@@ -1227,6 +1227,39 @@ test("preserves a resumable session when the language catalog fails transiently"
   expect(window.localStorage.getItem("2000nl:training-session:user-1")).not.toBeNull();
 });
 
+test("discards a resume for a language removed from the catalog before list hydration", async () => {
+  fetchAvailableLearningLanguages
+    .mockReset()
+    .mockResolvedValue(
+      defaultAvailableLearningLanguages.filter(({ code }) => code === "en"),
+    );
+  fetchActiveTrainingScope.mockReturnValueOnce(
+    new Promise<ActiveTrainingScope>(() => undefined),
+  );
+  await writeTrainingSessionResume({
+    sessionId: "session-removed-language",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await waitFor(() =>
+    expect(
+      window.localStorage.getItem("2000nl:training-session:user-1"),
+    ).toBeNull(),
+  );
+  expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
+});
+
 test("Statistics and Settings destinations preserve the current Training turn", async () => {
   function Harness() {
     const [destination, setDestination] =

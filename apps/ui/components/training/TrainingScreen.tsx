@@ -83,6 +83,7 @@ import {
   readTrainingSessionResume,
   subscribeTrainingSessionInvalidation,
   subscribeTrainingSessionOwnerInvalidation,
+  type TrainingSessionResumeRecord,
   writeTrainingSessionResume,
 } from "@/lib/training/sessionResumeStore";
 import {
@@ -232,6 +233,9 @@ function TrainingScreenContent({
   const [sessionResumeResolved, setSessionResumeResolved] = useState(
     () => !trainingTodaySetupEnabled,
   );
+  const [sessionResumeRecord, setSessionResumeRecord] = useState<
+    TrainingSessionResumeRecord | null | undefined
+  >(() => (trainingTodaySetupEnabled ? undefined : null));
   const [sessionResumeError, setSessionResumeError] = useState(false);
   const [sessionReplacementWarning, setSessionReplacementWarning] =
     useState(false);
@@ -300,6 +304,9 @@ function TrainingScreenContent({
   const [trainingLanguageOptions, setTrainingLanguageOptions] = useState(
     DEFAULT_LANGUAGE_OPTIONS,
   );
+  const [trainingLanguageCodes, setTrainingLanguageCodes] = useState<string[]>(
+    [],
+  );
   const [trainingLanguagesResolved, setTrainingLanguagesResolved] =
     useState(false);
   const [trainingLanguagesCatalogError, setTrainingLanguagesCatalogError] =
@@ -325,6 +332,7 @@ function TrainingScreenContent({
           value: item.code,
           label: item.label || fallbackLanguageLabel(item.code),
         }));
+        setTrainingLanguageCodes(languages.map((item) => item.code));
         const withCurrent = options.some(
           (option) => option.value === currentTrainingLanguage,
         )
@@ -1305,6 +1313,7 @@ function TrainingScreenContent({
         setTrainingLoadError(null);
         setSessionResumeError(false);
         sessionResumeAttemptedRef.current = false;
+        setSessionResumeRecord(undefined);
         setTrainingLanguagesResolved(false);
         setTrainingLanguagesCatalogError(false);
         setTrainingLanguagesRetryGeneration((generation) => generation + 1);
@@ -1322,70 +1331,102 @@ function TrainingScreenContent({
       !trainingTodaySetupEnabled ||
       !user?.id ||
       sessionResumeResolved ||
-      sessionResumeAttemptedRef.current
+      sessionResumeRecord !== undefined
     ) {
       return;
     }
-    sessionResumeAttemptedRef.current = true;
+    let cancelled = false;
     const resumeGeneration = sessionResumeGenerationRef.current;
-    const resolveResume = async () => {
-      const record = await readTrainingSessionResume(user.id);
+    void readTrainingSessionResume(user.id).then((record) => {
       if (
+        cancelled ||
         !componentMountedRef.current ||
         sessionResumeGenerationRef.current !== resumeGeneration
       ) {
         return;
       }
-      // An ordinary first visit has no resumable session. Resolve immediately
-      // instead of waiting for optional list hydration that may not be
-      // available on an empty or fixture-backed setup surface.
-      if (!record) {
-        if (componentMountedRef.current) setSessionResumeResolved(true);
-        return;
-      }
-      if (!trainingLanguagesResolved) {
-        sessionResumeAttemptedRef.current = false;
-        return;
-      }
-      if (trainingLanguagesCatalogError) {
-        setSessionResumeError(true);
-        setTrainingLoadError("training_resume_failed");
-        return;
-      }
-      const savedLanguagePermitted = trainingLanguageOptions.some(
-        (option) => option.value === record.languageCode,
-      );
-      if (!savedLanguagePermitted) {
-        await clearTrainingSessionResume(user.id);
-        if (componentMountedRef.current) setSessionResumeResolved(true);
-        return;
-      }
-      if (record.languageCode !== currentTrainingLanguage) {
-        // Rehydrate the list catalogue in the saved language before deciding
-        // whether that saved list is still permitted. Keep the record intact
-        // across this internal language transition.
-        trainingLanguageManuallyChangedRef.current = true;
-        languageHydrationPendingRef.current = true;
-        languageHydrationObservedNotReadyRef.current = false;
-        setCurrentTrainingLanguage(record.languageCode);
-        sessionResumeAttemptedRef.current = false;
-        return;
-      }
-      // A saved session must still validate its list against the hydrated
-      // catalogue before it can be resumed.
-      if (
-        !listHydrated ||
-        hydratedLanguage !== record.languageCode ||
-        listCatalogStatus === "loading"
-      ) {
-        sessionResumeAttemptedRef.current = false;
-        return;
-      }
-      if (listCatalogStatus === "error") {
-        setSessionResumeError(true);
-        setTrainingLoadError("training_resume_failed");
-        return;
-      }
+      setSessionResumeRecord(record);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    sessionResumeRecord,
+    sessionResumeResolved,
+    trainingTodaySetupEnabled,
+    user?.id,
+  ]);
+
+  useEffect(() => {
+    if (
+      !trainingTodaySetupEnabled ||
+      !user?.id ||
+      sessionResumeResolved ||
+      sessionResumeRecord === undefined ||
+      sessionResumeAttemptedRef.current
+    ) {
+      return;
+    }
+    // An ordinary first visit has no resumable session. Resolve immediately
+    // instead of waiting for optional list hydration that may not be
+    // available on an empty or fixture-backed setup surface.
+    if (!sessionResumeRecord) {
+      setSessionResumeResolved(true);
+      return;
+    }
+    if (!trainingLanguagesResolved) return;
+    if (trainingLanguagesCatalogError) {
+      sessionResumeAttemptedRef.current = true;
+      setSessionResumeError(true);
+      setTrainingLoadError("training_resume_failed");
+      return;
+    }
+    const record = sessionResumeRecord;
+    const savedLanguagePermitted = trainingLanguageCodes.includes(
+      record.languageCode,
+    );
+    if (!savedLanguagePermitted) {
+      sessionResumeAttemptedRef.current = true;
+      const resumeGeneration = sessionResumeGenerationRef.current;
+      void clearTrainingSessionResume(user.id).then(() => {
+        if (
+          componentMountedRef.current &&
+          sessionResumeGenerationRef.current === resumeGeneration
+        ) {
+          setSessionResumeResolved(true);
+        }
+      });
+      return;
+    }
+    if (record.languageCode !== currentTrainingLanguage) {
+      // Rehydrate the list catalogue in the saved language before deciding
+      // whether that saved list is still permitted. Keep the record intact
+      // across this internal language transition.
+      trainingLanguageManuallyChangedRef.current = true;
+      languageHydrationPendingRef.current = true;
+      languageHydrationObservedNotReadyRef.current = false;
+      setCurrentTrainingLanguage(record.languageCode);
+      return;
+    }
+    // A saved session must still validate its list against the hydrated
+    // catalogue before it can be resumed.
+    if (
+      !listHydrated ||
+      hydratedLanguage !== record.languageCode ||
+      listCatalogStatus === "loading"
+    ) {
+      return;
+    }
+    if (listCatalogStatus === "error") {
+      sessionResumeAttemptedRef.current = true;
+      setSessionResumeError(true);
+      setTrainingLoadError("training_resume_failed");
+      return;
+    }
+
+    sessionResumeAttemptedRef.current = true;
+    const resumeGeneration = sessionResumeGenerationRef.current;
+    const resolveResume = async () => {
       languageHydrationPendingRef.current = false;
       languageHydrationObservedNotReadyRef.current = false;
       if (
@@ -1552,6 +1593,7 @@ function TrainingScreenContent({
     listHydrated,
     listCatalogStatus,
     loadNextWord,
+    sessionResumeRecord,
     sessionResumeResolved,
     setActiveScenario,
     setCardFilterPreference,
@@ -1565,7 +1607,7 @@ function TrainingScreenContent({
     trainingLanguagesCatalogError,
     trainingLanguagesRetryGeneration,
     trainingTodaySetupEnabled,
-    trainingLanguageOptions,
+    trainingLanguageCodes,
     trainingLanguagesResolved,
     user?.id,
   ]);
