@@ -1,3 +1,6 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { getDbUrl } from "./dbTestUtils";
 
@@ -6,6 +9,18 @@ afterEach(() => {
 });
 
 describe("getDbUrl", () => {
+  test("is the only FSRS test helper allowed to read the database URL", () => {
+    const directory = dirname(fileURLToPath(import.meta.url));
+    const rawEnvironmentRead = ["process", "env", "FSRS_TEST_DB_URL"].join(".");
+    const offenders = readdirSync(directory)
+      .filter((filename) => filename.endsWith(".test.ts"))
+      .filter((filename) =>
+        readFileSync(join(directory, filename), "utf8").includes(rawEnvironmentRead),
+      );
+
+    expect(offenders).toEqual([]);
+  });
+
   test("ignores application database aliases when the explicit FSRS URL is absent", () => {
     vi.stubEnv("FSRS_TEST_DB_URL", "");
     vi.stubEnv(

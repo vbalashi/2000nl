@@ -3,12 +3,13 @@ import { randomUUID } from "crypto";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
   ensureUserWithSettings,
+  getDbUrl,
   insertWord,
   runMigrations,
   withTransaction,
 } from "./dbTestUtils";
 
-const databaseUrl = process.env.FSRS_TEST_DB_URL;
+const databaseUrl = getDbUrl();
 const describeDb = databaseUrl ? describe : describe.skip;
 
 describeDb("local training study day", () => {
