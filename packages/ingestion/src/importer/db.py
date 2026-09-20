@@ -17,6 +17,42 @@ def ensure_language(cursor: Cursor, code: str, name: str) -> None:
     )
 
 
+def ensure_dictionary_schema(
+    cursor: Cursor,
+    schema_key: str,
+    schema_version: int,
+    language_code: str,
+    title: str,
+    description: str,
+    source_path: str,
+) -> None:
+    """Register an importer-owned schema without requiring a new migration."""
+    cursor.execute(
+        """
+        insert into dictionary_schemas (
+            schema_key,
+            version,
+            language_code,
+            title,
+            description,
+            source_path,
+            render_capabilities
+        )
+        values (%s, %s, %s, %s, %s, %s, %s)
+        on conflict (schema_key, version) do nothing
+        """,
+        (
+            schema_key,
+            schema_version,
+            language_code,
+            title,
+            description,
+            source_path,
+            ["definitions", "examples", "idioms", "morphology", "conjugation"],
+        ),
+    )
+
+
 def ensure_word_list(
     cursor: Cursor,
     language_code: str,
@@ -49,23 +85,37 @@ def ensure_dictionary(
     description: Optional[str],
     schema_key: str,
     schema_version: int,
+    source_provider: str = "vandale",
+    source_version: Optional[str] = None,
 ) -> str:
     cursor.execute(
         """
         insert into dictionaries (
             language_code, slug, name, description, kind, visibility, is_editable,
-            minimum_subscription_tier, schema_key, schema_version, source_provider
+            minimum_subscription_tier, schema_key, schema_version,
+            source_provider, source_version
         )
-        values (%s, %s, %s, %s, 'curated', 'system', false, 'free', %s, %s, 'vandale')
+        values (%s, %s, %s, %s, 'curated', 'system', false, 'free', %s, %s, %s, %s)
         on conflict (language_code, slug) do update
         set name = excluded.name,
             description = coalesce(excluded.description, dictionaries.description),
             schema_key = excluded.schema_key,
             schema_version = excluded.schema_version,
+            source_provider = excluded.source_provider,
+            source_version = coalesce(excluded.source_version, dictionaries.source_version),
             updated_at = now()
         returning id
         """,
-        (language_code, slug, name, description, schema_key, schema_version),
+        (
+            language_code,
+            slug,
+            name,
+            description,
+            schema_key,
+            schema_version,
+            source_provider,
+            source_version,
+        ),
     )
     return cursor.fetchone()[0]
 

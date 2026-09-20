@@ -1,0 +1,84 @@
+[
+  {
+    "headword": "Freund",
+    "pronunciation": "Freund",
+    "pronunciation_with_stress": "Freund",
+    "gender": "der",
+    "part_of_speech": "zn",
+    "plural": "Freunde",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Person, zu der man eine enge Beziehung hat.",
+        "context": "eine Person",
+        "examples": [
+          "Mein Freund wohnt in der Nähe."
+        ],
+        "idioms": [
+          {
+            "expression": "unter Freunden",
+            "explanation": "in vertrauter Gesellschaft",
+            "examples": [
+              "Unter Freunden kann man offen sprechen."
+            ]
+          }
+        ],
+        "synonyms": [
+          "Kamerad"
+        ],
+        "antonyms": [],
+        "related_terms": [
+          "Freundschaft"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "article": "der"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "Freund",
+      "headword_raw": "Freund",
+      "index": 100008,
+      "dictionaryId": "de-duden-test",
+      "dictionary_name": "Duden-like DE Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "de-duden-test",
+        "provider_article_id": "de-duden-test:100008"
+      },
+      "provider_article_id": "de-duden-test:100008",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "zn"
+      },
+      "source_group_key": "local-complete-fixture-v1:de-duden-test:100008",
+      "source_entry_key": "local-complete-fixture-v1:de-duden-test:100008",
+      "source_index": 100008,
+      "sense_ordinal": 1
+    }
+  }
+]

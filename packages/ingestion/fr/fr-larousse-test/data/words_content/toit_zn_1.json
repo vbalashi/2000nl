@@ -1,0 +1,85 @@
+[
+  {
+    "headword": "toit",
+    "pronunciation": "toit",
+    "pronunciation_with_stress": "toit",
+    "gender": "le",
+    "part_of_speech": "zn",
+    "plural": "toits",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Partie supérieure qui couvre un bâtiment.",
+        "context": "une partie d un bâtiment",
+        "examples": [
+          "La pluie frappe le toit."
+        ],
+        "idioms": [
+          {
+            "expression": "avoir un toit sur la tête",
+            "explanation": "avoir un logement",
+            "examples": [
+              "Après le voyage, ils ont enfin un toit sur la tête."
+            ]
+          }
+        ],
+        "synonyms": [
+          "couverture"
+        ],
+        "antonyms": [],
+        "related_terms": [
+          "maison",
+          "pluie"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "article": "le"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "toit",
+      "headword_raw": "toit",
+      "index": 99008,
+      "dictionaryId": "fr-larousse-test",
+      "dictionary_name": "Larousse-like FR Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "fr-larousse-test",
+        "provider_article_id": "fr-larousse-test:99008"
+      },
+      "provider_article_id": "fr-larousse-test:99008",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "zn"
+      },
+      "source_group_key": "local-complete-fixture-v1:fr-larousse-test:99008",
+      "source_entry_key": "local-complete-fixture-v1:fr-larousse-test:99008",
+      "source_index": 99008,
+      "sense_ordinal": 1
+    }
+  }
+]

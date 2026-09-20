@@ -1,0 +1,85 @@
+[
+  {
+    "headword": "Wasser",
+    "pronunciation": "Wasser",
+    "pronunciation_with_stress": "Wasser",
+    "gender": "das",
+    "part_of_speech": "zn",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Klare Flüssigkeit, die Menschen und Tiere trinken.",
+        "context": "ein Stoff",
+        "examples": [
+          "Das Glas ist mit Wasser gefüllt."
+        ],
+        "idioms": [
+          {
+            "expression": "nah am Wasser gebaut sein",
+            "explanation": "leicht zu rühren sein",
+            "examples": [
+              "Sie ist nah am Wasser gebaut."
+            ]
+          }
+        ],
+        "synonyms": [
+          "Trinkwasser"
+        ],
+        "antonyms": [],
+        "related_terms": [
+          "Fluss",
+          "Getränk"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "article": "das"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "Wasser",
+      "headword_raw": "Wasser",
+      "index": 100009,
+      "dictionaryId": "de-duden-test",
+      "dictionary_name": "Duden-like DE Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "de-duden-test",
+        "provider_article_id": "de-duden-test:100009"
+      },
+      "provider_article_id": "de-duden-test:100009",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "zn"
+      },
+      "source_group_key": "local-complete-fixture-v1:de-duden-test:100009",
+      "source_entry_key": "local-complete-fixture-v1:de-duden-test:100009",
+      "source_index": 100009,
+      "sense_ordinal": 1
+    }
+  }
+]

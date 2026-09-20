@@ -1,0 +1,106 @@
+[
+  {
+    "headword": "porte",
+    "pronunciation": "porte",
+    "pronunciation_with_stress": "porte",
+    "gender": "",
+    "part_of_speech": "ww",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "porta, a porté",
+    "conjugation_table": {
+      "present": {
+        "je": "porte",
+        "tu": "portes",
+        "il_elle": "porte",
+        "nous": "portons",
+        "vous": "portez",
+        "ils_elles": "portent"
+      },
+      "past": {
+        "je": "portai",
+        "tu": "portas",
+        "il_elle": "porta",
+        "nous": "portâmes",
+        "vous": "portâtes",
+        "ils_elles": "portèrent"
+      },
+      "perfect": {
+        "auxiliary": "a",
+        "participle": "porté"
+      }
+    },
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Transporter quelque chose sur soi ou avec soi.",
+        "context": "une action",
+        "examples": [
+          "Elle porte un sac bleu."
+        ],
+        "idioms": [
+          {
+            "expression": "porter ses fruits",
+            "explanation": "produire le résultat attendu",
+            "examples": [
+              "Le travail finit par porter ses fruits."
+            ]
+          }
+        ],
+        "synonyms": [
+          "transporter"
+        ],
+        "antonyms": [],
+        "related_terms": [
+          "sac",
+          "vêtement"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "auxiliary": "avoir"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "porte",
+      "headword_raw": "porte",
+      "index": 99005,
+      "dictionaryId": "fr-larousse-test",
+      "dictionary_name": "Larousse-like FR Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "fr-larousse-test",
+        "provider_article_id": "fr-larousse-test:99005"
+      },
+      "provider_article_id": "fr-larousse-test:99005",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "ww"
+      },
+      "source_group_key": "local-complete-fixture-v1:fr-larousse-test:99005",
+      "source_entry_key": "local-complete-fixture-v1:fr-larousse-test:99005",
+      "source_index": 99005,
+      "sense_ordinal": 1
+    }
+  }
+]

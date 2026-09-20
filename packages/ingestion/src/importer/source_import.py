@@ -12,6 +12,7 @@ import psycopg2.extras
 
 from importer.db import (
     ensure_dictionary,
+    ensure_dictionary_schema,
     ensure_language,
     ensure_word_list,
     refresh_dictionary_search_documents,
@@ -406,6 +407,10 @@ def import_source_manifest(
     dictionary_description: Optional[str] = None,
     dictionary_schema_key: str = "nl-vandale-v2",
     dictionary_schema_version: int = 1,
+    dictionary_source_provider: str = "vandale",
+    dictionary_source_version: Optional[str] = None,
+    list_is_primary: bool = True,
+    include_all_in_list: bool = False,
     nt2_slug: str = "nt2-2000",
     nt2_name: str = "VanDale 2k",
     nt2_description: Optional[str] = "Core 2000 woorden voor NT2",
@@ -441,6 +446,15 @@ def import_source_manifest(
                 return stats
 
             ensure_language(cursor, language_code, language_name)
+            ensure_dictionary_schema(
+                cursor,
+                dictionary_schema_key,
+                dictionary_schema_version,
+                language_code,
+                f"{dictionary_name} entry schema",
+                "Runtime registry row for an importer-managed dictionary entry payload.",
+                str(data_dir),
+            )
             dictionary_id = ensure_dictionary(
                 cursor,
                 language_code,
@@ -449,6 +463,8 @@ def import_source_manifest(
                 dictionary_description,
                 dictionary_schema_key,
                 dictionary_schema_version,
+                dictionary_source_provider,
+                dictionary_source_version,
             )
             list_id = ensure_word_list(
                 cursor,
@@ -456,7 +472,7 @@ def import_source_manifest(
                 nt2_slug,
                 nt2_name,
                 nt2_description,
-                True,
+                list_is_primary,
             )
 
             active_bindings = _load_active_bindings(
@@ -800,7 +816,7 @@ def import_source_manifest(
             nt2_rows = [
                 (list_id, row["id"], artifact.source_index)
                 for artifact, row, _ in resolved
-                if row["is_nt2_2000"]
+                if include_all_in_list or row["is_nt2_2000"]
             ]
             nt2_word_ids = [word_id for _, word_id, _ in nt2_rows]
             cursor.execute(

@@ -1,0 +1,85 @@
+[
+  {
+    "headword": "maison",
+    "pronunciation": "maison",
+    "pronunciation_with_stress": "maison",
+    "gender": "la",
+    "part_of_speech": "zn",
+    "plural": "maisons",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Bâtiment ou logement dans lequel on habite.",
+        "context": "un lieu d habitation",
+        "examples": [
+          "Notre maison donne sur le jardin."
+        ],
+        "idioms": [
+          {
+            "expression": "être maître chez soi",
+            "explanation": "pouvoir décider librement chez soi",
+            "examples": [
+              "Ici, elle est maître chez elle."
+            ]
+          }
+        ],
+        "synonyms": [
+          "logement"
+        ],
+        "antonyms": [],
+        "related_terms": [
+          "pièce",
+          "toit"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "article": "la"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "maison",
+      "headword_raw": "maison",
+      "index": 99000,
+      "dictionaryId": "fr-larousse-test",
+      "dictionary_name": "Larousse-like FR Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "fr-larousse-test",
+        "provider_article_id": "fr-larousse-test:99000"
+      },
+      "provider_article_id": "fr-larousse-test:99000",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "zn"
+      },
+      "source_group_key": "local-complete-fixture-v1:fr-larousse-test:99000",
+      "source_entry_key": "local-complete-fixture-v1:fr-larousse-test:99000",
+      "source_index": 99000,
+      "sense_ordinal": 1
+    }
+  }
+]

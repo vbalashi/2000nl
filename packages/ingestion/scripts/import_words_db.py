@@ -90,6 +90,26 @@ def main() -> None:
         help="Dictionary schema version registered in dictionary_schemas.",
     )
     parser.add_argument(
+        "--dictionary-source-provider",
+        default="vandale",
+        help="Source provider stored on the dictionary registry row.",
+    )
+    parser.add_argument(
+        "--dictionary-source-version",
+        default=None,
+        help="Optional source version stored on the dictionary registry row.",
+    )
+    parser.add_argument(
+        "--list-not-primary",
+        action="store_true",
+        help="Keep the imported list out of the default primary-list selection.",
+    )
+    parser.add_argument(
+        "--include-all-in-list",
+        action="store_true",
+        help="Add every imported entry to the named list instead of using is_nt2_2000.",
+    )
+    parser.add_argument(
         "--refresh-search-documents",
         action="store_true",
         help="Refresh dictionary_search_documents after importing entries. For full imports, prefer a controlled backfill job.",
@@ -128,6 +148,10 @@ def main() -> None:
         dictionary_description=args.dictionary_description,
         dictionary_schema_key=args.dictionary_schema_key,
         dictionary_schema_version=args.dictionary_schema_version,
+        dictionary_source_provider=args.dictionary_source_provider,
+        dictionary_source_version=args.dictionary_source_version,
+        list_is_primary=not args.list_not_primary,
+        include_all_in_list=args.include_all_in_list,
         refresh_search_documents=args.refresh_search_documents,
         reconciliation_plan=args.reconciliation_plan,
     )

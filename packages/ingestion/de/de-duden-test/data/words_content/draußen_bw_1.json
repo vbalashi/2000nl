@@ -1,0 +1,86 @@
+[
+  {
+    "headword": "draußen",
+    "pronunciation": "draußen",
+    "pronunciation_with_stress": "draußen",
+    "gender": "",
+    "part_of_speech": "bw",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Außerhalb eines Gebäudes oder eines abgegrenzten Raumes.",
+        "context": "ein Ort",
+        "examples": [
+          "Die Kinder spielen draußen."
+        ],
+        "idioms": [
+          {
+            "expression": "draußen vor der Tür stehen",
+            "explanation": "nicht beteiligt sein",
+            "examples": [
+              "Ohne Einladung stand er draußen vor der Tür."
+            ]
+          }
+        ],
+        "synonyms": [
+          "außen"
+        ],
+        "antonyms": [
+          "drinnen"
+        ],
+        "related_terms": [
+          "Außenbereich"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "degree": "neutral"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "draußen",
+      "headword_raw": "draußen",
+      "index": 100006,
+      "dictionaryId": "de-duden-test",
+      "dictionary_name": "Duden-like DE Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "de-duden-test",
+        "provider_article_id": "de-duden-test:100006"
+      },
+      "provider_article_id": "de-duden-test:100006",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "bw"
+      },
+      "source_group_key": "local-complete-fixture-v1:de-duden-test:100006",
+      "source_entry_key": "local-complete-fixture-v1:de-duden-test:100006",
+      "source_index": 100006,
+      "sense_ordinal": 1
+    }
+  }
+]

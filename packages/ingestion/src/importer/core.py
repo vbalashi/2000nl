@@ -28,6 +28,10 @@ def import_entries(
     ),
     dictionary_schema_key: str = "nl-vandale-v2",
     dictionary_schema_version: int = 1,
+    dictionary_source_provider: str = "vandale",
+    dictionary_source_version: str | None = None,
+    list_is_primary: bool = True,
+    include_all_in_list: bool = False,
     refresh_search_documents: bool = False,
     reconciliation_plan: Path | str | None = None,
 ) -> SourceImportStats:
@@ -54,5 +58,9 @@ def import_entries(
         dictionary_description=dictionary_description,
         dictionary_schema_key=dictionary_schema_key,
         dictionary_schema_version=dictionary_schema_version,
+        dictionary_source_provider=dictionary_source_provider,
+        dictionary_source_version=dictionary_source_version,
+        list_is_primary=list_is_primary,
+        include_all_in_list=include_all_in_list,
         refresh_search_documents=refresh_search_documents,
     )

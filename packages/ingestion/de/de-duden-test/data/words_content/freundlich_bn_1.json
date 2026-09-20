@@ -1,0 +1,86 @@
+[
+  {
+    "headword": "freundlich",
+    "pronunciation": "freundlich",
+    "pronunciation_with_stress": "freundlich",
+    "gender": "",
+    "part_of_speech": "bn",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "freundlicher",
+    "superlative": "am freundlichsten",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Wohlwollend und angenehm im Umgang mit anderen.",
+        "context": "eine Person oder Haltung",
+        "examples": [
+          "Die Verkäuferin war sehr freundlich."
+        ],
+        "idioms": [
+          {
+            "expression": "ein freundliches Gesicht machen",
+            "explanation": "freundlich wirken",
+            "examples": [
+              "Er macht trotz der Arbeit ein freundliches Gesicht."
+            ]
+          }
+        ],
+        "synonyms": [
+          "nett"
+        ],
+        "antonyms": [
+          "unfreundlich"
+        ],
+        "related_terms": [
+          "Freund"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "attributive": "ein freundlicher Mensch"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "freundlich",
+      "headword_raw": "freundlich",
+      "index": 100003,
+      "dictionaryId": "de-duden-test",
+      "dictionary_name": "Duden-like DE Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "de-duden-test",
+        "provider_article_id": "de-duden-test:100003"
+      },
+      "provider_article_id": "de-duden-test:100003",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "bn"
+      },
+      "source_group_key": "local-complete-fixture-v1:de-duden-test:100003",
+      "source_entry_key": "local-complete-fixture-v1:de-duden-test:100003",
+      "source_index": 100003,
+      "sense_ordinal": 1
+    }
+  }
+]

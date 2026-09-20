@@ -1,0 +1,107 @@
+[
+  {
+    "headword": "laufen",
+    "pronunciation": "laufen",
+    "pronunciation_with_stress": "laufen",
+    "gender": "",
+    "part_of_speech": "ww",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "lief, ist gelaufen",
+    "conjugation_table": {
+      "present": {
+        "ich": "laufe",
+        "du": "läufst",
+        "er_sie_es": "läuft",
+        "wir": "laufen",
+        "ihr": "lauft",
+        "sie": "laufen"
+      },
+      "past": {
+        "ich": "lief",
+        "du": "liefst",
+        "er_sie_es": "lief",
+        "wir": "liefen",
+        "ihr": "lieft",
+        "sie": "liefen"
+      },
+      "perfect": {
+        "auxiliary": "ist",
+        "participle": "gelaufen"
+      }
+    },
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Sich schnell zu Fuß fortbewegen.",
+        "context": "eine Bewegung",
+        "examples": [
+          "Die Kinder laufen zum Park."
+        ],
+        "idioms": [
+          {
+            "expression": "jemandem davonlaufen",
+            "explanation": "sich einer Person entziehen",
+            "examples": [
+              "Die Gelegenheit ist ihm davongelaufen."
+            ]
+          }
+        ],
+        "synonyms": [
+          "rennen"
+        ],
+        "antonyms": [
+          "stehen"
+        ],
+        "related_terms": [
+          "Lauf"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "auxiliary": "sein"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "laufen",
+      "headword_raw": "laufen",
+      "index": 100001,
+      "dictionaryId": "de-duden-test",
+      "dictionary_name": "Duden-like DE Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "de-duden-test",
+        "provider_article_id": "de-duden-test:100001"
+      },
+      "provider_article_id": "de-duden-test:100001",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "ww"
+      },
+      "source_group_key": "local-complete-fixture-v1:de-duden-test:100001",
+      "source_entry_key": "local-complete-fixture-v1:de-duden-test:100001",
+      "source_index": 100001,
+      "sense_ordinal": 1
+    }
+  }
+]

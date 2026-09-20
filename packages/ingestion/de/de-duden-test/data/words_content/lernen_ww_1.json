@@ -1,0 +1,106 @@
+[
+  {
+    "headword": "lernen",
+    "pronunciation": "lernen",
+    "pronunciation_with_stress": "lernen",
+    "gender": "",
+    "part_of_speech": "ww",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "lernte, hat gelernt",
+    "conjugation_table": {
+      "present": {
+        "ich": "lerne",
+        "du": "lernst",
+        "er_sie_es": "lernt",
+        "wir": "lernen",
+        "ihr": "lernt",
+        "sie": "lernen"
+      },
+      "past": {
+        "ich": "lernte",
+        "du": "lerntest",
+        "er_sie_es": "lernte",
+        "wir": "lernten",
+        "ihr": "lerntet",
+        "sie": "lernten"
+      },
+      "perfect": {
+        "auxiliary": "hat",
+        "participle": "gelernt"
+      }
+    },
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Wissen oder eine Fähigkeit durch Übung erwerben.",
+        "context": "Schule und Übung",
+        "examples": [
+          "Sie lernt jeden Abend neue Wörter."
+        ],
+        "idioms": [
+          {
+            "expression": "aus Fehlern lernen",
+            "explanation": "durch Fehler besser werden",
+            "examples": [
+              "Wir können aus Fehlern lernen."
+            ]
+          }
+        ],
+        "synonyms": [
+          "studieren"
+        ],
+        "antonyms": [],
+        "related_terms": [
+          "Schule",
+          "Wissen"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "auxiliary": "haben"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "lernen",
+      "headword_raw": "lernen",
+      "index": 100002,
+      "dictionaryId": "de-duden-test",
+      "dictionary_name": "Duden-like DE Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "de-duden-test",
+        "provider_article_id": "de-duden-test:100002"
+      },
+      "provider_article_id": "de-duden-test:100002",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "ww"
+      },
+      "source_group_key": "local-complete-fixture-v1:de-duden-test:100002",
+      "source_entry_key": "local-complete-fixture-v1:de-duden-test:100002",
+      "source_index": 100002,
+      "sense_ordinal": 1
+    }
+  }
+]

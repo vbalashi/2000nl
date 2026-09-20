@@ -1,0 +1,8 @@
+{
+  "artifact_count": 10,
+  "artifact_format_version": "dictionary-fixture-v1",
+  "identity_scheme_version": "local-complete-fixture-v1",
+  "input_sha256": "8e2401fa26a008530eef4462adc3ec42f358cb460b03ef79712df87b702bd5b2",
+  "manifest_sha256": "6443371e6c616320f2bc43dbc9fd63057130357bc0f3d9601eb80876f2a78fcb",
+  "source_record_count": 10
+}

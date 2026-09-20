@@ -1,0 +1,85 @@
+[
+  {
+    "headword": "room",
+    "pronunciation": "room",
+    "pronunciation_with_stress": "room",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "rooms",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "A separate space inside a building.",
+        "context": "part of a building",
+        "examples": [
+          "The room has two large windows."
+        ],
+        "idioms": [
+          {
+            "expression": "make room",
+            "explanation": "create enough space",
+            "examples": [
+              "Please make room for one more chair."
+            ]
+          }
+        ],
+        "synonyms": [
+          "space"
+        ],
+        "antonyms": [],
+        "related_terms": [
+          "house",
+          "window"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "article": "a"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "room",
+      "headword_raw": "room",
+      "index": 98008,
+      "dictionaryId": "en-cambridge-test",
+      "dictionary_name": "Cambridge-like EN Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "en-cambridge-test",
+        "provider_article_id": "en-cambridge-test:98008"
+      },
+      "provider_article_id": "en-cambridge-test:98008",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "zn"
+      },
+      "source_group_key": "local-complete-fixture-v1:en-cambridge-test:98008",
+      "source_entry_key": "local-complete-fixture-v1:en-cambridge-test:98008",
+      "source_index": 98008,
+      "sense_ordinal": 1
+    }
+  }
+]

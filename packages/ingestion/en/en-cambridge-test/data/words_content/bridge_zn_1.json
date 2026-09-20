@@ -1,0 +1,85 @@
+[
+  {
+    "headword": "bridge",
+    "pronunciation": "bridge",
+    "pronunciation_with_stress": "bridge",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "bridges",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "A structure that allows people or vehicles to cross an obstacle.",
+        "context": "a structure",
+        "examples": [
+          "The bridge crosses the narrow river."
+        ],
+        "idioms": [
+          {
+            "expression": "cross that bridge when we come to it",
+            "explanation": "deal with a problem when it happens",
+            "examples": [
+              "We will cross that bridge when we come to it."
+            ]
+          }
+        ],
+        "synonyms": [
+          "crossing"
+        ],
+        "antonyms": [],
+        "related_terms": [
+          "river",
+          "road"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "article": "a"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "bridge",
+      "headword_raw": "bridge",
+      "index": 98002,
+      "dictionaryId": "en-cambridge-test",
+      "dictionary_name": "Cambridge-like EN Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "en-cambridge-test",
+        "provider_article_id": "en-cambridge-test:98002"
+      },
+      "provider_article_id": "en-cambridge-test:98002",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "zn"
+      },
+      "source_group_key": "local-complete-fixture-v1:en-cambridge-test:98002",
+      "source_entry_key": "local-complete-fixture-v1:en-cambridge-test:98002",
+      "source_index": 98002,
+      "sense_ordinal": 1
+    }
+  }
+]

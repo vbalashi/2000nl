@@ -1,0 +1,86 @@
+[
+  {
+    "headword": "oft",
+    "pronunciation": "oft",
+    "pronunciation_with_stress": "oft",
+    "gender": "",
+    "part_of_speech": "bw",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Viele Male oder bei vielen Gelegenheiten.",
+        "context": "Häufigkeit",
+        "examples": [
+          "Er fährt oft mit dem Fahrrad."
+        ],
+        "idioms": [
+          {
+            "expression": "alle naselang",
+            "explanation": "sehr häufig",
+            "examples": [
+              "Sie ruft alle naselang an."
+            ]
+          }
+        ],
+        "synonyms": [
+          "häufig"
+        ],
+        "antonyms": [
+          "selten"
+        ],
+        "related_terms": [
+          "Häufigkeit"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "degree": "neutral"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "oft",
+      "headword_raw": "oft",
+      "index": 100005,
+      "dictionaryId": "de-duden-test",
+      "dictionary_name": "Duden-like DE Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "de-duden-test",
+        "provider_article_id": "de-duden-test:100005"
+      },
+      "provider_article_id": "de-duden-test:100005",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "bw"
+      },
+      "source_group_key": "local-complete-fixture-v1:de-duden-test:100005",
+      "source_entry_key": "local-complete-fixture-v1:de-duden-test:100005",
+      "source_index": 100005,
+      "sense_ordinal": 1
+    }
+  }
+]

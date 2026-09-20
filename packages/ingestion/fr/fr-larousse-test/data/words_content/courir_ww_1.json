@@ -1,0 +1,107 @@
+[
+  {
+    "headword": "courir",
+    "pronunciation": "courir",
+    "pronunciation_with_stress": "courir",
+    "gender": "",
+    "part_of_speech": "ww",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "courut, a couru",
+    "conjugation_table": {
+      "present": {
+        "je": "cours",
+        "tu": "cours",
+        "il_elle": "court",
+        "nous": "courons",
+        "vous": "courez",
+        "ils_elles": "courent"
+      },
+      "past": {
+        "je": "courus",
+        "tu": "courus",
+        "il_elle": "courut",
+        "nous": "courûmes",
+        "vous": "courûtes",
+        "ils_elles": "coururent"
+      },
+      "perfect": {
+        "auxiliary": "a",
+        "participle": "couru"
+      }
+    },
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Se déplacer rapidement avec les jambes.",
+        "context": "un déplacement",
+        "examples": [
+          "Nous aimons courir le matin."
+        ],
+        "idioms": [
+          {
+            "expression": "courir après le temps",
+            "explanation": "avoir toujours trop peu de temps",
+            "examples": [
+              "Elle court après le temps cette semaine."
+            ]
+          }
+        ],
+        "synonyms": [
+          "galoper"
+        ],
+        "antonyms": [
+          "marcher"
+        ],
+        "related_terms": [
+          "course"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "auxiliary": "avoir"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "courir",
+      "headword_raw": "courir",
+      "index": 99001,
+      "dictionaryId": "fr-larousse-test",
+      "dictionary_name": "Larousse-like FR Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "fr-larousse-test",
+        "provider_article_id": "fr-larousse-test:99001"
+      },
+      "provider_article_id": "fr-larousse-test:99001",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "ww"
+      },
+      "source_group_key": "local-complete-fixture-v1:fr-larousse-test:99001",
+      "source_entry_key": "local-complete-fixture-v1:fr-larousse-test:99001",
+      "source_index": 99001,
+      "sense_ordinal": 1
+    }
+  }
+]

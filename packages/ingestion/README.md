@@ -12,6 +12,9 @@ Scripts (see `packages/ingestion/SCRIPTS.md` for timestamps and details):
 - `process_raw_words.py` – parse Vandale HTML (`data/word_list.json`) into structured `data/words_content/` when run from a source-data directory such as `packages/ingestion/nl/vandale-nt2/`.
 - `import_words_db.py` – load structured entries into a dictionary in Postgres and seed the NT2 list.
 - `import_word_forms.py` – populate `word_forms` lookup from structured entries.
+- `generate_complete_fixture_dictionaries.py` – generate four small,
+  source-managed multilingual QA dictionaries with full VanDale-shaped JSON
+  payloads and versioned manifests.
 - `audit_pointer_meanings.py` – audit a bounded, deterministic corpus sample for
   resolvable pointer-only meanings without treating arbitrary hyphens as
   redirects.
@@ -41,3 +44,25 @@ their definition contains a hyphen.
 Run `import_word_forms.py` after the entry import. For a versioned corpus it
 resolves each entry through the source-binding ledger and fails closed if the
 manifest and active bindings do not have exact coverage.
+
+## Complete local multilingual fixtures
+
+The synthetic complete fixtures live under:
+
+- `packages/ingestion/nl/nl-wiktionary-test/`
+- `packages/ingestion/en/en-cambridge-test/`
+- `packages/ingestion/fr/fr-larousse-test/`
+- `packages/ingestion/de/de-duden-test/`
+
+The names are deliberately marked as synthetic: these are not exports from the
+named reference dictionaries. Each dictionary contains ten entries with
+definitions, contexts, examples, idioms, morphology, and source identity. The
+repeatable local import command is:
+
+```bash
+scripts/import-complete-local-dictionaries.sh
+```
+
+It targets local Supabase by default, keeps the fixture lists out of the
+primary training-list selection, and refreshes `word_forms` and search
+documents. The command is safe to run repeatedly.

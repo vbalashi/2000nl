@@ -1,0 +1,86 @@
+[
+  {
+    "headword": "hell",
+    "pronunciation": "hell",
+    "pronunciation_with_stress": "hell",
+    "gender": "",
+    "part_of_speech": "bn",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "heller",
+    "superlative": "am hellsten",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Viel Licht aufweisend oder abgebend.",
+        "context": "ein Raum oder eine Farbe",
+        "examples": [
+          "Das Zimmer ist hell und warm."
+        ],
+        "idioms": [
+          {
+            "expression": "hellwach sein",
+            "explanation": "voll aufmerksam sein",
+            "examples": [
+              "Nach dem Kaffee war er hellwach."
+            ]
+          }
+        ],
+        "synonyms": [
+          "licht"
+        ],
+        "antonyms": [
+          "dunkel"
+        ],
+        "related_terms": [
+          "Licht"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "attributive": "ein heller Raum"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "hell",
+      "headword_raw": "hell",
+      "index": 100004,
+      "dictionaryId": "de-duden-test",
+      "dictionary_name": "Duden-like DE Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "de-duden-test",
+        "provider_article_id": "de-duden-test:100004"
+      },
+      "provider_article_id": "de-duden-test:100004",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "bn"
+      },
+      "source_group_key": "local-complete-fixture-v1:de-duden-test:100004",
+      "source_entry_key": "local-complete-fixture-v1:de-duden-test:100004",
+      "source_index": 100004,
+      "sense_ordinal": 1
+    }
+  }
+]

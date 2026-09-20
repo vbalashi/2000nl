@@ -1,0 +1,86 @@
+[
+  {
+    "headword": "souvent",
+    "pronunciation": "souvent",
+    "pronunciation_with_stress": "souvent",
+    "gender": "",
+    "part_of_speech": "bw",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "À de nombreuses reprises.",
+        "context": "la fréquence",
+        "examples": [
+          "Il vient souvent nous voir."
+        ],
+        "idioms": [
+          {
+            "expression": "de temps en temps",
+            "explanation": "parfois, mais pas toujours",
+            "examples": [
+              "Nous mangeons ensemble de temps en temps."
+            ]
+          }
+        ],
+        "synonyms": [
+          "fréquemment"
+        ],
+        "antonyms": [
+          "rarement"
+        ],
+        "related_terms": [
+          "fréquence"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "degree": "neutral"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "souvent",
+      "headword_raw": "souvent",
+      "index": 99003,
+      "dictionaryId": "fr-larousse-test",
+      "dictionary_name": "Larousse-like FR Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "fr-larousse-test",
+        "provider_article_id": "fr-larousse-test:99003"
+      },
+      "provider_article_id": "fr-larousse-test:99003",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "bw"
+      },
+      "source_group_key": "local-complete-fixture-v1:fr-larousse-test:99003",
+      "source_entry_key": "local-complete-fixture-v1:fr-larousse-test:99003",
+      "source_index": 99003,
+      "sense_ordinal": 1
+    }
+  }
+]

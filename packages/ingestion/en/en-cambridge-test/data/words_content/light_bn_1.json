@@ -1,0 +1,86 @@
+[
+  {
+    "headword": "light",
+    "pronunciation": "light",
+    "pronunciation_with_stress": "light",
+    "gender": "",
+    "part_of_speech": "bn",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "lighter",
+    "superlative": "lightest",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Not heavy; weighing little.",
+        "context": "weight",
+        "examples": [
+          "This bag is light enough to carry."
+        ],
+        "idioms": [
+          {
+            "expression": "light as a feather",
+            "explanation": "very light",
+            "examples": [
+              "The scarf was light as a feather."
+            ]
+          }
+        ],
+        "synonyms": [
+          "lightweight"
+        ],
+        "antonyms": [
+          "heavy"
+        ],
+        "related_terms": [
+          "weight"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "attributive": "a light bag"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "light",
+      "headword_raw": "light",
+      "index": 98003,
+      "dictionaryId": "en-cambridge-test",
+      "dictionary_name": "Cambridge-like EN Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "en-cambridge-test",
+        "provider_article_id": "en-cambridge-test:98003"
+      },
+      "provider_article_id": "en-cambridge-test:98003",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "bn"
+      },
+      "source_group_key": "local-complete-fixture-v1:en-cambridge-test:98003",
+      "source_entry_key": "local-complete-fixture-v1:en-cambridge-test:98003",
+      "source_index": 98003,
+      "sense_ordinal": 1
+    }
+  }
+]

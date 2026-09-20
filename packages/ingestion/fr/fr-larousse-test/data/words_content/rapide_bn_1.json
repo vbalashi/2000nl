@@ -1,0 +1,86 @@
+[
+  {
+    "headword": "rapide",
+    "pronunciation": "rapide",
+    "pronunciation_with_stress": "rapide",
+    "gender": "",
+    "part_of_speech": "bn",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "plus rapide",
+    "superlative": "le plus rapide",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Qui se déplace ou agit avec vitesse.",
+        "context": "la vitesse",
+        "examples": [
+          "Le train est très rapide."
+        ],
+        "idioms": [
+          {
+            "expression": "à toute vitesse",
+            "explanation": "très vite",
+            "examples": [
+              "Il est parti à toute vitesse."
+            ]
+          }
+        ],
+        "synonyms": [
+          "vite"
+        ],
+        "antonyms": [
+          "lent"
+        ],
+        "related_terms": [
+          "vitesse"
+        ],
+        "usage_labels": [
+          "fixture"
+        ],
+        "grammar": {
+          "attributive": "une réponse rapide"
+        },
+        "note": "Synthetic local fixture entry for multilingual QA.",
+        "cross_references": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "reference_tables": [],
+    "_metadata": {
+      "search_term": "rapide",
+      "headword_raw": "rapide",
+      "index": 99002,
+      "dictionaryId": "fr-larousse-test",
+      "dictionary_name": "Larousse-like FR Test (synthetic)",
+      "fixture": true
+    },
+    "meaning_id": 1,
+    "_source": {
+      "identity_scheme_version": "local-complete-fixture-v1",
+      "identity_evidence": {
+        "kind": "deterministic-local-complete-fixture",
+        "dictionary_id": "fr-larousse-test",
+        "provider_article_id": "fr-larousse-test:99002"
+      },
+      "provider_article_id": "fr-larousse-test:99002",
+      "normalized_pos_status": "known",
+      "pos_evidence": {
+        "normalized_pos_status": "known",
+        "source": "local-fixture",
+        "raw_value": "bn"
+      },
+      "source_group_key": "local-complete-fixture-v1:fr-larousse-test:99002",
+      "source_entry_key": "local-complete-fixture-v1:fr-larousse-test:99002",
+      "source_index": 99002,
+      "sense_ordinal": 1
+    }
+  }
+]
