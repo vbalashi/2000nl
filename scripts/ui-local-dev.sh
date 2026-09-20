@@ -114,7 +114,11 @@ if ! command -v npm >/dev/null 2>&1; then
   exit 1
 fi
 
-status_env="$(cd "$repo_root" && supabase status -o env)"
+# The CLI writes ~/.supabase/telemetry.json before dispatching this local
+# command. Disable that side effect so the launcher works in agent sandboxes
+# without broad access to the user's home directory.
+status_env="$(cd "$repo_root" && \
+  SUPABASE_TELEMETRY_DISABLED=1 DO_NOT_TRACK=1 supabase status -o env)"
 
 get_env_value() {
   local key="$1"

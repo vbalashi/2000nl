@@ -54,13 +54,21 @@ ensure_supabase() {
   need_cmd docker
 }
 
+# Supabase CLI persists telemetry under ~/.supabase before dispatching even
+# local-only commands. Agent sandboxes commonly allow the repo and /tmp but not
+# arbitrary writes to the user's home directory. Keep this harness usable there
+# without requiring broad filesystem access.
+run_local_supabase_cli() {
+  SUPABASE_TELEMETRY_DISABLED=1 DO_NOT_TRACK=1 supabase "$@"
+}
+
 ensure_psql() {
   need_cmd psql
 }
 
 start_stack() {
   ensure_supabase
-  (cd "$repo_root" && supabase start)
+  (cd "$repo_root" && run_local_supabase_cli start)
 }
 
 apply_bootstrap() {
@@ -84,7 +92,7 @@ EOF
   if command -v supabase >/dev/null 2>&1; then
     echo
     echo "# Supabase local keys, if the stack is running:"
-    (cd "$repo_root" && supabase status -o env 2>/dev/null || true) \
+    (cd "$repo_root" && run_local_supabase_cli status -o env 2>/dev/null || true) \
       | grep -E '^(ANON_KEY|SERVICE_ROLE_KEY|SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY)=' \
       | sed -E 's/^ANON_KEY=/NEXT_PUBLIC_SUPABASE_ANON_KEY=/' \
       | sed -E 's/^SUPABASE_ANON_KEY=/NEXT_PUBLIC_SUPABASE_ANON_KEY=/' \
@@ -330,11 +338,11 @@ case "$cmd" in
     ;;
   stop)
     ensure_supabase
-    (cd "$repo_root" && supabase stop)
+    (cd "$repo_root" && run_local_supabase_cli stop)
     ;;
   status)
     ensure_supabase
-    (cd "$repo_root" && supabase status)
+    (cd "$repo_root" && run_local_supabase_cli status)
     ;;
   env)
     print_env
@@ -344,7 +352,7 @@ case "$cmd" in
     ;;
   reset)
     ensure_supabase
-    (cd "$repo_root" && supabase db reset)
+    (cd "$repo_root" && run_local_supabase_cli db reset)
     apply_bootstrap
     ;;
   probe)
@@ -373,7 +381,7 @@ case "$cmd" in
     ;;
   all)
     start_stack
-    (cd "$repo_root" && supabase db reset)
+    (cd "$repo_root" && run_local_supabase_cli db reset)
     apply_bootstrap
     run_probe
     run_fsrs_tests

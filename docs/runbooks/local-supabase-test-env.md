@@ -17,6 +17,13 @@ brew install colima docker docker-compose
 colima start --cpu 4 --memory 8
 ```
 
+The project wrappers disable Supabase CLI telemetry for local commands. The CLI
+otherwise writes `~/.supabase/telemetry.json` before dispatching even `start` or
+`status`, which is incompatible with agent sandboxes that intentionally allow
+the repository and temporary directories but not arbitrary home-directory
+writes. Do not grant full filesystem access merely to permit that telemetry
+side effect; use the wrappers below.
+
 ## Choose the database by purpose
 
 The canonical local Supabase database is disposable app/browser QA state. SQL,

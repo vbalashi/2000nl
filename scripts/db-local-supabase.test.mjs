@@ -15,7 +15,7 @@ function fixture(t, failTool = "", sleepTool = "") {
   for (const tool of ["psql", "supabase", "docker", "npm", "createdb", "dropdb", "python"]) {
     const file = path.join(dir, tool);
     writeFileSync(file, `#!/bin/bash
-printf '%s %s PGOPTIONS=%s PGHOSTADDR=%s PGSERVICE=%s FSRS_TEST_DB_URL=%s INGESTION_TEST_DATABASE_URL=%s\\n' '${tool}' "$*" "$PGOPTIONS" "$PGHOSTADDR" "$PGSERVICE" "$FSRS_TEST_DB_URL" "$INGESTION_TEST_DATABASE_URL" >> "$QA_CALL_LOG"
+printf '%s %s PGOPTIONS=%s PGHOSTADDR=%s PGSERVICE=%s FSRS_TEST_DB_URL=%s INGESTION_TEST_DATABASE_URL=%s SUPABASE_TELEMETRY_DISABLED=%s DO_NOT_TRACK=%s\\n' '${tool}' "$*" "$PGOPTIONS" "$PGHOSTADDR" "$PGSERVICE" "$FSRS_TEST_DB_URL" "$INGESTION_TEST_DATABASE_URL" "$SUPABASE_TELEMETRY_DISABLED" "$DO_NOT_TRACK" >> "$QA_CALL_LOG"
 if [[ "$QA_SLEEP_TOOL" == '${tool}' ]]; then exec sleep 30; fi
 if [[ "$QA_FAIL_TOOL" == '${tool}' ]]; then exit 37; fi
 if [[ '${tool}' == psql && "$*" != *'-f '* ]]; then cat >> "$QA_CALL_LOG"; fi
@@ -101,6 +101,26 @@ test("confirmed all uses disposable test databases and the small QA fixture", (t
   assert.match(f.calls(), /dropdb .*2000nl_ingestion_/);
   assert.match(f.calls(), /search_multisource\.sql/);
   assert.match(f.calls(), /training_smoke\.sql/);
+});
+
+test("every local Supabase CLI command disables home-directory telemetry", (t) => {
+  const f = fixture(t);
+  for (const args of [
+    ["start"],
+    ["status"],
+    ["stop"],
+    ["reset", "--confirm-reset"],
+    ["all", "--confirm-reset"],
+  ]) {
+    const result = f.run(args);
+    assert.equal(result.status, 0, `${args.join(" ")}: ${result.stderr}`);
+  }
+  const supabaseCalls = f.calls().split("\n").filter((line) => line.startsWith("supabase "));
+  assert.ok(supabaseCalls.length >= 6);
+  for (const call of supabaseCalls) {
+    assert.match(call, /SUPABASE_TELEMETRY_DISABLED=1/);
+    assert.match(call, /DO_NOT_TRACK=1/);
+  }
 });
 
 test("FSRS tests never target the canonical app database", (t) => {
