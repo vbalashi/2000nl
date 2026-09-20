@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://2000nl.local/schemas/training-filter-profile-v1.json",
+  "title": "2000NL training filter profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profileId",
+    "languageCode",
+    "combination",
+    "groups",
+    "defaultPreset"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "profileId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "languageCode": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}$"
+    },
+    "status": {
+      "enum": ["draft", "active", "retired"]
+    },
+    "combination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["betweenFields", "withinMultipleField", "emptySelection"],
+      "properties": {
+        "betweenFields": {
+          "const": "and"
+        },
+        "withinMultipleField": {
+          "const": "or"
+        },
+        "emptySelection": {
+          "const": "no-restriction"
+        }
+      }
+    },
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/group"
+      }
+    },
+    "defaultPreset": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/jsonValue"
+      }
+    }
+  },
+  "$defs": {
+    "jsonValue": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        }
+      ]
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "operator"],
+      "properties": {
+        "field": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operator": {
+          "enum": [
+            "equals",
+            "not-equals",
+            "includes",
+            "empty-or-includes"
+          ]
+        },
+        "value": {
+          "$ref": "#/$defs/jsonValue"
+        }
+      }
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "labelKey", "value", "availability"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "labelKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "descriptionKey": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/jsonValue"
+        },
+        "availability": {
+          "enum": ["available", "gated", "planned", "deferred"]
+        }
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "labelKey",
+        "role",
+        "control",
+        "selection",
+        "availability",
+        "required",
+        "options"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "labelKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "descriptionKey": {
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "material",
+            "lexical",
+            "scheduler",
+            "exercise",
+            "session",
+            "activity"
+          ]
+        },
+        "control": {
+          "enum": ["radio", "checkbox-chips", "select"]
+        },
+        "selection": {
+          "enum": ["single", "multiple"]
+        },
+        "availability": {
+          "enum": ["available", "gated", "planned", "deferred"]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "advanced": {
+          "type": "boolean"
+        },
+        "hideWhenSingleAvailableOption": {
+          "type": "boolean"
+        },
+        "missingValuePolicy": {
+          "enum": ["include", "exclude-when-filtered", "reject"]
+        },
+        "default": {
+          "$ref": "#/$defs/jsonValue"
+        },
+        "visibleWhen": {
+          "$ref": "#/$defs/condition"
+        },
+        "clearWhenHidden": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/option"
+          }
+        }
+      }
+    },
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "labelKey", "layer", "scope", "fields"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "labelKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "descriptionKey": {
+          "type": "string"
+        },
+        "layer": {
+          "enum": ["pool", "plan", "activity"]
+        },
+        "scope": {
+          "enum": ["common", "language"]
+        },
+        "advanced": {
+          "type": "boolean"
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        }
+      }
+    }
+  }
+}

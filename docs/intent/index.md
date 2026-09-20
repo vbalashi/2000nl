@@ -28,6 +28,14 @@
 - System overview: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Current transformation targets: [current-transformation-targets.md](./current-transformation-targets.md)
 - Search and lists intent map: [search-and-lists/index.md](./search-and-lists/index.md)
+- Reconciled collection/training contract:
+  [collection-training-contract.md](./search-and-lists/collection-training-contract.md)
+- Collection composition decision history:
+  [collection-composition-decisions.md](./search-and-lists/collection-composition-decisions.md)
+- Current implementation audit and runnable evidence map:
+  [collection-training-current-state-map-2026-09-20.md](../research/collection-training-current-state-map-2026-09-20.md)
+- Junior validation runbook:
+  [collection-training-junior-test-runbook.md](../exec-plans/active/collection-training-junior-test-runbook.md)
 - Training-scope redesign evidence:
   [training-scope-redesign/README.md](./training-scope-redesign/README.md)
 - Data and contract docs: [packages/docs/README.md](../../packages/docs/README.md)

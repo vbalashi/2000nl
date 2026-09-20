@@ -57,6 +57,26 @@ _Avoid_: Easy review, hidden card, deleting prior state
 One opportunity to learn a meaning or recall a target in a chosen direction; Learn, Known or a recall grade completes it. Recall in the other direction is a separate exercise.
 _Avoid_: unique word, unique meaning, displayed-card count
 
+**Training Material**:
+The material selection that defines the starting set of Dictionary Entries for a Training Setup. It is either one collection or an explicit set of accessible dictionaries; arbitrary collection unions and dictionary-plus-collection expressions are not yet part of the approved contract. A derived collection such as VanDale 2K is one collection choice, not a second simultaneous source beside its parent dictionary.
+_Avoid_: event provenance, copied cards, training queue
+
+**Training Setup**:
+A reusable recipe that combines Training Material, optional lexical and Learning History Filters, and a study policy such as queue, exercise direction, and Session Size. It defines how a new session is selected but is not the selected session membership.
+_Avoid_: queue snapshot, materialized preset, collection
+
+**Training Filter Profile**:
+The language-specific declaration of which lexical predicates and compatible Training Setup controls are available for a learning language. Interface language and learner-facing translations remain independent of this profile.
+_Avoid_: locale, dictionary schema, saved preset
+
+**Learning History Filter**:
+An optional Training Setup predicate that requires a matching prior user action by result, provenance source and/or rolling time window. It narrows Training Material but is not itself material, a collection rule, a due-state selector, or a measure of how well the learner knows an entry.
+_Avoid_: recent collection, event source as dictionary, weakest words
+
+**Exercise Family**:
+A class of Exercise Targets with one identity and interaction contract, such as ordinary meaning cards, attached idioms, or example-sentence translation. Selecting a family determines which target kind may enter the session; it does not change dictionary or collection membership.
+_Avoid_: part of speech, answer direction, content section shown on an ordinary card
+
 **Exercise Target**:
 The stable identity of one Training Exercise. Ordinary meaning exercises remain
 identified at the Dictionary Entry plus direction level for compatibility;

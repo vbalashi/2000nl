@@ -1,0 +1,300 @@
+{
+  "$schema": "./training-filter-profile.schema.json",
+  "schemaVersion": 1,
+  "profileId": "training-filters.nl.v1",
+  "languageCode": "nl",
+  "status": "draft",
+  "combination": {
+    "betweenFields": "and",
+    "withinMultipleField": "or",
+    "emptySelection": "no-restriction"
+  },
+  "groups": [
+    {
+      "id": "material",
+      "labelKey": "trainingSetup.groups.material.label",
+      "descriptionKey": "trainingSetup.groups.material.description",
+      "layer": "pool",
+      "scope": "language",
+      "fields": [
+        {
+          "id": "material.source",
+          "labelKey": "trainingSetup.fields.material.label",
+          "descriptionKey": "trainingSetup.fields.material.description",
+          "role": "material",
+          "control": "radio",
+          "selection": "single",
+          "availability": "available",
+          "required": true,
+          "default": "vandale-2k",
+          "options": [
+            {
+              "id": "vandale-2k",
+              "labelKey": "trainingSetup.materials.vandale2k.label",
+              "descriptionKey": "trainingSetup.materials.vandale2k.description",
+              "value": {
+                "kind": "curated-list",
+                "catalogKey": "nt2-2000",
+                "dictionaryCatalogKey": "nl-vandale"
+              },
+              "availability": "available"
+            },
+            {
+              "id": "vandale-full",
+              "labelKey": "trainingSetup.materials.vandaleFull.label",
+              "descriptionKey": "trainingSetup.materials.vandaleFull.description",
+              "value": {
+                "kind": "dictionary",
+                "catalogKey": "nl-vandale"
+              },
+              "availability": "available"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "words",
+      "labelKey": "trainingSetup.groups.words.label",
+      "descriptionKey": "trainingSetup.groups.words.description",
+      "layer": "pool",
+      "scope": "language",
+      "fields": [
+        {
+          "id": "lexical.partOfSpeech",
+          "labelKey": "trainingSetup.fields.partOfSpeech.label",
+          "descriptionKey": "trainingSetup.fields.partOfSpeech.description",
+          "role": "lexical",
+          "control": "checkbox-chips",
+          "selection": "multiple",
+          "availability": "available",
+          "required": false,
+          "missingValuePolicy": "exclude-when-filtered",
+          "default": [],
+          "options": [
+            { "id": "ww", "labelKey": "partOfSpeech.ww", "value": "ww", "availability": "available" },
+            { "id": "zn", "labelKey": "partOfSpeech.zn", "value": "zn", "availability": "available" },
+            { "id": "bn", "labelKey": "partOfSpeech.bn", "value": "bn", "availability": "available" },
+            { "id": "bw", "labelKey": "partOfSpeech.bw", "value": "bw", "availability": "available" },
+            { "id": "vz", "labelKey": "partOfSpeech.vz", "value": "vz", "availability": "available" },
+            { "id": "vnw", "labelKey": "partOfSpeech.vnw", "value": "vnw", "availability": "available" },
+            { "id": "vw", "labelKey": "partOfSpeech.vw", "value": "vw", "availability": "available" },
+            { "id": "tw", "labelKey": "partOfSpeech.tw", "value": "tw", "availability": "available" },
+            { "id": "lidw", "labelKey": "partOfSpeech.lidw", "value": "lidw", "availability": "available" },
+            { "id": "tsw", "labelKey": "partOfSpeech.tsw", "value": "tsw", "availability": "available" },
+            { "id": "afk", "labelKey": "partOfSpeech.afk", "value": "afk", "availability": "available" },
+            { "id": "vv", "labelKey": "partOfSpeech.vv", "value": "vv", "availability": "available" }
+          ]
+        },
+        {
+          "id": "lexical.article",
+          "labelKey": "trainingSetup.fields.article.label",
+          "descriptionKey": "trainingSetup.fields.article.description",
+          "role": "lexical",
+          "control": "checkbox-chips",
+          "selection": "multiple",
+          "availability": "available",
+          "required": false,
+          "missingValuePolicy": "exclude-when-filtered",
+          "default": [],
+          "visibleWhen": {
+            "field": "lexical.partOfSpeech",
+            "operator": "empty-or-includes",
+            "value": "zn"
+          },
+          "clearWhenHidden": true,
+          "options": [
+            { "id": "de", "labelKey": "trainingSetup.articles.de", "value": "de", "availability": "available" },
+            { "id": "het", "labelKey": "trainingSetup.articles.het", "value": "het", "availability": "available" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "learningQueue",
+      "labelKey": "trainingSetup.groups.learningQueue.label",
+      "descriptionKey": "trainingSetup.groups.learningQueue.description",
+      "layer": "plan",
+      "scope": "common",
+      "fields": [
+        {
+          "id": "plan.queue",
+          "labelKey": "trainingSetup.fields.queue.label",
+          "descriptionKey": "trainingSetup.fields.queue.description",
+          "role": "scheduler",
+          "control": "radio",
+          "selection": "single",
+          "availability": "available",
+          "required": true,
+          "default": "mixed",
+          "options": [
+            { "id": "due", "labelKey": "trainingSetup.queue.due", "value": "review", "availability": "available" },
+            { "id": "new", "labelKey": "trainingSetup.queue.new", "value": "new", "availability": "available" },
+            { "id": "mixed", "labelKey": "trainingSetup.queue.mixed", "value": "both", "availability": "available" }
+          ]
+        },
+        {
+          "id": "plan.newReviewRatio",
+          "labelKey": "trainingSetup.fields.newReviewRatio.label",
+          "descriptionKey": "trainingSetup.fields.newReviewRatio.description",
+          "role": "scheduler",
+          "control": "radio",
+          "selection": "single",
+          "availability": "available",
+          "required": true,
+          "advanced": true,
+          "default": "one-to-three",
+          "visibleWhen": {
+            "field": "plan.queue",
+            "operator": "equals",
+            "value": "mixed"
+          },
+          "clearWhenHidden": false,
+          "options": [
+            { "id": "one-to-one", "labelKey": "trainingSetup.ratios.oneToOne", "value": 1, "availability": "available" },
+            { "id": "one-to-two", "labelKey": "trainingSetup.ratios.oneToTwo", "value": 2, "availability": "available" },
+            { "id": "one-to-three", "labelKey": "trainingSetup.ratios.oneToThree", "value": 3, "availability": "available" },
+            { "id": "one-to-five", "labelKey": "trainingSetup.ratios.oneToFive", "value": 5, "availability": "available" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cardSetup",
+      "labelKey": "trainingSetup.groups.cardSetup.label",
+      "descriptionKey": "trainingSetup.groups.cardSetup.description",
+      "layer": "plan",
+      "scope": "common",
+      "fields": [
+        {
+          "id": "exercise.family",
+          "labelKey": "trainingSetup.fields.exerciseFamily.label",
+          "descriptionKey": "trainingSetup.fields.exerciseFamily.description",
+          "role": "exercise",
+          "control": "radio",
+          "selection": "single",
+          "availability": "available",
+          "required": true,
+          "hideWhenSingleAvailableOption": true,
+          "default": "ordinary-meaning",
+          "options": [
+            { "id": "ordinary-meaning", "labelKey": "trainingSetup.exerciseFamilies.ordinaryMeaning", "value": "ordinary-meaning", "availability": "available" },
+            { "id": "idiom", "labelKey": "trainingSetup.exerciseFamilies.idiom", "value": "idiom", "availability": "gated" },
+            { "id": "example-sentences", "labelKey": "trainingSetup.exerciseFamilies.exampleSentences", "descriptionKey": "trainingSetup.exerciseFamilies.exampleSentencesDescription", "value": "sentence-translation", "availability": "planned" }
+          ]
+        },
+        {
+          "id": "exercise.direction",
+          "labelKey": "trainingSetup.fields.direction.label",
+          "descriptionKey": "trainingSetup.fields.direction.description",
+          "role": "exercise",
+          "control": "checkbox-chips",
+          "selection": "multiple",
+          "availability": "available",
+          "required": true,
+          "default": ["word-to-definition"],
+          "options": [
+            { "id": "word-to-definition", "labelKey": "trainingSetup.directions.wordToDefinition", "value": "word-to-definition", "availability": "available" },
+            { "id": "definition-to-word", "labelKey": "trainingSetup.directions.definitionToWord", "value": "definition-to-word", "availability": "available" }
+          ]
+        },
+        {
+          "id": "exercise.answerMode",
+          "labelKey": "trainingSetup.fields.answerMode.label",
+          "descriptionKey": "trainingSetup.fields.answerMode.description",
+          "role": "exercise",
+          "control": "radio",
+          "selection": "single",
+          "availability": "available",
+          "required": true,
+          "hideWhenSingleAvailableOption": true,
+          "default": "self-assess",
+          "options": [
+            { "id": "self-assess", "labelKey": "trainingSetup.answerModes.selfAssess", "value": "self-assess", "availability": "available" },
+            { "id": "type-answer", "labelKey": "trainingSetup.answerModes.typeAnswer", "value": "type-answer", "availability": "planned" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "session",
+      "labelKey": "trainingSetup.groups.session.label",
+      "descriptionKey": "trainingSetup.groups.session.description",
+      "layer": "plan",
+      "scope": "common",
+      "fields": [
+        {
+          "id": "session.size",
+          "labelKey": "trainingSetup.fields.sessionSize.label",
+          "descriptionKey": "trainingSetup.fields.sessionSize.description",
+          "role": "session",
+          "control": "radio",
+          "selection": "single",
+          "availability": "available",
+          "required": true,
+          "default": "ten",
+          "options": [
+            { "id": "five", "labelKey": "trainingSetup.sessionSizes.five", "value": 5, "availability": "available" },
+            { "id": "ten", "labelKey": "trainingSetup.sessionSizes.ten", "value": 10, "availability": "available" },
+            { "id": "twenty", "labelKey": "trainingSetup.sessionSizes.twenty", "value": 20, "availability": "available" },
+            { "id": "fifty", "labelKey": "trainingSetup.sessionSizes.fifty", "value": 50, "availability": "available" },
+            { "id": "all-due", "labelKey": "trainingSetup.sessionSizes.allDue", "value": "all-due-today", "availability": "available" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "activity",
+      "labelKey": "trainingSetup.groups.activity.label",
+      "descriptionKey": "trainingSetup.groups.activity.description",
+      "layer": "activity",
+      "scope": "common",
+      "advanced": true,
+      "fields": [
+        {
+          "id": "activity.event",
+          "labelKey": "trainingSetup.fields.activityEvent.label",
+          "descriptionKey": "trainingSetup.fields.activityEvent.description",
+          "role": "activity",
+          "control": "select",
+          "selection": "single",
+          "availability": "deferred",
+          "required": false,
+          "default": "any-reviewed",
+          "options": [
+            { "id": "any-reviewed", "labelKey": "trainingSetup.activityEvents.anyReviewed", "value": "any-reviewed", "availability": "deferred" },
+            { "id": "forgotten", "labelKey": "trainingSetup.activityEvents.forgotten", "value": "review-fail", "availability": "deferred" }
+          ]
+        },
+        {
+          "id": "activity.window",
+          "labelKey": "trainingSetup.fields.activityWindow.label",
+          "descriptionKey": "trainingSetup.fields.activityWindow.description",
+          "role": "activity",
+          "control": "select",
+          "selection": "single",
+          "availability": "deferred",
+          "required": false,
+          "default": "all-time",
+          "options": [
+            { "id": "all-time", "labelKey": "trainingSetup.activityWindows.allTime", "value": "all-time", "availability": "deferred" },
+            { "id": "last-24-hours", "labelKey": "trainingSetup.activityWindows.last24Hours", "value": { "kind": "rolling-hours", "hours": 24 }, "availability": "deferred" },
+            { "id": "last-7-days", "labelKey": "trainingSetup.activityWindows.last7Days", "value": { "kind": "rolling-hours", "hours": 168 }, "availability": "deferred" },
+            { "id": "last-30-days", "labelKey": "trainingSetup.activityWindows.last30Days", "value": { "kind": "rolling-hours", "hours": 720 }, "availability": "deferred" }
+          ]
+        }
+      ]
+    }
+  ],
+  "defaultPreset": {
+    "material.source": "vandale-2k",
+    "lexical.partOfSpeech": [],
+    "lexical.article": [],
+    "plan.queue": "mixed",
+    "plan.newReviewRatio": "one-to-three",
+    "exercise.family": "ordinary-meaning",
+    "exercise.direction": ["word-to-definition"],
+    "exercise.answerMode": "self-assess",
+    "session.size": "ten"
+  }
+}

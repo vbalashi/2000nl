@@ -3,6 +3,11 @@
 Last updated: 2026-05-26
 Status: Approved baseline for A1/A3/A6/A7/A8/A9 planning
 
+September 2026 supplement: [collection/training contract](./collection-training-contract.md)
+governs the newly agreed manual/rule collection distinction, training-only history
+filters, presets and refresh/access lifecycle. This May baseline describes earlier
+behavior; do not interpret its one-off next-card flow as the new preset/session model.
+
 ## Purpose
 
 This document defines the product objects and precedence rules for dictionary
