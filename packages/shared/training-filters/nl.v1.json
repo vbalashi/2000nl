@@ -99,7 +99,7 @@
           "default": [],
           "visibleWhen": {
             "field": "lexical.partOfSpeech",
-            "operator": "empty-or-includes",
+            "operator": "includes",
             "value": "zn"
           },
           "clearWhenHidden": true,
@@ -154,6 +154,7 @@
             { "id": "one-to-one", "labelKey": "trainingSetup.ratios.oneToOne", "value": 1, "availability": "available" },
             { "id": "one-to-two", "labelKey": "trainingSetup.ratios.oneToTwo", "value": 2, "availability": "available" },
             { "id": "one-to-three", "labelKey": "trainingSetup.ratios.oneToThree", "value": 3, "availability": "available" },
+            { "id": "one-to-four", "labelKey": "trainingSetup.ratios.oneToFour", "value": 4, "availability": "available" },
             { "id": "one-to-five", "labelKey": "trainingSetup.ratios.oneToFive", "value": 5, "availability": "available" }
           ]
         }

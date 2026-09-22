@@ -10,6 +10,7 @@ import type {
   TrainingSessionSize,
 } from "@/lib/types";
 import { TrainingPilotStatePanel } from "./TrainingPilotStatePanel";
+import { TrainingMixPicker, mixStepSelection } from "./TrainingMixPicker";
 import { TrainingSessionSizePicker } from "./TrainingSessionSizePicker";
 import {
   presetStorageKey,
@@ -135,7 +136,7 @@ const copy = {
     reverse: "Reverse",
     listening: "Listening",
     soon: "Soon",
-    mix: "Session mix",
+    mix: "Review ↔ new rhythm",
     new: "New",
     review: "Reviews",
     both: "Both",
@@ -151,8 +152,10 @@ const copy = {
     startHere: "Start training here",
     replacementWarning: "This will reset training on another device.",
     starting: "Starting…",
-    ratio: "New / review rhythm",
-    ratioOption: (value: number) => `1 new · ${value} review`,
+    ratioOption: (value: number) => `1 new : ${value} reviews`,
+    reviewsOnly: "Reviews only",
+    newOnly: "New only",
+    mixHelp: "Target rhythm; the actual mix depends on available cards.",
     sessionSize: "Session size",
     exercises: (count: number) => `${count} exercises`,
     allDueHelp: "Selecting this switches the mix to Reviews only; new cards are not included.",
@@ -216,7 +219,7 @@ const copy = {
     reverse: "Omgekeerd",
     listening: "Luisteren",
     soon: "Binnenkort",
-    mix: "Sessiemix",
+    mix: "Ritme herhaling ↔ nieuw",
     new: "Nieuw",
     review: "Herhaling",
     both: "Beide",
@@ -232,8 +235,10 @@ const copy = {
     startHere: "Training hier starten",
     replacementWarning: "Hiermee wordt de training op een ander apparaat gereset.",
     starting: "Starten…",
-    ratio: "Ritme nieuw / herhaling",
-    ratioOption: (value: number) => `1 nieuw · ${value} herhaling`,
+    ratioOption: (value: number) => `1 nieuw : ${value} ${value === 1 ? "herhaling" : "herhalingen"}`,
+    reviewsOnly: "Alleen herhalen",
+    newOnly: "Alleen nieuw",
+    mixHelp: "Streepritme; de verhouding hangt af van beschikbare kaarten.",
     sessionSize: "Sessiegrootte",
     exercises: (count: number) => `${count} oefeningen`,
     allDueHelp: "Dit schakelt over naar alleen herhalingen; nieuwe kaarten tellen niet mee.",
@@ -297,7 +302,7 @@ const copy = {
     reverse: "Обратные",
     listening: "Аудирование",
     soon: "Скоро",
-    mix: "Состав сессии",
+    mix: "Ритм повторений ↔ новых",
     new: "Новые",
     review: "Повторения",
     both: "Оба",
@@ -313,8 +318,10 @@ const copy = {
     startHere: "Начать тренировку здесь",
     replacementWarning: "Это сбросит тренировку на другом устройстве.",
     starting: "Запускаем…",
-    ratio: "Ритм новых / повторений",
-    ratioOption: (value: number) => `1 новая · ${value} повторений`,
+    ratioOption: (value: number) => `1 новая : ${value} ${value === 1 ? "повторение" : value === 5 ? "повторений" : "повторения"}`,
+    reviewsOnly: "Только повторы",
+    newOnly: "Только новые",
+    mixHelp: "Целевой ритм; состав зависит от доступных карточек.",
     sessionSize: "Размер сессии",
     exercises: (count: number) => `${count} упражнений`,
     allDueHelp: "Этот вариант переключает состав на повторы; новые карточки не входят.",
@@ -464,17 +471,18 @@ export function TrainingTodaySetup({
   const selectionSummary = useMemo(
     () =>
       [
+        trainingLanguageCode?.toUpperCase(),
         draft.cardFilter === "both"
-          ? t.both
+          ? t.ratioOption(draft.newReviewRatio)
           : draft.cardFilter === "new"
-            ? t.new
-            : t.review,
+            ? t.newOnly
+            : t.reviewsOnly,
         selectedModeLabels.join(" + "),
         selectedList,
       ]
         .filter(Boolean)
         .join(" · "),
-    [draft.cardFilter, selectedList, selectedModeLabels, t],
+    [draft.cardFilter, draft.newReviewRatio, selectedList, selectedModeLabels, t, trainingLanguageCode],
   );
 
   const openSetup = () => {
@@ -492,7 +500,12 @@ export function TrainingTodaySetup({
     const sizeLabel = draft.sessionSize === "all-due-today"
       ? t.allDueToday
       : t.exercises(draft.sessionSize);
-    const presetName = `${selectedList ?? t.list} · ${t.words} · ${sizeLabel}`;
+    const mixLabel = draft.cardFilter === "both"
+      ? t.ratioOption(draft.newReviewRatio)
+      : draft.cardFilter === "new"
+        ? t.newOnly
+        : t.reviewsOnly;
+    const presetName = `${selectedList ?? t.list} · ${t.words} · ${mixLabel} · ${sizeLabel}`;
     const preset: TrainingSetupPreset = {
       id: editingPresetId ?? crypto.randomUUID(),
       name: presetName,
@@ -686,24 +699,14 @@ export function TrainingTodaySetup({
       };
     });
   };
-  const toggleSessionKind = (kind: "new" | "review") =>
+  const changeMix = (index: number) =>
     setDraft((current) => {
-      const cardFilter: CardFilter = kind === "new"
-        ? current.cardFilter === "both"
-          ? "review"
-          : current.cardFilter === "review"
-            ? "both"
-            : "new"
-        : current.cardFilter === "both"
-          ? "new"
-          : current.cardFilter === "new"
-            ? "both"
-            : "review";
+      const selection = mixStepSelection(index, current.newReviewRatio);
       return {
         ...current,
-        cardFilter,
+        ...selection,
         sessionSize:
-          cardFilter !== "review" && current.sessionSize === "all-due-today"
+          selection.cardFilter !== "review" && current.sessionSize === "all-due-today"
             ? DEFAULT_SESSION_SIZE
             : current.sessionSize,
       };
@@ -817,49 +820,18 @@ export function TrainingTodaySetup({
             </div>
           </fieldset>
 
-          <fieldset className="order-6 min-w-0">
-            <legend className="text-sm font-semibold text-slate-950 dark:text-white">
-              {t.mix}
-            </legend>
-            <div className="mt-2 flex gap-2">
-              <ChoiceButton
-                active={draft.cardFilter !== "review"}
-                label={t.new}
-                onClick={() => toggleSessionKind("new")}
-              />
-              <ChoiceButton
-                active={draft.cardFilter !== "new"}
-                label={t.review}
-                onClick={() => toggleSessionKind("review")}
-              />
-            </div>
-          </fieldset>
-
-          <fieldset
-            disabled={draft.cardFilter !== "both"}
-            className="order-7 min-w-0 transition disabled:opacity-45"
-          >
-            <legend className="text-sm font-semibold text-slate-950 dark:text-white">
-              {t.ratio}
-            </legend>
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {[1, 2, 3, 5].map((ratio) => (
-                <ChoiceButton
-                  key={ratio}
-                  active={draft.newReviewRatio === ratio}
-                  disabled={draft.cardFilter !== "both"}
-                  label={t.ratioOption(ratio)}
-                  shortLabel={`1:${ratio}`}
-                  onClick={() =>
-                    setDraft((current) => ({
-                      ...current,
-                      newReviewRatio: ratio,
-                    }))
-                  }
-                />
-              ))}
-            </div>
-          </fieldset>
+          <div className="order-6 min-w-0">
+            <TrainingMixPicker
+              cardFilter={draft.cardFilter}
+              ratio={draft.newReviewRatio}
+              onChange={changeMix}
+              label={t.mix}
+              reviewsOnly={t.reviewsOnly}
+              newOnly={t.newOnly}
+              ratioLabel={t.ratioOption}
+              help={t.mixHelp}
+            />
+          </div>
 
           <fieldset className="order-9 min-w-0">
             <legend className="text-sm font-semibold text-slate-950 dark:text-white">

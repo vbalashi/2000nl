@@ -407,7 +407,7 @@ test("container client requires a digest and forwards DB settings by name, never
   assert.doesNotMatch(args, /topsecret|postgresql:\/\/|db\.example/);
 });
 
-test("the repository contract enables the issue 393 Training authority contract", () => {
+test("the repository contract enables the issue 407 per-session rhythm contract", () => {
   const result = spawnSync(
     process.execPath,
     [
@@ -422,7 +422,7 @@ test("the repository contract enables the issue 393 Training authority contract"
   assert.equal(result.status, 0, result.stderr);
   assert.equal(
     result.stdout.trim(),
-    "enabled 155 393",
+    "enabled 156 407",
   );
 });
 

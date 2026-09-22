@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-155",
+  "contractId": "2000nl-db-156",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 155,
-    "coordinationIssue": 393,
+    "requiredMigrationId": 156,
+    "coordinationIssue": 407,
     "compatibilityPhase": "legacy-first-party-compatible",
     "strictEnforcementIssue": 399
   },
@@ -181,12 +181,17 @@
       "migrationId": 155,
       "file": "db/migrations/155_idiom_training_session_consumer.sql",
       "sha256": "e076eab7c376b105aed6c6d4a8f9229cdda8fcde71e782406e7fd466a9ed4b19"
+    },
+    {
+      "migrationId": 156,
+      "file": "db/migrations/156_per_session_new_review_ratio.sql",
+      "sha256": "a8f8b219b017b9aa70e6fbe86eb2f2b72d6a9e9d2bfd5c09dc1c997d4a5f2a4d"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-155.sql",
+  "postflightProbe": "db/deploy-contract/postflight-156.sql",
   "preSwitchReadProbe": {
-    "file": "db/deploy-contract/pre-switch-read-probe-155.sql",
-    "sha256": "7e885c9372c68a2b85ec7f5e9523cad877a0cd1461a41a0bf0736dbe955d4757",
+    "file": "db/deploy-contract/pre-switch-read-probe-156.sql",
+    "sha256": "3aa1d335a3fe15bf0d8408a859db466e8ffea26ea6b582af7b436b9b117b6630",
     "statementTimeoutMs": 2000
   }
 }

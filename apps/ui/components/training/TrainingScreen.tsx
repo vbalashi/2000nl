@@ -1814,10 +1814,11 @@ function TrainingScreenContent({
       listId: wordListId,
       ...(wordListType ? { listType: wordListType } : {}),
       cardFilter,
+      newReviewRatio,
       trainingFilter: trainingFocusFilter,
       sessionSize,
     }),
-    [cardFilter, sessionSize, trainingFocusFilter, wordListId, wordListType],
+    [cardFilter, newReviewRatio, sessionSize, trainingFocusFilter, wordListId, wordListType],
   );
   const {
     scopeKey: trainingSessionPlanScopeKey,
