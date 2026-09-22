@@ -11,7 +11,9 @@ const browserLauncher = path.join(repoRoot, "scripts/lib/run-sanitized-agent-bro
 const expectedOrigin = "https://2000.dilum.io";
 export const surfaceProbeExpression = `(() => {
   const text = (document.body?.innerText || "").toLocaleLowerCase();
-  const today = ["training · vandaag", "training · today", "тренировка · сегодня"]
+  // Keep old image labels for rollback smoke alongside the current study-day copy.
+  const today = ["training · vandaag", "training · today", "тренировка · сегодня",
+    "training · studiedag", "training · study day", "тренировка · учебный день"]
     .some((label) => text.includes(label));
   if (today) return "QA_SURFACE:TODAY";
   const authKey = Object.keys(localStorage).find((key) => key.startsWith("sb-") && key.endsWith("-auth-token"));

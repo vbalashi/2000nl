@@ -64,6 +64,16 @@ test("surface probe recognizes the approved uppercase Dutch Today label", () => 
   assert.equal(marker, "QA_SURFACE:TODAY");
 });
 
+for (const label of ["TRAINING · STUDY DAY", "TRAINING · STUDIEDAG", "ТРЕНИРОВКА · УЧЕБНЫЙ ДЕНЬ"]) {
+  test(`surface probe recognizes the current setup label: ${label}`, () => {
+    const marker = vm.runInNewContext(surfaceProbeExpression, {
+      document: { body: { innerText: label }, querySelector: () => null },
+      localStorage: {},
+    });
+    assert.equal(marker, "QA_SURFACE:TODAY");
+  });
+}
+
 test("surface probe does not treat a stale storage key as visible authentication", () => {
   const marker = vm.runInNewContext(surfaceProbeExpression, {
     Date,
