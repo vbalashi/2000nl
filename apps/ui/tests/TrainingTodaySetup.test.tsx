@@ -146,12 +146,59 @@ test("session size is an explicit per-session choice", () => {
   render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);
 
   fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
-  fireEvent.click(screen.getByRole("button", { name: "5 cards" }));
+  fireEvent.change(screen.getByRole("slider", { name: "Session size" }), {
+    target: { value: "0" },
+  });
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
 
   expect(onStart).toHaveBeenCalledWith(
     expect.objectContaining({ sessionSize: 5 }),
   );
+});
+
+test("all due means reviews only, and turning New back on restores a finite size", () => {
+  const onStart = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  fireEvent.click(screen.getByRole("button", { name: "All due today" }));
+  expect(screen.getByRole("button", { name: "New" })).toHaveAttribute("aria-pressed", "false");
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenCalledWith(
+    expect.objectContaining({ cardFilter: "review", sessionSize: "all-due-today" }),
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "New" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenLastCalledWith(
+    expect.objectContaining({ cardFilter: "both", sessionSize: 10 }),
+  );
+});
+
+test("a saved preset can be reopened and modified on this device", () => {
+  render(
+    <TrainingTodaySetup
+      {...baseProps}
+      userId="preset-test-user"
+      trainingLanguageCode="nl"
+    />,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  fireEvent.change(screen.getByRole("slider", { name: "Session size" }), {
+    target: { value: "4" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save preset" }));
+  fireEvent.click(screen.getByRole("button", { name: "Back to Today" }));
+  expect(screen.getByText("NT2 2000 · Words · 30 exercises")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  expect(screen.getByRole("slider", { name: "Session size" })).toHaveValue("4");
+  fireEvent.change(screen.getByRole("slider", { name: "Session size" }), {
+    target: { value: "5" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Update preset" }));
+  expect(screen.getByText("Saved on this device")).toBeInTheDocument();
+  window.localStorage.clear();
 });
 
 test.each([

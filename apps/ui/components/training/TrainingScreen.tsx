@@ -1941,6 +1941,8 @@ function TrainingScreenContent({
       >
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
           <TrainingTodaySetup
+            userId={user.id}
+            trainingLanguageCode={currentTrainingLanguage}
             interfaceLanguage={onboardingLang}
             status={trainingPilot.status}
             initialDraft={trainingPilot.initialDraft}

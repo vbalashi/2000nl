@@ -1,0 +1,55 @@
+import type { TrainingSetupDraft } from "./TrainingTodaySetup";
+
+export type TrainingSetupPreset = {
+  id: string;
+  name: string;
+  draft: TrainingSetupDraft;
+};
+
+const STORAGE_PREFIX = "2000nl.training.presets.v1";
+
+export const presetStorageKey = (userId: string, languageCode: string) =>
+  `${STORAGE_PREFIX}.${userId}.${languageCode}`;
+
+export function readTrainingPresets(key: string): TrainingSetupPreset[] {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) ?? "[]");
+    if (!Array.isArray(value)) return [];
+    return value.filter(
+      (item): item is TrainingSetupPreset =>
+        typeof item?.id === "string" &&
+        typeof item?.name === "string" &&
+        item?.draft?.scenarioId === "understanding" &&
+        Array.isArray(item?.draft?.modes) &&
+        item.draft.modes.length > 0 &&
+        item.draft.modes.every(
+          (mode: unknown) =>
+            mode === "word-to-definition" || mode === "definition-to-word",
+        ) &&
+        ["new", "review", "both"].includes(item.draft.cardFilter) &&
+        Number.isInteger(item.draft.newReviewRatio) &&
+        item.draft.newReviewRatio > 0 &&
+        ["all", "today", "yesterday", "daysAgo"].includes(item.draft.dateWindow) &&
+        typeof item?.draft?.listValue === "string" &&
+        typeof item?.draft?.sourceValue === "string" &&
+        (item.draft.sessionSize === "all-due-today" ||
+          (typeof item.draft.sessionSize === "number" &&
+            Number.isInteger(item.draft.sessionSize) &&
+            item.draft.sessionSize > 0)),
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function writeTrainingPresets(
+  key: string,
+  presets: TrainingSetupPreset[],
+): boolean {
+  try {
+    localStorage.setItem(key, JSON.stringify(presets));
+    return true;
+  } catch {
+    return false;
+  }
+}
