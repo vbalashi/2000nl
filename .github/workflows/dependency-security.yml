@@ -1,0 +1,26 @@
+name: Production dependency security
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '23 7 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  production-dependency-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+        working-directory: apps/ui
+      - name: Verify security check
+        run: node --test scripts/check-dependency-security.test.mjs
+      - name: Audit production dependencies
+        run: node scripts/check-dependency-security.mjs
