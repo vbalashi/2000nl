@@ -93,6 +93,22 @@ idiom members atomically through the migration-154 action boundary. It keeps
 ordinary Training responses unchanged and exposes no exercise-family launch UI;
 that visual decision remains gated by #331.
 
+Migration 156 adds the explicit per-session new/review rhythm for ordinary
+Training under #407. The finite preview accepts `p_new_review_ratio` as its
+eighth argument; the idempotent start accepts it as its ninth argument, after
+`p_request_id`. Named calls use those exact names. Mixed sessions validate
+integer values 1 through 5. New-only and review-only sessions normalize the
+irrelevant ratio to 2, while `card_filter` controls their queue. The selected
+ratio is included in the start receipt's request hash, stored on
+`training_sessions`, and used if an unavailable member needs replacement.
+The migration emits a PostgREST schema-cache reload notification at commit so
+the new named RPC argument can be resolved without waiting for cache expiry.
+Pre-existing sessions have a null latch and retain the historical global
+preference fallback. The older public preview/start overloads remain callable
+for prior app images and cached bundles; this migration does not enable an
+exercise family or change ordinary FSRS state. App-image rollback can therefore
+leave migration 156 in place.
+
 Migration 153 adds one active first-party Training run per learner. It preserves
 ordinary queue membership and durable FSRS/history, but makes a superseded
 queue non-actionable before its next card can be projected or graded. It also
@@ -147,7 +163,7 @@ supported. Do not implement the cutoff as mutable operator SQL or edit migration
 153 after deployment; advance the contract, checksum, postflight and rollback
 runbook together.
 
-An enabled deployment must apply or verify migrations 123 through 155 in order
+An enabled deployment must apply or verify migrations 123 through 156 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -162,6 +178,17 @@ Migration 155 is additive idiom-session consumption on top of migration 154.
 It does not copy or delete existing FSRS/history, and it preserves attached
 idioms as supporting ordinary-card content. Its migration owner is #332; the
 launch and visual review remain in #331.
+
+Migration 156 is additive ordinary-session rhythm storage. The postflight
+checks the new column, constraint, exact old/new overloads and argument names,
+security-definer search paths, role grants, request-hash routing, and
+replacement latch. The pre-switch probe retains the existing bounded
+read-only QA selector because the new ratio is an ordering parameter, not a
+new selector read path. Before shipping the slider, run the migration-156 FSRS
+tests against a disposable database and confirm the enabled manifest, exact
+checksum, postflight, and app client are reviewed together. Do not replay
+`bootstrap.sql` over the populated local QA database without a verified
+deployment ledger.
 
 ## What the gate guarantees
 
@@ -254,7 +281,8 @@ App rollback and DB recovery are deliberately separate:
   cached browser bundles that may outlive an app switch. Removing a public RPC
   shape needs an explicit staged-client deprecation plan, not merely a
   repository caller audit.
-- The migration's owning issue owns DB recovery. Issue #332 owns migration 155
+- The migration's owning issue owns DB recovery. Issue #407 owns migration 156
+  and its per-session rhythm contract; issue #332 owns migration 155
   idiom-session consumption; issue #394 owns migration 154 exercise hardening;
   issue #393 owns migration 153 phase 1 and #399 owns its
   strict phase-2 cutoff. Issue #243 owns migration 128;

@@ -453,3 +453,6 @@
 \i db/migrations/153_single_active_training_run.sql
 \i db/migrations/154_harden_training_exercise_actions.sql
 \i db/migrations/155_idiom_training_session_consumer.sql
+
+-- Latch an explicit new/review rhythm in each ordinary Training session
+\i db/migrations/156_per_session_new_review_ratio.sql

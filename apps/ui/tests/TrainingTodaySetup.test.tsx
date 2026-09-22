@@ -82,18 +82,13 @@ test("Setup is a draft: Back discards changes and Start applies one selection", 
     "aria-pressed",
     "true",
   );
-  fireEvent.click(screen.getByRole("button", { name: "New" }));
-  expect(screen.getByRole("button", { name: "New" })).toHaveAttribute(
-    "aria-pressed",
-    "false",
+  fireEvent.change(screen.getByRole("slider", { name: "Review ↔ new rhythm" }), {
+    target: { value: "0" },
+  });
+  expect(screen.getByRole("slider", { name: "Review ↔ new rhythm" })).toHaveAttribute(
+    "aria-valuetext",
+    "Reviews only",
   );
-  expect(screen.getByRole("button", { name: "Reviews" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  expect(
-    screen.getByRole("button", { name: "1 new · 3 review" }),
-  ).toBeDisabled();
   expect(onStart).not.toHaveBeenCalled();
 
   fireEvent.click(screen.getByRole("button", { name: "Back to Today" }));
@@ -102,23 +97,16 @@ test("Setup is a draft: Back discards changes and Start applies one selection", 
     "aria-pressed",
     "true",
   );
-  expect(screen.getByRole("button", { name: "New" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  expect(screen.getByRole("button", { name: "Reviews" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  expect(screen.getByRole("slider", { name: "Review ↔ new rhythm" })).toHaveValue("4");
 
   fireEvent.click(screen.getByRole("button", { name: "Reverse" }));
   expect(screen.getByRole("button", { name: "Reverse" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  fireEvent.click(screen.getByRole("button", { name: "New" }));
-  fireEvent.click(screen.getByRole("button", { name: "New" }));
-  fireEvent.click(screen.getByRole("button", { name: "1 new · 3 review" }));
+  fireEvent.change(screen.getByRole("slider", { name: "Review ↔ new rhythm" }), {
+    target: { value: "3" },
+  });
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
 
   expect(onStart).toHaveBeenCalledOnce();
@@ -146,12 +134,93 @@ test("session size is an explicit per-session choice", () => {
   render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);
 
   fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
-  fireEvent.click(screen.getByRole("button", { name: "5 cards" }));
+  fireEvent.change(screen.getByRole("slider", { name: "Session size" }), {
+    target: { value: "0" },
+  });
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
 
   expect(onStart).toHaveBeenCalledWith(
     expect.objectContaining({ sessionSize: 5 }),
   );
+});
+
+test("all due means reviews only, and moving the mix slider restores a finite size", () => {
+  const onStart = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  fireEvent.click(screen.getByRole("button", { name: "All due today" }));
+  expect(screen.getByRole("slider", { name: "Review ↔ new rhythm" })).toHaveValue("0");
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenCalledWith(
+    expect.objectContaining({ cardFilter: "review", sessionSize: "all-due-today" }),
+  );
+
+  fireEvent.change(screen.getByRole("slider", { name: "Review ↔ new rhythm" }), {
+    target: { value: "4" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenLastCalledWith(
+    expect.objectContaining({ cardFilter: "both", sessionSize: 10 }),
+  );
+});
+
+test("mix slider endpoints and middle stops retain the chosen rhythm", () => {
+  const onStart = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  const slider = screen.getByRole("slider", { name: "Review ↔ new rhythm" });
+
+  fireEvent.change(slider, { target: { value: "6" } });
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenLastCalledWith(
+    expect.objectContaining({ cardFilter: "new", newReviewRatio: 2 }),
+  );
+
+  fireEvent.change(slider, { target: { value: "1" } });
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenLastCalledWith(
+    expect.objectContaining({ cardFilter: "both", newReviewRatio: 5 }),
+  );
+
+  fireEvent.change(slider, { target: { value: "0" } });
+  fireEvent.change(slider, { target: { value: "1" } });
+  expect(slider).toHaveAttribute("aria-valuetext", "1 new : 5 reviews");
+});
+
+test("an existing 1:4 preference remains representable by the slider", () => {
+  const onStart = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} initialDraft={{ ...initialDraft, newReviewRatio: 4 }} onStart={onStart} />);
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  expect(screen.getByRole("slider", { name: "Review ↔ new rhythm" })).toHaveValue("2");
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ newReviewRatio: 4 }));
+});
+
+test("a saved preset can be reopened and modified on this device", () => {
+  render(
+    <TrainingTodaySetup
+      {...baseProps}
+      userId="preset-test-user"
+      trainingLanguageCode="nl"
+    />,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  fireEvent.change(screen.getByRole("slider", { name: "Session size" }), {
+    target: { value: "4" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save preset" }));
+  fireEvent.click(screen.getByRole("button", { name: "Back to Today" }));
+  expect(screen.getByText("NT2 2000 · Words · 1 new : 2 reviews · 30 exercises")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  expect(screen.getByRole("slider", { name: "Session size" })).toHaveValue("4");
+  fireEvent.change(screen.getByRole("slider", { name: "Session size" }), {
+    target: { value: "5" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Update preset" }));
+  expect(screen.getByText("Saved on this device")).toBeInTheDocument();
+  window.localStorage.clear();
 });
 
 test.each([

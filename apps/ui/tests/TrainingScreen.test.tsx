@@ -2180,15 +2180,8 @@ test("superseded resume restores every still-permitted setup setting before Star
     "aria-pressed",
     "true",
   );
-  expect(screen.getByRole("button", { name: "New" })).toHaveAttribute(
-    "aria-pressed",
-    "false",
-  );
-  expect(screen.getByRole("button", { name: "Reviews" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  expect(screen.getByLabelText("Word list")).toHaveValue(
+  expect(screen.getByRole("slider", { name: /Review ↔ new rhythm|Ritme herhaling ↔ nieuw/ })).toHaveValue("0");
+  expect(screen.getByLabelText("Collection")).toHaveValue(
     `user:${userOwnedList.id}`,
   );
   expect(screen.getByLabelText("Source")).toHaveValue(
@@ -2257,10 +2250,9 @@ test("pilot Start persists the complete selection in one scope update", async ()
     screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
   );
   fireEvent.click(screen.getByRole("button", { name: /Reverse|Omgekeerd/ }));
-  fireEvent.click(
-    screen.getByRole("button", {
-      name: /1 new · 3 review|1 nieuw · 3 herhaling/,
-    }),
+  fireEvent.change(
+    screen.getByRole("slider", { name: /Review ↔ new rhythm|Ritme herhaling ↔ nieuw/ }),
+    { target: { value: "3" } },
   );
   fireEvent.click(
     screen.getByRole("button", { name: /Start training|Training starten/ }),

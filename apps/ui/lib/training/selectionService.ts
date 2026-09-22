@@ -40,6 +40,8 @@ export type TrainingSessionPlanScope = {
   cardFilter: CardFilter;
   trainingFilter?: TrainingFocusFilter | null;
   sessionSize?: TrainingSessionSize;
+  /** Target reviews between new cards when both queues are selected. */
+  newReviewRatio?: number;
 };
 
 export type TrainingSession = TrainingSessionPlan & {
@@ -333,6 +335,7 @@ const trainingSessionPlanScopePayload = (
     p_list_id: input.listId ?? null,
     p_list_type: input.listId ? input.listType ?? "curated" : "curated",
     p_card_filter: input.cardFilter,
+    p_new_review_ratio: input.newReviewRatio ?? 2,
     p_session_size: input.sessionSize ?? DEFAULT_TRAINING_SESSION_SIZE,
     p_training_filter: trainingFilter,
   };
@@ -357,6 +360,7 @@ export async function fetchTrainingSessionPlan(
     p_list_id: scope.p_list_id,
     p_list_type: scope.p_list_type,
     p_card_filter: scope.p_card_filter,
+    p_new_review_ratio: scope.p_new_review_ratio,
     p_session_size: scope.p_session_size,
     p_training_filter: scope.p_training_filter,
   };
@@ -385,6 +389,7 @@ export async function startTrainingSession(
     p_list_id: scope.p_list_id,
     p_list_type: scope.p_list_type,
     p_card_filter: scope.p_card_filter,
+    p_new_review_ratio: scope.p_new_review_ratio,
     p_training_filter: scope.p_training_filter,
     p_session_size: String(scope.p_session_size),
     p_request_id: requestId,

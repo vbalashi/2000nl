@@ -69,6 +69,14 @@ _Avoid_: queue snapshot, materialized preset, collection
 The language-specific declaration of which lexical predicates and compatible Training Setup controls are available for a learning language. Interface language and learner-facing translations remain independent of this profile.
 _Avoid_: locale, dictionary schema, saved preset
 
+**Training Language**:
+The single language whose material and lexical schema a new Training Setup uses. It is distinct from the interface language and from the language in which an exercise answer is displayed.
+_Avoid_: interface locale, multi-language material filter
+
+**Conditional Lexical Filter**:
+A language-specific Training Setup predicate shown only while its parent part of speech is explicitly selected. It narrows entries of that part of speech without excluding other selected parts; removing the parent selection removes the predicate.
+_Avoid_: global word filter, part-of-speech subtype inferred from spelling
+
 **Learning History Filter**:
 An optional Training Setup predicate that requires a matching prior user action by result, provenance source and/or rolling time window. It narrows Training Material but is not itself material, a collection rule, a due-state selector, or a measure of how well the learner knows an entry.
 _Avoid_: recent collection, event source as dictionary, weakest words

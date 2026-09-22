@@ -82,6 +82,7 @@ describe("trainingService next-word selection", () => {
       p_list_id: "list-1",
       p_list_type: "user",
       p_card_filter: "both",
+      p_new_review_ratio: 2,
       p_session_size: 10,
       p_training_filter: {},
     });
@@ -147,6 +148,10 @@ describe("trainingService next-word selection", () => {
 
     expect(first).toBe(same);
     expect(changed).not.toBe(first);
+    expect(createTrainingSessionPlanKey("user-1", ["word-to-definition"], {
+      ...scope,
+      newReviewRatio: 5,
+    })).not.toBe(first);
   });
 
   test("starts a server-latched session and returns its opaque id", async () => {
@@ -189,6 +194,7 @@ describe("trainingService next-word selection", () => {
       p_list_id: "list-1",
       p_list_type: "user",
       p_card_filter: "both",
+      p_new_review_ratio: 2,
       p_training_filter: {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
       },

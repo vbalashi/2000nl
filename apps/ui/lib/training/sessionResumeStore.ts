@@ -223,7 +223,8 @@ const isCardFilter = (value: unknown): value is CardFilter =>
   value === "new" || value === "review" || value === "both";
 
 const isSessionSize = (value: unknown): value is TrainingSessionSize =>
-  value === 5 || value === 10 || value === "all-due-today";
+  value === "all-due-today" ||
+  (typeof value === "number" && Number.isInteger(value) && value > 0);
 
 const isWordListType = (value: unknown): value is WordListType =>
   value === "curated" || value === "user";

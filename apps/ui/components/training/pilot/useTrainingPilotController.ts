@@ -150,6 +150,7 @@ export function useCommitTrainingPilotDraft({
         scope,
         modes: draft.modes,
         cardFilter: draft.cardFilter,
+        newReviewRatio: draft.newReviewRatio,
         focusFilter,
         sessionSize: draft.sessionSize,
       });
@@ -163,6 +164,7 @@ export function useCommitTrainingPilotDraft({
         listId: scope.listId,
         listType: scope.listType ?? undefined,
         cardFilter: draft.cardFilter,
+        newReviewRatio: draft.newReviewRatio,
         trainingFilter: focusFilter,
         sessionSize: draft.sessionSize,
       }, startRequestRef.current.requestId);
