@@ -273,6 +273,34 @@ delta is therefore server-side: the PostgreSQL execution itself grew from about
 inside the backend execution/runtime path. No SQL, timeout, setting, or
 production state changed.
 
+## Isolated nested function timing (2026-09-23)
+
+The disposable session-plan fixture now enables PostgreSQL `track_functions` for
+the measured transaction and reads aggregate `pg_stat_user_functions` deltas
+after the connection closes. It records function names, call counts, and total
+and self time only; it does not emit learner or card data. Both production
+contracts are exercised: the six-argument public call and the exact eight-
+argument UI call (`p_session_size='10'`, `p_new_review_ratio=2`).
+
+On the current synthetic 18,184-entry / 4,031-NT2 corpus, the six-argument
+call took **85.355 ms** in PostgreSQL. The public wrapper accounted for
+**85.287 ms**, with `private.training_scheduler_candidates_v2` at **83.085 ms**
+(**81.913 ms** self time); timezone and filter helpers were each about 1.2 ms
+or less. The eight-argument UI call took **88.792 ms**. Its
+`private.training_session_members_v1` path accounted for **87.894 ms**, while
+the nested scheduler candidate function accounted for **82.172 ms**. These
+function totals overlap because callers include the time of nested functions;
+they must not be added together.
+
+The isolated fixture therefore has no nested function consuming seconds and
+does not reproduce the production first-call pause. This is evidence against a
+deterministic multi-second scheduler helper regression in the fixture, but it
+does not model the production pooler lifecycle, backend state, physical cache
+history, or host runtime. The experiment narrows the remaining boundary to
+production backend/runtime or connection lifecycle behavior rather than
+supporting a SQL rewrite. The local test remains read-only during measurement
+and cleans up its disposable database.
+
 ## Constrained resource experiment (2026-09-23)
 
 To test whether a simple resource ceiling is sufficient to recreate the first-
@@ -332,19 +360,20 @@ can fail on the symptom; it does **not** reproduce the production cause.
 
 No scheduler migration is justified yet. Current evidence ranks backend-local
 runtime initialization or pooler lifecycle above host-wide resource saturation
-and persistent query-volume regression; contention and nested planning have not
-been separated.
+and persistent query-volume regression. The isolated nested timing experiment
+found no multi-second helper in the representative fixture, so nested function
+execution is now separated from the remaining production-only boundary.
 
 The constrained profile, synchronized host sampler, exact UI-overload
-comparison, controlled-idle UI reproduction, and server/outer timing split have
-now been completed. Next, isolate the backend execution/runtime boundary in a
-non-production PostgreSQL instance with nested statement planning/execution
-timing and representative content. On production, retain only read-only
-backend PID/start and activity correlation; do not enable invasive tracing or
-change runtime settings there. Reproduce the near-two-second server-side
-first-call behavior before changing SQL or release timeout; compare one
-variable at a time. Restart/evict caches only on the isolated instance, never
-on the shared QA or production database.
+comparison, controlled-idle UI reproduction, server/outer timing split, and
+nested function timing have now been completed. The next useful evidence is
+pooler/backend lifecycle correlation around an idle-to-first-call transition:
+keep production checks read-only, capture backend PID/start and activity state,
+and compare a fresh or reused backend with the same exact UI overload. Do not
+enable invasive tracing or change runtime settings there. Reproduce the
+near-two-second server-side first-call behavior before changing SQL or release
+timeout; compare one variable at a time. Restart/evict caches only on the
+isolated instance, never on the shared QA or production database.
 
 If the isolated instance cannot reproduce it, the next missing evidence is
 pooler/backend lifecycle telemetry that can distinguish a backend-local runtime
