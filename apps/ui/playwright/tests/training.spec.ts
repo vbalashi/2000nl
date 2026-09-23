@@ -129,6 +129,24 @@ const restHandler = async (route: any) => {
     return;
   }
 
+  if (pathname.endsWith("/rpc/get_available_learning_languages")) {
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify([
+        {
+          code: "nl",
+          label: "Nederlands",
+          dictionary_count: 1,
+          curated_list_count: 1,
+          user_list_count: 0,
+          has_training_eligible_lists: true,
+        },
+      ]),
+    });
+    return;
+  }
+
   if (pathname.endsWith("/rpc/get_training_scenarios")) {
     await route.fulfill({
       status: 200,
