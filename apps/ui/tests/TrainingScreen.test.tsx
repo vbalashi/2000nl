@@ -162,7 +162,7 @@ const userDictionaryGedoe = {
 };
 
 const fetchNextTrainingWordByScenario = vi.fn().mockResolvedValue(mockWord);
-const fetchStats = vi.fn().mockResolvedValue({
+const defaultTrainingStats = {
   newWordsToday: 0,
   newCardsToday: 0,
   learningStartedToday: 0,
@@ -174,7 +174,8 @@ const fetchStats = vi.fn().mockResolvedValue({
   reviewCardsDue: 0,
   totalWordsLearned: 0,
   totalWordsInList: 2000,
-});
+};
+const fetchStats = vi.fn().mockResolvedValue(defaultTrainingStats);
 const prefetchPlatformV2TrainingEntry = vi.fn().mockResolvedValue({
   state: "ready",
   group: { header: { audio: null, text: "huis" } },
@@ -788,6 +789,7 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue(defaultAvailableLearningLanguages);
   fetchNextTrainingWordByScenario.mockReset().mockResolvedValue(mockWord);
+  fetchStats.mockReset().mockResolvedValue(defaultTrainingStats);
   mockV2SessionState = "ready";
   mockV2AcceptanceGate = null;
   prefetchPlatformV2TrainingEntry.mockReset().mockResolvedValue({
@@ -1381,7 +1383,7 @@ test("first-pilot Training opens on Today and Continue reveals the mounted card"
   );
 });
 
-test("delayed first card keeps the Today shell until Continue can reveal it", async () => {
+test("delayed first card keeps Today usable and guards Start and Continue until ready", async () => {
   let resolveFirstCard!: (word: typeof mockWord) => void;
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario.mockImplementationOnce(
@@ -1402,28 +1404,41 @@ test("delayed first card keeps the Today shell until Continue can reveal it", as
     );
 
     expect(
-      await screen.findByRole("heading", {
-        name: /Loading card|Kaart laden/,
-      }),
+      await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
     ).toBeInTheDocument();
     const todayShell = document.querySelector<HTMLElement>(
       '[data-training-pilot-surface="today"]',
     );
     expect(todayShell).toBeInTheDocument();
     expect(screen.getByLabelText("2000nl")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Preparing your next card|Je volgende kaart wordt voorbereid|Подготавливаем следующую карточку/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+    ).toBeDisabled();
     expect(screen.queryByTestId("training-card-frame")).not.toBeInTheDocument();
     expect(screen.queryByText("Laden…")).not.toBeInTheDocument();
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+    );
+    expect(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ })).toBeDisabled();
+    expect(startTrainingSession).not.toHaveBeenCalled();
 
     await waitFor(() => expect(resolveFirstCard).toEqual(expect.any(Function)));
     await act(async () => resolveFirstCard(mockWord));
 
-    expect(
-      await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ })).toBeEnabled();
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
     expect(
       screen.queryByRole("heading", { name: "huis" }),
     ).not.toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("button", { name: /Back to Today|Terug naar Vandaag/ }));
     fireEvent.click(
       screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
     );
@@ -1434,6 +1449,38 @@ test("delayed first card keeps the Today shell until Continue can reveal it", as
     fetchNextTrainingWordByScenario.mockReset();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
   }
+});
+
+test("setup and prepared card stay usable while scoped stats are still pending", async () => {
+  const statsRequests: Array<{
+    resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void;
+  }> = [];
+  fetchStats.mockImplementation(
+    () => new Promise((resolve) => { statsRequests.push({ resolve }); }),
+  );
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
+  ).toBeInTheDocument();
+  await waitFor(() => expect(statsRequests).toHaveLength(1));
+  expect(
+    screen.getAllByText(/Loading progress…|Voortgang laden…|Загружаем статистику…/),
+  ).toHaveLength(2);
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+    ).toBeEnabled(),
+  );
+  expect(startTrainingSession).not.toHaveBeenCalled();
+
+  await act(async () => statsRequests[0].resolve(defaultTrainingStats));
+  expect(
+    await screen.findByText(
+      /0 reviews due · 0 new this study day|0 herhalingen klaar · 0 nieuw deze studiedag|Повторений к выполнению: 0 · новых за учебный день: 0/,
+    ),
+  ).toBeInTheDocument();
+  expect(startTrainingSession).not.toHaveBeenCalled();
 });
 
 test("resumes a still-active server session after refresh without starting another session", async () => {
@@ -2324,10 +2371,11 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
   );
 
   expect(
-    await screen.findByRole("heading", {
-      name: /Training could not be loaded|Training kon niet worden geladen/,
-    }),
-  ).toBeInTheDocument();
+    await screen.findByText(
+      /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
+    ),
+  ).toHaveAttribute("role", "alert");
+  expect(screen.getByRole("heading", { name: /Good morning|Goedemorgen/ })).toBeInTheDocument();
   expect(
     screen.queryByRole("heading", { name: "huis" }),
   ).not.toBeInTheDocument();
@@ -2336,6 +2384,48 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
       name: /No cards match this setup|Geen kaarten voor deze selectie/,
     }),
   ).not.toBeInTheDocument();
+  expect(startTrainingSession).toHaveBeenCalledOnce();
+  fireEvent.click(
+    screen.getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ }),
+  );
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+    ).toBeEnabled(),
+  );
+  expect(startTrainingSession).toHaveBeenCalledOnce();
+  expect(mockV2ProgressAction).not.toHaveBeenCalled();
+});
+
+test("stats errors preserve setup and retry the read without creating a session", async () => {
+  fetchStats.mockImplementation(async () => {
+    throw new Error("stats unavailable");
+  });
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getAllByText(/Progress could not be loaded\.|Voortgang kon niet worden geladen\.|Не удалось загрузить статистику\./),
+  ).toHaveLength(2);
+  expect(startTrainingSession).not.toHaveBeenCalled();
+  const callsBeforeRetry = fetchStats.mock.calls.length;
+  fetchStats.mockImplementation(async () => defaultTrainingStats);
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: /Retry progress|Voortgang opnieuw laden|Повторить загрузку статистики/,
+    }),
+  );
+  await waitFor(() =>
+    expect(fetchStats).toHaveBeenCalledTimes(callsBeforeRetry + 1),
+  );
+  expect(
+    await screen.findByText(
+      /0 reviews due · 0 new this study day|0 herhalingen klaar · 0 nieuw deze studiedag|Повторений к выполнению: 0 · новых за учебный день: 0/,
+    ),
+  ).toBeInTheDocument();
+  expect(startTrainingSession).not.toHaveBeenCalled();
 });
 
 test("pilot Start shows empty recovery when the replacement queue has no cards", async () => {
@@ -2351,10 +2441,10 @@ test("pilot Start shows empty recovery when the replacement queue has no cards",
   );
 
   expect(
-    await screen.findByRole("heading", {
-      name: /No cards match this setup|Geen kaarten voor deze selectie/,
-    }),
-  ).toBeInTheDocument();
+    await screen.findByText(
+      /No card is ready for this setup|Er staat nog geen kaart klaar/,
+    ),
+  ).toHaveAttribute("role", "status");
   expect(
     screen.queryByRole("heading", {
       name: /Training could not be loaded|Training kon niet worden geladen/,
@@ -3367,6 +3457,11 @@ test("keyboard return from History restores focus to its stable Training trigger
   try {
     render(<Harness />);
     await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+      ).toBeEnabled(),
+    );
     fireEvent.click(
       screen.getByRole("button", {
         name: /Continue session|Sessie doorgaan/,

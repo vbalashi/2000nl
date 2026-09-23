@@ -9,12 +9,12 @@ test("@pilot statement timeout retries selection only and reaches a ready card",
   });
 
   await expect(
-    page.getByRole("heading", {
-      name: /Training could not be loaded|Training kon niet worden geladen|Не удалось загрузить тренировку/,
-    }),
+    page.getByText(
+      /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
+    ),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: /Try again|Opnieuw proberen|Попробовать снова/ })
+    .getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ })
     .click();
   await page
     .getByRole("button", {
@@ -34,9 +34,9 @@ test("@pilot statement timeout retries selection only and reaches a ready card",
 
   await expect(page.getByRole("heading", { name: "huis" })).toBeVisible();
   await expect(
-    page.getByRole("heading", {
-      name: /Training could not be loaded|Training kon niet worden geladen|Не удалось загрузить тренировку/,
-    }),
+    page.getByText(
+      /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
+    ),
   ).toHaveCount(0);
 });
 
@@ -48,18 +48,18 @@ test("@pilot statement timeout retry reports an honest no-match terminal outcome
   });
 
   await expect(
-    page.getByRole("heading", {
-      name: /Training could not be loaded|Training kon niet worden geladen|Не удалось загрузить тренировку/,
-    }),
+    page.getByText(
+      /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
+    ),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: /Try again|Opnieuw proberen|Попробовать снова/ })
+    .getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ })
     .click();
 
   await expect(
-    page.getByRole("heading", {
-      name: /No cards match this setup|Geen kaarten voor deze selectie|Для этих настроек нет карточек/,
-    }),
+    page.getByText(
+      /No card is ready for this setup|Er staat nog geen kaart klaar|Пока нет готовой карточки/,
+    ),
   ).toBeVisible();
   expect(harness.requests.scheduler).toHaveLength(2);
   await expect(page.getByRole("heading", { name: "huis" })).toHaveCount(0);

@@ -103,6 +103,48 @@ test("Today keeps the mounted session behind an explicit Continue action", () =>
   expect(onContinue).toHaveBeenCalledOnce();
 });
 
+test("pending card and stats keep Today and setup usable while actions stay guarded", () => {
+  const onContinue = vi.fn();
+  const onStart = vi.fn();
+  render(
+    <TrainingTodaySetup
+      {...baseProps}
+      statsStatus="pending"
+      cardPreparationStatus="pending"
+      startBlocked
+      continueDisabled
+      onContinue={onContinue}
+      onStart={onStart}
+    />,
+  );
+
+  expect(screen.getByRole("heading", { name: "Good morning" })).toBeInTheDocument();
+  expect(screen.getAllByText("Loading progress…")).toHaveLength(2);
+  expect(screen.getByText("Preparing your next card…")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Continue session" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  expect(screen.getByLabelText("Review ↔ new rhythm")).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Start training" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onContinue).not.toHaveBeenCalled();
+  expect(onStart).not.toHaveBeenCalled();
+});
+
+test("stats error is explicit and can be retried without replacing Today", () => {
+  const onRetryStats = vi.fn();
+  render(
+    <TrainingTodaySetup
+      {...baseProps}
+      statsStatus="error"
+      onRetryStats={onRetryStats}
+    />,
+  );
+  expect(screen.getByRole("heading", { name: "Good morning" })).toBeInTheDocument();
+  expect(screen.getAllByText("Progress could not be loaded.")).toHaveLength(2);
+  fireEvent.click(screen.getByRole("button", { name: "Retry progress" }));
+  expect(onRetryStats).toHaveBeenCalledOnce();
+});
+
 test("Setup is a draft: Back discards changes and Start applies one selection", () => {
   const onStart = vi.fn<[TrainingSetupDraft], void>();
   render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);

@@ -235,7 +235,7 @@ test("delayed list hydration and card selection are attributed to startup @pilot
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   await installTrainingAttributionCollector(page);
-  await setupAuthenticatedTrainingAttributionPage(page, 0, {
+  const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
     bootstrapReadDelayMs: 40,
     activeScopeDelayMs: 600,
     listSummaryDelayMs: 700,
@@ -254,21 +254,33 @@ test("delayed list hydration and card selection are attributed to startup @pilot
   ).toBeVisible();
   await expect(page.getByText(/Loading Training/i)).toHaveCount(0);
 
+  const todayHeading = page.getByRole("heading", {
+    name: /Good morning|Goedemorgen|Доброе утро/i,
+  });
+  await expect(todayHeading).toBeVisible();
   await expect(
-    authenticatedStatus.getByRole("heading", {
-      name: /Loading card|Kaart laden|Загружаем карточку/i,
-    }),
+    page.getByText(
+      /Preparing your next card|Je volgende kaart wordt voorbereid|Подготавливаем следующую карточку/i,
+    ),
   ).toBeVisible();
 
-  const startCurrentSettings = page.getByRole("button", {
-    name: /Начать с текущими настройками|Start (?:with current settings|current setup)|Start met huidige instellingen/i,
+  const continueSession = page.getByRole("button", {
+    name: /Continue session|Sessie doorgaan|Продолжить сессию/i,
   });
-  await expect(startCurrentSettings).toBeVisible();
-  await startCurrentSettings.click();
+  await expect(continueSession).toBeDisabled();
+  await expect(
+    page.getByRole("button", {
+      name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/i,
+    }),
+  ).toBeDisabled();
+  await expect.poll(() => harness.requests.scheduler.length).toBe(1);
+  await expect(continueSession).toBeEnabled();
+  await continueSession.click();
 
   // The card is the observable end of the complete startup chain: auth,
   // saved-list hydration, scheduler selection, and card presentation.
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+  expect(harness.requests.session).toHaveLength(0);
 
   const capture = await readTrainingAttributionCapture(page);
   const hydration = capture.timings.find(
