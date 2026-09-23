@@ -117,6 +117,18 @@ function componentStatement(component) {
       '{}'::jsonb
     )`;
   }
+  if (component === "ui-public") {
+    return `SELECT public.get_training_session_plan(
+      (SELECT id FROM auth.users WHERE email = 'test@2000nl.test'),
+      ARRAY['word-to-definition']::text[],
+      NULL,
+      'curated',
+      'both',
+      '{}'::jsonb,
+      '10',
+      2
+    )`;
+  }
   if (component === "next") {
     return `SELECT * FROM public.get_next_card(
       (SELECT id FROM auth.users WHERE email = 'test@2000nl.test'),
@@ -252,7 +264,7 @@ async function main() {
   // with the deployment gate. The selector, aggregate, and candidate passes
   // then attribute the same scheduler work without exposing the full EXPLAIN
   // plan in CI logs.
-  for (const component of ["public", "next", "filtered", "aggregate", "candidate"]) {
+  for (const component of ["public", "ui-public", "next", "filtered", "aggregate", "candidate"]) {
     for (let sample = 1; sample <= options.samples; sample += 1) {
       const metrics = runSample(options, childEnv, component, sample);
       process.stdout.write(
