@@ -208,6 +208,35 @@ explanation for the first-call pause. It strengthens the backend-local runtime
 initialization or pooler lifecycle hypothesis while leaving the exact owner
 unproven. No production state, database setting, or timeout changed.
 
+## Exact UI overload comparison (2026-09-23)
+
+The readiness diagnostic now includes the exact eight-argument overload used by
+the UI (`p_session_size='10'`, `p_new_review_ratio=2`) and can choose whether
+that overload or the six-argument public/deploy path runs first. This matters
+because both calls share backend-local caches and the order can change the
+observed first-call timing.
+
+In [35860010208](https://github.com/vbalashi/2000nl/actions/runs/35860010208),
+the six-argument public call ran first and took **1,311.385 ms** on backend
+`2209460`; the eight-argument UI call immediately after it took **192.125 ms**
+on that same backend/start. This is an order-sensitive comparison, not a cold
+UI result.
+
+The UI-first run
+[35860409669](https://github.com/vbalashi/2000nl/actions/runs/35860409669)
+measured the UI overload at **206.003 ms**, then the public call at **179.730
+ms**, both on new backend `2209483`. A three-sample UI-first run
+[35860495548](https://github.com/vbalashi/2000nl/actions/runs/35860495548)
+kept the same backend and measured UI **186.626 / 206.052 / 182.824 ms** and
+public **191.419 / 187.706 / 193.038 ms**. No call timed out and the activity
+sampler saw no wait event during the short UI calls.
+
+This series makes the six-argument public/deploy path the more repeatable
+cold-first outlier in the current workflow. It does not erase the earlier
+direct eight-argument UI observation at 1.949 s; that historical outlier still
+needs a matching idle/backend reproduction before any code change is justified.
+The production database and learner state remained read-only throughout.
+
 ## Constrained resource experiment (2026-09-23)
 
 To test whether a simple resource ceiling is sufficient to recreate the first-
@@ -270,14 +299,15 @@ runtime initialization or pooler lifecycle above host-wide resource saturation
 and persistent query-volume regression; contention and nested planning have not
 been separated.
 
-The constrained profile and synchronized host sampler have now been tested.
-Next, isolate the remaining backend/pooler boundary: correlate pooler routing
-and backend PID/start with a fresh first call, capture any available pooler
-connection or server-side runtime timing, and repeat the six-argument manifest
-probe alongside the eight-argument UI RPC. Use a genuinely new backend for the
-first call and two follow-up calls on that same backend. Enable nested statement
-planning/execution timing only in an isolated environment. Reproduce the
-near-two-second first-call behavior before changing SQL or runtime settings;
+The constrained profile, synchronized host sampler, and exact UI-overload
+comparison have now been tested. Next, isolate the remaining backend/pooler
+boundary around the six-argument cold-first outlier: correlate pooler routing
+and backend PID/start with a genuinely new first call, capture any available
+pooler connection or server-side runtime timing, and repeat after a controlled
+idle interval. Keep the eight-argument UI path in the same comparison so the
+historical 1.949 s observation can be reproduced or retired. Enable nested
+statement planning/execution timing only in an isolated environment. Reproduce
+the near-two-second first-call behavior before changing SQL or runtime settings;
 compare one variable at a time. Restart/evict caches only on the isolated
 instance, never on the shared QA or production database.
 
