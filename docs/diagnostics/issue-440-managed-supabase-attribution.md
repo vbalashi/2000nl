@@ -98,23 +98,49 @@ subsequently authorized through that same profile, and `supabase projects list`
 now succeeds. No CLI database inspection was run, and no credential value or
 production data was exposed in the report.
 
-**Near-time resource sample for run 35864272860 (2026-09-23).** The slow UI
+**Near-time resource dashboard review for run 35864272860 (2026-09-23).** The slow UI
 overload began at `13:01:56.782319Z` on backend `2211863`. The Supabase
 Observability → Database dashboard was set to `12:58Z–13:05Z`, a seven-minute
 window containing that call and its warm repeats. The dashboard summary showed
 CPU `0.41%`, memory used `411.32 MB`, memory commitment `1.21 GB`, and network
-throughput `7.2 KB/s`; the plotted CPU remained near its baseline. IOPS, disk
+throughput `7.2 KB/s`. IOPS, disk
 throughput, connections, and disk-usage panels did not load in that view. These
 are coarse dashboard-window observations, not per-request measurements; the
-headline values are not retained as exact samples at the slow query timestamp.
+headline values are not retained as exact samples at the slow query timestamp,
+and the dashboard does not establish the maximum CPU or memory use during the
+call. Do not treat `0.41%` as a time-correlated CPU measurement.
 
 A bounded Logs Explorer query for the diagnostic interval returned no rows.
 This does not prove the database or API was idle: log source/retention coverage
 and event correlation are not established by an empty result. The available
-near-time chart does not show broad CPU saturation, but its granularity and
-missing panels cannot rule out short-lived or backend-local resource pressure.
-This narrows the evidence without proving or excluding a managed-capacity
-cause, and it still does not justify a dedicated-compute move or SQL rewrite.
+chart and missing panels cannot rule out short-lived or backend-local resource
+pressure. This does not prove or exclude a managed-capacity cause and does not
+justify a compute move or SQL rewrite.
+
+**Access and data-target audit (2026-09-23).** The authorized Supabase CLI
+(`2.101.0`) lists the active, healthy project `2000nl` with reference
+`lliwdcpuuzjmxyzrjtoz` in `eu-west-1`. The repository's production QA policy
+uses the same API origin; production deep health on release `0.18.696` reports
+`status: ok` and `database.target: remote` with expected contract
+`2000nl-db-156`. Health does not disclose the live project reference. A
+read-only inspection of resource-host names already recorded in the existing
+authenticated production Chrome tab found
+`lliwdcpuuzjmxyzrjtoz.supabase.co`; no page reload or new production request
+was made for this audit. This verifies the browser's observed API target,
+though not the project/role used by each historical SQL or dashboard sample.
+The same authorized Chrome profile was used for dashboard observations; an
+unauthenticated browser was not used. The CLI is not linked to this project
+and no CLI SQL inspection was run.
+
+Supabase MCP is configured globally, enabled, and uses OAuth with all-project
+visibility (no `project_ref` scope). Its tools were not exposed in this task's
+callable tool inventory, so none of the measurements in this report came from
+MCP. The installed Supabase skill was read; it supplies operating guidance,
+not a data connection. A future MCP or CLI result must explicitly select and
+record project ref `lliwdcpuuzjmxyzrjtoz` before interpreting metrics or SQL.
+The official Supabase observability guide allows database inspection via CLI,
+Explorer, or MCP; tool availability alone does not establish that a specific
+measurement came from the correct project or database role.
 
 **Aggregated Query Performance observations.** Supabase Observability → Query
 Performance was inspected for **2026-09-22 14:11:05.597Z through 2026-09-23
