@@ -19,6 +19,7 @@ on:
       - 'db/scripts/scheduler_legacy_callers.test.mjs'
       - 'db/scripts/postgres_client.mjs'
       - 'db/scripts/local_supabase_probe.sql'
+      - 'db/scripts/training_lexical_candidate_filters.integration.sql'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
       - 'db/scripts/live_dictionary_migration*.sql'
       - 'db/scripts/live_dictionary_migration.sh'
@@ -48,6 +49,7 @@ on:
       - 'db/scripts/scheduler_legacy_callers.test.mjs'
       - 'db/scripts/postgres_client.mjs'
       - 'db/scripts/local_supabase_probe.sql'
+      - 'db/scripts/training_lexical_candidate_filters.integration.sql'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
       - 'db/scripts/live_dictionary_migration*.sql'
       - 'db/scripts/live_dictionary_migration.sh'
@@ -227,13 +229,14 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/plain_postgres_supabase_compat.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/local_supabase_probe.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/training_lexical_candidate_filters.integration.sql
 
       - name: Execute exact deployment postflight against PostgreSQL
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/ledger-v1.sql
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-156.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-157.sql
 
       - name: Test exact bounded pre-switch scheduler read
         env:

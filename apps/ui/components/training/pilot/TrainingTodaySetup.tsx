@@ -7,6 +7,8 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type {
   CardFilter,
   DetailedStats,
+  DutchNounArticle,
+  DutchTrainingPartOfSpeech,
   TrainingDateWindow,
   TrainingMode,
   TrainingSessionSize,
@@ -35,6 +37,10 @@ export type TrainingSetupDraft = {
   sourceValue: string;
   /** Maximum unique card targets for this session; omitted by old callers. */
   sessionSize?: TrainingSessionSize;
+  /** Empty means all supported Dutch parts of speech. */
+  partOfSpeech?: DutchTrainingPartOfSpeech[];
+  /** Article selection narrows noun candidates; selected non-noun POS remain eligible. */
+  nounArticles?: DutchNounArticle[];
 };
 
 export const DEFAULT_SESSION_SIZE: TrainingSessionSize = 10;
@@ -122,7 +128,7 @@ const copy = {
     idioms: "Idioms",
     sentences: "Example sentences",
     unavailable: "Coming when this training path is ready",
-    lexicalUnavailable: "Part of speech and de/het filters need a server-side candidate filter before they can start a real session.",
+    lexicalUnavailable: "Choose one or more parts of speech. With no selection, all parts of speech are included.",
     partOfSpeech: "Part of speech",
     noun: "Noun",
     verb: "Verb",
@@ -208,7 +214,7 @@ const copy = {
     idioms: "Uitdrukkingen",
     sentences: "Voorbeeldzinnen",
     unavailable: "Beschikbaar zodra deze training klaar is",
-    lexicalUnavailable: "Woordsoort en de/het vereisen eerst een serverfilter voor oefenkandidaten.",
+    lexicalUnavailable: "Kies een of meer woordsoorten. Zonder selectie worden alle woordsoorten meegenomen.",
     partOfSpeech: "Woordsoort",
     noun: "Zelfstandig naamwoord",
     verb: "Werkwoord",
@@ -294,7 +300,7 @@ const copy = {
     idioms: "Идиомы",
     sentences: "Примеры предложений",
     unavailable: "Появится, когда сценарий будет готов",
-    lexicalUnavailable: "Для частей речи и de/het нужен серверный фильтр кандидатов перед запуском сессии.",
+    lexicalUnavailable: "Выберите одну или несколько частей речи. Без выбора включены все части речи.",
     partOfSpeech: "Часть речи",
     noun: "Существительное",
     verb: "Глагол",
@@ -792,7 +798,38 @@ export function TrainingTodaySetup({
               {t.unavailable}
             </p>
           </fieldset>
-          <TrainingLexicalPreview languageCode={trainingLanguageCode ?? "nl"} interfaceLanguage={interfaceLanguage} />
+          <TrainingLexicalPreview
+            languageCode={trainingLanguageCode ?? "nl"}
+            interfaceLanguage={interfaceLanguage}
+            selectedParts={draft.partOfSpeech ?? []}
+            selectedArticles={draft.nounArticles ?? []}
+            onPartToggle={(partOfSpeech) =>
+              setDraft((current) => {
+                const selected = current.partOfSpeech ?? [];
+                const next = selected.includes(partOfSpeech)
+                  ? selected.filter((item) => item !== partOfSpeech)
+                  : [...selected, partOfSpeech];
+                return {
+                  ...current,
+                  partOfSpeech: next,
+                  nounArticles: next.includes("zn")
+                    ? current.nounArticles ?? []
+                    : [],
+                };
+              })
+            }
+            onArticleToggle={(article) =>
+              setDraft((current) => {
+                const selected = current.nounArticles ?? [];
+                return {
+                  ...current,
+                  nounArticles: selected.includes(article)
+                    ? selected.filter((item) => item !== article)
+                    : [...selected, article],
+                };
+              })
+            }
+          />
           <fieldset className="order-8 min-w-0">
             <legend className="text-sm font-semibold text-slate-950 dark:text-white">
               {t.goal}

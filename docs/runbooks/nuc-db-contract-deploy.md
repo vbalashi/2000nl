@@ -109,6 +109,22 @@ for prior app images and cached bundles; this migration does not enable an
 exercise family or change ordinary FSRS state. App-image rollback can therefore
 leave migration 156 in place.
 
+Migration 157 applies supported Dutch part-of-speech and `de`/`het` filters in
+the canonical scheduler scope before planning and session membership are
+latched. No selected part of speech keeps the existing unfiltered pool,
+including entries without POS metadata. An active POS filter excludes missing
+or unsupported metadata. Article filters narrow selected noun candidates while
+keeping explicitly selected non-noun categories; with no POS selection, an
+article filter selects only matching nouns. Date/source activity filters keep
+their existing history-matching meaning when combined with lexical filters.
+Fixed expressions and idioms remain on the separately gated idiom exercise
+path; this migration does not enable that family. The postflight verifies the
+private helper boundary and selector routing, and the integration probe checks
+empty results, missing POS, article matching, mixed POS/article selection,
+unfiltered compatibility, and latched membership. The default unfiltered
+read-probe remains unchanged; the new SQL scope still must pass its bounded
+session-plan CI measurement before rollout.
+
 Migration 153 adds one active first-party Training run per learner. It preserves
 ordinary queue membership and durable FSRS/history, but makes a superseded
 queue non-actionable before its next card can be projected or graded. It also
@@ -163,7 +179,7 @@ supported. Do not implement the cutoff as mutable operator SQL or edit migration
 153 after deployment; advance the contract, checksum, postflight and rollback
 runbook together.
 
-An enabled deployment must apply or verify migrations 123 through 156 in order
+An enabled deployment must apply or verify migrations 123 through 157 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

@@ -127,6 +127,8 @@ describe("trainingService next-word selection", () => {
         dateWindow: "today" as const,
         timezone: "Europe/Amsterdam",
         sourceKind: "youtube",
+        partOfSpeech: ["ww", "zn"] as ("ww" | "zn")[],
+        nounArticles: ["de"] as ("de" | "het")[],
       },
     };
 
@@ -138,7 +140,7 @@ describe("trainingService next-word selection", () => {
     const same = createTrainingSessionPlanKey(
       "user-1",
       ["word-to-definition"],
-      scope,
+      { ...scope, trainingFilter: { ...scope.trainingFilter, partOfSpeech: ["zn", "ww"] as ("ww" | "zn")[] } },
     );
     const changed = createTrainingSessionPlanKey(
       "user-1",
@@ -148,6 +150,10 @@ describe("trainingService next-word selection", () => {
 
     expect(first).toBe(same);
     expect(changed).not.toBe(first);
+    expect(createTrainingSessionPlanKey("user-1", ["word-to-definition"], {
+      ...scope,
+      trainingFilter: { ...scope.trainingFilter, nounArticles: ["het"] },
+    })).not.toBe(first);
     expect(createTrainingSessionPlanKey("user-1", ["word-to-definition"], {
       ...scope,
       newReviewRatio: 5,
@@ -177,6 +183,11 @@ describe("trainingService next-word selection", () => {
         listType: "user",
         cardFilter: "both",
         sessionSize: 5,
+        trainingFilter: {
+          dateWindow: "all",
+          partOfSpeech: ["ww"],
+          nounArticles: ["de"],
+        },
       }, "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed001"),
     ).resolves.toEqual({
       sessionId: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
@@ -197,6 +208,9 @@ describe("trainingService next-word selection", () => {
       p_new_review_ratio: 2,
       p_training_filter: {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+        dateWindow: "all",
+        partOfSpeech: ["ww"],
+        nounArticles: ["de"],
       },
       p_session_size: "5",
       p_request_id: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed001",
