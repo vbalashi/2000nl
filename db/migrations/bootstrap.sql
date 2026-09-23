@@ -456,3 +456,6 @@
 
 -- Latch an explicit new/review rhythm in each ordinary Training session
 \i db/migrations/156_per_session_new_review_ratio.sql
+
+-- Apply optional Dutch lexical filters before ordinary candidates are queued
+\i db/migrations/157_ordinary_training_lexical_candidate_filters.sql
