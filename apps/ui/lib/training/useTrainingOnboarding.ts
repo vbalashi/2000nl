@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CallBackProps } from "react-joyride";
+import type { EventData } from "react-joyride";
 import { STATUS } from "react-joyride";
 import { trainingDebug } from "@/lib/trainingDebug";
 import {
@@ -133,7 +133,7 @@ export function useTrainingOnboarding(params: {
   }, [updateOnboardingPreferences, userId]);
 
   const handleJoyrideCallback = useCallback(
-    async (data: CallBackProps) => {
+    async (data: EventData) => {
       const { status } = data;
       const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 

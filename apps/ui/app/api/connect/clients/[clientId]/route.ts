@@ -22,7 +22,7 @@ export function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { clientId: string } },
+  { params }: { params: Promise<{ clientId: string }> },
 ) {
   const reply = (payload: unknown, status = 200) =>
     withConnectCors(request, jsonNoStore(payload, status));
@@ -30,7 +30,7 @@ export async function GET(
   const service = createServiceClient();
   if (service instanceof Response) return withConnectCors(request, service);
 
-  const client = await loadConnectedClient(service, params.clientId);
+  const client = await loadConnectedClient(service, (await params).clientId);
   if (client instanceof Response) return withConnectCors(request, client);
 
   const url = new URL(request.url);

@@ -45,6 +45,23 @@ describe("2000NL Connect API", () => {
     process.env.CONNECT_API_ALLOWED_ORIGINS = "chrome-extension://abc";
   });
 
+  test("client metadata awaits Next async route params and preserves redirect validation", async () => {
+    const query = queryChain({ data: {
+      client_id: "audiofilms_chrome", display_name: "AudioFilms", client_type: "chrome_extension",
+      status: "active", allowed_redirect_uris: ["https://extension.chromiumapp.org/"],
+      allowed_origins: ["chrome-extension://abc"], allowed_scopes: ["platform:read"], requires_pkce: true,
+    }, error: null });
+    createClient.mockReturnValue({ from: vi.fn(() => query) });
+    const { GET } = await import("@/app/api/connect/clients/[clientId]/route");
+    const response = await GET(new NextRequest("http://localhost/api/connect/clients/audiofilms_chrome?redirect_uri=https%3A%2F%2Fextension.chromiumapp.org%2F&scope=platform%3Aread"), {
+      params: Promise.resolve({ clientId: "audiofilms_chrome" }),
+    });
+    expect(response.status).toBe(200);
+    expect(query.eq).toHaveBeenCalledWith("client_id", "audiofilms_chrome");
+    expect(await response.json()).toMatchObject({ clientId: "audiofilms_chrome", requiresPkce: true });
+    expect(response.headers.get("cache-control")).toContain("no-store");
+  });
+
   test("approve creates a grant and returns an authorization-code redirect", async () => {
     const getUser = vi.fn(async () => ({
       data: { user: { id: "user-1", email: "user@example.com" } },

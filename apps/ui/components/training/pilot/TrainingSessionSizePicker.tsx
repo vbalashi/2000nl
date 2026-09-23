@@ -3,7 +3,23 @@
 import React from "react";
 import type { TrainingSessionSize } from "@/lib/types";
 
-const STEPS = [5, 10, 15, 20, 30, 50, 100] as const;
+const BASE_STEPS: TrainingSessionSize[] = [
+  5, 10, 15, 20, 30, 50, "all-due-today",
+];
+
+const nearestStepIndex = (steps: TrainingSessionSize[], value: number) => {
+  let bestIndex = 0;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  steps.forEach((step, index) => {
+    if (typeof step !== "number") return;
+    const distance = Math.abs(step - value);
+    if (distance < bestDistance) {
+      bestIndex = index;
+      bestDistance = distance;
+    }
+  });
+  return bestIndex;
+};
 
 export function TrainingSessionSizePicker({
   value,
@@ -20,16 +36,17 @@ export function TrainingSessionSizePicker({
   allDueLabel: string;
   allDueHelp: string;
 }) {
-  const selectedIndex =
-    typeof value === "number"
-      ? STEPS.reduce(
-          (best, step, index) =>
-            Math.abs(step - value) < Math.abs(STEPS[best] - value)
-              ? index
-              : best,
-          0,
-        )
-      : 3;
+  // Keep a saved 100-exercise choice selectable until the learner moves the
+  // slider. New selections use the shorter scale ending at All due.
+  const steps = value === 100
+    ? [...BASE_STEPS.slice(0, -1), 100, "all-due-today" as const]
+    : BASE_STEPS;
+  const selectedIndex = value === "all-due-today"
+    ? steps.length - 1
+    : nearestStepIndex(steps, value);
+  const selectedLabel = value === "all-due-today"
+    ? allDueLabel
+    : exercisesLabel(value);
 
   return (
     <div>
@@ -41,42 +58,32 @@ export function TrainingSessionSizePicker({
           {label}
         </label>
         <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-          {value === "all-due-today" ? allDueLabel : exercisesLabel(value)}
+          {selectedLabel}
         </span>
       </div>
       <input
         id="training-session-size"
         type="range"
         min={0}
-        max={STEPS.length - 1}
+        max={steps.length - 1}
         step={1}
         value={selectedIndex}
-        onChange={(event) => onChange(STEPS[Number(event.target.value)])}
-        aria-valuetext={exercisesLabel(STEPS[selectedIndex])}
+        onChange={(event) => onChange(steps[Number(event.target.value)])}
+        aria-valuetext={selectedLabel}
         className="mt-4 h-8 w-full cursor-pointer accent-indigo-500"
       />
       <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
-        {STEPS.map((step) => (
-          <span key={step} className="w-7 text-center first:text-left last:text-right">
-            {step}
+        {steps.map((step) => (
+          <span key={step} className="w-7 text-center first:text-left last:w-auto last:text-right">
+            {step === "all-due-today" ? allDueLabel : step}
           </span>
         ))}
       </div>
-      <button
-        type="button"
-        aria-pressed={value === "all-due-today"}
-        onClick={() => onChange("all-due-today")}
-        className={`mt-4 min-h-10 w-full rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${
-          value === "all-due-today"
-            ? "border-indigo-500 bg-indigo-500/20 text-indigo-950 dark:text-indigo-100"
-            : "border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-300"
-        }`}
-      >
-        {allDueLabel}
-      </button>
-      <p className="mt-1 text-xs leading-4 text-slate-500 dark:text-slate-400">
-        {allDueHelp}
-      </p>
+      {value === "all-due-today" ? (
+        <p className="mt-1 text-xs leading-4 text-slate-500 dark:text-slate-400">
+          {allDueHelp}
+        </p>
+      ) : null}
     </div>
   );
 }
