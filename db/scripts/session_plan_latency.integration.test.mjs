@@ -3,6 +3,11 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import {
+  assertSessionPlanFunctionStats,
+  sessionPlanFunctionStatsDelta,
+  sessionPlanFunctionStatsSql,
+} from "./session_plan_function_stats.mjs";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 const baseDatabaseUrl = process.env.SESSION_PLAN_BENCHMARK_BASE_DB_URL;
@@ -67,22 +72,8 @@ function parseFirstJsonArray(output, offset = 0) {
   assert.fail(`Unterminated JSON array in ${JSON.stringify(output)}`);
 }
 
-const functionStatsSql = `SELECT COALESCE(
-  json_agg(json_build_object(
-    'schema', schemaname,
-    'function', funcname,
-    'calls', calls,
-    'totalMs', round(total_time::numeric, 3),
-    'selfMs', round(self_time::numeric, 3)
-  ) ORDER BY total_time DESC)::text,
-  '[]'
-)
-FROM pg_stat_user_functions
-WHERE calls > 0
-  AND (funcname LIKE '%training%' OR funcname LIKE '%schedule%');`;
-
 function readFunctionStats(targetUrl) {
-  const result = psql(targetUrl, `SELECT pg_stat_clear_snapshot(); ${functionStatsSql}`);
+  const result = psql(targetUrl, `SELECT pg_stat_clear_snapshot(); ${sessionPlanFunctionStatsSql()}`);
   assert.equal(result.status, 0, result.stderr);
   return parseFirstJsonArray(result.stdout);
 }
@@ -96,7 +87,11 @@ const planStatements = {
   )`,
 };
 
-function measure(targetUrl, statement = planStatements.public, { functionStats = false } = {}) {
+function measure(
+  targetUrl,
+  statement = planStatements.public,
+  { functionStats = false, overload } = {},
+) {
   // Every call gets a new backend, so function/query caches from earlier
   // samples cannot turn the first-call regression into a warm-only test.
   const statsBeforeRows = functionStats ? readFunctionStats(targetUrl) : [];
@@ -114,24 +109,10 @@ function measure(targetUrl, statement = planStatements.public, { functionStats =
   assert.notEqual(explainMarker, -1, `EXPLAIN marker missing from ${JSON.stringify(result.stdout)}`);
   const [explain] = parseFirstJsonArray(result.stdout, explainMarker);
   const statsAfterRows = functionStats ? readFunctionStats(targetUrl) : [];
-  const statsBeforeByFunction = new Map(
-    statsBeforeRows.map((row) => [`${row.schema}.${row.function}`, row]),
-  );
-  const functionStatsDelta = statsAfterRows
-    .map((row) => {
-      const before = statsBeforeByFunction.get(`${row.schema}.${row.function}`) ?? {
-        calls: 0,
-        totalMs: 0,
-        selfMs: 0,
-      };
-      return {
-        ...row,
-        calls: row.calls - before.calls,
-        totalMs: Number((row.totalMs - before.totalMs).toFixed(3)),
-        selfMs: Number((row.selfMs - before.selfMs).toFixed(3)),
-      };
-    })
-    .filter((row) => row.calls > 0);
+  const functionStatsDelta = functionStats
+    ? sessionPlanFunctionStatsDelta(statsBeforeRows, statsAfterRows)
+    : undefined;
+  if (functionStats) assertSessionPlanFunctionStats(functionStatsDelta, overload);
   return {
     executionMs: explain['Execution Time'],
     planningMs: explain['Planning Time'],
@@ -291,11 +272,18 @@ ANALYZE private.platform_v2_content_nodes;`);
       }
 
       // Keep nested PL/pgSQL timing on the disposable fixture.  This uses a
-      // fresh backend for each call and records only aggregate function names,
-      // call counts, and durations; it does not expose learner or card data.
+      // fresh backend for each call and records function OIDs/signatures,
+      // aggregate call counts, and durations; it does not expose learner or
+      // card data.
       const nestedTiming = {
-        public: measure(targetUrl, planStatements.public, { functionStats: true }),
-        uiPublic: measure(targetUrl, planStatements.uiPublic, { functionStats: true }),
+        public: measure(targetUrl, planStatements.public, {
+          functionStats: true,
+          overload: 'public',
+        }),
+        uiPublic: measure(targetUrl, planStatements.uiPublic, {
+          functionStats: true,
+          overload: 'uiPublic',
+        }),
       };
       t.diagnostic(JSON.stringify({ nestedTiming }));
       assert.ok(nestedTiming.public.executionMs <= 2000, JSON.stringify(nestedTiming));

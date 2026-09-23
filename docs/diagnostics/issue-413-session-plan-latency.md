@@ -3,6 +3,31 @@
 Date: 2026-09-22. Base commit: `93a9530f5839d7ce63dc8262ec1b889b091772fa`.
 Status: diagnosis and regression coverage; **the production timeout is not fixed**.
 
+## Attribution correction (2026-09-23)
+
+The Linux `/proc` readings in the production diagnostic runs came from the
+self-hosted GitHub Actions runner on the 2000NL NUC. They describe the NUC that
+runs the application and diagnostic client; they do **not** describe the
+managed Supabase database host. Earlier language that treated these readings as
+evidence against database-host CPU, memory, disk, or I/O pressure was too
+strong. The measurements only show that the NUC runner did not appear broadly
+saturated in those sampled intervals. Supabase compute health remains
+unmeasured.
+
+Likewise, `waitEventType=null` in a sampled `pg_stat_activity` row means no
+wait event was visible in that snapshot. It does not prove that the request had
+no transient wait or that Supabase had spare resources. The 2.141-second
+`EXPLAIN (ANALYZE)` execution time is real work observed inside PostgreSQL for
+that call, but the NUC telemetry and synthetic local timings do not explain why
+the same database path later ran in about 196 ms. Production data distribution,
+planner/runtime state, PostgREST, backend scheduling, and managed database
+resources remain possible contributors.
+
+The local `track_functions` run establishes only that the synthetic fixture's
+6- and 8-argument calls completed in under 100 ms and contained no measured
+multi-second helper. It does not exclude a production SQL plan/data-shape issue
+or establish equivalence with the production authenticated PostgREST role.
+
 ## Confirmed current failure
 
 - Historical deployment [35531469093](https://github.com/vbalashi/2000nl/actions/runs/35531469093)
@@ -141,9 +166,9 @@ the `next`, `filtered`, aggregate, and candidate components in **204.213 ms**,
 read/write blocks matched the earlier run.
 
 This makes the first-use shape repeatable after idle time, while the following
-calls on that backend remain fast. It strengthens the backend/pooler/runtime
-initialization hypothesis; it still cannot distinguish backend startup from
-pooler routing or host scheduling. Workflow run:
+calls on that backend remain fast. It confirms the timing shape but does not
+distinguish database resources, SQL/data-shape, backend state, or connection
+routing. The NUC sampler does not measure the managed database host. Workflow run:
 [35856210739](https://github.com/vbalashi/2000nl/actions/runs/35856210739).
 
 ## Synchronized activity telemetry
@@ -152,11 +177,10 @@ The readiness workflow now starts `scheduler_activity_sampler.mjs` alongside
 the bounded read-only probe for 30 seconds. The sampler reads only aggregate
 `pg_stat_activity` fields: backend PID/start, query start, state, wait type/event,
 and an allowlisted scheduler query class. It deliberately excludes SQL text and
-all learner/content payloads. This is the next attribution boundary: an active
-backend with a wait event during the first call points toward runtime/resource
-or pooler scheduling, while an active backend without a wait event leaves query
-execution as the remaining database-side hypothesis. The sampler itself does
-not reset statistics, change settings, or mutate data.
+all learner/content payloads. This is one attribution signal: a wait event in a
+snapshot is evidence of that wait at that instant; an active backend without a
+wait event only shows that no wait was visible in that snapshot. The sampler
+itself does not reset statistics, change settings, or mutate data.
 
 The first production run with the sampler was
 [35857186766](https://github.com/vbalashi/2000nl/actions/runs/35857186766),
@@ -170,14 +194,14 @@ event. The diagnostic still showed the usual first-call shape: the first public
 call was slow, later calls were roughly 143–201 ms, and shared reads stayed at
 zero.
 
-This makes a visible PostgreSQL lock/I/O wait less likely for this occurrence
-and moves the leading hypothesis toward CPU/runtime execution, backend
-initialization, or pooler routing. `pg_stat_activity` cannot rule out host-level
-CPU scheduling between samples, and the sampler does not prove the exact owner.
+This shows no lock/I/O wait event in the sampled activity row. It does not rule
+out transient waits, CPU/runtime scheduling, backend initialization, managed
+Supabase resource pressure, or production SQL/data-shape effects.
+`pg_stat_activity` cannot prove the exact owner.
 The sampler emitted no SQL text or learner data; no production state or
 configuration changed.
 
-## Production host correlation (2026-09-23)
+## Self-hosted NUC runner correlation (2026-09-23)
 
 PR #428 added a second bounded companion to the readiness workflow. It reads
 only aggregate Linux `/proc` metrics from the self-hosted runner: load,
@@ -191,22 +215,24 @@ database. The first run, [35859292253](https://github.com/vbalashi/2000nl/action
 measured the public session-plan at **1,584.773 ms** on backend `2208886`
 (backend start `2026-09-23 12:15:05.703736 UTC`). The activity sampler observed
 that backend active as `session-plan` with `waitEventType=null` and
-`waitEvent=null`. During the roughly two-second interval, host load was about
+`waitEvent=null`. During the roughly two-second interval, NUC-runner load was about
 `0.75`, memory available about `12.8 GB` of `16.3 GB`, CPU PSI `9–12%` with no
 full CPU pressure, and IO PSI `2–4%`; short CPU windows included some I/O wait
 but no sustained saturation.
 
 The second run, [35859394020](https://github.com/vbalashi/2000nl/actions/runs/35859394020),
 used the **same backend PID and start time** and measured the first public
-session-plan at **185.267 ms**. Its host load and PSI were actually higher
+session-plan at **185.267 ms**. NUC-runner load and PSI were actually higher
 (load up to `1.72`, CPU PSI up to `15.37%`, IO PSI up to `5.92%`), yet the
 query was fast. The sampler did not catch an active query because the calls
 completed too quickly.
 
-This paired result makes host-wide CPU/RAM/I/O saturation an insufficient
-explanation for the first-call pause. It strengthens the backend-local runtime
-initialization or pooler lifecycle hypothesis while leaving the exact owner
-unproven. No production state, database setting, or timeout changed.
+This paired result suggests broad saturation of the **NUC runner** is not a
+sufficient explanation for the first-call pause. It says nothing about CPU,
+memory, storage, or I/O pressure on the managed Supabase host. Backend-local
+runtime state, production SQL/data shape, PostgREST, pooler behavior, and cloud
+resource limits remain unseparated. No production state, database setting, or
+timeout changed.
 
 ## Exact UI overload comparison (2026-09-23)
 
@@ -248,12 +274,13 @@ after it took **193.346 ms** on that same backend/start. This reproduces the
 cold-first effect on the actual UI contract after idle.
 
 The activity sampler observed the slow UI `session-plan` active with
-`waitEventType=null` and `waitEvent=null`. During the slow interval, host load
+`waitEventType=null` and `waitEvent=null`. During the slow interval, NUC-runner load
 was about `1.02`, memory available about `12.8 GB` of `16.3 GB`, CPU PSI about
 `1–4.6%` with no full CPU pressure, and IO PSI about `0.9–2.4%`. The result
-therefore makes host-wide saturation, visible lock waits, and visible I/O waits
-insufficient explanations. The remaining boundary is backend/pooler/runtime
-initialization timing; no production state or configuration changed.
+shows no broad NUC-runner saturation and no wait event in the sampled database
+activity row. Neither observation rules out managed Supabase resource pressure,
+transient waits, or a production SQL/data-shape effect. No production state or
+configuration changed.
 
 ## Server execution versus outer wrapper time (2026-09-23)
 
@@ -318,11 +345,10 @@ near-two-second first call. The eight-argument UI overload was not exercised by
 this run and remains part of the separate production attribution plan.
 
 This is evidence against a generic 1-CPU/2-GB ceiling as the sole cause. It is
-not a production resource match: the actual host limits, storage behavior,
-pooler lifecycle, and CPU scheduling profile remain unknown. The next useful
-experiment therefore needs synchronized production host/pooler telemetry or a
-more faithful isolated profile, rather than a SQL rewrite or a larger release
-timeout.
+not a production resource match: the managed Supabase resource limits, storage
+behavior, pooler lifecycle, and CPU scheduling profile remain unknown. The next
+useful evidence is time-correlated Supabase metrics and matched HTTP/SQL paths,
+rather than a SQL rewrite or a larger release timeout.
 
 ## Repeated UI-first production probe (2026-09-23)
 
@@ -336,9 +362,9 @@ and following public samples 1–3 used backend `2211863`, started at
 
 The activity sampler caught the slow `session-plan` backend active with
 `waitEventType=null` and `waitEvent=null` (`queryStart=2026-09-23T13:01:56.782319Z`).
-The host sampler around that interval reported load about `0.25`, roughly
+The NUC-runner sampler around that interval reported load about `0.25`, roughly
 `12.7 GB` available out of `16.3 GB`, CPU PSI up to `5.09%`, and I/O PSI up to
-`1.65%`; it did not show host-wide saturation. Outer wrapper overhead stayed
+`1.65%`; it did not show broad NUC-runner saturation. Outer wrapper overhead stayed
 roughly **1.30–1.45 s** for both the slow and warm samples, while server-side
 execution changed from **1.596 s** to about **0.19 s**.
 
@@ -383,25 +409,29 @@ can fail on the symptom; it does **not** reproduce the production cause.
 
 ## What remains and next experiment
 
-No scheduler migration is justified yet. Current evidence ranks backend-local
-runtime initialization or pooler lifecycle above host-wide resource saturation
-and persistent query-volume regression. The isolated nested timing experiment
-found no multi-second helper in the representative fixture, so nested function
-execution is now separated from the remaining production-only boundary.
+No scheduler migration is justified yet. Available `/proc` data belongs to the
+NUC runner, not managed Supabase, so it cannot rank cloud resource limits below
+the other explanations. The isolated nested timing experiment found no
+multi-second helper in the representative fixture; it separates that fixture
+from the production observation but does not clear production SQL, planner, or
+data-shape effects.
 
-The constrained profile, synchronized host sampler, exact UI-overload
+The constrained profile, synchronized NUC-runner sampler, exact UI-overload
 comparison, controlled-idle UI reproduction, server/outer timing split, and
 nested function timing have now been completed. The next useful evidence is
-pooler/backend lifecycle correlation around an idle-to-first-call transition:
-keep production checks read-only, capture backend PID/start and activity state,
-and compare a fresh or reused backend with the same exact UI overload. Do not
-enable invasive tracing or change runtime settings there. Reproduce the
-near-two-second server-side first-call behavior before changing SQL or release
-timeout; compare one variable at a time. Restart/evict caches only on the
-isolated instance, never on the shared QA or production database.
+time-correlated managed Supabase compute and connection metrics plus a matched
+authenticated PostgREST/SQL comparison for the exact UI overload. Existing
+idle/backend probes already reproduce the first-use shape and should not be
+repeated without a discriminating comparison. Keep production checks read-only
+and bounded on the existing authenticated browser/diagnostic session. Do not
+enable invasive tracing or change runtime settings there. Do not change SQL or
+the release timeout until the production cause is better distinguished. Any
+cold-cache experiment belongs only on an isolated instance.
 
-If the isolated instance cannot reproduce it, the next missing evidence is
-pooler/backend lifecycle telemetry that can distinguish a backend-local runtime
-event from connection routing. Query counters and host load alone cannot make
-that attribution. Do not increase the release timeout, add warm-up retries, or
-treat the issue as completed on the strength of passing local tests.
+The isolated synthetic instance did not reproduce the production delay. The
+remaining evidence gap is time-correlated managed Supabase metrics and matched
+authenticated PostgREST/SQL request-path telemetry that can distinguish a
+resource limit from query/data-shape or API-layer work. Query counters and NUC
+runner load alone cannot make that attribution. Do not increase the release
+timeout, add warm-up retries, or treat the issue as completed on the strength
+of passing local tests.
