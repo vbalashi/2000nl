@@ -19,6 +19,7 @@ function parseArgs(argv) {
     envFile: "",
     samples: 5,
     statementTimeoutMs: 10_000,
+    firstComponent: "public",
   };
   for (let index = 0; index < argv.length; index += 2) {
     const arg = argv[index];
@@ -33,6 +34,7 @@ function parseArgs(argv) {
     else if (arg === "--env-file") options.envFile = value;
     else if (arg === "--samples") options.samples = Number.parseInt(value, 10);
     else if (arg === "--statement-timeout-ms") options.statementTimeoutMs = Number.parseInt(value, 10);
+    else if (arg === "--first-component") options.firstComponent = value;
     else throw new Error(`Unknown argument: ${arg}`);
   }
   if (!Number.isSafeInteger(options.samples) || options.samples < 1 || options.samples > 10) {
@@ -44,6 +46,9 @@ function parseArgs(argv) {
     options.statementTimeoutMs > 60_000
   ) {
     throw new Error("--statement-timeout-ms must be between 2001 and 60000");
+  }
+  if (!["public", "ui-public"].includes(options.firstComponent)) {
+    throw new Error("--first-component must be public or ui-public");
   }
   return options;
 }
@@ -228,6 +233,11 @@ export function explainMetrics(output, component, sample) {
   };
 }
 
+export function componentOrder(firstComponent = "public") {
+  const first = firstComponent === "ui-public" ? ["ui-public", "public"] : ["public", "ui-public"];
+  return [...first, "next", "filtered", "aggregate", "candidate"];
+}
+
 function runSample(options, childEnv, component, sample) {
   // Each sample opens a client connection, but a transaction pooler may reuse
   // a physical backend and its function/plan caches. Report backend identity
@@ -264,7 +274,7 @@ async function main() {
   // with the deployment gate. The selector, aggregate, and candidate passes
   // then attribute the same scheduler work without exposing the full EXPLAIN
   // plan in CI logs.
-  for (const component of ["public", "ui-public", "next", "filtered", "aggregate", "candidate"]) {
+  for (const component of componentOrder(options.firstComponent)) {
     for (let sample = 1; sample <= options.samples; sample += 1) {
       const metrics = runSample(options, childEnv, component, sample);
       process.stdout.write(

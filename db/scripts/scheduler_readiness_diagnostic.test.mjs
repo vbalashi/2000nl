@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { diagnosticSql, explainMetrics } from './scheduler_readiness_diagnostic.mjs';
+import { componentOrder, diagnosticSql, explainMetrics } from './scheduler_readiness_diagnostic.mjs';
 
 test('diagnostic records physical backend identity inside the read-only transaction', () => {
   const sql = diagnosticSql({ statementTimeoutMs: 3000 }, 'public');
@@ -17,6 +17,11 @@ test('diagnostic includes the exact eight-argument UI session-plan overload', ()
   const sql = diagnosticSql({ statementTimeoutMs: 3000 }, 'ui-public');
   assert.match(sql, /get_training_session_plan\([\s\S]*'10',[\s\n]*2\n\s*\)/);
   assert.match(sql, /BEGIN READ ONLY/);
+});
+
+test('component order can make the UI overload the first call', () => {
+  assert.deepEqual(componentOrder('ui-public'), ['ui-public', 'public', 'next', 'filtered', 'aggregate', 'candidate']);
+  assert.deepEqual(componentOrder('public'), ['public', 'ui-public', 'next', 'filtered', 'aggregate', 'candidate']);
 });
 
 test('metrics keep outer planning distinct from execution and preserve reused backend identity', () => {
