@@ -270,6 +270,41 @@ initiator or argument signature, its exact cause remains unknown; the request
 is consistent with intended speculative next-card preparation, not proven to
 be that call.
 
+### Additional authenticated root-page trace in a new Chrome tab (2026-09-23)
+
+One more navigation was captured in a separate tab in the same authorized
+Chrome profile at `2026-09-23T17:44:53.595Z`. The browser profile already had
+the production app open, so this is a new-tab navigation, not a cold browser or
+cache experiment. No controls were clicked. The first observed UI state was
+`Preparing training`; a later accessibility snapshot showed the Today `Quick
+start` and `Continue session` controls. The precise time those controls first
+became available was not captured. No answer/review or progress action was
+performed.
+
+The document returned quickly (`responseStart=109 ms`, DOMContentLoaded `164
+ms`, load `214 ms`). Sanitized Resource Timing entries show:
+
+| Request | Start after navigation | Duration | Server timing |
+|---|---:|---:|---|
+| `get_learning_preferences` | 738 ms | 709 ms | not exposed |
+| setup/scope/bootstrap RPCs | 1,820–2,109 ms | 95–412 ms | not exposed |
+| `get_detailed_training_stats` | 2,208 ms | 4,205 ms | not exposed |
+| first `get_next_card` | 2,208 ms | 5,659 ms | not exposed |
+| first `/api/platform/v2/lookup` | 7,872 ms | 5,042 ms | route 4,953 ms; auth 959 ms; operation 3,992 ms; exact-group 3,528 ms; user-state 336 ms; translations 461 ms |
+| later `get_next_card` | 12,999 ms | 2,087 ms | not exposed |
+| later `/api/platform/v2/lookup` calls | 15,091 / 15,708 ms | 3,213 / 2,664 ms | exact-group 2,440 / 2,316 ms |
+
+This one root navigation confirms the same sequential selection → projection
+path in the exact production tab: the first projection RPC begins immediately
+after the first selection returns. It also shows a later selection and two
+more projection requests. Since argument bodies and initiators were not
+retained, their identities and purpose cannot be inferred. The SQL execution
+time within the Supabase HTTP RPC is not exposed by these timings. Browser
+Resource Timing has no useful cross-origin response-start detail for the
+PostgREST calls; the same-origin application route does expose its server
+timings. Treat this as one additional sample (not a percentile or a cold-start
+result), with the user-visible ready transition still lacking an exact marker.
+
 ## Harness correction
 
 `session_plan_latency.integration.test.mjs` previously diffed
