@@ -177,6 +177,37 @@ CPU scheduling between samples, and the sampler does not prove the exact owner.
 The sampler emitted no SQL text or learner data; no production state or
 configuration changed.
 
+## Production host correlation (2026-09-23)
+
+PR #428 added a second bounded companion to the readiness workflow. It reads
+only aggregate Linux `/proc` metrics from the self-hosted runner: load,
+CPU-window percentages, memory availability, and CPU/I/O pressure. It does not
+read process command lines, environment variables, SQL, credentials, or learner
+data. The workflow still runs the database probe and activity sampler when the
+runner lacks `/proc`.
+
+Two one-sample runs were then executed against the unchanged production
+database. The first run, [35859292253](https://github.com/vbalashi/2000nl/actions/runs/35859292253),
+measured the public session-plan at **1,584.773 ms** on backend `2208886`
+(backend start `2026-09-23 12:15:05.703736 UTC`). The activity sampler observed
+that backend active as `session-plan` with `waitEventType=null` and
+`waitEvent=null`. During the roughly two-second interval, host load was about
+`0.75`, memory available about `12.8 GB` of `16.3 GB`, CPU PSI `9–12%` with no
+full CPU pressure, and IO PSI `2–4%`; short CPU windows included some I/O wait
+but no sustained saturation.
+
+The second run, [35859394020](https://github.com/vbalashi/2000nl/actions/runs/35859394020),
+used the **same backend PID and start time** and measured the first public
+session-plan at **185.267 ms**. Its host load and PSI were actually higher
+(load up to `1.72`, CPU PSI up to `15.37%`, IO PSI up to `5.92%`), yet the
+query was fast. The sampler did not catch an active query because the calls
+completed too quickly.
+
+This paired result makes host-wide CPU/RAM/I/O saturation an insufficient
+explanation for the first-call pause. It strengthens the backend-local runtime
+initialization or pooler lifecycle hypothesis while leaving the exact owner
+unproven. No production state, database setting, or timeout changed.
+
 ## Constrained resource experiment (2026-09-23)
 
 To test whether a simple resource ceiling is sufficient to recreate the first-
@@ -234,22 +265,21 @@ can fail on the symptom; it does **not** reproduce the production cause.
 
 ## What remains and next experiment
 
-No scheduler migration is justified yet. Current evidence ranks backend/runtime
-initialization, pooler routing, or transient host scheduling above persistent
-query-volume regression; contention and nested planning have not been separated.
+No scheduler migration is justified yet. Current evidence ranks backend-local
+runtime initialization or pooler lifecycle above host-wide resource saturation
+and persistent query-volume regression; contention and nested planning have not
+been separated.
 
-The simple constrained profile has now been tested without reproducing the
-symptom. Next, obtain synchronized read-only production host/pooler telemetry
-during an ordinary failed readiness run, or reproduce the exact production
-resource/storage profile in isolation. Then run both the exact six-argument
-manifest probe and the current eight-argument UI RPC as the first call on each
-genuinely new direct backend (record PID/start), compare with two calls in that
-backend, and repeat through a transaction pooler while collecting host CPU
-scheduling/I/O/wait telemetry. Enable nested statement planning/execution
-timing only in that isolated environment. Reproduce the near-two-second
-first-call behavior before changing SQL or runtime settings; compare one
-variable at a time. Restart/evict caches only on the isolated instance, never
-on the shared QA or production database.
+The constrained profile and synchronized host sampler have now been tested.
+Next, isolate the remaining backend/pooler boundary: correlate pooler routing
+and backend PID/start with a fresh first call, capture any available pooler
+connection or server-side runtime timing, and repeat the six-argument manifest
+probe alongside the eight-argument UI RPC. Use a genuinely new backend for the
+first call and two follow-up calls on that same backend. Enable nested statement
+planning/execution timing only in an isolated environment. Reproduce the
+near-two-second first-call behavior before changing SQL or runtime settings;
+compare one variable at a time. Restart/evict caches only on the isolated
+instance, never on the shared QA or production database.
 
 If the isolated instance cannot reproduce it, the next missing evidence is
 synchronized read-only production host/pooler telemetry during an ordinary
