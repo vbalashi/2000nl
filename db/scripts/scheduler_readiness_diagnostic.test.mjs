@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { clientOverheadMs, componentOrder, diagnosticSql, explainMetrics } from './scheduler_readiness_diagnostic.mjs';
+import { componentOrder, diagnosticSql, explainMetrics, outerOverheadMs } from './scheduler_readiness_diagnostic.mjs';
 
 test('diagnostic records physical backend identity inside the read-only transaction', () => {
   const sql = diagnosticSql({ statementTimeoutMs: 3000 }, 'public');
@@ -24,8 +24,8 @@ test('component order can make the UI overload the first call', () => {
   assert.deepEqual(componentOrder('public'), ['public', 'ui-public', 'next', 'filtered', 'aggregate', 'candidate']);
 });
 
-test('client overhead keeps connection and pooler time separate from server execution', () => {
-  assert.equal(clientOverheadMs(2050.25, 1805.75), 244.5);
+test('outer overhead keeps wrapper time separate from server execution', () => {
+  assert.equal(outerOverheadMs(2050.25, 1805.75), 244.5);
 });
 
 test('metrics keep outer planning distinct from execution and preserve reused backend identity', () => {

@@ -234,8 +234,8 @@ export function explainMetrics(output, component, sample) {
   };
 }
 
-export function clientOverheadMs(clientElapsedMs, executionMs) {
-  return clientElapsedMs - executionMs;
+export function outerOverheadMs(outerElapsedMs, executionMs) {
+  return outerElapsedMs - executionMs;
 }
 
 export function componentOrder(firstComponent = "public") {
@@ -248,7 +248,7 @@ function runSample(options, childEnv, component, sample) {
   // a physical backend and its function/plan caches. Report backend identity
   // instead of claiming that fresh clients prove a cold-backend measurement.
   // Shared buffers and operating-system caches deliberately remain shared.
-  const clientStartedAt = performance.now();
+  const outerStartedAt = performance.now();
   const result = spawnPostgresClient(
     options,
     ["-X", "--no-psqlrc", "--tuples-only", "--no-align", "--set=ON_ERROR_STOP=1"],
@@ -260,14 +260,14 @@ function runSample(options, childEnv, component, sample) {
       timeout: 15 * 60 * 1000,
     },
   );
-  const clientElapsedMs = performance.now() - clientStartedAt;
+  const outerElapsedMs = performance.now() - outerStartedAt;
   const output = redact(`${result.stdout ?? ""}${result.stderr ?? ""}`);
   if (result.error) throw new Error(`PostgreSQL client runtime failed: ${result.error.message}`);
   if (result.signal) throw new Error(`psql stopped by ${result.signal}`);
   if (result.status !== 0) {
     throw new Error(`${component} sample ${sample} failed${output.trim() ? `: ${output.trim()}` : ""}`);
   }
-  return { ...explainMetrics(output, component, sample), clientElapsedMs };
+  return { ...explainMetrics(output, component, sample), outerElapsedMs };
 }
 
 async function main() {
@@ -287,8 +287,8 @@ async function main() {
       process.stdout.write(
         `scheduler-readiness-${component}-sample-${sample}` +
         ` execution_ms=${metrics.executionMs.toFixed(3)}` +
-        ` client_elapsed_ms=${metrics.clientElapsedMs.toFixed(3)}` +
-        ` client_overhead_ms=${clientOverheadMs(metrics.clientElapsedMs, metrics.executionMs).toFixed(3)}` +
+        ` outer_elapsed_ms=${metrics.outerElapsedMs.toFixed(3)}` +
+        ` outer_overhead_ms=${outerOverheadMs(metrics.outerElapsedMs, metrics.executionMs).toFixed(3)}` +
         ` planning_ms=${metrics.planningMs.toFixed(3)}` +
         ` planning_hit=${metrics.planningHit}` +
         ` planning_read=${metrics.planningRead}` +
