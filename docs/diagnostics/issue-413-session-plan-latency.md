@@ -177,6 +177,27 @@ CPU scheduling between samples, and the sampler does not prove the exact owner.
 The sampler emitted no SQL text or learner data; no production state or
 configuration changed.
 
+## Constrained resource experiment (2026-09-23)
+
+To test whether a simple resource ceiling is sufficient to recreate the first-
+call pause, the disposable fixture was run against a separate PostgreSQL 17.6
+container using the same Supabase PostgreSQL image family, capped at **1 CPU and
+2 GB RAM**. The shared local Supabase instance, QA database, and production
+database were not used or changed. The container was removed after the run.
+
+The current-plan integration test passed. Its three direct calls measured
+**87.793 / 87.032 / 88.056 ms**, with the expected first-call read pattern
+(19 shared reads, then zero) and the existing temporary-write shape. The
+fixture therefore stayed bounded even under this representative constrained
+profile and did not reproduce the production near-two-second first call.
+
+This is evidence against a generic 1-CPU/2-GB ceiling as the sole cause. It is
+not a production resource match: the actual host limits, storage behavior,
+pooler lifecycle, and CPU scheduling profile remain unknown. The next useful
+experiment therefore needs synchronized production host/pooler telemetry or a
+more faithful isolated profile, rather than a SQL rewrite or a larger release
+timeout.
+
 ## Repeatable local feedback loop
 
 ```sh
@@ -212,19 +233,21 @@ can fail on the symptom; it does **not** reproduce the production cause.
 ## What remains and next experiment
 
 No scheduler migration is justified yet. Current evidence ranks backend/runtime
-initialization or transient resource scheduling above persistent query-volume
-regression; contention and nested planning have not been separated.
+initialization, pooler routing, or transient host scheduling above persistent
+query-volume regression; contention and nested planning have not been separated.
 
-Next, use an isolated PostgreSQL 17.6 environment with the production instance's
-CPU/memory/storage limits and representative anonymized content multiplicities.
-Run both the exact six-argument manifest probe and the current eight-argument UI
-RPC as the first call on each genuinely new direct backend (record PID/start),
-compare with two calls in that backend, and repeat through a transaction pooler
-while collecting host CPU scheduling/I/O/wait telemetry. Enable nested statement
-planning/execution timing only in that isolated environment. Reproduce the
-near-two-second first-call behavior before changing SQL or runtime settings;
-compare one variable at a time. Restart/evict caches only on the isolated
-instance, never on the shared QA or production database.
+The simple constrained profile has now been tested without reproducing the
+symptom. Next, obtain synchronized read-only production host/pooler telemetry
+during an ordinary failed readiness run, or reproduce the exact production
+resource/storage profile in isolation. Then run both the exact six-argument
+manifest probe and the current eight-argument UI RPC as the first call on each
+genuinely new direct backend (record PID/start), compare with two calls in that
+backend, and repeat through a transaction pooler while collecting host CPU
+scheduling/I/O/wait telemetry. Enable nested statement planning/execution
+timing only in that isolated environment. Reproduce the near-two-second
+first-call behavior before changing SQL or runtime settings; compare one
+variable at a time. Restart/evict caches only on the isolated instance, never
+on the shared QA or production database.
 
 If the isolated instance cannot reproduce it, the next missing evidence is
 synchronized read-only production host/pooler telemetry during an ordinary
