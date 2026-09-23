@@ -73,14 +73,31 @@ client scheduler block took 365.844, 374.972, and 367.351 ms. This confirms that
 the exact gate is currently fast on the backend and conditions sampled. It does
 not reproduce a new backend under a controlled cold-start condition.
 
+The current UI sends the eight-argument `get_training_session_plan` overload
+(including `p_session_size='10'` and `p_new_review_ratio=2`). A separate direct
+`PERFORM` through the same production pooler, bounded at 3,000 ms and run with
+the dedicated QA identity, measured 1,948.890 ms on the first call and 216.995 /
+215.490 ms on the next two calls. The three transactions reported the same
+backend PID and start time. The first measured call was therefore a real
+current-path near-two-second observation on a backend whose recorded start time
+was 2026-09-23 09:35:23 UTC, followed by fast calls on that backend. The test
+discarded the returned plan and exposed no learner content. The diagnostic used
+a 3,000 ms bound to observe latency rather than
+abort at 2,000 ms; the first sample was still just under the deploy threshold.
+Because the transaction pooler may route a standalone `DISCARD PLANS` statement
+to a different backend than the following transaction, this does not prove that
+the plan cache was explicitly invalidated on the measured backend.
+
 A read-only `pg_stat_statements` snapshot had last reset at
 2026-05-16 15:55:11 UTC. It showed the pre-switch session-plan DO block at a
 maximum of 1,916.2 ms over 68 calls, while normalized PostgREST session-plan
 calls had historical maxima of 6,477.7 ms (45 calls, six-argument signature)
-and 7,350.9 ms (69 calls, seven-argument signature). These counters span several
-months and database contracts, and do not identify the call timestamp, caller,
-or parameter values; they are a lead for production API-path investigation, not
-proof that the current deploy probe exceeded its bound. The separate diagnostic
+and 7,350.9 ms (69 calls, seven-argument signature). The current UI calls the
+eight-argument overload; these six/seven-argument API entries are legacy
+signatures and may reflect older app versions or other callers. The counters
+span several months and database contracts, and do not identify the call
+timestamp, caller, or parameter values. They are context, not proof that the
+current UI path or deploy probe exceeded its bound. The separate diagnostic
 EXPLAIN wrapper's 2,115.683 ms first sample is also not the exact deploy probe.
 
 No learner/business data or database configuration was changed. Do not reset
@@ -126,13 +143,14 @@ regression; contention and nested planning have not been separated.
 
 Next, use an isolated PostgreSQL 17.6 environment with the production instance's
 CPU/memory/storage limits and representative anonymized content multiplicities.
-Run the same exact manifest probe as the first call on each genuinely new direct
-backend (record PID/start), compare with two calls in that backend, and repeat
-through a transaction pooler while collecting host CPU scheduling/I/O/wait
-telemetry. Enable nested statement planning/execution timing only in that
-isolated environment. Reproduce a >2-second first call before changing SQL or
-runtime settings; compare one variable at a time. Restart/evict caches only on
-the isolated instance, never on the shared QA or production database.
+Run both the exact six-argument manifest probe and the current eight-argument UI
+RPC as the first call on each genuinely new direct backend (record PID/start),
+compare with two calls in that backend, and repeat through a transaction pooler
+while collecting host CPU scheduling/I/O/wait telemetry. Enable nested statement
+planning/execution timing only in that isolated environment. Reproduce the
+near-two-second first-call behavior before changing SQL or runtime settings;
+compare one variable at a time. Restart/evict caches only on the isolated
+instance, never on the shared QA or production database.
 
 If the isolated instance cannot reproduce it, the next missing evidence is
 synchronized read-only production host/pooler telemetry during an ordinary
