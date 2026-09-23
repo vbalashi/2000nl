@@ -60,6 +60,32 @@ transaction-local 16 MB work-memory experiment removed all temporary spilling,
 but still measured 1,027.006 / 186.965 ms. This rules out spilling as a sufficient
 explanation; it does not prove memory is irrelevant or justify a global change.
 
+## Production deployment-probe recheck (2026-09-23)
+
+Replayed the current contract-156 read-only pre-switch SQL through the production
+transaction pooler: `DISCARD PLANS`, `BEGIN READ ONLY`, the existing 2,000 ms
+statement timeout, JIT off, and the committed `pre-switch-read-probe-156.sql`
+include chain. All six bounded client runs completed without a statement timeout.
+The detailed second batch used the same physical backend PID/start time across
+its three runs; its session-plan DO block took 213.011, 219.507, and 218.535 ms.
+The adjacent next-card block took 213.782, 219.763, and 219.495 ms; the cached
+client scheduler block took 365.844, 374.972, and 367.351 ms. This confirms that
+the exact gate is currently fast on the backend and conditions sampled. It does
+not reproduce a new backend under a controlled cold-start condition.
+
+A read-only `pg_stat_statements` snapshot had last reset at
+2026-05-16 15:55:11 UTC. It showed the pre-switch session-plan DO block at a
+maximum of 1,916.2 ms over 68 calls, while normalized PostgREST session-plan
+calls had historical maxima of 6,477.7 ms (45 calls, six-argument signature)
+and 7,350.9 ms (69 calls, seven-argument signature). These counters span several
+months and database contracts, and do not identify the call timestamp, caller,
+or parameter values; they are a lead for production API-path investigation, not
+proof that the current deploy probe exceeded its bound. The separate diagnostic
+EXPLAIN wrapper's 2,115.683 ms first sample is also not the exact deploy probe.
+
+No learner/business data or database configuration was changed. Do not reset
+production statistics or tune server settings to investigate further.
+
 ## Repeatable local feedback loop
 
 ```sh
