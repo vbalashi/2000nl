@@ -190,6 +190,11 @@ export async function setupAuthenticatedTrainingAttributionPage(
   const consumedSessionEntryIds = new Set<string>();
   const unavailableSessionEntryIds = new Set<string>();
   const statsRequests: Record<string, unknown>[] = [];
+  const requestTimes = {
+    scheduler: [] as number[],
+    stats: [] as number[],
+    projection: [] as number[],
+  };
   const scenarioRequests: Record<string, unknown>[] = [];
   const failWarmupLookupsForEntries = new Set<string>();
   const lookupAttempts = new Map<string, number>();
@@ -264,6 +269,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   await page.route("**/api/platform/v2/lookup", async (route) => {
     const body = route.request().postDataJSON?.() ?? {};
     projectionLookupRequests.push({ ...body });
+    requestTimes.projection.push(Date.now());
     await wait(options.lookupDelayMs ?? 0);
     const entryId = typeof body.entryId === "string" ? body.entryId : "";
     const entry = entries.find((candidate) => candidate.id === entryId);
@@ -508,6 +514,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
 
     if (pathname.endsWith("/rpc/get_next_card")) {
       schedulerRequests.push({ ...body });
+      requestTimes.scheduler.push(Date.now());
       await wait(options.schedulerDelayMs ?? 0);
       const forcedOutcome = schedulerOutcomes.shift();
       if (forcedOutcome === "statement-timeout") {
@@ -786,6 +793,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     }
     if (pathname.endsWith("/rpc/get_detailed_training_stats")) {
       statsRequests.push({ ...body });
+      requestTimes.stats.push(Date.now());
       await wait(options.statsDelayMs ?? 0);
       await fulfillJson(
         route,
@@ -890,6 +898,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
       progressActions: progressActionRequests,
       progressActionReconciliations: progressActionReconciliationRequests,
       projectionLookups: projectionLookupRequests,
+      requestTimes,
       unavailable: unavailableSessionRequests,
       stats: statsRequests,
       scenarios: scenarioRequests,
