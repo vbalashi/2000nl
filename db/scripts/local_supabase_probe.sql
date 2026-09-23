@@ -17,6 +17,25 @@ begin
     raise exception 'missing auth.users table';
   end if;
 
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'training_sessions'
+      and column_name = 'new_review_ratio'
+  ) then
+    raise exception 'missing migration 156 training_sessions.new_review_ratio';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.training_sessions'::regclass
+      and conname = 'training_sessions_new_review_ratio_check'
+  ) then
+    raise exception 'missing migration 156 training_sessions_new_review_ratio_check';
+  end if;
+
   if not exists (select 1 from pg_roles where rolname = 'anon') then
     raise exception 'missing anon role';
   end if;

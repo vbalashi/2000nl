@@ -151,6 +151,10 @@ export NEXT_DIST_DIR="${NEXT_DIST_DIR:-.next-dev}"
 
 export APP_ROLLOUT_PROFILE="pilot"
 
+# Fail before creating the local QA user or starting Next when this retained
+# Supabase database does not satisfy the schema contract for this checkout.
+"$repo_root/scripts/db-local-supabase.sh" probe
+
 echo "Starting UI against local Supabase:"
 echo "  UI:       http://localhost:$port"
 echo "  Supabase: $NEXT_PUBLIC_SUPABASE_URL"

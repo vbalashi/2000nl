@@ -54,6 +54,13 @@ A fresh `bootstrap.sql` database intentionally has no deployment receipts. Use
 `probe` for that state; failure of `check` is not evidence that the bootstrap is
 invalid.
 
+The local UI launcher runs `scripts/db-local-supabase.sh probe` before creating
+the QA account or starting Next. A failed probe means the retained database is
+not ready for browser acceptance, even if the health endpoint responds. Repair
+the database through the reviewed local migration/rebuild procedure before
+retrying the launcher; do not bypass the probe or insert synthetic deployment
+receipts.
+
 If `check` fails, preserve data only when it is intentional or needed for a
 comparison. The canonical local QA database may be rebuilt from checked-in
 migrations instead.

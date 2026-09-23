@@ -14,6 +14,10 @@ describe("local launcher", () => {
     expect(script).toContain("scripts/check-qa-server.mjs");
     expect(script).toContain("SUPABASE_TELEMETRY_DISABLED=1");
     expect(script).toContain("DO_NOT_TRACK=1");
+    expect(script).toContain('"$repo_root/scripts/db-local-supabase.sh" probe');
+    expect(script.indexOf('"$repo_root/scripts/db-local-supabase.sh" probe')).toBeLessThan(
+      script.indexOf("scripts/ensure-local-qa-account.js"),
+    );
     expect(script).not.toContain("export PLATFORM_V2_LOOKUP_ENABLED=");
     expect(script).not.toContain("export NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI=");
   });
