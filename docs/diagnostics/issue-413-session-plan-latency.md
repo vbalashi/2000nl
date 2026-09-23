@@ -146,7 +146,7 @@ initialization hypothesis; it still cannot distinguish backend startup from
 pooler routing or host scheduling. Workflow run:
 [35856210739](https://github.com/vbalashi/2000nl/actions/runs/35856210739).
 
-## Synchronized activity telemetry (next probe)
+## Synchronized activity telemetry
 
 The readiness workflow now starts `scheduler_activity_sampler.mjs` alongside
 the bounded read-only probe for 30 seconds. The sampler reads only aggregate
@@ -157,6 +157,25 @@ backend with a wait event during the first call points toward runtime/resource
 or pooler scheduling, while an active backend without a wait event leaves query
 execution as the remaining database-side hypothesis. The sampler itself does
 not reset statistics, change settings, or mutate data.
+
+The first production run with the sampler was
+[35857186766](https://github.com/vbalashi/2000nl/actions/runs/35857186766),
+with three readiness samples. During the slow first public plan
+(`1821.433 ms`, backend `2207693`, query start `2026-09-23 11:53:54.093 UTC`),
+the sampler observed an active `session-plan` backend with both
+`waitEventType=null` and `waitEvent=null`; it disappeared after the call
+completed. A later `filtered-card` backend was observed with the same empty
+wait fields. No sampled scheduler call exposed a lock, I/O, or timeout wait
+event. The diagnostic still showed the usual first-call shape: the first public
+call was slow, later calls were roughly 143–201 ms, and shared reads stayed at
+zero.
+
+This makes a visible PostgreSQL lock/I/O wait less likely for this occurrence
+and moves the leading hypothesis toward CPU/runtime execution, backend
+initialization, or pooler routing. `pg_stat_activity` cannot rule out host-level
+CPU scheduling between samples, and the sampler does not prove the exact owner.
+The sampler emitted no SQL text or learner data; no production state or
+configuration changed.
 
 ## Repeatable local feedback loop
 
