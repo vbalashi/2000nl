@@ -311,14 +311,15 @@ The Supabase Database Observability page was set to the overlapping
 commitment **1.23 GB**, CPU **1.39%**, network **22.4 KB/s**, and **7 IOPS**.
 The ten-minute commitment plot appears to stay near the displayed **1.24 GB**
 commit-limit line; the CPU plot is mostly idle. The memory-usage chart also
-shows a sustained visible `Swap` segment throughout the plotted interval. In
-Supabase's documentation, swap means physical RAM is exhausted, and sustained
-swap indicates memory pressure that can degrade database performance
+shows a visible `Swap` segment throughout the plotted interval. This is swap
+occupancy, not a measurement of page-in/page-out activity during the slow RPCs;
+previously swapped pages may remain allocated after pressure subsides. Likewise,
+memory commitment is promised virtual memory, not resident usage. Supabase's
+documentation warns about sustained swap *activity* and high commitment
 ([Database Observability](https://supabase.com/docs/guides/observability/reports#memory-usage)).
-This makes managed-database memory pressure a credible contributor to test
-alongside expensive SQL and app concurrency. The plotted value was not
-extracted at the exact RPC seconds, so it remains interval-level evidence, not
-causal attribution. The screenshot did not expose an exact swap number.
+These charts justify checking connections, query allocations, and swap I/O at
+the same request times, but do not establish contemporaneous memory pressure or
+causation. The screenshot did not expose an exact swap number.
 Disk-throughput, connection, and disk-usage panels did not load; the separate
 size card showed **0.48 GB / 8 GB**. Low CPU weakens sustained CPU saturation
 for this interval.
@@ -408,10 +409,10 @@ CI run.
 - [ ] Verified NUC geographic location — still undocumented in the repository.
 - [ ] Obtained per-request CPU/memory/disk/connection metrics for the managed
   database. A 10-minute resource chart overlaps one #421 root navigation and
-  shows low CPU, memory commitment near the plotted limit, and sustained visible
-  swap. This is a credible memory-pressure signal but remains too coarse to
-  join to individual RPCs; other resource panels failed to load, and #413 plus
-  earlier #421 traces remain unmatched.
+  shows low CPU, memory commitment near the plotted limit, and visible swap
+  occupancy. Neither chart measures swap I/O or resident pressure at the RPC
+  seconds. Other resource panels failed to load, and #413 plus earlier #421
+  traces remain unmatched.
 - [ ] Matched direct SQL / transaction-pooler calls to actual PostgREST calls
   using the same QA principal, role/RLS, inputs, and data scope — not complete.
   Existing #421 HTTP traces have no matched SQL baseline; #413 SQL calls do not
@@ -437,7 +438,7 @@ CI run.
   resource layer dominates.
 
 Next discriminating step: determine whether the same QA startup path's query
-concurrency coincides with elevated committed memory/swap, then compare its
+concurrency coincides with active swap I/O or low free memory, then compare its
 actual PostgREST request with role/RLS-equivalent SQL for the same principal,
 arguments, and data scope. The equivalent SQL path and a reliable per-request
 metric export are not yet available in this task. Preserve the existing sample
