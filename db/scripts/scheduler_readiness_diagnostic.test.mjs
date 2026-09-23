@@ -5,6 +5,7 @@ import {
   diagnosticSql,
   explainMetrics,
   outerOverheadMs,
+  parseArgs,
   redactDiagnosticOutput,
 } from './scheduler_readiness_diagnostic.mjs';
 
@@ -47,6 +48,14 @@ test('diagnostic includes the exact eight-argument UI session-plan overload', ()
 test('component order can make the UI overload the first call', () => {
   assert.deepEqual(componentOrder('ui-public'), ['ui-public', 'public', 'next', 'filtered', 'aggregate', 'candidate']);
   assert.deepEqual(componentOrder('public'), ['public', 'ui-public', 'next', 'filtered', 'aggregate', 'candidate']);
+});
+
+test('production diagnostic sample count is capped at three', () => {
+  assert.equal(parseArgs([]).samples, 3);
+  assert.equal(parseArgs(['--samples', '1']).samples, 1);
+  assert.equal(parseArgs(['--samples', '3']).samples, 3);
+  assert.throws(() => parseArgs(['--samples', '4']), /between 1 and 3/);
+  assert.throws(() => parseArgs(['--samples', '0']), /between 1 and 3/);
 });
 
 test('outer overhead keeps wrapper time separate from server execution', () => {

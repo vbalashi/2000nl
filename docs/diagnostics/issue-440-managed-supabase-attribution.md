@@ -291,6 +291,9 @@ CI run.
   verifies the 2-second statement timeout fails the probe; malformed/missing
   EXPLAIN fields fail closed in `scheduler_readiness_diagnostic.test.mjs`. The
   timeout case uses a disposable local database; parser tests are unit tests.
+- [x] Production sample count is capped at three per component in both the CLI
+  and manual workflow; the default is three and invalid counts fail before DB
+  access.
 - [x] Timing-boundary parsing: `scheduler_readiness_diagnostic.test.mjs` checks
   `Execution Time`, `Planning Time`, and outer-overhead calculation; the SQL
   integration harness records `Execution Time` separately from client wall
@@ -319,8 +322,9 @@ CI run.
   recorded that the outer interval includes fresh container/client startup and
   is not pure pooler time. Full HTTP/app totals are available only for #421.
 - [x] Stayed within the production limits by running no new production probe;
-  did not repeat known first-slow/fast samples. Prior evidence is summarized
-  with single-sample maxima and no p95 claim.
+  did not repeat known first-slow/fast samples. The diagnostic CLI and workflow
+  now cap any future round at three samples per component. Prior evidence is
+  summarized with single-sample maxima and no p95 claim.
 - [x] Changed local nested stats identity to OID/signature, added required-call
   assertions, and tested 6- and 8-argument paths independently.
 - [ ] Full acceptance unmet: no matched request identity/sample IDs, exact

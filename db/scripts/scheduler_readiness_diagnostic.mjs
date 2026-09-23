@@ -9,7 +9,7 @@ import { spawnPostgresClient, preflightPostgresClient } from "./postgres_client.
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const options = {
     repoRoot,
     psqlBin: "psql",
@@ -18,7 +18,7 @@ function parseArgs(argv) {
     containerRuntimeBin: "docker",
     databaseUrlEnv: "SUPABASE_DB_URL",
     envFile: "",
-    samples: 5,
+    samples: 3,
     statementTimeoutMs: 10_000,
     firstComponent: "public",
   };
@@ -38,8 +38,8 @@ function parseArgs(argv) {
     else if (arg === "--first-component") options.firstComponent = value;
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  if (!Number.isSafeInteger(options.samples) || options.samples < 1 || options.samples > 10) {
-    throw new Error("--samples must be between 1 and 10");
+  if (!Number.isSafeInteger(options.samples) || options.samples < 1 || options.samples > 3) {
+    throw new Error("--samples must be between 1 and 3");
   }
   if (
     !Number.isSafeInteger(options.statementTimeoutMs) ||
