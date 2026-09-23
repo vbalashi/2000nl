@@ -3,6 +3,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 import { spawnPostgresClient, preflightPostgresClient } from "./postgres_client.mjs";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
@@ -150,7 +151,7 @@ function componentStatement(component) {
   return `SELECT count(*) FROM ${candidateRelation()}`;
 }
 
-function diagnosticSql(options, component) {
+export function diagnosticSql(options, component) {
   return `\\set ON_ERROR_STOP on
 \\set QUIET on
 BEGIN READ ONLY;
@@ -167,6 +168,13 @@ BEGIN
   PERFORM set_config('request.jwt.claim.sub', qa_user_id::text, true);
 END
 $qa_identity$;
+SELECT 'scheduler_context=' || jsonb_build_object(
+  'backendPid', pg_backend_pid(),
+  'backendStart', (SELECT backend_start FROM pg_stat_activity WHERE pid = pg_backend_pid()),
+  'serverVersion', current_setting('server_version'),
+  'workMem', current_setting('work_mem'),
+  'jit', current_setting('jit')
+)::text;
 EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
 ${componentStatement(component)};
 COMMIT;
@@ -180,7 +188,7 @@ function redact(message) {
     .replaceAll(/[A-Za-z0-9_-]{80,}/g, "[redacted-token]");
 }
 
-function explainMetrics(output, component, sample) {
+export function explainMetrics(output, component, sample) {
   const jsonStart = output.indexOf("[");
   const jsonEnd = output.lastIndexOf("]");
   if (jsonStart < 0 || jsonEnd <= jsonStart) {
@@ -192,7 +200,14 @@ function explainMetrics(output, component, sample) {
   if (!Number.isFinite(executionMs)) {
     throw new Error(`scheduler-readiness-diagnostic: ${component} sample ${sample} has no execution time`);
   }
+  const contextLine = output.split(/\r?\n/).find(line => line.startsWith("scheduler_context="));
+  if (!contextLine) throw new Error("scheduler-readiness-diagnostic: missing backend context");
+  const context = JSON.parse(contextLine.slice("scheduler_context=".length));
   return {
+    context,
+    planningMs: plan[0]?.["Planning Time"] ?? 0,
+    planningHit: plan[0]?.Planning?.["Shared Hit Blocks"] ?? 0,
+    planningRead: plan[0]?.Planning?.["Shared Read Blocks"] ?? 0,
     executionMs,
     sharedHit: root["Shared Hit Blocks"] ?? 0,
     sharedRead: root["Shared Read Blocks"] ?? 0,
@@ -202,10 +217,10 @@ function explainMetrics(output, component, sample) {
 }
 
 function runSample(options, childEnv, component, sample) {
-  // A separate client process makes each observation independent of the
-  // previous session's PostgreSQL plan cache. Shared buffers remain shared on
-  // purpose: the readiness failure is about the production cold path, not a
-  // synthetic attempt to evict the database cache.
+  // Each sample opens a client connection, but a transaction pooler may reuse
+  // a physical backend and its function/plan caches. Report backend identity
+  // instead of claiming that fresh clients prove a cold-backend measurement.
+  // Shared buffers and operating-system caches deliberately remain shared.
   const result = spawnPostgresClient(
     options,
     ["-X", "--no-psqlrc", "--tuples-only", "--no-align", "--set=ON_ERROR_STOP=1"],
@@ -243,6 +258,10 @@ async function main() {
       process.stdout.write(
         `scheduler-readiness-${component}-sample-${sample}` +
         ` execution_ms=${metrics.executionMs.toFixed(3)}` +
+        ` planning_ms=${metrics.planningMs.toFixed(3)}` +
+        ` planning_hit=${metrics.planningHit}` +
+        ` planning_read=${metrics.planningRead}` +
+        ` backend=${JSON.stringify(metrics.context)}` +
         ` shared_hit=${metrics.sharedHit}` +
         ` shared_read=${metrics.sharedRead}` +
         ` temp_read=${metrics.tempRead}` +
@@ -252,7 +271,7 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main().catch((error) => {
   process.stderr.write(`scheduler-readiness-diagnostic: ${redact(error instanceof Error ? error.message : String(error))}\n`);
   process.exitCode = 1;
 });
