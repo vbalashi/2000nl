@@ -324,6 +324,31 @@ experiment therefore needs synchronized production host/pooler telemetry or a
 more faithful isolated profile, rather than a SQL rewrite or a larger release
 timeout.
 
+## Repeated UI-first production probe (2026-09-23)
+
+After the isolated nested timing result, the read-only workflow was run again
+with the exact eight-argument UI overload first and three samples:
+[35864272860](https://github.com/vbalashi/2000nl/actions/runs/35864272860).
+The UI path measured **1,596.053 ms**, then **186.082 / 197.916 ms**. All UI
+and following public samples 1–3 used backend `2211863`, started at
+`2026-09-23T13:01:54.723839Z`; the following six-argument public path measured
+**176.465 / 176.922 / 176.221 ms**.
+
+The activity sampler caught the slow `session-plan` backend active with
+`waitEventType=null` and `waitEvent=null` (`queryStart=2026-09-23T13:01:56.782319Z`).
+The host sampler around that interval reported load about `0.25`, roughly
+`12.7 GB` available out of `16.3 GB`, CPU PSI up to `5.09%`, and I/O PSI up to
+`1.65%`; it did not show host-wide saturation. Outer wrapper overhead stayed
+roughly **1.30–1.45 s** for both the slow and warm samples, while server-side
+execution changed from **1.596 s** to about **0.19 s**.
+
+This is another reproduction of the backend-local first-call effect on the
+actual UI contract. It does not show a PostgreSQL lock or I/O wait and does not
+prove that the pooler owns the delay because each workflow sample still starts
+a fresh client container. SQL, timeout, settings, and production state were
+unchanged. Evidence is recorded in
+[issue #413](https://github.com/vbalashi/2000nl/issues/413#issuecomment-5795335156).
+
 ## Repeatable local feedback loop
 
 ```sh
