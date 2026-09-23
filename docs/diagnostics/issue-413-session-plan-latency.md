@@ -185,11 +185,13 @@ container using the same Supabase PostgreSQL image family, capped at **1 CPU and
 2 GB RAM**. The shared local Supabase instance, QA database, and production
 database were not used or changed. The container was removed after the run.
 
-The current-plan integration test passed. Its three direct calls measured
-**87.793 / 87.032 / 88.056 ms**, with the expected first-call read pattern
-(19 shared reads, then zero) and the existing temporary-write shape. The
-fixture therefore stayed bounded even under this representative constrained
-profile and did not reproduce the production near-two-second first call.
+The current **six-argument public session-plan** integration test passed. Its
+three direct calls measured **87.793 / 87.032 / 88.056 ms**, with the expected
+first-call read pattern (19 shared reads, then zero) and the existing
+temporary-write shape. The fixture therefore stayed bounded even under this
+representative constrained profile and did not reproduce the production
+near-two-second first call. The eight-argument UI overload was not exercised by
+this run and remains part of the separate production attribution plan.
 
 This is evidence against a generic 1-CPU/2-GB ceiling as the sole cause. It is
 not a production resource match: the actual host limits, storage behavior,
