@@ -1944,6 +1944,9 @@ function TrainingScreenContent({
           <TrainingTodaySetup
             userId={user.id}
             trainingLanguageCode={currentTrainingLanguage}
+            trainingLanguageOptions={trainingLanguageOptions}
+            trainingLanguageLoading={!trainingLanguagesResolved || !listHydrated || hydratedLanguage !== currentTrainingLanguage}
+            onTrainingLanguageChange={handleTrainingLanguageChange}
             interfaceLanguage={onboardingLang}
             status={trainingPilot.status}
             initialDraft={trainingPilot.initialDraft}

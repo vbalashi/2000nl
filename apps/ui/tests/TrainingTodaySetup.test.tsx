@@ -52,6 +52,42 @@ const baseProps = {
   onRetry: vi.fn(),
 };
 
+test("setup shows the language selector, compact material control and all Dutch POS previews", () => {
+  const onTrainingLanguageChange = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} trainingLanguageCode="nl" trainingLanguageOptions={[{ value: "nl", label: "Nederlands" }, { value: "en", label: "English" }]} onTrainingLanguageChange={onTrainingLanguageChange} />);
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  expect(screen.getByLabelText("Training language")).toHaveValue("nl");
+  expect(screen.getByText("Change material")).toBeInTheDocument();
+  expect(screen.queryByText("TRAINING · SETUP")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Any" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "de" })).toBeDisabled();
+  const disclosure = screen.getByText("Show 8 more parts of speech");
+  fireEvent.click(disclosure);
+  expect(disclosure.closest("details")).toHaveAttribute("open");
+  for (const name of ["Preposition", "Pronoun", "Conjunction", "Numeral", "Article", "Interjection", "Abbreviation", "Fixed expression"]) {
+    expect(screen.getByRole("button", { name: new RegExp(`^${name}$`) })).toBeDisabled();
+  }
+  fireEvent.change(screen.getByLabelText("Training language"), { target: { value: "en" } });
+  expect(onTrainingLanguageChange).toHaveBeenCalledWith("en");
+  expect(screen.getByRole("button", { name: "Start training" })).toBeDisabled();
+});
+
+test("language hydration replaces material without carrying a Dutch preset into English", () => {
+  const onStart = vi.fn();
+  const props = { ...baseProps, userId: "language-switch-test", trainingLanguageCode: "nl", onStart, onTrainingLanguageChange: vi.fn(), trainingLanguageOptions: [{ value: "nl", label: "Nederlands" }, { value: "en", label: "English" }] };
+  const { rerender } = render(<TrainingTodaySetup {...props} />);
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  fireEvent.change(screen.getByLabelText("Training language"), { target: { value: "en" } });
+  rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" trainingLanguageLoading />);
+  expect(screen.getByRole("button", { name: "Save preset" })).toBeDisabled();
+  expect(screen.queryByRole("button", { name: /^de$/ })).not.toBeInTheDocument();
+  expect(screen.getByText("Lexical filters for this language are not connected yet.")).toBeInTheDocument();
+  rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" initialDraft={{ ...initialDraft, listValue: "user:english" }} lists={[{ value: "user:english", label: "English collection" }]} />);
+  expect(screen.getByLabelText("Collection")).toHaveValue("user:english");
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ listValue: "user:english" }));
+});
+
 test("Today keeps the mounted session behind an explicit Continue action", () => {
   const onContinue = vi.fn();
   render(<TrainingTodaySetup {...baseProps} onContinue={onContinue} />);
@@ -149,7 +185,7 @@ test("all due means reviews only, and moving the mix slider restores a finite si
   render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);
 
   fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
-  fireEvent.click(screen.getByRole("button", { name: "All due today" }));
+  fireEvent.change(screen.getByRole("slider", { name: "Session size" }), { target: { value: "6" } });
   expect(screen.getByRole("slider", { name: "Review ↔ new rhythm" })).toHaveValue("0");
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
   expect(onStart).toHaveBeenCalledWith(
