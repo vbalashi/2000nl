@@ -60,6 +60,7 @@ DECLARE
   v_list uuid := '40820000-0000-0000-0000-000000000001';
   v_plan jsonb;
   v_session jsonb;
+  v_snapshot jsonb;
   v_members uuid[];
 BEGIN
   v_plan := public.get_training_session_plan(
@@ -135,6 +136,19 @@ BEGIN
     '40810000-0000-0000-0000-000000000002'::uuid
   ] THEN
     RAISE EXCEPTION 'session membership must latch the filtered candidates; got %', v_members;
+  END IF;
+
+  v_snapshot := public.get_training_session_snapshot(
+    v_user, (v_session->>'sessionId')::uuid
+  );
+  SELECT array_agg((member->>'entryId')::uuid ORDER BY member->>'entryId')
+  INTO v_members
+  FROM jsonb_array_elements(v_snapshot->'members') member;
+  IF v_members IS DISTINCT FROM ARRAY[
+    '40810000-0000-0000-0000-000000000001'::uuid,
+    '40810000-0000-0000-0000-000000000002'::uuid
+  ] THEN
+    RAISE EXCEPTION 'resumed session snapshot must preserve the filtered membership; got %', v_members;
   END IF;
 END;
 $$;

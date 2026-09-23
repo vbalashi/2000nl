@@ -307,3 +307,22 @@ test.each([
     }
   },
 );
+
+test("empty candidate state can recover to its selected lexical filter setup", () => {
+  render(
+    <TrainingTodaySetup
+      {...baseProps}
+      status="empty"
+      initialDraft={{ ...initialDraft, partOfSpeech: ["ww"], nounArticles: [] }}
+    />,
+  );
+
+  expect(
+    screen.getByRole("heading", { name: "No cards match this setup" }),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Adjust filters" }));
+  expect(screen.getByRole("button", { name: "Verb" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
