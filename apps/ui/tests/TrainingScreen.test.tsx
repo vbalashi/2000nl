@@ -23,6 +23,7 @@ import type { TrainingSessionChromeProps } from "@/components/training/v2/Traini
 import type { FooterStatsProps } from "@/components/training/FooterStats";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 import {
+  readTrainingSessionResume,
   releaseTrainingSessionOwner,
   writeTrainingSessionResume,
 } from "@/lib/training/sessionResumeStore";
@@ -1690,8 +1691,12 @@ test("resumes a still-active server session after refresh without starting anoth
     modes: ["word-to-definition"],
     cardFilter: "both",
     newReviewRatio: 2,
-    focusFilter: { dateWindow: "all" },
+    focusFilter: { dateWindow: "all", partOfSpeech: ["ww"], nounArticles: [] },
     sessionSize: 5,
+  });
+  await expect(readTrainingSessionResume("user-1")).resolves.toMatchObject({
+    sessionId: "session-resume",
+    focusFilter: { dateWindow: "all", partOfSpeech: ["ww"], nounArticles: [] },
   });
   fetchTrainingSessionSnapshot.mockResolvedValueOnce({
     sessionId: "session-resume",

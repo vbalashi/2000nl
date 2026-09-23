@@ -150,7 +150,9 @@ export const isTrainingFocusFilterActive = (
   return filter.dateWindow !== "all" ||
     Boolean(filter.sourceId) ||
     Boolean(filter.sourceKind) ||
-    Boolean(filter.externalId);
+    Boolean(filter.externalId) ||
+    Boolean(filter.partOfSpeech?.length) ||
+    Boolean(filter.nounArticles?.length);
 };
 
 const isNonNegativeInteger = (value: unknown): value is number =>
@@ -927,6 +929,12 @@ function normalizeTrainingFocusFilter(
     ...(filter.sourceKind ? { sourceKind: filter.sourceKind } : {}),
     ...(filter.sourceId ? { sourceId: filter.sourceId } : {}),
     ...(filter.externalId ? { externalId: filter.externalId } : {}),
+    ...(filter.partOfSpeech?.length
+      ? { partOfSpeech: [...new Set(filter.partOfSpeech)].sort() }
+      : {}),
+    ...(filter.nounArticles?.length
+      ? { nounArticles: [...new Set(filter.nounArticles)].sort() }
+      : {}),
   };
 }
 

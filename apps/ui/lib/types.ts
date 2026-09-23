@@ -20,7 +20,26 @@ export type TrainingFocusFilter = {
   sourceKind?: string;
   sourceId?: string;
   externalId?: string;
+  /** Dutch dictionary POS codes selected for ordinary Training. Empty means all. */
+  partOfSpeech?: DutchTrainingPartOfSpeech[];
+  /** Restrict noun candidates by their de/het article; non-noun POS remain unaffected. */
+  nounArticles?: DutchNounArticle[];
 };
+
+export type DutchTrainingPartOfSpeech =
+  | "zn"
+  | "ww"
+  | "bn"
+  | "bw"
+  | "vz"
+  | "vnw"
+  | "vw"
+  | "tw"
+  | "lidw"
+  | "tsw"
+  | "afk";
+
+export type DutchNounArticle = "de" | "het";
 
 export type TrainingFilterSource = {
   sourceId: string;

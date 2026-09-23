@@ -127,6 +127,12 @@ export function useCommitTrainingPilotDraft({
           : draft.sourceValue === "kind:youtube"
             ? { sourceKind: "youtube" }
             : {}),
+        ...(draft.partOfSpeech?.length
+          ? { partOfSpeech: [...new Set(draft.partOfSpeech)].sort() }
+          : {}),
+        ...(draft.nounArticles?.length
+          ? { nounArticles: [...new Set(draft.nounArticles)].sort() }
+          : {}),
       };
 
       const result = await updateActiveTrainingScope({
@@ -297,6 +303,8 @@ export function useTrainingPilotController({
       : focusFilter.sourceKind === "youtube"
         ? "kind:youtube"
         : "all",
+    partOfSpeech: focusFilter.partOfSpeech ?? [],
+    nounArticles: focusFilter.nounArticles ?? [],
   };
 
   const scenarioOptions = useMemo<TrainingSetupOption[]>(() => {

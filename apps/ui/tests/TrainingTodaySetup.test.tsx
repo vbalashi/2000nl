@@ -52,7 +52,7 @@ const baseProps = {
   onRetry: vi.fn(),
 };
 
-test("setup shows the language selector, compact material control and all Dutch POS previews", () => {
+test("setup exposes working Dutch POS and noun article filters while other languages stay unavailable", () => {
   const onTrainingLanguageChange = vi.fn();
   render(<TrainingTodaySetup {...baseProps} trainingLanguageCode="nl" trainingLanguageOptions={[{ value: "nl", label: "Nederlands" }, { value: "en", label: "English" }]} onTrainingLanguageChange={onTrainingLanguageChange} />);
   fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
@@ -60,16 +60,33 @@ test("setup shows the language selector, compact material control and all Dutch 
   expect(screen.getByText("Change material")).toBeInTheDocument();
   expect(screen.queryByText("TRAINING · SETUP")).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Any" })).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "de" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Verb" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "de" })).toBeEnabled();
   const disclosure = screen.getByText("Show 8 more parts of speech");
   fireEvent.click(disclosure);
   expect(disclosure.closest("details")).toHaveAttribute("open");
-  for (const name of ["Preposition", "Pronoun", "Conjunction", "Numeral", "Article", "Interjection", "Abbreviation", "Fixed expression"]) {
-    expect(screen.getByRole("button", { name: new RegExp(`^${name}$`) })).toBeDisabled();
+  for (const name of ["Preposition", "Pronoun", "Conjunction", "Numeral", "Article", "Interjection", "Abbreviation"]) {
+    expect(screen.getByRole("button", { name: new RegExp(`^${name}$`) })).toBeEnabled();
   }
+  expect(screen.getByRole("button", { name: "Fixed expression" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Verb" }));
+  expect(screen.getByRole("button", { name: "Verb" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "de" })).toBeDisabled();
   fireEvent.change(screen.getByLabelText("Training language"), { target: { value: "en" } });
   expect(onTrainingLanguageChange).toHaveBeenCalledWith("en");
   expect(screen.getByRole("button", { name: "Start training" })).toBeDisabled();
+});
+
+test("lexical choices are sent with the selected ordinary training draft", () => {
+  const onStart = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  fireEvent.click(screen.getByRole("button", { name: "Verb" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({
+    partOfSpeech: ["ww"],
+    nounArticles: [],
+  }));
 });
 
 test("language hydration replaces material without carrying a Dutch preset into English", () => {
@@ -321,11 +338,17 @@ test("a saved preset can be reopened and modified on this device", () => {
   fireEvent.change(screen.getByRole("slider", { name: "Session size" }), {
     target: { value: "4" },
   });
+  fireEvent.click(screen.getByRole("button", { name: "Verb" }));
+  fireEvent.click(screen.getByRole("button", { name: "Noun" }));
+  fireEvent.click(screen.getByRole("button", { name: "de" }));
   fireEvent.click(screen.getByRole("button", { name: "Save preset" }));
   fireEvent.click(screen.getByRole("button", { name: "Back to Today" }));
   expect(screen.getByText("NT2 2000 · Words · 1 new : 2 reviews · 30 exercises")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
   expect(screen.getByRole("slider", { name: "Session size" })).toHaveValue("4");
+  expect(screen.getByRole("button", { name: "Verb" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "Noun" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "de" })).toHaveAttribute("aria-pressed", "true");
   fireEvent.change(screen.getByRole("slider", { name: "Session size" }), {
     target: { value: "5" },
   });
@@ -359,3 +382,22 @@ test.each([
     }
   },
 );
+
+test("empty candidate state can recover to its selected lexical filter setup", () => {
+  render(
+    <TrainingTodaySetup
+      {...baseProps}
+      status="empty"
+      initialDraft={{ ...initialDraft, partOfSpeech: ["ww"], nounArticles: [] }}
+    />,
+  );
+
+  expect(
+    screen.getByRole("heading", { name: "No cards match this setup" }),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Adjust filters" }));
+  expect(screen.getByRole("button", { name: "Verb" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});

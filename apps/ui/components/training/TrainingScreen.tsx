@@ -136,6 +136,8 @@ const trainingFilterKey = (filter: TrainingFocusFilter) =>
     sourceKind: filter.sourceKind ?? null,
     sourceId: filter.sourceId ?? null,
     externalId: filter.externalId ?? null,
+    partOfSpeech: [...(filter.partOfSpeech ?? [])].sort(),
+    nounArticles: [...(filter.nounArticles ?? [])].sort(),
   });
 
 const fallbackLanguageLabel = (code: string) =>

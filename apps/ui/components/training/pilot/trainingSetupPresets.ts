@@ -8,6 +8,10 @@ export type TrainingSetupPreset = {
 
 const STORAGE_PREFIX = "2000nl.training.presets.v1";
 
+const validPartOfSpeech = (value: unknown) =>
+  ["zn", "ww", "bn", "bw", "vz", "vnw", "vw", "tw", "lidw", "tsw", "afk"].includes(String(value));
+const validNounArticle = (value: unknown) => value === "de" || value === "het";
+
 export const presetStorageKey = (userId: string, languageCode: string) =>
   `${STORAGE_PREFIX}.${userId}.${languageCode}`;
 
@@ -32,6 +36,12 @@ export function readTrainingPresets(key: string): TrainingSetupPreset[] {
         ["all", "today", "yesterday", "daysAgo"].includes(item.draft.dateWindow) &&
         typeof item?.draft?.listValue === "string" &&
         typeof item?.draft?.sourceValue === "string" &&
+        (item.draft.partOfSpeech === undefined ||
+          (Array.isArray(item.draft.partOfSpeech) &&
+            item.draft.partOfSpeech.every(validPartOfSpeech))) &&
+        (item.draft.nounArticles === undefined ||
+          (Array.isArray(item.draft.nounArticles) &&
+            item.draft.nounArticles.every(validNounArticle))) &&
         (item.draft.sessionSize === "all-due-today" ||
           (typeof item.draft.sessionSize === "number" &&
             Number.isInteger(item.draft.sessionSize) &&
