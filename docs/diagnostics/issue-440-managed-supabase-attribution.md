@@ -91,14 +91,30 @@ as displayed and not reconciled here.
 
 These are verified capacity/quota observations, not a latency attribution. The
 snapshot/trend are not correlated to the timestamps of runs 35862404089,
-35861721662, 35864272860, or the #421 HTTP traces. The management CLI remains
-unavailable: `supabase projects list` returned `Access token not provided.
-Supply an access token by running supabase login or setting the
-SUPABASE_ACCESS_TOKEN environment variable.` In the initial agent attempt the
-dashboard deep link redirected to `/dashboard/sign-in?returnTo=...`; the owner
-later authenticated in the existing profile and inspected the project. No
-credentials or secret values were read or printed, and no production DB request
-was used to compensate for the missing time correlation.
+35861721662, 35864272860, or the #421 HTTP traces. At the time of this initial
+snapshot, the CLI was not authenticated; the owner used
+the existing authorized Chrome profile for the dashboard review. CLI access was
+subsequently authorized through that same profile, and `supabase projects list`
+now succeeds. No CLI database inspection was run, and no credential value or
+production data was exposed in the report.
+
+**Near-time resource sample for run 35864272860 (2026-09-23).** The slow UI
+overload began at `13:01:56.782319Z` on backend `2211863`. The Supabase
+Observability → Database dashboard was set to `12:58Z–13:05Z`, a seven-minute
+window containing that call and its warm repeats. The dashboard summary showed
+CPU `0.41%`, memory used `411.32 MB`, memory commitment `1.21 GB`, and network
+throughput `7.2 KB/s`; the plotted CPU remained near its baseline. IOPS, disk
+throughput, connections, and disk-usage panels did not load in that view. These
+are coarse dashboard-window observations, not per-request measurements; the
+headline values are not retained as exact samples at the slow query timestamp.
+
+A bounded Logs Explorer query for the diagnostic interval returned no rows.
+This does not prove the database or API was idle: log source/retention coverage
+and event correlation are not established by an empty result. The available
+near-time chart does not show broad CPU saturation, but its granularity and
+missing panels cannot rule out short-lived or backend-local resource pressure.
+This narrows the evidence without proving or excluding a managed-capacity
+cause, and it still does not justify a dedicated-compute move or SQL rewrite.
 
 **Aggregated Query Performance observations.** Supabase Observability → Query
 Performance was inspected for **2026-09-22 14:11:05.597Z through 2026-09-23
