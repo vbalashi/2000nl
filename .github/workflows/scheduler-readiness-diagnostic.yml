@@ -36,14 +36,24 @@ jobs:
           esac
           activity_log="$(mktemp)"
           activity_pid=""
-          cleanup_activity() {
+          host_log="$(mktemp)"
+          host_pid=""
+          cleanup_diagnostics() {
             if [[ -n "${activity_pid}" ]]; then
               kill "${activity_pid}" 2>/dev/null || true
               wait "${activity_pid}" 2>/dev/null || true
             fi
-            rm -f "${activity_log}"
+            if [[ -n "${host_pid}" ]]; then
+              kill "${host_pid}" 2>/dev/null || true
+              wait "${host_pid}" 2>/dev/null || true
+            fi
+            rm -f "${activity_log}" "${host_log}"
           }
-          trap cleanup_activity EXIT
+          trap cleanup_diagnostics EXIT
+          node db/scripts/scheduler_host_sampler.mjs \
+            --duration-ms 30000 \
+            --interval-ms 250 >"${host_log}" 2>&1 &
+          host_pid=$!
           sg docker -c "node db/scripts/scheduler_activity_sampler.mjs \\
             --psql-container-image '${DB_PSQL_IMAGE}' \\
             --env-file .env \\
@@ -58,4 +68,8 @@ jobs:
           kill "${activity_pid}" 2>/dev/null || true
           wait "${activity_pid}" 2>/dev/null || true
           activity_pid=""
+          kill "${host_pid}" 2>/dev/null || true
+          wait "${host_pid}" 2>/dev/null || true
+          host_pid=""
+          cat "${host_log}"
           cat "${activity_log}"
