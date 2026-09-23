@@ -1,8 +1,10 @@
 # Issue 440: managed Supabase and Training latency attribution
 
-Date: 2026-09-23; follow-up evidence added 2026-09-24. Scope: bounded,
-read-only evidence review; no runtime change, production request, deployment,
-or database setting change in this issue branch.
+Date: 2026-09-23; follow-up evidence added 2026-09-24. Scope: bounded
+production diagnostics and authenticated UI navigation for startup timing. No
+product code, schema, project setting, or deployment change. The app's normal
+startup included translation-table writes; no learner answer, review, or
+progress action was performed.
 
 ## Architect conclusion by path
 
@@ -365,6 +367,50 @@ upstream-duration boundary for the #421 sample. It does not supply the
 per-request host CPU, resident/free memory, active swap I/O, disk, or connection
 metrics required to attribute the high origin times to managed compute. The
 log records also do not expose a SQL execution duration for those exact RPCs.
+
+### Fresh production startup trace (2026-09-23T22:39:24.558Z)
+
+A fresh root-page reload in another tab of the same authorized Chrome profile
+reproduced the user's slow initial state. The first captured accessibility
+snapshot showed `Preparing training` at +381 ms; `Loading card` was visible by
++1.746 s and remained visible after +5.5 s. A later snapshot showed the Today
+screen at about +16 s; the exact ready transition was not captured. No Training
+or answer controls were clicked.
+
+The bounded Supabase edge-log query covered 22:39:20Z–22:39:50Z and returned
+the following sanitized timings for this reload:
+
+| Request | Started after reload | Gateway `response.origin_time` | Role / status |
+|---|---:|---:|---|
+| Initial `get_detailed_training_stats` | +1.739 s | 4,128 ms | authenticated / 200 |
+| Initial `get_next_card` | +1.742 s | 5,512 ms | authenticated / 200 |
+| `read_platform_v2_training_group` | +8.007 s | 2,252 ms | role not exposed / 200 |
+| Later `get_next_card` | +10.916 s | 2,457 ms | authenticated / 200 |
+| Later `read_platform_v2_training_group` calls | +13.909 / +13.918 s | 780 / 812 ms | role not exposed / 200 |
+
+Setup/bootstrap RPCs returned 200 with gateway origin times of 274–374 ms;
+`get_word_list_summary` returned in 73 ms. The stats and first selection
+requests began together after bootstrap, while the first Platform V2 group
+lookup followed the initial selection. The later selection and group lookups
+also completed before the Today screen was observed. This confirms that the
+initial UI is still coupled to card readiness and that the first selection and
+card projection form a slow critical path. It does not prove that every later
+request is required before Today can render, nor does it separate SQL execution
+from PostgREST/API origin time. The later `get_next_card` initiator remains
+unknown; speculative preparation is one possible explanation, not a finding.
+
+The same bounded logs showed `POST` and `PATCH` requests to
+`word_entry_translations` (HTTP 201 and 204) during startup, consistent with
+the app's normal translation-data side effects. Request bodies and rows were
+not read. These writes did not represent a learner answer, review, or progress
+mutation, but this trace was not literally read-only at the application
+boundary.
+
+One Metrics API scrape using an already-present CLI credential returned HTTP
+401 (`Invalid API key`). No key was created or rotated. Consequently, this
+capture adds the Supabase gateway timing boundary but no time-correlated host
+CPU, memory, swap-I/O, disk, or connection measurements. It still does not
+justify a compute move.
 
 ## Harness correction
 
