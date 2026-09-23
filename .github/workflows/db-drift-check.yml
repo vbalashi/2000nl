@@ -14,6 +14,7 @@ on:
       - 'db/scripts/scheduler_cold_io.integration.test.mjs'
       - 'db/scripts/scheduler_readiness_diagnostic*.mjs'
       - 'db/scripts/scheduler_activity_sampler*.mjs'
+      - 'db/scripts/scheduler_host_sampler*.mjs'
       - 'db/scripts/session_plan_latency.integration.test.mjs'
       - 'db/scripts/scheduler_legacy_callers.test.mjs'
       - 'db/scripts/postgres_client.mjs'
@@ -42,6 +43,7 @@ on:
       - 'db/scripts/scheduler_cold_io.integration.test.mjs'
       - 'db/scripts/scheduler_readiness_diagnostic*.mjs'
       - 'db/scripts/scheduler_activity_sampler*.mjs'
+      - 'db/scripts/scheduler_host_sampler*.mjs'
       - 'db/scripts/session_plan_latency.integration.test.mjs'
       - 'db/scripts/scheduler_legacy_callers.test.mjs'
       - 'db/scripts/postgres_client.mjs'
@@ -248,7 +250,7 @@ jobs:
       - name: Test current public session-plan latency and diagnostic metadata
         env:
           SESSION_PLAN_BENCHMARK_BASE_DB_URL: postgres://postgres:postgres@localhost:5432/contract_test?sslmode=disable
-        run: node --test db/scripts/session_plan_latency.integration.test.mjs db/scripts/scheduler_readiness_diagnostic.test.mjs db/scripts/scheduler_activity_sampler.test.mjs
+        run: node --test db/scripts/session_plan_latency.integration.test.mjs db/scripts/scheduler_readiness_diagnostic.test.mjs db/scripts/scheduler_activity_sampler.test.mjs db/scripts/scheduler_host_sampler.test.mjs
 
       - name: Test versioned importer and idempotent local fixture
         env:

@@ -296,6 +296,18 @@ credentials, or response data. The workflow runs it for 30 seconds in parallel
 with the existing probe; it is telemetry only and does not reset statistics or
 change database settings.
 
+### Scheduler host sampler
+
+`scheduler_host_sampler.mjs` is a bounded, Linux `/proc`-only companion for the
+same production workflow. It emits timestamped load averages, aggregate CPU
+window percentages (including I/O wait and steal), memory availability, and
+optional CPU/I/O pressure averages. It never reads process command lines,
+environment variables, database URLs, SQL text, or learner data. The workflow
+runs it for the same 30-second window as the database activity sampler so a
+slow first call can be compared with host scheduling pressure. If the runner
+does not expose Linux `/proc`, the sampler's diagnostic output is retained and
+the database probe still runs.
+
 ---
 
 ## Development
