@@ -8,6 +8,14 @@ on:
         required: false
         default: "5"
         type: string
+      first_component:
+        description: "Which session-plan overload runs first on the sampled backend"
+        required: false
+        default: "public"
+        type: choice
+        options:
+          - public
+          - ui-public
 
 permissions:
   contents: read
@@ -22,6 +30,7 @@ jobs:
     env:
       DB_PSQL_IMAGE: postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
       DIAGNOSTIC_SAMPLES: ${{ inputs.samples }}
+      DIAGNOSTIC_FIRST_COMPONENT: ${{ inputs.first_component }}
     steps:
       - name: Run bounded read-only scheduler diagnostic
         shell: bash
@@ -33,6 +42,10 @@ jobs:
           case "${DIAGNOSTIC_SAMPLES}" in
             1|2|3|4|5|6|7|8|9|10) ;;
             *) echo "samples must be an integer from 1 to 10" >&2; exit 64 ;;
+          esac
+          case "${DIAGNOSTIC_FIRST_COMPONENT}" in
+            public|ui-public) ;;
+            *) echo "first_component must be public or ui-public" >&2; exit 64 ;;
           esac
           activity_log="$(mktemp)"
           activity_pid=""
@@ -64,7 +77,8 @@ jobs:
           sg docker -c "node db/scripts/scheduler_readiness_diagnostic.mjs \\
             --psql-container-image '${DB_PSQL_IMAGE}' \\
             --env-file .env \\
-            --samples '${DIAGNOSTIC_SAMPLES}'"
+            --samples '${DIAGNOSTIC_SAMPLES}' \\
+            --first-component '${DIAGNOSTIC_FIRST_COMPONENT}'"
           kill "${activity_pid}" 2>/dev/null || true
           wait "${activity_pid}" 2>/dev/null || true
           activity_pid=""
