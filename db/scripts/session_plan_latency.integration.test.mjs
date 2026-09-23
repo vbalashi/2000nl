@@ -41,24 +41,97 @@ function applySqlFile(targetUrl, relativePath) {
   assert.equal(result.status, 0, result.stderr);
 }
 
-const planStatement = `SELECT public.get_training_session_plan(
-  '${qaUserId}', ARRAY['word-to-definition'], NULL, 'curated', 'both', '{}'
-)`;
+function parseFirstJsonArray(output, offset = 0) {
+  const start = output.indexOf("[", offset);
+  assert.notEqual(start, -1, `JSON array missing from ${JSON.stringify(output)}`);
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = start; index < output.length; index += 1) {
+    const character = output[index];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === '"') inString = false;
+      continue;
+    }
+    if (character === '"') {
+      inString = true;
+    } else if (character === "[") {
+      depth += 1;
+    } else if (character === "]") {
+      depth -= 1;
+      if (depth === 0) return JSON.parse(output.slice(start, index + 1));
+    }
+  }
+  assert.fail(`Unterminated JSON array in ${JSON.stringify(output)}`);
+}
 
-function measure(targetUrl) {
+const functionStatsSql = `SELECT COALESCE(
+  json_agg(json_build_object(
+    'schema', schemaname,
+    'function', funcname,
+    'calls', calls,
+    'totalMs', round(total_time::numeric, 3),
+    'selfMs', round(self_time::numeric, 3)
+  ) ORDER BY total_time DESC)::text,
+  '[]'
+)
+FROM pg_stat_user_functions
+WHERE calls > 0
+  AND (funcname LIKE '%training%' OR funcname LIKE '%schedule%');`;
+
+function readFunctionStats(targetUrl) {
+  const result = psql(targetUrl, `SELECT pg_stat_clear_snapshot(); ${functionStatsSql}`);
+  assert.equal(result.status, 0, result.stderr);
+  return parseFirstJsonArray(result.stdout);
+}
+
+const planStatements = {
+  public: `SELECT public.get_training_session_plan(
+  '${qaUserId}', ARRAY['word-to-definition'], NULL, 'curated', 'both', '{}'
+  )`,
+  uiPublic: `SELECT public.get_training_session_plan(
+    '${qaUserId}', ARRAY['word-to-definition'], NULL, 'curated', 'both', '{}', '10', 2
+  )`,
+};
+
+function measure(targetUrl, statement = planStatements.public, { functionStats = false } = {}) {
   // Every call gets a new backend, so function/query caches from earlier
   // samples cannot turn the first-call regression into a warm-only test.
+  const statsBeforeRows = functionStats ? readFunctionStats(targetUrl) : [];
   const result = psql(targetUrl, `DISCARD PLANS; BEGIN READ ONLY;
     SET LOCAL statement_timeout = '2000ms';
     SET LOCAL jit = off;
     SET LOCAL work_mem = '2184kB';
     SELECT set_config('request.jwt.claim.sub', '${qaUserId}', true);
-    EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${planStatement};
+    SET LOCAL track_functions = 'all';
+    SELECT 'EXPLAIN_START';
+    EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${statement};
     ROLLBACK;`);
   assert.equal(result.status, 0, result.stderr);
-  const start = result.stdout.indexOf('[');
-  const end = result.stdout.lastIndexOf(']') + 1;
-  const [explain] = JSON.parse(result.stdout.slice(start, end));
+  const explainMarker = result.stdout.indexOf('EXPLAIN_START');
+  assert.notEqual(explainMarker, -1, `EXPLAIN marker missing from ${JSON.stringify(result.stdout)}`);
+  const [explain] = parseFirstJsonArray(result.stdout, explainMarker);
+  const statsAfterRows = functionStats ? readFunctionStats(targetUrl) : [];
+  const statsBeforeByFunction = new Map(
+    statsBeforeRows.map((row) => [`${row.schema}.${row.function}`, row]),
+  );
+  const functionStatsDelta = statsAfterRows
+    .map((row) => {
+      const before = statsBeforeByFunction.get(`${row.schema}.${row.function}`) ?? {
+        calls: 0,
+        totalMs: 0,
+        selfMs: 0,
+      };
+      return {
+        ...row,
+        calls: row.calls - before.calls,
+        totalMs: Number((row.totalMs - before.totalMs).toFixed(3)),
+        selfMs: Number((row.selfMs - before.selfMs).toFixed(3)),
+      };
+    })
+    .filter((row) => row.calls > 0);
   return {
     executionMs: explain['Execution Time'],
     planningMs: explain['Planning Time'],
@@ -66,6 +139,7 @@ function measure(targetUrl) {
     reads: explain.Plan['Shared Read Blocks'],
     tempReads: explain.Plan['Temp Read Blocks'],
     tempWrites: explain.Plan['Temp Written Blocks'],
+    functionStats: functionStats ? functionStatsDelta : undefined,
   };
 }
 
@@ -215,6 +289,17 @@ ANALYZE private.platform_v2_content_nodes;`);
         assert.ok(sample.hits + sample.reads <= 6500,
           `current public plan buffer budget exceeded: ${JSON.stringify(sample)}`);
       }
+
+      // Keep nested PL/pgSQL timing on the disposable fixture.  This uses a
+      // fresh backend for each call and records only aggregate function names,
+      // call counts, and durations; it does not expose learner or card data.
+      const nestedTiming = {
+        public: measure(targetUrl, planStatements.public, { functionStats: true }),
+        uiPublic: measure(targetUrl, planStatements.uiPublic, { functionStats: true }),
+      };
+      t.diagnostic(JSON.stringify({ nestedTiming }));
+      assert.ok(nestedTiming.public.executionMs <= 2000, JSON.stringify(nestedTiming));
+      assert.ok(nestedTiming.uiPublic.executionMs <= 2000, JSON.stringify(nestedTiming));
       const manifest = JSON.parse(readFileSync(
         path.join(repoRoot, 'packages/shared/deployment/db-contract.json'), 'utf8'));
       const shape = psql(targetUrl, `BEGIN READ ONLY;
