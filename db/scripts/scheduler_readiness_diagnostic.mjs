@@ -48,7 +48,7 @@ function parseArgs(argv) {
   return options;
 }
 
-function databaseEnvironment(urlString) {
+export function databaseEnvironment(urlString) {
   const url = new URL(urlString);
   if (!["postgres:", "postgresql:"].includes(url.protocol)) {
     throw new Error("Database URL must use postgres or postgresql");
@@ -67,7 +67,7 @@ function databaseEnvironment(urlString) {
   };
 }
 
-async function databaseUrl(options) {
+export async function databaseUrl(options) {
   const direct = process.env[options.databaseUrlEnv] ??
     (options.databaseUrlEnv === "SUPABASE_DB_URL" ? process.env.DATABASE_URL : undefined);
   if (direct) return direct;
