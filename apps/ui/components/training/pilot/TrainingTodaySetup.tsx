@@ -86,10 +86,12 @@ type Props = {
   startPending?: boolean;
   scenarioLoading?: boolean;
   statsStatus?: "pending" | "ready" | "error";
-  cardPreparationStatus?: "pending" | "ready" | "error" | "empty";
+  sessionResumeStatus?: "pending" | "ready" | "error";
+  cardPreparationStatus?: "idle" | "pending" | "ready" | "error" | "empty";
   startBlocked?: boolean;
   continueDisabled?: boolean;
   onRetryStats?: () => void;
+  onRetryResume?: () => void;
   onRetryCard?: () => void;
   /** A saved local queue was superseded by a deliberate start elsewhere. */
   replacementWarning?: boolean;
@@ -189,6 +191,9 @@ const copy = {
     saveFailed: "Could not save this preset on this device.",
     statsLoading: "Loading progress…",
     statsError: "Progress could not be loaded.",
+    resumePending: "Checking your saved session…",
+    resumeError: "Your saved session could not be checked.",
+    retryResume: "Retry session check",
     cardPending: "Preparing your next card…",
     cardError: "The next card could not be prepared. You can retry or adjust the setup.",
     cardEmpty: "No card is ready for this setup yet. Adjust it or start a session.",
@@ -282,6 +287,9 @@ const copy = {
     saveFailed: "Kon de preset niet op dit apparaat bewaren.",
     statsLoading: "Voortgang laden…",
     statsError: "Voortgang kon niet worden geladen.",
+    resumePending: "Je opgeslagen sessie wordt gecontroleerd…",
+    resumeError: "Je opgeslagen sessie kon niet worden gecontroleerd.",
+    retryResume: "Sessiecontrole opnieuw proberen",
     cardPending: "Je volgende kaart wordt voorbereid…",
     cardError: "De volgende kaart kon niet worden voorbereid. Probeer opnieuw of pas de selectie aan.",
     cardEmpty: "Er staat nog geen kaart klaar. Pas de selectie aan of start een sessie.",
@@ -375,6 +383,9 @@ const copy = {
     saveFailed: "Не удалось сохранить пресет на этом устройстве.",
     statsLoading: "Загружаем статистику…",
     statsError: "Не удалось загрузить статистику.",
+    resumePending: "Проверяем сохранённую сессию…",
+    resumeError: "Не удалось проверить сохранённую сессию.",
+    retryResume: "Повторить проверку сессии",
     cardPending: "Подготавливаем следующую карточку…",
     cardError: "Не удалось подготовить карточку. Повторите попытку или измените настройки.",
     cardEmpty: "Пока нет готовой карточки. Измените настройки или начните сессию.",
@@ -438,10 +449,12 @@ export function TrainingTodaySetup({
   startPending = false,
   scenarioLoading = false,
   statsStatus = "ready",
+  sessionResumeStatus = "ready",
   cardPreparationStatus = "ready",
   startBlocked = false,
   continueDisabled = false,
   onRetryStats,
+  onRetryResume,
   onRetryCard,
   replacementWarning = false,
   activeSessionLabel,
@@ -687,7 +700,22 @@ export function TrainingTodaySetup({
                     : t.statsError}
               </p>
             </div>
-            {cardPreparationStatus !== "ready" ? (
+            {sessionResumeStatus !== "ready" ? (
+              <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                <p
+                  role={sessionResumeStatus === "error" ? "alert" : "status"}
+                  aria-live="polite"
+                >
+                  {sessionResumeStatus === "pending" ? t.resumePending : t.resumeError}
+                </p>
+                {sessionResumeStatus === "error" && onRetryResume ? (
+                  <button type="button" onClick={onRetryResume} className="mt-1 font-semibold text-indigo-600 dark:text-indigo-300">
+                    {t.retryResume}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+            {cardPreparationStatus !== "ready" && cardPreparationStatus !== "idle" ? (
               <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                 <p
                   role={cardPreparationStatus === "error" ? "alert" : "status"}
@@ -818,7 +846,22 @@ export function TrainingTodaySetup({
         <h1 className="sr-only">
           {t.setupHeading}
         </h1>
-        {cardPreparationStatus !== "ready" ? (
+        {sessionResumeStatus !== "ready" ? (
+          <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+            <p
+              role={sessionResumeStatus === "error" ? "alert" : "status"}
+              aria-live="polite"
+            >
+              {sessionResumeStatus === "pending" ? t.resumePending : t.resumeError}
+            </p>
+            {sessionResumeStatus === "error" && onRetryResume ? (
+              <button type="button" onClick={onRetryResume} className="mt-1 font-semibold text-indigo-600 dark:text-indigo-300">
+                {t.retryResume}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {cardPreparationStatus !== "ready" && cardPreparationStatus !== "idle" ? (
           <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
             <p
               role={cardPreparationStatus === "error" ? "alert" : "status"}

@@ -145,6 +145,39 @@ test("stats error is explicit and can be retried without replacing Today", () =>
   expect(onRetryStats).toHaveBeenCalledOnce();
 });
 
+test("resume checking and failure stay distinct from card preparation and can be retried", () => {
+  const onRetryResume = vi.fn();
+  const props = {
+    ...baseProps,
+    sessionResumeStatus: "pending" as const,
+    cardPreparationStatus: "idle" as const,
+    startBlocked: true,
+    continueDisabled: true,
+    onRetryResume,
+  };
+  const { rerender } = render(<TrainingTodaySetup {...props} />);
+
+  expect(screen.getByText("Checking your saved session…")).toBeInTheDocument();
+  expect(screen.queryByText("Preparing your next card…")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Continue session" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  expect(screen.getByRole("slider", { name: "Review ↔ new rhythm" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Start training" })).toBeDisabled();
+
+  rerender(
+    <TrainingTodaySetup
+      {...props}
+      sessionResumeStatus="error"
+    />,
+  );
+  expect(screen.getByText("Your saved session could not be checked.")).toHaveAttribute(
+    "role",
+    "alert",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Retry session check" }));
+  expect(onRetryResume).toHaveBeenCalledOnce();
+});
+
 test("Setup is a draft: Back discards changes and Start applies one selection", () => {
   const onStart = vi.fn<[TrainingSetupDraft], void>();
   render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);

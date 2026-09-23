@@ -66,7 +66,7 @@ test("prepared card and setup remain usable while scoped stats are held for 10 s
   const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
     statsDelayMs: 10_000,
     visualProfile: "answer",
-    devTestLogin: true,
+    devTestLogin: false,
   });
 
   await expect.poll(() => harness.requests.stats.length).toBe(1);
@@ -168,7 +168,7 @@ test("setup controls stay editable while the first-card request is held for 10 s
   const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
     schedulerDelayMs: 10_000,
     visualProfile: "answer",
-    devTestLogin: true,
+    devTestLogin: false,
   });
   await expect.poll(() => harness.requests.scheduler.length).toBe(1);
   const schedulerRequestObservedAt = harness.requests.requestTimes.scheduler[0]!;
@@ -332,7 +332,7 @@ test("Continue waits for the selected card's projection while setup stays usable
   const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
     lookupDelayMs: 10_000,
     visualProfile: "answer",
-    devTestLogin: true,
+    devTestLogin: false,
   });
   await expect.poll(() => harness.requests.projectionLookups.length).toBe(1);
   const projectionRequestObservedAt = harness.requests.requestTimes.projection[0]!;
