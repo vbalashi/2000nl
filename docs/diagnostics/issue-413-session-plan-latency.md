@@ -255,6 +255,24 @@ therefore makes host-wide saturation, visible lock waits, and visible I/O waits
 insufficient explanations. The remaining boundary is backend/pooler/runtime
 initialization timing; no production state or configuration changed.
 
+## Server execution versus outer wrapper time (2026-09-23)
+
+The readiness probe now reports PostgreSQL `Execution Time` separately from the
+outer wall-clock time of the client invocation. In
+[35862404089](https://github.com/vbalashi/2000nl/actions/runs/35862404089),
+the UI-first call measured **2,141.285 ms** inside PostgreSQL and **3,567.791
+ms** outside it. The following public call on the same backend measured
+**196.336 ms** inside PostgreSQL and **1,661.474 ms** outside it.
+
+The apparent outer overhead was about **1.43–1.47 s** for both calls. The
+production workflow starts a fresh digest-pinned ephemeral `psql` container for
+each sample, so this part includes container/client startup and any
+connection/pooler time; it is not a pure pooler measurement. The meaningful
+delta is therefore server-side: the PostgreSQL execution itself grew from about
+196 ms to 2.141 s on the first UI call. This moves the remaining investigation
+inside the backend execution/runtime path. No SQL, timeout, setting, or
+production state changed.
+
 ## Constrained resource experiment (2026-09-23)
 
 To test whether a simple resource ceiling is sufficient to recreate the first-
@@ -318,18 +336,18 @@ and persistent query-volume regression; contention and nested planning have not
 been separated.
 
 The constrained profile, synchronized host sampler, exact UI-overload
-comparison, and controlled-idle UI reproduction have now been completed. Next,
-isolate the backend/pooler/runtime initialization boundary: correlate pooler
-routing and backend PID/start with a genuinely new first call, capture any
-available pooler connection or server-side runtime timing, and repeat the same
-UI-first probe after an idle interval. Enable nested statement
-planning/execution timing only in an isolated environment. Reproduce the
-near-two-second first-call behavior before changing SQL or runtime settings;
-compare one variable at a time. Restart/evict caches only on the isolated
-instance, never on the shared QA or production database.
+comparison, controlled-idle UI reproduction, and server/outer timing split have
+now been completed. Next, isolate the backend execution/runtime boundary in a
+non-production PostgreSQL instance with nested statement planning/execution
+timing and representative content. On production, retain only read-only
+backend PID/start and activity correlation; do not enable invasive tracing or
+change runtime settings there. Reproduce the near-two-second server-side
+first-call behavior before changing SQL or release timeout; compare one
+variable at a time. Restart/evict caches only on the isolated instance, never
+on the shared QA or production database.
 
 If the isolated instance cannot reproduce it, the next missing evidence is
-synchronized read-only production host/pooler telemetry during an ordinary
-failed readiness run. Query counters alone cannot attribute time lost to CPU
-scheduling or host storage. Do not increase the release timeout, add warm-up
-retries, or treat the issue as completed on the strength of passing local tests.
+pooler/backend lifecycle telemetry that can distinguish a backend-local runtime
+event from connection routing. Query counters and host load alone cannot make
+that attribution. Do not increase the release timeout, add warm-up retries, or
+treat the issue as completed on the strength of passing local tests.
