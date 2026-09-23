@@ -105,7 +105,7 @@ describe("useTrainingOnboarding", () => {
     });
   });
 
-  test("completion persists without clobbering other preferences", async () => {
+  test.each(["finished", "skipped"])("%s persists without clobbering other preferences", async (status) => {
     const { result } = renderHook(() =>
       useTrainingOnboarding({
         userId: "user-1",
@@ -126,7 +126,7 @@ describe("useTrainingOnboarding", () => {
     expect(result.current.onboardingCompleted).toBe(false);
 
     await act(async () => {
-      await result.current.handleJoyrideCallback({ status: "finished" } as any);
+      await result.current.handleJoyrideCallback({ status } as any);
     });
 
     expect(result.current.runTour).toBe(false);

@@ -53,7 +53,6 @@ const rolloutEnv = Object.fromEntries(
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   // Local preview wrappers use a dedicated cache directory so a concurrent
   // production build cannot overwrite chunks served by `next dev`.
   distDir: envNonEmpty(process.env.NEXT_DIST_DIR) ?? ".next",

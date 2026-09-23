@@ -5,17 +5,18 @@ import { normalizeReadingSize } from "@/lib/reading/readingSize";
 
 export const dynamic = "force-dynamic";
 
-export default function SenseCardGatePage({
-  searchParams,
+export default async function SenseCardGatePage({
+  searchParams: query,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     prototype?: string;
     size?: string;
     wrapper?: string;
     fixture?: string;
     mode?: string;
-  };
+  }>;
 }) {
+  const searchParams = await query;
   if (process.env.NODE_ENV === "production") {
     return <main className="p-8">Not available in production.</main>;
   }

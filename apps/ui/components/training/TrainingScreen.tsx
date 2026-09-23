@@ -4,7 +4,7 @@ import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import type { User } from "@supabase/supabase-js";
-import Joyride, { Step } from "react-joyride";
+import { Joyride, Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
 import { trainingDebug } from "@/lib/trainingDebug";
 import {
@@ -2096,18 +2096,18 @@ function TrainingScreenContent({
           steps={buildJoyrideSteps(onboardingLang)}
           run={runTour}
           continuous
-          showProgress
-          showSkipButton
-          callback={handleJoyrideCallback}
+          onEvent={handleJoyrideCallback}
           locale={getOnboardingTranslation(onboardingLang).onboarding.buttons}
+          options={{
+            showProgress: true,
+            buttons: ["back", "close", "primary", "skip"],
+            primaryColor: "#3b82f6",
+            zIndex: 10000,
+            backgroundColor: isDarkMode ? "#1e293b" : "#ffffff",
+            textColor: isDarkMode ? "#e2e8f0" : "#1f2937",
+            arrowColor: isDarkMode ? "#1e293b" : "#ffffff",
+          }}
           styles={{
-            options: {
-              primaryColor: "#3b82f6",
-              zIndex: 10000,
-              backgroundColor: isDarkMode ? "#1e293b" : "#ffffff",
-              textColor: isDarkMode ? "#e2e8f0" : "#1f2937",
-              arrowColor: isDarkMode ? "#1e293b" : "#ffffff",
-            },
             tooltip: {
               backgroundColor: isDarkMode ? "#1e293b" : "#ffffff",
               color: isDarkMode ? "#e2e8f0" : "#1f2937",
@@ -2119,7 +2119,7 @@ function TrainingScreenContent({
             tooltipContent: {
               color: isDarkMode ? "#e2e8f0" : "#374151",
             },
-            buttonNext: {
+            buttonPrimary: {
               backgroundColor: "#3b82f6",
               color: "#ffffff",
             },
