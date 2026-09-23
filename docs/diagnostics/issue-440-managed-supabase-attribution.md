@@ -46,11 +46,12 @@ but does not explain either first-card trace by itself.
 **Dedicated compute / migration:** Supabase is verified in West EU (`eu-west-1`)
 on shared `t4g.nano` compute, with a 0.5 GB RAM ceiling and a Free-plan database
 quota warning showing 0.518/0.5 GB (104%). This justifies treating capacity and
-quota as material risks and checking storage usage. It does not show that either
-caused the observed latency: the dashboard readings are not aligned to the
-slow-request timestamps. No dedicated-node or paid-compute change is justified
-until time-correlated resource metrics and matched HTTP/SQL evidence are
-available. The app/NUC geographic region remains unknown.
+quota as material risks and checking storage usage. A later ten-minute resource
+chart overlaps one #421 trace (details below): it shows low CPU and memory
+commitment near the plotted limit, but no per-request resource sample. This
+does not establish that memory pressure caused the latency. No compute change
+is justified on these observations. The app/NUC geographic region remains
+unknown.
 
 ## Verified paths and missing equivalence
 
@@ -305,6 +306,17 @@ PostgREST calls; the same-origin application route does expose its server
 timings. Treat this as one additional sample (not a percentile or a cold-start
 result), with the user-visible ready transition still lacking an exact marker.
 
+The Supabase Database Observability page was set to the overlapping
+**17:40–17:50 UTC** window. It displayed memory used **411.32 MB**, memory
+commitment **1.23 GB**, CPU **1.39%**, network **22.4 KB/s**, and **7 IOPS**.
+The ten-minute commitment plot appears to stay near the displayed **1.24 GB**
+commit-limit line; the CPU plot is mostly idle. These are coarse dashboard
+window observations, not metrics joined to individual RPCs. Disk-throughput,
+connection, and disk-usage panels did not load; the separate size card showed
+**0.48 GB / 8 GB**. Low CPU weakens a sustained CPU-saturation explanation for
+this interval. Near-limit memory commitment keeps memory pressure plausible,
+but does not prove it caused the slow selection or projection RPCs.
+
 ## Harness correction
 
 `session_plan_latency.integration.test.mjs` previously diffed
@@ -388,9 +400,11 @@ CI run.
 - [x] Verified Supabase compute tier/primary DB region: shared `t4g.nano`, West
   EU (`eu-west-1`); compute scaling is disabled on the Free plan.
 - [ ] Verified NUC geographic location — still undocumented in the repository.
-- [ ] Obtained time-correlated CPU/memory/disk/connection metrics for the
-  managed database during slow requests. Dashboard snapshot and aggregate query
-  statistics are recorded, but are not correlated to #413/#421 request times.
+- [ ] Obtained per-request CPU/memory/disk/connection metrics for the managed
+  database. A 10-minute resource chart overlaps one #421 root navigation and
+  shows low CPU plus memory commitment near the plotted limit, but it is too
+  coarse to join to individual RPCs. Other resource panels failed to load, and
+  #413 plus earlier #421 traces remain unmatched.
 - [ ] Matched direct SQL / transaction-pooler calls to actual PostgREST calls
   using the same QA principal, role/RLS, inputs, and data scope — not complete.
   Existing #421 HTTP traces have no matched SQL baseline; #413 SQL calls do not
@@ -398,10 +412,10 @@ CI run.
 - [x] Separated PostgreSQL execution from outer client time where available;
   recorded that the outer interval includes fresh container/client startup and
   is not pure pooler time. Full HTTP/app totals are available only for #421.
-- [x] Stayed within the production limits by running no new production probe;
-  did not repeat known first-slow/fast samples. The diagnostic CLI and workflow
-  now cap any future round at three samples per component. Prior evidence is
-  summarized with single-sample maxima and no p95 claim.
+- [x] Stayed within the production limits: one additional read-only root-page
+  navigation captured missing stage/resource context; no learner action was
+  performed. The diagnostic CLI and workflow cap SQL rounds at three samples
+  per component. Prior evidence is summarized as samples, not percentiles.
 - [x] Changed local nested stats identity to OID/signature, added required-call
   assertions, and tested 6- and 8-argument paths independently.
 - [ ] Full acceptance unmet: no matched request identity/sample IDs, exact
@@ -415,11 +429,11 @@ CI run.
   server-side first-card pipeline but does not identify whether its DB, API, or
   resource layer dominates.
 
-Next discriminating step: use the verified dashboard access to capture
-time-correlated metrics while scheduling one <=3-call round with the same QA
-principal/inputs via role-equivalent SQL and the actual PostgREST path. Record
-per-request timestamps and backend identity, compare cloud metrics over that
-exact interval, and retain a sanitized initiator/argument-shape record for the
-second root-page `get_next_card` call so source prefetch and scope replacement
-can be distinguished. Do not retain auth headers/HARs, use NUC telemetry as a
-database-resource proxy, or repeat another identical cold-first run.
+Next discriminating step: compare the actual PostgREST request with
+role/RLS-equivalent SQL for the same QA principal, arguments, and data scope,
+while recording request timestamps and resource metrics. The equivalent SQL
+path and a reliable per-request metric export are not yet available in this
+task. Preserve the existing sample caps; retain only sanitized request
+identity and timing boundaries. Do not retain auth headers/HARs, use NUC
+telemetry as a database-resource proxy, or repeat another identical cold-first
+run.
