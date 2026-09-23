@@ -103,6 +103,34 @@ EXPLAIN wrapper's 2,115.683 ms first sample is also not the exact deploy probe.
 No learner/business data or database configuration was changed. Do not reset
 production statistics or tune server settings to investigate further.
 
+## Production readiness diagnostic rerun (2026-09-23)
+
+The existing GitHub Actions workflow was run against the current `main` commit
+`583af8e79` with three samples per component. It used the self-hosted production
+runner and the dedicated QA identity, with the same bounded read-only transaction,
+JIT off, and no writes. All samples used PostgreSQL 17.6 and reported the same
+physical backend (`backendPid=2205899`, started at `2026-09-23 11:29:50 UTC`),
+so this is a warm-backend comparison rather than a cold-backend experiment.
+
+| Component | First sample | Following samples | Planning | Shared reads | Temp read/write |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| public six-argument plan | 2,648.276 ms | 181.321 / 179.166 ms | 0.110–0.114 ms | 0 | 280 / 564 |
+| next card | 186.833 ms | 196.435 / 182.321 ms | 0.114–0.126 ms | 0 | 280 / 564 |
+| filtered card | 148.098 ms | 139.960 / 153.946 ms | 0.116–0.126 ms | 0 | 280 / 564 |
+| aggregate / candidate | 176.840 / 176.361 ms | 176.909 / 176.637 and 177.440 / 177.314 ms | 0.127–0.156 ms | 0 | 280 / 564 |
+
+This rerun reproduces the important shape: one slow first public-plan call,
+followed by stable sub-200 ms calls on the same backend. The outer PostgreSQL
+planner is not spending the missing seconds; the persistent query path is fast
+once the backend has completed its first execution. Temporary blocks remain
+present in every call, so they are a characteristic of this path rather than a
+new first-call-only event. The run therefore strengthens the cold-backend,
+pooler, or runtime-initialization hypothesis but does not distinguish which of
+those layers owns the delay.
+
+Workflow run: [35854847126](https://github.com/vbalashi/2000nl/actions/runs/35854847126).
+The run produced no learner-content output and changed no production state.
+
 ## Repeatable local feedback loop
 
 ```sh
