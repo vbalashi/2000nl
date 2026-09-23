@@ -1,7 +1,8 @@
 # Issue 440: managed Supabase and Training latency attribution
 
-Date: 2026-09-23. Scope: bounded, read-only evidence review; no runtime change,
-production probe, deployment, or database setting change in this issue branch.
+Date: 2026-09-23; follow-up evidence added 2026-09-24. Scope: bounded,
+read-only evidence review; no runtime change, production request, deployment,
+or database setting change in this issue branch.
 
 ## Architect conclusion by path
 
@@ -111,10 +112,15 @@ headline values are not retained as exact samples at the slow query timestamp,
 and the dashboard does not establish the maximum CPU or memory use during the
 call. Do not treat `0.41%` as a time-correlated CPU measurement.
 
-A bounded Logs Explorer query for the diagnostic interval returned no rows.
-This does not prove the database or API was idle: log source/retention coverage
-and event correlation are not established by an empty result. The available
-chart and missing panels cannot rule out short-lived or backend-local resource
+An earlier bounded Logs Explorer query for the diagnostic interval returned no
+rows. A follow-up query against the unified logs stream found 3 auth, 41 edge,
+3 PostgREST, and 2 PostgreSQL rows in the ten-minute window. In the exact
+20-second browser trace window, edge/auth events were present, but there were
+no PostgREST or PostgreSQL rows. The PostgREST and PostgreSQL rows elsewhere in
+the ten-minute window do not align with the measured RPC timestamps. The
+earlier empty result was therefore a limitation of that query/source selection,
+not evidence that all Supabase services were idle. The available chart and
+missing panels still cannot rule out short-lived or backend-local resource
 pressure. This does not prove or exclude a managed-capacity cause and does not
 justify a compute move or SQL rewrite.
 
@@ -133,15 +139,14 @@ The same authorized Chrome profile was used for dashboard observations; an
 unauthenticated browser was not used. The CLI is not linked to this project
 and no CLI SQL inspection was run.
 
-Supabase MCP is configured globally, enabled, and uses OAuth with all-project
-visibility (no `project_ref` scope). Its tools were not exposed in this task's
-callable tool inventory, so none of the measurements in this report came from
-MCP. The installed Supabase skill was read; it supplies operating guidance,
-not a data connection. A future MCP or CLI result must explicitly select and
-record project ref `lliwdcpuuzjmxyzrjtoz` before interpreting metrics or SQL.
-The official Supabase observability guide allows database inspection via CLI,
-Explorer, or MCP; tool availability alone does not establish that a specific
-measurement came from the correct project or database role.
+At follow-up, the Supabase MCP was callable. `get_project` explicitly selected
+reference `lliwdcpuuzjmxyzrjtoz` and returned project `2000nl`, region
+`eu-west-1`, status `ACTIVE_HEALTHY`, and PostgreSQL `17.6.1.054`. The bounded
+historical `query_logs` reads below also targeted that exact project. No SQL
+execution, request payload, auth header, user identifier, or learner content
+was read or retained in this follow-up. The CLI remains unlinked to the
+project; no production SQL inspection was run. Tool availability alone does
+not establish equivalence between a database role or request path.
 
 **Aggregated Query Performance observations.** Supabase Observability → Query
 Performance was inspected for **2026-09-22 14:11:05.597Z through 2026-09-23
@@ -324,6 +329,43 @@ Disk-throughput, connection, and disk-usage panels did not load; the separate
 size card showed **0.48 GB / 8 GB**. Low CPU weakens sustained CPU saturation
 for this interval.
 
+**Sanitized Supabase edge-log correlation for the same browser trace
+(read 2026-09-24).** A bounded unified-log query covered
+`2026-09-23T17:44:50Z`–`17:45:10Z`, around the new-tab navigation at
+`17:44:53.595Z` recorded above. The selected fields were timestamp, method,
+route path, authenticated JWT role where present, HTTP status, gateway
+`response.origin_time`, and cache status. User, session, IP, token, query-string,
+request-body, and response-body fields were excluded.
+
+| Supabase route | Started after navigation | JWT role | HTTP | Gateway `response.origin_time` |
+|---|---:|---|---:|---:|
+| `get_learning_preferences` | +0.844 s | authenticated | 200 | 606 ms |
+| `user_settings` | +0.847 s | authenticated | 200 | 604 ms |
+| Setup/scope RPCs (`get_training_filter_sources`, `get_available_learning_languages`, `get_training_scenarios`, `get_available_word_lists`, `get_active_training_scope`) | +1.86–1.88 s | authenticated | 200 | 166–369 ms |
+| `get_word_list_summary` | +2.153 s | authenticated | 200 | 52 ms |
+| `get_detailed_training_stats` | +2.251 s | authenticated | 200 | 4,169 ms |
+| First `get_next_card` | +2.255 s | authenticated | 200 | 5,618 ms |
+| `fetch_dictionary_entry_by_id_gated` | +12.992 s | authenticated | 200 | 186 ms |
+| Later `get_next_card` | +13.023 s | authenticated | 200 | 2,069 ms |
+| `read_platform_v2_training_group` (two calls) | +15.552 / +15.759 s | not exposed | 200 | 2,397 / 2,294 ms |
+
+The first `get_detailed_training_stats` and `get_next_card` gateway timings are
+within 36 ms and 41 ms, respectively, of the browser Resource Timing durations
+in the same trace (4,205 ms and 5,659 ms). This strongly locates almost all of
+those two waits inside the Supabase API/origin path rather than browser transfer
+or rendering. It does **not** isolate PostgreSQL execution from PostgREST,
+gateway, connection acquisition, or response serialization. All observed
+requests returned HTTP 200; these two RPCs used the authenticated role. The two
+`read_platform_v2_training_group` events are close in time to the later
+Platform V2 lookups in the browser trace, but no shared request ID was retained,
+so their exact pairing is not proven. They do not explain the first lookup.
+
+This supplies the missing request timestamps/status and a Supabase-side
+upstream-duration boundary for the #421 sample. It does not supply the
+per-request host CPU, resident/free memory, active swap I/O, disk, or connection
+metrics required to attribute the high origin times to managed compute. The
+log records also do not expose a SQL execution duration for those exact RPCs.
+
 ## Harness correction
 
 `session_plan_latency.integration.test.mjs` previously diffed
@@ -426,22 +468,26 @@ CI run.
   per component. Prior evidence is summarized as samples, not percentiles.
 - [x] Changed local nested stats identity to OID/signature, added required-call
   assertions, and tested 6- and 8-argument paths independently.
-- [ ] Full acceptance unmet: no matched request identity/sample IDs, exact
-  timings/status codes/errors for an #413 HTTP-vs-SQL round, or per-request
-  Supabase metrics. Current capacity and Query Performance data are aggregate
-  observations, not matched to the existing traces. A new probe is useful only
-  when dashboard metrics and an authenticated HTTP path can be correlated in
-  one scheduled, read-only window.
+- [ ] Full acceptance unmet: #413 still lacks matched HTTP-vs-SQL request
+  identities, equivalent authenticated-role SQL, and exact inputs/data scope.
+  For #421, the edge-log follow-up now adds authenticated-role status codes and
+  a gateway-origin timing that closely matches browser duration for the first
+  stats/card RPCs, but it still lacks SQL execution time and per-request host
+  CPU, resident/free memory, active swap I/O, disk, and connection metrics.
+  Aggregate charts and Query Performance values are not substitutes for those
+  matched observations.
 - [ ] No production-cause conclusion for either issue. #413 supports neither a
   SQL rewrite nor a dedicated-node decision yet. #421 confirms an expensive
   server-side first-card pipeline but does not identify whether its DB, API, or
   resource layer dominates.
 
-Next discriminating step: determine whether the same QA startup path's query
-concurrency coincides with active swap I/O or low free memory, then compare its
-actual PostgREST request with role/RLS-equivalent SQL for the same principal,
-arguments, and data scope. The equivalent SQL path and a reliable per-request
-metric export are not yet available in this task. Preserve the existing sample
-caps; retain only sanitized request identity and timing boundaries. Do not
-retain auth headers/HARs, use NUC telemetry as a database-resource proxy, or
-repeat another identical cold-first run.
+Next discriminating step: for #421, obtain a bounded same-window database
+metrics sample (free/resident memory, active swap I/O, connections, CPU and
+disk) around an already planned authenticated startup capture; do not repeat an
+identical cold-first run just to recreate this log sample. Separately, for
+#413, compare its actual PostgREST request with role/RLS-equivalent SQL for the
+same principal, arguments, and data scope. The equivalent SQL path and a
+reliable per-request metric export are not yet available in this task. Preserve
+the existing sample caps; retain only sanitized request identity and timing
+boundaries. Do not retain auth headers/HARs or use NUC telemetry as a
+database-resource proxy.
