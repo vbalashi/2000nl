@@ -237,6 +237,24 @@ direct eight-argument UI observation at 1.949 s; that historical outlier still
 needs a matching idle/backend reproduction before any code change is justified.
 The production database and learner state remained read-only throughout.
 
+## Controlled-idle UI reproduction (2026-09-23)
+
+After approximately five minutes without readiness calls, the same workflow ran
+the exact eight-argument UI overload first in
+[35861721662](https://github.com/vbalashi/2000nl/actions/runs/35861721662).
+The first UI call took **1,805.719 ms** on new backend `2210081` (started at
+`2026-09-23 12:38:17.924465 UTC`). The six-argument public call immediately
+after it took **193.346 ms** on that same backend/start. This reproduces the
+cold-first effect on the actual UI contract after idle.
+
+The activity sampler observed the slow UI `session-plan` active with
+`waitEventType=null` and `waitEvent=null`. During the slow interval, host load
+was about `1.02`, memory available about `12.8 GB` of `16.3 GB`, CPU PSI about
+`1–4.6%` with no full CPU pressure, and IO PSI about `0.9–2.4%`. The result
+therefore makes host-wide saturation, visible lock waits, and visible I/O waits
+insufficient explanations. The remaining boundary is backend/pooler/runtime
+initialization timing; no production state or configuration changed.
+
 ## Constrained resource experiment (2026-09-23)
 
 To test whether a simple resource ceiling is sufficient to recreate the first-
@@ -299,15 +317,14 @@ runtime initialization or pooler lifecycle above host-wide resource saturation
 and persistent query-volume regression; contention and nested planning have not
 been separated.
 
-The constrained profile, synchronized host sampler, and exact UI-overload
-comparison have now been tested. Next, isolate the remaining backend/pooler
-boundary around the six-argument cold-first outlier: correlate pooler routing
-and backend PID/start with a genuinely new first call, capture any available
-pooler connection or server-side runtime timing, and repeat after a controlled
-idle interval. Keep the eight-argument UI path in the same comparison so the
-historical 1.949 s observation can be reproduced or retired. Enable nested
-statement planning/execution timing only in an isolated environment. Reproduce
-the near-two-second first-call behavior before changing SQL or runtime settings;
+The constrained profile, synchronized host sampler, exact UI-overload
+comparison, and controlled-idle UI reproduction have now been completed. Next,
+isolate the backend/pooler/runtime initialization boundary: correlate pooler
+routing and backend PID/start with a genuinely new first call, capture any
+available pooler connection or server-side runtime timing, and repeat the same
+UI-first probe after an idle interval. Enable nested statement
+planning/execution timing only in an isolated environment. Reproduce the
+near-two-second first-call behavior before changing SQL or runtime settings;
 compare one variable at a time. Restart/evict caches only on the isolated
 instance, never on the shared QA or production database.
 
