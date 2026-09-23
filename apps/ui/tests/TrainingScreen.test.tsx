@@ -1596,6 +1596,57 @@ test("late stats from the old setup scope cannot replace the current session sta
   }
 });
 
+test("returning to a pending stats scope adopts its existing request", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockImplementation(
+    () => new Promise(() => undefined),
+  );
+  const requests: Array<{
+    scope: unknown;
+    resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void;
+  }> = [];
+  fetchStats.mockImplementation(
+    (_userId: string, _modes: string[], scope: unknown) =>
+      new Promise((resolve) => { requests.push({ scope, resolve }); }),
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("button", { name: "Wijzigen" });
+    await waitFor(() => expect(requests).toHaveLength(1));
+
+    fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
+    fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
+    await waitFor(() => expect(requests).toHaveLength(2));
+
+    fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[0]!.scope).toEqual(
+      expect.objectContaining({ listId: activeList.id, listType: activeList.type }),
+    );
+    expect(requests[1]!.scope).toEqual(
+      expect.objectContaining({ listId: secondaryList.id, listType: secondaryList.type }),
+    );
+
+    await act(async () =>
+      requests[0]!.resolve({ ...defaultTrainingStats, newCardsToday: 17 }),
+    );
+    expect(await screen.findByText("17")).toBeInTheDocument();
+
+    await act(async () =>
+      requests[1]!.resolve({ ...defaultTrainingStats, newCardsToday: 29 }),
+    );
+    expect(screen.getByText("17")).toBeInTheDocument();
+    expect(screen.queryByText("29")).not.toBeInTheDocument();
+  } finally {
+    for (const request of requests) request.resolve(defaultTrainingStats);
+    restoreDefaultListScope();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
 test("setup and prepared card stay usable while scoped stats are still pending", async () => {
   const statsRequests: Array<{
     resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void;

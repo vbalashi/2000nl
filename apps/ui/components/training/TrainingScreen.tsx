@@ -501,7 +501,14 @@ function TrainingScreenContent({
   const initialLoadDone = useRef(false);
   const statsRequestGenerationRef = useRef(0);
   const statsRequestedKeyRef = useRef("");
-  const statsPendingScopeKeysRef = useRef(new Set<string>());
+  const statsPendingRequestsRef = useRef(
+    new Map<
+      string,
+      { userId: string; scopeKey: string; generation: number }
+    >(),
+  );
+  const currentPendingStatsRequest =
+    statsPendingRequestsRef.current.get(currentStatsScopeKey);
   const statsCurrentContextRef = useRef({
     userId: user?.id ?? "",
     scopeKey: currentStatsScopeKey,
@@ -511,7 +518,9 @@ function TrainingScreenContent({
   statsCurrentContextRef.current = {
     userId: user?.id ?? "",
     scopeKey: currentStatsScopeKey,
-    generation: statsRequestGenerationRef.current,
+    generation:
+      currentPendingStatsRequest?.generation ??
+      statsRequestGenerationRef.current,
     mounted: componentMountedRef.current,
   };
   const lastAppliedTrainingFocusFilterKey = useRef(trainingFocusFilterKey);
@@ -581,14 +590,26 @@ function TrainingScreenContent({
         effectiveListId ?? null,
         effectiveListType ?? null,
       ]);
-      if (statsPendingScopeKeysRef.current.has(scopeKey)) return;
-      statsPendingScopeKeysRef.current.add(scopeKey);
+      const pendingRequest = statsPendingRequestsRef.current.get(scopeKey);
+      if (pendingRequest) {
+        // Returning to a scope whose read is still in flight should adopt that
+        // exact request. Otherwise its response remains fenced as stale while
+        // the dedupe guard prevents a replacement request from starting.
+        statsRequestedKeyRef.current = scopeKey;
+        statsCurrentContextRef.current = {
+          ...pendingRequest,
+          mounted: componentMountedRef.current,
+        };
+        setStatsReadiness({ key: scopeKey, status: "pending" });
+        return;
+      }
       const generation = (statsRequestGenerationRef.current += 1);
       const request = {
         userId: user.id,
         scopeKey,
         generation,
       };
+      statsPendingRequestsRef.current.set(scopeKey, request);
       statsRequestedKeyRef.current = request.scopeKey;
       statsCurrentContextRef.current = {
         userId: request.userId,
@@ -623,7 +644,12 @@ function TrainingScreenContent({
         }
         return;
       } finally {
-        statsPendingScopeKeysRef.current.delete(request.scopeKey);
+        if (
+          statsPendingRequestsRef.current.get(request.scopeKey)?.generation ===
+          request.generation
+        ) {
+          statsPendingRequestsRef.current.delete(request.scopeKey);
+        }
       }
       if (
         !isCurrentTrainingReadinessRequest(
