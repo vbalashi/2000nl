@@ -285,6 +285,10 @@ The probe is repeated even when all migrations are no-ops so a prior timeout
 cannot be bypassed by a retry. It does not review a card, mark it known, or
 submit a report.
 
+The readiness diagnostic reports both the six-argument public session-plan
+contract and the exact eight-argument UI overload (`p_session_size='10'`,
+`p_new_review_ratio=2`) so their first-call behavior can be compared.
+
 ### Scheduler activity sampler
 
 `scheduler_activity_sampler.mjs` is a bounded, read-only companion for the

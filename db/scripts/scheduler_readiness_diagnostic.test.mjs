@@ -13,6 +13,12 @@ test('diagnostic records physical backend identity inside the read-only transact
   assert.ok(sql.indexOf('scheduler_context=') < sql.indexOf('COMMIT'));
 });
 
+test('diagnostic includes the exact eight-argument UI session-plan overload', () => {
+  const sql = diagnosticSql({ statementTimeoutMs: 3000 }, 'ui-public');
+  assert.match(sql, /get_training_session_plan\([\s\S]*'10',[\s\n]*2\n\s*\)/);
+  assert.match(sql, /BEGIN READ ONLY/);
+});
+
 test('metrics keep outer planning distinct from execution and preserve reused backend identity', () => {
   const context = { backendPid: 123, backendStart: '2026-09-22T20:00:00+00:00', serverVersion: '17.6', workMem: '2184kB', jit: 'off' };
   const output = `scheduler_context=${JSON.stringify(context)}\n${JSON.stringify([{
