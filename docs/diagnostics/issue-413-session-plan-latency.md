@@ -131,6 +131,21 @@ those layers owns the delay.
 Workflow run: [35854847126](https://github.com/vbalashi/2000nl/actions/runs/35854847126).
 The run produced no learner-content output and changed no production state.
 
+## Idle follow-up probe (2026-09-23)
+
+After an idle gap, a one-sample run of the same workflow again measured the
+first public plan at **2,241.907 ms**. The same physical backend then completed
+the `next`, `filtered`, aggregate, and candidate components in **204.213 ms**,
+**207.046 ms**, **408.252 ms**, and **230.413 ms** respectively. PostgreSQL
+17.6, `work_mem=2184kB`, JIT off, zero shared reads, and 280/564 temporary
+read/write blocks matched the earlier run.
+
+This makes the first-use shape repeatable after idle time, while the following
+calls on that backend remain fast. It strengthens the backend/pooler/runtime
+initialization hypothesis; it still cannot distinguish backend startup from
+pooler routing or host scheduling. Workflow run:
+[35856210739](https://github.com/vbalashi/2000nl/actions/runs/35856210739).
+
 ## Repeatable local feedback loop
 
 ```sh
