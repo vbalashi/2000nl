@@ -1,6 +1,31 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { componentOrder, diagnosticSql, explainMetrics, outerOverheadMs } from './scheduler_readiness_diagnostic.mjs';
+import {
+  componentOrder,
+  diagnosticSql,
+  explainMetrics,
+  outerOverheadMs,
+  redactDiagnosticOutput,
+} from './scheduler_readiness_diagnostic.mjs';
+
+test('diagnostic output redacts database URLs, named secrets, and opaque tokens', () => {
+  const opaqueToken = 'xY9_'.repeat(20);
+  const input = [
+    'connection=postgresql://qa_user:private-pass@db.example:6543/postgres?sslmode=require',
+    'password=private-password token=private-token secret=private-secret key=private-key',
+    `authorization=${opaqueToken}`,
+  ].join('\n');
+
+  const redacted = redactDiagnosticOutput(input);
+
+  assert.match(redacted, /\[redacted-db-url\]/);
+  assert.match(redacted, /password=\[redacted\]/);
+  assert.match(redacted, /token=\[redacted\]/);
+  assert.match(redacted, /secret=\[redacted\]/);
+  assert.match(redacted, /key=\[redacted\]/);
+  assert.match(redacted, /\[redacted-token\]/);
+  assert.doesNotMatch(redacted, /qa_user|private-pass|private-password|private-token|private-secret|private-key|xY9_/);
+});
 
 test('diagnostic records physical backend identity inside the read-only transaction', () => {
   const sql = diagnosticSql({ statementTimeoutMs: 3000 }, 'public');
@@ -41,4 +66,10 @@ test('metrics keep outer planning distinct from execution and preserve reused ba
   assert.deepEqual(first, { context, planningMs: 1.25, planningHit: 3, planningRead: 1, executionMs: 2317.099, sharedHit: 5341, sharedRead: 0, tempRead: 280, tempWritten: 564 });
   assert.equal(first.context.backendPid, second.context.backendPid);
   assert.throws(() => explainMetrics(output.replace(/^scheduler_context=.*\n/, ''), 'public', 1), /missing backend context/);
+});
+
+test('timing parser fails closed when EXPLAIN JSON or execution time is missing', () => {
+  const context = 'scheduler_context={"backendPid":123}\n';
+  assert.throws(() => explainMetrics(`${context}no plan`, 'public', 1), /returned no EXPLAIN JSON/);
+  assert.throws(() => explainMetrics(`${context}[{"Plan":{}}]`, 'public', 1), /has no execution time/);
 });
