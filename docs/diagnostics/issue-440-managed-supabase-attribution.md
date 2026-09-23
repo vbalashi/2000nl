@@ -29,8 +29,10 @@ above.
 **#421 — first actionable card.** Two authenticated browser traces on the same
 release, plus one supplementary cold root-page trace, show several seconds in
 the Supabase upstream for training statistics and card selection, followed by
-a slow Platform V2 lookup. The root trace's LCP was 0.49 s, while the training
-card remained on `Loading card` until the slow requests finished. The request path is
+a slow Platform V2 lookup. In the supplementary root trace, LCP was 0.49 s;
+notes place `Loading card` around +5 s and say the home UI returned later, but
+they do not retain the exact app-ready time. The separate Network `Finish`
+boundary at 17.57 s is not an app-ready measurement. The request path is
 server-side enough that browser rendering/network setup is not the dominant
 reported interval. The evidence does not separate managed database resource
 limits from the individual SQL/RPC work or PostgREST/API layers. The UI can
@@ -191,21 +193,24 @@ Performance reported **LCP 0.49 s**, **CLS 0.00**, and Network `Finish` at
 **17.57 s** across **88 requests / 13.2 MB**. The request count/bytes include
 resources not yet attributed to the app (for example, extension or media
 resources); do not use the total as an app transfer-size measurement. The page
-briefly displayed `Loading card`; the final root training UI appeared only
-after the long requests completed.
+showed `Loading card` around +5 s, then returned to the home UI later. The exact
+app UI-ready timestamp was not captured; Network `Finish` is only the network
+completion boundary.
 
-| Request | Started after navigation | Queueing | Waiting for server | Body download |
-|---|---:|---:|---:|---:|
-| first `get_next_card` | +2.32 s | ~17 ms | 5.50 s | <1 ms |
-| `get_detailed_training_stats` (concurrent) | +2.32 s | not retained | 3.86 s | 41 ms |
-| second `get_next_card` | +12.11 s | not retained | 2.45 s | not retained |
-| `/api/platform/v2/lookup` | not retained | not retained | 4.29 s | not retained |
-| `/api/platform/translation` | not retained | not retained | 4.14 s | not retained |
+| Request | Started after navigation | Total request duration | Queueing | Waiting for server | Body download |
+|---|---:|---:|---:|---:|---:|
+| first `get_next_card` | +2.32 s | not retained | ~17 ms | 5.50 s | <1 ms |
+| `get_detailed_training_stats` (concurrent) | +2.32 s | not retained | not retained | 3.86 s | 41 ms |
+| second `get_next_card` | +12.11 s | not retained | not retained | 2.45 s | not retained |
+| `/api/platform/v2/lookup` | not retained | 4.29 s | not retained | not retained | not retained |
+| `/api/platform/translation` | not retained | 4.14 s | not retained | not retained | not retained |
 
-This single trace shows that server wait dominates the first two RPC request
-durations and captures a later second `get_next_card` request. It is not a
-percentile, and it is not causally joined to the 24-hour dashboard aggregates.
-No HAR or full request headers were retained because those contain auth data.
+This single trace shows that server wait dominates the observed timing of the
+first two RPCs and captures a later second `get_next_card` request. The lookup
+and translation values are total request durations; their timing-phase
+breakdown was not retained. The trace is not a percentile, and it is not
+causally joined to the 24-hour dashboard aggregates. No HAR or full request
+headers were retained because those contain auth data.
 
 Source review finds one likely, but unconfirmed, explanation for the second
 `get_next_card`: the initial-load effect in `TrainingScreen.tsx` calls
