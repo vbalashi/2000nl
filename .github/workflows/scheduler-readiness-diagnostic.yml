@@ -34,7 +34,28 @@ jobs:
             1|2|3|4|5|6|7|8|9|10) ;;
             *) echo "samples must be an integer from 1 to 10" >&2; exit 64 ;;
           esac
+          activity_log="$(mktemp)"
+          activity_pid=""
+          cleanup_activity() {
+            if [[ -n "${activity_pid}" ]]; then
+              kill "${activity_pid}" 2>/dev/null || true
+              wait "${activity_pid}" 2>/dev/null || true
+            fi
+            rm -f "${activity_log}"
+          }
+          trap cleanup_activity EXIT
+          sg docker -c "node db/scripts/scheduler_activity_sampler.mjs \\
+            --psql-container-image '${DB_PSQL_IMAGE}' \\
+            --env-file .env \\
+            --duration-ms 30000 \\
+            --interval-ms 250" >"${activity_log}" 2>&1 &
+          activity_pid=$!
+          sleep 1
           sg docker -c "node db/scripts/scheduler_readiness_diagnostic.mjs \\
             --psql-container-image '${DB_PSQL_IMAGE}' \\
             --env-file .env \\
             --samples '${DIAGNOSTIC_SAMPLES}'"
+          kill "${activity_pid}" 2>/dev/null || true
+          wait "${activity_pid}" 2>/dev/null || true
+          activity_pid=""
+          cat "${activity_log}"

@@ -285,6 +285,17 @@ The probe is repeated even when all migrations are no-ops so a prior timeout
 cannot be bypassed by a retry. It does not review a card, mark it known, or
 submit a report.
 
+### Scheduler activity sampler
+
+`scheduler_activity_sampler.mjs` is a bounded, read-only companion for the
+production scheduler-readiness workflow. It samples `pg_stat_activity` while
+the readiness probe runs and emits only backend PID/start, query start, state,
+wait type/event, and an allowlisted query class (`session-plan`, `next-card`,
+`filtered-card`, or `candidate`). It never prints SQL text, learner content,
+credentials, or response data. The workflow runs it for 30 seconds in parallel
+with the existing probe; it is telemetry only and does not reset statistics or
+change database settings.
+
 ---
 
 ## Development

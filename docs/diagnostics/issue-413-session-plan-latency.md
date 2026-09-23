@@ -146,6 +146,18 @@ initialization hypothesis; it still cannot distinguish backend startup from
 pooler routing or host scheduling. Workflow run:
 [35856210739](https://github.com/vbalashi/2000nl/actions/runs/35856210739).
 
+## Synchronized activity telemetry (next probe)
+
+The readiness workflow now starts `scheduler_activity_sampler.mjs` alongside
+the bounded read-only probe for 30 seconds. The sampler reads only aggregate
+`pg_stat_activity` fields: backend PID/start, query start, state, wait type/event,
+and an allowlisted scheduler query class. It deliberately excludes SQL text and
+all learner/content payloads. This is the next attribution boundary: an active
+backend with a wait event during the first call points toward runtime/resource
+or pooler scheduling, while an active backend without a wait event leaves query
+execution as the remaining database-side hypothesis. The sampler itself does
+not reset statistics, change settings, or mutate data.
+
 ## Repeatable local feedback loop
 
 ```sh
