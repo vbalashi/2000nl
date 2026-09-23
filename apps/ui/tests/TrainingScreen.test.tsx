@@ -2189,9 +2189,9 @@ test("superseded resume restores every still-permitted setup setting before Star
   );
   expect(screen.getByLabelText("Time window")).toHaveValue("daysAgo");
   expect(screen.getByLabelText("Days ago")).toHaveValue(14);
-  expect(screen.getByRole("button", { name: "All due today" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
+  expect(screen.getByRole("slider", { name: "Session size" })).toHaveAttribute(
+    "aria-valuetext",
+    "All due",
   );
 
   updateActiveTrainingScope.mockClear();

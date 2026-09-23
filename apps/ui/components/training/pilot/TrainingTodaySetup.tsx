@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, ChevronDown, Plus } from "lucide-react";
+import { TrainingLexicalPreview } from "./TrainingLexicalPreview";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type {
   CardFilter,
@@ -71,6 +73,9 @@ const defaultModesForScenario = (scenario: TrainingSetupOption) => {
 type Props = {
   userId?: string;
   trainingLanguageCode?: string;
+  trainingLanguageOptions?: TrainingSetupOption[];
+  trainingLanguageLoading?: boolean;
+  onTrainingLanguageChange?: (language: string) => void;
   interfaceLanguage: OnboardingLanguage;
   status: TrainingPilotStatus;
   initialDraft: TrainingSetupDraft;
@@ -92,6 +97,9 @@ type Props = {
 
 const copy = {
   en: {
+    language: "Training language",
+    material: "Material",
+    changeMaterial: "Change material",
     eyebrowToday: "TRAINING · STUDY DAY",
     greeting: "Good morning",
     completed: (count: number) => `${count} cards completed this study day`,
@@ -130,7 +138,7 @@ const copy = {
     directionHelp: "Select one or both word-card directions.",
     activity: "Recent activity",
     activityHelp: "Optional: narrow by event date and source; this does not mean forgotten words only.",
-    materialHelp: "Choose one collection. Dictionary-wide training is not wired yet.",
+    materialHelp: "Choose a dictionary or one collection.",
     goal: "Training goal",
     meaning: "Meaning",
     reverse: "Reverse",
@@ -161,7 +169,7 @@ const copy = {
     allDueHelp: "Selecting this switches the mix to Reviews only; new cards are not included.",
     fiveCards: "5 cards",
     tenCards: "10 cards",
-    allDueToday: "All due today",
+    allDueToday: "All due",
     daysAgo: "Days ago",
     loading: "Loading Training",
     chooseGoal: "Choose a training goal",
@@ -175,6 +183,9 @@ const copy = {
     saveFailed: "Could not save this preset on this device.",
   },
   nl: {
+    language: "Leertaal",
+    material: "Materiaal",
+    changeMaterial: "Materiaal wijzigen",
     eyebrowToday: "TRAINING · STUDIEDAG",
     greeting: "Goedemorgen",
     completed: (count: number) => `${count} kaarten deze studiedag afgerond`,
@@ -213,7 +224,7 @@ const copy = {
     directionHelp: "Kies één of beide richtingen voor woordkaarten.",
     activity: "Recente activiteit",
     activityHelp: "Optioneel: filter op datum en bron; dit selecteert niet alleen vergeten woorden.",
-    materialHelp: "Kies één collectie. Trainen met een heel woordenboek is nog niet aangesloten.",
+    materialHelp: "Kies een woordenboek of één collectie.",
     goal: "Trainingsdoel",
     meaning: "Betekenis",
     reverse: "Omgekeerd",
@@ -244,7 +255,7 @@ const copy = {
     allDueHelp: "Dit schakelt over naar alleen herhalingen; nieuwe kaarten tellen niet mee.",
     fiveCards: "5 kaarten",
     tenCards: "10 kaarten",
-    allDueToday: "Alles voor vandaag",
+    allDueToday: "Alles wat moet",
     daysAgo: "Dagen geleden",
     loading: "Training laden",
     chooseGoal: "Kies een trainingsdoel",
@@ -258,6 +269,9 @@ const copy = {
     saveFailed: "Kon de preset niet op dit apparaat bewaren.",
   },
   ru: {
+    language: "Язык тренировки",
+    material: "Материал",
+    changeMaterial: "Изменить материал",
     eyebrowToday: "ТРЕНИРОВКА · УЧЕБНЫЙ ДЕНЬ",
     greeting: "Доброе утро",
     completed: (count: number) => `За учебный день завершено карточек: ${count}`,
@@ -296,7 +310,7 @@ const copy = {
     directionHelp: "Выберите одно или оба направления для карточек со словами.",
     activity: "Недавняя активность",
     activityHelp: "Можно сузить по дате и источнику; это не выбор только забытых слов.",
-    materialHelp: "Выберите одну коллекцию. Тренировка всего словаря пока не подключена.",
+    materialHelp: "Выберите словарь или одну коллекцию.",
     goal: "Цель тренировки",
     meaning: "Значение",
     reverse: "Обратные",
@@ -327,7 +341,7 @@ const copy = {
     allDueHelp: "Этот вариант переключает состав на повторы; новые карточки не входят.",
     fiveCards: "5 карточек",
     tenCards: "10 карточек",
-    allDueToday: "Всё на сегодня",
+    allDueToday: "Все доступные повторы",
     daysAgo: "Дней назад",
     loading: "Загрузка тренировки",
     chooseGoal: "Выберите цель тренировки",
@@ -384,6 +398,9 @@ function ChoiceButton({
 export function TrainingTodaySetup({
   userId,
   trainingLanguageCode,
+  trainingLanguageOptions = [{ value: "nl", label: "Nederlands" }],
+  trainingLanguageLoading = false,
+  onTrainingLanguageChange,
   interfaceLanguage,
   status,
   initialDraft,
@@ -408,6 +425,7 @@ export function TrainingTodaySetup({
   const [presets, setPresets] = useState<TrainingSetupPreset[]>([]);
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const [presetMessage, setPresetMessage] = useState("");
+  const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
   const storageKey =
     userId && trainingLanguageCode
       ? presetStorageKey(userId, trainingLanguageCode)
@@ -416,6 +434,15 @@ export function TrainingTodaySetup({
   useEffect(() => {
     setPresets(storageKey ? readTrainingPresets(storageKey) : []);
   }, [storageKey]);
+
+  useEffect(() => {
+    if (pendingLanguage === trainingLanguageCode && !trainingLanguageLoading) {
+      setDraft({ ...initialDraft, sessionSize: initialDraft.sessionSize ?? DEFAULT_SESSION_SIZE });
+      setEditingPresetId(null);
+      setPresetMessage("");
+      setPendingLanguage(null);
+    }
+  }, [pendingLanguage, trainingLanguageCode, trainingLanguageLoading, initialDraft]);
 
   useEffect(() => {
     if (screen === "today") {
@@ -496,7 +523,7 @@ export function TrainingTodaySetup({
   };
 
   const savePreset = () => {
-    if (!storageKey || !draftScenarioSupported) return;
+    if (!storageKey || !draftScenarioSupported || trainingLanguageLoading || pendingLanguage) return;
     const sizeLabel = draft.sessionSize === "all-due-today"
       ? t.allDueToday
       : t.exercises(draft.sessionSize);
@@ -524,6 +551,7 @@ export function TrainingTodaySetup({
   };
 
   const requestStart = async (nextDraft: TrainingSetupDraft) => {
+    if (trainingLanguageLoading || pendingLanguage) return;
     const started = await onStart(nextDraft);
     if (started === false) setScreen("today");
   };
@@ -720,25 +748,34 @@ export function TrainingTodaySetup({
           type="button"
           aria-label={t.back}
           onClick={() => setScreen("today")}
-          className="min-h-10 text-sm font-semibold text-slate-600 dark:text-slate-300"
+          className="flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300"
         >
-          ← {t.back}
+          <ArrowLeft size={16} aria-hidden="true" /> {t.back}
         </button>
-        <p className="mt-4 font-mono text-xs font-bold tracking-[0.22em] text-slate-500 dark:text-slate-400">
-          {t.setupEyebrow}
-        </p>
-        <h1 className="mt-2 text-2xl font-medium text-slate-950 dark:text-white md:text-3xl">
+        <h1 className="sr-only">
           {t.setupHeading}
         </h1>
-
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-          {selectionSummary}
-        </p>
+        <div className="mt-3">
+          <label htmlFor="training-setup-language" className="text-sm font-semibold text-slate-950 dark:text-white">{t.language}</label>
+          <div className="relative mt-2">
+            <select
+              id="training-setup-language"
+              value={trainingLanguageCode ?? "nl"}
+              disabled={trainingLanguageLoading || !onTrainingLanguageChange || startPending}
+              onChange={(event) => {
+                if (event.target.value === trainingLanguageCode) return;
+                setPendingLanguage(event.target.value);
+                onTrainingLanguageChange?.(event.target.value);
+              }}
+              className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-slate-100/70 px-9 text-center text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
+            >
+              {trainingLanguageOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+            <ChevronDown size={16} aria-hidden="true" className="pointer-events-none absolute right-3 top-3.5 text-slate-500" />
+          </div>
+        </div>
 
         <div className="mt-6 flex flex-col gap-6 md:grid md:grid-cols-2 md:gap-x-6">
-          <h2 className="order-1 text-xs font-bold tracking-[0.18em] text-indigo-600 dark:text-indigo-300 md:col-span-2">
-            {t.pool}
-          </h2>
           <fieldset className="order-3 min-w-0">
             <legend className="text-sm font-semibold text-slate-950 dark:text-white">
               {t.family}
@@ -755,38 +792,7 @@ export function TrainingTodaySetup({
               {t.unavailable}
             </p>
           </fieldset>
-          <section className="order-4 min-w-0 md:col-span-2">
-            <h3 className="text-sm font-semibold text-slate-950 dark:text-white">
-              {t.partOfSpeech}
-            </h3>
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {[t.noun, t.verb, t.adjective, t.adverb].map((label) => (
-                <ChoiceButton key={label} active={false} disabled label={label} onClick={() => undefined} />
-              ))}
-            </div>
-            <details className="mt-2 rounded-lg bg-slate-100/70 px-3 py-2 dark:bg-slate-900/50">
-              <summary className="min-h-8 cursor-pointer text-xs font-semibold text-slate-600 dark:text-slate-300">
-                {t.moreParts}
-              </summary>
-              <p className="pb-1 text-xs text-slate-500 dark:text-slate-400">
-                {t.lexicalUnavailable}
-              </p>
-            </details>
-            <h3 className="mt-4 text-sm font-semibold text-slate-950 dark:text-white">
-              {t.nounArticle}
-            </h3>
-            <div className="mt-2 flex gap-2">
-              {[t.anyArticle, "de", "het"].map((label) => (
-                <ChoiceButton key={label} active={label === t.anyArticle} disabled label={label} onClick={() => undefined} />
-              ))}
-            </div>
-            <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-              {t.lexicalUnavailable}
-            </p>
-          </section>
-          <h2 className="order-5 text-xs font-bold tracking-[0.18em] text-indigo-600 dark:text-indigo-300 md:col-span-2">
-            {t.plan}
-          </h2>
+          <TrainingLexicalPreview languageCode={trainingLanguageCode ?? "nl"} interfaceLanguage={interfaceLanguage} />
           <fieldset className="order-8 min-w-0">
             <legend className="text-sm font-semibold text-slate-950 dark:text-white">
               {t.goal}
@@ -846,18 +852,25 @@ export function TrainingTodaySetup({
             </p>
           </fieldset>
 
-          <label className="order-2 min-w-0 text-sm font-semibold text-slate-950 dark:text-white">
-            {t.list}
+          <section className="order-2 min-w-0 text-sm font-semibold text-slate-950 dark:text-white">
+            <h2>{t.material}</h2>
+            <p className="mt-2 inline-flex max-w-full items-center rounded-full border border-indigo-400 bg-indigo-500/10 px-3 py-1 text-sm text-indigo-800 dark:text-indigo-200">
+              <span className="truncate">{lists.find((option) => option.value === draft.listValue)?.label ?? t.loading}</span>
+            </p>
+            <div className="relative mt-2 flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-100/70 text-slate-600 focus-within:ring-2 focus-within:ring-indigo-400 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
+              <Plus size={14} aria-hidden="true" />
+              <span aria-hidden="true">{t.changeMaterial}</span>
             <select
               aria-label={t.list}
               value={draft.listValue}
+              disabled={trainingLanguageLoading || Boolean(pendingLanguage) || startPending}
               onChange={(event) =>
                 setDraft((current) => ({
                   ...current,
                   listValue: event.target.value,
                 }))
               }
-              className="mt-2 min-h-10 w-full rounded-lg border border-slate-200 bg-white/70 px-3 text-sm dark:border-slate-700 dark:bg-slate-900/50"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-wait"
             >
               {lists.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -865,10 +878,11 @@ export function TrainingTodaySetup({
                 </option>
               ))}
             </select>
+            </div>
             <span className="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400">
               {t.materialHelp}
             </span>
-          </label>
+          </section>
 
           <details className="order-10 min-w-0 rounded-lg bg-slate-100/70 px-3 py-2 dark:bg-slate-900/50">
           <summary className="min-h-8 cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -969,7 +983,7 @@ export function TrainingTodaySetup({
               <button
                 type="button"
                 onClick={savePreset}
-                disabled={!draftScenarioSupported}
+                disabled={!draftScenarioSupported || trainingLanguageLoading || Boolean(pendingLanguage)}
                 className={`${actionClass} min-w-0 flex-[0.75] border-slate-300 bg-white text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200`}
               >
                 {editingPresetId ? t.updatePreset : t.savePreset}
@@ -979,7 +993,7 @@ export function TrainingTodaySetup({
               type="button"
               onClick={() => void requestStart(draft)}
               disabled={
-                startPending || scenarioLoading || !draftScenarioSupported
+                startPending || scenarioLoading || !draftScenarioSupported || trainingLanguageLoading || Boolean(pendingLanguage)
               }
               className={`${actionClass} min-w-0 flex-[1.25] border-indigo-500 bg-indigo-500 text-white hover:bg-indigo-400 disabled:cursor-wait disabled:opacity-60 dark:text-slate-950`}
             >
