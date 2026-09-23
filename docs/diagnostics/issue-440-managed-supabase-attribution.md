@@ -27,8 +27,10 @@ entries concern other RPCs and cannot replace or explain the direct SQL timings
 above.
 
 **#421 — first actionable card.** Two authenticated browser traces on the same
-release show several seconds in the Supabase upstream for training statistics
-and card selection, followed by a slow Platform V2 lookup. The request path is
+release, plus one supplementary cold root-page trace, show several seconds in
+the Supabase upstream for training statistics and card selection, followed by
+a slow Platform V2 lookup. The root trace's LCP was 0.49 s, while the training
+card remained on `Loading card` until the slow requests finished. The request path is
 server-side enough that browser rendering/network setup is not the dominant
 reported interval. The evidence does not separate managed database resource
 limits from the individual SQL/RPC work or PostgREST/API layers. The UI can
@@ -181,6 +183,46 @@ first trace. The two first RPCs start in parallel; the slower selection path is
 followed by a serial lookup. Those are separate pipeline stages and must not be
 merged into the #413 session-plan diagnosis.
 
+### Additional cold root-page trace (2026-09-23)
+
+One cold reload of the authenticated production root page was recorded in the
+existing Chrome profile without clicking any training controls. Chrome
+Performance reported **LCP 0.49 s**, **CLS 0.00**, and Network `Finish` at
+**17.57 s** across **88 requests / 13.2 MB**. The request count/bytes include
+resources not yet attributed to the app (for example, extension or media
+resources); do not use the total as an app transfer-size measurement. The page
+briefly displayed `Loading card`; the final root training UI appeared only
+after the long requests completed.
+
+| Request | Started after navigation | Queueing | Waiting for server | Body download |
+|---|---:|---:|---:|---:|
+| first `get_next_card` | +2.32 s | ~17 ms | 5.50 s | <1 ms |
+| `get_detailed_training_stats` (concurrent) | +2.32 s | not retained | 3.86 s | 41 ms |
+| second `get_next_card` | +12.11 s | not retained | 2.45 s | not retained |
+| `/api/platform/v2/lookup` | not retained | not retained | 4.29 s | not retained |
+| `/api/platform/translation` | not retained | not retained | 4.14 s | not retained |
+
+This single trace shows that server wait dominates the first two RPC request
+durations and captures a later second `get_next_card` request. It is not a
+percentile, and it is not causally joined to the 24-hour dashboard aggregates.
+No HAR or full request headers were retained because those contain auth data.
+
+Source review finds one likely, but unconfirmed, explanation for the second
+`get_next_card`: the initial-load effect in `TrainingScreen.tsx` calls
+`loadNextWord()` once after list/resume gates pass
+(`TrainingScreen.tsx:899-916`; `initialLoadDone` prevents that effect from
+simply firing twice). Once `currentWord` exists, the effect in
+`usePreparedNextTrainingTurn.ts:239-263` starts a separate next-candidate
+selection and excludes the displayed card; the
+`TrainingScreen.test.tsx:852-859` startup helper expects at least two selector
+calls after the first card heading appears.
+Language/mode and focus-filter changes can also replace selection after a real
+scope change, although refs and hydration gates suppress an ordinary repeat
+with unchanged defaults. Since the trace did not preserve the second request's
+initiator or argument signature, its exact cause remains unknown; the request
+is consistent with intended speculative next-card preparation, not proven to
+be that call.
+
 ## Harness correction
 
 `session_plan_latency.integration.test.mjs` previously diffed
@@ -290,6 +332,8 @@ CI run.
 Next discriminating step: use the verified dashboard access to capture
 time-correlated metrics while scheduling one <=3-call round with the same QA
 principal/inputs via role-equivalent SQL and the actual PostgREST path. Record
-per-request timestamps and backend identity and compare cloud metrics over that
-exact interval. Do not use NUC telemetry as a database-resource proxy or repeat
-another identical cold-first run.
+per-request timestamps and backend identity, compare cloud metrics over that
+exact interval, and retain a sanitized initiator/argument-shape record for the
+second root-page `get_next_card` call so source prefetch and scope replacement
+can be distinguished. Do not retain auth headers/HARs, use NUC telemetry as a
+database-resource proxy, or repeat another identical cold-first run.
