@@ -289,7 +289,10 @@ The readiness diagnostic reports both the six-argument public session-plan
 contract and the exact eight-argument UI overload (`p_session_size='10'`,
 `p_new_review_ratio=2`) so their first-call behavior can be compared. The
 manual workflow accepts `first_component=public` or `first_component=ui-public`
-to make either overload the first call on the sampled backend.
+to make either overload the first call on the sampled backend. Each diagnostic
+line also reports client wall time and the difference from PostgreSQL
+`Execution Time`; that difference is the bounded connection/client/pooler
+overhead estimate, not a database execution measurement.
 
 ### Scheduler activity sampler
 
