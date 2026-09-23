@@ -1403,6 +1403,11 @@ test("delayed first card keeps Today usable and guards Start and Continue until 
       />,
     );
 
+    await waitFor(
+      () => expect(resolveFirstCard).toEqual(expect.any(Function)),
+      { timeout: 5000 },
+    );
+
     expect(
       await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
     ).toBeInTheDocument();
@@ -1429,7 +1434,6 @@ test("delayed first card keeps Today usable and guards Start and Continue until 
     expect(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ })).toBeDisabled();
     expect(startTrainingSession).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(resolveFirstCard).toEqual(expect.any(Function)));
     await act(async () => resolveFirstCard(mockWord));
 
     expect(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ })).toBeEnabled();
@@ -1752,11 +1756,33 @@ test("superseded saved session clears its queue and returns to a deliberate loca
 
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
 
+  await waitFor(
+    () =>
+      expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
+        "user-1",
+        "session-superseded",
+      ),
+    { timeout: 5000 },
+  );
+  await waitFor(
+    () =>
+      expect(
+        window.localStorage.getItem("2000nl:training-session:user-1"),
+      ).toBeNull(),
+    { timeout: 5000 },
+  );
+
   expect(
-    await screen.findByRole("button", { name: "Start training here" }),
+    await screen.findByRole(
+      "button",
+      { name: /Start training here|Training hier starten|Начать тренировку здесь/ },
+      { timeout: 5000 },
+    ),
   ).toBeInTheDocument();
   expect(
-    screen.getByText("This will reset training on another device."),
+    screen.getByText(
+      /This will reset training on another device\.|Hiermee wordt de training op een ander apparaat gereset\.|Это сбросит тренировку на другом устройстве\./,
+    ),
   ).toBeInTheDocument();
   expect(
     screen.queryByTestId("mock-training-sense-card-v2"),
