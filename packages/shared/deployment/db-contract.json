@@ -190,7 +190,7 @@
     {
       "migrationId": 157,
       "file": "db/migrations/157_ordinary_training_lexical_candidate_filters.sql",
-      "sha256": "a3755cfdf1f2835fff6a6f64cd60c59048c0e731f49ead8db6bbf7f44e0054be"
+      "sha256": "947cb8c42b6163ea05642a1b89b100a710e3fc690334b758c5047c9acf73c275"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-157.sql",

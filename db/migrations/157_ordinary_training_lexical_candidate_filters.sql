@@ -208,22 +208,27 @@ WITH args AS (
   CROSS JOIN filter_values
   LEFT JOIN readable_dictionaries readable_dictionary
     ON readable_dictionary.id=scope_entry.dictionary_id
-  LEFT JOIN word_entries lexical_entry
-    ON (filter_values.filter_data ? 'partOfSpeech'
-      OR filter_values.filter_data ? 'nounArticles')
-      AND lexical_entry.id=scope_entry.entry_id
   WHERE p_list_id IS NULL
+    AND NOT (filter_values.filter_data ? 'partOfSpeech'
+      OR filter_values.filter_data ? 'nounArticles')
     AND NOT (scope_entry.entry_id=ANY(filter_values.excluded_entries))
     AND (scope_entry.dictionary_id IS NULL OR readable_dictionary.id IS NOT NULL)
-    AND CASE
-      WHEN filter_values.filter_data ? 'partOfSpeech'
-        OR filter_values.filter_data ? 'nounArticles'
-      THEN private.training_lexical_candidate_matches_v1(
-        lexical_entry.part_of_speech, lexical_entry.gender,
-        filter_values.filter_data
-      )
-      ELSE true
-    END
+  UNION ALL
+  SELECT scope_entry.entry_id AS id
+  FROM private.default_training_scope_entries_v1 scope_entry
+  CROSS JOIN filter_values
+  LEFT JOIN readable_dictionaries readable_dictionary
+    ON readable_dictionary.id=scope_entry.dictionary_id
+  JOIN word_entries lexical_entry ON lexical_entry.id=scope_entry.entry_id
+  WHERE p_list_id IS NULL
+    AND (filter_values.filter_data ? 'partOfSpeech'
+      OR filter_values.filter_data ? 'nounArticles')
+    AND NOT (scope_entry.entry_id=ANY(filter_values.excluded_entries))
+    AND (scope_entry.dictionary_id IS NULL OR readable_dictionary.id IS NOT NULL)
+    AND private.training_lexical_candidate_matches_v1(
+      lexical_entry.part_of_speech, lexical_entry.gender,
+      filter_values.filter_data
+    )
   UNION ALL
   SELECT entry.id
   FROM word_entries entry
