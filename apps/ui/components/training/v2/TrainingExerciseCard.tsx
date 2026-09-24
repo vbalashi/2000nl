@@ -2,7 +2,10 @@
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
-import type { TrainingExercisePresentation } from "@/lib/training/trainingCardPresentation";
+import {
+  hasTrainingCardTranslation,
+  type TrainingExercisePresentation,
+} from "@/lib/training/trainingCardPresentation";
 import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
 import {
   TrainingCardShell,
@@ -41,10 +44,7 @@ export function TrainingExerciseCard({
   const revealRef = React.useRef<HTMLButtonElement>(null);
   const firstGradeRef = React.useRef<HTMLButtonElement>(null);
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
-  const translationAvailable = presentation.answer.examples.some(
-    (node) =>
-      node.translation || node.children.some((child) => child.translation),
-  );
+  const translationAvailable = hasTrainingCardTranslation(presentation.answer);
 
   React.useEffect(() => {
     stageRef.current?.focus();
@@ -67,11 +67,17 @@ export function TrainingExerciseCard({
     if (
       event.target instanceof HTMLElement &&
       event.target.closest(
-        "button,a,input,textarea,select,[contenteditable='true']",
+        "input,textarea,select,[contenteditable='true'],[role='textbox']",
       )
     )
       return;
     const key = event.key.toLowerCase();
+    // Native button Space/Enter activation must remain intact. Letter shortcuts
+    // still work after reveal moves focus to the first grade button.
+    const interactive =
+      event.target instanceof HTMLElement &&
+      event.target.closest("button,a,[role='button']");
+    if ((key === " " || key === "enter") && interactive) return;
     if (key === " " && !revealed) {
       event.preventDefault();
       onReveal();

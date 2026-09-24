@@ -49,9 +49,11 @@ export function buildIdiomCardPresentation({
       : undefined,
     answer: {
       headword: content.headword,
+      article: content.article,
+      coreVocabularyLabel: content.coreVocabularyLabel,
       partOfSpeech:
         localizePlatformSemanticTerm(
-          content.entry.partOfSpeech,
+          content.partOfSpeech ?? content.entry.partOfSpeech,
           interfaceLanguage,
         ) ?? undefined,
       repeatCount,

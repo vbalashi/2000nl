@@ -183,3 +183,26 @@ test("translations stay secondary and require the requested language and matchin
   expect(screen.queryByText("Stale")).not.toBeInTheDocument();
   expect(screen.queryByText("German")).not.toBeInTheDocument();
 });
+
+test("keyboard grading works after reveal transfers focus to Again", () => {
+  const onGrade = vi.fn();
+  function KeyboardExercise() {
+    const [revealed, setRevealed] = React.useState(false);
+    return (
+      <TrainingExerciseCard
+        presentation={build("direct")}
+        interfaceLanguage="en"
+        revealed={revealed}
+        onReveal={() => setRevealed(true)}
+        busy={false}
+        onGrade={onGrade}
+      />
+    );
+  }
+  render(<KeyboardExercise />);
+  fireEvent.keyDown(document.activeElement!, { key: " " });
+  expect(screen.getByRole("button", { name: "Again" })).toHaveFocus();
+  fireEvent.keyDown(document.activeElement!, { key: "k" });
+  expect(onGrade).toHaveBeenCalledTimes(1);
+  expect(onGrade).toHaveBeenCalledWith("success");
+});

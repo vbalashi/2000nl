@@ -1,4 +1,5 @@
 "use client";
+import { hasTrainingCardTranslation as hasTranslation } from "@/lib/training/trainingCardPresentation";
 import { selectTrainingReversePrompt } from "@/lib/training/trainingReversePrompt";
 
 import React from "react";
@@ -20,10 +21,7 @@ import {
   trainingReviewGridClassName,
 } from "./TrainingCardTemplates";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
-import type {
-  TrainingSenseCardContent,
-  TrainingSenseCardModel,
-} from "./trainingSenseCardModel";
+import type { TrainingSenseCardModel } from "./trainingSenseCardModel";
 
 type Props = {
   model: TrainingSenseCardModel;
@@ -529,19 +527,6 @@ function MarkKnownAction({
     >
       <Check aria-hidden="true" className="h-4 w-4" /> {label}
     </button>
-  );
-}
-
-function hasTranslation(model: TrainingSenseCardModel) {
-  return Boolean(
-    model.entryTranslation ||
-      [...model.definitions, ...model.examples].some(hasContentTranslation),
-  );
-}
-
-function hasContentTranslation(item: TrainingSenseCardContent): boolean {
-  return Boolean(
-    item.translation || item.children?.some(hasContentTranslation),
   );
 }
 

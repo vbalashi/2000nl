@@ -12,6 +12,9 @@ type IdiomTarget = Pick<
 
 export type IdiomExerciseContent = {
   headword: string;
+  article?: string;
+  partOfSpeech?: PlatformHeadwordGroupV2["header"]["partOfSpeech"];
+  coreVocabularyLabel?: "2K";
   entry: PlatformSenseCardEntryV2;
   expression: PlatformContentNodeV2;
   explanation: PlatformContentNodeV2;
@@ -38,7 +41,8 @@ export function resolveIdiomExerciseContent(
     expression.parentContentNodeId !== null ||
     expression.sourceTextFingerprint !== target.sourceTextFingerprint ||
     !expression.text.trim()
-  ) return null;
+  )
+    return null;
 
   const children = entry.contentNodes.filter(
     (node) => node.parentContentNodeId === expression.contentNodeId,
@@ -56,6 +60,15 @@ export function resolveIdiomExerciseContent(
 
   return {
     headword: group.header.text,
+    article: group.header.article ?? undefined,
+    partOfSpeech: entry.partOfSpeech ?? group.header.partOfSpeech,
+    coreVocabularyLabel: group.indicators.some(
+      (indicator) =>
+        indicator.indicatorId === "core-vocabulary.nt2-2000" ||
+        indicator.messageKey === "indicator.coreVocabulary.nt22000",
+    )
+      ? "2K"
+      : undefined,
     entry,
     expression,
     explanation: explanations[0],

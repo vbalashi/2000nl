@@ -22,3 +22,14 @@ export type TrainingExercisePresentation = {
   hint?: { text: string; label: string };
   answer: TrainingCardAnswer;
 };
+
+export function hasTrainingCardTranslation(
+  answer: TrainingCardAnswer,
+): boolean {
+  const translated = (node: PlatformV2SenseContentNode): boolean =>
+    Boolean(node.translation || node.children?.some(translated));
+  return Boolean(
+    answer.entryTranslation ||
+      [...answer.definitions, ...answer.examples].some(translated),
+  );
+}

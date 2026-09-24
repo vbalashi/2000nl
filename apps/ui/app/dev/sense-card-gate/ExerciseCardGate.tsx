@@ -50,7 +50,9 @@ export function ExerciseCardGate() {
   React.useEffect(() => {
     const previous = document.documentElement.classList.contains("dark");
     document.documentElement.classList.toggle("dark", dark);
-    return () => document.documentElement.classList.toggle("dark", previous);
+    return () => {
+      document.documentElement.classList.toggle("dark", previous);
+    };
   }, [dark]);
   return (
     <main className={`${dark ? "dark" : ""} h-dvh`}>
