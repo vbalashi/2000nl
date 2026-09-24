@@ -56,7 +56,7 @@ paths can create or mutate a session.
   "active session" heading. That tab did not own the saved session record:
   it made ordinary `get_next_card` calls and no session-snapshot call.
   The displayed ordinary card therefore did not test same-tab membership
-  preservation. Its misleading Continue label is tracked separately; do not
+  preservation. Its misleading Continue label is tracked in #452; do not
   cite it as a proven lost-member defect in this PR.
 - A page-level auth `SIGNED_OUT` test now unmounts the authenticated Training
   shell; controller tests separately prove that late selection/projection
