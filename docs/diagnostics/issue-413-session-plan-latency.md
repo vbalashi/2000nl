@@ -622,3 +622,39 @@ with transaction-local candidate self time on that **same call**. A slow inner
 plan points to execution; a fast inner plan paired with slow self time points
 to planning or initialization outside the logged execution. Do not infer a
 resource upgrade from either result alone.
+
+## Matched slow inner plan and same-backend repeat (2026-09-24)
+
+The corrected trace captured a slow first call on backend `2277155`, started
+`07:09:42.983Z`, after an idle interval. The six-argument public planner took
+**1,972.028 ms** inside PostgreSQL; outer planning was **0.111 ms**. The
+candidate helper contributed **1,892.030 ms total / 1,884.483 ms self**.
+`auto_explain` logged the helper's inner `WindowAgg` plan at **1,676.464 ms**,
+with 2,345 output rows, 16,396 rows in a nested window/sort path, 280/563
+temporary blocks read/written, and no shared-buffer reads. The wrapper
+aggregate and public result plans logged at **1,892.824/1,971.938 ms**.
+
+One immediate repeat on the **same PID and backend start** took **208.586 ms**
+public and **203.209 ms** candidate self. The inner plan took **193.096 ms**;
+its root still emitted 2,345 rows, the nested path still handled 16,396 rows,
+and temporary read/write blocks remained 280/563. The inner window/sort path
+fell from **1,362.601/1,347.874 ms** to **111.133/98.191 ms**. Root shared
+hits were 5,515 versus 5,319, with zero shared reads in both. This is a
+matched slow-versus-warm execution comparison, not an estimate of production
+frequency or a proof that the sort operation itself consumed all the time:
+node total times include descendant work.
+
+The decisive correction is that most missing time is inside the **execution**
+of the candidate helper's inner SQL plan, rather than its outer wrapper or
+initial planning alone. The same rows and temporary block counts weaken a
+simple data-volume explanation. They do not distinguish slow temporary-file
+I/O, kernel-cache behavior, CPU scheduling on the managed host, or an expensive
+descendant node with backend-local first-use behavior. PostgreSQL 17 permits
+transaction-local `track_io_timing = on` on this diagnostic connection; a
+read-only permission probe confirmed it without changing a global setting.
+The harness now has an optional `--io-timing` flag and reports only I/O timing
+and generic node-type paths. One post-idle bounded trace with that flag is the
+next discriminating measurement. I/O timing has its own overhead, so compare
+the time attribution within that call rather than treating absolute milliseconds
+as directly interchangeable with the preceding samples. No SQL rewrite,
+compute resize, or release-timeout change is justified yet.

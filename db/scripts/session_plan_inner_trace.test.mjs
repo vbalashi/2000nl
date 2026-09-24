@@ -12,6 +12,7 @@ test("summarizes nested plan timing without exposing query text", () => {
       "Shared Hit Blocks": 8440,
       "Temp Read Blocks": 280,
       "Temp Written Blocks": 564,
+      "Temp I/O Read Time": 12.5,
       Plans: [{ "Node Type": "Sort", "Actual Total Time": 1800, "Actual Rows": 16396 }],
     },
   }];
@@ -19,6 +20,8 @@ test("summarizes nested plan timing without exposing query text", () => {
   assert.equal(notices.length, 1);
   assert.equal(notices[0].durationMs, 1917.624);
   assert.deepEqual(notices[0].notable.map((item) => item.type), ["WindowAgg", "Sort"]);
+  assert.equal(notices[0].ioTimes["Temp I/O Read Time"], 12.5);
+  assert.deepEqual(notices[0].topTimedNodes[0].path, ["WindowAgg"]);
   assert.doesNotMatch(JSON.stringify(notices), /sensitive|secret_learner_payload/);
   assert.equal(summarizeAutoExplain(`NOTICE: duration: 1917.624 ms plan:\n${JSON.stringify(plan[0])}`).length, 1);
   assert.equal(summarizeAutoExplain(`NOTICE: duration: 1 ms plan:\ninvalid\nNOTICE: duration: 2 ms plan:\n${JSON.stringify(plan[0])}`).length, 1);

@@ -10,6 +10,11 @@ import path from "node:path";
 const PROJECT_REF = "lliwdcpuuzjmxyzrjtoz";
 const QA_EMAIL = "test@2000nl.test";
 
+function ioTimes(node) {
+  return Object.fromEntries(Object.entries(node)
+    .filter(([key, value]) => /I\/O (?:Read|Write) Time$/.test(key) && Number.isFinite(value)));
+}
+
 function connectionEnvironment(envFile) {
   const source = readFileSync(envFile, "utf8");
   const line = source.split(/\r?\n/).find((value) => value.startsWith("DATABASE_URL="));
@@ -83,7 +88,16 @@ export function summarizeAutoExplain(output) {
     const plan = parsed.value.Plan;
     if (!plan) continue;
     const notable = [];
-    const walk = (node) => {
+    const timedNodes = [];
+    const walk = (node, path = []) => {
+      const nodePath = [...path, node["Node Type"]];
+      timedNodes.push({
+        path: nodePath,
+        actualTotalMs: node["Actual Total Time"] ?? null,
+        actualRows: node["Actual Rows"] ?? null,
+        actualLoops: node["Actual Loops"] ?? null,
+        ioTimes: ioTimes(node),
+      });
       if (["WindowAgg", "Sort", "HashAggregate", "Aggregate"].includes(node["Node Type"])) {
         notable.push({
           type: node["Node Type"],
@@ -92,9 +106,10 @@ export function summarizeAutoExplain(output) {
           sharedHit: node["Shared Hit Blocks"] ?? null,
           tempRead: node["Temp Read Blocks"] ?? null,
           tempWritten: node["Temp Written Blocks"] ?? null,
+          ioTimes: ioTimes(node),
         });
       }
-      for (const child of node.Plans ?? []) walk(child);
+      for (const child of node.Plans ?? []) walk(child, nodePath);
     };
     walk(plan);
     notices.push({
@@ -106,19 +121,24 @@ export function summarizeAutoExplain(output) {
       sharedRead: plan["Shared Read Blocks"] ?? null,
       tempRead: plan["Temp Read Blocks"] ?? null,
       tempWritten: plan["Temp Written Blocks"] ?? null,
+      ioTimes: ioTimes(plan),
       notable: notable.slice(0, 12),
+      topTimedNodes: timedNodes
+        .sort((left, right) => (right.actualTotalMs ?? -1) - (left.actualTotalMs ?? -1))
+        .slice(0, 12),
     });
   }
   return notices;
 }
 
-function sql() {
+function sql(ioTimingEnabled) {
   return `\\set ON_ERROR_STOP on
 \\set QUIET on
 BEGIN READ ONLY;
 SET LOCAL statement_timeout = '3000ms';
 SET LOCAL jit = off;
 SET LOCAL track_functions = 'all';
+${ioTimingEnabled ? "SET LOCAL track_io_timing = on;" : ""}
 SET LOCAL client_min_messages = notice;
 SET LOCAL auto_explain.log_level = notice;
 SET LOCAL auto_explain.log_min_duration = '100ms';
@@ -139,6 +159,7 @@ SELECT 'trace_context=' || jsonb_build_object(
   'backendStart', (SELECT backend_start FROM pg_stat_activity WHERE pid = pg_backend_pid()),
   'serverVersion', current_setting('server_version'),
   'jit', current_setting('jit'),
+  'trackIoTiming', current_setting('track_io_timing'),
   'autoExplainLevel', current_setting('auto_explain.log_level'),
   'autoExplainThreshold', current_setting('auto_explain.log_min_duration'),
   'autoExplainNested', current_setting('auto_explain.log_nested_statements'),
@@ -194,12 +215,16 @@ export function summarizeTrace(stdout, stderr) {
 }
 
 function main() {
-  if (process.argv.length !== 4 || process.argv[2] !== "--env-file") {
-    throw new Error("Usage: node db/scripts/session_plan_inner_trace.mjs --env-file /private/path/.env.local");
+  if (
+    ![4, 5].includes(process.argv.length) ||
+    process.argv[2] !== "--env-file" ||
+    (process.argv.length === 5 && process.argv[4] !== "--io-timing")
+  ) {
+    throw new Error("Usage: node db/scripts/session_plan_inner_trace.mjs --env-file /private/path/.env.local [--io-timing]");
   }
   const env = connectionEnvironment(process.argv[3]);
   const result = spawnSync("psql", ["-X", "--no-psqlrc", "-q", "-t", "-A", "-v", "ON_ERROR_STOP=1"], {
-    input: sql(),
+    input: sql(process.argv.length === 5),
     env,
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
