@@ -43,7 +43,21 @@ paths can create or mutate a session.
   seconds and capture timing plus sanitized request identities. These are
   route-mocked local QA evidence, not production latency evidence.
 - Local Auth/PostgREST Start/reload/resume evidence is recorded in PR #445; it
-  confirmed the same active session/card but did not capture member-ID equality.
+  confirmed the same active session/card. A follow-up on the exact PR head
+  `67c3a45c058f6c9d88cdc046a5be103c334e7b1f` used the local QA identity
+  and real PostgREST/SQL paths: explicit Start returned a ten-member session;
+  the first-card response identified ordinal 1 and exactly matched the first
+  member's entry ID in the local DB. Reload in the same in-app browser tab
+  returned the same session ID, ten-member snapshot, ordinal-1 entry ID, and
+  visible card. No answer/progress action was submitted. The local health
+  warning concerned the optional grouped search index/deployment receipt;
+  the DB migration contract probe passed.
+- An earlier new-tab smoke appeared to show a different card under an
+  "active session" heading. That tab did not own the saved session record:
+  it made ordinary `get_next_card` calls and no session-snapshot call.
+  The displayed ordinary card therefore did not test same-tab membership
+  preservation. Its misleading Continue label is tracked separately; do not
+  cite it as a proven lost-member defect in this PR.
 - A page-level auth `SIGNED_OUT` test now unmounts the authenticated Training
   shell; controller tests separately prove that late selection/projection
   results cannot install a card after unmount. This does not simulate an
