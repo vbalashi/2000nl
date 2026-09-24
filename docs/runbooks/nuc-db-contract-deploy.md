@@ -194,7 +194,15 @@ supported. Do not implement the cutoff as mutable operator SQL or edit migration
 153 after deployment; advance the contract, checksum, postflight and rollback
 runbook together.
 
-An enabled deployment must apply or verify migrations 123 through 158 in order
+Migration 159 narrows ordinary-meaning predecessor ordering to source groups
+present in the requested Training scope while retaining out-of-scope siblings
+within those groups. It preserves the lexical filters, reference clock, grants,
+queue policy, and existing learner state. Its postflight checks the scoped
+scheduler definition, and the unchanged 2,000 ms pre-switch read runs before
+the new app image is switched. A failed gate leaves the previous image live;
+the forward migration remains installed for a corrected follow-up release.
+
+An enabled deployment must apply or verify migrations 123 through 159 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

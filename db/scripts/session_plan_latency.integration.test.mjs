@@ -146,6 +146,27 @@ function measure(targetUrl, statement = planStatements.public, { functionStats =
   };
 }
 
+function candidateDigest(targetUrl, trainingFilter = '{}') {
+  const result = psql(targetUrl, `BEGIN READ ONLY;
+    SET LOCAL jit = off;
+    SELECT set_config('request.jwt.claim.sub', '${qaUserId}', true);
+    SELECT md5(COALESCE(string_agg(
+      concat_ws('|', entry_id, card_type_id, queue_source, new_today,
+        daily_new_limit, new_pool_size, learning_due_count, review_pool_size),
+      ',' ORDER BY entry_id, card_type_id, queue_source
+    ), ''))
+    FROM private.training_scheduler_candidates_v2(
+      '${qaUserId}', ARRAY['word-to-definition']::text[], NULL,
+      'curated', 'both', 'auto', ARRAY[]::uuid[], ARRAY[]::text[],
+      '${trainingFilter}'::jsonb, false, true
+    );
+    ROLLBACK;`);
+  assert.equal(result.status, 0, result.stderr);
+  const match = result.stdout.match(/\b[a-f0-9]{32}\b/);
+  assert.ok(match, `candidate digest missing from ${JSON.stringify(result.stdout)}`);
+  return match[0];
+}
+
 function assertNestedFunctionTiming(sample, wrapperArgumentTypes) {
   const expected = [
     ["public", "get_training_session_plan", wrapperArgumentTypes],
@@ -175,6 +196,10 @@ test('current public session plan and exact deployment probe stay bounded on a d
     try {
       applySqlFile(targetUrl, 'db/scripts/plain_postgres_supabase_compat.sql');
       applySqlFile(targetUrl, 'db/migrations/bootstrap.sql');
+      // The disposable fixture compares the last pre-optimization candidate
+      // contract with migration 159. Re-apply only its prior function owner;
+      // migration 158's scope security boundary remains intact.
+      applySqlFile(targetUrl, 'db/migrations/157_ordinary_training_lexical_candidate_filters.sql');
       const seed = psql(
         targetUrl,
         `INSERT INTO auth.users (id, email)
@@ -198,7 +223,8 @@ test('current public session plan and exact deployment probe stay bounded on a d
            dictionary_id, language_code, headword, meaning_id, part_of_speech,
            is_nt2_2000, raw
          )
-         SELECT '${dictionaryId}', 'nl', 'issue238-entry-' || sample, sample, 'noun',
+         SELECT '${dictionaryId}', 'nl', 'issue238-entry-' || sample, sample,
+           CASE WHEN mod(sample, 5) = 0 THEN 'bn' ELSE 'noun' END,
            mod(sample::bigint * ${nt2EntryCount}, ${entryCount}) < ${nt2EntryCount},
            jsonb_build_object('payload', (
              SELECT string_agg(md5(sample::text || ':' || chunk::text), '')
@@ -385,6 +411,25 @@ SELECT json_build_object(
         // test's separate 4,000-block bound is deliberately unchanged.
         assert.ok(sample.hits + sample.reads <= 6500,
           `current public plan buffer budget exceeded: ${JSON.stringify(sample)}`);
+      }
+
+      const originalCandidates = candidateDigest(targetUrl);
+      const adjectiveCandidates = candidateDigest(targetUrl, '{"partOfSpeech":["bn"]}');
+      assert.notEqual(adjectiveCandidates, 'd41d8cd98f00b204e9800998ecf8427e',
+        'lexical filter fixture must select at least one card');
+      applySqlFile(targetUrl, 'db/migrations/159_scope_ordinary_source_introductions.sql');
+      applySqlFile(targetUrl, 'db/deploy-contract/postflight-159.sql');
+      const optimizedCandidates = candidateDigest(targetUrl);
+      assert.equal(optimizedCandidates, originalCandidates,
+        'scope-group optimization changed candidate membership or diagnostics');
+      assert.equal(candidateDigest(targetUrl, '{"partOfSpeech":["bn"]}'), adjectiveCandidates,
+        'scope-group optimization changed adjective-filtered candidates');
+      const optimizedSamples = Array.from({ length: 3 }, () => measure(targetUrl));
+      t.diagnostic(JSON.stringify({ optimizedSamples }));
+      for (const sample of optimizedSamples) {
+        assert.ok(sample.executionMs <= 2000, JSON.stringify(sample));
+        assert.ok(sample.hits + sample.reads <= 6500,
+          `scope-group candidate buffer budget exceeded: ${JSON.stringify(sample)}`);
       }
 
       // Keep nested PL/pgSQL timing on the disposable fixture.  This uses a

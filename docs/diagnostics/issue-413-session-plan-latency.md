@@ -1,7 +1,7 @@
 # Issue 413: session-plan latency investigation
 
 Date: 2026-09-22. Base commit: `93a9530f5839d7ce63dc8262ec1b889b091772fa`.
-Status: diagnosis and regression coverage; **the production timeout is not fixed**.
+Status: diagnosis, regression coverage, and migration 159 candidate; **production latency is not yet revalidated after rollout**.
 
 ## Confirmed current failure
 
@@ -902,3 +902,30 @@ to relax that budget. Both experimental rewrites were discarded. No migration,
 manifest change, or production SQL change was shipped. A viable rewrite must
 retain the parity result **and** avoid the buffer amplification before it is
 eligible for a forward migration or rollout.
+
+### Scope-group rewrite with bounded reads (2026-09-24)
+
+A later bounded production member trace captured a 1,493.861 ms read-only call
+on backend 2289834. The nested candidate function took 1,433.025 ms and its
+16,396-row global predecessor window reached 1,100.213 ms. The next call on
+the **same backend** completed in 219.185 ms. Both calls had zero shared reads;
+the slow call's temporary I/O was under 5 ms. This is the first direct evidence
+that the full-corpus predecessor step accounts for most of a slow member call.
+
+The revised query materializes active bindings and active root definitions once,
+then restricts the predecessor window to complete source groups represented in
+the requested scope. It uses a hashed anti-set for the small unrenderable-entry
+projection. Read-only production comparisons on the same current data showed
+16,396 baseline rows versus 3,486 scoped rows, with **zero missing or extra
+`(entry_id, predecessor_entry_id)` pairs**, including duplicates. Standalone
+warm query time decreased from about 145 to 81 ms, with 4,676 shared-buffer
+hits for both shapes. The earlier 17,100-block scoped experiment remains
+discarded; this is a different join plan.
+
+On a disposable 18,184-entry database with an out-of-scope predecessor, the
+full public plan fell from 87–93 ms to 66–72 ms after migration 159. Candidate
+membership and diagnostics digests matched exactly, and the optimized call
+stayed under the existing 6,500-block budget (4,782 hits in that run). The
+readiness probe retains its 2,000 ms bound. The local fixture still cannot
+reproduce the managed database's first-use penalty; deployment followed by
+the same read-only production trace is required before calling #413 fixed.

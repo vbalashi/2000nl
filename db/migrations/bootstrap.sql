@@ -462,3 +462,6 @@
 
 -- Restrict per-user Training scope to authenticated owner-checking RPCs
 \i db/migrations/158_lock_user_training_scopes_access.sql
+
+-- Narrow source predecessor ordering to the source groups in Training scope.
+\i db/migrations/159_scope_ordinary_source_introductions.sql
