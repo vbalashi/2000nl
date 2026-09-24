@@ -407,6 +407,43 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.setCurrentWord).not.toHaveBeenCalledWith(oldWord);
   });
 
+  test("does not retry selection after its session failure reconciliation is stale", async () => {
+    const retirement = deferred<boolean>();
+    const selectNext = vi
+      .fn<[TrainingTurnSelectionRequest], Promise<TrainingWord | null>>()
+      .mockRejectedValueOnce(
+        new TrainingSessionMemberUnavailableError({
+          trainingSessionUnavailable: true,
+          trainingSessionId: "session-1",
+          trainingSessionOrdinal: 1,
+          entryId: "word-unavailable",
+          cardTypeId: "word-to-definition",
+          reason: "dictionary-access-revoked",
+        }),
+      )
+      .mockResolvedValue(word2);
+    const markUnavailable = vi.fn(() => retirement.promise);
+    const controller = renderController({
+      currentWord: null,
+      selectNext,
+      markUnavailable,
+      trainingSessionId: "session-1",
+    });
+    let pending!: Promise<unknown>;
+
+    act(() => {
+      pending = controller.result.current.loadNextWord();
+    });
+    await waitFor(() => expect(markUnavailable).toHaveBeenCalledOnce());
+
+    act(() => controller.result.current.beginSessionScopeChange());
+    await act(async () => retirement.resolve(true));
+
+    await expect(pending).resolves.toBe("skipped");
+    expect(selectNext).toHaveBeenCalledOnce();
+    expect(controller.setCurrentWord).not.toHaveBeenCalled();
+  });
+
   test("issues a new presentation identity when the same card is presented again", async () => {
     const repeatedWord = { ...word1 };
     const controller = renderController({

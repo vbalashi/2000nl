@@ -498,6 +498,7 @@ export function useTrainingTurnController(input: Inputs) {
                 (selected) => (selected ? "ready" : "empty"),
               );
             } catch (cause) {
+              if (!isCurrentLoad()) return null;
               if (!isTrainingSessionUnavailableError(cause)) {
                 throw normalizeTrainingSelectionFailure(cause);
               }
@@ -525,6 +526,7 @@ export function useTrainingTurnController(input: Inputs) {
                 cardTypeId: diagnostic.cardTypeId,
                 reason: diagnostic.reason,
               });
+              if (!isCurrentLoad()) return null;
               if (!marked) throw cause;
               reconciledDiagnostics.add(diagnosticKey);
             }

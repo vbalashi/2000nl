@@ -34,8 +34,11 @@ paths can create or mutate a session.
 
 - Component tests hold stats and card preparation pending while setup remains
   available, and cover errors, retry, resume validation, and stale scope stats.
-- Turn-controller tests cover stale scope selection/projection and late
-  selection/projection results after unmount.
+- The existing `scope-key replacement cancels the old selection and presents
+  exactly one new-scope result` test and the screen-level `footer list selector
+  still changes active training scope` test cover a prior selection resolving
+  after scope replacement. Turn-controller tests also cover a stale old-scope
+  projection and late selection/projection results after unmount.
 - Delayed-network Playwright tests hold stats, selection, and projection for ten
   seconds and capture timing plus sanitized request identities. These are
   route-mocked local QA evidence, not production latency evidence.
