@@ -226,9 +226,17 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 160 in order
+An enabled deployment must apply or verify migrations 123 through 161 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
+
+Migration 161 adds a shared, read-only source-entry scope for idiom and future
+sentence sessions. The new idiom start overload stores the exact material,
+lexical and activity filters plus the selected new/review mix before it builds
+the server queue. The existing four-argument idiom start and ordinary Training
+contracts remain callable for cached clients. The first app image with this
+database contract still keeps the Idioms setup choice disabled; its UI rollout
+is a separate step under #332 after preservation and visual checks.
 
 Migration 154 is additive exercise-boundary hardening on top of migration 153.
 It canonicalizes retry identity, checks the receipt before mutable target and

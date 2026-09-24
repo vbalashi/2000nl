@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { performPlatformV2IdiomExerciseAction } from "@/lib/platform/platformV2IdiomExerciseClient";
+import {
+  performPlatformV2IdiomExerciseAction,
+  startPlatformV2IdiomTrainingSession,
+} from "@/lib/platform/platformV2IdiomExerciseClient";
 import { platformFetchWithTimeout } from "@/lib/platform/platformFetchWithTimeout";
+import { supabase } from "@/lib/supabaseClient";
+
+vi.mock("@/lib/supabaseClient", () => ({
+  supabase: { rpc: vi.fn() },
+}));
 
 vi.mock("@/lib/platform/platformV2Http", () => ({
   platformV2AuthenticatedJsonHeaders: vi.fn(async () => ({
@@ -63,5 +71,66 @@ describe("idiom action transport", () => {
     await performPlatformV2IdiomExerciseAction(input);
 
     expect(sent).toEqual(["intentional-action-1", "intentional-action-1"]);
+  });
+
+  test("starts with the exact selected source scope and per-session mix", async () => {
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: {
+        contractVersion: "platform-idiom-exercise-session-v2",
+        sessionId: "session-1",
+        exerciseFamily: "idiom",
+        direction: "reverse",
+        sessionSize: "5",
+        requestedTotal: 5,
+        plannedNew: 0,
+        plannedReview: 0,
+        plannedPractice: 0,
+        plannedTotal: 0,
+        plannedAt: "2026-09-24T12:00:00Z",
+        runStatus: "active",
+        runGeneration: 1,
+        completedActions: 0,
+        completionReason: "exhausted",
+        members: [],
+      },
+      error: null,
+    } as never);
+    const trainingFilter = {
+      dateWindow: "today" as const,
+      partOfSpeech: ["bn" as const],
+      dictionaryScope: {
+        mode: "selected" as const,
+        languageCode: "nl",
+        dictionaryIds: ["dictionary-1"],
+      },
+    };
+
+    const session = await startPlatformV2IdiomTrainingSession({
+      userId: "user-1",
+      direction: "reverse",
+      sessionSize: 5,
+      requestId: "request-1",
+      listId: null,
+      listType: "curated",
+      cardFilter: "review",
+      trainingFilter,
+      newReviewRatio: 3,
+    });
+
+    expect(session.sessionId).toBe("session-1");
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "start_platform_v2_idiom_training_session",
+      {
+        p_user_id: "user-1",
+        p_direction: "reverse",
+        p_session_size: "5",
+        p_request_id: "request-1",
+        p_list_id: null,
+        p_list_type: "curated",
+        p_card_filter: "review",
+        p_training_filter: trainingFilter,
+        p_new_review_ratio: 3,
+      },
+    );
   });
 });

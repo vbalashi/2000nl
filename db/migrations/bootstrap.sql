@@ -466,3 +466,4 @@
 -- Narrow source predecessor ordering to the source groups in Training scope.
 \i db/migrations/159_scope_ordinary_source_introductions.sql
 \i db/migrations/160_training_dictionary_material_scope.sql
+\i db/migrations/161_training_extra_source_scope.sql
