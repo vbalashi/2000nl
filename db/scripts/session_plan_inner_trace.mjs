@@ -4,6 +4,7 @@
 // and learner data: only the summaries below may reach stdout or errors.
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 
@@ -13,6 +14,17 @@ const QA_EMAIL = "test@2000nl.test";
 function ioTimes(node) {
   return Object.fromEntries(Object.entries(node)
     .filter(([key, value]) => /I\/O (?:Read|Write) Time$/.test(key) && Number.isFinite(value)));
+}
+
+function planShapeHash(node) {
+  const shape = (current) => [
+    current["Node Type"],
+    current["Join Type"] ?? null,
+    current.Strategy ?? null,
+    current["CTE Name"] ?? null,
+    (current.Plans ?? []).map(shape),
+  ];
+  return createHash("sha256").update(JSON.stringify(shape(node))).digest("hex").slice(0, 12);
 }
 
 function connectionEnvironment(envFile) {
@@ -93,6 +105,7 @@ export function summarizeAutoExplain(output) {
       const nodePath = [...path, node["Node Type"]];
       timedNodes.push({
         path: nodePath,
+        cteName: node["CTE Name"] ?? null,
         actualTotalMs: node["Actual Total Time"] ?? null,
         actualRows: node["Actual Rows"] ?? null,
         actualLoops: node["Actual Loops"] ?? null,
@@ -115,6 +128,7 @@ export function summarizeAutoExplain(output) {
     notices.push({
       durationMs: Number(match[1]),
       rootType: plan["Node Type"],
+      planShapeHash: planShapeHash(plan),
       rootActualTotalMs: plan["Actual Total Time"] ?? null,
       rootActualRows: plan["Actual Rows"] ?? null,
       sharedHit: plan["Shared Hit Blocks"] ?? null,

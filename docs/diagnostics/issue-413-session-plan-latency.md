@@ -658,3 +658,32 @@ next discriminating measurement. I/O timing has its own overhead, so compare
 the time attribution within that call rather than treating absolute milliseconds
 as directly interchangeable with the preceding samples. No SQL rewrite,
 compute resize, or release-timeout change is justified yet.
+
+## Matched transaction-local I/O timing (2026-09-24)
+
+The `--io-timing` trace captured another slow first call on new backend
+`2277729` (started `07:15:27.537Z`): **1,749.140 ms** public execution,
+**1,643.301 ms** candidate self, and **1,426.678 ms** for the inner
+`WindowAgg` plan. An immediate repeat on that exact backend took **225.342 ms**
+public, **219.577 ms** candidate self, and **208.303 ms** inner plan.
+
+The inner plan reported **0.636 ms temporary read + 3.840 ms temporary write**
+I/O time in the slow call, versus **0.410 + 3.805 ms** in the repeat. Shared
+and local I/O times and shared-buffer reads were zero in both. The inner plan
+still returned 2,345 rows, handled 16,396 rows in the nested window/sort
+path, and read/wrote 280/563 temporary blocks. Thus temporary-file I/O system
+calls account for under five milliseconds of the slow execution and cannot
+explain its ~1.5-second excess. The node totals are inclusive: the 1,146 ms
+slow sort-path total includes the CTE input and must not be called sort CPU
+time. The generic node chain reaches a `CTE Scan` at 1,170 ms slow versus
+130 ms warm, but this summary did not retain the CTE name.
+
+The remaining uncertainty is execution CPU versus time when the managed
+backend was not scheduled, and which named CTE or descendant operation owns
+the measured wall time. Neither PostgreSQL wait sampling nor transaction-local
+I/O timing can distinguish those on its own. Keep the rollout hold; do not
+increase compute or rewrite the scheduler based only on these node totals.
+For the final bounded attribution round, the sanitized parser now includes
+only named CTE labels and a hash of the generic plan shape, so a slow and warm
+call can be compared without logging SQL text, predicates, relation contents,
+or learner data.
