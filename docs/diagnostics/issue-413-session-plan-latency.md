@@ -1,7 +1,7 @@
 # Issue 413: session-plan latency investigation
 
 Date: 2026-09-22. Base commit: `93a9530f5839d7ce63dc8262ec1b889b091772fa`.
-Status: diagnosis, regression coverage, and migration 159 candidate; **production latency is not yet revalidated after rollout**.
+Status: migration 159 deployed and production revalidated; intermittent first-call latency remains open.
 
 ## Confirmed current failure
 
@@ -929,3 +929,56 @@ stayed under the existing 6,500-block budget (4,782 hits in that run). The
 readiness probe retains its 2,000 ms bound. The local fixture still cannot
 reproduce the managed database's first-use penalty; deployment followed by
 the same read-only production trace is required before calling #413 fixed.
+
+## Migration 159 rollout and remaining latency (2026-09-24)
+
+Before committing migration 159, the live production function body was
+compared with the latest committed defining migration, 157. Their `prosrc` MD5
+hashes matched exactly (`961a0505e9e914efec2a58c6aed2e1ae`) under DB
+contract 158. An initial local draft had started from migration 146 and
+accidentally omitted the later lexical filters and reference clock. It was
+discarded before commit, and the shipped migration changes only the targeted
+predecessor projection based on the complete migration-157 body. The adjective
+filter parity fixture and migration postflight now cover those preserved
+behaviors. Thus the earlier production measurements were made against the
+actual current function, and the erroneous draft never reached production.
+
+PR [#461](https://github.com/vbalashi/2000nl/pull/461) merged as
+`aa41f1737dbae749a92b3d4a67611e0d0e504e02`. The normal
+[deployment](https://github.com/vbalashi/2000nl/actions/runs/35989970636)
+succeeded; public deep health and `app_db_contract_state` both identify DB
+contract/migration 159 and that app commit. The release's exact 2,000 ms
+pre-switch read was not relaxed. All 233 FSRS tests, the current-contract
+latency and postflight probe, UI typecheck/lint, and PR CI passed.
+
+The first bounded read-only production member trace after rollout took
+**1,420.928 ms** with **1,349.463 ms** in the candidate helper and 3,486
+rows in the narrowed predecessor step. A third call on the same backend took
+**183.796 ms** with **171.097 ms** in candidates. The matching pre-rollout
+trace took **1,493.861/219.185 ms**. This is a warm-path reduction,
+but it does not eliminate the intermittent first-call delay or establish a
+user-visible Start improvement. Keep #413 open.
+
+A transaction-local `DISCARD PLANS` followed by the same read-only query took
+**2,087.333 ms** once and **177.143 ms** on repetition with the same plan
+shape. Plan discard alone is therefore not a reproducible cause. On the
+session pooler, a newly created physical backend first took **344.346 ms**
+and then **168–171 ms**. Physical backend startup alone is insufficient too.
+
+Three simultaneous bounded read-only member traces once took approximately
+**1,647/1,648/1,836 ms** on two newly started and one already-warm backend.
+Their immediate repeated three-call batch took **243–255 ms**. The generic
+plan shape matched across these samples, shared reads stayed at zero, and
+the selected predecessor CTE returned the same 3,486 rows. This proves that
+a warm backend can also experience a transient slow execution; it does not
+prove that three-way concurrency caused the normal one-user Start delay.
+Supavisor records in the measurement window were information-level connection
+events, without an error-level record. Its logs and one-minute Supabase node
+metrics cannot isolate the CPU time or scheduling of a particular backend.
+
+The remaining useful boundary is a naturally slow exact Start request with
+correlated HTTP phases, nested candidate-plan timing, concurrent DB activity,
+and per-backend CPU/scheduling evidence if the provider can expose it. The
+current evidence does not justify a speculative second SQL rewrite, hidden
+warm-up, raising the 2,000 ms gate, or increasing compute. The validated
+post-deploy measurements are also recorded on [#413](https://github.com/vbalashi/2000nl/issues/413#issuecomment-5812893593).

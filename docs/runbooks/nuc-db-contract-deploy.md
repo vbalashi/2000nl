@@ -7,6 +7,17 @@ image first, applies only the manifest's contiguous reviewed-forward migrations,
 runs exact SQL probes, switches the container, and then accepts the release only
 when deep health reports the same commit and database contract.
 
+When a forward migration replaces an existing function, start from the **last
+committed migration that defines that exact signature**, not the first search
+hit or original introduction. Check the deployed `app_db_contract_state` and,
+when production is accessible, compare the current `pg_proc.prosrc` body with
+that committed definition before editing. Review the new function against
+that latest body so intervening filters, clocks, permissions, and queue rules
+survive. Characterization tests and the migration postflight must pin those
+preserved behaviors. This caught an uncommitted migration-159 draft copied
+from migration 146 that would have dropped migration-157 lexical filtering
+and reference-clock behavior; the shipped migration was rebuilt from 157.
+
 The NUC host does not provide `psql` and must not be mutated to add it. The
 workflow runs PostgreSQL client 17 from the official digest-pinned container in
 `DB_PSQL_IMAGE`. Before the expensive app build it starts that image with no
