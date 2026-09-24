@@ -34,7 +34,14 @@ begin
     from pg_constraint constraint_row
     where conrelid = 'public.training_sessions'::regclass
       and conname = 'training_sessions_new_review_ratio_check'
-      and pg_get_constraintdef(constraint_row.oid) ~* 'new_review_ratio IS NULL.*new_review_ratio >= 1.*new_review_ratio <= 5'
+      -- Ignore PostgreSQL's formatting parentheses/whitespace, but retain the
+      -- boolean operators so an incorrect AND cannot satisfy this contract.
+      and lower(regexp_replace(
+        pg_get_constraintdef(constraint_row.oid),
+        '[[:space:]()]',
+        '',
+        'g'
+      )) = 'checknew_review_ratioisnullornew_review_ratio>=1andnew_review_ratio<=5'
   ) then
     raise exception 'missing or incompatible migration 156 training_sessions_new_review_ratio_check';
   end if;
