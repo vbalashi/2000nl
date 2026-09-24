@@ -137,6 +137,18 @@ async function expectDirectRequestDenied(
   completed.push(label);
 }
 
+function assertMismatchedScopeDenied(result, label, completed) {
+  assert.equal(result.status, 400, `${label} returned an unexpected status`);
+  const error = parseJson(result.text);
+  assert.equal(error.code, "P0001", `${label} returned an unexpected SQL error`);
+  assert.equal(
+    error.message,
+    "unauthorized: user_id does not match authenticated user",
+    `${label} did not reject the mismatched user identity`,
+  );
+  completed.push(label);
+}
+
 async function deleteUser(baseUrl, serviceKey, userId) {
   const response = await apiRequest(
     baseUrl,
@@ -267,8 +279,24 @@ async function main() {
       anonKey,
       { method: "POST", body: { p_user_id: owner.id, p_language_code: "nl" } },
     );
-    assert.equal(anonRpc.ok, false, "anonymous scope RPC unexpectedly succeeded");
+    assert.equal(
+      [401, 403].includes(anonRpc.status),
+      true,
+      "anonymous scope RPC was not rejected for insufficient privileges",
+    );
     completed.push("anonymous scope RPC denied");
+
+    const crossUserRead = await apiRequest(
+      baseUrl,
+      "/rest/v1/rpc/get_active_training_scope",
+      anonKey,
+      ownerToken,
+      {
+        method: "POST",
+        body: { p_user_id: otherOwner.id, p_language_code: "nl" },
+      },
+    );
+    assertMismatchedScopeDenied(crossUserRead, "cross-user scope read RPC denied", completed);
 
     const crossUserWrite = await apiRequest(
       baseUrl,
@@ -285,8 +313,7 @@ async function main() {
         },
       },
     );
-    assert.equal(crossUserWrite.ok, false, "cross-user scope RPC unexpectedly succeeded");
-    completed.push("cross-user scope RPC denied");
+    assertMismatchedScopeDenied(crossUserWrite, "cross-user scope write RPC denied", completed);
 
     const otherOwnerRead = await apiRequest(
       baseUrl,
