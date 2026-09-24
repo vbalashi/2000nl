@@ -1522,13 +1522,18 @@ function TrainingScreenContent({
       ? statsReadiness.status
       : "pending";
   const pilotAwaitingStart =
-    trainingTodaySetupEnabled && !trainingSessionId && !trainingLoadError;
+    trainingTodaySetupEnabled &&
+    !trainingSessionId &&
+    !idiomSession &&
+    !trainingLoadError;
   const cardPreparationStatus = !sessionResumeScopeResolved || pilotAwaitingStart
     ? "idle"
     : !sessionResumeResolved || loadingWord
       ? "pending"
       : trainingLoadError
         ? "error"
+        : activeExerciseFamily === "idiom" && idiomSession
+          ? "ready"
         : currentWord
           ? "ready"
           : "empty";
@@ -2374,7 +2379,17 @@ function TrainingScreenContent({
             scenarioLoading={trainingPilot.scenarioLoading}
             replacementWarning={sessionReplacementWarning}
             hasOwnedSession={Boolean(trainingSessionId || idiomSession)}
-            activeSessionLabel={trainingFocusFilter.dictionaryScope ? undefined : wordListLabel || undefined}
+            activeSessionLabel={
+              activeExerciseFamily === "idiom"
+                ? onboardingLang === "ru"
+                  ? "Тренировка идиом"
+                  : onboardingLang === "nl"
+                    ? "Training uitdrukkingen"
+                    : "Idiom training"
+                : trainingFocusFilter.dictionaryScope
+                  ? undefined
+                  : wordListLabel || undefined
+            }
             onContinue={handleContinueTrainingSession}
             onStart={trainingPilot.startSession}
             onRetry={() => void trainingPilot.retry()}

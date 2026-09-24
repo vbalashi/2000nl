@@ -622,12 +622,13 @@ export function TrainingTodaySetup({
           : draft.cardFilter === "new"
             ? t.newOnly
             : t.reviewsOnly,
+        activeFamily === "idiom" ? t.idioms : null,
         selectedModeLabels.join(" + "),
         selectedList,
       ]
         .filter(Boolean)
         .join(" · "),
-    [draft.cardFilter, draft.newReviewRatio, selectedList, selectedModeLabels, t, trainingLanguageCode],
+    [activeFamily, draft.cardFilter, draft.newReviewRatio, selectedList, selectedModeLabels, t, trainingLanguageCode],
   );
 
   const openSetup = () => {
