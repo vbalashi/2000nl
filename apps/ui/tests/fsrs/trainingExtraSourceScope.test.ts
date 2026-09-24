@@ -112,13 +112,42 @@ async function sourceEntries(
           [idiomId, entryId, `fingerprint-${idiomId}`, `idiom-${idiomId}`,
             randomUUID(), `explanation-${idiomId}`, `explanation-${idiomId}`],
         );
+      }
+      const identityVersion = `extra-source-${randomUUID()}`;
+      const { rows: importRows } = await client.query(
+        `insert into private.dictionary_import_runs (
+           dictionary_id, identity_scheme_version, artifact_format_version,
+           manifest_checksum, input_checksum, source_record_count,
+           artifact_count, status
+         ) values ($1, $2, 'test-v1', $3, $4, 2, 2, 'completed')
+         returning id`,
+        [accessibleDictionary, identityVersion, randomUUID(), randomUUID()],
+      );
+      for (const [index, entryId] of [adjective, verb].entries()) {
         await client.query(
-          `insert into user_card_status (
-             user_id, entry_id, card_type_id, fsrs_enabled, in_learning, next_review_at
-           ) values ($1, $2, 'word-to-definition', true, true, now())`,
-          [userId, entryId],
+          `insert into private.source_entry_bindings (
+             dictionary_id, identity_scheme_version, source_entry_key,
+             source_group_key, sense_ordinal, word_entry_id, binding_state,
+             first_seen_run_id, last_seen_run_id, manifest_checksum,
+             content_fingerprint_version, content_fingerprint,
+             identity_evidence, reconciliation_decision
+           ) values (
+             $1, $2, $3, 'extra-source-group', $4, $5, 'active',
+             $6, $6, 'test-manifest', 'test-v1', $7,
+             '{"kind":"test"}'::jsonb, '{"decision":"create"}'::jsonb
+           )`,
+          [accessibleDictionary, identityVersion, `extra-entry-${index}-${randomUUID()}`,
+            index + 1, entryId, importRows[0].id, `fingerprint-${entryId}`],
         );
       }
+      // The learner knows one ordinary meaning; idioms attached to its sibling
+      // meaning in the same source group must be eligible too.
+      await client.query(
+        `insert into user_card_status (
+           user_id, entry_id, card_type_id, fsrs_enabled, in_learning, next_review_at
+         ) values ($1, $2, 'word-to-definition', true, true, now())`,
+        [userId, adjective],
+      );
       const { rows: idiomRows } = await client.query(
         `select item from private.platform_v2_idiom_exercise_candidates_v2(
            $1::uuid, 'direct', 20, 0, null::uuid, 'curated', 'new', $2::jsonb
@@ -126,6 +155,13 @@ async function sourceEntries(
         [userId, JSON.stringify({ ...selected, partOfSpeech: ["bn"] })],
       );
       expect(idiomRows.map((row) => row.item.entryId)).toEqual([adjective]);
+      const { rows: siblingRows } = await client.query(
+        `select item from private.platform_v2_idiom_exercise_candidates_v2(
+           $1::uuid, 'direct', 20, 0, null::uuid, 'curated', 'new', $2::jsonb
+         ) as item`,
+        [userId, JSON.stringify({ ...selected, partOfSpeech: ["ww"] })],
+      );
+      expect(siblingRows.map((row) => row.item.entryId)).toEqual([verb]);
 
       const startFilter = { ...selected, partOfSpeech: ["bn", "zn"] };
       const requestId = randomUUID();

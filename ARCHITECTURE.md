@@ -96,7 +96,9 @@ Docker Supabase URL. For local DB/RPC checks, prefer
   normalized in the V2 preparation/client modules before they reach the UI;
   the session components own layout and interactions and do not inspect raw
   provider payloads. Any remaining compatibility normalization belongs at the
-  platform boundary, not in a second card renderer.
+  platform boundary, not in a second card renderer. The source-scope,
+  family-content, exercise-identity and queue stages are documented in
+  [the Training selection pipeline](docs/architecture/training-selection-pipeline.md).
 - UI-only changes: validate with `npm run lint` and relevant UI tests in `apps/ui`.
 - FSRS or DB changes: validate migrations plus `apps/ui/tests/fsrs/*.test.ts`; prefer the local Supabase Docker harness in `docs/runbooks/local-supabase-test-env.md`, and avoid production DBs for migration-driven tests.
 - Auth/provider changes: confirm required env vars, callback URLs, and service-role boundaries remain server-side.

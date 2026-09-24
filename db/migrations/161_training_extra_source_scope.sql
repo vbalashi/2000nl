@@ -3,6 +3,10 @@
 -- into each family's new session-start contract.
 BEGIN;
 
+CREATE INDEX IF NOT EXISTS platform_v2_content_nodes_active_idiom_entry_idx
+  ON private.platform_v2_content_nodes (entry_id)
+  WHERE kind = 'idiom' AND binding_state = 'active';
+
 CREATE OR REPLACE FUNCTION private.training_extra_source_entries_v1(
   p_user_id uuid,
   p_list_id uuid,
@@ -202,7 +206,47 @@ BEGIN
     END IF;
 
     FOR v_candidate IN
-        WITH source_entries AS MATERIALIZED (
+        WITH readable_dictionaries AS MATERIALIZED (
+            SELECT dictionary.id
+              FROM public.dictionaries AS dictionary
+             WHERE public.can_access_dictionary(p_user_id, dictionary.id, 'read')
+        ), eligible_seed AS MATERIALIZED (
+            SELECT status.entry_id
+              FROM public.user_card_status AS status
+              JOIN public.word_entries AS entry ON entry.id = status.entry_id
+              LEFT JOIN readable_dictionaries AS readable
+                ON readable.id = entry.dictionary_id
+             WHERE status.user_id = p_user_id
+               AND status.card_type_id IN ('word-to-definition', 'definition-to-word')
+               AND (
+                   COALESCE(status.in_learning, false)
+                   OR COALESCE(status.fsrs_enabled, false)
+                   OR COALESCE(status.fsrs_reps, 0) > 0
+                   OR status.last_reviewed_at IS NOT NULL
+               )
+               AND (entry.dictionary_id IS NULL OR readable.id IS NOT NULL)
+            UNION
+            SELECT known.entry_id
+              FROM public.user_card_known_marks AS known
+              JOIN public.word_entries AS entry ON entry.id = known.entry_id
+              LEFT JOIN readable_dictionaries AS readable
+                ON readable.id = entry.dictionary_id
+             WHERE known.user_id = p_user_id
+               AND known.card_type_id IN ('word-to-definition', 'definition-to-word')
+               AND known.cleared_at IS NULL
+               AND (entry.dictionary_id IS NULL OR readable.id IS NOT NULL)
+        ), eligible_source_groups AS MATERIALIZED (
+            SELECT DISTINCT source_group.id
+              FROM eligible_seed AS seed
+              JOIN private.source_entry_bindings AS binding
+                ON binding.word_entry_id = seed.entry_id
+               AND binding.binding_state = 'active'
+              JOIN private.platform_v2_headword_groups AS source_group
+                ON source_group.management_kind = 'source'
+               AND source_group.dictionary_id = binding.dictionary_id
+               AND source_group.identity_scheme_version = binding.identity_scheme_version
+               AND source_group.source_group_key = binding.source_group_key
+        ), source_entries AS MATERIALIZED (
             SELECT entry_id
               FROM private.training_extra_source_entries_v1(
                   p_user_id, p_list_id, p_list_type, p_training_filter
@@ -222,15 +266,27 @@ BEGIN
                     'hex'
                 ) AS source_revision
               FROM private.platform_v2_content_nodes AS node
+              LEFT JOIN private.source_entry_bindings AS source_binding
+                ON source_binding.word_entry_id = node.entry_id
+               AND source_binding.binding_state = 'active'
+              LEFT JOIN private.platform_v2_headword_groups AS source_group
+                ON source_group.management_kind = 'source'
+               AND source_group.dictionary_id = source_binding.dictionary_id
+               AND source_group.identity_scheme_version = source_binding.identity_scheme_version
+               AND source_group.source_group_key = source_binding.source_group_key
+              LEFT JOIN eligible_source_groups AS eligible_group
+                ON eligible_group.id = source_group.id
+              LEFT JOIN eligible_seed AS direct_seed
+                ON direct_seed.entry_id = node.entry_id
              WHERE node.kind = 'idiom'
                AND node.binding_state = 'active'
                AND EXISTS (
                    SELECT 1 FROM source_entries AS source_entry
                    WHERE source_entry.entry_id = node.entry_id
                )
-               AND private.platform_v2_training_ordinary_meaning_eligible_v1(
-                   p_user_id,
-                   node.entry_id
+               AND (
+                   eligible_group.id IS NOT NULL
+                   OR (source_group.id IS NULL AND direct_seed.entry_id IS NOT NULL)
                )
                AND (
                    SELECT count(*)

@@ -30,7 +30,10 @@ BEGIN
      OR v_scope NOT ILIKE '%user_card_action_events%'
      OR v_candidates IS NULL
      OR v_candidates NOT ILIKE '%training_extra_source_entries_v1%'
+     OR v_candidates NOT ILIKE '%eligible_source_groups AS MATERIALIZED%'
+     OR v_candidates ILIKE '%platform_v2_training_ordinary_meaning_eligible_v1%'
      OR v_candidates NOT ILIKE '%p_card_filter%'
+     OR to_regclass('private.platform_v2_content_nodes_active_idiom_entry_idx') IS NULL
      OR v_start IS NULL
      OR v_start NOT ILIKE '%platform_v2_idiom_exercise_candidates_v2%'
      OR v_start NOT ILIKE '%trainingFilter%'
