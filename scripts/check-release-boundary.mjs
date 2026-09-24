@@ -37,7 +37,8 @@ async function listPages(path) {
 
 const openPulls = await listPages('pulls?state=open');
 for (const target of affectedMainPulls(event, openPulls, repository)) {
-  const changedFiles = (await listPages(`pulls/${target.number}/files`)).map((file) => file.filename);
+  const changedFiles = (await listPages(`pulls/${target.number}/files`))
+    .flatMap((file) => [file.filename, file.previous_filename].filter(Boolean));
   const result = checkReleaseBoundary({ pull: target, changedFiles, openPulls, repository });
   const state = result.errors.length > 0 ? 'failure' : 'success';
   const statusResponse = await fetch(`https://api.github.com/repos/${repository}/statuses/${target.head.sha}`, {
