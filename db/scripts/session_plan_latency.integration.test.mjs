@@ -69,17 +69,20 @@ function parseFirstJsonArray(output, offset = 0) {
 
 const functionStatsSql = `SELECT COALESCE(
   json_agg(json_build_object(
-    'schema', schemaname,
-    'function', funcname,
+    'functionId', stats.funcid,
+    'schema', stats.schemaname,
+    'function', stats.funcname,
+    'argumentTypes', oidvectortypes(procedure.proargtypes),
     'calls', calls,
     'totalMs', round(total_time::numeric, 3),
     'selfMs', round(self_time::numeric, 3)
   ) ORDER BY total_time DESC)::text,
   '[]'
 )
-FROM pg_stat_user_functions
-WHERE calls > 0
-  AND (funcname LIKE '%training%' OR funcname LIKE '%schedule%');`;
+FROM pg_stat_user_functions stats
+JOIN pg_proc procedure ON procedure.oid = stats.funcid
+WHERE stats.calls > 0
+  AND (stats.funcname LIKE '%training%' OR stats.funcname LIKE '%schedule%');`;
 
 function readFunctionStats(targetUrl) {
   const result = psql(targetUrl, `SELECT pg_stat_clear_snapshot(); ${functionStatsSql}`);
@@ -115,11 +118,11 @@ function measure(targetUrl, statement = planStatements.public, { functionStats =
   const [explain] = parseFirstJsonArray(result.stdout, explainMarker);
   const statsAfterRows = functionStats ? readFunctionStats(targetUrl) : [];
   const statsBeforeByFunction = new Map(
-    statsBeforeRows.map((row) => [`${row.schema}.${row.function}`, row]),
+    statsBeforeRows.map((row) => [row.functionId, row]),
   );
   const functionStatsDelta = statsAfterRows
     .map((row) => {
-      const before = statsBeforeByFunction.get(`${row.schema}.${row.function}`) ?? {
+      const before = statsBeforeByFunction.get(row.functionId) ?? {
         calls: 0,
         totalMs: 0,
         selfMs: 0,
@@ -141,6 +144,22 @@ function measure(targetUrl, statement = planStatements.public, { functionStats =
     tempWrites: explain.Plan['Temp Written Blocks'],
     functionStats: functionStats ? functionStatsDelta : undefined,
   };
+}
+
+function assertNestedFunctionTiming(sample, wrapperArgumentTypes) {
+  const expected = [
+    ["public", "get_training_session_plan", wrapperArgumentTypes],
+    ["private", "training_scheduler_candidates_v2",
+      "uuid, text[], uuid, text, text, text, uuid[], text[], jsonb, boolean, boolean"],
+  ];
+  for (const [schema, name, argumentTypes] of expected) {
+    const matching = sample.functionStats.filter((row) =>
+      row.schema === schema && row.function === name &&
+      row.argumentTypes === argumentTypes && row.calls > 0,
+    );
+    assert.equal(matching.length, 1,
+      `Missing or ambiguous function timing for ${schema}.${name}(${argumentTypes}): ${JSON.stringify(sample.functionStats)}`);
+  }
 }
 
 test('current public session plan and exact deployment probe stay bounded on a dirty wide corpus',
@@ -256,6 +275,13 @@ test('current public session plan and exact deployment probe stay bounded on a d
       const sourceShape = psql(targetUrl, `INSERT INTO private.dictionary_import_runs(id,dictionary_id,identity_scheme_version,artifact_format_version,manifest_checksum,input_checksum,source_record_count,artifact_count,status) VALUES('41300000-0000-0000-0000-000000000001','413d0000-0000-0000-0000-000000000001','fixture','fixture','fixture','fixture',18184,18184,'completed');
 INSERT INTO private.source_entry_bindings(dictionary_id,identity_scheme_version,source_entry_key,source_group_key,sense_ordinal,word_entry_id,binding_state,first_seen_run_id,last_seen_run_id,manifest_checksum,content_fingerprint_version,content_fingerprint,identity_evidence,reconciliation_decision)
 SELECT dictionary_id,'fixture',id::text,headword,1,id,'active','41300000-0000-0000-0000-000000000001','41300000-0000-0000-0000-000000000001','fixture','fixture','fixture','{}','{}' FROM public.word_entries;
+-- Entry 5 belongs to the NT2 scope, but its ordinary predecessor (entry 1)
+-- does not. A safe scope-group optimization must retain that predecessor.
+UPDATE private.source_entry_bindings binding
+SET source_group_key = 'fixture-cross-scope-pair',
+    sense_ordinal = CASE WHEN entry.meaning_id = 1 THEN 1 ELSE 2 END
+FROM public.word_entries entry
+WHERE binding.word_entry_id = entry.id AND entry.meaning_id IN (1, 5);
 -- Fixture bulk loading only: all entries have both root nodes, so the
 -- exceptional unrenderable projection correctly stays empty. Avoid the
 -- unrelated import reconciliation cost; restore triggers before reads.
@@ -267,6 +293,77 @@ COMMIT;
 ANALYZE private.source_entry_bindings;
 ANALYZE private.platform_v2_content_nodes;`);
       assert.equal(sourceShape.status, 0, sourceShape.stderr);
+
+      const predecessorParity = psql(targetUrl, `WITH scope_ids AS MATERIALIZED (
+  SELECT entry_id FROM private.default_training_scope_entries_v1
+), scope_groups AS MATERIALIZED (
+  SELECT DISTINCT binding.dictionary_id, binding.identity_scheme_version,
+    binding.source_group_key
+  FROM scope_ids scope
+  JOIN private.source_entry_bindings binding
+    ON binding.word_entry_id = scope.entry_id
+   AND binding.binding_state = 'active'
+), ordinary_rows AS MATERIALIZED (
+  SELECT binding.word_entry_id, binding.dictionary_id,
+    binding.identity_scheme_version, binding.source_group_key,
+    binding.sense_ordinal
+  FROM private.source_entry_bindings binding
+  JOIN private.platform_v2_content_nodes definition
+    ON definition.entry_id = binding.word_entry_id
+   AND definition.binding_state = 'active'
+   AND definition.parent_content_node_id IS NULL
+   AND definition.kind = 'definition'
+  LEFT JOIN private.unrenderable_ordinary_direct_entries_v1 unrenderable
+    ON unrenderable.entry_id = binding.word_entry_id
+  WHERE binding.binding_state = 'active'
+    AND unrenderable.entry_id IS NULL
+), global_introductions AS MATERIALIZED (
+  SELECT word_entry_id,
+    lag(word_entry_id) OVER (
+      PARTITION BY dictionary_id, identity_scheme_version, source_group_key
+      ORDER BY sense_ordinal, word_entry_id
+    ) predecessor_entry_id
+  FROM ordinary_rows
+), scoped_introductions AS MATERIALIZED (
+  SELECT row.word_entry_id,
+    lag(row.word_entry_id) OVER (
+      PARTITION BY row.dictionary_id, row.identity_scheme_version,
+        row.source_group_key
+      ORDER BY row.sense_ordinal, row.word_entry_id
+    ) predecessor_entry_id
+  FROM ordinary_rows row
+  JOIN scope_groups group_key
+    ON group_key.dictionary_id = row.dictionary_id
+   AND group_key.identity_scheme_version = row.identity_scheme_version
+   AND group_key.source_group_key = row.source_group_key
+)
+SELECT json_build_object(
+  'globalRows', (SELECT count(*) FROM global_introductions),
+  'scopedRows', (SELECT count(*) FROM scoped_introductions),
+  'mismatches', (
+    SELECT count(*) FROM scope_ids scope
+    LEFT JOIN global_introductions original
+      ON original.word_entry_id = scope.entry_id
+    LEFT JOIN scoped_introductions narrowed
+      ON narrowed.word_entry_id = scope.entry_id
+    WHERE original.predecessor_entry_id IS DISTINCT FROM narrowed.predecessor_entry_id
+  ),
+  'outsideScopePredecessors', (
+    SELECT count(*) FROM scope_ids scope
+    JOIN global_introductions original
+      ON original.word_entry_id = scope.entry_id
+    LEFT JOIN scope_ids predecessor
+      ON predecessor.entry_id = original.predecessor_entry_id
+    WHERE original.predecessor_entry_id IS NOT NULL
+      AND predecessor.entry_id IS NULL
+  )
+)::text;`);
+      assert.equal(predecessorParity.status, 0, predecessorParity.stderr);
+      const parity = JSON.parse(predecessorParity.stdout.trim());
+      t.diagnostic(JSON.stringify({ predecessorParity: parity }));
+      assert.equal(parity.mismatches, 0);
+      assert.ok(parity.outsideScopePredecessors > 0);
+      assert.ok(parity.scopedRows < parity.globalRows / 2);
 
       // Invalidate visibility on distributed source and projection pages.
       // This models import/update churn; it does not claim to evict OS caches.
@@ -300,6 +397,10 @@ ANALYZE private.platform_v2_content_nodes;`);
       t.diagnostic(JSON.stringify({ nestedTiming }));
       assert.ok(nestedTiming.public.executionMs <= 2000, JSON.stringify(nestedTiming));
       assert.ok(nestedTiming.uiPublic.executionMs <= 2000, JSON.stringify(nestedTiming));
+      assertNestedFunctionTiming(nestedTiming.public,
+        "uuid, text[], uuid, text, text, jsonb");
+      assertNestedFunctionTiming(nestedTiming.uiPublic,
+        "uuid, text[], uuid, text, text, jsonb, text, integer");
       const manifest = JSON.parse(readFileSync(
         path.join(repoRoot, 'packages/shared/deployment/db-contract.json'), 'utf8'));
       const shape = psql(targetUrl, `BEGIN READ ONLY;

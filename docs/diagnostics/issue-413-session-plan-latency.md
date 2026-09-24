@@ -446,3 +446,459 @@ pooler/backend lifecycle telemetry that can distinguish a backend-local runtime
 event from connection routing. Query counters and host load alone cannot make
 that attribution. Do not increase the release timeout, add warm-up retries, or
 treat the issue as completed on the strength of passing local tests.
+
+## Exact session-start member path (2026-09-24)
+
+The released Training Today screen opens quickly because it no longer starts a
+run before rendering. A single authorized Start on the test-production app then
+measured `update_active_training_scope` at 626 ms and
+`start_training_session` at **4,959 ms** in the browser. The following owned
+next-card read took 234 ms. A later plan read took 2,779 ms and began after
+the start; it did not block the initial Active Session panel. The Start action
+created one real session on the owner's authorized account. Only RPC paths and
+aggregate timings were retained.
+
+Read-only `pg_stat_statements` snapshots immediately before and after that Start
+showed exactly one additional start-family call, adding **4,680.2 ms** of
+PostgreSQL execution versus 4,959 ms of browser request time. The later
+plan-family call added 2,459.3 ms in PostgreSQL versus 2,779 ms in the browser.
+The roughly 0.28–0.32 s differences include transport, pooler, and API overhead;
+they are not a separate measurement of any one layer. This matched pair shows
+that most of the user's wait is inside PostgreSQL execution, not React render
+or network transit.
+
+The current `start_training_session` inserts a session and invokes the read-only
+`private.training_session_members_v1` selector to materialize ten members.
+A direct read-only production `EXPLAIN ANALYZE` of that selector under the QA
+identity took **3,241.0 ms** (ten members, 8,554 shared-buffer hits, zero shared
+reads, 280/564 temporary read/write blocks). A subsequent two-call transaction
+on one backend measured 236.6 / 206.6 ms. This demonstrates that the selection
+itself can consume seconds without writing a session.
+
+The privacy-safe trace now supports `--component members`, which runs that exact
+member selector in a read-only transaction with an 8,000 ms SQL bound and
+transaction-local nested-plan/function timing. One production trace on backend
+`2289248` measured **1,805.6 ms** in PostgreSQL. Function accounting assigned
+1,804.6 ms total to `training_session_members_v1`, including **1,729.8 ms**
+in `training_scheduler_candidates_v2` (1,721.4 ms self time); these totals
+overlap and must not be added. The nested candidate SQL took 1,560.5 ms.
+It had zero shared reads and about 4.8 ms measured temporary-file I/O. On the
+same backend, the immediate repeat took **220.8 ms**, with the candidate at
+210.6 ms. The warm nested plan still materialized
+`ordinary_source_introductions` across 16,396 rows in 121.1 ms. No learner
+payloads, SQL text, credentials, database state, or configuration were emitted
+or changed by the trace.
+
+This is stronger than the earlier plan-only evidence: the live Start delay is
+database execution, and the read-only candidate SQL used to build the session
+can itself account for the large first-call outlier. The full-corpus predecessor
+CTE is a measurable warm cost, but the slow trace does not yet prove that this
+single CTE owns the extra first-call seconds. A prior scope-group rewrite
+reduced rows but increased shared-buffer work, so it remains rejected. The
+next optimization should target the timed candidate subplan with exact
+predecessor and queue-order parity tests, warm and first-use production
+measurements, and a buffer budget; a blind rewrite or compute upgrade is not
+justified by these results.
+
+## Production rollout timeout after migration 158 (2026-09-24)
+
+Security PR [#450](https://github.com/vbalashi/2000nl/pull/450) merged as
+`b6b23a798869b9f9c5bbfeb769728f1e9862f3ca`, which triggered the normal NUC
+workflow [35953070335](https://github.com/vbalashi/2000nl/actions/runs/35953070335).
+The immutable migration gate applied migration 158 and then the existing
+pre-switch read exceeded its unchanged **2,000 ms** statement timeout. The
+container switch did not run. This is a production failure of the six-argument
+public `get_training_session_plan(uuid,text[],uuid,text,text,jsonb)` probe, not
+the eight-argument UI overload used in several earlier diagnostic samples. The
+PostgreSQL error context names `private.training_scheduler_candidates_v2`
+under `get_training_session_plan`; the logged SQLSTATE is `57014` at
+`2026-09-24T03:54:27.229Z`.
+
+A bounded Supabase unified-log query targeted the exact 30-second window
+`03:54:10Z–03:54:40Z` for project `2000nl` (`lliwdcpuuzjmxyzrjtoz`). It found
+11 PostgreSQL, 14 PostgREST, and 7 Supavisor events. The PostgreSQL stream had
+one `ERROR` with SQLSTATE `57014` and the scheduler-helper context. The
+Supavisor stream recorded `auth_scram_final_wait` at `03:54:22.286Z` and
+`03:54:22.293Z`, followed by `busy` at `03:54:27.261Z`; these are event labels,
+not measurements of queue duration, and do not prove that the pooler caused
+the statement delay. The failed deployment did not capture a correlated backend
+PID/start or wait-event sample. No query text, arguments, user identity, or
+learner rows were retrieved from Supabase logs/catalogs.
+
+The deployment contract state now records `2000nl-db-158:158`. Read-only
+catalog verification found RLS enabled and not forced on
+`public.user_training_scopes`, zero direct policies, zero effective table or
+column grants for `PUBLIC`/`anon`/`authenticated`, and authenticated-only
+execution of the two owner-checking scope RPCs. No user rows were read. The
+still-running app answered as release `0.18.735`, commit `0b69c69968bbed42b8082e6594e2886da7c16e72`, but its health endpoint now reports
+`status: warning`: it expects contract 157 while the database is at 158. The
+platform RPC and grouped-search checks are `ok`; the exact deployment contract
+check is not. The app container was not switched during this workflow.
+
+This adds a concrete failed sample to #413 but does not identify its root
+cause. The error establishes that PostgreSQL cancelled work inside the
+scheduler candidate path; it does not distinguish query/data-shape cost,
+backend-local execution behavior, or short-lived resource pressure. The
+Supavisor events do not establish connection wait as the cause. Do not retry
+the deployment unchanged, increase the timeout, or change SQL based only on
+this event. Before another rollout attempt, define one discriminating,
+bounded measurement for the **six-argument pre-switch path** that can capture
+backend identity/start and activity/wait state around the first call, while
+keeping the normal two-second release gate. Preserve the already-applied
+forward migration 158; do not reverse its grants or disable RLS. Recheck the
+health contract after a later successful deployment.
+
+## Synchronized single-sample pre-switch-path probe (2026-09-24)
+
+Because run 35953070335 newly failed on the six-argument deployment overload,
+one bounded, read-only diagnostic was run with `samples=1` and
+`first_component=public`, retaining the existing 2,000 ms statement timeout
+and starting the activity/NUC samplers at the same time:
+[35954125190](https://github.com/vbalashi/2000nl/actions/runs/35954125190).
+
+The six-argument public session-plan call took **1,674.470 ms of PostgreSQL
+execution**, below the gate but close to it; outer client wall time was
+**3,092.777 ms** with **1,418.307 ms** outside server execution. Planning was
+**0.121 ms**, with **8,356 shared buffer hits / 0 reads**, **280 temp blocks
+read / 564 written**, JIT off, and `work_mem=2184kB`. The sampler saw backend
+`2266384` active as `session-plan` at
+`2026-09-24T04:05:14.297690Z`, with backend start
+`04:05:12.127193Z` and both wait-event fields null. The next activity sample
+found no active query. On that same backend, the following UI/public overload
+executed in **197.524 ms**; next, filtered, aggregate, and candidate components
+were **203.970 / 193.370 / 189.361 / 181.864 ms**. This is one observed sample,
+not a percentile or proof of root cause.
+
+NUC-runner samples during the 30-second window showed load up to about `0.8`,
+roughly `12.7 GB` available of `16.3 GB`, CPU PSI some up to `9.68%` with full
+pressure `0`, and I/O PSI some up to `3.54%`. These describe the diagnostic
+runner, not the managed Supabase database, so they cannot exclude pressure on
+the database host.
+
+The Supabase unified logs for `04:05:00Z–04:05:30Z` contained 52 Supavisor
+rows, 16 Edge, 2 Auth, and 1 PostgREST row, with no PostgreSQL error and no
+Supavisor `busy` event in that window. One Supavisor row matched backend PID
+`2266384`; it was recorded at `04:05:12.177929Z` in `transaction` mode and
+region `eu-west-1`, about 51 ms after backend start. No logged wait duration
+or matching pooler-busy event explains the later SQL execution time. Logs
+contained no query text, arguments, user identity, or learner rows.
+
+This strengthens the conclusion that the observed near-threshold portion is
+inside PostgreSQL execution rather than client/container wall time. It weakens
+pooler saturation and NUC-wide load as explanations for this occurrence, but
+it does not measure Supabase CPU/memory/disk at query time and cannot distinguish
+backend-local execution state from query/data-shape cost or short-lived database
+resource pressure. It does not justify a dedicated compute move, SQL rewrite,
+or a larger gate. Do not repeat this first/warm sequence without new
+hypothesis-discriminating evidence; keep #413 open and use the unchanged gate
+for a later rollout only after the cause or an existing fix is reviewed.
+
+## Independent-backend gate reproduction (2026-09-24)
+
+A second bounded read-only run, [35955022754](https://github.com/vbalashi/2000nl/actions/runs/35955022754), used the same `samples=1`, `first_component=public` setup and unchanged 2,000 ms statement timeout. It ran on backend `2267020`, started at `04:17:37.645388Z`, distinct from `2266384` in the prior sample. PostgreSQL execution was **2,261.464 ms**, exceeding the release gate; outer client time was **4,230.948 ms**. Planning was **0.108 ms**, shared buffers were **8,356 hits / 0 reads**, and temporary blocks were **280 read / 564 written**—the same aggregate block counts as the preceding backend. The activity sampler observed the exact backend as an active `session-plan` with both wait-event fields null. This is a second distinct-backend reproduction, not a percentile estimate.
+
+For `04:17:25Z–04:17:55Z`, the verified Supabase project's unified logs returned 45 Supavisor rows, one containing backend PID `2267020`, in `transaction` mode / `eu-west-1`; the window had no `busy` label match, PostgreSQL error, or `57014` timeout code. This rules out a visible pooler `busy` event for this occurrence, not all pooler or database-resource effects. The synchronized NUC runner sampler showed a 1-minute load maximum of `1.82`, at least `12.7 GB` available memory, CPU PSI some up to `6.73%`, and I/O PSI some up to `4.75%`; these are runner measurements, not Supabase telemetry.
+
+Together with the 1,674.470 ms call on backend `2266384`, the result confirms that first-call PostgreSQL execution varies across distinct backends and can cross the two-second deployment gate without a reported wait event. Identical buffer/temp-block aggregates suggest the visible data-access work is similar, but they do not identify which internal function or execution state accounts for the timing difference. The available logs still lack per-request database CPU, memory, disk, and nested-function timing. Keep #413 as the immediate rollout gate; do not raise the timeout, retry deployment unchanged, or infer that dedicated compute is required. The next useful step is to check whether the NUC runner's dedicated diagnostic connection permits transaction-local nested timing; if not, choose another privacy-safe attribution method without changing project-wide settings.
+
+A separate read-only settings/catalog query through the Supabase MCP returned `track_functions=none`, `pg_stat_statements.track=top`, the `pg_stat_statements` extension installed, and no `pg_stat_user_functions` row for `private.training_scheduler_candidates_v2`. A transaction-local `set_config('track_functions','all',true)` probe through that same MCP was rejected with SQLSTATE `42501` (`permission denied to set parameter "track_functions"`); no database setting was changed. The currently available MCP role therefore cannot provide nested function timing this way. Any further attempt needs a separately authorized diagnostic connection or another privacy-safe method; do not change project-wide production settings for this investigation.
+
+## Production nested-function attribution (2026-09-24)
+
+The existing NUC diagnostic connection was verified as the expected Supabase
+project (`lliwdcpuuzjmxyzrjtoz`) through the transaction pooler in eu-west-1;
+it is distinct from the less-privileged MCP role. A one-second read-only
+permission probe confirmed this connection accepts `SET LOCAL
+track_functions = 'all'`. A disposable local Supabase transaction confirmed
+that `pg_stat_xact_user_functions` reports nested timing before rollback.
+Neither check changed a project-wide setting.
+
+One production read-only transaction then enabled that setting locally, kept
+JIT off, used only the dedicated QA identity, and bounded the six-argument
+public plan call at 3,000 ms for attribution. Its backend was PID `2270559`,
+started `2026-09-24T05:23:39.763406Z`. The PostgreSQL EXPLAIN execution was
+**2,038.121 ms**, planning **0.120 ms**, with 8,440 shared hits / zero reads
+and 280/564 temporary read/write blocks. Transaction-local function timing:
+
+| Function | Calls | Total | Self |
+| --- | ---: | ---: | ---: |
+| `public.get_training_session_plan` | 1 | 2,036.780 ms | 34.972 ms |
+| `private.training_scheduler_candidates_v2` | 1 | 1,927.420 ms | **1,917.624 ms** |
+| `private.training_filter_target_date` | 2 | 74.838 ms | 1.502 ms |
+| `private.training_filter_target_date_at` | 2 | 68.546 ms | 2.207 ms |
+| `private.training_user_timezone_v1` | 9 | 62.496 ms | 57.673 ms |
+
+The dominant time is inside the candidate helper's **self** time, which
+includes its SQL execution and unreported internal planning/initialization;
+these counters do not distinguish those subparts or prove database-host
+resource pressure. The function totals overlap across callers, so they must
+not be summed. Instrumenting function calls adds some overhead, and this
+3,000 ms diagnostic is not an unchanged replay of the 2,000 ms deployment
+gate. It nevertheless localizes the near-threshold execution far more tightly
+than the outer EXPLAIN or aggregate logs. No learner/card payload or credential
+was printed, no progress action was submitted, and the transaction rolled back.
+
+The next probe should compare first and immediate repeat calls on the **same
+backend**, with per-call `pg_stat_xact_user_functions` deltas, and then inspect
+the candidate helper's inner SQL plan or compilation behavior. Do not change
+the release gate, global DB settings, or compute size on this evidence alone.
+
+That same-backend comparison was subsequently run in a single read-only
+transaction on PID `2270559` (identical backend start). It measured the public
+plan at **232.519 ms** on the first invocation of this transaction and
+**175.354 ms** on the immediate second invocation. The candidate helper's
+per-call self time was **199.699 ms** and **171.465 ms** respectively. The
+backend had already executed the 2,038 ms instrumented call above. Thus the
+expensive candidate self time was absent when that physical backend was reused,
+even though each invocation still executed the same function. This is
+consistent with a backend-local first-use/idle effect but does not prove it or
+separate SQL statement planning from execution or short-lived managed-host
+pressure at the first use.
+`training_scheduler_candidates_v2` is a SQL-language, security-definer helper
+with a large CTE query; its `self_time` covers the inner query. Next inspect
+its actual inner plan/compilation on a slow first use before changing SQL.
+
+Supabase's documented transaction-local `auto_explain` path was then checked.
+The managed connection already had the module loaded and accepted local
+`log_nested_statements`, `log_analyze`, `log_buffers`, JSON format, and a
+100 ms threshold at `NOTICE` level. Server `log_min_messages` was `warning`,
+so this client-directed NOTICE level was below the server log threshold. One
+bounded read-only QA transaction on **another backend**, PID `2271126`
+(started `2026-09-24T05:29:14.193939Z`), produced a **fast** public call:
+268.528 ms execution / 0.125 ms outer planning. The nested candidate plan
+took 203.640 ms: a `WindowAgg` over 2,345 output rows, with a nested sort over
+16,396 rows and the familiar 280/563 temporary blocks. The wrapper aggregate
+was 245.863 ms. This is a warm-speed inner-plan reference, **not** a plan
+captured during a two-second outlier. In particular, a recently started
+backend can also be fast; backend age/first use alone is not a sufficient
+explanation. Avoid attributing the outlier to compilation or memory pressure
+without a matched slow inner plan. The diagnostic printed only node types,
+counts, blocks and timing; it did not output SQL text or learner content.
+
+The disposable local timing fixture now keys before/after function-stat deltas
+by PostgreSQL function OID instead of schema and name, because the public
+planner has multiple overloads. It also requires one positive-call row for
+the exact six- or eight-argument wrapper and the candidate helper in each
+measurement; missing or misattributed rows fail the test. The 2026-09-24 local
+run passed on a disposable 18,184-entry corpus: the six-argument wrapper took
+103.226 ms and the eight-argument wrapper 107.065 ms, with the candidate
+helper called once in each. This repairs diagnostic attribution but does not
+explain or remove the production two-second outlier.
+
+## Bounded inner-plan trace preparation (2026-09-24)
+
+The CLI connection was rechecked against the same expected project ref,
+eu-west-1 transaction pooler, and PostgreSQL 17.6. A new diagnostic command,
+`node db/scripts/session_plan_inner_trace.mjs --env-file <private-env-file>`,
+executes exactly one six-argument public-plan call under the QA identity in a
+read-only transaction. It bounds that diagnostic call at 3,000 ms, enables
+`track_functions` and `auto_explain` only with `SET LOCAL`, and reports only
+aggregate timing, backend identity, and plan-node counts. The exact 2,000 ms
+deployment gate is unchanged. Parser tests assert that SQL/query text is never
+included in the emitted summary.
+
+Three bounded invocations were made while validating the parser. The first
+returned an output-parsing error after its result was discarded; it supplies
+**no usable timing evidence**. The next two used the same backend PID `2276584`
+(started `07:02:41.805Z`) and were fast: **210.008 ms** and **205.811 ms**
+inside PostgreSQL, with outer planning **0.116/0.110 ms**. Candidate-helper
+self time was **204.678/201.323 ms**. This is another warm-speed reference,
+not a matched slow inner plan. The server emitted three `auto_explain` plan
+notices in the last invocation, but the initial parser incorrectly expected a
+JSON array; PostgreSQL's `auto_explain` JSON log is an object. The parser now
+accepts both shapes, scopes each notice to its own plan, and has synthetic
+privacy/attribution tests. No further production call was made in this bounded
+round merely to recheck parsing.
+
+The next useful call is one bounded, post-idle QA trace with the corrected
+parser. If it captures a slow candidate, compare its logged inner-plan time
+with transaction-local candidate self time on that **same call**. A slow inner
+plan points to execution; a fast inner plan paired with slow self time points
+to planning or initialization outside the logged execution. Do not infer a
+resource upgrade from either result alone.
+
+## Matched slow inner plan and same-backend repeat (2026-09-24)
+
+The corrected trace captured a slow first call on backend `2277155`, started
+`07:09:42.983Z`, after an idle interval. The six-argument public planner took
+**1,972.028 ms** inside PostgreSQL; outer planning was **0.111 ms**. The
+candidate helper contributed **1,892.030 ms total / 1,884.483 ms self**.
+`auto_explain` logged the helper's inner `WindowAgg` plan at **1,676.464 ms**,
+with 2,345 output rows, 16,396 rows in a nested window/sort path, 280/563
+temporary blocks read/written, and no shared-buffer reads. The wrapper
+aggregate and public result plans logged at **1,892.824/1,971.938 ms**.
+
+One immediate repeat on the **same PID and backend start** took **208.586 ms**
+public and **203.209 ms** candidate self. The inner plan took **193.096 ms**;
+its root still emitted 2,345 rows, the nested path still handled 16,396 rows,
+and temporary read/write blocks remained 280/563. The inner window/sort path
+fell from **1,362.601/1,347.874 ms** to **111.133/98.191 ms**. Root shared
+hits were 5,515 versus 5,319, with zero shared reads in both. This is a
+matched slow-versus-warm execution comparison, not an estimate of production
+frequency or a proof that the sort operation itself consumed all the time:
+node total times include descendant work.
+
+The decisive correction is that most missing time is inside the **execution**
+of the candidate helper's inner SQL plan, rather than its outer wrapper or
+initial planning alone. The same rows and temporary block counts weaken a
+simple data-volume explanation. They do not distinguish slow temporary-file
+I/O, kernel-cache behavior, CPU scheduling on the managed host, or an expensive
+descendant node with backend-local first-use behavior. PostgreSQL 17 permits
+transaction-local `track_io_timing = on` on this diagnostic connection; a
+read-only permission probe confirmed it without changing a global setting.
+The harness now has an optional `--io-timing` flag and reports only I/O timing
+and generic node-type paths. One post-idle bounded trace with that flag is the
+next discriminating measurement. I/O timing has its own overhead, so compare
+the time attribution within that call rather than treating absolute milliseconds
+as directly interchangeable with the preceding samples. No SQL rewrite,
+compute resize, or release-timeout change is justified yet.
+
+## Matched transaction-local I/O timing (2026-09-24)
+
+The `--io-timing` trace captured another slow first call on new backend
+`2277729` (started `07:15:27.537Z`): **1,749.140 ms** public execution,
+**1,643.301 ms** candidate self, and **1,426.678 ms** for the inner
+`WindowAgg` plan. An immediate repeat on that exact backend took **225.342 ms**
+public, **219.577 ms** candidate self, and **208.303 ms** inner plan.
+
+The inner plan reported **0.636 ms temporary read + 3.840 ms temporary write**
+I/O time in the slow call, versus **0.410 + 3.805 ms** in the repeat. Shared
+and local I/O times and shared-buffer reads were zero in both. The inner plan
+still returned 2,345 rows, handled 16,396 rows in the nested window/sort
+path, and read/wrote 280/563 temporary blocks. Thus temporary-file I/O system
+calls account for under five milliseconds of the slow execution and cannot
+explain its ~1.5-second excess. The node totals are inclusive: the 1,146 ms
+slow sort-path total includes the CTE input and must not be called sort CPU
+time. The generic node chain reaches a `CTE Scan` at 1,170 ms slow versus
+130 ms warm, but this summary did not retain the CTE name.
+
+The remaining uncertainty is execution CPU versus time when the managed
+backend was not scheduled, and which named CTE or descendant operation owns
+the measured wall time. Neither PostgreSQL wait sampling nor transaction-local
+I/O timing can distinguish those on its own. Keep the rollout hold; do not
+increase compute or rewrite the scheduler based only on these node totals.
+For the final bounded attribution round, the sanitized parser now includes
+only named CTE labels and a hash of the generic plan shape, so a slow and warm
+call can be compared without logging SQL text, predicates, relation contents,
+or learner data.
+
+The final post-idle call in this bounded series used a newly started backend
+`2277759` (`07:20:50.635Z`) but was **fast**: public execution **232.314 ms**,
+candidate self **221.951 ms**, inner plan **203.628 ms**. This again proves
+that a new backend is not sufficient to trigger the outlier. The fast plan's
+shape hash was `8bef2ac124d2`; its high-level paths included the named
+`eligible` and `ordinary_source_introductions` CTE scans. The earlier slow
+plan was collected before the shape-hash/CTE-label fields were added, so the
+named CTEs and hash **cannot** be asserted as matched to that slow call. No
+further production calls were made to chase a slow sample beyond the bounded
+series.
+
+The evidence now rules out outer SQL planning and measured temporary-file I/O
+as dominant causes. The remaining ~1.5-second first-call excess is in
+backend execution of the candidate's SQL, with the same aggregate row and
+block counts as the immediate repeat. This is compatible with CPU work on a
+fresh execution path or intermittent scheduling/compute pressure on the
+managed database, but the current instruments do not distinguish them.
+The next decision must use actual Supabase-host CPU/scheduling telemetry or a
+controlled isolated reproduction that can measure backend CPU time alongside
+wall time. It should not be based on NUC runner load, a fast local fixture,
+or an inferred CTE name. Keep the 2,000 ms rollout hold and do not increase
+compute or change SQL without that causal boundary.
+
+## Supabase Metrics API access and resolution (2026-09-24)
+
+The verified production project `lliwdcpuuzjmxyzrjtoz` exposes the official
+[Supabase Metrics API](https://supabase.com/docs/guides/observability/metrics).
+An authenticated read with the existing project Secret API key returned HTTP
+200 and 298 metric names; no credential, metric labels, or raw series were
+recorded in the diagnostic output. The relevant available series include
+`node_cpu_seconds_total` (16 mode/core series labelled `service_type="db"`),
+`node_load1`, `node_memory_MemAvailable_bytes`, and database-level Postgres
+statistics. This confirms access to **the managed DB node's aggregate** CPU
+and memory observations, rather than the NUC runner measurements used earlier.
+
+Supabase's [collector guidance](https://supabase.com/docs/guides/observability/metrics/vendor-agnostic)
+specifies a 60-second scrape interval. The endpoint provides current counters,
+not retained per-request backend CPU time; we had no historical scrape covering
+the slow `07:09` and `07:15` calls. A one-minute aggregate cannot establish
+whether one 1.5-second SQL outlier consumed CPU or waited to be scheduled,
+especially with other database work in the same minute. The `process_cpu_seconds_total`
+series also lacks a backend-PID label, so it cannot fill that gap. We should
+retain this feed for correlation with future occurrences, but must not call an
+isolated current snapshot proof of managed-host pressure or justify a compute
+upgrade from it.
+
+The next discriminating step is a **bounded** slow/warm reproduction with
+backend CPU time measured alongside the already captured wall/I/O/plan timing,
+or an equivalent provider-side trace for the exact backend and timestamp.
+If Supabase cannot expose that per-backend signal, first reproduce the same
+plan and first-call behavior in an isolated environment with CPU accounting;
+only then choose a narrowly scoped SQL/runtime fix. No further production SQL
+probes were run for this metrics-access check.
+
+## Pilot rollout and named CTE pair (2026-09-24)
+
+The 2,000 ms release threshold was introduced by commit `7eeface4f` for
+[#238](https://github.com/vbalashi/2000nl/issues/238), after a 3,282.6 ms
+first read following migration 126. It is an adopted first-call performance
+budget, not a database compatibility boundary. The gate currently runs on
+no-op retries and UI-only releases as well as scheduler migrations. This can
+block an unrelated pilot release when the existing query has a sporadic
+outlier. The compatibility checks still have independent value. Any policy
+change should preserve fail-closed schema/security/QA-read correctness while
+deciding separately whether the 2-second *performance* budget blocks this
+pilot's UI-only releases. That release-policy work is tracked separately in
+[#454](https://github.com/vbalashi/2000nl/issues/454).
+
+A normal rerun of deployment
+[35953070335, attempt 2](https://github.com/vbalashi/2000nl/actions/runs/35953070335/attempts/2)
+passed the unchanged gate and switched the app to `b6b23a798869b9f9c5bbfeb769728f1e9862f3ca`.
+Deep health then reported `status: ok` and matching app/DB contract 158.
+The unchanged gate passing on this attempt does not resolve the intermittent
+query latency.
+
+After rollout, one bounded read-only trace and its immediate same-backend
+repeat used PID `2278911` (backend start `07:35:43.529Z`). The public six-
+argument call took **1,043.670/232.222 ms** and the inner candidate plan
+**790.524/205.524 ms**, with identical generic shape hash
+`8bef2ac124d2`. The `ordinary_source_introductions` CTE scan's inclusive
+total fell from **600.924 to 129.719 ms** and returned 16,396 rows in each
+call. The `eligible` CTE scan fell from **649.370 to 145.164 ms**, returning
+2,345 rows. Temporary I/O was only **6.073/9.256 ms**; shared reads were zero
+and the inner plan's temporary block counts remained 280/563. This places the
+largest visible difference on the path that materializes and joins global
+ordinary-meaning introductions, while the two CTE totals overlap and must
+not be added. It still does not distinguish CPU work from backend scheduling.
+
+The SQL definition supports a targeted hypothesis: `ordinary_source_introductions`
+materializes active source bindings with active root definitions, filters
+unrenderable entries, and computes predecessor order across the entire corpus
+before joining to the learner's eligible scope. That is about 16,396 rows for
+this call, while only 2,345 candidate rows remain. A scope-restricted or
+precomputed predecessor projection might remove recurring global work, but
+simply filtering before `lag()` would change semantics when a predecessor is
+outside the current scope. Any rewrite therefore needs a production-shaped
+disposable fixture, predecessor/permission/session parity tests, and a new
+forward migration; the trace alone is not enough to ship one.
+
+### Disposable scope-group rewrite experiment
+
+The production-shaped disposable 18,184-entry fixture now includes one
+ordinary meaning whose predecessor is **outside** the 4,031-entry NT2 scope.
+A local parity check compared the current global predecessor window with a
+window restricted to complete source groups represented in the scope. The
+restricted window handled 4,032 versus 18,184 rows, had zero predecessor
+mismatches on scope entries, and retained that outside-scope predecessor.
+The existing six- and eight-argument public plan and exact deployment-probe
+tests passed on the unchanged contract 158.
+
+An experimental function rewrite was then applied **only** to the disposable
+database. Both a direct scope-to-bindings join and an `EXISTS` form reduced
+local execution from roughly 100–111 ms to 73–80 ms, but increased the public
+plan's shared-buffer accesses from about 5,300 to **17,100**, failing the
+existing 6,500-block regression budget. This likely reflects many binding
+lookups and could amplify cold managed-DB cost; local timing alone is not enough
+to relax that budget. Both experimental rewrites were discarded. No migration,
+manifest change, or production SQL change was shipped. A viable rewrite must
+retain the parity result **and** avoid the buffer amplification before it is
+eligible for a forward migration or rollout.

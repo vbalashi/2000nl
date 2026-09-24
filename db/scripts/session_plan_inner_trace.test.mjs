@@ -1,0 +1,63 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { summarizeAutoExplain, summarizeTrace, traceSql } from "./session_plan_inner_trace.mjs";
+
+test("member trace is bounded, read-only, and follows the session-start selector", () => {
+  const sql = traceSql(true, "members");
+  assert.match(sql, /BEGIN READ ONLY/);
+  assert.match(sql, /statement_timeout = '8000ms'/);
+  assert.match(sql, /EXPLAIN \(ANALYZE, BUFFERS, FORMAT JSON\)\s+SELECT count\(\*\) FROM private\.training_session_members_v1/);
+  assert.match(sql, /'10',\s+2\s+\);/);
+  assert.match(sql, /training_scheduler_candidates_v2/);
+  assert.match(sql, /ROLLBACK/);
+  assert.doesNotMatch(sql, /\b(?:INSERT|UPDATE|DELETE|TRUNCATE)\b/i);
+  assert.match(traceSql(false), /statement_timeout = '3000ms'/);
+});
+
+test("summarizes nested plan timing without exposing query text", () => {
+  const plan = [{
+    "Query Text": "select private.secret_learner_payload('sensitive')",
+    Plan: {
+      "Node Type": "WindowAgg",
+      "Actual Total Time": 1917.5,
+      "Actual Rows": 2345,
+      "Shared Hit Blocks": 8440,
+      "Temp Read Blocks": 280,
+      "Temp Written Blocks": 564,
+      "Temp I/O Read Time": 12.5,
+      Plans: [{
+        "Node Type": "Sort", "Actual Total Time": 1800, "Actual Rows": 16396,
+        Plans: [{ "Node Type": "CTE Scan", "CTE Name": "eligible", "Actual Total Time": 1700 }],
+      }],
+    },
+  }];
+  const notices = summarizeAutoExplain(`NOTICE: duration: 1917.624 ms plan:\nQuery Text: ARRAY['word-to-definition']\n${JSON.stringify(plan)}\nCONTEXT: SQL function`);
+  assert.equal(notices.length, 1);
+  assert.equal(notices[0].durationMs, 1917.624);
+  assert.deepEqual(notices[0].notable.map((item) => item.type), ["WindowAgg", "Sort"]);
+  assert.equal(notices[0].ioTimes["Temp I/O Read Time"], 12.5);
+  assert.deepEqual(notices[0].topTimedNodes[0].path, ["WindowAgg"]);
+  assert.ok(notices[0].topTimedNodes.some((node) => node.cteName === "eligible"));
+  const changedTiming = structuredClone(plan[0]);
+  changedTiming.Plan["Actual Total Time"] = 200;
+  assert.equal(
+    summarizeAutoExplain(`NOTICE: duration: 200 ms plan:\n${JSON.stringify(changedTiming)}`)[0].planShapeHash,
+    notices[0].planShapeHash,
+  );
+  assert.doesNotMatch(JSON.stringify(notices), /sensitive|secret_learner_payload/);
+  assert.equal(summarizeAutoExplain(`NOTICE: duration: 1917.624 ms plan:\n${JSON.stringify(plan[0])}`).length, 1);
+  assert.equal(summarizeAutoExplain(`NOTICE: duration: 1 ms plan:\ninvalid\nNOTICE: duration: 2 ms plan:\n${JSON.stringify(plan[0])}`).length, 1);
+});
+
+test("requires the expected candidate timing row and returns only aggregate metrics", () => {
+  const stdout = [
+    'trace_context={"backendPid":2270559,"backendStart":"2026-09-24T05:23:39Z"}',
+    JSON.stringify([{ Plan: { "Node Type": "Result" }, "Planning Time": 0.12, "Execution Time": 2038.121 }]),
+    'trace_functions=[{"signature":"private.training_scheduler_candidates_v2(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean,boolean)","calls":1,"totalMs":1927.42,"selfMs":1917.624}]',
+  ].join("\n");
+  const result = summarizeTrace(stdout, "");
+  assert.equal(result.executionMs, 2038.121);
+  assert.equal(result.functions[0].selfMs, 1917.624);
+  assert.doesNotMatch(JSON.stringify(result), /auth.users|test@2000nl/);
+  assert.throws(() => summarizeTrace(stdout.replace("training_scheduler_candidates_v2", "wrong_function"), ""), /Candidate helper/);
+});
