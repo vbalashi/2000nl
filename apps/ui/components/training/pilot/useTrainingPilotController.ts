@@ -199,17 +199,27 @@ export function useCommitTrainingPilotDraft({
           reportError("training_idiom_unavailable");
           return false;
         }
-        const idiomSession = await startIdiomSession({
-          userId,
-          direction: draft.modes.includes("definition-to-word") ? "reverse" : "direct",
-          sessionSize: typeof draft.sessionSize === "number" ? draft.sessionSize : 10,
-          requestId: startRequestRef.current.requestId,
-          listId: scope.listId,
-          listType: scope.listType ?? "curated",
-          cardFilter: draft.cardFilter,
-          trainingFilter: focusFilter,
-          newReviewRatio: draft.newReviewRatio,
-        });
+        let idiomSession: PlatformIdiomExerciseSessionV2;
+        try {
+          idiomSession = await startIdiomSession({
+            userId,
+            direction: draft.modes.includes("definition-to-word") ? "reverse" : "direct",
+            sessionSize: typeof draft.sessionSize === "number" ? draft.sessionSize : 10,
+            requestId: startRequestRef.current.requestId,
+            listId: scope.listId,
+            listType: scope.listType ?? "curated",
+            cardFilter: draft.cardFilter,
+            trainingFilter: focusFilter,
+            newReviewRatio: draft.newReviewRatio,
+          });
+        } catch (error) {
+          reportError(
+            error instanceof Error && error.message === "training_material_unavailable"
+              ? "training_material_unavailable"
+              : "training_idiom_start_failed",
+          );
+          return false;
+        }
         startRequestRef.current = null;
         onSessionReady?.(idiomSession, {
           languageCode,
@@ -371,7 +381,10 @@ export function useTrainingPilotController({
 
   const initialDraft: TrainingSetupDraft = {
     family: exerciseFamily,
-    scenarioId: activeScenario,
+    // The ordinary scope remains persisted as `understanding` while an idiom
+    // run is active. The setup draft must still point at the idiom scenario so
+    // presets round-trip through validation and can be started again.
+    scenarioId: exerciseFamily === "idiom" ? "idiom" : activeScenario,
     modes: enabledModes,
     cardFilter,
     listValue: activeListValue,

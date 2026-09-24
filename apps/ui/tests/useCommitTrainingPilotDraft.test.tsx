@@ -3,8 +3,9 @@ import { expect, test, vi } from "vitest";
 import { useCommitTrainingPilotDraft } from "@/components/training/pilot/useTrainingPilotController";
 import type { TrainingSetupDraft } from "@/components/training/pilot/TrainingTodaySetup";
 
-const { startTrainingSession, updateActiveTrainingScope } = vi.hoisted(() => ({
+const { startTrainingSession, startIdiomSession, updateActiveTrainingScope } = vi.hoisted(() => ({
   startTrainingSession: vi.fn(),
+  startIdiomSession: vi.fn(),
   updateActiveTrainingScope: vi.fn(),
 }));
 
@@ -142,4 +143,37 @@ test("server-side material loss leaves the session uncommitted", async () => {
   });
   expect(reportError).toHaveBeenCalledWith("training_material_unavailable");
   expect(resetQueue).not.toHaveBeenCalled();
+});
+
+test("idiom start failures stay on setup and expose a recoverable error", async () => {
+  startIdiomSession.mockReset();
+  updateActiveTrainingScope.mockReset();
+  updateActiveTrainingScope.mockResolvedValue({ error: null });
+  startIdiomSession.mockRejectedValue(new Error("network_failure"));
+  const reportError = vi.fn();
+  const { result } = renderHook(() => useCommitTrainingPilotDraft({
+    userId: "user-1",
+    languageCode: "nl",
+    resolveList: () => null,
+    applyListLocally: vi.fn(),
+    applyPreferences: vi.fn(),
+    applyFocusFilter: vi.fn(),
+    resetQueue: vi.fn(),
+    loadStats: vi.fn(),
+    loadWord: vi.fn(),
+    startIdiomSession,
+    reportError,
+  }));
+
+  await act(async () => {
+    expect(await result.current({
+      ...draft,
+      family: "idiom",
+      scenarioId: "idiom",
+      materialMode: "all-dictionaries",
+    })).toBe(false);
+  });
+
+  expect(reportError).toHaveBeenCalledWith("training_idiom_start_failed");
+  expect(startIdiomSession).toHaveBeenCalledOnce();
 });

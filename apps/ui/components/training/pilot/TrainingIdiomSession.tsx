@@ -9,7 +9,6 @@ import {
 } from "@/lib/platform/platformV2IdiomExerciseClient";
 import type {
   PlatformIdiomExerciseCandidateV2,
-  PlatformIdiomExerciseSessionNextV2,
   PlatformIdiomExerciseSessionV2,
   PlatformTrainingExerciseReviewResultV2,
 } from "../../../../../packages/shared/types/platformV2";
@@ -125,6 +124,7 @@ export function TrainingIdiomSession({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(false);
+  const actionClientEventIdRef = useRef<string | null>(null);
 
   const loadNext = useCallback(async () => {
     setLoading(true);
@@ -196,11 +196,15 @@ export function TrainingIdiomSession({
     setSubmitting(true);
     setError(false);
     try {
+      const clientEventId = actionClientEventIdRef.current ?? crypto.randomUUID();
+      actionClientEventIdRef.current = clientEventId;
       await performPlatformV2IdiomExerciseAction({
         trainingSessionId: session.sessionId,
+        clientEventId,
         candidate,
         reviewResult,
       });
+      actionClientEventIdRef.current = null;
       completedCountRef.current += 1;
       setCompletedCount(completedCountRef.current);
       await loadNext();

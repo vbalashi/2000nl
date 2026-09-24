@@ -108,6 +108,7 @@ test("idiom family is selectable as a separate finite session and reaches the st
   fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
   fireEvent.click(screen.getByRole("button", { name: "Idioms" }));
   expect(screen.getByRole("button", { name: "Idioms" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.queryByText("All due")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
   expect(onStart).toHaveBeenCalledWith(expect.objectContaining({
     family: "idiom",
