@@ -1528,15 +1528,15 @@ function TrainingScreenContent({
     !trainingLoadError;
   const cardPreparationStatus = !sessionResumeScopeResolved || pilotAwaitingStart
     ? "idle"
-    : !sessionResumeResolved || loadingWord
-      ? "pending"
-      : trainingLoadError
-        ? "error"
-        : activeExerciseFamily === "idiom" && idiomSession
-          ? "ready"
-        : currentWord
-          ? "ready"
-          : "empty";
+    : activeExerciseFamily === "idiom" && idiomSession
+      ? "ready"
+      : !sessionResumeResolved || loadingWord
+        ? "pending"
+        : trainingLoadError
+          ? "error"
+          : currentWord
+            ? "ready"
+            : "empty";
   const sessionResumeStatus = sessionResumeScopeResolved
     ? "ready"
     : sessionResumeError
