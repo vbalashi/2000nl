@@ -741,3 +741,48 @@ If Supabase cannot expose that per-backend signal, first reproduce the same
 plan and first-call behavior in an isolated environment with CPU accounting;
 only then choose a narrowly scoped SQL/runtime fix. No further production SQL
 probes were run for this metrics-access check.
+
+## Pilot rollout and named CTE pair (2026-09-24)
+
+The 2,000 ms release threshold was introduced by commit `7eeface4f` for
+[#238](https://github.com/vbalashi/2000nl/issues/238), after a 3,282.6 ms
+first read following migration 126. It is an adopted first-call performance
+budget, not a database compatibility boundary. The gate currently runs on
+no-op retries and UI-only releases as well as scheduler migrations. This can
+block an unrelated pilot release when the existing query has a sporadic
+outlier. The compatibility checks still have independent value. Any policy
+change should preserve fail-closed schema/security/QA-read correctness while
+deciding separately whether the 2-second *performance* budget blocks this
+pilot's UI-only releases. That release-policy work is tracked separately in
+[#454](https://github.com/vbalashi/2000nl/issues/454).
+
+A normal rerun of deployment
+[35953070335, attempt 2](https://github.com/vbalashi/2000nl/actions/runs/35953070335/attempts/2)
+passed the unchanged gate and switched the app to `b6b23a798869b9f9c5bbfeb769728f1e9862f3ca`.
+Deep health then reported `status: ok` and matching app/DB contract 158.
+The unchanged gate passing on this attempt does not resolve the intermittent
+query latency.
+
+After rollout, one bounded read-only trace and its immediate same-backend
+repeat used PID `2278911` (backend start `07:35:43.529Z`). The public six-
+argument call took **1,043.670/232.222 ms** and the inner candidate plan
+**790.524/205.524 ms**, with identical generic shape hash
+`8bef2ac124d2`. The `ordinary_source_introductions` CTE scan's inclusive
+total fell from **600.924 to 129.719 ms** and returned 16,396 rows in each
+call. The `eligible` CTE scan fell from **649.370 to 145.164 ms**, returning
+2,345 rows. Temporary I/O was only **6.073/9.256 ms**; shared reads were zero
+and the inner plan's temporary block counts remained 280/563. This places the
+largest visible difference on the path that materializes and joins global
+ordinary-meaning introductions, while the two CTE totals overlap and must
+not be added. It still does not distinguish CPU work from backend scheduling.
+
+The SQL definition supports a targeted hypothesis: `ordinary_source_introductions`
+materializes active source bindings with active root definitions, filters
+unrenderable entries, and computes predecessor order across the entire corpus
+before joining to the learner's eligible scope. That is about 16,396 rows for
+this call, while only 2,345 candidate rows remain. A scope-restricted or
+precomputed predecessor projection might remove recurring global work, but
+simply filtering before `lag()` would change semantics when a predecessor is
+outside the current scope. Any rewrite therefore needs a production-shaped
+disposable fixture, predecessor/permission/session parity tests, and a new
+forward migration; the trace alone is not enough to ship one.
