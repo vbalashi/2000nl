@@ -267,20 +267,23 @@ test("delayed list hydration and card selection are attributed to startup @pilot
   const continueSession = page.getByRole("button", {
     name: /Continue session|Sessie doorgaan|Продолжить сессию/i,
   });
-  await expect(continueSession).toBeDisabled();
-  await expect(
-    page.getByRole("button", {
-      name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/i,
-    }),
-  ).toBeDisabled();
+  const startCurrentSetup = page.getByRole("button", {
+    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/i,
+  });
+  await expect(continueSession).toHaveCount(0);
+  await expect(startCurrentSetup).toBeDisabled();
   await expect.poll(() => harness.requests.scheduler.length).toBe(1);
-  await expect(continueSession).toBeEnabled();
-  await continueSession.click();
+  await expect(startCurrentSetup).toBeEnabled();
+  await startCurrentSetup.click();
 
   // The card is the observable end of the complete startup chain: auth,
   // saved-list hydration, scheduler selection, and card presentation.
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
-  expect(harness.requests.session).toHaveLength(0);
+  expect(harness.requests.sessionStarts).toHaveLength(1);
+  expect(harness.requests.session.length).toBeGreaterThanOrEqual(1);
+  expect(harness.requests.session.every(
+    (request) => request.p_session_id === "training-session-fixture",
+  )).toBe(true);
 
   const capture = await readTrainingAttributionCapture(page);
   const hydration = capture.timings.find(

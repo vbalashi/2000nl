@@ -66,7 +66,8 @@ const restHandler = async (route: any) => {
   // RPCs used by TrainingScreen
   // ---------------------------------------------------------------------------
 
-  if (pathname.endsWith("/rpc/get_next_card")) {
+  if (pathname.endsWith("/rpc/get_next_card") ||
+      pathname.endsWith("/rpc/get_next_training_session_card")) {
     const body = request.postDataJSON?.() ?? {};
     const excludedIds = new Set<string>(
       Array.isArray(body.p_exclude_entry_ids) ? body.p_exclude_entry_ids : [],
@@ -109,6 +110,44 @@ const restHandler = async (route: any) => {
           },
         },
       ]),
+    });
+    return;
+  }
+
+  if (pathname.endsWith("/rpc/start_training_session")) {
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        sessionId: "training-session-fixture",
+        runStatus: "active",
+        runGeneration: 1,
+        plannedNew: 1,
+        plannedReview: 0,
+        plannedPractice: 0,
+        plannedTotal: 1,
+        plannedAt: new Date(0).toISOString(),
+      }),
+    });
+    return;
+  }
+
+  if (pathname.endsWith("/rpc/update_active_training_scope")) {
+    const body = request.postDataJSON?.() ?? {};
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        language_code: body.p_language_code ?? "nl",
+        active_list_id: body.p_list_id ?? "list-1",
+        active_list_type: body.p_list_type ?? "curated",
+        active_scenario: body.p_active_scenario ?? "understanding",
+        card_filter: body.p_card_filter ?? "both",
+        modes_enabled: body.p_modes_enabled ?? ["word-to-definition"],
+        new_review_ratio: body.p_new_review_ratio ?? 2,
+        has_saved_scope: true,
+        is_valid: true,
+      }),
     });
     return;
   }
@@ -569,18 +608,21 @@ async function setupAuthenticatedTrainingPage(page: Page) {
   await page.goto("/");
 }
 
-async function continuePreparedTrainingSession(page: Page) {
-  const continueButton = page.getByRole("button", {
-    name: /Continue session|Sessie doorgaan|Продолжить сессию/i,
+async function startPreparedTrainingSession(page: Page) {
+  const startButton = page.getByRole("button", {
+    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/i,
   });
   const cardHeading = page.getByRole("heading", { name: /huis/i });
   await expect
     .poll(
       async () =>
-        (await continueButton.isVisible()) || (await cardHeading.isVisible()),
+        (await startButton.isVisible()) || (await cardHeading.isVisible()),
     )
     .toBe(true);
-  if (await continueButton.isVisible()) await continueButton.click();
+  if (await startButton.isVisible()) {
+    await expect(startButton).toBeEnabled();
+    await startButton.click();
+  }
   await expect(cardHeading).toBeVisible();
 }
 
@@ -594,7 +636,7 @@ test("training flow preserves the answer while word details open @pilot", async 
     }
   });
   await setupAuthenticatedTrainingPage(page);
-  await continuePreparedTrainingSession(page);
+  await startPreparedTrainingSession(page);
   expect(recentHistoryRequests).toEqual([]);
 
   // Reveal the answer, then open the current word through the shared details
@@ -622,7 +664,7 @@ test("training flow preserves the answer while word details open @pilot", async 
 
 test("the Library dictionary search surface renders @pilot", async ({ page }) => {
   await setupAuthenticatedTrainingPage(page);
-  await continuePreparedTrainingSession(page);
+  await startPreparedTrainingSession(page);
 
   await page.getByRole("button", { name: /Library|Bibliotheek/ }).first().click();
   await expect(
@@ -649,7 +691,7 @@ test("the Library dictionary search surface renders on mobile @pilot", async ({
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await setupAuthenticatedTrainingPage(page);
-  await continuePreparedTrainingSession(page);
+  await startPreparedTrainingSession(page);
   await page
     .getByRole("button", {
       name: /Show answer|Toon antwoord|Показать ответ/i,

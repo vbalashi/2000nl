@@ -18,9 +18,12 @@ test("@pilot statement timeout retries selection only and reaches a ready card",
     .click();
   await page
     .getByRole("button", {
-      name: /Continue session|Sessie voortzetten|Продолжить сессию/,
+      name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
     })
     .waitFor();
+  await expect(page.getByRole("button", {
+    name: /Continue session|Sessie voortzetten|Продолжить сессию/,
+  })).toHaveCount(0);
   expect(harness.requests.scheduler.length).toBeGreaterThanOrEqual(2);
   expect(harness.requests.scheduler.slice(0, 2)).toEqual([
     expect.objectContaining({ p_exclude_card_keys: [] }),
@@ -28,11 +31,13 @@ test("@pilot statement timeout retries selection only and reaches a ready card",
   ]);
   await page
     .getByRole("button", {
-      name: /Continue session|Sessie voortzetten|Продолжить сессию/,
+      name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
     })
     .click();
 
   await expect(page.getByRole("heading", { name: "huis" })).toBeVisible();
+  expect(harness.requests.sessionStarts).toHaveLength(1);
+  expect(harness.requests.session.length).toBeGreaterThanOrEqual(1);
   await expect(
     page.getByText(
       /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
