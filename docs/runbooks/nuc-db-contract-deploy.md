@@ -226,7 +226,7 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 163 in order
+An enabled deployment must apply or verify migrations 123 through 164 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -236,6 +236,12 @@ target's active source group and its siblings. It also keeps unbound and
 user-owned entries as direct singletons. This applies to idiom session
 responses and exact-target checks; the Idioms setup choice remains disabled
 until the full pilot latency and parity checks under #485 finish.
+
+Migration 164 adds a partial covering index keyed by active Content Node entry
+and source order. It bounds the report-atom revision path used by the
+presentation-identity wrapper without changing its public shape, fail-closed
+behavior, or learner state. Its postflight requires the index to be valid and
+ready before compatibility is advertised.
 
 Migration 162 adds a partial index for active Content Node children by parent,
 kind and source order. It prevents the idiom explanation/example lookups from

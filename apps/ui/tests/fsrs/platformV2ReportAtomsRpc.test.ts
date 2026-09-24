@@ -117,6 +117,29 @@ describeIfDb("Platform V2 bounded report atom attestation", () => {
     await pool.end();
   });
 
+  test("keeps report atom reads bounded by the requested entry", async () => {
+    const { rows } = await pool.query(
+      `select
+         pg_get_indexdef(idx.indexrelid) as definition,
+         pg_get_expr(idx.indpred, idx.indrelid) as predicate,
+         idx.indisvalid as is_valid,
+         idx.indisready as is_ready
+       from pg_index as idx
+       where idx.indexrelid =
+         'private.platform_v2_content_nodes_active_entry_order_idx'::regclass`,
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      is_valid: true,
+      is_ready: true,
+      predicate: expect.stringContaining("binding_state"),
+      definition: expect.stringContaining(
+        "(entry_id, source_order, id) INCLUDE (kind, parent_content_node_id, canonical_source_text)",
+      ),
+    });
+  });
+
   test("reconstructs every source atom in report priority and idiom ownership order", async () => {
     await withTransaction(pool, async (client) => {
       const userId = randomUUID();
