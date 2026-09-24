@@ -41,6 +41,17 @@ function shortFingerprint(value: string) {
   return createHash("sha256").update(value).digest("hex").slice(0, 10);
 }
 
+function expectOnlyOwnedSessionSelections(
+  requests: Record<string, unknown>[],
+) {
+  expect(requests.length).toBeGreaterThanOrEqual(1);
+  expect(
+    requests.every(
+      (request) => request.p_session_id === "training-session-fixture",
+    ),
+  ).toBe(true);
+}
+
 async function attachScreenshot(page: Page, testInfo: TestInfo, name: string) {
   const path = testInfo.outputPath(name);
   await page.screenshot({ fullPage: true, path });
@@ -79,10 +90,15 @@ test("prepared card and setup remain usable while scoped stats are held for 10 s
   expect(setupAvailableMs).toBeLessThanOrEqual(1_000);
   await expect(page.getByText(copy.statsPending).first()).toBeVisible();
 
-  const continueSession = page.getByRole("button", { name: copy.continue });
-  await expect(continueSession).toBeEnabled({ timeout: 4_000 });
+  const startCurrentSetup = page.getByRole("button", { name: copy.start });
+  await expect(page.getByRole("button", { name: copy.continue })).toHaveCount(0);
+  await expect(startCurrentSetup).toBeEnabled({ timeout: 4_000 });
   expect(harness.requests.sessionStarts).toHaveLength(0);
+  expect(harness.requests.stats).toHaveLength(1);
   expect(harness.requests.progressActions).toHaveLength(0);
+  const initialStatsIdentitySummary = summarizeRequestIdentities(
+    harness.requests.stats,
+  );
   await attachScreenshot(
     page,
     testInfo,
@@ -111,12 +127,12 @@ test("prepared card and setup remain usable while scoped stats are held for 10 s
   );
   await page.getByRole("button", { name: copy.backToToday }).click();
   await page.setViewportSize({ width: 1280, height: 900 });
-  await expect(continueSession).toBeEnabled();
+  await expect(startCurrentSetup).toBeEnabled();
 
-  await continueSession.click();
+  await startCurrentSetup.click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
-  expect(harness.requests.sessionStarts).toHaveLength(0);
-  expect(harness.requests.session).toHaveLength(0);
+  expect(harness.requests.sessionStarts).toHaveLength(1);
+  expectOnlyOwnedSessionSelections(harness.requests.session);
   expect(harness.requests.progressActions).toHaveLength(0);
   expect(harness.requests.progressActionReconciliations).toHaveLength(0);
 
@@ -127,22 +143,22 @@ test("prepared card and setup remain usable while scoped stats are held for 10 s
   });
   const statsHeldDurationMs = Date.now() - statsRequestObservedAt;
   expect(statsHeldDurationMs).toBeGreaterThanOrEqual(9_000);
-  expect(harness.requests.stats).toHaveLength(1);
+  expect(harness.requests.stats.length).toBeGreaterThanOrEqual(1);
   expect(harness.requests.scheduler.length).toBeGreaterThanOrEqual(1);
-  expect(harness.requests.sessionStarts).toHaveLength(0);
-  expect(harness.requests.session).toHaveLength(0);
+  expect(harness.requests.sessionStarts).toHaveLength(1);
+  expectOnlyOwnedSessionSelections(harness.requests.session);
   expect(harness.requests.progressActions).toHaveLength(0);
   expect(harness.requests.progressActionReconciliations).toHaveLength(0);
 
-  const statsIdentitySummary = summarizeRequestIdentities(harness.requests.stats);
-  expect(statsIdentitySummary.total).toBe(1);
-  expect(statsIdentitySummary.repeatedIdentities).toBe(0);
+  expect(initialStatsIdentitySummary.total).toBe(1);
+  expect(initialStatsIdentitySummary.repeatedIdentities).toBe(0);
   const schedulerIdentitySummary = summarizeRequestIdentities(
     harness.requests.scheduler,
   );
   expect(schedulerIdentitySummary.repeatedIdentities).toBe(0);
   await attachMetrics(testInfo, "stats-hold-network-metrics.json", {
-    statsRequestIdentities: statsIdentitySummary,
+    initialStatsRequestIdentities: initialStatsIdentitySummary,
+    statsRequestsAfterStart: harness.requests.stats.length,
     schedulerRequestIdentities: schedulerIdentitySummary,
     sessionStartRequests: harness.requests.sessionStarts.length,
     sessionCardSelectionRequests: harness.requests.session.length,
@@ -177,9 +193,8 @@ test("setup controls stay editable while the first-card request is held for 10 s
   expect(setupAvailableMs).toBeLessThanOrEqual(1_000);
   await expect(page.getByText(copy.cardPending)).toBeVisible();
 
-  const continueSession = page.getByRole("button", { name: copy.continue });
   const startCurrentSetup = page.getByRole("button", { name: copy.start });
-  await expect(continueSession).toBeDisabled();
+  await expect(page.getByRole("button", { name: copy.continue })).toHaveCount(0);
   await expect(startCurrentSetup).toBeDisabled();
   expect(harness.requests.sessionStarts).toHaveLength(0);
 
@@ -198,19 +213,19 @@ test("setup controls stay editable while the first-card request is held for 10 s
   );
 
   await page.getByRole("button", { name: copy.backToToday }).click();
-  await expect(continueSession).toBeDisabled();
-  await expect(continueSession).toBeEnabled({ timeout: 15_000 });
+  await expect(startCurrentSetup).toBeDisabled();
+  await expect(startCurrentSetup).toBeEnabled({ timeout: 15_000 });
   const delayedDurationMs = Date.now() - schedulerRequestObservedAt;
   expect(delayedDurationMs).toBeGreaterThanOrEqual(9_000);
-  await continueSession.click();
+  await startCurrentSetup.click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
   const schedulerIdentitySummary = summarizeRequestIdentities(
     harness.requests.scheduler,
   );
   expect(schedulerIdentitySummary.repeatedIdentities).toBe(0);
-  expect(harness.requests.stats).toHaveLength(1);
-  expect(harness.requests.sessionStarts).toHaveLength(0);
-  expect(harness.requests.session).toHaveLength(0);
+  expect(harness.requests.stats.length).toBeGreaterThanOrEqual(1);
+  expect(harness.requests.sessionStarts).toHaveLength(1);
+  expectOnlyOwnedSessionSelections(harness.requests.session);
   expect(harness.requests.progressActions).toHaveLength(0);
   expect(harness.requests.progressActionReconciliations).toHaveLength(0);
 
@@ -229,7 +244,7 @@ test("setup controls stay editable while the first-card request is held for 10 s
   });
 });
 
-test("Continue waits for the selected card's projection while setup stays usable", async ({
+test("Start waits for the selected card's projection while setup stays usable", async ({
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -340,8 +355,9 @@ test("Continue waits for the selected card's projection while setup stays usable
   const setupAvailableMs = Date.now() - projectionRequestObservedAt;
   expect(setupAvailableMs).toBeLessThanOrEqual(1_000);
   await expect(page.getByText(copy.cardPending)).toBeVisible();
-  const continueSession = page.getByRole("button", { name: copy.continue });
-  await expect(continueSession).toBeDisabled();
+  const startCurrentSetup = page.getByRole("button", { name: copy.start });
+  await expect(page.getByRole("button", { name: copy.continue })).toHaveCount(0);
+  await expect(startCurrentSetup).toBeDisabled();
   expect(harness.requests.sessionStarts).toHaveLength(0);
   expect(harness.requests.progressActions).toHaveLength(0);
   const screenshot = await attachScreenshot(
@@ -360,7 +376,7 @@ test("Continue waits for the selected card's projection while setup stays usable
   ).toBeDisabled();
   await page.getByRole("button", { name: copy.backToToday }).click();
 
-  await expect(continueSession).toBeEnabled({ timeout: 15_000 });
+  await expect(startCurrentSetup).toBeEnabled({ timeout: 15_000 });
   const projectionHeldDurationMs = Date.now() - projectionRequestObservedAt;
   expect(projectionHeldDurationMs).toBeGreaterThanOrEqual(9_000);
   await expect(page.getByText(copy.cardPending)).toBeHidden();
@@ -374,13 +390,13 @@ test("Continue waits for the selected card's projection while setup stays usable
   expect(maxConcurrentProjectionRequests).toBeLessThanOrEqual(1);
   expect(maxConcurrentSameIdentityProjectionRequests).toBeLessThanOrEqual(1);
   expect(translationRequestTimes).toHaveLength(0);
-  await continueSession.click();
+  await startCurrentSetup.click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
   const projectionIdentitySummary = summarizeRequestIdentities(
     harness.requests.projectionLookups,
   );
-  expect(harness.requests.sessionStarts).toHaveLength(0);
-  expect(harness.requests.session).toHaveLength(0);
+  expect(harness.requests.sessionStarts).toHaveLength(1);
+  expectOnlyOwnedSessionSelections(harness.requests.session);
   expect(harness.requests.progressActions).toHaveLength(0);
   expect(harness.requests.progressActionReconciliations).toHaveLength(0);
 
