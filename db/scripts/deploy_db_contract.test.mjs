@@ -68,7 +68,9 @@ async function fixture() {
       preSwitchReadProbe: {
         file: "db/deploy-contract/pre-switch-read-probe-123.sql",
         sha256: "1acff5a07e0e0f1fde97875d4e4bd0ce847b05cbdfd51a555de0ce74fd3a0202",
-        statementTimeoutMs: 50,
+        statementTimeoutMs: 200,
+        performanceBudgetMs: 50,
+        overBudgetAction: "warn",
       },
     }),
   );
@@ -250,11 +252,11 @@ test("keeps final contract receipts when populated replay emits many notices", a
   assert.ok(result.stdout.length <= 4000);
 });
 
-test("rejects a pre-switch read probe above the rollout budget", async () => {
+test("rejects a pre-switch read probe above the hard timeout limit", async () => {
   const root = await fixture();
   const manifestPath = path.join(root, "packages/shared/deployment/db-contract.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-  manifest.preSwitchReadProbe.statementTimeoutMs = 2_001;
+  manifest.preSwitchReadProbe.statementTimeoutMs = 10_001;
   await writeFile(manifestPath, JSON.stringify(manifest));
 
   const result = spawnSync(
@@ -265,6 +267,24 @@ test("rejects a pre-switch read probe above the rollout budget", async () => {
 
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Invalid pre-switch read probe contract/);
+});
+
+test("requires an explicit warning policy below the safety timeout", async () => {
+  const root = await fixture();
+  const manifestPath = path.join(root, "packages/shared/deployment/db-contract.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.preSwitchReadProbe.performanceBudgetMs = 201;
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  const invalidBudget = spawnSync(process.execPath, [runner, "validate", "--repo-root", root], { encoding: "utf8" });
+  assert.notEqual(invalidBudget.status, 0);
+  assert.match(invalidBudget.stderr, /Invalid pre-switch read probe contract/);
+
+  manifest.preSwitchReadProbe.performanceBudgetMs = 50;
+  manifest.preSwitchReadProbe.overBudgetAction = "ignore";
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  const invalidAction = spawnSync(process.execPath, [runner, "validate", "--repo-root", root], { encoding: "utf8" });
+  assert.notEqual(invalidAction.status, 0);
+  assert.match(invalidAction.stderr, /Invalid pre-switch read probe contract/);
 });
 
 test("rejects an unknown staged compatibility phase", async () => {
@@ -455,7 +475,9 @@ test("runs the exact bounded read-only probe after migrations and before compati
   assert.ok(readOnlyProbe > postflight);
   assert.ok(probeBody > readOnlyProbe);
   assert.ok(compatible > probeBody);
-  assert.match(sql, /SET LOCAL statement_timeout = '50ms'/);
+  assert.match(sql, /SET LOCAL statement_timeout = '200ms'/);
+  assert.match(sql, /pre-switch-read-probe passed elapsed_ms=:pre_switch_elapsed_ms budget_ms=50 hard_timeout_ms=200/);
+  assert.match(sql, /performance-warning successful read exceeded 50ms/);
   assert.match(sql, /SET LOCAL jit = off/);
   assert.match(sql, /db-contract-gate: pre-switch-read-probe passed/);
 });

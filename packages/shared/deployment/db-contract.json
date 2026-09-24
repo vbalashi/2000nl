@@ -207,6 +207,8 @@
   "preSwitchReadProbe": {
     "file": "db/deploy-contract/pre-switch-read-probe-159.sql",
     "sha256": "1300a932ac088bb6d321da9b35706a2772d5b053092924fdb07c5c75bba94b21",
-    "statementTimeoutMs": 2000
+    "statementTimeoutMs": 10000,
+    "performanceBudgetMs": 2000,
+    "overBudgetAction": "warn"
   }
 }

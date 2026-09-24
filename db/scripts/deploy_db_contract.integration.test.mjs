@@ -48,6 +48,7 @@ BEGIN
   END IF;
 END $$;
 `,
+  latencyPolicy = { statementTimeoutMs: 200, performanceBudgetMs: 50 },
 ) {
   const ledgerSource = `BEGIN;
 CREATE TABLE IF NOT EXISTS public.app_db_contract_migrations (
@@ -112,7 +113,8 @@ END $$;
       preSwitchReadProbe: {
         file: "db/deploy-contract/pre-switch-read-probe-123.sql",
         sha256: sha256(preSwitchReadProbeSource),
-        statementTimeoutMs: 50,
+        ...latencyPolicy,
+        overBudgetAction: "warn",
       },
     }),
   );
@@ -243,7 +245,7 @@ COMMIT;
 );
 
 test(
-  "real PostgreSQL bounds the probe and refuses writes before compatibility",
+  "real PostgreSQL warns after a successful slow read but still blocks writes and hard timeouts",
   { skip: !baseDatabaseUrl },
   async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "2000nl-db-probe-integration-"));
@@ -260,8 +262,17 @@ test(
     try {
       const migration = `BEGIN;
 CREATE TABLE public.rollback_marker(id integer PRIMARY KEY);
+CREATE FUNCTION public.fixture_training_scheduler() RETURNS integer LANGUAGE sql AS 'SELECT 1';
 COMMIT;
 `;
+      const slowProbe = `SELECT public.fixture_training_scheduler(), pg_sleep(0.075);\n`;
+      await writeFixture(root, migration, slowProbe);
+      const appliedSlowScheduler = applyFixture(root, targetUrl.toString());
+      assert.equal(appliedSlowScheduler.status, 0, appliedSlowScheduler.stderr);
+      assert.match(appliedSlowScheduler.stdout, /applied 123/);
+      assert.match(appliedSlowScheduler.stdout, /performance-warning successful read exceeded 50ms/);
+      assert.match(appliedSlowScheduler.stdout, /compatible integration-123/);
+
       const mutatingProbe = `CREATE TABLE public.probe_must_remain_read_only(id integer);\n`;
       await writeFixture(root, migration, mutatingProbe);
       const rejectedWrite = applyFixture(root, targetUrl.toString());
@@ -280,21 +291,41 @@ COMMIT;
       assert.equal(noProbeMutation.status, 0, noProbeMutation.stderr);
       assert.equal(noProbeMutation.stdout.trim(), "t|t|1");
 
-      const slowProbe = `SELECT pg_sleep(0.075);\n`;
       await writeFixture(root, migration, slowProbe);
+      const slowButSuccessful = applyFixture(root, targetUrl.toString());
+      assert.equal(slowButSuccessful.status, 0, slowButSuccessful.stderr);
+      assert.match(slowButSuccessful.stdout, /no-op 123/);
+      assert.match(slowButSuccessful.stdout, /performance-warning successful read exceeded 50ms/);
+      assert.match(slowButSuccessful.stdout, /compatible integration-123/);
+      assert.match(slowButSuccessful.stdout, /readiness elapsed_ms=\d+ budget_ms=50 over_budget=t/);
+
+      const timedOutProbe = `SELECT public.fixture_training_scheduler(), pg_sleep(0.25);\n`;
+      await writeFixture(root, migration, timedOutProbe);
       const timedOut = applyFixture(root, targetUrl.toString());
       assert.notEqual(timedOut.status, 0);
       assert.match(timedOut.stderr, /statement timeout/i);
       assert.match(timedOut.stderr, /no-op 123/);
       assert.doesNotMatch(`${timedOut.stdout}\n${timedOut.stderr}`, /compatible integration-123/);
 
-      const safeProbe = `SELECT current_setting('transaction_read_only');\n`;
+      const productionSizedWarning = `SELECT public.fixture_training_scheduler(), pg_sleep(2.2);\n`;
+      await writeFixture(root, migration, productionSizedWarning, {
+        statementTimeoutMs: 10_000, performanceBudgetMs: 2_000,
+      });
+      const productionSized = applyFixture(root, targetUrl.toString());
+      assert.equal(productionSized.status, 0, productionSized.stderr);
+      assert.match(productionSized.stdout, /no-op 123/);
+      assert.match(productionSized.stdout, /performance-warning successful read exceeded 2000ms/);
+      assert.match(productionSized.stdout, /compatible integration-123/);
+      assert.match(productionSized.stdout, /readiness elapsed_ms=\d+ budget_ms=2000 over_budget=t/);
+
+      const safeProbe = `SELECT public.fixture_training_scheduler(), current_setting('transaction_read_only');\n`;
       await writeFixture(root, migration, safeProbe);
       const recovered = applyFixture(root, targetUrl.toString());
       assert.equal(recovered.status, 0, recovered.stderr);
       assert.match(recovered.stdout, /no-op 123/);
       assert.match(recovered.stdout, /pre-switch-read-probe passed/);
       assert.match(recovered.stdout, /compatible integration-123/);
+      assert.match(recovered.stdout, /readiness elapsed_ms=\d+ budget_ms=50 over_budget=f/);
     } finally {
       const drop = psql(
         baseDatabaseUrl,

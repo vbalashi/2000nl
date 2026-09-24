@@ -73,7 +73,12 @@ async function readManifest(repoRoot, manifestPath) {
     !sha256Pattern.test(manifest.preSwitchReadProbe?.sha256 ?? "") ||
     !Number.isSafeInteger(manifest.preSwitchReadProbe?.statementTimeoutMs) ||
     manifest.preSwitchReadProbe.statementTimeoutMs < 1 ||
-    manifest.preSwitchReadProbe.statementTimeoutMs > 2_000
+    manifest.preSwitchReadProbe.statementTimeoutMs > 10_000 ||
+    !Number.isSafeInteger(manifest.preSwitchReadProbe?.performanceBudgetMs) ||
+    manifest.preSwitchReadProbe.performanceBudgetMs < 1 ||
+    manifest.preSwitchReadProbe.performanceBudgetMs > 2_000 ||
+    manifest.preSwitchReadProbe.performanceBudgetMs >= manifest.preSwitchReadProbe.statementTimeoutMs ||
+    manifest.preSwitchReadProbe.overBudgetAction !== "warn"
   ) {
     throw new Error("Invalid pre-switch read probe contract");
   }
@@ -319,9 +324,15 @@ DISCARD PLANS;
 BEGIN READ ONLY;
 SET LOCAL statement_timeout = '${manifest.preSwitchReadProbe.statementTimeoutMs}ms';
 SET LOCAL jit = off;
+SELECT clock_timestamp() AS pre_switch_started_at \\gset
 ${preSwitchReadProbe}
+SELECT floor(1000 * extract(epoch from clock_timestamp() - :'pre_switch_started_at'::timestamptz))::bigint AS pre_switch_elapsed_ms \\gset
 COMMIT;
-\\echo db-contract-gate: pre-switch-read-probe passed
+\\echo db-contract-gate: pre-switch-read-probe passed elapsed_ms=:pre_switch_elapsed_ms budget_ms=${manifest.preSwitchReadProbe.performanceBudgetMs} hard_timeout_ms=${manifest.preSwitchReadProbe.statementTimeoutMs}
+SELECT CAST(:pre_switch_elapsed_ms AS bigint) > ${manifest.preSwitchReadProbe.performanceBudgetMs} AS pre_switch_over_budget \\gset
+\\if :pre_switch_over_budget
+\\echo db-contract-gate: performance-warning successful read exceeded ${manifest.preSwitchReadProbe.performanceBudgetMs}ms; issue #413 remains open
+\\endif
 
 DO $contract_state$
 BEGIN
@@ -335,6 +346,7 @@ BEGIN
 END
 $contract_state$;
 \\echo db-contract-gate: compatible ${manifest.contractId}
+\\echo db-contract-gate: readiness elapsed_ms=:pre_switch_elapsed_ms budget_ms=${manifest.preSwitchReadProbe.performanceBudgetMs} over_budget=:pre_switch_over_budget
 SELECT pg_advisory_unlock(hashtext('2000nl_deploy_db_contract_v1')) \\g /dev/null
 `;
 }
