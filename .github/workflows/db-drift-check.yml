@@ -19,6 +19,7 @@ on:
       - 'db/scripts/scheduler_legacy_callers.test.mjs'
       - 'db/scripts/postgres_client.mjs'
       - 'db/scripts/local_supabase_probe.sql'
+      - 'db/scripts/local_supabase_probe.integration.test.mjs'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
       - 'db/scripts/live_dictionary_migration*.sql'
       - 'db/scripts/live_dictionary_migration.sh'
@@ -48,6 +49,7 @@ on:
       - 'db/scripts/scheduler_legacy_callers.test.mjs'
       - 'db/scripts/postgres_client.mjs'
       - 'db/scripts/local_supabase_probe.sql'
+      - 'db/scripts/local_supabase_probe.integration.test.mjs'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
       - 'db/scripts/live_dictionary_migration*.sql'
       - 'db/scripts/live_dictionary_migration.sh'
@@ -223,6 +225,7 @@ jobs:
       - name: Apply bootstrap and probe contract
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
+          LOCAL_SUPABASE_PROBE_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/plain_postgres_supabase_compat.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql

@@ -4,7 +4,31 @@ import path from "node:path";
 import test from "node:test";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = process.env.LOCAL_SUPABASE_PROBE_TEST_DATABASE_URL;
+
+function validateTestDatabaseUrl(value) {
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error("integration test requires a local contract_test database URL");
+  }
+
+  const isLocalHost = ["localhost", "127.0.0.1", "::1"].includes(parsed.hostname);
+  const isLocalPostgresPort = ["5432", "54322"].includes(parsed.port);
+  const isDisposableDatabase = parsed.pathname === "/contract_test";
+  if (
+    !["postgres:", "postgresql:"].includes(parsed.protocol) ||
+    !isLocalHost ||
+    !isLocalPostgresPort ||
+    !isDisposableDatabase ||
+    parsed.search ||
+    parsed.hash
+  ) {
+    throw new Error("integration test only permits a loopback contract_test database");
+  }
+  return value;
+}
 
 function runPsql(args, input) {
   return spawnSync("psql", ["-X", "-v", "ON_ERROR_STOP=1", ...args], {
@@ -14,14 +38,28 @@ function runPsql(args, input) {
   });
 }
 
+test("integration target validation permits only the disposable local database", () => {
+  assert.doesNotThrow(() =>
+    validateTestDatabaseUrl("postgresql://postgres:postgres@127.0.0.1:54322/contract_test"),
+  );
+  for (const unsafeUrl of [
+    "postgresql://postgres:secret@db.example.com:5432/contract_test",
+    "postgresql://postgres:secret@127.0.0.1:54322/postgres",
+    "postgresql://postgres:secret@127.0.0.1:54322/contract_test?host=db.example.com",
+  ]) {
+    assert.throws(() => validateTestDatabaseUrl(unsafeUrl));
+  }
+});
+
 test("local schema probe rejects a matching but NOT VALID ratio constraint", {
   skip: !databaseUrl,
 }, () => {
+  const safeDatabaseUrl = validateTestDatabaseUrl(databaseUrl);
   const probePath = path.join(repoRoot, "db/scripts/local_supabase_probe.sql");
-  const baseline = runPsql([databaseUrl, "-f", probePath]);
+  const baseline = runPsql([safeDatabaseUrl, "-f", probePath]);
   assert.equal(baseline.status, 0, "baseline probe must accept the migrated schema");
 
-  const nonvalidatedSchema = runPsql([databaseUrl], `
+  const nonvalidatedSchema = runPsql([safeDatabaseUrl], `
 BEGIN;
 ALTER TABLE public.training_sessions
   DROP CONSTRAINT training_sessions_new_review_ratio_check;
@@ -42,7 +80,7 @@ ROLLBACK;
   );
 
   const restoredState = runPsql(
-    [databaseUrl, "-Atq", "-c", `
+    [safeDatabaseUrl, "-Atq", "-c", `
       SELECT convalidated
       FROM pg_constraint
       WHERE conrelid = 'public.training_sessions'::regclass
