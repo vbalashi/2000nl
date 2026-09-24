@@ -1,0 +1,11 @@
+{
+  "checked_at": "2026-09-24T18:56:59.309Z",
+  "target": "local Supabase",
+  "method": "Two real Auth sessions for one temporary confirmed user; local sign-out and surviving-session refresh in both directions. Does not exercise Google OAuth.",
+  "results": {
+    "learner_logout_preserves_admin": true,
+    "admin_logout_preserves_learner": true,
+    "learner_profile_unchanged": true,
+    "temporary_local_user_removed": true
+  }
+}

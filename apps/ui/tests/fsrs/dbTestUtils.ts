@@ -36,6 +36,39 @@ export function getDbUrl() {
   return value;
 }
 
+async function ensureCronTestApi(pool: Pool) {
+  const { rows } = await pool.query("select current_database() as database_name, to_regclass('cron.job') as job_table");
+  if (rows[0]?.job_table) return;
+  // Supabase installs pg_cron in its configured `postgres` database. Leave
+  // that path to the real extension; only disposable FSRS test DBs get a stub.
+  if (rows[0]?.database_name === "postgres") return;
+
+  await pool.query(`
+    create schema cron;
+    create table cron.job (
+      jobid bigserial primary key,
+      schedule text not null,
+      command text not null,
+      jobname text unique not null
+    );
+    create function cron.schedule(p_jobname text, p_schedule text, p_command text)
+    returns bigint
+    language plpgsql
+    as $$
+    declare
+      v_jobid bigint;
+    begin
+      insert into cron.job (jobname, schedule, command)
+      values ($1, $2, $3)
+      on conflict (jobname) do update
+        set schedule = excluded.schedule, command = excluded.command
+      returning jobid into v_jobid;
+      return v_jobid;
+    end;
+    $$;
+  `);
+}
+
 export async function ensureAuthSchema(pool: Pool) {
   const { rowCount: hasSupabaseAuth } = await pool.query(`
     select 1
@@ -44,8 +77,17 @@ export async function ensureAuthSchema(pool: Pool) {
       and table_name = 'users'
   `);
 
+  await pool.query(`
+    do $$ begin
+      create role supabase_auth_admin nologin;
+    exception when duplicate_object then
+      null;
+    end $$;
+  `);
+
   if (hasSupabaseAuth && hasSupabaseAuth > 0) {
     await pool.query(supabaseCompatSql);
+    await ensureCronTestApi(pool);
     return;
   }
 
@@ -65,6 +107,12 @@ export async function ensureAuthSchema(pool: Pool) {
 
     do $$ begin
       create role service_role nologin;
+    exception when duplicate_object then
+      null;
+    end $$;
+
+    do $$ begin
+      create role supabase_auth_admin nologin;
     exception when duplicate_object then
       null;
     end $$;
@@ -91,11 +139,13 @@ export async function ensureAuthSchema(pool: Pool) {
       select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
     $$;
   `);
+  await ensureCronTestApi(pool);
 }
 
 const supabaseCompatSql = `
   create schema if not exists private;
   create schema if not exists extensions;
+
   create extension if not exists pgcrypto with schema extensions;
 
   create or replace function public.digest(data text, type text)

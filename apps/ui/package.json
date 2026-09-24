@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@google-cloud/text-to-speech": "^6.4.0",
+    "@supabase/ssr": "0.8.0",
     "@supabase/supabase-js": "^2.45.0",
     "clsx": "^1.2.1",
     "lucide-react": "^1.31.0",

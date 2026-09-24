@@ -1457,20 +1457,8 @@ function TrainingScreenContent({
   });
 
   const handleSignOut = async () => {
-    // Supabase can return `session_not_found` if the JWT refers to a session
-    // that was already revoked/expired server-side. Treat that as a successful
-    // sign out and still clear local auth state.
-    const { error } = await supabase.auth.signOut({ scope: "global" });
-    if (error) {
-      const code = (error as unknown as { code?: string }).code;
-      if (code !== "session_not_found") {
-        console.warn("[Auth] signOut(global) failed:", error);
-      }
-    }
-
-    // Always clear local session so the UI updates. In practice, Supabase can
-    // still reply `session_not_found` here as well; ensure we clear storage
-    // regardless.
+    // End this learner session only: the same identity can have an independent
+    // operator session. A normal logout must not revoke other sessions.
     const { error: localError } = await supabase.auth.signOut({
       scope: "local",
     });
@@ -1485,8 +1473,12 @@ function TrainingScreenContent({
     // "logged in" client-side due to a missing server session record.
     if (typeof window !== "undefined") {
       try {
-        for (const k of Object.keys(window.localStorage)) {
-          if (k.startsWith("sb-") && k.includes("-auth-token")) {
+        const keys = Array.from(
+          { length: window.localStorage.length },
+          (_, index) => window.localStorage.key(index),
+        );
+        for (const k of keys) {
+          if (k?.startsWith("sb-") && k.includes("-auth-token")) {
             window.localStorage.removeItem(k);
           }
         }
