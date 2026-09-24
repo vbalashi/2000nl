@@ -28,6 +28,7 @@ export function TrainingSessionSizePicker({
   exercisesLabel,
   allDueLabel,
   allDueHelp,
+  allowAllDueToday = true,
 }: {
   value: TrainingSessionSize;
   onChange: (value: TrainingSessionSize) => void;
@@ -35,12 +36,14 @@ export function TrainingSessionSizePicker({
   exercisesLabel: (count: number) => string;
   allDueLabel: string;
   allDueHelp: string;
+  allowAllDueToday?: boolean;
 }) {
   // Keep a saved 100-exercise choice selectable until the learner moves the
   // slider. New selections use the shorter scale ending at All due.
+  const finiteSteps = BASE_STEPS.filter((step) => allowAllDueToday || step !== "all-due-today");
   const steps = value === 100
-    ? [...BASE_STEPS.slice(0, -1), 100, "all-due-today" as const]
-    : BASE_STEPS;
+    ? [...finiteSteps.filter((step) => step !== "all-due-today"), 100, ...(allowAllDueToday ? ["all-due-today" as const] : [])]
+    : finiteSteps;
   const selectedIndex = value === "all-due-today"
     ? steps.length - 1
     : nearestStepIndex(steps, value);

@@ -16,6 +16,7 @@ import {
   fetchStats,
   updateActiveTrainingScope,
   type TrainingScenarioCatalog,
+  type TrainingSession,
   type TrainingSessionSnapshot,
 } from "@/lib/trainingService";
 import type {
@@ -25,6 +26,7 @@ import type {
   DetailedStats,
   DictionaryEntry,
   TrainingFocusFilter,
+  TrainingExerciseFamily,
   TrainingFilterSource,
   TrainingMode,
   TrainingSessionPlan,
@@ -33,7 +35,11 @@ import type {
   WordListSummary,
   WordListType,
 } from "@/lib/types";
-import type { PlatformHeadwordGroupV2 } from "../../../../packages/shared/types/platformV2";
+import type {
+  PlatformHeadwordGroupV2,
+  PlatformIdiomExerciseSessionV2,
+} from "../../../../packages/shared/types/platformV2";
+import { startPlatformV2IdiomTrainingSession } from "@/lib/platform/platformV2IdiomExerciseClient";
 import { useCardParams } from "@/lib/cardParams";
 import {
   useTrainingPreferences,
@@ -76,6 +82,7 @@ import {
   DEFAULT_SESSION_SIZE,
   type TrainingSetupDraft,
 } from "./pilot/TrainingTodaySetup";
+import { TrainingIdiomSession } from "./pilot/TrainingIdiomSession";
 import {
   useCommitTrainingPilotDraft,
   useTrainingPilotController,
@@ -225,6 +232,10 @@ function TrainingScreenContent({
   const trainingScenarioCatalog = trainingScenarioCatalogRef.current;
   const { wordId, devMode } = useCardParams();
   const [currentWord, setCurrentWord] = useState<TrainingWord | null>(null);
+  const [activeExerciseFamily, setActiveExerciseFamily] =
+    useState<TrainingExerciseFamily>("meaning");
+  const [idiomSession, setIdiomSession] =
+    useState<PlatformIdiomExerciseSessionV2 | null>(null);
   const [sessionSize, setSessionSize] =
     useState<TrainingSessionSize>(DEFAULT_SESSION_SIZE);
   const [sessionPlannedTotal, setSessionPlannedTotal] = useState<number | null>(
@@ -1354,7 +1365,7 @@ function TrainingScreenContent({
 
   const applyPilotPreferences = useCallback(
     (draft: TrainingSetupDraft) => {
-      setActiveScenario(draft.scenarioId, { persist: false });
+      setActiveScenario(draft.family === "idiom" ? "understanding" : draft.scenarioId, { persist: false });
       setEnabledModes(draft.modes, { persist: false });
       setCardFilterPreference(draft.cardFilter, { persist: false });
       setNewReviewRatio(draft.newReviewRatio, { persist: false });
@@ -1383,13 +1394,28 @@ function TrainingScreenContent({
     resetQueue: resetFocusQueueState,
     loadStats: (scope) => void loadStats(scope),
     loadWord: loadNextWord,
+    startIdiomSession: startPlatformV2IdiomTrainingSession,
     reportError: setTrainingLoadError,
     onSessionReady: (session, context) => {
       setSessionReplacementWarning(false);
       setSessionConsumedCardKeys([]);
       setSessionCompletedActions(0);
+      if (context.draft.family === "idiom") {
+        setActiveExerciseFamily("idiom");
+        setIdiomSession(session as PlatformIdiomExerciseSessionV2);
+        setCurrentWord(null);
+        replaceTrainingSessionId(null);
+        setLatchedSessionPlan(null);
+        if (user.id) void clearTrainingSessionResume(user.id);
+        lastAppliedTrainingFocusFilterKey.current = trainingFilterKey(
+          context.focusFilter,
+        );
+        return;
+      }
+      setActiveExerciseFamily("meaning");
+      setIdiomSession(null);
       replaceTrainingSessionId(session.sessionId);
-      setLatchedSessionPlan(session);
+      setLatchedSessionPlan(session as TrainingSession);
       // The explicit session-start load below owns this filter. Mark it as
       // already applied so the focus-filter observer does not issue a
       // second, unscoped replacement request after React commits the state.
@@ -2037,6 +2063,11 @@ function TrainingScreenContent({
     setCurrentWord(null);
     returnToToday();
   }, [returnToToday]);
+  const exitIdiomSession = useCallback(() => {
+    setIdiomSession(null);
+    setActiveExerciseFamily("meaning");
+    returnToToday();
+  }, [returnToToday]);
   const trainingSessionPlanScope = React.useMemo(
     () => ({
       listId: trainingFocusFilter.dictionaryScope ? null : wordListId,
@@ -2088,6 +2119,7 @@ function TrainingScreenContent({
   }, [onRequestDestination]);
 
   const v2SessionLayoutVisible = Boolean(
+    activeExerciseFamily !== "idiom" &&
     v2SessionOwned &&
     (!trainingTodaySetupEnabled || trainingPilot.surface === "session"),
   );
@@ -2212,6 +2244,17 @@ function TrainingScreenContent({
             onContinue={handleContinueTrainingSession}
             onStart={trainingPilot.startSession}
             onRetry={() => void trainingPilot.retry()}
+          />
+        ) : activeExerciseFamily === "idiom" && idiomSession ? (
+          <TrainingIdiomSession
+            userId={user.id}
+            session={idiomSession}
+            contentLanguageCode={currentTrainingLanguage}
+            translationTargetLanguageCode={
+              translationLang === "off" ? null : translationLang
+            }
+            interfaceLanguage={onboardingLang}
+            onExit={exitIdiomSession}
           />
         ) : v2SessionOwned && currentWord && v2SessionMode ? (
           <TrainingSenseCardV2Session

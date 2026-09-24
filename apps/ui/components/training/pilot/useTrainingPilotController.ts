@@ -8,6 +8,7 @@ import type { TrainingSession } from "@/lib/trainingService";
 import type {
   CardFilter,
   DetailedStats,
+  TrainingExerciseFamily,
   TrainingFocusFilter,
   TrainingMode,
   TrainingScenario,
@@ -16,6 +17,11 @@ import type {
   WordListSummary,
   WordListType,
 } from "@/lib/types";
+import type {
+  PlatformIdiomExerciseSessionV2,
+} from "../../../../../packages/shared/types/platformV2";
+import type { StartPlatformV2IdiomTrainingSessionInput } from "@/lib/platform/platformV2IdiomExerciseClient";
+import { platformV2IdiomExercisesEnabled } from "@/lib/platform/platformV2Rollout";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type {
   TrainingPilotStatus,
@@ -42,6 +48,8 @@ export type TrainingSessionStartContext = {
   focusFilter: TrainingFocusFilter;
 };
 
+export type TrainingPilotSession = TrainingSession | PlatformIdiomExerciseSessionV2;
+
 type CommitPilotDraftParams = {
   userId?: string;
   languageCode: string;
@@ -59,10 +67,13 @@ type CommitPilotDraftParams = {
     focusFilter: TrainingFocusFilter;
     trainingSessionId?: string;
   }) => Promise<LoadNextTrainingTurnResult>;
+  startIdiomSession?: (
+    input: StartPlatformV2IdiomTrainingSessionInput,
+  ) => Promise<PlatformIdiomExerciseSessionV2>;
   reportError: (error: string | null) => void;
   onPlanReady?: (plan: TrainingSessionPlan) => void;
   onSessionReady?: (
-    session: TrainingSession,
+    session: TrainingPilotSession,
     context: TrainingSessionStartContext,
   ) => void;
 };
@@ -102,6 +113,7 @@ export function useCommitTrainingPilotDraft({
   resetQueue,
   loadStats,
   loadWord,
+  startIdiomSession,
   reportError,
   onPlanReady,
   onSessionReady,
@@ -155,7 +167,9 @@ export function useCommitTrainingPilotDraft({
         languageCode,
         listId: scope.listId,
         listType: scope.listType,
-        activeScenario: draft.scenarioId,
+        // Idiom exercises own a separate server queue. Keep the persisted
+        // ordinary scope valid while the draft carries the family boundary.
+        activeScenario: draft.family === "idiom" ? "understanding" : draft.scenarioId,
         cardFilter: draft.cardFilter,
         modesEnabled: draft.modes,
         newReviewRatio: draft.newReviewRatio,
@@ -167,6 +181,7 @@ export function useCommitTrainingPilotDraft({
 
       const startKey = JSON.stringify({
         scope,
+        family: draft.family ?? "meaning",
         modes: draft.modes,
         cardFilter: draft.cardFilter,
         newReviewRatio: draft.newReviewRatio,
@@ -178,6 +193,45 @@ export function useCommitTrainingPilotDraft({
           key: startKey,
           requestId: crypto.randomUUID(),
         };
+      }
+      if (draft.family === "idiom") {
+        if (!startIdiomSession) {
+          reportError("training_idiom_unavailable");
+          return false;
+        }
+        const idiomSession = await startIdiomSession({
+          userId,
+          direction: draft.modes.includes("definition-to-word") ? "reverse" : "direct",
+          sessionSize: typeof draft.sessionSize === "number" ? draft.sessionSize : 10,
+          requestId: startRequestRef.current.requestId,
+          listId: scope.listId,
+          listType: scope.listType ?? "curated",
+          cardFilter: draft.cardFilter,
+          trainingFilter: focusFilter,
+          newReviewRatio: draft.newReviewRatio,
+        });
+        startRequestRef.current = null;
+        onSessionReady?.(idiomSession, {
+          languageCode,
+          scope,
+          draft,
+          focusFilter,
+        });
+        onPlanReady?.({
+          requestedTotal: idiomSession.requestedTotal,
+          plannedNew: idiomSession.plannedNew,
+          plannedReview: idiomSession.plannedReview,
+          plannedPractice: idiomSession.plannedPractice,
+          plannedTotal: idiomSession.plannedTotal,
+          plannedAt: idiomSession.plannedAt,
+        });
+        reportError(null);
+        if (selectedList) applyListLocally(selectedList);
+        applyPreferences(draft);
+        applyFocusFilter(focusFilter);
+        resetQueue();
+        loadStats(scope);
+        return true;
       }
       let session: TrainingSession | null;
       try {
@@ -243,6 +297,7 @@ export function useCommitTrainingPilotDraft({
       reportError,
       resetQueue,
       resolveList,
+      startIdiomSession,
       userId,
     ],
   );
@@ -276,6 +331,7 @@ export function useTrainingPilotController({
   const [scenarios, setScenarios] = useState<TrainingScenario[]>([]);
   const [scenariosResolved, setScenariosResolved] = useState(false);
   const [startPending, setStartPending] = useState(false);
+  const [exerciseFamily, setExerciseFamily] = useState<TrainingExerciseFamily>("meaning");
   const startPendingRef = useRef(false);
   const initialScenarioTransitionIdRef = useRef(initialTransitionId);
 
@@ -314,6 +370,7 @@ export function useTrainingPilotController({
   });
 
   const initialDraft: TrainingSetupDraft = {
+    family: exerciseFamily,
     scenarioId: activeScenario,
     modes: enabledModes,
     cardFilter,
@@ -339,7 +396,7 @@ export function useTrainingPilotController({
 
   const scenarioOptions = useMemo<TrainingSetupOption[]>(() => {
     if (!scenariosResolved) return [];
-    return scenarios
+    const options = scenarios
       .filter((scenario) => scenario.id === "understanding")
       .map((scenario) => ({
         value: scenario.id,
@@ -349,6 +406,14 @@ export function useTrainingPilotController({
             : scenario.nameEn || scenario.nameNl || scenario.id,
         modes: scenario.cardModes.filter(isTrainingMode),
       }));
+    if (platformV2IdiomExercisesEnabled()) {
+      options.push({
+        value: "idiom",
+        label: interfaceLanguage === "nl" ? "Uitdrukkingen" : interfaceLanguage === "ru" ? "Идиомы" : "Idioms",
+        modes: ["word-to-definition", "definition-to-word"],
+      });
+    }
+    return options;
   }, [interfaceLanguage, scenarios, scenariosResolved]);
 
   const startSession = useCallback(
@@ -365,6 +430,7 @@ export function useTrainingPilotController({
       try {
         const committed = await onCommitDraft(draft);
         if (committed) {
+          setExerciseFamily(draft.family ?? "meaning");
           setSessionGeneration((generation) => generation + 1);
           setSurface("session");
         }

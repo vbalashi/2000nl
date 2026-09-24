@@ -93,6 +93,29 @@ test("lexical choices are sent with the selected ordinary training draft", () =>
   }));
 });
 
+test("idiom family is selectable as a separate finite session and reaches the start callback", () => {
+  const onStart = vi.fn();
+  render(
+    <TrainingTodaySetup
+      {...baseProps}
+      onStart={onStart}
+      scenarios={[
+        ...baseProps.scenarios,
+        { value: "idiom", label: "Idioms", modes: ["word-to-definition" as const, "definition-to-word" as const] },
+      ]}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  fireEvent.click(screen.getByRole("button", { name: "Idioms" }));
+  expect(screen.getByRole("button", { name: "Idioms" })).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({
+    family: "idiom",
+    scenarioId: "idiom",
+    sessionSize: 10,
+  }));
+});
+
 test("language hydration replaces material without carrying a Dutch preset into English", () => {
   const onStart = vi.fn();
   const props = { ...baseProps, userId: "language-switch-test", trainingLanguageCode: "nl", onStart, onTrainingLanguageChange: vi.fn(), trainingLanguageOptions: [{ value: "nl", label: "Nederlands" }, { value: "en", label: "English" }] };
