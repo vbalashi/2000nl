@@ -190,9 +190,8 @@ DECLARE
     v_candidate record;
     v_target_id uuid;
     v_target_key text;
-    v_count integer := 0;
     v_error text;
-    v_limit integer := LEAST(GREATEST(COALESCE(p_limit, 20), 1), 100);
+    v_limit integer := GREATEST(COALESCE(p_limit, 20), 1);
     v_offset integer := GREATEST(COALESCE(p_offset, 0), 0);
 BEGIN
     IF p_user_id IS NULL THEN
@@ -363,22 +362,29 @@ BEGIN
               LEFT JOIN public.user_training_exercise_state AS state
                 ON state.user_id = p_user_id
                AND state.target_id = target.id
+        ), ranked AS (
+            SELECT shaped.*,
+                   row_number() OVER (
+                       PARTITION BY CASE WHEN queue_rank = 0 THEN 0 ELSE 1 END
+                       ORDER BY queue_rank, next_review_at NULLS FIRST,
+                                created_at, content_node_id
+                   ) AS queue_ordinal
+              FROM shaped
+             WHERE COALESCE(hidden, false) = false
+               AND (
+                   frozen_until IS NULL
+                   OR frozen_until <= private.training_reference_now_v1()
+               )
+               AND (
+                   (p_card_filter IN ('both', 'new') AND queue_rank = 0)
+                   OR (p_card_filter IN ('both', 'review') AND queue_rank IN (1, 2))
+               )
         )
         SELECT *
-          FROM shaped
-         WHERE COALESCE(hidden, false) = false
-           AND (
-               frozen_until IS NULL
-               OR frozen_until <= private.training_reference_now_v1()
-           )
-           AND (
-               p_card_filter = 'both'
-               OR (p_card_filter = 'new' AND queue_rank = 0)
-               OR (p_card_filter = 'review' AND queue_rank IN (1, 2))
-           )
+          FROM ranked
+         WHERE queue_ordinal > v_offset
+           AND queue_ordinal <= v_offset::bigint + v_limit::bigint
          ORDER BY queue_rank, next_review_at NULLS FIRST, created_at, content_node_id
-         OFFSET v_offset
-         LIMIT v_limit
     LOOP
         BEGIN
             v_target_id := private.ensure_platform_v2_training_exercise_target_v1(
@@ -432,8 +438,6 @@ BEGIN
                 v_target_id
             )
         );
-        v_count := v_count + 1;
-        EXIT WHEN v_count >= v_limit;
     END LOOP;
 END;
 $$;
@@ -470,13 +474,6 @@ DECLARE
     v_receipt public.training_exercise_run_start_receipts%rowtype;
     v_candidate jsonb;
     v_candidates jsonb[] := ARRAY[]::jsonb[];
-    v_candidate_offset integer := 0;
-    v_candidate_page_size integer;
-    v_candidate_page_count integer;
-    v_candidate_count integer := 0;
-    v_candidate_new_count integer := 0;
-    v_candidate_review_count integer := 0;
-    v_saw_practice boolean;
     v_new_candidates jsonb[] := ARRAY[]::jsonb[];
     v_review_candidates jsonb[] := ARRAY[]::jsonb[];
     v_new_index integer := 1;
@@ -513,6 +510,9 @@ BEGIN
         RAISE EXCEPTION 'invalid idiom training session size: %', v_size;
     END IF;
     v_requested_total := v_size::integer;
+    -- A single-queue run never uses the rhythm. Match the ordinary Training
+    -- contract so irrelevant slider values do not change retry identity.
+    v_ratio := CASE WHEN p_card_filter = 'both' THEN p_new_review_ratio ELSE 2 END;
 
     -- These arrays describe selections, not an order. Canonicalize before
     -- storing and hashing so a reordered retry returns the original run.
@@ -548,7 +548,7 @@ BEGIN
         'listType', COALESCE(p_list_type, 'curated'),
         'cardFilter', p_card_filter,
         'trainingFilter', v_filter,
-        'newReviewRatio', p_new_review_ratio
+        'newReviewRatio', v_ratio
     )::text, 'sha256'), 'hex');
 
     -- The same request is safe to retry. The receipt does not reclaim an old
@@ -591,55 +591,25 @@ BEGIN
         p_card_filter,
         v_filter,
         v_requested_total,
-        p_new_review_ratio,
+        v_ratio,
         v_now
     );
 
-    -- The filtered candidate reader orders each immediate queue. The loop
-    -- pages until it has enough candidates from both queues.
-    -- The candidate RPC sorts practice last; once that tail is observed there
-    -- cannot be another new/review row, so the loop does not scan the whole
-    -- future-practice pool.
+    -- One candidate read limits each immediate queue independently. A skewed
+    -- pool cannot trigger repeated corpus/group scans just to fill the other
+    -- side of the optional rhythm.
+    FOR v_candidate IN
+        SELECT candidate.item
+          FROM private.platform_v2_idiom_exercise_candidates_v2(
+              p_user_id, p_direction, v_requested_total, 0,
+              p_list_id, p_list_type, p_card_filter, v_filter
+          ) AS candidate(item)
     LOOP
-        v_candidate_page_size := LEAST(100, v_requested_total);
-        EXIT WHEN v_candidate_page_size <= 0;
-        v_candidate_page_count := 0;
-        v_saw_practice := false;
-
-        FOR v_candidate IN
-            SELECT candidate.item
-              FROM private.platform_v2_idiom_exercise_candidates_v2(
-                  p_user_id,
-                  p_direction,
-                  v_candidate_page_size,
-                  v_candidate_offset,
-                  p_list_id,
-                  p_list_type,
-                  p_card_filter,
-                  v_filter
-              ) AS candidate(item)
-        LOOP
-            v_candidate_page_count := v_candidate_page_count + 1;
-            IF v_candidate->>'queueSource' = 'practice' THEN
-                v_saw_practice := true;
-            ELSIF v_candidate->>'queueSource' = 'new' THEN
-                v_candidates := array_append(v_candidates, v_candidate);
-                v_candidate_count := v_candidate_count + 1;
-                v_candidate_new_count := v_candidate_new_count + 1;
-            ELSIF v_candidate->>'queueSource' IN ('learning', 'review') THEN
-                v_candidates := array_append(v_candidates, v_candidate);
-                v_candidate_count := v_candidate_count + 1;
-                v_candidate_review_count := v_candidate_review_count + 1;
-            END IF;
-        END LOOP;
-
-        EXIT WHEN v_candidate_page_count = 0
-            OR (
-                v_candidate_new_count >= v_requested_total
-                AND v_candidate_review_count >= v_requested_total
-            )
-            OR v_saw_practice;
-        v_candidate_offset := v_candidate_offset + v_candidate_page_size;
+        IF v_candidate->>'queueSource' = 'new' THEN
+            v_candidates := array_append(v_candidates, v_candidate);
+        ELSIF v_candidate->>'queueSource' IN ('learning', 'review') THEN
+            v_candidates := array_append(v_candidates, v_candidate);
+        END IF;
     END LOOP;
 
     -- Apply the selected soft new/review rhythm. It is a preference for
@@ -651,8 +621,6 @@ BEGIN
             v_review_candidates := array_append(v_review_candidates, v_candidate);
         END IF;
     END LOOP;
-
-    v_ratio := p_new_review_ratio;
 
     WHILE v_ordinal < v_requested_total
       AND (

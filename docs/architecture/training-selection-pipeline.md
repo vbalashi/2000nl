@@ -79,8 +79,11 @@ evidence, not by copying another filter branch into the family selector.
 Do not invoke the headword-group eligibility function once per idiom node.
 Production currently has about 18,224 entries and 2,414 active idiom nodes;
 one warm call to that legacy function took about 325 ms in a read-only probe.
-Migration 161 computes the learner's eligible entry/group set once and joins
-it to idiom nodes. A read-only prototype of that group join across the corpus
+Migration 161 computes the learner's eligible entry/group set once per session
+start and joins it to idiom nodes. The candidate read takes up to the requested
+size from each immediate queue in that one pass; a sparse new or review queue
+cannot trigger repeated scans of all source groups. Finite sessions exclude
+future-due practice targets. A read-only prototype of that group join across the corpus
 took about 242 ms warm, but this is **not** a measured full session-start time.
 Cold probes varied substantially, including one 2.5-second timeout. Keep
 initial filtering off the app's first paint, benchmark the complete start

@@ -165,15 +165,15 @@ async function sourceEntries(
 
       const startFilter = { ...selected, partOfSpeech: ["bn", "zn"] };
       const requestId = randomUUID();
-      const start = async (filter = startFilter) => {
+      const start = async (filter = startFilter, ratio = 3) => {
         await client.query("set local role authenticated");
         try {
           return await client.query(
             `select public.start_platform_v2_idiom_training_session(
                $1::uuid, 'direct', '5', $2::uuid, null::uuid, 'curated',
-               'new', $3::jsonb, 3
+               'new', $3::jsonb, $4::integer
              ) as session`,
-            [userId, requestId, JSON.stringify(filter)],
+            [userId, requestId, JSON.stringify(filter), ratio],
           );
         } finally {
           await client.query("reset role");
@@ -186,6 +186,8 @@ async function sourceEntries(
       });
       const { rows: retryRows } = await start();
       expect(retryRows[0].session.sessionId).toBe(sessionId);
+      const { rows: equivalentRatioRetryRows } = await start(startFilter, 5);
+      expect(equivalentRatioRetryRows[0].session.sessionId).toBe(sessionId);
       const { rows: reorderedRetryRows } = await start({
         dictionaryScope: {
           ...selected.dictionaryScope,
@@ -215,8 +217,42 @@ async function sourceEntries(
             dictionaryIds: [...startFilter.dictionaryScope.dictionaryIds].sort(),
           },
         },
-        new_review_ratio: 3,
+        new_review_ratio: 2,
         card_filter: "new",
+      });
+      const { rows: targetRows } = await client.query(
+        `select id from private.platform_v2_training_exercise_targets
+         where entry_id = $1 and family = 'idiom' and direction = 'direct'`,
+        [adjective],
+      );
+      await client.query(
+        `insert into public.user_training_exercise_state (
+           user_id, target_id, fsrs_enabled, fsrs_reps,
+           fsrs_last_interval, next_review_at
+         ) values ($1, $2, true, 1, 2, now() - interval '1 minute')`,
+        [userId, targetRows[0].id],
+      );
+      // A mixed reader selects its own budget from each queue in one call.
+      // The single new idiom must not crowd out the due idiom.
+      const { rows: mixedCandidates } = await client.query(
+        `select item from private.platform_v2_idiom_exercise_candidates_v2(
+           $1::uuid, 'direct', 1, 0, null::uuid, 'curated', 'both', $2::jsonb
+         ) as item`,
+        [userId, JSON.stringify(selected)],
+      );
+      expect(mixedCandidates.map((row) => row.item.queueSource).sort())
+        .toEqual(["new", "review"]);
+      await client.query("set local role authenticated");
+      const { rows: mixedStartRows } = await client.query(
+        `select public.start_platform_v2_idiom_training_session(
+           $1::uuid, 'direct', '2', $2::uuid, null::uuid, 'curated',
+           'both', $3::jsonb, 3
+         ) as session`,
+        [userId, randomUUID(), JSON.stringify(selected)],
+      );
+      await client.query("reset role");
+      expect(mixedStartRows[0].session).toMatchObject({
+        plannedTotal: 2, plannedNew: 1, plannedReview: 1,
       });
       await client.query("savepoint changed_idiom_start_request");
       await client.query("set local role authenticated");
