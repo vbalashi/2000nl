@@ -2470,4 +2470,95 @@ describeDb("authoritative training session plan RPC", () => {
       expect(exhaustedSelection[0]?.item).toBeUndefined();
     }, userId);
   });
+
+  test("dictionary material scope uses accessible meanings, preserves an explicit subset, and latches that subset", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const dictionaries: Array<{ id: string; entryId: string }> = [];
+      for (let index = 0; index < 3; index += 1) {
+        const { rows: dictionaryRows } = await client.query(
+          `insert into dictionaries (
+             language_code, slug, name, kind, visibility, minimum_subscription_tier,
+             schema_key, schema_version
+           ) values ('nl', $1, 'Training material fixture', 'curated', 'private',
+             'free', 'nl-vandale-v1', 1) returning id`,
+          [`training-material-${userId}-${index}`],
+        );
+        const id = dictionaryRows[0].id as string;
+        if (index < 2) {
+          await client.query(
+            `insert into dictionary_entitlements (
+               dictionary_id, subject_type, subject_key, permission
+             ) values ($1, 'user', $2, 'read')`,
+            [id, userId],
+          );
+        }
+        const { rows: entryRows } = await client.query(
+          `insert into word_entries (
+             dictionary_id, language_code, headword, part_of_speech,
+             is_nt2_2000, raw
+           ) values ($1, 'nl', $2, 'noun', false, '{}'::jsonb) returning id`,
+          [id, `material-${userId}-${index}`],
+        );
+        dictionaries.push({ id, entryId: entryRows[0].id as string });
+      }
+
+      const candidates = async (scope: unknown, listId: string | null = null) => {
+        const { rows } = await client.query(
+          `select entry_id from private.training_scheduler_candidates_v2(
+             $1, ARRAY['word-to-definition']::text[], $2::uuid, 'curated',
+             'new', 'auto', ARRAY[]::uuid[], ARRAY[]::text[], $3::jsonb,
+             false, false
+           ) where queue_source = 'new'`,
+          [userId, listId, JSON.stringify({ dictionaryScope: scope })],
+        );
+        return rows.map((row) => row.entry_id as string);
+      };
+      const all = { mode: "all", languageCode: "nl" };
+      expect(await candidates(all)).toEqual(expect.arrayContaining([
+        dictionaries[0].entryId, dictionaries[1].entryId,
+      ]));
+      expect(await candidates(all)).not.toContain(dictionaries[2].entryId);
+      const subset = {
+        mode: "selected", languageCode: "nl",
+        dictionaryIds: [dictionaries[0].id, dictionaries[2].id],
+      };
+      expect(await candidates(subset)).toEqual([dictionaries[0].entryId]);
+      expect(await candidates({ mode: "selected", languageCode: "nl", dictionaryIds: [dictionaries[2].id] })).toEqual([]);
+      expect(await candidates({ mode: "all", languageCode: "en" })).toEqual([]);
+      expect(await candidates(all, randomUUID())).toEqual([]);
+
+      await client.query("SAVEPOINT unavailable_material");
+      await expect(client.query(
+        `select start_training_session(
+           $1::uuid, ARRAY['word-to-definition']::text[], NULL::uuid,
+           'curated', 'new', $2::jsonb, '10', $3::uuid, 2
+         ) as session`,
+        [userId, JSON.stringify({ dictionaryScope: {
+          mode: "selected", languageCode: "nl", dictionaryIds: [dictionaries[2].id],
+        } }), randomUUID()],
+      )).rejects.toThrow("training_material_unavailable");
+      await client.query("ROLLBACK TO SAVEPOINT unavailable_material");
+      const { rows: rejectedSessions } = await client.query(
+        `select count(*)::integer AS count from training_sessions where user_id = $1`,
+        [userId],
+      );
+      expect(rejectedSessions[0].count).toBe(0);
+
+      const { rows: startRows } = await client.query(
+        `select start_training_session(
+           $1::uuid, ARRAY['word-to-definition']::text[], NULL::uuid,
+           'curated', 'new', $2::jsonb, '10', $3::uuid, 2
+         ) as session`,
+        [userId, JSON.stringify({ dictionaryScope: subset }), randomUUID()],
+      );
+      const sessionId = startRows[0].session.sessionId as string;
+      const { rows: members } = await client.query(
+        `select entry_id from training_session_members where session_id = $1`,
+        [sessionId],
+      );
+      expect(members.map((member) => member.entry_id)).toEqual([dictionaries[0].entryId]);
+    }, userId);
+  });
 });

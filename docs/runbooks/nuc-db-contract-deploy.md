@@ -136,6 +136,19 @@ unfiltered compatibility, and latched membership. The default unfiltered
 read-probe remains unchanged; the new SQL scope still must pass its bounded
 session-plan CI measurement before rollout.
 
+Migration 160 adds all-accessible or explicitly selected dictionaries as
+ordinary Training material. The selected language and dictionary IDs travel in
+the session's existing `training_filter` JSON; no new public RPC signature or
+FSRS state key is introduced. The scheduler intersects the requested set with
+server-side dictionary read access before lexical and queue filters. A missing
+explicit source can narrow the selection but never widen it; mixing a list ID
+with a dictionary scope yields no candidates. Legacy list and default-NT2
+selection remain on their prior branches. The postflight pins those boundaries,
+the FSRS integration test checks private, partially revoked, wrong-language,
+mixed-source and latched-session cases, and the wide-corpus latency fixture
+checks legacy candidate parity after the function replacement. App rollback
+can leave migration 160 in place because old clients omit `dictionaryScope`.
+
 Migration 158 enables RLS on `user_training_scopes` and removes table-level and
 column-level privileges from `PUBLIC`, `anon`, and `authenticated`. The
 application has no direct table callers; authenticated reads and writes remain

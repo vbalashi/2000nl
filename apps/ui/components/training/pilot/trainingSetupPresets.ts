@@ -7,6 +7,7 @@ export type TrainingSetupPreset = {
 };
 
 const STORAGE_PREFIX = "2000nl.training.presets.v1";
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const validPartOfSpeech = (value: unknown) =>
   ["zn", "ww", "bn", "bw", "vz", "vnw", "vw", "tw", "lidw", "tsw", "afk"].includes(String(value));
@@ -35,6 +36,13 @@ export function readTrainingPresets(key: string): TrainingSetupPreset[] {
         item.draft.newReviewRatio > 0 &&
         ["all", "today", "yesterday", "daysAgo"].includes(item.draft.dateWindow) &&
         typeof item?.draft?.listValue === "string" &&
+        (item.draft.materialMode === undefined ||
+          item.draft.materialMode === "collection" ||
+          item.draft.materialMode === "all-dictionaries" ||
+          (item.draft.materialMode === "selected-dictionaries" &&
+            Array.isArray(item.draft.dictionaryIds) &&
+            item.draft.dictionaryIds.length > 0 &&
+            item.draft.dictionaryIds.every((id: unknown) => typeof id === "string" && UUID_PATTERN.test(id)))) &&
         typeof item?.draft?.sourceValue === "string" &&
         (item.draft.partOfSpeech === undefined ||
           (Array.isArray(item.draft.partOfSpeech) &&
