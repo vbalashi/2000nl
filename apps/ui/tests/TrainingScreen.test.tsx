@@ -1335,9 +1335,10 @@ test("first-pilot Training opens on Today and Start reveals the mounted card", a
   expect(
     document.querySelector('[data-app-mobile-navigation="menu"]'),
   ).toBeInTheDocument();
-  await waitFor(() =>
-    expect(fetchNextTrainingWordByScenario).toHaveBeenCalled(),
-  );
+  await waitFor(() => expect(fetchStats).toHaveBeenCalled());
+  expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
+  expect(startTrainingSession).not.toHaveBeenCalled();
+  expect(fetchTrainingSessionPlan).not.toHaveBeenCalled();
   expect(
     screen.queryByRole("heading", { name: "huis" }),
   ).not.toBeInTheDocument();
@@ -1465,7 +1466,7 @@ test("a failed run claim leaves the foreign-owner tab on Today without an action
   expect(mockV2ProgressAction).not.toHaveBeenCalled();
 });
 
-test("delayed first card keeps Today usable and guards Start and Continue until ready", async () => {
+test("first pilot selection starts only after Start and belongs to its run", async () => {
   let resolveFirstCard!: (word: typeof mockWord) => void;
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario.mockImplementationOnce(
@@ -1485,11 +1486,6 @@ test("delayed first card keeps Today usable and guards Start and Continue until 
       />,
     );
 
-    await waitFor(
-      () => expect(resolveFirstCard).toEqual(expect.any(Function)),
-      { timeout: 5000 },
-    );
-
     expect(
       await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
     ).toBeInTheDocument();
@@ -1498,28 +1494,28 @@ test("delayed first card keeps Today usable and guards Start and Continue until 
     );
     expect(todayShell).toBeInTheDocument();
     expect(screen.getByLabelText("2000nl")).toBeInTheDocument();
+    const startCurrentSetup = screen.getByRole("button", {
+      name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+    });
+    await waitFor(() => expect(startCurrentSetup).toBeEnabled());
     expect(
-      screen.getByText(
+      screen.queryByText(
         /Preparing your next card|Je volgende kaart wordt voorbereid|Подготавливаем следующую карточку/,
       ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
-    ).toBeDisabled();
+    ).not.toBeInTheDocument();
+    expect(startCurrentSetup).toBeEnabled();
     expect(screen.queryByRole("button", { name: /Continue session|Sessie doorgaan/ })).not.toBeInTheDocument();
     expect(screen.queryByTestId("training-card-frame")).not.toBeInTheDocument();
     expect(screen.queryByText("Laden…")).not.toBeInTheDocument();
     expect(mockV2ProgressAction).not.toHaveBeenCalled();
+    expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
 
     fireEvent.click(
       screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
     );
-    expect(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ })).toBeDisabled();
-    expect(startTrainingSession).not.toHaveBeenCalled();
-
-    await act(async () => resolveFirstCard(mockWord));
-
     expect(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ })).toBeEnabled();
+    expect(startTrainingSession).not.toHaveBeenCalled();
+    expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
     expect(mockV2ProgressAction).not.toHaveBeenCalled();
     expect(
       screen.queryByRole("heading", { name: "huis" }),
@@ -1527,8 +1523,18 @@ test("delayed first card keeps Today usable and guards Start and Continue until 
 
     fireEvent.click(screen.getByRole("button", { name: /Back to Today|Terug naar Vandaag/ }));
     fireEvent.click(
-      screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
+      screen.getByRole("button", {
+        name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+      }),
     );
+    await waitFor(() => expect(resolveFirstCard).toEqual(expect.any(Function)));
+    expect(startTrainingSession).toHaveBeenCalledOnce();
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(1);
+    expect(fetchNextTrainingWordByScenario.mock.calls[0]?.[11]).toBe(
+      defaultStartedTrainingSession.sessionId,
+    );
+    expect(screen.queryByRole("heading", { name: "huis" })).not.toBeInTheDocument();
+    await act(async () => resolveFirstCard(mockWord));
     expect(
       await screen.findByRole("heading", { name: "huis" }),
     ).toBeInTheDocument();
@@ -2642,16 +2648,14 @@ test("pilot Setup applies source and date filters only when Start commits the dr
   fireEvent.change(screen.getByLabelText("Source"), {
     target: { value: "source:source-youtube-1" },
   });
-  expect(
-    fetchNextTrainingWordByScenario.mock.calls.some(
-      (call) => call[8]?.sourceId === "source-youtube-1",
-    ),
-  ).toBe(false);
-  fetchNextTrainingWordByScenario.mockClear();
+  expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
+  expect(fetchTrainingSessionPlan).not.toHaveBeenCalled();
+  expect(startTrainingSession).not.toHaveBeenCalled();
   const sourceFilterStartButton = screen.getByRole("button", {
     name: /Start training|Training starten/,
   });
   await waitFor(() => expect(sourceFilterStartButton).toBeEnabled());
+  expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
   fireEvent.click(sourceFilterStartButton);
   await waitFor(() =>
     expect(

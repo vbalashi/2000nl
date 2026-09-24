@@ -70,7 +70,7 @@ async function attachMetrics(
   console.log(`[qa-evidence] ${path}`);
 }
 
-test("prepared card and setup remain usable while scoped stats are held for 10 seconds", async ({
+test("setup remains usable without card selection while scoped stats are held for 10 seconds", async ({
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -81,9 +81,6 @@ test("prepared card and setup remain usable while scoped stats are held for 10 s
   });
 
   await expect.poll(() => harness.requests.stats.length).toBe(1);
-  await expect
-    .poll(() => harness.requests.scheduler.length)
-    .toBeGreaterThanOrEqual(1);
   const statsRequestObservedAt = harness.requests.requestTimes.stats[0]!;
   await expect(page.getByRole("heading", { name: copy.greeting })).toBeVisible();
   const setupAvailableMs = Date.now() - statsRequestObservedAt;
@@ -94,6 +91,10 @@ test("prepared card and setup remain usable while scoped stats are held for 10 s
   await expect(page.getByRole("button", { name: copy.continue })).toHaveCount(0);
   await expect(startCurrentSetup).toBeEnabled({ timeout: 4_000 });
   expect(harness.requests.sessionStarts).toHaveLength(0);
+  expect(harness.requests.sessionPlans).toHaveLength(0);
+  expect(harness.requests.scheduler).toHaveLength(0);
+  expect(harness.requests.session).toHaveLength(0);
+  expect(harness.requests.projectionLookups).toHaveLength(0);
   expect(harness.requests.stats).toHaveLength(1);
   expect(harness.requests.progressActions).toHaveLength(0);
   const initialStatsIdentitySummary = summarizeRequestIdentities(
@@ -102,7 +103,7 @@ test("prepared card and setup remain usable while scoped stats are held for 10 s
   await attachScreenshot(
     page,
     testInfo,
-    "today-with-prepared-card-and-stats-pending.png",
+    "today-without-card-and-stats-pending.png",
   );
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -128,6 +129,9 @@ test("prepared card and setup remain usable while scoped stats are held for 10 s
   await page.getByRole("button", { name: copy.backToToday }).click();
   await page.setViewportSize({ width: 1280, height: 900 });
   await expect(startCurrentSetup).toBeEnabled();
+  expect(harness.requests.scheduler).toHaveLength(0);
+  expect(harness.requests.session).toHaveLength(0);
+  expect(harness.requests.projectionLookups).toHaveLength(0);
 
   await startCurrentSetup.click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
@@ -144,7 +148,7 @@ test("prepared card and setup remain usable while scoped stats are held for 10 s
   const statsHeldDurationMs = Date.now() - statsRequestObservedAt;
   expect(statsHeldDurationMs).toBeGreaterThanOrEqual(9_000);
   expect(harness.requests.stats.length).toBeGreaterThanOrEqual(1);
-  expect(harness.requests.scheduler.length).toBeGreaterThanOrEqual(1);
+  expect(harness.requests.scheduler).toHaveLength(0);
   expect(harness.requests.sessionStarts).toHaveLength(1);
   expectOnlyOwnedSessionSelections(harness.requests.session);
   expect(harness.requests.progressActions).toHaveLength(0);
@@ -155,7 +159,7 @@ test("prepared card and setup remain usable while scoped stats are held for 10 s
   const schedulerIdentitySummary = summarizeRequestIdentities(
     harness.requests.scheduler,
   );
-  expect(schedulerIdentitySummary.repeatedIdentities).toBe(0);
+  expect(schedulerIdentitySummary.total).toBe(0);
   await attachMetrics(testInfo, "stats-hold-network-metrics.json", {
     initialStatsRequestIdentities: initialStatsIdentitySummary,
     statsRequestsAfterStart: harness.requests.stats.length,
@@ -169,7 +173,7 @@ test("prepared card and setup remain usable while scoped stats are held for 10 s
     statsHeldDurationMs,
     configuredStatsDelayMs: 10_000,
     screenshots: [
-      testInfo.outputPath("today-with-prepared-card-and-stats-pending.png"),
+      testInfo.outputPath("today-without-card-and-stats-pending.png"),
       setupScreenshot,
       testInfo.outputPath("mobile-today-with-stats-pending.png"),
       testInfo.outputPath("mobile-editable-setup-with-stats-pending.png"),
@@ -177,7 +181,7 @@ test("prepared card and setup remain usable while scoped stats are held for 10 s
   });
 });
 
-test("setup controls stay editable while the first-card request is held for 10 seconds", async ({
+test("a delayed ordinary scheduler is never invoked before or after pilot Start", async ({
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -186,17 +190,16 @@ test("setup controls stay editable while the first-card request is held for 10 s
     visualProfile: "answer",
     devTestLogin: false,
   });
-  await expect.poll(() => harness.requests.scheduler.length).toBe(1);
-  const schedulerRequestObservedAt = harness.requests.requestTimes.scheduler[0]!;
   await expect(page.getByRole("heading", { name: copy.greeting })).toBeVisible();
-  const setupAvailableMs = Date.now() - schedulerRequestObservedAt;
-  expect(setupAvailableMs).toBeLessThanOrEqual(1_000);
-  await expect(page.getByText(copy.cardPending)).toBeVisible();
-
   const startCurrentSetup = page.getByRole("button", { name: copy.start });
   await expect(page.getByRole("button", { name: copy.continue })).toHaveCount(0);
-  await expect(startCurrentSetup).toBeDisabled();
+  await expect(startCurrentSetup).toBeEnabled({ timeout: 4_000 });
   expect(harness.requests.sessionStarts).toHaveLength(0);
+  expect(harness.requests.sessionPlans).toHaveLength(0);
+  expect(harness.requests.scheduler).toHaveLength(0);
+  expect(harness.requests.session).toHaveLength(0);
+  expect(harness.requests.projectionLookups).toHaveLength(0);
+  await expect(page.getByText(copy.cardPending)).toHaveCount(0);
 
   await page.getByRole("button", { name: copy.adjust }).click();
   await expect(page.getByRole("heading", { name: copy.setupHeading })).toBeVisible();
@@ -205,24 +208,24 @@ test("setup controls stay editable while the first-card request is held for 10 s
     page.getByRole("button", {
       name: /Start training|Training starten|Начать тренировку/i,
     }),
-  ).toBeDisabled();
+  ).toBeEnabled();
   const screenshot = await attachScreenshot(
     page,
     testInfo,
-    "setup-while-card-request-pending.png",
+    "setup-with-no-card-request.png",
   );
 
   await page.getByRole("button", { name: copy.backToToday }).click();
-  await expect(startCurrentSetup).toBeDisabled();
-  await expect(startCurrentSetup).toBeEnabled({ timeout: 15_000 });
-  const delayedDurationMs = Date.now() - schedulerRequestObservedAt;
-  expect(delayedDurationMs).toBeGreaterThanOrEqual(9_000);
+  await expect(startCurrentSetup).toBeEnabled();
+  expect(harness.requests.scheduler).toHaveLength(0);
+  const startClickedAt = Date.now();
   await startCurrentSetup.click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+  const clickToCardMs = Date.now() - startClickedAt;
   const schedulerIdentitySummary = summarizeRequestIdentities(
     harness.requests.scheduler,
   );
-  expect(schedulerIdentitySummary.repeatedIdentities).toBe(0);
+  expect(schedulerIdentitySummary.total).toBe(0);
   expect(harness.requests.stats.length).toBeGreaterThanOrEqual(1);
   expect(harness.requests.sessionStarts).toHaveLength(1);
   expectOnlyOwnedSessionSelections(harness.requests.session);
@@ -237,14 +240,13 @@ test("setup controls stay editable while the first-card request is held for 10 s
     progressActionRequests: harness.requests.progressActions.length,
     progressActionReconciliationRequests:
       harness.requests.progressActionReconciliations.length,
-    setupAvailableMs,
-    delayedDurationMs,
+    clickToCardMs,
     configuredSchedulerDelayMs: 10_000,
     screenshot,
   });
 });
 
-test("Start waits for the selected card's projection while setup stays usable", async ({
+test("projection starts after Start and keeps the setup visible until the card is ready", async ({
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -349,21 +351,20 @@ test("Start waits for the selected card's projection while setup stays usable", 
     visualProfile: "answer",
     devTestLogin: false,
   });
-  await expect.poll(() => harness.requests.projectionLookups.length).toBe(1);
-  const projectionRequestObservedAt = harness.requests.requestTimes.projection[0]!;
   await expect(page.getByRole("heading", { name: copy.greeting })).toBeVisible();
-  const setupAvailableMs = Date.now() - projectionRequestObservedAt;
-  expect(setupAvailableMs).toBeLessThanOrEqual(1_000);
-  await expect(page.getByText(copy.cardPending)).toBeVisible();
   const startCurrentSetup = page.getByRole("button", { name: copy.start });
   await expect(page.getByRole("button", { name: copy.continue })).toHaveCount(0);
-  await expect(startCurrentSetup).toBeDisabled();
+  await expect(startCurrentSetup).toBeEnabled({ timeout: 4_000 });
   expect(harness.requests.sessionStarts).toHaveLength(0);
+  expect(harness.requests.sessionPlans).toHaveLength(0);
   expect(harness.requests.progressActions).toHaveLength(0);
+  expect(harness.requests.projectionLookups).toHaveLength(0);
+  expect(harness.requests.scheduler).toHaveLength(0);
+  await expect(page.getByText(copy.cardPending)).toHaveCount(0);
   const screenshot = await attachScreenshot(
     page,
     testInfo,
-    "setup-while-projection-request-pending.png",
+    "setup-before-projection-request.png",
   );
 
   await page.getByRole("button", { name: copy.adjust }).click();
@@ -373,13 +374,23 @@ test("Start waits for the selected card's projection while setup stays usable", 
     page.getByRole("button", {
       name: /Start training|Training starten|Начать тренировку/i,
     }),
-  ).toBeDisabled();
+  ).toBeEnabled();
   await page.getByRole("button", { name: copy.backToToday }).click();
 
-  await expect(startCurrentSetup).toBeEnabled({ timeout: 15_000 });
+  const startClickedAt = Date.now();
+  await startCurrentSetup.click();
+  await expect.poll(() => harness.requests.projectionLookups.length).toBe(1);
+  const projectionRequestObservedAt = harness.requests.requestTimes.projection[0]!;
+  expect(projectionRequestObservedAt).toBeGreaterThanOrEqual(startClickedAt);
+  await expect(page.getByText(copy.cardPending)).toBeVisible();
+  await expect(page.getByRole("button", { name: /Starting…|Starten…|Запускаем…/i })).toBeDisabled();
+  expect(harness.requests.sessionStarts).toHaveLength(1);
+  expectOnlyOwnedSessionSelections(harness.requests.session);
+
+  await expect(page.getByTestId("training-sense-card-v2")).toBeVisible({ timeout: 15_000 });
+  const clickToCardMs = Date.now() - startClickedAt;
   const projectionHeldDurationMs = Date.now() - projectionRequestObservedAt;
   expect(projectionHeldDurationMs).toBeGreaterThanOrEqual(9_000);
-  await expect(page.getByText(copy.cardPending)).toBeHidden();
   expect(
     projectionRequestEvents.some(
       (event) =>
@@ -387,11 +398,10 @@ test("Start waits for the selected card's projection while setup stays usable", 
         event.outcome === "finished",
     ),
   ).toBe(true);
-  expect(maxConcurrentProjectionRequests).toBeLessThanOrEqual(1);
+  // A distinct next-member projection may overlap the displayed card's refresh.
+  expect(maxConcurrentProjectionRequests).toBeLessThanOrEqual(2);
   expect(maxConcurrentSameIdentityProjectionRequests).toBeLessThanOrEqual(1);
   expect(translationRequestTimes).toHaveLength(0);
-  await startCurrentSetup.click();
-  await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
   const projectionIdentitySummary = summarizeRequestIdentities(
     harness.requests.projectionLookups,
   );
@@ -439,7 +449,7 @@ test("Start waits for the selected card's projection while setup stays usable", 
     progressActionRequests: harness.requests.progressActions.length,
     progressActionReconciliationRequests:
       harness.requests.progressActionReconciliations.length,
-    setupAvailableMs,
+    clickToCardMs,
     projectionHeldDurationMs,
     configuredProjectionDelayMs: 10_000,
     screenshot,

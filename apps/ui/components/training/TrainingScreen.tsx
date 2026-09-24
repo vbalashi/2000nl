@@ -898,7 +898,7 @@ function TrainingScreenContent({
     if (activeScenario !== activeList.default_scenario_id) {
       beginSessionScopeChange();
       setActiveScenario(activeList.default_scenario_id, { persist: false });
-      if (initialLoadDone.current) {
+      if (!trainingTodaySetupEnabled && initialLoadDone.current) {
         void replaceSessionScopeAndLoad({
           scope: { listId: wordListId, listType: wordListType },
           scenario: activeList.default_scenario_id,
@@ -913,6 +913,7 @@ function TrainingScreenContent({
     beginSessionScopeChange,
     replaceSessionScopeAndLoad,
     setActiveScenario,
+    trainingTodaySetupEnabled,
     wordListId,
     wordListType,
   ]);
@@ -943,7 +944,7 @@ function TrainingScreenContent({
     } else if (!listHydrated) {
       return;
     }
-    if (!initialLoadDone.current) return;
+    if (trainingTodaySetupEnabled || !initialLoadDone.current) return;
     lastReloadedLanguageModeScopeRef.current = nextKey;
     void loadNextWord();
   }, [
@@ -952,6 +953,7 @@ function TrainingScreenContent({
     listHydrated,
     loadNextWord,
     sessionResumeResolved,
+    trainingTodaySetupEnabled,
   ]);
 
   useEffect(() => {
@@ -969,7 +971,7 @@ function TrainingScreenContent({
       setCardFilterPreference(newFilter, { persist: false });
       persistCurrentTrainingScope({ cardFilter: newFilter });
       resetQueueForFilter(newFilter);
-      if (initialLoadDone.current) {
+      if (!trainingTodaySetupEnabled && initialLoadDone.current) {
         void loadNextWord({
           cardFilter: newFilter,
           trainingSessionId: null,
@@ -983,6 +985,7 @@ function TrainingScreenContent({
       persistCurrentTrainingScope,
       resetQueueForFilter,
       setCardFilterPreference,
+      trainingTodaySetupEnabled,
     ],
   );
 
@@ -1045,6 +1048,10 @@ function TrainingScreenContent({
     ) {
       return;
     }
+    // The pilot builds a finite, owned session on Start. Selecting an ordinary
+    // card here makes setup wait for work that is discarded by that session.
+    // An owned resume selects its member in the resume effect below.
+    if (trainingTodaySetupEnabled) return;
     // Prevent double-loading due to loadNextWord changing when queueTurn changes
     if (initialLoadDone.current) {
       return;
@@ -1063,6 +1070,7 @@ function TrainingScreenContent({
     listHydrated,
     initialTransitionId,
     sessionResumeResolved,
+    trainingTodaySetupEnabled,
     wordId,
   ]);
 
@@ -1071,7 +1079,8 @@ function TrainingScreenContent({
       !user?.id ||
       !listHydrated ||
       !sessionResumeResolved ||
-      !initialLoadDone.current
+      !initialLoadDone.current ||
+      trainingTodaySetupEnabled
     ) {
       return;
     }
@@ -1094,6 +1103,7 @@ function TrainingScreenContent({
     sessionResumeResolved,
     trainingFocusFilter,
     trainingFocusFilterKey,
+    trainingTodaySetupEnabled,
     user?.id,
   ]);
 
@@ -1436,7 +1446,9 @@ function TrainingScreenContent({
     statsReadiness.key === currentStatsScopeKey
       ? statsReadiness.status
       : "pending";
-  const cardPreparationStatus = !sessionResumeScopeResolved
+  const pilotAwaitingStart =
+    trainingTodaySetupEnabled && !trainingSessionId && !trainingLoadError;
+  const cardPreparationStatus = !sessionResumeScopeResolved || pilotAwaitingStart
     ? "idle"
     : !sessionResumeResolved || loadingWord
       ? "pending"
@@ -2143,7 +2155,7 @@ function TrainingScreenContent({
             startBlocked={
               trainingSetupPrerequisites !== "ready" ||
               !sessionResumeResolved ||
-              loadingWord
+              (Boolean(trainingSessionId) && loadingWord)
             }
             continueDisabled={
               cardPreparationStatus !== "ready" ||
