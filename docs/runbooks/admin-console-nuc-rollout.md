@@ -32,9 +32,9 @@ deployment; PR review must treat merge as the rollout boundary.
 The workflow validates the checked-in DB manifest, checks rollout status,
 builds the new UI while the existing container is running, applies only the
 manifest-pinned forward contract, switches the UI image, and verifies deep
-health for the exact commit. The base repository contract was DB 163 under
-#485. This change appends migration 164 and updates the contract to
-`2000nl-db-164`; the issue-specific postflight checks access controls, trigger
+health for the exact commit. The base repository contract is DB 164 under #485.
+This change appends migration 165 and updates the contract to
+`2000nl-db-165`; the issue-specific postflight checks access controls, trigger
 behavior and audit-retention scheduling. Recheck the manifest and hold state
 from the reviewed PR head before any future deployment; do not rely on this
 note as live-server state.

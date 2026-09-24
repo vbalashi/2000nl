@@ -144,7 +144,7 @@ describe("NUC database contract deployment", () => {
     expect(postflight).toContain("hardened-exercise-actions");
     expect(postflight).toContain("future-practice-filter");
     expect(postflight).toContain("target-read-fail-closed");
-    expect(workflow).toContain("-f db/deploy-contract/postflight-164.sql");
+    expect(workflow).toContain("-f db/deploy-contract/postflight-165.sql");
   });
 
   test("pins a bounded read-only QA selector before every compatible app switch", () => {

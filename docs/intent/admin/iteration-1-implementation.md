@@ -108,7 +108,7 @@ and device fingerprints are excluded.
 
 ## Deployment boundary
 
-The implementation appends migration 164 to the checked-in NUC contract.
+The implementation appends migration 165 to the checked-in NUC contract.
 `.github/workflows/deploy-nuc.yml` deploys
 on pushes to `main` affecting application paths, so merging this application
 work can initiate a deployment. No deployment or database change is authorized
