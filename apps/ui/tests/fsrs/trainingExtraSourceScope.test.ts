@@ -16,12 +16,13 @@ async function sourceEntries(
   userId: string,
   filter: Record<string, unknown>,
   listId: string | null = null,
+  listType: "curated" | "user" = "curated",
 ) {
   const { rows } = await client.query(
     `select entry_id from private.training_extra_source_entries_v1(
-       $1::uuid, $2::uuid, 'curated', $3::jsonb
+       $1::uuid, $2::uuid, $3::text, $4::jsonb
      ) order by entry_id`,
-    [userId, listId, JSON.stringify(filter)],
+    [userId, listId, listType, JSON.stringify(filter)],
   );
   return rows.map((row) => row.entry_id as string);
 }
@@ -91,8 +92,10 @@ async function sourceEntries(
         ...selected, partOfSpeech: ["zn"],
       })).toEqual([]);
 
+      const idiomNodeIds = new Map<string, string>();
       for (const entryId of [adjective, verb]) {
         const idiomId = randomUUID();
+        idiomNodeIds.set(entryId, idiomId);
         await client.query(
           `insert into private.platform_v2_content_nodes (
              id, entry_id, parent_content_node_id, kind, binding_state,
@@ -172,6 +175,25 @@ async function sourceEntries(
       await client.query("rollback to savepoint changed_idiom_start_request");
       await client.query("reset role");
 
+      const adjectiveIdiom = idiomNodeIds.get(adjective);
+      if (!adjectiveIdiom) throw new Error("missing adjective idiom fixture");
+      await client.query(
+        `insert into private.platform_v2_content_nodes (
+           id, entry_id, parent_content_node_id, kind, binding_state,
+           first_source_revision, last_source_revision,
+           source_text_fingerprint, diagnostic_locator
+         ) values ($1, $2, $3, 'idiom-explanation', 'active',
+           'extra-v1', 'extra-v1', $4, ' ')`,
+        [randomUUID(), adjective, adjectiveIdiom, `blank-${randomUUID()}`],
+      );
+      const { rows: ambiguousRows } = await client.query(
+        `select item from private.platform_v2_idiom_exercise_candidates_v2(
+           $1::uuid, 'direct', 20, 0, null::uuid, 'curated', 'new', $2::jsonb
+         ) as item`,
+        [userId, JSON.stringify(startFilter)],
+      );
+      expect(ambiguousRows).toEqual([]);
+
       const { rows: listRows } = await client.query(
         `insert into word_lists (language_code, slug, name)
          values ('nl', $1, 'Extra exercise list') returning id`,
@@ -184,6 +206,23 @@ async function sourceEntries(
       );
       expect(await sourceEntries(client, userId, {}, listId)).toEqual([adjective]);
       expect(await sourceEntries(client, userId, { partOfSpeech: ["ww"] }, listId)).toEqual([]);
+
+      const { rows: userListRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, name)
+         values ($1, 'nl', $2) returning id`,
+        [userId, `Extra user list ${userId}`],
+      );
+      const userListId = userListRows[0].id as string;
+      await client.query(
+        `insert into user_word_list_items (list_id, word_id) values ($1, $2)`,
+        [userListId, defaultEntry],
+      );
+      expect(await sourceEntries(client, userId, {}, userListId, "user"))
+        .toEqual([defaultEntry]);
+      const otherUserId = randomUUID();
+      await ensureUserWithSettings(client, otherUserId);
+      expect(await sourceEntries(client, otherUserId, {}, userListId, "user"))
+        .toEqual([]);
 
       const { rows: sourceRows } = await client.query(
         `insert into learning_sources (

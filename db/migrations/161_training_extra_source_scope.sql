@@ -232,6 +232,13 @@ BEGIN
                    p_user_id,
                    node.entry_id
                )
+               AND (
+                   SELECT count(*)
+                     FROM private.platform_v2_content_nodes AS explanation
+                    WHERE explanation.parent_content_node_id = node.id
+                      AND explanation.kind = 'idiom-explanation'
+                      AND explanation.binding_state = 'active'
+               ) = 1
                AND EXISTS (
                    SELECT 1
                      FROM private.platform_v2_content_nodes AS explanation
@@ -505,8 +512,8 @@ BEGIN
         v_now
     );
 
-    -- Candidate ordering and eligibility remain owned by migration 154. The
-    -- loop pages until it has enough candidates from both immediate queues.
+    -- The filtered candidate reader orders each immediate queue. The loop
+    -- pages until it has enough candidates from both queues.
     -- The candidate RPC sorts practice last; once that tail is observed there
     -- cannot be another new/review row, so the loop does not scan the whole
     -- future-practice pool.
@@ -552,7 +559,7 @@ BEGIN
         v_candidate_offset := v_candidate_offset + v_candidate_page_size;
     END LOOP;
 
-    -- Reuse the learner's soft new/review preference. It is a preference for
+    -- Apply the selected soft new/review rhythm. It is a preference for
     -- ordering, never a quota: whichever category is available is used.
     FOR v_candidate IN SELECT item FROM unnest(v_candidates) AS item LOOP
         IF v_candidate->>'queueSource' = 'new' THEN
