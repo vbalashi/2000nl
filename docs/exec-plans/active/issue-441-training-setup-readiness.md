@@ -44,8 +44,14 @@ paths can create or mutate a session.
   route-mocked local QA evidence, not production latency evidence.
 - Local Auth/PostgREST Start/reload/resume evidence is recorded in PR #445; it
   confirmed the same active session/card but did not capture member-ID equality.
+- Direct auth-expiry/logout coverage is still open. The turn-controller tests
+  cover unmount cleanup; they do not simulate the auth session expiring while
+  Training is mounted.
 - Desktop/mobile QA captures still need product-owner review against the
   currently approved visuals. The checked-in Playwright captures include the
   Next.js development badge and are not approval screenshots.
 - The duplicate same-identity projection handoff remains owned by #442; this
   issue does not change cache/session ownership or claim a first-card speedup.
+  The current route-mocked A→B→A identities have no matched main-vs-branch
+  before/after comparison yet; do not treat them as production counts or as
+  evidence that the duplicate request was eliminated.
