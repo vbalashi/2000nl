@@ -508,3 +508,57 @@ For `04:17:25Z–04:17:55Z`, the verified Supabase project's unified logs return
 Together with the 1,674.470 ms call on backend `2266384`, the result confirms that first-call PostgreSQL execution varies across distinct backends and can cross the two-second deployment gate without a reported wait event. Identical buffer/temp-block aggregates suggest the visible data-access work is similar, but they do not identify which internal function or execution state accounts for the timing difference. The available logs still lack per-request database CPU, memory, disk, and nested-function timing. Keep #413 as the immediate rollout gate; do not raise the timeout, retry deployment unchanged, or infer that dedicated compute is required. The next useful step is to check whether the NUC runner's dedicated diagnostic connection permits transaction-local nested timing; if not, choose another privacy-safe attribution method without changing project-wide settings.
 
 A separate read-only settings/catalog query through the Supabase MCP returned `track_functions=none`, `pg_stat_statements.track=top`, the `pg_stat_statements` extension installed, and no `pg_stat_user_functions` row for `private.training_scheduler_candidates_v2`. A transaction-local `set_config('track_functions','all',true)` probe through that same MCP was rejected with SQLSTATE `42501` (`permission denied to set parameter "track_functions"`); no database setting was changed. The currently available MCP role therefore cannot provide nested function timing this way. Any further attempt needs a separately authorized diagnostic connection or another privacy-safe method; do not change project-wide production settings for this investigation.
+
+## Production nested-function attribution (2026-09-24)
+
+The existing NUC diagnostic connection was verified as the expected Supabase
+project (`lliwdcpuuzjmxyzrjtoz`) through the transaction pooler in eu-west-1;
+it is distinct from the less-privileged MCP role. A one-second read-only
+permission probe confirmed this connection accepts `SET LOCAL
+track_functions = 'all'`. A disposable local Supabase transaction confirmed
+that `pg_stat_xact_user_functions` reports nested timing before rollback.
+Neither check changed a project-wide setting.
+
+One production read-only transaction then enabled that setting locally, kept
+JIT off, used only the dedicated QA identity, and bounded the six-argument
+public plan call at 3,000 ms for attribution. Its backend was PID `2270559`,
+started `2026-09-24T05:23:39.763406Z`. The PostgreSQL EXPLAIN execution was
+**2,038.121 ms**, planning **0.120 ms**, with 8,440 shared hits / zero reads
+and 280/564 temporary read/write blocks. Transaction-local function timing:
+
+| Function | Calls | Total | Self |
+| --- | ---: | ---: | ---: |
+| `public.get_training_session_plan` | 1 | 2,036.780 ms | 34.972 ms |
+| `private.training_scheduler_candidates_v2` | 1 | 1,927.420 ms | **1,917.624 ms** |
+| `private.training_filter_target_date` | 2 | 74.838 ms | 1.502 ms |
+| `private.training_filter_target_date_at` | 2 | 68.546 ms | 2.207 ms |
+| `private.training_user_timezone_v1` | 9 | 62.496 ms | 57.673 ms |
+
+The dominant time is inside the candidate helper's **self** time, which
+includes its SQL execution and unreported internal planning/initialization;
+these counters do not distinguish those subparts or prove database-host
+resource pressure. The function totals overlap across callers, so they must
+not be summed. Instrumenting function calls adds some overhead, and this
+3,000 ms diagnostic is not an unchanged replay of the 2,000 ms deployment
+gate. It nevertheless localizes the near-threshold execution far more tightly
+than the outer EXPLAIN or aggregate logs. No learner/card payload or credential
+was printed, no progress action was submitted, and the transaction rolled back.
+
+The next probe should compare first and immediate repeat calls on the **same
+backend**, with per-call `pg_stat_xact_user_functions` deltas, and then inspect
+the candidate helper's inner SQL plan or compilation behavior. Do not change
+the release gate, global DB settings, or compute size on this evidence alone.
+
+That same-backend comparison was subsequently run in a single read-only
+transaction on PID `2270559` (identical backend start). It measured the public
+plan at **232.519 ms** on the first invocation of this transaction and
+**175.354 ms** on the immediate second invocation. The candidate helper's
+per-call self time was **199.699 ms** and **171.465 ms** respectively. The
+backend had already executed the 2,038 ms instrumented call above. Thus the
+expensive candidate self time was absent when that physical backend was reused,
+even though each invocation still executed the same function. This supports a
+backend-local first-use/idle effect but does not yet separate SQL statement
+planning from execution or short-lived managed-host pressure at the first use.
+`training_scheduler_candidates_v2` is a SQL-language, security-definer helper
+with a large CTE query; its `self_time` covers the inner query. Next inspect
+its actual inner plan/compilation on a slow first use before changing SQL.
