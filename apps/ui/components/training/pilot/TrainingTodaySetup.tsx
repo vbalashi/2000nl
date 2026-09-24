@@ -101,6 +101,7 @@ type Props = {
   onRetryCard?: () => void;
   /** A saved local queue was superseded by a deliberate start elsewhere. */
   replacementWarning?: boolean;
+  hasOwnedSession?: boolean;
   activeSessionLabel?: string;
   onContinue: () => void;
   onStart: (
@@ -463,6 +464,7 @@ export function TrainingTodaySetup({
   onRetryResume,
   onRetryCard,
   replacementWarning = false,
+  hasOwnedSession = true,
   activeSessionLabel,
   onContinue,
   onStart,
@@ -657,7 +659,8 @@ export function TrainingTodaySetup({
             ) : null}
           </header>
 
-          <section className="rounded-2xl border border-indigo-500/60 bg-indigo-500/10 p-5 md:p-7">
+          {hasOwnedSession ? (
+            <section className="rounded-2xl border border-indigo-500/60 bg-indigo-500/10 p-5 md:p-7">
             <p className="font-mono text-xs font-bold tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
               {t.active}
             </p>
@@ -679,7 +682,8 @@ export function TrainingTodaySetup({
                 {t.continue} <span aria-hidden="true">→</span>
               </button>
             </div>
-          </section>
+            </section>
+          ) : null}
 
           <section className="pt-1">
             <div className="flex items-center justify-between gap-4">

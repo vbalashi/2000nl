@@ -1489,7 +1489,7 @@ function TrainingScreenContent({
       if (recovery === "skipped") await loadNextWord();
     },
   });
-  const { continueSession, resumeSession, returnToToday } = trainingPilot;
+  const { continueSession, resumeSession, returnToToday, startSession } = trainingPilot;
 
   useEffect(() => {
     if (
@@ -1906,6 +1906,12 @@ function TrainingScreenContent({
     };
     const sessionId = trainingSessionIdRef.current;
     if (!sessionId || !user?.id) {
+      // A saved run from another tab is not this tab's authority. Continue is
+      // an explicit claim of a new run, never a session-less card action.
+      if (trainingTodaySetupEnabled && user?.id) {
+        void startSession(trainingPilot.initialDraft);
+        return;
+      }
       continueCurrentSession();
       return;
     }
@@ -1918,6 +1924,9 @@ function TrainingScreenContent({
     currentWord,
     resetFocusQueueState,
     continueSession,
+    startSession,
+    trainingPilot.initialDraft,
+    trainingTodaySetupEnabled,
     user?.id,
     validateTrainingSessionAuthority,
   ]);
@@ -2136,7 +2145,13 @@ function TrainingScreenContent({
               !sessionResumeResolved ||
               loadingWord
             }
-            continueDisabled={cardPreparationStatus !== "ready"}
+            continueDisabled={
+              cardPreparationStatus !== "ready" ||
+              (!trainingSessionId &&
+                (trainingSetupPrerequisites !== "ready" ||
+                  trainingPilot.scenarioLoading ||
+                  trainingPilot.startPending))
+            }
             onRetryStats={() => void loadStats(undefined, "RETRY")}
             onRetryCard={() => void trainingPilot.retry()}
             scenarios={trainingPilot.scenarioOptions}
@@ -2145,6 +2160,7 @@ function TrainingScreenContent({
             startPending={trainingPilot.startPending}
             scenarioLoading={trainingPilot.scenarioLoading}
             replacementWarning={sessionReplacementWarning}
+            hasOwnedSession={Boolean(trainingSessionId)}
             activeSessionLabel={wordListLabel || undefined}
             onContinue={handleContinueTrainingSession}
             onStart={trainingPilot.startSession}
@@ -2174,6 +2190,7 @@ function TrainingScreenContent({
               navigationBlocked ||
               acceptedTransitionLoadStalled ||
               sessionAuthorityChecking ||
+              (trainingTodaySetupEnabled && !trainingSessionId) ||
               returnedToTraining
             }
             focusOnPresentation={isSubsequentSessionCard}

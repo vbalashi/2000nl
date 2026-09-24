@@ -1320,7 +1320,7 @@ test("Statistics and Settings destinations preserve the current Training turn", 
   expectOnlyBackgroundSelectionSince(trainingFetchCount);
 });
 
-test("first-pilot Training opens on Today and Continue reveals the mounted card", async () => {
+test("first-pilot Training opens on Today and Start reveals the mounted card", async () => {
   render(
     <TrainingScreen
       user={user}
@@ -1343,7 +1343,7 @@ test("first-pilot Training opens on Today and Continue reveals the mounted card"
   ).not.toBeInTheDocument();
 
   fireEvent.click(
-    screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+    screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
   );
   expect(
     await screen.findByRole("heading", { name: "huis" }),
@@ -1377,10 +1377,56 @@ test("first-pilot Training opens on Today and Continue reveals the mounted card"
   ).toBeInTheDocument();
 
   fireEvent.click(
-    screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+    screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
   );
   await waitFor(() =>
-    expect(fetchTrainingSessionPlan).toHaveBeenCalledTimes(2),
+    expect(startTrainingSession).toHaveBeenCalledTimes(2),
+  );
+});
+
+test("a foreign-owner tab offers Start and claims a run before showing an actionable card", async () => {
+  window.localStorage.setItem(
+    "2000nl:training-session:user-1",
+    JSON.stringify({
+      sessionId: "session-other-tab",
+      userId: "user-1",
+      ownerId: "other-tab-owner",
+      languageCode: "nl",
+      listId: null,
+      listType: null,
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 10,
+    }),
+  );
+  let resolveStart!: (session: typeof defaultStartedTrainingSession) => void;
+  startTrainingSession.mockImplementationOnce(
+    () => new Promise((resolve) => { resolveStart = resolve; }),
+  );
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  const startButton = await screen.findByRole("button", {
+    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
+  expect(screen.queryByRole("button", {
+    name: /Continue session|Sessie doorgaan/,
+  })).not.toBeInTheDocument();
+
+  fireEvent.click(startButton);
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  expect(screen.queryByTestId("mock-training-sense-card-v2")).not.toBeInTheDocument();
+  expect(mockV2ProgressAction).not.toHaveBeenCalled();
+
+  await act(async () => resolveStart(defaultStartedTrainingSession));
+  const card = await screen.findByTestId("mock-training-sense-card-v2");
+  expect(card).toHaveAttribute(
+    "data-training-session-id",
+    defaultStartedTrainingSession.sessionId,
   );
 });
 
@@ -1423,8 +1469,9 @@ test("delayed first card keeps Today usable and guards Start and Continue until 
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+      screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
     ).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Continue session|Sessie doorgaan/ })).not.toBeInTheDocument();
     expect(screen.queryByTestId("training-card-frame")).not.toBeInTheDocument();
     expect(screen.queryByText("Laden…")).not.toBeInTheDocument();
     expect(mockV2ProgressAction).not.toHaveBeenCalled();
@@ -1445,7 +1492,7 @@ test("delayed first card keeps Today usable and guards Start and Continue until 
 
     fireEvent.click(screen.getByRole("button", { name: /Back to Today|Terug naar Vandaag/ }));
     fireEvent.click(
-      screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+      screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
     );
     expect(
       await screen.findByRole("heading", { name: "huis" }),
@@ -1666,7 +1713,7 @@ test("setup and prepared card stay usable while scoped stats are still pending",
   ).toHaveLength(2);
   await waitFor(() =>
     expect(
-      screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+      screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
     ).toBeEnabled(),
   );
   expect(startTrainingSession).not.toHaveBeenCalled();
@@ -3554,11 +3601,11 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
 
     await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
-    const continueSession = screen.getByRole("button", {
-      name: /Continue session|Sessie doorgaan/,
+    const startSession = screen.getByRole("button", {
+      name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
     });
-    await waitFor(() => expect(continueSession).toBeEnabled());
-    fireEvent.click(continueSession);
+    await waitFor(() => expect(startSession).toBeEnabled());
+    fireEvent.click(startSession);
 
     await screen.findByTestId("mock-training-sense-card-v2");
     const scrollRegion = await screen.findByTestId(
@@ -3649,11 +3696,11 @@ test("approved Training History control requests the authoritative destination b
     );
 
     await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
-    const continueSession = screen.getByRole("button", {
-      name: /Continue session|Sessie doorgaan/,
+    const startSession = screen.getByRole("button", {
+      name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
     });
-    await waitFor(() => expect(continueSession).toBeEnabled());
-    fireEvent.click(continueSession);
+    await waitFor(() => expect(startSession).toBeEnabled());
+    fireEvent.click(startSession);
     await screen.findByTestId("mock-training-sense-card-v2");
 
     const history = screen.getByRole("button", { name: "History" });
@@ -3667,6 +3714,21 @@ test("approved Training History control requests the authoritative destination b
 });
 
 test("keyboard return from History restores focus to its stable Training trigger", async () => {
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...defaultStartedTrainingSession,
+    runStatus: "active",
+    runGeneration: 1,
+    sessionSize: 10,
+    requestedTotal: 2,
+    members: [{
+      ordinal: 1,
+      entryId: mockWord.id,
+      cardTypeId: "word-to-definition",
+      queueSource: "new",
+      consumedAt: null,
+      unavailableAt: null,
+    }],
+  });
   prefetchPlatformV2TrainingEntry.mockReset();
   prefetchPlatformV2TrainingEntry.mockResolvedValue({
     state: "ready",
@@ -3693,12 +3755,12 @@ test("keyboard return from History restores focus to its stable Training trigger
     await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+        screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
       ).toBeEnabled(),
     );
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Continue session|Sessie doorgaan/,
+        name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
       }),
     );
     await screen.findByTestId("mock-training-sense-card-v2");
@@ -3733,11 +3795,11 @@ test("V2 loading retains the existing session chrome and footer", async () => {
   try {
     render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
     await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
-    const continueSession = screen.getByRole("button", {
-      name: /Continue session|Sessie doorgaan/,
+    const startSession = screen.getByRole("button", {
+      name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
     });
-    await waitFor(() => expect(continueSession).toBeEnabled());
-    fireEvent.click(continueSession);
+    await waitFor(() => expect(startSession).toBeEnabled());
+    fireEvent.click(startSession);
 
     expect(
       await screen.findByTestId("training-v2-loading"),
