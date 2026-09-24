@@ -457,6 +457,33 @@ BEGIN
         RAISE EXCEPTION 'invalid idiom training session size: %', v_size;
     END IF;
     v_requested_total := v_size::integer;
+
+    -- These arrays describe selections, not an order. Canonicalize before
+    -- storing and hashing so a reordered retry returns the original run.
+    IF jsonb_typeof(v_filter->'partOfSpeech') = 'array' THEN
+        v_filter := jsonb_set(v_filter, '{partOfSpeech}', (
+            SELECT COALESCE(jsonb_agg(value ORDER BY value), '[]'::jsonb)
+            FROM (SELECT DISTINCT value FROM jsonb_array_elements_text(
+                v_filter->'partOfSpeech'
+            ) AS item(value)) AS selected
+        ));
+    END IF;
+    IF jsonb_typeof(v_filter->'nounArticles') = 'array' THEN
+        v_filter := jsonb_set(v_filter, '{nounArticles}', (
+            SELECT COALESCE(jsonb_agg(value ORDER BY value), '[]'::jsonb)
+            FROM (SELECT DISTINCT value FROM jsonb_array_elements_text(
+                v_filter->'nounArticles'
+            ) AS item(value)) AS selected
+        ));
+    END IF;
+    IF jsonb_typeof(v_filter #> '{dictionaryScope,dictionaryIds}') = 'array' THEN
+        v_filter := jsonb_set(v_filter, '{dictionaryScope,dictionaryIds}', (
+            SELECT COALESCE(jsonb_agg(value ORDER BY value), '[]'::jsonb)
+            FROM (SELECT DISTINCT value FROM jsonb_array_elements_text(
+                v_filter #> '{dictionaryScope,dictionaryIds}'
+            ) AS item(value)) AS selected
+        ));
+    END IF;
     v_request_hash := encode(digest(jsonb_build_object(
         'exerciseFamily', 'idiom',
         'direction', p_direction,
@@ -694,5 +721,8 @@ GRANT EXECUTE ON FUNCTION public.start_platform_v2_idiom_training_session(
     uuid, text, text, uuid, uuid, text, text, jsonb, integer
 )
     TO authenticated;
+
+-- PostgREST must see the new named-argument overload before app traffic uses it.
+NOTIFY pgrst, 'reload schema';
 
 COMMIT;

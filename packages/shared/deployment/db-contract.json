@@ -210,7 +210,7 @@
     {
       "migrationId": 161,
       "file": "db/migrations/161_training_extra_source_scope.sql",
-      "sha256": "a52109d8d3f87f15a37091b70aa3f6095c805d9ade6a3e9eb56aa6925df356a5"
+      "sha256": "8979bdbdd0dfc598581eeadbde7382d0d8f0b60093de3ce4c0e6d75ac79dad7c"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-161.sql",

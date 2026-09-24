@@ -8,6 +8,10 @@ DECLARE
   v_scope text;
   v_candidates text;
   v_start text;
+  v_public_oid oid := 'public.start_platform_v2_idiom_training_session(uuid,text,text,uuid,uuid,text,text,jsonb,integer)'::regprocedure;
+  v_scope_oid oid := 'private.training_extra_source_entries_v1(uuid,uuid,text,jsonb)'::regprocedure;
+  v_candidates_oid oid := 'private.platform_v2_idiom_exercise_candidates_v2(uuid,text,integer,integer,uuid,text,text,jsonb)'::regprocedure;
+  v_start_oid oid := 'private.start_platform_v2_idiom_training_session_v2(uuid,text,text,uuid,uuid,text,text,jsonb,integer)'::regprocedure;
 BEGIN
   SELECT pg_get_functiondef(
     'private.training_extra_source_entries_v1(uuid,uuid,text,jsonb)'::regprocedure
@@ -30,6 +34,23 @@ BEGIN
      OR v_start IS NULL
      OR v_start NOT ILIKE '%platform_v2_idiom_exercise_candidates_v2%'
      OR v_start NOT ILIKE '%trainingFilter%'
+     OR NOT EXISTS (
+       SELECT 1 FROM pg_proc AS fn
+       WHERE fn.oid = v_public_oid AND fn.prosecdef
+         AND fn.proconfig @> ARRAY['search_path=public, private, extensions, pg_temp']
+     )
+     OR NOT EXISTS (
+       SELECT 1 FROM pg_proc AS fn
+       WHERE fn.oid = v_scope_oid AND fn.prosecdef
+         AND fn.proconfig @> ARRAY['search_path=public, private, pg_temp']
+     )
+     OR NOT EXISTS (
+       SELECT 1 FROM pg_proc AS fn
+       WHERE fn.oid IN (v_candidates_oid, v_start_oid) AND fn.prosecdef
+         AND fn.proconfig @> ARRAY['search_path=public, private, extensions, pg_temp']
+       GROUP BY fn.prosecdef
+       HAVING count(*) = 2
+     )
      OR NOT has_function_privilege(
        'authenticated',
        'public.start_platform_v2_idiom_training_session(uuid,text,text,uuid,uuid,text,text,jsonb,integer)',
@@ -40,10 +61,13 @@ BEGIN
        'public.start_platform_v2_idiom_training_session(uuid,text,text,uuid,uuid,text,text,jsonb,integer)',
        'EXECUTE'
      )
-     OR has_function_privilege(
-       'authenticated',
-       'private.training_extra_source_entries_v1(uuid,uuid,text,jsonb)',
-       'EXECUTE'
+     OR has_function_privilege('service_role', v_public_oid, 'EXECUTE')
+     OR EXISTS (
+       SELECT 1
+       FROM unnest(ARRAY[v_scope_oid, v_candidates_oid, v_start_oid]) AS fn(oid)
+       WHERE has_function_privilege('anon', fn.oid, 'EXECUTE')
+          OR has_function_privilege('authenticated', fn.oid, 'EXECUTE')
+          OR has_function_privilege('service_role', fn.oid, 'EXECUTE')
      ) THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed extra-source-scope';
   END IF;

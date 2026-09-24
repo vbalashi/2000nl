@@ -69,13 +69,17 @@ async function sourceEntries(
            ($1, 'nl', $3, 'bn', false, '{}'::jsonb),
            ($1, 'nl', $4, 'ww', false, '{}'::jsonb),
            ($2, 'nl', $5, 'bn', false, '{}'::jsonb)
-         returning id, part_of_speech`,
+         returning id, dictionary_id, part_of_speech`,
         [accessibleDictionary, unavailableDictionary,
           `extra-adjective-${userId}`, `extra-verb-${userId}`,
           `extra-hidden-${userId}`],
       );
-      const adjective = entryRows.find((row) => row.part_of_speech === "bn")?.id as string;
-      const verb = entryRows.find((row) => row.part_of_speech === "ww")?.id as string;
+      const adjective = entryRows.find(
+        (row) => row.dictionary_id === accessibleDictionary && row.part_of_speech === "bn",
+      )?.id as string;
+      const verb = entryRows.find(
+        (row) => row.dictionary_id === accessibleDictionary && row.part_of_speech === "ww",
+      )?.id as string;
       const selected = {
         dictionaryScope: {
           mode: "selected", languageCode: "nl",
@@ -123,7 +127,7 @@ async function sourceEntries(
       );
       expect(idiomRows.map((row) => row.item.entryId)).toEqual([adjective]);
 
-      const startFilter = { ...selected, partOfSpeech: ["bn"] };
+      const startFilter = { ...selected, partOfSpeech: ["bn", "zn"] };
       const requestId = randomUUID();
       const start = async (filter = startFilter) => {
         await client.query("set local role authenticated");
@@ -146,6 +150,14 @@ async function sourceEntries(
       });
       const { rows: retryRows } = await start();
       expect(retryRows[0].session.sessionId).toBe(sessionId);
+      const { rows: reorderedRetryRows } = await start({
+        dictionaryScope: {
+          ...selected.dictionaryScope,
+          dictionaryIds: [...selected.dictionaryScope.dictionaryIds].reverse(),
+        },
+        partOfSpeech: ["zn", "bn", "bn"],
+      });
+      expect(reorderedRetryRows[0].session.sessionId).toBe(sessionId);
       const { rows: memberRows } = await client.query(
         `select target.entry_id from training_session_exercise_members member
          join private.platform_v2_training_exercise_targets target
@@ -160,7 +172,15 @@ async function sourceEntries(
         [sessionId],
       );
       expect(storedRows[0]).toEqual({
-        training_filter: startFilter, new_review_ratio: 3, card_filter: "new",
+        training_filter: {
+          ...startFilter,
+          dictionaryScope: {
+            ...startFilter.dictionaryScope,
+            dictionaryIds: [...startFilter.dictionaryScope.dictionaryIds].sort(),
+          },
+        },
+        new_review_ratio: 3,
+        card_filter: "new",
       });
       await client.query("savepoint changed_idiom_start_request");
       await client.query("set local role authenticated");
