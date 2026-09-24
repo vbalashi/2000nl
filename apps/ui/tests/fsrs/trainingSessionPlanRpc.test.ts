@@ -2498,20 +2498,24 @@ describeDb("authoritative training session plan RPC", () => {
           `insert into word_entries (
              dictionary_id, language_code, headword, part_of_speech,
              is_nt2_2000, raw
-           ) values ($1, 'nl', $2, 'noun', false, '{}'::jsonb) returning id`,
+           ) values ($1, 'nl', $2, 'zn', false, '{}'::jsonb) returning id`,
           [id, `material-${userId}-${index}`],
         );
         dictionaries.push({ id, entryId: entryRows[0].id as string });
       }
 
-      const candidates = async (scope: unknown, listId: string | null = null) => {
+      const candidates = async (
+        scope: unknown,
+        listId: string | null = null,
+        lexicalFilter: Record<string, unknown> = {},
+      ) => {
         const { rows } = await client.query(
           `select entry_id from private.training_scheduler_candidates_v2(
              $1, ARRAY['word-to-definition']::text[], $2::uuid, 'curated',
              'new', 'auto', ARRAY[]::uuid[], ARRAY[]::text[], $3::jsonb,
              false, false
            ) where queue_source = 'new'`,
-          [userId, listId, JSON.stringify({ dictionaryScope: scope })],
+          [userId, listId, JSON.stringify({ dictionaryScope: scope, ...lexicalFilter })],
         );
         return rows.map((row) => row.entry_id as string);
       };
@@ -2525,6 +2529,8 @@ describeDb("authoritative training session plan RPC", () => {
         dictionaryIds: [dictionaries[0].id, dictionaries[2].id],
       };
       expect(await candidates(subset)).toEqual([dictionaries[0].entryId]);
+      expect(await candidates(subset, null, { partOfSpeech: ["zn"] })).toEqual([dictionaries[0].entryId]);
+      expect(await candidates(subset, null, { partOfSpeech: ["bn"] })).toEqual([]);
       expect(await candidates({ mode: "selected", languageCode: "nl", dictionaryIds: [dictionaries[2].id] })).toEqual([]);
       expect(await candidates({ mode: "all", languageCode: "en" })).toEqual([]);
       expect(await candidates(all, randomUUID())).toEqual([]);
