@@ -209,7 +209,7 @@ Migration 159 narrows ordinary-meaning predecessor ordering to source groups
 present in the requested Training scope while retaining out-of-scope siblings
 within those groups. It preserves the lexical filters, reference clock, grants,
 queue policy, and existing learner state. Its postflight checks the scoped
-scheduler definition, and the unchanged 2,000 ms pre-switch read runs before
+scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
@@ -263,9 +263,15 @@ deployment ledger.
   sibling-count index, application compatibility, and the bounded health signal.
 - Before compatibility is advertised, the gate executes the checksum-pinned
   session-plan and actual next-card selector as exactly one `test@2000nl.test`
-  principal inside `BEGIN READ ONLY`, with one 2,000 ms statement timeout. It
-  discards only the deployment session's cached plans and cannot review,
-  report, mark known, or otherwise mutate learner state.
+  principal inside `BEGIN READ ONLY`. It discards only the deployment session's
+  cached plans and cannot review, report, mark known, or otherwise mutate
+  learner state. The SQL must succeed within a 10,000 ms safety timeout.
+- The same read is measured against a 2,000 ms user-experience budget. A
+  successful read above that budget emits `performance-warning` with elapsed,
+  budget, and hard timeout values, then permits the app switch. This applies
+  to scheduler migrations and no-op/UI-only releases alike: SQL success and
+  postflight establish compatibility; a slow first read alone does not.
+  Issue #413 remains open until the cold path is reliably fast.
 - The pre-switch read runs on no-op retries too. This is deliberate: forward
   migrations commit independently, so a timed-out first read must not be
   bypassed merely because the retry sees those migrations in the ledger.
@@ -306,7 +312,8 @@ It stops without switching the app when the manifest is held, the pinned client
 preflight fails, the baseline is too old, the DB is newer than the app, a
 checksum differs, a migration fails, or postflight fails. Client preflight also
 runs before building. A missing/ambiguous QA identity, read-only violation, or
-selector read exceeding 2,000 ms also stops before the app switch. The old app
+selector SQL failure or a 10,000 ms safety timeout also stops before the app
+switch. A successful read over 2,000 ms is a logged performance warning. The old app
 continues serving; rerunning the same immutable deployment repeats the read
 probe even when every forward migration is now a no-op. After the container
 switch, deep health must report:
@@ -318,6 +325,9 @@ switch, deep health must report:
 
 Health exposes only contract IDs, migration numbers, and compatibility. It does
 not expose function definitions, grants, schema names, checksums, or credentials.
+For an over-budget release, the deployment log retains the measured warning and
+the post-switch deep-health receipt confirms that the exact app/DB contract
+became live; it does not claim that the latency issue was fixed.
 
 ## Rollback and recovery ownership
 
@@ -353,8 +363,9 @@ CI proves that recovery path against a real disposable PostgreSQL database: a
 fixture fails after visible DDL, both the DDL and migration ledger row are
 verified absent, then the repaired immutable input succeeds on the same
 database and its next replay is verified as a no-op. Separate real-PostgreSQL
-coverage proves that the pre-switch probe rejects writes, times out at its
-declared bound, reruns after committed migrations, and preserves all learner
+coverage proves that the pre-switch probe rejects writes, warns after a
+successful over-budget read, times out at its declared safety bound, reruns
+after committed migrations, and preserves all learner
 state for the exact QA identity.
 
 ## First-call latency ownership
@@ -376,8 +387,9 @@ An index-only version fell back to 10,066 after distributed NT2 heap pages were
 dirtied; the synchronized projection stayed at 1,825 blocks and 16.647 ms after
 both source and projection visibility were invalidated. Queue counts remained
 identical across single-mode `both`/`new`/`review` and multi-mode cases. CI keeps
-a 4,000-block and 2,000-ms fail-closed budget; the production pre-switch probe
-remains exactly read-only and retains its two-second timeout.
+a 4,000-block and 2,000-ms benchmark budget. The production pre-switch probe
+remains exactly read-only; #454 separates the two-second performance warning
+from its 10-second safety timeout so #413 does not block a healthy pilot release.
 
 Migration 127 takes a `SHARE ROW EXCLUSIVE` source-table lock before installing
 the projection trigger and taking the backfill snapshot. Training and other

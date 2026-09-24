@@ -153,7 +153,9 @@ describe("NUC database contract deployment", () => {
     const gate = workflow.indexOf("deploy_db_contract.mjs apply");
     const switchApp = workflow.indexOf("docker compose up -d --no-build ui", gate);
 
-    expect(contract.preSwitchReadProbe.statementTimeoutMs).toBe(2_000);
+    expect(contract.preSwitchReadProbe.statementTimeoutMs).toBe(10_000);
+    expect(contract.preSwitchReadProbe.performanceBudgetMs).toBe(2_000);
+    expect(contract.preSwitchReadProbe.overBudgetAction).toBe("warn");
     expect(createHash("sha256").update(probe).digest("hex")).toBe(
       contract.preSwitchReadProbe.sha256,
     );
@@ -173,6 +175,7 @@ describe("NUC database contract deployment", () => {
     expect(probeSource).not.toMatch(/\b(?:INSERT|UPDATE|DELETE|MERGE|TRUNCATE)\b/i);
     expect(runner).toContain("BEGIN READ ONLY");
     expect(runner).toContain("pre-switch-read-probe passed");
+    expect(runner).toContain("performance-warning successful read exceeded");
     expect(runner).toContain("SET LOCAL jit = off");
     expect(readinessDiagnostic).toContain("SET LOCAL jit = off");
     expect(driftWorkflow).toContain("pre_switch_read_probe.integration.test.mjs");
