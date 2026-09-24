@@ -125,6 +125,21 @@ unfiltered compatibility, and latched membership. The default unfiltered
 read-probe remains unchanged; the new SQL scope still must pass its bounded
 session-plan CI measurement before rollout.
 
+Migration 158 enables RLS on `user_training_scopes` and removes table-level and
+column-level privileges from `PUBLIC`, `anon`, and `authenticated`. The
+application has no direct table callers; authenticated reads and writes remain
+available through `get_active_training_scope` and
+`update_active_training_scope`, whose `SECURITY DEFINER` boundary verifies
+`p_user_id` against `auth.uid()`. The migration deliberately creates no direct
+table policy and does not force RLS, so the existing owner-run RPCs continue to
+work. It changes no user rows and leaves service-role privileges untouched.
+If the app health gate fails after this migration, restore the previous app
+image through the normal deployment workflow and leave migration 158 in place;
+the previous app already uses the same scoped RPCs. Do not reverse the grants
+or disable RLS as an app rollback, because that would silently reopen the
+exposure. If an app image cannot use the preserved RPC contract, stop the
+rollout and repair that image before switching traffic.
+
 Migration 153 adds one active first-party Training run per learner. It preserves
 ordinary queue membership and durable FSRS/history, but makes a superseded
 queue non-actionable before its next card can be projected or graded. It also
@@ -179,7 +194,7 @@ supported. Do not implement the cutoff as mutable operator SQL or edit migration
 153 after deployment; advance the contract, checksum, postflight and rollback
 runbook together.
 
-An enabled deployment must apply or verify migrations 123 through 157 in order
+An enabled deployment must apply or verify migrations 123 through 158 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

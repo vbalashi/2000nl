@@ -29,6 +29,61 @@ begin
     raise exception 'missing auth.uid()';
   end if;
 
+  if not exists (
+    select 1
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public'
+       and c.relname = 'user_training_scopes'
+       and c.relrowsecurity
+       and not c.relforcerowsecurity
+  ) then
+    raise exception 'user_training_scopes must enable RLS without forcing it on its owner RPCs';
+  end if;
+
+  if exists (
+    select 1
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public'
+       and c.relname = 'user_training_scopes'
+       and (
+         has_table_privilege('anon', c.oid, 'select')
+         or has_table_privilege('anon', c.oid, 'insert')
+         or has_table_privilege('anon', c.oid, 'update')
+         or has_table_privilege('anon', c.oid, 'delete')
+         or has_table_privilege('authenticated', c.oid, 'select')
+         or has_table_privilege('authenticated', c.oid, 'insert')
+         or has_table_privilege('authenticated', c.oid, 'update')
+         or has_table_privilege('authenticated', c.oid, 'delete')
+       )
+  ) then
+    raise exception 'user_training_scopes must not be directly accessible by client roles';
+  end if;
+
+  if not has_function_privilege(
+       'authenticated',
+       'public.get_active_training_scope(uuid,text)',
+       'execute'
+     )
+     or not has_function_privilege(
+       'authenticated',
+       'public.update_active_training_scope(uuid,text,uuid,text,text,text,text[],integer)',
+       'execute'
+     )
+     or has_function_privilege(
+       'anon',
+       'public.get_active_training_scope(uuid,text)',
+       'execute'
+     )
+     or has_function_privilege(
+       'anon',
+       'public.update_active_training_scope(uuid,text,uuid,text,text,text,text[],integer)',
+       'execute'
+     ) then
+    raise exception 'user_training_scopes RPC grants do not match the authenticated client boundary';
+  end if;
+
   if to_regprocedure('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[],boolean)') is null then
     raise exception 'missing public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[],boolean)';
   end if;

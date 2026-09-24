@@ -698,15 +698,16 @@ describeDb("active Training run authority", () => {
         card,
         first.sessionId,
       );
+      const staleGradeRejection = expect(staleGradePromise).rejects.toThrow(
+        "training_session_superseded",
+      );
       await waitUntilBlocked(pool, grade.pid);
 
       await startClient.query("commit");
       startClient.release();
       startClient = null;
 
-      await expect(staleGradePromise).rejects.toThrow(
-        "training_session_superseded",
-      );
+      await staleGradeRejection;
       await gradeClient.query("rollback");
       gradeClient.release();
       gradeClient = null;
