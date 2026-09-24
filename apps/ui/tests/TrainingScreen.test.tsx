@@ -1430,6 +1430,41 @@ test("a foreign-owner tab offers Start and claims a run before showing an action
   );
 });
 
+test("a failed run claim leaves the foreign-owner tab on Today without an actionable card", async () => {
+  window.localStorage.setItem(
+    "2000nl:training-session:user-1",
+    JSON.stringify({
+      sessionId: "session-other-tab",
+      userId: "user-1",
+      ownerId: "other-tab-owner",
+      languageCode: "nl",
+      listId: null,
+      listType: null,
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 10,
+    }),
+  );
+  startTrainingSession.mockResolvedValueOnce(null);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  const startButton = await screen.findByRole("button", {
+    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  fireEvent.click(startButton);
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  await waitFor(() => expect(startButton).toBeEnabled());
+  expect(screen.queryByTestId("mock-training-sense-card-v2")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", {
+    name: /Continue session|Sessie doorgaan/,
+  })).not.toBeInTheDocument();
+  expect(mockV2ProgressAction).not.toHaveBeenCalled();
+});
+
 test("delayed first card keeps Today usable and guards Start and Continue until ready", async () => {
   let resolveFirstCard!: (word: typeof mockWord) => void;
   fetchNextTrainingWordByScenario.mockReset();
