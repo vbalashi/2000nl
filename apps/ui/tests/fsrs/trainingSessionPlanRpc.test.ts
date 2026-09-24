@@ -652,6 +652,13 @@ describeDb("authoritative training session plan RPC", () => {
       expect(fourthIntroduction.plannedTotal).toBe(1);
       expect(await memberEntryIds(fourthIntroduction.sessionId)).toEqual([fourth]);
 
+      const selectedSequentialEntries = [
+        ...(await memberEntryIds(firstIntroduction.sessionId)),
+        ...(await memberEntryIds(secondIntroduction.sessionId)),
+        ...(await memberEntryIds(fourthIntroduction.sessionId)),
+      ];
+      expect(selectedSequentialEntries).not.toContain(idiomOnly);
+
       const { rows: legacyRows } = await client.query(
         `insert into word_entries (
            dictionary_id, language_code, headword, meaning_id,
