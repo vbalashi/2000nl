@@ -66,6 +66,7 @@ beforeEach(() => {
 });
 
 test("direct idiom reveals complete content and records the self-assessment", async () => {
+  const dispatch = vi.spyOn(window, "dispatchEvent");
   vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise)
     .mockResolvedValueOnce(candidate)
     .mockResolvedValueOnce({ status: "completed", sessionId: "session-1", completedActions: 1, requestedTotal: 1 });
@@ -74,6 +75,21 @@ test("direct idiom reveals complete content and records the self-assessment", as
 
   render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} />);
   expect(await screen.findByText("ergens helemaal klaar mee zijn")).toBeInTheDocument();
+  const timingDetails = dispatch.mock.calls
+    .map(([event]) => event)
+    .filter(
+      (event): event is CustomEvent =>
+        event instanceof CustomEvent &&
+        event.type === "2000nl:training-transition-timing",
+    )
+    .map((event) => event.detail);
+  expect(timingDetails).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ stage: "idiom.session-next", outcome: "ready" }),
+      expect.objectContaining({ stage: "idiom.content-lookup", outcome: "ready" }),
+      expect.objectContaining({ stage: "transition.total", outcome: "continue-ready" }),
+    ]),
+  );
   expect(screen.getByRole("button", { name: "Show answer" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
   expect(screen.getByText("iets niet meer willen")).toBeInTheDocument();

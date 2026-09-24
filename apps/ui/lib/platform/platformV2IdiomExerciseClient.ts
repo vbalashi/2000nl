@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
 import { platformFetchWithTimeout } from "./platformFetchWithTimeout";
+import { measureTrainingTransitionStage } from "../training/trainingTransitionTiming";
 import type {
   PlatformIdiomExerciseCandidateV2,
   PlatformIdiomExerciseCandidatesResponseV2,
@@ -62,19 +63,21 @@ export type StartPlatformV2IdiomTrainingSessionInput = {
 export async function startPlatformV2IdiomTrainingSession(
   input: StartPlatformV2IdiomTrainingSessionInput,
 ): Promise<PlatformIdiomExerciseSessionV2> {
-  const { data, error } = await supabase.rpc(
-    "start_platform_v2_idiom_training_session",
-    {
-      p_user_id: input.userId,
-      p_direction: input.direction,
-      p_session_size: String(input.sessionSize),
-      p_request_id: input.requestId,
-      p_list_id: input.listId,
-      p_list_type: input.listType,
-      p_card_filter: input.cardFilter,
-      p_training_filter: input.trainingFilter,
-      p_new_review_ratio: input.newReviewRatio,
-    },
+  const { data, error } = await measureTrainingTransitionStage(
+    input.requestId,
+    "idiom.session-start",
+    async () =>
+      await supabase.rpc("start_platform_v2_idiom_training_session", {
+        p_user_id: input.userId,
+        p_direction: input.direction,
+        p_session_size: String(input.sessionSize),
+        p_request_id: input.requestId,
+        p_list_id: input.listId,
+        p_list_type: input.listType,
+        p_card_filter: input.cardFilter,
+        p_training_filter: input.trainingFilter,
+        p_new_review_ratio: input.newReviewRatio,
+      }),
   );
   if (error) throw error;
   const session = parseSession(data);

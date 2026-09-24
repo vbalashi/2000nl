@@ -14,6 +14,12 @@ import type {
 } from "../../../../../packages/shared/types/platformV2";
 import { loadIdiomExerciseContent } from "@/lib/training/idiomExerciseLoader";
 import type { IdiomExerciseContent } from "@/lib/training/idiomExerciseContent";
+import {
+  beginTrainingUserTransition,
+  createTrainingTransitionId,
+  finishTrainingUserTransition,
+  measureTrainingTransitionStage,
+} from "@/lib/training/trainingTransitionTiming";
 
 type Props = {
   userId: string;
@@ -125,8 +131,12 @@ export function TrainingIdiomSession({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(false);
   const actionClientEventIdRef = useRef<string | null>(null);
+  const activeTransitionIdRef = useRef<string | null>(null);
 
   const loadNext = useCallback(async () => {
+    const transitionId = createTrainingTransitionId();
+    activeTransitionIdRef.current = transitionId;
+    beginTrainingUserTransition(transitionId, "continue");
     setLoading(true);
     setError(false);
     setTerminal(null);
@@ -135,16 +145,26 @@ export function TrainingIdiomSession({
     setRevealed(false);
     try {
       for (let attempt = 0; attempt < 8; attempt += 1) {
-        const next = await fetchNextPlatformV2IdiomTrainingSessionExercise(
-          userId,
-          session.sessionId,
+        const next = await measureTrainingTransitionStage(
+          transitionId,
+          "idiom.session-next",
+          () =>
+            fetchNextPlatformV2IdiomTrainingSessionExercise(
+              userId,
+              session.sessionId,
+            ),
         );
         if (next.status === "ready") {
-          const loaded = await loadIdiomExerciseContent({
-            candidate: next,
-            contentLanguageCode,
-            translationTargetLanguageCode,
-          });
+          const loaded = await measureTrainingTransitionStage(
+            transitionId,
+            "idiom.content-lookup",
+            () =>
+              loadIdiomExerciseContent({
+                candidate: next,
+                contentLanguageCode,
+                translationTargetLanguageCode,
+              }),
+          );
           if (loaded.state === "ready") {
             setCandidate(next);
             setContent(loaded.content);
@@ -169,18 +189,44 @@ export function TrainingIdiomSession({
         }
         if (next.status === "completed" || next.status === "exhausted") {
           setTerminal(completedCountRef.current > 0 ? "complete" : "empty");
+          activeTransitionIdRef.current = null;
+          finishTrainingUserTransition(transitionId, `terminal-${next.status}`);
           return;
         }
         setError(true);
+        activeTransitionIdRef.current = null;
+        finishTrainingUserTransition(transitionId, `error-${next.status}`);
         return;
       }
       setError(true);
+      activeTransitionIdRef.current = null;
+      finishTrainingUserTransition(transitionId, "error-retries-exhausted");
     } catch {
       setError(true);
+      activeTransitionIdRef.current = null;
+      finishTrainingUserTransition(transitionId, "error-request");
     } finally {
       setLoading(false);
     }
   }, [contentLanguageCode, session.sessionId, translationTargetLanguageCode, userId]);
+
+  useEffect(() => {
+    if (!candidate || !content) return;
+    const transitionId = activeTransitionIdRef.current;
+    if (!transitionId) return;
+    activeTransitionIdRef.current = null;
+    finishTrainingUserTransition(transitionId, "ready");
+  }, [candidate, content]);
+
+  useEffect(
+    () => () => {
+      const transitionId = activeTransitionIdRef.current;
+      if (!transitionId) return;
+      activeTransitionIdRef.current = null;
+      finishTrainingUserTransition(transitionId, "cancelled");
+    },
+    [],
+  );
 
   useEffect(() => {
     void loadNext();
