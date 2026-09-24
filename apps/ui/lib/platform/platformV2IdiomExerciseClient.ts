@@ -13,6 +13,7 @@ import type {
   PlatformTrainingExerciseStateV2,
 } from "../../../../packages/shared/types/platformV2";
 import type { PlatformSourceContextV2 } from "../../../../packages/shared/types/platform";
+import type { CardFilter, TrainingFocusFilter } from "@/lib/types";
 
 export type PlatformV2IdiomExerciseCandidatesInput = {
   direction: PlatformTrainingExerciseDirectionV2;
@@ -46,19 +47,33 @@ export async function fetchPlatformV2IdiomExerciseCandidates(
   return result;
 }
 
+export type StartPlatformV2IdiomTrainingSessionInput = {
+  userId: string;
+  direction: PlatformTrainingExerciseDirectionV2;
+  sessionSize: number;
+  requestId: string;
+  listId: string | null;
+  listType: "curated" | "user";
+  cardFilter: CardFilter;
+  trainingFilter: TrainingFocusFilter;
+  newReviewRatio: number;
+};
+
 export async function startPlatformV2IdiomTrainingSession(
-  userId: string,
-  direction: PlatformTrainingExerciseDirectionV2,
-  sessionSize: number,
-  requestId: string,
+  input: StartPlatformV2IdiomTrainingSessionInput,
 ): Promise<PlatformIdiomExerciseSessionV2> {
   const { data, error } = await supabase.rpc(
     "start_platform_v2_idiom_training_session",
     {
-      p_user_id: userId,
-      p_direction: direction,
-      p_session_size: String(sessionSize),
-      p_request_id: requestId,
+      p_user_id: input.userId,
+      p_direction: input.direction,
+      p_session_size: String(input.sessionSize),
+      p_request_id: input.requestId,
+      p_list_id: input.listId,
+      p_list_type: input.listType,
+      p_card_filter: input.cardFilter,
+      p_training_filter: input.trainingFilter,
+      p_new_review_ratio: input.newReviewRatio,
     },
   );
   if (error) throw error;

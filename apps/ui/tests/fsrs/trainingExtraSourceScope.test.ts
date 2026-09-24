@@ -206,6 +206,12 @@ async function sourceEntries(
         ...selected, sourceId,
       })).toEqual([adjective]);
       expect(await sourceEntries(client, userId, {
+        ...selected, sourceId, dateWindow: "today",
+      })).toEqual([adjective]);
+      expect(await sourceEntries(client, userId, {
+        ...selected, sourceId, dateWindow: "yesterday",
+      })).toEqual([]);
+      expect(await sourceEntries(client, userId, {
         ...selected, sourceKind: "youtube", partOfSpeech: ["ww"],
       })).toEqual([]);
       expect(await sourceEntries(client, userId, {
