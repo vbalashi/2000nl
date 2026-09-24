@@ -710,3 +710,34 @@ controlled isolated reproduction that can measure backend CPU time alongside
 wall time. It should not be based on NUC runner load, a fast local fixture,
 or an inferred CTE name. Keep the 2,000 ms rollout hold and do not increase
 compute or change SQL without that causal boundary.
+
+## Supabase Metrics API access and resolution (2026-09-24)
+
+The verified production project `lliwdcpuuzjmxyzrjtoz` exposes the official
+[Supabase Metrics API](https://supabase.com/docs/guides/observability/metrics).
+An authenticated read with the existing project Secret API key returned HTTP
+200 and 298 metric names; no credential, metric labels, or raw series were
+recorded in the diagnostic output. The relevant available series include
+`node_cpu_seconds_total` (16 mode/core series labelled `service_type="db"`),
+`node_load1`, `node_memory_MemAvailable_bytes`, and database-level Postgres
+statistics. This confirms access to **the managed DB node's aggregate** CPU
+and memory observations, rather than the NUC runner measurements used earlier.
+
+Supabase's [collector guidance](https://supabase.com/docs/guides/observability/metrics/vendor-agnostic)
+specifies a 60-second scrape interval. The endpoint provides current counters,
+not retained per-request backend CPU time; we had no historical scrape covering
+the slow `07:09` and `07:15` calls. A one-minute aggregate cannot establish
+whether one 1.5-second SQL outlier consumed CPU or waited to be scheduled,
+especially with other database work in the same minute. The `process_cpu_seconds_total`
+series also lacks a backend-PID label, so it cannot fill that gap. We should
+retain this feed for correlation with future occurrences, but must not call an
+isolated current snapshot proof of managed-host pressure or justify a compute
+upgrade from it.
+
+The next discriminating step is a **bounded** slow/warm reproduction with
+backend CPU time measured alongside the already captured wall/I/O/plan timing,
+or an equivalent provider-side trace for the exact backend and timestamp.
+If Supabase cannot expose that per-backend signal, first reproduce the same
+plan and first-call behavior in an isolated environment with CPU accounting;
+only then choose a narrowly scoped SQL/runtime fix. No further production SQL
+probes were run for this metrics-access check.
