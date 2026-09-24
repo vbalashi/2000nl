@@ -1,4 +1,5 @@
 import React from "react";
+import { supabase } from "@/lib/supabaseClient";
 import {
   act,
   fireEvent,
@@ -4503,4 +4504,20 @@ test("US-094.3: after grading multiple cards, all graded card keys are in the ex
     });
     expect(hasExclude).toBe(true);
   });
+});
+
+
+test("learner logout preserves the same user's separate admin session", async () => {
+  vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null });
+  window.localStorage.setItem("sb-example-auth-token", "learner-session");
+  window.localStorage.setItem("unrelated-setting", "keep");
+  document.cookie = "2000nl-admin-auth=admin-session; path=/";
+  render(<TrainingScreen user={user} destination="settings" />);
+  fireEvent.click(await screen.findByRole("button", { name: /Uitloggen|Sign out|Выйти/ }));
+  await waitFor(() => expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: "local" }));
+  expect(supabase.auth.signOut).not.toHaveBeenCalledWith({ scope: "global" });
+  await waitFor(() => expect(window.localStorage.getItem("sb-example-auth-token")).toBeNull());
+  expect(window.localStorage.getItem("unrelated-setting")).toBe("keep");
+  expect(document.cookie).toContain("2000nl-admin-auth=admin-session");
+  document.cookie = "2000nl-admin-auth=; max-age=0; path=/";
 });

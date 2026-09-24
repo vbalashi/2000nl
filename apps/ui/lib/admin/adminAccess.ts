@@ -97,13 +97,12 @@ export async function requireAdmin(request: Request, permission: AdminPermission
 
   try {
     const service = createAdminServiceClient();
-    const [{ data: operator, error: operatorError }, { data: activeSession, error: activeSessionError }, { data: learnerSettings, error: learnerError }] = await Promise.all([
+    const [{ data: operator, error: operatorError }, { data: activeSession, error: activeSessionError }] = await Promise.all([
       service.from("admin_operators").select("email,user_id,is_active,permissions").eq("user_id", user.id).maybeSingle(),
       service.from("admin_operator_sessions").select("auth_session_id").eq("auth_session_id", sessionId).eq("operator_user_id", user.id).is("revoked_at", null).gt("expires_at", new Date().toISOString()).maybeSingle(),
-      service.from("user_settings").select("user_id").eq("user_id", user.id).maybeSingle(),
     ]);
-    if (operatorError || activeSessionError || learnerError) throw new Error("Admin authorization lookup failed");
-    if (!operator || !operator.is_active || operator.email !== user.email.toLowerCase() || learnerSettings || !activeSession) {
+    if (operatorError || activeSessionError) throw new Error("Admin authorization lookup failed");
+    if (!operator || !operator.is_active || operator.email !== user.email.toLowerCase() || !activeSession) {
       await writeAdminAuditEvent({
         operatorUserId: user.id,
         action: "access.denied",

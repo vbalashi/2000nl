@@ -50,26 +50,6 @@ export async function POST(request: Request) {
       });
       return NextResponse.json({ error: "operator_access_not_available" }, { status: 403, headers: { "Cache-Control": "no-store" } });
     }
-    if (operator.user_id) {
-      const { data: learnerSettings, error: learnerError } = await service
-        .from("user_settings")
-        .select("user_id")
-        .eq("user_id", operator.user_id)
-        .maybeSingle();
-      if (learnerError) throw learnerError;
-      if (learnerSettings) {
-        await writeAdminAuditEvent({
-          operatorUserId: operator.user_id,
-          action: "auth.sign_in_denied",
-          outcome: "denied",
-          targetType: "operator",
-          targetId: "google",
-          context,
-        });
-        return NextResponse.json({ error: "operator_access_not_available" }, { status: 403, headers: { "Cache-Control": "no-store" } });
-      }
-    }
-
     const auth = await createAdminAuthClient();
     const redirectTo = new URL("/api/admin/auth/callback", expectedOrigin).toString();
     const { data, error: oauthError } = await auth.auth.signInWithOAuth({

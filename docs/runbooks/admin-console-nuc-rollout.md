@@ -39,8 +39,10 @@ behavior and audit-retention scheduling. Recheck the manifest and hold state
 from the reviewed PR head before any future deployment; do not rely on this
 note as live-server state.
 
-Configure `ADMIN_SITE_URL=https://2000.dilum.io` and ensure
-that URL is present in the Supabase Auth redirect URL allowlist. The Google
+Compose supplies `ADMIN_SITE_URL=https://2000.dilum.io` by default (an explicit
+host environment override is supported). Ensure
+`https://2000.dilum.io/api/admin/auth/callback` is present in the Supabase Auth
+redirect URL allowlist, preserving existing learner callback URLs. The Google
 OAuth provider's callback remains Supabase's own `/auth/v1/callback` URL.
 Keep the project's existing server-only Supabase URL and anon key, plus its
 service-role/secret key in server runtime secrets. Never place privileged credentials in
@@ -51,8 +53,19 @@ proxy/IP source and retention cleanup before rollout.
 ## Operator bootstrap and recovery
 
 This first iteration uses an allowlist, not public operator registration.
-Before rollout, an owner prepares a dedicated Google identity and adds its
-normalized email with only the required permissions. The database insert is:
+Before rollout, an owner selects a Google identity (an existing learner
+identity is supported) and adds its normalized email with only the required
+permissions. For an existing user, bind the verified Auth user ID at bootstrap:
+
+```sql
+INSERT INTO public.admin_operators (email, user_id, is_active, permissions)
+SELECT lower(email), id, true, ARRAY['dictionaries.read', 'audit.read']
+FROM auth.users
+WHERE lower(email) = 'operator@example.com' AND email_confirmed_at IS NOT NULL;
+```
+
+Verify exactly one row was inserted. For a new identity, allowlist its email
+before the first Google sign-in:
 
 ```sql
 INSERT INTO public.admin_operators (email, is_active, permissions)
@@ -62,9 +75,9 @@ VALUES ('operator@example.com', true, ARRAY['dictionaries.read', 'audit.read']);
 Use only `dictionaries.read` or `audit.read` as needed. On first successful
 Google callback, the application binds the Supabase Auth user ID to the row;
 the Auth trigger does not create learner settings for an active allowlisted
-operator. Do not bootstrap with a learner identity. Verify the operator has
-no `user_settings` record and that direct API access denies a learner-only
-session.
+operator. Existing learner settings and progress remain intact. Verify that a
+learner-only session cannot access the admin API, even for the same Auth user,
+and that sign-out in either surface preserves the other surface’s session.
 
 For urgent access removal, set `is_active = false` and revoke remaining rows
 in `admin_operator_sessions` for that Auth user ID. Protected requests enforce
@@ -72,7 +85,9 @@ this immediately. To restore access, confirm the identity and minimum
 permissions, reactivate the row, and have the operator sign in again. If
 replacing an identity, prepare a new Google identity and update the allowlisted
 email after disabling the old row. Review all recovery SQL against the intended
-database first. This issue does not provision an operator.
+database first. Provision only the identity explicitly authorized by the
+owner, after the reviewed migration is deployed. Do not create a duplicate Auth user or reset
+existing learner credentials.
 
 ## Audit retention
 
@@ -105,5 +120,5 @@ owning issue's reviewed recovery plan. If there was no previous image, the
 workflow stops the incompatible new UI and requires operator recovery.
 
 Do not deploy from this issue's local worktree, apply a production migration
-manually, create a real operator, modify DNS, or merge until the owner has
+manually, modify DNS, or merge until the owner has
 reviewed the concrete PR and authorized that rollout.

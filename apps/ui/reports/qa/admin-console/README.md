@@ -4,7 +4,7 @@ Date: 2026-09-24. Scope: issue #480 first iteration.
 
 ## Results
 
-- Server authorization unit checks cover missing auth, learner `user_settings`,
+- Server authorization unit checks cover missing auth, learner-only sessions, explicitly allowlisted shared identities,
   inactive/revoked operators, missing capability, live session checks, and
   fail-closed audit storage. Direct API route checks confirm denied requests do
   not invoke dictionary or journal reads.
@@ -53,3 +53,30 @@ therefore this is not a live Supabase authorization walkthrough. Production
 redirect allowlisting, runtime secrets, trusted proxy chain, and scheduled-job
 health still need deployment verification. No training filters, queues, or
 FSRS behavior were changed.
+
+## Shared Google identity follow-up (2026-09-24)
+
+The owner selected an existing learner account for operator access. The admin
+start/callback/authorization paths now allow an explicitly granted operator
+regardless of learner-profile presence. Learner logout uses local Supabase
+sign-out so it does not revoke the separate admin session. Google callback
+and sign-out tests cover the existing email identity with linked Google,
+wrong identity binding, failed exchanges, and preservation of learner state.
+No learner profile, progress, subscription, filter, queue, or FSRS mutation is
+introduced.
+
+Read-only production checks confirmed the selected account already has Google
+linked and a learner profile; Supabase permits concurrent sessions. The admin
+schema is not deployed. NUC lacks ADMIN_SITE_URL; the reviewed Compose change
+supplies the existing production origin by default at rollout. Supabase
+currently allows only the learner callback; appending the admin callback
+while retaining the learner URL is a rollout prerequisite.
+
+Follow-up verification: 87 focused tests passed across authorization, Google
+auth routes and the learner TrainingScreen regression suite. Typecheck passed;
+lint passed with the existing TrainingSenseCardV2Session hook warning. Ten
+additional AuthScreen, audit and dictionary-contract regression tests passed.
+`shared-identity-session-check.json` records a real local Supabase check: two
+sessions for one temporary user, logout and successful surviving-session
+refresh in both directions, unchanged learner settings, and test-user cleanup.
+The check exercises Supabase session behavior, not live Google OAuth.

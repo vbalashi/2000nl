@@ -61,12 +61,10 @@ export async function GET(request: Request) {
 
     const service = createAdminServiceClient();
     const email = user.email.toLowerCase();
-    const [{ data: operator, error: operatorError }, { data: learnerSettings, error: learnerError }] = await Promise.all([
-      service.from("admin_operators").select("email,user_id,is_active").eq("email", email).maybeSingle(),
-      service.from("user_settings").select("user_id").eq("user_id", user.id).maybeSingle(),
-    ]);
-    if (operatorError || learnerError) throw new Error("Operator lookup failed");
-    if (!operator?.is_active || learnerSettings || (operator.user_id && operator.user_id !== user.id)) {
+    const { data: operator, error: operatorError } = await service
+      .from("admin_operators").select("email,user_id,is_active").eq("email", email).maybeSingle();
+    if (operatorError) throw new Error("Operator lookup failed");
+    if (!operator?.is_active || (operator.user_id && operator.user_id !== user.id)) {
       await writeAdminAuditEvent({
         operatorUserId: user.id,
         action: "auth.sign_in_denied",

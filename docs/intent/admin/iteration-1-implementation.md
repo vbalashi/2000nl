@@ -29,18 +29,22 @@ learner-side record for each operator identity, and browser-managed learner
 auth would need extra work to guarantee session isolation.
 
 Owner decision: use the existing Supabase project and its Google provider; MFA
-is not required. Only a separately prepared Google identity on the manually
-maintained operator allowlist can sign in. The callback rejects identities
-with a learner `user_settings` row. The auth-user insert trigger skips learner
-settings creation for active allowlisted operator email addresses.
+is not required. An existing learner Google identity may also be explicitly
+added to the manually maintained operator allowlist (owner clarification, 2026-09-24).
+A learner profile neither grants nor blocks administrative access. The
+auth-user insert trigger skips learner settings creation for new active
+allowlisted operator email addresses. Existing learner profiles are retained.
 
 The admin console uses a separate server-managed HttpOnly cookie. Every
 protected server request verifies the Supabase identity, its active operator
 row, the server-side admin session, its expiry/revocation state, and the
 specific `dictionaries.read` or `audit.read` capability. It never relies on
 learner `user_settings`, subscription tier, provider user metadata, or
-frontend state for authorization. The absolute session lifetime is eight
-hours; deactivation and session revocation deny the next request. Google
+frontend state for authorization. Normal sign-out in either surface revokes
+only that surface’s Supabase session; the learner logout no longer requests global sign-out. Existing
+learner profiles, subscriptions and progress are never modified by admin login.
+The absolute admin session lifetime is eight hours; deactivation and session
+revocation deny the next request. Google
 sign-up is initiated only by a server-checked allowlisted email. Learner OTP
 flows and settings are unchanged.
 
@@ -51,7 +55,7 @@ callback binds its Auth user ID. No real operator is provisioned by this issue.
 Recovery is owner-assisted: deactivate the row to revoke future access, revoke
 active database sessions, correct the allowlisted email/permissions, then ask
 the operator to authenticate again. If the identity itself must be replaced,
-prepare a new dedicated Google identity and repeat the bootstrap. There is no
+prepare the replacement Google identity and repeat the bootstrap. There is no
 MFA reset path because MFA is not part of this policy.
 
 The journal records application-observed successful/denied sign-in, sign-out,

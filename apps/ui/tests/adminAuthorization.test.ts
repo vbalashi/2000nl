@@ -65,7 +65,7 @@ describe("admin server authorization", () => {
     await expect(requireAdmin(request(), "dictionaries.read")).rejects.toMatchObject({ status: 401, code: "unauthorized" });
   });
 
-  it("denies learner identities even if an operator row is accidentally present", async () => {
+  it("allows an explicitly authorized operator who also has a learner profile", async () => {
     serviceClient.from.mockImplementation((table: string) => {
       if (table === "admin_operators") return query({ data: { email: user.email, user_id: user.id, is_active: true, permissions: ["dictionaries.read"] }, error: null });
       if (table === "admin_operator_sessions") return query({ data: { auth_session_id: sessionId }, error: null });
@@ -73,7 +73,18 @@ describe("admin server authorization", () => {
       if (table === "admin_audit_events") return query(null);
       throw new Error(`Unexpected table ${table}`);
     });
-    await expect(requireAdmin(request(), "dictionaries.read")).rejects.toMatchObject({ status: 403, code: "forbidden" });
+    await expect(requireAdmin(request(), "dictionaries.read")).resolves.toMatchObject({ userId: user.id });
+    expect(serviceClient.from).not.toHaveBeenCalledWith("user_settings");
+  });
+
+  it("denies a learner identity without an operator grant", async () => {
+    serviceClient.from.mockImplementation((table: string) => {
+      if (table === "admin_operators") return query({ data: null, error: null });
+      if (table === "admin_operator_sessions") return query({ data: { auth_session_id: sessionId }, error: null });
+      if (table === "admin_audit_events") return query(null);
+      throw new Error(`Unexpected table ${table}`);
+    });
+    await expect(requireAdmin(request(), "dictionaries.read")).rejects.toMatchObject({ status: 403 });
   });
 
   it("denies inactive operators even when an admin session row exists", async () => {
