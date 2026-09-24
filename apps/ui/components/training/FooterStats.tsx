@@ -14,6 +14,7 @@ import sessionStyles from "./v2/TrainingSessionLayout.module.css";
 
 export type FooterStatsProps = {
   stats: DetailedStats;
+  statsStatus?: "pending" | "ready" | "error";
   cardFilter: CardFilter;
   onCardFilterChange: (filter: CardFilter) => void;
   language: string;
@@ -50,16 +51,21 @@ function ProgressStat({
   label,
   value,
   total,
+  unknownLabel,
   colorClass,
   barColorClass,
 }: {
   label: string;
-  value: number;
-  total?: number;
+  value: number | null;
+  total?: number | null;
+  unknownLabel: string;
   colorClass: string;
   barColorClass: string;
 }) {
-  const progress = total && total > 0 ? Math.min((value / total) * 100, 100) : 0;
+  const progress =
+    value !== null && total && total > 0
+      ? Math.min((value / total) * 100, 100)
+      : 0;
 
   return (
     <div className="flex items-center gap-2">
@@ -68,7 +74,7 @@ function ProgressStat({
       >
         {label}
       </span>
-      {total !== undefined && (
+      {total != null && (
         <div className="h-1.5 w-8 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700 md:w-16">
           <div
             className={`h-full rounded-full transition-all ${barColorClass}`}
@@ -76,9 +82,12 @@ function ProgressStat({
           />
         </div>
       )}
-      <span className="text-slate-800 dark:text-slate-100">
-        {value}
-        {total !== undefined && <span className="opacity-50">/{total}</span>}
+      <span
+        className="text-slate-800 dark:text-slate-100"
+        aria-label={value === null ? `${label}: ${unknownLabel}` : undefined}
+      >
+        {value === null ? "—" : value}
+        {total != null && <span className="opacity-50">/{total}</span>}
       </span>
     </div>
   );
@@ -88,20 +97,25 @@ function CompactProgressStat({
   label,
   value,
   total,
+  unknownLabel,
   barColorClass,
 }: {
   label: string;
-  value: number;
-  total?: number;
+  value: number | null;
+  total?: number | null;
+  unknownLabel: string;
   barColorClass: string;
 }) {
-  const progress = total && total > 0 ? Math.min((value / total) * 100, 100) : 0;
+  const progress =
+    value !== null && total && total > 0
+      ? Math.min((value / total) * 100, 100)
+      : 0;
   return (
     <div className={sessionStyles.stat}>
       <span className={sessionStyles.statLabel} title={label}>
         {label}
       </span>
-      {total !== undefined && (
+      {total != null && (
         <div className={sessionStyles.statBar} aria-hidden="true">
           <div
             className={`h-full rounded-sm transition-[width] motion-reduce:transition-none ${barColorClass}`}
@@ -109,9 +123,12 @@ function CompactProgressStat({
           />
         </div>
       )}
-      <span className={sessionStyles.statValue}>
-        {value}
-        {total !== undefined && `/${total}`}
+      <span
+        className={sessionStyles.statValue}
+        aria-label={value === null ? `${label}: ${unknownLabel}` : undefined}
+      >
+        {value === null ? "—" : value}
+        {total != null && `/${total}`}
       </span>
     </div>
   );
@@ -119,6 +136,7 @@ function CompactProgressStat({
 
 export function FooterStats({
   stats,
+  statsStatus = "ready",
   cardFilter,
   onCardFilterChange,
   language,
@@ -139,6 +157,19 @@ export function FooterStats({
   const [controlsOpen, setControlsOpen] = useState(false);
   const versionInfo = appVersionInfo();
   const text = footerCopy[interfaceLanguage];
+  const statsAvailable = statsStatus === "ready";
+  const unknownLabel =
+    statsStatus === "pending"
+      ? interfaceLanguage === "nl"
+        ? "wordt geladen"
+        : interfaceLanguage === "ru"
+          ? "загружается"
+          : "loading"
+      : interfaceLanguage === "nl"
+        ? "niet beschikbaar"
+        : interfaceLanguage === "ru"
+          ? "недоступно"
+          : "unavailable";
   const {
     newCardsToday,
     reviewCardsDone,
@@ -147,8 +178,9 @@ export function FooterStats({
   } = stats;
 
   // Use fixed Y value from session start, or fall back to current stats
-  const reviewTotal =
-    initialReviewDue ?? reviewCardsDone + stats.reviewCardsDue;
+  const reviewTotal = statsAvailable
+    ? initialReviewDue ?? reviewCardsDone + stats.reviewCardsDue
+    : null;
 
   const fallbackLanguageOptions = [{ value: "nl", label: "Nederlands" }];
 
@@ -162,21 +194,24 @@ export function FooterStats({
     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 sm:flex-nowrap sm:gap-x-5">
       <ProgressStat
         label={text.new}
-        value={newCardsToday}
+        value={statsAvailable ? newCardsToday : null}
+        unknownLabel={unknownLabel}
         colorClass="text-blue-500 dark:text-blue-400"
         barColorClass="bg-blue-500 dark:bg-blue-400"
       />
       <ProgressStat
         label={text.review}
-        value={reviewCardsDone}
+        value={statsAvailable ? reviewCardsDone : null}
         total={reviewTotal}
+        unknownLabel={unknownLabel}
         colorClass="text-amber-500 dark:text-amber-400"
         barColorClass="bg-amber-500 dark:bg-amber-400"
       />
       <ProgressStat
         label={text.total}
-        value={totalWordsLearned}
-        total={totalWordsInList}
+        value={statsAvailable ? totalWordsLearned : null}
+        total={statsAvailable ? totalWordsInList : null}
+        unknownLabel={unknownLabel}
         colorClass="text-emerald-500 dark:text-emerald-400"
         barColorClass="bg-emerald-500 dark:bg-emerald-400"
       />
@@ -196,19 +231,22 @@ export function FooterStats({
         >
           <CompactProgressStat
             label={text.new}
-            value={newCardsToday}
+            value={statsAvailable ? newCardsToday : null}
+            unknownLabel={unknownLabel}
             barColorClass="bg-blue-400"
           />
           <CompactProgressStat
             label={text.review}
-            value={reviewCardsDone}
+            value={statsAvailable ? reviewCardsDone : null}
             total={reviewTotal}
+            unknownLabel={unknownLabel}
             barColorClass="bg-amber-400"
           />
           <CompactProgressStat
             label={text.total}
-            value={totalWordsLearned}
-            total={totalWordsInList}
+            value={statsAvailable ? totalWordsLearned : null}
+            total={statsAvailable ? totalWordsInList : null}
+            unknownLabel={unknownLabel}
             barColorClass="bg-emerald-400"
           />
         </div>

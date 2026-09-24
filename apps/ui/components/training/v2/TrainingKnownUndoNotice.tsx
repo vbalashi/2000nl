@@ -9,12 +9,14 @@ import { usePendingKnownUndo } from "./usePendingKnownUndo";
 export function TrainingKnownUndoNotice({
   interfaceLanguage,
   currentPresentationIdentity,
+  requireTrainingSessionId = false,
 }: {
   interfaceLanguage: OnboardingLanguage;
   currentPresentationIdentity: string | null;
+  requireTrainingSessionId?: boolean;
 }) {
   const { busy, errorCode, undoKnown, undo, dismiss, dismissError } =
-    usePendingKnownUndo(currentPresentationIdentity);
+    usePendingKnownUndo(currentPresentationIdentity, requireTrainingSessionId);
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
 
   if (!undoKnown && !errorCode) return null;

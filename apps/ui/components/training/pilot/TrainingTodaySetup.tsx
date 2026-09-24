@@ -91,8 +91,17 @@ type Props = {
   sources: TrainingSetupOption[];
   startPending?: boolean;
   scenarioLoading?: boolean;
+  statsStatus?: "pending" | "ready" | "error";
+  sessionResumeStatus?: "pending" | "ready" | "error";
+  cardPreparationStatus?: "idle" | "pending" | "ready" | "error" | "empty";
+  startBlocked?: boolean;
+  continueDisabled?: boolean;
+  onRetryStats?: () => void;
+  onRetryResume?: () => void;
+  onRetryCard?: () => void;
   /** A saved local queue was superseded by a deliberate start elsewhere. */
   replacementWarning?: boolean;
+  hasOwnedSession?: boolean;
   activeSessionLabel?: string;
   onContinue: () => void;
   onStart: (
@@ -187,6 +196,16 @@ const copy = {
     updatePreset: "Update preset",
     savedOnDevice: "Saved on this device",
     saveFailed: "Could not save this preset on this device.",
+    statsLoading: "Loading progress…",
+    statsError: "Progress could not be loaded.",
+    resumePending: "Checking your saved session…",
+    resumeError: "Your saved session could not be checked.",
+    retryResume: "Retry session check",
+    cardPending: "Preparing your next card…",
+    cardError: "The next card could not be prepared. You can retry or adjust the setup.",
+    cardEmpty: "No card is ready for this setup yet. Adjust it or start a session.",
+    retryProgress: "Retry progress",
+    retryCard: "Retry card preparation",
   },
   nl: {
     language: "Leertaal",
@@ -273,6 +292,16 @@ const copy = {
     updatePreset: "Preset bijwerken",
     savedOnDevice: "Op dit apparaat bewaard",
     saveFailed: "Kon de preset niet op dit apparaat bewaren.",
+    statsLoading: "Voortgang laden…",
+    statsError: "Voortgang kon niet worden geladen.",
+    resumePending: "Je opgeslagen sessie wordt gecontroleerd…",
+    resumeError: "Je opgeslagen sessie kon niet worden gecontroleerd.",
+    retryResume: "Sessiecontrole opnieuw proberen",
+    cardPending: "Je volgende kaart wordt voorbereid…",
+    cardError: "De volgende kaart kon niet worden voorbereid. Probeer opnieuw of pas de selectie aan.",
+    cardEmpty: "Er staat nog geen kaart klaar. Pas de selectie aan of start een sessie.",
+    retryProgress: "Voortgang opnieuw laden",
+    retryCard: "Kaart opnieuw voorbereiden",
   },
   ru: {
     language: "Язык тренировки",
@@ -359,6 +388,16 @@ const copy = {
     updatePreset: "Обновить пресет",
     savedOnDevice: "Сохранено на этом устройстве",
     saveFailed: "Не удалось сохранить пресет на этом устройстве.",
+    statsLoading: "Загружаем статистику…",
+    statsError: "Не удалось загрузить статистику.",
+    resumePending: "Проверяем сохранённую сессию…",
+    resumeError: "Не удалось проверить сохранённую сессию.",
+    retryResume: "Повторить проверку сессии",
+    cardPending: "Подготавливаем следующую карточку…",
+    cardError: "Не удалось подготовить карточку. Повторите попытку или измените настройки.",
+    cardEmpty: "Пока нет готовой карточки. Измените настройки или начните сессию.",
+    retryProgress: "Повторить загрузку статистики",
+    retryCard: "Повторить подготовку карточки",
   },
 } satisfies Record<OnboardingLanguage, Record<string, unknown>>;
 
@@ -416,7 +455,16 @@ export function TrainingTodaySetup({
   sources,
   startPending = false,
   scenarioLoading = false,
+  statsStatus = "ready",
+  sessionResumeStatus = "ready",
+  cardPreparationStatus = "ready",
+  startBlocked = false,
+  continueDisabled = false,
+  onRetryStats,
+  onRetryResume,
+  onRetryCard,
   replacementWarning = false,
+  hasOwnedSession = true,
   activeSessionLabel,
   onContinue,
   onStart,
@@ -557,7 +605,7 @@ export function TrainingTodaySetup({
   };
 
   const requestStart = async (nextDraft: TrainingSetupDraft) => {
-    if (trainingLanguageLoading || pendingLanguage) return;
+    if (trainingLanguageLoading || pendingLanguage || startBlocked) return;
     const started = await onStart(nextDraft);
     if (started === false) setScreen("today");
   };
@@ -598,32 +646,44 @@ export function TrainingTodaySetup({
               {t.greeting}
             </h1>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              {t.completed(completed)}
+              {statsStatus === "ready"
+                ? t.completed(completed)
+                : statsStatus === "pending"
+                  ? t.statsLoading
+                  : t.statsError}
             </p>
+            {statsStatus === "error" && onRetryStats ? (
+              <button type="button" onClick={onRetryStats} className="mt-2 text-sm font-semibold text-indigo-600 dark:text-indigo-300">
+                {t.retryProgress}
+              </button>
+            ) : null}
           </header>
 
-          <section className="rounded-2xl border border-indigo-500/60 bg-indigo-500/10 p-5 md:p-7">
-            <p className="font-mono text-xs font-bold tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
-              {t.active}
-            </p>
-            <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-slate-950 dark:text-white">
-                  {activeSessionLabel || t.activeFallback}
-                </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {selectionSummary}
-                </p>
+          {hasOwnedSession ? (
+            <section className="rounded-2xl border border-indigo-500/60 bg-indigo-500/10 p-5 md:p-7">
+              <p className="font-mono text-xs font-bold tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
+                {t.active}
+              </p>
+              <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-950 dark:text-white">
+                    {activeSessionLabel || t.activeFallback}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    {selectionSummary}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onContinue}
+                  disabled={continueDisabled}
+                  className={`${actionClass} shrink-0 border-indigo-500 bg-indigo-500 text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-950`}
+                >
+                  {t.continue} <span aria-hidden="true">→</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={onContinue}
-                className={`${actionClass} shrink-0 border-indigo-500 bg-indigo-500 text-white hover:bg-indigo-400 dark:text-slate-950`}
-              >
-                {t.continue} <span aria-hidden="true">→</span>
-              </button>
-            </div>
-          </section>
+            </section>
+          ) : null}
 
           <section className="pt-1">
             <div className="flex items-center justify-between gap-4">
@@ -643,17 +703,52 @@ export function TrainingTodaySetup({
                 {selectionSummary}
               </p>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {t.queueSummary(
-                  stats.reviewCardsDue,
-                  stats.newWordsToday,
-                )}
+                {statsStatus === "ready"
+                  ? t.queueSummary(stats.reviewCardsDue, stats.newWordsToday)
+                  : statsStatus === "pending"
+                    ? t.statsLoading
+                    : t.statsError}
               </p>
             </div>
+            {sessionResumeStatus !== "ready" ? (
+              <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                <p
+                  role={sessionResumeStatus === "error" ? "alert" : "status"}
+                  aria-live="polite"
+                >
+                  {sessionResumeStatus === "pending" ? t.resumePending : t.resumeError}
+                </p>
+                {sessionResumeStatus === "error" && onRetryResume ? (
+                  <button type="button" onClick={onRetryResume} className="mt-1 font-semibold text-indigo-600 dark:text-indigo-300">
+                    {t.retryResume}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+            {cardPreparationStatus !== "ready" && cardPreparationStatus !== "idle" ? (
+              <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                <p
+                  role={cardPreparationStatus === "error" ? "alert" : "status"}
+                  aria-live="polite"
+                >
+                  {cardPreparationStatus === "pending"
+                    ? t.cardPending
+                    : cardPreparationStatus === "error"
+                      ? t.cardError
+                      : t.cardEmpty}
+                </p>
+                {cardPreparationStatus === "error" && onRetryCard ? (
+                  <button type="button" onClick={onRetryCard} className="mt-1 font-semibold text-indigo-600 dark:text-indigo-300">
+                    {t.retryCard}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
             <button
               type="button"
               onClick={() => void requestStart(initialDraft)}
               disabled={
-                startPending || scenarioLoading || !initialScenarioSupported
+                startPending || scenarioLoading || startBlocked || !initialScenarioSupported
               }
               className={`${actionClass} mt-4 w-full border-indigo-500 bg-indigo-500/15 text-indigo-900 hover:bg-indigo-500/25 disabled:cursor-wait disabled:opacity-60 dark:text-indigo-100`}
             >
@@ -761,6 +856,40 @@ export function TrainingTodaySetup({
         <h1 className="sr-only">
           {t.setupHeading}
         </h1>
+        {sessionResumeStatus !== "ready" ? (
+          <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+            <p
+              role={sessionResumeStatus === "error" ? "alert" : "status"}
+              aria-live="polite"
+            >
+              {sessionResumeStatus === "pending" ? t.resumePending : t.resumeError}
+            </p>
+            {sessionResumeStatus === "error" && onRetryResume ? (
+              <button type="button" onClick={onRetryResume} className="mt-1 font-semibold text-indigo-600 dark:text-indigo-300">
+                {t.retryResume}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {cardPreparationStatus !== "ready" && cardPreparationStatus !== "idle" ? (
+          <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+            <p
+              role={cardPreparationStatus === "error" ? "alert" : "status"}
+              aria-live="polite"
+            >
+              {cardPreparationStatus === "pending"
+                ? t.cardPending
+                : cardPreparationStatus === "error"
+                  ? t.cardError
+                  : t.cardEmpty}
+            </p>
+            {cardPreparationStatus === "error" && onRetryCard ? (
+              <button type="button" onClick={onRetryCard} className="mt-1 font-semibold text-indigo-600 dark:text-indigo-300">
+                {t.retryCard}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
         <div className="mt-3">
           <label htmlFor="training-setup-language" className="text-sm font-semibold text-slate-950 dark:text-white">{t.language}</label>
           <div className="relative mt-2">
@@ -1030,7 +1159,7 @@ export function TrainingTodaySetup({
               type="button"
               onClick={() => void requestStart(draft)}
               disabled={
-                startPending || scenarioLoading || !draftScenarioSupported || trainingLanguageLoading || Boolean(pendingLanguage)
+                startPending || scenarioLoading || startBlocked || !draftScenarioSupported || trainingLanguageLoading || Boolean(pendingLanguage)
               }
               className={`${actionClass} min-w-0 flex-[1.25] border-indigo-500 bg-indigo-500 text-white hover:bg-indigo-400 disabled:cursor-wait disabled:opacity-60 dark:text-slate-950`}
             >

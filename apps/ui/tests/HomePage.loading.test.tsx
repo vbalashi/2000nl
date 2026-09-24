@@ -416,6 +416,31 @@ test("discards an authenticated bootstrap that finishes after sign-out", async (
   ).not.toBeInTheDocument();
 });
 
+test("signed-out auth event unmounts the authenticated Training shell", async () => {
+  render(<HomePage />);
+
+  await act(async () => {
+    resolveSession({
+      data: {
+        session: {
+          user: { id: "user-1", email: "test@2000nl.test" } as User,
+        },
+      },
+    });
+  });
+  expect(screen.getByTestId("authenticated-training-shell")).toBeInTheDocument();
+
+  act(() => authStateHandler("SIGNED_OUT", null));
+  expect(getSession).toHaveBeenCalledTimes(2);
+
+  await act(async () => {
+    resolveSession({ data: { session: null } });
+  });
+
+  expect(await screen.findByText("Auth")).toBeInTheDocument();
+  expect(screen.queryByTestId("authenticated-training-shell")).not.toBeInTheDocument();
+});
+
 test("auth failure stays in the shell and retry resolves the destination", async () => {
   const interaction = userEvent.setup();
   getSession.mockRejectedValueOnce(new Error("temporary auth failure"));

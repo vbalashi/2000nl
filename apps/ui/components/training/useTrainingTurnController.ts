@@ -163,6 +163,7 @@ export function useTrainingTurnController(input: Inputs) {
   const actionLoadingRef = useRef(false);
   const loadingInProgressRef = useRef(false);
   const loadGenerationRef = useRef(0);
+  const componentMountedRef = useRef(true);
   const sessionScopeKeyRef = useRef(sessionScopeKey);
   const currentTurnIdRef = useRef<string | null>(null);
   const reviewedCardKeysRef = useRef<Set<string>>(new Set());
@@ -280,7 +281,9 @@ export function useTrainingTurnController(input: Inputs) {
   useEffect(() => {
     const reviewed = reviewedCardKeysRef.current;
     const rejected = rejectedCardKeysRef.current;
+    componentMountedRef.current = true;
     return () => {
+      componentMountedRef.current = false;
       reviewed.clear();
       rejected.clear();
       cardFailureRef.current = null;
@@ -394,6 +397,8 @@ export function useTrainingTurnController(input: Inputs) {
 
       loadingInProgressRef.current = true;
       const generation = (loadGenerationRef.current += 1);
+      const isCurrentLoad = () =>
+        componentMountedRef.current && generation === loadGenerationRef.current;
       setLoadingWord(true);
       setUsableCandidatesExhausted(false);
       setLoadError(null);
@@ -406,7 +411,7 @@ export function useTrainingTurnController(input: Inputs) {
         if (overrideWordId) {
           nextCardOverrideWordIdRef.current = null;
           const overrideWord = await selection.lookupOverride(overrideWordId);
-          if (generation !== loadGenerationRef.current) {
+          if (!isCurrentLoad()) {
             finishTrainingUserTransition(transitionId, "cancelled");
             return "skipped";
           }
@@ -426,7 +431,7 @@ export function useTrainingTurnController(input: Inputs) {
               undefined,
               transitionId,
             );
-            if (generation !== loadGenerationRef.current) {
+            if (!isCurrentLoad()) {
               finishTrainingUserTransition(transitionId, "cancelled");
               return "skipped";
             }
@@ -436,6 +441,10 @@ export function useTrainingTurnController(input: Inputs) {
                 trainingWarmFailure(overrideWarmResult),
                 effectiveTrainingSessionId,
               );
+              if (!isCurrentLoad()) {
+                finishTrainingUserTransition(transitionId, "cancelled");
+                return "skipped";
+              }
               nextCardOverrideActiveKeyRef.current = null;
               setNextCardOverrideNotice(
                 "Kon dit woord niet laden; probeer het opnieuw.",
@@ -489,6 +498,7 @@ export function useTrainingTurnController(input: Inputs) {
                 (selected) => (selected ? "ready" : "empty"),
               );
             } catch (cause) {
+              if (!isCurrentLoad()) return null;
               if (!isTrainingSessionUnavailableError(cause)) {
                 throw normalizeTrainingSelectionFailure(cause);
               }
@@ -516,6 +526,7 @@ export function useTrainingTurnController(input: Inputs) {
                 cardTypeId: diagnostic.cardTypeId,
                 reason: diagnostic.reason,
               });
+              if (!isCurrentLoad()) return null;
               if (!marked) throw cause;
               reconciledDiagnostics.add(diagnosticKey);
             }
@@ -523,7 +534,7 @@ export function useTrainingTurnController(input: Inputs) {
         };
         const primaryQueueTurn = requestedQueueTurn ?? queueTurn;
         let nextWord = await selectForQueueTurn(primaryQueueTurn);
-        if (generation !== loadGenerationRef.current) {
+        if (!isCurrentLoad()) {
           finishTrainingUserTransition(transitionId, "cancelled");
           return "skipped";
         }
@@ -534,7 +545,7 @@ export function useTrainingTurnController(input: Inputs) {
         ) {
           nextWord = await selectForQueueTurn(fallbackQueueTurnOnEmpty);
         }
-        if (generation !== loadGenerationRef.current) {
+        if (!isCurrentLoad()) {
           finishTrainingUserTransition(transitionId, "cancelled");
           return "skipped";
         }
@@ -546,7 +557,7 @@ export function useTrainingTurnController(input: Inputs) {
         }
 
         const warmResult = await warmWord(nextWord, undefined, transitionId);
-        if (generation !== loadGenerationRef.current) {
+        if (!isCurrentLoad()) {
           finishTrainingUserTransition(transitionId, "cancelled");
           return "skipped";
         }
@@ -556,6 +567,10 @@ export function useTrainingTurnController(input: Inputs) {
             trainingWarmFailure(warmResult),
             effectiveTrainingSessionId,
           );
+          if (!isCurrentLoad()) {
+            finishTrainingUserTransition(transitionId, "cancelled");
+            return "skipped";
+          }
           setLoadError("platform_v2_lookup_failed");
           finishTrainingUserTransition(
             transitionId,
@@ -566,7 +581,7 @@ export function useTrainingTurnController(input: Inputs) {
         presentWord(nextWord);
         return "loaded";
       } catch (cause) {
-        if (generation !== loadGenerationRef.current) {
+        if (!isCurrentLoad()) {
           finishTrainingUserTransition(transitionId, "cancelled");
           return "skipped";
         }
@@ -581,7 +596,7 @@ export function useTrainingTurnController(input: Inputs) {
         );
         return outcome;
       } finally {
-        if (generation === loadGenerationRef.current) {
+        if (isCurrentLoad()) {
           loadingInProgressRef.current = false;
           setLoadingWord(false);
         }

@@ -31,19 +31,7 @@ export async function fetchStats(
 
   if (error) {
     console.error("Error fetching stats:", error);
-    return {
-      newWordsToday: 0,
-      newCardsToday: 0,
-      learningStartedToday: 0,
-      graduatedNewWordsToday: 0,
-      dailyNewLimit: 10,
-      reviewWordsDone: 0,
-      reviewCardsDone: 0,
-      reviewWordsDue: 0,
-      reviewCardsDue: 0,
-      totalWordsLearned: 0,
-      totalWordsInList: 2000,
-    };
+    throw new Error("training_stats_unavailable");
   }
 
   const stats = {

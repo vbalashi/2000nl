@@ -5,38 +5,42 @@ test("@pilot statement timeout retries selection only and reaches a ready card",
   page,
 }) => {
   const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
-    schedulerOutcomes: ["statement-timeout", "card"],
+    sessionOutcomes: ["statement-timeout", "card"],
   });
 
+  const startCurrentSetup = page.getByRole("button", {
+    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+  });
+  await expect(startCurrentSetup).toBeEnabled();
+  expect(harness.requests.scheduler).toHaveLength(0);
+  expect(harness.requests.session).toHaveLength(0);
+  await startCurrentSetup.click();
+
   await expect(
-    page.getByRole("heading", {
-      name: /Training could not be loaded|Training kon niet worden geladen|Не удалось загрузить тренировку/,
-    }),
+    page.getByText(
+      /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
+    ),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: /Try again|Opnieuw proberen|Попробовать снова/ })
+    .getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ })
     .click();
-  await page
-    .getByRole("button", {
-      name: /Continue session|Sessie voortzetten|Продолжить сессию/,
-    })
-    .waitFor();
-  expect(harness.requests.scheduler.length).toBeGreaterThanOrEqual(2);
-  expect(harness.requests.scheduler.slice(0, 2)).toEqual([
-    expect.objectContaining({ p_exclude_card_keys: [] }),
-    expect.objectContaining({ p_exclude_card_keys: [] }),
-  ]);
-  await page
-    .getByRole("button", {
-      name: /Continue session|Sessie voortzetten|Продолжить сессию/,
-    })
-    .click();
-
+  const continueSession = page.getByRole("button", {
+    name: /Continue session|Sessie voortzetten|Продолжить сессию/,
+  });
+  await expect(continueSession).toBeEnabled();
+  await continueSession.click();
   await expect(page.getByRole("heading", { name: "huis" })).toBeVisible();
+  expect(harness.requests.sessionStarts).toHaveLength(1);
+  expect(harness.requests.session.length).toBeGreaterThanOrEqual(2);
+  expect(harness.requests.session.slice(0, 2)).toEqual([
+    expect.objectContaining({ p_session_id: "training-session-fixture" }),
+    expect.objectContaining({ p_session_id: "training-session-fixture" }),
+  ]);
+  expect(harness.requests.scheduler).toHaveLength(0);
   await expect(
-    page.getByRole("heading", {
-      name: /Training could not be loaded|Training kon niet worden geladen|Не удалось загрузить тренировку/,
-    }),
+    page.getByText(
+      /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
+    ),
   ).toHaveCount(0);
 });
 
@@ -44,23 +48,32 @@ test("@pilot statement timeout retry reports an honest no-match terminal outcome
   page,
 }) => {
   const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
-    schedulerOutcomes: ["statement-timeout", "empty"],
+    sessionOutcomes: ["statement-timeout", "empty"],
   });
 
+  const startCurrentSetup = page.getByRole("button", {
+    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+  });
+  await expect(startCurrentSetup).toBeEnabled();
+  expect(harness.requests.session).toHaveLength(0);
+  await startCurrentSetup.click();
+
   await expect(
-    page.getByRole("heading", {
-      name: /Training could not be loaded|Training kon niet worden geladen|Не удалось загрузить тренировку/,
-    }),
+    page.getByText(
+      /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
+    ),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: /Try again|Opnieuw proberen|Попробовать снова/ })
+    .getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ })
     .click();
 
   await expect(
-    page.getByRole("heading", {
-      name: /No cards match this setup|Geen kaarten voor deze selectie|Для этих настроек нет карточек/,
-    }),
+    page.getByText(
+      /No card is ready for this setup|Er staat nog geen kaart klaar|Пока нет готовой карточки/,
+    ),
   ).toBeVisible();
-  expect(harness.requests.scheduler).toHaveLength(2);
+  expect(harness.requests.session).toHaveLength(2);
+  expect(harness.requests.sessionStarts).toHaveLength(1);
+  expect(harness.requests.scheduler).toHaveLength(0);
   await expect(page.getByRole("heading", { name: "huis" })).toHaveCount(0);
 });

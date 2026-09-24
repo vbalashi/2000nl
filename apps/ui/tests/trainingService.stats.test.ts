@@ -59,27 +59,15 @@ describe("trainingService stats", () => {
     });
   });
 
-  test("fetchStats returns conservative defaults on RPC error", async () => {
+  test("fetchStats reports RPC errors instead of presenting false zero progress", async () => {
     const { fetchStats } = await importService();
     rpc.mockResolvedValueOnce({
       data: null,
       error: { message: "boom" },
     });
 
-    await expect(fetchStats("user-1", ["word-to-definition"])).resolves.toEqual(
-      {
-        newWordsToday: 0,
-        newCardsToday: 0,
-        learningStartedToday: 0,
-        graduatedNewWordsToday: 0,
-        dailyNewLimit: 10,
-        reviewWordsDone: 0,
-        reviewCardsDone: 0,
-        reviewWordsDue: 0,
-        reviewCardsDue: 0,
-        totalWordsLearned: 0,
-        totalWordsInList: 2000,
-      },
+    await expect(fetchStats("user-1", ["word-to-definition"])).rejects.toThrow(
+      "training_stats_unavailable",
     );
     expect(rpc).toHaveBeenCalledWith("get_detailed_training_stats", {
       p_user_id: "user-1",
