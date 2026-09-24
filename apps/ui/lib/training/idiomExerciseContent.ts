@@ -44,11 +44,11 @@ export function resolveIdiomExerciseContent(
     (node) => node.parentContentNodeId === expression.contentNodeId,
   );
   const explanations = children.filter(
-    (node) => node.kind === "idiom-explanation" && node.text.trim(),
+    (node) => node.kind === "idiom-explanation",
   );
   // A missing or ambiguous explanation is not a usable recall target. Do not
   // borrow a definition or an explanation attached to a sibling expression.
-  if (explanations.length !== 1) return null;
+  if (explanations.length !== 1 || !explanations[0].text.trim()) return null;
 
   const examples = children
     .filter((node) => node.kind === "example" && node.text.trim())

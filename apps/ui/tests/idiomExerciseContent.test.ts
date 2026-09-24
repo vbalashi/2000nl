@@ -86,5 +86,20 @@ describe("idiom exercise content", () => {
       target("entry-goed", "idiom-goed"),
       ambiguous,
     )).toBeNull();
+
+    const blankExtraExplanation = {
+      ...goedGroup,
+      entries: [{
+        ...entry,
+        contentNodes: [
+          ...entry.contentNodes,
+          { ...explanation, contentNodeId: "blank-explanation", text: "  ", order: 9 },
+        ],
+      }],
+    };
+    expect(resolveIdiomExerciseContent(
+      target("entry-goed", "idiom-goed"),
+      blankExtraExplanation,
+    )).toBeNull();
   });
 });
