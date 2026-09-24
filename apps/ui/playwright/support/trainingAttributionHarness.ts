@@ -155,6 +155,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
     listSummaryDelayMs?: number;
     /** Delay scheduler selection so the attribution test covers a slow card pick. */
     schedulerDelayMs?: number;
+    /** Delay the owned-session selector independently from setup hydration. */
+    sessionSelectionDelayMs?: number;
     /** Delay the scoped training statistics RPC independently from card selection. */
     statsDelayMs?: number;
     lookupDelayMs?: number;
@@ -163,6 +165,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     advanceLeaseClockOnAction?: number;
     forceOnDemandLookupEveryAction?: boolean;
     schedulerOutcomes?: Array<"statement-timeout" | "card" | "empty">;
+    sessionOutcomes?: Array<"statement-timeout" | "card" | "empty">;
     /** One valid deterministic state used only for visual QA. */
     visualProfile?: TrainingVisualState;
     /** Use the local app's dev-only test login instead of installing a mocked session. */
@@ -210,6 +213,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     ? buildTrainingVisualFixtureBundle(options.visualProfile, entries)
     : null;
   const schedulerOutcomes = [...(options.schedulerOutcomes ?? [])];
+  const sessionOutcomes = [...(options.sessionOutcomes ?? [])];
 
   const consumeSessionMember = (body: Record<string, unknown>) => {
     const sessionId = body.trainingSessionId;
@@ -605,6 +609,30 @@ export async function setupAuthenticatedTrainingAttributionPage(
 
     if (pathname.endsWith("/rpc/get_next_training_session_card")) {
       sessionRequests.push({ ...body });
+      await wait(options.sessionSelectionDelayMs ?? 0);
+      const forcedOutcome = sessionOutcomes.shift();
+      if (forcedOutcome === "statement-timeout") {
+        await fulfillJson(
+          route,
+          {
+            code: "57014",
+            details: null,
+            hint: null,
+            message: "canceling statement due to statement timeout",
+          },
+          "session-card-timeout",
+          500,
+        );
+        return;
+      }
+      if (forcedOutcome === "empty") {
+        await fulfillJson(route, [], "session-card-empty");
+        return;
+      }
+      if (forcedOutcome === "card") {
+        await fulfillJson(route, buildSchedulerEntry(entries[nextEntryIndex]!), "session-card");
+        return;
+      }
       const excludedCardKeys = Array.isArray(body.p_exclude_card_keys)
         ? body.p_exclude_card_keys.filter(
             (value: unknown): value is string => typeof value === "string",

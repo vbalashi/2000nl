@@ -229,7 +229,7 @@ for (const profile of profiles) {
   });
 }
 
-test("delayed list hydration and card selection are attributed to startup @pilot", async ({
+test("delayed list hydration and post-Start card selection are attributed separately @pilot", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -239,7 +239,7 @@ test("delayed list hydration and card selection are attributed to startup @pilot
     bootstrapReadDelayMs: 40,
     activeScopeDelayMs: 600,
     listSummaryDelayMs: 700,
-    schedulerDelayMs: 1_200,
+    sessionSelectionDelayMs: 1_200,
   });
 
   const authenticatedStatus = page.locator(
@@ -258,12 +258,6 @@ test("delayed list hydration and card selection are attributed to startup @pilot
     name: /Good morning|Goedemorgen|Доброе утро/i,
   });
   await expect(todayHeading).toBeVisible();
-  await expect(
-    page.getByText(
-      /Preparing your next card|Je volgende kaart wordt voorbereid|Подготавливаем следующую карточку/i,
-    ),
-  ).toBeVisible();
-
   const continueSession = page.getByRole("button", {
     name: /Continue session|Sessie doorgaan|Продолжить сессию/i,
   });
@@ -271,13 +265,21 @@ test("delayed list hydration and card selection are attributed to startup @pilot
     name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/i,
   });
   await expect(continueSession).toHaveCount(0);
-  await expect(startCurrentSetup).toBeDisabled();
-  await expect.poll(() => harness.requests.scheduler.length).toBe(1);
   await expect(startCurrentSetup).toBeEnabled();
+  expect(harness.requests.scheduler).toHaveLength(0);
+  expect(harness.requests.session).toHaveLength(0);
+  expect(harness.requests.sessionStarts).toHaveLength(0);
+
+  const beforeStart = await readTrainingAttributionCapture(page);
+  expect(beforeStart.timings.some((event) => event.stage === "next-card.selection")).toBe(false);
   await startCurrentSetup.click();
 
-  // The card is the observable end of the complete startup chain: auth,
-  // saved-list hydration, scheduler selection, and card presentation.
+  await expect.poll(() => harness.requests.session.length).toBeGreaterThanOrEqual(1);
+  await expect(
+    page.getByText(
+      /Preparing your next card|Je volgende kaart wordt voorbereid|Подготавливаем следующую карточку/i,
+    ),
+  ).toBeVisible();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
   expect(harness.requests.sessionStarts).toHaveLength(1);
   expect(harness.requests.session.length).toBeGreaterThanOrEqual(1);
@@ -292,24 +294,16 @@ test("delayed list hydration and card selection are attributed to startup @pilot
   expect(hydration).toMatchObject({ outcome: "ready" });
   expect(hydration?.durationMs ?? 0).toBeGreaterThanOrEqual(550);
 
-  const startupSelection = capture.timings.find(
+  const postStartSelection = capture.timings.find(
     (event) =>
-      event.stage === "next-card.selection" &&
-      event.transitionId === hydration?.transitionId,
+      event.stage === "next-card.selection" && event.outcome === "ready",
   );
-  expect(startupSelection).toMatchObject({ outcome: "ready" });
-  expect(startupSelection?.durationMs ?? 0).toBeGreaterThanOrEqual(1_100);
-  expect(startupSelection?.monotonicStartedAtMs ?? 0).toBeLessThan(
-    startupSelection?.monotonicEndedAtMs ?? 0,
+  expect(postStartSelection).toBeDefined();
+  expect(postStartSelection?.durationMs ?? 0).toBeGreaterThanOrEqual(1_100);
+  expect(postStartSelection?.monotonicStartedAtMs ?? 0).toBeLessThan(
+    postStartSelection?.monotonicEndedAtMs ?? 0,
   );
-
-  // A delayed list request must not be mistaken for a card-selection delay;
-  // both stages remain separately visible under the same startup transition.
-  expect(
-    capture.timings.filter(
-      (event) =>
-        event.transitionId === hydration?.transitionId &&
-        event.stage === "next-card.selection",
-    ),
-  ).toEqual(expect.arrayContaining([expect.objectContaining({ outcome: "ready" })]));
+  expect(postStartSelection?.monotonicStartedAtMs ?? 0).toBeGreaterThanOrEqual(
+    hydration?.monotonicEndedAtMs ?? 0,
+  );
 });
