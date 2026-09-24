@@ -218,6 +218,16 @@ export function TrainingIdiomSession({
     finishTrainingUserTransition(transitionId, "ready");
   }, [candidate, content]);
 
+  useEffect(
+    () => () => {
+      const transitionId = activeTransitionIdRef.current;
+      if (!transitionId) return;
+      activeTransitionIdRef.current = null;
+      finishTrainingUserTransition(transitionId, "cancelled");
+    },
+    [],
+  );
+
   useEffect(() => {
     void loadNext();
   }, [loadNext]);
