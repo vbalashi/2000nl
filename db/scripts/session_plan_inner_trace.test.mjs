@@ -1,6 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizeAutoExplain, summarizeTrace } from "./session_plan_inner_trace.mjs";
+import { summarizeAutoExplain, summarizeTrace, traceSql } from "./session_plan_inner_trace.mjs";
+
+test("member trace is bounded, read-only, and follows the session-start selector", () => {
+  const sql = traceSql(true, "members");
+  assert.match(sql, /BEGIN READ ONLY/);
+  assert.match(sql, /statement_timeout = '8000ms'/);
+  assert.match(sql, /EXPLAIN \(ANALYZE, BUFFERS, FORMAT JSON\)\s+SELECT count\(\*\) FROM private\.training_session_members_v1/);
+  assert.match(sql, /'10',\s+2\s+\);/);
+  assert.match(sql, /training_scheduler_candidates_v2/);
+  assert.match(sql, /ROLLBACK/);
+  assert.doesNotMatch(sql, /\b(?:INSERT|UPDATE|DELETE|TRUNCATE)\b/i);
+  assert.match(traceSql(false), /statement_timeout = '3000ms'/);
+});
 
 test("summarizes nested plan timing without exposing query text", () => {
   const plan = [{

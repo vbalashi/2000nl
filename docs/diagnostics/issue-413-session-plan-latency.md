@@ -406,6 +406,59 @@ event from connection routing. Query counters and host load alone cannot make
 that attribution. Do not increase the release timeout, add warm-up retries, or
 treat the issue as completed on the strength of passing local tests.
 
+## Exact session-start member path (2026-09-24)
+
+The released Training Today screen opens quickly because it no longer starts a
+run before rendering. A single authorized Start on the test-production app then
+measured `update_active_training_scope` at 626 ms and
+`start_training_session` at **4,959 ms** in the browser. The following owned
+next-card read took 234 ms. A later plan read took 2,779 ms and began after
+the start; it did not block the initial Active Session panel. The Start action
+created one real session on the owner's authorized account. Only RPC paths and
+aggregate timings were retained.
+
+Read-only `pg_stat_statements` snapshots immediately before and after that Start
+showed exactly one additional start-family call, adding **4,680.2 ms** of
+PostgreSQL execution versus 4,959 ms of browser request time. The later
+plan-family call added 2,459.3 ms in PostgreSQL versus 2,779 ms in the browser.
+The roughly 0.28–0.32 s differences include transport, pooler, and API overhead;
+they are not a separate measurement of any one layer. This matched pair shows
+that most of the user's wait is inside PostgreSQL execution, not React render
+or network transit.
+
+The current `start_training_session` inserts a session and invokes the read-only
+`private.training_session_members_v1` selector to materialize ten members.
+A direct read-only production `EXPLAIN ANALYZE` of that selector under the QA
+identity took **3,241.0 ms** (ten members, 8,554 shared-buffer hits, zero shared
+reads, 280/564 temporary read/write blocks). A subsequent two-call transaction
+on one backend measured 236.6 / 206.6 ms. This demonstrates that the selection
+itself can consume seconds without writing a session.
+
+The privacy-safe trace now supports `--component members`, which runs that exact
+member selector in a read-only transaction with an 8,000 ms SQL bound and
+transaction-local nested-plan/function timing. One production trace on backend
+`2289248` measured **1,805.6 ms** in PostgreSQL. Function accounting assigned
+1,804.6 ms total to `training_session_members_v1`, including **1,729.8 ms**
+in `training_scheduler_candidates_v2` (1,721.4 ms self time); these totals
+overlap and must not be added. The nested candidate SQL took 1,560.5 ms.
+It had zero shared reads and about 4.8 ms measured temporary-file I/O. On the
+same backend, the immediate repeat took **220.8 ms**, with the candidate at
+210.6 ms. The warm nested plan still materialized
+`ordinary_source_introductions` across 16,396 rows in 121.1 ms. No learner
+payloads, SQL text, credentials, database state, or configuration were emitted
+or changed by the trace.
+
+This is stronger than the earlier plan-only evidence: the live Start delay is
+database execution, and the read-only candidate SQL used to build the session
+can itself account for the large first-call outlier. The full-corpus predecessor
+CTE is a measurable warm cost, but the slow trace does not yet prove that this
+single CTE owns the extra first-call seconds. A prior scope-group rewrite
+reduced rows but increased shared-buffer work, so it remains rejected. The
+next optimization should target the timed candidate subplan with exact
+predecessor and queue-order parity tests, warm and first-use production
+measurements, and a buffer budget; a blind rewrite or compute upgrade is not
+justified by these results.
+
 ## Production rollout timeout after migration 158 (2026-09-24)
 
 Security PR [#450](https://github.com/vbalashi/2000nl/pull/450) merged as

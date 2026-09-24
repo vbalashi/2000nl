@@ -147,11 +147,31 @@ export function summarizeAutoExplain(output) {
   return notices;
 }
 
-function sql(ioTimingEnabled) {
+export function traceSql(ioTimingEnabled, component = "public") {
+  if (!["public", "members"].includes(component)) throw new Error("Unknown trace component");
+  const call = component === "members"
+    ? `SELECT count(*) FROM private.training_session_members_v1(
+  (SELECT id FROM auth.users WHERE email = '${QA_EMAIL}'),
+  ARRAY['word-to-definition']::text[],
+  NULL,
+  'curated',
+  'both',
+  '{}'::jsonb,
+  '10',
+  2
+);`
+    : `SELECT public.get_training_session_plan(
+  (SELECT id FROM auth.users WHERE email = '${QA_EMAIL}'),
+  ARRAY['word-to-definition']::text[],
+  NULL,
+  'curated',
+  'both',
+  '{}'::jsonb
+);`;
   return `\\set ON_ERROR_STOP on
 \\set QUIET on
 BEGIN READ ONLY;
-SET LOCAL statement_timeout = '3000ms';
+SET LOCAL statement_timeout = '${component === "members" ? 8000 : 3000}ms';
 SET LOCAL jit = off;
 SET LOCAL track_functions = 'all';
 ${ioTimingEnabled ? "SET LOCAL track_io_timing = on;" : ""}
@@ -171,6 +191,7 @@ BEGIN
 END
 $qa_identity$;
 SELECT 'trace_context=' || jsonb_build_object(
+  'component', '${component}',
   'backendPid', pg_backend_pid(),
   'backendStart', (SELECT backend_start FROM pg_stat_activity WHERE pid = pg_backend_pid()),
   'serverVersion', current_setting('server_version'),
@@ -182,14 +203,7 @@ SELECT 'trace_context=' || jsonb_build_object(
   'autoExplainFormat', current_setting('auto_explain.log_format')
 )::text;
 EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
-SELECT public.get_training_session_plan(
-  (SELECT id FROM auth.users WHERE email = '${QA_EMAIL}'),
-  ARRAY['word-to-definition']::text[],
-  NULL,
-  'curated',
-  'both',
-  '{}'::jsonb
-);
+${call}
 SELECT 'trace_functions=' || coalesce(jsonb_agg(jsonb_build_object(
   'signature', p.oid::regprocedure::text,
   'calls', f.calls,
@@ -198,7 +212,11 @@ SELECT 'trace_functions=' || coalesce(jsonb_agg(jsonb_build_object(
 ) ORDER BY f.total_time DESC), '[]'::jsonb)::text
 FROM pg_stat_xact_user_functions f
 JOIN pg_proc p ON p.oid = f.funcid
-WHERE p.proname IN ('get_training_session_plan', 'training_scheduler_candidates_v2');
+WHERE p.proname IN (
+  'get_training_session_plan',
+  'training_session_members_v1',
+  'training_scheduler_candidates_v2'
+);
 ROLLBACK;
 `;
 }
@@ -231,20 +249,25 @@ export function summarizeTrace(stdout, stderr) {
 }
 
 function main() {
-  if (
-    ![4, 5].includes(process.argv.length) ||
-    process.argv[2] !== "--env-file" ||
-    (process.argv.length === 5 && process.argv[4] !== "--io-timing")
-  ) {
-    throw new Error("Usage: node db/scripts/session_plan_inner_trace.mjs --env-file /private/path/.env.local [--io-timing]");
+  let envFile = "";
+  let component = "public";
+  let ioTimingEnabled = false;
+  for (let index = 2; index < process.argv.length; index += 1) {
+    if (process.argv[index] === "--env-file") envFile = process.argv[++index] ?? "";
+    else if (process.argv[index] === "--component") component = process.argv[++index] ?? "";
+    else if (process.argv[index] === "--io-timing") ioTimingEnabled = true;
+    else throw new Error(`Unknown argument: ${process.argv[index]}`);
   }
-  const env = connectionEnvironment(process.argv[3]);
+  if (!envFile || !["public", "members"].includes(component)) {
+    throw new Error("Usage: node db/scripts/session_plan_inner_trace.mjs --env-file /private/path/.env.local [--component public|members] [--io-timing]");
+  }
+  const env = connectionEnvironment(envFile);
   const result = spawnSync("psql", ["-X", "--no-psqlrc", "-q", "-t", "-A", "-v", "ON_ERROR_STOP=1"], {
-    input: sql(process.argv.length === 5),
+    input: traceSql(ioTimingEnabled, component),
     env,
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
-    timeout: 15_000,
+    timeout: 20_000,
   });
   if (result.status !== 0 || result.error || result.signal) {
     throw new Error(`Bounded read-only trace failed: ${result.signal ?? result.error?.code ?? `psql exit ${result.status}`}`);
