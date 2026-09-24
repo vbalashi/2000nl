@@ -44,9 +44,10 @@ paths can create or mutate a session.
   route-mocked local QA evidence, not production latency evidence.
 - Local Auth/PostgREST Start/reload/resume evidence is recorded in PR #445; it
   confirmed the same active session/card but did not capture member-ID equality.
-- Direct auth-expiry/logout coverage is still open. The turn-controller tests
-  cover unmount cleanup; they do not simulate the auth session expiring while
-  Training is mounted.
+- A page-level auth `SIGNED_OUT` test now unmounts the authenticated Training
+  shell; controller tests separately prove that late selection/projection
+  results cannot install a card after unmount. This does not simulate an
+  actually expired or remotely revoked token.
 - Desktop/mobile QA captures still need product-owner review against the
   currently approved visuals. The checked-in Playwright captures include the
   Next.js development badge and are not approval screenshots.
