@@ -8,6 +8,10 @@ import {
 import type { TrainingWord } from "@/lib/types";
 import type { FooterStatsProps } from "@/components/training/FooterStats";
 import {
+  readPendingKnownUndo,
+  rememberPendingKnownUndo,
+} from "@/components/training/v2/pendingKnownUndoStore";
+import {
   projectedTrainingAudioResult,
   singleSenseEntry,
   singleSenseGroup,
@@ -107,6 +111,7 @@ const word: TrainingWord = {
 
 describe("TrainingSenseCardV2Session", () => {
   beforeEach(() => {
+    rememberPendingKnownUndo(null);
     window.sessionStorage.clear();
     fetchSingleSense.mockReset();
     performAction.mockReset();
@@ -163,6 +168,30 @@ describe("TrainingSenseCardV2Session", () => {
     expect(await screen.findByRole("heading", { name: "hand" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Not recognized" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Recognized" })).toBeVisible();
+  });
+
+  test("an unowned Training card cannot send a session-less progress action", async () => {
+    const onProgressActionAccepted = vi.fn();
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        trainingSessionId={null}
+        interactionDisabled
+        onProgressActionAccepted={onProgressActionAccepted}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    const reveal = screen.getByRole("button", { name: "Antwoord tonen" });
+    expect(reveal).toBeDisabled();
+    fireEvent.click(reveal);
+    expect(screen.queryByRole("button", { name: "Goed" })).not.toBeInTheDocument();
+    expect(performAction).not.toHaveBeenCalled();
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
   });
 
   test("reviews an answer past the swipe threshold and resets a cancelled swipe", async () => {
@@ -1505,6 +1534,42 @@ describe("TrainingSenseCardV2Session", () => {
       ).not.toBeInTheDocument(),
     );
 
+  });
+
+  test("drops a legacy sessionless undo notice in session-bound training", async () => {
+    rememberPendingKnownUndo({
+      capability: {
+        actionId: "undo-known",
+        elementId: "sense-card.known.undo",
+        messageKey: "senseCard.known.undo",
+        target: {
+          kind: "sense-card",
+          entryId: singleSenseEntry.entryId,
+          cardTypeId: "word-to-definition",
+          stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+          activeKnownMarkId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          knownMarkRevision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+        },
+      },
+      presentationIdentity: testPresentationIdentity(word, "word-to-definition"),
+    });
+
+    render(
+      <TrainingKnownUndoNotice
+        interfaceLanguage="nl"
+        currentPresentationIdentity={testPresentationIdentity(
+          word,
+          "word-to-definition",
+        )}
+        requireTrainingSessionId
+      />,
+    );
+
+    await waitFor(() => expect(readPendingKnownUndo()).toBeNull());
+    expect(
+      screen.queryByRole("button", { name: "Markering ongedaan maken" }),
+    ).not.toBeInTheDocument();
+    expect(performAction).not.toHaveBeenCalled();
   });
 
   test("keeps same-presentation undo available when session storage is unavailable", async () => {

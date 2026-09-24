@@ -101,6 +101,7 @@ import {
   registerTrainingEntryTransition,
 } from "@/lib/training/trainingTransitionTiming";
 import type { TrainingStartupSnapshot } from "@/lib/training/trainingStartupSnapshot";
+import { isCurrentTrainingReadinessRequest } from "@/lib/training/trainingReadiness";
 
 type Props = {
   user: User;
@@ -235,6 +236,9 @@ function TrainingScreenContent({
   const [sessionResumeResolved, setSessionResumeResolved] = useState(
     () => !trainingTodaySetupEnabled,
   );
+  // The saved scope becomes authoritative before first-card selection finishes.
+  const [sessionResumeScopeResolved, setSessionResumeScopeResolved] =
+    useState(() => !trainingTodaySetupEnabled);
   const [sessionResumeRecord, setSessionResumeRecord] = useState<
     TrainingSessionResumeRecord | null | undefined
   >(() => (trainingTodaySetupEnabled ? undefined : null));
@@ -405,6 +409,11 @@ function TrainingScreenContent({
     totalWordsLearned: 0,
     totalWordsInList: 2000,
   });
+  const [statsReadiness, setStatsReadiness] = useState<{
+    key: string;
+    status: "pending" | "ready" | "error";
+  }>({ key: "", status: "pending" });
+  const statsInitialFetchPendingRef = useRef(true);
   // Fixed Y value for HERHALING counter - set once at session start, never changes
   const [initialReviewDue, setInitialReviewDue] = useState<number | null>(null);
   const [showHotkeys, setShowHotkeys] = useState(false);
@@ -463,6 +472,13 @@ function TrainingScreenContent({
     showSettings: destination === "library",
     initialTransitionId,
   });
+  const currentStatsScopeKey = JSON.stringify([
+    user?.id ?? "",
+    currentTrainingLanguage,
+    enabledModes,
+    wordListId ?? null,
+    wordListType ?? null,
+  ]);
 
   const appliedDefaultScenarioListRef = useRef<string | null>(null);
   const lastAppliedActiveTrainingScopeRef = useRef<ActiveTrainingScope | null>(
@@ -486,6 +502,29 @@ function TrainingScreenContent({
   // Ref to prevent race conditions: track if initial load has been done
   const initialLoadDone = useRef(false);
   const statsRequestGenerationRef = useRef(0);
+  const statsRequestedKeyRef = useRef("");
+  const statsPendingRequestsRef = useRef(
+    new Map<
+      string,
+      { userId: string; scopeKey: string; generation: number }
+    >(),
+  );
+  const currentPendingStatsRequest =
+    statsPendingRequestsRef.current.get(currentStatsScopeKey);
+  const statsCurrentContextRef = useRef({
+    userId: user?.id ?? "",
+    scopeKey: currentStatsScopeKey,
+    generation: 0,
+    mounted: true,
+  });
+  statsCurrentContextRef.current = {
+    userId: user?.id ?? "",
+    scopeKey: currentStatsScopeKey,
+    generation:
+      currentPendingStatsRequest?.generation ??
+      statsRequestGenerationRef.current,
+    mounted: componentMountedRef.current,
+  };
   const lastAppliedTrainingFocusFilterKey = useRef(trainingFocusFilterKey);
   const lastReloadedLanguageModeScopeRef = useRef(
     `${currentTrainingLanguage}|${enabledModesKey}`,
@@ -544,19 +583,84 @@ function TrainingScreenContent({
       isInitialLoad?: boolean,
     ) => {
       if (!user?.id) return;
-      const generation = (statsRequestGenerationRef.current += 1);
       const effectiveListId = scope?.listId ?? wordListId;
       const effectiveListType = scope?.listType ?? wordListType;
-      const fresh = await fetchStats(
+      const scopeKey = JSON.stringify([
         user.id,
+        currentTrainingLanguage,
         enabledModes,
-        {
-          listId: effectiveListId ?? undefined,
-          listType: effectiveListType ?? undefined,
-        },
-        logContext,
-      );
-      if (generation !== statsRequestGenerationRef.current) return;
+        effectiveListId ?? null,
+        effectiveListType ?? null,
+      ]);
+      const pendingRequest = statsPendingRequestsRef.current.get(scopeKey);
+      if (pendingRequest) {
+        // Returning to a scope whose read is still in flight should adopt that
+        // exact request. Otherwise its response remains fenced as stale while
+        // the dedupe guard prevents a replacement request from starting.
+        statsRequestedKeyRef.current = scopeKey;
+        statsCurrentContextRef.current = {
+          ...pendingRequest,
+          mounted: componentMountedRef.current,
+        };
+        setStatsReadiness({ key: scopeKey, status: "pending" });
+        return;
+      }
+      const generation = (statsRequestGenerationRef.current += 1);
+      const request = {
+        userId: user.id,
+        scopeKey,
+        generation,
+      };
+      statsPendingRequestsRef.current.set(scopeKey, request);
+      statsRequestedKeyRef.current = request.scopeKey;
+      statsCurrentContextRef.current = {
+        userId: request.userId,
+        scopeKey: request.scopeKey,
+        generation: request.generation,
+        mounted: componentMountedRef.current,
+      };
+      setStatsReadiness({ key: request.scopeKey, status: "pending" });
+      let fresh: DetailedStats;
+      try {
+        fresh = await fetchStats(
+          user.id,
+          enabledModes,
+          {
+            listId: effectiveListId ?? undefined,
+            listType: effectiveListType ?? undefined,
+          },
+          logContext,
+        );
+      } catch (error) {
+        console.warn("[Training] Stats request failed before returning data.", {
+          context: logContext ?? "unspecified",
+          errorName: error instanceof Error ? error.name : "non-error",
+        });
+        if (
+          componentMountedRef.current &&
+          isCurrentTrainingReadinessRequest(
+            request,
+            statsCurrentContextRef.current,
+          )
+        ) {
+          setStatsReadiness({ key: request.scopeKey, status: "error" });
+        }
+        return;
+      } finally {
+        if (
+          statsPendingRequestsRef.current.get(request.scopeKey)?.generation ===
+          request.generation
+        ) {
+          statsPendingRequestsRef.current.delete(request.scopeKey);
+        }
+      }
+      if (
+        !componentMountedRef.current ||
+        !isCurrentTrainingReadinessRequest(
+          request,
+          statsCurrentContextRef.current,
+        )
+      ) return;
 
       if (isInitialLoad || initialReviewDue === null) {
         const totalReviewDue = fresh.reviewCardsDone + fresh.reviewCardsDue;
@@ -567,9 +671,44 @@ function TrainingScreenContent({
         );
       }
       setStats(fresh);
+      setStatsReadiness({ key: request.scopeKey, status: "ready" });
     },
-    [user?.id, enabledModes, wordListId, wordListType, initialReviewDue],
+    [user?.id, currentTrainingLanguage, enabledModes, wordListId, wordListType, initialReviewDue],
   );
+
+  useEffect(() => {
+    if (
+      !user?.id ||
+      !sessionResumeScopeResolved ||
+      !trainingLanguagesResolved ||
+      !listHydrated ||
+      hydratedLanguage !== currentTrainingLanguage ||
+      listCatalogStatus !== "ready" ||
+      (listOptions.length > 0 && !wordListId) ||
+      statsRequestedKeyRef.current === currentStatsScopeKey
+    ) {
+      return;
+    }
+    const isInitialFetch = statsInitialFetchPendingRef.current;
+    statsInitialFetchPendingRef.current = false;
+    void loadStats(
+      undefined,
+      isInitialFetch ? "INITIAL LOAD" : "SCOPE CHANGE",
+      isInitialFetch,
+    );
+  }, [
+    currentStatsScopeKey,
+    currentTrainingLanguage,
+    hydratedLanguage,
+    listHydrated,
+    listCatalogStatus,
+    listOptions.length,
+    loadStats,
+    sessionResumeScopeResolved,
+    trainingLanguagesResolved,
+    user?.id,
+    wordListId,
+  ]);
 
   const selectionPort = useTrainingTurnSelectionPort({
     userId: user.id,
@@ -915,7 +1054,6 @@ function TrainingScreenContent({
       requestNextCardOverride(wordId, false);
     }
     loadNextWord({ transitionId: initialTransitionId });
-    loadStats(undefined, "INITIAL LOAD", true); // isInitialLoad = true to set fixed Y
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeList?.default_scenario_id,
@@ -1285,13 +1423,37 @@ function TrainingScreenContent({
     value: `source:${source.sourceId}`,
     label: source.label,
   }));
+  const trainingSetupPrerequisites =
+    !trainingLanguagesResolved ||
+    !listHydrated ||
+    hydratedLanguage !== currentTrainingLanguage ||
+    listCatalogStatus === "loading"
+      ? "pending"
+      : trainingLanguagesCatalogError || listCatalogStatus === "error"
+        ? "error"
+        : "ready";
+  const trainingStatsStatus =
+    statsReadiness.key === currentStatsScopeKey
+      ? statsReadiness.status
+      : "pending";
+  const cardPreparationStatus = !sessionResumeScopeResolved
+    ? "idle"
+    : !sessionResumeResolved || loadingWord
+      ? "pending"
+      : trainingLoadError
+        ? "error"
+        : currentWord
+          ? "ready"
+          : "empty";
+  const sessionResumeStatus = sessionResumeScopeResolved
+    ? "ready"
+    : sessionResumeError
+      ? "error"
+      : "pending";
   const trainingPilot = useTrainingPilotController({
     enabled: trainingTodaySetupEnabled,
     interfaceLanguage: onboardingLang,
-    listHydrated,
-    loadingWord,
-    hasCurrentWord: Boolean(currentWord),
-    loadError: trainingLoadError,
+    setupPrerequisites: trainingSetupPrerequisites,
     activeScenario,
     enabledModes,
     cardFilter,
@@ -1312,6 +1474,7 @@ function TrainingScreenContent({
           trainingLanguagesCatalogError ||
           listCatalogStatus === "error")
       ) {
+        setSessionResumeScopeResolved(false);
         setTrainingLoadError(null);
         setSessionResumeError(false);
         sessionResumeAttemptedRef.current = false;
@@ -1326,7 +1489,7 @@ function TrainingScreenContent({
       if (recovery === "skipped") await loadNextWord();
     },
   });
-  const { continueSession, resumeSession, returnToToday } = trainingPilot;
+  const { continueSession, resumeSession, returnToToday, startSession } = trainingPilot;
 
   useEffect(() => {
     if (
@@ -1373,6 +1536,7 @@ function TrainingScreenContent({
     // instead of waiting for optional list hydration that may not be
     // available on an empty or fixture-backed setup surface.
     if (!sessionResumeRecord) {
+      setSessionResumeScopeResolved(true);
       setSessionResumeResolved(true);
       return;
     }
@@ -1395,6 +1559,7 @@ function TrainingScreenContent({
           componentMountedRef.current &&
           sessionResumeGenerationRef.current === resumeGeneration
         ) {
+          setSessionResumeScopeResolved(true);
           setSessionResumeResolved(true);
         }
       });
@@ -1438,7 +1603,10 @@ function TrainingScreenContent({
           )
       ) {
         await clearTrainingSessionResume(user.id);
-        if (componentMountedRef.current) setSessionResumeResolved(true);
+        if (componentMountedRef.current) {
+          setSessionResumeScopeResolved(true);
+          setSessionResumeResolved(true);
+        }
         return;
       }
 
@@ -1466,6 +1634,7 @@ function TrainingScreenContent({
       }
       if (!snapshot) {
         await clearTrainingSessionResume(user.id);
+        setSessionResumeScopeResolved(true);
         setSessionResumeResolved(true);
         return;
       }
@@ -1494,6 +1663,7 @@ function TrainingScreenContent({
         setSessionConsumedCardKeys([]);
         setSessionCompletedActions(0);
         setSessionReplacementWarning(true);
+        setSessionResumeScopeResolved(true);
         setSessionResumeResolved(true);
         return;
       }
@@ -1505,6 +1675,7 @@ function TrainingScreenContent({
       );
       if (!hasRemainingMember) {
         await clearTrainingSessionResume(user.id);
+        setSessionResumeScopeResolved(true);
         setSessionResumeResolved(true);
         return;
       }
@@ -1547,6 +1718,7 @@ function TrainingScreenContent({
       lastAppliedTrainingFocusFilterKey.current = trainingFilterKey(
         record.focusFilter,
       );
+      setSessionResumeScopeResolved(true);
 
       // Claim the initial-load slot before requesting the resumed member so
       // the ordinary loader cannot race and create a different selection.
@@ -1580,6 +1752,7 @@ function TrainingScreenContent({
         setTrainingLoadError("training_resume_failed");
       } else {
         await clearTrainingSessionResume(user.id);
+        setSessionResumeScopeResolved(true);
         setSessionResumeResolved(true);
       }
     };
@@ -1733,6 +1906,12 @@ function TrainingScreenContent({
     };
     const sessionId = trainingSessionIdRef.current;
     if (!sessionId || !user?.id) {
+      // A saved run from another tab is not this tab's authority. Continue is
+      // an explicit claim of a new run, never a session-less card action.
+      if (trainingTodaySetupEnabled && user?.id) {
+        void startSession(trainingPilot.initialDraft);
+        return;
+      }
       continueCurrentSession();
       return;
     }
@@ -1745,6 +1924,9 @@ function TrainingScreenContent({
     currentWord,
     resetFocusQueueState,
     continueSession,
+    startSession,
+    trainingPilot.initialDraft,
+    trainingTodaySetupEnabled,
     user?.id,
     validateTrainingSessionAuthority,
   ]);
@@ -1883,6 +2065,7 @@ function TrainingScreenContent({
   const trainingSessionChrome = sessionChrome;
   const trainingSessionFooter: FooterStatsProps = {
     stats,
+    statsStatus: trainingStatsStatus,
     cardFilter,
     onCardFilterChange: handleCardFilterChange,
     language: currentTrainingLanguage,
@@ -1953,12 +2136,31 @@ function TrainingScreenContent({
             status={trainingPilot.status}
             initialDraft={trainingPilot.initialDraft}
             stats={stats}
+            statsStatus={trainingStatsStatus}
+            sessionResumeStatus={sessionResumeStatus}
+            onRetryResume={() => void trainingPilot.retry()}
+            cardPreparationStatus={cardPreparationStatus}
+            startBlocked={
+              trainingSetupPrerequisites !== "ready" ||
+              !sessionResumeResolved ||
+              loadingWord
+            }
+            continueDisabled={
+              cardPreparationStatus !== "ready" ||
+              (!trainingSessionId &&
+                (trainingSetupPrerequisites !== "ready" ||
+                  trainingPilot.scenarioLoading ||
+                  trainingPilot.startPending))
+            }
+            onRetryStats={() => void loadStats(undefined, "RETRY")}
+            onRetryCard={() => void trainingPilot.retry()}
             scenarios={trainingPilot.scenarioOptions}
             lists={listOptions}
             sources={trainingPilot.sourceOptions}
             startPending={trainingPilot.startPending}
             scenarioLoading={trainingPilot.scenarioLoading}
             replacementWarning={sessionReplacementWarning}
+            hasOwnedSession={Boolean(trainingSessionId)}
             activeSessionLabel={wordListLabel || undefined}
             onContinue={handleContinueTrainingSession}
             onStart={trainingPilot.startSession}
@@ -1988,6 +2190,7 @@ function TrainingScreenContent({
               navigationBlocked ||
               acceptedTransitionLoadStalled ||
               sessionAuthorityChecking ||
+              (trainingTodaySetupEnabled && !trainingSessionId) ||
               returnedToTraining
             }
             focusOnPresentation={isSubsequentSessionCard}
@@ -2049,6 +2252,7 @@ function TrainingScreenContent({
         <TrainingKnownUndoNotice
           interfaceLanguage={onboardingLang}
           currentPresentationIdentity={currentPresentationIdentity}
+          requireTrainingSessionId={trainingTodaySetupEnabled}
         />
 
         <TrainingDetailsDrawer

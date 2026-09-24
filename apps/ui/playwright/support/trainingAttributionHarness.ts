@@ -155,6 +155,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
     listSummaryDelayMs?: number;
     /** Delay scheduler selection so the attribution test covers a slow card pick. */
     schedulerDelayMs?: number;
+    /** Delay the scoped training statistics RPC independently from card selection. */
+    statsDelayMs?: number;
     lookupDelayMs?: number;
     actionDelayMs?: number;
     advanceLeaseClockMs?: number;
@@ -163,6 +165,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
     schedulerOutcomes?: Array<"statement-timeout" | "card" | "empty">;
     /** One valid deterministic state used only for visual QA. */
     visualProfile?: TrainingVisualState;
+    /** Use the local app's dev-only test login instead of installing a mocked session. */
+    devTestLogin?: boolean;
   } = {},
 ) {
   let nextEntryIndex = 0;
@@ -176,13 +180,21 @@ export async function setupAuthenticatedTrainingAttributionPage(
   let acceptedScenario: "hit" | "miss" | "fallback" = "hit";
   let slowEligibleCount = 0;
   const schedulerRequests: Record<string, unknown>[] = [];
+  const sessionStartRequests: Record<string, unknown>[] = [];
   const sessionRequests: Record<string, unknown>[] = [];
+  const progressActionRequests: Record<string, unknown>[] = [];
+  const progressActionReconciliationRequests: Record<string, unknown>[] = [];
   const projectionLookupRequests: Record<string, unknown>[] = [];
   const unavailableSessionRequests: Record<string, unknown>[] = [];
   const sessionMembers = entries.slice(0, 50);
   const consumedSessionEntryIds = new Set<string>();
   const unavailableSessionEntryIds = new Set<string>();
   const statsRequests: Record<string, unknown>[] = [];
+  const requestTimes = {
+    scheduler: [] as number[],
+    stats: [] as number[],
+    projection: [] as number[],
+  };
   const scenarioRequests: Record<string, unknown>[] = [];
   const failWarmupLookupsForEntries = new Set<string>();
   const lookupAttempts = new Map<string, number>();
@@ -255,12 +267,13 @@ export async function setupAuthenticatedTrainingAttributionPage(
   });
 
   await page.route("**/api/platform/v2/lookup", async (route) => {
-    await wait(options.lookupDelayMs ?? 0);
     const body = route.request().postDataJSON?.() ?? {};
+    projectionLookupRequests.push({ ...body });
+    requestTimes.projection.push(Date.now());
+    await wait(options.lookupDelayMs ?? 0);
     const entryId = typeof body.entryId === "string" ? body.entryId : "";
     const entry = entries.find((candidate) => candidate.id === entryId);
     if (projectionMissingEntryIds.has(entryId)) {
-      projectionLookupRequests.push({ ...body });
       await fulfillJson(
         route,
         { error: "presentation_identity_incomplete" },
@@ -307,6 +320,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
 
   await page.route("**/api/platform/v2/actions", async (route) => {
     const body = route.request().postDataJSON?.() ?? {};
+    progressActionRequests.push({ ...body });
     actionCount += 1;
     if (
       options.advanceLeaseClockMs &&
@@ -363,6 +377,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   await page.route("**/api/platform/v2/actions/reconcile", async (route) => {
     await wait(options.reconcileDelayMs ?? 0);
     const body = route.request().postDataJSON?.() ?? {};
+    progressActionReconciliationRequests.push({ ...body });
     if (
       !pendingActionReceipt ||
       body.clientEventId !== pendingActionReceipt.clientEventId
@@ -416,6 +431,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     const body = request.postDataJSON?.() ?? {};
 
     if (pathname.endsWith("/rpc/start_training_session")) {
+      sessionStartRequests.push({ ...body });
       consumedSessionEntryIds.clear();
       unavailableSessionEntryIds.clear();
       sessionOnDemandReady = false;
@@ -498,6 +514,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
 
     if (pathname.endsWith("/rpc/get_next_card")) {
       schedulerRequests.push({ ...body });
+      requestTimes.scheduler.push(Date.now());
       await wait(options.schedulerDelayMs ?? 0);
       const forcedOutcome = schedulerOutcomes.shift();
       if (forcedOutcome === "statement-timeout") {
@@ -776,6 +793,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
     }
     if (pathname.endsWith("/rpc/get_detailed_training_stats")) {
       statsRequests.push({ ...body });
+      requestTimes.stats.push(Date.now());
+      await wait(options.statsDelayMs ?? 0);
       await fulfillJson(
         route,
         visualFixture
@@ -864,13 +883,22 @@ export async function setupAuthenticatedTrainingAttributionPage(
     await fulfillJson(route, { error: "Not mocked by attribution harness" }, "missing", 404);
   });
 
-  await installSupabaseSession(page, buildFakeSupabaseSession(userSession));
-  await page.goto("/");
+  if (options.devTestLogin) {
+    await page.goto("/dev/test-login?redirectTo=/");
+    await page.waitForURL((url) => url.pathname === "/");
+  } else {
+    await installSupabaseSession(page, buildFakeSupabaseSession(userSession));
+    await page.goto("/");
+  }
   return {
     requests: {
       scheduler: schedulerRequests,
+      sessionStarts: sessionStartRequests,
       session: sessionRequests,
+      progressActions: progressActionRequests,
+      progressActionReconciliations: progressActionReconciliationRequests,
       projectionLookups: projectionLookupRequests,
+      requestTimes,
       unavailable: unavailableSessionRequests,
       stats: statsRequests,
       scenarios: scenarioRequests,

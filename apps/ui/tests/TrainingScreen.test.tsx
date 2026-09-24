@@ -163,7 +163,7 @@ const userDictionaryGedoe = {
 };
 
 const fetchNextTrainingWordByScenario = vi.fn().mockResolvedValue(mockWord);
-const fetchStats = vi.fn().mockResolvedValue({
+const defaultTrainingStats = {
   newWordsToday: 0,
   newCardsToday: 0,
   learningStartedToday: 0,
@@ -175,7 +175,8 @@ const fetchStats = vi.fn().mockResolvedValue({
   reviewCardsDue: 0,
   totalWordsLearned: 0,
   totalWordsInList: 2000,
-});
+};
+const fetchStats = vi.fn().mockResolvedValue(defaultTrainingStats);
 const prefetchPlatformV2TrainingEntry = vi.fn().mockResolvedValue({
   state: "ready",
   group: { header: { audio: null, text: "huis" } },
@@ -789,6 +790,7 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue(defaultAvailableLearningLanguages);
   fetchNextTrainingWordByScenario.mockReset().mockResolvedValue(mockWord);
+  fetchStats.mockReset().mockResolvedValue(defaultTrainingStats);
   mockV2SessionState = "ready";
   mockV2AcceptanceGate = null;
   prefetchPlatformV2TrainingEntry.mockReset().mockResolvedValue({
@@ -1318,7 +1320,7 @@ test("Statistics and Settings destinations preserve the current Training turn", 
   expectOnlyBackgroundSelectionSince(trainingFetchCount);
 });
 
-test("first-pilot Training opens on Today and Continue reveals the mounted card", async () => {
+test("first-pilot Training opens on Today and Start reveals the mounted card", async () => {
   render(
     <TrainingScreen
       user={user}
@@ -1341,7 +1343,7 @@ test("first-pilot Training opens on Today and Continue reveals the mounted card"
   ).not.toBeInTheDocument();
 
   fireEvent.click(
-    screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+    screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
   );
   expect(
     await screen.findByRole("heading", { name: "huis" }),
@@ -1375,14 +1377,95 @@ test("first-pilot Training opens on Today and Continue reveals the mounted card"
   ).toBeInTheDocument();
 
   fireEvent.click(
-    screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+    screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
   );
   await waitFor(() =>
-    expect(fetchTrainingSessionPlan).toHaveBeenCalledTimes(2),
+    expect(startTrainingSession).toHaveBeenCalledTimes(2),
   );
 });
 
-test("delayed first card keeps the Today shell until Continue can reveal it", async () => {
+test("a foreign-owner tab offers Start and claims a run before showing an actionable card", async () => {
+  window.localStorage.setItem(
+    "2000nl:training-session:user-1",
+    JSON.stringify({
+      sessionId: "session-other-tab",
+      userId: "user-1",
+      ownerId: "other-tab-owner",
+      languageCode: "nl",
+      listId: null,
+      listType: null,
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 10,
+    }),
+  );
+  let resolveStart!: (session: typeof defaultStartedTrainingSession) => void;
+  startTrainingSession.mockImplementationOnce(
+    () => new Promise((resolve) => { resolveStart = resolve; }),
+  );
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  const startButton = await screen.findByRole("button", {
+    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
+  expect(screen.queryByRole("button", {
+    name: /Continue session|Sessie doorgaan/,
+  })).not.toBeInTheDocument();
+
+  fireEvent.click(startButton);
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  expect(screen.queryByTestId("mock-training-sense-card-v2")).not.toBeInTheDocument();
+  expect(mockV2ProgressAction).not.toHaveBeenCalled();
+
+  await act(async () => resolveStart(defaultStartedTrainingSession));
+  const card = await screen.findByTestId("mock-training-sense-card-v2");
+  expect(card).toHaveAttribute(
+    "data-training-session-id",
+    defaultStartedTrainingSession.sessionId,
+  );
+});
+
+test("a failed run claim leaves the foreign-owner tab on Today without an actionable card", async () => {
+  window.localStorage.setItem(
+    "2000nl:training-session:user-1",
+    JSON.stringify({
+      sessionId: "session-other-tab",
+      userId: "user-1",
+      ownerId: "other-tab-owner",
+      languageCode: "nl",
+      listId: null,
+      listType: null,
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 10,
+    }),
+  );
+  startTrainingSession.mockResolvedValueOnce(null);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  const startButton = await screen.findByRole("button", {
+    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  fireEvent.click(startButton);
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  await waitFor(() => expect(startButton).toBeEnabled());
+  expect(screen.queryByTestId("mock-training-sense-card-v2")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", {
+    name: /Continue session|Sessie doorgaan/,
+  })).not.toBeInTheDocument();
+  expect(mockV2ProgressAction).not.toHaveBeenCalled();
+});
+
+test("delayed first card keeps Today usable and guards Start and Continue until ready", async () => {
   let resolveFirstCard!: (word: typeof mockWord) => void;
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario.mockImplementationOnce(
@@ -1402,31 +1485,49 @@ test("delayed first card keeps the Today shell until Continue can reveal it", as
       />,
     );
 
+    await waitFor(
+      () => expect(resolveFirstCard).toEqual(expect.any(Function)),
+      { timeout: 5000 },
+    );
+
     expect(
-      await screen.findByRole("heading", {
-        name: /Loading card|Kaart laden/,
-      }),
+      await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
     ).toBeInTheDocument();
     const todayShell = document.querySelector<HTMLElement>(
       '[data-training-pilot-surface="today"]',
     );
     expect(todayShell).toBeInTheDocument();
     expect(screen.getByLabelText("2000nl")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Preparing your next card|Je volgende kaart wordt voorbereid|Подготавливаем следующую карточку/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
+    ).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Continue session|Sessie doorgaan/ })).not.toBeInTheDocument();
     expect(screen.queryByTestId("training-card-frame")).not.toBeInTheDocument();
     expect(screen.queryByText("Laden…")).not.toBeInTheDocument();
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(resolveFirstCard).toEqual(expect.any(Function)));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+    );
+    expect(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ })).toBeDisabled();
+    expect(startTrainingSession).not.toHaveBeenCalled();
+
     await act(async () => resolveFirstCard(mockWord));
 
-    expect(
-      await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ })).toBeEnabled();
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
     expect(
       screen.queryByRole("heading", { name: "huis" }),
     ).not.toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("button", { name: /Back to Today|Terug naar Vandaag/ }));
     fireEvent.click(
-      screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+      screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
     );
     expect(
       await screen.findByRole("heading", { name: "huis" }),
@@ -1435,6 +1536,230 @@ test("delayed first card keeps the Today shell until Continue can reveal it", as
     fetchNextTrainingWordByScenario.mockReset();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
   }
+});
+
+test("resume scope validation is visible and blocks stats for the pre-resume scope", async () => {
+  let resolveResume!: (snapshot: TrainingSessionSnapshot | null) => void;
+  await writeTrainingSessionResume({
+    sessionId: "session-pending-resume",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  fetchTrainingSessionSnapshot.mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveResume = resolve;
+    }),
+  );
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByText("Checking your saved session…"),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Preparing your next card…")).not.toBeInTheDocument();
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledOnce(),
+  );
+  expect(fetchStats).not.toHaveBeenCalled();
+
+  await act(async () => resolveResume(null));
+  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+});
+
+test("resume errors expose an actionable retry instead of waiting forever", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-failed-resume",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  fetchTrainingSessionSnapshot
+    .mockRejectedValueOnce(new Error("offline"))
+    .mockResolvedValueOnce(null);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByText("Your saved session could not be checked."),
+  ).toHaveAttribute("role", "alert");
+  expect(screen.queryByText("Preparing your next card…")).not.toBeInTheDocument();
+  expect(fetchStats).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Retry session check" }));
+
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2),
+  );
+  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  expect(
+    screen.queryByText("Your saved session could not be checked."),
+  ).not.toBeInTheDocument();
+});
+
+test("starting while stats are pending reuses the request and keeps unknown footer counts unknown", async () => {
+  let resolveStats!: (stats: Awaited<ReturnType<typeof fetchStats>>) => void;
+  fetchStats.mockImplementation(
+    () => new Promise((resolve) => { resolveStats = resolve; }),
+  );
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
+  ).toBeInTheDocument();
+  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  fireEvent.click(screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }));
+  const startButton = await screen.findByRole("button", { name: /Start training|Training starten/ });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  fireEvent.click(startButton);
+
+  expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+  expect(startTrainingSession).toHaveBeenCalledOnce();
+  expect(fetchStats).toHaveBeenCalledOnce();
+  const footer = screen.getByTestId("training-session-footer-progress");
+  expect(footer).toHaveTextContent("—");
+  expect(footer).not.toHaveTextContent("0/2000");
+
+  await act(async () => resolveStats(defaultTrainingStats));
+});
+
+test("late stats from the old setup scope cannot replace the current session stats", async () => {
+  useTwoListScope();
+  const requests: Array<{
+    resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void;
+  }> = [];
+  fetchStats.mockImplementation(
+    () => new Promise((resolve) => { requests.push({ resolve }); }),
+  );
+
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+    await waitFor(() => expect(requests).toHaveLength(1));
+
+    fireEvent.click(screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }));
+    fireEvent.change(screen.getByLabelText("Collection"), {
+      target: { value: `curated:${secondaryList.id}` },
+    });
+    const startButton = screen.getByRole("button", {
+      name: /Start training|Training starten/,
+    });
+    await waitFor(() => expect(startButton).toBeEnabled());
+    fireEvent.click(startButton);
+
+    expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+    await waitFor(() => expect(requests).toHaveLength(2));
+    await act(async () =>
+      requests[1]!.resolve({ ...defaultTrainingStats, newCardsToday: 22 }),
+    );
+    const footer = screen.getByTestId("training-session-footer-progress");
+    await waitFor(() => expect(footer).toHaveTextContent("22"));
+
+    await act(async () =>
+      requests[0]!.resolve({ ...defaultTrainingStats, newCardsToday: 3 }),
+    );
+    expect(footer).toHaveTextContent("22");
+    expect(footer).not.toHaveTextContent("3");
+  } finally {
+    for (const request of requests) request.resolve(defaultTrainingStats);
+    restoreDefaultListScope();
+  }
+});
+
+test("returning to a pending stats scope adopts its existing request", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockImplementation(
+    () => new Promise(() => undefined),
+  );
+  const requests: Array<{
+    scope: unknown;
+    resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void;
+  }> = [];
+  fetchStats.mockImplementation(
+    (_userId: string, _modes: string[], scope: unknown) =>
+      new Promise((resolve) => { requests.push({ scope, resolve }); }),
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("button", { name: "Wijzigen" });
+    await waitFor(() => expect(requests).toHaveLength(1));
+
+    fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
+    fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
+    await waitFor(() => expect(requests).toHaveLength(2));
+
+    fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[0]!.scope).toEqual(
+      expect.objectContaining({ listId: activeList.id, listType: activeList.type }),
+    );
+    expect(requests[1]!.scope).toEqual(
+      expect.objectContaining({ listId: secondaryList.id, listType: secondaryList.type }),
+    );
+
+    await act(async () =>
+      requests[0]!.resolve({ ...defaultTrainingStats, newCardsToday: 17 }),
+    );
+    expect(await screen.findByText("17")).toBeInTheDocument();
+
+    await act(async () =>
+      requests[1]!.resolve({ ...defaultTrainingStats, newCardsToday: 29 }),
+    );
+    expect(screen.getByText("17")).toBeInTheDocument();
+    expect(screen.queryByText("29")).not.toBeInTheDocument();
+  } finally {
+    for (const request of requests) request.resolve(defaultTrainingStats);
+    restoreDefaultListScope();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("setup and prepared card stay usable while scoped stats are still pending", async () => {
+  const statsRequests: Array<{
+    resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void;
+  }> = [];
+  fetchStats.mockImplementation(
+    () => new Promise((resolve) => { statsRequests.push({ resolve }); }),
+  );
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
+  ).toBeInTheDocument();
+  await waitFor(() => expect(statsRequests).toHaveLength(1));
+  expect(
+    screen.getAllByText(/Loading progress…|Voortgang laden…|Загружаем статистику…/),
+  ).toHaveLength(2);
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
+    ).toBeEnabled(),
+  );
+  expect(startTrainingSession).not.toHaveBeenCalled();
+
+  await act(async () => statsRequests[0].resolve(defaultTrainingStats));
+  expect(
+    await screen.findByText(
+      /0 reviews due · 0 new this study day|0 herhalingen klaar · 0 nieuw deze studiedag|Повторений к выполнению: 0 · новых за учебный день: 0/,
+    ),
+  ).toBeInTheDocument();
+  expect(startTrainingSession).not.toHaveBeenCalled();
 });
 
 test("resumes a still-active server session after refresh without starting another session", async () => {
@@ -1569,11 +1894,33 @@ test("superseded saved session clears its queue and returns to a deliberate loca
 
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
 
+  await waitFor(
+    () =>
+      expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
+        "user-1",
+        "session-superseded",
+      ),
+    { timeout: 5000 },
+  );
+  await waitFor(
+    () =>
+      expect(
+        window.localStorage.getItem("2000nl:training-session:user-1"),
+      ).toBeNull(),
+    { timeout: 5000 },
+  );
+
   expect(
-    await screen.findByRole("button", { name: "Start training here" }),
+    await screen.findByRole(
+      "button",
+      { name: /Start training here|Training hier starten|Начать тренировку здесь/ },
+      { timeout: 5000 },
+    ),
   ).toBeInTheDocument();
   expect(
-    screen.getByText("This will reset training on another device."),
+    screen.getByText(
+      /This will reset training on another device\.|Hiermee wordt de training op een ander apparaat gereset\.|Это сбросит тренировку на другом устройстве\./,
+    ),
   ).toBeInTheDocument();
   expect(
     screen.queryByTestId("mock-training-sense-card-v2"),
@@ -1890,10 +2237,12 @@ test("a deferred authority result for session A cannot reset newly started sessi
     }),
   );
   await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+  const startCurrentSetup = screen.getByRole("button", {
+    name: /Start current setup|Start huidige instelling/,
+  });
+  await waitFor(() => expect(startCurrentSetup).toBeEnabled());
   fireEvent.click(
-    screen.getByRole("button", {
-      name: /Start current setup|Start huidige instelling/,
-    }),
+    startCurrentSetup,
   );
   await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
   const sessionBCard = await screen.findByTestId(
@@ -2259,9 +2608,11 @@ test("pilot Start persists the complete selection in one scope update", async ()
     screen.getByRole("slider", { name: /Review ↔ new rhythm|Ritme herhaling ↔ nieuw/ }),
     { target: { value: "3" } },
   );
-  fireEvent.click(
-    screen.getByRole("button", { name: /Start training|Training starten/ }),
-  );
+  const startButton = screen.getByRole("button", {
+    name: /Start training|Training starten/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  fireEvent.click(startButton);
 
   await waitFor(() => expect(updateActiveTrainingScope).toHaveBeenCalledOnce());
   expect(updateActiveTrainingScope).toHaveBeenCalledWith({
@@ -2297,9 +2648,11 @@ test("pilot Setup applies source and date filters only when Start commits the dr
     ),
   ).toBe(false);
   fetchNextTrainingWordByScenario.mockClear();
-  fireEvent.click(
-    screen.getByRole("button", { name: /Start training|Training starten/ }),
-  );
+  const sourceFilterStartButton = screen.getByRole("button", {
+    name: /Start training|Training starten/,
+  });
+  await waitFor(() => expect(sourceFilterStartButton).toBeEnabled());
+  fireEvent.click(sourceFilterStartButton);
   await waitFor(() =>
     expect(
       fetchNextTrainingWordByScenario.mock.calls.map((call) => call[8]),
@@ -2324,15 +2677,18 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
       code: "57014",
     }),
   );
-  fireEvent.click(
-    screen.getByRole("button", { name: /Start training|Training starten/ }),
-  );
+  const startButton = screen.getByRole("button", {
+    name: /Start training|Training starten/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  fireEvent.click(startButton);
 
   expect(
-    await screen.findByRole("heading", {
-      name: /Training could not be loaded|Training kon niet worden geladen/,
-    }),
-  ).toBeInTheDocument();
+    await screen.findByText(
+      /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
+    ),
+  ).toHaveAttribute("role", "alert");
+  expect(screen.getByRole("heading", { name: /Good morning|Goedemorgen/ })).toBeInTheDocument();
   expect(
     screen.queryByRole("heading", { name: "huis" }),
   ).not.toBeInTheDocument();
@@ -2341,6 +2697,49 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
       name: /No cards match this setup|Geen kaarten voor deze selectie/,
     }),
   ).not.toBeInTheDocument();
+  expect(startTrainingSession).toHaveBeenCalledOnce();
+  fireEvent.click(
+    screen.getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ }),
+  );
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+    ).toBeEnabled(),
+  );
+  expect(startTrainingSession).toHaveBeenCalledOnce();
+  expect(mockV2ProgressAction).not.toHaveBeenCalled();
+});
+
+test("stats errors preserve setup and retry the read without creating a session", async () => {
+  fetchStats.mockImplementation(async () => {
+    throw new Error("stats unavailable");
+  });
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
+  ).toBeInTheDocument();
+  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  expect(
+    screen.getAllByText(/Progress could not be loaded\.|Voortgang kon niet worden geladen\.|Не удалось загрузить статистику\./),
+  ).toHaveLength(2);
+  expect(startTrainingSession).not.toHaveBeenCalled();
+  const callsBeforeRetry = fetchStats.mock.calls.length;
+  fetchStats.mockImplementation(async () => defaultTrainingStats);
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: /Retry progress|Voortgang opnieuw laden|Повторить загрузку статистики/,
+    }),
+  );
+  await waitFor(() =>
+    expect(fetchStats).toHaveBeenCalledTimes(callsBeforeRetry + 1),
+  );
+  expect(
+    await screen.findByText(
+      /0 reviews due · 0 new this study day|0 herhalingen klaar · 0 nieuw deze studiedag|Повторений к выполнению: 0 · новых за учебный день: 0/,
+    ),
+  ).toBeInTheDocument();
+  expect(startTrainingSession).not.toHaveBeenCalled();
 });
 
 test("pilot Start shows empty recovery when the replacement queue has no cards", async () => {
@@ -2350,16 +2749,18 @@ test("pilot Start shows empty recovery when the replacement queue has no cards",
   fireEvent.click(
     screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
   );
+  const startButton = screen.getByRole("button", {
+    name: /Start training|Training starten/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
   fetchNextTrainingWordByScenario.mockResolvedValueOnce(null);
-  fireEvent.click(
-    screen.getByRole("button", { name: /Start training|Training starten/ }),
-  );
+  fireEvent.click(startButton);
 
   expect(
-    await screen.findByRole("heading", {
-      name: /No cards match this setup|Geen kaarten voor deze selectie/,
-    }),
-  ).toBeInTheDocument();
+    await screen.findByText(
+      /No card is ready for this setup|Er staat nog geen kaart klaar/,
+    ),
+  ).toHaveAttribute("role", "status");
   expect(
     screen.queryByRole("heading", {
       name: /Training could not be loaded|Training kon niet worden geladen/,
@@ -3235,11 +3636,11 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
 
     await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /Continue session|Sessie doorgaan/,
-      }),
-    );
+    const startSession = screen.getByRole("button", {
+      name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+    });
+    await waitFor(() => expect(startSession).toBeEnabled());
+    fireEvent.click(startSession);
 
     await screen.findByTestId("mock-training-sense-card-v2");
     const scrollRegion = await screen.findByTestId(
@@ -3330,11 +3731,11 @@ test("approved Training History control requests the authoritative destination b
     );
 
     await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /Continue session|Sessie doorgaan/,
-      }),
-    );
+    const startSession = screen.getByRole("button", {
+      name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+    });
+    await waitFor(() => expect(startSession).toBeEnabled());
+    fireEvent.click(startSession);
     await screen.findByTestId("mock-training-sense-card-v2");
 
     const history = screen.getByRole("button", { name: "History" });
@@ -3348,6 +3749,21 @@ test("approved Training History control requests the authoritative destination b
 });
 
 test("keyboard return from History restores focus to its stable Training trigger", async () => {
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...defaultStartedTrainingSession,
+    runStatus: "active",
+    runGeneration: 1,
+    sessionSize: 10,
+    requestedTotal: 2,
+    members: [{
+      ordinal: 1,
+      entryId: mockWord.id,
+      cardTypeId: "word-to-definition",
+      queueSource: "new",
+      consumedAt: null,
+      unavailableAt: null,
+    }],
+  });
   prefetchPlatformV2TrainingEntry.mockReset();
   prefetchPlatformV2TrainingEntry.mockResolvedValue({
     state: "ready",
@@ -3372,9 +3788,14 @@ test("keyboard return from History restores focus to its stable Training trigger
   try {
     render(<Harness />);
     await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/ }),
+      ).toBeEnabled(),
+    );
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Continue session|Sessie doorgaan/,
+        name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
       }),
     );
     await screen.findByTestId("mock-training-sense-card-v2");
@@ -3409,11 +3830,11 @@ test("V2 loading retains the existing session chrome and footer", async () => {
   try {
     render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
     await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: /Continue session|Sessie doorgaan/,
-      }),
-    );
+    const startSession = screen.getByRole("button", {
+      name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+    });
+    await waitFor(() => expect(startSession).toBeEnabled());
+    fireEvent.click(startSession);
 
     expect(
       await screen.findByTestId("training-v2-loading"),

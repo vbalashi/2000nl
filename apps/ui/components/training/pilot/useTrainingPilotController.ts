@@ -24,6 +24,7 @@ import type {
 } from "./TrainingTodaySetup";
 import { isTrainingSetupDraftSupported } from "./TrainingTodaySetup";
 import { measureTrainingTransitionStage } from "@/lib/training/trainingTransitionTiming";
+import { deriveTrainingPilotSetupStatus } from "@/lib/training/trainingReadiness";
 import {
   isTrainingLoadFailure,
   type LoadNextTrainingTurnResult,
@@ -70,10 +71,7 @@ type CommitPilotDraftParams = {
 type PilotControllerParams = {
   enabled: boolean;
   interfaceLanguage: OnboardingLanguage;
-  listHydrated: boolean;
-  loadingWord: boolean;
-  hasCurrentWord: boolean;
-  loadError: string | null;
+  setupPrerequisites: "pending" | "ready" | "error";
   activeScenario: string;
   enabledModes: TrainingMode[];
   cardFilter: CardFilter;
@@ -230,10 +228,7 @@ export function useCommitTrainingPilotDraft({
 export function useTrainingPilotController({
   enabled,
   interfaceLanguage,
-  listHydrated,
-  loadingWord,
-  hasCurrentWord,
-  loadError,
+  setupPrerequisites,
   activeScenario,
   enabledModes,
   cardFilter,
@@ -289,17 +284,10 @@ export function useTrainingPilotController({
     };
   }, [enabled, loadTrainingScenarios]);
 
-  const status: TrainingPilotStatus = loadError
-    ? "error"
-    : !listHydrated
-      ? "preparing"
-      : loadingWord && !hasCurrentWord
-      ? "loading"
-      : listOptions.length === 0
-        ? "first-use"
-        : !hasCurrentWord
-          ? "empty"
-          : "ready";
+  const status = deriveTrainingPilotSetupStatus({
+    prerequisites: setupPrerequisites,
+    hasAvailableLists: listOptions.length > 0,
+  });
 
   const initialDraft: TrainingSetupDraft = {
     scenarioId: activeScenario,
