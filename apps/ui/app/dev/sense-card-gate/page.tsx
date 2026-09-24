@@ -1,5 +1,9 @@
+import { ExerciseCardGate } from "./ExerciseCardGate";
 import { SenseCardGateHarness } from "./SenseCardGateHarness";
-import { ReadingSizePrototype, ReadingSettingsGate } from "./ReadingSizePrototype";
+import {
+  ReadingSizePrototype,
+  ReadingSettingsGate,
+} from "./ReadingSizePrototype";
 import { UnifiedDetailsGate } from "./UnifiedDetailsGate";
 import { normalizeReadingSize } from "@/lib/reading/readingSize";
 
@@ -20,6 +24,7 @@ export default async function SenseCardGatePage({
   if (process.env.NODE_ENV === "production") {
     return <main className="p-8">Not available in production.</main>;
   }
+  if (searchParams?.prototype === "exercise") return <ExerciseCardGate />;
   if (searchParams?.prototype === "reading") {
     return <ReadingSizePrototype />;
   }
