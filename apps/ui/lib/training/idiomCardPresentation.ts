@@ -3,7 +3,7 @@ import {
   localizePlatformSemanticTerm,
   projectPlatformV2SenseContent,
 } from "@/lib/platform/projections/platformV2SenseContent";
-import type { TrainingExercisePresentation } from "./trainingCardPresentation";
+import type { TrainingExercisePresentation } from "./exerciseCardPresentation";
 import type { IdiomExerciseContent } from "./idiomExerciseContent";
 
 /** Only the resolved target and its owned children enter the shared templates. */

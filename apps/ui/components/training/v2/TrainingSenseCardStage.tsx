@@ -1,5 +1,5 @@
 "use client";
-import { hasTrainingCardTranslation as hasTranslation } from "@/lib/training/trainingCardPresentation";
+import { hasTrainingCardTranslation as hasTranslation } from "@/lib/training/exerciseCardPresentation";
 import { selectTrainingReversePrompt } from "@/lib/training/trainingReversePrompt";
 
 import React from "react";

@@ -5,7 +5,7 @@ import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   hasTrainingCardTranslation,
   type TrainingExercisePresentation,
-} from "@/lib/training/trainingCardPresentation";
+} from "@/lib/training/exerciseCardPresentation";
 import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
 import {
   TrainingCardShell,
