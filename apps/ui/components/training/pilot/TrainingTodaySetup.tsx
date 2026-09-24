@@ -31,6 +31,9 @@ export type TrainingSetupDraft = {
   modes: TrainingMode[];
   cardFilter: CardFilter;
   listValue: string;
+  /** Absent is the legacy one-collection preset. */
+  materialMode?: "collection" | "all-dictionaries" | "selected-dictionaries";
+  dictionaryIds?: string[];
   newReviewRatio: number;
   dateWindow: TrainingDateWindow;
   daysAgo?: number;
@@ -65,6 +68,18 @@ export const isTrainingSetupDraftSupported = (
   );
 };
 
+export const isTrainingSetupMaterialAvailable = (
+  draft: Pick<TrainingSetupDraft, "listValue" | "materialMode" | "dictionaryIds">,
+  lists: TrainingSetupOption[],
+  dictionaries: TrainingSetupOption[] = [],
+) => {
+  if (draft.materialMode === "all-dictionaries") return dictionaries.length > 0;
+  if (draft.materialMode === "selected-dictionaries") {
+    return Boolean(draft.dictionaryIds?.some((id) => dictionaries.some((source) => source.value === id)));
+  }
+  return lists.some((option) => option.value === draft.listValue);
+};
+
 const defaultModesForScenario = (scenario: TrainingSetupOption) => {
   const modes = scenario.modes ?? [];
   if (
@@ -84,10 +99,13 @@ type Props = {
   onTrainingLanguageChange?: (language: string) => void;
   interfaceLanguage: OnboardingLanguage;
   status: TrainingPilotStatus;
+  startError?: string | null;
   initialDraft: TrainingSetupDraft;
   stats: DetailedStats;
   scenarios: TrainingSetupOption[];
   lists: TrainingSetupOption[];
+  dictionaries?: TrainingSetupOption[];
+  dictionariesLoading?: boolean;
   sources: TrainingSetupOption[];
   startPending?: boolean;
   scenarioLoading?: boolean;
@@ -154,6 +172,12 @@ const copy = {
     activity: "Recent activity",
     activityHelp: "Optional: narrow by event date and source; this does not mean forgotten words only.",
     materialHelp: "Choose a dictionary or one collection.",
+    allDictionaries: "All accessible dictionaries",
+    chosenDictionaries: "Selected dictionaries",
+    selectDictionary: "Choose dictionaries",
+    partialDictionaryAccess: "Some selected dictionaries are unavailable; this session will use only those you can access.",
+    loadingDictionaries: "Loading dictionaries…",
+    dictionaryQueueDeferred: "The exact cards are selected when you start.",
     goal: "Training goal",
     meaning: "Meaning",
     reverse: "Reverse",
@@ -164,6 +188,7 @@ const copy = {
     review: "Reviews",
     both: "Both",
     list: "Collection",
+    collectionMode: "One collection",
     source: "Source",
     date: "Time window",
     allDates: "All time",
@@ -187,6 +212,7 @@ const copy = {
     allDueToday: "All due",
     daysAgo: "Days ago",
     loading: "Loading Training",
+    materialUnavailable: "Selected material is unavailable. Choose another before starting.",
     chooseGoal: "Choose a training goal",
     presets: "Saved presets",
     noPresets: "No presets saved on this device yet.",
@@ -250,6 +276,12 @@ const copy = {
     activity: "Recente activiteit",
     activityHelp: "Optioneel: filter op datum en bron; dit selecteert niet alleen vergeten woorden.",
     materialHelp: "Kies een woordenboek of één collectie.",
+    allDictionaries: "Alle toegankelijke woordenboeken",
+    chosenDictionaries: "Gekozen woordenboeken",
+    selectDictionary: "Kies woordenboeken",
+    partialDictionaryAccess: "Sommige gekozen woordenboeken zijn niet beschikbaar; deze sessie gebruikt alleen de toegankelijke.",
+    loadingDictionaries: "Woordenboeken laden…",
+    dictionaryQueueDeferred: "De exacte kaarten worden gekozen wanneer je start.",
     goal: "Trainingsdoel",
     meaning: "Betekenis",
     reverse: "Omgekeerd",
@@ -260,6 +292,7 @@ const copy = {
     review: "Herhaling",
     both: "Beide",
     list: "Collectie",
+    collectionMode: "Eén collectie",
     source: "Bron",
     date: "Periode",
     allDates: "Alle tijd",
@@ -283,6 +316,7 @@ const copy = {
     allDueToday: "Alles wat moet",
     daysAgo: "Dagen geleden",
     loading: "Training laden",
+    materialUnavailable: "Het gekozen materiaal is niet beschikbaar. Kies ander materiaal voordat je start.",
     chooseGoal: "Kies een trainingsdoel",
     presets: "Bewaarde presets",
     noPresets: "Nog geen presets op dit apparaat.",
@@ -346,6 +380,12 @@ const copy = {
     activity: "Недавняя активность",
     activityHelp: "Можно сузить по дате и источнику; это не выбор только забытых слов.",
     materialHelp: "Выберите словарь или одну коллекцию.",
+    allDictionaries: "Все доступные словари",
+    chosenDictionaries: "Выбранные словари",
+    selectDictionary: "Выберите словари",
+    partialDictionaryAccess: "Некоторые выбранные словари недоступны; сессия использует только те, к которым есть доступ.",
+    loadingDictionaries: "Загружаем словари…",
+    dictionaryQueueDeferred: "Точные карточки будут выбраны при запуске.",
     goal: "Цель тренировки",
     meaning: "Значение",
     reverse: "Обратные",
@@ -356,6 +396,7 @@ const copy = {
     review: "Повторения",
     both: "Оба",
     list: "Коллекция",
+    collectionMode: "Одна коллекция",
     source: "Источник",
     date: "Период",
     allDates: "За всё время",
@@ -379,6 +420,7 @@ const copy = {
     allDueToday: "Все доступные повторы",
     daysAgo: "Дней назад",
     loading: "Загрузка тренировки",
+    materialUnavailable: "Выбранный материал недоступен. Перед запуском выберите другой.",
     chooseGoal: "Выберите цель тренировки",
     presets: "Сохранённые пресеты",
     noPresets: "На этом устройстве пока нет пресетов.",
@@ -448,10 +490,13 @@ export function TrainingTodaySetup({
   onTrainingLanguageChange,
   interfaceLanguage,
   status,
+  startError,
   initialDraft,
   stats,
   scenarios,
   lists,
+  dictionaries = [],
+  dictionariesLoading = false,
   sources,
   startPending = false,
   scenarioLoading = false,
@@ -540,15 +585,22 @@ export function TrainingTodaySetup({
     draft,
     scenarios,
   );
+  const initialMaterialAvailable = isTrainingSetupMaterialAvailable(initialDraft, lists, dictionaries);
+  const draftMaterialAvailable = isTrainingSetupMaterialAvailable(draft, lists, dictionaries);
 
   const completed = stats.newCardsToday + stats.reviewCardsDone;
   const selectedModeLabels = [
     draft.modes.includes("word-to-definition") ? t.meaning : null,
     draft.modes.includes("definition-to-word") ? t.reverse : null,
   ].filter(Boolean);
-  const selectedList = lists.find(
-    (option) => option.value === draft.listValue,
-  )?.label;
+  const selectedList = draft.materialMode === "all-dictionaries"
+    ? dictionariesLoading ? t.loadingDictionaries : t.allDictionaries
+    : draft.materialMode === "selected-dictionaries"
+      ? dictionariesLoading ? t.loadingDictionaries : (draft.dictionaryIds ?? [])
+          .map((id) => dictionaries.find((source) => source.value === id)?.label)
+          .filter(Boolean)
+          .join(", ") || t.materialUnavailable
+      : lists.find((option) => option.value === draft.listValue)?.label;
   const selectionSummary = useMemo(
     () =>
       [
@@ -577,7 +629,7 @@ export function TrainingTodaySetup({
   };
 
   const savePreset = () => {
-    if (!storageKey || !draftScenarioSupported || trainingLanguageLoading || pendingLanguage) return;
+    if (!storageKey || !draftScenarioSupported || !draftMaterialAvailable || trainingLanguageLoading || pendingLanguage) return;
     const sizeLabel = draft.sessionSize === "all-due-today"
       ? t.allDueToday
       : t.exercises(draft.sessionSize);
@@ -605,7 +657,7 @@ export function TrainingTodaySetup({
   };
 
   const requestStart = async (nextDraft: TrainingSetupDraft) => {
-    if (trainingLanguageLoading || pendingLanguage || startBlocked) return;
+    if (trainingLanguageLoading || pendingLanguage || startBlocked || !isTrainingSetupMaterialAvailable(nextDraft, lists, dictionaries)) return;
     const started = await onStart(nextDraft);
     if (started === false) setScreen("today");
   };
@@ -703,8 +755,10 @@ export function TrainingTodaySetup({
                 {selectionSummary}
               </p>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {statsStatus === "ready"
-                  ? t.queueSummary(stats.reviewCardsDue, stats.newWordsToday)
+                {initialDraft.materialMode && initialDraft.materialMode !== "collection"
+                  ? t.dictionaryQueueDeferred
+                  : statsStatus === "ready"
+                    ? t.queueSummary(stats.reviewCardsDue, stats.newWordsToday)
                   : statsStatus === "pending"
                     ? t.statsLoading
                     : t.statsError}
@@ -734,7 +788,7 @@ export function TrainingTodaySetup({
                   {cardPreparationStatus === "pending"
                     ? t.cardPending
                     : cardPreparationStatus === "error"
-                      ? t.cardError
+                      ? startError === "training_material_unavailable" ? t.materialUnavailable : t.cardError
                       : t.cardEmpty}
                 </p>
                 {cardPreparationStatus === "error" && onRetryCard ? (
@@ -748,7 +802,7 @@ export function TrainingTodaySetup({
               type="button"
               onClick={() => void requestStart(initialDraft)}
               disabled={
-                startPending || scenarioLoading || startBlocked || !initialScenarioSupported
+                startPending || scenarioLoading || startBlocked || !initialScenarioSupported || !initialMaterialAvailable
               }
               className={`${actionClass} mt-4 w-full border-indigo-500 bg-indigo-500/15 text-indigo-900 hover:bg-indigo-500/25 disabled:cursor-wait disabled:opacity-60 dark:text-indigo-100`}
             >
@@ -756,9 +810,13 @@ export function TrainingTodaySetup({
                 ? t.starting
                 : scenarioLoading
                   ? t.loading
-                  : initialScenarioSupported
-                    ? t.startCurrent
-                    : t.chooseGoal}
+                  : !initialScenarioSupported
+                    ? t.chooseGoal
+                    : !initialMaterialAvailable
+                      ? dictionariesLoading && initialDraft.materialMode && initialDraft.materialMode !== "collection"
+                        ? t.loadingDictionaries
+                        : t.materialUnavailable
+                      : t.startCurrent}
             </button>
           </section>
           {storageKey ? (
@@ -774,11 +832,23 @@ export function TrainingTodaySetup({
                 <div className="mt-3 space-y-2">
                   {presets.map((preset) => {
                     const supported = isTrainingSetupDraftSupported(preset.draft, scenarios);
+                    const materialAvailable = isTrainingSetupMaterialAvailable(preset.draft, lists, dictionaries);
+                    const missingSelectedDictionary = preset.draft.materialMode === "selected-dictionaries" &&
+                      preset.draft.dictionaryIds?.some((id) => !dictionaries.some((source) => source.value === id));
                     return (
                       <div key={preset.id} className="flex items-center gap-2 rounded-xl bg-slate-100/70 p-2 dark:bg-slate-900/55">
                         <span className="min-w-0 flex-1 truncate px-2 text-sm font-medium text-slate-800 dark:text-slate-200">
                           {preset.name}
                         </span>
+                        {missingSelectedDictionary && !dictionariesLoading ? (
+                          <span className="text-xs text-amber-700 dark:text-amber-300">
+                            {materialAvailable ? t.partialDictionaryAccess : t.materialUnavailable}
+                          </span>
+                        ) : !materialAvailable ? (
+                          <span className="text-xs text-amber-700 dark:text-amber-300">
+                            {dictionariesLoading && preset.draft.materialMode && preset.draft.materialMode !== "collection" ? t.loadingDictionaries : t.materialUnavailable}
+                          </span>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => {
@@ -793,7 +863,7 @@ export function TrainingTodaySetup({
                         </button>
                         <button
                           type="button"
-                          disabled={!supported || startPending || scenarioLoading}
+                          disabled={!supported || !materialAvailable || startPending || scenarioLoading}
                           onClick={() => void requestStart(preset.draft)}
                           className="min-h-10 rounded-lg bg-indigo-500 px-3 text-sm font-semibold text-white disabled:opacity-50"
                         >
@@ -1021,30 +1091,65 @@ export function TrainingTodaySetup({
           <section className="order-2 min-w-0 text-sm font-semibold text-slate-950 dark:text-white">
             <h2>{t.material}</h2>
             <p className="mt-2 inline-flex max-w-full items-center rounded-full border border-indigo-400 bg-indigo-500/10 px-3 py-1 text-sm text-indigo-800 dark:text-indigo-200">
-              <span className="truncate">{lists.find((option) => option.value === draft.listValue)?.label ?? t.loading}</span>
+              <span className="truncate">{selectedList ?? t.materialUnavailable}</span>
             </p>
-            <div className="relative mt-2 flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-100/70 text-slate-600 focus-within:ring-2 focus-within:ring-indigo-400 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
-              <Plus size={14} aria-hidden="true" />
-              <span aria-hidden="true">{t.changeMaterial}</span>
-            <select
-              aria-label={t.list}
-              value={draft.listValue}
-              disabled={trainingLanguageLoading || Boolean(pendingLanguage) || startPending}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  listValue: event.target.value,
-                }))
-              }
-              className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-wait"
-            >
-              {lists.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <ChoiceButton
+                active={!draft.materialMode || draft.materialMode === "collection"}
+                label={t.collectionMode}
+                onClick={() => setDraft((current) => ({ ...current, materialMode: "collection" }))}
+              />
+              <ChoiceButton
+                active={draft.materialMode === "all-dictionaries"}
+                label={t.allDictionaries}
+                onClick={() => setDraft((current) => ({ ...current, materialMode: "all-dictionaries" }))}
+              />
+              <ChoiceButton
+                active={draft.materialMode === "selected-dictionaries"}
+                label={t.chosenDictionaries}
+                onClick={() => setDraft((current) => ({ ...current, materialMode: "selected-dictionaries" }))}
+              />
             </div>
+            {!draft.materialMode || draft.materialMode === "collection" ? (
+              <div className="relative mt-2 flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-100/70 text-slate-600 focus-within:ring-2 focus-within:ring-indigo-400 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
+                <Plus size={14} aria-hidden="true" />
+                <span aria-hidden="true">{t.changeMaterial}</span>
+                <select
+                  aria-label={t.list}
+                  value={draft.listValue}
+                  disabled={trainingLanguageLoading || Boolean(pendingLanguage) || startPending}
+                  onChange={(event) => setDraft((current) => ({ ...current, listValue: event.target.value }))}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-wait"
+                >
+                  {!draftMaterialAvailable && draft.listValue ? (
+                    <option value={draft.listValue} disabled>{t.materialUnavailable}</option>
+                  ) : null}
+                  {lists.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </div>
+            ) : draft.materialMode === "selected-dictionaries" ? (
+              <fieldset className="mt-2 space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                <legend className="sr-only">{t.selectDictionary}</legend>
+                {dictionaries.map((source) => (
+                  <label key={source.value} className="flex min-h-10 items-center gap-2 font-normal">
+                    <input
+                      type="checkbox"
+                      checked={draft.dictionaryIds?.includes(source.value) ?? false}
+                      onChange={(event) => setDraft((current) => ({
+                        ...current,
+                        dictionaryIds: event.target.checked
+                          ? [...new Set([...(current.dictionaryIds ?? []), source.value])]
+                          : (current.dictionaryIds ?? []).filter((id) => id !== source.value),
+                      }))}
+                    />
+                    {source.label}
+                  </label>
+                ))}
+                {!dictionariesLoading && (draft.dictionaryIds ?? []).some((id) => !dictionaries.some((source) => source.value === id)) ? (
+                  <p role="status" className="text-xs font-normal text-amber-700 dark:text-amber-300">{t.partialDictionaryAccess}</p>
+                ) : null}
+              </fieldset>
+            ) : null}
             <span className="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400">
               {t.materialHelp}
             </span>
@@ -1149,7 +1254,7 @@ export function TrainingTodaySetup({
               <button
                 type="button"
                 onClick={savePreset}
-                disabled={!draftScenarioSupported || trainingLanguageLoading || Boolean(pendingLanguage)}
+                disabled={!draftScenarioSupported || !draftMaterialAvailable || trainingLanguageLoading || Boolean(pendingLanguage)}
                 className={`${actionClass} min-w-0 flex-[0.75] border-slate-300 bg-white text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200`}
               >
                 {editingPresetId ? t.updatePreset : t.savePreset}
@@ -1159,7 +1264,7 @@ export function TrainingTodaySetup({
               type="button"
               onClick={() => void requestStart(draft)}
               disabled={
-                startPending || scenarioLoading || startBlocked || !draftScenarioSupported || trainingLanguageLoading || Boolean(pendingLanguage)
+                startPending || scenarioLoading || startBlocked || !draftScenarioSupported || !draftMaterialAvailable || trainingLanguageLoading || Boolean(pendingLanguage)
               }
               className={`${actionClass} min-w-0 flex-[1.25] border-indigo-500 bg-indigo-500 text-white hover:bg-indigo-400 disabled:cursor-wait disabled:opacity-60 dark:text-slate-950`}
             >
@@ -1167,11 +1272,15 @@ export function TrainingTodaySetup({
                 ? t.starting
                 : scenarioLoading
                   ? t.loading
-                  : draftScenarioSupported
-                    ? replacementWarning
-                      ? t.startHere
-                      : t.start
-                    : t.chooseGoal}
+                  : !draftScenarioSupported
+                    ? t.chooseGoal
+                    : !draftMaterialAvailable
+                      ? dictionariesLoading && draft.materialMode && draft.materialMode !== "collection"
+                        ? t.loadingDictionaries
+                        : t.materialUnavailable
+                      : replacementWarning
+                        ? t.startHere
+                        : t.start}
             </button>
           </div>
         </div>

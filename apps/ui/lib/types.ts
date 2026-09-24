@@ -24,6 +24,12 @@ export type TrainingFocusFilter = {
   partOfSpeech?: DutchTrainingPartOfSpeech[];
   /** Restrict noun candidates by their de/het article; non-noun POS remain unaffected. */
   nounArticles?: DutchNounArticle[];
+  /** Source scope for dictionary-based Training; absent preserves legacy list/default scope. */
+  dictionaryScope?: {
+    mode: "all" | "selected";
+    languageCode: string;
+    dictionaryIds?: string[];
+  };
 };
 
 export type DutchTrainingPartOfSpeech =

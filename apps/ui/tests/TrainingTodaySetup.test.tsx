@@ -5,6 +5,7 @@ import {
   TrainingTodaySetup,
   type TrainingSetupDraft,
 } from "@/components/training/pilot/TrainingTodaySetup";
+import { presetStorageKey } from "@/components/training/pilot/trainingSetupPresets";
 
 const initialDraft: TrainingSetupDraft = {
   scenarioId: "understanding",
@@ -15,6 +16,9 @@ const initialDraft: TrainingSetupDraft = {
   dateWindow: "all",
   sourceValue: "all",
 };
+const dictionaryA = "00000000-0000-4000-8000-0000000000a1";
+const dictionaryB = "00000000-0000-4000-8000-0000000000b2";
+const dictionaryLost = "00000000-0000-4000-8000-0000000000c3";
 
 const baseProps = {
   interfaceLanguage: "en" as const,
@@ -355,6 +359,93 @@ test("a saved preset can be reopened and modified on this device", () => {
   fireEvent.click(screen.getByRole("button", { name: "Update preset" }));
   expect(screen.getByText("Saved on this device")).toBeInTheDocument();
   window.localStorage.clear();
+});
+
+test("a preset with a missing collection stays editable and cannot start another collection", () => {
+  const userId = "missing-material-test-user";
+  const key = presetStorageKey(userId, "nl");
+  window.localStorage.setItem(key, JSON.stringify([{
+    id: "missing-material",
+    name: "Old collection · Words",
+    draft: { ...initialDraft, listValue: "user:missing", sessionSize: 10 },
+  }]));
+  const onStart = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} userId={userId} trainingLanguageCode="nl" onStart={onStart} />);
+
+  expect(screen.getByRole("button", { name: "Start" })).toBeDisabled();
+  expect(screen.getByText("Selected material is unavailable. Choose another before starting.")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  expect(screen.getByLabelText("Collection")).toHaveValue("user:missing");
+  expect(screen.getByRole("button", { name: "Selected material is unavailable. Choose another before starting." })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Update preset" })).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("Collection"), { target: { value: "curated:nt2" } });
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ listValue: "curated:nt2" }));
+  window.localStorage.removeItem(key);
+});
+
+test("dictionary material modes launch only the chosen source and persist in a preset", () => {
+  const userId = "dictionary-mode-user";
+  const onStart = vi.fn();
+  render(<TrainingTodaySetup
+    {...baseProps}
+    userId={userId}
+    trainingLanguageCode="nl"
+    dictionaries={[{ value: dictionaryA, label: "Core Dutch" }, { value: dictionaryB, label: "My Dutch" }]}
+    onStart={onStart}
+  />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  fireEvent.click(screen.getByRole("button", { name: "All accessible dictionaries" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ materialMode: "all-dictionaries" }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Selected dictionaries" }));
+  expect(screen.getByRole("button", { name: "Selected material is unavailable. Choose another before starting." })).toBeDisabled();
+  fireEvent.click(screen.getByLabelText("My Dutch"));
+  fireEvent.click(screen.getByRole("button", { name: "Save preset" }));
+  fireEvent.click(screen.getByRole("button", { name: "Back to Today" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start" }));
+  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({
+    materialMode: "selected-dictionaries",
+    dictionaryIds: [dictionaryB],
+  }));
+  window.localStorage.removeItem(presetStorageKey(userId, "nl"));
+});
+
+test("a failed start returns to Today and explains material loss", async () => {
+  const onStart = vi.fn().mockResolvedValue(false);
+  const { rerender } = render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(await screen.findByRole("heading", { name: "Good morning" })).toBeInTheDocument();
+  rerender(<TrainingTodaySetup {...baseProps} onStart={onStart} startError="training_material_unavailable" cardPreparationStatus="error" />);
+  expect(screen.getByRole("alert")).toHaveTextContent("Selected material is unavailable. Choose another before starting.");
+});
+
+test("partially unavailable dictionary presets retain their references and disclose the reduction", () => {
+  const userId = "partial-dictionary-user";
+  const key = presetStorageKey(userId, "nl");
+  window.localStorage.setItem(key, JSON.stringify([{
+    id: "partial",
+    name: "Two dictionaries · Words",
+    draft: {
+      ...initialDraft,
+      materialMode: "selected-dictionaries",
+      dictionaryIds: [dictionaryA, dictionaryLost],
+      sessionSize: 10,
+    },
+  }]));
+  const onStart = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} userId={userId} trainingLanguageCode="nl"
+    dictionaries={[{ value: dictionaryA, label: "Core Dutch" }]} onStart={onStart} />);
+  expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  expect(screen.getByLabelText("Core Dutch")).toBeChecked();
+  expect(screen.getByText("Some selected dictionaries are unavailable; this session will use only those you can access.")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ dictionaryIds: [dictionaryA, dictionaryLost] }));
+  window.localStorage.removeItem(key);
 });
 
 test.each([

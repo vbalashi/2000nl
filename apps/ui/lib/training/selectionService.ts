@@ -152,7 +152,8 @@ export const isTrainingFocusFilterActive = (
     Boolean(filter.sourceKind) ||
     Boolean(filter.externalId) ||
     Boolean(filter.partOfSpeech?.length) ||
-    Boolean(filter.nounArticles?.length);
+    Boolean(filter.nounArticles?.length) ||
+    Boolean(filter.dictionaryScope);
 };
 
 const isNonNegativeInteger = (value: unknown): value is number =>
@@ -398,6 +399,9 @@ export async function startTrainingSession(
   });
   if (error) {
     console.error("Error starting training session:", error);
+    if (error.message?.includes("training_material_unavailable")) {
+      throw new Error("training_material_unavailable");
+    }
     return null;
   }
   return mapTrainingSession(data);
@@ -934,6 +938,15 @@ function normalizeTrainingFocusFilter(
       : {}),
     ...(filter.nounArticles?.length
       ? { nounArticles: [...new Set(filter.nounArticles)].sort() }
+      : {}),
+    ...(filter.dictionaryScope
+      ? { dictionaryScope: {
+          mode: filter.dictionaryScope.mode,
+          languageCode: filter.dictionaryScope.languageCode,
+          ...(filter.dictionaryScope.mode === "selected"
+            ? { dictionaryIds: [...new Set(filter.dictionaryScope.dictionaryIds ?? [])].sort() }
+            : {}),
+        } }
       : {}),
   };
 }

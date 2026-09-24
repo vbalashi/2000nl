@@ -29,3 +29,25 @@ test("presets are stored separately for each learner and training language", () 
   expect(readTrainingPresets(presetStorageKey("user-b", "nl"))).toEqual([]);
   expect(readTrainingPresets(presetStorageKey("user-a", "en"))).toEqual([]);
 });
+
+test("dictionary presets retain explicit source IDs and reject malformed selections", () => {
+  const key = presetStorageKey("user-a", "nl");
+  const draft = {
+    scenarioId: "understanding",
+    modes: ["word-to-definition" as const],
+    cardFilter: "new" as const,
+    listValue: "",
+    newReviewRatio: 2,
+    dateWindow: "all" as const,
+    sourceValue: "all",
+    sessionSize: 10,
+    materialMode: "selected-dictionaries" as const,
+    dictionaryIds: ["00000000-0000-4000-8000-0000000000a1"],
+  };
+  window.localStorage.setItem(key, JSON.stringify([
+    { id: "valid", name: "Chosen dictionary", draft },
+    { id: "empty", name: "Empty subset", draft: { ...draft, dictionaryIds: [] } },
+    { id: "bad", name: "Malformed ID", draft: { ...draft, dictionaryIds: ["not-a-uuid"] } },
+  ]));
+  expect(readTrainingPresets(key)).toEqual([{ id: "valid", name: "Chosen dictionary", draft }]);
+});

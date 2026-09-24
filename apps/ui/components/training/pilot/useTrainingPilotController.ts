@@ -22,7 +22,7 @@ import type {
   TrainingSetupDraft,
   TrainingSetupOption,
 } from "./TrainingTodaySetup";
-import { isTrainingSetupDraftSupported } from "./TrainingTodaySetup";
+import { isTrainingSetupDraftSupported, isTrainingSetupMaterialAvailable } from "./TrainingTodaySetup";
 import { measureTrainingTransitionStage } from "@/lib/training/trainingTransitionTiming";
 import { deriveTrainingPilotSetupStatus } from "@/lib/training/trainingReadiness";
 import {
@@ -45,7 +45,6 @@ export type TrainingSessionStartContext = {
 type CommitPilotDraftParams = {
   userId?: string;
   languageCode: string;
-  currentScope: TrainingScope;
   resolveList: (value: string) => WordListSummary | null;
   applyListLocally: (list: WordListSummary) => void;
   applyPreferences: (draft: TrainingSetupDraft) => void;
@@ -80,6 +79,7 @@ type PilotControllerParams = {
   sessionSize: TrainingSessionSize;
   focusFilter: TrainingFocusFilter;
   listOptions: TrainingSetupOption[];
+  dictionaryOptions: TrainingSetupOption[];
   sourceOptions: TrainingSetupOption[];
   onCommitDraft: (draft: TrainingSetupDraft) => Promise<boolean>;
   onRetry: () => Promise<unknown> | void;
@@ -95,7 +95,6 @@ const isTrainingMode = (value: string): value is TrainingMode =>
 export function useCommitTrainingPilotDraft({
   userId,
   languageCode,
-  currentScope,
   resolveList,
   applyListLocally,
   applyPreferences,
@@ -113,10 +112,25 @@ export function useCommitTrainingPilotDraft({
   return useCallback(
     async (draft: TrainingSetupDraft) => {
       if (!userId) return false;
-      const selectedList = resolveList(draft.listValue);
+      const collectionMode = !draft.materialMode || draft.materialMode === "collection";
+      const selectedList = collectionMode ? resolveList(draft.listValue) : null;
+      if (collectionMode && !selectedList) {
+        reportError("training_material_unavailable");
+        return false;
+      }
+      if (draft.materialMode === "selected-dictionaries" && !draft.dictionaryIds?.length) {
+        reportError("training_material_unavailable");
+        return false;
+      }
       const scope: TrainingScope = selectedList
         ? { listId: selectedList.id, listType: selectedList.type }
-        : currentScope;
+        : { listId: null, listType: null };
+      const dictionaryScope: TrainingFocusFilter["dictionaryScope"] =
+        draft.materialMode === "all-dictionaries"
+          ? { mode: "all", languageCode }
+          : draft.materialMode === "selected-dictionaries"
+            ? { mode: "selected", languageCode, dictionaryIds: draft.dictionaryIds ?? [] }
+            : undefined;
       const focusFilter: TrainingFocusFilter = {
         dateWindow: draft.dateWindow,
         ...(draft.dateWindow === "daysAgo"
@@ -133,6 +147,7 @@ export function useCommitTrainingPilotDraft({
         ...(draft.nounArticles?.length
           ? { nounArticles: [...new Set(draft.nounArticles)].sort() }
           : {}),
+        ...(dictionaryScope ? { dictionaryScope } : {}),
       };
 
       const result = await updateActiveTrainingScope({
@@ -164,14 +179,23 @@ export function useCommitTrainingPilotDraft({
           requestId: crypto.randomUUID(),
         };
       }
-      const session = await startTrainingSession(userId, draft.modes, {
-        listId: scope.listId,
-        listType: scope.listType ?? undefined,
-        cardFilter: draft.cardFilter,
-        newReviewRatio: draft.newReviewRatio,
-        trainingFilter: focusFilter,
-        sessionSize: draft.sessionSize,
-      }, startRequestRef.current.requestId);
+      let session: TrainingSession | null;
+      try {
+        session = await startTrainingSession(userId, draft.modes, {
+          listId: scope.listId,
+          listType: scope.listType ?? undefined,
+          cardFilter: draft.cardFilter,
+          newReviewRatio: draft.newReviewRatio,
+          trainingFilter: focusFilter,
+          sessionSize: draft.sessionSize,
+        }, startRequestRef.current.requestId);
+      } catch (error) {
+        if (error instanceof Error && error.message === "training_material_unavailable") {
+          reportError("training_material_unavailable");
+          return false;
+        }
+        throw error;
+      }
       if (!session) {
         reportError("training_plan_unavailable");
         return false;
@@ -211,7 +235,6 @@ export function useCommitTrainingPilotDraft({
       applyFocusFilter,
       applyListLocally,
       applyPreferences,
-      currentScope,
       languageCode,
       loadStats,
       loadWord,
@@ -237,6 +260,7 @@ export function useTrainingPilotController({
   sessionSize,
   focusFilter,
   listOptions,
+  dictionaryOptions,
   sourceOptions,
   onCommitDraft,
   onRetry,
@@ -286,7 +310,7 @@ export function useTrainingPilotController({
 
   const status = deriveTrainingPilotSetupStatus({
     prerequisites: setupPrerequisites,
-    hasAvailableLists: listOptions.length > 0,
+    hasAvailableLists: listOptions.length > 0 || dictionaryOptions.length > 0,
   });
 
   const initialDraft: TrainingSetupDraft = {
@@ -294,6 +318,12 @@ export function useTrainingPilotController({
     modes: enabledModes,
     cardFilter,
     listValue: activeListValue,
+    materialMode: focusFilter.dictionaryScope?.mode === "all"
+      ? "all-dictionaries"
+      : focusFilter.dictionaryScope?.mode === "selected"
+        ? "selected-dictionaries"
+        : "collection",
+    dictionaryIds: focusFilter.dictionaryScope?.dictionaryIds ?? [],
     newReviewRatio,
     sessionSize,
     dateWindow: focusFilter.dateWindow,
@@ -327,7 +357,7 @@ export function useTrainingPilotController({
         draft,
         scenarioOptions,
       );
-      if (!scenariosResolved || !scenarioSupported || startPendingRef.current) {
+      if (!scenariosResolved || !scenarioSupported || !isTrainingSetupMaterialAvailable(draft, listOptions, dictionaryOptions) || startPendingRef.current) {
         return false;
       }
       startPendingRef.current = true;
@@ -344,7 +374,7 @@ export function useTrainingPilotController({
         setStartPending(false);
       }
     },
-    [onCommitDraft, scenarioOptions, scenariosResolved],
+    [dictionaryOptions, listOptions, onCommitDraft, scenarioOptions, scenariosResolved],
   );
 
   const continueSession = useCallback(() => {

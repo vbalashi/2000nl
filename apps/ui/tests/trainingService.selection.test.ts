@@ -158,6 +158,61 @@ describe("trainingService next-word selection", () => {
       ...scope,
       newReviewRatio: 5,
     })).not.toBe(first);
+    const selectedDictionaries = {
+      cardFilter: "new" as const,
+      trainingFilter: {
+        dateWindow: "all" as const,
+        dictionaryScope: { mode: "selected" as const, languageCode: "nl", dictionaryIds: ["dict-b", "dict-a"] },
+      },
+    };
+    expect(createTrainingSessionPlanKey("user-1", ["word-to-definition"], selectedDictionaries))
+      .toBe(createTrainingSessionPlanKey("user-1", ["word-to-definition"], {
+        ...selectedDictionaries,
+        trainingFilter: {
+          ...selectedDictionaries.trainingFilter,
+          dictionaryScope: { ...selectedDictionaries.trainingFilter.dictionaryScope, dictionaryIds: ["dict-a", "dict-b"] },
+        },
+      }));
+  });
+
+  test("dictionary material reaches the authenticated session-start RPC without a list", async () => {
+    const { startTrainingSession } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: {
+        sessionId: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+        plannedNew: 1,
+        plannedReview: 0,
+        plannedPractice: 0,
+        plannedTotal: 1,
+        plannedAt: "2026-09-10T12:00:00.000Z",
+      },
+      error: null,
+    });
+    await startTrainingSession("user-1", ["word-to-definition"], {
+      listId: null,
+      cardFilter: "new",
+      trainingFilter: {
+        dateWindow: "all",
+        dictionaryScope: { mode: "selected", languageCode: "nl", dictionaryIds: ["dict-b", "dict-a"] },
+      },
+    }, "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed001");
+    expect(rpc).toHaveBeenCalledWith("start_training_session", expect.objectContaining({
+      p_list_id: null,
+      p_training_filter: expect.objectContaining({
+        dictionaryScope: { mode: "selected", languageCode: "nl", dictionaryIds: ["dict-a", "dict-b"] },
+      }),
+    }));
+  });
+
+  test("session-start material denial remains distinguishable from an empty candidate pool", async () => {
+    const { startTrainingSession } = await importService();
+    rpc.mockResolvedValueOnce({ data: null, error: { message: "training_material_unavailable" } });
+    await expect(startTrainingSession("user-1", ["word-to-definition"], {
+      listId: null,
+      cardFilter: "new",
+      trainingFilter: { dateWindow: "all", dictionaryScope: { mode: "all", languageCode: "nl" } },
+    }, "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed001"))
+      .rejects.toThrow("training_material_unavailable");
   });
 
   test("starts a server-latched session and returns its opaque id", async () => {

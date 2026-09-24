@@ -424,6 +424,23 @@ SELECT json_build_object(
         'scope-group optimization changed candidate membership or diagnostics');
       assert.equal(candidateDigest(targetUrl, '{"partOfSpeech":["bn"]}'), adjectiveCandidates,
         'scope-group optimization changed adjective-filtered candidates');
+      applySqlFile(targetUrl, 'db/migrations/160_training_dictionary_material_scope.sql');
+      applySqlFile(targetUrl, 'db/deploy-contract/postflight-160.sql');
+      assert.equal(candidateDigest(targetUrl), originalCandidates,
+        'dictionary material support changed legacy candidate membership or diagnostics');
+      assert.equal(candidateDigest(targetUrl, '{"partOfSpeech":["bn"]}'), adjectiveCandidates,
+        'dictionary material support changed adjective-filtered candidates');
+      const dictionaryPlan = `SELECT public.get_training_session_plan(
+        '${qaUserId}', ARRAY['word-to-definition'], NULL, 'curated', 'both',
+        '{"dictionaryScope":{"mode":"all","languageCode":"nl"}}'::jsonb, '10', 2
+      )`;
+      const dictionaryMaterialSamples = Array.from({ length: 3 }, () =>
+        measure(targetUrl, dictionaryPlan));
+      t.diagnostic(JSON.stringify({ dictionaryMaterialSamples }));
+      for (const sample of dictionaryMaterialSamples) {
+        assert.ok(sample.executionMs <= 10_000,
+          `dictionary material plan exceeded the interactive safety bound: ${JSON.stringify(sample)}`);
+      }
       const optimizedSamples = Array.from({ length: 3 }, () => measure(targetUrl));
       t.diagnostic(JSON.stringify({ optimizedSamples }));
       for (const sample of optimizedSamples) {

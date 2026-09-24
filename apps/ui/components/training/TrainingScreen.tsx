@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { trainingDebug } from "@/lib/trainingDebug";
 import {
   createTrainingScenarioCatalog,
+  fetchAvailableDictionarySources,
   fetchAvailableLearningLanguages,
   fetchTrainingFilterSources,
   fetchTrainingSessionSnapshot,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/trainingService";
 import type {
   ActiveTrainingScope,
+  AvailableDictionarySource,
   CardFilter,
   DetailedStats,
   DictionaryEntry,
@@ -138,6 +140,13 @@ const trainingFilterKey = (filter: TrainingFocusFilter) =>
     externalId: filter.externalId ?? null,
     partOfSpeech: [...(filter.partOfSpeech ?? [])].sort(),
     nounArticles: [...(filter.nounArticles ?? [])].sort(),
+    dictionaryScope: filter.dictionaryScope
+      ? {
+          mode: filter.dictionaryScope.mode,
+          languageCode: filter.dictionaryScope.languageCode,
+          dictionaryIds: [...(filter.dictionaryScope.dictionaryIds ?? [])].sort(),
+        }
+      : null,
   });
 
 const fallbackLanguageLabel = (code: string) =>
@@ -388,6 +397,24 @@ function TrainingScreenContent({
   const [trainingFilterSources, setTrainingFilterSources] = useState<
     TrainingFilterSource[]
   >([]);
+  const [dictionaryCatalog, setDictionaryCatalog] = useState<{
+    key: string;
+    sources: AvailableDictionarySource[];
+    status: "pending" | "ready";
+  }>({ key: "", sources: [], status: "pending" });
+  useEffect(() => {
+    if (!user?.id || !currentTrainingLanguage) return;
+    let cancelled = false;
+    const key = `${user.id}:${currentTrainingLanguage}`;
+    setDictionaryCatalog({ key, sources: [], status: "pending" });
+    void fetchAvailableDictionarySources({
+      userId: user.id,
+      languageCode: currentTrainingLanguage,
+    }).then((sources) => {
+      if (!cancelled) setDictionaryCatalog({ key, sources, status: "ready" });
+    });
+    return () => { cancelled = true; };
+  }, [currentTrainingLanguage, user?.id]);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailSelection, setDetailSelection] = useState<{
     entryId: string;
@@ -1344,7 +1371,6 @@ function TrainingScreenContent({
   const commitPilotSessionDraft = useCommitTrainingPilotDraft({
     userId: user?.id,
     languageCode: currentTrainingLanguage,
-    currentScope: { listId: wordListId, listType: wordListType },
     resolveList: resolveListValue,
     applyListLocally: applyListLocal,
     applyPreferences: applyPilotPreferences,
@@ -1433,6 +1459,11 @@ function TrainingScreenContent({
     value: `source:${source.sourceId}`,
     label: source.label,
   }));
+  const dictionaryOptions = dictionaryCatalog.key === `${user?.id}:${currentTrainingLanguage}`
+    ? dictionaryCatalog.sources.map((source) => ({ value: source.id, label: source.name }))
+    : [];
+  const dictionariesLoading = dictionaryCatalog.key !== `${user?.id}:${currentTrainingLanguage}` ||
+    dictionaryCatalog.status === "pending";
   const trainingSetupPrerequisites =
     !trainingLanguagesResolved ||
     !listHydrated ||
@@ -1474,6 +1505,7 @@ function TrainingScreenContent({
     sessionSize,
     focusFilter: trainingFocusFilter,
     listOptions,
+    dictionaryOptions,
     sourceOptions: pilotSourceOptions,
     initialTransitionId,
     loadTrainingScenarios: trainingScenarioCatalog.fetch,
@@ -2007,8 +2039,8 @@ function TrainingScreenContent({
   }, [returnToToday]);
   const trainingSessionPlanScope = React.useMemo(
     () => ({
-      listId: wordListId,
-      ...(wordListType ? { listType: wordListType } : {}),
+      listId: trainingFocusFilter.dictionaryScope ? null : wordListId,
+      ...(!trainingFocusFilter.dictionaryScope && wordListType ? { listType: wordListType } : {}),
       cardFilter,
       newReviewRatio,
       trainingFilter: trainingFocusFilter,
@@ -2146,6 +2178,7 @@ function TrainingScreenContent({
             onTrainingLanguageChange={handleTrainingLanguageChange}
             interfaceLanguage={onboardingLang}
             status={trainingPilot.status}
+            startError={trainingLoadError}
             initialDraft={trainingPilot.initialDraft}
             stats={stats}
             statsStatus={trainingStatsStatus}
@@ -2168,12 +2201,14 @@ function TrainingScreenContent({
             onRetryCard={() => void trainingPilot.retry()}
             scenarios={trainingPilot.scenarioOptions}
             lists={listOptions}
+            dictionaries={dictionaryOptions}
+            dictionariesLoading={dictionariesLoading}
             sources={trainingPilot.sourceOptions}
             startPending={trainingPilot.startPending}
             scenarioLoading={trainingPilot.scenarioLoading}
             replacementWarning={sessionReplacementWarning}
             hasOwnedSession={Boolean(trainingSessionId)}
-            activeSessionLabel={wordListLabel || undefined}
+            activeSessionLabel={trainingFocusFilter.dictionaryScope ? undefined : wordListLabel || undefined}
             onContinue={handleContinueTrainingSession}
             onStart={trainingPilot.startSession}
             onRetry={() => void trainingPilot.retry()}
