@@ -2,7 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { createAdminAuthClient, createAdminServiceClient, ADMIN_SESSION_MAX_AGE_SECONDS } from "@/lib/admin/adminServerClient";
+import { createAdminAuthClient, createAdminServiceClient, clearAdminAuthCookies, ADMIN_SESSION_MAX_AGE_SECONDS } from "@/lib/admin/adminServerClient";
 import { readAdminAuditContext, writeAdminAuditEvent } from "@/lib/admin/adminAuditRepository";
 import { AdminAccessError } from "@/lib/admin/adminAccess";
 
@@ -141,6 +141,7 @@ export async function GET(request: Request) {
     } catch {
       // The response still clears the admin session cookie below.
     }
+    await clearAdminAuthCookies();
     return failureRedirect(request);
   }
 }

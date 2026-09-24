@@ -80,3 +80,14 @@ additional AuthScreen, audit and dictionary-contract regression tests passed.
 sessions for one temporary user, logout and successful surviving-session
 refresh in both directions, unchanged learner settings, and test-user cleanup.
 The check exercises Supabase session behavior, not live Google OAuth.
+
+## Pre-rollout review corrections
+
+Standards/spec review identified and then cleared the following corrections:
+audit-only operators now bootstrap the UI and see their permitted navigation;
+journal pagination preserves an upper timestamp bound and records success only
+after reading; admin logout/failing callback explicitly clear only admin cookie
+chunks, and incomplete logout is reported as an error. Twenty-five focused
+admin route/component/cookie tests passed. The existing Google callback URL
+was appended to the production Supabase allowlist, preserving the learner URL.
+Google provider settings and concurrent-session policy remain unchanged.

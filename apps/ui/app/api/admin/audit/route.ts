@@ -36,7 +36,11 @@ export async function GET(request: Request) {
       ? rawAction as AdminAuditAction
       : undefined;
     const period = PERIOD_DAYS.includes(rawPeriod as (typeof PERIOD_DAYS)[number]) ? rawPeriod : 30;
-    const since = new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString();
+    const requestedBefore = Date.parse(params.get("before") ?? "");
+    const now = Date.now();
+    const before = new Date(Number.isFinite(requestedBefore) && requestedBefore <= now ? requestedBefore : now).toISOString();
+    const since = new Date(Date.parse(before) - period * 24 * 60 * 60 * 1000).toISOString();
+    const pageData = await readAdminAuditEvents({ page, pageSize, action, since, before });
 
     await writeAdminAuditEvent({
       operatorUserId: principal.userId,
@@ -46,8 +50,7 @@ export async function GET(request: Request) {
       requestId: principal.requestId,
       context: principal.clientContext,
     });
-    const pageData = await readAdminAuditEvents({ page, pageSize, action, since });
-    return NextResponse.json({ ...pageData, page, pageSize, period, action: action ?? "" }, {
+    return NextResponse.json({ ...pageData, page, pageSize, period, before, action: action ?? "" }, {
       headers: { "Cache-Control": "private, no-store, max-age=0", Vary: "Cookie" },
     });
   } catch (error) {

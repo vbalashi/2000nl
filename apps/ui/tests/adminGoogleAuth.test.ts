@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const { auth, from, audit } = vi.hoisted(() => ({
+const { auth, from, audit, clearCookies } = vi.hoisted(() => ({
   auth: { signInWithOAuth: vi.fn(), exchangeCodeForSession: vi.fn(), getSession: vi.fn(), getUser: vi.fn(), signOut: vi.fn() },
-  from: vi.fn(), audit: vi.fn(),
+  from: vi.fn(), audit: vi.fn(), clearCookies: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/admin/adminServerClient", () => ({ createAdminAuthClient: async () => ({ auth }), createAdminServiceClient: () => ({ from }), ADMIN_SESSION_MAX_AGE_SECONDS: 28800 }));
+vi.mock("@/lib/admin/adminServerClient", () => ({ createAdminAuthClient: async () => ({ auth }), createAdminServiceClient: () => ({ from }), clearAdminAuthCookies: clearCookies, ADMIN_SESSION_MAX_AGE_SECONDS: 28800 }));
 vi.mock("@/lib/admin/adminAuditRepository", () => ({ readAdminAuditContext: () => ({}), writeAdminAuditEvent: audit }));
 import { POST as start } from "@/app/api/admin/auth/start/route";
 import { GET as callback } from "@/app/api/admin/auth/callback/route";
@@ -72,6 +72,14 @@ describe("Google admin login for an existing learner identity", () => {
     expect(auth.signOut).toHaveBeenCalledTimes(1);
     expect(auth.signOut).toHaveBeenCalledWith({ scope: "local" });
     expect(sessions.insert).not.toHaveBeenCalled();
+  });
+  it("clears admin cookies and reports failed remote sign-out", async () => {
+    auth.getUser.mockResolvedValue({ data: { user: null }, error: new Error("Auth unavailable") });
+    auth.signOut.mockResolvedValue({ error: new Error("Auth unavailable") });
+    const response = await signOut(post("sign-out"));
+    expect(response.status).toBe(503);
+    expect(clearCookies).toHaveBeenCalledTimes(1);
+    expect(audit).toHaveBeenCalledWith(expect.objectContaining({ outcome: "failure" }));
   });
   it("signs out only the admin session for the shared identity", async () => {
     expect((await signOut(post("sign-out"))).status).toBe(200);

@@ -117,6 +117,7 @@ describe("admin server authorization", () => {
       if (table === "admin_audit_events") return query(null);
       throw new Error(`Unexpected table ${table}`);
     });
+    await expect(requireAdmin(request())).resolves.toMatchObject({ permissions: ["audit.read"] });
     await expect(requireAdmin(request(), "dictionaries.read")).rejects.toMatchObject({ status: 403, code: "forbidden" });
   });
 

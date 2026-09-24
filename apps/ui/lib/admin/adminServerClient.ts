@@ -63,3 +63,13 @@ export function createAdminServiceClient() {
     global: { fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }) },
   });
 }
+
+/** Clear only administrative cookies, including SDK chunks and PKCE state. */
+export async function clearAdminAuthCookies() {
+  const store = await cookies();
+  for (const { name } of store.getAll()) {
+    if (name === ADMIN_AUTH_COOKIE || name.startsWith(`${ADMIN_AUTH_COOKIE}.`) || name.startsWith(`${ADMIN_AUTH_COOKIE}-code-verifier`)) {
+      store.set(name, "", { path: "/", maxAge: 0, httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+    }
+  }
+}

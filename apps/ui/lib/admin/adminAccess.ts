@@ -54,7 +54,7 @@ async function auditDenied(request: Request, userId: string | null, action: "acc
   });
 }
 
-export async function requireAdmin(request: Request, permission: AdminPermission): Promise<AdminPrincipal> {
+export async function requireAdmin(request: Request, permission?: AdminPermission): Promise<AdminPrincipal> {
   let auth;
   try {
     auth = await createAdminAuthClient();
@@ -116,7 +116,7 @@ export async function requireAdmin(request: Request, permission: AdminPermission
     const permissions = Array.isArray(operator.permissions)
       ? operator.permissions.filter((value): value is AdminPermission => value === "dictionaries.read" || value === "audit.read")
       : [];
-    if (!permissions.includes(permission)) {
+    if (permissions.length === 0 || (permission && !permissions.includes(permission))) {
       await writeAdminAuditEvent({
         operatorUserId: user.id,
         action: "access.denied",

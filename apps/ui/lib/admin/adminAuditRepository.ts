@@ -62,12 +62,14 @@ export async function readAdminAuditEvents(input: {
   pageSize: number;
   action?: string;
   since?: string;
+  before: string;
 }) {
   const supabase = createAdminServiceClient();
   const from = (input.page - 1) * input.pageSize;
   let query = supabase
     .from("admin_audit_events")
     .select("id,created_at,operator_user_id,action,outcome,target_type,target_id,request_id,client_ip,user_agent")
+    .lt("created_at", input.before)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .range(from, from + input.pageSize);

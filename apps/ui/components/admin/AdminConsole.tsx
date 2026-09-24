@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Activity,
   ArrowLeft,
@@ -32,8 +32,9 @@ type LocationState = {
   period: number;
   action: string;
   state: string;
+  before: string;
 };
-type ApiPage<T> = { items: T[]; hasNext: boolean; page: number; pageSize: number };
+type ApiPage<T> = { items: T[]; hasNext: boolean; page: number; pageSize: number; before?: string };
 
 const blankPage: DictionaryRegistryPage = { items: [], hasNext: false, page: 1, pageSize: 25, hasPrevious: false, returned: 0 };
 const date = (value: string | null) => value
@@ -69,6 +70,7 @@ function readLocation(): LocationState {
     period: [7, 30, 90, 365].includes(period) ? period : 30,
     action: query.get("action") ?? "",
     state: query.get("state") ?? "",
+    before: query.get("before") ?? "",
   };
 }
 
@@ -85,6 +87,7 @@ function adminUrl(value: Partial<LocationState>) {
   if (next.view === "journal" && next.period !== 30) params.set("period", String(next.period));
   if (next.view === "journal" && next.action) params.set("action", next.action);
   if (next.state) params.set("state", next.state);
+  if (next.view === "journal" && next.before) params.set("before", next.before);
   return `/admin${params.size ? `?${params.toString()}` : ""}`;
 }
 
@@ -112,6 +115,7 @@ export default function AdminConsole() {
   const [events, setEvents] = useState<AdminAuditEvent[]>([]);
   const [hasNext, setHasNext] = useState(false);
   const [operatorEmail, setOperatorEmail] = useState("");
+  const [permissions, setPermissions] = useState<string[]>([]);
   const [email, setEmail] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
   const [loginError, setLoginError] = useState(false);
@@ -185,8 +189,15 @@ export default function AdminConsole() {
         return;
       }
       if (!sessionResponse.ok) throw new Error("Admin session unavailable");
-      const session = await sessionResponse.json() as { email: string };
-      if (!cancelled) setOperatorEmail(session.email);
+      const session = await sessionResponse.json() as { email: string; permissions: string[] };
+      if (cancelled) return;
+      setOperatorEmail(session.email);
+      setPermissions(session.permissions);
+      const needed = location.view === "journal" ? "audit.read" : "dictionaries.read";
+      if (!session.permissions.includes(needed)) {
+        navigate(adminUrl({ view: session.permissions.includes("dictionaries.read") ? "dictionaries" : "journal", id: "", page: 1, before: "" }), true);
+        return;
+      }
 
       if (location.view === "dictionaries") {
         const params = new URLSearchParams({ q: location.q, language: location.language, kind: location.kind, page: String(location.page), pageSize: String(location.pageSize) });
@@ -207,12 +218,16 @@ export default function AdminConsole() {
       } else {
         const params = new URLSearchParams({ page: String(location.page), pageSize: String(location.pageSize), period: String(location.period) });
         if (location.action) params.set("action", location.action);
+        if (location.before) params.set("before", location.before);
         const response = await fetch(`/api/admin/audit?${params}`, { cache: "no-store" });
         if (response.status === 401) { if (!cancelled) navigate(adminUrl({ view: "login", state: "expired", id: "" })); return; }
         if (response.status === 403) { if (!cancelled) setForbidden(true); return; }
         if (!response.ok) throw new Error("Journal unavailable");
         const value = await response.json() as ApiPage<AdminAuditEvent>;
-        if (!cancelled) { setEvents(value.items); setHasNext(value.hasNext); }
+        if (!cancelled) {
+          setEvents(value.items); setHasNext(value.hasNext);
+          if (!location.before && value.before) window.history.replaceState({}, "", adminUrl({ before: value.before }));
+        }
       }
     };
     void run()
@@ -223,7 +238,7 @@ export default function AdminConsole() {
 
   const go = (view: View) => navigate(adminUrl(view === "dictionaries"
     ? { view, id: "", state: "" }
-    : { view, id: "", q: "", language: "", kind: "", page: 1, pageSize: 25, state: "" }));
+    : { view, id: "", q: "", language: "", kind: "", page: 1, pageSize: 25, state: "", before: "" }));
   const returnToRegistry = () => navigate(adminUrl({
     view: "dictionaries",
     id: "",
@@ -255,8 +270,15 @@ export default function AdminConsole() {
   };
 
   const signOut = async () => {
-    await fetch("/api/admin/auth/sign-out", { method: "POST" });
-    navigate(adminUrl({ view: "login", state: "signed-out", id: "" }));
+    let state = "signout-error";
+    try {
+      const response = await fetch("/api/admin/auth/sign-out", { method: "POST" });
+      if (response.ok) state = "signed-out";
+    } catch {
+      // Keep the failure visible and remove protected content from the screen.
+    } finally {
+      navigate(adminUrl({ view: "login", state, id: "" }));
+    }
   };
 
   if (!location) return <div className="min-h-screen animate-pulse bg-[#F8FAFF]" aria-label="Загрузка" />;
@@ -270,6 +292,7 @@ export default function AdminConsole() {
       <form className="space-y-4" onSubmit={(event) => void signIn(event)}>
         <label className="block space-y-1.5 text-sm font-medium">Электронная почта<input required type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} className="h-11 w-full rounded-lg border border-slate-300 px-3 font-normal outline-none focus:border-primary focus:ring-2 focus:ring-indigo-100" placeholder="name@example.com" /></label>
         {(loginError || location.state === "signin-error" || location.state === "expired") && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{location.state === "expired" ? "Срок действия сеанса истёк. Войдите снова." : "Не удалось выполнить вход. Проверьте доступ и попробуйте ещё раз."}</p>}
+        {location.state === "signout-error" && <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">Не удалось подтвердить завершение сеанса. <button type="button" className="underline" onClick={() => void signOut()}>Повторить выход</button></div>}
         {location.state === "signed-out" && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">Вы вышли из административной системы.</p>}
         <button disabled={loginBusy} className="min-h-11 w-full rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">{loginBusy ? "Переход к Google…" : "Продолжить с Google"}</button>
       </form>
@@ -280,7 +303,7 @@ export default function AdminConsole() {
   return <div className="min-h-screen bg-[#F8FAFF] text-slate-900"><div className="flex min-h-screen">
     <aside className="hidden w-56 shrink-0 flex-col border-r border-slate-200 bg-white px-4 py-5 lg:flex">
       <div className="mb-8 flex items-center gap-2 px-2 text-sm font-semibold"><span className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-50 text-primary"><Database size={17} /></span>2000NL Admin</div>
-      <nav className="space-y-1" aria-label="Основная навигация"><button onClick={() => go("dictionaries")} className={`flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm ${location.view !== "journal" ? "bg-indigo-50 font-medium text-primary" : "text-slate-600 hover:bg-slate-50"}`}><Database size={17} />Словари</button><button onClick={() => go("journal")} className={`flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm ${location.view === "journal" ? "bg-indigo-50 font-medium text-primary" : "text-slate-600 hover:bg-slate-50"}`}><FileClock size={17} />Журнал</button></nav>
+      <nav className="space-y-1" aria-label="Основная навигация">{permissions.includes("dictionaries.read") && <button onClick={() => go("dictionaries")} className={`flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm ${location.view !== "journal" ? "bg-indigo-50 font-medium text-primary" : "text-slate-600 hover:bg-slate-50"}`}><Database size={17} />Словари</button>}{permissions.includes("audit.read") && <button onClick={() => go("journal")} className={`flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm ${location.view === "journal" ? "bg-indigo-50 font-medium text-primary" : "text-slate-600 hover:bg-slate-50"}`}><FileClock size={17} />Журнал</button>}</nav>
       <div className="mt-auto border-t border-slate-100 pt-4"><div className="mb-3 flex items-center gap-2 px-2 text-xs text-slate-600"><span className="h-2 w-2 rounded-full bg-emerald-500" />Защищённая сессия</div><div className="flex items-center justify-between gap-2 px-2 text-xs"><span className="truncate text-slate-600" title={operatorEmail}>{operatorEmail || "Оператор"}</span><button aria-label="Выйти" onClick={() => void signOut()} className="rounded p-2 text-slate-500 hover:bg-slate-100"><LogOut size={16} /></button></div></div>
     </aside>
     <div className="min-w-0 flex-1">
@@ -291,7 +314,7 @@ export default function AdminConsole() {
         {forbidden && <div role="alert" className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">У этой учётной записи нет разрешения на этот раздел.</div>}
         {location.view === "detail" ? detail ? <>
           <button className="mb-5 inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm text-slate-600 hover:bg-white" onClick={returnToRegistry}><ArrowLeft size={17} />К списку словарей</button>
-          <div className="mb-7"><div className="mb-2 text-xs text-slate-500"><button onClick={() => go("dictionaries")} className="hover:text-primary">Словари</button><span className="mx-2">›</span>Метаданные</div><h1 className="break-words text-2xl font-semibold tracking-tight sm:text-[28px]">{detail.name}</h1><p className="mt-2 text-sm text-slate-600">{kindLabel(detail.kind)} · Язык: {detail.languageCode.toUpperCase()}</p></div>
+          <div className="mb-7"><div className="mb-2 text-xs text-slate-500">{permissions.includes("dictionaries.read") && <button onClick={() => go("dictionaries")} className="hover:text-primary">Словари</button>}<span className="mx-2">›</span>Метаданные</div><h1 className="break-words text-2xl font-semibold tracking-tight sm:text-[28px]">{detail.name}</h1><p className="mt-2 text-sm text-slate-600">{kindLabel(detail.kind)} · Язык: {detail.languageCode.toUpperCase()}</p></div>
           <div className="max-w-4xl space-y-4 pb-8">
             <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6"><h2 className="mb-3 text-base font-semibold">Основное</h2><dl><CopyField label="ID" value={detail.id} /><CopyField label="Стабильный ключ" value={detail.slug} /><CopyField label="Название" value={detail.name} /><CopyField label="Описание" value={detail.description} /><CopyField label="Язык" value={detail.languageCode.toUpperCase()} /><CopyField label="Тип" value={kindLabel(detail.kind)} /><CopyField label="Владелец" value={detail.ownerId} /><CopyField label="Схема" value={detail.schemaKey} /><CopyField label="Версия схемы" value={detail.schemaVersion === null ? null : String(detail.schemaVersion)} /></dl></section>
             <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6"><h2 className="mb-3 text-base font-semibold">Источник</h2><dl><CopyField label="Провайдер" value={detail.sourceProvider} /><CopyField label="Версия источника" value={detail.sourceVersion} /><CopyField label="Загружено" value={date(detail.createdAt)} /><CopyField label="Обновлено" value={date(detail.updatedAt)} /><CopyField label="Схема: название" value={detail.schemaTitle} /><CopyField label="Схема: архивирована" value={date(detail.schemaRetiredAt)} /></dl></section>
@@ -300,8 +323,8 @@ export default function AdminConsole() {
         </> : <StateBlock title="Словарь не найден" description="Проверьте реестр и попробуйте открыть словарь ещё раз." action="Вернуться к списку" onAction={returnToRegistry} />
         : location.view === "journal" ? <>
           <div className="mb-7"><h1 className="text-2xl font-semibold tracking-tight sm:text-[28px]">Журнал</h1><p className="mt-2 text-sm text-slate-600">События доступа операторов и контекст запросов.</p></div>
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end"><label className="space-y-1 text-xs font-medium text-slate-600">Действие<select value={location.action} onChange={(event) => navigate(adminUrl({ action: event.target.value, page: 1 }))} className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm sm:w-56">{actionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label><label className="space-y-1 text-xs font-medium text-slate-600">Период<select value={location.period} onChange={(event) => navigate(adminUrl({ period: Number(event.target.value), page: 1 }))} className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm sm:w-36"><option value={7}>7 дней</option><option value={30}>30 дней</option><option value={90}>90 дней</option><option value={365}>Год</option></select></label></div>
-          {events.length === 0 ? <StateBlock title="Событий пока нет" description="Для выбранных фильтров нет записей журнала." action="Сбросить фильтры" onAction={() => navigate(adminUrl({ action: "", period: 30, page: 1 }))} /> : <div className="overflow-hidden rounded-xl border border-slate-200 bg-white"><div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr>{["Время", "Действие", "Цель", "Оператор", "Результат"].map((value) => <th key={value} className="px-4 py-3 font-medium">{value}</th>)}</tr></thead><tbody>{events.map((event) => <tr key={event.id} className="border-t border-slate-100"><td className="whitespace-nowrap px-4 py-3">{date(event.occurredAt)}</td><td className="px-4 py-3 font-mono text-xs">{event.action}</td><td className="max-w-64 break-words px-4 py-3">{targetLabel(event)}</td><td className="max-w-56 break-all px-4 py-3 font-mono text-xs">{event.operatorId ?? "Нет данных"}</td><td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs ${event.outcome === "success" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>{event.outcome === "success" ? "Успешно" : event.outcome === "denied" ? "Отказано" : "Ошибка"}</span></td><td className="px-4 py-3"><button className="min-h-9 text-xs font-medium text-primary hover:underline" onClick={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)} aria-expanded={expandedEvent === event.id}>{expandedEvent === event.id ? "Скрыть" : "Подробнее"}</button></td></tr>)}</tbody></table></div>
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end"><label className="space-y-1 text-xs font-medium text-slate-600">Действие<select value={location.action} onChange={(event) => navigate(adminUrl({ action: event.target.value, page: 1, before: "" }))} className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm sm:w-56">{actionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label><label className="space-y-1 text-xs font-medium text-slate-600">Период<select value={location.period} onChange={(event) => navigate(adminUrl({ period: Number(event.target.value), page: 1, before: "" }))} className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm sm:w-36"><option value={7}>7 дней</option><option value={30}>30 дней</option><option value={90}>90 дней</option><option value={365}>Год</option></select></label></div>
+          {events.length === 0 ? <StateBlock title="Событий пока нет" description="Для выбранных фильтров нет записей журнала." action="Сбросить фильтры" onAction={() => navigate(adminUrl({ action: "", period: 30, page: 1, before: "" }))} /> : <div className="overflow-hidden rounded-xl border border-slate-200 bg-white"><div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr>{["Время", "Действие", "Цель", "Оператор", "Результат"].map((value) => <th key={value} className="px-4 py-3 font-medium">{value}</th>)}</tr></thead><tbody>{events.map((event) => <tr key={event.id} className="border-t border-slate-100"><td className="whitespace-nowrap px-4 py-3">{date(event.occurredAt)}</td><td className="px-4 py-3 font-mono text-xs">{event.action}</td><td className="max-w-64 break-words px-4 py-3">{targetLabel(event)}</td><td className="max-w-56 break-all px-4 py-3 font-mono text-xs">{event.operatorId ?? "Нет данных"}</td><td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs ${event.outcome === "success" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>{event.outcome === "success" ? "Успешно" : event.outcome === "denied" ? "Отказано" : "Ошибка"}</span></td><td className="px-4 py-3"><button className="min-h-9 text-xs font-medium text-primary hover:underline" onClick={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)} aria-expanded={expandedEvent === event.id}>{expandedEvent === event.id ? "Скрыть" : "Подробнее"}</button></td></tr>)}</tbody></table></div>
             {events.map((event) => expandedEvent === event.id && <div key={`details-${event.id}`} className="grid gap-3 border-t border-slate-100 bg-slate-50 p-4 text-xs sm:grid-cols-2"><div><span className="text-slate-500">Correlation ID</span><div className="mt-1 flex items-center gap-2 break-all font-mono">{event.correlationId}<button aria-label="Копировать Correlation ID" className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded px-2 text-slate-600 hover:bg-white" onClick={() => { void navigator.clipboard.writeText(event.correlationId).then(() => { setCopiedEvent(event.id); window.setTimeout(() => setCopiedEvent(null), 1200); }).catch(() => setCopiedEvent(null)); }}>{copiedEvent === event.id ? <Check size={14} /> : <Copy size={14} />}{copiedEvent === event.id ? "Скопировано" : "Копировать"}</button></div></div><div><span className="text-slate-500">IP</span><p className="mt-1 break-all">{event.clientContext?.ipAddress ?? "Нет данных"}</p></div><div className="sm:col-span-2"><span className="text-slate-500">User-Agent</span><p className="mt-1 break-all">{event.clientContext?.userAgent ?? "Нет данных"}</p></div></div>)}
             <Pagination page={location.page} pageSize={location.pageSize} hasNext={hasNext} onPage={changePage} onPageSize={(value) => navigate(adminUrl({ pageSize: value, page: 1 }))} /></div>}
         </> : <>
@@ -316,7 +339,7 @@ export default function AdminConsole() {
       </main>
     </div>
   </div>
-    {menuOpen && <div className="fixed inset-0 z-40 bg-slate-900/30 lg:hidden" onClick={() => setMenuOpen(false)}><aside onClick={(event) => event.stopPropagation()} className="flex h-full w-[min(300px,85vw)] flex-col bg-white p-4 shadow-xl"><div className="mb-8 flex items-center justify-between"><span className="font-semibold">2000NL Admin</span><button onClick={() => setMenuOpen(false)} aria-label="Закрыть меню" className="grid h-10 w-10 place-items-center rounded-lg"><X size={19} /></button></div><button onClick={() => go("dictionaries")} className="flex min-h-11 items-center gap-3 rounded-lg bg-indigo-50 px-3 text-left text-sm font-medium text-primary"><Database size={17} />Словари</button><button onClick={() => go("journal")} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-left text-sm text-slate-600"><FileClock size={17} />Журнал</button><div className="mt-auto border-t border-slate-100 pt-4"><p className="mb-3 break-all text-xs text-slate-500">{operatorEmail}</p><button onClick={() => void signOut()} className="flex min-h-11 items-center gap-3 text-sm text-slate-600"><LogOut size={17} />Выйти</button></div></aside></div>}
+    {menuOpen && <div className="fixed inset-0 z-40 bg-slate-900/30 lg:hidden" onClick={() => setMenuOpen(false)}><aside onClick={(event) => event.stopPropagation()} className="flex h-full w-[min(300px,85vw)] flex-col bg-white p-4 shadow-xl"><div className="mb-8 flex items-center justify-between"><span className="font-semibold">2000NL Admin</span><button onClick={() => setMenuOpen(false)} aria-label="Закрыть меню" className="grid h-10 w-10 place-items-center rounded-lg"><X size={19} /></button></div>{permissions.includes("dictionaries.read") && <button onClick={() => go("dictionaries")} className="flex min-h-11 items-center gap-3 rounded-lg bg-indigo-50 px-3 text-left text-sm font-medium text-primary"><Database size={17} />Словари</button>}{permissions.includes("audit.read") && <button onClick={() => go("journal")} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-left text-sm text-slate-600"><FileClock size={17} />Журнал</button>}<div className="mt-auto border-t border-slate-100 pt-4"><p className="mb-3 break-all text-xs text-slate-500">{operatorEmail}</p><button onClick={() => void signOut()} className="flex min-h-11 items-center gap-3 text-sm text-slate-600"><LogOut size={17} />Выйти</button></div></aside></div>}
   </div>;
 }
 
