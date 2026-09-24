@@ -12,6 +12,7 @@ import {
 
 export function usePendingKnownUndo(
   currentPresentationIdentity: string | null,
+  requireTrainingSessionId = false,
 ) {
   const [pendingUndo, setPendingUndo] =
     React.useState<PendingKnownUndo | null>(null);
@@ -29,7 +30,8 @@ export function usePendingKnownUndo(
       const pending = readPendingKnownUndo();
       if (
         pending &&
-        pending.presentationIdentity !== currentPresentationIdentity
+        (pending.presentationIdentity !== currentPresentationIdentity ||
+          (requireTrainingSessionId && !pending.trainingSessionId))
       ) {
         rememberPendingKnownUndo(null);
         setPendingUndo(null);
@@ -39,7 +41,7 @@ export function usePendingKnownUndo(
     };
     sync();
     return subscribePendingKnownUndo(sync);
-  }, [currentPresentationIdentity]);
+  }, [currentPresentationIdentity, requireTrainingSessionId]);
 
   React.useEffect(() => {
     if (!errorCode) return;
@@ -48,12 +50,19 @@ export function usePendingKnownUndo(
   }, [errorCode]);
 
   const visibleUndoKnown =
-    pendingUndo?.presentationIdentity === currentPresentationIdentity
+    pendingUndo?.presentationIdentity === currentPresentationIdentity &&
+    (!requireTrainingSessionId || Boolean(pendingUndo.trainingSessionId))
       ? pendingUndo.capability
       : null;
 
   const undo = React.useCallback(async () => {
-    if (!visibleUndoKnown || !currentPresentationIdentity) return;
+    if (
+      !visibleUndoKnown ||
+      !currentPresentationIdentity ||
+      (requireTrainingSessionId && !pendingUndo?.trainingSessionId)
+    ) {
+      return;
+    }
     const attemptPresentationIdentity = currentPresentationIdentity;
     const attempt = (undoAttemptRef.current += 1);
     setBusy(true);
@@ -81,7 +90,12 @@ export function usePendingKnownUndo(
     } finally {
       if (undoAttemptRef.current === attempt) setBusy(false);
     }
-  }, [currentPresentationIdentity, pendingUndo?.trainingSessionId, visibleUndoKnown]);
+  }, [
+    currentPresentationIdentity,
+    pendingUndo?.trainingSessionId,
+    requireTrainingSessionId,
+    visibleUndoKnown,
+  ]);
 
   const dismiss = React.useCallback(() => {
     rememberPendingKnownUndo(null);

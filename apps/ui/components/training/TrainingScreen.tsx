@@ -2252,6 +2252,7 @@ function TrainingScreenContent({
         <TrainingKnownUndoNotice
           interfaceLanguage={onboardingLang}
           currentPresentationIdentity={currentPresentationIdentity}
+          requireTrainingSessionId={trainingTodaySetupEnabled}
         />
 
         <TrainingDetailsDrawer
