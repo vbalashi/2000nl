@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { checkReleaseBoundary, hasReleaseReadyDeclaration, triggersDeploy } from './lib/release-boundary.mjs';
+import { affectedMainPulls, checkReleaseBoundary, hasReleaseReadyDeclaration, triggersDeploy } from './lib/release-boundary.mjs';
 
 const repo = 'vbalashi/2000nl';
 const pull = {
@@ -40,4 +40,19 @@ test('does not require a release declaration for docs-only changes', () => {
   const result = checkReleaseBoundary({ pull: { ...pull, body: '' }, changedFiles: ['docs/runbook.md'], openPulls: [], repository: repo });
   assert.equal(result.deployRelevant, false);
   assert.deepEqual(result.errors, []);
+});
+
+test('a newly opened child invalidates its parent, and closing it reevaluates the parent', () => {
+  const parent = { ...pull, base: { ref: 'main', repo: { full_name: repo } } };
+  const child = { number: 2, base: { ref: 'feature', repo: { full_name: repo } } };
+  assert.deepEqual(affectedMainPulls({ action: 'opened', pull_request: child }, [parent, child], repo).map((item) => item.number), [1]);
+  assert.deepEqual(affectedMainPulls({ action: 'closed', pull_request: child }, [parent], repo).map((item) => item.number), [1]);
+});
+
+test('retargeting a child reevaluates both old and new parent branches', () => {
+  const oldParent = { ...pull, base: { ref: 'main', repo: { full_name: repo } } };
+  const newParent = { ...oldParent, number: 3, head: { ref: 'other', repo: { full_name: repo } } };
+  const child = { number: 2, base: { ref: 'other', repo: { full_name: repo } } };
+  const event = { action: 'edited', pull_request: child, changes: { base: { ref: { from: 'feature' } } } };
+  assert.deepEqual(affectedMainPulls(event, [oldParent, newParent, child], repo).map((item) => item.number), [3, 1]);
 });

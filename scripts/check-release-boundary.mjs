@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { checkReleaseBoundary, triggersDeploy } from './lib/release-boundary.mjs';
+import { affectedMainPulls, checkReleaseBoundary, triggersDeploy } from './lib/release-boundary.mjs';
 
 const repository = process.env.GITHUB_REPOSITORY;
 const eventPath = process.env.GITHUB_EVENT_PATH;
@@ -11,8 +11,8 @@ if (!repository || !eventPath || !token) {
 
 const event = JSON.parse(await readFile(eventPath, 'utf8'));
 const pull = event.pull_request;
-if (!pull || pull.base.ref !== 'main' || pull.base.repo?.full_name !== repository) {
-  throw new Error('Expected a pull request targeting this repository main branch');
+if (!pull || pull.base.repo?.full_name !== repository) {
+  throw new Error('Expected a pull request targeting this repository');
 }
 
 async function listPages(path) {
@@ -35,15 +35,32 @@ async function listPages(path) {
   throw new Error(`GitHub API ${path} exceeded pagination limit; refusing to guess release safety`);
 }
 
-const changedFiles = (await listPages(`pulls/${pull.number}/files`)).map((file) => file.filename);
-const openPulls = changedFiles.some(triggersDeploy)
-  ? await listPages('pulls?state=open')
-  : [];
-const result = checkReleaseBoundary({ pull, changedFiles, openPulls, repository });
+const openPulls = await listPages('pulls?state=open');
+for (const target of affectedMainPulls(event, openPulls, repository)) {
+  const changedFiles = (await listPages(`pulls/${target.number}/files`)).map((file) => file.filename);
+  const result = checkReleaseBoundary({ pull: target, changedFiles, openPulls, repository });
+  const state = result.errors.length > 0 ? 'failure' : 'success';
+  const statusResponse = await fetch(`https://api.github.com/repos/${repository}/statuses/${target.head.sha}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: JSON.stringify({
+      state,
+      context: 'release-boundary',
+      description: state === 'success' ? 'Safe release boundary confirmed' : 'Incomplete release boundary; inspect workflow',
+      target_url: process.env.GITHUB_RUN_ID ? `https://github.com/${repository}/actions/runs/${process.env.GITHUB_RUN_ID}` : undefined,
+    }),
+  });
+  if (!statusResponse.ok) throw new Error(`GitHub status update failed for #${target.number}: HTTP ${statusResponse.status}`);
 
-if (result.errors.length > 0) {
-  for (const error of result.errors) console.error(`::error::${error}`);
-  process.exitCode = 1;
-} else {
-  console.log(result.deployRelevant ? 'Deploy-relevant PR has an independent release boundary.' : 'No test-production deployment is triggered by this PR.');
+  if (result.errors.length > 0) {
+    for (const error of result.errors) console.error(`::error title=PR #${target.number}::${error}`);
+    process.exitCode = 1;
+  } else {
+    console.log(`PR #${target.number}: ${result.deployRelevant ? 'independent release boundary confirmed' : 'no test-production deployment triggered'}.`);
+  }
 }

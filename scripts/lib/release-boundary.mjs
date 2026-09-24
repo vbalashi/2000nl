@@ -35,6 +35,26 @@ export function openChildPulls(parent, openPulls, repository) {
   );
 }
 
+export function affectedMainPulls(event, openPulls, repository) {
+  const changedPull = event.pull_request;
+  const targets = new Map();
+  if (event.action !== 'closed' && changedPull.base.ref === 'main' && changedPull.base.repo?.full_name === repository) {
+    targets.set(changedPull.number, changedPull);
+  }
+
+  const previousBase = event.changes?.base?.ref?.from;
+  for (const branch of [changedPull.base.ref, previousBase]) {
+    if (!branch || branch === 'main') continue;
+    for (const parent of openPulls) {
+      if (parent.base.ref === 'main' && parent.base.repo?.full_name === repository &&
+          parent.head.ref === branch && parent.head.repo?.full_name === repository) {
+        targets.set(parent.number, parent);
+      }
+    }
+  }
+  return [...targets.values()];
+}
+
 export function checkReleaseBoundary({ pull, changedFiles, openPulls, repository }) {
   if (!changedFiles.some(triggersDeploy)) {
     return { deployRelevant: false, errors: [] };
