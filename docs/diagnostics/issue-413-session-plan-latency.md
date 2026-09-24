@@ -383,6 +383,47 @@ can fail on the symptom; it does **not** reproduce the production cause.
 
 ## What remains and next experiment
 
+### Post-release Start-path observation (2026-09-24)
+
+The combined Training setup/ownership release, main commit
+`9d476d4300088bd1fcd97e06de4422f8f4ee0b49`, passed the unchanged
+2,000 ms pre-switch read gate. Public deep health reported the exact commit
+and compatible contract 158. This is one successful deployment, not evidence
+that the intermittent cold-first timeout disappeared.
+
+An authorized Chrome Network trace of a **second** Start on the released
+production build showed `update_active_training_scope` at 205 ms to response
+headers, `start_training_session` at **5,289 ms**, and two distinct-body
+`get_next_training_session_card` requests at about **350 ms** each. The first
+Platform V2 lookup took **3,621 ms**. `get_training_session_plan` (3,388 ms)
+and detailed stats (3,832 ms) began after the start RPC and alongside/later
+than the first-card chain. A later Platform V2 lookup repeated the first
+lookup's POST body exactly and returned in 478 ms. The trace recorded only
+request paths, response status, timing, and body equality; no auth tokens,
+learner content, or payloads were retained. It is a repeat-path sample after
+another test run had been returned to Today, not a matched cold baseline.
+
+The current SQL contract explains why session start can be expensive:
+`public.start_training_session` delegates to
+`private.claim_training_session_start_v1`, which invokes
+`private.start_training_session_latch_v1`; that function materializes the
+entire finite run through `private.training_session_members_v1`, itself built
+over `private.training_scheduler_candidates_v2`. The HTTP timing alone does
+not separate SQL execution, pooler wait, or transport. It also does not prove
+that the subsequent plan read blocks the first card. The cumulative
+`pg_stat_statements` snapshot (reset 2026-05-16) had 158 matching start-family
+calls, weighted mean 438.8 ms and max 7,153.4 ms; 458 plan-family calls,
+weighted mean 776.7 ms and max 7,526.4 ms; and 311 owned-selector calls,
+weighted mean 45.2 ms and max 586.2 ms. These counters span multiple builds
+and cannot be assigned to this Chrome request. They support investigating
+intermittent start/plan outliers before changing the fast owned selector.
+
+The next attribution boundary is a bounded same-request breakdown for the
+start RPC and its member-planning function, paired with the existing
+read-only plan diagnostic. No production SQL rewrite, capacity increase, or
+rollout-gate relaxation follows from this single waterfall. First-lookup
+latency and the confirmed production repeated projection are tracked in #442.
+
 No scheduler migration is justified yet. Current evidence ranks backend-local
 runtime initialization or pooler lifecycle above host-wide resource saturation
 and persistent query-volume regression. The isolated nested timing experiment
