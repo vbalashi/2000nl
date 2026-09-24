@@ -470,3 +470,6 @@
 \i db/migrations/162_index_active_content_children.sql
 \i db/migrations/163_bound_extra_exercise_source_eligibility.sql
 \i db/migrations/164_index_report_atom_entry_lookup.sql
+
+-- Separate operator allowlist, isolated sessions, and one-year audit retention
+\i db/migrations/165_admin_console_identity_audit.sql
