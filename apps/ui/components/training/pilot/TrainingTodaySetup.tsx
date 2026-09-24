@@ -85,6 +85,9 @@ export const isTrainingSetupMaterialAvailable = (
 
 const defaultModesForScenario = (scenario: TrainingSetupOption) => {
   const modes = scenario.modes ?? [];
+  if (scenario.value === "idiom" && modes.includes("word-to-definition")) {
+    return ["word-to-definition"] satisfies TrainingMode[];
+  }
   if (
     scenario.value === "understanding" &&
     modes.includes("word-to-definition")
@@ -175,6 +178,7 @@ const copy = {
     typed: "Type the answer",
     selfRateHelp: "Reveal the answer, then rate Again / Hard / Good / Easy.",
     directionHelp: "Select one or both word-card directions.",
+    idiomDirectionHelp: "Choose one direction for idiom exercises.",
     activity: "Recent activity",
     activityHelp: "Optional: narrow by event date and source; this does not mean forgotten words only.",
     materialHelp: "Choose a dictionary or one collection.",
@@ -279,6 +283,7 @@ const copy = {
     typed: "Antwoord typen",
     selfRateHelp: "Toon het antwoord en kies Again / Hard / Good / Easy.",
     directionHelp: "Kies één of beide richtingen voor woordkaarten.",
+    idiomDirectionHelp: "Kies één richting voor uitdrukkingen.",
     activity: "Recente activiteit",
     activityHelp: "Optioneel: filter op datum en bron; dit selecteert niet alleen vergeten woorden.",
     materialHelp: "Kies een woordenboek of één collectie.",
@@ -383,6 +388,7 @@ const copy = {
     typed: "Ввести ответ",
     selfRateHelp: "Откройте ответ и оцените: Again / Hard / Good / Easy.",
     directionHelp: "Выберите одно или оба направления для карточек со словами.",
+    idiomDirectionHelp: "Для идиом выберите одно направление.",
     activity: "Недавняя активность",
     activityHelp: "Можно сузить по дате и источнику; это не выбор только забытых слов.",
     materialHelp: "Выберите словарь или одну коллекцию.",
@@ -908,6 +914,13 @@ export function TrainingTodaySetup({
     if (!selectedScenario?.modes?.includes(mode)) return;
     setDraft((current) => {
       const active = current.modes.includes(mode);
+      if (activeFamily === "idiom") {
+        return {
+          ...current,
+          scenarioId: selectedScenario.value,
+          modes: [mode],
+        };
+      }
       if (active && current.modes.length === 1) return current;
       return {
         ...current,
@@ -1059,7 +1072,7 @@ export function TrainingTodaySetup({
               {t.goal}
             </legend>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              {t.directionHelp}
+              {activeFamily === "idiom" ? t.idiomDirectionHelp : t.directionHelp}
             </p>
             <div className="mt-2 flex gap-2">
               {scenarioLoading ? (
