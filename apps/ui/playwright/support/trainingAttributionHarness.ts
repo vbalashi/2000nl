@@ -180,6 +180,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   let acceptedScenario: "hit" | "miss" | "fallback" = "hit";
   let slowEligibleCount = 0;
   const schedulerRequests: Record<string, unknown>[] = [];
+  const sessionPlanRequests: Record<string, unknown>[] = [];
   const sessionStartRequests: Record<string, unknown>[] = [];
   const sessionRequests: Record<string, unknown>[] = [];
   const progressActionRequests: Record<string, unknown>[] = [];
@@ -453,6 +454,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     }
 
     if (pathname.endsWith("/rpc/get_training_session_plan")) {
+      sessionPlanRequests.push({ ...body });
       await fulfillJson(
         route,
         visualFixture
@@ -893,6 +895,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   return {
     requests: {
       scheduler: schedulerRequests,
+      sessionPlans: sessionPlanRequests,
       sessionStarts: sessionStartRequests,
       session: sessionRequests,
       progressActions: progressActionRequests,
