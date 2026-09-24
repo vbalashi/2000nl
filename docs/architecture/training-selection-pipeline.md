@@ -85,7 +85,11 @@ size from each immediate queue in that one pass; a sparse new or review queue
 cannot trigger repeated scans of all source groups. Finite sessions exclude
 future-due practice targets. A read-only prototype of that group join across the corpus
 took about 242 ms warm, but this is **not** a measured full session-start time.
-Cold probes varied substantially, including one 2.5-second timeout. Keep
+Cold probes varied substantially, including one 2.5-second timeout. A later
+full-start production probe of DB 161 exceeded 10 seconds because child
+explanation lookups scanned the 40,772-node table once per idiom. Migration
+162 adds the missing active-child index; its full-start effect must be measured
+before Idioms is enabled. Keep
 initial filtering off the app's first paint, benchmark the complete start
 after deployment, and add a write-maintained projection only if the measured
 set-based path remains too slow. Each grade should update one target and its

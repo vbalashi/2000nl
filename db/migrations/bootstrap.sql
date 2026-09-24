@@ -467,3 +467,4 @@
 \i db/migrations/159_scope_ordinary_source_introductions.sql
 \i db/migrations/160_training_dictionary_material_scope.sql
 \i db/migrations/161_training_extra_source_scope.sql
+\i db/migrations/162_index_active_content_children.sql

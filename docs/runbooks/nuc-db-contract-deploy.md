@@ -226,9 +226,15 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 161 in order
+An enabled deployment must apply or verify migrations 123 through 162 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
+
+Migration 162 adds a partial index for active Content Node children by parent,
+kind and source order. It prevents the idiom explanation/example lookups from
+scanning the full content table once per idiom. No function, permission or
+existing exercise state changes. The Idioms setup choice remains disabled until
+full session-start latency is verified on the pilot corpus under #476.
 
 Migration 161 adds a shared, read-only source-entry scope for idiom and future
 sentence sessions. The new idiom start overload stores the exact material,
