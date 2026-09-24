@@ -87,23 +87,6 @@ export QA_SOURCE_ORIGIN_MAIN
 export QA_SOURCE_REMOTE_REFS
 export QA_SOURCE_SQUASH_MERGED
 
-if server_check_output="$(node "$repo_root/scripts/check-qa-server.mjs" \
-  --port "$port" \
-  --mode "$QA_SOURCE_MODE" \
-  --work-ref "$QA_SOURCE_WORK_REF" \
-  --expected-commit "$QA_SOURCE_COMMIT" \
-  --expected-checkout-path "$QA_SOURCE_CHECKOUT_PATH" \
-  --expected-dirty "$QA_SOURCE_DIRTY" 2>&1)"; then
-  echo "$server_check_output"
-  exit 0
-else
-  server_check_status=$?
-  if [[ "$server_check_status" != "2" ]]; then
-    echo "$server_check_output" >&2
-    exit "$server_check_status"
-  fi
-fi
-
 if ! command -v supabase >/dev/null 2>&1; then
   echo "Missing required command: supabase" >&2
   exit 1
@@ -150,6 +133,29 @@ export NEXT_PUBLIC_SITE_URL="http://localhost:$port"
 export NEXT_DIST_DIR="${NEXT_DIST_DIR:-.next-dev}"
 
 export APP_ROLLOUT_PROFILE="pilot"
+
+# Fail before creating the local QA user or starting Next when this retained
+# Supabase database does not satisfy the schema contract for this checkout.
+# Run before the existing-server fast path too: the database may have changed
+# since the current process started.
+"$repo_root/scripts/db-local-supabase.sh" probe
+
+if server_check_output="$(node "$repo_root/scripts/check-qa-server.mjs" \
+  --port "$port" \
+  --mode "$QA_SOURCE_MODE" \
+  --work-ref "$QA_SOURCE_WORK_REF" \
+  --expected-commit "$QA_SOURCE_COMMIT" \
+  --expected-checkout-path "$QA_SOURCE_CHECKOUT_PATH" \
+  --expected-dirty "$QA_SOURCE_DIRTY" 2>&1)"; then
+  echo "$server_check_output"
+  exit 0
+else
+  server_check_status=$?
+  if [[ "$server_check_status" != "2" ]]; then
+    echo "$server_check_output" >&2
+    exit "$server_check_status"
+  fi
+fi
 
 echo "Starting UI against local Supabase:"
 echo "  UI:       http://localhost:$port"

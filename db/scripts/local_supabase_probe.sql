@@ -17,6 +17,63 @@ begin
     raise exception 'missing auth.users table';
   end if;
 
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'training_sessions'
+      and column_name = 'new_review_ratio'
+      and data_type = 'integer'
+      and is_nullable = 'YES'
+  ) then
+    raise exception 'missing or incompatible migration 156 training_sessions.new_review_ratio';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint constraint_row
+    where conrelid = 'public.training_sessions'::regclass
+      and conname = 'training_sessions_new_review_ratio_check'
+      -- Ignore PostgreSQL's formatting parentheses/whitespace, but retain the
+      -- boolean operators so an incorrect AND cannot satisfy this contract.
+      and lower(regexp_replace(
+        pg_get_constraintdef(constraint_row.oid),
+        '[[:space:]()]',
+        '',
+        'g'
+      )) = 'checknew_review_ratioisnullornew_review_ratio>=1andnew_review_ratio<=5'
+  ) then
+    raise exception 'missing or incompatible migration 156 training_sessions_new_review_ratio_check';
+  end if;
+
+  if to_regprocedure('public.get_training_session_plan(uuid,text[],uuid,text,text,jsonb,text,integer)') is null then
+    raise exception 'missing migration 156 eight-argument public.get_training_session_plan';
+  end if;
+  if pg_get_function_arguments(to_regprocedure('public.get_training_session_plan(uuid,text[],uuid,text,text,jsonb,text,integer)')) not like '%p_new_review_ratio integer%' then
+    raise exception 'migration 156 get_training_session_plan must name p_new_review_ratio';
+  end if;
+  if not has_function_privilege(
+    'authenticated',
+    to_regprocedure('public.get_training_session_plan(uuid,text[],uuid,text,text,jsonb,text,integer)'),
+    'EXECUTE'
+  ) then
+    raise exception 'authenticated role cannot execute migration 156 get_training_session_plan';
+  end if;
+
+  if to_regprocedure('public.start_training_session(uuid,text[],uuid,text,text,jsonb,text,uuid,integer)') is null then
+    raise exception 'missing migration 156 nine-argument public.start_training_session';
+  end if;
+  if pg_get_function_arguments(to_regprocedure('public.start_training_session(uuid,text[],uuid,text,text,jsonb,text,uuid,integer)')) not like '%p_new_review_ratio integer%' then
+    raise exception 'migration 156 start_training_session must name p_new_review_ratio';
+  end if;
+  if not has_function_privilege(
+    'authenticated',
+    to_regprocedure('public.start_training_session(uuid,text[],uuid,text,text,jsonb,text,uuid,integer)'),
+    'EXECUTE'
+  ) then
+    raise exception 'authenticated role cannot execute migration 156 start_training_session';
+  end if;
+
   if not exists (select 1 from pg_roles where rolname = 'anon') then
     raise exception 'missing anon role';
   end if;
