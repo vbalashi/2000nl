@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-157",
+  "contractId": "2000nl-db-158",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 157,
+    "requiredMigrationId": 158,
     "coordinationIssue": 408,
     "compatibilityPhase": "legacy-first-party-compatible",
     "strictEnforcementIssue": 399
@@ -191,12 +191,17 @@
       "migrationId": 157,
       "file": "db/migrations/157_ordinary_training_lexical_candidate_filters.sql",
       "sha256": "947cb8c42b6163ea05642a1b89b100a710e3fc690334b758c5047c9acf73c275"
+    },
+    {
+      "migrationId": 158,
+      "file": "db/migrations/158_lock_user_training_scopes_access.sql",
+      "sha256": "1835a8f013a55c4fdd1af0b1d32c831e1e18c5067855100908b6ed9767244cf2"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-157.sql",
+  "postflightProbe": "db/deploy-contract/postflight-158.sql",
   "preSwitchReadProbe": {
-    "file": "db/deploy-contract/pre-switch-read-probe-157.sql",
-    "sha256": "e7727690536d234c2233d8530ea3a6fff7c47d373f1085f799703d20ab5b50f7",
+    "file": "db/deploy-contract/pre-switch-read-probe-158.sql",
+    "sha256": "e4e3b0e4167fc2964e6ed53a74fcafa692ab1e3084b8b8b15541c8d0bc9e1b74",
     "statementTimeoutMs": 2000
   }
 }

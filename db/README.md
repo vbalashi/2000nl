@@ -7,7 +7,7 @@ and [`docs/reference/api-functions/training-and-queue.md`](../docs/reference/api
 
 ## Migration sources of truth
 
-- `db/migrations/001_*.sql` through the current numbered migration (`157` at
+- `db/migrations/001_*.sql` through the current numbered migration (`158` at
   the time of writing) are the ordered schema history. Do not renumber or edit
   an already deployed migration.
 - `db/migrations/bootstrap.sql` includes that complete numbered chain. It is
@@ -16,12 +16,12 @@ and [`docs/reference/api-functions/training-and-queue.md`](../docs/reference/api
 - `db/deploy-contract/ledger-v1.sql` creates the immutable deployment ledger
   before the first managed forward migration. The later managed sequence is
   declared by `packages/shared/deployment/db-contract.json` and currently
-  covers migrations `123` through `157` after baseline `122`.
+  covers migrations `123` through `158` after baseline `122`.
 - `db/deploy-contract/` contains the checksum-pinned baseline, pre-switch,
   and postflight probes for the deployment contract.
 
 The manifest is the application-owned database contract. It currently declares
-contract `2000nl-db-157`, required migration `157`, and the exact checksums for
+contract `2000nl-db-158`, required migration `158`, and the exact checksums for
 every managed migration and probe. Inspect or validate it without a database:
 
 ```bash
@@ -104,3 +104,15 @@ schemas and card IDs live under `packages/shared/`.
 - [`db/scripts/README.md`](scripts/README.md) — database helper and gate scripts;
 - [`docs/reference/api-functions/`](../docs/reference/api-functions/) — current
   Platform function contracts.
+
+The isolated local Auth/PostgREST regression for the per-user Training scope
+can be run against the local Supabase stack after migration 158 is applied:
+
+```bash
+node db/scripts/user_training_scopes_postgrest.integration.mjs
+```
+
+It creates temporary local Auth users, verifies direct REST table operations
+are denied, exercises the scoped RPCs, and deletes its users afterward. The
+script refuses non-loopback Supabase URLs and does not print credentials or
+user data.

@@ -459,3 +459,6 @@
 
 -- Apply optional Dutch lexical filters before ordinary candidates are queued
 \i db/migrations/157_ordinary_training_lexical_candidate_filters.sql
+
+-- Restrict per-user Training scope to authenticated owner-checking RPCs
+\i db/migrations/158_lock_user_training_scopes_access.sql
