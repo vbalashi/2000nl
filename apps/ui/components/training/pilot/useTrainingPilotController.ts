@@ -462,6 +462,10 @@ export function useTrainingPilotController({
   }, []);
   const resumeSession = useCallback(() => setSurface("session"), []);
   const returnToToday = useCallback(() => setSurface("today"), []);
+  const setExerciseFamilyForResume = useCallback(
+    (family: TrainingExerciseFamily) => setExerciseFamily(family),
+    [],
+  );
 
   return {
     surface,
@@ -475,6 +479,7 @@ export function useTrainingPilotController({
     continueSession,
     resumeSession,
     returnToToday,
+    setExerciseFamilyForResume,
     startSession,
     retry: onRetry,
   };

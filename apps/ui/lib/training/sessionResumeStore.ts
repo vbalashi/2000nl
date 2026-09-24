@@ -1,6 +1,7 @@
 import type {
   CardFilter,
   TrainingFocusFilter,
+  TrainingExerciseFamily,
   TrainingMode,
   TrainingSessionSize,
   WordListType,
@@ -9,6 +10,8 @@ import type {
 export type TrainingSessionResumeRecord = {
   sessionId: string;
   userId: string;
+  /** The server-backed session family; old records are ordinary meaning sessions. */
+  family?: Extract<TrainingExerciseFamily, "meaning" | "idiom">;
   languageCode: string;
   listId: string | null;
   listType: WordListType | null;
@@ -234,6 +237,11 @@ const isTrainingMode = (value: unknown): value is TrainingMode =>
   value === "definition-to-word" ||
   value === "listen-recognize";
 
+const isTrainingSessionFamily = (
+  value: unknown,
+): value is Extract<TrainingExerciseFamily, "meaning" | "idiom"> =>
+  value === "meaning" || value === "idiom";
+
 const parseResumeRecord = (
   value: unknown,
 ): StoredTrainingSessionResumeRecord | null => {
@@ -250,7 +258,8 @@ const parseResumeRecord = (
     !value.modes.every(isTrainingMode) ||
     typeof value.newReviewRatio !== "number" ||
     !Number.isFinite(value.newReviewRatio) ||
-    !isRecord(value.focusFilter)
+    !isRecord(value.focusFilter) ||
+    (value.family !== undefined && !isTrainingSessionFamily(value.family))
   ) {
     return null;
   }
@@ -262,6 +271,7 @@ const parseResumeRecord = (
     sessionId: value.sessionId,
     userId: value.userId,
     ownerId: value.ownerId,
+    ...(isTrainingSessionFamily(value.family) ? { family: value.family } : {}),
     languageCode: value.languageCode,
     listId,
     listType,

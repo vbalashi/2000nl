@@ -39,7 +39,10 @@ import type {
   PlatformHeadwordGroupV2,
   PlatformIdiomExerciseSessionV2,
 } from "../../../../packages/shared/types/platformV2";
-import { startPlatformV2IdiomTrainingSession } from "@/lib/platform/platformV2IdiomExerciseClient";
+import {
+  fetchPlatformV2IdiomTrainingSessionSnapshot,
+  startPlatformV2IdiomTrainingSession,
+} from "@/lib/platform/platformV2IdiomExerciseClient";
 import { useCardParams } from "@/lib/cardParams";
 import {
   useTrainingPreferences,
@@ -1406,7 +1409,22 @@ function TrainingScreenContent({
         setCurrentWord(null);
         replaceTrainingSessionId(null);
         setLatchedSessionPlan(null);
-        if (user.id) void clearTrainingSessionResume(user.id);
+        if (user.id) {
+          void writeTrainingSessionResume({
+            family: "idiom",
+            sessionId: session.sessionId,
+            userId: user.id,
+            languageCode: context.languageCode,
+            listId: context.scope.listId,
+            listType: context.scope.listType,
+            scenarioId: "idiom",
+            modes: context.draft.modes,
+            cardFilter: context.draft.cardFilter,
+            newReviewRatio: context.draft.newReviewRatio,
+            focusFilter: context.focusFilter,
+            sessionSize: context.draft.sessionSize ?? DEFAULT_SESSION_SIZE,
+          });
+        }
         lastAppliedTrainingFocusFilterKey.current = trainingFilterKey(
           context.focusFilter,
         );
@@ -1559,7 +1577,13 @@ function TrainingScreenContent({
       if (recovery === "skipped") await loadNextWord();
     },
   });
-  const { continueSession, resumeSession, returnToToday, startSession } = trainingPilot;
+  const {
+    continueSession,
+    resumeSession,
+    returnToToday,
+    startSession,
+    setExerciseFamilyForResume,
+  } = trainingPilot;
 
   useEffect(() => {
     if (
@@ -1677,6 +1701,85 @@ function TrainingScreenContent({
           setSessionResumeScopeResolved(true);
           setSessionResumeResolved(true);
         }
+        return;
+      }
+
+      if (record.family === "idiom") {
+        let idiomSnapshot: PlatformIdiomExerciseSessionV2 | null;
+        try {
+          idiomSnapshot = await fetchPlatformV2IdiomTrainingSessionSnapshot(
+            user.id,
+            record.sessionId,
+          );
+        } catch {
+          if (
+            componentMountedRef.current &&
+            sessionResumeGenerationRef.current === resumeGeneration
+          ) {
+            setSessionResumeError(true);
+            setTrainingLoadError("training_resume_failed");
+          }
+          return;
+        }
+        if (
+          !componentMountedRef.current ||
+          sessionResumeGenerationRef.current !== resumeGeneration
+        ) {
+          return;
+        }
+        const hasRemainingMember = Boolean(
+          idiomSnapshot?.members.some(
+            (member) => !member.consumedAt && !member.unavailableAt,
+          ),
+        );
+        if (
+          !idiomSnapshot ||
+          idiomSnapshot.runStatus === "superseded" ||
+          !hasRemainingMember
+        ) {
+          await clearTrainingSessionResume(user.id);
+          setIdiomSession(null);
+          setActiveExerciseFamily("meaning");
+          setExerciseFamilyForResume("meaning");
+          setSessionReplacementWarning(
+            idiomSnapshot?.runStatus === "superseded",
+          );
+          setSessionResumeScopeResolved(true);
+          setSessionResumeResolved(true);
+          return;
+        }
+
+        const savedList = record.listId
+          ? availableLists.find(
+              (list) =>
+                list.id === record.listId && list.type === record.listType,
+            )
+          : null;
+        if (savedList) applyListLocal(savedList);
+        if (activeTrainingScope) {
+          lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
+        }
+        setActiveScenario("understanding", { persist: false });
+        setEnabledModes(record.modes, { persist: false });
+        setCardFilterPreference(record.cardFilter, { persist: false });
+        setNewReviewRatio(record.newReviewRatio, { persist: false });
+        setSessionSize(record.sessionSize);
+        setTrainingFocusFilter(record.focusFilter);
+        setExerciseFamilyForResume("idiom");
+        setActiveExerciseFamily("idiom");
+        setIdiomSession(idiomSnapshot);
+        replaceTrainingSessionId(null);
+        setLatchedSessionPlan(null);
+        setSessionPlannedTotal(
+          idiomSnapshot.requestedTotal ?? idiomSnapshot.plannedTotal,
+        );
+        setSessionCompletedActions(
+          idiomSnapshot.completedActions ??
+            idiomSnapshot.members.filter((member) => member.consumedAt).length,
+        );
+        setSessionResumeScopeResolved(true);
+        setSessionResumeResolved(true);
+        resumeSession();
         return;
       }
 
@@ -1844,6 +1947,7 @@ function TrainingScreenContent({
     setCardFilterPreference,
     setEnabledModes,
     setNewReviewRatio,
+    setExerciseFamilyForResume,
     setTrainingLoadError,
     setTrainingFocusFilter,
     resumeSession,
@@ -1963,6 +2067,30 @@ function TrainingScreenContent({
     user?.id,
   ]);
   const handleContinueTrainingSession = useCallback(() => {
+    if (activeExerciseFamily === "idiom" && idiomSession && user?.id) {
+      void fetchPlatformV2IdiomTrainingSessionSnapshot(
+        user.id,
+        idiomSession.sessionId,
+      )
+        .then((snapshot) => {
+          if (!snapshot || snapshot.runStatus === "superseded") {
+            void clearTrainingSessionResume(user.id);
+            setIdiomSession(null);
+            setActiveExerciseFamily("meaning");
+            setExerciseFamilyForResume("meaning");
+            setSessionReplacementWarning(Boolean(snapshot));
+            returnToToday();
+            return;
+          }
+          setIdiomSession(snapshot);
+          resumeSession();
+        })
+        .catch(() => {
+          setSessionResumeError(true);
+          setTrainingLoadError("training_resume_failed");
+        });
+      return;
+    }
     const continueCurrentSession = () => {
       resetFocusQueueState();
       setPresentationResetKey((key) => key + 1);
@@ -1999,6 +2127,12 @@ function TrainingScreenContent({
     trainingTodaySetupEnabled,
     user?.id,
     validateTrainingSessionAuthority,
+    activeExerciseFamily,
+    idiomSession,
+    resumeSession,
+    returnToToday,
+    setExerciseFamilyForResume,
+    setTrainingLoadError,
   ]);
   useEffect(() => {
     if (!trainingSessionId) {
@@ -2064,8 +2198,8 @@ function TrainingScreenContent({
     returnToToday();
   }, [returnToToday]);
   const exitIdiomSession = useCallback(() => {
-    setIdiomSession(null);
-    setActiveExerciseFamily("meaning");
+    // Keep the server-backed run resumable when returning to Today. A later
+    // explicit start supersedes it and replaces this local record.
     returnToToday();
   }, [returnToToday]);
   const trainingSessionPlanScope = React.useMemo(
@@ -2239,7 +2373,7 @@ function TrainingScreenContent({
             startPending={trainingPilot.startPending}
             scenarioLoading={trainingPilot.scenarioLoading}
             replacementWarning={sessionReplacementWarning}
-            hasOwnedSession={Boolean(trainingSessionId)}
+            hasOwnedSession={Boolean(trainingSessionId || idiomSession)}
             activeSessionLabel={trainingFocusFilter.dictionaryScope ? undefined : wordListLabel || undefined}
             onContinue={handleContinueTrainingSession}
             onStart={trainingPilot.startSession}

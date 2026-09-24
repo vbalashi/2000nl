@@ -149,6 +149,16 @@ describe("training session resume store", () => {
     expect(await readTrainingSessionResume("another-user")).toBeNull();
   });
 
+  test("round-trips the idiom family without changing legacy meaning records", async () => {
+    const idiomRecord: TrainingSessionResumeRecord = {
+      ...record,
+      family: "idiom",
+      scenarioId: "idiom",
+    };
+    await writeTrainingSessionResume(idiomRecord);
+    expect(await readTrainingSessionResume("user-1")).toEqual(idiomRecord);
+  });
+
   test("round-trips a stepped session size beyond the former 5/10 choices", async () => {
     const stepped = { ...record, sessionSize: 30 };
     await writeTrainingSessionResume(stepped);
