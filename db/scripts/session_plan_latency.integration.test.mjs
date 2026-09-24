@@ -275,6 +275,13 @@ test('current public session plan and exact deployment probe stay bounded on a d
       const sourceShape = psql(targetUrl, `INSERT INTO private.dictionary_import_runs(id,dictionary_id,identity_scheme_version,artifact_format_version,manifest_checksum,input_checksum,source_record_count,artifact_count,status) VALUES('41300000-0000-0000-0000-000000000001','413d0000-0000-0000-0000-000000000001','fixture','fixture','fixture','fixture',18184,18184,'completed');
 INSERT INTO private.source_entry_bindings(dictionary_id,identity_scheme_version,source_entry_key,source_group_key,sense_ordinal,word_entry_id,binding_state,first_seen_run_id,last_seen_run_id,manifest_checksum,content_fingerprint_version,content_fingerprint,identity_evidence,reconciliation_decision)
 SELECT dictionary_id,'fixture',id::text,headword,1,id,'active','41300000-0000-0000-0000-000000000001','41300000-0000-0000-0000-000000000001','fixture','fixture','fixture','{}','{}' FROM public.word_entries;
+-- Entry 5 belongs to the NT2 scope, but its ordinary predecessor (entry 1)
+-- does not. A safe scope-group optimization must retain that predecessor.
+UPDATE private.source_entry_bindings binding
+SET source_group_key = 'fixture-cross-scope-pair',
+    sense_ordinal = CASE WHEN entry.meaning_id = 1 THEN 1 ELSE 2 END
+FROM public.word_entries entry
+WHERE binding.word_entry_id = entry.id AND entry.meaning_id IN (1, 5);
 -- Fixture bulk loading only: all entries have both root nodes, so the
 -- exceptional unrenderable projection correctly stays empty. Avoid the
 -- unrelated import reconciliation cost; restore triggers before reads.
@@ -286,6 +293,77 @@ COMMIT;
 ANALYZE private.source_entry_bindings;
 ANALYZE private.platform_v2_content_nodes;`);
       assert.equal(sourceShape.status, 0, sourceShape.stderr);
+
+      const predecessorParity = psql(targetUrl, `WITH scope_ids AS MATERIALIZED (
+  SELECT entry_id FROM private.default_training_scope_entries_v1
+), scope_groups AS MATERIALIZED (
+  SELECT DISTINCT binding.dictionary_id, binding.identity_scheme_version,
+    binding.source_group_key
+  FROM scope_ids scope
+  JOIN private.source_entry_bindings binding
+    ON binding.word_entry_id = scope.entry_id
+   AND binding.binding_state = 'active'
+), ordinary_rows AS MATERIALIZED (
+  SELECT binding.word_entry_id, binding.dictionary_id,
+    binding.identity_scheme_version, binding.source_group_key,
+    binding.sense_ordinal
+  FROM private.source_entry_bindings binding
+  JOIN private.platform_v2_content_nodes definition
+    ON definition.entry_id = binding.word_entry_id
+   AND definition.binding_state = 'active'
+   AND definition.parent_content_node_id IS NULL
+   AND definition.kind = 'definition'
+  LEFT JOIN private.unrenderable_ordinary_direct_entries_v1 unrenderable
+    ON unrenderable.entry_id = binding.word_entry_id
+  WHERE binding.binding_state = 'active'
+    AND unrenderable.entry_id IS NULL
+), global_introductions AS MATERIALIZED (
+  SELECT word_entry_id,
+    lag(word_entry_id) OVER (
+      PARTITION BY dictionary_id, identity_scheme_version, source_group_key
+      ORDER BY sense_ordinal, word_entry_id
+    ) predecessor_entry_id
+  FROM ordinary_rows
+), scoped_introductions AS MATERIALIZED (
+  SELECT row.word_entry_id,
+    lag(row.word_entry_id) OVER (
+      PARTITION BY row.dictionary_id, row.identity_scheme_version,
+        row.source_group_key
+      ORDER BY row.sense_ordinal, row.word_entry_id
+    ) predecessor_entry_id
+  FROM ordinary_rows row
+  JOIN scope_groups group_key
+    ON group_key.dictionary_id = row.dictionary_id
+   AND group_key.identity_scheme_version = row.identity_scheme_version
+   AND group_key.source_group_key = row.source_group_key
+)
+SELECT json_build_object(
+  'globalRows', (SELECT count(*) FROM global_introductions),
+  'scopedRows', (SELECT count(*) FROM scoped_introductions),
+  'mismatches', (
+    SELECT count(*) FROM scope_ids scope
+    LEFT JOIN global_introductions original
+      ON original.word_entry_id = scope.entry_id
+    LEFT JOIN scoped_introductions narrowed
+      ON narrowed.word_entry_id = scope.entry_id
+    WHERE original.predecessor_entry_id IS DISTINCT FROM narrowed.predecessor_entry_id
+  ),
+  'outsideScopePredecessors', (
+    SELECT count(*) FROM scope_ids scope
+    JOIN global_introductions original
+      ON original.word_entry_id = scope.entry_id
+    LEFT JOIN scope_ids predecessor
+      ON predecessor.entry_id = original.predecessor_entry_id
+    WHERE original.predecessor_entry_id IS NOT NULL
+      AND predecessor.entry_id IS NULL
+  )
+)::text;`);
+      assert.equal(predecessorParity.status, 0, predecessorParity.stderr);
+      const parity = JSON.parse(predecessorParity.stdout.trim());
+      t.diagnostic(JSON.stringify({ predecessorParity: parity }));
+      assert.equal(parity.mismatches, 0);
+      assert.ok(parity.outsideScopePredecessors > 0);
+      assert.ok(parity.scopedRows < parity.globalRows / 2);
 
       // Invalidate visibility on distributed source and projection pages.
       // This models import/update churn; it does not claim to evict OS caches.

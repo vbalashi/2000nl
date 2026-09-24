@@ -786,3 +786,25 @@ simply filtering before `lag()` would change semantics when a predecessor is
 outside the current scope. Any rewrite therefore needs a production-shaped
 disposable fixture, predecessor/permission/session parity tests, and a new
 forward migration; the trace alone is not enough to ship one.
+
+### Disposable scope-group rewrite experiment
+
+The production-shaped disposable 18,184-entry fixture now includes one
+ordinary meaning whose predecessor is **outside** the 4,031-entry NT2 scope.
+A local parity check compared the current global predecessor window with a
+window restricted to complete source groups represented in the scope. The
+restricted window handled 4,032 versus 18,184 rows, had zero predecessor
+mismatches on scope entries, and retained that outside-scope predecessor.
+The existing six- and eight-argument public plan and exact deployment-probe
+tests passed on the unchanged contract 158.
+
+An experimental function rewrite was then applied **only** to the disposable
+database. Both a direct scope-to-bindings join and an `EXISTS` form reduced
+local execution from roughly 100–111 ms to 73–80 ms, but increased the public
+plan's shared-buffer accesses from about 5,300 to **17,100**, failing the
+existing 6,500-block regression budget. This likely reflects many binding
+lookups and could amplify cold managed-DB cost; local timing alone is not enough
+to relax that budget. Both experimental rewrites were discarded. No migration,
+manifest change, or production SQL change was shipped. A viable rewrite must
+retain the parity result **and** avoid the buffer amplification before it is
+eligible for a forward migration or rollout.
