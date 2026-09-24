@@ -556,9 +556,27 @@ plan at **232.519 ms** on the first invocation of this transaction and
 per-call self time was **199.699 ms** and **171.465 ms** respectively. The
 backend had already executed the 2,038 ms instrumented call above. Thus the
 expensive candidate self time was absent when that physical backend was reused,
-even though each invocation still executed the same function. This supports a
-backend-local first-use/idle effect but does not yet separate SQL statement
-planning from execution or short-lived managed-host pressure at the first use.
+even though each invocation still executed the same function. This is
+consistent with a backend-local first-use/idle effect but does not prove it or
+separate SQL statement planning from execution or short-lived managed-host
+pressure at the first use.
 `training_scheduler_candidates_v2` is a SQL-language, security-definer helper
 with a large CTE query; its `self_time` covers the inner query. Next inspect
 its actual inner plan/compilation on a slow first use before changing SQL.
+
+Supabase's documented transaction-local `auto_explain` path was then checked.
+The managed connection already had the module loaded and accepted local
+`log_nested_statements`, `log_analyze`, `log_buffers`, JSON format, and a
+100 ms threshold at `NOTICE` level. Server `log_min_messages` was `warning`,
+so this client-directed NOTICE level was below the server log threshold. One
+bounded read-only QA transaction on **another backend**, PID `2271126`
+(started `2026-09-24T05:29:14.193939Z`), produced a **fast** public call:
+268.528 ms execution / 0.125 ms outer planning. The nested candidate plan
+took 203.640 ms: a `WindowAgg` over 2,345 output rows, with a nested sort over
+16,396 rows and the familiar 280/563 temporary blocks. The wrapper aggregate
+was 245.863 ms. This is a warm-speed inner-plan reference, **not** a plan
+captured during a two-second outlier. In particular, a recently started
+backend can also be fast; backend age/first use alone is not a sufficient
+explanation. Avoid attributing the outlier to compilation or memory pressure
+without a matched slow inner plan. The diagnostic printed only node types,
+counts, blocks and timing; it did not output SQL text or learner content.
