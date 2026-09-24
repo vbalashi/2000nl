@@ -44,9 +44,9 @@ that URL is present in the Supabase Auth redirect URL allowlist. The Google
 OAuth provider's callback remains Supabase's own `/auth/v1/callback` URL.
 Keep the project's existing server-only Supabase URL and anon key, plus its
 service-role/secret key in server runtime secrets. Never place privileged credentials in
-`NEXT_PUBLIC_*` settings, browser payloads, logs, or issue comments. If event
-Client context collection is enabled by the confirmed policy. Verify the
-trusted proxy/IP source and retention cleanup before rollout.
+`NEXT_PUBLIC_*` settings, browser payloads, logs, or issue comments. Collect
+IP and User-Agent context under the confirmed policy. Verify the trusted
+proxy/IP source and retention cleanup before rollout.
 
 ## Operator bootstrap and recovery
 
