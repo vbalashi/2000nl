@@ -61,7 +61,9 @@ const content = {
   examples: [],
 };
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 test("direct idiom reveals complete content and records the self-assessment", async () => {
   vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise)
