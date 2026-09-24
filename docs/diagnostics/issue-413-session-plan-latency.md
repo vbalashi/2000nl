@@ -590,3 +590,35 @@ run passed on a disposable 18,184-entry corpus: the six-argument wrapper took
 103.226 ms and the eight-argument wrapper 107.065 ms, with the candidate
 helper called once in each. This repairs diagnostic attribution but does not
 explain or remove the production two-second outlier.
+
+## Bounded inner-plan trace preparation (2026-09-24)
+
+The CLI connection was rechecked against the same expected project ref,
+eu-west-1 transaction pooler, and PostgreSQL 17.6. A new diagnostic command,
+`node db/scripts/session_plan_inner_trace.mjs --env-file <private-env-file>`,
+executes exactly one six-argument public-plan call under the QA identity in a
+read-only transaction. It bounds that diagnostic call at 3,000 ms, enables
+`track_functions` and `auto_explain` only with `SET LOCAL`, and reports only
+aggregate timing, backend identity, and plan-node counts. The exact 2,000 ms
+deployment gate is unchanged. Parser tests assert that SQL/query text is never
+included in the emitted summary.
+
+Three bounded invocations were made while validating the parser. The first
+returned an output-parsing error after its result was discarded; it supplies
+**no usable timing evidence**. The next two used the same backend PID `2276584`
+(started `07:02:41.805Z`) and were fast: **210.008 ms** and **205.811 ms**
+inside PostgreSQL, with outer planning **0.116/0.110 ms**. Candidate-helper
+self time was **204.678/201.323 ms**. This is another warm-speed reference,
+not a matched slow inner plan. The server emitted three `auto_explain` plan
+notices in the last invocation, but the initial parser incorrectly expected a
+JSON array; PostgreSQL's `auto_explain` JSON log is an object. The parser now
+accepts both shapes, scopes each notice to its own plan, and has synthetic
+privacy/attribution tests. No further production call was made in this bounded
+round merely to recheck parsing.
+
+The next useful call is one bounded, post-idle QA trace with the corrected
+parser. If it captures a slow candidate, compare its logged inner-plan time
+with transaction-local candidate self time on that **same call**. A slow inner
+plan points to execution; a fast inner plan paired with slow self time points
+to planning or initialization outside the logged execution. Do not infer a
+resource upgrade from either result alone.
