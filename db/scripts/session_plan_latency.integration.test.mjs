@@ -69,17 +69,20 @@ function parseFirstJsonArray(output, offset = 0) {
 
 const functionStatsSql = `SELECT COALESCE(
   json_agg(json_build_object(
-    'schema', schemaname,
-    'function', funcname,
+    'functionId', stats.funcid,
+    'schema', stats.schemaname,
+    'function', stats.funcname,
+    'argumentTypes', oidvectortypes(procedure.proargtypes),
     'calls', calls,
     'totalMs', round(total_time::numeric, 3),
     'selfMs', round(self_time::numeric, 3)
   ) ORDER BY total_time DESC)::text,
   '[]'
 )
-FROM pg_stat_user_functions
-WHERE calls > 0
-  AND (funcname LIKE '%training%' OR funcname LIKE '%schedule%');`;
+FROM pg_stat_user_functions stats
+JOIN pg_proc procedure ON procedure.oid = stats.funcid
+WHERE stats.calls > 0
+  AND (stats.funcname LIKE '%training%' OR stats.funcname LIKE '%schedule%');`;
 
 function readFunctionStats(targetUrl) {
   const result = psql(targetUrl, `SELECT pg_stat_clear_snapshot(); ${functionStatsSql}`);
@@ -115,11 +118,11 @@ function measure(targetUrl, statement = planStatements.public, { functionStats =
   const [explain] = parseFirstJsonArray(result.stdout, explainMarker);
   const statsAfterRows = functionStats ? readFunctionStats(targetUrl) : [];
   const statsBeforeByFunction = new Map(
-    statsBeforeRows.map((row) => [`${row.schema}.${row.function}`, row]),
+    statsBeforeRows.map((row) => [row.functionId, row]),
   );
   const functionStatsDelta = statsAfterRows
     .map((row) => {
-      const before = statsBeforeByFunction.get(`${row.schema}.${row.function}`) ?? {
+      const before = statsBeforeByFunction.get(row.functionId) ?? {
         calls: 0,
         totalMs: 0,
         selfMs: 0,
@@ -141,6 +144,22 @@ function measure(targetUrl, statement = planStatements.public, { functionStats =
     tempWrites: explain.Plan['Temp Written Blocks'],
     functionStats: functionStats ? functionStatsDelta : undefined,
   };
+}
+
+function assertNestedFunctionTiming(sample, wrapperArgumentTypes) {
+  const expected = [
+    ["public", "get_training_session_plan", wrapperArgumentTypes],
+    ["private", "training_scheduler_candidates_v2",
+      "uuid, text[], uuid, text, text, text, uuid[], text[], jsonb, boolean, boolean"],
+  ];
+  for (const [schema, name, argumentTypes] of expected) {
+    const matching = sample.functionStats.filter((row) =>
+      row.schema === schema && row.function === name &&
+      row.argumentTypes === argumentTypes && row.calls > 0,
+    );
+    assert.equal(matching.length, 1,
+      `Missing or ambiguous function timing for ${schema}.${name}(${argumentTypes}): ${JSON.stringify(sample.functionStats)}`);
+  }
 }
 
 test('current public session plan and exact deployment probe stay bounded on a dirty wide corpus',
@@ -300,6 +319,10 @@ ANALYZE private.platform_v2_content_nodes;`);
       t.diagnostic(JSON.stringify({ nestedTiming }));
       assert.ok(nestedTiming.public.executionMs <= 2000, JSON.stringify(nestedTiming));
       assert.ok(nestedTiming.uiPublic.executionMs <= 2000, JSON.stringify(nestedTiming));
+      assertNestedFunctionTiming(nestedTiming.public,
+        "uuid, text[], uuid, text, text, jsonb");
+      assertNestedFunctionTiming(nestedTiming.uiPublic,
+        "uuid, text[], uuid, text, text, jsonb, text, integer");
       const manifest = JSON.parse(readFileSync(
         path.join(repoRoot, 'packages/shared/deployment/db-contract.json'), 'utf8'));
       const shape = psql(targetUrl, `BEGIN READ ONLY;

@@ -580,3 +580,13 @@ backend can also be fast; backend age/first use alone is not a sufficient
 explanation. Avoid attributing the outlier to compilation or memory pressure
 without a matched slow inner plan. The diagnostic printed only node types,
 counts, blocks and timing; it did not output SQL text or learner content.
+
+The disposable local timing fixture now keys before/after function-stat deltas
+by PostgreSQL function OID instead of schema and name, because the public
+planner has multiple overloads. It also requires one positive-call row for
+the exact six- or eight-argument wrapper and the candidate helper in each
+measurement; missing or misattributed rows fail the test. The 2026-09-24 local
+run passed on a disposable 18,184-entry corpus: the six-argument wrapper took
+103.226 ms and the eight-argument wrapper 107.065 ms, with the candidate
+helper called once in each. This repairs diagnostic attribution but does not
+explain or remove the production two-second outlier.
