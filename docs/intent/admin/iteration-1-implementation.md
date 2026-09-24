@@ -2,8 +2,9 @@
 
 Issue: [#480](https://github.com/vbalashi/2000nl/issues/480)
 Status: first implementation is in review. Authentication and audit decisions
-were confirmed in #480; real credentials, account provisioning, production
-configuration, and rollout remain outside this implementation pass.
+were confirmed in #480. The existing Google identity was verified and the
+admin callback was appended to Supabase redirect configuration. Operator
+provisioning and production rollout remain pending the rollout boundary.
 
 ## Scope
 

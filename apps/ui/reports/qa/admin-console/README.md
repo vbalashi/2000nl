@@ -68,9 +68,9 @@ introduced.
 Read-only production checks confirmed the selected account already has Google
 linked and a learner profile; Supabase permits concurrent sessions. The admin
 schema is not deployed. NUC lacks ADMIN_SITE_URL; the reviewed Compose change
-supplies the existing production origin by default at rollout. Supabase
-currently allows only the learner callback; appending the admin callback
-while retaining the learner URL is a rollout prerequisite.
+supplies the existing production origin by default at rollout. Supabase now allows the admin callback as well as the existing learner
+callback. This additive configuration change has been verified; it does not
+activate the undeployed console or provision operator rights.
 
 Follow-up verification: 87 focused tests passed across authorization, Google
 auth routes and the learner TrainingScreen regression suite. Typecheck passed;
