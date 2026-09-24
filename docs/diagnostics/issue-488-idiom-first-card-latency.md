@@ -42,15 +42,25 @@ buffer/cache effect amplified by a broad `read_platform_v2_training_group`
 projection, rather than a need to increase the release timeout or move to a
 dedicated instance.
 
+The projection split makes the next SQL seam more specific. On the same
+complete group, the group-member aggregation itself was about 16 ms and the
+base presentation-identity function about 90 ms warm (44,914 shared hits). The
+remaining cold cost is in the attested identity wrapper, which computes a
+report-content revision for every returned entry; the six-entry identity call
+alone measured about 2,950 ms cold-ish and 144,178 shared hits. This points to
+the per-entry report-atom revision work and its repeated content-node checks as
+the first query to profile before changing the broader group lookup.
+
 ## Next bounded work
 
 1. Keep the new browser events from PR #494 in the production build so the next
    authorized smoke separates `idiom.session-start`, `idiom.session-next`,
    `idiom.content-lookup`, and card readiness on the real network path.
 2. Review the function-level plan and the complete-group query shape before any
-   SQL change. The likely optimization seam is a target-scoped content
-   projection that preserves exact content-node and dictionary-access checks,
-   rather than returning the whole headword group for the first idiom card.
+   SQL change. Start with the per-entry report-atom revision/attestation work;
+   then consider a target-scoped content projection that preserves exact
+   content-node and dictionary-access checks, rather than returning the whole
+   headword group for the first idiom card.
 3. Separately decide whether the UI should show a responsive idiom shell while
    the first content projection is pending. This must not bypass the current
    exact-target or access checks.
