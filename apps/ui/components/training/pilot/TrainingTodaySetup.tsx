@@ -661,27 +661,27 @@ export function TrainingTodaySetup({
 
           {hasOwnedSession ? (
             <section className="rounded-2xl border border-indigo-500/60 bg-indigo-500/10 p-5 md:p-7">
-            <p className="font-mono text-xs font-bold tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
-              {t.active}
-            </p>
-            <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-slate-950 dark:text-white">
-                  {activeSessionLabel || t.activeFallback}
-                </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {selectionSummary}
-                </p>
+              <p className="font-mono text-xs font-bold tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
+                {t.active}
+              </p>
+              <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-950 dark:text-white">
+                    {activeSessionLabel || t.activeFallback}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    {selectionSummary}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onContinue}
+                  disabled={continueDisabled}
+                  className={`${actionClass} shrink-0 border-indigo-500 bg-indigo-500 text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-950`}
+                >
+                  {t.continue} <span aria-hidden="true">→</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={onContinue}
-                disabled={continueDisabled}
-                className={`${actionClass} shrink-0 border-indigo-500 bg-indigo-500 text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-950`}
-              >
-                {t.continue} <span aria-hidden="true">→</span>
-              </button>
-            </div>
             </section>
           ) : null}
 
