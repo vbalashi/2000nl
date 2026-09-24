@@ -177,3 +177,77 @@ test("idiom start failures stay on setup and expose a recoverable error", async 
   expect(reportError).toHaveBeenCalledWith("training_idiom_start_failed");
   expect(startIdiomSession).toHaveBeenCalledOnce();
 });
+
+test("idiom starts forward the exact family filters and plan", async () => {
+  startIdiomSession.mockReset();
+  updateActiveTrainingScope.mockReset();
+  updateActiveTrainingScope.mockResolvedValue({ error: null });
+  startIdiomSession.mockResolvedValue({
+    contractVersion: "platform-idiom-exercise-session-v2",
+    sessionId: "idiom-session-1",
+    exerciseFamily: "idiom",
+    direction: "reverse",
+    sessionSize: "10",
+    requestedTotal: 10,
+    plannedNew: 8,
+    plannedReview: 2,
+    plannedPractice: 0,
+    plannedTotal: 10,
+    plannedAt: "2026-09-24T00:00:00Z",
+    runStatus: "active",
+    runGeneration: 1,
+    completedActions: 0,
+    completionReason: null,
+    members: [],
+  });
+  const onSessionReady = vi.fn();
+  const applyFocusFilter = vi.fn();
+  const { result } = renderHook(() => useCommitTrainingPilotDraft({
+    userId: "user-1",
+    languageCode: "nl",
+    resolveList: () => ({ id: "list-1", type: "curated", name: "List 1" }),
+    applyListLocally: vi.fn(),
+    applyPreferences: vi.fn(),
+    applyFocusFilter,
+    resetQueue: vi.fn(),
+    loadStats: vi.fn(),
+    loadWord: vi.fn(),
+    startIdiomSession,
+    reportError: vi.fn(),
+    onSessionReady,
+  }));
+
+  await act(async () => {
+    expect(await result.current({
+      ...draft,
+      family: "idiom",
+      scenarioId: "idiom",
+      modes: ["definition-to-word"],
+      listValue: "curated:list-1",
+      cardFilter: "review",
+      newReviewRatio: 4,
+      partOfSpeech: ["bn"],
+      nounArticles: ["de"],
+      sourceValue: "kind:youtube",
+      sessionSize: 10,
+    })).toBe(true);
+  });
+
+  expect(startIdiomSession).toHaveBeenCalledWith(expect.objectContaining({
+    direction: "reverse",
+    listId: "list-1",
+    listType: "curated",
+    cardFilter: "review",
+    newReviewRatio: 4,
+    trainingFilter: expect.objectContaining({
+      sourceKind: "youtube",
+      partOfSpeech: ["bn"],
+      nounArticles: ["de"],
+    }),
+  }));
+  expect(onSessionReady).toHaveBeenCalledWith(
+    expect.objectContaining({ sessionId: "idiom-session-1" }),
+    expect.objectContaining({ draft: expect.objectContaining({ family: "idiom" }) }),
+  );
+  expect(applyFocusFilter).toHaveBeenCalledWith(expect.objectContaining({ sourceKind: "youtube" }));
+});
