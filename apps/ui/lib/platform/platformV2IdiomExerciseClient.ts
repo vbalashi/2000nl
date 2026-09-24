@@ -145,6 +145,8 @@ export async function markPlatformV2IdiomTrainingSessionMemberUnavailable(
 
 export async function performPlatformV2IdiomExerciseAction(input: {
   trainingSessionId: string;
+  /** Reuse this identity when retrying the same intentional grade after an uncertain response. */
+  clientEventId?: string;
   candidate: Pick<
     PlatformIdiomExerciseCandidateV2,
     "targetId" | "direction" | "targetKey" | "state"
@@ -154,7 +156,7 @@ export async function performPlatformV2IdiomExerciseAction(input: {
 }): Promise<PlatformIdiomExerciseActionResponseV2> {
   const request = {
     actionId: "review-exercise" as const,
-    clientEventId: crypto.randomUUID(),
+    clientEventId: input.clientEventId ?? crypto.randomUUID(),
     trainingSessionId: input.trainingSessionId,
     target: {
       kind: "training-exercise" as const,
