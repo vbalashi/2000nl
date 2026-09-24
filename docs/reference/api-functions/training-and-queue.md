@@ -76,6 +76,24 @@ of reviews before the next new idiom, with fallbacks when one queue is empty.
 No daily cap is introduced. The launch selector and exercise-family UI are
 intentionally not part of this boundary and remain gated by #331.
 
+Migration 156 adds the sentence-translation consumer. Its candidate wrapper is
+`read_platform_v2_translation_candidates_as_principal_v1`; it selects active
+ordinary meaning examples whose owning entry has at least one enrolled or Known
+ordinary meaning. Nested idiom examples remain supporting content in this v1
+pool and are not candidates merely because an idiom card displayed them.
+
+`start_platform_v2_translation_training_session` creates a separate finite
+translation session with the fixed `recall` direction. Each exact source
+example Content Node gets its own target, state, action history, and session
+member. The translation language is resolved by the existing app settings and
+lookup/generation path; it is never stored in the target identity. Therefore a
+language switch preserves due dates and history, and a missing cached
+translation does not consume an exercise or remove its source sentence from the
+queue. `perform_platform_v2_translation_exercise_action_as_principal_v1` is
+self-assessment only and uses the same idempotent retry contract as idiom
+exercises. The translation family remains dark behind
+`PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED` until #331 approves the launch UI.
+
 ## `get_next_card`
 
 Get the next card for training. The current fresh-deploy function accepts explicit card modes; callers that work from a scenario must resolve that scenario to its `card_modes` first.

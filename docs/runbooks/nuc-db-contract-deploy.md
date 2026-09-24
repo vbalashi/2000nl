@@ -226,7 +226,7 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 164 in order
+An enabled deployment must apply or verify migrations 123 through 166 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -236,6 +236,13 @@ target's active source group and its siblings. It also keeps unbound and
 user-owned entries as direct singletons. This applies to idiom session
 responses and exact-target checks; the Idioms setup choice remains disabled
 until the full pilot latency and parity checks under #485 finish.
+
+
+Migration 166 adds the dark sentence-translation consumer on top of the current
+admin contract. Each source example Content Node remains the progress identity;
+translation language is presentation-only, and the launch UI stays disabled until
+#331 approves the sentence-family visuals and states. The postflight verifies the
+translation candidate/session/action RPC boundary and chains migration 165.
 
 Migration 164 adds a partial covering index keyed by active Content Node entry
 and source order. It bounds the report-atom revision path used by the
