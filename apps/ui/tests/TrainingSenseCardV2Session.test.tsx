@@ -165,6 +165,30 @@ describe("TrainingSenseCardV2Session", () => {
     expect(screen.getByRole("button", { name: "Recognized" })).toBeVisible();
   });
 
+  test("an unowned Training card cannot send a session-less progress action", async () => {
+    const onProgressActionAccepted = vi.fn();
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        trainingSessionId={null}
+        interactionDisabled
+        onProgressActionAccepted={onProgressActionAccepted}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    const reveal = screen.getByRole("button", { name: "Antwoord tonen" });
+    expect(reveal).toBeDisabled();
+    fireEvent.click(reveal);
+    expect(screen.queryByRole("button", { name: "Goed" })).not.toBeInTheDocument();
+    expect(performAction).not.toHaveBeenCalled();
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
+  });
+
   test("reviews an answer past the swipe threshold and resets a cancelled swipe", async () => {
     const original = Object.getOwnPropertyDescriptor(
       HTMLElement.prototype,
