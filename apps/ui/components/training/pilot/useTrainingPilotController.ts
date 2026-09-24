@@ -22,7 +22,7 @@ import type {
   TrainingSetupDraft,
   TrainingSetupOption,
 } from "./TrainingTodaySetup";
-import { isTrainingSetupDraftSupported } from "./TrainingTodaySetup";
+import { isTrainingSetupDraftSupported, isTrainingSetupMaterialAvailable } from "./TrainingTodaySetup";
 import { measureTrainingTransitionStage } from "@/lib/training/trainingTransitionTiming";
 import { deriveTrainingPilotSetupStatus } from "@/lib/training/trainingReadiness";
 import {
@@ -45,7 +45,6 @@ export type TrainingSessionStartContext = {
 type CommitPilotDraftParams = {
   userId?: string;
   languageCode: string;
-  currentScope: TrainingScope;
   resolveList: (value: string) => WordListSummary | null;
   applyListLocally: (list: WordListSummary) => void;
   applyPreferences: (draft: TrainingSetupDraft) => void;
@@ -95,7 +94,6 @@ const isTrainingMode = (value: string): value is TrainingMode =>
 export function useCommitTrainingPilotDraft({
   userId,
   languageCode,
-  currentScope,
   resolveList,
   applyListLocally,
   applyPreferences,
@@ -114,9 +112,11 @@ export function useCommitTrainingPilotDraft({
     async (draft: TrainingSetupDraft) => {
       if (!userId) return false;
       const selectedList = resolveList(draft.listValue);
-      const scope: TrainingScope = selectedList
-        ? { listId: selectedList.id, listType: selectedList.type }
-        : currentScope;
+      if (!selectedList) {
+        reportError("training_material_unavailable");
+        return false;
+      }
+      const scope: TrainingScope = { listId: selectedList.id, listType: selectedList.type };
       const focusFilter: TrainingFocusFilter = {
         dateWindow: draft.dateWindow,
         ...(draft.dateWindow === "daysAgo"
@@ -191,7 +191,7 @@ export function useCommitTrainingPilotDraft({
       onPlanReady?.(session);
 
       reportError(null);
-      if (selectedList) applyListLocally(selectedList);
+      applyListLocally(selectedList);
       applyPreferences(draft);
       applyFocusFilter(focusFilter);
       resetQueue();
@@ -211,7 +211,6 @@ export function useCommitTrainingPilotDraft({
       applyFocusFilter,
       applyListLocally,
       applyPreferences,
-      currentScope,
       languageCode,
       loadStats,
       loadWord,
@@ -327,7 +326,7 @@ export function useTrainingPilotController({
         draft,
         scenarioOptions,
       );
-      if (!scenariosResolved || !scenarioSupported || startPendingRef.current) {
+      if (!scenariosResolved || !scenarioSupported || !isTrainingSetupMaterialAvailable(draft, listOptions) || startPendingRef.current) {
         return false;
       }
       startPendingRef.current = true;
@@ -344,7 +343,7 @@ export function useTrainingPilotController({
         setStartPending(false);
       }
     },
-    [onCommitDraft, scenarioOptions, scenariosResolved],
+    [listOptions, onCommitDraft, scenarioOptions, scenariosResolved],
   );
 
   const continueSession = useCallback(() => {

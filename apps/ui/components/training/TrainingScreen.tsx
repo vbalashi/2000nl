@@ -1344,7 +1344,6 @@ function TrainingScreenContent({
   const commitPilotSessionDraft = useCommitTrainingPilotDraft({
     userId: user?.id,
     languageCode: currentTrainingLanguage,
-    currentScope: { listId: wordListId, listType: wordListType },
     resolveList: resolveListValue,
     applyListLocally: applyListLocal,
     applyPreferences: applyPilotPreferences,

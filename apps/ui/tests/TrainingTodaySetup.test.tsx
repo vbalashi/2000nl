@@ -5,6 +5,7 @@ import {
   TrainingTodaySetup,
   type TrainingSetupDraft,
 } from "@/components/training/pilot/TrainingTodaySetup";
+import { presetStorageKey } from "@/components/training/pilot/trainingSetupPresets";
 
 const initialDraft: TrainingSetupDraft = {
   scenarioId: "understanding",
@@ -355,6 +356,29 @@ test("a saved preset can be reopened and modified on this device", () => {
   fireEvent.click(screen.getByRole("button", { name: "Update preset" }));
   expect(screen.getByText("Saved on this device")).toBeInTheDocument();
   window.localStorage.clear();
+});
+
+test("a preset with a missing collection stays editable and cannot start another collection", () => {
+  const userId = "missing-material-test-user";
+  const key = presetStorageKey(userId, "nl");
+  window.localStorage.setItem(key, JSON.stringify([{
+    id: "missing-material",
+    name: "Old collection · Words",
+    draft: { ...initialDraft, listValue: "user:missing", sessionSize: 10 },
+  }]));
+  const onStart = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} userId={userId} trainingLanguageCode="nl" onStart={onStart} />);
+
+  expect(screen.getByRole("button", { name: "Start" })).toBeDisabled();
+  expect(screen.getByText("Selected collection is unavailable. Choose another before starting.")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  expect(screen.getByLabelText("Collection")).toHaveValue("user:missing");
+  expect(screen.getByRole("button", { name: "Selected collection is unavailable. Choose another before starting." })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Update preset" })).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("Collection"), { target: { value: "curated:nt2" } });
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ listValue: "curated:nt2" }));
+  window.localStorage.removeItem(key);
 });
 
 test.each([
