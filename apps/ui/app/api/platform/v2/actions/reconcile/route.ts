@@ -16,10 +16,12 @@ import { parsePlatformV2ActionReceiptRequest } from "@/lib/platform/platformV2Ac
 import {
   reconcilePlatformV2ActionReceipt,
   reconcilePlatformV2IdiomExerciseActionReceipt,
+  reconcilePlatformV2TranslationExerciseActionReceipt,
 } from "@/lib/platform/platformV2ActionService";
 import {
   platformV2ActionsEnabled,
   platformV2IdiomExercisesEnabled,
+  platformV2TranslationExercisesEnabled,
 } from "@/lib/platform/platformV2Rollout";
 
 export const runtime = "nodejs";
@@ -70,6 +72,15 @@ export async function POST(request: NextRequest) {
       instrumentation,
     );
   }
+  if (
+    parsed.actionFamily === "translation" &&
+    !platformV2TranslationExercisesEnabled()
+  ) {
+    return appendPlatformRouteHeaders(
+      reply({ error: "platform_v2_translation_exercises_not_enabled" }, 503),
+      instrumentation,
+    );
+  }
   const service = getPlatformServiceSupabase();
   if (service instanceof Response) {
     return appendPlatformRouteHeaders(
@@ -88,6 +99,12 @@ export async function POST(request: NextRequest) {
             service,
             parsed.clientEventId,
           )
+        : parsed.actionFamily === "translation"
+          ? reconcilePlatformV2TranslationExerciseActionReceipt(
+              auth,
+              service,
+              parsed.clientEventId,
+            )
         : reconcilePlatformV2ActionReceipt(auth, service, parsed.clientEventId),
   );
   const response = reply(result.payload, result.status);

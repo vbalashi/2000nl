@@ -47,6 +47,7 @@ describe("/api/platform/v2/actions", () => {
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
     process.env.PLATFORM_V2_ACTIONS_ENABLED = "1";
     process.env.PLATFORM_V2_IDIOM_EXERCISES_ENABLED = "1";
+    delete process.env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED;
     delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
     getUser.mockReset();
     rpc.mockReset();
@@ -348,6 +349,81 @@ describe("/api/platform/v2/actions", () => {
           targetId: "00000000-0000-4000-8000-000000000010",
           family: "idiom",
           direction: "direct",
+        }),
+      }),
+    );
+  });
+
+  test("routes translation exercise reviews to the translation action RPC", async () => {
+    process.env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED = "1";
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        actionId: "review-exercise",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        family: "translation",
+        targetId: "00000000-0000-4000-8000-000000000010",
+        targetKey: "translation:entry-1:node-1:recall",
+        direction: "recall",
+        state: {
+          stateRevision: "00000000-0000-4000-8000-000000000011",
+          fsrsStability: 2,
+          fsrsDifficulty: 5,
+          fsrsReps: 1,
+          fsrsLapses: 0,
+          fsrsLastGrade: 3,
+          fsrsLastInterval: 1,
+          fsrsTargetRetention: 0.9,
+          fsrsParamsVersion: "fsrs-v1",
+          fsrsEnabled: true,
+          nextReviewAt: "2026-09-14T08:00:00.000Z",
+          lastSeenAt: "2026-09-13T08:00:00.000Z",
+          lastReviewedAt: "2026-09-13T08:00:00.000Z",
+          seenCount: 1,
+          successCount: 1,
+          lastResult: "success",
+          hidden: false,
+          frozenUntil: null,
+          inLearning: false,
+          learningDueAt: null,
+        },
+      },
+      error: null,
+    });
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request({
+        actionId: "review-exercise",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        trainingSessionId: "00000000-0000-4000-8000-000000000012",
+        target: {
+          kind: "training-exercise",
+          targetId: "00000000-0000-4000-8000-000000000010",
+          family: "translation",
+          direction: "recall",
+          stateRevision: "untracked",
+        },
+        reviewResult: "success",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith(
+      "perform_platform_v2_translation_exercise_action_as_principal_v1",
+      expect.objectContaining({
+        p_target_id: "00000000-0000-4000-8000-000000000010",
+        p_direction: "recall",
+        p_training_session_id: "00000000-0000-4000-8000-000000000012",
+      }),
+    );
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        actionId: "review-exercise",
+        accepted: true,
+        exercise: expect.objectContaining({
+          family: "translation",
+          direction: "recall",
         }),
       }),
     );

@@ -1,5 +1,6 @@
 import type {
   PlatformIdiomExerciseActionResponseV2,
+  PlatformTranslationExerciseActionResponseV2,
   PlatformActionV2Request,
   PlatformOrdinaryActionId,
   PlatformActionV2Response,
@@ -10,7 +11,10 @@ import type {
   AuthenticatedSupabase,
   ServiceSupabase,
 } from "./serverSupabase";
-import { platformV2IdiomExercisesEnabled } from "./platformV2Rollout";
+import {
+  platformV2IdiomExercisesEnabled,
+  platformV2TranslationExercisesEnabled,
+} from "./platformV2Rollout";
 
 export type PlatformV2ActionOperationResult = {
   payload: unknown;
@@ -37,13 +41,25 @@ export async function performPlatformV2Action(
         status: 403,
       };
     }
-    if (!platformV2IdiomExercisesEnabled()) {
+    if (
+      request.target.family === "idiom" &&
+      !platformV2IdiomExercisesEnabled()
+    ) {
       return {
         payload: { error: "platform_v2_idiom_exercises_not_enabled" },
         status: 503,
       };
     }
-    return performPlatformV2IdiomExerciseAction(auth, service, request);
+    if (
+      request.target.family === "translation" &&
+      !platformV2TranslationExercisesEnabled()
+    ) {
+      return {
+        payload: { error: "platform_v2_translation_exercises_not_enabled" },
+        status: 503,
+      };
+    }
+    return performPlatformV2ExerciseAction(auth, service, request);
   }
   if (callPath === "training" && !request.trainingSessionId) {
     return {
@@ -127,13 +143,16 @@ export async function performPlatformV2Action(
   };
 }
 
-async function performPlatformV2IdiomExerciseAction(
+async function performPlatformV2ExerciseAction(
   auth: AuthenticatedSupabase,
   service: ServiceSupabase,
   request: Extract<PlatformActionV2Request, { actionId: "review-exercise" }>,
 ): Promise<PlatformV2ActionOperationResult> {
+  const family = request.target.family;
   const { data, error } = await service.supabase.rpc(
-    "perform_platform_v2_idiom_exercise_action_as_principal_v1",
+    family === "idiom"
+      ? "perform_platform_v2_idiom_exercise_action_as_principal_v1"
+      : "perform_platform_v2_translation_exercise_action_as_principal_v1",
     {
       p_user_id: auth.user.id,
       p_target_id: request.target.targetId,
@@ -153,7 +172,7 @@ async function performPlatformV2IdiomExerciseAction(
     (result.status !== "accepted" && result.status !== "duplicate") ||
     result.actionId !== "review-exercise" ||
     result.clientEventId !== request.clientEventId ||
-    result.family !== "idiom" ||
+    result.family !== family ||
     result.targetId !== request.target.targetId ||
     result.direction !== request.target.direction ||
     !state ||
@@ -166,19 +185,34 @@ async function performPlatformV2IdiomExerciseAction(
     };
   }
 
-  const payload: PlatformIdiomExerciseActionResponseV2 = {
-    contractVersion: "platform-action-v2",
-    actionId: "review-exercise",
-    clientEventId: request.clientEventId,
-    accepted: true,
-    exercise: {
-      targetId: request.target.targetId,
-      targetKey: result.targetKey,
-      family: "idiom",
-      direction: request.target.direction,
-      state,
-    },
-  };
+  const payload =
+    family === "idiom"
+      ? ({
+          contractVersion: "platform-action-v2",
+          actionId: "review-exercise",
+          clientEventId: request.clientEventId,
+          accepted: true,
+          exercise: {
+            targetId: request.target.targetId,
+            targetKey: result.targetKey,
+            family: "idiom",
+            direction: request.target.direction,
+            state,
+          },
+        } satisfies PlatformIdiomExerciseActionResponseV2)
+      : ({
+          contractVersion: "platform-action-v2",
+          actionId: "review-exercise",
+          clientEventId: request.clientEventId,
+          accepted: true,
+          exercise: {
+            targetId: request.target.targetId,
+            targetKey: result.targetKey,
+            family: "translation",
+            direction: "recall",
+            state,
+          },
+        } satisfies PlatformTranslationExerciseActionResponseV2);
   return {
     payload,
     status: 200,
@@ -236,8 +270,40 @@ export async function reconcilePlatformV2IdiomExerciseActionReceipt(
   service: ServiceSupabase,
   clientEventId: string,
 ): Promise<PlatformV2ActionOperationResult> {
-  const { data, error } = await service.supabase.rpc(
+  return reconcilePlatformV2ExerciseActionReceipt(
+    auth,
+    service,
+    clientEventId,
+    "idiom",
     "reconcile_platform_v2_idiom_receipt_as_principal",
+  );
+}
+
+export async function reconcilePlatformV2TranslationExerciseActionReceipt(
+  auth: AuthenticatedSupabase,
+  service: ServiceSupabase,
+  clientEventId: string,
+): Promise<PlatformV2ActionOperationResult> {
+  return reconcilePlatformV2ExerciseActionReceipt(
+    auth,
+    service,
+    clientEventId,
+    "translation",
+    "reconcile_platform_v2_translation_receipt_as_principal",
+  );
+}
+
+async function reconcilePlatformV2ExerciseActionReceipt(
+  auth: AuthenticatedSupabase,
+  service: ServiceSupabase,
+  clientEventId: string,
+  family: "idiom" | "translation",
+  rpcName:
+    | "reconcile_platform_v2_idiom_receipt_as_principal"
+    | "reconcile_platform_v2_translation_receipt_as_principal",
+): Promise<PlatformV2ActionOperationResult> {
+  const { data, error } = await service.supabase.rpc(
+    rpcName,
     {
       p_user_id: auth.user.id,
       p_client_event_id: clientEventId,
@@ -254,10 +320,12 @@ export async function reconcilePlatformV2IdiomExerciseActionReceipt(
     result.status !== "duplicate" ||
     result.actionId !== "review-exercise" ||
     result.clientEventId !== clientEventId ||
-    result.family !== "idiom" ||
+    result.family !== family ||
     typeof result.targetId !== "string" ||
     typeof result.targetKey !== "string" ||
-    (result.direction !== "direct" && result.direction !== "reverse") ||
+    (family === "idiom"
+      ? result.direction !== "direct" && result.direction !== "reverse"
+      : result.direction !== "recall") ||
     !state
   ) {
     return {
@@ -266,19 +334,34 @@ export async function reconcilePlatformV2IdiomExerciseActionReceipt(
     };
   }
 
-  const payload: PlatformIdiomExerciseActionResponseV2 = {
-    contractVersion: "platform-action-v2",
-    actionId: "review-exercise",
-    clientEventId,
-    accepted: true,
-    exercise: {
-      targetId: result.targetId,
-      targetKey: result.targetKey,
-      family: "idiom",
-      direction: result.direction,
-      state,
-    },
-  };
+  const payload =
+    family === "idiom"
+      ? ({
+          contractVersion: "platform-action-v2",
+          actionId: "review-exercise",
+          clientEventId,
+          accepted: true,
+          exercise: {
+            targetId: result.targetId,
+            targetKey: result.targetKey,
+            family: "idiom",
+            direction: result.direction as "direct" | "reverse",
+            state,
+          },
+        } satisfies PlatformIdiomExerciseActionResponseV2)
+      : ({
+          contractVersion: "platform-action-v2",
+          actionId: "review-exercise",
+          clientEventId,
+          accepted: true,
+          exercise: {
+            targetId: result.targetId,
+            targetKey: result.targetKey,
+            family: "translation",
+            direction: "recall",
+            state,
+          },
+        } satisfies PlatformTranslationExerciseActionResponseV2);
   return { payload, status: 200, receiptStatus: "duplicate" };
 }
 

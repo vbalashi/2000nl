@@ -473,3 +473,6 @@
 
 -- Separate operator allowlist, isolated sessions, and one-year audit retention
 \i db/migrations/165_admin_console_identity_audit.sql
+
+-- Add the dark sentence-translation exercise consumer after the admin contract.
+\i db/migrations/166_translation_training_session_consumer.sql

@@ -118,13 +118,21 @@ export type PlatformTrainingExerciseReviewResultV2 =
   | "success"
   | "easy";
 
-export type PlatformTrainingExerciseTargetV2 = {
-  kind: "training-exercise";
-  targetId: string;
-  family: "idiom";
-  direction: PlatformTrainingExerciseDirectionV2;
-  stateRevision: string;
-};
+export type PlatformTrainingExerciseTargetV2 =
+  | {
+      kind: "training-exercise";
+      targetId: string;
+      family: "idiom";
+      direction: PlatformTrainingExerciseDirectionV2;
+      stateRevision: string;
+    }
+  | {
+      kind: "training-exercise";
+      targetId: string;
+      family: "translation";
+      direction: "recall";
+      stateRevision: string;
+    };
 
 export type PlatformTrainingExerciseStateV2 = {
   stateRevision: string;
@@ -206,6 +214,80 @@ export type PlatformIdiomExerciseSessionV2 = {
 
 export type PlatformIdiomExerciseSessionNextV2 =
   | (PlatformIdiomExerciseCandidateV2 & {
+      status: "ready";
+      sessionId: string;
+      ordinal: number;
+    })
+  | {
+      status: "completed" | "exhausted" | "superseded" | "not-member";
+      sessionId?: string;
+      completedActions?: number;
+      requestedTotal?: number;
+    }
+  | {
+      status: "unavailable";
+      sessionId: string;
+      ordinal: number;
+      targetId: string;
+      reason: "projection-missing" | "dictionary-access-revoked";
+    remaining: number;
+  };
+
+export type PlatformTranslationExerciseCandidateV2 = {
+  targetId: string;
+  targetKey: string;
+  family: "translation";
+  direction: "recall";
+  entryId: string;
+  contentNodeId: string;
+  sourcePath: string;
+  sourceRevision: string;
+  sourceTextFingerprint: string;
+  queueSource: "new" | "learning" | "review";
+  state: PlatformTrainingExerciseStateV2 | null;
+};
+
+export type PlatformTranslationExerciseCandidatesResponseV2 = {
+  contractVersion: "platform-translation-exercise-candidates-v1";
+  family: "translation";
+  direction: "recall";
+  items: PlatformTranslationExerciseCandidateV2[];
+};
+
+export type PlatformTranslationExerciseSessionMemberV2 = {
+  ordinal: number;
+  targetId: string;
+  queueSource: "new" | "learning" | "review";
+  consumedAt: string | null;
+  unavailableAt: string | null;
+  unavailableReason: string | null;
+  entryId: string;
+  contentNodeId: string;
+  family: "translation";
+  direction: "recall";
+};
+
+export type PlatformTranslationExerciseSessionV2 = {
+  contractVersion: "platform-translation-exercise-session-v1";
+  sessionId: string;
+  exerciseFamily: "translation";
+  direction: "recall";
+  sessionSize: string;
+  requestedTotal: number;
+  plannedNew: number;
+  plannedReview: number;
+  plannedPractice: 0;
+  plannedTotal: number;
+  plannedAt: string;
+  runStatus: "active" | "superseded";
+  runGeneration: number | null;
+  completedActions: number;
+  completionReason: "completed" | "exhausted" | null;
+  members: PlatformTranslationExerciseSessionMemberV2[];
+};
+
+export type PlatformTranslationExerciseSessionNextV2 =
+  | (PlatformTranslationExerciseCandidateV2 & {
       status: "ready";
       sessionId: string;
       ordinal: number;
@@ -480,6 +562,20 @@ export type PlatformIdiomExerciseActionResponseV2 = {
     targetKey: string;
     family: "idiom";
     direction: PlatformTrainingExerciseDirectionV2;
+    state: PlatformTrainingExerciseStateV2;
+  };
+};
+
+export type PlatformTranslationExerciseActionResponseV2 = {
+  contractVersion: "platform-action-v2";
+  actionId: "review-exercise";
+  clientEventId: string;
+  accepted: true;
+  exercise: {
+    targetId: string;
+    targetKey: string;
+    family: "translation";
+    direction: "recall";
     state: PlatformTrainingExerciseStateV2;
   };
 };
