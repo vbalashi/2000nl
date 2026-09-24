@@ -227,6 +227,7 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/plain_postgres_supabase_compat.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/local_supabase_probe.sql
+          node --test db/scripts/local_supabase_probe.integration.test.mjs
 
       - name: Execute exact deployment postflight against PostgreSQL
         env:

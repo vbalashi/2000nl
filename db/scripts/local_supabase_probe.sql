@@ -34,6 +34,7 @@ begin
     from pg_constraint constraint_row
     where conrelid = 'public.training_sessions'::regclass
       and conname = 'training_sessions_new_review_ratio_check'
+      and constraint_row.convalidated
       -- Ignore PostgreSQL's formatting parentheses/whitespace, but retain the
       -- boolean operators so an incorrect AND cannot satisfy this contract.
       and lower(regexp_replace(
