@@ -1,0 +1,28 @@
+name: Release boundary
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, synchronize, edited, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  release-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify release-boundary rules
+        run: node --test scripts/check-release-boundary.test.mjs
+      - name: Check whether this PR can deploy independently
+        run: node scripts/check-release-boundary.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
