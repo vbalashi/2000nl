@@ -468,3 +468,4 @@
 \i db/migrations/160_training_dictionary_material_scope.sql
 \i db/migrations/161_training_extra_source_scope.sql
 \i db/migrations/162_index_active_content_children.sql
+\i db/migrations/163_bound_extra_exercise_source_eligibility.sql

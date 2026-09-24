@@ -80,6 +80,9 @@ async function sourceEntries(
       const verb = entryRows.find(
         (row) => row.dictionary_id === accessibleDictionary && row.part_of_speech === "ww",
       )?.id as string;
+      const inaccessible = entryRows.find(
+        (row) => row.dictionary_id === unavailableDictionary,
+      )?.id as string;
       const selected = {
         dictionaryScope: {
           mode: "selected", languageCode: "nl",
@@ -145,9 +148,31 @@ async function sourceEntries(
       await client.query(
         `insert into user_card_status (
            user_id, entry_id, card_type_id, fsrs_enabled, in_learning, next_review_at
-         ) values ($1, $2, 'word-to-definition', true, true, now())`,
-        [userId, adjective],
+         ) values ($1, $2, 'word-to-definition', true, true, now()),
+                  ($1, $3, 'word-to-definition', true, true, now())`,
+        [userId, adjective, inaccessible],
       );
+      const { rows: eligibilityRows } = await client.query(
+        `select private.platform_v2_training_ordinary_meaning_eligible_v1(
+           $1::uuid, $2::uuid
+         ) as learned_source,
+         private.platform_v2_training_ordinary_meaning_eligible_v1(
+           $1::uuid, $3::uuid
+         ) as sibling_source,
+         private.platform_v2_training_ordinary_meaning_eligible_v1(
+           $1::uuid, $4::uuid
+         ) as inaccessible_source,
+         private.platform_v2_training_ordinary_meaning_eligible_v1(
+           $1::uuid, $5::uuid
+         ) as untouched_source`,
+        [userId, adjective, verb, inaccessible, defaultEntry],
+      );
+      expect(eligibilityRows[0]).toEqual({
+        learned_source: true,
+        sibling_source: true,
+        inaccessible_source: false,
+        untouched_source: false,
+      });
       const { rows: idiomRows } = await client.query(
         `select item from private.platform_v2_idiom_exercise_candidates_v2(
            $1::uuid, 'direct', 20, 0, null::uuid, 'curated', 'new', $2::jsonb
@@ -315,6 +340,51 @@ async function sourceEntries(
       await ensureUserWithSettings(client, otherUserId);
       expect(await sourceEntries(client, otherUserId, {}, userListId, "user"))
         .toEqual([]);
+      await client.query(
+        `insert into dictionary_entitlements (
+           dictionary_id, subject_type, subject_key, permission
+         ) values ($1, 'user', $2, 'read')`,
+        [accessibleDictionary, otherUserId],
+      );
+      const { rows: siblingKnownEvents } = await client.query(
+        `insert into user_card_action_events (
+           user_id, entry_id, card_type_id, action, client_event_id,
+           action_payload_hash
+         ) values ($1, $2, 'word-to-definition', 'mark-known', $3, 'sibling-known')
+         returning id`,
+        [otherUserId, adjective, randomUUID()],
+      );
+      const { rows: siblingKnownMarks } = await client.query(
+        `insert into user_card_known_marks (
+           user_id, entry_id, card_type_id, mark_event_id
+         ) values ($1, $2, 'word-to-definition', $3) returning id`,
+        [otherUserId, adjective, siblingKnownEvents[0].id],
+      );
+      const siblingKnownEligibility = async () => {
+        const { rows } = await client.query(
+          `select private.platform_v2_training_ordinary_meaning_eligible_v1(
+             $1::uuid, $2::uuid
+           ) as eligible`,
+          [otherUserId, verb],
+        );
+        return rows[0].eligible as boolean;
+      };
+      expect(await siblingKnownEligibility()).toBe(true);
+      const { rows: siblingUndoEvents } = await client.query(
+        `insert into user_card_action_events (
+           user_id, entry_id, card_type_id, action, client_event_id,
+           action_payload_hash
+         ) values ($1, $2, 'word-to-definition', 'undo-known', $3, 'sibling-undo')
+         returning id`,
+        [otherUserId, adjective, randomUUID()],
+      );
+      await client.query(
+        `update user_card_known_marks
+         set cleared_at = now(), undo_event_id = $2
+         where id = $1`,
+        [siblingKnownMarks[0].id, siblingUndoEvents[0].id],
+      );
+      expect(await siblingKnownEligibility()).toBe(false);
 
       const { rows: sourceRows } = await client.query(
         `insert into learning_sources (
@@ -348,6 +418,46 @@ async function sourceEntries(
       expect(await sourceEntries(client, userId, {
         ...selected, sourceId: randomUUID(),
       })).toEqual([]);
+
+      const { rows: knownEventRows } = await client.query(
+        `insert into user_card_action_events (
+           user_id, entry_id, card_type_id, action, client_event_id,
+           action_payload_hash
+         ) values ($1, $2, 'word-to-definition', 'mark-known', $3, 'known')
+         returning id`,
+        [userId, defaultEntry, randomUUID()],
+      );
+      const { rows: knownRows } = await client.query(
+        `insert into user_card_known_marks (
+           user_id, entry_id, card_type_id, mark_event_id
+         ) values ($1, $2, 'word-to-definition', $3) returning id`,
+        [userId, defaultEntry, knownEventRows[0].id],
+      );
+      const knownEligibility = async () => {
+        const { rows } = await client.query(
+          `select private.platform_v2_training_ordinary_meaning_eligible_v1(
+             $1::uuid, $2::uuid
+           ) as eligible`,
+          [userId, defaultEntry],
+        );
+        return rows[0].eligible as boolean;
+      };
+      expect(await knownEligibility()).toBe(true);
+      const { rows: undoEventRows } = await client.query(
+        `insert into user_card_action_events (
+           user_id, entry_id, card_type_id, action, client_event_id,
+           action_payload_hash
+         ) values ($1, $2, 'word-to-definition', 'undo-known', $3, 'undo')
+         returning id`,
+        [userId, defaultEntry, randomUUID()],
+      );
+      await client.query(
+        `update user_card_known_marks
+         set cleared_at = now(), undo_event_id = $2
+         where id = $1`,
+        [knownRows[0].id, undoEventRows[0].id],
+      );
+      expect(await knownEligibility()).toBe(false);
 
       await client.query("savepoint malformed_extra_scope");
       await expect(sourceEntries(client, userId, {

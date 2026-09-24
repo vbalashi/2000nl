@@ -88,8 +88,11 @@ took about 242 ms warm, but this is **not** a measured full session-start time.
 Cold probes varied substantially, including one 2.5-second timeout. A later
 full-start production probe of DB 161 exceeded 10 seconds because child
 explanation lookups scanned the 40,772-node table once per idiom. Migration
-162 adds the missing active-child index; its full-start effect must be measured
-before Idioms is enabled. Keep
+162 adds the missing active-child index. On the pilot corpus afterward, a warm
+candidate read took 80–250 ms, but the session response still took 1.2–2.6 s
+because it called the old all-entry source-group gate for every latched member.
+Migration 163 bounds that gate to the target's active source group and siblings;
+its full-start effect must be measured before Idioms is enabled. Keep
 initial filtering off the app's first paint, benchmark the complete start
 after deployment, and add a write-maintained projection only if the measured
 set-based path remains too slow. Each grade should update one target and its
