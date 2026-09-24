@@ -453,3 +453,48 @@ backend identity/start and activity/wait state around the first call, while
 keeping the normal two-second release gate. Preserve the already-applied
 forward migration 158; do not reverse its grants or disable RLS. Recheck the
 health contract after a later successful deployment.
+
+## Synchronized single-sample pre-switch-path probe (2026-09-24)
+
+Because run 35953070335 newly failed on the six-argument deployment overload,
+one bounded, read-only diagnostic was run with `samples=1` and
+`first_component=public`, retaining the existing 2,000 ms statement timeout
+and starting the activity/NUC samplers at the same time:
+[35954125190](https://github.com/vbalashi/2000nl/actions/runs/35954125190).
+
+The six-argument public session-plan call took **1,674.470 ms of PostgreSQL
+execution**, below the gate but close to it; outer client wall time was
+**3,092.777 ms** with **1,418.307 ms** outside server execution. Planning was
+**0.121 ms**, with **8,356 shared buffer hits / 0 reads**, **280 temp blocks
+read / 564 written**, JIT off, and `work_mem=2184kB`. The sampler saw backend
+`2266384` active as `session-plan` at
+`2026-09-24T04:05:14.297690Z`, with backend start
+`04:05:12.127193Z` and both wait-event fields null. The next activity sample
+found no active query. On that same backend, the following UI/public overload
+executed in **197.524 ms**; next, filtered, aggregate, and candidate components
+were **203.970 / 193.370 / 189.361 / 181.864 ms**. This is one observed sample,
+not a percentile or proof of root cause.
+
+NUC-runner samples during the 30-second window showed load up to about `0.8`,
+roughly `12.7 GB` available of `16.3 GB`, CPU PSI some up to `9.68%` with full
+pressure `0`, and I/O PSI some up to `3.54%`. These describe the diagnostic
+runner, not the managed Supabase database, so they cannot exclude pressure on
+the database host.
+
+The Supabase unified logs for `04:05:00Z–04:05:30Z` contained 52 Supavisor
+rows, 16 Edge, 2 Auth, and 1 PostgREST row, with no PostgreSQL error and no
+Supavisor `busy` event in that window. One Supavisor row matched backend PID
+`2266384`; it was recorded at `04:05:12.177929Z` in `transaction` mode and
+region `eu-west-1`, about 51 ms after backend start. No logged wait duration
+or matching pooler-busy event explains the later SQL execution time. Logs
+contained no query text, arguments, user identity, or learner rows.
+
+This strengthens the conclusion that the observed near-threshold portion is
+inside PostgreSQL execution rather than client/container wall time. It weakens
+pooler saturation and NUC-wide load as explanations for this occurrence, but
+it does not measure Supabase CPU/memory/disk at query time and cannot distinguish
+backend-local execution state from query/data-shape cost or short-lived database
+resource pressure. It does not justify a dedicated compute move, SQL rewrite,
+or a larger gate. Do not repeat this first/warm sequence without new
+hypothesis-discriminating evidence; keep #413 open and use the unchanged gate
+for a later rollout only after the cause or an existing fix is reviewed.
