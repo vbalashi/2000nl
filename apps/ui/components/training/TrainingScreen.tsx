@@ -637,6 +637,7 @@ function TrainingScreenContent({
           errorName: error instanceof Error ? error.name : "non-error",
         });
         if (
+          componentMountedRef.current &&
           isCurrentTrainingReadinessRequest(
             request,
             statsCurrentContextRef.current,
@@ -654,6 +655,7 @@ function TrainingScreenContent({
         }
       }
       if (
+        !componentMountedRef.current ||
         !isCurrentTrainingReadinessRequest(
           request,
           statsCurrentContextRef.current,

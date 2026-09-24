@@ -317,6 +317,96 @@ describe("useTrainingTurnController transition matrix", () => {
     );
   });
 
+  test("does not present a selection that resolves after unmount", async () => {
+    const selection = deferred<TrainingWord | null>();
+    const selectNext = vi.fn(() => selection.promise);
+    const controller = renderController({
+      currentWord: null,
+      selectNext,
+    });
+    let pending!: Promise<unknown>;
+
+    act(() => {
+      pending = controller.result.current.loadNextWord();
+    });
+    expect(selectNext).toHaveBeenCalledOnce();
+
+    controller.unmount();
+    await act(async () => selection.resolve(word2));
+
+    await expect(pending).resolves.toBe("skipped");
+    expect(controller.setCurrentWord).not.toHaveBeenCalled();
+    expect(prepared.warm).not.toHaveBeenCalled();
+  });
+
+  test("does not present a prepared card that resolves after unmount", async () => {
+    const readiness = deferred<boolean>();
+    prepared.warm.mockReturnValueOnce(readiness.promise);
+    const selectNext = vi.fn().mockResolvedValue(word2);
+    const controller = renderController({
+      currentWord: null,
+      selectNext,
+    });
+    let pending!: Promise<unknown>;
+
+    act(() => {
+      pending = controller.result.current.loadNextWord();
+    });
+    await waitFor(() => expect(prepared.warm).toHaveBeenCalledOnce());
+
+    controller.unmount();
+    await act(async () => readiness.resolve(true));
+
+    await expect(pending).resolves.toBe("skipped");
+    expect(controller.setCurrentWord).not.toHaveBeenCalled();
+  });
+
+  test("ignores an old card projection that resolves after a scope change", async () => {
+    const oldProjection = deferred<boolean>();
+    const newProjection = deferred<boolean>();
+    const oldWord = { ...word2, id: "word-old", headword: "oud" };
+    const newWord = { ...word2, id: "word-new", headword: "nieuw" };
+    prepared.warm
+      .mockReturnValueOnce(oldProjection.promise)
+      .mockReturnValueOnce(newProjection.promise);
+    const selectNext = vi
+      .fn<[TrainingTurnSelectionRequest], Promise<TrainingWord | null>>()
+      .mockResolvedValueOnce(oldWord)
+      .mockResolvedValueOnce(newWord);
+    const controller = renderController({
+      currentWord: null,
+      selectNext,
+    });
+    let oldLoad!: Promise<string>;
+
+    act(() => {
+      oldLoad = controller.result.current.loadNextWord({
+        scenario: "old-scope",
+      });
+    });
+    await waitFor(() => expect(prepared.warm).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      controller.result.current.beginSessionScopeChange();
+    });
+    let newLoad!: Promise<string>;
+    act(() => {
+      newLoad = controller.result.current.loadNextWord({
+        scenario: "new-scope",
+      });
+    });
+    await waitFor(() => expect(prepared.warm).toHaveBeenCalledTimes(2));
+
+    await act(async () => newProjection.resolve(true));
+    await expect(newLoad).resolves.toBe("loaded");
+    await act(async () => oldProjection.resolve(true));
+    await expect(oldLoad).resolves.toBe("skipped");
+
+    expect(controller.setCurrentWord).toHaveBeenCalledOnce();
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(newWord);
+    expect(controller.setCurrentWord).not.toHaveBeenCalledWith(oldWord);
+  });
+
   test("issues a new presentation identity when the same card is presented again", async () => {
     const repeatedWord = { ...word1 };
     const controller = renderController({
