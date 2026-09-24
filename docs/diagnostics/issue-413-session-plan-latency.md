@@ -687,3 +687,26 @@ For the final bounded attribution round, the sanitized parser now includes
 only named CTE labels and a hash of the generic plan shape, so a slow and warm
 call can be compared without logging SQL text, predicates, relation contents,
 or learner data.
+
+The final post-idle call in this bounded series used a newly started backend
+`2277759` (`07:20:50.635Z`) but was **fast**: public execution **232.314 ms**,
+candidate self **221.951 ms**, inner plan **203.628 ms**. This again proves
+that a new backend is not sufficient to trigger the outlier. The fast plan's
+shape hash was `8bef2ac124d2`; its high-level paths included the named
+`eligible` and `ordinary_source_introductions` CTE scans. The earlier slow
+plan was collected before the shape-hash/CTE-label fields were added, so the
+named CTEs and hash **cannot** be asserted as matched to that slow call. No
+further production calls were made to chase a slow sample beyond the bounded
+series.
+
+The evidence now rules out outer SQL planning and measured temporary-file I/O
+as dominant causes. The remaining ~1.5-second first-call excess is in
+backend execution of the candidate's SQL, with the same aggregate row and
+block counts as the immediate repeat. This is compatible with CPU work on a
+fresh execution path or intermittent scheduling/compute pressure on the
+managed database, but the current instruments do not distinguish them.
+The next decision must use actual Supabase-host CPU/scheduling telemetry or a
+controlled isolated reproduction that can measure backend CPU time alongside
+wall time. It should not be based on NUC runner load, a fast local fixture,
+or an inferred CTE name. Keep the 2,000 ms rollout hold and do not increase
+compute or change SQL without that causal boundary.

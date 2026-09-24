@@ -22,6 +22,8 @@ function planShapeHash(node) {
     current["Join Type"] ?? null,
     current.Strategy ?? null,
     current["CTE Name"] ?? null,
+    current["Relation Name"] ?? null,
+    current["Index Name"] ?? null,
     (current.Plans ?? []).map(shape),
   ];
   return createHash("sha256").update(JSON.stringify(shape(node))).digest("hex").slice(0, 12);
