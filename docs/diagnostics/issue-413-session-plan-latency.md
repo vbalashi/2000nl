@@ -405,3 +405,51 @@ pooler/backend lifecycle telemetry that can distinguish a backend-local runtime
 event from connection routing. Query counters and host load alone cannot make
 that attribution. Do not increase the release timeout, add warm-up retries, or
 treat the issue as completed on the strength of passing local tests.
+
+## Production rollout timeout after migration 158 (2026-09-24)
+
+Security PR [#450](https://github.com/vbalashi/2000nl/pull/450) merged as
+`b6b23a798869b9f9c5bbfeb769728f1e9862f3ca`, which triggered the normal NUC
+workflow [35953070335](https://github.com/vbalashi/2000nl/actions/runs/35953070335).
+The immutable migration gate applied migration 158 and then the existing
+pre-switch read exceeded its unchanged **2,000 ms** statement timeout. The
+container switch did not run. This is a production failure of the six-argument
+public `get_training_session_plan(uuid,text[],uuid,text,text,jsonb)` probe, not
+the eight-argument UI overload used in several earlier diagnostic samples. The
+PostgreSQL error context names `private.training_scheduler_candidates_v2`
+under `get_training_session_plan`; the logged SQLSTATE is `57014` at
+`2026-09-24T03:54:27.229Z`.
+
+A bounded Supabase unified-log query targeted the exact 30-second window
+`03:54:10Z–03:54:40Z` for project `2000nl` (`lliwdcpuuzjmxyzrjtoz`). It found
+11 PostgreSQL, 14 PostgREST, and 7 Supavisor events. The PostgreSQL stream had
+one `ERROR` with SQLSTATE `57014` and the scheduler-helper context. The
+Supavisor stream recorded `auth_scram_final_wait` at `03:54:22.286Z` and
+`03:54:22.293Z`, followed by `busy` at `03:54:27.261Z`; these are event labels,
+not measurements of queue duration, and do not prove that the pooler caused
+the statement delay. The failed deployment did not capture a correlated backend
+PID/start or wait-event sample. No query text, arguments, user identity, or
+learner rows were retrieved from Supabase logs/catalogs.
+
+The deployment contract state now records `2000nl-db-158:158`. Read-only
+catalog verification found RLS enabled and not forced on
+`public.user_training_scopes`, zero direct policies, zero effective table or
+column grants for `PUBLIC`/`anon`/`authenticated`, and authenticated-only
+execution of the two owner-checking scope RPCs. No user rows were read. The
+still-running app answered as release `0.18.735`, commit `0b69c69968bbed42b8082e6594e2886da7c16e72`, but its health endpoint now reports
+`status: warning`: it expects contract 157 while the database is at 158. The
+platform RPC and grouped-search checks are `ok`; the exact deployment contract
+check is not. The app container was not switched during this workflow.
+
+This adds a concrete failed sample to #413 but does not identify its root
+cause. The error establishes that PostgreSQL cancelled work inside the
+scheduler candidate path; it does not distinguish query/data-shape cost,
+backend-local execution behavior, or short-lived resource pressure. The
+Supavisor events do not establish connection wait as the cause. Do not retry
+the deployment unchanged, increase the timeout, or change SQL based only on
+this event. Before another rollout attempt, define one discriminating,
+bounded measurement for the **six-argument pre-switch path** that can capture
+backend identity/start and activity/wait state around the first call, while
+keeping the normal two-second release gate. Preserve the already-applied
+forward migration 158; do not reverse its grants or disable RLS. Recheck the
+health contract after a later successful deployment.
