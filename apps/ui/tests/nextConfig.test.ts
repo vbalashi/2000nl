@@ -67,8 +67,9 @@ describe("rollout profile compilation", () => {
     );
 
     expect(env.NEXT_PUBLIC_APP_ROLLOUT_PROFILE).toBe("pilot");
+    expect(env.PLATFORM_V2_IDIOM_EXERCISES_ENABLED).toBe("true");
     expect(env.NEXT_PUBLIC_DICTIONARY_SEARCH_V2).toBeUndefined();
-    expect(flags).toHaveLength(4);
+    expect(flags).toHaveLength(5);
     expect(flags.every(([, value]) => value === "true")).toBe(true);
   });
 });

@@ -10,6 +10,7 @@ import type {
   DutchNounArticle,
   DutchTrainingPartOfSpeech,
   TrainingDateWindow,
+  TrainingExerciseFamily,
   TrainingMode,
   TrainingSessionSize,
 } from "@/lib/types";
@@ -27,6 +28,8 @@ export type TrainingPilotStatus =
   "ready" | "preparing" | "loading" | "empty" | "error" | "first-use";
 
 export type TrainingSetupDraft = {
+  /** One content family per v1 session; omitted legacy drafts are ordinary words. */
+  family?: TrainingExerciseFamily;
   scenarioId: string;
   modes: TrainingMode[];
   cardFilter: CardFilter;
@@ -82,6 +85,9 @@ export const isTrainingSetupMaterialAvailable = (
 
 const defaultModesForScenario = (scenario: TrainingSetupOption) => {
   const modes = scenario.modes ?? [];
+  if (scenario.value === "idiom" && modes.includes("word-to-definition")) {
+    return ["word-to-definition"] satisfies TrainingMode[];
+  }
   if (
     scenario.value === "understanding" &&
     modes.includes("word-to-definition")
@@ -90,6 +96,9 @@ const defaultModesForScenario = (scenario: TrainingSetupOption) => {
   }
   return modes;
 };
+
+const familyForDraft = (draft: Pick<TrainingSetupDraft, "family">): TrainingExerciseFamily =>
+  draft.family ?? "meaning";
 
 type Props = {
   userId?: string;
@@ -169,6 +178,7 @@ const copy = {
     typed: "Type the answer",
     selfRateHelp: "Reveal the answer, then rate Again / Hard / Good / Easy.",
     directionHelp: "Select one or both word-card directions.",
+    idiomDirectionHelp: "Choose one direction for idiom exercises.",
     activity: "Recent activity",
     activityHelp: "Optional: narrow by event date and source; this does not mean forgotten words only.",
     materialHelp: "Choose a dictionary or one collection.",
@@ -273,6 +283,7 @@ const copy = {
     typed: "Antwoord typen",
     selfRateHelp: "Toon het antwoord en kies Again / Hard / Good / Easy.",
     directionHelp: "Kies één of beide richtingen voor woordkaarten.",
+    idiomDirectionHelp: "Kies één richting voor uitdrukkingen.",
     activity: "Recente activiteit",
     activityHelp: "Optioneel: filter op datum en bron; dit selecteert niet alleen vergeten woorden.",
     materialHelp: "Kies een woordenboek of één collectie.",
@@ -377,6 +388,7 @@ const copy = {
     typed: "Ввести ответ",
     selfRateHelp: "Откройте ответ и оцените: Again / Hard / Good / Easy.",
     directionHelp: "Выберите одно или оба направления для карточек со словами.",
+    idiomDirectionHelp: "Для идиом выберите одно направление.",
     activity: "Недавняя активность",
     activityHelp: "Можно сузить по дате и источнику; это не выбор только забытых слов.",
     materialHelp: "Выберите словарь или одну коллекцию.",
@@ -561,12 +573,10 @@ export function TrainingTodaySetup({
     const selectedScenario = scenarios.find(
       (option) => option.value === draft.scenarioId,
     );
-    if (
-      selectedScenario?.value === "understanding" &&
-      isTrainingSetupDraftSupported(draft, scenarios)
-    )
+    if (selectedScenario && isTrainingSetupDraftSupported(draft, scenarios))
       return;
     const nextScenario =
+      scenarios.find((option) => option.value === (familyForDraft(draft) === "idiom" ? "idiom" : "understanding")) ??
       scenarios.find((option) => option.value === "understanding") ??
       selectedScenario ??
       scenarios[0];
@@ -589,6 +599,8 @@ export function TrainingTodaySetup({
   const draftMaterialAvailable = isTrainingSetupMaterialAvailable(draft, lists, dictionaries);
 
   const completed = stats.newCardsToday + stats.reviewCardsDone;
+  const activeFamily = familyForDraft(draft);
+  const selectedScenario = scenarios.find((option) => option.value === draft.scenarioId);
   const selectedModeLabels = [
     draft.modes.includes("word-to-definition") ? t.meaning : null,
     draft.modes.includes("definition-to-word") ? t.reverse : null,
@@ -638,7 +650,7 @@ export function TrainingTodaySetup({
       : draft.cardFilter === "new"
         ? t.newOnly
         : t.reviewsOnly;
-    const presetName = `${selectedList ?? t.list} · ${t.words} · ${mixLabel} · ${sizeLabel}`;
+    const presetName = `${selectedList ?? t.list} · ${activeFamily === "idiom" ? t.idioms : t.words} · ${mixLabel} · ${sizeLabel}`;
     const preset: TrainingSetupPreset = {
       id: editingPresetId ?? crypto.randomUUID(),
       name: presetName,
@@ -884,14 +896,35 @@ export function TrainingTodaySetup({
   const understandingScenario = scenarios.find(
     (option) => option.value === "understanding",
   );
+  const idiomScenario = scenarios.find((option) => option.value === "idiom");
+  const selectFamily = (family: TrainingExerciseFamily) => {
+    const scenario = family === "idiom" ? idiomScenario : understandingScenario;
+    if (!scenario) return;
+    setDraft((current) => ({
+      ...current,
+      family,
+      scenarioId: scenario.value,
+      modes: defaultModesForScenario(scenario),
+      ...(family === "idiom" && current.sessionSize === "all-due-today"
+        ? { sessionSize: DEFAULT_SESSION_SIZE }
+        : {}),
+    }));
+  };
   const toggleMode = (mode: TrainingMode) => {
-    if (!understandingScenario?.modes?.includes(mode)) return;
+    if (!selectedScenario?.modes?.includes(mode)) return;
     setDraft((current) => {
       const active = current.modes.includes(mode);
+      if (activeFamily === "idiom") {
+        return {
+          ...current,
+          scenarioId: selectedScenario.value,
+          modes: [mode],
+        };
+      }
       if (active && current.modes.length === 1) return current;
       return {
         ...current,
-        scenarioId: understandingScenario.value,
+        scenarioId: selectedScenario.value,
         modes: active
           ? current.modes.filter((candidate) => candidate !== mode)
           : [...current.modes, mode],
@@ -986,16 +1019,21 @@ export function TrainingTodaySetup({
               {t.family}
             </legend>
             <div className="mt-2 flex gap-2">
-              <ChoiceButton active label={t.words} onClick={() => undefined} />
-              <ChoiceButton active={false} disabled label={t.idioms} onClick={() => undefined} />
+              <ChoiceButton active={activeFamily === "meaning"} label={t.words} onClick={() => selectFamily("meaning")} />
+              <ChoiceButton
+                active={activeFamily === "idiom"}
+                disabled={!idiomScenario}
+                label={t.idioms}
+                onClick={() => selectFamily("idiom")}
+              />
             </div>
             <div className="mt-2 flex gap-2">
               <ChoiceButton active={false} disabled label={t.sentences} onClick={() => undefined} />
               <ChoiceButton active={false} disabled label={t.listening} onClick={() => undefined} />
             </div>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              {t.unavailable}
-            </p>
+            {!idiomScenario ? (
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.unavailable}</p>
+            ) : null}
           </fieldset>
           <TrainingLexicalPreview
             languageCode={trainingLanguageCode ?? "nl"}
@@ -1034,7 +1072,7 @@ export function TrainingTodaySetup({
               {t.goal}
             </legend>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              {t.directionHelp}
+              {activeFamily === "idiom" ? t.idiomDirectionHelp : t.directionHelp}
             </p>
             <div className="mt-2 flex gap-2">
               {scenarioLoading ? (
@@ -1045,14 +1083,14 @@ export function TrainingTodaySetup({
                   {t.loading}
                 </p>
               ) : null}
-              {understandingScenario?.modes?.includes("word-to-definition") ? (
+              {selectedScenario?.modes?.includes("word-to-definition") ? (
                 <ChoiceButton
                   active={draft.modes.includes("word-to-definition")}
                   label={t.meaning}
                   onClick={() => toggleMode("word-to-definition")}
                 />
               ) : null}
-              {understandingScenario?.modes?.includes("definition-to-word") ? (
+              {selectedScenario?.modes?.includes("definition-to-word") ? (
                 <ChoiceButton
                   active={draft.modes.includes("definition-to-word")}
                   label={t.reverse}
@@ -1240,6 +1278,7 @@ export function TrainingTodaySetup({
             exercisesLabel={t.exercises}
             allDueLabel={t.allDueToday}
             allDueHelp={t.allDueHelp}
+            allowAllDueToday={activeFamily !== "idiom"}
           />
         </section>
       </div>

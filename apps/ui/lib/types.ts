@@ -3,6 +3,8 @@ export type TrainingMode =
   | "definition-to-word"
   | "listen-recognize"
   | "listen-type";
+/** The content family selected for a self-contained Training session. */
+export type TrainingExerciseFamily = "meaning" | "idiom" | "sentence";
 export type CardFilter = "new" | "review" | "both";
 export type QueueTurn = "new" | "review" | "auto";
 
