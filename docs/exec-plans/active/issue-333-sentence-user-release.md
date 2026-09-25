@@ -115,6 +115,51 @@ Continuous sessions remain #468; All due is not Continuous.
 Authority: [ADR-0015](../../adr/0015-word-in-context-shared-reverse-state.md),
 [discussion evidence](../../discussions/2026-09-25-03-word-in-context.md).
 Do not implement the superseded independent sentence queue refinement.
+The owner confirmed that no sentence grades have been made, so no historical
+grade transfer or FSRS reconciliation is needed
+([transition discussion](../../discussions/2026-09-25-04-word-context-transition.md)).
+
+### Transition contract before implementation
+
+- Give the new presentation a distinct persisted setup/resume identity,
+  `word-in-context`. It starts an ordinary `meaning` session containing only
+  `definition-to-word` members. Do not reuse the existing `sentence` family
+  identifier, because it still identifies independently scheduled translation
+  targets and their session snapshots. The UI may present a user-facing name
+  without exposing this internal identifier.
+- Keep ordinary queue order, due rules, card filters, lexical/material filters,
+  session size, exclusion and replacement behavior. Only values with an active
+  example eligible for translation may enter the context session. Check this
+  during server selection before latching members; filtering a normal meaning
+  session after start would produce missing cards, broken totals and a biased
+  queue. Familiarity with one meaning must never grant access to a sibling.
+  The selected example is presentation data, not another unit in the queue.
+- The currently deployed `sentence` resume record remains readable by its
+  existing handler until a new run supersedes it; old records must not be
+  reinterpreted as `word-in-context`. A new context resume record carries the
+  ordinary session ID and mode, so reload restores the same queue and the
+  selected example. Existing ordinary/sentence states and action history stay
+  intact, even though no old grades need transferring.
+- An accepted grade uses the ordinary reverse capability for the exact entry,
+  the active ordinary session ID and one client event ID. It consumes exactly
+  one ordinary member and writes exactly one reverse FSRS/history action.
+  Store presentation mode, exact source node/fingerprint and hint-opened flag
+  as bounded evidence of that action. Retrying the same event must not grade
+  twice or change which example was shown. Never derive the target entry or
+  action authority from a client-supplied example ID.
+- Freeze the chosen example for each active member across reveal, retries and
+  reloads. Advance example rotation only when the ordinary member is actually
+  consumed. A missing/stale translation blocks answerability without grading;
+  the existing translation API can prepare it and bounded lookahead may warm
+  the following member. Inactive/retired source nodes are unavailable, with
+  server-owned replacement accounting.
+
+The current ordinary session schema has no presentation-mode discriminator,
+and the old sentence session uses a different member/state table. Do not use
+only local storage to distinguish the modes: session snapshot and action
+validation must enforce the same server-owned contract. Inspect the ordinary
+start/action functions before choosing a new parameter or persisted column;
+preserve old RPC signatures for existing clients.
 
 1. Characterize the ordinary reverse selection/action boundary and existing
    sentence sessions/presets. Specify transition behavior before changing it;
