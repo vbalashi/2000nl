@@ -166,6 +166,7 @@ function trainingPartOfSpeechLabel(value: string) {
 export function TrainingCardFace({
   prompt,
   label,
+  partOfSpeechChip,
   hint,
   hintVisible,
   hintLabel,
@@ -173,6 +174,7 @@ export function TrainingCardFace({
 }: {
   prompt: TrainingCardPrompt;
   label?: string;
+  partOfSpeechChip?: string;
   hint?: { text: string };
   hintVisible: boolean;
   hintLabel: string;
@@ -191,6 +193,14 @@ export function TrainingCardFace({
       className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:thin] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400"
     >
       <div className="flex min-h-full flex-col p-[18px]">
+        {partOfSpeechChip ? (
+          <span
+            data-testid="training-face-part-of-speech"
+            className="inline-flex max-w-full self-start rounded-md bg-indigo-500/10 px-2 py-1 text-xs font-medium text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]"
+          >
+            {partOfSpeechChip}
+          </span>
+        ) : null}
         <div className="my-auto flex shrink-0 flex-col items-center gap-4 px-10 py-3 text-center">
           {label ? (
             <span className="rounded-md bg-indigo-500/10 px-2 py-1 font-sense-sans text-xs font-semibold text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]">

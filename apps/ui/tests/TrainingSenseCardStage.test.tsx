@@ -60,9 +60,12 @@ describe("TrainingSenseCardStage", () => {
       contextPrompt={{ text: "Я знаю это слово.", sourceText: "Ik ken dit woord.", contentNodeId: "selected", sourceTextFingerprint: "selected-fingerprint" }} />);
     expect(screen.getByTestId("reverse-prompt")).toHaveTextContent("Я знаю это слово.");
     expect(screen.getByText("Recall the Dutch word")).toBeInTheDocument();
+    expect(screen.getByTestId("training-face-part-of-speech")).toHaveTextContent("noun");
     fireEvent.click(screen.getByRole("button", { name: "Show hint" }));
+    expect(screen.getByText("het einde van je arm, waar je vingers aan zitten")).toBeInTheDocument();
     expect(onHintOpened).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    expect(screen.getByText("het einde van je arm, waar je vingers aan zitten")).toBeInTheDocument();
     expect(screen.getByText("Ik ken dit woord.")).toBeInTheDocument();
     expect(screen.getAllByText("Я знаю это слово.")).toHaveLength(1);
     expect(screen.queryByText("Another sentence.")).not.toBeInTheDocument();
@@ -83,6 +86,7 @@ describe("TrainingSenseCardStage", () => {
         onAction={vi.fn()}
       />,
     );
+    expect(screen.queryByTestId("training-face-part-of-speech")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
 
     const nodigIdioms = container.querySelector('[data-section="idioms"]');
