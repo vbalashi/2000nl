@@ -3,8 +3,9 @@
 Status: migrations 172 and 173 are deployed. The same live start RPC improved
 from 6.547 seconds to 2.160 seconds and then to 441 ms while returning a real
 sentence card without grading it. Startup localization is complete for this
-release. One-card translation lookahead is implemented locally through the
-existing lookup/translation cache boundary and is awaiting CI/deployment.
+release. One-card translation lookahead is deployed and verified through the
+existing lookup/translation cache boundary. The next stage is the agreed
+exact-meaning admission and round-robin queue refinement.
 
 ## Product contract
 
@@ -92,14 +93,18 @@ server selection, and presets must round-trip them. No empty-scope fallback.
    fresh finite-session smoke without grading, and record edge origin time. The
    deployed RPC completed in 441 ms (80% below migration 172 and 93% below the
    original 6.547-second measurement).
-9. Complete locally: while the current sentence is visible, select exactly the
+9. Complete in production: while the current sentence is visible, select exactly the
    next still-available latched member and warm its translation through the
    existing library lookup and translation API. A per-run/member/language key
    prevents duplicate speculative calls. The result never updates UI, advances
    the session, marks a member unavailable, or writes a review; after an action,
    the normal next-member RPC and exact fingerprint loader remain authoritative.
    Focused component/loader tests cover one-card bounding, ready-cache reuse,
-   missing-translation generation, and absence of progress mutations.
+   missing-translation generation, and absence of progress mutations. In the
+   live smoke, card 1 remained visible and unconsumed while the translation row
+   for card 2's entry (`caa866a3-2343-43eb-b89e-170f3c4dbc56`) became ready.
+   The post-smoke database check found zero consumed session members, zero
+   exercise actions and zero ordinary reviews.
 
 The opposite direction, text entry and automatic grading remain out of v1.
 Continuous sessions remain #468; All due is not Continuous.
@@ -112,8 +117,8 @@ This is a refinement of the current implementation, not already delivered behavi
 Current admission accepts learning/Known state on a source-group sibling as well
 as the exact entry. Current ordering uses each sentence exercise's own state and
 due date, then creation time and node ID; it does not rank by parent meaning FSRS
-or interleave examples by meaning. The session currently loads translations for
-the current candidate on demand, without one-card lookahead.
+or interleave examples by meaning. Translation preparation now keeps a bounded
+one-card lookahead; it does not change this still-pending queue policy.
 
 Accepted follow-up ([ADR-0014](../../adr/0014-sentence-queue-and-preparation.md),
 [discussion](../../discussions/2026-09-25-01-sentence-queue.md)): require prior learning or an explicit Known mark on the exact
@@ -134,7 +139,6 @@ Failed speculative work must remain retryable without retry storms. First-card
 preparation needs an explicit loading state. Verify a single in-flight request,
 cache reuse, stale-response isolation, and no progress mutation from prefetch.
 
-Priority: deploy and smoke bounded translation lookahead, then implement the
-agreed queue refinement. The
+Priority: implement the agreed queue refinement. The
 set-based eligibility optimization is compatible with a later narrower exact-meaning
 policy; deploying it does not establish sibling admission as final product intent.
