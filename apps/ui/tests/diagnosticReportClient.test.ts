@@ -130,6 +130,71 @@ describe("diagnostic report client", () => {
     ]);
   });
 
+  test("binds an idiom report to its source node while retaining canonical entry atoms", async () => {
+    const contentNodeId = "77777777-7777-4777-8777-777777777777";
+    const fingerprint = "c".repeat(64);
+    const base = snapshot();
+    const frozen = freezeSenseCardDiagnosticSnapshot({
+      route: "training",
+      group: singleSenseGroup,
+      entry: {
+        ...base.entry,
+        contentNodes: [
+          {
+            contentNodeId,
+            parentContentNodeId: null,
+            kind: "idiom",
+            order: 1,
+            text: "ergens klaar mee zijn",
+            sourceTextFingerprint: fingerprint,
+            translations: [],
+          },
+          {
+            contentNodeId: "88888888-8888-4888-8888-888888888888",
+            parentContentNodeId: contentNodeId,
+            kind: "idiom-explanation",
+            order: 2,
+            text: "iets niet meer willen",
+            sourceTextFingerprint: "d".repeat(64),
+            translations: [],
+          },
+        ],
+      },
+      target: {
+        kind: "content-node",
+        entryId,
+        contentNodeId,
+        nodeKind: "idiom",
+        sourceTextFingerprint: fingerprint,
+      },
+    });
+
+    const report = await buildSenseCardDiagnosticReport({
+      snapshot: frozen,
+      kind: "content-quality",
+      comment: null,
+      reportId: "66666666-6666-4666-8666-666666666666",
+      now: new Date("2026-09-25T07:00:00.000Z"),
+      environment: {
+        timezoneOffsetMinutes: -120,
+        timezoneName: "Europe/Amsterdam",
+        browserFamily: "chromium",
+        browserMajorVersion: 140,
+        osFamily: "macos",
+        osMajorVersion: 15,
+        isPwa: false,
+        isOnline: true,
+      },
+    });
+
+    expect(report.target).toEqual(frozen.target);
+    expect(report.cardContent?.atoms.map((atom) => atom.role)).toEqual([
+      "headword",
+      "idiom",
+      "idiom-explanation",
+    ]);
+  });
+
   test("deletes only an accepted record and retains transient failures for retry", async () => {
     const report = await buildSenseCardDiagnosticReport({
       snapshot: snapshot(),

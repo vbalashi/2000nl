@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { TrainingExclusionUndoNotice } from "./v2/TrainingExclusionUndoNotice";
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import type { User } from "@supabase/supabase-js";
@@ -1167,13 +1168,17 @@ function TrainingScreenContent({
       group: PlatformHeadwordGroupV2;
       entry: { entryId: string };
     }) => {
-      if (!currentWord) return;
+      const entryId = details?.entry?.entryId ?? currentWord?.id;
+      const headword = details?.group?.header.text ?? currentWord?.headword;
+      if (!entryId || !headword) return;
       setDetailInitialGroup(details?.group ?? null);
       setDetailSelection({
-        entryId: details?.entry?.entryId ?? currentWord.id,
-        headword: details?.group?.header.text ?? currentWord.headword,
+        entryId,
+        headword,
         contentLanguageCode:
-          currentWord.language_code ?? currentTrainingLanguage,
+          details?.group?.dictionary.sourceLanguageCode ??
+          currentWord?.language_code ??
+          currentTrainingLanguage,
       });
       setDetailsOpen(true);
     },
@@ -2215,6 +2220,7 @@ function TrainingScreenContent({
     snapshot: trainingSessionPlanSnapshot,
   } = useAuthoritativeTrainingSessionPlan({
     active:
+      activeExerciseFamily === "meaning" &&
       Boolean(trainingTodaySetupEnabled) && trainingPilot.surface === "session",
     sessionGeneration: trainingPilot.sessionGeneration,
     userId: user.id,
@@ -2250,8 +2256,8 @@ function TrainingScreenContent({
   }, [onRequestDestination]);
 
   const v2SessionLayoutVisible = Boolean(
-    activeExerciseFamily !== "idiom" &&
-    v2SessionOwned &&
+    ((activeExerciseFamily === "idiom" && Boolean(idiomSession)) ||
+      v2SessionOwned) &&
     (!trainingTodaySetupEnabled || trainingPilot.surface === "session"),
   );
   const sessionChromeVisible =
@@ -2388,6 +2394,7 @@ function TrainingScreenContent({
           />
         ) : activeExerciseFamily === "idiom" && idiomSession ? (
           <TrainingIdiomSession
+            key={idiomSession.sessionId}
             userId={user.id}
             session={idiomSession}
             contentLanguageCode={currentTrainingLanguage}
@@ -2396,6 +2403,15 @@ function TrainingScreenContent({
             }
             interfaceLanguage={onboardingLang}
             onExit={exitIdiomSession}
+            onSessionSuperseded={() => {
+              setIdiomSession(null);
+              setActiveExerciseFamily("meaning");
+              setExerciseFamilyForResume("meaning");
+              handleTrainingSessionSuperseded();
+            }}
+            onHistory={openTrainingHistory}
+            onPlayResolvedAudio={(url, label) => playAudio(url, label)}
+            onOpenDetails={handleShowCurrentWordDetails}
           />
         ) : v2SessionOwned && currentWord && v2SessionMode ? (
           <TrainingSenseCardV2Session
@@ -2480,6 +2496,7 @@ function TrainingScreenContent({
             )}
           </TrainingSessionSurface>
         )}
+        {user?.id ? <TrainingExclusionUndoNotice userId={user.id} language={onboardingLang}/> : null}
         <TrainingKnownUndoNotice
           interfaceLanguage={onboardingLang}
           currentPresentationIdentity={currentPresentationIdentity}

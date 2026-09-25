@@ -1672,3 +1672,24 @@ Response:
 ```
 
 If an `actions` field is provided and is not an empty array, the route returns `400` with `error: "analyze_selection_is_read_only"` and `actionsEndpoint: "/api/platform/actions"`.
+
+### First-party training pair exclusion
+
+`POST /api/platform/v2/training/exclusions` requires an authenticated first-party
+principal, `platform:write`, and the V2 action rollout flag. It is separate from
+Known and review grades; user identity is never accepted in the request body.
+
+The strict request contains `clientEventId`, `actionId`, and `target`. A meaning
+target uses `{kind: "meaning", entryId, cardTypeId}`; a content-bound target uses
+`{kind: "exercise", targetId}`. `exclude-pair` requires `trainingSessionId` and
+atomically consumes the current member. `restore-pair` requires the exact
+`exclusionId` and forbids a session ID; restoration never consumes another turn.
+
+Each intended action has a UUID. Retry with the identical request after an
+uncertain transport result. Receipts identify `accepted`/`duplicate`, action,
+event, exclusion mark, family and excluded state. Ordinary recall directions
+share a pair; idioms/sentences bind to their content node and source fingerprint.
+Neither action changes FSRS/Known or historical review events. A superseded
+session returns 409 and sends the UI to session recovery, not another retry of
+the stale session. Undo is offered across the next-card transition in the current
+tab and is scoped to the authenticated user.

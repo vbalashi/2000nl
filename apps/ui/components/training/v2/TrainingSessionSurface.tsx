@@ -34,7 +34,7 @@ export type TrainingSessionSurfaceProps = {
   children: React.ReactNode;
 };
 
-function TrainingSessionNotice({
+export function TrainingSessionNotice({
   notice,
 }: {
   notice: TrainingSessionNoticeInput;

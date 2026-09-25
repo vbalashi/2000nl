@@ -11,6 +11,7 @@ type IdiomTarget = Pick<
 >;
 
 export type IdiomExerciseContent = {
+  group: PlatformHeadwordGroupV2;
   headword: string;
   article?: string;
   partOfSpeech?: PlatformHeadwordGroupV2["header"]["partOfSpeech"];
@@ -59,6 +60,7 @@ export function resolveIdiomExerciseContent(
     .sort((left, right) => left.order - right.order);
 
   return {
+    group,
     headword: group.header.text,
     article: group.header.article ?? undefined,
     partOfSpeech: entry.partOfSpeech ?? group.header.partOfSpeech,

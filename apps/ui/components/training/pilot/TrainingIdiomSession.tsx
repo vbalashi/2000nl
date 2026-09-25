@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import {
   fetchNextPlatformV2IdiomTrainingSessionExercise,
@@ -27,8 +21,16 @@ import {
   measureTrainingTransitionStage,
 } from "@/lib/training/trainingTransitionTiming";
 
-import { TrainingExerciseCard } from "../v2/TrainingExerciseCard";
-import { buildIdiomCardPresentation } from "@/lib/training/idiomCardPresentation";
+import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
+import { TrainingSessionNotice } from "../v2/TrainingSessionSurface";
+import { TrainingSessionChrome } from "../v2/TrainingSessionChrome";
+
+import { TrainingSessionStatsFooter } from "../TrainingSessionStatsFooter";
+import { useIdiomTrainingStats } from "./useIdiomTrainingStats";
+
+import { useTrainingExclusion } from "../v2/useTrainingExclusion";
+import { trainingExclusionCopy } from "../v2/TrainingExcludeAction";
+import { TrainingIdiomCard } from "./TrainingIdiomCard";
 
 type Props = {
   userId: string;
@@ -37,6 +39,13 @@ type Props = {
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
   onExit: () => void;
+  onSessionSuperseded?: () => void;
+  onHistory?: () => void;
+  onPlayResolvedAudio?: (url: string, label: string) => void;
+  onOpenDetails?: (details: {
+    group: IdiomExerciseContent["group"];
+    entry: IdiomExerciseContent["entry"];
+  }) => void;
 };
 
 const copy = {
@@ -79,6 +88,10 @@ export function TrainingIdiomSession({
   translationTargetLanguageCode,
   interfaceLanguage,
   onExit,
+  onSessionSuperseded,
+  onHistory,
+  onPlayResolvedAudio,
+  onOpenDetails,
 }: Props) {
   const t = copy[interfaceLanguage];
   const [candidate, setCandidate] =
@@ -87,6 +100,7 @@ export function TrainingIdiomSession({
   const [completedCount, setCompletedCount] = useState(
     session.completedActions,
   );
+  const footerStats = useIdiomTrainingStats(session.sessionId, completedCount);
   const completedCountRef = useRef(session.completedActions);
   const [terminal, setTerminal] = useState<"complete" | "empty" | null>(
     session.plannedTotal === 0 ? "empty" : null,
@@ -97,8 +111,10 @@ export function TrainingIdiomSession({
   const [error, setError] = useState(false);
   const actionClientEventIdRef = useRef<string | null>(null);
   const activeTransitionIdRef = useRef<string | null>(null);
+  const loadGenerationRef = useRef(0);
 
   const loadNext = useCallback(async () => {
+    const generation = ++loadGenerationRef.current;
     const transitionId = createTrainingTransitionId();
     activeTransitionIdRef.current = transitionId;
     beginTrainingUserTransition(transitionId, "continue");
@@ -119,6 +135,7 @@ export function TrainingIdiomSession({
               session.sessionId,
             ),
         );
+        if (generation !== loadGenerationRef.current) return;
         if (next.status === "ready") {
           const loaded = await measureTrainingTransitionStage(
             transitionId,
@@ -130,6 +147,7 @@ export function TrainingIdiomSession({
                 translationTargetLanguageCode,
               }),
           );
+          if (generation !== loadGenerationRef.current) return;
           if (loaded.state === "ready") {
             setCandidate(next);
             setContent(loaded.content);
@@ -167,11 +185,12 @@ export function TrainingIdiomSession({
       activeTransitionIdRef.current = null;
       finishTrainingUserTransition(transitionId, "error-retries-exhausted");
     } catch {
+      if (generation !== loadGenerationRef.current) return;
       setError(true);
       activeTransitionIdRef.current = null;
       finishTrainingUserTransition(transitionId, "error-request");
     } finally {
-      setLoading(false);
+      if (generation === loadGenerationRef.current) setLoading(false);
     }
   }, [
     contentLanguageCode,
@@ -190,6 +209,7 @@ export function TrainingIdiomSession({
 
   useEffect(
     () => () => {
+      loadGenerationRef.current++;
       const transitionId = activeTransitionIdRef.current;
       if (!transitionId) return;
       activeTransitionIdRef.current = null;
@@ -202,16 +222,23 @@ export function TrainingIdiomSession({
     void loadNext();
   }, [loadNext]);
 
-  const progressLabel = useMemo(
-    () =>
-      `${Math.min(completedCount, session.requestedTotal)} / ${session.requestedTotal}`,
-    [completedCount, session.requestedTotal],
-  );
+  const exclusion = useTrainingExclusion({
+    userId,
+    onSessionSuperseded: onSessionSuperseded ?? onExit,
+    identity: candidate?.targetKey ?? "none",
+    sessionId: session.sessionId,
+    target: { kind: "exercise", targetId: candidate?.targetId ?? "" },
+    onAccepted: async () => {
+      completedCountRef.current += 1;
+      setCompletedCount(completedCountRef.current);
+      await loadNext();
+    },
+  });
 
   const grade = async (
     reviewResult: PlatformTrainingExerciseReviewResultV2,
   ) => {
-    if (!candidate || !content || submitting) return;
+    if (!candidate || !content || submitting || exclusion.busy) return;
     setSubmitting(true);
     setError(false);
     try {
@@ -235,100 +262,105 @@ export function TrainingIdiomSession({
     }
   };
 
-  const presentation = useMemo(
-    () =>
-      content && candidate
-        ? buildIdiomCardPresentation({
-            content,
-            direction: candidate.direction,
-            interfaceLanguage,
-            translationTargetLanguageCode,
-            repeatCount: candidate.state?.seenCount ?? 0,
-          })
-        : null,
-    [content, candidate, interfaceLanguage, translationTargetLanguageCode],
-  );
-
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent px-4 py-5 md:px-8 md:py-8">
-      <div className="mx-auto flex w-full max-w-[760px] min-h-0 flex-1 flex-col gap-[10px]">
-        <header className="flex items-center justify-between gap-4">
-          <div>
-            <p className="font-mono text-xs font-bold tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
-              {t.title}
-            </p>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {progressLabel}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onExit}
-            className="min-h-10 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200"
-          >
-            {t.back}
-          </button>
-        </header>
-
-        {loading ? (
-          <div
-            role="status"
-            className="grid min-h-[320px] flex-1 place-items-center rounded-3xl border border-slate-300 bg-slate-50 text-sm font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300"
-          >
-            {t.loading}
-          </div>
-        ) : null}
-        {!loading && terminal ? (
-          <div
-            role="status"
-            className="grid min-h-[320px] flex-1 place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-center dark:border-slate-700 dark:bg-slate-900/50"
-          >
-            <div>
-              <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">
-                {terminal === "complete" ? t.complete : t.empty}
-              </h1>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                {terminal === "complete"
-                  ? t.completeDetail(completedCount)
-                  : ""}
-              </p>
-              <button
-                type="button"
-                onClick={onExit}
-                className="mt-5 rounded-xl bg-indigo-500 px-4 py-3 font-semibold text-white"
-              >
-                {t.back}
-              </button>
-            </div>
-          </div>
-        ) : null}
-        {!loading && !terminal && candidate && content ? (
-          <TrainingExerciseCard
-            key={candidate.targetKey}
-            presentation={presentation!}
-            interfaceLanguage={interfaceLanguage}
-            revealed={revealed}
-            onReveal={() => setRevealed(true)}
-            busy={submitting}
-            onGrade={(result) => void grade(result)}
+    <TrainingSessionV2Layout
+      phase={loading ? "loading" : error && !candidate ? "failure" : "ready"}
+      chrome={
+        <TrainingSessionChrome
+          interfaceLanguage={interfaceLanguage}
+          scenario="idiom"
+          mode={
+            session.direction === "direct"
+              ? "word-to-definition"
+              : "definition-to-word"
+          }
+          cardFilter="both"
+          sessionName={t.title}
+          presentation={{
+            kind: "planned",
+            position: Math.min(completedCount, session.requestedTotal),
+            total: session.requestedTotal,
+            fraction:
+              session.requestedTotal > 0
+                ? Math.min(completedCount / session.requestedTotal, 1)
+                : 0,
+          }}
+          onHistory={onHistory}
+          onClose={onExit}
+          disabled={submitting || exclusion.busy}
+        />
+      }
+      notice={
+        error || exclusion.failed ? (
+          <TrainingSessionNotice
+            notice={{
+              kind: "error",
+              message: exclusion.failed
+                ? trainingExclusionCopy[interfaceLanguage].failed
+                : t.failed,
+              retryLabel: t.retry,
+              retryDisabled: submitting || loading,
+              onRetry: () =>
+                exclusion.failed ? void exclusion.exclude() : void loadNext(),
+            }}
           />
-        ) : null}
-        {error ? (
-          <div
-            role="alert"
-            className="flex items-center justify-between gap-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200"
-          >
-            <span>{t.failed}</span>
+        ) : null
+      }
+      footer={
+        <TrainingSessionStatsFooter
+          {...footerStats}
+          interfaceLanguage={interfaceLanguage}
+        />
+      }
+    >
+      {loading ? (
+        <div
+          role="status"
+          className="grid h-full min-h-0 place-items-center rounded-3xl border border-slate-300 bg-slate-50 text-sm font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300"
+        >
+          {t.loading}
+        </div>
+      ) : null}
+      {!loading && terminal ? (
+        <div
+          role="status"
+          className="grid h-full min-h-0 place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-center dark:border-slate-700 dark:bg-slate-900/50"
+        >
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">
+              {terminal === "complete" ? t.complete : t.empty}
+            </h1>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              {terminal === "complete" ? t.completeDetail(completedCount) : ""}
+            </p>
             <button
               type="button"
-              onClick={() => void loadNext()}
-              className="shrink-0 underline"
+              onClick={onExit}
+              className="mt-5 rounded-xl bg-indigo-500 px-4 py-3 font-semibold text-white"
             >
-              {t.retry}
+              {t.back}
             </button>
           </div>
-        ) : null}
-      </div>
-    </div>
+        </div>
+      ) : null}
+      {!loading && !terminal && candidate && content ? (
+        <TrainingIdiomCard
+          key={`${session.sessionId}:${candidate.targetKey}:${translationTargetLanguageCode ?? "off"}`}
+          candidate={candidate}
+          content={content}
+          userId={userId}
+          contentLanguageCode={contentLanguageCode}
+          translationTargetLanguageCode={translationTargetLanguageCode}
+          onPlayResolvedAudio={onPlayResolvedAudio}
+          onOpenDetails={onOpenDetails}
+          interfaceLanguage={interfaceLanguage}
+          revealed={revealed}
+          onReveal={() => setRevealed(true)}
+          busy={submitting || exclusion.busy || exclusion.failed}
+          onExclude={() => void exclusion.exclude()}
+          onGrade={(result) => void grade(result)}
+        />
+      ) : null}
+    </TrainingSessionV2Layout>
   );
 }

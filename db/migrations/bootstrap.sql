@@ -476,3 +476,12 @@
 
 -- Add the dark sentence-translation exercise consumer after the admin contract.
 \i db/migrations/166_translation_training_session_consumer.sql
+
+-- Read-only idiom statistics and the shared candidate source relation.
+\i db/migrations/167_idiom_training_stats.sql
+
+-- Explicit pair exclusions preserve scheduling and immutable undo receipts.
+\i db/migrations/168_training_pair_exclusion_actions.sql
+
+\echo 'Applying migration 169: pair exclusion availability'
+\i db/migrations/169_training_pair_exclusion_selection.sql

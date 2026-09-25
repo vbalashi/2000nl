@@ -10,7 +10,7 @@ import { DropUpSelect } from "./DropUpSelect";
 import { appVersionInfo } from "@/lib/appVersion";
 import { EffectiveTrainingScopeSummary } from "./EffectiveTrainingScopeSummary";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import sessionStyles from "./v2/TrainingSessionLayout.module.css";
+import { TrainingSessionStatsFooter, trainingFooterCopy as footerCopy } from "./TrainingSessionStatsFooter";
 
 export type FooterStatsProps = {
   stats: DetailedStats;
@@ -36,15 +36,6 @@ export type FooterStatsProps = {
   compact?: boolean;
   interfaceLanguage?: OnboardingLanguage;
 };
-
-const footerCopy = {
-  nl: { new: "Nieuw", review: "Herhaling", total: "Totaal" },
-  en: { new: "New", review: "Review", total: "Total" },
-  ru: { new: "Новые", review: "Повторение", total: "Всего" },
-} satisfies Record<
-  OnboardingLanguage,
-  { new: string; review: string; total: string }
->;
 
 // Progress stat with bar and numbers
 function ProgressStat({
@@ -88,47 +79,6 @@ function ProgressStat({
       >
         {value === null ? "—" : value}
         {total != null && <span className="opacity-50">/{total}</span>}
-      </span>
-    </div>
-  );
-}
-
-function CompactProgressStat({
-  label,
-  value,
-  total,
-  unknownLabel,
-  barColorClass,
-}: {
-  label: string;
-  value: number | null;
-  total?: number | null;
-  unknownLabel: string;
-  barColorClass: string;
-}) {
-  const progress =
-    value !== null && total && total > 0
-      ? Math.min((value / total) * 100, 100)
-      : 0;
-  return (
-    <div className={sessionStyles.stat}>
-      <span className={sessionStyles.statLabel} title={label}>
-        {label}
-      </span>
-      {total != null && (
-        <div className={sessionStyles.statBar} aria-hidden="true">
-          <div
-            className={`h-full rounded-sm transition-[width] motion-reduce:transition-none ${barColorClass}`}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
-      <span
-        className={sessionStyles.statValue}
-        aria-label={value === null ? `${label}: ${unknownLabel}` : undefined}
-      >
-        {value === null ? "—" : value}
-        {total != null && `/${total}`}
       </span>
     </div>
   );
@@ -219,39 +169,17 @@ export function FooterStats({
   );
 
   if (compact) {
-    return (
-      <footer
-        data-compact="true"
-        data-visual-spec="training-height-b"
-        className={`${sessionStyles.footer} font-sense-sans`}
-      >
-        <div
-          data-testid="training-session-footer-progress"
-          className={sessionStyles.stats}
-        >
-          <CompactProgressStat
-            label={text.new}
-            value={statsAvailable ? newCardsToday : null}
-            unknownLabel={unknownLabel}
-            barColorClass="bg-blue-400"
-          />
-          <CompactProgressStat
-            label={text.review}
-            value={statsAvailable ? reviewCardsDone : null}
-            total={reviewTotal}
-            unknownLabel={unknownLabel}
-            barColorClass="bg-amber-400"
-          />
-          <CompactProgressStat
-            label={text.total}
-            value={statsAvailable ? totalWordsLearned : null}
-            total={statsAvailable ? totalWordsInList : null}
-            unknownLabel={unknownLabel}
-            barColorClass="bg-emerald-400"
-          />
-        </div>
-      </footer>
-    );
+    return <TrainingSessionStatsFooter
+      interfaceLanguage={interfaceLanguage}
+      status={statsStatus}
+      initialReviewDue={initialReviewDue}
+      stats={{
+        newCardsToday, reviewCardsDone,
+        reviewCardsDue: stats.reviewCardsDue,
+        totalCardsStarted: totalWordsLearned,
+        totalCardsInScope: totalWordsInList,
+      }}
+    />;
   }
 
   return (

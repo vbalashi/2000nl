@@ -30,6 +30,11 @@ export function TrainingExerciseCard({
   onReveal,
   busy,
   onGrade,
+  onPlayAudio,
+  onOpenDetails,
+  onRequestTranslation,
+  secondaryActions,
+  notice,
 }: {
   presentation: TrainingExercisePresentation;
   interfaceLanguage: OnboardingLanguage;
@@ -37,6 +42,11 @@ export function TrainingExerciseCard({
   onReveal: () => void;
   busy: boolean;
   onGrade: (grade: Grade) => void;
+  onPlayAudio?: () => void;
+  onOpenDetails?: () => void;
+  onRequestTranslation?: () => Promise<void>;
+  secondaryActions?: React.ReactNode;
+  notice?: React.ReactNode;
 }) {
   const [hintVisible, setHintVisible] = React.useState(false);
   const [translationVisible, setTranslationVisible] = React.useState(false);
@@ -44,7 +54,21 @@ export function TrainingExerciseCard({
   const revealRef = React.useRef<HTMLButtonElement>(null);
   const firstGradeRef = React.useRef<HTMLButtonElement>(null);
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
-  const translationAvailable = hasTrainingCardTranslation(presentation.answer);
+  const hasTranslation = hasTrainingCardTranslation(presentation.answer);
+  const translationAvailable = hasTranslation || Boolean(onRequestTranslation);
+  const toggleTranslation = async () => {
+    if (busy) return;
+    if (!hasTranslation && onRequestTranslation) {
+      try {
+        await onRequestTranslation();
+        setTranslationVisible(true);
+      } catch {
+        /* The session action boundary owns error/retry UI. */
+      }
+      return;
+    }
+    setTranslationVisible((v) => !v);
+  };
 
   React.useEffect(() => {
     stageRef.current?.focus();
@@ -88,7 +112,7 @@ export function TrainingExerciseCard({
     }
     if (key === "t" && revealed && translationAvailable) {
       event.preventDefault();
-      setTranslationVisible((v) => !v);
+      void toggleTranslation();
     }
     const grade = gradeKeys[key as keyof typeof gradeKeys];
     if (revealed && grade) {
@@ -107,6 +131,7 @@ export function TrainingExerciseCard({
       data-side={revealed ? "answer" : "face"}
       className={trainingCardStageClassName}
     >
+      {notice}
       <TrainingCardShell answerVisible={revealed}>
         {revealed ? (
           <>
@@ -118,7 +143,9 @@ export function TrainingExerciseCard({
               audioLabel={t("senseCard.audio.play")}
               moreLabel={t("senseCard.wordDetails.open")}
               busy={busy}
-              onToggleTranslation={() => setTranslationVisible((v) => !v)}
+              onToggleTranslation={() => void toggleTranslation()}
+              onPlayAudio={onPlayAudio}
+              onOpenDetails={onOpenDetails}
             />
             <TrainingCardAnswerBody
               model={presentation.answer}
@@ -138,7 +165,7 @@ export function TrainingExerciseCard({
           />
         )}
       </TrainingCardShell>
-      <footer className="shrink-0">
+      <footer className="shrink-0 flex flex-col gap-2">
         {revealed ? (
           <div
             role="group"
@@ -169,6 +196,7 @@ export function TrainingExerciseCard({
             showAnswerRef={revealRef}
           />
         )}
+        {secondaryActions}
       </footer>
     </section>
   );

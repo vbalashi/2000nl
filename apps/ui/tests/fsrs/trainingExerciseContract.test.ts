@@ -1158,4 +1158,361 @@ describeIfDb("content-bound training exercise database contract", () => {
       userId,
     );
   });
+  async function statsSession(client: PoolClient, userId: string, direction = "direct", filter = {}) {
+    const sessionId = randomUUID();
+    await client.query(`insert into training_sessions
+      (id,user_id,exercise_family,session_size,card_type_ids,list_type,card_filter,training_filter,requested_total)
+      values ($1,$2,'idiom','5',array[$3],'curated','both',$4,5)`,
+      [sessionId,userId,`idiom:${direction}`,filter]);
+    return sessionId;
+  }
+  async function readStats(client: PoolClient, sessionId: string) {
+    return asAuthenticated(client, async () => (await client.query(
+      'select public.read_training_idiom_stats_v1($1) result', [sessionId],
+    )).rows[0].result);
+  }
+
+  test("idiom statistics read the full saved scope without materializing reverse targets", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async client => {
+      const a = await createIdiomFixture(client, userId);
+      const b = await createIdiomFixture(client, userId);
+      await client.query("update word_entries set part_of_speech = 'bn' where id = $1", [a.entryId]);
+      await client.query("update word_entries set part_of_speech = 'ww' where id = $1", [b.entryId]);
+      const all = await statsSession(client,userId,"reverse");
+      const adjective = await statsSession(client,userId,"reverse",{partOfSpeech:["bn"]});
+      const before = (await client.query(`select
+        (select count(*) from private.platform_v2_training_exercise_targets) targets,
+        (select count(*) from user_training_exercise_state) states,
+        (select count(*) from user_training_exercise_action_events) events`)).rows;
+      expect(await readStats(client,all)).toEqual({
+        contractVersion:"training-idiom-stats-v1", newCardsToday:0,
+        reviewCardsDone:0,reviewCardsDue:0,totalCardsStarted:0,totalCardsInScope:2,
+      });
+      expect(await readStats(client,adjective)).toMatchObject({totalCardsInScope:1});
+      const after = (await client.query(`select
+        (select count(*) from private.platform_v2_training_exercise_targets) targets,
+        (select count(*) from user_training_exercise_state) states,
+        (select count(*) from user_training_exercise_action_events) events`)).rows;
+      expect(after).toEqual(before);
+    }, userId);
+  });
+
+  test("idiom statistics count accepted first reviews and repeats once, in the user's study day", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async client => {
+      const a = await createIdiomFixture(client,userId);
+      const b = await createIdiomFixture(client,userId);
+      await createIdiomFixture(client,userId);
+      const direct = await statsSession(client,userId);
+      const reverse = await statsSession(client,userId,"reverse");
+      await client.query("select set_config('training.test_reference_now','2026-09-24T12:00:00Z',true)");
+      const old = await performIdiomAction(client,userId,a.targetId,randomUUID());
+      await client.query("select set_config('training.test_reference_now','2026-09-25T12:00:00Z',true)");
+      const eventId = randomUUID();
+      await performIdiomAction(client,userId,a.targetId,eventId,{stateRevision:(old.state as {stateRevision:string}).stateRevision});
+      await performIdiomAction(client,userId,a.targetId,eventId,{stateRevision:(old.state as {stateRevision:string}).stateRevision});
+      await performIdiomAction(client,userId,b.targetId,randomUUID());
+      // Both due before study day end; today's new introduction is not a review due.
+      await client.query("update user_training_exercise_state set next_review_at='2026-09-25T20:00:00Z' where user_id=$1",[userId]);
+      expect(await readStats(client,direct)).toMatchObject({
+        newCardsToday:1,reviewCardsDone:1,reviewCardsDue:1,totalCardsStarted:2,totalCardsInScope:3,
+      });
+      expect(await readStats(client,reverse)).toMatchObject({newCardsToday:0,reviewCardsDone:0,totalCardsStarted:0,totalCardsInScope:3});
+    },userId);
+  });
+
+  test("idiom statistics deny other users and anonymous calls", async () => {
+    const owner = randomUUID();
+    await withTransaction(pool,async client => {
+      await createIdiomFixture(client,owner);
+      const sessionId = await statsSession(client,owner);
+      await client.query("select set_config('request.jwt.claim.sub',$1,true)",[randomUUID()]);
+      await expect(readStats(client,sessionId)).rejects.toThrow('training_session_not_found');
+    },owner);
+    const {rows} = await pool.query(`select
+      has_function_privilege('anon','public.read_training_idiom_stats_v1(uuid)','execute') anon,
+      has_function_privilege('authenticated','private.training_idiom_source_nodes_v1(uuid,text,uuid,text,jsonb)','execute') internal`);
+    expect(rows[0]).toEqual({anon:false,internal:false});
+  });
+
+  test("idiom statistics roll over at local 04:00 across the DST change", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool,async client => {
+      const fixture = await createIdiomFixture(client,userId);
+      await client.query("update user_settings set training_schedule_timezone='Europe/Amsterdam' where user_id=$1",[userId]);
+      const sessionId = await statsSession(client,userId);
+      // After the autumn DST change, 02:59 UTC is 03:59 local: previous study day.
+      await client.query("select set_config('training.test_reference_now','2026-10-25T02:59:00Z',true)");
+      await performIdiomAction(client,userId,fixture.targetId,randomUUID());
+      expect(await readStats(client,sessionId)).toMatchObject({newCardsToday:1,totalCardsStarted:1});
+      await client.query("select set_config('training.test_reference_now','2026-10-25T03:00:00Z',true)");
+      expect(await readStats(client,sessionId)).toMatchObject({newCardsToday:0,reviewCardsDone:0,totalCardsStarted:1});
+    },userId);
+  });
+
+  async function pairAction(client: PoolClient,userId: string,action: "exclude-pair"|"restore-pair",eventId: string,
+    target: {entryId?:string;cardTypeId?:string;targetId?:string},markId: string|null=null,sessionId: string|null=null) {
+    return asServiceRole(client,async () => (await client.query(
+      `select public.perform_training_pair_exclusion_as_principal_v1($1,$2,$3,$4,$5,$6,$7,$8) result`,
+      [userId,action,eventId,target.entryId??null,target.cardTypeId??null,target.targetId??null,markId,sessionId],
+    )).rows[0].result);
+  }
+  async function pairExcluded(client:PoolClient,userId:string,entryId:string,cardTypeId:string,
+    nodeId:string|null=null,fingerprint:string|null=null) {
+    return (await client.query(`select private.training_pair_excluded_v1($1,$2,$3,$4,$5,$6) excluded`,
+      [userId,nodeId?'idiom':'meaning',entryId,nodeId,fingerprint,cardTypeId])).rows[0].excluded;
+  }
+
+  test("ordinary pair exclusion preserves FSRS and Known, and reverse-side undo restores the pair", async () => {
+    const userId=randomUUID();
+    await withTransaction(pool,async client=>{
+      const fixture=await createIdiomFixture(client,userId);
+      const before=(await client.query('select to_jsonb(s) state from user_card_status s where user_id=$1',[userId])).rows;
+      const target={entryId:fixture.entryId,cardTypeId:'word-to-definition'};
+      const eventId=randomUUID();
+      const mark=await pairAction(client,userId,'exclude-pair',eventId,target);
+      expect(mark).toMatchObject({status:'accepted',excluded:true,family:'meaning',consumption:null});
+      expect(await pairExcluded(client,userId,fixture.entryId,'word-to-definition')).toBe(true);
+      expect(await pairExcluded(client,userId,fixture.entryId,'definition-to-word')).toBe(true);
+      expect(await pairExcluded(client,userId,fixture.entryId,'listen-type')).toBe(false);
+      expect((await client.query('select to_jsonb(s) state from user_card_status s where user_id=$1',[userId])).rows).toEqual(before);
+      expect((await client.query('select count(*)::int count from user_card_known_marks where user_id=$1',[userId])).rows[0].count).toBe(0);
+      const restored=await pairAction(client,userId,'restore-pair',randomUUID(),
+        {entryId:fixture.entryId,cardTypeId:'definition-to-word'},mark.exclusionId);
+      expect(restored.excluded).toBe(false);
+      expect(await pairExcluded(client,userId,fixture.entryId,'word-to-definition')).toBe(false);
+      // A delayed retry returns its immutable receipt; it does not re-exclude.
+      expect((await pairAction(client,userId,'exclude-pair',eventId,target)).status).toBe('duplicate');
+      expect(await pairExcluded(client,userId,fixture.entryId,'word-to-definition')).toBe(false);
+      expect((await client.query('select count(*)::int count from private.training_pair_exclusion_events where user_id=$1',[userId])).rows[0].count).toBe(2);
+    },userId);
+  });
+
+  test("idiom exclusion consumes one current-session action without creating a grade or scheduling state", async()=>{
+    const userId=randomUUID();
+    await withTransaction(pool,async client=>{
+      const fixture=await createIdiomFixture(client,userId);
+      const session=await startIdiomSession(client,userId,'direct',1,randomUUID());
+      const eventId=randomUUID();
+      const mark=await pairAction(client,userId,'exclude-pair',eventId,{targetId:fixture.targetId},null,session.sessionId);
+      expect(mark.consumption).toMatchObject({status:'consumed-complete',completedActions:1});
+      expect(await pairExcluded(client,userId,fixture.entryId,'',fixture.idiomNodeId,`idiom-fingerprint-${fixture.idiomNodeId}`)).toBe(true);
+      expect(await pairExcluded(client,userId,fixture.entryId,'',randomUUID(),'other-fingerprint')).toBe(false);
+      expect(await pairExcluded(client,userId,fixture.entryId,'word-to-definition')).toBe(false);
+      const duplicate=await pairAction(client,userId,'exclude-pair',eventId,{targetId:fixture.targetId},null,session.sessionId);
+      expect(duplicate.status).toBe('duplicate');
+      const {rows}=await client.query(`select
+        (select count(*)::int from user_training_exercise_state where user_id=$1) states,
+        (select count(*)::int from user_training_exercise_action_events where user_id=$1) reviews,
+        (select count(*)::int from training_session_exercise_members where session_id=$2 and consumed_at is not null) consumed`,[userId,session.sessionId]);
+      expect(rows[0]).toEqual({states:0,reviews:0,consumed:1});
+      await pairAction(client,userId,'restore-pair',randomUUID(),{targetId:fixture.targetId},mark.exclusionId);
+      expect(await pairExcluded(client,userId,fixture.entryId,'',fixture.idiomNodeId,`idiom-fingerprint-${fixture.idiomNodeId}`)).toBe(false);
+    },userId);
+  });
+
+  test("pair exclusion removes both idiom directions from legacy and scoped selection without removing siblings", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async client => {
+      const excluded = await createIdiomFixture(client, userId);
+      const sibling = await createIdiomFixture(client, userId);
+      const target = { targetId: excluded.targetId };
+      const mark = await pairAction(client, userId, 'exclude-pair', randomUUID(), target);
+      for (const direction of ['direct', 'reverse']) {
+        for (const version of [1, 2]) {
+          const args = version === 1 ? "$1,$2,20,0" : "$1,$2,20,0,null,'curated','both','{}'::jsonb";
+          const { rows } = await client.query(`select candidate->>'entryId' entry_id from
+            private.platform_v2_idiom_exercise_candidates_v${version}(${args}) candidate`, [userId,direction]);
+          expect(rows.map(row => row.entry_id)).toEqual([sibling.entryId]);
+        }
+      }
+      await pairAction(client, userId, 'restore-pair', randomUUID(), target, mark.exclusionId);
+      const restored = await client.query(`select count(*)::int count from
+        private.platform_v2_idiom_exercise_candidates_v2($1,'direct',20,0,null,'curated','both','{}')`,[userId]);
+      expect(restored.rows[0].count).toBe(2);
+    }, userId);
+  });
+
+  test("a latched idiom becomes explicitly unavailable after library exclusion, without a review", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async client => {
+      const fixture = await createIdiomFixture(client, userId);
+      const session = await startIdiomSession(client,userId,'direct',1,randomUUID());
+      await pairAction(client,userId,'exclude-pair',randomUUID(),{targetId:fixture.targetId});
+      expect(await readIdiomSessionNext(client,userId,session.sessionId)).toMatchObject({
+        status:'unavailable',reason:'pair-excluded',targetId:fixture.targetId,
+      });
+      const result = await asAuthenticated(client,async () => (await client.query(
+        "select public.mark_platform_v2_idiom_training_session_member_unavailable($1,$2,$3,'pair-excluded') result",
+        [userId,session.sessionId,fixture.targetId])).rows[0].result);
+      expect(result.status).toBe('unavailable-exhausted');
+      expect((await client.query('select count(*)::int count from user_training_exercise_action_events where user_id=$1',[userId])).rows[0].count).toBe(0);
+    },userId);
+  });
+
+  test("excluded idioms leave due counts but retain historical and total statistics", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool,async client => {
+      const fixture = await createIdiomFixture(client,userId);
+      await performIdiomAction(client,userId,fixture.targetId,randomUUID());
+      await client.query("update user_training_exercise_action_events set created_at=now()-interval '2 days' where user_id=$1",[userId]);
+      await client.query("update user_training_exercise_state set next_review_at=now()-interval '1 minute' where user_id=$1",[userId]);
+      const session = await statsSession(client,userId);
+      const before = await readStats(client,session);
+      expect(before.reviewCardsDue).toBe(1);
+      const mark = await pairAction(client,userId,'exclude-pair',randomUUID(),{targetId:fixture.targetId});
+      expect(await readStats(client,session)).toEqual({...before,reviewCardsDue:0});
+      await pairAction(client,userId,'restore-pair',randomUUID(),{targetId:fixture.targetId},mark.exclusionId);
+      expect(await readStats(client,session)).toEqual(before);
+    },userId);
+  });
+
+  test("ordinary due statistics exclude the recall pair and preserve unrelated listening state", async () => {
+    const userId=randomUUID();
+    await withTransaction(pool,async client => {
+      const fixture=await createIdiomFixture(client,userId);
+      await client.query(`insert into user_card_status(user_id,entry_id,card_type_id,fsrs_enabled,next_review_at)
+        values ($1,$2,'definition-to-word',true,now()),($1,$2,'listen-type',true,now())`,[userId,fixture.entryId]);
+      const stats=async () => (await client.query(`select private.training_local_daily_stats_v1(
+        $1,ARRAY['word-to-definition','definition-to-word','listen-type'],null,'curated','Europe/Amsterdam') result`,[userId])).rows[0].result;
+      const before=await stats();
+      expect(before.reviewCardsDue).toBe(3);
+      const target={entryId:fixture.entryId,cardTypeId:'definition-to-word'};
+      const mark=await pairAction(client,userId,'exclude-pair',randomUUID(),target);
+      expect(await stats()).toEqual({...before,reviewCardsDue:1});
+      await pairAction(client,userId,'restore-pair',randomUUID(),target,mark.exclusionId);
+      expect(await stats()).toEqual(before);
+    },userId);
+  });
+
+  test("an in-flight exclusion serializes a concurrent legacy review before it can change FSRS", async () => {
+    const userId=randomUUID();
+    const setup=await pool.connect();
+    const excluding=await pool.connect();
+    const reviewing=await pool.connect();
+    let entryId:string|undefined;
+    try {
+      await setup.query('begin');
+      await ensureUserWithSettings(setup,userId);
+      entryId=await insertWord(setup,`pair-race-${randomUUID()}`);
+      await setup.query('commit');
+      await excluding.query('begin');
+      await pairAction(excluding,userId,'exclude-pair',randomUUID(),{entryId,cardTypeId:'word-to-definition'});
+      await reviewing.query('begin');
+      await reviewing.query("select set_config('request.jwt.claim.sub',$1,true)",[userId]);
+      await reviewing.query("set local statement_timeout='2s'");
+      let settled=false;
+      const pending=reviewing.query("select public.handle_card_review($1,$2,'definition-to-word','success',$3)",[userId,entryId,randomUUID()])
+        .then(() => {settled=true;return 'accepted';},(error:Error) => {settled=true;return error.message;});
+      await new Promise(resolve=>setTimeout(resolve,50));
+      expect(settled).toBe(false);
+      await excluding.query('commit');
+      expect(await pending).toContain('training_pair_excluded');
+      await reviewing.query('rollback');
+      expect((await setup.query('select count(*)::int count from user_card_status where user_id=$1',[userId])).rows[0].count).toBe(0);
+    } finally {
+      await excluding.query('rollback');
+      await reviewing.query('rollback');
+      await setup.query('rollback');
+      excluding.release();reviewing.release();setup.release();
+      await pool.query('delete from auth.users where id=$1',[userId]);
+      if(entryId) await pool.query('delete from word_entries where id=$1',[entryId]);
+    }
+  });
+
+  test("ordinary exclusion filters both directions and legacy grades cannot bypass it", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool,async client => {
+      const fixture=await createIdiomFixture(client,userId);
+      const candidates=async () => (await client.query(`select entry_id from private.training_scheduler_candidates_v2(
+        $1,ARRAY['word-to-definition','definition-to-word'],null,'curated','both','auto',
+        ARRAY[]::uuid[],ARRAY[]::text[],'{}',false,false)`,[userId])).rows;
+      expect(await candidates()).not.toHaveLength(0);
+      await pairAction(client,userId,'exclude-pair',randomUUID(),{entryId:fixture.entryId,cardTypeId:'definition-to-word'});
+      expect(await candidates()).toHaveLength(0);
+      await expect(asAuthenticated(client,() => client.query(
+        "select public.handle_card_review($1,$2,'word-to-definition','success',$3)",[userId,fixture.entryId,randomUUID()]))).rejects.toThrow('training_pair_excluded');
+    },userId);
+  });
+
+  test("excluded idioms reject new grades but preserve accepted grade retries", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async client => {
+      const fixture = await createIdiomFixture(client, userId);
+      const event = randomUUID();
+      const accepted = await performIdiomAction(client, userId, fixture.targetId, event);
+      await pairAction(client, userId, 'exclude-pair', randomUUID(), { targetId: fixture.targetId });
+      expect((await performIdiomAction(client,userId,fixture.targetId,event)).status).toBe('duplicate');
+      await client.query('savepoint reject_grade');
+      await expect(performIdiomAction(client,userId,fixture.targetId,randomUUID(), {
+        stateRevision: (accepted.state as {stateRevision:string}).stateRevision,
+      })).rejects.toThrow('training_pair_excluded');
+      await client.query('rollback to savepoint reject_grade');
+      expect((await client.query('select count(*)::int count from user_training_exercise_action_events where user_id=$1',[userId])).rows[0].count).toBe(1);
+    }, userId);
+  });
+
+  test("exclude and undo preserve an already reviewed idiom's complete scheduling state and history", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async client => {
+      const fixture = await createIdiomFixture(client, userId);
+      await performIdiomAction(client, userId, fixture.targetId, randomUUID());
+      const snapshot = async () => (await client.query(`select
+        (select jsonb_agg(to_jsonb(s)) from user_training_exercise_state s where user_id=$1) states,
+        (select jsonb_agg(to_jsonb(e)) from user_training_exercise_action_events e where user_id=$1) events`, [userId])).rows;
+      const before = await snapshot();
+      const target = { targetId: fixture.targetId };
+      const mark = await pairAction(client, userId, 'exclude-pair', randomUUID(), target);
+      expect(await snapshot()).toEqual(before);
+      await pairAction(client, userId, 'restore-pair', randomUUID(), target, mark.exclusionId);
+      expect(await snapshot()).toEqual(before);
+    }, userId);
+  });
+
+  test("out-of-order exclusion rolls back without a mark, event or consumed session budget", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async client => {
+      const first = await createIdiomFixture(client, userId);
+      const second = await createIdiomFixture(client, userId);
+      const session = await startIdiomSession(client, userId, 'direct', 2, randomUUID());
+      const head = (await client.query(`select target_id from training_session_exercise_members
+        where session_id=$1 and consumed_at is null order by ordinal limit 1`, [session.sessionId])).rows[0].target_id;
+      const other = head === first.targetId ? second.targetId : first.targetId;
+      await client.query('savepoint reject_exclusion');
+      await expect(pairAction(client, userId, 'exclude-pair', randomUUID(), { targetId: other }, null, session.sessionId)).rejects.toThrow();
+      await client.query('rollback to savepoint reject_exclusion');
+      const result = (await client.query(`select
+        (select count(*)::int from private.training_pair_exclusions where user_id=$1) marks,
+        (select count(*)::int from private.training_pair_exclusion_events where user_id=$1) events,
+        (select count(*)::int from training_session_exercise_members where session_id=$2 and consumed_at is not null) consumed`, [userId,session.sessionId])).rows[0];
+      expect(result).toEqual({ marks: 0, events: 0, consumed: 0 });
+    }, userId);
+  });
+
+  test("exclusion rejects stale undo, conflicting retries and a superseded training run",async()=>{
+    for(const condition of ['stale','conflict','superseded'] as const){
+      const userId=randomUUID();
+      await withTransaction(pool,async client=>{
+        const fixture=await createIdiomFixture(client,userId);
+        const target={targetId:fixture.targetId};
+        if(condition==='superseded'){
+          const first=await startIdiomSession(client,userId,'direct',1,randomUUID());
+          await startIdiomSession(client,userId,'direct',1,randomUUID());
+          await expect(pairAction(client,userId,'exclude-pair',randomUUID(),target,null,first.sessionId)).rejects.toThrow('training_session_superseded');
+          return;
+        }
+        const eventId=randomUUID();
+        const mark=await pairAction(client,userId,'exclude-pair',eventId,target);
+        await pairAction(client,userId,'restore-pair',randomUUID(),target,mark.exclusionId);
+        if(condition==='stale'){
+          await pairAction(client,userId,'exclude-pair',randomUUID(),target);
+          await expect(pairAction(client,userId,'restore-pair',randomUUID(),target,mark.exclusionId)).rejects.toThrow('stale_exclusion_mark');
+        } else {
+          await expect(pairAction(client,userId,'restore-pair',eventId,target,mark.exclusionId)).rejects.toThrow('exclusion_idempotency_conflict');
+        }
+      },userId);
+    }
+  });
+
 });

@@ -229,7 +229,7 @@ export type PlatformIdiomExerciseSessionNextV2 =
       sessionId: string;
       ordinal: number;
       targetId: string;
-      reason: "projection-missing" | "dictionary-access-revoked";
+      reason: "projection-missing" | "dictionary-access-revoked" | "pair-excluded";
     remaining: number;
   };
 
@@ -303,7 +303,7 @@ export type PlatformTranslationExerciseSessionNextV2 =
       sessionId: string;
       ordinal: number;
       targetId: string;
-      reason: "projection-missing" | "dictionary-access-revoked";
+      reason: "projection-missing" | "dictionary-access-revoked" | "pair-excluded";
       remaining: number;
     };
 
@@ -606,4 +606,15 @@ export type PlatformGeneratedDraftV2Response = {
       revision: number;
     };
   }>;
+};
+
+
+/** Scenario-owned counts, consumed by the common Training footer. */
+export type PlatformTrainingExerciseStatsV1 = {
+  contractVersion: "training-idiom-stats-v1";
+  newCardsToday: number;
+  reviewCardsDone: number;
+  reviewCardsDue: number;
+  totalCardsStarted: number;
+  totalCardsInScope: number;
 };

@@ -2,6 +2,7 @@ import { platformV2AuthenticatedJsonHeaders } from "@/lib/platform/platformV2Htt
 import { supabase } from "@/lib/supabaseClient";
 import {
   buildDiagnosticReport,
+  type DiagnosticTarget,
   type DiagnosticCardAtom,
   type DiagnosticReportTransportV1,
   type FeedbackKind,
@@ -37,6 +38,7 @@ export type SenseCardDiagnosticSnapshot = Readonly<{
   headword: string;
   entry: PlatformSenseCardEntryV2;
   operation: SenseCardTrainingOperation | null;
+  target: Extract<DiagnosticTarget, { kind: "content-node" }> | null;
 }>;
 export type SenseCardReportDeliveryState = "editing" | "sending" | "sent" | "queued" | "scheduled" | "retry" | "rejected";
 export type DiagnosticReportOutboxRecord = {
@@ -79,12 +81,14 @@ export function freezeSenseCardDiagnosticSnapshot(input: {
   group: PlatformHeadwordGroupV2;
   entry: PlatformSenseCardEntryV2;
   operation?: SenseCardTrainingOperation | null;
+  target?: Extract<DiagnosticTarget, { kind: "content-node" }> | null;
 }): SenseCardDiagnosticSnapshot {
   return Object.freeze({
     route: input.route,
     headword: input.group.header.text.normalize("NFC"),
     entry: structuredClone(input.entry),
     operation: input.operation ? structuredClone(input.operation) : null,
+    target: input.target ? structuredClone(input.target) : null,
   });
 }
 
@@ -106,7 +110,7 @@ export async function buildSenseCardDiagnosticReport(input: {
         operation.request,
         snapshot.entry.reportContentRevision,
       )
-    : {
+    : snapshot.target ?? {
         kind: "entry" as const,
         entryId: snapshot.entry.entryId,
         contentRevision: snapshot.entry.reportContentRevision,
