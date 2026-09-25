@@ -126,4 +126,53 @@ describeIfDb("word in context uses ordinary reverse membership", () => {
         .rejects.toThrow(/unauthorized/);
     });
   });
+
+  test("a context action consumes one ordinary reverse member without a sentence schedule", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      await ensureUserWithSettings(client, userId);
+      await client.query("select set_config('request.jwt.claim.sub', $1, true)", [userId]);
+      const entryId = await insertWord(client, `context-action-${randomUUID()}`);
+      await client.query(`insert into private.platform_v2_content_nodes
+        (id,entry_id,kind,binding_state,first_source_revision,last_source_revision,
+         source_text_fingerprint,diagnostic_locator)
+        values ($1,$2,'example','active','v1','v1','fingerprint',
+          'raw.meanings[0].examples[0]')`, [randomUUID(), entryId]);
+      await client.query(`insert into user_card_status
+        (user_id,entry_id,card_type_id,fsrs_enabled,in_learning)
+        values ($1,$2,'word-to-definition',true,true)`, [userId, entryId]);
+      const { rows: startRows } = await client.query(`select start_training_session(
+        p_user_id => $1::uuid,
+        p_card_type_ids => ARRAY['definition-to-word']::text[],
+        p_list_id => NULL::uuid, p_list_type => 'curated', p_card_filter => 'both',
+        p_training_filter => '{"presentationMode":"word-in-context"}'::jsonb,
+        p_session_size => '1', p_request_id => $2::uuid,
+        p_new_review_ratio => 2) session`, [userId, randomUUID()]);
+      const sessionId = startRows[0].session.sessionId as string;
+      const { rows: cardRows } = await client.query(`select get_next_training_session_card(
+        $1::uuid,$2::uuid) card`, [userId, sessionId]);
+      const card = cardRows[0].card;
+      expect(card).toMatchObject({ id: entryId, mode: "definition-to-word" });
+      await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+      const eventId = randomUUID();
+      const action = () => client.query(`select perform_platform_v2_card_action_as_principal(
+        $1::uuid,'start-learning',$2::uuid,'definition-to-word',$3::text,
+        null,null,null,$4::uuid,null,'first_party',null,$5::uuid) result`,
+        [userId, entryId, card.stateRevision, eventId, sessionId]);
+      expect((await action()).rows[0].result.status).toBe("accepted");
+      expect((await action()).rows[0].result.status).toBe("duplicate");
+      const { rows: status } = await client.query(`select card_type_id,seen_count
+        from user_card_status where user_id=$1 and entry_id=$2
+        order by card_type_id`, [userId, entryId]);
+      expect(status).toHaveLength(2);
+      expect(status.find((row) => row.card_type_id === "definition-to-word")?.seen_count).toBe(1);
+      expect(status.find((row) => row.card_type_id === "word-to-definition")?.seen_count).toBe(0);
+      const { rows: members } = await client.query(`select count(*)::integer total
+        from training_session_members where session_id=$1 and consumed_at is not null`, [sessionId]);
+      expect(members[0].total).toBe(1);
+      const { rows: exercise } = await client.query(`select count(*)::integer total
+        from user_training_exercise_state where user_id=$1`, [userId]);
+      expect(exercise[0].total).toBe(0);
+    });
+  });
 });
