@@ -35,6 +35,7 @@ test("context prompt reads the latched node and its exact translation", async ()
   } });
   await expect(loadWordContextPrompt(input)).resolves.toEqual({ state: "ready", prompt: {
     text: "Я знаю это слово.", sourceText: "Ik ken dit woord.", contentNodeId: "example-a",
+    sourceTextFingerprint: "fingerprint-a",
   } });
   expect(loadSentenceExerciseContent).toHaveBeenCalledWith(expect.objectContaining({
     candidate: { entryId: "entry-id", contentNodeId: "example-a", sourceTextFingerprint: "fingerprint-a" },

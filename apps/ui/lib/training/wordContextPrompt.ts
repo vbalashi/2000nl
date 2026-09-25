@@ -7,6 +7,7 @@ export type WordContextPrompt = {
   text: string;
   sourceText: string;
   contentNodeId: string;
+  sourceTextFingerprint: string;
 };
 
 export type WordContextLoadResult =
@@ -101,6 +102,7 @@ export async function loadWordContextPrompt(input: {
       text: prompt.text,
       sourceText: loaded.content.sentence.text,
       contentNodeId: source.contentNodeId,
+      sourceTextFingerprint: source.sourceTextFingerprint,
     },
   };
 }

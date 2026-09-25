@@ -792,6 +792,15 @@ export function TrainingSenseCardV2Session({
                   route: "training",
                   group: result.group,
                   entry: result.entry,
+                  ...(wordInContext && contextResult?.state === "ready" ? {
+                    target: {
+                      kind: "content-node" as const,
+                      entryId: result.entry.entryId,
+                      contentNodeId: contextResult.prompt.contentNodeId,
+                      nodeKind: "example" as const,
+                      sourceTextFingerprint: contextResult.prompt.sourceTextFingerprint,
+                    },
+                  } : {}),
                   operation: reportOperation,
                 })}
                 interfaceLanguage={interfaceLanguage}

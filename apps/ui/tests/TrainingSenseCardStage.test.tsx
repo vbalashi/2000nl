@@ -57,7 +57,7 @@ describe("TrainingSenseCardStage", () => {
     render(<TrainingSenseCardStage model={model} mode="definition-to-word"
       interfaceLanguage="en" onAction={vi.fn()}
       onHintOpened={onHintOpened}
-      contextPrompt={{ text: "Я знаю это слово.", sourceText: "Ik ken dit woord.", contentNodeId: "selected" }} />);
+      contextPrompt={{ text: "Я знаю это слово.", sourceText: "Ik ken dit woord.", contentNodeId: "selected", sourceTextFingerprint: "selected-fingerprint" }} />);
     expect(screen.getByTestId("reverse-prompt")).toHaveTextContent("Я знаю это слово.");
     expect(screen.getByText("Recall the Dutch word")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Show hint" }));
