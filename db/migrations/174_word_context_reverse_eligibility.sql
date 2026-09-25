@@ -40,7 +40,7 @@ $$;
 REVOKE ALL ON FUNCTION private.training_word_context_candidate_v1(uuid,uuid,text)
   FROM PUBLIC, anon, authenticated, service_role;
 
-CREATE FUNCTION pg_temp.patch_word_context_definition(
+CREATE OR REPLACE FUNCTION pg_temp.patch_word_context_definition(
   p_signature text, p_before text, p_after text
 ) RETURNS void LANGUAGE plpgsql AS $$
 DECLARE definition text;
