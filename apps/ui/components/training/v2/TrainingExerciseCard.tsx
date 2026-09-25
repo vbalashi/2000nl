@@ -49,7 +49,9 @@ export function TrainingExerciseCard({
   notice?: React.ReactNode;
 }) {
   const [hintVisible, setHintVisible] = React.useState(false);
-  const [translationVisible, setTranslationVisible] = React.useState(false);
+  const [translationVisible, setTranslationVisible] = React.useState(
+    presentation.answerTranslationInitiallyVisible ?? false,
+  );
   const stageRef = React.useRef<HTMLElement>(null);
   const revealRef = React.useRef<HTMLButtonElement>(null);
   const firstGradeRef = React.useRef<HTMLButtonElement>(null);
