@@ -40,19 +40,23 @@ server selection, and presets must round-trip them. No empty-scope fallback.
 
 ## Implementation sequence and release gates
 
-1. Exact source resolution and translation readiness, with stale/sibling/language
-   tests; typed presentation through existing templates.
-2. Shared server entry filters for sentence sessions, authoritative statistics,
-   idempotent start/grade and single-active-run parity. Existing migration 166
-   exposes only user, size and request ID on its public start RPC; do not enable
-   the UI before this filter gap is closed.
-3. Client session consumer, bounded translation preparation and shared card
-   actions. Keep family disabled while a slice is incomplete.
-4. Component and SQL tests for source identity, all displayed filters, language
-   switching, cached/generated translation, retries, stale runs, Exclude/Undo
-   and statistics; mobile en/nl/ru visual QA.
-5. One independently deployable release containing the enabled UI and its exact
-   DB contract; CI, deploy and production verification before declaring complete.
+1. Complete: exact source resolution, readiness checks and typed presentation
+   through the shared card. Focused tests cover wrong-language/missing
+   translations and selected-node isolation.
+2. Complete locally: migration 170 carries all material/lexical/activity/mix
+   filters into translation-session selection and statistics, retaining pair
+   exclusion, idempotent start, and authenticated grants. The clean local DB
+   harness passes 254/254 tests; migration 170 postflight passes.
+3. Implemented: finite translation session, exact-node lookup, translation
+   preparation/retry without consuming a member, shared reveal/grade shell,
+   session restore, statistics, audio, Report, and pair Exclude/Undo.
+4. Focused UI tests and typecheck pass. Full UI suite passed before the final
+   setup/client characterization was added; rerun it after the final edits.
+   Browser/mobile QA, generated-translation and language-switch behavior remain
+   release gates. Keep the family dark until they pass.
+5. Pending: append migration 170's checksum/postflight to the deployment
+   contract, CI/review, then deploy app and DB together and verify the test
+   production.
 
 The opposite direction, text entry and automatic grading remain out of v1.
 Continuous sessions remain #468; All due is not Continuous.

@@ -3,9 +3,10 @@ import { expect, test, vi } from "vitest";
 import { useCommitTrainingPilotDraft } from "@/components/training/pilot/useTrainingPilotController";
 import type { TrainingSetupDraft } from "@/components/training/pilot/TrainingTodaySetup";
 
-const { startTrainingSession, startIdiomSession, updateActiveTrainingScope } = vi.hoisted(() => ({
+const { startTrainingSession, startIdiomSession, startTranslationSession, updateActiveTrainingScope } = vi.hoisted(() => ({
   startTrainingSession: vi.fn(),
   startIdiomSession: vi.fn(),
+  startTranslationSession: vi.fn(),
   updateActiveTrainingScope: vi.fn(),
 }));
 
@@ -250,4 +251,35 @@ test("idiom starts forward the exact family filters and plan", async () => {
     expect.objectContaining({ draft: expect.objectContaining({ family: "idiom" }) }),
   );
   expect(applyFocusFilter).toHaveBeenCalledWith(expect.objectContaining({ sourceKind: "youtube" }));
+});
+
+test("sentence start forwards exact scope, mix and lexical/activity filters to translation session", async () => {
+  startTranslationSession.mockReset().mockResolvedValue({
+    contractVersion: "platform-translation-exercise-session-v1",
+    sessionId: "sentence-session-1", exerciseFamily: "translation", direction: "recall",
+    sessionSize: "12", requestedTotal: 12, plannedNew: 10, plannedReview: 2,
+    plannedPractice: 0, plannedTotal: 12, plannedAt: "2026-09-24T00:00:00Z",
+    runStatus: "active", runGeneration: 1, completedActions: 0,
+    completionReason: null, members: [],
+  });
+  updateActiveTrainingScope.mockReset().mockResolvedValue({ error: null });
+  const onSessionReady = vi.fn();
+  const { result } = renderHook(() => useCommitTrainingPilotDraft({
+    userId: "user-1", languageCode: "nl", resolveList: () => null,
+    applyListLocally: vi.fn(), applyPreferences: vi.fn(), applyFocusFilter: vi.fn(),
+    resetQueue: vi.fn(), loadStats: vi.fn(), loadWord: vi.fn(),
+    startTranslationSession, reportError: vi.fn(), onSessionReady,
+  }));
+  await act(async () => {
+    expect(await result.current({ ...draft, family: "sentence", scenarioId: "sentences",
+      materialMode: "selected-dictionaries", dictionaryIds: ["dict-1", "dict-2"],
+      cardFilter: "review", newReviewRatio: 4, partOfSpeech: ["bn"],
+      nounArticles: ["de"], sourceValue: "kind:youtube", sessionSize: 12,
+    })).toBe(true);
+  });
+  expect(startTranslationSession).toHaveBeenCalledWith(expect.objectContaining({
+    sessionSize: 12, listId: null, listType: "curated", cardFilter: "review", newReviewRatio: 4,
+    trainingFilter: expect.objectContaining({ dictionaryScope: { mode: "selected", languageCode: "nl", dictionaryIds: ["dict-1", "dict-2"] }, partOfSpeech: ["bn"], nounArticles: ["de"], sourceKind: "youtube" }),
+  }));
+  expect(onSessionReady).toHaveBeenCalledWith(expect.objectContaining({ sessionId: "sentence-session-1" }), expect.objectContaining({ draft: expect.objectContaining({ family: "sentence" }) }));
 });

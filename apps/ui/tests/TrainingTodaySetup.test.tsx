@@ -117,6 +117,17 @@ test("idiom family is selectable as a separate finite session and reaches the st
   }));
 });
 
+test("example sentence family is a finite single-direction session and reaches start", () => {
+  const onStart = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} onStart={onStart} scenarios={[...baseProps.scenarios, { value: "sentences", label: "Example sentences", modes: ["word-to-definition" as const] }]} />);
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  fireEvent.click(screen.getByRole("button", { name: "Example sentences" }));
+  expect(screen.getByRole("button", { name: "Example sentences" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.queryByText("All due")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ family: "sentence", scenarioId: "sentences", modes: ["word-to-definition"], sessionSize: 10 }));
+});
+
 test("idiom presets retain their family and scenario when reopened", () => {
   const userId = "idiom-preset-round-trip";
   const onStart = vi.fn();

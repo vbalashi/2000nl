@@ -485,3 +485,6 @@
 
 \echo 'Applying migration 169: pair exclusion availability'
 \i db/migrations/169_training_pair_exclusion_selection.sql
+
+-- Sentence family remains dark until its full user release is ready.
+\i db/migrations/170_translation_session_scope.sql

@@ -19,9 +19,11 @@ import type {
 } from "@/lib/types";
 import type {
   PlatformIdiomExerciseSessionV2,
+  PlatformTranslationExerciseSessionV2,
 } from "../../../../../packages/shared/types/platformV2";
 import type { StartPlatformV2IdiomTrainingSessionInput } from "@/lib/platform/platformV2IdiomExerciseClient";
-import { platformV2IdiomExercisesEnabled } from "@/lib/platform/platformV2Rollout";
+import type { startPlatformV2TranslationTrainingSession } from "@/lib/platform/platformV2TranslationExerciseClient";
+import { platformV2IdiomExercisesEnabled, platformV2TranslationExercisesEnabled } from "@/lib/platform/platformV2Rollout";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type {
   TrainingPilotStatus,
@@ -48,7 +50,7 @@ export type TrainingSessionStartContext = {
   focusFilter: TrainingFocusFilter;
 };
 
-export type TrainingPilotSession = TrainingSession | PlatformIdiomExerciseSessionV2;
+export type TrainingPilotSession = TrainingSession | PlatformIdiomExerciseSessionV2 | PlatformTranslationExerciseSessionV2;
 
 type CommitPilotDraftParams = {
   userId?: string;
@@ -70,6 +72,7 @@ type CommitPilotDraftParams = {
   startIdiomSession?: (
     input: StartPlatformV2IdiomTrainingSessionInput,
   ) => Promise<PlatformIdiomExerciseSessionV2>;
+  startTranslationSession?: typeof startPlatformV2TranslationTrainingSession;
   reportError: (error: string | null) => void;
   onPlanReady?: (plan: TrainingSessionPlan) => void;
   onSessionReady?: (
@@ -80,6 +83,7 @@ type CommitPilotDraftParams = {
 
 type PilotControllerParams = {
   enabled: boolean;
+  translationTargetLanguageCode?: string | null;
   interfaceLanguage: OnboardingLanguage;
   setupPrerequisites: "pending" | "ready" | "error";
   activeScenario: string;
@@ -114,6 +118,7 @@ export function useCommitTrainingPilotDraft({
   loadStats,
   loadWord,
   startIdiomSession,
+  startTranslationSession,
   reportError,
   onPlanReady,
   onSessionReady,
@@ -169,7 +174,7 @@ export function useCommitTrainingPilotDraft({
         listType: scope.listType,
         // Idiom exercises own a separate server queue. Keep the persisted
         // ordinary scope valid while the draft carries the family boundary.
-        activeScenario: draft.family === "idiom" ? "understanding" : draft.scenarioId,
+        activeScenario: draft.family === "meaning" ? draft.scenarioId : "understanding",
         cardFilter: draft.cardFilter,
         modesEnabled: draft.modes,
         newReviewRatio: draft.newReviewRatio,
@@ -243,6 +248,38 @@ export function useCommitTrainingPilotDraft({
         loadStats(scope);
         return true;
       }
+      if (draft.family === "sentence") {
+        if (!startTranslationSession) {
+          reportError("training_sentences_unavailable");
+          return false;
+        }
+        let translationSession: PlatformTranslationExerciseSessionV2;
+        try {
+          translationSession = await startTranslationSession({
+            userId,
+            sessionSize: typeof draft.sessionSize === "number" ? draft.sessionSize : 10,
+            requestId: startRequestRef.current.requestId,
+            listId: scope.listId,
+            listType: scope.listType ?? "curated",
+            cardFilter: draft.cardFilter,
+            trainingFilter: focusFilter,
+            newReviewRatio: draft.newReviewRatio,
+          });
+        } catch (error) {
+          reportError(error instanceof Error && error.message === "training_material_unavailable" ? "training_material_unavailable" : "training_sentences_start_failed");
+          return false;
+        }
+        startRequestRef.current = null;
+        onSessionReady?.(translationSession, { languageCode, scope, draft, focusFilter });
+        onPlanReady?.({ requestedTotal: translationSession.requestedTotal, plannedNew: translationSession.plannedNew, plannedReview: translationSession.plannedReview, plannedPractice: 0, plannedTotal: translationSession.plannedTotal, plannedAt: translationSession.plannedAt });
+        reportError(null);
+        if (selectedList) applyListLocally(selectedList);
+        applyPreferences(draft);
+        applyFocusFilter(focusFilter);
+        resetQueue();
+        loadStats(scope);
+        return true;
+      }
       let session: TrainingSession | null;
       try {
         session = await startTrainingSession(userId, draft.modes, {
@@ -308,6 +345,7 @@ export function useCommitTrainingPilotDraft({
       resetQueue,
       resolveList,
       startIdiomSession,
+      startTranslationSession,
       userId,
     ],
   );
@@ -315,6 +353,7 @@ export function useCommitTrainingPilotDraft({
 
 export function useTrainingPilotController({
   enabled,
+  translationTargetLanguageCode,
   interfaceLanguage,
   setupPrerequisites,
   activeScenario,
@@ -384,7 +423,7 @@ export function useTrainingPilotController({
     // The ordinary scope remains persisted as `understanding` while an idiom
     // run is active. The setup draft must still point at the idiom scenario so
     // presets round-trip through validation and can be started again.
-    scenarioId: exerciseFamily === "idiom" ? "idiom" : activeScenario,
+    scenarioId: exerciseFamily === "idiom" ? "idiom" : exerciseFamily === "sentence" ? "sentences" : activeScenario,
     modes: enabledModes,
     cardFilter,
     listValue: activeListValue,
@@ -426,8 +465,11 @@ export function useTrainingPilotController({
         modes: ["word-to-definition", "definition-to-word"],
       });
     }
+    if (platformV2TranslationExercisesEnabled() && translationTargetLanguageCode) {
+      options.push({ value: "sentences", label: interfaceLanguage === "nl" ? "Voorbeeldzinnen" : interfaceLanguage === "ru" ? "Примеры предложений" : "Example sentences", modes: ["word-to-definition"] });
+    }
     return options;
-  }, [interfaceLanguage, scenarios, scenariosResolved]);
+  }, [interfaceLanguage, scenarios, scenariosResolved, translationTargetLanguageCode]);
 
   const startSession = useCallback(
     async (draft: TrainingSetupDraft) => {
