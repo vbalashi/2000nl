@@ -1,12 +1,12 @@
 # Sentence translation user release (#333)
 
-Status: migration 171 is deployed and the first live sentence-session smoke now
-returns a real card without grading it. The start RPC still took 6.547 seconds.
-Migration 172 restructures the remaining eligibility work around the small
-learned/Known set; a read-only production `EXPLAIN ANALYZE` returned the same
-974 examples in about 150 ms instead of 3.752 seconds for the source helper.
-Local FSRS and deployment-contract tests pass. Final production latency remains
-open until migration 172 is deployed and the start RPC is remeasured.
+Status: migration 172 is deployed. The live start RPC improved from 6.547 to
+2.160 seconds while returning the same real sentence card without grading it.
+The source helper varies with cache pressure (about 150–983 ms in observed
+runs), but no longer accounts for the whole start time. Migration 173 replaces
+the remaining per-card target/state loop with one set-based statement and avoids
+rewriting unchanged targets. Local FSRS and deployment-contract tests pass;
+production measurement remains open until migration 173 is deployed.
 
 ## Product contract
 
@@ -79,11 +79,19 @@ server selection, and presets must round-trip them. No empty-scope fallback.
    switch translation language and confirm the source exercise identity stays
    unchanged. The smoke showed a Russian prompt for Dutch recall without
    revealing or grading it, but the start RPC remained 6.547 seconds.
-7. In progress: migration 172 builds the learned/Known set first, resolves its
+7. Complete in production: migration 172 builds the learned/Known set first, resolves its
    valid source groups, and checks each distinct dictionary once. The production
    explain returned the same 974 examples in about 150 ms. After CI and deploy,
    start a fresh finite sentence session and use the Supabase edge log's
-   `response.origin_time` as the release measurement.
+   `response.origin_time` as the release measurement. The fresh session start
+   completed in 2.160 seconds, down 67% from 6.547 seconds.
+8. In progress: migration 173 batches target creation/reactivation and state
+   projection for the selected cards. A rollback-only production measurement
+   showed the existing candidate function at 3.389 seconds while the equivalent
+   ranked source query was 0.168 seconds; ten already-existing target ensures
+   took only milliseconds in isolation. The change removes the PL/pgSQL
+   per-candidate boundary and its unconditional target writes. Deploy, repeat a
+   fresh finite-session smoke without grading, and record edge origin time.
 
 The opposite direction, text entry and automatic grading remain out of v1.
 Continuous sessions remain #468; All due is not Continuous.
@@ -118,7 +126,7 @@ Failed speculative work must remain retryable without retry storms. First-card
 preparation needs an explicit loading state. Verify a single in-flight request,
 cache reuse, stale-response isolation, and no progress mutation from prefetch.
 
-Priority: finish and measure migration 171's startup fix independently, then
+Priority: finish and measure migration 173's startup fix independently, then
 implement bounded translation lookahead and the agreed queue refinement. The
 set-based eligibility optimization is compatible with a later narrower exact-meaning
 policy; deploying it does not establish sibling admission as final product intent.
