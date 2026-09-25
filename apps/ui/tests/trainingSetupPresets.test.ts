@@ -7,6 +7,27 @@ import {
 
 afterEach(() => window.localStorage.clear());
 
+test("context presets persist the reverse-only exercise identity", () => {
+  const key = presetStorageKey("user-a", "nl");
+  const draft = {
+    family: "word-in-context" as const,
+    scenarioId: "understanding",
+    modes: ["definition-to-word" as const],
+    cardFilter: "both" as const,
+    listValue: "curated:nt2",
+    newReviewRatio: 2,
+    dateWindow: "all" as const,
+    sourceValue: "all",
+    sessionSize: 10,
+  };
+  expect(writeTrainingPresets(key, [{ id: "context", name: "Context", draft }])).toBe(true);
+  expect(readTrainingPresets(key)).toEqual([{ id: "context", name: "Context", draft }]);
+  localStorage.setItem(key, JSON.stringify([{ id: "wrong", name: "Wrong", draft: {
+    ...draft, modes: ["word-to-definition"],
+  } }]));
+  expect(readTrainingPresets(key)).toEqual([]);
+});
+
 test("presets are stored separately for each learner and training language", () => {
   const key = presetStorageKey("user-a", "nl");
   const presets = [{

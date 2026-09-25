@@ -41,6 +41,7 @@ import { TransientNotice } from "@/components/system/TransientNotice";
 import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
 import { evaluateTrainingCardRenderability } from "@/lib/training/trainingCardRenderability";
 import { selectTrainingReversePrompt } from "@/lib/training/trainingReversePrompt";
+import { loadWordContextPrompt, type WordContextLoadResult } from "@/lib/training/wordContextPrompt";
 import {
   rememberPendingKnownUndo,
   type UndoKnownCapability,
@@ -67,6 +68,7 @@ type Props = {
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
   trainingSessionId?: string | null;
+  wordInContext?: boolean;
   sessionChrome?: TrainingSessionChromeProps | null;
   sessionFooter: FooterStatsProps;
   sessionNotice?: TrainingSessionNoticeInput | null;
@@ -122,6 +124,7 @@ export function TrainingSenseCardV2Session({
   translationTargetLanguageCode,
   interfaceLanguage,
   trainingSessionId,
+  wordInContext = false,
   sessionChrome,
   sessionFooter,
   sessionNotice,
@@ -151,6 +154,27 @@ export function TrainingSenseCardV2Session({
     () =>
       peekPrefetchedPlatformV2TrainingEntry(lookupInput),
   );
+  const [contextResult, setContextResult] = React.useState<WordContextLoadResult | null>(null);
+  const [contextRetry, setContextRetry] = React.useState(0);
+  React.useEffect(() => {
+    if (!wordInContext || !trainingSessionId || !translationTargetLanguageCode) return;
+    const controller = new AbortController();
+    setContextResult(null);
+    void loadWordContextPrompt({
+      userId: cacheOwnerId,
+      sessionId: trainingSessionId,
+      entryId: word.id,
+      contentLanguageCode,
+      translationTargetLanguageCode,
+      signal: controller.signal,
+    }).then((result) => {
+      if (!controller.signal.aborted) setContextResult(result);
+    }).catch(() => {
+      if (!controller.signal.aborted) setContextResult({ state: "translation-unavailable" });
+    });
+    return () => controller.abort();
+  }, [cacheOwnerId, contentLanguageCode, contextRetry, trainingSessionId,
+    translationTargetLanguageCode, word.id, wordInContext]);
   const [busy, setBusy] = React.useState(false);
   const [acceptedActionRecoveryPending, setAcceptedActionRecoveryPending] =
     React.useState(false);
@@ -285,7 +309,10 @@ export function TrainingSenseCardV2Session({
     [mode, result],
   );
 
-  const sessionState: TrainingV2SessionState = !lookup
+  const sessionState: TrainingV2SessionState = wordInContext &&
+    (!translationTargetLanguageCode || contextResult?.state !== "ready")
+      ? "loading"
+      : !lookup
       ? "loading"
       : lookup.state !== "ready"
         ? lookup.state
@@ -315,9 +342,10 @@ export function TrainingSenseCardV2Session({
   }, [cacheOwnerId, nextTransitionId, word.id]);
 
   React.useEffect(() => {
+    if (wordInContext && contextResult?.state !== "ready") return;
     if (sessionState === "loading" || sessionState === "ready") return;
     onLoadFailure?.(sessionState);
-  }, [onLoadFailure, sessionState]);
+  }, [contextResult, onLoadFailure, sessionState, wordInContext]);
 
   React.useEffect(() => {
     if (!handlePresentation) return;
@@ -629,6 +657,27 @@ export function TrainingSenseCardV2Session({
     </TrainingSessionSurface>
   );
 
+  if (wordInContext && (!translationTargetLanguageCode ||
+    (contextResult && contextResult.state !== "ready"))) {
+    return renderLayout(
+      <div role="status" data-testid="training-word-context-preparation"
+        className="mx-auto grid min-h-0 w-full max-w-[760px] flex-1 place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-center text-sm text-slate-700 dark:border-slate-600 dark:bg-[#1d222b] dark:text-slate-200">
+        <div className="space-y-4">
+          <p>{!translationTargetLanguageCode
+            ? "Choose a translation language in Settings before starting this training."
+            : contextResult?.state === "translation-pending"
+              ? "Preparing this sentence translation…"
+              : "This example is not ready yet."}</p>
+          {translationTargetLanguageCode ? <button type="button"
+            className="rounded-xl border border-slate-400 px-4 py-2 font-semibold"
+            onClick={() => setContextRetry((value) => value + 1)}>
+            {platformV2Message(interfaceLanguage, "senseCard.training.retry")}
+          </button> : null}
+        </div>
+      </div>,
+    );
+  }
+
   if (sessionState === "loading") {
     return renderLayout(
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3">
@@ -683,6 +732,8 @@ export function TrainingSenseCardV2Session({
         </p> : null}
         <TrainingSenseCardStage
           model={model}
+          contextPrompt={wordInContext && contextResult?.state === "ready"
+            ? contextResult.prompt : undefined}
           mode={mode}
           interfaceLanguage={interfaceLanguage}
           busy={busy || exclusion.busy || exclusion.failed || interactionDisabled || acceptedActionRecoveryPending}

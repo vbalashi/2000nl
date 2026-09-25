@@ -11,7 +11,7 @@ export type TrainingSessionResumeRecord = {
   sessionId: string;
   userId: string;
   /** The server-backed session family; old records are ordinary meaning sessions. */
-  family?: Extract<TrainingExerciseFamily, "meaning" | "idiom" | "sentence">;
+  family?: TrainingExerciseFamily;
   languageCode: string;
   listId: string | null;
   listType: WordListType | null;
@@ -239,8 +239,8 @@ const isTrainingMode = (value: unknown): value is TrainingMode =>
 
 const isTrainingSessionFamily = (
   value: unknown,
-): value is Extract<TrainingExerciseFamily, "meaning" | "idiom" | "sentence"> =>
-  value === "meaning" || value === "idiom" || value === "sentence";
+): value is TrainingExerciseFamily =>
+  value === "meaning" || value === "idiom" || value === "sentence" || value === "word-in-context";
 
 const parseResumeRecord = (
   value: unknown,

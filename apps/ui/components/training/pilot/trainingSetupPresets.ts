@@ -24,7 +24,7 @@ export function readTrainingPresets(key: string): TrainingSetupPreset[] {
       (item): item is TrainingSetupPreset =>
         typeof item?.id === "string" &&
         typeof item?.name === "string" &&
-        (item?.draft?.family === undefined || item.draft.family === "meaning" || item.draft.family === "idiom" || item.draft.family === "sentence") &&
+        (item?.draft?.family === undefined || item.draft.family === "meaning" || item.draft.family === "idiom" || item.draft.family === "sentence" || item.draft.family === "word-in-context") &&
         (item?.draft?.family === "idiom" ? item?.draft?.scenarioId === "idiom" : item?.draft?.family === "sentence" ? item?.draft?.scenarioId === "sentences" : item?.draft?.scenarioId === "understanding") &&
         Array.isArray(item?.draft?.modes) &&
         item.draft.modes.length > 0 &&
@@ -32,6 +32,8 @@ export function readTrainingPresets(key: string): TrainingSetupPreset[] {
           (mode: unknown) =>
             mode === "word-to-definition" || mode === "definition-to-word",
         ) &&
+        (item.draft.family !== "word-in-context" ||
+          (item.draft.modes.length === 1 && item.draft.modes[0] === "definition-to-word")) &&
         ["new", "review", "both"].includes(item.draft.cardFilter) &&
         Number.isInteger(item.draft.newReviewRatio) &&
         item.draft.newReviewRatio > 0 &&

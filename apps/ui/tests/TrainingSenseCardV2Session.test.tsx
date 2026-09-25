@@ -26,6 +26,11 @@ const consumePrefetched = vi.fn();
 const preloadAudio = vi.fn();
 const queueDiagnosticReport = vi.fn();
 const buildDiagnosticReport = vi.fn();
+const loadContextPrompt = vi.fn();
+
+vi.mock("@/lib/training/wordContextPrompt", () => ({
+  loadWordContextPrompt: (...args: unknown[]) => loadContextPrompt(...args),
+}));
 
 vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
   fetchPlatformV2TrainingEntry: (...args: unknown[]) => fetchSingleSense(...args),
@@ -114,6 +119,7 @@ describe("TrainingSenseCardV2Session", () => {
     rememberPendingKnownUndo(null);
     window.sessionStorage.clear();
     fetchSingleSense.mockReset();
+    loadContextPrompt.mockReset();
     performAction.mockReset();
     resolveAudio.mockReset();
     requestTranslation.mockReset();
@@ -144,6 +150,19 @@ describe("TrainingSenseCardV2Session", () => {
       accepted: true,
       card: singleSenseEntry.card,
     });
+  });
+
+  test("context mode waits for its exact translation before allowing a review", async () => {
+    loadContextPrompt.mockResolvedValue({ state: "translation-pending" });
+    const onProgressActionAccepted = vi.fn();
+    render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word"
+      wordInContext trainingSessionId="session-context"
+      contentLanguageCode="nl" translationTargetLanguageCode="ru"
+      interfaceLanguage="en" onProgressActionAccepted={onProgressActionAccepted} />);
+    await screen.findByTestId("training-word-context-preparation");
+    expect(screen.queryByRole("button", { name: "Good" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Show answer" })).not.toBeInTheDocument();
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
   });
 
   test("uses the V2 listening face and reveals the same answer surface", async () => {

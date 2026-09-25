@@ -38,6 +38,33 @@ function TrainingSenseCardStage(
 }
 
 describe("TrainingSenseCardStage", () => {
+  test("context presentation keeps the normal actions and shows only the latched example", () => {
+    const base = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "en",
+    });
+    const model = {
+      ...base,
+      examples: [
+        { contentNodeId: "selected", parentContentNodeId: null, kind: "example" as const,
+          text: "Ik ken dit woord.", translation: "Я знаю это слово.", children: [] },
+        { contentNodeId: "sibling", parentContentNodeId: null, kind: "example" as const,
+          text: "Another sentence.", translation: "Другое предложение.", children: [] },
+      ],
+    };
+    render(<TrainingSenseCardStage model={model} mode="definition-to-word"
+      interfaceLanguage="en" onAction={vi.fn()}
+      contextPrompt={{ text: "Я знаю это слово.", sourceText: "Ik ken dit woord.", contentNodeId: "selected" }} />);
+    expect(screen.getByTestId("reverse-prompt")).toHaveTextContent("Я знаю это слово.");
+    expect(screen.getByText("Recall the Dutch word")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    expect(screen.getByText("Ik ken dit woord.")).toBeInTheDocument();
+    expect(screen.getAllByText("Я знаю это слово.")).toHaveLength(1);
+    expect(screen.queryByText("Another sentence.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Good" })).toBeInTheDocument();
+  });
+
   test("renders two nodig idioms and the goed expression hierarchy", () => {
     const nodigModel = buildTrainingSenseCardModel({
       group: nodigGroup,

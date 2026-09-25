@@ -23,9 +23,11 @@ import {
 } from "./TrainingCardTemplates";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import type { TrainingSenseCardModel } from "./trainingSenseCardModel";
+import type { WordContextPrompt } from "@/lib/training/wordContextPrompt";
 
 type Props = {
   model: TrainingSenseCardModel;
+  contextPrompt?: WordContextPrompt;
   mode: TrainingMode;
   interfaceLanguage: OnboardingLanguage;
   busy?: boolean;
@@ -41,6 +43,7 @@ type Props = {
 
 export function TrainingSenseCardStage({
   model,
+  contextPrompt,
   mode,
   interfaceLanguage,
   busy = false,
@@ -65,7 +68,27 @@ export function TrainingSenseCardStage({
     (key: string) => platformV2Message(interfaceLanguage, key),
     [interfaceLanguage],
   );
-  const hint = model.examples[0];
+  const hint = React.useMemo(() => contextPrompt
+    ? model.partOfSpeech ? { text: model.partOfSpeech } : undefined
+    : model.examples[0], [contextPrompt, model.examples, model.partOfSpeech]);
+  const selectedExample = contextPrompt
+    ? model.examples.find((item) => item.contentNodeId === contextPrompt.contentNodeId)
+    : undefined;
+  const answerModel = contextPrompt
+    ? {
+        ...model,
+        definitions: [],
+        examples: [{
+          ...selectedExample,
+          contentNodeId: contextPrompt.contentNodeId,
+          parentContentNodeId: selectedExample?.parentContentNodeId ?? null,
+          kind: "example" as const,
+          text: contextPrompt.sourceText,
+          translation: contextPrompt.text,
+          children: selectedExample?.children ?? [],
+        }],
+      }
+    : model;
   const reversePrompt = selectTrainingReversePrompt([
     ...model.definitions,
     ...model.examples,
@@ -209,8 +232,8 @@ export function TrainingSenseCardStage({
               onOpenDetails={onOpenDetails}
             />
             <AnswerBody
-              model={model}
-              translationVisible={translationVisible}
+              model={answerModel}
+              translationVisible={Boolean(contextPrompt) || translationVisible}
               interfaceLanguage={interfaceLanguage}
               onReachEnd={() => primaryAnswerActionRef.current?.focus()}
             />
@@ -227,7 +250,7 @@ export function TrainingSenseCardStage({
           <TrainingCardFace
             prompt={
               mode === "definition-to-word"
-                ? { kind: "explanation", text: reversePrompt?.text ?? "" }
+                ? { kind: "explanation", text: contextPrompt?.text ?? reversePrompt?.text ?? "" }
                 : {
                     kind: "expression",
                     text: model.headword,
@@ -236,7 +259,12 @@ export function TrainingSenseCardStage({
             }
             hint={hint}
             hintVisible={hintVisible}
-            hintLabel={t("senseCard.hint.example")}
+            label={contextPrompt ? {
+              en: "Recall the Dutch word",
+              nl: "Herinner je het Nederlandse woord",
+              ru: "Вспомните нидерландское слово",
+            }[interfaceLanguage] : undefined}
+            hintLabel={contextPrompt ? t("senseCard.training.content") : t("senseCard.hint.example")}
             contentLabel={t("senseCard.training.content")}
           />
         )}
