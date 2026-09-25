@@ -1167,13 +1167,17 @@ function TrainingScreenContent({
       group: PlatformHeadwordGroupV2;
       entry: { entryId: string };
     }) => {
-      if (!currentWord) return;
+      const entryId = details?.entry?.entryId ?? currentWord?.id;
+      const headword = details?.group?.header.text ?? currentWord?.headword;
+      if (!entryId || !headword) return;
       setDetailInitialGroup(details?.group ?? null);
       setDetailSelection({
-        entryId: details?.entry?.entryId ?? currentWord.id,
-        headword: details?.group?.header.text ?? currentWord.headword,
+        entryId,
+        headword,
         contentLanguageCode:
-          currentWord.language_code ?? currentTrainingLanguage,
+          details?.group?.dictionary.sourceLanguageCode ??
+          currentWord?.language_code ??
+          currentTrainingLanguage,
       });
       setDetailsOpen(true);
     },
@@ -2250,8 +2254,8 @@ function TrainingScreenContent({
   }, [onRequestDestination]);
 
   const v2SessionLayoutVisible = Boolean(
-    activeExerciseFamily !== "idiom" &&
-    v2SessionOwned &&
+    ((activeExerciseFamily === "idiom" && Boolean(idiomSession)) ||
+      v2SessionOwned) &&
     (!trainingTodaySetupEnabled || trainingPilot.surface === "session"),
   );
   const sessionChromeVisible =
@@ -2396,6 +2400,9 @@ function TrainingScreenContent({
             }
             interfaceLanguage={onboardingLang}
             onExit={exitIdiomSession}
+            onHistory={openTrainingHistory}
+            onPlayResolvedAudio={(url, label) => playAudio(url, label)}
+            onOpenDetails={handleShowCurrentWordDetails}
           />
         ) : v2SessionOwned && currentWord && v2SessionMode ? (
           <TrainingSenseCardV2Session

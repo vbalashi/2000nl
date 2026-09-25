@@ -2,7 +2,10 @@
 import React from "react";
 import { TrainingExerciseCard } from "@/components/training/v2/TrainingExerciseCard";
 import { buildIdiomCardPresentation } from "@/lib/training/idiomCardPresentation";
-import { gateFurnitureEntry } from "@/lib/platform/fixtures/senseCardV1GateFixture";
+import {
+  gateFurnitureEntry,
+  gateSingleSenseGroup,
+} from "@/lib/platform/fixtures/senseCardV1GateFixture";
 import type { IdiomExerciseContent } from "@/lib/training/idiomExerciseContent";
 
 const expressionId = "gate-klaar-idiom";
@@ -22,6 +25,7 @@ function node(
   };
 }
 const content: IdiomExerciseContent = {
+  group: gateSingleSenseGroup,
   headword: "klaar",
   entry: {
     ...gateFurnitureEntry,

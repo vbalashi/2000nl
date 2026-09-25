@@ -14,6 +14,7 @@ import {
   TrainingCardAnswerBody as AnswerBody,
   TrainingCardFace,
   TrainingCardShell,
+  TrainingCardSecondaryActions as SecondaryActionRow,
   TrainingCardFaceControls,
   TrainingCardReviewButton,
   TrainingCardIconButton as IconButton,
@@ -495,14 +496,6 @@ function AnswerDock({
           />
         ) : null}
       </SecondaryActionRow>
-    </div>
-  );
-}
-
-function SecondaryActionRow({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-6 min-h-6 shrink-0 items-center justify-between gap-3">
-      {children}
     </div>
   );
 }

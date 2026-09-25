@@ -611,3 +611,15 @@ export function TrainingCardIconButton({
     </button>
   );
 }
+
+export function TrainingCardSecondaryActions({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex h-6 min-h-6 shrink-0 items-center justify-between gap-3">
+      {children}
+    </div>
+  );
+}
