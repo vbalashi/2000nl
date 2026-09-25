@@ -1,12 +1,10 @@
 # Sentence translation user release (#333)
 
-Status: migration 172 is deployed. The live start RPC improved from 6.547 to
-2.160 seconds while returning the same real sentence card without grading it.
-The source helper varies with cache pressure (about 150–983 ms in observed
-runs), but no longer accounts for the whole start time. Migration 173 replaces
-the remaining per-card target/state loop with one set-based statement and avoids
-rewriting unchanged targets. Local FSRS and deployment-contract tests pass;
-production measurement remains open until migration 173 is deployed.
+Status: migrations 172 and 173 are deployed. The same live start RPC improved
+from 6.547 seconds to 2.160 seconds and then to 441 ms while returning a real
+sentence card without grading it. Startup localization is complete for this
+release. One-card translation lookahead is implemented locally through the
+existing lookup/translation cache boundary and is awaiting CI/deployment.
 
 ## Product contract
 
@@ -85,13 +83,23 @@ server selection, and presets must round-trip them. No empty-scope fallback.
    start a fresh finite sentence session and use the Supabase edge log's
    `response.origin_time` as the release measurement. The fresh session start
    completed in 2.160 seconds, down 67% from 6.547 seconds.
-8. In progress: migration 173 batches target creation/reactivation and state
+8. Complete in production: migration 173 batches target creation/reactivation and state
    projection for the selected cards. A rollback-only production measurement
    showed the existing candidate function at 3.389 seconds while the equivalent
    ranked source query was 0.168 seconds; ten already-existing target ensures
    took only milliseconds in isolation. The change removes the PL/pgSQL
    per-candidate boundary and its unconditional target writes. Deploy, repeat a
-   fresh finite-session smoke without grading, and record edge origin time.
+   fresh finite-session smoke without grading, and record edge origin time. The
+   deployed RPC completed in 441 ms (80% below migration 172 and 93% below the
+   original 6.547-second measurement).
+9. Complete locally: while the current sentence is visible, select exactly the
+   next still-available latched member and warm its translation through the
+   existing library lookup and translation API. A per-run/member/language key
+   prevents duplicate speculative calls. The result never updates UI, advances
+   the session, marks a member unavailable, or writes a review; after an action,
+   the normal next-member RPC and exact fingerprint loader remain authoritative.
+   Focused component/loader tests cover one-card bounding, ready-cache reuse,
+   missing-translation generation, and absence of progress mutations.
 
 The opposite direction, text entry and automatic grading remain out of v1.
 Continuous sessions remain #468; All due is not Continuous.
@@ -126,7 +134,7 @@ Failed speculative work must remain retryable without retry storms. First-card
 preparation needs an explicit loading state. Verify a single in-flight request,
 cache reuse, stale-response isolation, and no progress mutation from prefetch.
 
-Priority: finish and measure migration 173's startup fix independently, then
-implement bounded translation lookahead and the agreed queue refinement. The
+Priority: deploy and smoke bounded translation lookahead, then implement the
+agreed queue refinement. The
 set-based eligibility optimization is compatible with a later narrower exact-meaning
 policy; deploying it does not establish sibling admission as final product intent.

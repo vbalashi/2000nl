@@ -7,6 +7,73 @@ export type SentenceExerciseLoadResult =
   | { state: "translation-pending" | "translation-unavailable" }
   | { state: "projection-missing" | "dictionary-access-revoked" | "entry-not-found" };
 
+export type SentenceTranslationPreparationResult =
+  | { state: "ready" | "translation-pending" | "translation-unavailable" }
+  | { state: "projection-missing" | "dictionary-access-revoked" | "entry-not-found" };
+
+/**
+ * Warms exactly one latched session member without advancing the session or
+ * touching learning state. The normal loader revalidates target identity after
+ * the current action is accepted.
+ */
+export async function prepareSentenceExerciseTranslation(input: {
+  entryId: string;
+  contentNodeId: string;
+  contentLanguageCode: string;
+  translationTargetLanguageCode: string;
+  signal?: AbortSignal;
+}): Promise<SentenceTranslationPreparationResult> {
+  try {
+    const group = await fetchPlatformV2LibraryGroup({
+      entryId: input.entryId,
+      cardTypeId: "word-to-definition",
+      contentLanguageCode: input.contentLanguageCode,
+      translationTargetLanguageCode: input.translationTargetLanguageCode,
+      signal: input.signal,
+    });
+    if (!group) return { state: "entry-not-found" };
+    const entry = group.entries.find(
+      (item) => item.kind === "sense-card" && item.entryId === input.entryId,
+    );
+    if (!entry || entry.kind !== "sense-card") return { state: "projection-missing" };
+    const sentence = entry.contentNodes.find(
+      (node) => node.contentNodeId === input.contentNodeId,
+    );
+    if (!sentence || sentence.kind !== "example" || !sentence.text.trim()) {
+      return { state: "projection-missing" };
+    }
+    const ready = sentence.translations.some(
+      (translation) =>
+        translation.targetLanguageCode === input.translationTargetLanguageCode &&
+        translation.status === "ready" &&
+        Boolean(translation.text?.trim()) &&
+        translation.sourceTextFingerprint === sentence.sourceTextFingerprint,
+    );
+    if (ready) return { state: "ready" };
+    const capability = entry.capabilities?.find(
+      (item) =>
+        item.actionId === "request-translation" &&
+        item.target.entryId === input.entryId &&
+        item.targetLanguageCode === input.translationTargetLanguageCode,
+    );
+    if (!capability || capability.actionId !== "request-translation") {
+      return { state: "translation-unavailable" };
+    }
+    const result = await requestPlatformV2LibraryTranslation({
+      entryId: input.entryId,
+      targetLanguageCode: input.translationTargetLanguageCode,
+    });
+    return { state: result === "ready" ? "ready" : "translation-pending" };
+  } catch (error) {
+    if (error instanceof PlatformV2LibraryLookupError) {
+      if (error.status === 403) return { state: "dictionary-access-revoked" };
+      if (error.status === 404) return { state: "entry-not-found" };
+      if (error.status === 409) return { state: "projection-missing" };
+    }
+    throw error;
+  }
+}
+
 /** Reads exactly the scheduled source node; generation never changes its identity. */
 export async function loadSentenceExerciseContent(input: {
   candidate: PlatformTranslationExerciseCandidateV2;
