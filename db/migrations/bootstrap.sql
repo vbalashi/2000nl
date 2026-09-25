@@ -492,3 +492,4 @@
 \i db/migrations/172_translation_source_learned_set.sql
 \i db/migrations/173_translation_candidate_batch_targets.sql
 \i db/migrations/174_word_context_reverse_eligibility.sql
+\i db/migrations/175_word_context_member_source.sql
