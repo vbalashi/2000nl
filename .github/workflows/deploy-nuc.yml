@@ -37,6 +37,8 @@ jobs:
       # Dictionary/list filtering is a stable gated-RPC path, not a rollout flag.
       # See docs/runbooks/dictionary-search-rollout.md.
       APP_ROLLOUT_PROFILE: pilot
+      # Enabled with migration 170 for the #333 test-production release.
+      PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED: "true"
     steps:
       - name: Deploy with Telegram notifications
         shell: bash

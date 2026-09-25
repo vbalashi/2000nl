@@ -1,6 +1,6 @@
 # Sentence translation user release (#333)
 
-Status: implementation in progress; family remains disabled until the complete release gates pass.
+Status: implementation and local gates complete; ready for coordinated test-production release after final PR/CI review. The local fixture corpus has no translated examples, so real answer-card QA remains a production verification step.
 
 ## Product contract
 
@@ -50,13 +50,16 @@ server selection, and presets must round-trip them. No empty-scope fallback.
 3. Implemented: finite translation session, exact-node lookup, translation
    preparation/retry without consuming a member, shared reveal/grade shell,
    session restore, statistics, audio, Report, and pair Exclude/Undo.
-4. Focused UI tests and typecheck pass. Full UI suite passed before the final
-   setup/client characterization was added; rerun it after the final edits.
-   Browser/mobile QA, generated-translation and language-switch behavior remain
-   release gates. Keep the family dark until they pass.
-5. Pending: append migration 170's checksum/postflight to the deployment
-   contract, CI/review, then deploy app and DB together and verify the test
-   production.
+4. Complete locally: all 138 UI test files pass (1,172 passed, 242 skipped),
+   typecheck passes, lint passes with one existing hook-dependency warning,
+   and the full local DB harness and migration-170 postflight pass. Local UI
+   launch reaches the sentence session and shows the designed empty state; the
+   local corpus contains no translated examples, so it cannot show a real card.
+5. Complete locally: contract 170 records the migration SHA and chained
+   postflight; the deployment pipeline passes the sentence-family launch flag
+   through Compose and both Docker build stages. Production migration, live
+   translated-card rendering, generated-translation retry and language-switch
+   verification remain the deployment smoke gate.
 
 The opposite direction, text entry and automatic grading remain out of v1.
 Continuous sessions remain #468; All due is not Continuous.

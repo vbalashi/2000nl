@@ -238,7 +238,7 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 169 in order
+An enabled deployment must apply or verify migrations 123 through 170 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -252,9 +252,14 @@ until the full pilot latency and parity checks under #485 finish.
 
 Migration 166 adds the dark sentence-translation consumer on top of the current
 admin contract. Each source example Content Node remains the progress identity;
-translation language is presentation-only, and the launch UI stays disabled until
-#331 approves the sentence-family visuals and states. The postflight verifies the
+translation language is presentation-only. The postflight verifies the
 translation candidate/session/action RPC boundary and chains migration 165.
+
+Migration 170 carries material, lexical, activity, and new/review mix filters
+into translation selection and statistics while preserving pair exclusion. Its
+postflight chains migration 169. The #333 app rollout sets
+`PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED=true` through the deployment build
+arguments; local and other builds remain dark by default.
 
 Migration 164 adds a partial covering index keyed by active Content Node entry
 and source order. It bounds the report-atom revision path used by the
