@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-172",
+  "contractId": "2000nl-db-173",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 172,
+    "requiredMigrationId": 173,
     "coordinationIssue": 333,
     "compatibilityPhase": "legacy-first-party-compatible",
     "strictEnforcementIssue": 399
@@ -266,9 +266,14 @@
       "migrationId": 172,
       "file": "db/migrations/172_translation_source_learned_set.sql",
       "sha256": "63dab534eddca6dc7de399a2358f02dadca60ec1fea7a5344a9273a0e16987aa"
+    },
+    {
+      "migrationId": 173,
+      "file": "db/migrations/173_translation_candidate_batch_targets.sql",
+      "sha256": "50a90a16ad9fc727113c4d9973372b2aea15d4fa02c85935f85d15c9d2644186"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-172.sql",
+  "postflightProbe": "db/deploy-contract/postflight-173.sql",
   "preSwitchReadProbe": {
     "file": "db/deploy-contract/pre-switch-read-probe-164.sql",
     "sha256": "e4ea2002e4d65225d28ac4d7313426d4ca2ae91e2a6c514d223783e174d74a88",
