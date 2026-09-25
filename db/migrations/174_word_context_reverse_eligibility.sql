@@ -2,7 +2,7 @@
 -- Patching exact anchors preserves later pair-exclusion and scope amendments.
 BEGIN;
 
-CREATE FUNCTION private.training_word_context_candidate_v1(
+CREATE OR REPLACE FUNCTION private.training_word_context_candidate_v1(
   p_user_id uuid, p_entry_id uuid, p_card_type_id text
 ) RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = public, private, pg_temp
