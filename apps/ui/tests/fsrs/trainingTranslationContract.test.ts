@@ -86,6 +86,88 @@ describeIfDb("translation exercise database contract", () => {
     });
   });
 
+  test("keeps every eligible example node while excluding entries without ordinary learning state", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      await ensureUserWithSettings(client, userId);
+      const learnedEntry = await insertWord(client, `sentence-multi-${randomUUID()}`);
+      const knownEntry = await insertWord(client, `sentence-known-${randomUUID()}`);
+      const untouchedEntry = await insertWord(client, `sentence-untouched-${randomUUID()}`);
+      const exampleNodes = [0, 1, 2].map(() => randomUUID());
+      const knownNode = randomUUID();
+      const untouchedNode = randomUUID();
+      for (const [index, nodeId] of exampleNodes.entries()) {
+        await client.query(
+          `insert into private.platform_v2_content_nodes (
+             id, entry_id, kind, binding_state, first_source_revision,
+             last_source_revision, source_text_fingerprint, diagnostic_locator
+           ) values ($1, $2, 'example', 'active', 'test-v1', 'test-v1', $3, $4)`,
+          [nodeId, learnedEntry, `sentence-${nodeId}`, `raw.meanings[0].examples[${index}]`],
+        );
+      }
+      await client.query(
+        `insert into private.platform_v2_content_nodes (
+           id, entry_id, kind, binding_state, first_source_revision,
+           last_source_revision, source_text_fingerprint, diagnostic_locator
+         ) values ($1, $2, 'example', 'active', 'test-v1', 'test-v1', $3,
+                  'raw.meanings[0].examples[0]')`,
+        [knownNode, knownEntry, `sentence-${knownNode}`],
+      );
+      await client.query(
+        `insert into private.platform_v2_content_nodes (
+           id, entry_id, kind, binding_state, first_source_revision,
+           last_source_revision, source_text_fingerprint, diagnostic_locator
+         ) values ($1, $2, 'example', 'active', 'test-v1', 'test-v1', $3,
+                  'raw.meanings[0].examples[0]')`,
+        [untouchedNode, untouchedEntry, `sentence-${untouchedNode}`],
+      );
+      await client.query(
+        `insert into public.user_card_status (
+           user_id, entry_id, card_type_id, fsrs_enabled, in_learning
+         ) values ($1, $2, 'word-to-definition', true, true)`,
+        [userId, learnedEntry],
+      );
+      const { rows: knownEventRows } = await client.query(
+        `insert into public.user_card_action_events (
+           user_id, entry_id, card_type_id, action, client_event_id,
+           action_payload_hash
+         ) values ($1, $2, 'word-to-definition', 'mark-known', $3, 'sentence-known')
+         returning id`,
+        [userId, knownEntry, randomUUID()],
+      );
+      await client.query(
+        `insert into public.user_card_known_marks (
+           user_id, entry_id, card_type_id, mark_event_id
+         ) values ($1, $2, 'word-to-definition', $3)`,
+        [userId, knownEntry, knownEventRows[0].id],
+      );
+
+      const { rows: definitionRows } = await client.query(
+        `select pg_get_functiondef(
+           'private.training_translation_source_nodes_v1(uuid,uuid,text,jsonb)'::regprocedure
+         ) as definition`,
+      );
+      expect(definitionRows[0].definition)
+        .toContain("eligible_entries AS MATERIALIZED");
+      expect(definitionRows[0].definition)
+        .not.toContain("platform_v2_training_ordinary_meaning_eligible_v1");
+
+      const { rows } = await client.query(
+        `select content_node_id, entry_id
+           from private.training_translation_source_nodes_v1(
+             $1::uuid, null::uuid, 'curated', '{}'::jsonb
+           )
+          where entry_id = any($2::uuid[])
+          order by content_node_id`,
+        [userId, [learnedEntry, knownEntry, untouchedEntry]],
+      );
+      expect(rows.map((row) => row.content_node_id).sort())
+        .toEqual([...exampleNodes, knownNode].sort());
+      expect(rows.filter((row) => row.entry_id === learnedEntry)).toHaveLength(3);
+      expect(rows.filter((row) => row.entry_id === knownEntry)).toHaveLength(1);
+    });
+  });
+
   test("keeps the source node identity stable through candidate, session, grade, and retry", async () => {
     await withTransaction(pool, async (client) => {
       const userId = randomUUID();

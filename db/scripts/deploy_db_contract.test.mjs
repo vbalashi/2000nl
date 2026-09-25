@@ -442,7 +442,7 @@ test("the repository contract enables the current training rollout contract", ()
   assert.equal(result.status, 0, result.stderr);
   assert.equal(
     result.stdout.trim(),
-    "enabled 170 333",
+    "enabled 171 333",
   );
 });
 

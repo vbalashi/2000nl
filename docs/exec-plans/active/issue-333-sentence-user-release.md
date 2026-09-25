@@ -1,6 +1,6 @@
 # Sentence translation user release (#333)
 
-Status: implementation and local gates complete; ready for coordinated test-production release after final PR/CI review. The local fixture corpus has no translated examples, so real answer-card QA remains a production verification step.
+Status: migration 170 and sentence-session UI are deployed to test production. The first live sentence-session smoke test failed before creating a session: PostgreSQL cancelled candidate selection with SQLSTATE `57014` (`statement timeout`). Migration 171 now computes ordinary-learning eligibility once per source entry rather than invoking the scalar check for each example node. Local FSRS tests pass; production smoke remains open until migration 171 is deployed and a real sentence card is shown.
 
 ## Product contract
 
@@ -55,11 +55,58 @@ server selection, and presets must round-trip them. No empty-scope fallback.
    and the full local DB harness and migration-170 postflight pass. Local UI
    launch reaches the sentence session and shows the designed empty state; the
    local corpus contains no translated examples, so it cannot show a real card.
-5. Complete locally: contract 170 records the migration SHA and chained
+5. Deployed: contract 170 records the migration SHA and chained
    postflight; the deployment pipeline passes the sentence-family launch flag
-   through Compose and both Docker build stages. Production migration, live
-   translated-card rendering, generated-translation retry and language-switch
-   verification remain the deployment smoke gate.
+   through Compose and both Docker build stages. The live smoke attempt at
+   `2026-09-25 09:13:44 UTC` reached the scoped start RPC but timed out while
+   `training_translation_source_nodes_v1` called
+   `platform_v2_training_ordinary_meaning_eligible_v1` from candidate selection.
+   The transaction rolled back, so no session row or learning action was
+   created. Do not close the user-release gate on health status alone.
+6. In progress: migration 171 replaces that per-example eligibility call with
+   a materialized, set-based eligible-entry relation. The existing filters,
+   exact source-node identity, sibling learning/Known gate, and stale-binding
+   exclusion stay in place. Local coverage verifies that multiple examples on
+   one eligible entry remain separate candidates and that unlearned entries
+   remain excluded. After CI and test-production deployment, retry a finite
+   sentence session, verify prompt/answer and translation preparation, then
+   switch translation language and confirm the source exercise identity stays
+   unchanged. Do not grade a production card during this smoke test.
 
 The opposite direction, text entry and automatic grading remain out of v1.
 Continuous sessions remain #468; All due is not Continuous.
+
+## Queue clarification — 2026-09-25
+
+The user wants sentence practice to reinforce previously encountered meanings,
+with weaker meanings receiving priority and examples rotating across meanings.
+This is a refinement of the current implementation, not already delivered behavior.
+Current admission accepts learning/Known state on a source-group sibling as well
+as the exact entry. Current ordering uses each sentence exercise's own state and
+due date, then creation time and node ID; it does not rank by parent meaning FSRS
+or interleave examples by meaning. The session currently loads translations for
+the current candidate on demand, without one-card lookahead.
+
+Accepted follow-up ([ADR-0014](../../adr/0014-sentence-queue-and-preparation.md),
+[discussion](../../discussions/2026-09-25-01-sentence-queue.md)): require prior learning or an explicit Known mark on the exact
+meaning; preserve sentence identity and its own review state; prioritize due
+sentence reviews, and rank new sentence introductions by the parent meaning's
+review urgency. Introduce at most one new example per meaning per pass, rotating
+through remaining examples before reusing them. Do not equate a distant due date
+with a complete measure of knowledge, and do not write a second ordinary-word
+review when a sentence is graded. Confirm scheduling semantics before changing
+the scheduler, including how existing sentence states behave if source eligibility
+changes. Existing ordinary-word progress must remain intact.
+
+Prepare at most the next candidate's translation while the current card is shown,
+using the same loader/cache boundary, deduplicated by entry/revision/language.
+Lookahead must not advance the session, grade, or reorder it; revalidate the next
+candidate after an action and ignore stale responses on exit/language/run changes.
+Failed speculative work must remain retryable without retry storms. First-card
+preparation needs an explicit loading state. Verify a single in-flight request,
+cache reuse, stale-response isolation, and no progress mutation from prefetch.
+
+Priority: finish and measure migration 171's startup fix independently, then
+implement bounded translation lookahead and the agreed queue refinement. The
+set-based eligibility optimization is compatible with a later narrower exact-meaning
+policy; deploying it does not establish sibling admission as final product intent.

@@ -24,6 +24,9 @@
 
 ## Canonical Navigation
 
+- Current decisions: [current-decisions.md](./current-decisions.md)
+- Discussion archive and recording rules: [../discussions/README.md](../discussions/README.md)
+
 - Root repo map: [AGENTS.md](../../AGENTS.md)
 - System overview: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Current transformation targets: [current-transformation-targets.md](./current-transformation-targets.md)

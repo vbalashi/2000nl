@@ -8,7 +8,8 @@ BEGIN
   SELECT pg_get_functiondef(
     'private.training_translation_source_nodes_v1(uuid,uuid,text,jsonb)'::regprocedure
   ) INTO definition;
-  IF strpos(definition, 'platform_v2_training_ordinary_meaning_eligible_v1') = 0
+  IF (strpos(definition, 'platform_v2_training_ordinary_meaning_eligible_v1') = 0
+      AND strpos(definition, 'eligible_entries AS MATERIALIZED') = 0)
      OR strpos(definition, 'training_extra_source_entries_v1') = 0
      OR strpos(definition, 'raw\.meanings') = 0 THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed sentence source scope';

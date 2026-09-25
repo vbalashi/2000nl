@@ -38,6 +38,19 @@ postflight 167 additionally verifies the stats boundary and shared relation.
 The compact footer is shared with ordinary cards; stats load independently of
 first-card readiness. This migration does not enable new exercise families.
 
+## Sentence candidate eligibility (migration 171)
+
+The first test-production sentence-session start after migration 170 timed out
+inside `platform_v2_training_ordinary_meaning_eligible_v1`, called from
+`training_translation_source_nodes_v1` once for each example node. Migration
+171 keeps that source-word learning/Known gate and source-group sibling
+semantics, but computes the eligible entry set once and joins example nodes
+against it. This avoids repeated per-example work without changing sentence
+identity, lexical/activity/material filters, pair exclusion, or queue ordering.
+Postflight 171 verifies the set-based body and the private helper's search path
+and grants. Production sentence smoke must still show a real card before issue
+#333 is accepted.
+
 ## Current coordinated rollout
 
 Issue #233 first integrated the gate with `rollout.status: hold` and
@@ -238,7 +251,7 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 170 in order
+An enabled deployment must apply or verify migrations 123 through 171 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

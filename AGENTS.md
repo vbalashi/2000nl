@@ -51,6 +51,14 @@ promotes a boundary change.
 
 ## Working Rules
 
+- Preserve material product/architecture discussions using
+  [docs/discussions/README.md](./docs/discussions/README.md). Search previous
+  decisions before reopening a topic. Record each new discussion in a separate
+  dated file; do not rewrite historical reasoning. Update only current decisions
+  in [docs/intent/current-decisions.md](./docs/intent/current-decisions.md) and
+  relevant ADRs, linking their discussion sources. Distinguish proposed, accepted,
+  and implemented behavior; capture decisions before continuing implementation.
+
 - Create every material 2000NL worktree through
   `scripts/create-worktree.sh <issue-number> <short-slug>` from the reference
   checkout. It places the checkout in the ignored project-local
