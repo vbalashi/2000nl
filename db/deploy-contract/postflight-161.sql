@@ -7,6 +7,8 @@ DO $postflight_extra_source_scope$
 DECLARE
   v_scope text;
   v_candidates text;
+  v_candidate_scope text;
+  v_source_nodes_oid oid;
   v_start text;
   v_public_argument_names text[];
   v_public_oid oid := 'public.start_platform_v2_idiom_training_session(uuid,text,text,uuid,uuid,text,text,jsonb,integer)'::regprocedure;
@@ -23,6 +25,24 @@ BEGIN
   SELECT pg_get_functiondef(
     'private.start_platform_v2_idiom_training_session_v2(uuid,text,text,uuid,uuid,text,text,jsonb,integer)'::regprocedure
   ) INTO v_start;
+  -- Migration 167 shares the read-only relation with the stats projection.
+  -- Validate the actual delegated body; do not require the selector to duplicate it.
+  v_candidate_scope := v_candidates;
+  IF v_candidates ILIKE '%FROM private.training_idiom_source_nodes_v1(%' THEN
+    v_source_nodes_oid := to_regprocedure(
+      'private.training_idiom_source_nodes_v1(uuid,text,uuid,text,jsonb)'
+    );
+    SELECT pg_get_functiondef(v_source_nodes_oid) INTO v_candidate_scope;
+    IF v_source_nodes_oid IS NULL OR NOT EXISTS (
+      SELECT 1 FROM pg_proc WHERE oid = v_source_nodes_oid AND prosecdef
+        AND provolatile = 's'
+        AND proconfig @> ARRAY['search_path=public, private, extensions, pg_temp']
+    ) OR has_function_privilege('anon', v_source_nodes_oid, 'EXECUTE')
+      OR has_function_privilege('authenticated', v_source_nodes_oid, 'EXECUTE')
+      OR has_function_privilege('service_role', v_source_nodes_oid, 'EXECUTE') THEN
+      RAISE EXCEPTION 'db-contract-gate: postflight-failed idiom-shared-source-scope';
+    END IF;
+  END IF;
   SELECT proargnames INTO v_public_argument_names
   FROM pg_proc WHERE oid = v_public_oid;
 
@@ -32,8 +52,8 @@ BEGIN
      OR v_scope NOT ILIKE '%user_word_lists%'
      OR v_scope NOT ILIKE '%user_card_action_events%'
      OR v_candidates IS NULL
-     OR v_candidates NOT ILIKE '%training_extra_source_entries_v1%'
-     OR v_candidates NOT ILIKE '%eligible_source_groups AS MATERIALIZED%'
+     OR v_candidate_scope NOT ILIKE '%training_extra_source_entries_v1%'
+     OR v_candidate_scope NOT ILIKE '%eligible_source_groups AS MATERIALIZED%'
      OR v_candidates ILIKE '%platform_v2_training_ordinary_meaning_eligible_v1%'
      OR v_candidates NOT ILIKE '%p_card_filter%'
      OR to_regclass('private.platform_v2_content_nodes_active_idiom_entry_idx') IS NULL

@@ -476,3 +476,6 @@
 
 -- Add the dark sentence-translation exercise consumer after the admin contract.
 \i db/migrations/166_translation_training_session_consumer.sql
+
+-- Read-only idiom statistics and the shared candidate source relation.
+\i db/migrations/167_idiom_training_stats.sql

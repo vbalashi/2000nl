@@ -2219,6 +2219,7 @@ function TrainingScreenContent({
     snapshot: trainingSessionPlanSnapshot,
   } = useAuthoritativeTrainingSessionPlan({
     active:
+      activeExerciseFamily === "meaning" &&
       Boolean(trainingTodaySetupEnabled) && trainingPilot.surface === "session",
     sessionGeneration: trainingPilot.sessionGeneration,
     userId: user.id,
@@ -2392,6 +2393,7 @@ function TrainingScreenContent({
           />
         ) : activeExerciseFamily === "idiom" && idiomSession ? (
           <TrainingIdiomSession
+            key={idiomSession.sessionId}
             userId={user.id}
             session={idiomSession}
             contentLanguageCode={currentTrainingLanguage}

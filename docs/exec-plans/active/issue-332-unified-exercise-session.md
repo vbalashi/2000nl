@@ -27,7 +27,16 @@ knows the material. Do not exclude sibling meanings or idioms in the same entry.
   progress, history and close. The parent applies the same viewport style.
 - Existing word details callback also receives a click event in compatibility
   consumers; safe optional access preserves that behavior.
-- No DB migration has been authored or applied by this worktree yet.
+- Migration 167 adds a read-only, owned-session idiom stats RPC and extracts the
+  source-node relation from migration 161 for both selection and counting.
+  Local tests/postflight pass; production remains on DB166 and has not changed.
+- Production selector body was checked through linked Supabase CLI: its MD5
+  `cfff2f0f546d9c5f11eba7430cd4e9fb` exactly matches migration 161 (including
+  delimiter-adjacent newlines). No production writes were made.
+- Both word and idiom sessions use TrainingSessionStatsFooter. Idiom counts load
+  separately, refresh after accepted grades, reject stale responses and freeze
+  the review denominator after the first successful response.
+- The ordinary session-plan hook no longer starts for idiom sessions.
 
 ## Release blockers (do not merge this checkpoint as a complete release)
 
@@ -43,10 +52,10 @@ knows the material. Do not exclude sibling meanings or idioms in the same entry.
    exclusion with atomic action/receipt and undo; preserve historical Known data.
    Verify ordinary and content-bound exercise selection plus already-latched
    session behavior. Do not change scheduling or manufacture reviews.
-3. **Footer data:** idiom session payload has bounded members, not corpus/day
-   statistics. Never populate its footer with word statistics or treat session
-   size as total corpus. Add the read-only projection described below and use
-   the same footer renderer. Fetch independently of first-card readiness.
+3. **Footer data:** implemented in migration 167 and the shared renderer; still
+   needs the forthcoming pair-exclusion filter and final real-browser proof.
+   Counts use the saved session scope; bounded session membership is not used
+   as corpus size. The footer never blocks card readiness.
 4. **Browser proof:** verify direct/reverse, front/back, all three locales,
    mobile narrow width and desktop, actual actions and current-session counts.
    Pending test.todo for exclusion must become an executed test before release.
@@ -92,3 +101,17 @@ classification from actual historical events/receipts.
    deployed SHA and actual runtime behavior before calling the release complete.
 
 #413 remains nonblocking and is not part of this UI release.
+
+## Statistics checkpoint evidence (2026-09-25)
+
+- Full disposable SQL suite: 240 tests passed before adding the DST regression.
+- Final targeted real DB suite: 12 tests passed, including the new DST test;
+  entire chained postflight through 167 passed on that disposable database.
+- UI/transport/deployment checks: 95 passed, one existing exclusion TODO remains.
+- Typecheck passed; lint passed with the pre-existing handlePlayAudio hook warning.
+- Deployment manifest validates exact migration checksum and contract 167.
+- Two-axis static review found no blockers. A history-scan risk was improved:
+  aggregate only events inside the study day and use the indexed prior-event
+  existence check to identify introductions, instead of ranking all past events.
+- No release merge/deployment has occurred. Next: pair exclusion/undo (#499),
+  scoped Report, then complete browser/production verification.

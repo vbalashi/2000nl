@@ -30,6 +30,9 @@ import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
 import { TrainingSessionNotice } from "../v2/TrainingSessionSurface";
 import { TrainingSessionChrome } from "../v2/TrainingSessionChrome";
 
+import { TrainingSessionStatsFooter } from "../TrainingSessionStatsFooter";
+import { useIdiomTrainingStats } from "./useIdiomTrainingStats";
+
 import { TrainingIdiomCard } from "./TrainingIdiomCard";
 
 type Props = {
@@ -98,6 +101,7 @@ export function TrainingIdiomSession({
   const [completedCount, setCompletedCount] = useState(
     session.completedActions,
   );
+  const footerStats = useIdiomTrainingStats(session.sessionId, completedCount);
   const completedCountRef = useRef(session.completedActions);
   const [terminal, setTerminal] = useState<"complete" | "empty" | null>(
     session.plannedTotal === 0 ? "empty" : null,
@@ -276,7 +280,7 @@ export function TrainingIdiomSession({
           onRetry: () => void loadNext(),
         }} />
       ) : null}
-      footer={null}
+      footer={<TrainingSessionStatsFooter {...footerStats} interfaceLanguage={interfaceLanguage} />}
     >
       {loading ? (
         <div

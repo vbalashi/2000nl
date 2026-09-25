@@ -1,5 +1,7 @@
 import * as reportClient from "@/lib/feedback/diagnosticReportClient";
 import React from "react";
+import { readIdiomTrainingStats } from "@/lib/training/idiomStatsClient";
+vi.mock("@/lib/training/idiomStatsClient", () => ({ readIdiomTrainingStats: vi.fn() }));
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
 import { TrainingIdiomSession } from "@/components/training/pilot/TrainingIdiomSession";
@@ -119,6 +121,7 @@ const content = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(readIdiomTrainingStats).mockResolvedValue({contractVersion: "training-idiom-stats-v1", newCardsToday: 2, reviewCardsDone: 3, reviewCardsDue: 4, totalCardsStarted: 12, totalCardsInScope: 30});
 });
 
 test("direct idiom reveals complete content and records the self-assessment", async () => {
@@ -422,4 +425,31 @@ test.each(["audio", "translation"] as const)("failed %s stays inside the shared 
   expect(alert.parentElement).toBe(screen.getByTestId("training-exercise-card"));
   expect(alert).toHaveClass("shrink-0");
   expect(screen.getByRole("button", { name: "Good" })).toBeEnabled();
+});
+
+test("the common footer loads independently and refreshes authoritative counters after a grade", async () => {
+  let resolveStats!: (value: Awaited<ReturnType<typeof readIdiomTrainingStats>>) => void;
+  vi.mocked(readIdiomTrainingStats).mockImplementationOnce(() => new Promise(resolve => { resolveStats = resolve; }));
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise)
+    .mockResolvedValueOnce(candidate)
+    .mockResolvedValueOnce({status:"completed",completedActions:1,requestedTotal:1});
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({ state:"ready",content } as never);
+  vi.mocked(performPlatformV2IdiomExerciseAction).mockResolvedValue({} as never);
+  render(<TrainingIdiomSession userId="user-1" session={session}
+    contentLanguageCode="nl" translationTargetLanguageCode={null}
+    interfaceLanguage="en" onExit={vi.fn()} />);
+  const reveal = await screen.findByRole("button",{name:"Show answer"});
+  expect(screen.getByLabelText("New: loading")).toBeInTheDocument();
+  resolveStats({contractVersion:"training-idiom-stats-v1",newCardsToday:2,
+    reviewCardsDone:3,reviewCardsDue:4,totalCardsStarted:12,totalCardsInScope:30});
+  await waitFor(() => expect(screen.getByTestId("training-session-footer-progress")).toHaveTextContent("3/7"));
+  expect(screen.getByTestId("training-session-footer-progress")).toHaveTextContent("12/30");
+  vi.mocked(readIdiomTrainingStats).mockResolvedValueOnce({contractVersion:"training-idiom-stats-v1",
+    newCardsToday:3,reviewCardsDone:3,reviewCardsDue:5,totalCardsStarted:13,totalCardsInScope:30});
+  fireEvent.click(reveal);
+  fireEvent.click(screen.getByRole("button",{name:"Good"}));
+  await waitFor(() => expect(screen.getByTestId("training-session-footer-progress")).toHaveTextContent("13/30"));
+  expect(screen.getByTestId("training-session-footer-progress")).toHaveTextContent("3/7");
+  expect(readIdiomTrainingStats).toHaveBeenCalledTimes(2);
+  expect(readIdiomTrainingStats).toHaveBeenLastCalledWith(session.sessionId);
 });

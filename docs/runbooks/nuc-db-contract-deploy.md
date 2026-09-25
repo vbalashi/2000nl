@@ -26,6 +26,18 @@ image, non-zero client, or wrong client major therefore stops deployment before
 `.env` is read or any database connection is possible. The apply command repeats
 that preflight and then reuses the already-pulled exact image.
 
+## Idiom session statistics (migration 167)
+
+Migration 167 factors the migration-161 idiom source-node relation into a private
+read-only helper reused by selection and statistics. Candidate ranking, limits,
+materialization and permissions remain unchanged. The authenticated stats RPC
+accepts only an owned session ID, uses its saved scope and the existing local
+04:00 study-day clock, and never creates targets or learning state. Postflight
+161 validates either the original scope body or the actual delegated helper;
+postflight 167 additionally verifies the stats boundary and shared relation.
+The compact footer is shared with ordinary cards; stats load independently of
+first-card readiness. This migration does not enable new exercise families.
+
 ## Current coordinated rollout
 
 Issue #233 first integrated the gate with `rollout.status: hold` and

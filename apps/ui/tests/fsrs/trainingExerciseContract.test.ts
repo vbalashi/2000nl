@@ -1158,4 +1158,97 @@ describeIfDb("content-bound training exercise database contract", () => {
       userId,
     );
   });
+  async function statsSession(client: PoolClient, userId: string, direction = "direct", filter = {}) {
+    const sessionId = randomUUID();
+    await client.query(`insert into training_sessions
+      (id,user_id,exercise_family,session_size,card_type_ids,list_type,card_filter,training_filter,requested_total)
+      values ($1,$2,'idiom','5',array[$3],'curated','both',$4,5)`,
+      [sessionId,userId,`idiom:${direction}`,filter]);
+    return sessionId;
+  }
+  async function readStats(client: PoolClient, sessionId: string) {
+    return asAuthenticated(client, async () => (await client.query(
+      'select public.read_training_idiom_stats_v1($1) result', [sessionId],
+    )).rows[0].result);
+  }
+
+  test("idiom statistics read the full saved scope without materializing reverse targets", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async client => {
+      const a = await createIdiomFixture(client, userId);
+      const b = await createIdiomFixture(client, userId);
+      await client.query("update word_entries set part_of_speech = 'bn' where id = $1", [a.entryId]);
+      await client.query("update word_entries set part_of_speech = 'ww' where id = $1", [b.entryId]);
+      const all = await statsSession(client,userId,"reverse");
+      const adjective = await statsSession(client,userId,"reverse",{partOfSpeech:["bn"]});
+      const before = (await client.query(`select
+        (select count(*) from private.platform_v2_training_exercise_targets) targets,
+        (select count(*) from user_training_exercise_state) states,
+        (select count(*) from user_training_exercise_action_events) events`)).rows;
+      expect(await readStats(client,all)).toEqual({
+        contractVersion:"training-idiom-stats-v1", newCardsToday:0,
+        reviewCardsDone:0,reviewCardsDue:0,totalCardsStarted:0,totalCardsInScope:2,
+      });
+      expect(await readStats(client,adjective)).toMatchObject({totalCardsInScope:1});
+      const after = (await client.query(`select
+        (select count(*) from private.platform_v2_training_exercise_targets) targets,
+        (select count(*) from user_training_exercise_state) states,
+        (select count(*) from user_training_exercise_action_events) events`)).rows;
+      expect(after).toEqual(before);
+    }, userId);
+  });
+
+  test("idiom statistics count accepted first reviews and repeats once, in the user's study day", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async client => {
+      const a = await createIdiomFixture(client,userId);
+      const b = await createIdiomFixture(client,userId);
+      await createIdiomFixture(client,userId);
+      const direct = await statsSession(client,userId);
+      const reverse = await statsSession(client,userId,"reverse");
+      await client.query("select set_config('training.test_reference_now','2026-09-24T12:00:00Z',true)");
+      const old = await performIdiomAction(client,userId,a.targetId,randomUUID());
+      await client.query("select set_config('training.test_reference_now','2026-09-25T12:00:00Z',true)");
+      const eventId = randomUUID();
+      await performIdiomAction(client,userId,a.targetId,eventId,{stateRevision:(old.state as {stateRevision:string}).stateRevision});
+      await performIdiomAction(client,userId,a.targetId,eventId,{stateRevision:(old.state as {stateRevision:string}).stateRevision});
+      await performIdiomAction(client,userId,b.targetId,randomUUID());
+      // Both due before study day end; today's new introduction is not a review due.
+      await client.query("update user_training_exercise_state set next_review_at='2026-09-25T20:00:00Z' where user_id=$1",[userId]);
+      expect(await readStats(client,direct)).toMatchObject({
+        newCardsToday:1,reviewCardsDone:1,reviewCardsDue:1,totalCardsStarted:2,totalCardsInScope:3,
+      });
+      expect(await readStats(client,reverse)).toMatchObject({newCardsToday:0,reviewCardsDone:0,totalCardsStarted:0,totalCardsInScope:3});
+    },userId);
+  });
+
+  test("idiom statistics deny other users and anonymous calls", async () => {
+    const owner = randomUUID();
+    await withTransaction(pool,async client => {
+      await createIdiomFixture(client,owner);
+      const sessionId = await statsSession(client,owner);
+      await client.query("select set_config('request.jwt.claim.sub',$1,true)",[randomUUID()]);
+      await expect(readStats(client,sessionId)).rejects.toThrow('training_session_not_found');
+    },owner);
+    const {rows} = await pool.query(`select
+      has_function_privilege('anon','public.read_training_idiom_stats_v1(uuid)','execute') anon,
+      has_function_privilege('authenticated','private.training_idiom_source_nodes_v1(uuid,text,uuid,text,jsonb)','execute') internal`);
+    expect(rows[0]).toEqual({anon:false,internal:false});
+  });
+
+  test("idiom statistics roll over at local 04:00 across the DST change", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool,async client => {
+      const fixture = await createIdiomFixture(client,userId);
+      await client.query("update user_settings set training_schedule_timezone='Europe/Amsterdam' where user_id=$1",[userId]);
+      const sessionId = await statsSession(client,userId);
+      // After the autumn DST change, 02:59 UTC is 03:59 local: previous study day.
+      await client.query("select set_config('training.test_reference_now','2026-10-25T02:59:00Z',true)");
+      await performIdiomAction(client,userId,fixture.targetId,randomUUID());
+      expect(await readStats(client,sessionId)).toMatchObject({newCardsToday:1,totalCardsStarted:1});
+      await client.query("select set_config('training.test_reference_now','2026-10-25T03:00:00Z',true)");
+      expect(await readStats(client,sessionId)).toMatchObject({newCardsToday:0,reviewCardsDone:0,totalCardsStarted:1});
+    },userId);
+  });
+
 });
