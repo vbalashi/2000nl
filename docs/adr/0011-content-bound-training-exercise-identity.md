@@ -4,6 +4,11 @@
 - Date: 2026-09-12
 - Decision owner: 2000NL product owner, recorded in #385
 
+For the newly accepted Word in Context presentation, see
+[ADR-0015](0015-word-in-context-shared-reverse-state.md): it shares ordinary
+reverse state and does not create a sentence Exercise Target. The independent
+translation contract below describes the existing runtime, not that new mode.
+
 ## Context
 
 Ordinary meaning exercises currently use the durable identity

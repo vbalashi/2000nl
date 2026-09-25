@@ -4,10 +4,11 @@ Status: migrations 172 and 173 are deployed. The same live start RPC improved
 from 6.547 seconds to 2.160 seconds and then to 441 ms while returning a real
 sentence card without grading it. Startup localization is complete for this
 release. One-card translation lookahead is deployed and verified through the
-existing lookup/translation cache boundary. The next stage is the agreed
-exact-meaning admission and round-robin queue refinement.
+existing lookup/translation cache boundary. The next stage is Word in Context under ADR-0015, not further development
+of independent sentence scheduling. The deployed runtime below still uses
+independent translation targets; the accepted replacement is not implemented.
 
-## Product contract
+## Deployed sentence product contract (superseded for the next mode)
 
 The first release has one direction: the selected translation language on Face,
 the original Dutch example on Answer. This is the existing `translation/recall`
@@ -109,36 +110,41 @@ server selection, and presets must round-trip them. No empty-scope fallback.
 The opposite direction, text entry and automatic grading remain out of v1.
 Continuous sessions remain #468; All due is not Continuous.
 
-## Queue clarification — 2026-09-25
+## Next stage — accepted 2026-09-25: Word in Context
 
-The user wants sentence practice to reinforce previously encountered meanings,
-with weaker meanings receiving priority and examples rotating across meanings.
-This is a refinement of the current implementation, not already delivered behavior.
-Current admission accepts learning/Known state on a source-group sibling as well
-as the exact entry. Current ordering uses each sentence exercise's own state and
-due date, then creation time and node ID; it does not rank by parent meaning FSRS
-or interleave examples by meaning. Translation preparation now keeps a bounded
-one-card lookahead; it does not change this still-pending queue policy.
+Authority: [ADR-0015](../../adr/0015-word-in-context-shared-reverse-state.md),
+[discussion evidence](../../discussions/2026-09-25-03-word-in-context.md).
+Do not implement the superseded independent sentence queue refinement.
 
-Accepted follow-up ([ADR-0014](../../adr/0014-sentence-queue-and-preparation.md),
-[discussion](../../discussions/2026-09-25-01-sentence-queue.md)): require prior learning or an explicit Known mark on the exact
-meaning; preserve sentence identity and its own review state; prioritize due
-sentence reviews, and rank new sentence introductions by the parent meaning's
-review urgency. Introduce at most one new example per meaning per pass, rotating
-through remaining examples before reusing them. Do not equate a distant due date
-with a complete measure of knowledge, and do not write a second ordinary-word
-review when a sentence is graded. Confirm scheduling semantics before changing
-the scheduler, including how existing sentence states behave if source eligibility
-changes. Existing ordinary-word progress must remain intact.
+1. Characterize the ordinary reverse selection/action boundary and existing
+   sentence sessions/presets. Specify transition behavior before changing it;
+   preserve prior ordinary progress and historical sentence records. No automatic
+   transfer of sentence grades into ordinary FSRS. Keep DB learning semantics
+   in the existing scheduler/action owner, not in the UI.
+2. Add context presentation over the ordinary reverse queue, with exact-meaning
+   example eligibility and all existing filters/exclusions. Rotate examples
+   within the selected meaning using minimal durable selection metadata; do not
+   introduce a second queue or scheduling state. Freeze the selected node and
+   fingerprint for an active question so reload/prefetch cannot change its answer.
+3. Add small allowlisted presentation/hint metadata to the existing review action,
+   preserving idempotency and atomic history/state writes. Reuse shared card/session
+   templates. Face: translated example with a low-emphasis recall instruction;
+   Answer: target word, exact original example and translation. POS hint may be
+   used; do not guess cloze spans. Exact UI copy remains an implementation proposal.
+4. Reuse translation readiness/cache and bounded next-card preparation. Audit
+   in-flight deduplication, cancellation/stale responses and retry on aborted work;
+   the previous smoke proves cache warming, not every race or transition latency.
+5. Before release: DB tests prove one grade updates only the exact ordinary reverse
+   state, duplicate delivery is harmless, direct/sibling states remain unchanged,
+   and no per-example FSRS is created by this mode. Test exclusion of both directions,
+   filter/preset round-trip, example rotation/reload, source edits/missing examples,
+   unavailable translations, and preservation of old sessions/history. UI tests
+   prove shared actions/stats and focused prompt/answer, hint metadata, no progress
+   writes from preparation, and safe stale-response handling. Run relevant DB/UI
+   checks, then authorized production smoke with measured start and transition time.
 
-Prepare at most the next candidate's translation while the current card is shown,
-using the same loader/cache boundary, deduplicated by entry/revision/language.
-Lookahead must not advance the session, grade, or reorder it; revalidate the next
-candidate after an action and ignore stale responses on exit/language/run changes.
-Failed speculative work must remain retryable without retry storms. First-card
-preparation needs an explicit loading state. Verify a single in-flight request,
-cache reuse, stale-response isolation, and no progress mutation from prefetch.
-
-Priority: implement the agreed queue refinement. The
-set-based eligibility optimization is compatible with a later narrower exact-meaning
-policy; deploying it does not establish sibling admission as final product intent.
+Future enhancement (outside MVP): validated target spans in Dutch, including
+inflected/separable/multiword forms, and structured translation alignment for
+highlighting the corresponding translated phrase. Reject invalid spans safely;
+never use naive string replacement as reliable target alignment. This is recorded
+as backlog scope, not an implemented feature or a release prerequisite.

@@ -92,6 +92,12 @@ content-bound exercises additionally name their exact Content Node and family.
 Changing a translation's display language does not change its Exercise Target.
 _Avoid_: visible text, array position, translation language as identity
 
+**Word in Context**:
+A presentation of an ordinary reverse Dictionary Meaning exercise using a translated
+example as its prompt. Examples can rotate while recall progress belongs to the
+same meaning and direction as definition-based recall.
+_Avoid_: independent sentence exercise, whole-headword progress
+
 **Translation Exercise**:
 A Training Exercise that asks the learner to recall a translation for one exact
 example Content Node. Every example node is its own exercise, even when several
