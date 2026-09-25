@@ -479,3 +479,6 @@
 
 -- Read-only idiom statistics and the shared candidate source relation.
 \i db/migrations/167_idiom_training_stats.sql
+
+-- Explicit pair exclusions preserve scheduling and immutable undo receipts.
+\i db/migrations/168_training_pair_exclusion_actions.sql

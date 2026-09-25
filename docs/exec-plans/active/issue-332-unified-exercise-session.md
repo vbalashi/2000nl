@@ -115,3 +115,19 @@ classification from actual historical events/receipts.
   existence check to identify introductions, instead of ranking all past events.
 - No release merge/deployment has occurred. Next: pair exclusion/undo (#499),
   scoped Report, then complete browser/production verification.
+
+## Exclusion action foundation checkpoint (2026-09-25)
+
+Migration 168 introduces private pair marks and immutable retry receipts, plus a
+service-principal action boundary. Exclude consumes the active session member
+atomically; Undo restores only the exact still-active mark. Neither changes FSRS
+or Known. Ordinary recall directions share identity; content-bound exercises use
+their node and fingerprint, so sibling content remains available. A shared pair
+lock/guard is ready for review integration.
+
+Seventeen targeted real SQL tests and the full postflight chain through 168 pass.
+Tests cover reverse undo, delayed retries after undo, stale undo after re-exclude,
+superseded sessions, nonzero scheduling/history preservation and atomic rejection
+of an out-of-order member. Both static reviewers found no actionable foundation
+defects. Selection, review guards, current-session reads and UI integration remain
+unfinished; this checkpoint must not be independently published as the release.
