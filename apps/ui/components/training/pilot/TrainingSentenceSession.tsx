@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { PlatformTranslationExerciseCandidateV2, PlatformTranslationExerciseSessionV2, PlatformTrainingExerciseReviewResultV2 } from "../../../../../packages/shared/types/platformV2";
 import type { SentenceExerciseContent } from "@/lib/training/sentenceExerciseContent";
-import { loadSentenceExerciseContent } from "@/lib/training/sentenceExerciseLoader";
+import { loadSentenceExerciseContent, prepareSentenceExerciseTranslation } from "@/lib/training/sentenceExerciseLoader";
 import { fetchNextPlatformV2TranslationTrainingSessionExercise, markPlatformV2TranslationTrainingSessionMemberUnavailable, performPlatformV2TranslationExerciseAction } from "@/lib/platform/platformV2TranslationExerciseClient";
 import { buildSentenceCardPresentation } from "@/lib/training/sentenceCardPresentation";
 import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
@@ -40,7 +40,7 @@ const copy = {
 export function TrainingSentenceSession(props: Props) {
   const { userId, session, contentLanguageCode, translationTargetLanguageCode, interfaceLanguage, onExit, onSessionSuperseded, onHistory, onPlayResolvedAudio, onOpenDetails } = props;
   const t = copy[interfaceLanguage];
-  const [candidate, setCandidate] = useState<PlatformTranslationExerciseCandidateV2 | null>(null);
+  const [candidate, setCandidate] = useState<(PlatformTranslationExerciseCandidateV2 & { ordinal: number }) | null>(null);
   const [content, setContent] = useState<SentenceExerciseContent | null>(null);
   const [completed, setCompleted] = useState(session.completedActions);
   const completedRef = useRef(session.completedActions);
@@ -51,6 +51,7 @@ export function TrainingSentenceSession(props: Props) {
   const [terminal, setTerminal] = useState<"complete" | "empty" | null>(session.plannedTotal === 0 ? "empty" : null);
   const eventId = useRef<string | null>(null);
   const generation = useRef(0);
+  const preparedMembers = useRef(new Set<string>());
   const stats = useTranslationTrainingStats(session.sessionId, completed);
 
   const loadNext = useCallback(async () => {
@@ -85,6 +86,37 @@ export function TrainingSentenceSession(props: Props) {
     void loadNext();
     return () => { generationRef.current++; };
   }, [loadNext]);
+
+  useEffect(() => {
+    if (!candidate || !content || loading || terminal) return;
+    const nextMember = session.members.find(
+      (member) =>
+        member.ordinal > candidate.ordinal &&
+        member.consumedAt === null &&
+        member.unavailableAt === null,
+    );
+    if (!nextMember) return;
+    const key = [
+      session.sessionId,
+      session.runGeneration ?? "superseded",
+      nextMember.targetId,
+      translationTargetLanguageCode,
+    ].join(":");
+    if (preparedMembers.current.has(key)) return;
+    preparedMembers.current.add(key);
+    const controller = new AbortController();
+    void prepareSentenceExerciseTranslation({
+      entryId: nextMember.entryId,
+      contentNodeId: nextMember.contentNodeId,
+      contentLanguageCode,
+      translationTargetLanguageCode,
+      signal: controller.signal,
+    }).catch(() => {
+      // Speculative work never changes the visible card. A later authoritative
+      // load remains retryable, while this run avoids a background retry loop.
+    });
+    return () => controller.abort();
+  }, [candidate, content, loading, terminal, session.members, session.runGeneration, session.sessionId, contentLanguageCode, translationTargetLanguageCode]);
 
   const exclusion = useTrainingExclusion({ userId, onSessionSuperseded: onSessionSuperseded ?? onExit, identity: candidate?.targetKey ?? "none", sessionId: session.sessionId, target: { kind: "exercise", targetId: candidate?.targetId ?? "" }, onAccepted: async () => { completedRef.current++; setCompleted(completedRef.current); await loadNext(); } });
   async function grade(result: PlatformTrainingExerciseReviewResultV2) {
