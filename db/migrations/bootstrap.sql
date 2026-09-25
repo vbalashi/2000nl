@@ -489,3 +489,4 @@
 -- Sentence family remains dark until its full user release is ready.
 \i db/migrations/170_translation_session_scope.sql
 \i db/migrations/171_translation_source_eligibility_set_based.sql
+\i db/migrations/172_translation_source_learned_set.sql

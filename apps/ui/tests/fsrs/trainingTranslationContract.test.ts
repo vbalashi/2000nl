@@ -150,6 +150,14 @@ describeIfDb("translation exercise database contract", () => {
       expect(definitionRows[0].definition)
         .toContain("eligible_entries AS MATERIALIZED");
       expect(definitionRows[0].definition)
+        .toContain("learned_entries AS MATERIALIZED");
+      expect(definitionRows[0].definition)
+        .toContain("dictionary_access AS MATERIALIZED");
+      expect(definitionRows[0].definition)
+        .not.toContain("grouped_entries AS MATERIALIZED");
+      expect(definitionRows[0].definition)
+        .not.toContain("JOIN private.source_entry_bindings AS sibling");
+      expect(definitionRows[0].definition)
         .not.toContain("platform_v2_training_ordinary_meaning_eligible_v1");
 
       const { rows } = await client.query(

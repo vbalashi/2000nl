@@ -1,6 +1,12 @@
 # Sentence translation user release (#333)
 
-Status: migration 170 and sentence-session UI are deployed to test production. The first live sentence-session smoke test failed before creating a session: PostgreSQL cancelled candidate selection with SQLSTATE `57014` (`statement timeout`). Migration 171 now computes ordinary-learning eligibility once per source entry rather than invoking the scalar check for each example node. Local FSRS tests pass; production smoke remains open until migration 171 is deployed and a real sentence card is shown.
+Status: migration 171 is deployed and the first live sentence-session smoke now
+returns a real card without grading it. The start RPC still took 6.547 seconds.
+Migration 172 restructures the remaining eligibility work around the small
+learned/Known set; a read-only production `EXPLAIN ANALYZE` returned the same
+974 examples in about 150 ms instead of 3.752 seconds for the source helper.
+Local FSRS and deployment-contract tests pass. Final production latency remains
+open until migration 172 is deployed and the start RPC is remeasured.
 
 ## Product contract
 
@@ -63,7 +69,7 @@ server selection, and presets must round-trip them. No empty-scope fallback.
    `platform_v2_training_ordinary_meaning_eligible_v1` from candidate selection.
    The transaction rolled back, so no session row or learning action was
    created. Do not close the user-release gate on health status alone.
-6. In progress: migration 171 replaces that per-example eligibility call with
+6. Complete in production: migration 171 replaces that per-example eligibility call with
    a materialized, set-based eligible-entry relation. The existing filters,
    exact source-node identity, sibling learning/Known gate, and stale-binding
    exclusion stay in place. Local coverage verifies that multiple examples on
@@ -71,7 +77,13 @@ server selection, and presets must round-trip them. No empty-scope fallback.
    remain excluded. After CI and test-production deployment, retry a finite
    sentence session, verify prompt/answer and translation preparation, then
    switch translation language and confirm the source exercise identity stays
-   unchanged. Do not grade a production card during this smoke test.
+   unchanged. The smoke showed a Russian prompt for Dutch recall without
+   revealing or grading it, but the start RPC remained 6.547 seconds.
+7. In progress: migration 172 builds the learned/Known set first, resolves its
+   valid source groups, and checks each distinct dictionary once. The production
+   explain returned the same 974 examples in about 150 ms. After CI and deploy,
+   start a fresh finite sentence session and use the Supabase edge log's
+   `response.origin_time` as the release measurement.
 
 The opposite direction, text entry and automatic grading remain out of v1.
 Continuous sessions remain #468; All due is not Continuous.

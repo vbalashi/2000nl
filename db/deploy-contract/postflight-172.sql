@@ -1,6 +1,6 @@
-\i db/deploy-contract/postflight-170.sql
+\i db/deploy-contract/postflight-171.sql
 BEGIN;
-DO $sentence_source_eligibility_contract$
+DO $sentence_learned_set_contract$
 DECLARE
   definition text;
   config text[];
@@ -8,17 +8,18 @@ BEGIN
   SELECT pg_get_functiondef(
     'private.training_translation_source_nodes_v1(uuid,uuid,text,jsonb)'::regprocedure
   ) INTO definition;
-  IF strpos(definition, 'eligible_entries AS MATERIALIZED') = 0
-     OR (strpos(definition, 'grouped_entries AS MATERIALIZED') = 0
-         AND strpos(definition, 'learned_entries AS MATERIALIZED') = 0)
+  IF strpos(definition, 'learned_entries AS MATERIALIZED') = 0
+     OR strpos(definition, 'dictionary_access AS MATERIALIZED') = 0
+     OR strpos(definition, 'accessible_learned AS MATERIALIZED') = 0
+     OR strpos(definition, 'eligible_groups AS MATERIALIZED') = 0
      OR strpos(definition, 'training_extra_source_entries_v1') = 0
-     OR strpos(definition, 'platform_v2_training_ordinary_meaning_eligible_v1') > 0
+     OR strpos(definition, 'can_access_dictionary') = 0
      OR strpos(definition, 'user_card_status') = 0
      OR strpos(definition, 'user_card_known_marks') = 0
-     OR strpos(definition, 'source_group_key') = 0
-     OR strpos(definition, 'binding_state') = 0
+     OR strpos(definition, 'grouped_entries AS MATERIALIZED') > 0
+     OR strpos(definition, 'JOIN private.source_entry_bindings AS sibling') > 0
      OR strpos(definition, 'raw\.meanings') = 0 THEN
-    RAISE EXCEPTION 'db-contract-gate: postflight-failed set-based sentence eligibility';
+    RAISE EXCEPTION 'db-contract-gate: postflight-failed learned-set sentence eligibility';
   END IF;
   SELECT proconfig INTO config
     FROM pg_proc
@@ -32,5 +33,5 @@ BEGIN
     RAISE EXCEPTION 'db-contract-gate: sentence source helper privilege boundary changed';
   END IF;
 END
-$sentence_source_eligibility_contract$;
+$sentence_learned_set_contract$;
 COMMIT;
