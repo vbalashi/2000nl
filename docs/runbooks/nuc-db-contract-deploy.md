@@ -51,6 +51,19 @@ Postflight 171 verifies the set-based body and the private helper's search path
 and grants. Production sentence smoke must still show a real card before issue
 #333 is accepted.
 
+Migration 172 addresses the remaining production cost after migration 171.
+The successful test-production start returned 974 eligible examples but spent
+6.547 seconds in the start RPC; the source helper alone took 3.752 seconds and
+82,856 shared-buffer hits. The revised relation first materializes the learner's
+ordinary learned/Known entry set, derives its valid source groups, checks access
+once per distinct dictionary, and intersects that set with the selected source
+scope. An `EXPLAIN (ANALYZE, BUFFERS)` against the same production user and
+collection returned the same 974 examples in about 150 ms. Migration 172 keeps
+the migration-171 source filters, sibling semantics, stale-target exclusion,
+search path, and private grants. The production session-start RPC must be
+remeasured after deployment; the exploratory explain is evidence for the query
+shape, not the final user-facing latency.
+
 ## Current coordinated rollout
 
 Issue #233 first integrated the gate with `rollout.status: hold` and
@@ -251,7 +264,7 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 171 in order
+An enabled deployment must apply or verify migrations 123 through 172 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
