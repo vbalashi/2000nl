@@ -393,7 +393,7 @@ function actionError(error: unknown): PlatformV2ActionOperationResult {
   if (message.includes("platform_card_already_known")) {
     return { payload: { error: "card_already_known" }, status: 409 };
   }
-  if (message.includes("platform_action_not_available")) {
+  if (message.includes("platform_action_not_available") || message.includes("training_pair_excluded")) {
     return { payload: { error: "action_not_available" }, status: 409 };
   }
   if (message.includes("card_is_known")) {
@@ -423,6 +423,7 @@ function idiomExerciseActionError(error: unknown): PlatformV2ActionOperationResu
     message.includes("training_session_superseded") ||
     message.includes("training_exercise_session_") ||
     message.includes("training_exercise_target_unavailable") ||
+    message.includes("training_pair_excluded") ||
     message.includes("training_exercise_source_not_eligible")
   ) {
     return { payload: { error: "training_exercise_not_available" }, status: 409 };

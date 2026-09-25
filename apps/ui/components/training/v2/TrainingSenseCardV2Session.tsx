@@ -1,4 +1,6 @@
 "use client";
+import { useTrainingExclusion } from "./useTrainingExclusion";
+import { TrainingExcludeAction, trainingExclusionCopy } from "./TrainingExcludeAction";
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -82,7 +84,7 @@ type Props = {
     state: Exclude<TrainingV2SessionState, "loading" | "ready">,
   ) => void | Promise<void>;
   onProgressActionAccepted: (
-    capability: PlatformV2TrainingActionCapability,
+    capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" },
   ) => Promise<
     Extract<
       TrainingCardSwipeCommitOutcome,
@@ -562,9 +564,31 @@ export function TrainingSenseCardV2Session({
   const swipeRightCapability = model?.reviewCapabilities.find(
     (capability) => capability.reviewResult === "success",
   );
+  const exclusion = useTrainingExclusion({
+    userId: cacheOwnerId,
+    identity: cardIdentity,
+    sessionId: trainingSessionId,
+    onPendingChange: onProgressActionPendingChange,
+    onStarting: onProgressActionStarting,
+    onSessionSuperseded: onTrainingSessionSuperseded,
+    target: { kind: "meaning", entryId: word.id, cardTypeId: mode },
+    onAccepted: async () => {
+      try {
+        await onProgressActionAccepted({ actionId: "exclude-pair" });
+      } catch (cause) {
+        setAcceptedActionRecoveryPending(true);
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : temporaryFailureMessage(interfaceLanguage),
+        );
+      }
+    },
+  });
+
   const swipeSurface = useTrainingCardSwipeSurface({
     enabled: sessionState === "ready" && cardSide === "answer",
-    busy: busy || interactionDisabled || acceptedActionRecoveryPending,
+    busy: busy || exclusion.busy || exclusion.failed || interactionDisabled || acceptedActionRecoveryPending,
     identity: cardIdentity,
     left: swipeLeftCapability
       ? {
@@ -654,11 +678,14 @@ export function TrainingSenseCardV2Session({
         data-training-renderer="v2"
         data-training-v2-state="ready"
       >
+        {exclusion.failed ? <p role="alert" className="text-sm text-rose-600">
+          {trainingExclusionCopy[interfaceLanguage].failed}
+        </p> : null}
         <TrainingSenseCardStage
           model={model}
           mode={mode}
           interfaceLanguage={interfaceLanguage}
-          busy={busy || interactionDisabled || acceptedActionRecoveryPending}
+          busy={busy || exclusion.busy || exclusion.failed || interactionDisabled || acceptedActionRecoveryPending}
           focusOnMount={handlePresentation}
           onPlayAudio={
             result.group.header.audio && onPlayResolvedAudio
@@ -670,6 +697,11 @@ export function TrainingSenseCardV2Session({
               ? () => onOpenDetails({ group: result.group, entry: result.entry })
               : undefined
           }
+          exclusionAction={exclusion.available ? (
+            <TrainingExcludeAction language={interfaceLanguage}
+              disabled={busy || exclusion.busy || interactionDisabled || acceptedActionRecoveryPending}
+              onClick={() => void exclusion.exclude()} />
+          ) : undefined}
           reportAction={
             model.reportCapabilities.length && result.entry.reportContentRevision ? (
               <SenseCardReportAction

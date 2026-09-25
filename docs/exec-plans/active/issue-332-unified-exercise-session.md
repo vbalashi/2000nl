@@ -157,3 +157,26 @@ list; corrected and rerun.
 Remaining before release: HTTP/client Exclude and Undo wiring for ordinary and
 idiom cards, Report submission contract, complete mobile localization/browser QA,
 PR/CI/deploy verification. Neither 168 nor 169 has been applied to production.
+
+## Exclusion UI checkpoint (2026-09-25)
+
+A strict first-party HTTP boundary now derives the principal server-side and
+invokes the atomic exclusion RPC. Shared `useTrainingExclusion`,
+`TrainingExcludeAction` and `TrainingExclusionUndoNotice` serve ordinary and idiom
+training. The short visible labels are Exclude/Uitsluiten/Исключить; accessible
+help explains both directions. Ordinary Exclude replaces the training Known link,
+while historical Known compatibility remains available on its existing surface.
+
+Uncertain retries keep the frozen request/event ID. Accepted actions never become
+new exclusions when presentation fails. Undo remains visible after next-card or
+completion transitions, preserves its own retry identity and is scoped by user.
+Ordinary exclusion invalidates prepared-next state (a cached reverse may now be
+excluded). Idiom next-card loading ignores stale responses. Superseded exclusion
+requests recover through the existing session reset in both scenarios.
+
+Validation: typecheck; 142 component/controller/HTTP tests pass, including the
+previous exclusion TODO now executed. Lint has only the pre-existing audio-effect
+warning. Two-axis review found parser coercion and missing superseded recovery;
+both fixed, tested and independently rechecked. No production deployment yet.
+Next: finish source-bound Report submission, then complete real-browser mobile
+ru/en/nl and desktop parity, release review/CI/deploy/runtime verification.

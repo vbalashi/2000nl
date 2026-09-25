@@ -33,6 +33,7 @@ type Props = {
   onPlayAudio?: () => void;
   onOpenDetails?: () => void;
   reportAction?: React.ReactNode;
+  exclusionAction?: React.ReactNode;
   side: "face" | "answer";
   onSideChange: (side: "face" | "answer") => void;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
@@ -47,6 +48,7 @@ export function TrainingSenseCardStage({
   onPlayAudio,
   onOpenDetails,
   reportAction,
+  exclusionAction,
   side,
   onSideChange,
   onAction,
@@ -247,7 +249,7 @@ export function TrainingSenseCardStage({
             ? model.reviewCapabilities.length
               ? "h-[120px] min-h-[120px] sm:h-[76px] sm:min-h-[76px]"
               : "h-[76px] min-h-[76px]"
-            : reportAction || model.markKnownCapability
+            : reportAction || exclusionAction || model.markKnownCapability
               ? "h-[76px] min-h-[76px]"
               : "h-11 min-h-11"
         }`}
@@ -261,6 +263,7 @@ export function TrainingSenseCardStage({
             primaryActionRef={primaryAnswerActionRef}
             onAction={onAction}
             reportAction={reportAction}
+            exclusionAction={exclusionAction}
           />
         ) : (
           <FaceDock
@@ -277,6 +280,7 @@ export function TrainingSenseCardStage({
             showAnswerRef={showAnswerRef}
             onAction={onAction}
             reportAction={reportAction}
+            exclusionAction={exclusionAction}
           />
         )}
       </footer>
@@ -343,6 +347,7 @@ function FaceDock({
   showAnswerRef,
   onAction,
   reportAction,
+  exclusionAction,
 }: {
   model: TrainingSenseCardModel;
   busy: boolean;
@@ -357,6 +362,7 @@ function FaceDock({
   showAnswerRef: React.RefObject<HTMLButtonElement>;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
   reportAction?: React.ReactNode;
+  exclusionAction?: React.ReactNode;
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
 
@@ -375,17 +381,18 @@ function FaceDock({
           showAnswerRef,
         }}
       />
-      {reportAction || model.markKnownCapability ? (
+      {reportAction || exclusionAction || model.markKnownCapability ? (
         <SecondaryActionRow>
           {reportAction ?? <span />}
-          {model.markKnownCapability ? (
-            <MarkKnownAction
-              capability={model.markKnownCapability}
-              busy={busy}
-              label={t(model.markKnownCapability.messageKey)}
-              onAction={onAction}
-            />
-          ) : null}
+          {exclusionAction ??
+            (model.markKnownCapability ? (
+              <MarkKnownAction
+                capability={model.markKnownCapability}
+                busy={busy}
+                label={t(model.markKnownCapability.messageKey)}
+                onAction={onAction}
+              />
+            ) : null)}
         </SecondaryActionRow>
       ) : null}
     </div>
@@ -400,6 +407,7 @@ function AnswerDock({
   primaryActionRef,
   onAction,
   reportAction,
+  exclusionAction,
 }: {
   model: TrainingSenseCardModel;
   mode: TrainingMode;
@@ -408,6 +416,7 @@ function AnswerDock({
   primaryActionRef: React.RefObject<HTMLButtonElement>;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
   reportAction?: React.ReactNode;
+  exclusionAction?: React.ReactNode;
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
   const reviewCapabilities =
@@ -487,14 +496,15 @@ function AnswerDock({
 
       <SecondaryActionRow>
         {reportAction ?? <span />}
-        {model.markKnownCapability ? (
-          <MarkKnownAction
-            capability={model.markKnownCapability}
-            busy={busy}
-            label={t(model.markKnownCapability.messageKey)}
-            onAction={onAction}
-          />
-        ) : null}
+        {exclusionAction ??
+          (model.markKnownCapability ? (
+            <MarkKnownAction
+              capability={model.markKnownCapability}
+              busy={busy}
+              label={t(model.markKnownCapability.messageKey)}
+              onAction={onAction}
+            />
+          ) : null)}
       </SecondaryActionRow>
     </div>
   );

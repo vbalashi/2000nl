@@ -15,6 +15,7 @@ import {
 import { freezeSenseCardDiagnosticSnapshot } from "@/lib/feedback/diagnosticReportClient";
 import { SenseCardReportAction } from "@/components/feedback/SenseCardReportSheet";
 import { TrainingCardSecondaryActions } from "../v2/TrainingCardTemplates";
+import { TrainingExcludeAction } from "../v2/TrainingExcludeAction";
 import { TrainingExerciseCard } from "../v2/TrainingExerciseCard";
 
 /** Non-learning actions reuse Platform services; grades remain with the session. */
@@ -29,6 +30,7 @@ export function TrainingIdiomCard({
   onReveal,
   busy,
   onGrade,
+  onExclude,
   onPlayResolvedAudio,
   onOpenDetails,
 }: {
@@ -42,6 +44,7 @@ export function TrainingIdiomCard({
   onReveal: () => void;
   busy: boolean;
   onGrade: (result: PlatformTrainingExerciseReviewResultV2) => void;
+  onExclude?: () => void;
   onPlayResolvedAudio?: (url: string, label: string) => void;
   onOpenDetails?: (details: {
     group: IdiomExerciseContent["group"];
@@ -163,23 +166,28 @@ export function TrainingIdiomCard({
                 }, setContent)
             : undefined
         }
-        notice={failed ? (
-        <p role="alert" className="shrink-0 text-sm text-rose-600 dark:text-rose-300">
-          {
-            {
-              en: "The action failed. Please try the button again.",
-              nl: "De actie is mislukt. Probeer de knop opnieuw.",
-              ru: "Не удалось выполнить действие. Нажмите кнопку ещё раз.",
-            }[interfaceLanguage]
-          }
-        </p>
-      ) : null}
+        notice={
+          failed ? (
+            <p
+              role="alert"
+              className="shrink-0 text-sm text-rose-600 dark:text-rose-300"
+            >
+              {
+                {
+                  en: "The action failed. Please try the button again.",
+                  nl: "De actie is mislukt. Probeer de knop opnieuw.",
+                  ru: "Не удалось выполнить действие. Нажмите кнопку ещё раз.",
+                }[interfaceLanguage]
+              }
+            </p>
+          ) : null
+        }
         secondaryActions={
-          content.entry.reportContentRevision &&
-          content.entry.capabilities?.some(
-            (cap) => cap.actionId === "report-content",
-          ) ? (
-            <TrainingCardSecondaryActions>
+          <TrainingCardSecondaryActions>
+            {content.entry.reportContentRevision &&
+            content.entry.capabilities?.some(
+              (cap) => cap.actionId === "report-content",
+            ) ? (
               <SenseCardReportAction
                 appearance="training-text"
                 snapshot={freezeSenseCardDiagnosticSnapshot({
@@ -190,8 +198,17 @@ export function TrainingIdiomCard({
                 interfaceLanguage={interfaceLanguage}
                 disabled={busy || actionBusy}
               />
-            </TrainingCardSecondaryActions>
-          ) : undefined
+            ) : (
+              <span />
+            )}
+            {onExclude ? (
+              <TrainingExcludeAction
+                language={interfaceLanguage}
+                disabled={busy || actionBusy}
+                onClick={onExclude}
+              />
+            ) : null}
+          </TrainingCardSecondaryActions>
         }
       />
     </>

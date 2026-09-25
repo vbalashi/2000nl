@@ -1,3 +1,7 @@
+import { performTrainingExclusion } from "@/lib/platform/trainingExclusionClient";
+import { TrainingExclusionUndoNotice } from "@/components/training/v2/TrainingExclusionUndoNotice";
+import { rememberExclusionUndo } from "@/components/training/v2/trainingExclusionUndoStore";
+vi.mock("@/lib/platform/trainingExclusionClient", () => ({ performTrainingExclusion: vi.fn() }));
 import * as reportClient from "@/lib/feedback/diagnosticReportClient";
 import React from "react";
 import { readIdiomTrainingStats } from "@/lib/training/idiomStatsClient";
@@ -121,6 +125,7 @@ const content = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  rememberExclusionUndo(null);
   vi.mocked(readIdiomTrainingStats).mockResolvedValue({contractVersion: "training-idiom-stats-v1", newCardsToday: 2, reviewCardsDone: 3, reviewCardsDue: 4, totalCardsStarted: 12, totalCardsInScope: 30});
 });
 
@@ -228,9 +233,79 @@ test("the idiom answer exposes the same header and secondary actions as word car
   expect(screen.getByRole("button", { name: "Report" })).toBeInTheDocument();
 });
 
-test.todo(
-  "excluding an idiom excludes both directions and supports undo without changing FSRS or ordinary word progress",
-);
+test("excludes the idiom pair, advances once, and keeps Undo available after completion", async () => {
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise)
+    .mockResolvedValueOnce(candidate)
+    .mockResolvedValueOnce({
+      status: "completed",
+      sessionId: session.sessionId,
+      completedActions: 1,
+      requestedTotal: 1,
+    });
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({
+    state: "ready",
+    content,
+  } as never);
+  vi.mocked(performTrainingExclusion)
+    .mockResolvedValueOnce({
+      status: "accepted",
+      actionId: "exclude-pair",
+      clientEventId: "event",
+      exclusionId: "mark",
+      excluded: true,
+      family: "idiom",
+    })
+    .mockResolvedValueOnce({
+      status: "accepted",
+      actionId: "restore-pair",
+      clientEventId: "undo",
+      exclusionId: "mark",
+      excluded: false,
+      family: "idiom",
+    });
+  render(
+    <>
+      <TrainingIdiomSession
+        userId="user-1"
+        session={session}
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onExit={() => {}}
+      />
+      <TrainingExclusionUndoNotice userId="user-1" language="en" />
+    </>,
+  );
+  fireEvent.click(
+    await screen.findByRole("button", {
+      name: "Exclude this pair from training in both directions",
+    }),
+  );
+  expect(await screen.findByText("Idiom session complete")).toBeInTheDocument();
+  expect(performTrainingExclusion).toHaveBeenNthCalledWith(
+    1,
+    expect.objectContaining({
+      actionId: "exclude-pair",
+      trainingSessionId: "session-1",
+      target: { kind: "exercise", targetId: "target-1" },
+    }),
+  );
+  expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+  await waitFor(() =>
+    expect(performTrainingExclusion).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        actionId: "restore-pair",
+        exclusionId: "mark",
+        target: { kind: "exercise", targetId: "target-1" },
+      }),
+    ),
+  );
+  expect(fetchNextPlatformV2IdiomTrainingSessionExercise).toHaveBeenCalledTimes(
+    2,
+  );
+});
 
 test("header actions use the selected content and do not consume a review", async () => {
   vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(

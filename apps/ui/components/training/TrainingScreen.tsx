@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { TrainingExclusionUndoNotice } from "./v2/TrainingExclusionUndoNotice";
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import type { User } from "@supabase/supabase-js";
@@ -2402,6 +2403,12 @@ function TrainingScreenContent({
             }
             interfaceLanguage={onboardingLang}
             onExit={exitIdiomSession}
+            onSessionSuperseded={() => {
+              setIdiomSession(null);
+              setActiveExerciseFamily("meaning");
+              setExerciseFamilyForResume("meaning");
+              handleTrainingSessionSuperseded();
+            }}
             onHistory={openTrainingHistory}
             onPlayResolvedAudio={(url, label) => playAudio(url, label)}
             onOpenDetails={handleShowCurrentWordDetails}
@@ -2489,6 +2496,7 @@ function TrainingScreenContent({
             )}
           </TrainingSessionSurface>
         )}
+        {user?.id ? <TrainingExclusionUndoNotice userId={user.id} language={onboardingLang}/> : null}
         <TrainingKnownUndoNotice
           interfaceLanguage={onboardingLang}
           currentPresentationIdentity={currentPresentationIdentity}

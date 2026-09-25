@@ -1,11 +1,6 @@
 "use client";
 
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import {
   fetchNextPlatformV2IdiomTrainingSessionExercise,
@@ -33,6 +28,8 @@ import { TrainingSessionChrome } from "../v2/TrainingSessionChrome";
 import { TrainingSessionStatsFooter } from "../TrainingSessionStatsFooter";
 import { useIdiomTrainingStats } from "./useIdiomTrainingStats";
 
+import { useTrainingExclusion } from "../v2/useTrainingExclusion";
+import { trainingExclusionCopy } from "../v2/TrainingExcludeAction";
 import { TrainingIdiomCard } from "./TrainingIdiomCard";
 
 type Props = {
@@ -42,6 +39,7 @@ type Props = {
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
   onExit: () => void;
+  onSessionSuperseded?: () => void;
   onHistory?: () => void;
   onPlayResolvedAudio?: (url: string, label: string) => void;
   onOpenDetails?: (details: {
@@ -90,6 +88,7 @@ export function TrainingIdiomSession({
   translationTargetLanguageCode,
   interfaceLanguage,
   onExit,
+  onSessionSuperseded,
   onHistory,
   onPlayResolvedAudio,
   onOpenDetails,
@@ -112,8 +111,10 @@ export function TrainingIdiomSession({
   const [error, setError] = useState(false);
   const actionClientEventIdRef = useRef<string | null>(null);
   const activeTransitionIdRef = useRef<string | null>(null);
+  const loadGenerationRef = useRef(0);
 
   const loadNext = useCallback(async () => {
+    const generation = ++loadGenerationRef.current;
     const transitionId = createTrainingTransitionId();
     activeTransitionIdRef.current = transitionId;
     beginTrainingUserTransition(transitionId, "continue");
@@ -134,6 +135,7 @@ export function TrainingIdiomSession({
               session.sessionId,
             ),
         );
+        if (generation !== loadGenerationRef.current) return;
         if (next.status === "ready") {
           const loaded = await measureTrainingTransitionStage(
             transitionId,
@@ -145,6 +147,7 @@ export function TrainingIdiomSession({
                 translationTargetLanguageCode,
               }),
           );
+          if (generation !== loadGenerationRef.current) return;
           if (loaded.state === "ready") {
             setCandidate(next);
             setContent(loaded.content);
@@ -182,11 +185,12 @@ export function TrainingIdiomSession({
       activeTransitionIdRef.current = null;
       finishTrainingUserTransition(transitionId, "error-retries-exhausted");
     } catch {
+      if (generation !== loadGenerationRef.current) return;
       setError(true);
       activeTransitionIdRef.current = null;
       finishTrainingUserTransition(transitionId, "error-request");
     } finally {
-      setLoading(false);
+      if (generation === loadGenerationRef.current) setLoading(false);
     }
   }, [
     contentLanguageCode,
@@ -205,6 +209,7 @@ export function TrainingIdiomSession({
 
   useEffect(
     () => () => {
+      loadGenerationRef.current++;
       const transitionId = activeTransitionIdRef.current;
       if (!transitionId) return;
       activeTransitionIdRef.current = null;
@@ -217,10 +222,23 @@ export function TrainingIdiomSession({
     void loadNext();
   }, [loadNext]);
 
+  const exclusion = useTrainingExclusion({
+    userId,
+    onSessionSuperseded: onSessionSuperseded ?? onExit,
+    identity: candidate?.targetKey ?? "none",
+    sessionId: session.sessionId,
+    target: { kind: "exercise", targetId: candidate?.targetId ?? "" },
+    onAccepted: async () => {
+      completedCountRef.current += 1;
+      setCompletedCount(completedCountRef.current);
+      await loadNext();
+    },
+  });
+
   const grade = async (
     reviewResult: PlatformTrainingExerciseReviewResultV2,
   ) => {
-    if (!candidate || !content || submitting) return;
+    if (!candidate || !content || submitting || exclusion.busy) return;
     setSubmitting(true);
     setError(false);
     try {
@@ -262,25 +280,38 @@ export function TrainingIdiomSession({
             kind: "planned",
             position: Math.min(completedCount, session.requestedTotal),
             total: session.requestedTotal,
-            fraction: session.requestedTotal > 0
-              ? Math.min(completedCount / session.requestedTotal, 1)
-              : 0,
+            fraction:
+              session.requestedTotal > 0
+                ? Math.min(completedCount / session.requestedTotal, 1)
+                : 0,
           }}
           onHistory={onHistory}
           onClose={onExit}
-          disabled={submitting}
+          disabled={submitting || exclusion.busy}
         />
       }
-      notice={error ? (
-        <TrainingSessionNotice notice={{
-          kind: "error",
-          message: t.failed,
-          retryLabel: t.retry,
-          retryDisabled: submitting || loading,
-          onRetry: () => void loadNext(),
-        }} />
-      ) : null}
-      footer={<TrainingSessionStatsFooter {...footerStats} interfaceLanguage={interfaceLanguage} />}
+      notice={
+        error || exclusion.failed ? (
+          <TrainingSessionNotice
+            notice={{
+              kind: "error",
+              message: exclusion.failed
+                ? trainingExclusionCopy[interfaceLanguage].failed
+                : t.failed,
+              retryLabel: t.retry,
+              retryDisabled: submitting || loading,
+              onRetry: () =>
+                exclusion.failed ? void exclusion.exclude() : void loadNext(),
+            }}
+          />
+        ) : null
+      }
+      footer={
+        <TrainingSessionStatsFooter
+          {...footerStats}
+          interfaceLanguage={interfaceLanguage}
+        />
+      }
     >
       {loading ? (
         <div
@@ -300,9 +331,7 @@ export function TrainingIdiomSession({
               {terminal === "complete" ? t.complete : t.empty}
             </h1>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              {terminal === "complete"
-                ? t.completeDetail(completedCount)
-                : ""}
+              {terminal === "complete" ? t.completeDetail(completedCount) : ""}
             </p>
             <button
               type="button"
@@ -327,7 +356,8 @@ export function TrainingIdiomSession({
           interfaceLanguage={interfaceLanguage}
           revealed={revealed}
           onReveal={() => setRevealed(true)}
-          busy={submitting}
+          busy={submitting || exclusion.busy || exclusion.failed}
+          onExclude={() => void exclusion.exclude()}
           onGrade={(result) => void grade(result)}
         />
       ) : null}
