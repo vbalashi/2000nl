@@ -16,13 +16,13 @@ describe("NUC database contract deployment", () => {
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(contract.rollout).toEqual({
       status: "enabled",
-      requiredMigrationId: 169,
+      requiredMigrationId: 170,
       coordinationIssue: 333,
       compatibilityPhase: "legacy-first-party-compatible",
       strictEnforcementIssue: 399,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169,
+      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170,
     ]);
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
@@ -86,8 +86,9 @@ describe("NUC database contract deployment", () => {
   });
 
   test("postflight protects the current canonical scheduler and sequential-introduction seam", () => {
+    const driftWorkflow = read(".github/workflows/db-drift-check.yml");
     const postflight =
-      read("db/deploy-contract/postflight-169.sql") +
+      read("db/deploy-contract/postflight-170.sql") +
       read("db/deploy-contract/postflight-168.sql") +
       read("db/deploy-contract/postflight-167.sql") +
       read("db/deploy-contract/postflight-166.sql") +
@@ -148,7 +149,7 @@ describe("NUC database contract deployment", () => {
     expect(postflight).toContain("hardened-exercise-actions");
     expect(postflight).toContain("future-practice-filter");
     expect(postflight).toContain("target-read-fail-closed");
-    expect(workflow).toContain("-f db/deploy-contract/postflight-169.sql");
+    expect(driftWorkflow).toContain("-f db/deploy-contract/postflight-170.sql");
   });
 
   test("pins a bounded read-only QA selector before every compatible app switch", () => {

@@ -576,7 +576,7 @@ export function TrainingTodaySetup({
     if (selectedScenario && isTrainingSetupDraftSupported(draft, scenarios))
       return;
     const nextScenario =
-      scenarios.find((option) => option.value === (familyForDraft(draft) === "idiom" ? "idiom" : "understanding")) ??
+      scenarios.find((option) => option.value === (familyForDraft(draft) === "idiom" ? "idiom" : familyForDraft(draft) === "sentence" ? "sentences" : "understanding")) ??
       scenarios.find((option) => option.value === "understanding") ??
       selectedScenario ??
       scenarios[0];
@@ -622,7 +622,7 @@ export function TrainingTodaySetup({
           : draft.cardFilter === "new"
             ? t.newOnly
             : t.reviewsOnly,
-        activeFamily === "idiom" ? t.idioms : null,
+        activeFamily === "idiom" ? t.idioms : activeFamily === "sentence" ? t.sentences : null,
         selectedModeLabels.join(" + "),
         selectedList,
       ]
@@ -651,7 +651,7 @@ export function TrainingTodaySetup({
       : draft.cardFilter === "new"
         ? t.newOnly
         : t.reviewsOnly;
-    const presetName = `${selectedList ?? t.list} · ${activeFamily === "idiom" ? t.idioms : t.words} · ${mixLabel} · ${sizeLabel}`;
+    const presetName = `${selectedList ?? t.list} · ${activeFamily === "idiom" ? t.idioms : activeFamily === "sentence" ? t.sentences : t.words} · ${mixLabel} · ${sizeLabel}`;
     const preset: TrainingSetupPreset = {
       id: editingPresetId ?? crypto.randomUUID(),
       name: presetName,
@@ -899,14 +899,14 @@ export function TrainingTodaySetup({
   );
   const idiomScenario = scenarios.find((option) => option.value === "idiom");
   const selectFamily = (family: TrainingExerciseFamily) => {
-    const scenario = family === "idiom" ? idiomScenario : understandingScenario;
+  const scenario = family === "idiom" ? idiomScenario : family === "sentence" ? scenarios.find((option) => option.value === "sentences") : understandingScenario;
     if (!scenario) return;
     setDraft((current) => ({
       ...current,
       family,
       scenarioId: scenario.value,
       modes: defaultModesForScenario(scenario),
-      ...(family === "idiom" && current.sessionSize === "all-due-today"
+      ...(family !== "meaning" && current.sessionSize === "all-due-today"
         ? { sessionSize: DEFAULT_SESSION_SIZE }
         : {}),
     }));
@@ -915,7 +915,7 @@ export function TrainingTodaySetup({
     if (!selectedScenario?.modes?.includes(mode)) return;
     setDraft((current) => {
       const active = current.modes.includes(mode);
-      if (activeFamily === "idiom") {
+      if (activeFamily !== "meaning") {
         return {
           ...current,
           scenarioId: selectedScenario.value,
@@ -1029,7 +1029,7 @@ export function TrainingTodaySetup({
               />
             </div>
             <div className="mt-2 flex gap-2">
-              <ChoiceButton active={false} disabled label={t.sentences} onClick={() => undefined} />
+              <ChoiceButton active={activeFamily === "sentence"} disabled={!scenarios.some((option) => option.value === "sentences")} label={t.sentences} onClick={() => selectFamily("sentence")} />
               <ChoiceButton active={false} disabled label={t.listening} onClick={() => undefined} />
             </div>
             {!idiomScenario ? (
@@ -1279,7 +1279,7 @@ export function TrainingTodaySetup({
             exercisesLabel={t.exercises}
             allDueLabel={t.allDueToday}
             allDueHelp={t.allDueHelp}
-            allowAllDueToday={activeFamily !== "idiom"}
+            allowAllDueToday={activeFamily === "meaning"}
           />
         </section>
       </div>

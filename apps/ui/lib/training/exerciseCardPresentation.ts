@@ -18,6 +18,7 @@ export type TrainingCardAnswer = {
 
 export type TrainingExercisePresentation = {
   label: string;
+  answerTranslationInitiallyVisible?: boolean;
   prompt: TrainingCardPrompt;
   hint?: { text: string; label: string };
   answer: TrainingCardAnswer;

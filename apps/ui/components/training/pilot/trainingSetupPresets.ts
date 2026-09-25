@@ -24,8 +24,8 @@ export function readTrainingPresets(key: string): TrainingSetupPreset[] {
       (item): item is TrainingSetupPreset =>
         typeof item?.id === "string" &&
         typeof item?.name === "string" &&
-        (item?.draft?.family === undefined || item.draft.family === "meaning" || item.draft.family === "idiom") &&
-        (item?.draft?.family === "idiom" ? item?.draft?.scenarioId === "idiom" : item?.draft?.scenarioId === "understanding") &&
+        (item?.draft?.family === undefined || item.draft.family === "meaning" || item.draft.family === "idiom" || item.draft.family === "sentence") &&
+        (item?.draft?.family === "idiom" ? item?.draft?.scenarioId === "idiom" : item?.draft?.family === "sentence" ? item?.draft?.scenarioId === "sentences" : item?.draft?.scenarioId === "understanding") &&
         Array.isArray(item?.draft?.modes) &&
         item.draft.modes.length > 0 &&
         item.draft.modes.every(
@@ -51,7 +51,7 @@ export function readTrainingPresets(key: string): TrainingSetupPreset[] {
         (item.draft.nounArticles === undefined ||
           (Array.isArray(item.draft.nounArticles) &&
             item.draft.nounArticles.every(validNounArticle))) &&
-        ((item.draft.family !== "idiom" && item.draft.sessionSize === "all-due-today") ||
+        ((item.draft.family === "meaning" && item.draft.sessionSize === "all-due-today") ||
           (typeof item.draft.sessionSize === "number" &&
             Number.isInteger(item.draft.sessionSize) &&
             item.draft.sessionSize > 0)),

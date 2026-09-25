@@ -17,10 +17,12 @@ function readDistDir(nextDistDir?: string) {
   );
 }
 
-function readRolloutEnv(profile?: string) {
+function readRolloutEnv(profile?: string, translationExercises?: string) {
   const env = { ...process.env };
   if (profile) env.APP_ROLLOUT_PROFILE = profile;
   else delete env.APP_ROLLOUT_PROFILE;
+  if (translationExercises) env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED = translationExercises;
+  else delete env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED;
 
   return JSON.parse(
     execFileSync(
@@ -63,13 +65,20 @@ describe("rollout profile compilation", () => {
     const env = readRolloutEnv("pilot");
     const flags = Object.entries(env).filter(
       ([name]) =>
-        name.includes("PLATFORM_V2") || name.includes("TRAINING_TODAY_SETUP"),
+        name !== "PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED" &&
+        (name.includes("PLATFORM_V2") || name.includes("TRAINING_TODAY_SETUP")),
     );
 
     expect(env.NEXT_PUBLIC_APP_ROLLOUT_PROFILE).toBe("pilot");
     expect(env.PLATFORM_V2_IDIOM_EXERCISES_ENABLED).toBe("true");
+    expect(env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED).toBe("false");
     expect(env.NEXT_PUBLIC_DICTIONARY_SEARCH_V2).toBeUndefined();
     expect(flags).toHaveLength(5);
     expect(flags.every(([, value]) => value === "true")).toBe(true);
+  });
+
+  test("allows the sentence release to opt in independently", () => {
+    expect(readRolloutEnv("pilot", "true").PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED).toBe("true");
+    expect(readRolloutEnv("pilot", "false").PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED).toBe("false");
   });
 });

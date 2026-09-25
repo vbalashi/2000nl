@@ -611,7 +611,7 @@ export type PlatformGeneratedDraftV2Response = {
 
 /** Scenario-owned counts, consumed by the common Training footer. */
 export type PlatformTrainingExerciseStatsV1 = {
-  contractVersion: "training-idiom-stats-v1";
+  contractVersion: "training-idiom-stats-v1" | "training-translation-stats-v1";
   newCardsToday: number;
   reviewCardsDone: number;
   reviewCardsDue: number;

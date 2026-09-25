@@ -49,6 +49,11 @@ const rolloutEnv = Object.fromEntries(
     enabled ? "true" : "false",
   ]),
 );
+// Sentence exercises are a separate launch gate. Keep them dark by default,
+// while allowing an explicit deployment/local-QA opt-in without changing the
+// baseline pilot profile used for ordinary Training and idioms.
+rolloutEnv.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED =
+  envNonEmpty(process.env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED) ?? "false";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

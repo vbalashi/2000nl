@@ -92,7 +92,8 @@ translation does not consume an exercise or remove its source sentence from the
 queue. `perform_platform_v2_translation_exercise_action_as_principal_v1` is
 self-assessment only and uses the same idempotent retry contract as idiom
 exercises. The translation family remains dark behind
-`PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED` until #331 approves the launch UI.
+`PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED` until the coordinated #333 app and
+database release passes its rollout gates.
 
 ## `get_next_card`
 

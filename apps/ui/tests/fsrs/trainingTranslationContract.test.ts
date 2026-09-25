@@ -39,6 +39,53 @@ describeIfDb("translation exercise database contract", () => {
     await pool.end();
   });
 
+  test("scoped sessions filter before limiting, preserve retry identity and never broaden empty selections", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      await ensureUserWithSettings(client, userId);
+      const noun = await insertWord(client, `sentence-noun-${randomUUID()}`);
+      const adjective = await insertWord(client, `sentence-adjective-${randomUUID()}`);
+      await client.query("update word_entries set part_of_speech='bn' where id=$1", [adjective]);
+      for (const entryId of [noun, adjective]) {
+        await client.query(`insert into private.platform_v2_content_nodes (
+          id,entry_id,kind,binding_state,first_source_revision,last_source_revision,source_text_fingerprint,diagnostic_locator
+        ) values ($1,$2,'example','active','v1','v1',$3,'raw.meanings[0].examples[0]')`,
+        [randomUUID(), entryId, `example-${entryId}`]);
+        await client.query(`insert into private.platform_v2_content_nodes (
+          id,entry_id,kind,binding_state,first_source_revision,last_source_revision,source_text_fingerprint,diagnostic_locator
+        ) values ($1,$2,'definition','active','v1','v1',$3,'raw.meanings[0].definition')`,
+        [randomUUID(), entryId, `definition-${entryId}`]);
+        await client.query(`insert into user_card_status(user_id,entry_id,card_type_id,fsrs_enabled,in_learning)
+          values ($1,$2,'word-to-definition',true,true)`, [userId, entryId]);
+      }
+      const requestId = randomUUID();
+      const start = (filter: object, id = requestId) => asRole(client, "authenticated", userId, async () => {
+        const { rows } = await client.query(`select start_platform_v2_translation_training_session_scoped(
+          $1,'1',$2,null,'curated','both',$3::jsonb,3) result`, [userId,id,JSON.stringify(filter)]);
+        return rows[0].result;
+      });
+      const first = await start({ partOfSpeech: ["bn", "ww"] });
+      expect(first.plannedTotal).toBe(1);
+      expect(first.members[0].entryId).toBe(adjective);
+      const stats = await asRole(client, "authenticated", userId, async () => {
+        const { rows } = await client.query("select read_training_translation_stats_v1($1) result", [first.sessionId]);
+        return rows[0].result;
+      });
+      expect(stats).toMatchObject({
+        contractVersion: "training-translation-stats-v1",
+        totalCardsInScope: 1, totalCardsStarted: 0,
+        newCardsToday: 0, reviewCardsDone: 0, reviewCardsDue: 0,
+      });
+      const replay = await start({ partOfSpeech: ["ww", "bn", "bn"] });
+      expect(replay.sessionId).toBe(first.sessionId);
+      expect(replay.members).toEqual(first.members);
+      const empty = await start({ partOfSpeech: ["ww"] }, randomUUID());
+      expect(empty.plannedTotal).toBe(0);
+      expect(empty.members).toEqual([]);
+      expect(empty.completionReason).toBe("exhausted");
+    });
+  });
+
   test("keeps the source node identity stable through candidate, session, grade, and retry", async () => {
     await withTransaction(pool, async (client) => {
       const userId = randomUUID();

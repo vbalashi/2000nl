@@ -17,6 +17,8 @@ services:
         NEXT_PUBLIC_APP_VERSION: ${NEXT_PUBLIC_APP_VERSION:-}
         # Required deployment profile; deploy-nuc selects the approved pilot.
         APP_ROLLOUT_PROFILE: ${APP_ROLLOUT_PROFILE:?APP_ROLLOUT_PROFILE must be set}
+        # Sentence exercises remain dark unless the release explicitly opts in.
+        PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED: ${PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED:-false}
     # IMPORTANT:
     # Next.js inlines NEXT_PUBLIC_* at build time, but server routes (e.g. /api/translation)
     # still require runtime secrets (Supabase service key, DeepL API key, etc.).
