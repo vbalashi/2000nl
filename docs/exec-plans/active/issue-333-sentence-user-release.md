@@ -182,6 +182,14 @@ preserve old RPC signatures for existing clients.
   smoke, and measured startup/transition times remain release gates. The simple first rotation cursor follows existing reverse review
   count; refine it if we require rotation only after a context presentation.
 
+Production checkpoint: PRs #509–#511 passed CI and deployed to test production.
+An authenticated no-grade smoke showed the translated prompt, shared card
+actions and the exact selected Dutch example; reload restored the same prompt
+without changing progress. First-card latency remains a separate nonblocking
+#413 investigation. The owner then clarified that the Face needs a POS chip and
+definition hint, while Answer must retain the definition; see [discussion](../../discussions/2026-09-25-05-word-context-card-content.md)
+and [#512](https://github.com/vbalashi/2000nl/issues/512).
+
 1. Characterize the ordinary reverse selection/action boundary and existing
    sentence sessions/presets. Specify transition behavior before changing it;
    preserve prior ordinary progress and historical sentence records. No automatic

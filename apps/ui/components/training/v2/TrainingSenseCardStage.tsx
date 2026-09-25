@@ -74,16 +74,19 @@ export function TrainingSenseCardStage({
     (key: string) => platformV2Message(interfaceLanguage, key),
     [interfaceLanguage],
   );
-  const hint = React.useMemo(() => contextPrompt
-    ? model.partOfSpeech ? { text: model.partOfSpeech } : undefined
-    : model.examples[0], [contextPrompt, model.examples, model.partOfSpeech]);
+  const reversePrompt = selectTrainingReversePrompt([
+    ...model.definitions,
+    ...model.examples,
+  ]);
+  const hint = contextPrompt
+    ? reversePrompt?.kind === "definition" ? reversePrompt : undefined
+    : model.examples[0];
   const selectedExample = contextPrompt
     ? model.examples.find((item) => item.contentNodeId === contextPrompt.contentNodeId)
     : undefined;
   const answerModel = contextPrompt
     ? {
         ...model,
-        definitions: [],
         examples: [{
           ...selectedExample,
           contentNodeId: contextPrompt.contentNodeId,
@@ -95,10 +98,6 @@ export function TrainingSenseCardStage({
         }],
       }
     : model;
-  const reversePrompt = selectTrainingReversePrompt([
-    ...model.definitions,
-    ...model.examples,
-  ]);
   const translationActionAvailable = Boolean(
     model.requestTranslationCapability,
   );
@@ -270,7 +269,8 @@ export function TrainingSenseCardStage({
               nl: "Herinner je het Nederlandse woord",
               ru: "Вспомните нидерландское слово",
             }[interfaceLanguage] : undefined}
-            hintLabel={contextPrompt ? t("senseCard.training.content") : t("senseCard.hint.example")}
+            partOfSpeechChip={contextPrompt ? model.partOfSpeech : undefined}
+            hintLabel={contextPrompt ? t("senseCard.sections.definition") : t("senseCard.hint.example")}
             contentLabel={t("senseCard.training.content")}
           />
         )}
