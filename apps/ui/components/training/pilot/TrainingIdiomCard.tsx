@@ -82,20 +82,6 @@ export function TrainingIdiomCard({
       cap.actionId === "request-translation" &&
       cap.targetLanguageCode === translationTargetLanguageCode,
   );
-  const reportEntry = React.useMemo(
-    () => ({
-      ...content.entry,
-      card: null,
-      translation: null,
-      contentNodes: [
-        content.expression,
-        content.explanation,
-        ...content.examples,
-      ],
-    }),
-    [content],
-  );
-
   async function run<T>(
     operation: () => Promise<T>,
     accept: (value: T) => void,
@@ -193,7 +179,15 @@ export function TrainingIdiomCard({
                 snapshot={freezeSenseCardDiagnosticSnapshot({
                   route: "training",
                   group: content.group,
-                  entry: reportEntry,
+                  entry: content.entry,
+                  target: {
+                    kind: "content-node",
+                    entryId: content.entry.entryId,
+                    contentNodeId: content.expression.contentNodeId,
+                    nodeKind: "idiom",
+                    sourceTextFingerprint:
+                      content.expression.sourceTextFingerprint,
+                  },
                 })}
                 interfaceLanguage={interfaceLanguage}
                 disabled={busy || actionBusy}

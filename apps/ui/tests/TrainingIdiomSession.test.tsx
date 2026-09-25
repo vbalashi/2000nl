@@ -401,7 +401,7 @@ test("an audio response after leaving the card does not start playback", async (
   expect(play).not.toHaveBeenCalled();
 });
 
-test("report captures only the selected idiom and opens the common report sheet", async () => {
+test("report targets the selected idiom and keeps the canonical entry projection", async () => {
   const snapshot = vi.spyOn(reportClient, "freezeSenseCardDiagnosticSnapshot");
   vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(
     candidate,
@@ -426,10 +426,15 @@ test("report captures only the selected idiom and opens the common report sheet"
   expect(snapshot).toHaveBeenCalledWith(
     expect.objectContaining({
       entry: expect.objectContaining({
-        card: null,
-        translation: null,
-        contentNodes: [content.expression, content.explanation],
+        contentNodes: content.entry.contentNodes,
       }),
+      target: {
+        kind: "content-node",
+        entryId: content.entry.entryId,
+        contentNodeId: content.expression.contentNodeId,
+        nodeKind: "idiom",
+        sourceTextFingerprint: content.expression.sourceTextFingerprint,
+      },
     }),
   );
   expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
