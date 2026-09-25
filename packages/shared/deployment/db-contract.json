@@ -275,7 +275,7 @@
     {
       "migrationId": 174,
       "file": "db/migrations/174_word_context_reverse_eligibility.sql",
-      "sha256": "2b8fb9122894a39c6063f09a175afe95763080434ac6b6e0a896403e8c695972"
+      "sha256": "b4f07bb3420368461bcda746df0e012ebc361b96dec163c200ca741e1f94cc48"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-174.sql",
