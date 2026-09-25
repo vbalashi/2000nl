@@ -229,7 +229,7 @@ export type PlatformIdiomExerciseSessionNextV2 =
       sessionId: string;
       ordinal: number;
       targetId: string;
-      reason: "projection-missing" | "dictionary-access-revoked";
+      reason: "projection-missing" | "dictionary-access-revoked" | "pair-excluded";
     remaining: number;
   };
 
@@ -303,7 +303,7 @@ export type PlatformTranslationExerciseSessionNextV2 =
       sessionId: string;
       ordinal: number;
       targetId: string;
-      reason: "projection-missing" | "dictionary-access-revoked";
+      reason: "projection-missing" | "dictionary-access-revoked" | "pair-excluded";
       remaining: number;
     };
 

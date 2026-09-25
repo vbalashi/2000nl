@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   performPlatformV2IdiomExerciseAction,
+  fetchNextPlatformV2IdiomTrainingSessionExercise,
   startPlatformV2IdiomTrainingSession,
 } from "@/lib/platform/platformV2IdiomExerciseClient";
 import { platformFetchWithTimeout } from "@/lib/platform/platformFetchWithTimeout";
@@ -71,6 +72,12 @@ describe("idiom action transport", () => {
     await performPlatformV2IdiomExerciseAction(input);
 
     expect(sent).toEqual(["intentional-action-1", "intentional-action-1"]);
+  });
+
+  test("recognizes excluded latched members as unavailable instead of a malformed response", async () => {
+    const data={status:'unavailable',sessionId:'session-1',targetId:'target-1',ordinal:1,reason:'pair-excluded',remaining:1};
+    vi.mocked(supabase.rpc).mockResolvedValue({data,error:null} as never);
+    expect(await fetchNextPlatformV2IdiomTrainingSessionExercise('user-1','session-1')).toEqual(data);
   });
 
   test("starts with the exact selected source scope and per-session mix", async () => {

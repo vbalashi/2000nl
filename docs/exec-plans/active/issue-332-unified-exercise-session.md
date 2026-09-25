@@ -131,3 +131,29 @@ superseded sessions, nonzero scheduling/history preservation and atomic rejectio
 of an out-of-order member. Both static reviewers found no actionable foundation
 defects. Selection, review guards, current-session reads and UI integration remain
 unfinished; this checkpoint must not be independently published as the release.
+
+## Exclusion availability checkpoint (2026-09-25)
+
+Migration 169 integrates active pair exclusions into ordinary, idiom (legacy and
+scoped), and sentence candidate selection before ranking/pagination. Indexed
+anti-exists predicates avoid an RPC per corpus row. Exact single-occurrence
+patches operate on the latest installed definitions and fail closed if an anchor
+differs; no older function bodies replace newer filters or clock behavior.
+
+New grades/start-learning acquire the same pair lock after receipt replay; the
+legacy review path acquires pair before turn lock. Already-latched members expose
+`pair-excluded` and use the existing explicit unavailable-member mutation with
+server evidence. Reads remain read-only. Both ordinary and idiom due statistics
+omit exclusions while history/total counts retain existing progress.
+
+Validation: all 253 disposable DB tests pass; targeted 24 SQL tests plus the full
+postflight chain through 169 pass. Typecheck and nine deployment/idiom transport
+tests pass. Concurrent exclusion-versus-legacy-review test confirms blocking then
+rejection without creating FSRS state. Two-axis review identified missing ordinary
+due filtering; fixed and independently rechecked with a 3 -> 1 -> 3 test retaining
+listening state. The first manifest test caught an omitted 168 in its expected
+list; corrected and rerun.
+
+Remaining before release: HTTP/client Exclude and Undo wiring for ordinary and
+idiom cards, Report submission contract, complete mobile localization/browser QA,
+PR/CI/deploy verification. Neither 168 nor 169 has been applied to production.

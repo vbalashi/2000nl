@@ -66,6 +66,7 @@ export type TrainingSessionSnapshotMember = {
 
 export type TrainingSessionUnavailableReason =
   | "dictionary-access-revoked"
+  | "pair-excluded"
   | "projection-missing"
   | "entry-not-found"
   | "model-invalid"
@@ -309,6 +310,7 @@ const isTrainingSessionUnavailableReason = (
   value: unknown,
 ): value is TrainingSessionUnavailableReason =>
   value === "dictionary-access-revoked" ||
+  value === "pair-excluded" ||
   value === "projection-missing" ||
   value === "entry-not-found" ||
   value === "model-invalid" ||

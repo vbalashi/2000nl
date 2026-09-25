@@ -482,3 +482,6 @@
 
 -- Explicit pair exclusions preserve scheduling and immutable undo receipts.
 \i db/migrations/168_training_pair_exclusion_actions.sql
+
+\echo 'Applying migration 169: pair exclusion availability'
+\i db/migrations/169_training_pair_exclusion_selection.sql

@@ -119,6 +119,7 @@ export async function markPlatformV2IdiomTrainingSessionMemberUnavailable(
   sessionId: string,
   targetId: string,
   reason:
+    | "pair-excluded"
     | "projection-missing"
     | "dictionary-access-revoked"
     | "entry-not-found",
@@ -383,7 +384,8 @@ function parseNext(value: unknown): PlatformIdiomExerciseSessionNextV2 | null {
     string(item.sessionId) &&
     integerAtLeastOne(item.ordinal) &&
     string(item.targetId) &&
-    (item.reason === "projection-missing" ||
+    (item.reason === "pair-excluded" ||
+      item.reason === "projection-missing" ||
       item.reason === "dictionary-access-revoked") &&
     integer(item.remaining)
   ) {
