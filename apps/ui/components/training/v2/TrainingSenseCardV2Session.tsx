@@ -41,7 +41,7 @@ import { TransientNotice } from "@/components/system/TransientNotice";
 import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
 import { evaluateTrainingCardRenderability } from "@/lib/training/trainingCardRenderability";
 import { selectTrainingReversePrompt } from "@/lib/training/trainingReversePrompt";
-import { loadWordContextPrompt, type WordContextLoadResult } from "@/lib/training/wordContextPrompt";
+import { loadWordContextPrompt, markWordContextHintOpened, prepareNextWordContextTranslation, type WordContextLoadResult } from "@/lib/training/wordContextPrompt";
 import {
   rememberPendingKnownUndo,
   type UndoKnownCapability,
@@ -156,6 +156,8 @@ export function TrainingSenseCardV2Session({
   );
   const [contextResult, setContextResult] = React.useState<WordContextLoadResult | null>(null);
   const [contextRetry, setContextRetry] = React.useState(0);
+  const contextHintWriteRef = React.useRef<Promise<void> | null>(null);
+  const preparedNextRef = React.useRef<string | null>(null);
   React.useEffect(() => {
     if (!wordInContext || !trainingSessionId || !translationTargetLanguageCode) return;
     const controller = new AbortController();
@@ -174,6 +176,20 @@ export function TrainingSenseCardV2Session({
     });
     return () => controller.abort();
   }, [cacheOwnerId, contentLanguageCode, contextRetry, trainingSessionId,
+    translationTargetLanguageCode, word.id, wordInContext]);
+  React.useEffect(() => {
+    if (!wordInContext || contextResult?.state !== "ready" || !trainingSessionId ||
+        !translationTargetLanguageCode) return;
+    const key = `${trainingSessionId}:${word.id}:${translationTargetLanguageCode}`;
+    if (preparedNextRef.current === key) return;
+    preparedNextRef.current = key;
+    const controller = new AbortController();
+    void prepareNextWordContextTranslation({
+      userId: cacheOwnerId, sessionId: trainingSessionId, entryId: word.id,
+      contentLanguageCode, translationTargetLanguageCode, signal: controller.signal,
+    }).catch(() => { /* Speculative work cannot change this card or progress. */ });
+    return () => controller.abort();
+  }, [cacheOwnerId, contentLanguageCode, contextResult, trainingSessionId,
     translationTargetLanguageCode, word.id, wordInContext]);
   const [busy, setBusy] = React.useState(false);
   const [acceptedActionRecoveryPending, setAcceptedActionRecoveryPending] =
@@ -342,6 +358,10 @@ export function TrainingSenseCardV2Session({
   }, [cacheOwnerId, nextTransitionId, word.id]);
 
   React.useEffect(() => {
+    if (wordInContext && contextResult?.state === "source-unavailable") {
+      onLoadFailure?.("projection-missing");
+      return;
+    }
     if (wordInContext && contextResult?.state !== "ready") return;
     if (sessionState === "loading" || sessionState === "ready") return;
     onLoadFailure?.(sessionState);
@@ -401,6 +421,11 @@ export function TrainingSenseCardV2Session({
         return "accepted";
       }
       if (!isPlatformV2TrainingActionCapability(capability)) return "rejected";
+      if (wordInContext && contextHintWriteRef.current &&
+          (capability.actionId === "start-learning" || capability.actionId === "review-card" || capability.actionId === "mark-known")) {
+        await contextHintWriteRef.current;
+        if (!actionIsCurrent()) return "rejected";
+      }
       if (
         nextTransitionId &&
         (capability.actionId === "start-learning" ||
@@ -734,6 +759,12 @@ export function TrainingSenseCardV2Session({
           model={model}
           contextPrompt={wordInContext && contextResult?.state === "ready"
             ? contextResult.prompt : undefined}
+          onHintOpened={wordInContext && trainingSessionId ? () => {
+            if (contextHintWriteRef.current) return;
+            contextHintWriteRef.current = markWordContextHintOpened({
+              userId: cacheOwnerId, sessionId: trainingSessionId, entryId: word.id,
+            }).catch(() => { /* Display continues when optional evidence cannot be written. */ });
+          } : undefined}
           mode={mode}
           interfaceLanguage={interfaceLanguage}
           busy={busy || exclusion.busy || exclusion.failed || interactionDisabled || acceptedActionRecoveryPending}

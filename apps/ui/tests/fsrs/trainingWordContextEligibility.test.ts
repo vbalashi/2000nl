@@ -153,6 +153,9 @@ describeIfDb("word in context uses ordinary reverse membership", () => {
         $1::uuid,$2::uuid) card`, [userId, sessionId]);
       const card = cardRows[0].card;
       expect(card).toMatchObject({ id: entryId, mode: "definition-to-word" });
+      const { rows: hintRows } = await client.query(`select mark_training_word_context_hint_opened(
+        $1::uuid,$2::uuid,$3::uuid) opened`, [userId, sessionId, entryId]);
+      expect(hintRows[0].opened).toBe(true);
       await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
       const eventId = randomUUID();
       const action = () => client.query(`select perform_platform_v2_card_action_as_principal(
@@ -161,6 +164,16 @@ describeIfDb("word in context uses ordinary reverse membership", () => {
         [userId, entryId, card.stateRevision, eventId, sessionId]);
       expect((await action()).rows[0].result.status).toBe("accepted");
       expect((await action()).rows[0].result.status).toBe("duplicate");
+      const { rows: events } = await client.query(`select presentation_mode,
+        presentation_content_node_id, presentation_source_text_fingerprint,
+        presentation_hint_opened from user_card_action_events
+        where user_id=$1 and client_event_id=$2`, [userId, eventId]);
+      expect(events).toEqual([expect.objectContaining({
+        presentation_mode: "word-in-context",
+        presentation_source_text_fingerprint: "fingerprint",
+        presentation_hint_opened: true,
+      })]);
+      expect(events[0].presentation_content_node_id).toBeTruthy();
       const { rows: status } = await client.query(`select card_type_id,seen_count
         from user_card_status where user_id=$1 and entry_id=$2
         order by card_type_id`, [userId, entryId]);
@@ -173,6 +186,9 @@ describeIfDb("word in context uses ordinary reverse membership", () => {
       const { rows: exercise } = await client.query(`select count(*)::integer total
         from user_training_exercise_state where user_id=$1`, [userId]);
       expect(exercise[0].total).toBe(0);
+      await expect(client.query(`select mark_training_word_context_hint_opened(
+        $1::uuid,$2::uuid,$3::uuid)`, [randomUUID(), sessionId, entryId]))
+        .rejects.toThrow(/unauthorized/);
     });
   });
 });

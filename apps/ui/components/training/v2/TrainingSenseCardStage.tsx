@@ -28,6 +28,7 @@ import type { WordContextPrompt } from "@/lib/training/wordContextPrompt";
 type Props = {
   model: TrainingSenseCardModel;
   contextPrompt?: WordContextPrompt;
+  onHintOpened?: () => void;
   mode: TrainingMode;
   interfaceLanguage: OnboardingLanguage;
   busy?: boolean;
@@ -44,6 +45,7 @@ type Props = {
 export function TrainingSenseCardStage({
   model,
   contextPrompt,
+  onHintOpened,
   mode,
   interfaceLanguage,
   busy = false,
@@ -58,6 +60,10 @@ export function TrainingSenseCardStage({
 }: Props) {
   const answerVisible = side === "answer";
   const [hintVisible, setHintVisible] = React.useState(false);
+  const toggleHint = React.useCallback(() => {
+    if (!hintVisible) onHintOpened?.();
+    setHintVisible(!hintVisible);
+  }, [hintVisible, onHintOpened]);
   const [translationVisible, setTranslationVisible] = React.useState(false);
   const stageRef = React.useRef<HTMLElement>(null);
   const primaryAnswerActionRef = React.useRef<HTMLButtonElement>(null);
@@ -146,7 +152,7 @@ export function TrainingSenseCardStage({
       const key = event.key.toLowerCase();
       if (key === "i" && !event.shiftKey && !answerVisible && hint) {
         event.preventDefault();
-        setHintVisible((visible) => !visible);
+        toggleHint();
         return;
       }
       if (key === "t" && answerVisible && hasTranslation(model)) {
@@ -172,7 +178,7 @@ export function TrainingSenseCardStage({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [answerVisible, busy, hint, model, onAction, onSideChange]);
+  }, [answerVisible, busy, hint, model, onAction, onSideChange, toggleHint]);
 
   return (
     <section
@@ -303,7 +309,7 @@ export function TrainingSenseCardStage({
             showHintLabel={t("senseCard.hint.show")}
             hideHintLabel={t("senseCard.hint.hide")}
             showAnswerLabel={t("senseCard.answer.show")}
-            onToggleHint={() => setHintVisible((visible) => !visible)}
+            onToggleHint={toggleHint}
             onShowAnswer={() => onSideChange("answer")}
             showAnswerRef={showAnswerRef}
             onAction={onAction}

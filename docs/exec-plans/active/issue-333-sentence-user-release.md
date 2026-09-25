@@ -171,10 +171,15 @@ preserve old RPC signatures for existing clients.
   presentation marker only to session start, loads the exact selected node and
   its translation, and reuses the ordinary card and session shell. An
   unavailable translation is a preparation state with no answer controls.
-- This is **not yet a completed user release**. Action-history presentation and
-  hint evidence, next-card translation lookahead, source-unavailability
-  replacement behavior, and an authenticated production smoke remain release
-  gates. The simple first rotation cursor follows existing reverse review
+- Migration 176 copies the frozen presentation source and the hint-opened bit
+  into the existing ordinary action event in the same transaction that consumes
+  the ordinary member. Hint recording does not change the FSRS state.
+- The client now warms only the next still-available latched example while the
+  current prompt is visible. A missing or retired source enters the ordinary
+  unavailable-member replacement path; a pending translation remains retryable
+  without a grade.
+- This is **not yet a completed user release**. CI, an authenticated production
+  smoke, and measured startup/transition times remain release gates. The simple first rotation cursor follows existing reverse review
   count; refine it if we require rotation only after a context presentation.
 
 1. Characterize the ordinary reverse selection/action boundary and existing

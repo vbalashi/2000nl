@@ -165,6 +165,18 @@ describe("TrainingSenseCardV2Session", () => {
     expect(onProgressActionAccepted).not.toHaveBeenCalled();
   });
 
+  test("a retired context source enters the ordinary unavailable replacement path", async () => {
+    loadContextPrompt.mockResolvedValue({ state: "source-unavailable" });
+    const onLoadFailure = vi.fn();
+    render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word"
+      wordInContext trainingSessionId="session-context"
+      contentLanguageCode="nl" translationTargetLanguageCode="ru"
+      interfaceLanguage="en" onProgressActionAccepted={vi.fn()}
+      onLoadFailure={onLoadFailure} />);
+    await waitFor(() => expect(onLoadFailure).toHaveBeenCalledWith("projection-missing"));
+    expect(screen.queryByRole("button", { name: "Good" })).not.toBeInTheDocument();
+  });
+
   test("uses the V2 listening face and reveals the same answer surface", async () => {
     render(
       <TestTrainingSenseCardV2Session
