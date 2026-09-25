@@ -100,9 +100,12 @@ async function sourceEntries(
       })).toEqual([]);
 
       const idiomNodeIds = new Map<string, string>();
+      const exampleNodeIds = new Map<string, string>();
       for (const entryId of [adjective, verb]) {
         const idiomId = randomUUID();
         idiomNodeIds.set(entryId, idiomId);
+        const exampleId = randomUUID();
+        exampleNodeIds.set(entryId, exampleId);
         await client.query(
           `insert into private.platform_v2_content_nodes (
              id, entry_id, parent_content_node_id, kind, binding_state,
@@ -115,7 +118,26 @@ async function sourceEntries(
           [idiomId, entryId, `fingerprint-${idiomId}`, `idiom-${idiomId}`,
             randomUUID(), `explanation-${idiomId}`, `explanation-${idiomId}`],
         );
+        await client.query(
+          `insert into private.platform_v2_content_nodes (
+             id, entry_id, parent_content_node_id, kind, binding_state,
+             first_source_revision, last_source_revision,
+             source_text_fingerprint, diagnostic_locator
+           ) values ($1, $2, null, 'example', 'active', 'extra-v1',
+             'extra-v1', $3, 'raw.meanings[0].examples[0]')`,
+          [exampleId, entryId, `example-${exampleId}`],
+        );
       }
+      const inaccessibleExampleId = randomUUID();
+      await client.query(
+        `insert into private.platform_v2_content_nodes (
+           id, entry_id, parent_content_node_id, kind, binding_state,
+           first_source_revision, last_source_revision,
+           source_text_fingerprint, diagnostic_locator
+         ) values ($1, $2, null, 'example', 'active', 'extra-v1',
+           'extra-v1', $3, 'raw.meanings[0].examples[0]')`,
+        [inaccessibleExampleId, inaccessible, `example-${inaccessibleExampleId}`],
+      );
       const identityVersion = `extra-source-${randomUUID()}`;
       const { rows: importRows } = await client.query(
         `insert into private.dictionary_import_runs (
@@ -173,6 +195,17 @@ async function sourceEntries(
         inaccessible_source: false,
         untouched_source: false,
       });
+      const { rows: sentenceSiblingRows } = await client.query(
+        `select content_node_id, entry_id
+           from private.training_translation_source_nodes_v1(
+             $1::uuid, null::uuid, 'curated', $2::jsonb
+           ) order by content_node_id`,
+        [userId, JSON.stringify({ ...selected, partOfSpeech: ["ww"] })],
+      );
+      expect(sentenceSiblingRows).toEqual([{
+        content_node_id: exampleNodeIds.get(verb),
+        entry_id: verb,
+      }]);
       const { rows: idiomRows } = await client.query(
         `select item from private.platform_v2_idiom_exercise_candidates_v2(
            $1::uuid, 'direct', 20, 0, null::uuid, 'curated', 'new', $2::jsonb
