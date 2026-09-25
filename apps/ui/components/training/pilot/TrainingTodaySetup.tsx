@@ -107,6 +107,7 @@ type Props = {
   trainingLanguageLoading?: boolean;
   onTrainingLanguageChange?: (language: string) => void;
   interfaceLanguage: OnboardingLanguage;
+  translationTargetLanguageCode?: string | null;
   status: TrainingPilotStatus;
   startError?: string | null;
   initialDraft: TrainingSetupDraft;
@@ -163,6 +164,8 @@ const copy = {
     words: "Words",
     idioms: "Idioms",
     sentences: "Example sentences",
+    wordInContext: "Word in context",
+    contextLanguageNeeded: "Choose a translation language in Settings to use this exercise.",
     unavailable: "Coming when this training path is ready",
     lexicalUnavailable: "Choose one or more parts of speech. With no selection, all parts of speech are included.",
     partOfSpeech: "Part of speech",
@@ -268,6 +271,8 @@ const copy = {
     words: "Woorden",
     idioms: "Uitdrukkingen",
     sentences: "Voorbeeldzinnen",
+    wordInContext: "Woord in context",
+    contextLanguageNeeded: "Kies een vertaaltaal in Instellingen voor deze oefening.",
     unavailable: "Beschikbaar zodra deze training klaar is",
     lexicalUnavailable: "Kies een of meer woordsoorten. Zonder selectie worden alle woordsoorten meegenomen.",
     partOfSpeech: "Woordsoort",
@@ -373,6 +378,8 @@ const copy = {
     words: "Слова",
     idioms: "Идиомы",
     sentences: "Примеры предложений",
+    wordInContext: "Слово в контексте",
+    contextLanguageNeeded: "Для этого упражнения выберите язык перевода в настройках.",
     unavailable: "Появится, когда сценарий будет готов",
     lexicalUnavailable: "Выберите одну или несколько частей речи. Без выбора включены все части речи.",
     partOfSpeech: "Часть речи",
@@ -501,6 +508,7 @@ export function TrainingTodaySetup({
   trainingLanguageLoading = false,
   onTrainingLanguageChange,
   interfaceLanguage,
+  translationTargetLanguageCode,
   status,
   startError,
   initialDraft,
@@ -622,7 +630,7 @@ export function TrainingTodaySetup({
           : draft.cardFilter === "new"
             ? t.newOnly
             : t.reviewsOnly,
-        activeFamily === "idiom" ? t.idioms : activeFamily === "sentence" ? t.sentences : null,
+        activeFamily === "idiom" ? t.idioms : activeFamily === "sentence" ? t.sentences : activeFamily === "word-in-context" ? t.wordInContext : null,
         selectedModeLabels.join(" + "),
         selectedList,
       ]
@@ -651,7 +659,7 @@ export function TrainingTodaySetup({
       : draft.cardFilter === "new"
         ? t.newOnly
         : t.reviewsOnly;
-    const presetName = `${selectedList ?? t.list} · ${activeFamily === "idiom" ? t.idioms : activeFamily === "sentence" ? t.sentences : t.words} · ${mixLabel} · ${sizeLabel}`;
+    const presetName = `${selectedList ?? t.list} · ${activeFamily === "idiom" ? t.idioms : activeFamily === "sentence" ? t.sentences : activeFamily === "word-in-context" ? t.wordInContext : t.words} · ${mixLabel} · ${sizeLabel}`;
     const preset: TrainingSetupPreset = {
       id: editingPresetId ?? crypto.randomUUID(),
       name: presetName,
@@ -671,6 +679,7 @@ export function TrainingTodaySetup({
 
   const requestStart = async (nextDraft: TrainingSetupDraft) => {
     if (trainingLanguageLoading || pendingLanguage || startBlocked || !isTrainingSetupMaterialAvailable(nextDraft, lists, dictionaries)) return;
+    if (nextDraft.family === "word-in-context" && translationTargetLanguageCode === null) return;
     const started = await onStart(nextDraft);
     if (started === false) setScreen("today");
   };
@@ -905,7 +914,7 @@ export function TrainingTodaySetup({
       ...current,
       family,
       scenarioId: scenario.value,
-      modes: defaultModesForScenario(scenario),
+      modes: family === "word-in-context" ? ["definition-to-word"] : defaultModesForScenario(scenario),
       ...(family !== "meaning" && current.sessionSize === "all-due-today"
         ? { sessionSize: DEFAULT_SESSION_SIZE }
         : {}),
@@ -915,6 +924,7 @@ export function TrainingTodaySetup({
     if (!selectedScenario?.modes?.includes(mode)) return;
     setDraft((current) => {
       const active = current.modes.includes(mode);
+      if (activeFamily === "word-in-context") return current;
       if (activeFamily !== "meaning") {
         return {
           ...current,
@@ -1029,9 +1039,10 @@ export function TrainingTodaySetup({
               />
             </div>
             <div className="mt-2 flex gap-2">
-              <ChoiceButton active={activeFamily === "sentence"} disabled={!scenarios.some((option) => option.value === "sentences")} label={t.sentences} onClick={() => selectFamily("sentence")} />
+              <ChoiceButton active={activeFamily === "word-in-context"} disabled={!understandingScenario?.modes?.includes("definition-to-word") || translationTargetLanguageCode === null} label={t.wordInContext} onClick={() => selectFamily("word-in-context")} />
               <ChoiceButton active={false} disabled label={t.listening} onClick={() => undefined} />
             </div>
+            {translationTargetLanguageCode === null ? <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.contextLanguageNeeded}</p> : null}
             {!idiomScenario ? (
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.unavailable}</p>
             ) : null}
@@ -1084,7 +1095,7 @@ export function TrainingTodaySetup({
                   {t.loading}
                 </p>
               ) : null}
-              {selectedScenario?.modes?.includes("word-to-definition") ? (
+              {activeFamily !== "word-in-context" && selectedScenario?.modes?.includes("word-to-definition") ? (
                 <ChoiceButton
                   active={draft.modes.includes("word-to-definition")}
                   label={t.meaning}

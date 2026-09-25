@@ -928,6 +928,9 @@ function normalizeTrainingFocusFilter(
 ) {
   return {
     dateWindow: filter.dateWindow,
+    ...(filter.presentationMode === "word-in-context"
+      ? { presentationMode: "word-in-context" as const }
+      : {}),
     ...(filter.daysAgo !== undefined ? { daysAgo: filter.daysAgo } : {}),
     ...(includeBrowserTimezone
       ? { timezone: filter.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }

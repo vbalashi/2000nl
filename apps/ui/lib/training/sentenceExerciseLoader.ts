@@ -76,7 +76,7 @@ export async function prepareSentenceExerciseTranslation(input: {
 
 /** Reads exactly the scheduled source node; generation never changes its identity. */
 export async function loadSentenceExerciseContent(input: {
-  candidate: PlatformTranslationExerciseCandidateV2;
+  candidate: Pick<PlatformTranslationExerciseCandidateV2, "entryId" | "contentNodeId" | "sourceTextFingerprint">;
   contentLanguageCode: string;
   translationTargetLanguageCode: string;
   signal?: AbortSignal;

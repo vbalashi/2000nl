@@ -146,6 +146,37 @@ test("server-side material loss leaves the session uncommitted", async () => {
   expect(resetQueue).not.toHaveBeenCalled();
 });
 
+test("word in context starts only the ordinary reverse queue with a presentation marker", async () => {
+  startTrainingSession.mockReset().mockResolvedValue({
+    sessionId: "context-session", runStatus: "active",
+    plannedNew: 0, plannedReview: 1, plannedTotal: 1,
+  });
+  updateActiveTrainingScope.mockReset().mockResolvedValue({ error: null });
+  const applyFocusFilter = vi.fn();
+  const loadWord = vi.fn().mockResolvedValue("loaded");
+  const { result } = renderHook(() => useCommitTrainingPilotDraft({
+    userId: "user-1", languageCode: "nl", resolveList: () => null,
+    applyListLocally: vi.fn(), applyPreferences: vi.fn(), applyFocusFilter,
+    resetQueue: vi.fn(), loadStats: vi.fn(), loadWord,
+    reportError: vi.fn(),
+  }));
+  await act(async () => {
+    expect(await result.current({ ...draft, family: "word-in-context",
+      modes: ["definition-to-word"], materialMode: "all-dictionaries",
+      partOfSpeech: ["ww"], cardFilter: "review" })).toBe(true);
+  });
+  expect(startTrainingSession).toHaveBeenCalledWith("user-1", ["definition-to-word"],
+    expect.objectContaining({ trainingFilter: expect.objectContaining({
+      presentationMode: "word-in-context", partOfSpeech: ["ww"],
+    }) }), expect.any(String));
+  expect(applyFocusFilter).toHaveBeenCalledWith(expect.not.objectContaining({
+    presentationMode: "word-in-context",
+  }));
+  expect(loadWord).toHaveBeenCalledWith(expect.objectContaining({
+    trainingSessionId: "context-session", scenario: "understanding",
+  }));
+});
+
 test("idiom start failures stay on setup and expose a recoverable error", async () => {
   startIdiomSession.mockReset();
   updateActiveTrainingScope.mockReset();

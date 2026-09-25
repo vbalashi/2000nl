@@ -117,15 +117,15 @@ test("idiom family is selectable as a separate finite session and reaches the st
   }));
 });
 
-test("example sentence family is a finite single-direction session and reaches start", () => {
+test("word in context uses the ordinary reverse scenario and a finite session", () => {
   const onStart = vi.fn();
-  render(<TrainingTodaySetup {...baseProps} onStart={onStart} scenarios={[...baseProps.scenarios, { value: "sentences", label: "Example sentences", modes: ["word-to-definition" as const] }]} />);
+  render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);
   fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
-  fireEvent.click(screen.getByRole("button", { name: "Example sentences" }));
-  expect(screen.getByRole("button", { name: "Example sentences" })).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(screen.getByRole("button", { name: "Word in context" }));
+  expect(screen.getByRole("button", { name: "Word in context" })).toHaveAttribute("aria-pressed", "true");
   expect(screen.queryByText("All due")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ family: "sentence", scenarioId: "sentences", modes: ["word-to-definition"], sessionSize: 10 }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ family: "word-in-context", scenarioId: "understanding", modes: ["definition-to-word"], sessionSize: 10 }));
 });
 
 test("idiom presets retain their family and scenario when reopened", () => {

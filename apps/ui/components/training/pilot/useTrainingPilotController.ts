@@ -282,12 +282,14 @@ export function useCommitTrainingPilotDraft({
       }
       let session: TrainingSession | null;
       try {
-        session = await startTrainingSession(userId, draft.modes, {
+        session = await startTrainingSession(userId, draft.family === "word-in-context" ? ["definition-to-word"] : draft.modes, {
           listId: scope.listId,
           listType: scope.listType ?? undefined,
           cardFilter: draft.cardFilter,
           newReviewRatio: draft.newReviewRatio,
-          trainingFilter: focusFilter,
+          trainingFilter: draft.family === "word-in-context"
+            ? { ...focusFilter, presentationMode: "word-in-context" }
+            : focusFilter,
           sessionSize: draft.sessionSize,
         }, startRequestRef.current.requestId);
       } catch (error) {

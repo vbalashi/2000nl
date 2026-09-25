@@ -4,7 +4,7 @@ export type TrainingMode =
   | "listen-recognize"
   | "listen-type";
 /** The content family selected for a self-contained Training session. */
-export type TrainingExerciseFamily = "meaning" | "idiom" | "sentence";
+export type TrainingExerciseFamily = "meaning" | "idiom" | "sentence" | "word-in-context";
 export type CardFilter = "new" | "review" | "both";
 export type QueueTurn = "new" | "review" | "auto";
 
@@ -17,6 +17,8 @@ export type TrainingDateWindow = "all" | "today" | "yesterday" | "daysAgo";
 
 export type TrainingFocusFilter = {
   dateWindow: TrainingDateWindow;
+  /** Ordinary reverse queue, presented through a translated source example. */
+  presentationMode?: "word-in-context";
   daysAgo?: number;
   timezone?: string;
   sourceKind?: string;

@@ -1459,7 +1459,7 @@ function TrainingScreenContent({
         lastAppliedTrainingFocusFilterKey.current = trainingFilterKey(context.focusFilter);
         return;
       }
-      setActiveExerciseFamily("meaning");
+      setActiveExerciseFamily(context.draft.family === "word-in-context" ? "word-in-context" : "meaning");
       setIdiomSession(null);
       setSentenceSession(null);
       replaceTrainingSessionId(session.sessionId);
@@ -1471,6 +1471,7 @@ function TrainingScreenContent({
         context.focusFilter,
       );
       void writeTrainingSessionResume({
+        ...(context.draft.family === "word-in-context" ? { family: "word-in-context" as const } : {}),
         sessionId: session.sessionId,
         userId: user.id,
         languageCode: context.languageCode,
@@ -1928,6 +1929,8 @@ function TrainingScreenContent({
       setSessionSize(record.sessionSize);
       setTrainingFocusFilter(record.focusFilter);
       replaceTrainingSessionId(snapshot.sessionId);
+      setActiveExerciseFamily(record.family === "word-in-context" ? "word-in-context" : "meaning");
+      setExerciseFamilyForResume(record.family === "word-in-context" ? "word-in-context" : "meaning");
       setLatchedSessionPlan(snapshot);
       setSessionPlannedTotal(snapshot.requestedTotal ?? snapshot.plannedTotal);
       setSessionConsumedCardKeys(
@@ -2410,6 +2413,7 @@ function TrainingScreenContent({
             trainingLanguageLoading={!trainingLanguagesResolved || !listHydrated || hydratedLanguage !== currentTrainingLanguage}
             onTrainingLanguageChange={handleTrainingLanguageChange}
             interfaceLanguage={onboardingLang}
+            translationTargetLanguageCode={translationLang === "off" ? null : translationLang}
             status={trainingPilot.status}
             startError={trainingLoadError}
             initialDraft={trainingPilot.initialDraft}
@@ -2496,6 +2500,7 @@ function TrainingScreenContent({
             }
             interfaceLanguage={onboardingLang}
             trainingSessionId={trainingSessionId}
+            wordInContext={activeExerciseFamily === "word-in-context"}
             sessionChrome={trainingSessionChrome}
             sessionFooter={trainingSessionFooter}
             sessionNotice={trainingSessionNotice}
