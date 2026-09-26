@@ -36,3 +36,4 @@
 - [2026-09-25: уточнение перехода без переноса оценок](2026-09-25-04-word-context-transition.md)
 
 - [2026-09-26: Builder, карточки, Lavender и Library](2026-09-26-01-builder-lavender-library.md)
+- [2026-09-26: сохранить существующую структуру Library](2026-09-26-02-library-existing-structure.md)

@@ -40,3 +40,7 @@ Sequence: review Library → iterate mobile/desktop and empty/loading states →
 ## Evidence and consequences
 
 [Discussion history](../discussions/2026-09-26-01-builder-lavender-library.md); [current UI contract](../research/training-builder-ui-decisions-2026-09-26.md). Runnable dev-only route `/dev/session-builder-prototype?view=palette&palette=soft`; Library `/dev/session-builder-prototype?view=library`. All data is illustrative, no live mutations. Dark theme, real source/translation capability binding, preset update, focus trap/restore and complete phone QA remain integration tasks.
+
+### Library clarification, 2026-09-26
+
+Preserve the existing LibrarySenseCardGroup structure and headword/POS identity; do not replace it with an invented single-definition panel. POS + actual 2K indicator + translation/audio precede headword and meaning cards. The current goed preview uses the actual component with source-derived ordinary-meaning fixtures; the list/search chrome remains experimental. See discussion 2026-09-26-02-library-existing-structure.md.
