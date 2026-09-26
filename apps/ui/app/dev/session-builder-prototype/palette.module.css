@@ -1,0 +1,30 @@
+.lab{min-height:100dvh;background:#f5f5f8;color:#202335}.toolbar{display:flex;align-items:center;gap:22px;padding:18px 28px;border-bottom:1px solid #e2e3eb;background:#fff}.toolbar strong{font-size:17px}.toolbar p{font-size:12px;color:#697083;margin:4px 0 0}.toolbar nav{display:flex;gap:5px;margin-left:auto;flex-shrink:0}.toolbar button,.previewHeading button{border:1px solid #dedee8;border-radius:9px;background:white;padding:9px 12px;font-size:12px}.toolbar button[aria-pressed=true]{background:#eeebff;border-color:#b7acec;color:#4e3fd1}.toolbar a{font-size:12px;white-space:nowrap;color:#6557ba}.workspace{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(390px,1fr);max-width:1700px;margin:auto}.builder{min-width:0;border-right:1px solid #e2e3eb}.preview{padding:28px;position:sticky;top:0;align-self:start;min-width:0}.previewHeading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:25px}.previewHeading span{font-size:10px;letter-spacing:1.5px;color:#777e91}.cardArea{height:535px}.session{display:flex;justify-content:space-between;font-size:12px;color:#64748b;padding:0 4px 8px}.feedback{min-height:40px;font-size:12px;color:#71798c;margin:18px 0}.notes{font-size:12px;line-height:1.6;color:#71798c;border-top:1px solid #e0e3eb;padding-top:20px}.notes strong{color:#42495a}.notes p{margin:8px 0}.review button:active,.reveal:active{transform:scale(.98)}.reveal{height:46px;border-radius:12px;border:1px solid #818cf8;background:#4f46e5;color:white;font-size:14px;font-weight:700}.lab button:focus-visible{outline:2px solid #6d5ac9;outline-offset:3px}@media(max-width:1000px){.workspace{grid-template-columns:1fr}.preview{position:relative;border-top:1px solid #e2e3eb}.builder{border:0}.toolbar{flex-wrap:wrap;padding:14px}.toolbar nav{margin-left:0;flex-wrap:wrap}.cardArea{height:510px}.preview{padding:20px}.toolbar a{margin-left:auto}}@media(prefers-reduced-motion:reduce){.review button:active,.reveal:active{transform:none}}
+
+/* Keep this light-palette study independent of the saved application theme. */
+.cardArea [data-testid="training-sense-card-shell"]{background:#f8fafc;border-color:#cbd5e1;color:#0f172a;box-shadow:0 18px 55px #0f172a1f}
+.cardArea [class*="dark:text-"]{color:#0f172a}
+.cardArea [class*="text-slate-500"]{color:#64748b}
+.cardArea [class*="text-slate-600"]{color:#475569}
+.cardArea [class*="border-indigo-400"]{border-color:#818cf8}
+.cardArea .review button{background:#fff;border-color:#cbd5e1}
+.cardArea .review button:nth-child(1){color:#e11d48}.cardArea .review button:nth-child(1)::before{background:#fb7185}
+.cardArea .review button:nth-child(2){color:#4d7c0f}.cardArea .review button:nth-child(2)::before{background:#84cc16}
+.cardArea .review button:nth-child(3){color:#047857}.cardArea .review button:nth-child(3)::before{background:#10b981}
+.cardArea .review button:nth-child(4){color:#0f766e}.cardArea .review button:nth-child(4)::before{background:#2dd4bf}
+.cardArea .review button:hover{background:#f1f5f9}
+@media(max-width:700px){.preview{padding-bottom:110px}}
+/* Lavender refinement, scoped to the study rather than production cards. */
+.lab[data-palette="soft"] .review button{font-weight:400;font-size:12px}
+.lab[data-palette="soft"] .reveal{background:#d8cfee;border-color:#c3b5e2;color:#49366d;font-weight:500}
+.lab[data-palette="soft"] .reveal:hover{background:#cfc2e9}
+.lab[data-palette="soft"] .cardArea header > div:first-child [class*="font-medium"]{font-size:11px;font-weight:400;gap:5px;color:#71798b}
+.lab[data-palette="soft"] .cardArea header [class*="bg-emerald-500"]{width:5px;height:5px;background:#34b88b}
+.lab[data-palette="soft"] .cardArea header [class*="font-mono"]{font-family:var(--font-sense-sans),Inter,sans-serif;font-size:11px;font-weight:400;border-color:#dde2eb;color:#71798b;background:transparent}
+.lab[data-palette="soft"] .cardArea [data-testid="training-face-part-of-speech"]{display:inline-flex;align-items:center;gap:5px;background:transparent;color:#71798b;font-family:var(--font-sense-sans),Inter,sans-serif;font-size:11px;font-weight:400;padding:0;min-height:24px}
+.lab[data-palette="soft"] .cardArea [data-testid="training-face-part-of-speech"]::before{content:"";width:5px;height:5px;border-radius:50%;background:#34b88b}
+/* Separate metadata from the headword; bind definition more closely to it. */
+.lab[data-palette="soft"] .cardArea header > div:first-child{margin-bottom:18px}
+.lab[data-palette="soft"] .cardArea [data-testid="training-answer-scroll"]{padding-top:0}
+.lab[data-palette="soft"] .reveal{color:#37254f}
+
+.libraryWorkspace{grid-template-columns:1fr}.libraryWorkspace .builder{border-right:0}

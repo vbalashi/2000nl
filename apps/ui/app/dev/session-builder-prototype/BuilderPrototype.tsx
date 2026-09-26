@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { ArrowLeft, BookOpen, ChartNoAxesColumn, Check, ChevronDown, Library, LoaderCircle, Play, Search, Settings } from "lucide-react";
+import {LibraryPrototype} from "./LibraryPrototype";
 import { AppDestinationNav } from "@/components/navigation/AppDestinationNav";
 import { balances, Draft, Exercise, initialDraft, matchMeanings, parts, sources, toggleRequired } from "./model";
 import s from "./prototype.module.css";
@@ -22,9 +23,10 @@ function Section({id, title, summary, open, onToggle, children}: {id: string; ti
     </div>
   </section>;
 }
-export function BuilderPrototype({variant="current",embedded=false,showSwitcher=false}:{variant?:Variant;embedded?:boolean;showSwitcher?:boolean}) {
+export function BuilderPrototype({variant="current",embedded=false,showSwitcher=false,initialScreen="builder",onScreenChange}:{variant?:Variant;embedded?:boolean;showSwitcher?:boolean;initialScreen?:"builder"|"library";onScreenChange?:(screen:string)=>void}) {
   const [draft, setDraft] = useState<Draft>(initialDraft);
-  const [screen, setScreen] = useState<"builder" | "home" | "library" | "statistics">("builder");
+  const [screen, setScreen] = useState<"builder" | "home" | "library" | "statistics">(initialScreen);
+  useEffect(()=>{onScreenChange?.(screen);},[screen,onScreenChange]);
   const [open, setOpen] = useState<string[]>(["exercises", "filters"]);
   const [nounOpen, setNounOpen] = useState(false);
   const linkedReady=useRef(!embedded);
@@ -111,7 +113,7 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
       <div className={s.desktopNav}><AppDestinationNav active={screen === "builder" || screen === "home" ? "training" : screen} interfaceLanguage="en" onNavigate={v => setScreen(v === "training" ? "home" : v === "library" ? "library" : "statistics")}/></div>
       <button className={s.iconButton} aria-label="Show prototype state" onClick={() => document.getElementById("prototype-inspector")?.scrollIntoView({behavior:"smooth"})}><Settings size={19}/></button>
     </header>
-    <main className={s.main}>
+    <main className={`${s.main} ${screen==="library"?s.libraryMain:""}`}>
       {screen === "builder" ? <>
         <div className={s.title}><button className={s.iconButton} aria-label="Back to Training" onClick={() => setScreen("home")}><ArrowLeft size={20}/></button><h1>Session builder</h1></div>
         <div className={s.panel}>
@@ -120,7 +122,7 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
             <div className={s.material}><BookOpen size={22}/><div><strong>{source.name}</strong><p>{source.kind} · {source.count} sample meanings</p></div><Action  onClick={showSource}>Change source</Action></div>
           </Section>
           <Section id="exercises" title="Exercises" summary={summary} open={open.includes("exercises")} onToggle={() => toggleSection("exercises")}>
-            <div className={s.field}><h2>Exercise type</h2><div className={s.choices}>{(["Words","Idioms","Translation"] as const).map(t => <Choice key={t} active={draft.types.includes(t)} onClick={() => update({types: toggleRequired(draft.types,t)})}>{t}</Choice>)}</div></div>
+            <div className={s.field}><h2>Exercise type</h2><div className={s.choices}>{(["Words","Idioms","Translation"] as const).map(t => <Choice key={t} active={draft.types.includes(t)} onClick={() => update({types: [t]})}>{t}</Choice>)}</div></div>
             {draft.types.includes("Translation") && <p className={s.muted}>Translation language: {draft.language === "Dutch" ? "English" : "Dutch"} · target word in sentence context</p>}
             <div className={s.field}><h2>Direction <span className={s.muted}>{previewType === "Translation" ? "Translation" : previewType === "Idioms" ? "Idiom" : "Meaning"} example</span></h2>
               <Directions values={draft.directions} pair={pair} onChange={directions=>update({directions})}/>
@@ -148,7 +150,7 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
       </> : screen === "home" ? <>
         <div className={s.title}><h1>Your practice</h1></div><section className={s.homeCard}><p className={s.eyebrow}>READY WHEN YOU ARE</p><h2>A little practice, every day.</h2><p>Your current setup is kept while you explore.</p><Action primary onClick={() => setScreen("builder")}>Continue setup</Action><Action  onClick={() => {setDraft({...initialDraft});setNounOpen(false);setScreen("builder");}}>New session</Action></section>
         <h2 className={s.savedTitle}>Saved presets</h2>{presets.length ? presets.map((preset,i) => <button className={s.preset} key={i} onClick={() => {setDraft({...preset.draft});setNounOpen(false);setScreen("builder");}}><span>{preset.name}<small>{preset.draft.types.join(" · ")}</small></span><ChevronDown size={18}/></button>) : <p className={s.muted}>Presets saved in this preview will appear here until you reload.</p>}
-      </> : <section className={s.homeCard}><h1>{screen === "library" ? "Library" : "Statistics"}</h1><p>This preview focuses on building a session.</p><Action  onClick={() => setScreen("builder")}>Return to builder</Action></section>}
+      </> : screen === "library" ? <LibraryPrototype/> : <section className={s.homeCard}><h1>Statistics</h1><p>This preview focuses on building a session.</p><Action  onClick={() => setScreen("builder")}>Return to builder</Action></section>}
       <details id="prototype-inspector" className={s.inspector}><summary>Prototype controls & state</summary><label>Count simulation <select value={simulation} onChange={e => setSimulation(e.target.value)}><option value="normal">Fixture count</option><option value="slow">Slow count</option><option value="empty">Zero results</option><option value="error">Count error</option></select></label><p>Fixture meanings only. No API calls, account changes, scheduling, or persisted presets. Exercise mixing and typed answers are interaction previews, not claims of backend support.</p><pre>{JSON.stringify({draft, open, nounOpen, countState, matchingMeaningIds: matchMeanings(draft).map(m => m.id)}, null, 2)}</pre></details>
     </main>
     <nav className={s.mobileNav} aria-label="Mobile primary navigation">{[{name:"Training",id:"home",Icon:Play},{name:"Library",id:"library",Icon:Library},{name:"Statistics",id:"statistics",Icon:ChartNoAxesColumn}].map(({name,id,Icon}) => <button key={id} aria-current={screen === id || id === "home" && screen === "builder" ? "page" : undefined} onClick={() => setScreen(id as "home" | "library" | "statistics")}><Icon size={18}/>{name}</button>)}</nav>

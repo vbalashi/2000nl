@@ -34,3 +34,5 @@
 
 - [2026-09-25: слово в контексте, общий reverse FSRS](2026-09-25-03-word-in-context.md)
 - [2026-09-25: уточнение перехода без переноса оценок](2026-09-25-04-word-context-transition.md)
+
+- [2026-09-26: Builder, карточки, Lavender и Library](2026-09-26-01-builder-lavender-library.md)

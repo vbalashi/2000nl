@@ -54,3 +54,18 @@ Validation: typecheck, focused ESLint and whitespace check passed. Browser check
 Review image: `/Users/khrustal/.codex/visualizations/2026/09/26/session-builder-comparison/four-mobile-designs.png`.
 
 Verdict pending user comparison. No Pen changes, production integration, deployment or PR in this iteration. Keep only the chosen direction (or explicitly selected combination) when this comparison answers the design question.
+
+## D × 2000NL palette study — 2026-09-26
+
+Open `?view=palette&palette=solid|soft|notch`. Three user-requested palette/selection treatments retain D geometry and Inter/Newsreader. The live training preview imports the actual shell, answer header/body, face and review buttons with fixture content. Light colors are scoped explicitly so saved dark mode does not contaminate this light study; production components are unchanged. Review button semantic colors remain original. A subtle press scale is local to this study. Builder exercise type is now single choice. Translation examples/preset update flow are still pending separate correction.
+
+Current candidate: notch (white surface, violet left accent on ordinary choices; no added check or width change); user verdict pending. Compare against solid for stronger selection visibility and soft for gentler area fill. No persistence or actual review recording. Typecheck passes; lint has an existing handlePlayAudio hook warning in TrainingSenseCardV2Session. Desktop three palettes and 390px layout inspected.
+
+User correction: do not append checkmarks or change button width on selection. Direction previews retain their existing checkbox and soft selected background, without a left accent.
+
+Lavender selected by user. Local study refinements: rating label weight 400; CTA muted lavender #d8cfee with dark plum ink; noun label 11px/400 and 5px green dot on both faces; exposure badge soft border and matching 11px Inter. Production components unchanged.
+Lavender spacing refinement: metadata-to-headword margin 18px (was 8px); answer body top padding removed (was 8px), bringing definition closer to headword. CTA ink deepened to #37254f; selected direction check uses muted lavender fill with plum mark instead of bright indigo.
+
+## Library exploration checkpoint
+
+Lavender accepted as baseline, language check colors aligned. Library available from primary navigation and `?view=library`. Twelve illustrative entries, initial nonempty alphabetical list, search word/English gloss, collapsible source scope, selected-word detail, mobile list/detail transition and zero-result reset. No dictionary calls or writes. Desktop and 390px checked; typecheck passes; lint retains existing handlePlayAudio warning. Current contract ADR-0016 and discussion archive distinguish approved baseline from proposed Library structure.
