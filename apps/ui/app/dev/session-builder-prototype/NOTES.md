@@ -26,3 +26,31 @@ Validation: TypeScript and focused ESLint passed. In-app browser interaction che
 Polish iteration 2026-09-26: reserve the page scrollbar gutter so accordion changes do not shift the centered layout; label-free exercise summary; a shared accessible purple dot marks active noun subfilters in both chip and summary. Optional noun restrictions are unchanged. Slimmer 32px desktop choices / 36–38px mobile controls, short press feedback, rotating chevrons, animated desktop height and mobile popup enter/exit, with reduced-motion overrides. Range endpoint captions now sit next to the track. Learning language is a transparent mobile row opening a compact picker. Dutch and English are explicitly illustrative fixture languages; switching language resets source/POS/article and updates examples and available sources. No claim about the user's active languages or production language support.
 
 Polish verification: before correction main x changed 152.5 → 160 at 1280px when Exercises collapsed; after correction x remained 152.5. Desktop, 390px and 360px inspected; 360px popup bounds x17–326, content width345 ≤ viewport360. Checked language/example/source reset, label-free summaries, noun indicator, de+het normalization, close/preserve via Escape, and reopen. TypeScript and focused ESLint passed. Browser fixtures only. Reference research and review captures: docs/research/training-builder-polish-2026-09-26.md.
+
+## Four-design comparison — 26 September 2026
+
+Question: how does the same session-builder behavior feel in our current design, a Linear-inspired compact workspace, actual Radix Themes controls, and an Emil Kowalski-inspired tactile interpretation?
+
+- Original route remains the baseline: `/dev/session-builder-prototype`.
+- Desktop comparison: `?view=compare` (2×2 by default).
+- Four mobile previews: `?view=compare&device=mobile` (four across on wide screens).
+- Individual variants: `?variant=current`, `?variant=linear`, `?variant=radix`, `?variant=emil`. Floating switcher and arrow keys preserve draft state. Keyboard shortcuts ignore controls/editable fields.
+- Gallery can switch desktop/mobile, four-across/2×2, or focus one design at natural size. Each iframe has an actual viewport; desktop comparison uses 1060px and mobile 390px. Scaled previews are labeled as such.
+- Sync choices is on by default. Draft, open sections, and noun editor are synchronized through same-origin, registered-frame messages; dialogs, navigation and in-memory preset lists are local to each view. Turning sync back on adopts the most recently edited draft. Reset/scenario buttons apply to all views even when sync is off.
+- Overview, Exercises, Noun filters and Session scenes open and scroll to the same section in each preview. Wait for all four frames to be ready before enabling scenes. No persistent storage or real data added.
+
+B and D are explicitly interpretations, not official themes or replicas. B changes desktop navigation to a sidebar and uses compact aligned property rows. C uses `@radix-ui/themes` Button, CheckboxCards, Slider, Theme and Dialog, with modular settings cards. D uses separated soft cards, pill controls, restrained monochrome selection and short tactile feedback. Lexical Newsreader examples and all filter/direction rules remain shared. A retains baseline layout/styles; controls were extracted to allow C's real components.
+
+Radix Themes 3.1.6 is pinned as a prototype dev dependency: its declarations work with this repo's existing TypeScript module resolution. Later 3.2/3.3 declarations import `radix-ui/internal`, which the existing resolution did not resolve; no app-wide TypeScript configuration was changed. Slider thumb receives an accessible label because this version only passes aria-label to its wrapper.
+
+References:
+- https://linear.app/now/behind-the-latest-design-refresh
+- https://www.radix-ui.com/themes/docs/components/checkbox-cards
+- https://www.radix-ui.com/themes/docs/components/button
+- https://emilkowal.ski/ui/you-dont-need-animations
+
+Validation: typecheck, focused ESLint and whitespace check passed. Browser checks: all four frames ready; Idioms/Reverse and learning-language changes synchronized; Radix slider changed all session sizes 20→25; sync-off changed only Linear 25→30; individual variant switching preserved Words+Idioms; Radix prevented clearing the last direction; 360px Emil popup stayed inside viewport; mobile and desktop focus/grid views inspected. Fixed a zero-width ResizeObserver measurement for hidden frames that produced an invalid height. Transient CSS hot-reload errors while changing dependencies were cleared by a fresh gallery load; no persistent runtime failure observed. This remains fixture-only UI verification.
+
+Review image: `/Users/khrustal/.codex/visualizations/2026/09/26/session-builder-comparison/four-mobile-designs.png`.
+
+Verdict pending user comparison. No Pen changes, production integration, deployment or PR in this iteration. Keep only the chosen direction (or explicitly selected combination) when this comparison answers the design question.
