@@ -328,4 +328,4 @@ to{opacity:1}
 
 :global([data-palette="soft"]) .emil .languageOption[aria-pressed=true]{background:#eae5fa;color:#514295}
 :global([data-palette="soft"]) .emil .languageOption[aria-pressed=true] .check{background:#d8cfee;border-color:#b9a8d9;color:#49366d}
-:global([data-palette]) .emil .libraryMain{max-width:1120px}
+:global([data-palette]) .emil .libraryMain{max-width:840px}

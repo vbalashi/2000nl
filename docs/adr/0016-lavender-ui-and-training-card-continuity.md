@@ -44,3 +44,7 @@ Sequence: review Library → iterate mobile/desktop and empty/loading states →
 ### Library clarification, 2026-09-26
 
 Preserve the existing LibrarySenseCardGroup structure and headword/POS identity; do not replace it with an invented single-definition panel. POS + actual 2K indicator + translation/audio precede headword and meaning cards. The current goed preview uses the actual component with source-derived ordinary-meaning fixtures; the list/search chrome remains experimental. See discussion 2026-09-26-02-library-existing-structure.md.
+
+### Shared outer geometry, 2026-09-27
+
+Owner explicitly rejects independent destination widths. Training/Library/Statistics share outer max-width and horizontal anchors; density differences belong inside that region. This supersedes the earlier statement that Library may use a wider outer page. Prototype Library now uses the same840px D main container. Library variants are proposals, not approvals: compact one-line rows vs definition preview, typography nesting vs soft grouped blocks. New shared prototype presentation consumes the existing domain model; integrate only after user review and production characterization/capability tests.

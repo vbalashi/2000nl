@@ -76,6 +76,13 @@
                 "kind": "idiom-explanation",
                 "text": "iets is bestemd voor iemand of iets; iets is gunstig voor iemand of iets",
                 "children": []
+              },
+              {
+                "contentNodeId": "004395_a4439_goed_zn_2-i0-example0",
+                "parentContentNodeId": "004395_a4439_goed_zn_2-i0",
+                "kind": "example",
+                "text": "het geld dat we met deze actie verdienen, komt ten goede aan de slachtoffers van de brand",
+                "children": []
               }
             ]
           }
@@ -188,6 +195,13 @@
                   "parentContentNodeId": null,
                   "kind": "idiom-explanation",
                   "text": "iets is bestemd voor iemand of iets; iets is gunstig voor iemand of iets",
+                  "children": []
+                },
+                {
+                  "contentNodeId": "004395_a4439_goed_zn_2-i0-example0",
+                  "parentContentNodeId": "004395_a4439_goed_zn_2-i0",
+                  "kind": "example",
+                  "text": "het geld dat we met deze actie verdienen, komt ten goede aan de slachtoffers van de brand",
                   "children": []
                 }
               ]
@@ -369,6 +383,13 @@
                 "kind": "idiom-explanation",
                 "text": "iets wordt gewaardeerd",
                 "children": []
+              },
+              {
+                "contentNodeId": "004396_a4440_goed_bn_1-i0-example0",
+                "parentContentNodeId": "004396_a4440_goed_bn_1-i0",
+                "kind": "example",
+                "text": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+                "children": []
               }
             ]
           },
@@ -443,6 +464,13 @@
                 "parentContentNodeId": null,
                 "kind": "idiom-explanation",
                 "text": "vrijwel helemaal",
+                "children": []
+              },
+              {
+                "contentNodeId": "004396_a4440_goed_bn_2-i1-example0",
+                "parentContentNodeId": "004396_a4440_goed_bn_2-i1",
+                "kind": "example",
+                "text": "die schoenen zijn nog zo goed als nieuw",
                 "children": []
               }
             ]
@@ -553,6 +581,13 @@
                   "kind": "idiom-explanation",
                   "text": "iets wordt gewaardeerd",
                   "children": []
+                },
+                {
+                  "contentNodeId": "004396_a4440_goed_bn_1-i0-example0",
+                  "parentContentNodeId": "004396_a4440_goed_bn_1-i0",
+                  "kind": "example",
+                  "text": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+                  "children": []
                 }
               ]
             },
@@ -630,6 +665,13 @@
                   "parentContentNodeId": null,
                   "kind": "idiom-explanation",
                   "text": "vrijwel helemaal",
+                  "children": []
+                },
+                {
+                  "contentNodeId": "004396_a4440_goed_bn_2-i1-example0",
+                  "parentContentNodeId": "004396_a4440_goed_bn_2-i1",
+                  "kind": "example",
+                  "text": "die schoenen zijn nog zo goed als nieuw",
                   "children": []
                 }
               ]
