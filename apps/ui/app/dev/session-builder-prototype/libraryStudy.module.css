@@ -1,0 +1,166 @@
+.studyDock {
+  position: fixed;
+  z-index: 15;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100vw - 24px);
+  padding: 8px 12px;
+  background: #faf9fd;
+  border: 1px solid #d5cee3;
+  box-shadow: 0 6px 25px #33234512;
+  border-radius: 12px;
+  color: #736380;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.studyDock button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #eae5fa;
+  border: 1px solid #d4c8e9;
+  color: #584779;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 11px;
+}
+.studyDialog {
+  padding: 0;
+  width: min(650px,calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  border: 1px solid #e1daeb;
+  border-radius: 16px;
+  background: #fcfbfe;
+  color: #493e58;
+  box-shadow: 0 20px 80px #24143225;
+}
+.studyDialog::backdrop {
+  background: #28203424;
+  backdrop-filter: blur(4px);
+}
+.studySheet {
+  padding: 20px;
+  font-family: var(--font-sense-sans),Inter,sans-serif;
+}
+.studySheet header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.studySheet h2 {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+}
+.studySheet p {
+  font-size: 11px;
+  color: #8b8099;
+  margin: 5px 0 0;
+}
+.studySheet button {
+  border: 1px solid #ded6e8;
+  background: white;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #635274;
+}
+.studyPresets {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 8px;
+  margin: 18px 0 14px;
+}
+.studyPresets button {
+  text-align: left;
+}
+.studyPresets strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+}
+.studyPresets span {
+  display: block;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #8b8099;
+  margin-top: 5px;
+}
+.studyPresets button[aria-pressed=true] {
+  background: #eee8f9;
+  border-color: #c8b8e1;
+}
+.studyTable>[role=row] {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 220px;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid #ece7f2;
+}
+.studyTable strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+}
+.studyTable small {
+  display: block;
+  font-size: 10px;
+  color: #8b8099;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+.studyTable select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ded6e8;
+  background: white;
+  color: #635274;
+  border-radius: 7px;
+  font-size: 11px;
+}
+.studySheet footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 15px;
+}
+.studySheet footer button:last-child {
+  background: #ded4ef;
+  border-color: #cbbcde;
+  color: #49345e;
+}
+@media(max-width:700px) {
+  .studyDock {
+  bottom: 76px;
+  }
+  .studySheet {
+  padding: 14px;
+  }
+  .studyPresets {
+  gap: 5px;
+  }
+  .studyPresets button {
+  padding: 8px;
+  }
+  .studyPresets span {
+  font-size: 9px;
+  }
+  .studyTable>[role=row] {
+  grid-template-columns: minmax(0,1fr) 155px;
+  gap: 10px;
+  padding: 9px 0;
+  }
+  .studyTable select {
+  padding: 8px 4px;
+  font-size: 10px;
+  }
+  .studyTable small {
+  font-size: 9px;
+  }
+}

@@ -38,3 +38,4 @@
 - [2026-09-26: Builder, карточки, Lavender и Library](2026-09-26-01-builder-lavender-library.md)
 - [2026-09-26: сохранить существующую структуру Library](2026-09-26-02-library-existing-structure.md)
 - [2026-09-27: общие границы и варианты плотности Library](2026-09-27-01-library-density-variants.md)
+- [2026-09-27: компоненты Library и матрица сочетаний](2026-09-27-02-library-component-matrix.md)
