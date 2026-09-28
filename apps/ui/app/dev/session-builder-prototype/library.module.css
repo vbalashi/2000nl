@@ -789,3 +789,24 @@
 @container (max-width: 280px) {
   .reportAction span { display: none; }
 }
+
+/* Owner review, 28 September: metadata-first list and floating actions. */
+.srOnly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.badge{min-height:14px;line-height:14px;font-size:10px;padding:0 4px;border-radius:4px}
+.articleHeader{border-bottom:0;padding-bottom:8px}
+.contentSection h3{display:flex;align-items:center;gap:6px}.contentSection h3 svg{flex:none;opacity:.8}
+.detail[data-nesting=hybrid] .contentSection>.contentNode{border-left:2px solid var(--content-accent,#bdc2ce);padding-left:10px}
+.detail[data-nesting=hybrid] .contentSection>.contentNode>p{border-left:0;padding-left:0}
+.detail[data-nesting=hybrid] .contentSection>.contentNode>.children{margin-left:0}
+.actionGroup[data-grouping=toolbar]{display:block}.actionGroup[data-grouping=toolbar] .secondaryActions{margin-top:4px}
+.actionGroup[data-grouping=toolbar] .actions>.button,.actionGroup[data-grouping=full] .actions>.button{width:100%}
+.actionGroup[data-learn-width=inset]:not([data-grouping=split]) .actions>.primary{width:84%;margin-left:8%;margin-right:8%}
+.library .detail .reviewButtons>button:nth-child(1){--rating-accent:#fb7185;--rating-ink:#ac3452}
+.library .detail .reviewButtons>button:nth-child(2){--rating-accent:#a3e635;--rating-ink:#557716}
+.library .detail .reviewButtons>button:nth-child(3){--rating-accent:#34d399;--rating-ink:#197953}
+.library .detail .reviewButtons>button:nth-child(4){--rating-accent:#2dd4bf;--rating-ink:#167b70}
+.library .detail .reviewButtons>button::before{background:var(--rating-accent)}
+.library .detail [data-rating-ink=exact] .reviewButtons>button{color:var(--rating-accent)}
+.library .detail [data-rating-ink=tonal] .reviewButtons>button{color:var(--rating-ink)}
+.row{grid-template-columns:minmax(0,1fr) auto;row-gap:5px}.rowMain{grid-column:1;grid-row:1}.listMeta{grid-column:1;grid-row:2;display:flex;align-items:center;gap:6px;min-width:0}.listSource{font-size:10px;color:var(--lib-muted)}.row .pos i{display:inline-block}.count{grid-column:2;grid-row:1/3;white-space:nowrap}.library[data-listing=metadata] .count{display:none}.snippet{grid-row:3;margin-top:0}.hasDetail .listSource,.hasDetail .count,.hasDetail .snippet{display:none}.row .metadata{gap:6px}.listMeta .badge{order:2}
+@media(max-width:700px){.listSource,.count,.snippet{display:none}.row{min-height:64px}.articleHeader{padding-bottom:8px}}

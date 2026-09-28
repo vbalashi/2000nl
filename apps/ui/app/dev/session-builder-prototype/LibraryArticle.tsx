@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { ChevronDown, Languages, Volume2, X, ArrowLeft } from "lucide-react";
+import { ChevronDown, Languages, Volume2, X, ArrowLeft, List, Quote } from "lucide-react";
 import type { LibrarySenseCardGroupModel, LibrarySenseCardModel, LibrarySenseContent } from "@/components/training/library-v2/librarySenseCardModel";
 import { SenseCardReveal } from "@/components/training/SenseCardChrome";
 import { LibraryIconButton, MeaningActions, DemoLearningState } from "./LibraryActions";
@@ -19,7 +19,7 @@ export function LibraryContentNode({ node }: { node: LibrarySenseContent }) {
 }
 export function MeaningContent({ meaning }: { meaning: LibrarySenseCardModel }) {
   const groups = [{ label: "Examples", nodes: meaning.details.filter(n => n.kind === "example") }, { label: "Expressions & usage", nodes: meaning.details.filter(n => n.kind !== "example") }];
-  return <>{meaning.definition?.children.map(n => <LibraryContentNode key={n.contentNodeId} node={n}/>)}{groups.filter(g => g.nodes.length).map(group => <section className={s.contentSection} key={group.label}><h3>{group.label}</h3>{group.nodes.map(n => <LibraryContentNode key={n.contentNodeId} node={n}/>)}</section>)}</>;
+  return <>{meaning.definition?.children.map(n => <LibraryContentNode key={n.contentNodeId} node={n}/>)}{groups.filter(g => g.nodes.length).map(group => <section className={s.contentSection} key={group.label}><h3>{group.label==="Examples"?<List size={12}/>:<Quote size={12}/>}<span>{group.label}</span></h3>{group.nodes.map(n => <LibraryContentNode key={n.contentNodeId} node={n}/>)}</section>)}</>;
 }
 export function MeaningCard({ meaning, defaultOpen, study, onNotice }: { meaning: LibrarySenseCardModel; defaultOpen: boolean; study: LibraryStudy; onNotice: (s: string) => void }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -27,7 +27,7 @@ export function MeaningCard({ meaning, defaultOpen, study, onNotice }: { meaning
   const status = state === "known" ? "Known" : state === "excluded" ? "Excluded" : study.scene === "review" ? "Review" : state === "learning" ? "Learning" : "New";
   return <NumberedMeaningFrame ordinal={meaning.displayOrdinal} numbering={study.numbering} open={open}>
     <button className={s.meaningLead} aria-label={`${meaning.displayOrdinal ?? ""} ${meaning.definition?.text || "Expression"} · ${status}`} aria-expanded={open} onClick={() => setOpen(!open)}>{study.numbering === "inline" && <span className={s.ordinal}>{meaning.displayOrdinal}</span>}<span>{meaning.definition?.text || "Expression"}</span><span className={s.state}>{status}</span><ChevronDown size={14} className={open ? s.rotated : ""}/></button>
-    <SenseCardReveal open={open}><div className={s.meaningBody} inert={!open} aria-hidden={!open}><MeaningContent meaning={meaning}/><MeaningActions study={study} state={state} onState={setState} onNotice={onNotice}/></div></SenseCardReveal>
+    <SenseCardReveal open={open}><div className={s.meaningBody} inert={!open} aria-hidden={!open}><MeaningContent meaning={meaning}/><MeaningActions cardId={meaning.entryId} study={study} state={state} onState={setState} onNotice={onNotice}/></div></SenseCardReveal>
   </NumberedMeaningFrame>;
 }
 export function LibraryArticleHeader({ model, source, study, onClose, onNotice }: { model: LibrarySenseCardGroupModel; source: string; study: LibraryStudy; onClose: () => void; onNotice: (s: string) => void }) {
