@@ -103,3 +103,6 @@ Shared TranslatedText uses SenseCardReveal for entry equivalents and inline tran
 
 ## Nested translation hierarchy
 nestedReading=paired|literary|tiles|original compares labelled pairs, literary example, separate surfaces and original typography. Collections now 11 px like ratings; desktop gap 10 px, mobile observed gap 8 px retained. Browser QA 1051/412 px, typecheck and targeted lint passed. See docs/discussions/2026-09-28-04-library-nested-reading.md.
+
+## Page list / independent article
+Owner selected Literary example (default). Search toolbar sticks while list uses document scrolling; sticky article owns one native scroll container, with edge chaining to document. Stable minimum workspace height prevents the main header returning on short/empty search. Actual toolbar height observed for filters/resizing. Desktop scroll independence and edge handoff, empty search and 412 px checked; typecheck/lint passed. See docs/discussions/2026-09-28-05-library-scrolling.md.

@@ -1,5 +1,5 @@
 "use client";
-import React,{useState,useEffect} from "react";
+import React,{useState,useEffect,useRef} from "react";
 import {Search,SlidersHorizontal,X} from "lucide-react";
 import {goedGroups} from "./GoedLibraryPreview";
 import {LibraryArticle,Metadata,LibraryButton} from "./LibraryArticle";
@@ -29,6 +29,13 @@ const words=[
 type Variant="compact"|"reading";
 function toModel(w:typeof words[number]):LibrarySenseCardGroupModel{if("goedIndex" in w)return goedGroups[w.goedIndex as number];const meaning={entryId:w.word,cardTypeId:"word-to-definition" as const,displayOrdinal:1,partOfSpeech:w.pos,definition:{contentNodeId:w.word+"-d",parentContentNodeId:null,kind:"definition" as const,text:w.definition,children:[]},entryTranslation:demoWordTranslations[w.word]||w.translation,entryTranslationAlternatives:[],translationStatus:null,details:[{contentNodeId:w.word+"-e",parentContentNodeId:null,kind:"example" as const,text:w.example,children:[]}],repeatCount:0,startLearning:null,markKnown:null,undoKnown:null,reportCapability:null};return {article:w.article,headword:w.word,partOfSpeech:w.pos,coreVocabularyLabel:null,audioCapability:null,senseCount:1,meanings:[meaning],crossReferences:[],presentations:[{kind:"sense-card",meaning}]};}
 export function LibraryPrototype(){
+ const toolbarRef=useRef<HTMLDivElement>(null);
+ useEffect(()=>{
+  const toolbar=toolbarRef.current;if(!toolbar)return;
+  const measure=()=>toolbar.parentElement?.style.setProperty("--library-toolbar-height",`${toolbar.offsetHeight}px`);
+  measure();const observer=new ResizeObserver(measure);observer.observe(toolbar);
+  return ()=>observer.disconnect();
+ },[]);
  const [variant,setVariant]=useState<Variant>("compact");const [study,setStudy]=useState<LibraryStudy>(studyDefaults);
  const [query,setQuery]=useState("goed");const [source,setSource]=useState("All sources");const [filters,setFilters]=useState(false);const [selected,setSelected]=useState<string|null>("goed-noun");
  useEffect(()=>{const p=new URLSearchParams(location.search);if(p.get("layout")==="reading")setVariant("reading");setStudy(readStudy(p));},[]);
@@ -36,10 +43,10 @@ export function LibraryPrototype(){
  function updateStudy(next:LibraryStudy){setStudy(next);studyUrl(next);}
  const results=words.filter(w=>(source==="All sources"||w.source===source)&&`${w.word} ${w.translation}`.toLowerCase().includes(query.toLowerCase()));const word=results.find(w=>`${w.word}-${w.pos}`===selected);
  return <DemoCollectionsProvider><section className={s.library} data-density={variant} data-listing={study.listing} data-count-position={study.countPosition} aria-label="Library"><h1 className={s.srOnly}>Library</h1>
- <div className={s.searchRow}><label className={s.search}><Search size={18}/><input aria-label="Search words" placeholder="Find a word or a meaning…" value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button aria-label="Clear search" onClick={()=>setQuery("")}><X size={16}/></button>}</label><button className={`${s.filterButton} ${filters?s.active:""}`} aria-label="Search filters" aria-expanded={filters} onClick={()=>setFilters(!filters)}><SlidersHorizontal size={17}/></button></div>
+ <div ref={toolbarRef} className={s.searchToolbar}><div className={s.searchRow}><label className={s.search}><Search size={18}/><input aria-label="Search words" placeholder="Find a word or a meaning…" value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button aria-label="Clear search" onClick={()=>setQuery("")}><X size={16}/></button>}</label><button className={`${s.filterButton} ${filters?s.active:""}`} aria-label="Search filters" aria-expanded={filters} onClick={()=>setFilters(!filters)}><SlidersHorizontal size={17}/></button></div>
  {filters&&<div className={s.filterPanel}><span>Dutch</span><label>Source<select value={source} onChange={e=>setSource(e.target.value)}>{["All sources","VanDale","Core vocabulary","Everyday Dutch"].map(v=><option key={v}>{v}</option>)}</select></label><LibraryButton onClick={()=>setFilters(false)}>Done</LibraryButton></div>}
- <div className={s.scope}><span>Dutch · {source}</span><span>{results.length} {results.length===1?"entry":"entries"}</span></div>
- <div className={`${s.workspace} ${word?s.hasDetail:""}`}><div className={s.list} aria-label="Dictionary entries">{results.map(w=>{const m=toModel(w);return <button key={`${w.word}-${w.pos}`} className={s.row} aria-pressed={selected===`${w.word}-${w.pos}`} onClick={()=>setSelected(`${w.word}-${w.pos}`)}><span className={s.rowMain}><span className={s.word}>{w.article&&<span>{w.article} </span>}{w.word}</span></span><span className={s.listMeta}><Metadata pos={w.pos} core={m.coreVocabularyLabel}/><span className={s.listSource}>· {w.source}</span><span className={s.count} aria-label={`${m.senseCount} ${m.senseCount===1?"meaning":"meanings"}`} title={`${m.senseCount} ${m.senseCount===1?"meaning":"meanings"}`}>{m.senseCount} {m.senseCount===1?"meaning":"meanings"}</span></span>{study.listing==="preview"&&<span className={s.snippet}>{w.definition}</span>}</button>})}{!results.length&&<div className={s.empty}><h2>No matching words</h2><LibraryButton onClick={()=>{setQuery("");setSource("All sources");}}>Clear search and filters</LibraryButton></div>}</div>
+ <div className={s.scope}><span>Dutch · {source}</span><span>{results.length} {results.length===1?"entry":"entries"}</span></div></div>
+ <div className={`${s.workspace} ${word?s.hasDetail:""}`}><div className={s.list} tabIndex={0} aria-label="Dictionary entries">{results.map(w=>{const m=toModel(w);return <button key={`${w.word}-${w.pos}`} className={s.row} aria-pressed={selected===`${w.word}-${w.pos}`} onClick={()=>setSelected(`${w.word}-${w.pos}`)}><span className={s.rowMain}><span className={s.word}>{w.article&&<span>{w.article} </span>}{w.word}</span></span><span className={s.listMeta}><Metadata pos={w.pos} core={m.coreVocabularyLabel}/><span className={s.listSource}>· {w.source}</span><span className={s.count} aria-label={`${m.senseCount} ${m.senseCount===1?"meaning":"meanings"}`} title={`${m.senseCount} ${m.senseCount===1?"meaning":"meanings"}`}>{m.senseCount} {m.senseCount===1?"meaning":"meanings"}</span></span>{study.listing==="preview"&&<span className={s.snippet}>{w.definition}</span>}</button>})}{!results.length&&<div className={s.empty}><h2>No matching words</h2><LibraryButton onClick={()=>{setQuery("");setSource("All sources");}}>Clear search and filters</LibraryButton></div>}</div>
  {word&&<LibraryArticle key={`${word.word}-${word.pos}`} model={toModel(word)} source={word.source} study={study} onClose={()=>setSelected(null)}/>}
  </div>
  <LibraryStudyPanel study={study} onChange={updateStudy} density={variant} onDensity={choose} onBrowse={()=>{setQuery("");setSelected("goed-noun");}}/>

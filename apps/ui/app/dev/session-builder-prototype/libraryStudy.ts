@@ -19,7 +19,7 @@ export const studyAxes = {
 export type StudyKey = keyof typeof studyAxes;
 export type LibraryStudy = { [K in StudyKey]: keyof typeof studyAxes[K]["options"] };
 export type Nesting = LibraryStudy["nesting"];
-export const studyDefaults: LibraryStudy = { navigation: "back", numbering: "corner", controls: "slim", shape: "rounded", actions: "toolbar", nesting: "hybrid", scene: "new", ratingInk:"tonal",learnWidth:"full",listing:"counts",exposure:"frame",countPosition:"near",translationInk:"warm",headerShape:"circle",nestedReading:"paired" };
+export const studyDefaults: LibraryStudy = { navigation: "back", numbering: "corner", controls: "slim", shape: "rounded", actions: "toolbar", nesting: "hybrid", scene: "new", ratingInk:"tonal",learnWidth:"full",listing:"counts",exposure:"frame",countPosition:"near",translationInk:"warm",headerShape:"circle",nestedReading:"literary" };
 export const studyPresets: { id: string; name: string; description: string; values: LibraryStudy }[] = [
   { id: "quiet", name: "1 · Quiet", description: "Compact Learn, soft blocks, no coloured rails.", values: { ...studyDefaults, actions: "split", nesting: "blocks" } },
   { id: "guided", name: "2 · Guided", description: "Centred Learn; phrase and explanation linked.", values: { ...studyDefaults } },

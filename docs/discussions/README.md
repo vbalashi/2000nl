@@ -46,3 +46,5 @@
 - [2026-09-28: переводы Library и круглые языковые кнопки](2026-09-28-03-library-translations.md)
 
 - [2026-09-28: читаемость вложенных переводов и Collections](2026-09-28-04-library-nested-reading.md)
+
+- [2026-09-28: прокрутка Library и выбор Literary example](2026-09-28-05-library-scrolling.md)

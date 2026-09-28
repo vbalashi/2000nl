@@ -851,3 +851,12 @@
 .detail[data-nested-reading=tiles] .children .contentPair{padding:9px 10px;border-radius:7px;background:#f5f3f9}
 .detail[data-nested-reading=tiles] .children .contentNode+.contentNode{margin-top:8px}
 .detail[data-nested-reading=tiles] .children [data-kind=example]>.contentPair{background:#f0f2f8}
+
+/* The list belongs to document scrolling; only the article has its own scroll. */
+.library{position:relative;min-height:100dvh;padding-bottom:68px;--library-toolbar-height:82px;overflow-anchor:none}
+.searchToolbar{position:sticky;top:0;z-index:4;background:#f4f3f8;padding-top:8px;padding-bottom:1px}
+.library .workspace{align-items:start;overflow:visible;min-height:calc(100dvh - var(--library-toolbar-height) - 68px)}
+.library .workspace>.list{overflow:clip;max-height:none}
+.library .workspace>.detail{position:sticky;top:calc(var(--library-toolbar-height) + 8px);max-height:calc(100dvh - var(--library-toolbar-height) - 24px);min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#d8d2e5 transparent;overscroll-behavior-y:auto}
+.library .meaningScroll{overflow:visible;max-height:none;min-height:0;overscroll-behavior:auto}
+@media(max-width:700px){.library{padding-bottom:150px}.library .workspace>.detail{display:block;max-height:calc(100dvh - var(--library-toolbar-height) - 150px)}.library .workspace.hasDetail>.list{display:none}}
