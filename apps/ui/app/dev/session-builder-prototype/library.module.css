@@ -861,16 +861,47 @@
 .library .meaningScroll{overflow:visible;max-height:none;min-height:0;overscroll-behavior:auto}
 @media(max-width:700px){.library{padding-bottom:150px}.library .workspace>.detail{display:block;max-height:calc(100dvh - var(--library-toolbar-height) - 150px)}.library .workspace.hasDetail>.list{display:none}}
 
-/* Nested role labels use the border as their baseline, without a text row. */
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children{border:1px solid #e4deed;padding:0 10px 8px;margin-top:12px;overflow:visible}
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode{position:relative;padding-top:9px}
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode+.contentNode{margin-top:12px;padding-top:9px}
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole{position:absolute;top:-7px;left:-3px;margin:0;padding:0 4px;background:#f5f3f9;line-height:14px;pointer-events:none}
-/* Transparent role text: the rule is drawn beside it, never masked by a patch. */
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children{border-top:0}
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode+.contentNode{border-top:0}
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole{display:flex;align-items:center;gap:4px;left:0;right:0;padding:0;background:transparent}
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode:first-child>.contentPair>.nodeRole{left:-10px;right:-10px}
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole::before,.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole::after{content:"";height:1px;background:#e4deed}
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole::before{width:6px;flex-shrink:0}
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole::after{flex:1}
+/* Border labels share one axis; transparent text never masks either surface. */
+.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) {
+  & .contentSection>.contentNode>.children {
+    border:0;
+    padding:0 10px 8px;
+    margin-top:12px;
+    overflow:visible;
+  }
+  & .contentSection>.contentNode>.children>.contentNode {
+    position:relative;
+    padding-top:9px;
+  }
+  & .contentSection>.contentNode>.children>.contentNode+.contentNode {
+    margin-top:12px;
+    padding-top:9px;
+    border-top:0;
+  }
+  & .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole {
+    position:absolute;
+    top:-7px;
+    left:0;
+    right:0;
+    display:flex;
+    align-items:center;
+    gap:4px;
+    margin:0;
+    padding:0;
+    background:transparent;
+    line-height:14px;
+    pointer-events:none;
+  }
+  & .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole::after {
+    content:"";
+    height:1px;
+    background:#e4deed;
+    flex:1;
+  }
+  & .contentSection>.contentNode>.children>.contentNode:first-child>.contentPair>.nodeRole {
+    right:-10px;
+  }
+  &[data-nested-text-inset=inset] .contentSection>.contentNode>.children>.contentNode>.contentPair {
+    padding-left:8px;
+  }
+}
