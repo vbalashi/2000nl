@@ -1,18 +1,20 @@
 "use client";
 import React, { useState } from "react";
-import { ChevronDown, Languages, Volume2, X, ArrowLeft, List, Quote } from "lucide-react";
+import { ChevronDown, Languages, Volume2, X, ArrowLeft, List, Quote, Repeat2 } from "lucide-react";
 import type { LibrarySenseCardGroupModel, LibrarySenseCardModel, LibrarySenseContent } from "@/components/training/library-v2/librarySenseCardModel";
 import { SenseCardReveal } from "@/components/training/SenseCardChrome";
 import { LibraryIconButton, MeaningActions, DemoLearningState } from "./LibraryActions";
 import type { LibraryStudy } from "./libraryStudy";
 import s from "./library.module.css";
 export { LibraryButton, LibraryIconButton } from "./LibraryActions";
+// POS families from apps/ui/docs/design-guide.md; current V2 headers still hardcode green.
+const posDots:Record<string,string>={noun:"#6493ce",zn:"#6493ce",verb:"#cf747c",ww:"#cf747c",adjective:"#64a681",bn:"#64a681",adverb:"#d49b60",bw:"#d49b60",preposition:"#a283c5",vz:"#a283c5"};
 export function Metadata({ pos, core, source }: { pos: string | null; core?: string | null; source?: string }) {
-  return <span className={s.metadata}><span className={s.pos}><i/>{pos}</span>{core && <span className={s.badge}>{core}</span>}{source && <span className={s.source}>{source}</span>}</span>;
+  return <span className={s.metadata}><span className={s.pos}><i style={{background:posDots[pos||""]||"#94a3b8"}}/>{pos}</span>{core && <span className={s.badge}>{core}</span>}{source && <span className={s.source}>{source}</span>}</span>;
 }
 // The corner marker never reserves a content column.
-export function NumberedMeaningFrame({ ordinal, numbering, open, children }: { ordinal: number | null; numbering: LibraryStudy["numbering"]; open: boolean; children: React.ReactNode }) {
-  return <article className={s.meaningCard} data-numbering={numbering} data-expanded={open}>{numbering === "corner" && ordinal != null && <span className={s.cornerNumber} aria-hidden="true">{ordinal}</span>}{children}</article>;
+export function NumberedMeaningFrame({ ordinal, numbering, open, exposure, children }: { exposure?:React.ReactNode; ordinal: number | null; numbering: LibraryStudy["numbering"]; open: boolean; children: React.ReactNode }) {
+  return <article className={s.meaningCard} data-numbering={numbering} data-expanded={open} data-exposure={exposure?"frame":"inline"}>{exposure&&<span className={s.frameExposure} aria-hidden="true">{exposure}</span>}{numbering === "corner" && ordinal != null && <span className={s.cornerNumber} aria-hidden="true">{ordinal}</span>}{children}</article>;
 }
 export function LibraryContentNode({ node }: { node: LibrarySenseContent }) {
   return <div className={s.contentNode} data-kind={node.kind}><p className={node.kind === "example" || node.kind === "idiom" ? s.literary : s.explanation}>{node.text}</p>{node.children.length > 0 && <div className={s.children}>{node.children.map(child => <LibraryContentNode key={child.contentNodeId} node={child}/>)}</div>}</div>;
@@ -24,9 +26,12 @@ export function MeaningContent({ meaning }: { meaning: LibrarySenseCardModel }) 
 export function MeaningCard({ meaning, defaultOpen, study, onNotice }: { meaning: LibrarySenseCardModel; defaultOpen: boolean; study: LibraryStudy; onNotice: (s: string) => void }) {
   const [open, setOpen] = useState(defaultOpen);
   const [state, setState] = useState<DemoLearningState>("new");
+  const exposureCount=study.scene==="review"?(meaning.repeatCount||3):0;
+  const exposureLabel=exposureCount?`${exposureCount}×`:"New";
+  const exposure=<><Repeat2 size={11}/><span>{exposureLabel}</span></>;
   const status = state === "known" ? "Known" : state === "excluded" ? "Excluded" : study.scene === "review" ? "Review" : state === "learning" ? "Learning" : "New";
-  return <NumberedMeaningFrame ordinal={meaning.displayOrdinal} numbering={study.numbering} open={open}>
-    <button className={s.meaningLead} aria-label={`${meaning.displayOrdinal ?? ""} ${meaning.definition?.text || "Expression"} · ${status}`} aria-expanded={open} onClick={() => setOpen(!open)}>{study.numbering === "inline" && <span className={s.ordinal}>{meaning.displayOrdinal}</span>}<span>{meaning.definition?.text || "Expression"}</span><span className={s.state}>{status}</span><ChevronDown size={14} className={open ? s.rotated : ""}/></button>
+  return <NumberedMeaningFrame ordinal={meaning.displayOrdinal} numbering={study.numbering} open={open} exposure={study.exposure==="frame"?exposure:undefined}>
+    <button className={s.meaningLead} aria-label={`${meaning.displayOrdinal ?? ""} ${meaning.definition?.text || "Expression"} · ${exposureLabel}${state === "new" ? "" : ` · ${status}`}`} aria-expanded={open} onClick={() => setOpen(!open)}>{study.numbering === "inline" && <span className={s.ordinal}>{meaning.displayOrdinal}</span>}<span>{meaning.definition?.text || "Expression"}</span>{study.exposure==="inline"&&<span className={s.inlineExposure}>{exposure}</span>}<ChevronDown size={14} className={open ? s.rotated : ""}/></button>
     <SenseCardReveal open={open}><div className={s.meaningBody} inert={!open} aria-hidden={!open}><MeaningContent meaning={meaning}/><MeaningActions cardId={meaning.entryId} study={study} state={state} onState={setState} onNotice={onNotice}/></div></SenseCardReveal>
   </NumberedMeaningFrame>;
 }

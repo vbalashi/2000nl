@@ -1,5 +1,7 @@
 // Prototype comparison contract. Every row drives both the matrix and the rendered components.
 export const studyAxes = {
+  exposure: {label:"Exposure label",note:"Demo: New or 3× exposures, with the repeat icon.",options:{frame:"In the top border",inline:"Inside header"}},
+  countPosition: {label:"Sense count position",note:"Keep related metadata together, or compare the far-edge position.",options:{near:"Beside metadata",edge:"Far edge (wide list)"}},
   navigation: { label: "Return", note: "One control only; audio and translation stay beside metadata.", options: { back: "Back arrow", close: "Close ×" } },
   numbering: { label: "Meaning number", note: "Corner removes the reserved number column.", options: { corner: "Cut-in corner", inline: "Inside header" } },
   controls: { label: "Button height", note: "Visual height; touch targets keep extra transparent space.", options: { slim: "Slim · 28 px", comfortable: "Comfortable · 34 px" } },
@@ -8,13 +10,13 @@ export const studyAxes = {
   nesting: { label: "Nested content", note: "Example: violet; idiom: amber; usage: teal.", options: { plain: "Typography", blocks: "Soft blocks", rails: "Colour rails", combined: "Blocks + rails", hybrid: "Phrase outside block" } },
   ratingInk: { label: "Rating text", note: "Compare neutral, exact accent and darker related colours.", options: {neutral:"Neutral",exact:"Same as accent",tonal:"Darker accent"} },
   learnWidth: {label:"Learn width",note:"Primary action above Collections and the action menu.",options:{full:"Full width",inset:"Inset · 8% each side"}},
-  listing: {label:"List metadata",note:"Narrow columns keep only word, part of speech and 2K.",options:{metadata:"Metadata only",counts:"Metadata + sense count",preview:"Metadata + first definition"}},
+  listing: {label:"List metadata",note:"Narrow columns keep word, part of speech, 2K and the sense count.",options:{metadata:"Metadata only",counts:"Metadata + sense count",preview:"Metadata + first definition"}},
   scene: { label: "Card state", note: "Local demonstration; ratings never record a real review.", options: { new: "New · Learn", review: "Answer · four ratings" } },
 } as const;
 export type StudyKey = keyof typeof studyAxes;
 export type LibraryStudy = { [K in StudyKey]: keyof typeof studyAxes[K]["options"] };
 export type Nesting = LibraryStudy["nesting"];
-export const studyDefaults: LibraryStudy = { navigation: "back", numbering: "corner", controls: "slim", shape: "rounded", actions: "toolbar", nesting: "hybrid", scene: "new", ratingInk:"tonal",learnWidth:"inset",listing:"metadata" };
+export const studyDefaults: LibraryStudy = { navigation: "back", numbering: "corner", controls: "slim", shape: "rounded", actions: "toolbar", nesting: "hybrid", scene: "new", ratingInk:"tonal",learnWidth:"full",listing:"counts",exposure:"frame",countPosition:"near" };
 export const studyPresets: { id: string; name: string; description: string; values: LibraryStudy }[] = [
   { id: "quiet", name: "1 · Quiet", description: "Compact Learn, soft blocks, no coloured rails.", values: { ...studyDefaults, actions: "split", nesting: "blocks" } },
   { id: "guided", name: "2 · Guided", description: "Centred Learn; phrase and explanation linked.", values: { ...studyDefaults } },

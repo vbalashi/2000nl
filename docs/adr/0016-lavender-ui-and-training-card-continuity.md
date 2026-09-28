@@ -48,3 +48,7 @@ Preserve the existing LibrarySenseCardGroup structure and headword/POS identity;
 ### Shared outer geometry, 2026-09-27
 
 Owner explicitly rejects independent destination widths. Training/Library/Statistics share outer max-width and horizontal anchors; density differences belong inside that region. This supersedes the earlier statement that Library may use a wider outer page. Prototype Library now uses the same840px D main container. Library variants are proposals, not approvals: compact one-line rows vs definition preview, typography nesting vs soft grouped blocks. New shared prototype presentation consumes the existing domain model; integrate only after user review and production characterization/capability tests.
+
+## Library checkpoint, 28 September
+
+Owner accepted full-width Learn, darker tonal rating text and overflow actions through the ellipsis. These are prototype defaults. Exposure in the top border and sense counts beside metadata remain comparison proposals; see [discussion](../discussions/2026-09-28-02-library-frame-exposure.md). No production integration is implied.

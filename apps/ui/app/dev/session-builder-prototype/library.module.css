@@ -810,3 +810,15 @@
 .library .detail [data-rating-ink=tonal] .reviewButtons>button{color:var(--rating-ink)}
 .row{grid-template-columns:minmax(0,1fr) auto;row-gap:5px}.rowMain{grid-column:1;grid-row:1}.listMeta{grid-column:1;grid-row:2;display:flex;align-items:center;gap:6px;min-width:0}.listSource{font-size:10px;color:var(--lib-muted)}.row .pos i{display:inline-block}.count{grid-column:2;grid-row:1/3;white-space:nowrap}.library[data-listing=metadata] .count{display:none}.snippet{grid-row:3;margin-top:0}.hasDetail .listSource,.hasDetail .count,.hasDetail .snippet{display:none}.row .metadata{gap:6px}.listMeta .badge{order:2}
 @media(max-width:700px){.listSource,.count,.snippet{display:none}.row{min-height:64px}.articleHeader{padding-bottom:8px}}
+
+/* Exposure is a frame slot, shared by all meaning cards. */
+.frameExposure,.inlineExposure{display:inline-flex;align-items:center;gap:4px;font-size:9px;line-height:16px;color:#8b8098;white-space:nowrap;font-variant-numeric:tabular-nums}
+.frameExposure{position:absolute;right:12px;top:-8px;padding:0 5px;background:var(--lib-surface);pointer-events:none}
+.meaningCard[data-numbering=corner][data-exposure=frame] .meaningLead{grid-template-columns:minmax(0,1fr) 14px}
+.meaningCard[data-numbering=inline][data-exposure=frame] .meaningLead{grid-template-columns:14px minmax(0,1fr) 14px}
+.row{grid-template-columns:minmax(0,1fr);position:relative}.listMeta{flex-wrap:wrap;gap:4px 6px}.listMeta .count{font-size:10px;color:var(--lib-muted);text-align:left;display:inline;white-space:nowrap}.listMeta .count::before{content:"·";margin-right:6px;color:#aaa2b5}
+.hasDetail .listMeta .count{display:inline}
+.library[data-count-position=edge] .workspace:not(.hasDetail) .count{position:absolute;right:14px;top:50%;transform:translateY(-50%)}
+.library[data-count-position=edge] .workspace:not(.hasDetail) .count::before{content:none}
+.library[data-count-position=edge] .workspace:not(.hasDetail) .row{padding-right:95px}
+@media(max-width:700px){.library .listMeta .count{display:inline}.library[data-count-position=edge] .workspace:not(.hasDetail) .count{position:static;transform:none}.library[data-count-position=edge] .workspace:not(.hasDetail) .count::before{content:"·"}.library[data-count-position=edge] .workspace:not(.hasDetail) .row{padding-right:14px}}

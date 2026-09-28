@@ -40,3 +40,5 @@
 - [2026-09-27: общие границы и варианты плотности Library](2026-09-27-01-library-density-variants.md)
 - [2026-09-27: компоненты Library и матрица сочетаний](2026-09-27-02-library-component-matrix.md)
 - [2026-09-28: всплывающие действия Library и состав списка](2026-09-28-01-library-overlays-and-list.md)
+
+- [2026-09-28: метка в рамке и группировка счётчиков Library](2026-09-28-02-library-frame-exposure.md)
