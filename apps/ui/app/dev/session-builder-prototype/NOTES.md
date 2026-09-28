@@ -118,3 +118,6 @@ Owner requested a common vertical axis for Explanation / Example and no left str
 
 ## Mixed label placement
 Owner follow-up: Explanation returns inside the soft block; only Example stays on the divider. Shared label axis, transparent Example background and optional 8 px text inset retained. Browser screenshot verified; typecheck passed.
+
+## Example without separator
+Added roleLabels=plain (Example without line): same placement and spacing as the divider version, with only its rule hidden. Explanation stays inside the block. Browser verified; typecheck passed.

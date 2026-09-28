@@ -1,7 +1,7 @@
 // Prototype comparison contract. Every row drives both the matrix and the rendered components.
 export const studyAxes = {
   nestedTextInset:{label:"Nested text alignment",note:"Explanation and Example share one vertical line.",options:{aligned:"Aligned with labels",inset:"Inset text · 8 px"}},
-  roleLabels:{label:"Nested labels",note:"Explanation stays inside; compare Example on the divider or above its text.",options:{border:"Example on divider",inline:"Above the text"}},
+  roleLabels:{label:"Nested labels",note:"Explanation stays inside; compare Example on the divider or above its text.",options:{border:"Example on divider",inline:"Above the text",plain:"Example without line"}},
   nestedReading:{label:"Explanation / example",note:"Compare hierarchy inside an idiom: source and translation stay paired.",options:{paired:"1 · Clear pairs",literary:"2 · Literary example",tiles:"3 · Separate surfaces",original:"Original"}},
   translationInk: {label:"Translation accent",note:"English demo translations: all meanings, examples and idioms of goed.",options:{warm:"Warm emphasis",neutral:"Neutral emphasis"}},
   headerShape: {label:"Audio / translation shape",note:"Only these two controls; other buttons keep their selected shape.",options:{circle:"Circle",rounded:"Rounded rectangle"}},
