@@ -7,6 +7,7 @@ import {DemoCollectionsProvider} from "./LibraryOverlays";
 import {LibraryStudyPanel} from "./LibraryStudyPanel";
 import {LibraryStudy,studyDefaults,readStudy,studyUrl} from "./libraryStudy";
 import type {LibrarySenseCardGroupModel} from "@/components/training/library-v2/librarySenseCardModel";
+import {demoWordTranslations} from "./libraryTranslationFixture";
 import additionalEntries from "./library-extra-fixture.json";
 import s from "./library.module.css";
 const words=[
@@ -26,7 +27,7 @@ const words=[
  {word:"zin",article:"de",pos:"noun",translation:"sentence",definition:"Een groep woorden die samen iets betekent.",example:"Lees de eerste zin nog een keer.",source:"Core vocabulary"}
 ];
 type Variant="compact"|"reading";
-function toModel(w:typeof words[number]):LibrarySenseCardGroupModel{if("goedIndex" in w)return goedGroups[w.goedIndex as number];const meaning={entryId:w.word,cardTypeId:"word-to-definition" as const,displayOrdinal:1,partOfSpeech:w.pos,definition:{contentNodeId:w.word+"-d",parentContentNodeId:null,kind:"definition" as const,text:w.definition,children:[]},entryTranslation:null,entryTranslationAlternatives:[],translationStatus:null,details:[{contentNodeId:w.word+"-e",parentContentNodeId:null,kind:"example" as const,text:w.example,children:[]}],repeatCount:0,startLearning:null,markKnown:null,undoKnown:null,reportCapability:null};return {article:w.article,headword:w.word,partOfSpeech:w.pos,coreVocabularyLabel:null,audioCapability:null,senseCount:1,meanings:[meaning],crossReferences:[],presentations:[{kind:"sense-card",meaning}]};}
+function toModel(w:typeof words[number]):LibrarySenseCardGroupModel{if("goedIndex" in w)return goedGroups[w.goedIndex as number];const meaning={entryId:w.word,cardTypeId:"word-to-definition" as const,displayOrdinal:1,partOfSpeech:w.pos,definition:{contentNodeId:w.word+"-d",parentContentNodeId:null,kind:"definition" as const,text:w.definition,children:[]},entryTranslation:demoWordTranslations[w.word]||w.translation,entryTranslationAlternatives:[],translationStatus:null,details:[{contentNodeId:w.word+"-e",parentContentNodeId:null,kind:"example" as const,text:w.example,children:[]}],repeatCount:0,startLearning:null,markKnown:null,undoKnown:null,reportCapability:null};return {article:w.article,headword:w.word,partOfSpeech:w.pos,coreVocabularyLabel:null,audioCapability:null,senseCount:1,meanings:[meaning],crossReferences:[],presentations:[{kind:"sense-card",meaning}]};}
 export function LibraryPrototype(){
  const [variant,setVariant]=useState<Variant>("compact");const [study,setStudy]=useState<LibraryStudy>(studyDefaults);
  const [query,setQuery]=useState("goed");const [source,setSource]=useState("All sources");const [filters,setFilters]=useState(false);const [selected,setSelected]=useState<string|null>("goed-noun");

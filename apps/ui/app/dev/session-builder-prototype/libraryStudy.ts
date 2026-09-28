@@ -1,11 +1,13 @@
 // Prototype comparison contract. Every row drives both the matrix and the rendered components.
 export const studyAxes = {
+  translationInk: {label:"Translation accent",note:"English demo translations: all meanings, examples and idioms of goed.",options:{warm:"Warm emphasis",neutral:"Neutral emphasis"}},
+  headerShape: {label:"Audio / translation shape",note:"Only these two controls; other buttons keep their selected shape.",options:{circle:"Circle",rounded:"Rounded rectangle"}},
   exposure: {label:"Exposure label",note:"Demo: New or 3× exposures, with the repeat icon.",options:{frame:"In the top border",inline:"Inside header"}},
   countPosition: {label:"Sense count position",note:"Keep related metadata together, or compare the far-edge position.",options:{near:"Beside metadata",edge:"Far edge (wide list)"}},
   navigation: { label: "Return", note: "One control only; audio and translation stay beside metadata.", options: { back: "Back arrow", close: "Close ×" } },
   numbering: { label: "Meaning number", note: "Corner removes the reserved number column.", options: { corner: "Cut-in corner", inline: "Inside header" } },
   controls: { label: "Button height", note: "Visual height; touch targets keep extra transparent space.", options: { slim: "Slim · 28 px", comfortable: "Comfortable · 34 px" } },
-  shape: { label: "Button shape", note: "Applies to text and icon buttons throughout the article.", options: { rounded: "Rounded rectangle", pill: "Pill / circle" } },
+  shape: { label: "Button shape", note: "Text buttons and other controls; audio / translation have their own setting.", options: { rounded: "Rounded rectangle", pill: "Pill / circle" } },
   actions: { label: "Action grouping", note: "Compare the same actions, without changing their meaning.", options: { full: "Full-width + quiet row", split: "Compact + quiet row", toolbar: "Primary + overflow" } },
   nesting: { label: "Nested content", note: "Example: violet; idiom: amber; usage: teal.", options: { plain: "Typography", blocks: "Soft blocks", rails: "Colour rails", combined: "Blocks + rails", hybrid: "Phrase outside block" } },
   ratingInk: { label: "Rating text", note: "Compare neutral, exact accent and darker related colours.", options: {neutral:"Neutral",exact:"Same as accent",tonal:"Darker accent"} },
@@ -16,7 +18,7 @@ export const studyAxes = {
 export type StudyKey = keyof typeof studyAxes;
 export type LibraryStudy = { [K in StudyKey]: keyof typeof studyAxes[K]["options"] };
 export type Nesting = LibraryStudy["nesting"];
-export const studyDefaults: LibraryStudy = { navigation: "back", numbering: "corner", controls: "slim", shape: "rounded", actions: "toolbar", nesting: "hybrid", scene: "new", ratingInk:"tonal",learnWidth:"full",listing:"counts",exposure:"frame",countPosition:"near" };
+export const studyDefaults: LibraryStudy = { navigation: "back", numbering: "corner", controls: "slim", shape: "rounded", actions: "toolbar", nesting: "hybrid", scene: "new", ratingInk:"tonal",learnWidth:"full",listing:"counts",exposure:"frame",countPosition:"near",translationInk:"warm",headerShape:"circle" };
 export const studyPresets: { id: string; name: string; description: string; values: LibraryStudy }[] = [
   { id: "quiet", name: "1 · Quiet", description: "Compact Learn, soft blocks, no coloured rails.", values: { ...studyDefaults, actions: "split", nesting: "blocks" } },
   { id: "guided", name: "2 · Guided", description: "Centred Learn; phrase and explanation linked.", values: { ...studyDefaults } },

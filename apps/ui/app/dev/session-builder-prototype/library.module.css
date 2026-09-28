@@ -499,7 +499,7 @@
   padding: 0 12px 12px 33px;
   padding-bottom: 10px;
 }
-.detail[data-nesting=rails] .contentNode>p,.detail[data-nesting=combined] .contentNode>p {
+.detail[data-nesting=rails] .contentNode>.contentPair,.detail[data-nesting=combined] .contentNode>.contentPair {
   border-left: 2px solid var(--content-accent,#bdc2ce);
   padding-left: 10px;
 }
@@ -520,11 +520,11 @@
 .detail[data-nesting=combined] .children {
   padding-left: 0;
 }
-.detail[data-nesting=combined] .children>.contentNode>p {
+.detail[data-nesting=combined] .children>.contentNode>.contentPair {
   border-left: 0;
   padding-left: 0;
 }
-.detail[data-nesting=hybrid] .contentSection>.contentNode>p {
+.detail[data-nesting=hybrid] .contentSection>.contentNode>.contentPair {
   border-left: 2px solid var(--content-accent,#bdc2ce);
   padding-left: 10px;
 }
@@ -796,7 +796,7 @@
 .articleHeader{border-bottom:0;padding-bottom:8px}
 .contentSection h3{display:flex;align-items:center;gap:6px}.contentSection h3 svg{flex:none;opacity:.8}
 .detail[data-nesting=hybrid] .contentSection>.contentNode{border-left:2px solid var(--content-accent,#bdc2ce);padding-left:10px}
-.detail[data-nesting=hybrid] .contentSection>.contentNode>p{border-left:0;padding-left:0}
+.detail[data-nesting=hybrid] .contentSection>.contentNode>.contentPair{border-left:0;padding-left:0}
 .detail[data-nesting=hybrid] .contentSection>.contentNode>.children{margin-left:0}
 .actionGroup[data-grouping=toolbar]{display:block}.actionGroup[data-grouping=toolbar] .secondaryActions{margin-top:4px}
 .actionGroup[data-grouping=toolbar] .actions>.button,.actionGroup[data-grouping=full] .actions>.button{width:100%}
@@ -822,3 +822,15 @@
 .library[data-count-position=edge] .workspace:not(.hasDetail) .count::before{content:none}
 .library[data-count-position=edge] .workspace:not(.hasDetail) .row{padding-right:95px}
 @media(max-width:700px){.library .listMeta .count{display:inline}.library[data-count-position=edge] .workspace:not(.hasDetail) .count{position:static;transform:none}.library[data-count-position=edge] .workspace:not(.hasDetail) .count::before{content:"·"}.library[data-count-position=edge] .workspace:not(.hasDetail) .row{padding-right:14px}}
+
+/* Translation pairs follow the source text inside its existing rail / soft block. */
+.translation{margin:4px 0 0;font-family:var(--font-inter),sans-serif;font-size:13px;font-style:normal;font-weight:400;line-height:1.4;color:#7b7488}
+.translationEmphasis{margin:0 0 5px;font-size:14px;line-height:1.35;font-style:normal;font-weight:500;color:#987036}
+.detail[data-translation-ink=neutral] .translationEmphasis{color:#655a76}
+.meaningText{min-width:0;display:block}
+.meaningLead{align-items:start}
+.detail .languageControl[data-header-shape=circle]{border-radius:50%}
+.detail .languageControl[data-header-shape=rounded]{border-radius:10px}
+.languageControl[aria-pressed=true]{background:#eee8f8;border-color:#c8bbe5;color:#69508c}
+
+.contentPair{min-width:0}

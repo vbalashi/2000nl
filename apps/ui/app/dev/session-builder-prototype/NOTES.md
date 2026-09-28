@@ -97,3 +97,6 @@ Browser 1024/412 checked: menu height invariant; collections create/select and c
 
 ## Frame exposure and nearby counts
 Full-width Learn, tonal rating ink and toolbar overflow are accepted defaults. New study axes: exposure=frame|inline and countPosition=near|edge. Frame badge uses Repeat2 and New / demo 3× (not real review history). POS colours come from design-guide families; Metadata owns them for list and header. Sense counts remain visible in narrow lists. Desktop 855 px and mobile 412 px inspected; typecheck and focused lint passed. See docs/discussions/2026-09-28-02-library-frame-exposure.md.
+
+## Translation study
+Shared TranslatedText uses SenseCardReveal for entry equivalents and inline translations. Full English demo coverage for goed; short equivalents for other demo entries. Translation toggle preserves expanded senses. translationInk=warm|neutral; headerShape=circle|rounded affects only audio/translation. Browser checked at 412/1024 px; typecheck and targeted lint passed. No translation-provider calls. See docs/discussions/2026-09-28-03-library-translations.md.
