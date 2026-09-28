@@ -834,3 +834,20 @@
 .languageControl[aria-pressed=true]{background:#eee8f8;border-color:#c8bbe5;color:#69508c}
 
 .contentPair{min-width:0}
+
+/* Keep secondary actions visually quieter than the learning action. */
+.library .detail .secondaryActions>button{font-size:11px;font-weight:400;line-height:16px;color:#82758e}
+.library .detail .secondaryActions>button>svg{width:12px;height:12px}
+.library .detail .secondaryActions>button[aria-label="More card actions"]>svg{width:16px;height:16px}
+@media(min-width:701px){.library .detail .actionGroup .secondaryActions{margin-top:10px}}
+/* Reading studies share content; only the nested hierarchy changes. */
+.nodeRole{display:none}
+.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .nodeRole{display:block;font-family:var(--font-inter),sans-serif;font-size:9px;font-weight:500;font-style:normal;letter-spacing:.065em;text-transform:uppercase;line-height:14px;color:#82758e;margin-bottom:4px}
+.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .contentPair>p{font-family:var(--font-inter),sans-serif;font-size:13px;font-weight:400;font-style:normal;line-height:1.5;color:#4f485d}
+.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .translation{font-family:var(--font-inter),sans-serif;font-size:12px;line-height:1.5;color:#81788d;margin-top:3px}
+.detail:is([data-nested-reading=paired],[data-nested-reading=literary]) .children .contentNode+.contentNode{margin-top:14px;padding-top:12px;border-top:1px solid #e4deed}
+.detail[data-nested-reading=literary] .children [data-kind=example]>.contentPair>p{font-family:var(--font-sense-serif),Georgia,serif;font-size:15px;font-style:italic;line-height:1.45}
+.detail[data-nested-reading=tiles] .contentSection>.contentNode>.children{background:transparent;padding:0;margin-top:9px}
+.detail[data-nested-reading=tiles] .children .contentPair{padding:9px 10px;border-radius:7px;background:#f5f3f9}
+.detail[data-nested-reading=tiles] .children .contentNode+.contentNode{margin-top:8px}
+.detail[data-nested-reading=tiles] .children [data-kind=example]>.contentPair{background:#f0f2f8}

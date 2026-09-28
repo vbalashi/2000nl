@@ -44,3 +44,5 @@
 - [2026-09-28: метка в рамке и группировка счётчиков Library](2026-09-28-02-library-frame-exposure.md)
 
 - [2026-09-28: переводы Library и круглые языковые кнопки](2026-09-28-03-library-translations.md)
+
+- [2026-09-28: читаемость вложенных переводов и Collections](2026-09-28-04-library-nested-reading.md)

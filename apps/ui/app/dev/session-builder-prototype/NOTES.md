@@ -100,3 +100,6 @@ Full-width Learn, tonal rating ink and toolbar overflow are accepted defaults. N
 
 ## Translation study
 Shared TranslatedText uses SenseCardReveal for entry equivalents and inline translations. Full English demo coverage for goed; short equivalents for other demo entries. Translation toggle preserves expanded senses. translationInk=warm|neutral; headerShape=circle|rounded affects only audio/translation. Browser checked at 412/1024 px; typecheck and targeted lint passed. No translation-provider calls. See docs/discussions/2026-09-28-03-library-translations.md.
+
+## Nested translation hierarchy
+nestedReading=paired|literary|tiles|original compares labelled pairs, literary example, separate surfaces and original typography. Collections now 11 px like ratings; desktop gap 10 px, mobile observed gap 8 px retained. Browser QA 1051/412 px, typecheck and targeted lint passed. See docs/discussions/2026-09-28-04-library-nested-reading.md.
