@@ -8,6 +8,7 @@ export const dynamic="force-dynamic";
 export default async function Page({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}) {
   if(process.env.NODE_ENV==="production")notFound();
   const params=await searchParams;
+  if(params.view==="statistics")return <div data-palette="soft"><BuilderPrototype variant="emil" initialScreen="statistics"/></div>;
   if(params.view==="library")return <div data-palette="soft"><BuilderPrototype variant="emil" initialScreen="library"/></div>;
   if(params.view==="palette")return <PaletteLab initialPalette={typeof params.palette==="string"?params.palette:"soft"}/>;
   if(params.view==="compare")return <ComparisonLab initialMobile={params.device==="mobile"}/>;

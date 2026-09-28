@@ -52,3 +52,6 @@ Owner explicitly rejects independent destination widths. Training/Library/Statis
 ## Library checkpoint, 28 September
 
 Owner accepted full-width Learn, darker tonal rating text and overflow actions through the ellipsis. These are prototype defaults. Exposure in the top border and sense counts beside metadata remain comparison proposals; see [discussion](../discussions/2026-09-28-02-library-frame-exposure.md). No production integration is implied.
+
+## Library approved, Statistics first pass
+Owner approved the current Library screen and nested labels without dividers, Literary example and 8 px text inset. Defaults recorded in the prototype. Statistics now has an illustrative current-day / started-card overview for review; scope wiring and historical metrics remain unapproved. See [checkpoint](../discussions/2026-09-28-07-library-approved-statistics.md).

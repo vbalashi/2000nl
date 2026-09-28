@@ -121,3 +121,6 @@ Owner follow-up: Explanation returns inside the soft block; only Example stays o
 
 ## Example without separator
 Added roleLabels=plain (Example without line): same placement and spacing as the divider version, with only its rule hidden. Explanation stays inside the block. Browser verified; typecheck passed.
+
+## Statistics first pass
+Library plain labels / inset text accepted and made defaults. StatisticsPrototype adds current study-day counts, started-card progress, illustrative Words/Idioms scopes and a first-visit state. Uses concepts from exercise stats read model but no backend calls. Direct view=statistics route. Desktop/412 px, scope/state switch and training navigation verified; typecheck/lint passed. Statistics remains a proposal.

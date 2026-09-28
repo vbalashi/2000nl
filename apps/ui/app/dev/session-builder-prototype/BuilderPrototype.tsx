@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { ArrowLeft, BookOpen, ChartNoAxesColumn, Check, ChevronDown, Library, LoaderCircle, Play, Search, Settings } from "lucide-react";
+import {StatisticsPrototype} from "./StatisticsPrototype";
 import {LibraryPrototype} from "./LibraryPrototype";
 import { AppDestinationNav } from "@/components/navigation/AppDestinationNav";
 import { balances, Draft, Exercise, initialDraft, matchMeanings, parts, sources, toggleRequired } from "./model";
@@ -23,7 +24,7 @@ function Section({id, title, summary, open, onToggle, children}: {id: string; ti
     </div>
   </section>;
 }
-export function BuilderPrototype({variant="current",embedded=false,showSwitcher=false,initialScreen="builder",onScreenChange}:{variant?:Variant;embedded?:boolean;showSwitcher?:boolean;initialScreen?:"builder"|"library";onScreenChange?:(screen:string)=>void}) {
+export function BuilderPrototype({variant="current",embedded=false,showSwitcher=false,initialScreen="builder",onScreenChange}:{variant?:Variant;embedded?:boolean;showSwitcher?:boolean;initialScreen?:"builder"|"library"|"statistics";onScreenChange?:(screen:string)=>void}) {
   const [draft, setDraft] = useState<Draft>(initialDraft);
   const [screen, setScreen] = useState<"builder" | "home" | "library" | "statistics">(initialScreen);
   useEffect(()=>{onScreenChange?.(screen);},[screen,onScreenChange]);
@@ -150,7 +151,7 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
       </> : screen === "home" ? <>
         <div className={s.title}><h1>Your practice</h1></div><section className={s.homeCard}><p className={s.eyebrow}>READY WHEN YOU ARE</p><h2>A little practice, every day.</h2><p>Your current setup is kept while you explore.</p><Action primary onClick={() => setScreen("builder")}>Continue setup</Action><Action  onClick={() => {setDraft({...initialDraft});setNounOpen(false);setScreen("builder");}}>New session</Action></section>
         <h2 className={s.savedTitle}>Saved presets</h2>{presets.length ? presets.map((preset,i) => <button className={s.preset} key={i} onClick={() => {setDraft({...preset.draft});setNounOpen(false);setScreen("builder");}}><span>{preset.name}<small>{preset.draft.types.join(" · ")}</small></span><ChevronDown size={18}/></button>) : <p className={s.muted}>Presets saved in this preview will appear here until you reload.</p>}
-      </> : screen === "library" ? <LibraryPrototype/> : <section className={s.homeCard}><h1>Statistics</h1><p>This preview focuses on building a session.</p><Action  onClick={() => setScreen("builder")}>Return to builder</Action></section>}
+      </> : screen === "library" ? <LibraryPrototype/> : <StatisticsPrototype onTrain={()=>setScreen("home")}/>}
       <details id="prototype-inspector" className={s.inspector}><summary>Prototype controls & state</summary><label>Count simulation <select value={simulation} onChange={e => setSimulation(e.target.value)}><option value="normal">Fixture count</option><option value="slow">Slow count</option><option value="empty">Zero results</option><option value="error">Count error</option></select></label><p>Fixture meanings only. No API calls, account changes, scheduling, or persisted presets. Exercise mixing and typed answers are interaction previews, not claims of backend support.</p><pre>{JSON.stringify({draft, open, nounOpen, countState, matchingMeaningIds: matchMeanings(draft).map(m => m.id)}, null, 2)}</pre></details>
     </main>
     <nav className={s.mobileNav} aria-label="Mobile primary navigation">{[{name:"Training",id:"home",Icon:Play},{name:"Library",id:"library",Icon:Library},{name:"Statistics",id:"statistics",Icon:ChartNoAxesColumn}].map(({name,id,Icon}) => <button key={id} aria-current={screen === id || id === "home" && screen === "builder" ? "page" : undefined} onClick={() => setScreen(id as "home" | "library" | "statistics")}><Icon size={18}/>{name}</button>)}</nav>
