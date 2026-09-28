@@ -109,3 +109,6 @@ Owner selected Literary example (default). Search toolbar sticks while list uses
 
 ## Border role labels
 roleLabels=border|inline compares inset Explanation / Example labels with the previous standalone lines. Scoped to hybrid + paired/literary. Border mode uses the outer top edge and inner separator without reserving label rows. Desktop/mobile 412 px reviewed; typecheck and focused lint passed.
+
+## Transparent inset labels (owner follow-up, 28 September)
+Removed the opaque lavender patch behind nested role labels. The label is transparent across the white/lavender boundary; two adjacent CSS rules draw the line without crossing its text. Browser verified with translations visible. CSS-only refinement; diff check passed.
