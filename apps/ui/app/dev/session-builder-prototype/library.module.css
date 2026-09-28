@@ -860,3 +860,9 @@
 .library .workspace>.detail{position:sticky;top:calc(var(--library-toolbar-height) + 8px);max-height:calc(100dvh - var(--library-toolbar-height) - 24px);min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#d8d2e5 transparent;overscroll-behavior-y:auto}
 .library .meaningScroll{overflow:visible;max-height:none;min-height:0;overscroll-behavior:auto}
 @media(max-width:700px){.library{padding-bottom:150px}.library .workspace>.detail{display:block;max-height:calc(100dvh - var(--library-toolbar-height) - 150px)}.library .workspace.hasDetail>.list{display:none}}
+
+/* Nested role labels use the border as their baseline, without a text row. */
+.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children{border:1px solid #e4deed;padding:0 10px 8px;margin-top:12px;overflow:visible}
+.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode{position:relative;padding-top:9px}
+.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode+.contentNode{margin-top:12px;padding-top:9px}
+.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole{position:absolute;top:-7px;left:-3px;margin:0;padding:0 4px;background:#f5f3f9;line-height:14px;pointer-events:none}

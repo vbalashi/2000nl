@@ -48,3 +48,5 @@
 - [2026-09-28: читаемость вложенных переводов и Collections](2026-09-28-04-library-nested-reading.md)
 
 - [2026-09-28: прокрутка Library и выбор Literary example](2026-09-28-05-library-scrolling.md)
+
+- [2026-09-28: подписи ролей в границе блока](2026-09-28-06-library-border-labels.md)

@@ -106,3 +106,6 @@ nestedReading=paired|literary|tiles|original compares labelled pairs, literary e
 
 ## Page list / independent article
 Owner selected Literary example (default). Search toolbar sticks while list uses document scrolling; sticky article owns one native scroll container, with edge chaining to document. Stable minimum workspace height prevents the main header returning on short/empty search. Actual toolbar height observed for filters/resizing. Desktop scroll independence and edge handoff, empty search and 412 px checked; typecheck/lint passed. See docs/discussions/2026-09-28-05-library-scrolling.md.
+
+## Border role labels
+roleLabels=border|inline compares inset Explanation / Example labels with the previous standalone lines. Scoped to hybrid + paired/literary. Border mode uses the outer top edge and inner separator without reserving label rows. Desktop/mobile 412 px reviewed; typecheck and focused lint passed.

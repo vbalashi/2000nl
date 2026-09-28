@@ -1,5 +1,6 @@
 // Prototype comparison contract. Every row drives both the matrix and the rendered components.
 export const studyAxes = {
+  roleLabels:{label:"Nested labels",note:"For Clear pairs / Literary example in the hybrid block.",options:{border:"Cut into border",inline:"Above the text"}},
   nestedReading:{label:"Explanation / example",note:"Compare hierarchy inside an idiom: source and translation stay paired.",options:{paired:"1 · Clear pairs",literary:"2 · Literary example",tiles:"3 · Separate surfaces",original:"Original"}},
   translationInk: {label:"Translation accent",note:"English demo translations: all meanings, examples and idioms of goed.",options:{warm:"Warm emphasis",neutral:"Neutral emphasis"}},
   headerShape: {label:"Audio / translation shape",note:"Only these two controls; other buttons keep their selected shape.",options:{circle:"Circle",rounded:"Rounded rectangle"}},
@@ -19,7 +20,7 @@ export const studyAxes = {
 export type StudyKey = keyof typeof studyAxes;
 export type LibraryStudy = { [K in StudyKey]: keyof typeof studyAxes[K]["options"] };
 export type Nesting = LibraryStudy["nesting"];
-export const studyDefaults: LibraryStudy = { navigation: "back", numbering: "corner", controls: "slim", shape: "rounded", actions: "toolbar", nesting: "hybrid", scene: "new", ratingInk:"tonal",learnWidth:"full",listing:"counts",exposure:"frame",countPosition:"near",translationInk:"warm",headerShape:"circle",nestedReading:"literary" };
+export const studyDefaults: LibraryStudy = { navigation: "back", numbering: "corner", controls: "slim", shape: "rounded", actions: "toolbar", nesting: "hybrid", scene: "new", ratingInk:"tonal",learnWidth:"full",listing:"counts",exposure:"frame",countPosition:"near",translationInk:"warm",headerShape:"circle",nestedReading:"literary",roleLabels:"border" };
 export const studyPresets: { id: string; name: string; description: string; values: LibraryStudy }[] = [
   { id: "quiet", name: "1 · Quiet", description: "Compact Learn, soft blocks, no coloured rails.", values: { ...studyDefaults, actions: "split", nesting: "blocks" } },
   { id: "guided", name: "2 · Guided", description: "Centred Learn; phrase and explanation linked.", values: { ...studyDefaults } },
