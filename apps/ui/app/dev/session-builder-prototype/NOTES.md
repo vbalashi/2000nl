@@ -115,3 +115,6 @@ Removed the opaque lavender patch behind nested role labels. The label is transp
 
 ## Label alignment correction
 Owner requested a common vertical axis for Explanation / Example and no left stroke breaking the rounded soft-block corner. Consolidated conflicting border-label rules: both labels share left:0, transparent backgrounds, rules only after the text, no outer outline or leading stroke. nestedTextInset=aligned|inset compares text on the label axis with an 8 px inset. Browser coordinates confirmed equal label x and text x=label x+8. Screenshot inspected; typecheck, focused lint and diff check passed.
+
+## Mixed label placement
+Owner follow-up: Explanation returns inside the soft block; only Example stays on the divider. Shared label axis, transparent Example background and optional 8 px text inset retained. Browser screenshot verified; typecheck passed.

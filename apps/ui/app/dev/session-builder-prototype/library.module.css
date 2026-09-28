@@ -905,3 +905,8 @@
     padding-left:8px;
   }
 }
+
+/* Explanation stays inside the soft block; Example remains on its separator. */
+.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=explanation]{position:static;display:block;margin:0 0 4px;line-height:14px}
+.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=explanation]::after{display:none}
+.detail[data-nested-text-inset=inset][data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=explanation]{margin-left:-8px}
