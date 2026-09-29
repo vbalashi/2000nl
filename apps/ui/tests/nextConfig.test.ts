@@ -17,12 +17,14 @@ function readDistDir(nextDistDir?: string) {
   );
 }
 
-function readRolloutEnv(profile?: string, translationExercises?: string) {
+function readRolloutEnv(profile?: string, translationExercises?: string, presentation?: string) {
   const env = { ...process.env };
   if (profile) env.APP_ROLLOUT_PROFILE = profile;
   else delete env.APP_ROLLOUT_PROFILE;
   if (translationExercises) env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED = translationExercises;
   else delete env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED;
+  if (presentation) env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 = presentation;
+  else delete env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1;
 
   return JSON.parse(
     execFileSync(
@@ -80,5 +82,11 @@ describe("rollout profile compilation", () => {
   test("allows the sentence release to opt in independently", () => {
     expect(readRolloutEnv("pilot", "true").PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED).toBe("true");
     expect(readRolloutEnv("pilot", "false").PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED).toBe("false");
+  });
+
+  test("keeps the approved session presentation off until explicitly enabled", () => {
+    expect(readRolloutEnv("pilot").NEXT_PUBLIC_TRAINING_PRESENTATION_V1).toBe("false");
+    expect(readRolloutEnv("pilot", undefined, "true").NEXT_PUBLIC_TRAINING_PRESENTATION_V1).toBe("true");
+    expect(readRolloutEnv("pilot", undefined, "false").NEXT_PUBLIC_TRAINING_PRESENTATION_V1).toBe("false");
   });
 });

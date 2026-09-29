@@ -28,6 +28,9 @@ import type {
 export const trainingCardStageClassName =
   "mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-[10px] font-sense-sans text-slate-900 dark:text-[#F4F6FA] [container-type:inline-size]";
 
+export const approvedTrainingReviewGridClassName =
+  "grid h-[62px] grid-cols-2 grid-rows-2 gap-[6px] sm:h-[46px] sm:grid-cols-4 sm:grid-rows-1";
+
 export function TrainingCardShell({
   answerVisible,
   children,
@@ -557,12 +560,14 @@ export function TrainingCardReviewButton({
   busy,
   onClick,
   buttonRef,
+  approvedPresentation = false,
 }: {
   result: keyof typeof reviewTone;
   label: string;
   busy: boolean;
   onClick: () => void;
   buttonRef?: React.RefObject<HTMLButtonElement>;
+  approvedPresentation?: boolean;
 }) {
   return (
     <button
@@ -570,7 +575,7 @@ export function TrainingCardReviewButton({
       type="button"
       disabled={busy}
       onClick={onClick}
-      className={`relative h-[42px] overflow-hidden rounded-xl border border-slate-300 bg-white px-2 text-xs font-bold outline-none transition before:absolute before:inset-y-0 before:left-0 before:w-1 hover:bg-slate-100 focus-visible:bg-slate-100 disabled:opacity-50 dark:border-[#7B8491] dark:bg-[#11141A] dark:hover:bg-[#202630] dark:focus-visible:bg-[#202630] ${reviewTone[result]}`}
+      className={`relative overflow-hidden rounded-xl border border-slate-300 bg-white px-2 font-bold outline-none transition before:absolute before:inset-y-0 before:left-0 before:w-1 hover:bg-slate-100 focus-visible:bg-slate-100 disabled:opacity-50 dark:border-[#7B8491] dark:bg-[#11141A] dark:hover:bg-[#202630] dark:focus-visible:bg-[#202630] ${approvedPresentation ? "h-[28px] text-[13px] sm:h-[46px] sm:text-sm" : "h-[42px] text-xs"} ${reviewTone[result]}`}
     >
       {label}
     </button>

@@ -25,6 +25,7 @@ export type TrainingSessionChromeProps = {
   historyButtonRef?: React.Ref<HTMLButtonElement>;
   onClose: () => void;
   disabled?: boolean;
+  approvedPresentation?: boolean;
 };
 
 export function TrainingSessionChrome({
@@ -38,6 +39,7 @@ export function TrainingSessionChrome({
   historyButtonRef,
   onClose,
   disabled = false,
+  approvedPresentation = false,
 }: TrainingSessionChromeProps) {
   const text = copy[interfaceLanguage];
   const name =
@@ -46,8 +48,8 @@ export function TrainingSessionChrome({
   return (
     <section
       data-testid="training-session-chrome"
-      data-visual-spec="training-height-b"
-      className={`${styles.session} font-sense-sans`}
+      data-visual-spec={approvedPresentation ? "training-approved-v1" : "training-height-b"}
+      className={`${styles.session} ${approvedPresentation ? styles.sessionApproved : ""} font-sense-sans`}
     >
       <span
         data-testid="training-session-name"

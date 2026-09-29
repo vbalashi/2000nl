@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { FooterStats, type FooterStatsProps } from "../FooterStats";
 import {
   TrainingSessionChrome,
@@ -76,11 +77,18 @@ export function TrainingSessionSurface({
   readySurface,
   children,
 }: TrainingSessionSurfaceProps) {
+  const approvedPresentation = trainingPresentationV1Enabled() && Boolean(chrome);
   return (
     <TrainingSessionV2Layout
       phase={phase}
-      chrome={chrome ? <TrainingSessionChrome {...chrome} /> : null}
-      footer={<FooterStats {...footer} />}
+      chrome={chrome ? (
+        <TrainingSessionChrome
+          {...chrome}
+          approvedPresentation={approvedPresentation}
+        />
+      ) : null}
+      footer={approvedPresentation ? null : <FooterStats {...footer} />}
+      approvedPresentation={approvedPresentation}
       notice={notice ? <TrainingSessionNotice notice={notice} /> : null}
       readySurface={readySurface}
     >

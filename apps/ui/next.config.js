@@ -54,6 +54,10 @@ const rolloutEnv = Object.fromEntries(
 // baseline pilot profile used for ordinary Training and idioms.
 rolloutEnv.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED =
   envNonEmpty(process.env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED) ?? "false";
+// The approved session presentation is an independent, reversible rollout.
+rolloutEnv.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 =
+  envNonEmpty(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1) ??
+  rolloutEnv.NEXT_PUBLIC_TRAINING_PRESENTATION_V1;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

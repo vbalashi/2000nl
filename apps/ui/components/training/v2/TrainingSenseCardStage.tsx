@@ -8,6 +8,7 @@ import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { senseCardQuietActionClassName } from "../SenseCardChrome";
 import {
   TrainingCardAnswerHeader as EntityHeader,
@@ -20,6 +21,7 @@ import {
   TrainingCardIconButton as IconButton,
   trainingCardStageClassName,
   trainingReviewGridClassName,
+  approvedTrainingReviewGridClassName,
 } from "./TrainingCardTemplates";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import type { TrainingSenseCardModel } from "./trainingSenseCardModel";
@@ -102,6 +104,7 @@ export function TrainingSenseCardStage({
     model.requestTranslationCapability,
   );
   const listeningMode = mode === "listen-recognize";
+  const approvedPresentation = trainingPresentationV1Enabled();
 
   React.useEffect(() => {
     if (!focusOnMount) return;
@@ -186,7 +189,7 @@ export function TrainingSenseCardStage({
       aria-label={t("senseCard.training.cardChanged")}
       data-testid="training-sense-card-stage"
       data-side={answerVisible ? "answer" : "face"}
-      data-visual-spec="training-v1.0"
+      data-visual-spec={approvedPresentation ? "training-approved-v1" : "training-v1.0"}
       className={trainingCardStageClassName}
     >
       <span className="sr-only" aria-live="polite" aria-atomic="true">
@@ -281,7 +284,9 @@ export function TrainingSenseCardStage({
         className={`shrink-0 ${
           answerVisible
             ? model.reviewCapabilities.length
-              ? "h-[120px] min-h-[120px] sm:h-[76px] sm:min-h-[76px]"
+              ? approvedPresentation
+                ? "h-[94px] min-h-[94px] sm:h-[78px] sm:min-h-[78px]"
+                : "h-[120px] min-h-[120px] sm:h-[76px] sm:min-h-[76px]"
               : "h-[76px] min-h-[76px]"
             : reportAction || exclusionAction || model.markKnownCapability
               ? "h-[76px] min-h-[76px]"
@@ -298,6 +303,7 @@ export function TrainingSenseCardStage({
             onAction={onAction}
             reportAction={reportAction}
             exclusionAction={exclusionAction}
+            approvedPresentation={approvedPresentation}
           />
         ) : (
           <FaceDock
@@ -442,6 +448,7 @@ function AnswerDock({
   onAction,
   reportAction,
   exclusionAction,
+  approvedPresentation,
 }: {
   model: TrainingSenseCardModel;
   mode: TrainingMode;
@@ -451,6 +458,7 @@ function AnswerDock({
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
   reportAction?: React.ReactNode;
   exclusionAction?: React.ReactNode;
+  approvedPresentation: boolean;
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
   const reviewCapabilities =
@@ -504,12 +512,13 @@ function AnswerDock({
         >
           <div
             data-testid="training-review-grid"
-            className={trainingReviewGridClassName}
+            className={approvedPresentation ? approvedTrainingReviewGridClassName : trainingReviewGridClassName}
           >
             {reviewCapabilities.map((capability, index) => (
               <TrainingCardReviewButton
                 key={capability.reviewResult}
                 result={capability.reviewResult}
+                approvedPresentation={approvedPresentation}
                 buttonRef={index === 0 ? primaryActionRef : undefined}
                 busy={busy}
                 onClick={() => onAction(capability)}

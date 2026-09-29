@@ -23,6 +23,10 @@
   padding: 10px 16px;
   background: var(--session-surface, #f1f5f9);
 }
+.mainApproved {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
 .stack {
   display: flex;
   flex-direction: column;
@@ -42,6 +46,24 @@
   border: 1px solid var(--session-line, #cbd5e1);
   border-radius: 10px;
   color: var(--session-ink, #334155);
+}
+.sessionApproved {
+  height: 62px;
+  padding: 0 0 7px;
+  border: 0;
+  border-radius: 0;
+  color: var(--session-ink, #334155);
+}
+.sessionApproved .name {
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+.sessionApproved .position {
+  font-size: 0.8125rem;
+}
+.sessionApproved .progress {
+  height: 3px;
+  border-radius: 999px;
 }
 .name {
   flex: 1;
@@ -205,5 +227,9 @@
   .main {
     padding-top: 40px;
     padding-bottom: 40px;
+  }
+  .mainApproved {
+    padding-top: 28px;
+    padding-bottom: 28px;
   }
 }

@@ -38,6 +38,27 @@ function TrainingSenseCardStage(
 }
 
 describe("TrainingSenseCardStage", () => {
+  test("uses compact two-row mobile ratings and full-height wide ratings in the approved presentation", () => {
+    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+    try {
+      const model = buildTrainingSenseCardModel({
+        group: singleSenseGroup,
+        entry: singleSenseEntry,
+        interfaceLanguage: "en",
+      });
+      render(<TrainingSenseCardStage model={model} mode="word-to-definition"
+        interfaceLanguage="en" onAction={vi.fn()} />);
+      fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+      expect(screen.getByTestId("training-sense-card-stage"))
+        .toHaveAttribute("data-visual-spec", "training-approved-v1");
+      expect(screen.getByTestId("training-review-grid"))
+        .toHaveClass("h-[62px]", "sm:h-[46px]");
+      expect(screen.getByRole("button", { name: "Again" }))
+        .toHaveClass("h-[28px]", "sm:h-[46px]", "before:left-0");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
   test("context presentation keeps the normal actions and shows only the latched example", () => {
     const base = buildTrainingSenseCardModel({
       group: singleSenseGroup,
