@@ -73,3 +73,8 @@ export function areTrainingHotkeysSuspended() {
     document.querySelector('[data-training-hotkeys-suspended="true"]') !== null
   );
 }
+
+/** Reuse the actual interface copy in rating previews and controls. */
+export function getTrainingRatingLabels(language: OnboardingLanguage) {
+  return {Again:labels[language].again,Hard:labels[language].hard,Good:labels[language].good,Easy:labels[language].easy};
+}

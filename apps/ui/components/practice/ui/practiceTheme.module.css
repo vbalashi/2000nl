@@ -1,0 +1,123 @@
+/* Semantic theme contract. Screens consume roles; palette values live only here. */
+.theme {
+ --practice-font-ui: var(--font-sense-sans), Inter, system-ui, sans-serif;
+ --practice-font-reading: var(--font-sense-serif), Newsreader, Georgia, serif;
+ --practice-text-label: 11px;
+ --practice-text-caption: 12px;
+ --practice-text-small: 13px;
+ --practice-text-body: 14px;
+ --practice-text-body-lg: 16px;
+ --practice-text-lead: 18px;
+ --practice-text-title-sm: 20px;
+ --practice-text-title: 24px;
+ --practice-text-page: 28px;
+ --practice-text-number: 32px;
+ --practice-text-headword: 36px;
+ --practice-text-display: 44px;
+ --practice-font-definition: var(--practice-font-reading);
+ --practice-definition-size: var(--practice-text-title-sm);
+ --practice-definition-leading: 1.4;
+ --practice-literary-size: var(--practice-text-body-lg);
+ --practice-literary-leading: 1.4;
+ --practice-content-inset: 10px;
+ --practice-radius-control: 10px;
+ --practice-radius-panel: 16px;
+ --practice-radius-dialog: 20px;
+ --practice-motion: cubic-bezier(.22,1,.36,1);
+ --practice-canvas: #f3f4f8;
+ --practice-surface: #ffffff;
+ --practice-surface-subtle: #efebf4;
+ --practice-surface-hover: #e7e1f0;
+ --practice-hero: #eae4f3;
+ --practice-hero-end: #f0edf6;
+ --practice-text: #303a50;
+ --practice-text-secondary: #555064;
+ --practice-text-muted: #6c6079;
+ --practice-border: #ddd5e8;
+ --practice-control-border: #9c8bad;
+ --practice-selected: #ded4ef;
+ --practice-selected-text: #49366d;
+ --practice-accent: #71608d;
+ --practice-accent-hover: #604d7c;
+ --practice-on-accent: #ffffff;
+ --practice-focus: #7753b0;
+ --practice-backdrop: #21172f66;
+ --practice-shadow: #21172f1c;
+ --practice-highlight: #ffffff60;
+ --practice-success: #356f60;
+ --practice-success-soft: #e1efe9;
+ --practice-warning: #805514;
+ --practice-warning-soft: #f6e9cd;
+ --practice-danger: #934556;
+ --practice-danger-soft: #f7e5e9;
+ --practice-info: #386aa0;
+ --practice-info-soft: #e3edf8;
+ --practice-example: #9984c7;
+ --practice-idiom: #c5a163;
+ --practice-relation: #659888;
+ --practice-activity-1: #e5dcef;
+ --practice-activity-2: #cebcdf;
+ --practice-activity-3: #a38abf;
+ font-family: var(--practice-font-ui);
+ color: var(--practice-text);
+ color-scheme: light;
+}
+.theme[data-practice-palette=blue] {
+ --practice-canvas: #f2f5fa; --practice-surface-subtle: #eaf0f8;
+ --practice-surface-hover: #dfe9f5; --practice-hero: #e1eaf7; --practice-hero-end: #edf2fa;
+ --practice-text: #29394e; --practice-text-secondary: #465c77; --practice-text-muted: #516783;
+ --practice-border: #d0dce9; --practice-control-border: #829ab6;
+ --practice-selected: #ccddf3; --practice-selected-text: #284a79;
+ --practice-accent: #456d9f; --practice-accent-hover: #345987; --practice-focus: #315f9f;
+ --practice-example: #7697c3; --practice-activity-1: #dce6f3; --practice-activity-2: #b8cde7; --practice-activity-3: #799cc8;
+}
+.theme[data-practice-palette=graphite] {
+ --practice-canvas: #f4f4f3; --practice-surface-subtle: #eeedeb;
+ --practice-surface-hover: #e3e2df; --practice-hero: #e8e7e4; --practice-hero-end: #f0efed;
+ --practice-text: #303033; --practice-text-secondary: #505054; --practice-text-muted: #626268;
+ --practice-border: #d9d8d5; --practice-control-border: #949398;
+ --practice-selected: #d7d6d3; --practice-selected-text: #303033;
+ --practice-accent: #45454b; --practice-accent-hover: #303033; --practice-focus: #56565f;
+ --practice-example: #929198; --practice-activity-1: #e1e0dd; --practice-activity-2: #bfbdba; --practice-activity-3: #919095;
+}
+.theme[data-colour-mode=dark] {
+ --practice-canvas: #191720; --practice-surface: #25212e; --practice-surface-subtle: #2c2637;
+ --practice-surface-hover: #3b3149; --practice-hero: #30283d; --practice-hero-end: #282331;
+ --practice-text: #f0eaf7; --practice-text-secondary: #d2c5e0; --practice-text-muted: #b6a6c8;
+ --practice-border: #493d59; --practice-control-border: #9480ac;
+ --practice-selected: #4f3e64; --practice-selected-text: #f0e3ff;
+ --practice-accent: #c2a8e2; --practice-accent-hover: #d2baf0; --practice-on-accent: #24182f;
+ --practice-focus: #c9a2fb; --practice-backdrop: #08060b99; --practice-shadow: #08060b40; --practice-highlight: #ffffff0a;
+ --practice-success: #94d0b7; --practice-success-soft: #243b34;
+ --practice-warning: #e2be7c; --practice-warning-soft: #3d3321;
+ --practice-danger: #f0adba; --practice-danger-soft: #482c37;
+ --practice-info: #9cc6f0; --practice-info-soft: #29394c;
+ --practice-example: #b69ad9; --practice-idiom: #c7a669; --practice-relation: #80b4a3;
+ --practice-activity-1: #382e45; --practice-activity-2: #65517b; --practice-activity-3: #a68cc2;
+ color-scheme: dark;
+}
+.theme[data-practice-palette=blue][data-colour-mode=dark] {
+ --practice-canvas: #141b24; --practice-surface: #1e2936; --practice-surface-subtle: #233142;
+ --practice-surface-hover: #2e4056; --practice-hero: #243449; --practice-hero-end: #1e2a3b;
+ --practice-text: #eaf1fb; --practice-text-secondary: #c0d2e9; --practice-text-muted: #a4b9d3;
+ --practice-border: #374a61; --practice-control-border: #7895b9;
+ --practice-selected: #304c6f; --practice-selected-text: #e0efff;
+ --practice-accent: #9dbfe9; --practice-accent-hover: #b3cef0; --practice-on-accent: #182637; --practice-focus: #91bffc;
+ --practice-example: #7ea7da; --practice-activity-1: #2a3a51; --practice-activity-2: #45638a; --practice-activity-3: #7ea1d0;
+}
+.theme[data-practice-palette=graphite][data-colour-mode=dark] {
+ --practice-canvas: #19191b; --practice-surface: #242427; --practice-surface-subtle: #2c2c30;
+ --practice-surface-hover: #39393f; --practice-hero: #303034; --practice-hero-end: #28282b;
+ --practice-text: #efeff0; --practice-text-secondary: #cfcfd2; --practice-text-muted: #b2b2b9;
+ --practice-border: #434348; --practice-control-border: #919199;
+ --practice-selected: #49494f; --practice-selected-text: #f1f1f3;
+ --practice-accent: #d0d0d5; --practice-accent-hover: #e5e5e8; --practice-on-accent: #252528; --practice-focus: #c9c9d2;
+ --practice-example: #a7a7b1; --practice-activity-1: #353539; --practice-activity-2: #62626a; --practice-activity-3: #a0a0aa;
+}
+.theme :where(button,input,select,textarea,summary,a):focus-visible {
+ outline: 2px solid var(--practice-focus); outline-offset: 3px;
+}
+.theme :where(input,select,textarea) { color-scheme: inherit; }
+@media(prefers-reduced-motion:reduce) {
+ .theme *, .theme *::before, .theme *::after {scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important;}
+}
