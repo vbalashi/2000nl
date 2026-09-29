@@ -31,7 +31,7 @@
 @media(max-width:600px){.mobileHeatGrid{grid-template-rows:repeat(7,22px)}.statistics .mobileHeatGrid button{width:22px;height:22px;justify-self:center}}
 
 /* Match the compact 28px study controls. */
-.statistics .languageTabs button,.statistics .languageTabs .moreLanguage{height:26px;min-height:26px;box-sizing:border-box;padding:0 13px;display:flex;align-items:center;justify-content:center;line-height:1}
+.statistics .languageTabs button,.statistics .languageTabs .moreLanguage{height:auto;min-height:26px;box-sizing:border-box;padding:0 13px;display:flex;align-items:center;justify-content:center;line-height:1}
 .languageTabs{border-radius:8px}
 .activityNumbers{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:600px){.activityNumbers{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:20px}.statistics .trainingScopes .languageTabs button{padding:0 12px;font-size:var(--practice-text-label)}.statistics .languageTabs .moreLanguage{padding:0 10px}}
@@ -53,3 +53,5 @@
 @media(max-width:600px){.sectionHeading h2,.materialTitle,.highlightsTitle{font-size:var(--practice-text-lead)}}
 .recentActivity{display:flex;align-items:center;gap:8px;padding:8px 0;margin-top:-16px;background:none;border:0;color:var(--practice-accent);font:inherit;font-size:var(--practice-text-small);cursor:pointer;min-height:44px}
 .recentActivity:focus-visible{outline:2px solid var(--practice-focus);outline-offset:3px}
+
+.sectionHeading,.scope,.legend,.progressTotal{flex-wrap:wrap}

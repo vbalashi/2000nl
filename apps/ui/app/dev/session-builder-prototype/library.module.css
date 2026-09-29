@@ -79,7 +79,7 @@
   border: 1px solid var(--lib-line);
   border-radius: 12px;
   padding: 12px;
-  margin-top: 8px;
+  margin-top: var(--practice-space-content);
   background: var(--practice-surface);
   font-size: var(--practice-text-caption);
 }
@@ -293,7 +293,7 @@
   transform: rotate(180deg);
 }
 .contentSection {
-  margin-top: 12px;
+  margin-top: var(--practice-space-section);
 }
 .contentSection:first-child {
   margin-top: 2px;
@@ -307,7 +307,7 @@
   margin: 0 0 8px;
 }
 .contentNode {
-  margin-top: 8px;
+  margin-top: var(--practice-space-content);
 }
 .contentNode:first-child {
   margin-top: 0;
@@ -321,7 +321,7 @@
   margin: 0;
 }
 .explanation {
-  font-size: var(--practice-text-caption);
+  font-size: var(--practice-reading-caption);
   line-height: 1.45;
   color: var(--practice-text-muted);
   margin: 0;
@@ -539,7 +539,7 @@
 }
 .actionGroup {
   container-type: inline-size;
-  margin-top: 12px;
+  margin-top: var(--practice-space-section);
 }
 .actionGroup .actions {
   margin-top: 0;
@@ -733,7 +733,7 @@
   padding-bottom: 14px;
   }
   .detail .headwordRow {
-  margin-top: 8px;
+  margin-top: var(--practice-space-content);
   }
   .detail .iconButton {
   width: 32px;
@@ -789,7 +789,7 @@
 
 /* Owner review, 28 September: metadata-first list and floating actions. */
 .srOnly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.badge{min-height:14px;line-height:14px;font-size:var(--practice-text-label);padding:0 4px;border-radius:4px}
+.badge{min-height:14px;line-height:1.3;font-size:var(--practice-text-label);padding:0 4px;border-radius:4px}
 .articleHeader{border-bottom:0;padding-bottom:8px}
 .contentSection h3{display:flex;align-items:center;gap:6px}.contentSection h3 svg{flex:none;opacity:.8}
 .detail[data-nesting=hybrid] .contentSection>.contentNode{border-left:2px solid var(--content-accent,var(--practice-border));padding-left:10px}
@@ -809,7 +809,7 @@
 @media(max-width:700px){.listSource,.count,.snippet{display:none}.row{min-height:64px}.articleHeader{padding-bottom:8px}}
 
 /* Exposure is a frame slot, shared by all meaning cards. */
-.frameExposure,.inlineExposure{display:inline-flex;align-items:center;gap:4px;font-size:var(--practice-text-label);line-height:16px;color:var(--practice-text-muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.frameExposure,.inlineExposure{display:inline-flex;align-items:center;gap:4px;font-size:var(--practice-text-label);line-height:1.45;color:var(--practice-text-muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 .frameExposure{position:absolute;right:12px;top:-8px;padding:0 5px;background:var(--lib-surface);pointer-events:none}
 .meaningCard[data-numbering=corner][data-exposure=frame] .meaningLead{grid-template-columns:minmax(0,1fr) 14px}
 .meaningCard[data-numbering=inline][data-exposure=frame] .meaningLead{grid-template-columns:14px minmax(0,1fr) 14px}
@@ -821,8 +821,8 @@
 @media(max-width:700px){.library .listMeta .count{display:inline}.library[data-count-position=edge] .workspace:not(.hasDetail) .count{position:static;transform:none}.library[data-count-position=edge] .workspace:not(.hasDetail) .count::before{content:"·"}.library[data-count-position=edge] .workspace:not(.hasDetail) .row{padding-right:14px}}
 
 /* Translation pairs follow the source text inside its existing rail / soft block. */
-.translation{margin:2px 0 0;font-family:var(--practice-font-ui);font-size:var(--practice-text-small);font-style:normal;font-weight:400;line-height:1.4;color:var(--practice-text-muted)}
-.translationEmphasis{margin:0 0 5px;font-size:var(--practice-text-body);line-height:1.35;font-style:normal;font-weight:500;color:var(--practice-warning)}
+.translation{margin:var(--practice-space-pair) 0 0;font-family:var(--practice-font-ui);font-size:var(--practice-reading-small);font-style:normal;font-weight:400;line-height:1.4;color:var(--practice-text-muted)}
+.translationEmphasis{margin:0 0 5px;font-size:var(--practice-reading-body);line-height:1.35;font-style:normal;font-weight:500;color:var(--practice-warning)}
 .detail[data-translation-ink=neutral] .translationEmphasis{color:var(--practice-text-muted)}
 .meaningText{min-width:0;display:block}
 .meaningLead{align-items:start}
@@ -833,17 +833,17 @@
 .contentPair{min-width:0}
 
 /* Keep secondary actions visually quieter than the learning action. */
-.library .detail .secondaryActions>button{font-size:var(--practice-text-label);font-weight:400;line-height:16px;color:var(--practice-text-muted)}
+.library .detail .secondaryActions>button{font-size:var(--practice-text-label);font-weight:400;line-height:1.45;color:var(--practice-text-muted)}
 .library .detail .secondaryActions>button>svg{width:12px;height:12px}
 .library .detail .secondaryActions>button[aria-label="More card actions"]>svg{width:16px;height:16px}
 @media(min-width:701px){.library .detail .actionGroup .secondaryActions{margin-top:10px}}
 /* Reading studies share content; only the nested hierarchy changes. */
 .nodeRole{display:none}
-.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .nodeRole{display:block;font-family:var(--practice-font-ui);font-size:var(--practice-text-label);font-weight:500;font-style:normal;letter-spacing:.065em;text-transform:uppercase;line-height:14px;color:var(--practice-text-muted);margin-bottom:4px}
-.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .contentPair>p{font-family:var(--practice-font-ui);font-size:var(--practice-text-small);font-weight:400;font-style:normal;line-height:1.5;color:var(--practice-text-secondary)}
-.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .translation{font-family:var(--practice-font-ui);font-size:var(--practice-text-caption);line-height:1.5;color:var(--practice-text-muted);margin-top:2px}
+.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .nodeRole{display:block;font-family:var(--practice-font-ui);font-size:var(--practice-text-label);font-weight:500;font-style:normal;letter-spacing:.065em;text-transform:uppercase;line-height:1.3;color:var(--practice-text-muted);margin-bottom:4px}
+.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .contentPair>p{font-family:var(--practice-font-ui);font-size:var(--practice-reading-small);font-weight:400;font-style:normal;line-height:1.5;color:var(--practice-text-secondary)}
+.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .translation{font-family:var(--practice-font-ui);font-size:var(--practice-reading-caption);line-height:1.5;color:var(--practice-text-muted);margin-top:var(--practice-space-pair)}
 .detail:is([data-nested-reading=paired],[data-nested-reading=literary]) .children .contentNode+.contentNode{margin-top:14px;padding-top:12px;border-top:1px solid var(--practice-border)}
-.detail[data-nested-reading=literary] .children [data-kind=example]>.contentPair>p{font-family:var(--practice-font-reading);font-size:var(--practice-text-body);font-style:italic;line-height:1.45}
+.detail[data-nested-reading=literary] .children [data-kind=example]>.contentPair>p{font-family:var(--practice-font-reading);font-size:var(--practice-reading-body);font-style:italic;line-height:1.45}
 .detail[data-nested-reading=tiles] .contentSection>.contentNode>.children{background:transparent;padding:0;margin-top:9px}
 .detail[data-nested-reading=tiles] .children .contentPair{padding:9px 10px;border-radius:7px;background:var(--practice-canvas)}
 .detail[data-nested-reading=tiles] .children .contentNode+.contentNode{margin-top:8px}
@@ -886,7 +886,7 @@
     margin:0;
     padding:0;
     background:transparent;
-    line-height:14px;
+    line-height:1.3;
     pointer-events:none;
   }
   & .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole::after {
@@ -904,13 +904,13 @@
 }
 
 /* Explanation stays inside the soft block; Example remains on its separator. */
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=explanation]{position:static;display:block;margin:0 0 4px;line-height:14px}
+.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=explanation]{position:static;display:block;margin:0 0 4px;line-height:1.3}
 .detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=explanation]::after{display:none}
 .detail[data-nested-text-inset=inset][data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=explanation]{margin-left:-8px}
 
 .detail[data-example-line=none][data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=example]::after{display:none}
 
-.detail[data-preview]{position:static;top:auto;max-height:none;width:100%;overflow:visible}.detail[data-preview] .meaningScroll{max-height:none;overflow:visible}.detail[data-preview] .meaningLead,.detail[data-preview] .explanation,.detail[data-preview] .translation{font-size:var(--preview-body,var(--practice-text-body))}.detail[data-preview] .literary{font-size:var(--preview-literary,var(--practice-text-body-lg))}
+.detail[data-preview]{position:static;top:auto;max-height:none;width:100%;overflow:visible}.detail[data-preview] .meaningScroll{max-height:none;overflow:visible}
 
 /* The word is a page section; each meaning keeps its own surface. */
 .library .detail[data-article-frame=flat]{border:0;background:transparent;box-shadow:none;border-radius:0}
@@ -931,7 +931,7 @@
 .library .detail .returnButton{background:var(--lib-surface);border:1px solid var(--lib-line);border-radius:50%}
 .library .detail .returnButton:hover{background:var(--lib-soft)}
 .detail[data-marker-placement=above] .meaningCard{margin-top:22px;margin-bottom:12px}
-.detail[data-marker-placement=above] .meaningCard :is(.cornerNumber,.frameExposure){top:-20px;background:transparent;padding:0;height:16px;line-height:16px}
+.detail[data-marker-placement=above] .meaningCard :is(.cornerNumber,.frameExposure){top:-20px;background:transparent;padding:0;height:16px;line-height:1.45}
 .detail[data-marker-placement=above] .cornerNumber{left:5px;min-width:10px}
 .detail[data-marker-placement=above] .frameExposure{right:8px}
 .detail[data-marker-placement=above] .meaningScroll{padding-top:0}

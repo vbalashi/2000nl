@@ -9,14 +9,15 @@ function files(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(item
 const selectedNames=['trainingSession.module.css','practicePanel.module.css','trainingOverview.module.css','wordDetails.module.css','libraryFilters.module.css','builderScope.module.css','settings.module.css','statistics.module.css','library.module.css','libraryOverlays.module.css'];
 const colorPattern=/#(?:[a-f0-9]{8}|[a-f0-9]{6}|[a-f0-9]{4}|[a-f0-9]{3})\b|rgba?\([^)]*\)|hsla?\([^)]*\)|\b(?:white|black)\b/gi;
 const inventory=files(prototype).concat(files(shared)).map(file=>{
- const colors=[],sizes=[],families=[];let important=0;
+ const colors=[],sizes=[],families=[],geometry=[];let important=0;
  postcss.parse(fs.readFileSync(file,'utf8')).walkDecls(decl=>{
   colors.push(...decl.value.match(colorPattern)||[]);
   if(decl.prop==='font-size')sizes.push(decl.value);
   if(decl.prop==='font-family')families.push(decl.value);
+  if(/^(margin|padding|gap|row-gap|column-gap|border-radius|line-height|height|min-height|max-height)/.test(decl.prop))geometry.push(`${decl.prop}: ${decl.value}`);
   if(decl.important)important++;
  });
- return {file:path.relative(ui,file),selected:selectedNames.includes(path.basename(file)),colors:[...new Set(colors.map(value=>value.toLowerCase()))].sort(),colorOccurrences:colors.length,fontSizes:[...new Set(sizes)].sort(),fontFamilies:[...new Set(families)].sort(),important};
+ return {file:path.relative(ui,file),selected:selectedNames.includes(path.basename(file)),colors:[...new Set(colors.map(value=>value.toLowerCase()))].sort(),colorOccurrences:colors.length,fontSizes:[...new Set(sizes)].sort(),fontFamilies:[...new Set(families)].sort(),important,geometry:[...new Set(geometry)].sort()};
 });
 function aggregate(rows){return {files:rows.length,uniqueColors:new Set(rows.flatMap(row=>row.colors)).size,colorOccurrences:rows.reduce((n,row)=>n+row.colorOccurrences,0),uniqueFontSizes:new Set(rows.flatMap(row=>row.fontSizes)).size,fontFamilies:[...new Set(rows.flatMap(row=>row.fontFamilies))],important:rows.reduce((n,row)=>n+row.important,0)};}
 const report={scope:'CSS declarations, including fallback literals; not computed on-screen colors or loaded font count',allPrototype:aggregate(inventory.filter(row=>row.file.startsWith('app/'))),selectedLeaves:aggregate(inventory.filter(row=>row.selected)),inventory};

@@ -19,6 +19,16 @@
  --practice-definition-leading: 1.4;
  --practice-literary-size: var(--practice-text-body-lg);
  --practice-literary-leading: 1.4;
+ --practice-reading-definition: var(--practice-text-title-sm);
+ --practice-reading-literary: var(--practice-text-body-lg);
+ --practice-reading-caption: var(--practice-text-caption);
+ --practice-reading-small: var(--practice-text-small);
+ --practice-reading-body: var(--practice-text-body);
+ --practice-reading-forms: var(--practice-text-lead);
+ --practice-reading-prompt: var(--practice-text-page);
+ --practice-space-pair: 2px;
+ --practice-space-content: 8px;
+ --practice-space-section: 12px;
  --practice-content-inset: 10px;
  --practice-radius-control: 10px;
  --practice-radius-panel: 16px;
@@ -50,7 +60,7 @@
  --practice-warning-soft: #f6e9cd;
  --practice-danger: #934556;
  --practice-danger-soft: #f7e5e9;
- --practice-info: #386aa0;
+ --practice-info: #326294;
  --practice-info-soft: #e3edf8;
  --practice-example: #9984c7;
  --practice-idiom: #c5a163;

@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ChartNoAxesColumn, ChevronDown, Library, LoaderCircle, Play, Settings, Sun, Moon, Monitor } from "lucide-react";
+import {textSizeStyles} from "@/lib/reading/textScale";
+import {usePreviewTextSize} from "./usePreviewTextSize";
 import themeStyles from "@/components/practice/ui/practiceTheme.module.css";
 import {usePracticeAppearance} from "@/components/practice/ui/usePracticeAppearance";
 import {SavedTrainingControls} from "./SavedTrainingControls";
@@ -42,6 +44,7 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
   const [draft, setDraft] = useState<Draft>(initialDraft);
   const [translationLanguage,setTranslationLanguage]=useState("English");
   const wordDirections=useRef<Draft["directions"]>(["Direct"]);
+  const textSize = usePreviewTextSize();
   const {palette,setPalette:changePalette,mode:colourMode,setMode:setColourMode,dark}=usePracticeAppearance("2000nl-preview-appearance-v1");
   const previousScreen=useRef<"builder"|"home"|"library"|"statistics">("home");
   const [statisticsTraining,setStatisticsTraining]=useState<string|null>(null);
@@ -137,7 +140,7 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
   };
   const available = countState.status === "pending" ? <><LoaderCircle className={s.spinner} size={15}/>Calculating meanings…</> : countState.status === "error" ? <>Couldn’t calculate. <button onClick={() => setRetry(v => v + 1)}>Retry</button></> : <>{countState.count} {countState.count === 1 ? "meaning" : "meanings"} available{countState.count === 0 ? " — adjust your filters" : ""}</>;
 
-  const content = <div lang="en" data-session={launchPreview} data-disclosure={disclosure} data-builder={screen==="builder"} data-library={screen==="library"} data-settings={screen==="settings"} data-colour-mode={dark?"dark":"light"} data-practice-palette={palette} data-design={variant} className={`${dark?"dark":""} ${s.root} ${themeStyles.theme} ${variant!=="current"?s[variant]:""} ${embedded?s.embedded:""} ${showSwitcher?s.withSwitcher:""} font-sense-sans`} onKeyDown={e => {if(e.key === "Escape")setNounOpen(false);}}>
+  const content = <div lang="en" style={textSizeStyles(textSize.size)} data-text-size={textSize.size} data-session={launchPreview} data-disclosure={disclosure} data-builder={screen==="builder"} data-library={screen==="library"} data-settings={screen==="settings"} data-colour-mode={dark?"dark":"light"} data-practice-palette={palette} data-design={variant} className={`${dark?"dark":""} ${s.root} ${themeStyles.theme} ${variant!=="current"?s[variant]:""} ${embedded?s.embedded:""} ${showSwitcher?s.withSwitcher:""} font-sense-sans`} onKeyDown={e => {if(e.key === "Escape")setNounOpen(false);}}>
     {nounPresent && <button className={`${s.filterScrim} ${!nounOpen ? s.leaving : ""}`} tabIndex={-1} aria-hidden={!nounOpen} aria-label="Close noun subfilters" onClick={() => setNounOpen(false)}/> }
     <div className={s.prototypeBanner}>INTERACTIVE PROTOTYPE · illustrative data · <a href="?view=compare">Compare four designs ↗</a></div>
     <header className={s.appHeader}><button className={s.brand} onClick={() => navigate("home")}>2000<span>nl</span></button>
@@ -145,7 +148,7 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
       <div className={s.headerTools}><button className={s.iconButton} aria-label={`Colour mode: ${colourMode}. Switch to ${colourMode==="Light"?"Dark":colourMode==="Dark"?"System":"Light"}`} onClick={()=>setColourMode(colourMode==="Light"?"Dark":colourMode==="Dark"?"System":"Light")}>{colourMode==="Light"?<Sun size={18}/>:colourMode==="Dark"?<Moon size={18}/>:<Monitor size={18}/>}</button><button className={s.iconButton} aria-label="Settings" aria-current={screen==="settings"?"page":undefined} onClick={() => {if(screen!=="settings")previousScreen.current=screen;navigate("settings");window.scrollTo({top:0,behavior:"instant"});}}><Settings size={19}/></button></div>
     </header>
     <main className={`${s.main} ${screen==="library"?s.libraryMain:""}`}>
-      <div hidden={screen!=="settings"}><SettingsPrototype resolvedDark={dark} palette={palette} onPaletteChange={changePalette} translation={translationLanguage} setTranslation={setTranslationLanguage} mode={colourMode} onModeChange={setColourMode} active={screen==="settings"} onExit={()=>{setScreen(previousScreen.current);window.scrollTo({top:0,behavior:"instant"});}}/></div>
+      <div hidden={screen!=="settings"}><SettingsPrototype textSize={textSize} resolvedDark={dark} palette={palette} onPaletteChange={changePalette} translation={translationLanguage} setTranslation={setTranslationLanguage} mode={colourMode} onModeChange={setColourMode} active={screen==="settings"} onExit={()=>{setScreen(previousScreen.current);window.scrollTo({top:0,behavior:"instant"});}}/></div>
       <div hidden={launchPreview}>
       {screen === "settings" ? null : screen === "builder" ? <>
         <div className={s.title}><button className={s.iconButton} aria-label="Back to Training" onClick={() => setScreen("home")}><ArrowLeft size={20}/></button><h1>{editingTraining===null?"Session builder":presets[editingTraining].name}</h1></div>

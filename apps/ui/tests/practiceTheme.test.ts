@@ -16,6 +16,7 @@ for(const name of ['lavender','blue','graphite'])for(const dark of [false,true])
  test(`${name} ${dark?'dark':'light'}: text roles meet AA on their supported surfaces`,()=>{
   const p=palette(name,dark);
   for(const ink of ['text','text-secondary','text-muted'])for(const surface of ['canvas','surface','surface-subtle','surface-hover','hero','hero-end'])expect(contrast(p[ink],p[surface]),`${ink} on ${surface}`).toBeGreaterThanOrEqual(4.5);
+  for(const ink of ['danger','warning','success','info']) expect(contrast(p[ink],p['surface-hover']),`${ink} rating on hover`).toBeGreaterThanOrEqual(4.5);
   for(const [ink,bg] of [['on-accent','accent'],['on-accent','accent-hover'],['selected-text','selected'],['success','success-soft'],['warning','warning-soft'],['danger','danger-soft'],['info','info-soft']])expect(contrast(p[ink],p[bg]),`${ink} on ${bg}`).toBeGreaterThanOrEqual(4.5);
  });
  test(`${name} ${dark?'dark':'light'}: focus visible on canvas and panels`,()=>{const p=palette(name,dark);for(const surface of ['canvas','surface','hero'])expect(contrast(p.focus,p[surface])).toBeGreaterThanOrEqual(3);});

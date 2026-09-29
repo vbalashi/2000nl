@@ -20,16 +20,16 @@
 .prompt{flex-shrink:0;padding:24px 4px 18px}
 .prompt:not([data-revealed=true]){flex:1;min-height:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px 4px}
 .prompt h1{width:fit-content;max-width:100%;transform-origin:top left}
-.promptTranslation p,.revealedIdentity p:not(.headword){margin:2px 0 0}
+.promptTranslation p,.revealedIdentity p:not(.headword){margin:var(--practice-space-pair) 0 0}
 .answerViewport{flex:1;min-height:0;display:flex;flex-direction:column}
 .card.card .answerViewport>div{flex:1;min-height:0}
 .card.card .answerViewport>div>div:first-child{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 4px 24px;scrollbar-width:none}
 .answerViewport[data-ready=false],.promptTranslation[data-ready=false],.revealedIdentity[data-ready=false]{visibility:hidden}
 .answerViewport[data-ready=true]:not([data-reverse=true]),.promptTranslation[data-ready=true],.revealedIdentity[data-ready=true]{animation:answer .2s ease-out}
 .answerPair>p{margin:0}
-.answerPair>div p{margin:2px 0 0}
+.answerPair>div p{margin:var(--practice-space-pair) 0 0}
 .headword{font-family:var(--practice-font-reading);font-size:var(--practice-text-display);font-weight:500;line-height:1.2;letter-spacing:-1px;overflow-wrap:anywhere;margin:0}
-.sentence{font-family:var(--practice-font-reading);font-size:var(--practice-text-page);line-height:1.4;font-weight:400;margin:0}
+.sentence{font-family:var(--practice-font-reading);font-size:var(--practice-reading-prompt);line-height:1.4;font-weight:400;margin:0}
 .headword:focus,.sentence:focus,.finished h1:focus{outline:none}
 .definition{margin:0;font-weight:400}
 .answer{margin:0}
@@ -95,3 +95,10 @@
 .markedCard>div{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:var(--practice-text-small);color:var(--practice-text-secondary)}
 .result [data-rating=Known]{--rating:var(--practice-success)}
 .result [data-rating=Excluded]{--rating:var(--practice-text-muted)}
+
+/* Enlarged prompts stay readable without consuming the entire answer viewport. */
+.prompt{max-height:45%;overflow-y:auto;scrollbar-width:none}
+.prompt:not([data-revealed=true]){max-height:none;overflow-y:auto}
+.cardTools{flex-wrap:wrap}
+.history li{flex-wrap:wrap}
+@media(max-height:650px){.session{gap:6px}.chrome{min-height:44px;padding-bottom:8px}.prompt{padding-block:8px}.card.card{padding-top:8px}}

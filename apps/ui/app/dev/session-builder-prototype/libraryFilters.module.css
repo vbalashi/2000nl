@@ -37,3 +37,6 @@
 .popoverHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .popoverHeader h3{font-size:var(--practice-text-body);font-weight:550;margin:0}
 .popover .help{font-size:var(--practice-text-label);margin:12px 0 0}
+/* Narrow or enlarged layouts must keep reset and both actions reachable. */
+.actions{flex-wrap:wrap}
+@media(max-width:400px){.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px}.row .value{grid-column:1;grid-row:2;text-align:left}.row>svg{grid-column:2;grid-row:1/3}.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}.actions>button{min-width:0;white-space:normal}.reset{grid-column:1/-1;text-align:left}}
