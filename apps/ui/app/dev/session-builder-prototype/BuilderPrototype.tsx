@@ -19,12 +19,13 @@ import {StatisticsPrototype} from "./StatisticsPrototype";
 import {LibraryPrototype} from "./LibraryPrototype";
 import { AppDestinationNav,appDestinationLabel } from "@/components/navigation/AppDestinationNav";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
-import {getUiMessages} from "@/lib/uiMessages";
+import {formatExerciseCount,formatMeaningAvailability,formatUiMessage,getUiMessages} from "@/lib/uiMessages";
+import {previewLanguageName} from "./previewLanguage";
 import { balances, Draft, Exercise, initialDraft, matchMeanings, parts, sources } from "./model";
 import s from "./prototype.module.css";
 import {Theme} from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
-import {Action, Choice, DesignContext, Directions, Modal, RangeControl} from "./VariantControls";
+import {Action, Choice, DesignContext, Directions, InterfaceLanguageContext, Modal, RangeControl} from "./VariantControls";
 import {BuilderSnapshot, comparisonChannel, Variant} from "./variants";
 import {VariantSwitcher} from "./ComparisonLab";
 
@@ -46,6 +47,10 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
   const [draft, setDraft] = useState<Draft>(initialDraft);
   const [translationLanguage,setTranslationLanguage]=useState("English");
   const [interfaceLanguage,setInterfaceLanguage]=useState<OnboardingLanguage>("en");
+  const messages=getUiMessages(interfaceLanguage);
+  const copy=messages.builder;
+  const learningLanguage=messages.trainingOverview.learningLanguage[draft.language];
+  const balanceLabel=copy.balance[draft.balance];
   const wordDirections=useRef<Draft["directions"]>(["Direct"]);
   const textSize = usePreviewTextSize();
   const {palette,setPalette:changePalette,mode:colourMode,setMode:setColourMode,dark}=usePracticeAppearance("2000nl-preview-appearance-v1");
@@ -134,56 +139,56 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
   };
   const previewType: Exercise = draft.types.includes("Words") ? "Words" : draft.types.includes("Idioms") ? "Idioms" : "Translation";
   const pair = draft.language === "English" ? (previewType === "Words" ? ["bicycle", "A vehicle with two wheels that you move by pedalling."] : previewType === "Idioms" ? ["Break the ice", "Make people feel more relaxed when they first meet."] : ["I cycle to work.", "Ik ga met de fiets naar mijn werk."]) : previewType === "Words" ? ["de fiets", "Een voertuig met twee wielen waarop je trapt."] : previewType === "Idioms" ? ["Met de deur in huis vallen", "Meteen zeggen waar het om gaat."] : ["I cycle to work.", "Ik ga met de fiets naar mijn werk."];
-  const summary = <span className={s.inlineSummary}>{draft.types.join(" + ")}<span className={s.separator}>·</span>{previewType === "Translation" ? translationLanguage === "Off" ? "Choose translation language" : `${translationLanguage} → ${draft.language}` : draft.directions.join(" + ")}<span className={s.separator}>·</span>{draft.mode}</span>;
+  const summary = <span className={s.inlineSummary}>{draft.types.map(type=>messages.trainingOverview.exerciseType[type]).join(" + ")}<span className={s.separator}>·</span>{previewType === "Translation" ? translationLanguage === "Off" ? copy.chooseTranslation : `${previewLanguageName(interfaceLanguage,translationLanguage)} → ${learningLanguage}` : draft.directions.map(direction=>messages.trainingOverview.direction[direction]).join(" + ")}<span className={s.separator}>·</span>{copy.answerModes[draft.mode]}</span>;
   const hasArticleFilter = draft.language === "Dutch";
-  const activeDot = <span className={s.activeDot} role="img" aria-label="Subfilters active"/>;
+  const activeDot = <span className={s.activeDot} role="img" aria-label={copy.subfiltersActive}/>;
   const toggleNounEditor = () => {
     if(!draft.parts.includes("Nouns")) update({parts: [...draft.parts, "Nouns"]});
     setNounOpen(v => !v);
   };
-  const available = countState.status === "pending" ? <><LoaderCircle className={s.spinner} size={15}/>Calculating meanings…</> : countState.status === "error" ? <>Couldn’t calculate. <button onClick={() => setRetry(v => v + 1)}>Retry</button></> : <>{countState.count} {countState.count === 1 ? "meaning" : "meanings"} available{countState.count === 0 ? " — adjust your filters" : ""}</>;
+  const available = countState.status === "pending" ? <><LoaderCircle className={s.spinner} size={15}/>{copy.calculating}</> : countState.status === "error" ? <>{copy.calculationFailed} <button onClick={() => setRetry(v => v + 1)}>{copy.retry}</button></> : <>{formatMeaningAvailability(interfaceLanguage,countState.count)}{countState.count === 0 ? ` · ${copy.adjustFilters}` : ""}</>;
 
   const content = <div lang="en" style={textSizeStyles(textSize.size)} data-text-size={textSize.size} data-session={launchPreview} data-disclosure={disclosure} data-training-home={screen==="home"&&!launchPreview} data-builder={screen==="builder"} data-library={screen==="library"} data-settings={screen==="settings"} data-colour-mode={dark?"dark":"light"} data-practice-palette={palette} data-design={variant} className={`${dark?"dark":""} ${s.root} ${themeStyles.theme} ${variant!=="current"?s[variant]:""} ${embedded?s.embedded:""} ${showSwitcher?s.withSwitcher:""} font-sense-sans`} onKeyDown={e => {if(e.key === "Escape")setNounOpen(false);}}>
-    {nounPresent && <button className={`${s.filterScrim} ${!nounOpen ? s.leaving : ""}`} tabIndex={-1} aria-hidden={!nounOpen} aria-label="Close noun subfilters" onClick={() => setNounOpen(false)}/> }
+    {nounPresent && <button className={`${s.filterScrim} ${!nounOpen ? s.leaving : ""}`} tabIndex={-1} aria-hidden={!nounOpen} aria-label={copy.closeNounSubfilters} onClick={() => setNounOpen(false)}/> }
     <div className={s.prototypeBanner}>INTERACTIVE PROTOTYPE · illustrative data · <a href="?view=compare">Compare four designs ↗</a></div>
     <header className={s.appHeader}><button className={s.brand} onClick={() => navigate("home")}>2000<span>nl</span></button>
       <div className={s.desktopNav} lang={interfaceLanguage}><AppDestinationNav active={screen === "settings" ? null : screen === "builder" || screen === "home" ? "training" : screen} interfaceLanguage={interfaceLanguage} onNavigate={v => navigate(v === "training" ? "home" : v === "library" ? "library" : "statistics")}/></div>
-      <div className={s.headerTools}><button className={s.iconButton} aria-label={`Colour mode: ${colourMode}. Switch to ${colourMode==="Light"?"Dark":colourMode==="Dark"?"System":"Light"}`} onClick={()=>setColourMode(colourMode==="Light"?"Dark":colourMode==="Dark"?"System":"Light")}>{colourMode==="Light"?<Sun size={18}/>:colourMode==="Dark"?<Moon size={18}/>:<Monitor size={18}/>}</button><button className={s.iconButton} aria-label={appDestinationLabel(interfaceLanguage,"settings")} aria-current={screen==="settings"?"page":undefined} onClick={() => {if(screen!=="settings")previousScreen.current=screen;navigate("settings");window.scrollTo({top:0,behavior:"instant"});}}><Settings size={19}/></button></div>
+      <div lang={interfaceLanguage} className={s.headerTools}><button className={s.iconButton} aria-label={formatUiMessage(copy.colourMode,{mode:copy.colourModes[colourMode],next:copy.colourModes[colourMode==="Light"?"Dark":colourMode==="Dark"?"System":"Light"]})} onClick={()=>setColourMode(colourMode==="Light"?"Dark":colourMode==="Dark"?"System":"Light")}>{colourMode==="Light"?<Sun size={18}/>:colourMode==="Dark"?<Moon size={18}/>:<Monitor size={18}/>}</button><button className={s.iconButton} aria-label={appDestinationLabel(interfaceLanguage,"settings")} aria-current={screen==="settings"?"page":undefined} onClick={() => {if(screen!=="settings")previousScreen.current=screen;navigate("settings");window.scrollTo({top:0,behavior:"instant"});}}><Settings size={19}/></button></div>
     </header>
     <main className={`${s.main} ${screen==="library"?s.libraryMain:""}`}>
       <div hidden={screen!=="settings"}><SettingsPrototype textSize={textSize} resolvedDark={dark} palette={palette} onPaletteChange={changePalette} translation={translationLanguage} setTranslation={setTranslationLanguage} interfaceLanguage={interfaceLanguage} onInterfaceLanguageChange={setInterfaceLanguage} mode={colourMode} onModeChange={setColourMode} active={screen==="settings"} onExit={()=>{setScreen(previousScreen.current);window.scrollTo({top:0,behavior:"instant"});}}/></div>
       <div hidden={launchPreview}>
       {screen === "settings" ? null : screen === "builder" ? <>
-        <div className={s.title}><button className={s.iconButton} aria-label="Back to Training" onClick={() => setScreen("home")}><ArrowLeft size={20}/></button><h1>{editingTraining===null?"Session builder":presets[editingTraining].name}</h1></div>
-        <div className={s.panel}>
-          <Section id="language" title="Language" summary={draft.language} open={open.includes("language")} onToggle={()=>toggleSection("language")}>
-            <BuilderScopePicker page="language" draft={draft} onApply={patch=>{update(patch);setNounOpen(false);}}/>
+        <div lang={interfaceLanguage} className={s.title}><button className={s.iconButton} aria-label={copy.back} onClick={() => setScreen("home")}><ArrowLeft size={20}/></button><h1>{editingTraining===null?copy.title:presets[editingTraining].name}</h1></div>
+        <div lang={interfaceLanguage} className={s.panel}>
+          <Section id="language" title={copy.language} summary={learningLanguage} open={open.includes("language")} onToggle={()=>toggleSection("language")}>
+            <BuilderScopePicker page="language" draft={draft} interfaceLanguage={interfaceLanguage} onApply={patch=>{update(patch);setNounOpen(false);}}/>
           </Section>
-          <Section id="source" title="Source" summary={source.name} open={open.includes("source")} onToggle={()=>toggleSection("source")}>
-            <BuilderScopePicker key={draft.language} page="source" draft={draft} onApply={update}/>
+          <Section id="source" title={copy.source} summary={source.name} open={open.includes("source")} onToggle={()=>toggleSection("source")}>
+            <BuilderScopePicker key={draft.language} page="source" draft={draft} interfaceLanguage={interfaceLanguage} onApply={update}/>
           </Section>
-          <Section id="exercises" title="Exercises" summary={summary} open={open.includes("exercises")} onToggle={() => toggleSection("exercises")}>
-            <div className={s.field}><h2>Exercise type</h2><div className={s.choices}>{(["Words","Idioms","Translation"] as const).map(t => <Choice key={t} active={draft.types.includes(t)} onClick={() => chooseExercise(t)}>{t}</Choice>)}</div></div>
-            {previewType === "Translation" ? <TranslationDirectionPreview from={translationLanguage} to={draft.language}/> : <div className={s.field}><h2>Direction <span className={s.muted}>{previewType === "Idioms" ? "Idiom" : "Meaning"} example</span></h2>
-              <Directions values={draft.directions} pair={pair} onChange={directions=>update({directions})}/>
+          <Section id="exercises" title={copy.exercises} summary={summary} open={open.includes("exercises")} onToggle={() => toggleSection("exercises")}>
+            <div className={s.field}><h2>{copy.exerciseType}</h2><div className={s.choices}>{(["Words","Idioms","Translation"] as const).map(t => <Choice key={t} active={draft.types.includes(t)} onClick={() => chooseExercise(t)}>{messages.trainingOverview.exerciseType[t]}</Choice>)}</div></div>
+            {previewType === "Translation" ? <TranslationDirectionPreview from={translationLanguage} to={draft.language}/> : <div className={s.field}><h2>{copy.direction} <span className={s.muted}>{previewType === "Idioms" ? copy.idiomExample : copy.meaningExample}</span></h2>
+              <Directions values={draft.directions} contentLanguage={draft.language==="Dutch"?"nl":"en"} pair={pair} onChange={directions=>update({directions})}/>
             </div>}
-            <div className={s.field}><h2>Answer mode</h2><div className={s.choices}>{(["Reveal & self-rate","Type the answer"] as const).map(mode => <Choice key={mode} active={draft.mode === mode} onClick={() => update({mode})}>{mode}</Choice>)}</div></div>
+            <div className={s.field}><h2>{copy.answerMode}</h2><div className={s.choices}>{(["Reveal & self-rate","Type the answer"] as const).map(mode => <Choice key={mode} active={draft.mode === mode} onClick={() => update({mode})}>{copy.answerModes[mode]}</Choice>)}</div></div>
           </Section>
-          <Section id="filters" title="Filters" summary={<span className={s.inlineSummary}>{draft.parts.length ? draft.parts.map((p,i) => <React.Fragment key={p}>{i > 0 && <span className={s.separator}>·</span>}<span>{p}{p === "Nouns" && draft.article && activeDot}</span></React.Fragment>) : "All parts of speech"}</span>} open={open.includes("filters")} onToggle={() => toggleSection("filters")}>
-            <div className={s.field}><h2>Part of speech</h2><div className={s.parts}>{parts.map(part => <div className={`${s.part} ${draft.parts.includes(part) ? s.selected : ""} ${part === "Nouns" && nounPresent ? s.activePart : ""}`} key={part}>
+          <Section id="filters" title={copy.filters} summary={<span className={s.inlineSummary}>{draft.parts.length ? draft.parts.map((p,i) => <React.Fragment key={p}>{i > 0 && <span className={s.separator}>·</span>}<span>{copy.parts[p]}{p === "Nouns" && draft.article && activeDot}</span></React.Fragment>) : copy.allParts}</span>} open={open.includes("filters")} onToggle={() => toggleSection("filters")}>
+            <div className={s.field}><h2>{copy.partOfSpeech}</h2><div className={s.parts}>{parts.map(part => <div className={`${s.part} ${draft.parts.includes(part) ? s.selected : ""} ${part === "Nouns" && nounPresent ? s.activePart : ""}`} key={part}>
               <button aria-pressed={draft.parts.includes(part)} onClick={() => {
                 const removing = draft.parts.includes(part);
                 update({parts: removing ? draft.parts.filter(p => p !== part) : [...draft.parts,part], ...(part === "Nouns" && removing ? {article:null} : {})});
                 if(part === "Nouns" && removing) setNounOpen(false);
-              }}>{part}{part === "Nouns" && draft.article && activeDot}</button>
-              {part === "Nouns" && hasArticleFilter && <button className={`${s.disclosure} ${nounOpen ? s.disclosureOpen : ""}`} aria-label="Noun subfilters" aria-expanded={nounOpen} aria-controls="noun-panel noun-panel-mobile" onClick={toggleNounEditor}><ChevronDown size={15} className={nounOpen ? s.rotated : ""}/></button>}
-              {part === "Nouns" && nounPresent && <div id="noun-panel-mobile" inert={!nounOpen} aria-hidden={!nounOpen} className={`${s.mobileNounPanel} ${!nounOpen ? s.leaving : ""}`} role="group" aria-label="Noun article"><h2>Article</h2><div className={s.choices}>{(["de","het"] as const).map(article => <Choice key={article} active={draft.article === article} onClick={() => update({article: draft.article ? null : article})}>{article}</Choice>)}</div></div>}
+              }}>{copy.parts[part]}{part === "Nouns" && draft.article && activeDot}</button>
+              {part === "Nouns" && hasArticleFilter && <button className={`${s.disclosure} ${nounOpen ? s.disclosureOpen : ""}`} aria-label={copy.nounSubfilters} aria-expanded={nounOpen} aria-controls="noun-panel noun-panel-mobile" onClick={toggleNounEditor}><ChevronDown size={15} className={nounOpen ? s.rotated : ""}/></button>}
+              {part === "Nouns" && nounPresent && <div id="noun-panel-mobile" inert={!nounOpen} aria-hidden={!nounOpen} className={`${s.mobileNounPanel} ${!nounOpen ? s.leaving : ""}`} role="group" aria-label={copy.nounArticle}><h2>{copy.article}</h2><div className={s.choices}>{(["de","het"] as const).map(article => <Choice key={article} active={draft.article === article} onClick={() => update({article: draft.article ? null : article})}>{article}</Choice>)}</div></div>}
             </div>)}</div></div>
-            <div className={`${s.nounReveal} ${nounOpen ? s.nounRevealOpen : ""}`} inert={!nounOpen} aria-hidden={!nounOpen}><div><div id="noun-panel" className={s.nounPanel}><h2>Article</h2><div className={s.choices}>{(["de","het"] as const).map(article => <Choice key={article} active={draft.article === article} onClick={() => update({article: draft.article ? null : article})}>{article}</Choice>)}</div></div></div></div>
+            <div className={`${s.nounReveal} ${nounOpen ? s.nounRevealOpen : ""}`} inert={!nounOpen} aria-hidden={!nounOpen}><div><div id="noun-panel" className={s.nounPanel}><h2>{copy.article}</h2><div className={s.choices}>{(["de","het"] as const).map(article => <Choice key={article} active={draft.article === article} onClick={() => update({article: draft.article ? null : article})}>{article}</Choice>)}</div></div></div></div>
           </Section>
-          <Section id="session" title="Session" summary={<span>{draft.size} exercises · {balances[draft.balance]}</span>} open={open.includes("session")} onToggle={() => toggleSection("session")}>
-            <div className={s.sessionFields}><label>Session size <strong>{draft.size} exercises</strong><RangeControl label="Session size" min={5} max={50} step={5} value={draft.size} onChange={size=>update({size})}/><span className={s.rangeEnds}><span>5</span><span>50</span></span></label>
-            <label>New / review balance <strong>{balances[draft.balance]}</strong><RangeControl label="New review balance" min={0} max={balances.length-1} value={draft.balance} onChange={balance=>update({balance})}/><span className={s.rangeEnds}><span>Review</span><span>New</span></span></label></div>
+          <Section id="session" title={copy.session} summary={<span>{formatExerciseCount(interfaceLanguage,draft.size)} · {balanceLabel}</span>} open={open.includes("session")} onToggle={() => toggleSection("session")}>
+            <div className={s.sessionFields}><label>{copy.sessionSize} <strong>{formatExerciseCount(interfaceLanguage,draft.size)}</strong><RangeControl label={copy.sessionSize} min={5} max={50} step={5} value={draft.size} onChange={size=>update({size})}/><span className={s.rangeEnds}><span>5</span><span>50</span></span></label>
+            <label>{copy.balanceLabel} <strong>{balanceLabel}</strong><RangeControl label={copy.balanceLabel} min={0} max={balances.length-1} value={draft.balance} onChange={balance=>update({balance})}/><span className={s.rangeEnds}><span>{copy.review}</span><span>{copy.new}</span></span></label></div>
           </Section>
           {editingTraining!==null&&<SavedTrainingControls name={presets[editingTraining].name} main={editingTraining===mainTraining} hasOthers={presets.length>1} onMain={()=>setMainTraining(editingTraining)} onDelete={()=>{
             const removed=editingTraining;
@@ -191,7 +196,7 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
             setMainTraining(current=>current===removed?0:current>removed?current-1:current);
             setEditingTraining(null);setDraft({...initialDraft});setOpen([]);setScreen("home");
           }}/>}
-          <footer className={s.actions}><div className={s.availability} role="status" aria-live="polite">{available}</div><Action  onClick={() => {setName(editingTraining===null?"":presets[editingTraining].name);setSaveDialog(true);}}>Save training</Action><Action primary disabled={countState.status !== "ready" || countState.count === 0 || previewType === "Translation" && (translationLanguage === "Off" || translationLanguage === draft.language)} onClick={() => startPreview({id:editingTraining===null?"draft":presets[editingTraining].id,name:editingTraining===null?"Custom training":presets[editingTraining].name,draft})}>Start training</Action></footer>
+          <footer className={s.actions}><div className={s.availability} role="status" aria-live="polite">{available}</div><Action  onClick={() => {setName(editingTraining===null?"":presets[editingTraining].name);setSaveDialog(true);}}>{copy.save}</Action><Action primary disabled={countState.status !== "ready" || countState.count === 0 || previewType === "Translation" && (translationLanguage === "Off" || translationLanguage === draft.language)} onClick={() => startPreview({id:editingTraining===null?"draft":presets[editingTraining].id,name:editingTraining===null?copy.customTraining:presets[editingTraining].name,draft})}>{copy.start}</Action></footer>
         </div>
       </> : screen === "home" ? statisticsTraining ? <section className={s.homeCard}><p className={s.eyebrow}>SELECTED TRAINING · PREVIEW</p><h2>{statisticsTraining}</h2><p>Your selection from Statistics. This illustrative setup has not started a session.</p><Action onClick={()=>setScreen("statistics")}>Back to statistics</Action><Action onClick={()=>setStatisticsTraining(null)}>Choose another training</Action></section> : <TrainingHome resume={resumable?{sessionId:String(resumable.id),trainingId:resumable.trainingId,completed:sessionProgress,total:resumable.draft.size}:undefined} onResume={()=>setLaunchPreview(true)} presets={resumable&&!presets.some(p=>p.id===resumable.trainingId)?[...presets,{id:resumable.trainingId,name:resumable.name,draft:resumable.draft}]:presets} mainIndex={mainTraining} translation={translationLanguage} interfaceLanguage={interfaceLanguage}
         onEdit={index=>{const selected=presets[index];setEditingTraining(selected?index:null);setDraft({...selected?.draft??resumable?.draft??initialDraft});setOpen([]);setScreen("builder");}}
@@ -205,8 +210,8 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
     </main>
     <nav className={s.mobileNav} lang={interfaceLanguage} aria-label={getUiMessages(interfaceLanguage).navigation.primary}>{[{destination:"training" as const,id:"home",Icon:Play},{destination:"library" as const,id:"library",Icon:Library},{destination:"statistics" as const,id:"statistics",Icon:ChartNoAxesColumn}].map(({destination,id,Icon}) => <button key={id} aria-current={screen === id || id === "home" && screen === "builder" ? "page" : undefined} onClick={() => navigate(id as "home" | "library" | "statistics")}><Icon size={18}/>{appDestinationLabel(interfaceLanguage,destination)}</button>)}</nav>
     {screen==="builder"&&!embedded&&!launchPreview&&<BuilderDisclosureVariation value={disclosure} onChange={changeDisclosure}/>}
-    {saveDialog && <Modal title="Save training" onClose={() => setSaveDialog(false)}><form onSubmit={e => {e.preventDefault(); if(!name.trim())return;setPresets(p => editingTraining===null?[...p,{id:crypto.randomUUID(),name:name.trim(),draft:{...draft}}]:p.map((item,index)=>index===editingTraining?{...item,name:name.trim(),draft:{...draft}}:item));setSaveDialog(false);setScreen("home");}}><div className={s.sourceTools}><label className={s.nameLabel}>Training name<input autoFocus required maxLength={80} placeholder="e.g. My everyday Dutch" value={name} onChange={e => setName(e.target.value)}/></label></div><div className={s.modalActions}><Action type="button"  onClick={() => setSaveDialog(false)}>Cancel</Action><Action primary type="submit" disabled={!name.trim()}>Save training</Action></div></form></Modal>}
+    {saveDialog && <Modal title={copy.save} onClose={() => setSaveDialog(false)}><form onSubmit={e => {e.preventDefault(); if(!name.trim())return;setPresets(p => editingTraining===null?[...p,{id:crypto.randomUUID(),name:name.trim(),draft:{...draft}}]:p.map((item,index)=>index===editingTraining?{...item,name:name.trim(),draft:{...draft}}:item));setSaveDialog(false);setScreen("home");}}><div className={s.sourceTools}><label className={s.nameLabel}>{copy.trainingName}<input autoFocus required maxLength={80} placeholder={copy.namePlaceholder} value={name} onChange={e => setName(e.target.value)}/></label></div><div className={s.modalActions}><Action type="button"  onClick={() => setSaveDialog(false)}>{copy.cancel}</Action><Action primary type="submit" disabled={!name.trim()}>{copy.save}</Action></div></form></Modal>}
     {recentOpen&&<RecentActivity items={recentActions} onClose={()=>setRecentOpen(false)}/>}
   </div>;
-  return <DesignContext.Provider value={variant}>{variant==="radix"?<Theme appearance="light" accentColor="violet" grayColor="mauve" radius="medium" scaling="100%">{content}</Theme>:content}{showSwitcher&&<VariantSwitcher variant={variant}/>}</DesignContext.Provider>;
+  return <InterfaceLanguageContext.Provider value={interfaceLanguage}><DesignContext.Provider value={variant}>{variant==="radix"?<Theme appearance="light" accentColor="violet" grayColor="mauve" radius="medium" scaling="100%">{content}</Theme>:content}{showSwitcher&&<VariantSwitcher variant={variant}/>}</DesignContext.Provider></InterfaceLanguageContext.Provider>;
 }

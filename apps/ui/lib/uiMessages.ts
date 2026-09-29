@@ -41,3 +41,10 @@ export function formatExerciseCount(
   }[category];
   return formatUiMessage(template, { count });
 }
+
+export function formatMeaningAvailability(language: OnboardingLanguage, count: number): string {
+  const copy = getUiMessages(language).builder;
+  const category = new Intl.PluralRules(language).select(count);
+  const template = category === "one" ? copy.meaningOne : category === "few" ? copy.meaningFew : category === "many" ? copy.meaningMany : copy.meaningOther;
+  return formatUiMessage(template, { count: new Intl.NumberFormat(language).format(count) });
+}

@@ -385,6 +385,24 @@ to{opacity:1}
 .root[data-builder=true] .panel .summary{order:0;flex-basis:auto}
 .root[data-builder=true] .panel .chevron{margin-left:0}
 
+/* Localized labels must remain readable at the largest interface text size. */
+.root[data-builder=true] .part{max-width:100%;min-width:0}
+.root[data-builder=true] .part>button{min-width:0;overflow-wrap:anywhere}
+.root[data-builder=true] .panel .sectionTitle,.root[data-builder=true] .panel .summary{overflow-wrap:anywhere}
+.root[data-builder=true] .inlineSummary>span:not(.separator){white-space:normal}
+.root[data-builder=true] .actions>button{min-width:0;white-space:normal;overflow-wrap:anywhere}
+.root[data-builder=true] .modalActions{flex-wrap:wrap}
+.root[data-builder=true] .modalActions>button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:700px){
+ .root[data-builder=true] .actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .root[data-builder=true][data-text-size=large] .panel .sectionHeading,
+ .root[data-builder=true][data-text-size=extra] .panel .sectionHeading{grid-template-columns:minmax(0,1fr) 17px}
+ .root[data-builder=true][data-text-size=large] .panel .summary,
+ .root[data-builder=true][data-text-size=extra] .panel .summary{grid-column:1/-1;grid-row:2}
+ .root[data-builder=true][data-text-size=large] .panel .chevron,
+ .root[data-builder=true][data-text-size=extra] .panel .chevron{grid-column:2;grid-row:1}
+}
+
 /* The tinted summary bar splits into a header, side rails and a moving lower lip. */
 .root[data-builder=true][data-disclosure=frame] .panel .section{padding:0 4px 5px;background:var(--practice-surface-subtle);border-radius:12px}
 .root[data-builder=true][data-disclosure=frame] .panel .sectionHeading{min-height:51px;padding:12.5px 18px;background:transparent}

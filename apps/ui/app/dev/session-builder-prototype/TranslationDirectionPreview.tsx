@@ -1,5 +1,9 @@
 "use client";
 import { ArrowDown } from "lucide-react";
+import React,{useContext} from "react";
+import {InterfaceLanguageContext} from "./VariantControls";
+import {formatUiMessage,getUiMessages} from "@/lib/uiMessages";
+import {previewLanguageCode,previewLanguageName} from "./previewLanguage";
 import s from "./prototype.module.css";
 
 const sentences: Record<string, string> = {
@@ -9,15 +13,19 @@ const sentences: Record<string, string> = {
   Spanish: "Voy al trabajo en bicicleta.",
 };
 export function TranslationDirectionPreview({ from, to }: { from: string; to: string }) {
-  if(from === "Off") return <p className={s.muted}>Choose a translation language in Settings to practise sentence translation.</p>;
-  if(from === to) return <p className={s.muted}>Choose a translation language different from {to} in Settings.</p>;
+  const locale=useContext(InterfaceLanguageContext);
+  const messages=getUiMessages(locale);
+  const copy=messages.builder;
+  const languageName=(name:string)=>previewLanguageName(locale,name);
+  if(from === "Off") return <p className={s.muted}>{copy.translationOff}</p>;
+  if(from === to) return <p className={s.muted}>{formatUiMessage(copy.translationSame,{language:languageName(to)})}</p>;
   return <div className={s.field}>
-    <h2>Sentence translation <span className={s.muted}>{from} → {to}</span></h2>
-    <div className={s.directions}><div className={`${s.direction} ${s.directionSelected}`} aria-label={`Sentence translation from ${from} to ${to}`}>
-      <span className={s.directionHeading}>{from} → {to}</span>
-      <strong className={s.prompt}>{sentences[from] || `A sentence in ${from}`}</strong>
+    <h2>{copy.sentenceTranslation} <span className={s.muted}>{languageName(from)} → {languageName(to)}</span></h2>
+    <div className={s.directions}><div className={`${s.direction} ${s.directionSelected}`} aria-label={formatUiMessage(copy.translationDirection,{from:languageName(from),to:languageName(to)})}>
+      <span className={s.directionHeading}>{languageName(from)} → {languageName(to)}</span>
+      <strong lang={sentences[from]?previewLanguageCode(from):locale} className={s.prompt}>{sentences[from] || formatUiMessage(copy.sentenceIn,{language:languageName(from)})}</strong>
       <ArrowDown className={s.directionArrow} size={15} aria-hidden="true"/>
-      <span className={s.answer}>{sentences[to]}</span>
+      <span lang={previewLanguageCode(to)} className={s.answer}>{sentences[to]}</span>
     </div></div>
   </div>;
 }
