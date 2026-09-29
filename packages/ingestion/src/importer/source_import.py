@@ -70,6 +70,15 @@ def _verify_source_schema(cursor) -> None:
             to_regprocedure(
                 'private.reconcile_platform_v2_content_nodes(uuid,text,jsonb)'
             ),
+                to_regprocedure(
+                    'private.reconcile_platform_v2_source_batch_v1(jsonb,boolean)'
+                ),
+            to_regprocedure(
+                'private.begin_platform_v2_source_import_v1()'
+            ),
+            to_regprocedure(
+                'private.finish_platform_v2_source_import_v1()'
+            ),
             (
                 select count(*) = 2
                 from information_schema.columns
@@ -92,6 +101,9 @@ def _verify_source_schema(cursor) -> None:
         headword_groups,
         content_nodes,
         reconcile_nodes,
+        reconcile_source_batch,
+        begin_source_import,
+        finish_source_import,
         report_atom_columns,
         management_column,
     ) = cursor.fetchone()
@@ -101,11 +113,14 @@ def _verify_source_schema(cursor) -> None:
         or headword_groups is None
         or content_nodes is None
         or reconcile_nodes is None
+        or reconcile_source_batch is None
+        or begin_source_import is None
+        or finish_source_import is None
         or not report_atom_columns
         or not management_column
     ):
         raise RuntimeError(
-            "Platform V2 identity migrations 102, 105, 106, and 120 are not applied"
+            "Platform V2 identity/import migrations through 177 are not applied"
         )
 
 
@@ -711,106 +726,58 @@ def import_source_manifest(
             _bulk_update_entries(cursor, updates)
             _bulk_insert_entries(cursor, inserts)
 
-            psycopg2.extras.execute_values(
-                cursor,
-                """
-                insert into private.source_entry_bindings (
-                    dictionary_id,
-                    identity_scheme_version,
-                    source_entry_key,
-                    source_group_key,
-                    sense_ordinal,
-                    word_entry_id,
-                    binding_state,
-                    first_seen_run_id,
-                    last_seen_run_id,
-                    manifest_checksum,
-                    content_fingerprint_version,
-                    content_fingerprint,
-                    identity_evidence,
-                    reconciliation_decision
-                )
-                values %s
-                on conflict (
-                    dictionary_id,
-                    identity_scheme_version,
-                    source_entry_key
-                )
-                do update set
-                    source_group_key = excluded.source_group_key,
-                    sense_ordinal = excluded.sense_ordinal,
-                    word_entry_id = excluded.word_entry_id,
-                    binding_state = 'active',
-                    last_seen_run_id = excluded.last_seen_run_id,
-                    manifest_checksum = excluded.manifest_checksum,
-                    content_fingerprint_version =
-                        excluded.content_fingerprint_version,
-                    content_fingerprint = excluded.content_fingerprint,
-                    identity_evidence = excluded.identity_evidence,
-                    reconciliation_decision =
-                        excluded.reconciliation_decision,
-                    updated_at = now()
-                """,
-                [
-                    (
-                        dictionary_id,
-                        artifact.identity_scheme_version,
-                        artifact.source_entry_key,
-                        artifact.source_group_key,
-                        artifact.sense_ordinal,
-                        row["id"],
-                        "active",
-                        run_id,
-                        run_id,
-                        manifest.manifest_sha256,
-                        artifact.fingerprint_version,
-                        artifact.content_fingerprint,
-                        psycopg2.extras.Json(
-                            artifact.payload["_source"].get(
-                                "identity_evidence",
-                                {},
-                            )
-                            | {
-                                "source_index": artifact.source_index,
-                                "pos_evidence": artifact.payload[
-                                    "_source"
-                                ].get("pos_evidence", {}),
-                            }
-                        ),
-                        psycopg2.extras.Json(decision_payload),
+            source_batches = [
+                {
+                    "dictionary_id": dictionary_id,
+                    "identity_scheme_version": artifact.identity_scheme_version,
+                    "source_entry_key": artifact.source_entry_key,
+                    "source_group_key": artifact.source_group_key,
+                    "sense_ordinal": artifact.sense_ordinal,
+                    "word_entry_id": row["id"],
+                    "run_id": run_id,
+                    "manifest_checksum": manifest.manifest_sha256,
+                    "content_fingerprint_version": artifact.fingerprint_version,
+                    "content_fingerprint": artifact.content_fingerprint,
+                    "identity_evidence": artifact.payload["_source"].get(
+                        "identity_evidence", {}
                     )
-                    for artifact, row, decision_payload in resolved
-                ],
-                page_size=500,
+                    | {
+                        "source_index": artifact.source_index,
+                        "pos_evidence": artifact.payload["_source"].get(
+                            "pos_evidence", {}
+                        ),
+                    },
+                    "reconciliation_decision": decision_payload,
+                    "nodes": platform_v2_content_node_inputs(artifact.payload),
+                }
+                for artifact, row, decision_payload in resolved
+            ]
+            cursor.execute(
+                "select private.begin_platform_v2_source_import_v1()"
             )
-
-            psycopg2.extras.execute_values(
-                cursor,
-                """
-                select private.reconcile_platform_v2_content_nodes(
-                    source.entry_id::uuid,
-                    source.source_revision,
-                    source.nodes::jsonb
+            for offset in range(0, len(source_batches), 500):
+                source_batch = source_batches[offset : offset + 500]
+                next_offset = offset + len(source_batch)
+                drain_after_batch = (
+                    next_offset == len(source_batches)
+                    or source_batch[-1]["source_group_key"]
+                    != source_batches[next_offset]["source_group_key"]
                 )
-                from (values %s) as source (
-                    entry_id,
-                    source_revision,
-                    nodes
-                )
-                """,
-                [
-                    (
-                        row["id"],
-                        manifest.manifest_sha256,
-                        psycopg2.extras.Json(
-                            platform_v2_content_node_inputs(
-                                artifact.payload
-                            )
-                        ),
+                cursor.execute(
+                    """
+                    select private.reconcile_platform_v2_source_batch_v1(
+                        %s::jsonb, %s
                     )
-                    for artifact, row, _ in resolved
-                ],
-                page_size=500,
+                    """,
+                    (
+                        psycopg2.extras.Json(
+                            source_batch
+                        ),
+                        drain_after_batch,
+                    ),
+                )
+            cursor.execute(
+                "select private.finish_platform_v2_source_import_v1()"
             )
 
             nt2_rows = [

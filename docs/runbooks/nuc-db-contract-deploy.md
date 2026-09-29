@@ -264,9 +264,25 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 176 in order
+An enabled deployment must apply or verify migrations 123 through 177 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
+
+Migration 177 replaces the full dictionary import's repeated row-trigger group
+refresh with a private, bounded batch boundary. Each batch upserts source
+bindings, reconciles durable Content Node identities, deduplicates affected
+source groups, and bounded drains rebuild each affected source group once as
+the manifest advances. Group-aware batch boundaries do not split a source
+group. The manifest-level finish verifies that no derived refresh remains;
+deferred constraint triggers force that finish if an importer omits it.
+Ordinary interactive writes retain immediate trigger refresh. A failed batch
+rolls back bindings, Content Nodes, and projection together; no trigger is
+disabled globally and no public or service-role grant is added. The explicit
+local budgets are: complete initial corpus at most 180 seconds; unchanged
+complete-corpus replay at most 10 seconds; and the CI 600-entry changed replay
+at most 10 seconds. The complete 18,163-artifact local corpus completed in
+155.74 seconds on the supported development host, versus the pre-migration run
+remaining in a single statement for more than 25 minutes before cancellation.
 
 Migration 163 preserves the extra-exercise eligibility RPC signature and
 boolean policy while replacing its all-word-entry scan with a lookup of the
