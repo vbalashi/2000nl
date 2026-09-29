@@ -124,3 +124,136 @@ Added roleLabels=plain (Example without line): same placement and spacing as the
 
 ## Statistics first pass
 Library plain labels / inset text accepted and made defaults. StatisticsPrototype adds current study-day counts, started-card progress, illustrative Words/Idioms scopes and a first-visit state. Uses concepts from exercise stats read model but no backend calls. Direct view=statistics route. Desktop/412 px, scope/state switch and training navigation verified; typecheck/lint passed. Statistics remains a proposal.
+
+
+## Statistics exploration — 28 September 2026
+
+Replaced the large month calendar with a separate compact, seven-row annual heatmap inspired by the user’s reference. Day selection reveals new-card and review counts below; mobile horizontally scrolls the map, initially showing recent months. The learning-scope trigger sits alongside languages and opens a modal with a blurred backdrop instead of a native scope dropdown. Scope names and history remain illustrative fixtures. Period controls only affect activity totals; queue and coverage remain current-state measures. Training handoff is a named preview, not a real session launch. Training landing content and the usefulness of period/coverage controls remain open design questions. No production APIs or learning state changed.
+
+Statistics follow-up: language-wide activity, heatmap, streaks and exercise records are now independent of the training scope. Scope segments moved above Due now and Material coverage. Mobile shows two months with earlier/later buttons instead of scrolling. Current streak tolerates an unfinished today; longest streak and best day use the demo year, daily average uses 30 calendar days including inactive days. Prototype fixture calculations only.
+
+Statistics refinement: renamed invented training labels to 2K (2,000 most common words) and Idioms throughout selection, coverage and handoff. Language/material segmented controls are 28px including the outer border. Activity adds illustrative study minutes for the selected period and day details, without adding a fifth record metric. Mobile activity uses a 2×2 grid. Real active-time measurement remains unimplemented.
+
+## Settings first pass — 28 September 2026
+
+Statistics accepted for now. Gear now opens Settings, with Languages, Reading, Appearance, Shortcuts and Account. Based on existing SettingsDestination and ReadingSettingsSection, rather than a recovered prior chat proposal. Interactive in-memory previews cover translation, learning-language ordering, and independent desktop/phone text sizes. Settings remain mounted across navigation to retain choices until reload. These values are not connected to production preferences or other prototype screens. Interface stays English; account actions are disabled. Lavender is current; Classic blue and Monochrome are visibly planned, disabled palettes. Shortcuts come from the existing production definition. Direct preview URL: ?view=settings. No API/auth changes.
+
+## Settings reconciliation — 28 September 2026
+
+Recovered the September 24 discussion in “Уточнить модель словарей и списков” and its accepted issues #469, #471, #475. July notes are historical, not the latest authority. #469/#475 explicitly reject a global dictionary on/off preference, and keep lookup scopes per context and training selection in Training. Today's requested switches conflict with that; clarification is pending. Dictionary toggles currently demonstrate local selection only and do not implement policy. Billing preview has no payment integration or invented prices; timed entitlements and paid status are distinct.
+
+Removed visible Settings title/back row; the gear marks the active destination. Light/Dark/System mode shares state between header and Appearance; other palette themes remain planned. Added a searchable ISO 639-3 catalogue (7,927 records, retrieved 2026-09-28 from https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab; SIL attribution in picker). Catalogue is not a verified provider-support list. Interface options remain only en/nl/ru as a selection preview. Learning-language pause preserves state and cannot pause the final active language. Billing and dictionary figures are fixtures, not account data.
+
+Text size reuses LibraryArticle/MeaningCard/MeaningContent with preview props omitting actions. All meanings expand, including idiom explanations, examples and English translations. Automatic device profile uses the existing detectReadingDevice helper (not window width), with independent in-memory phone/desktop values; manual device tabs removed. Values still do not persist to production preferences.
+
+Settings refinement: Text size moved under Appearance. Mobile section pills replaced by a modal left drawer and current-section label. Dictionary heading replaced by prominent purpose copy, language groups and visual switches. Translation picker keeps fixed height and input position while filtering; search includes Unicode-normalized English, Russian and Intl native names plus explicit krc/zh/ar/fa variants (coverage depends on locale data, not universal). Interface language uses a styled three-option disclosure with outside/Escape dismissal. Preview wrapper no longer inherits Library full-page minimum height. Subscription subheading retained to distinguish plan from billing details/payments. QA: drawer selection, rare-language search, unchanged 620px modal geometry, phone dictionary layout.
+
+Personal dictionary settings aggregate language-specific dictionaries into one always-enabled block. Storage remains per user and language (ensure_user_dictionary); creation uses entry.languageCode, or the explicitly selected dictionary. Counts remain illustrative. Language search retains both two- and three-letter ISO codes, including bibliographic aliases, and prioritizes exact code matches.
+
+Mobile settings now use a full-screen menu/detail hierarchy with back navigation, no app header or bottom navigation, and reduced-motion-aware slide transitions. Mobile panels lose outer frames and repeated section titles. Card text size and its live Library card example share one panel. Prototype-only explanatory copy is removed from settings; data and state remain fixtures/in-memory.
+
+Frameless study: desktop settings use a left sidebar and a centered 620px content column, with no outer panel surfaces. Library outer word frame defaults to flat; Variations can restore the original or remove only on phone. Individual meaning frames stay intact. Search filters retain a 44px hit target with no idle border/background.
+
+Meaning markers now default to a quiet row just above each frame, with the original border placement available in Variations. Back control matches round white audio/translation controls. Statistics Activity, heatmap and coverage have no outer panels; summary strip keeps its fine outline. Desktop settings menu uses 28px single-line items. Translation and text-size samples retain explicit frames.
+
+Mobile Library now keeps the list visible and opens a nonmodal bottom sheet on word selection. Drag the top handle (or tap/use arrows) to expand or collapse; pull down again from peek to dismiss. The word header stays fixed while meanings scroll; collapsing returns to the beginning. Desktop uses a separated close icon at right. Visible scrollbars are hidden without disabling scrolling. Meaning markers have more space from the preceding card. Statistics Activity uses the same grouped metric treatment as highlights; material selection controls queue/coverage, and Practise opens the selected material in Training.
+
+Panel motion: desktop enters with a 16px slide from the right and fade (200ms), exits in 180ms before unmount. Mobile navigation stays above the sheet at all snap positions; full sheet leaves 72px for navigation and exits beneath it. Both layouts use a white round close control. Reduced motion skips timed dismissal. Settled sheet has no filter, backdrop blur, opacity change or transform.
+
+Single selection always collapses all meanings; desktop double-click always expands all (not a toggle). Preview remains expanded. Meaning scroll contains overscroll so it cannot move the page/header at its boundary; desktop sticky container has sufficient vertical space for the complete word header.
+
+### Library filters and builder language control — 2026-09-28
+- Search filters now opens the shared modal, with language, source, multi-select parts of speech, and Dutch noun article controls. Draft changes apply with Show results; Cancel preserves the applied selection. Counts include the text search. Noun article restrictions do not exclude other selected parts of speech.
+- Language changes clear source/article restrictions. Library fixtures remain Dutch-only; other languages show an empty result without relabeling Dutch data.
+- Builder Learning language uses section-title typography and a compact value button with an adjacent chevron.
+- Checked desktop/mobile modal layout, noun/de + verb union (11 entries), VanDale narrowing (5), cancellation, empty language result, reset, and builder picker opening. Typecheck and focused ESLint passed. Local health targets local DB but reports missing credentials; this fixture-only UI does not require database access.
+
+### Library filter navigation revision — 2026-09-28
+- Replaced native selects and expanding article section with a fixed-size sliding screen stack. Language/Source rows open searchable lists; parts of speech are separate selectable rows and Nouns has a subfilter arrow/active dot.
+- Back/OK returns to the main filter screen, Escape backs out of a child screen before closing. Hidden screens are inert, focus returns to the originating row, and reduced motion skips the slide.
+- Article screen has only de/het; null displays both selected (unrestricted), clicking either narrows, and clicking again restores both. Other selected parts remain included.
+- Builder language picker is left aligned with the shared value column; desktop section headings share a 140px column to avoid wrapping Learning language.
+- Checked mobile and desktop navigation, source/language search, noun dot, de/het transitions, Escape return, and unchanged modal dimensions (558×738). Typecheck and focused lint passed.
+
+### Result-list scrolling and filter comparison — 2026-09-28
+- Reproduced short-list disappearance: three rows fit (207px content/viewport), but PageDown moved the first row from y=180 to y=1 beneath the sticky search bar. The document was scrolling, not overflowing results.
+- Desktop results now stick below the toolbar and scroll internally only when their content exceeds the available height. Same short-list check keeps the first row visible; long-list check reaches the last row (1731px content, 611px viewport, scrollTop 1120).
+- Variations → Library filters compares Rows/sliding screens with Chips/subfilter popover. Both use the same filter model. Chips reuse builder controls; the noun disclosure opens a nearby modal popover with blurred background, de/het, Escape/backdrop close, and focus return. Language/source screens remain searchable.
+- Verified variation switching, article dot and selection, nested Escape preserving the parent, mobile popover within viewport, typecheck and focused ESLint.
+
+### Builder language/source drill-in — 2026-09-28
+- Replaced Learning language picker and Material accordion with grouped Language/Source rows. Each opens an animated in-page selection screen with search, Back/Cancel, and OK; Source retains dictionary/collection filtering and supports the full source fixture list.
+- Selections are pending until OK; changing language preserves the existing reset of source and language-specific filters. Exercises, Filters, and Session remain unchanged.
+- Verified source search and apply (Dutch dictionary), language change (English → Everyday English), mobile layout and back navigation. Typecheck and focused ESLint passed.
+
+### Unified builder summary rows — 2026-09-28
+- All five summary rows now share the same lavender surface, padding, columns, typography, radius and minimum height. Scope rows navigate right; accordion chevrons expand down without circular backgrounds.
+- Removed the outer white/bordered accordion surfaces. Expanded controls sit on the page background; concrete direction cards retain their frames.
+- Verified expanded/collapsed desktop appearance, mobile summary wrapping and language drill-in/back. Fixed inherited mobile summary order so it stays between the title and chevron. Scrolling remains available with hidden bars.
+
+### Expanding-frame disclosure experiment — 2026-09-28
+- Added Builder Variations: Flat sections / Expanding frame, persisted in builderDisclosure URL parameter. Frame is the experiment's default; existing flat behavior remains selectable.
+- The summary background becomes continuous 4px side rails and a 5px lower lip. Grid-height expansion moves the lower lip with content over 400ms, with no content fade. Reduced-motion skips transitions; closed content remains inert.
+- Verified opening/collapse, selected noun summary, both variation styles, mobile layout, typecheck and focused ESLint.
+
+### Inline scope accordions and fresh-session reset — 2026-09-28
+- Language and Source now reuse the same accordion Section as Exercises/Filters/Session. Choices apply immediately; source search/type filters remain, with a bounded scrollable list. Language changes reset incompatible source/article/POS state as before.
+- Initial builder and New session reset all sections closed, including noun subfilters. Verified reset after editing language/source, not only on first entry.
+- Frame opening has square upper interior corners. Header hover tints the complete frame; keyboard focus outlines the complete section rather than only the header.
+- Checked desktop/mobile, source/language selection, five collapsed aria-expanded states after New session, zero top interior radius, typecheck and ESLint.
+
+### Sentence translation direction — 2026-09-28
+- Translation now has one sentence preview from the Settings translation language into the learning language, with explicit language labels instead of selectable Direct/Reverse cards. Its draft direction is Reverse; switching back restores the prior word/idiom directions.
+- Shared translation-language state with Settings. Off or identical source/target languages show guidance and disable starting this exercise. Fixture examples cover common languages; other catalogue languages show a labeled placeholder.
+- Verified mobile English-to-Dutch sentence preview, German setting propagation, and return to Words/Direct. Typecheck and focused ESLint passed.
+
+### Word details exploration and compact Translation — 2026-09-28
+- Translation reuses the two-column Directions grid with one occupied cell and the shared direction-card styling, including mobile typography.
+- Inspected the shared Note/Meaning schema, V2 rich-content projection, and reference checkout's ignored local VanDale import (17,959 entry records, not unique headwords or live database counts). Populated fields include plural (7,188), diminutive (2,366), verb_forms (4,086), conjugation_table (3,944), inflected_form (2,339), comparative/superlative (1,719 each), derivations (772), alternate_headwords (216). No populated synonym/antonym/related-term/usage-label/grammar-note/reference-table fields found in this snapshot; these exist in contracts and synthetic multilingual fixtures.
+- Real sample choices for a future comparison: goed adjective (goede/beter/best), fiets noun (fietsen/fietsje), gaan verb (ging/is gegaan + conjugation table). Keep article/POS scope distinct from individual sense scope; do not merge goed noun/adverb/adjective details.
+- Proposed visual comparison, not implemented yet: (A) concise forms summary below headword with inline expansion, sense-specific relations within each meaning; (B) all details collapsed in labeled rows; (C) contextual details subview for long tables, preserving the originating word/sense. Prefer A for small facts and C only for long tables. Avoid enlarging the sticky word header with the full details body.
+- Future exercises should target explicit forms/relations, preserve sense context for synonyms, and have separate progress identity from word-definition cards. Existing conjugation scenario is seeded disabled; supported data fields are not proof of implemented exercise modes.
+
+### Canonical details prototype — 2026-09-28
+- Correction to the previous exploration: the 17,959-record corpus was a legacy local copy. Canonical source is reference checkout `db/data/words_content`; its structured relations are populated. No live database query or write was needed for this visual change.
+- Added a minimal canonical snapshot for goed adjective, fiets, gaan and huis. Preserved source filename IDs for individual meanings; goed existing preview IDs match. Fiets/gaan/huis now use canonical definitions/examples/idioms instead of simplified demo entries. Relations are scoped by meaning ID (goed: slecht vs fout; fiets: het rijwiel; huis: de woning).
+- Added Additional details comparison in Variations: brief forms summary + inline relations (default), or everything on request. Forms open in the scrollable content below the fixed header; conjugation has its own nested disclosure. No empty sections or training buttons without behavior.
+- Binair's non-binair idiom annotation is not promoted to a sense relation. Idiom relation extraction/model extension remains outside this prototype; production API/DB untouched.
+- Typecheck and focused ESLint passed. Browser checked all four entries, both variation modes, mobile gaan table and navigation; screenshots saved with visual evidence.
+
+### POS morphology coverage and non-empty detail affordance — 2026-09-28
+- Canonical checked-in corpus snapshot: 18,164 entry records (the live DB count recently supplied by the user is 18,163; these are separate snapshots). Counts below are records with each non-empty field, so fields overlap.
+- Nouns (`zn`, 9,513): plural 7,213; diminutive 2,398; extra derivation 31. Lead with plural, fall back to diminutive; show other forms on the same disclosure.
+- Verbs (`ww`, 4,304): principal forms 4,300; conjugation table 4,042; derivations 580. Four entries lack both principal forms and conjugation. Lead with principal forms, defensively derive a line from past/perfect then present if principal forms are missing; expand once to the person/present/past table. Perfect stays in the headline and is not repeated as another row beneath it.
+- Adjectives (`bn`, 2,733): inflected form 2,340; comparative and superlative 1,709 each; derivations 182. Lead with comparative/superlative; if absent use inflected form, then a visibly labeled related-form line if only derivations/alternate forms exist.
+- Adverbs (`bw`, 789): comparative/superlative 8 each; no useful general inflection. Numerals (`tw`, 77): comparative/superlative 2 each. Abbreviations (`afk`, 287): plural 41, diminutive 2. These use only their POS-appropriate forms.
+- Pronouns (`vnw`, 143), prepositions (`vz`, 120), conjunctions (`vw`, 66), prefixes (`vv`, 51), interjections (`tsw`, 45), unknown POS (23), articles (`lidw`, 13): no useful systematic entry-form field; isolated plural/comparison values describe meta-entries, so do not show them as forms of ordinary words. Show meaning-level relations and notes where present.
+- Crucial empty-form case: 372 noun, 101 adjective, 212 adverb, 31 preposition, 24 pronoun, 18 conjunction, 14 abbreviation, 11 interjection, 7 numeral, 3 prefix and 1 unknown-POS record have synonyms/antonyms but no entry morphology. They therefore get no word-form row; their relations remain under the relevant meaning (inline in the primary variation, a labeled on-demand row in the alternative). No empty chevron.
+- Meaning-level relation counts (meanings with at least one value): synonyms/antonyms — noun 1,699/151; verb 752/72; adjective 690/336; adverb 166/58; abbreviation 17/4; pronoun 24/0; preposition 22/9; numeral 6/1; conjunction 18/0; prefix 0/3; interjection 9/2. This confirms relations must keep the meaning identity even when the word-level form strip is absent.
+- The compact headword line has no “Word forms” title or divider. One disclosure opens all supplementary forms and the non-nested person/present/past table. Word-form text never goes through translation toggling.
+
+### Grammar line visual comparison — 2026-09-28
+- Variations → Word forms presentation now compares three one-line treatments of the same data: a plain caption, a lavender ribbon with one grammar rail, and separate grammar tokens. The ribbon is the current default. All three keep one disclosure for extra forms and the conjugation table; no nested disclosure.
+- The collapsed line names each value's role without a heading: `Past ging · Perfect is gegaan`, `Plural huizen · Diminutive huisje`, or adjective comparison labels. This prevents the word forms from looking like unrelated loose words and avoids repeating the principal forms in the expanded table. Verb fallback values derived from conjugation data also receive their correct labels.
+- Sense relations now use the same small icon/uppercase label/coloured vertical rail rhythm as Examples and Expressions, with the related word on the next line. Their rendering is independent of the entry-form strip; `ieder` demonstrates a synonym with no word forms. No meaning-level relation was promoted to a headword-level fact.
+- Visual comparison at desktop and 430px: the caption is too detached; the tokens read clearly but resemble clickable filters. The ribbon best connects the grammar line to the headword while remaining compact. Verified `gaan` collapsed/expanded, `huis` with synonym, and `ieder` without forms; screenshots are in `/Users/khrustal/.codex/visualizations/2026/09/28/library-form-study`.
+
+### Typography-led revision — 2026-09-28
+- User rejected the ribbon/tokens treatment above: it adds interface noise and leaves the grammar visually detached. The earlier preference for the ribbon is superseded; no design has been approved.
+- Replaced those options with `formStyle=editorial|columns|aside`: readable italic role labels alongside serif forms; larger forms with captions underneath; or a compact two-row annotation immediately beside the headword. All use the existing typography with no new coloured surface or frame. Editorial is a starting point for comparison, not a settled winner.
+- Moved the compact morphology into the fixed word header. Its one-step expanded body stays in the independently scrollable content. Toggling returns that content to the top so the table is visible. The comparison dock now has previous/next controls (and arrow-key control when focused), preserving the selected word and open meanings while switching.
+- Checked desktop compositions and mobile 430px `gaan`, including expanded table and header persistence on scroll. Evidence: `/Users/khrustal/.codex/visualizations/2026/09/28/library-typography-study`.
+
+### Editorial forms approved — 2026-09-29
+
+The user selected the first, editorial composition. It is now the fixed presentation: compact italic grammatical labels and serif forms attached to the headword. Removed the losing columns/aside styles and the form-design switcher; other prototype variations remain available. Expanded details still open once and scroll with the meanings.
+
+### Training landing — 2026-09-29
+
+Implemented the approved single-primary-training concept in TrainingHome. A quiet lavender hero uses a serif title, three compact numeric measures, and one dominant launch action. Other saved trainings are compact rows with separate play/settings actions. Settings can promote any saved training; the previous main training returns to the list. Editing a saved training updates it rather than creating duplicates. Launching from home preserves any builder draft.
+
+This is a local interaction preview: three seeded routines and illustrative per-routine activity, plus an explicit unfinished-session preview control. Launch goes directly to the existing session-preview boundary, not the builder; actual training/resume and persistence are not integrated. No goals or motivational slogans. Direct entry: ?view=training.
+
+### Direct editing and deletion — 2026-09-29
+
+Removed the intermediate settings modal: sliders now open the saved training directly in the builder. Main-training assignment and deletion live below its settings. Delete asks for confirmation, preserves learning progress by only removing the in-memory saved setup, chooses another main if needed, and supports an empty state after deleting the last setup. Removed the visible Training/Dutch heading row; the hero eyebrow now carries its language. The page retains a visually hidden accessible heading.

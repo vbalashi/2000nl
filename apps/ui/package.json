@@ -11,6 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "audit:practice-styles": "node scripts/audit-practice-styles.mjs",
+    "check:practice-styles": "node scripts/audit-practice-styles.mjs --check",
     "test": "vitest run",
     "test:platform": "vitest run tests/api/platform*.test.ts",
     "test:watch": "vitest --watch",

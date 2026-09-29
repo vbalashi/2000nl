@@ -1,5 +1,9 @@
 // Prototype comparison contract. Every row drives both the matrix and the rendered components.
 export const studyAxes = {
+  wordDetails:{label:"Additional details",note:"For entries without forms, meaning relations keep their own disclosure.",options:{primary:"Key forms · relations inline",complete:"More forms · relations on request"}},
+  filterLayout:{label:"Library filters",note:"Compare rows with sliding subfilters against builder-style chips and a nearby popover.",options:{rows:"Rows · sliding screens",chips:"Chips · subfilter popover"}},
+  markerPlacement:{label:"Meaning markers",note:"Keep number and exposure at the edge, outside the reading area.",options:{above:"Above the frame",edge:"On the frame · original"}},
+  articleFrame:{label:"Outer word frame",note:"Keep individual meanings framed; compare the surrounding word container.",options:{flat:"No outer frame",mobile:"No frame on phone",framed:"Original outer frame"}},
   nestedTextInset:{label:"Nested text alignment",note:"Explanation and Example share one vertical line.",options:{aligned:"Aligned with labels",inset:"Inset text · 8 px"}},
   roleLabels:{label:"Nested labels",note:"Explanation stays inside; compare Example on the divider or above its text.",options:{border:"Example on divider",inline:"Above the text",plain:"Example without line"}},
   nestedReading:{label:"Explanation / example",note:"Compare hierarchy inside an idiom: source and translation stay paired.",options:{paired:"1 · Clear pairs",literary:"2 · Literary example",tiles:"3 · Separate surfaces",original:"Original"}},
@@ -21,7 +25,8 @@ export const studyAxes = {
 export type StudyKey = keyof typeof studyAxes;
 export type LibraryStudy = { [K in StudyKey]: keyof typeof studyAxes[K]["options"] };
 export type Nesting = LibraryStudy["nesting"];
-export const studyDefaults: LibraryStudy = { navigation: "back", numbering: "corner", controls: "slim", shape: "rounded", actions: "toolbar", nesting: "hybrid", scene: "new", ratingInk:"tonal",learnWidth:"full",listing:"counts",exposure:"frame",countPosition:"near",translationInk:"warm",headerShape:"circle",nestedReading:"literary",roleLabels:"plain",nestedTextInset:"inset" };
+// Approved presentation recipe. URL parameters are explicit comparison overrides only.
+export const studyDefaults: LibraryStudy = { wordDetails:"primary", filterLayout:"chips", markerPlacement:"above", articleFrame:"flat", navigation: "back", numbering: "corner", controls: "slim", shape: "rounded", actions: "toolbar", nesting: "hybrid", scene: "new", ratingInk:"tonal",learnWidth:"full",listing:"counts",exposure:"frame",countPosition:"near",translationInk:"warm",headerShape:"circle",nestedReading:"literary",roleLabels:"plain",nestedTextInset:"inset" };
 export const studyPresets: { id: string; name: string; description: string; values: LibraryStudy }[] = [
   { id: "quiet", name: "1 · Quiet", description: "Compact Learn, soft blocks, no coloured rails.", values: { ...studyDefaults, actions: "split", nesting: "blocks" } },
   { id: "guided", name: "2 · Guided", description: "Centred Learn; phrase and explanation linked.", values: { ...studyDefaults } },
@@ -37,6 +42,7 @@ export function readStudy(params: URLSearchParams): LibraryStudy {
 }
 export function studyUrl(study: LibraryStudy) {
   const url = new URL(window.location.href);
+  url.searchParams.delete("formStyle");
   for (const key of Object.keys(studyAxes) as StudyKey[]) url.searchParams.set(key, study[key]);
   window.history.replaceState(null, "", url);
 }

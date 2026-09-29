@@ -6,6 +6,8 @@ import {Button, CheckboxCards, Dialog, IconButton, Slider} from "@radix-ui/theme
 import {Direction, toggleRequired} from "./model";
 import {Variant} from "./variants";
 import s from "./prototype.module.css";
+import {DialogSurface} from "@/components/practice/ui/DialogSurface";
+import {IconAction} from "@/components/practice/ui/IconAction";
 
 export const DesignContext=createContext<Variant>("current");
 export function Choice({active,onClick,children}:{active:boolean;onClick:()=>void;children:React.ReactNode}) {
@@ -36,11 +38,9 @@ export function Action({primary=false,children,...props}:React.ButtonHTMLAttribu
   return <button {...props} className={primary?s.primary:s.secondary}>{children}</button>;
 }
 function NativeModal({title,onClose,children,compact=false}:{title:string;onClose:()=>void;children:React.ReactNode;compact?:boolean}) {
-  const ref=useRef<HTMLDialogElement>(null);
-  useEffect(()=>{const dialog=ref.current!;dialog.showModal();return ()=>dialog.close();},[]);
-  return <dialog ref={ref} className={`${s.modal} ${compact?s.compactModal:""}`} onCancel={onClose} onClick={event=>{if(event.target===event.currentTarget)onClose();}} aria-label={title}>
-    <div className={s.modalHeader}><h2>{title}</h2><button className={s.iconButton} aria-label="Close dialog" onClick={onClose}><X size={20}/></button></div>{children}
-  </dialog>;
+  return <DialogSurface onDismiss={onClose} className={`${s.modal} ${compact?s.compactModal:""}`} aria-label={title}>
+    <div className={s.modalHeader}><h2>{title}</h2><IconAction className={s.iconButton} label="Close dialog" onClick={onClose}><X size={20}/></IconAction></div>{children}
+  </DialogSurface>;
 }
 export function Modal(props:{title:string;onClose:()=>void;children:React.ReactNode;compact?:boolean}) {
   const variant=useContext(DesignContext);

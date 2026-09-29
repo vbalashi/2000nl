@@ -2,23 +2,22 @@
 import React, { useCallback, useRef, useState } from "react";
 import { List, EyeOff, Flag, MoreHorizontal, ChevronDown } from "lucide-react";
 import { TrainingCardReviewButton } from "@/components/training/v2/TrainingCardTemplates";
+import {IconAction} from "@/components/practice/ui/IconAction";
 import type { LibraryStudy } from "./libraryStudy";
 import s from "./library.module.css";
-import o from "./libraryOverlays.module.css";
-import {CardActionMenu,CollectionPicker,LibraryModal,useCollections} from "./LibraryOverlays";
+import {CardActionMenu,CollectionPicker,CardReportDialog,useCollections} from "./LibraryOverlays";
 export type DemoLearningState = "new" | "learning" | "known" | "excluded";
 export function LibraryButton({ children, primary = false, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { primary?: boolean }) {
   return <button type="button" {...props} className={`${s.button} ${primary ? s.primary : ""} ${props.className || ""}`}>{children}</button>;
 }
 export function LibraryIconButton({ label, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
-  return <button type="button" {...props} aria-label={label} title={label} className={`${s.iconButton} ${props.className || ""}`}>{children}</button>;
+  return <IconAction {...props} label={label} title={label} className={`${s.iconButton} ${props.className || ""}`}>{children}</IconAction>;
 }
 export function MeaningActions({ cardId, study, state, onState, onNotice }: { cardId:string; study: LibraryStudy; state: DemoLearningState; onState: (s: DemoLearningState) => void; onNotice: (s: string) => void }) {
   const [panel,setPanel]=useState<"collections"|"report"|null>(null);
   const [anchor,setAnchor]=useState<HTMLButtonElement|null>(null);
   const {catalog,create,memberships,toggle,add}=useCollections();
   const selected=memberships[cardId]||[];
-  const [reason,setReason]=useState("Content issue");
   const [rating,setRating]=useState("");
   const trigger=useRef<HTMLButtonElement|null>(null);
   const closeMenu=useCallback(()=>{setAnchor(null);trigger.current?.focus();},[]);
@@ -36,7 +35,7 @@ export function MeaningActions({ cardId, study, state, onState, onNotice }: { ca
     </div>
     {anchor&&<CardActionMenu anchor={anchor} onClose={closeMenu} onAction={action}/>}
     {panel==="collections"&&<CollectionPicker catalog={catalog} selected={selected} onToggle={id=>toggle(cardId,id)} onCreate={name=>{const id=create(name);add(cardId,id);}} onClose={close}/>}
-    {panel==="report"&&<LibraryModal title="Report" onClose={close}><div className={o.reportForm}><select aria-label="Report reason" value={reason} onChange={e=>setReason(e.target.value)}><option>Content issue</option><option>Wrong meaning</option><option>Other</option></select><p>Local preview · nothing will be sent.</p><LibraryButton onClick={()=>{close();onNotice(`${reason} · demo report, nothing sent`);}}>Preview report</LibraryButton></div></LibraryModal>}
+    {panel==="report"&&<CardReportDialog onClose={close} onNotice={onNotice}/>}
     {rating&&study.scene==="review"&&<small className={s.ratingFeedback} role="status">{rating} · demo only</small>}
   </div>;
 }

@@ -1,35 +1,55 @@
 "use client";
 import React,{useState} from "react";
-import {ArrowUpRight,Check,Layers,Repeat2,Sparkles} from "lucide-react";
+import {History,ArrowUpRight,Check,ChevronDown,ChevronLeft,ChevronRight,X} from "lucide-react";
+import {DialogSurface} from "@/components/practice/ui/DialogSurface";
 import s from "./statistics.module.css";
-// Illustrative snapshots using the same five count concepts as the exercise stats read model.
-// Scope aggregation / production wiring remains separate from this visual study.
-const snapshots={words:{label:"Words",newCardsToday:8,reviewCardsDone:24,reviewCardsDue:12,totalCardsStarted:318,totalCardsInScope:2000},idioms:{label:"Idioms",newCardsToday:2,reviewCardsDone:9,reviewCardsDue:4,totalCardsStarted:46,totalCardsInScope:240}};
-export function StatisticsPrototype({onTrain}:{onTrain:()=>void}){
- const [scope,setScope]=useState<keyof typeof snapshots>("words");
- const [empty,setEmpty]=useState(false);
- const fixture=snapshots[scope];
- const data=empty?{...fixture,newCardsToday:0,reviewCardsDone:0,reviewCardsDue:0,totalCardsStarted:0}:fixture;
- const progress=Math.round(data.totalCardsStarted/data.totalCardsInScope*100);
- return <section className={s.statistics} aria-label="Statistics">
-  <header className={s.heading}><div><h1>Statistics</h1><p>A little practice adds up.</p></div><span className={s.demo}>Demo data</span></header>
-  <div className={s.scope}><span>Dutch · Core vocabulary</span><div aria-label="Statistics scope" className={s.tabs}>{Object.entries(snapshots).map(([key,value])=><button key={key} aria-pressed={scope===key} onClick={()=>setScope(key as keyof typeof snapshots)}>{value.label}</button>)}</div></div>
-  <section className={s.today} aria-labelledby="stats-today"><div className={s.sectionHeading}><h2 id="stats-today">Today</h2><span>Your current study day</span></div>
-   <div className={s.metrics}>
-    <Metric icon={<Sparkles size={16}/>} value={data.newCardsToday} label="New cards" note="Started today"/>
-    <Metric icon={<Check size={16}/>} value={data.reviewCardsDone} label="Reviews completed" note="Review cards practised"/>
-    <Metric icon={<Repeat2 size={16}/>} value={data.reviewCardsDue} label="Due now" note="Ready to review"/>
-   </div>
+const languages=["Dutch","English","German","French","Spanish"];
+const setups=[{name:"All learning",description:"All your learning cards",total:2480},{name:"2K",description:"2,000 most common words · word and translation exercises",total:2000},{name:"Idioms",description:"Idioms and fixed expressions · idiom exercises",total:240}];
+// Fixed, clearly illustrative September 2026 history. Future dates are not zero activity.
+const today=28;
+const history=Array.from({length:365},(_,index)=>{const date=new Date(Date.UTC(2025,8,29+index));return {date,label:date.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"}),seed:date.getUTCFullYear()===2026&&date.getUTCMonth()===8?date.getUTCDate():index+31};});
+const monthLabels=history.flatMap((day,index)=>day.date.getUTCDate()===1?[{label:day.date.toLocaleDateString("en",{month:"short",timeZone:"UTC"}),column:Math.floor(index/7)+1}]:[]);
+function dayCounts(day:number,language:number,scope:number):{fresh:number;reviews:number}{if(scope===0){const a=dayCounts(day,language,1),b=dayCounts(day,language,2);return {fresh:a.fresh+b.fresh,reviews:a.reviews+b.reviews};}const active=day%6!==0;return {fresh:active?(day*3+language+scope)%9:0,reviews:active?(day*7+language*3+scope*5)%35:0};}
+export function StatisticsPrototype({onTrain,onHistory}:{onTrain:(name:string|null)=>void;onHistory?:()=>void}){
+ const [language,setLanguage]=useState("Dutch");const [scope,setScope]=useState(0);const [period,setPeriod]=useState("Week");const [selectedDay,setSelectedDay]=useState<number|null>(null);const [empty,setEmpty]=useState(false);
+ const [scopeOpen,setScopeOpen]=useState(false);
+ const li=languages.indexOf(language);const setup=setups[scope];
+ const counts=(day:number)=>empty?{fresh:0,reviews:0}:dayCounts(day,li,0);
+ // Illustrative active study duration, not inferred production telemetry.
+ const minutes=(day:number)=>{const c=counts(day);return Math.round((c.fresh*35+c.reviews*18)/60);};
+ const start=period==="Today"?today:period==="Week"?22:1;
+ const dates=Array.from({length:today-start+1},(_,i)=>i+start);
+ const aggregate=dates.reduce((sum,day)=>{const c=counts(day);return {fresh:sum.fresh+c.fresh,reviews:sum.reviews+c.reviews};},{fresh:0,reviews:0});
+ const due=empty?0:[18,12,4][scope]+li*2;const started=empty?0:Math.min(setup.total,[384,318,46][scope]+li*17);const pct=Math.round(started/setup.total*100);
+ const [historyPage,setHistoryPage]=useState(0);
+ const mobileStart=new Date(Date.UTC(2026,7-historyPage*2,1));
+ const mobileEnd=new Date(Date.UTC(2026,9-historyPage*2,1));
+ const mobileDays=history.map((day,index)=>({...day,index})).filter(day=>day.date>=mobileStart&&day.date<mobileEnd);
+ const mobileMonths=[mobileStart,new Date(Date.UTC(2026,8-historyPage*2,1))].map(date=>date.toLocaleDateString("en",{month:"short",year:"numeric",timeZone:"UTC"})).join(" – ");
+ const totals=history.map(day=>{const c=counts(day.seed);return c.fresh+c.reviews;});
+ let longest=0,run=0;for(const total of totals){run=total>0?run+1:0;longest=Math.max(longest,run);}
+ let streak=0;for(let i=totals.length-1-(totals.at(-1)===0?1:0);i>=0&&totals[i]>0;i--)streak++;
+ const average=Math.round(totals.slice(-30).reduce((sum,n)=>sum+n,0)/30);
+ const heatDay=(day:typeof history[number],index:number)=>{const c=counts(day.seed),total=c.fresh+c.reviews;return <button key={index} data-level={total===0?0:total<15?1:total<30?2:3} aria-pressed={selectedDay===index} aria-label={`${day.label}: ${c.fresh} new exercises, ${c.reviews} reviews`} title={`${day.label} · ${c.fresh} new · ${c.reviews} reviews`} onClick={()=>setSelectedDay(index)}/>;};
+ const chosen=selectedDay===null?null:counts(history[selectedDay].seed);
+ return <section className={s.statistics} aria-label="Statistics"><h1 className={s.srOnly}>Statistics</h1>
+  <div className={s.languageRow}><div className={s.languageTabs} aria-label="Learning language">{languages.slice(0,3).map(name=><button key={name} aria-pressed={language===name} onClick={()=>setLanguage(name)}>{name}</button>)}<label className={s.moreLanguage} data-active={li>2}><span>{li>2?language:"More"}</span><ChevronDown size={12}/><select aria-label="More learning languages" value={li>2?language:""} onChange={e=>setLanguage(e.target.value)}><option value="" disabled>Other languages</option>{languages.slice(3).map(name=><option key={name}>{name}</option>)}</select></label></div></div>
+  {scopeOpen&&<DialogSurface onDismiss={()=>setScopeOpen(false)} className={s.scopeDialog} aria-labelledby="scope-title"><div className={s.dialogInner}><div className={s.dialogHeading}><h2 id="scope-title">Choose material</h2><button aria-label="Close selection" onClick={()=>setScopeOpen(false)}><X size={18}/></button></div><p className={s.dialogHint}>{language} · Learning material</p><div className={s.scopeOptions}>{setups.map((item,i)=><button key={item.name} aria-pressed={scope===i} onClick={()=>{setScope(i);setScopeOpen(false);}}><span><strong>{item.name}</strong><small>{item.description}</small></span>{scope===i&&<Check size={17}/>}</button>)}</div></div></DialogSurface>}
+  <section className={s.today} aria-labelledby="stats-activity"><div className={s.sectionHeading}><h2 id="stats-activity">Activity</h2><div className={s.tabs} aria-label="Activity period">{["Today","Week","Month"].map(value=><button key={value} aria-pressed={period===value} onClick={()=>{setPeriod(value);setSelectedDay(null);}}>{value}</button>)}</div></div>
+   <p className={s.range}>{start===today?"28":`${start}–28`} September 2026</p>
+   <div className={s.activityNumbers}><Metric value={aggregate.fresh} label="New exercises"/><Metric value={aggregate.reviews} label="Reviews completed"/><Metric value={dates.filter(d=>{const c=counts(d);return c.fresh+c.reviews>0;}).length} label="Active days"/><Metric value={`${dates.reduce((sum,day)=>sum+minutes(day),0)} min`} label="Study time"/></div>
   </section>
-  <section className={s.progress} aria-labelledby="stats-progress"><div className={s.sectionHeading}><h2 id="stats-progress">Your progress</h2><Layers size={16}/></div>
-   <p className={s.progressTotal}><strong>{data.totalCardsStarted.toLocaleString("en")}</strong><span>of {data.totalCardsInScope.toLocaleString("en")} cards started</span></p>
-   <div className={s.bar} role="progressbar" aria-label="Cards started" aria-valuemin={0} aria-valuemax={data.totalCardsInScope} aria-valuenow={data.totalCardsStarted}><span style={{width:`${progress}%`}}/></div>
-   <div className={s.legend}><span><i/>{progress}% started</span><span>{(data.totalCardsInScope-data.totalCardsStarted).toLocaleString("en")} not started</span></div>
-   <p className={s.hint}>Started means you have begun practising a card. It does not mean you have mastered it.</p>
+  {onHistory&&<button className={s.recentActivity} onClick={onHistory}><History size={17}/>Recent activity<ChevronRight size={15}/></button>}
+  <section className={s.history} aria-labelledby="history-title"><div className={s.sectionHeading}><h2 id="history-title">Study activity</h2><span>Oct 2025 – Sep 2026</span></div><div className={s.desktopHeat}><div className={s.heatScroll}><div className={s.heatGrid} aria-label="Daily study activity over the past year">{history.map(heatDay)}</div><div className={s.monthLabels}>{monthLabels.map(item=><span key={item.label} style={{gridColumn:item.column}}>{item.label}</span>)}</div></div></div>
+   <div className={s.mobileHeat}><div className={s.mobileHistoryNav}><button aria-label="Earlier months" disabled={historyPage===5} onClick={()=>{setHistoryPage(p=>p+1);setSelectedDay(null);}}><ChevronLeft size={16}/></button><span>{mobileMonths}</span><button aria-label="Later months" disabled={historyPage===0} onClick={()=>{setHistoryPage(p=>p-1);setSelectedDay(null);}}><ChevronRight size={16}/></button></div><div className={s.mobileHeatGrid} aria-label="Daily study activity for two months">{Array.from({length:mobileDays.length?(mobileDays[0].date.getUTCDay()+6)%7:0},(_,i)=><span key={`blank-${i}`}/>)}{mobileDays.map(day=>heatDay(day,day.index))}</div></div>
+   <div className={s.heatLegend}><span>Less</span>{[0,1,2,3].map(level=><i key={level} data-level={level}/>)}<span>More activity</span></div>
+   <div className={s.dayDetail} aria-live="polite">{chosen&&selectedDay!==null?<><strong>{history[selectedDay].label}</strong><span>{chosen.fresh} new exercises · {chosen.reviews} reviews · {minutes(history[selectedDay].seed)} min{chosen.fresh+chosen.reviews===0?" · No activity recorded":""}</span></>:<span>Select a square to explore that day.</span>}</div>
   </section>
-  <section className={s.next}><div><h2>{empty?"Your first step starts here":data.reviewCardsDue?`${data.reviewCardsDue} cards ready when you are`:"You’re up to date"}</h2><p>{empty?"Start a session to begin building your progress.":"Continue at your own pace."}</p></div><button onClick={onTrain}>Go to training <ArrowUpRight size={15}/></button></section>
-  <details className={s.notes}><summary>About these numbers</summary><p>Counts refer to cards in the selected scope, not unique words. New cards and completed reviews use the current study day; due cards reflect the current queue. This preview uses illustrative snapshots, not your account history.</p></details>
-  <div className={s.preview}><span>Preview state</span><button aria-pressed={!empty} onClick={()=>setEmpty(false)}>With activity</button><button aria-pressed={empty} onClick={()=>setEmpty(true)}>First visit</button></div>
+  <section aria-labelledby="stats-highlights"><h2 id="stats-highlights" className={s.highlightsTitle}>Streaks & highlights</h2><div className={s.highlights}><Metric value={`${streak} days`} label="Current streak"/><Metric value={`${longest} days`} label="Longest streak · 1 year"/><Metric value={Math.max(...totals)} label="Best day · exercises · 1 year"/><Metric value={average} label="Daily average · last 30 days"/></div></section>
+  <div className={s.trainingScopes} aria-label="Training material"><h2 className={s.materialTitle}>Your material</h2><p className={s.materialHint}>Choose material to see its review queue and progress.</p><div className={s.languageTabs}>{setups.map((item,i)=><button key={item.name} aria-pressed={scope===i} onClick={()=>setScope(i)}>{i===0?"All":item.name}</button>)}<button className={s.scopeMore} aria-label="Choose training material" aria-haspopup="dialog" onClick={()=>setScopeOpen(true)}><ChevronDown size={14}/></button></div></div>
+  <section className={s.queue}><div><span className={s.queueLabel}>Due now</span><h2>{due} cards ready to review</h2><p>{scope===0?`All ${language} material`:`${language} · ${setup.name}`} · ready now</p></div><button onClick={()=>onTrain(`${language} · ${setup.name}`)}>{scope===0?"Practise all material":`Practise ${setup.name}`}<ArrowUpRight size={15}/></button></section>
+  <section className={s.progress} aria-labelledby="stats-progress"><div className={s.sectionHeading}><h2 id="stats-progress">Material coverage</h2><span>{scope===0?language:setup.name}</span></div><p className={s.progressTotal}><strong>{started.toLocaleString("en")}</strong><span>of {setup.total.toLocaleString("en")} cards started</span></p><div className={s.bar} role="progressbar" aria-label="Cards started in selected scope" aria-valuemin={0} aria-valuemax={setup.total} aria-valuenow={started}><span style={{width:`${pct}%`}}/></div><div className={s.legend}><span>{pct}% started</span><span>{(setup.total-started).toLocaleString("en")} not started</span></div><p className={s.hint}>Learning progress follows the card across training setups. Started does not mean mastered; the total can change when the selected material changes.</p></section>
+  <details className={s.notes}><summary>About these numbers</summary><p>Activity uses study days. The heatmap shows an illustrative year ending 28 September 2026. Queue and coverage describe the current state. Activity counts completed exercises, including repeated attempts on the same card. Coverage counts unique cards. Daily average includes inactive days; streaks allow today to remain unfinished. Records refer to the displayed demo year. Study time is illustrative active practice time; real duration tracking is not connected. All numbers and saved scopes in this preview are illustrative, not your account history.</p></details><div className={s.preview}><span>Demo data · Preview state</span><button aria-pressed={!empty} onClick={()=>setEmpty(false)}>With activity</button><button aria-pressed={empty} onClick={()=>setEmpty(true)}>First visit</button></div>
  </section>;
 }
-function Metric({icon,value,label,note}:{icon:React.ReactNode;value:number;label:string;note:string}){return <div className={s.metric}><span className={s.metricIcon}>{icon}</span><strong>{value}</strong><span className={s.metricLabel}>{label}</span><small>{note}</small></div>}
+function Metric({value,label}:{value:number|string;label:string}){return <div><strong>{value}</strong><span>{label}</span></div>}

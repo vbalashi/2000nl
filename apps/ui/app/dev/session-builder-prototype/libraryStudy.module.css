@@ -9,42 +9,42 @@
   gap: 14px;
   max-width: calc(100vw - 24px);
   padding: 8px 12px;
-  background: #faf9fd;
-  border: 1px solid #d5cee3;
-  box-shadow: 0 6px 25px #33234512;
+  background: var(--practice-surface);
+  border: 1px solid var(--practice-border);
+  box-shadow: 0 6px 25px var(--practice-shadow);
   border-radius: 12px;
-  color: #736380;
-  font-size: 11px;
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-label);
   white-space: nowrap;
 }
 .studyDock button {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #eae5fa;
-  border: 1px solid #d4c8e9;
-  color: #584779;
+  background: var(--practice-selected);
+  border: 1px solid var(--practice-border);
+  color: var(--practice-selected-text);
   border-radius: 8px;
   padding: 7px 10px;
-  font-size: 11px;
+  font-size: var(--practice-text-label);
 }
 .studyDialog {
   padding: 0;
   width: min(650px,calc(100vw - 24px));
   max-height: calc(100dvh - 32px);
-  border: 1px solid #e1daeb;
+  border: 1px solid var(--practice-border);
   border-radius: 16px;
-  background: #fcfbfe;
-  color: #493e58;
-  box-shadow: 0 20px 80px #24143225;
+  background: var(--practice-surface);
+  color: var(--practice-text);
+  box-shadow: 0 20px 80px var(--practice-shadow);
 }
 .studyDialog::backdrop {
-  background: #28203424;
+  background: var(--practice-backdrop);
   backdrop-filter: blur(4px);
 }
 .studySheet {
   padding: 20px;
-  font-family: var(--font-sense-sans),Inter,sans-serif;
+  font-family: var(--practice-font-ui);
 }
 .studySheet header {
   display: flex;
@@ -53,22 +53,22 @@
   gap: 12px;
 }
 .studySheet h2 {
-  font-size: 18px;
+  font-size: var(--practice-text-lead);
   font-weight: 500;
   margin: 0;
 }
 .studySheet p {
-  font-size: 11px;
-  color: #8b8099;
+  font-size: var(--practice-text-label);
+  color: var(--practice-text-muted);
   margin: 5px 0 0;
 }
 .studySheet button {
-  border: 1px solid #ded6e8;
-  background: white;
+  border: 1px solid var(--practice-border);
+  background: var(--practice-surface);
   border-radius: 8px;
   padding: 8px 10px;
-  font-size: 12px;
-  color: #635274;
+  font-size: var(--practice-text-caption);
+  color: var(--practice-text-secondary);
 }
 .studyPresets {
   display: grid;
@@ -81,19 +81,19 @@
 }
 .studyPresets strong {
   display: block;
-  font-size: 12px;
+  font-size: var(--practice-text-caption);
   font-weight: 500;
 }
 .studyPresets span {
   display: block;
-  font-size: 10px;
+  font-size: var(--practice-text-label);
   line-height: 1.4;
-  color: #8b8099;
+  color: var(--practice-text-muted);
   margin-top: 5px;
 }
 .studyPresets button[aria-pressed=true] {
-  background: #eee8f9;
-  border-color: #c8b8e1;
+  background: var(--practice-selected);
+  border-color: var(--practice-control-border);
 }
 .studyTable>[role=row] {
   display: grid;
@@ -101,28 +101,28 @@
   align-items: center;
   gap: 16px;
   padding: 10px 0;
-  border-top: 1px solid #ece7f2;
+  border-top: 1px solid var(--practice-border);
 }
 .studyTable strong {
   display: block;
-  font-size: 12px;
+  font-size: var(--practice-text-caption);
   font-weight: 500;
 }
 .studyTable small {
   display: block;
-  font-size: 10px;
-  color: #8b8099;
+  font-size: var(--practice-text-label);
+  color: var(--practice-text-muted);
   margin-top: 3px;
   line-height: 1.4;
 }
 .studyTable select {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ded6e8;
-  background: white;
-  color: #635274;
+  border: 1px solid var(--practice-border);
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
   border-radius: 7px;
-  font-size: 11px;
+  font-size: var(--practice-text-label);
 }
 .studySheet footer {
   display: flex;
@@ -131,9 +131,9 @@
   margin-top: 15px;
 }
 .studySheet footer button:last-child {
-  background: #ded4ef;
-  border-color: #cbbcde;
-  color: #49345e;
+  background: var(--practice-selected);
+  border-color: var(--practice-control-border);
+  color: var(--practice-selected-text);
 }
 @media(max-width:700px) {
   .studyDock {
@@ -149,7 +149,7 @@
   padding: 8px;
   }
   .studyPresets span {
-  font-size: 9px;
+  font-size: var(--practice-text-label);
   }
   .studyTable>[role=row] {
   grid-template-columns: minmax(0,1fr) 155px;
@@ -158,9 +158,9 @@
   }
   .studyTable select {
   padding: 8px 4px;
-  font-size: 10px;
+  font-size: var(--practice-text-label);
   }
   .studyTable small {
-  font-size: 9px;
+  font-size: var(--practice-text-label);
   }
 }
