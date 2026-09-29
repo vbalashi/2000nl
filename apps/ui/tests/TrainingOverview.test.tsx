@@ -4,10 +4,33 @@ import {afterEach,expect,test,vi} from 'vitest';
 import {TrainingOverview,type TrainingOverviewItem,type TrainingOverviewState} from '@/components/practice/TrainingOverview';
 afterEach(cleanup);
 const items:TrainingOverviewItem[]=[{id:'a',name:'Words',language:'Dutch',description:'Words · Direct',summary:'Dutch · 20 exercises',completedToday:12,meaningCount:36,sessionSize:20,canLaunch:true},{id:'b',name:'Idioms',language:'Dutch',description:'Idioms · Direct',summary:'Dutch · 10 exercises',completedToday:null,meaningCount:null,sessionSize:10,canLaunch:true}];
-function setup(state:TrainingOverviewState={status:'ready',trainings:items,mainId:'a'}){const callbacks={onLaunch:vi.fn(),onResume:vi.fn(),onEdit:vi.fn(),onCreate:vi.fn(),onRetry:vi.fn()};render(<TrainingOverview state={state} {...callbacks}/>);return callbacks;}
+function setup(state:TrainingOverviewState={status:'ready',trainings:items,mainId:'a'},interfaceLanguage:'en'|'nl'|'ru'='en'){const callbacks={onLaunch:vi.fn(),onResume:vi.fn(),onEdit:vi.fn(),onCreate:vi.fn(),onRetry:vi.fn()};render(<TrainingOverview state={state} interfaceLanguage={interfaceLanguage} {...callbacks}/>);return callbacks;}
 test('edit and launch take the stable training identity directly',()=>{const c=setup();fireEvent.click(screen.getByRole('button',{name:'Edit Idioms'}));expect(c.onEdit).toHaveBeenCalledWith('b');fireEvent.click(screen.getByRole('button',{name:'Start training'}));expect(c.onLaunch).toHaveBeenCalledWith('a');expect(screen.queryByRole('dialog')).toBeNull();});
 test('an unfinished session overrides the main routine and resumes its identity',()=>{const c=setup({status:'ready',trainings:items,mainId:'a',resume:{sessionId:'session-b',trainingId:'b',completed:3,total:10}});fireEvent.click(screen.getByRole('button',{name:'Continue training'}));expect(c.onResume).toHaveBeenCalledWith('session-b');expect(c.onLaunch).not.toHaveBeenCalled();expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow','3');});
 test('unknown activity is not presented as zero',()=>{setup({status:'ready',trainings:items,mainId:'b'});expect(screen.getAllByText('—')).toHaveLength(2);});
 test('loading, failure and empty are distinct actionable states',()=>{setup({status:'loading'});expect(screen.getByRole('status')).toHaveTextContent('Loading');expect(screen.queryByRole('button')).toBeNull();cleanup();let c=setup({status:'error',message:'Could not load training.'});fireEvent.click(screen.getByRole('button',{name:'Try again'}));expect(c.onRetry).toHaveBeenCalled();cleanup();c=setup({status:'ready',trainings:[],mainId:null});fireEvent.click(screen.getByRole('button',{name:'Create training'}));expect(c.onCreate).toHaveBeenCalled();});
 test('unavailable training cannot start and explains why',()=>{setup({status:'ready',mainId:'a',trainings:[{...items[0],canLaunch:false,unavailableReason:'Source unavailable.'}]});expect(screen.getByRole('button',{name:'Start training'})).toBeDisabled();expect(screen.getByRole('status')).toHaveTextContent('Source unavailable.');});
 test('a deleted main identity does not hide other saved training',()=>{setup({status:'ready',mainId:'deleted',trainings:[items[1]]});expect(screen.getByRole('button',{name:'Start Idioms'})).toBeEnabled();});
+
+test('resumed session shows its own completed count, not total activity today',()=>{
+ setup({status:'ready',trainings:items,mainId:'a',resume:{sessionId:'second-session',trainingId:'a',completed:4,total:20}});
+ expect(screen.getByText('done').nextElementSibling).toHaveTextContent('4');
+ expect(screen.getByText('remaining').nextElementSibling).toHaveTextContent('16');
+ expect(screen.queryByText('done today')).toBeNull();
+ expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow','4');
+});
+test('the shared overview localizes visible and accessible actions in Dutch',()=>{
+ const c=setup({status:'ready',trainings:items,mainId:'a',resume:{sessionId:'session-a',trainingId:'a',completed:4,total:20}},'nl');
+ expect(screen.getByRole('region',{name:'Huidige training'})).toBeInTheDocument();
+ expect(screen.getByText('resterend').nextElementSibling).toHaveTextContent('16');
+ expect(screen.getByRole('progressbar',{name:'Voortgang van de sessie'})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Training hervatten'}));
+ expect(c.onResume).toHaveBeenCalledWith('session-a');
+ expect(screen.getByRole('button',{name:'Idioms aanpassen'})).toBeInTheDocument();
+});
+test('Russian overview copy preserves the training name and localizes the action',()=>{
+ setup(undefined,'ru');
+ expect(screen.getByRole('button',{name:'Изменить «Idioms»'})).toBeInTheDocument();
+ expect(screen.getByRole('button',{name:'Начать «Idioms»'})).toBeInTheDocument();
+ expect(screen.getByText('Сохранённые тренировки')).toBeInTheDocument();
+});

@@ -189,6 +189,49 @@
     "ww": "werkwoord",
     "zn": "zelfstandig naamwoord"
   },
+  "ui": {
+    "navigation": {
+      "primary": "Hoofdnavigatie",
+      "destinations": "Navigatie",
+      "training": "Training",
+      "library": "Bibliotheek",
+      "statistics": "Statistieken",
+      "settings": "Instellingen",
+      "history": "Geschiedenis"
+    },
+    "trainingOverview": {
+      "loading": "Trainingen laden…",
+      "retry": "Opnieuw proberen",
+      "currentTraining": "Huidige training",
+      "mainTraining": "Hoofdtraining",
+      "inProgress": "BEZIG",
+      "edit": "{name} aanpassen",
+      "startNamed": "{name} starten",
+      "done": "gedaan",
+      "doneToday": "vandaag gedaan",
+      "meanings": "betekenissen",
+      "remaining": "resterend",
+      "perSession": "per sessie",
+      "sessionProgress": "Voortgang van de sessie",
+      "continue": "Training hervatten",
+      "start": "Training starten",
+      "adjust": "Aanpassen",
+      "firstTraining": "Je eerste training",
+      "create": "Training maken",
+      "saved": "Opgeslagen trainingen",
+      "sourceUnavailable": "Bron niet beschikbaar",
+      "translationLanguageBlocked": "Kies een andere vertaaltaal bij Instellingen.",
+      "noMatchingMeanings": "Geen overeenkomende betekenissen. Pas deze training aan.",
+      "exerciseOne": "{count} oefening",
+      "exerciseFew": "{count} oefeningen",
+      "exerciseMany": "{count} oefeningen",
+      "exerciseOther": "{count} oefeningen",
+      "illustrativeActivity": "Voorbeeldactiviteit · alleen opgeslagen in dit voorbeeld.",
+      "exerciseType": {"Words": "Woorden", "Idioms": "Uitdrukkingen", "Translation": "Vertaling"},
+      "direction": {"Direct": "Direct", "Reverse": "Omgekeerd"},
+      "learningLanguage": {"Dutch": "Nederlands", "English": "Engels", "German": "Duits"}
+    }
+  },
   "wordDetails": {
     "usageLabel": "Gebruik",
     "form": {

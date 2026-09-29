@@ -102,3 +102,6 @@
 .cardTools{flex-wrap:wrap}
 .history li{flex-wrap:wrap}
 @media(max-height:650px){.session{gap:6px}.chrome{min-height:44px;padding-bottom:8px}.prompt{padding-block:8px}.card.card{padding-top:8px}}
+
+/* FLIP starts outside the compact answer-side header. Clip only after landing. */
+.prompt[data-moving=true]{overflow:visible}

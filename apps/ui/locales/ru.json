@@ -189,6 +189,49 @@
     "ww": "глагол",
     "zn": "существительное"
   },
+  "ui": {
+    "navigation": {
+      "primary": "Основная навигация",
+      "destinations": "Разделы",
+      "training": "Тренировка",
+      "library": "Библиотека",
+      "statistics": "Статистика",
+      "settings": "Настройки",
+      "history": "История"
+    },
+    "trainingOverview": {
+      "loading": "Загрузка тренировок…",
+      "retry": "Повторить",
+      "currentTraining": "Текущая тренировка",
+      "mainTraining": "Основная тренировка",
+      "inProgress": "В ПРОЦЕССЕ",
+      "edit": "Изменить «{name}»",
+      "startNamed": "Начать «{name}»",
+      "done": "сделано",
+      "doneToday": "сделано сегодня",
+      "meanings": "значений",
+      "remaining": "осталось",
+      "perSession": "за сессию",
+      "sessionProgress": "Прогресс сессии",
+      "continue": "Продолжить тренировку",
+      "start": "Начать тренировку",
+      "adjust": "Настроить",
+      "firstTraining": "Первая тренировка",
+      "create": "Создать тренировку",
+      "saved": "Сохранённые тренировки",
+      "sourceUnavailable": "Источник недоступен",
+      "translationLanguageBlocked": "Выберите другой язык перевода в настройках.",
+      "noMatchingMeanings": "Подходящих значений нет. Измените тренировку.",
+      "exerciseOne": "{count} упражнение",
+      "exerciseFew": "{count} упражнения",
+      "exerciseMany": "{count} упражнений",
+      "exerciseOther": "{count} упражнения",
+      "illustrativeActivity": "Пример активности · сохранён только в этом прототипе.",
+      "exerciseType": {"Words": "Слова", "Idioms": "Выражения", "Translation": "Перевод"},
+      "direction": {"Direct": "Прямой", "Reverse": "Обратный"},
+      "learningLanguage": {"Dutch": "Нидерландский", "English": "Английский", "German": "Немецкий"}
+    }
+  },
   "wordDetails": {
     "usageLabel": "Употребление",
     "form": {

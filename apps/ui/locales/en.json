@@ -189,6 +189,49 @@
     "ww": "verb",
     "zn": "noun"
   },
+  "ui": {
+    "navigation": {
+      "primary": "Primary",
+      "destinations": "Destinations",
+      "training": "Training",
+      "library": "Library",
+      "statistics": "Statistics",
+      "settings": "Settings",
+      "history": "History"
+    },
+    "trainingOverview": {
+      "loading": "Loading training…",
+      "retry": "Try again",
+      "currentTraining": "Current training",
+      "mainTraining": "Main training",
+      "inProgress": "IN PROGRESS",
+      "edit": "Edit {name}",
+      "startNamed": "Start {name}",
+      "done": "done",
+      "doneToday": "done today",
+      "meanings": "meanings",
+      "remaining": "remaining",
+      "perSession": "per session",
+      "sessionProgress": "Session progress",
+      "continue": "Continue training",
+      "start": "Start training",
+      "adjust": "Adjust",
+      "firstTraining": "Your first training",
+      "create": "Create training",
+      "saved": "Saved training",
+      "sourceUnavailable": "Source unavailable",
+      "translationLanguageBlocked": "Choose a different translation language in Settings.",
+      "noMatchingMeanings": "No matching meanings. Adjust this training.",
+      "exerciseOne": "{count} exercise",
+      "exerciseFew": "{count} exercises",
+      "exerciseMany": "{count} exercises",
+      "exerciseOther": "{count} exercises",
+      "illustrativeActivity": "Illustrative activity · saved for this preview only.",
+      "exerciseType": {"Words": "Words", "Idioms": "Idioms", "Translation": "Translation"},
+      "direction": {"Direct": "Direct", "Reverse": "Reverse"},
+      "learningLanguage": {"Dutch": "Dutch", "English": "English", "German": "German"}
+    }
+  },
   "wordDetails": {
     "usageLabel": "Usage",
     "form": {

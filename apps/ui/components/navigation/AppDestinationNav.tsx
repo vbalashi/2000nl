@@ -3,43 +3,17 @@
 import React from "react";
 import { ChartNoAxesColumn, Library, Play } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { getUiMessages } from "@/lib/uiMessages";
 import type {
   AppDestination,
   PrimaryNavigationDestination,
 } from "./appDestination";
 
-const labels: Record<
-  OnboardingLanguage,
-  Record<AppDestination, string>
-> = {
-  nl: {
-    training: "Training",
-    library: "Bibliotheek",
-    statistics: "Statistieken",
-    settings: "Instellingen",
-    history: "Geschiedenis",
-  },
-  en: {
-    training: "Training",
-    library: "Library",
-    statistics: "Statistics",
-    settings: "Settings",
-    history: "History",
-  },
-  ru: {
-    training: "Тренировка",
-    library: "Библиотека",
-    statistics: "Статистика",
-    settings: "Настройки",
-    history: "История",
-  },
-};
-
 export function appDestinationLabel(
   interfaceLanguage: OnboardingLanguage,
   destination: AppDestination,
 ) {
-  return labels[interfaceLanguage][destination];
+  return getUiMessages(interfaceLanguage).navigation[destination];
 }
 
 function DestinationIcon({
@@ -76,7 +50,8 @@ export function AppDestinationNav({
   ];
   return (
     <nav
-      aria-label="Primary"
+      lang={interfaceLanguage}
+      aria-label={getUiMessages(interfaceLanguage).navigation.primary}
       className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1 text-sm dark:border-slate-700 dark:bg-slate-800/80"
     >
       {destinations.map((destination) => (

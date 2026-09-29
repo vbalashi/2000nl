@@ -18,7 +18,7 @@ export function usePromptReveal(heading:RefObject<HTMLElement>,revealed:boolean)
   const animation=node.animate([
    {transform:`translate(${from.left-to.left}px,${from.top-to.top}px)`},
    {transform:"translate(0,0)"},
-  ],{duration:420,easing:"cubic-bezier(.22,1,.36,1)"});
+  ],{duration:420,fill:"backwards",easing:"cubic-bezier(.22,1,.36,1)"});
   animation.onfinish=()=>setMoving(false);
   return()=>{animation.onfinish=null;animation.cancel();};
  },[revealed,heading]);

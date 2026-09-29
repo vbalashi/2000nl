@@ -433,3 +433,7 @@ to{opacity:1}
 .root[data-session=true]{height:100dvh;min-height:0;padding-bottom:0;overflow:hidden;display:flex;flex-direction:column}
 .root[data-session=true]>.appHeader{flex-shrink:0;width:100%;margin:0 auto}
 .root[data-session=true]>.main{flex:1;min-height:0;width:100%;padding-bottom:0;overflow:hidden}
+
+/* Training overview can grow with saved routines and text size; keep scrolling without chrome. */
+:global(html):has(.root[data-training-home=true]){scrollbar-width:none}
+:global(html):has(.root[data-training-home=true])::-webkit-scrollbar{display:none}

@@ -7,6 +7,7 @@ import { AppDestinationNav, appDestinationLabel } from "./AppDestinationNav";
 import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
 import type { AppDestination } from "./appDestination";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { getUiMessages } from "@/lib/uiMessages";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import styles from "./AppFrame.module.css";
 
@@ -25,12 +26,6 @@ export type AppFrameProps = {
 };
 
 type AppHeaderProps = Omit<AppFrameProps, "children" | "className">;
-
-const mobileLabels = {
-  nl: { destinations: "Navigatie" },
-  en: { destinations: "Destinations" },
-  ru: { destinations: "Разделы" },
-} as const;
 
 function MobileMenu({
   activeDestination,
@@ -89,7 +84,7 @@ function MobileMenu({
         aria-controls={menuId}
         aria-expanded={open}
         aria-haspopup="true"
-        aria-label={`${mobileLabels[interfaceLanguage].destinations}: ${currentLabel}`}
+        aria-label={`${getUiMessages(interfaceLanguage).navigation.destinations}: ${currentLabel}`}
         onClick={() => setOpen((current) => !current)}
       >
         <Menu aria-hidden="true" className="h-4 w-4" />
@@ -102,7 +97,7 @@ function MobileMenu({
           id={menuId}
           className={styles.menu}
           role="group"
-          aria-label={mobileLabels[interfaceLanguage].destinations}
+          aria-label={getUiMessages(interfaceLanguage).navigation.destinations}
         >
           <AppDestinationNav
             active={

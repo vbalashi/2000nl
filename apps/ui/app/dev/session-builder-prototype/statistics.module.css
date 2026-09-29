@@ -55,3 +55,7 @@
 .recentActivity:focus-visible{outline:2px solid var(--practice-focus);outline-offset:3px}
 
 .sectionHeading,.scope,.legend,.progressTotal{flex-wrap:wrap}
+
+/* Match Library and Builder: keep page scrolling, hide only its scrollbar. */
+:global(html):has(.statistics){scrollbar-width:none}
+:global(html):has(.statistics)::-webkit-scrollbar{display:none}

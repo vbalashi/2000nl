@@ -95,9 +95,13 @@ test("grading waits for question movement and becomes available when it finishes
  try{
   const p=props();render(<TrainingSessionPrototype {...p}/>);
   fireEvent.click(screen.getByRole("button",{name:"Show answer"}));
-  expect(animate).toHaveBeenCalledOnce();expect((screen.getByRole("button",{name:"Good"}) as HTMLButtonElement).disabled).toBe(true);
+  expect(animate).toHaveBeenCalledOnce();
+  expect(animate.mock.calls[0][1]).toMatchObject({fill:"backwards"});
+  expect(screen.getByRole("heading",{level:1}).parentElement?.getAttribute("data-moving")).toBe("true");
+  expect((screen.getByRole("button",{name:"Good"}) as HTMLButtonElement).disabled).toBe(true);
   fireEvent.click(screen.getByRole("button",{name:"Good"}));expect(p.onAction).not.toHaveBeenCalled();
   act(()=>animation.onfinish?.());
+  expect(screen.getByRole("heading",{level:1}).parentElement?.getAttribute("data-moving")).toBe("false");
   fireEvent.click(screen.getByRole("button",{name:"Good"}));expect(p.onAction).toHaveBeenCalledOnce();expect(animation.cancel).toHaveBeenCalled();
  }finally{delete (HTMLElement.prototype as Partial<HTMLElement>).animate;}
 });
