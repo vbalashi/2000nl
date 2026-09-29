@@ -122,8 +122,18 @@ scripts/db-local-supabase.sh import
 scripts/db-local-supabase.sh probe
 ```
 
-Full-corpus import performance is tracked in #397; it is not required for the
-small #393 browser acceptance fixture.
+Do not interpret a quiet terminal as a hung import while PostgreSQL is active.
+For the 18,163-artifact Van Dale corpus, a clean changed/initial import completed
+in 155.74 seconds on 2026-09-29; allow several minutes because Docker and host
+contention can extend that time. An identical completed manifest took 9.12
+seconds and made no database changes. These are observations from that dated
+machine/run, not universal guarantees. Full-corpus import performance is tracked
+in #397; it is not required for the small #393 browser acceptance fixture.
+
+The full import is needed only to populate an empty database or apply a changed
+source manifest. It is not part of `start`, `apply`, `probe`, `test-ingestion`,
+browser QA, or normal UI startup. See [dictionary-import.md](dictionary-import.md)
+for what each stage does and for cheaper alternatives.
 
 Unacknowledged `all` and `reset` stop before any service/database command.
 Local wrapper commands accept only loopback PostgreSQL URIs with an explicit port and without connection

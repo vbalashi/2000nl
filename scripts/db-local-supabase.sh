@@ -30,6 +30,9 @@ Commands:
   check                 Read-only content, migration receipts and contract checks.
   fixture               Load the deterministic small local dictionary fixture.
   import [data-dir]     Import dictionary JSON files (default: db/data/words_content).
+                        A changed 18k-entry corpus takes minutes, not seconds:
+                        155.74s measured 2026-09-29 on a clean local run.
+                        An identical completed manifest is a ~9s verified no-op.
   test-fsrs             Run apps/ui FSRS tests in a disposable local database.
   test-ingestion        Run scraper/ingestion tests in a disposable local database.
   all --confirm-reset   Erase DB, bootstrap, test in disposable databases, load
@@ -110,6 +113,14 @@ import_dictionary() {
 
   local python_bin
   python_bin="$(ingestion_python)"
+
+  cat <<'EOF'
+Full dictionary import verifies every artifact and preserves durable entry and
+Content Node identities. For the checked-in 18k Van Dale corpus, expect several
+minutes when the database is empty or content changed (155.74s measured on
+2026-09-29). An identical completed manifest should be a roughly 9s no-op.
+See docs/runbooks/dictionary-import.md for when this operation is necessary.
+EOF
 
   (cd "$repo_root" && PYTHONPATH="$repo_root/packages/ingestion/src${PYTHONPATH:+:$PYTHONPATH}" \
     "$python_bin" packages/ingestion/scripts/import_words_db.py \

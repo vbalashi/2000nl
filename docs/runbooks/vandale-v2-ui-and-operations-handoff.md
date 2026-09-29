@@ -113,6 +113,14 @@ evidence status and is no longer hidden by a default or used as identity.
 
 ## Operational Import
 
+This is a content deployment, not routine startup. A new/changed full corpus is
+expected to take several minutes: 155.74 seconds for 18,163 artifacts in the
+clean local measurement recorded on 2026-09-29. Identical replay took 9.12
+seconds because it verifies the manifest and exits without rewriting content.
+See [dictionary-import.md](dictionary-import.md) before rerunning it solely to
+repair a local environment; a small fixture or restored database may be the
+right tool instead.
+
 For a future identical or content-only re-import:
 
 ```bash
