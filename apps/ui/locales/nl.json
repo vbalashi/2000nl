@@ -190,6 +190,14 @@
     "zn": "zelfstandig naamwoord"
   },
   "ui": {
+    "appearancePreferences": {
+      "loading": "Weergave laden…",
+      "loadError": "Weergave kon niet worden geladen.",
+      "saving": "Opslaan…",
+      "saved": "Opgeslagen in je account.",
+      "saveError": "Weergave kon niet worden opgeslagen.",
+      "retry": "Opnieuw proberen"
+    },
     "textPreferences": {
       "description": "Kaarten en interface groeien samen. Leestekst groeit meer dan koppen.",
       "profile": "Apparaatprofiel",

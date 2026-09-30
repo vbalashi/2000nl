@@ -190,6 +190,14 @@
     "zn": "noun"
   },
   "ui": {
+    "appearancePreferences": {
+      "loading": "Loading appearance…",
+      "loadError": "Appearance could not be loaded.",
+      "saving": "Saving…",
+      "saved": "Saved to your account.",
+      "saveError": "Appearance could not be saved.",
+      "retry": "Retry"
+    },
     "textPreferences": {
       "description": "Cards and interface scale together. Reading text grows more than headings.",
       "profile": "Device profile",

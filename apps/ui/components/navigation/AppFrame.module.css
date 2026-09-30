@@ -1,9 +1,9 @@
 .frame {
-  --app-frame-surface: #f1f5f9;
-  --app-frame-ink: #334155;
-  --app-frame-muted: #64748b;
-  --app-frame-line: #cbd5e1;
-  --app-frame-control-surface: rgb(241 245 249 / 0.8);
+  --app-frame-surface: var(--practice-canvas, #f1f5f9);
+  --app-frame-ink: var(--practice-text, #334155);
+  --app-frame-muted: var(--practice-text-muted, #64748b);
+  --app-frame-line: var(--practice-border, #cbd5e1);
+  --app-frame-control-surface: var(--practice-surface-subtle, rgb(241 245 249 / 0.8));
   display: flex;
   height: 100dvh;
   min-height: 100dvh;
@@ -14,11 +14,11 @@
 }
 
 :global(.dark) .frame {
-  --app-frame-surface: #171c24;
-  --app-frame-ink: #f8fafc;
-  --app-frame-muted: #bfc7d4;
-  --app-frame-line: #394353;
-  --app-frame-control-surface: rgb(30 41 59 / 0.8);
+  --app-frame-surface: var(--practice-canvas, #171c24);
+  --app-frame-ink: var(--practice-text, #f8fafc);
+  --app-frame-muted: var(--practice-text-muted, #bfc7d4);
+  --app-frame-line: var(--practice-border, #394353);
+  --app-frame-control-surface: var(--practice-surface-subtle, rgb(30 41 59 / 0.8));
 }
 
 .header {

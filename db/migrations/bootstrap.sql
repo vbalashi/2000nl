@@ -507,3 +507,5 @@
 
 -- Shared four-step card/interface text preferences.
 \i db/migrations/181_four_step_text_preferences.sql
+
+\i db/migrations/182_account_practice_palette.sql

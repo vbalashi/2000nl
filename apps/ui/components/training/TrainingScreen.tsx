@@ -1,4 +1,6 @@
 "use client";
+import { applyResolvedTheme } from "@/lib/preferences/resolvedTheme";
+import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/AccountPracticeAppearanceProvider";
 
 import React from "react";
 import { TrainingExclusionUndoNotice } from "./v2/TrainingExclusionUndoNotice";
@@ -190,7 +192,9 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
 export function TrainingScreen(props: Props) {
   return (
     <ReadingPreferencesProvider userId={props.user.id}>
-      <TrainingScreenContent {...props} />
+      <AccountPracticeAppearanceProvider userId={props.user.id}>
+        <TrainingScreenContent {...props} />
+      </AccountPracticeAppearanceProvider>
     </ReadingPreferencesProvider>
   );
 }
@@ -1048,24 +1052,17 @@ function TrainingScreenContent({
     const root = document.documentElement;
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-    const applyTheme = (pref: ThemePreference) => {
-      const useDark =
-        pref === "dark" || (pref === "system" && mediaQuery.matches);
-      root.classList.toggle("dark", useDark);
+    root.dataset.accountThemeMode = themePreference;
+    const apply = () => applyResolvedTheme(root, mediaQuery.matches);
+    apply();
+    mediaQuery.addEventListener("change", apply);
+    return () => {
+      mediaQuery.removeEventListener("change", apply);
+      if (root.dataset.accountThemeMode === themePreference) {
+        delete root.dataset.accountThemeMode;
+        applyResolvedTheme(root, mediaQuery.matches);
+      }
     };
-
-    applyTheme(themePreference);
-
-    if (themePreference !== "system") {
-      return;
-    }
-
-    const handleSystemChange = (event: MediaQueryListEvent) => {
-      root.classList.toggle("dark", event.matches);
-    };
-
-    mediaQuery.addEventListener("change", handleSystemChange);
-    return () => mediaQuery.removeEventListener("change", handleSystemChange);
   }, [themePreference]);
 
   const handleTrainWord = useCallback(

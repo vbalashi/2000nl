@@ -72,7 +72,8 @@
  color: var(--practice-text);
  color-scheme: light;
 }
-.theme[data-practice-palette=blue] {
+.theme[data-practice-palette=blue],
+:global([data-account-palette=blue]) .theme[data-colour-mode=app] {
  --practice-canvas: #f2f5fa; --practice-surface-subtle: #eaf0f8;
  --practice-surface-hover: #dfe9f5; --practice-hero: #e1eaf7; --practice-hero-end: #edf2fa;
  --practice-text: #29394e; --practice-text-secondary: #465c77; --practice-text-muted: #516783;
@@ -81,7 +82,8 @@
  --practice-accent: #456d9f; --practice-accent-hover: #345987; --practice-focus: #315f9f;
  --practice-example: #7697c3; --practice-activity-1: #dce6f3; --practice-activity-2: #b8cde7; --practice-activity-3: #799cc8;
 }
-.theme[data-practice-palette=graphite] {
+.theme[data-practice-palette=graphite],
+:global([data-account-palette=graphite]) .theme[data-colour-mode=app] {
  --practice-canvas: #f4f4f3; --practice-surface-subtle: #eeedeb;
  --practice-surface-hover: #e3e2df; --practice-hero: #e8e7e4; --practice-hero-end: #f0efed;
  --practice-text: #303033; --practice-text-secondary: #505054; --practice-text-muted: #626268;
@@ -107,7 +109,9 @@
  --practice-activity-1: #382e45; --practice-activity-2: #65517b; --practice-activity-3: #a68cc2;
  color-scheme: dark;
 }
-.theme[data-practice-palette=blue][data-colour-mode=dark] {
+.theme[data-practice-palette=blue][data-colour-mode=dark],
+.theme[data-practice-palette=blue][data-colour-mode=app]:is(:global(.dark) *),
+:global(.dark) :global([data-account-palette=blue]) .theme[data-colour-mode=app] {
  --practice-canvas: #141b24; --practice-surface: #1e2936; --practice-surface-subtle: #233142;
  --practice-surface-hover: #2e4056; --practice-hero: #243449; --practice-hero-end: #1e2a3b;
  --practice-text: #eaf1fb; --practice-text-secondary: #c0d2e9; --practice-text-muted: #a4b9d3;
@@ -116,7 +120,9 @@
  --practice-accent: #9dbfe9; --practice-accent-hover: #b3cef0; --practice-on-accent: #182637; --practice-focus: #91bffc;
  --practice-example: #7ea7da; --practice-activity-1: #2a3a51; --practice-activity-2: #45638a; --practice-activity-3: #7ea1d0;
 }
-.theme[data-practice-palette=graphite][data-colour-mode=dark] {
+.theme[data-practice-palette=graphite][data-colour-mode=dark],
+.theme[data-practice-palette=graphite][data-colour-mode=app]:is(:global(.dark) *),
+:global(.dark) :global([data-account-palette=graphite]) .theme[data-colour-mode=app] {
  --practice-canvas: #19191b; --practice-surface: #242427; --practice-surface-subtle: #2c2c30;
  --practice-surface-hover: #39393f; --practice-hero: #303034; --practice-hero-end: #28282b;
  --practice-text: #efeff0; --practice-text-secondary: #cfcfd2; --practice-text-muted: #b2b2b9;
