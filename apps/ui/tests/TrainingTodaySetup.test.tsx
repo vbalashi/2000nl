@@ -1,11 +1,24 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { expect, test, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, expect, test, vi } from "vitest";
 import {
   TrainingTodaySetup,
   type TrainingSetupDraft,
 } from "@/components/training/pilot/TrainingTodaySetup";
-import { presetStorageKey } from "@/components/training/pilot/trainingSetupPresets";
+import type { TrainingSetupsDocument, TrainingSetupsSnapshot } from "@/lib/training/setups/model";
+const { accounts } = vi.hoisted(() => ({ accounts: new Map<string, TrainingSetupsSnapshot>() }));
+vi.mock("@/lib/training/setups/client", () => ({
+  fetchAccountTrainingSetups: async (userId: string) => accounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } },
+  saveAccountTrainingSetups: async (userId: string, revision: number, document: TrainingSetupsDocument) => {
+    const current = accounts.get(userId);
+    if (current && current.revision !== revision) return { kind: "conflict", snapshot: current };
+    const snapshot = { revision: revision + 1, document };
+    accounts.set(userId, snapshot);
+    return { kind: "saved", snapshot };
+  },
+}));
+beforeEach(() => accounts.clear());
+const seedAccount = (userId: string, trainings: unknown[]) => accounts.set(userId, { revision: 0, document: { schemaVersion: 1, trainings: trainings.map((item: any) => ({ ...item, languageCode: "nl" })), mainTrainingId: null } });
 
 const initialDraft: TrainingSetupDraft = {
   scenarioId: "understanding",
@@ -128,7 +141,7 @@ test("word in context uses the ordinary reverse scenario and a finite session", 
   expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ family: "word-in-context", scenarioId: "understanding", modes: ["definition-to-word"], sessionSize: 10 }));
 });
 
-test("idiom presets retain their family and scenario when reopened", () => {
+test("idiom presets retain their family and scenario when reopened", async () => {
   const userId = "idiom-preset-round-trip";
   const onStart = vi.fn();
   render(
@@ -145,7 +158,9 @@ test("idiom presets retain their family and scenario when reopened", () => {
   );
   fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
   fireEvent.click(screen.getByRole("button", { name: "Idioms" }));
-  fireEvent.click(screen.getByRole("button", { name: "Save preset" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Save training" })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: "Save training" }));
+  expect(await screen.findByText("Saved to your account")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Back to Today" }));
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
   expect(screen.getByRole("button", { name: "Idioms" })).toHaveAttribute("aria-pressed", "true");
@@ -157,14 +172,15 @@ test("idiom presets retain their family and scenario when reopened", () => {
   window.localStorage.clear();
 });
 
-test("language hydration replaces material without carrying a Dutch preset into English", () => {
+test("language hydration replaces material without carrying a Dutch preset into English", async () => {
   const onStart = vi.fn();
   const props = { ...baseProps, userId: "language-switch-test", trainingLanguageCode: "nl", onStart, onTrainingLanguageChange: vi.fn(), trainingLanguageOptions: [{ value: "nl", label: "Nederlands" }, { value: "en", label: "English" }] };
   const { rerender } = render(<TrainingTodaySetup {...props} />);
+  expect(await screen.findByText("No saved training yet.")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
   fireEvent.change(screen.getByLabelText("Training language"), { target: { value: "en" } });
   rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" trainingLanguageLoading />);
-  expect(screen.getByRole("button", { name: "Save preset" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Save training" })).toBeDisabled();
   expect(screen.queryByRole("button", { name: /^de$/ })).not.toBeInTheDocument();
   expect(screen.getByText("Lexical filters for this language are not connected yet.")).toBeInTheDocument();
   rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" initialDraft={{ ...initialDraft, listValue: "user:english" }} lists={[{ value: "user:english", label: "English collection" }]} />);
@@ -393,7 +409,7 @@ test("an existing 1:4 preference remains representable by the slider", () => {
   expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ newReviewRatio: 4 }));
 });
 
-test("a saved preset can be reopened and modified on this device", () => {
+test("a saved preset can be reopened and modified in the account", async () => {
   render(
     <TrainingTodaySetup
       {...baseProps}
@@ -409,7 +425,9 @@ test("a saved preset can be reopened and modified on this device", () => {
   fireEvent.click(screen.getByRole("button", { name: "Verb" }));
   fireEvent.click(screen.getByRole("button", { name: "Noun" }));
   fireEvent.click(screen.getByRole("button", { name: "de" }));
-  fireEvent.click(screen.getByRole("button", { name: "Save preset" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Save training" })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: "Save training" }));
+  expect(await screen.findByText("Saved to your account")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Back to Today" }));
   expect(screen.getByText("NT2 2000 · Words · 1 new : 2 reviews · 30 exercises")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
@@ -420,35 +438,34 @@ test("a saved preset can be reopened and modified on this device", () => {
   fireEvent.change(screen.getByRole("slider", { name: "Session size" }), {
     target: { value: "5" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Update preset" }));
-  expect(screen.getByText("Saved on this device")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Update training" }));
+  await waitFor(() => expect(accounts.get("preset-test-user")?.revision).toBe(2));
+  expect(screen.getByText("Saved to your account")).toBeInTheDocument();
   window.localStorage.clear();
 });
 
-test("a preset with a missing collection stays editable and cannot start another collection", () => {
+test("a preset with a missing collection stays editable and cannot start another collection", async () => {
   const userId = "missing-material-test-user";
-  const key = presetStorageKey(userId, "nl");
-  window.localStorage.setItem(key, JSON.stringify([{
+  seedAccount(userId, [{
     id: "missing-material",
     name: "Old collection · Words",
     draft: { ...initialDraft, listValue: "user:missing", sessionSize: 10 },
-  }]));
+  }]);
   const onStart = vi.fn();
   render(<TrainingTodaySetup {...baseProps} userId={userId} trainingLanguageCode="nl" onStart={onStart} />);
 
-  expect(screen.getByRole("button", { name: "Start" })).toBeDisabled();
+  expect(await screen.findByRole("button", { name: "Start" })).toBeDisabled();
   expect(screen.getByText("Selected material is unavailable. Choose another before starting.")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
   expect(screen.getByLabelText("Collection")).toHaveValue("user:missing");
   expect(screen.getByRole("button", { name: "Selected material is unavailable. Choose another before starting." })).toBeDisabled();
-  expect(screen.getByRole("button", { name: "Update preset" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Update training" })).toBeDisabled();
   fireEvent.change(screen.getByLabelText("Collection"), { target: { value: "curated:nt2" } });
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
   expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ listValue: "curated:nt2" }));
-  window.localStorage.removeItem(key);
 });
 
-test("dictionary material modes launch only the chosen source and persist in a preset", () => {
+test("dictionary material modes launch only the chosen source and persist in a preset", async () => {
   const userId = "dictionary-mode-user";
   const onStart = vi.fn();
   render(<TrainingTodaySetup
@@ -467,14 +484,15 @@ test("dictionary material modes launch only the chosen source and persist in a p
   fireEvent.click(screen.getByRole("button", { name: "Selected dictionaries" }));
   expect(screen.getByRole("button", { name: "Selected material is unavailable. Choose another before starting." })).toBeDisabled();
   fireEvent.click(screen.getByLabelText("My Dutch"));
-  fireEvent.click(screen.getByRole("button", { name: "Save preset" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Save training" })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: "Save training" }));
+  expect(await screen.findByText("Saved to your account")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Back to Today" }));
   fireEvent.click(screen.getByRole("button", { name: "Start" }));
   expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({
     materialMode: "selected-dictionaries",
     dictionaryIds: [dictionaryB],
   }));
-  window.localStorage.removeItem(presetStorageKey(userId, "nl"));
 });
 
 test("a failed start returns to Today and explains material loss", async () => {
@@ -487,10 +505,9 @@ test("a failed start returns to Today and explains material loss", async () => {
   expect(screen.getByRole("alert")).toHaveTextContent("Selected material is unavailable. Choose another before starting.");
 });
 
-test("partially unavailable dictionary presets retain their references and disclose the reduction", () => {
+test("partially unavailable dictionary presets retain their references and disclose the reduction", async () => {
   const userId = "partial-dictionary-user";
-  const key = presetStorageKey(userId, "nl");
-  window.localStorage.setItem(key, JSON.stringify([{
+  seedAccount(userId, [{
     id: "partial",
     name: "Two dictionaries · Words",
     draft: {
@@ -499,17 +516,16 @@ test("partially unavailable dictionary presets retain their references and discl
       dictionaryIds: [dictionaryA, dictionaryLost],
       sessionSize: 10,
     },
-  }]));
+  }]);
   const onStart = vi.fn();
   render(<TrainingTodaySetup {...baseProps} userId={userId} trainingLanguageCode="nl"
     dictionaries={[{ value: dictionaryA, label: "Core Dutch" }]} onStart={onStart} />);
-  expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
+  await waitFor(() => expect(screen.getByRole("button", { name: "Start" })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
   expect(screen.getByLabelText("Core Dutch")).toBeChecked();
   expect(screen.getByText("Some selected dictionaries are unavailable; this session will use only those you can access.")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
   expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ dictionaryIds: [dictionaryA, dictionaryLost] }));
-  window.localStorage.removeItem(key);
 });
 
 test.each([

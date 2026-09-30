@@ -5,13 +5,20 @@ import postcss from 'postcss';
 import {expect,test} from 'vitest';
 const root=postcss.parse(fs.readFileSync(path.resolve('components/practice/ui/practiceTheme.module.css'),'utf8'));
 function palette(name:string,dark:boolean){const tokens:Record<string,string>={};root.walkRules(rule=>{
- if(!rule.selector.startsWith('.theme')||rule.selector.includes(' ')||rule.parent?.type==='atrule')return;
- const selected=rule.selector.match(/data-practice-palette=(\w+)/)?.[1];
- if(selected&&selected!==name||rule.selector.includes('data-colour-mode=dark')&&!dark)return;
+ if(rule.parent?.type==='atrule')return;
+ const matches=rule.selectors.some(selector=>{
+  if(!selector.startsWith('.theme')||selector.includes(' '))return false;
+  const selected=selector.match(/data-practice-palette=(\w+)/)?.[1];
+  return (!selected||selected===name)&&(!selector.includes('data-colour-mode=dark')||dark);
+ });
+ if(!matches)return;
  rule.walkDecls(decl=>{if(decl.prop.startsWith('--practice-'))tokens[decl.prop.slice(11)]=decl.value;});
  });return tokens;}
 function luminance(hex:string){const values=hex.slice(1).match(/../g)!.slice(0,3).map(x=>parseInt(x,16)/255).map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4);return values[0]*.2126+values[1]*.7152+values[2]*.0722;}
 function contrast(a:string,b:string){const values=[luminance(a),luminance(b)].sort((x,y)=>y-x);return (values[0]+.05)/(values[1]+.05);}
+test('dark palettes include the shared semantic inks from grouped selectors',()=>{
+ for(const name of ['lavender','blue','graphite'])expect(palette(name,true).danger).toBe('#f0adba');
+});
 for(const name of ['lavender','blue','graphite'])for(const dark of [false,true]){
  test(`${name} ${dark?'dark':'light'}: text roles meet AA on their supported surfaces`,()=>{
   const p=palette(name,dark);

@@ -1,0 +1,16 @@
+.controls{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:22px 0 0;padding:0 2px;flex-wrap:wrap}
+.makeMain,.delete{display:flex;align-items:center;gap:7px;border:0;background:transparent;font:inherit;font-size:var(--practice-text-caption);min-height:40px;padding:8px 0;cursor:pointer}
+.makeMain{color:var(--practice-text-muted)}
+.delete{color:var(--practice-danger)}
+.makeMain:disabled,.delete:disabled{cursor:default;opacity:.65}
+.modal{width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 40px);padding:0;border:1px solid var(--practice-border);border-radius:20px;background:var(--practice-surface);color:var(--practice-text);box-shadow:0 20px 70px var(--practice-shadow);font-family:var(--practice-font-ui);overflow:auto}
+.modal::backdrop{background:var(--practice-backdrop);backdrop-filter:blur(2px)}
+.content{padding:20px 24px}
+.content h2{margin:0;font-size:var(--practice-text-lead);font-weight:600}
+.content p{font-size:var(--practice-text-body);line-height:1.6;color:var(--practice-text-muted);overflow-wrap:anywhere}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;flex-wrap:wrap}
+.cancel,.confirmDelete{font:inherit;font-size:var(--practice-text-small);padding:10px 17px;border-radius:20px;cursor:pointer;max-width:100%;overflow-wrap:anywhere}
+.cancel{border:1px solid var(--practice-border);background:var(--practice-surface);color:var(--practice-text)}
+.confirmDelete{border:1px solid var(--practice-danger);background:var(--practice-danger);color:var(--practice-on-accent)}
+.cancel:disabled,.confirmDelete:disabled{cursor:wait;opacity:.6}
+.controls button:focus-visible,.actions button:focus-visible{outline:2px solid var(--practice-focus);outline-offset:3px}

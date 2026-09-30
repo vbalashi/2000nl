@@ -190,6 +190,17 @@
     "zn": "noun"
   },
   "ui": {
+    "accountTrainingSetups": {
+      "loading": "Loading saved training…",
+      "empty": "No saved training yet.",
+      "loadFailed": "Could not load saved training.",
+      "retry": "Try again",
+      "saved": "Saved to your account",
+      "saveFailed": "Could not save. Try again.",
+      "conflict": "Training changed on another device. The list has been refreshed; your draft is kept. Review it before saving again.",
+      "save": "Save training",
+      "update": "Update training"
+    },
     "navigation": {
       "primary": "Primary",
       "destinations": "Destinations",

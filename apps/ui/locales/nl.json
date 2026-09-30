@@ -190,6 +190,17 @@
     "zn": "zelfstandig naamwoord"
   },
   "ui": {
+    "accountTrainingSetups": {
+      "loading": "Bewaarde trainingen laden…",
+      "empty": "Nog geen bewaarde trainingen.",
+      "loadFailed": "Kon bewaarde trainingen niet laden.",
+      "retry": "Probeer opnieuw",
+      "saved": "Bewaard in je account",
+      "saveFailed": "Kon niet bewaren. Probeer opnieuw.",
+      "conflict": "De training is gewijzigd op een ander apparaat. De lijst is vernieuwd; je concept is behouden. Controleer het voordat je opnieuw bewaart.",
+      "save": "Training bewaren",
+      "update": "Training bijwerken"
+    },
     "navigation": {
       "primary": "Hoofdnavigatie",
       "destinations": "Navigatie",
