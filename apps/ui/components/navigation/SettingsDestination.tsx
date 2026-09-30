@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ApprovedAppearanceSection } from "@/components/practice/ui/ApprovedAppearanceSection";
+import { ApprovedSettingsDestination } from "./ApprovedSettingsDestination";
 import { ReadingSettingsSection } from "@/components/reading/ReadingSettingsSection";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
@@ -64,7 +64,8 @@ const copy = {
   },
 } satisfies Record<OnboardingLanguage, Record<string, string>>;
 
-type Props = {
+export type SettingsDestinationProps = {
+  onExit: () => void;
   open: boolean;
   interfaceLanguage: OnboardingLanguage;
   themePreference: ThemePreference;
@@ -78,7 +79,13 @@ type Props = {
   onSignOut: () => void | Promise<void>;
 };
 
-export function SettingsDestination({
+export function SettingsDestination(props: SettingsDestinationProps) {
+  if (process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 === "true")
+    return <ApprovedSettingsDestination {...props} />;
+  return <LegacySettingsDestination {...props} />;
+}
+
+function LegacySettingsDestination({
   open,
   interfaceLanguage,
   themePreference,
@@ -88,7 +95,7 @@ export function SettingsDestination({
   onTranslationLanguageChange,
   userEmail,
   onSignOut,
-}: Props) {
+}: SettingsDestinationProps) {
   const text = copy[interfaceLanguage];
   const themeOptions: Array<{ value: ThemePreference; label: string }> = [
     { value: "light", label: text.light },
@@ -96,11 +103,6 @@ export function SettingsDestination({
     { value: "system", label: text.system },
   ];
   const hotkeys = getTrainingHotkeys(interfaceLanguage);
-  const cycleTheme = () => {
-    const options: ThemePreference[] = ["system", "light", "dark"];
-    const currentIndex = options.indexOf(themePreference);
-    onThemeChange(options[(currentIndex + 1) % options.length]);
-  };
 
   return (
     <section
@@ -121,34 +123,26 @@ export function SettingsDestination({
 
           <div className="mt-7 grid gap-5 lg:grid-cols-2">
             <ReadingSettingsSection language={interfaceLanguage} />
-            {process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 === "true" ? (
-              <ApprovedAppearanceSection
-                language={interfaceLanguage}
-                mode={themePreference}
-                onModeChange={onThemeChange}
-              />
-            ) : (
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <h2 className="text-base font-bold">{text.theme}</h2>
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  {themeOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      aria-pressed={themePreference === option.value}
-                      onClick={() => onThemeChange(option.value)}
-                      className={`min-h-11 rounded-xl border px-3 text-sm font-semibold transition ${
-                        themePreference === option.value
-                          ? "border-indigo-500 bg-indigo-50 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-200"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <h2 className="text-base font-bold">{text.theme}</h2>
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                {themeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={themePreference === option.value}
+                    onClick={() => onThemeChange(option.value)}
+                    className={`min-h-11 rounded-xl border px-3 text-sm font-semibold transition ${
+                      themePreference === option.value
+                        ? "border-indigo-500 bg-indigo-50 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-200"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </section>
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <h2 className="text-base font-bold">{text.languageGroup}</h2>

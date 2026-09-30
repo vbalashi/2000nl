@@ -21,6 +21,7 @@ test("App Settings exposes application preferences and the signed-in account", (
       onTranslationLanguageChange={onTranslationLanguageChange}
       userEmail="learner@example.com"
       onSignOut={onSignOut}
+      onExit={vi.fn()}
     />,
   );
 

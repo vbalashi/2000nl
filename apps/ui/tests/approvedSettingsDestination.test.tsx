@@ -1,0 +1,138 @@
+import React from "react";
+import { afterEach, expect, test, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+  waitFor,
+} from "@testing-library/react";
+import {
+  SettingsDestination,
+  type SettingsDestinationProps,
+} from "@/components/navigation/SettingsDestination";
+import { ReadingPreferencesProvider } from "@/components/reading/ReadingPreferencesProvider";
+import { getUiMessages } from "@/lib/uiMessages";
+afterEach(() => {
+  cleanup();
+  vi.unstubAllEnvs();
+});
+function props(): SettingsDestinationProps {
+  return {
+    open: true,
+    interfaceLanguage: "en",
+    themePreference: "system",
+    translationLanguage: "de",
+    onThemeChange: vi.fn(),
+    onInterfaceLanguageChange: vi.fn(),
+    onTranslationLanguageChange: vi.fn(),
+    onSignOut: vi.fn(),
+    onExit: vi.fn(),
+    userEmail: "learner@example.test",
+  };
+}
+function desktop(label: string) {
+  return within(
+    screen.getByRole("navigation", { name: "Settings sections" }),
+  ).getByRole("button", { name: label });
+}
+test("approved settings keep production callback ownership and an existing extra translation language", () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const p = props();
+  render(<SettingsDestination {...p} />);
+  expect(screen.getByLabelText("Translation language")).toHaveValue("de");
+  expect(screen.getByRole("option", { name: "German" })).toBeTruthy();
+  fireEvent.change(screen.getByLabelText("Translation language"), {
+    target: { value: "off" },
+  });
+  expect(p.onTranslationLanguageChange).toHaveBeenCalledWith(null);
+  fireEvent.change(screen.getByLabelText("Interface language"), {
+    target: { value: "ru" },
+  });
+  expect(p.onInterfaceLanguageChange).toHaveBeenCalledWith("ru");
+  fireEvent.click(desktop("Appearance"));
+  fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+  expect(p.onThemeChange).toHaveBeenCalledWith("dark");
+  fireEvent.click(desktop("Shortcuts"));
+  expect(
+    screen.getByRole("heading", { name: "Training shortcuts" }),
+  ).toBeTruthy();
+  fireEvent.click(desktop("Account"));
+  expect(screen.getByText("learner@example.test")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+  expect(p.onSignOut).toHaveBeenCalledOnce();
+  expect(screen.queryByText("Free")).toBeNull();
+});
+test("phone navigation supports return focus, app exit and a fresh menu on reopening", async () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const p = props();
+  const view = render(<SettingsDestination {...p} />);
+  const appearance = within(
+    screen.getByRole("navigation", { name: "Mobile settings sections" }),
+  ).getByRole("button", { name: "Appearance" });
+  fireEvent.click(appearance);
+  await waitFor(() =>
+    expect(
+      screen
+        .getAllByRole("heading", { name: "Appearance" })
+        .find((element) => element.getAttribute("tabindex") === "-1"),
+    ).toHaveFocus(),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Back to settings" }));
+  await waitFor(() => expect(appearance).toHaveFocus());
+  fireEvent.click(screen.getByRole("button", { name: "Back to app" }));
+  expect(p.onExit).toHaveBeenCalledOnce();
+  fireEvent.click(appearance);
+  view.rerender(<SettingsDestination {...p} open={false} />);
+  view.rerender(<SettingsDestination {...p} />);
+  expect(screen.getByRole("button", { name: "Back to app" })).toBeTruthy();
+});
+test.each(["en", "nl", "ru"] as const)(
+  "approved sections and accessible controls follow the %s catalog",
+  (language) => {
+    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+    const p = { ...props(), interfaceLanguage: language };
+    render(<SettingsDestination {...p} />);
+    const copy = getUiMessages(language).settings;
+    expect(
+      screen.getByRole("heading", { name: copy.title, level: 1 }),
+    ).toBeTruthy();
+    expect(screen.getByLabelText(copy.interfaceLanguage)).toBeTruthy();
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: copy.sections })).getByRole(
+        "button",
+        { name: copy.shortcuts },
+      ),
+    );
+    expect(
+      screen.getByRole("heading", { name: copy.trainingShortcuts }),
+    ).toBeTruthy();
+  },
+);
+test("appearance keeps the account text profile owner when its panel is reopened", async () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const repository = {
+    load: vi.fn().mockResolvedValue({ phone: "normal", desktop: "extra" }),
+    save: vi.fn().mockResolvedValue(undefined),
+  };
+  render(
+    <ReadingPreferencesProvider userId="a" repository={repository}>
+      <SettingsDestination {...props()} />
+    </ReadingPreferencesProvider>,
+  );
+  fireEvent.click(desktop("Appearance"));
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Extra large" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    ),
+  );
+  fireEvent.click(desktop("Languages"));
+  fireEvent.click(desktop("Appearance"));
+  expect(screen.getByRole("button", { name: "Extra large" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(repository.load).toHaveBeenCalledOnce();
+});

@@ -1,0 +1,66 @@
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--practice-text-body) * 7 + 24px)), 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.choices button {
+  min-width: 0;
+  border: 1px solid var(--practice-control-border);
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+  padding: 12px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.choices button[aria-pressed="true"] {
+  border-color: var(--practice-accent);
+  background: var(--practice-selected);
+  color: var(--practice-selected-text);
+}
+.choices button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.choices button:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+.choices strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: var(--practice-text-body);
+  font-weight: 500;
+  margin-top: 8px;
+}
+.choices small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-label);
+}
+.swatches {
+  display: flex;
+  height: 34px;
+  overflow: hidden;
+  border-radius: var(--practice-radius-control);
+}
+.swatches i {
+  flex: 1;
+}
+.swatches i:nth-child(1) {
+  background: var(--practice-canvas);
+}
+.swatches i:nth-child(2) {
+  background: var(--practice-selected);
+  color: var(--practice-selected-text);
+}
+.swatches i:nth-child(3) {
+  background: var(--practice-accent);
+}
+
+.choices button[aria-pressed="true"] small { color: var(--practice-selected-text); }

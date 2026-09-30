@@ -9,7 +9,8 @@
   font-size: var(--practice-text-title-sm);
   font-weight: 600;
 }
-.section p {
+.section p,
+.embedded p {
   margin-top: 8px;
   font-size: var(--practice-text-body);
   line-height: 1.5;
@@ -40,6 +41,7 @@
 .sizes button {
   flex: 1;
   min-width: 0;
+  overflow-wrap: anywhere;
   min-height: 36px;
   padding: 6px 2px;
   font-size: var(--practice-text-body);
@@ -53,7 +55,8 @@
 .sizes button:disabled {
   opacity: 0.5;
 }
-.section .hint {
+.section .hint,
+.embedded .hint {
   font-size: var(--practice-text-small);
   color: var(--practice-text-muted);
 }
@@ -72,18 +75,24 @@
   font-size: 0.65em;
   color: var(--practice-text-muted);
 }
-.section .definition {
+.section .definition,
+.embedded .definition {
   font-family: var(--practice-font-reading);
   font-size: var(--practice-reading-definition);
   line-height: var(--practice-definition-leading);
 }
-.section .example {
+.section .example,
+.embedded .example {
   font-family: var(--practice-font-reading);
   font-size: var(--practice-reading-literary);
   font-style: italic;
 }
-.section .translation {
+.section .translation,
+.embedded .translation {
   font-size: var(--practice-reading-small);
   color: var(--practice-text-secondary);
   margin-top: var(--practice-space-pair);
 }
+
+/* Settings embeds the same controls without adding another framed panel. */
+.embedded h2{font-size:var(--practice-text-body-lg);font-weight:500;color:var(--practice-text-secondary);margin-bottom:20px}

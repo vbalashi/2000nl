@@ -1,18 +1,22 @@
 "use client";
 import React from "react";
+import {SettingsRow,SettingsOptions} from "@/components/practice/settings/SettingsLayout";
+import layout from "@/components/practice/settings/settings.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import { getUiMessages } from "@/lib/uiMessages";
-import { practicePalettes } from "./appearance";
+import { PaletteChoices } from "@/components/practice/settings/PaletteChoices";
 import { useAccountPracticeAppearance } from "./AccountPracticeAppearanceProvider";
 import theme from "./practiceTheme.module.css";
 import s from "@/components/reading/textPreferences.module.css";
 export function ApprovedAppearanceSection({
   language,
+  embedded = false,
   mode,
   onModeChange,
 }: {
   language: OnboardingLanguage;
+  embedded?: boolean;
   mode: ThemePreference;
   onModeChange: (mode: ThemePreference) => void;
 }) {
@@ -25,46 +29,25 @@ export function ApprovedAppearanceSection({
     ["system", "System"],
   ] as const;
   return (
-    <section className={`${theme.theme} ${s.section}`} data-colour-mode="app">
+    <section
+      className={`${theme.theme} ${embedded ? `${s.embedded} ${layout.panel}` : s.section}`}
+      data-colour-mode="app"
+    >
       <h2>{copy.settings.appearance}</h2>
-      <div
-        className={s.sizes}
-        role="group"
-        aria-label={copy.settings.colourMode}
-      >
-        {modes.map(([value, key]) => (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={mode === value}
-            onClick={() => onModeChange(value)}
-          >
-            {copy.builder.colourModes[key]}
-          </button>
-        ))}
-      </div>
+      <SettingsRow title={copy.settings.colourMode}><SettingsOptions label={copy.settings.colourMode} items={modes.map(([id,key])=>({id,label:copy.builder.colourModes[key]}))} value={mode} onChange={onModeChange}/></SettingsRow>
       {appearance && (
         <>
-          <div
-            className={s.sizes}
-            role="group"
-            aria-label={copy.settings.theme}
-          >
-            {practicePalettes.map(({ id }) => (
-              <button
-                key={id}
-                type="button"
-                aria-pressed={appearance.palette === id}
-                disabled={
-                  appearance.loadStatus !== "ready" ||
-                  appearance.saveStatus === "saving"
-                }
-                onClick={() => void appearance.save(id)}
-              >
-                {copy.settings.themes[id]}
-              </button>
-            ))}
-          </div>
+          <h3 className={layout.subheading}>{copy.settings.theme}</h3>
+          <PaletteChoices
+            mode={mode}
+            language={language}
+            palette={appearance.palette}
+            disabled={
+              appearance.loadStatus !== "ready" ||
+              appearance.saveStatus === "saving"
+            }
+            onChange={(value) => void appearance.save(value)}
+          />
           {appearance.loadStatus === "loading" && (
             <p role="status">{status.loading}</p>
           )}

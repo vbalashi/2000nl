@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import layout from "@/components/practice/settings/settings.module.css";
 import { getUiMessages } from "@/lib/uiMessages";
 import { accountTextSize, textSizes } from "@/lib/reading/textScale";
 import { readingSizes, type ReadingDevice } from "@/lib/reading/readingSize";
@@ -11,8 +12,10 @@ import s from "./textPreferences.module.css";
 
 export function ApprovedTextSizeSection({
   language,
+  embedded = false,
 }: {
   language: OnboardingLanguage;
+  embedded?: boolean;
 }) {
   const settings = useReadingSettings();
   if (!settings) return null;
@@ -23,7 +26,10 @@ export function ApprovedTextSizeSection({
   const active = settings.preferences[settings.device];
   const saveStatus = settings.saveStatus[settings.device];
   return (
-    <section className={`${theme.theme} ${s.section}`} data-colour-mode="app">
+    <section
+      className={`${theme.theme} ${embedded ? `${s.embedded} ${layout.panel}` : s.section}`}
+      data-colour-mode="app"
+    >
       <h2>{text.textSize}</h2>
       <p>{prefs.description}</p>
       <label className={s.profile}>

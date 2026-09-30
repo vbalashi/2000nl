@@ -2693,6 +2693,7 @@ function TrainingScreenContent({
         />
       ) : null}
       <SettingsDestination
+        onExit={() => onRequestDestination("training")}
         open={destination === "settings"}
         interfaceLanguage={onboardingLang}
         themePreference={themePreference}
