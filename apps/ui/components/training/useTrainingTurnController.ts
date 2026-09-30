@@ -226,6 +226,7 @@ export function useTrainingTurnController(input: Inputs) {
   const {
     warmWord,
     refreshForCard: refreshPreparedNextTurn,
+    revalidateAfterCommit: revalidatePreparedAfterCommit,
     consumeForCard: consumePreparedNextTurn,
     reset: resetPreparedNextTurn,
     nextTransitionId,
@@ -779,6 +780,7 @@ export function useTrainingTurnController(input: Inputs) {
 
       let prefetched = transition.prefetched;
       if (prefetched?.v2Ready) {
+        revalidatePreparedAfterCommit(prefetched, transition.word.id);
         const warmResult = await prefetched.v2Ready.catch(() => false);
         if (transition.loadGeneration !== loadGenerationRef.current) {
           // Scope changes/reset invalidate a detached prefetch just as they
@@ -853,6 +855,7 @@ export function useTrainingTurnController(input: Inputs) {
       presentWord,
       reportCardLoadFailure,
       refreshAfterAccepted,
+      revalidatePreparedAfterCommit,
       sessionPlannedTotal,
     ],
   );

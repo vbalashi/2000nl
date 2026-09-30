@@ -7,6 +7,7 @@ import {
   fetchPlatformV2TrainingEntry,
   peekPrefetchedPlatformV2TrainingEntry,
   prefetchPlatformV2TrainingEntry,
+  PREPARED_CARD_MAX_REUSE_AGE_MS,
   performPlatformV2TrainingAction,
   preloadPlatformV2Audio,
   resolvePlatformV2Audio,
@@ -1043,7 +1044,7 @@ describe("fetchPlatformV2TrainingEntry", () => {
     );
   });
 
-  test("renews at the exact progress-action threshold and coalesces the replacement", async () => {
+  test("extends a fresh prepared card through the progress action without refetching", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-21T00:00:00.000Z"));
     const payload = {
@@ -1072,13 +1073,61 @@ describe("fetchPlatformV2TrainingEntry", () => {
     };
     const dispatch = vi.spyOn(window, "dispatchEvent");
     await prefetchPlatformV2TrainingEntry(input);
-    await vi.advanceTimersByTimeAsync(2_000);
+    // Ordinary think time: past the old 2s renewal threshold and the 30s TTL.
+    await vi.advanceTimersByTimeAsync(25_000);
 
     await ensurePlatformV2TrainingEntryValidThroughProgressAction(input);
+    await vi.advanceTimersByTimeAsync(PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS);
     expect(peekPrefetchedPlatformV2TrainingEntry(input)).toMatchObject({
       state: "ready",
     });
-    await vi.advanceTimersByTimeAsync(2_000);
+    const consumed = consumePrefetchedPlatformV2TrainingEntry(input);
+    expect(consumed).not.toBeNull();
+    await expect(consumed!).resolves.toMatchObject({ state: "ready" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const outcomes = transitionEvents(dispatch).map((event) => event.outcome);
+    expect(outcomes).toEqual(
+      expect.arrayContaining(["lease-extended", "accepted-hit-ready"]),
+    );
+    expect(outcomes).not.toContain("renewal-required");
+  });
+
+  test("renews a prepared card older than the reuse bound and coalesces the replacement", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-21T00:00:00.000Z"));
+    const payload = {
+      contractVersion: "platform-lookup-v2",
+      query: "hand",
+      request: {
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+        cardTypeId: "word-to-definition",
+        intent: "training-review",
+      },
+      groups: [singleSenseGroup],
+      page: { selectedTierComplete: true, nextGroupCursor: null },
+    };
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify(payload), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const input = {
+      cacheOwnerId: "test-user",
+      entryId: singleSenseEntry.entryId,
+      cardTypeId: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      transitionId: "transition-action-window",
+    };
+    const dispatch = vi.spyOn(window, "dispatchEvent");
+    await prefetchPlatformV2TrainingEntry(input);
+    // Keep the record alive up to the reuse bound through repeated extensions.
+    for (let elapsed = 20_000; elapsed <= PREPARED_CARD_MAX_REUSE_AGE_MS; elapsed += 20_000) {
+      await vi.advanceTimersByTimeAsync(20_000);
+      await ensurePlatformV2TrainingEntryValidThroughProgressAction(input);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(20_000);
     let resolveRenewal!: (response: Response) => void;
     fetchMock.mockImplementationOnce(
       () =>
@@ -1090,26 +1139,18 @@ describe("fetchPlatformV2TrainingEntry", () => {
     const coalesced = ensurePlatformV2TrainingEntryValidThroughProgressAction(input);
     expect(coalesced).toBe(renewal);
     await vi.advanceTimersByTimeAsync(0);
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     resolveRenewal(new Response(JSON.stringify(payload), { status: 200 }));
     await Promise.all([renewal, coalesced]);
-    await vi.advanceTimersByTimeAsync(
-      PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS,
-    );
     expect(peekPrefetchedPlatformV2TrainingEntry(input)).toMatchObject({
       state: "ready",
     });
-
-    const consumed = consumePrefetchedPlatformV2TrainingEntry(input);
-    expect(consumed).not.toBeNull();
-    await expect(consumed!).resolves.toMatchObject({ state: "ready" });
-    expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(transitionEvents(dispatch).map((event) => event.outcome)).toEqual(
       expect.arrayContaining([
+        "lease-extended",
         "renewal-required",
         "renewal-started",
         "renewal-ready",
-        "accepted-hit-ready",
       ]),
     );
   });

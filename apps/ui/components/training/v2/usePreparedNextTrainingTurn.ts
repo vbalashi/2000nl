@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ensurePlatformV2TrainingEntryValidThroughProgressAction,
   prefetchPlatformV2TrainingEntry,
+  type PlatformV2TrainingLookupResult,
 } from "@/lib/platform/platformV2TrainingClient";
 import { preparePlatformV2TrainingEntry } from "@/lib/platform/platformV2TrainingPreparationClient";
 import {
@@ -199,22 +200,7 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
           signal: controllerRef.current?.signal,
         },
       ).then((lookup) => {
-        const warmResult: TrainingWarmResult =
-          lookup.state === "ready"
-            ? (() => {
-                const renderability = evaluateTrainingCardRenderability(
-                  lookup.entry,
-                  mode,
-                );
-                return renderability.renderable
-                  ? true
-                  : { ready: false, unavailableReason: renderability.reason } as const;
-              })()
-            : lookup.state === "entry-not-found"
-              ? { ready: false, unavailableReason: "entry-not-found" }
-              : lookup.state === "projection-missing"
-                ? { ready: false, unavailableReason: "projection-missing" }
-                : false;
+        const warmResult = trainingWarmResultFor(lookup, mode);
         recordTrainingTransitionTiming({
           transitionId: candidate.transitionId,
           stage: "next-card.prefetch",
@@ -227,6 +213,44 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
       });
       candidate.v2Ready = refreshed;
       return refreshed;
+    },
+    [
+      cacheOwnerId,
+      contentLanguageCode,
+      enabledModes,
+      translationTargetLanguageCode,
+    ],
+  );
+
+  // Learn/Known on one direction also changes the sibling direction of the same
+  // meaning, so its preparation must be re-read after the action has committed.
+  const revalidateAfterCommit = useCallback(
+    (candidate: PreparedNextTrainingTurn, acceptedEntryId: string) => {
+      if (!candidate.v2Ready || candidate.word.id !== acceptedEntryId) {
+        return candidate.v2Ready;
+      }
+      const mode =
+        candidate.word.mode ?? enabledModes[0] ?? "word-to-definition";
+      recordTrainingTransitionTiming({
+        transitionId: candidate.transitionId,
+        stage: "next-card.prefetch",
+        durationMs: 0,
+        outcome: "same-meaning-revalidate",
+      });
+      const revalidated = prefetchPlatformV2TrainingEntry({
+        cacheOwnerId,
+        entryId: candidate.word.id,
+        cardTypeId: mode,
+        contentLanguageCode,
+        translationTargetLanguageCode,
+        transitionId: candidate.transitionId,
+        bypassCache: true,
+      }).then(
+        (lookup) => trainingWarmResultFor(lookup, mode),
+        () => false as const,
+      );
+      candidate.v2Ready = revalidated;
+      return revalidated;
     },
     [
       cacheOwnerId,
@@ -297,10 +321,30 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
   return {
     warmWord,
     refreshForCard,
+    revalidateAfterCommit,
     consumeForCard,
     reset,
     nextTransitionId,
   };
+}
+
+function trainingWarmResultFor(
+  lookup: PlatformV2TrainingLookupResult,
+  mode: TrainingMode,
+): TrainingWarmResult {
+  if (lookup.state === "ready") {
+    const renderability = evaluateTrainingCardRenderability(lookup.entry, mode);
+    return renderability.renderable
+      ? true
+      : { ready: false, unavailableReason: renderability.reason };
+  }
+  if (lookup.state === "entry-not-found") {
+    return { ready: false, unavailableReason: "entry-not-found" };
+  }
+  if (lookup.state === "projection-missing") {
+    return { ready: false, unavailableReason: "projection-missing" };
+  }
+  return false;
 }
 
 function isPlatformV2TrainingMode(

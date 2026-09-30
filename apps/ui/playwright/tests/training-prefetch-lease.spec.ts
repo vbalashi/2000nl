@@ -220,10 +220,18 @@ test("prepared card lease survives immediate and delayed answers", async ({
       delayedEvents.some(
         (event) =>
           event.stage === "next-card.prefetch" &&
+          event.outcome === "lease-extended",
+      ),
+      `${profile.name}: the fresh prepared card was not kept through the action`,
+    ).toBe(true);
+    expect(
+      delayedEvents.some(
+        (event) =>
+          event.stage === "next-card.prefetch" &&
           event.outcome === "renewal-required",
       ),
-      `${profile.name}: the near-boundary lease was incorrectly reused`,
-    ).toBe(true);
+      `${profile.name}: a fresh prepared card was refetched on the critical path`,
+    ).toBe(false);
     expect(
       delayedEvents.some(
         (event) =>
@@ -260,7 +268,7 @@ test("prepared card lease survives immediate and delayed answers", async ({
     const delayedOutcomes = delayedEvents
       .filter((event) => event.stage === "next-card.prefetch")
       .map((event) => event.outcome);
-    expect(delayedOutcomes.indexOf("renewal-ready")).toBeLessThan(
+    expect(delayedOutcomes.indexOf("lease-extended")).toBeLessThan(
       delayedOutcomes.indexOf("accepted-hit-ready"),
     );
     expect(

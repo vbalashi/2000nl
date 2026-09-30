@@ -21,6 +21,7 @@ const prepared = vi.hoisted(() => ({
   reset: vi.fn(),
   warm: vi.fn(),
   refresh: vi.fn(),
+  revalidate: vi.fn((candidate: { v2Ready: unknown }) => candidate.v2Ready),
   selectNext: null as null | ((queueTurn: "new" | "review", cardKey: string) => Promise<TrainingWord | null>),
 }));
 const transitionTiming = vi.hoisted(() => ({
@@ -42,6 +43,7 @@ vi.mock("@/components/training/v2/usePreparedNextTrainingTurn", () => ({
     return {
       warmWord: prepared.warm,
       refreshForCard: prepared.refresh,
+      revalidateAfterCommit: prepared.revalidate,
       consumeForCard: prepared.consume,
       reset: prepared.reset,
       nextTransitionId: "transition-1",
@@ -259,6 +261,36 @@ describe("useTrainingTurnController transition matrix", () => {
     await accepted;
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
     expect(controller.selectNext).not.toHaveBeenCalled();
+  });
+
+  test("revalidates the prepared card against the accepted entry before presenting it", async () => {
+    const sibling: TrainingWord = { ...word1, mode: "definition-to-word" };
+    const committed = deferred<boolean>();
+    prepared.candidate = {
+      forWordId: word1.id,
+      forCardKey: "word-1:word-to-definition",
+      queueTurn: "review",
+      word: sibling,
+      v2Ready: Promise.resolve(true),
+      transitionId: "transition-1",
+    };
+    prepared.revalidate.mockImplementationOnce((candidate: { v2Ready: unknown }) => {
+      candidate.v2Ready = committed.promise;
+      return committed.promise;
+    });
+    const controller = renderController();
+
+    let accepted!: Promise<unknown>;
+    act(() => {
+      accepted = controller.result.current.acceptPlatformProgressAction({} as any);
+    });
+    await act(async () => Promise.resolve());
+    expect(prepared.revalidate).toHaveBeenCalledWith(prepared.candidate, word1.id);
+    expect(controller.setCurrentWord).not.toHaveBeenCalledWith(sibling);
+
+    await act(async () => committed.resolve(true));
+    await accepted;
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(sibling);
   });
 
   test("missing or still-selecting preparation yields one on-demand owner after acceptance", async () => {
