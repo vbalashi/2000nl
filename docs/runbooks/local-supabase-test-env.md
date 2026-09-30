@@ -235,3 +235,14 @@ RPC search paths by hand. The readiness probe hashes a known value, and
 `LOCAL_SUPABASE_DB_URL=... node --test db/scripts/pgcrypto-namespace.test.mjs`
 checks both extension layouts in disposable databases. A passing index check
 alone does not prove Library lookup; verify a real imported word after reset.
+
+Account saved-training SQL validation uses a disposable database:
+`LOCAL_SUPABASE_DB_URL=... node --test db/scripts/account_training_setups.integration.test.mjs`.
+It applies own-row RLS and races two expected-revision saves, keeping one winner.
+On 2026-09-30 the local Supabase PostgreSQL backend segfaulted while rejecting a
+direct anon call to the new revoked RPC (server log: `SET ROLE anon; SELECT
+public.save_account_training_setups_v1(...)`, signal 11); the server recovered.
+The check now verifies revoked execute privileges and API auth denial without
+repeating that native-engine failure. This is an environment limitation, not a
+passing direct-denial invocation test. Clean only the exact scoped test database
+if a failed run leaves one behind; do not reset the canonical imported DB.

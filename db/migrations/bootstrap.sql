@@ -501,3 +501,6 @@
 
 -- Match the pgcrypto namespace on Supabase and plain Postgres.
 \i db/migrations/179_pgcrypto_namespace_compatibility.sql
+
+-- Account-owned saved/main training configuration, independent of progress.
+\i db/migrations/180_account_training_setups.sql

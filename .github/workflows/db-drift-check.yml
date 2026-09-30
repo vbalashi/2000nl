@@ -236,9 +236,14 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/ledger-v1.sql
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-179.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-180.sql
           # Postflight fixtures must be cleaned up and safe on a populated retry.
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-179.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-180.sql
+
+      - name: Test account training configuration ownership and concurrent saves
+        env:
+          LOCAL_SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/contract_test
+        run: node --test db/scripts/account_training_setups.integration.test.mjs
 
       - name: Test exact bounded pre-switch scheduler read
         env:
