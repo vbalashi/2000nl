@@ -69,10 +69,16 @@ The symlink is created at `apps/ui/public/audio`:
 
 ```bash
 cd apps/ui/public
-ln -s ../../db/audio audio
+ln -s ../../../db/audio audio
 ```
 
-This symlink is relative and portable - it works in both development and production without modification.
+The target is relative: locally it resolves to the repository `db/audio`, and
+in the production image `/app/public/audio` resolves to the mounted
+`/db/audio`. The Platform lookup checks local audio files through this path;
+when it cannot read them it falls back to an HTTP `HEAD` per audio URL on the
+lookup critical path. `docker-compose.yml` also sets
+`PLATFORM_AUDIO_PUBLIC_ROOT=/db` so the check stays on the filesystem even if
+the link is missing.
 
 ## URL Migration
 
