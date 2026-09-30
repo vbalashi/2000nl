@@ -557,3 +557,15 @@ before opening the site.
   default; mutations require their own owning issue.
 
 See `docs/runbooks/production-login.md` for the identity and cleanup contract.
+
+## Pgcrypto namespace compatibility (migration 179)
+
+The #407 fresh local Supabase acceptance found Library lookup failing at an
+unqualified `digest` call: pgcrypto lived in `extensions`, outside the legacy
+RPC's fixed search path. Plain-Postgres CI already exposed public digest
+adapters and therefore hid the mismatch. Migration 179 adds only missing
+immutable, schema-qualified text/bytea adapters; a public pgcrypto installation
+is unchanged. It preserves RPC bodies, permissions, cursor hashing and learning
+behavior. Postflight hashes a known value; retaining readiness uses a separate
+read-only chain. Contract 179 is appended with its exact checksum. This local
+preparation does not authorize production deployment.

@@ -227,3 +227,11 @@ scripts/db-local-supabase.sh probe
 Use the reviewed deployment gate for a populated staging database. Bootstrap is
 for a fresh disposable target only. Never pass a remote URL to the local wrapper.
 Keep staging project secrets out of committed files.
+
+Fresh Supabase keeps `pgcrypto` in `extensions`. Migration 179 supplies the
+public `digest(text,text)` / `digest(bytea,text)` compatibility surface already
+used in plain-Postgres tests; do not move the extension or patch individual
+RPC search paths by hand. The readiness probe hashes a known value, and
+`LOCAL_SUPABASE_DB_URL=... node --test db/scripts/pgcrypto-namespace.test.mjs`
+checks both extension layouts in disposable databases. A passing index check
+alone does not prove Library lookup; verify a real imported word after reset.

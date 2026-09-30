@@ -498,3 +498,6 @@
 -- Batch source binding/content reconciliation for practical full imports.
 \i db/migrations/177_batch_source_content_reconciliation.sql
 \i db/migrations/178_staged_source_content_import.sql
+
+-- Match the pgcrypto namespace on Supabase and plain Postgres.
+\i db/migrations/179_pgcrypto_namespace_compatibility.sql
