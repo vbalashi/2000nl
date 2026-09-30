@@ -1,3 +1,5 @@
+const recordedStudy = vi.hoisted(() => vi.fn());
+vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
@@ -94,4 +96,17 @@ test("a pending translation stays on the same session member and can be retried"
   expect(await screen.findByText("Переведённый пример.")).toBeVisible();
   expect(markPlatformV2TranslationTrainingSessionMemberUnavailable).not.toHaveBeenCalled();
   expect(performPlatformV2TranslationExerciseAction).not.toHaveBeenCalled();
+});
+
+
+test("active time waits for prepared sentence content and pauses with the enclosing surface", async () => {
+  vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValue(candidate);
+  vi.mocked(loadSentenceExerciseContent).mockResolvedValue({state:"ready",content} as never);
+  const view = (enabled: boolean) => <TrainingSentenceSession studyTimeEnabled={enabled} userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} />;
+  const {rerender}=render(view(true));
+  expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
+  await waitFor(()=>expect(recordedStudy.mock.lastCall?.[0]).toMatchObject({family:"sentence",ownerId:"user-1",sessionId:session.sessionId,entryId:candidate.entryId,targetId:candidate.targetId,enabled:true}));
+  fireEvent.click(screen.getByRole("button",{name:"Show answer"}));
+  expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(true);
+  rerender(view(false)); expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
 });

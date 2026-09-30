@@ -92,3 +92,17 @@ describe("active card attention", () => {
     advance(60000); expect(onDuration).not.toHaveBeenCalled(); expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+test("pauses for native/modal report dialogs and menus, and preserves captured targets", async () => {
+  const onDuration=vi.fn();
+  const identity={...card,target:{entryId:"old-entry",cardTypeId:"word-to-definition",targetId:null}};
+  const {rerender,unmount}=renderHook(({identity})=>useActiveStudyTime({identity,enabled:true,onDuration}),{initialProps:{identity}});
+  advance(1000);
+  const report=document.createElement("div"); report.setAttribute("role","dialog"); report.setAttribute("aria-modal","true");
+  await act(async()=>{document.body.append(report);});
+  advance(20000); await act(async()=>{report.remove();});
+  advance(2000);
+  rerender({identity:{...identity,cardKey:"new-card",target:{...identity.target,entryId:"new-entry"}}});
+  advance(1000); unmount();
+  expect(onDuration.mock.calls.map(([v])=>[v.target.entryId,v.activeMilliseconds])).toEqual([["old-entry",1000],["old-entry",2000],["new-entry",1000]]);
+});

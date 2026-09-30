@@ -1,3 +1,5 @@
+const recordedStudy = vi.hoisted(() => vi.fn());
+vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
 import React from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -150,6 +152,17 @@ describe("TrainingSenseCardV2Session", () => {
       accepted: true,
       card: singleSenseEntry.card,
     });
+  });
+
+  test("measures only the prepared owned card while its enclosing training surface is available", async () => {
+    const view = (enabled: boolean) => <TestTrainingSenseCardV2Session word={word} mode="word-to-definition" studyTimeEnabled={enabled}
+      trainingSessionId="owned-session" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()} />;
+    const { rerender } = render(view(true));
+    expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
+    await waitFor(() => expect(recordedStudy.mock.lastCall?.[0]).toMatchObject({ family:"meaning",sessionId:"owned-session",entryId:word.id,cardTypeId:"word-to-definition",enabled:true }));
+    fireEvent.click(screen.getByRole("button",{name:"Show answer"}));
+    expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(true);
+    rerender(view(false)); expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
   });
 
   test("context mode waits for its exact translation before allowing a review", async () => {

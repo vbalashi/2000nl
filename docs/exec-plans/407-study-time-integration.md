@@ -1,8 +1,9 @@
 # #407 measured active study time
 
 Status: measurement foundation and server duration storage/read API implemented.
-Actual card-owner integration and the full Statistics read model remain pending.
-The browser does not yet send measurements; this is not live telemetry.
+Card-owner/browser delivery integration is now wired behind the approved Training
+presentation flag. Real-browser persistence/attention acceptance and the full
+Statistics read model remain pending; unit tests are not proof of live collection.
 
 ## Approved meaning
 
@@ -122,3 +123,44 @@ production is not deployed. This does not prove active-card/overlay integration.
 Next: bounded principal-guarded client delivery with stable retry IDs, pause gates
 in the three real session owners and report/exclusion overlays; then measured-time
 and real historical activity integration into the approved Statistics surface.
+
+
+## Browser delivery and owner integration — 2026-09-30
+
+The ordinary, idiom and sentence session components now call the shared recorder
+only with saved session/member identities and prepared content. TrainingScreen
+supplies the global surface gate: actual Training destination, no full-word drawer,
+History/Settings/hotkeys/language picker, no load or authority check/pending action.
+Each card owner additionally excludes lookup/content preparation, submission,
+terminal and exclusion/recovery states. Face/answer reveal preserves the identity.
+The rollout-off path creates no measurement identity or attention timer.
+
+The browser hook observes actual open native/modal dialogs and menus, covering
+card-local report/exclusion surfaces without importing their business state into
+the timer. A pagehide latch prevents DOM mutations from resuming attention until
+pageshow. Frozen entry/direction/target metadata travels with the old duration on
+cleanup, preventing the new card/account from relabeling its predecessor.
+
+The independent delivery queue holds at most 64 receipts per retained account,
+checks the live auth principal before each send, keeps the same immutable payload
+for up to three attempts, uses an eight-second request timeout and keepalive, and
+never awaits delivery from reveal/grade/next. It discards rejected requests, stale
+principal queues and exhausted retries. Storage is memory-only; crash/offline/exit
+loss remains possible and is not presented as guaranteed accounting. Device time
+continues to be an attention estimate, not proof of a learning action.
+
+Validation: 161 checks pass across TrainingScreen, ordinary action/session,
+idiom/sentence sessions, attention and delivery, including three new owner readiness/
+surface-pause assertions. Three additional wrapper checks prove rollout-off and
+content-bound identity behavior; the attention/delivery checks also pass after the
+last wrapper guard. Typecheck and shared theme guard pass. New modules lint clean;
+the existing ordinary-session handlePlayAudio dependency warning and GoTrueClient/
+act test warnings remain visible. Initial repository-relative edit/check commands
+were issued from the UI directory and did not edit their intended files; corrected
+cwd runs completed the actual changes and validation.
+
+No new SQL/schema or learner action was introduced by this wiring slice. Browser
+acceptance must still verify real stored increments, paused intervals and focus/
+background transitions against an authenticated local owned session before measured
+Statistics is accepted. Next: that real-data attention smoke, followed by full
+Statistics history/material/read models and the approved shared presentation.

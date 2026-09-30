@@ -1,3 +1,13 @@
+export type ActiveStudyCardIdentity = {
+  ownerId: string;
+  sessionId: string;
+  family: "meaning" | "idiom" | "sentence";
+  cardKey: string;
+  target?: { entryId: string; cardTypeId: string | null; targetId: string | null };
+};
+
+export type ActiveStudyDuration = ActiveStudyCardIdentity & { activeMilliseconds: number };
+
 /**
  * Measures attention on a rendered card, independently of FSRS/review actions.
  * The caller owns card readiness, overlays, visibility and persistence.

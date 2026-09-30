@@ -1,3 +1,5 @@
+const recordedStudy = vi.hoisted(() => vi.fn());
+vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
 import { performTrainingExclusion } from "@/lib/platform/trainingExclusionClient";
 import { TrainingExclusionUndoNotice } from "@/components/training/v2/TrainingExclusionUndoNotice";
 import { rememberExclusionUndo } from "@/components/training/v2/trainingExclusionUndoStore";
@@ -532,4 +534,17 @@ test("the common footer loads independently and refreshes authoritative counters
   expect(screen.getByTestId("training-session-footer-progress")).toHaveTextContent("3/7");
   expect(readIdiomTrainingStats).toHaveBeenCalledTimes(2);
   expect(readIdiomTrainingStats).toHaveBeenLastCalledWith(session.sessionId);
+});
+
+
+test("active time waits for prepared idiom content and pauses with the enclosing surface", async () => {
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:"ready",content} as never);
+  const view = (enabled: boolean) => <TrainingIdiomSession studyTimeEnabled={enabled} userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onExit={vi.fn()} />;
+  const {rerender}=render(view(true));
+  expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
+  await waitFor(()=>expect(recordedStudy.mock.lastCall?.[0]).toMatchObject({family:"idiom",ownerId:"user-1",sessionId:session.sessionId,entryId:candidate.entryId,targetId:candidate.targetId,enabled:true}));
+  fireEvent.click(screen.getByRole("button",{name:"Show answer"}));
+  expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(true);
+  rerender(view(false)); expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
 });

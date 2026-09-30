@@ -3,6 +3,7 @@ import { useTrainingExclusion } from "./useTrainingExclusion";
 import { TrainingExcludeAction, trainingExclusionCopy } from "./TrainingExcludeAction";
 
 import React from "react";
+import { useRecordedStudyTime } from "../useRecordedStudyTime";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -59,6 +60,7 @@ import type { TrainingCardSwipeCommitOutcome } from "./useTrainingCardSwipeSurfa
 export { TrainingKnownUndoNotice } from "./TrainingKnownUndoNotice";
 
 type Props = {
+  studyTimeEnabled?: boolean;
   cacheOwnerId: string;
   nextTransitionId?: string;
   presentationIdentity: string | null;
@@ -116,6 +118,7 @@ type TrainingV2SessionState =
 
 export function TrainingSenseCardV2Session({
   cacheOwnerId,
+  studyTimeEnabled = false,
   nextTransitionId,
   presentationIdentity,
   word,
@@ -638,6 +641,9 @@ export function TrainingSenseCardV2Session({
       }
     },
   });
+
+  useRecordedStudyTime({ ownerId: cacheOwnerId, sessionId: trainingSessionId, family: "meaning", entryId: word.id, cardTypeId: mode,
+    enabled: studyTimeEnabled && sessionState === "ready" && !busy && !interactionDisabled && !acceptedActionRecoveryPending && !exclusion.busy && !exclusion.failed });
 
   const swipeSurface = useTrainingCardSwipeSurface({
     enabled: sessionState === "ready" && cardSide === "answer",

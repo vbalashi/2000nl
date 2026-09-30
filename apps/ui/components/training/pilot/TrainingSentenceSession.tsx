@@ -19,7 +19,10 @@ import { SenseCardReportAction } from "@/components/feedback/SenseCardReportShee
 import { freezeSenseCardDiagnosticSnapshot } from "@/lib/feedback/diagnosticReportClient";
 import { resolvePlatformV2Audio } from "@/lib/platform/platformV2TrainingMediaClient";
 
+import { useRecordedStudyTime } from "../useRecordedStudyTime";
+
 type Props = {
+  studyTimeEnabled?: boolean;
   userId: string;
   session: PlatformTranslationExerciseSessionV2;
   contentLanguageCode: string;
@@ -39,6 +42,7 @@ const copy = {
 
 export function TrainingSentenceSession(props: Props) {
   const { userId, session, contentLanguageCode, translationTargetLanguageCode, interfaceLanguage, onExit, onSessionSuperseded, onHistory, onPlayResolvedAudio, onOpenDetails } = props;
+  const studyTimeEnabled = props.studyTimeEnabled ?? false;
   const t = copy[interfaceLanguage];
   const [candidate, setCandidate] = useState<(PlatformTranslationExerciseCandidateV2 & { ordinal: number }) | null>(null);
   const [content, setContent] = useState<SentenceExerciseContent | null>(null);
@@ -119,6 +123,8 @@ export function TrainingSentenceSession(props: Props) {
   }, [candidate, content, loading, terminal, session.members, session.runGeneration, session.sessionId, contentLanguageCode, translationTargetLanguageCode]);
 
   const exclusion = useTrainingExclusion({ userId, onSessionSuperseded: onSessionSuperseded ?? onExit, identity: candidate?.targetKey ?? "none", sessionId: session.sessionId, target: { kind: "exercise", targetId: candidate?.targetId ?? "" }, onAccepted: async () => { completedRef.current++; setCompleted(completedRef.current); await loadNext(); } });
+  useRecordedStudyTime({ ownerId: userId, sessionId: session.sessionId, family: "sentence", entryId: candidate?.entryId, targetId: candidate?.targetId,
+    enabled: studyTimeEnabled && Boolean(candidate && content) && !loading && !terminal && !submitting && !exclusion.busy && !exclusion.failed });
   async function grade(result: PlatformTrainingExerciseReviewResultV2) {
     if (!candidate || !content || submitting || exclusion.busy) return;
     setSubmitting(true); setFailed(false);

@@ -681,3 +681,21 @@ reset; see `407-study-time-integration.md` for semantics and remaining integrati
 Next: bounded client delivery, actual ordinary/idiom/sentence readiness/overlay
 pause gates, then full approved Statistics with real historical read models.
 Production is not deployed; all other #407 acceptance gates remain open.
+
+
+## Active-time browser wiring — 2026-09-30
+
+Approved Training presentation now wires the attention recorder to prepared owned
+ordinary/idiom/sentence members, with global navigation/drawer/load gates and local
+submission/recovery gates. Open native/modal dialogs and menus pause the shared
+clock. Captured member metadata survives replacement without relabeling. Delivery
+is a bounded memory queue, principal-guarded, immutable-ID retried, timeout-bounded
+and independent of grading. Rollout off creates no measurement identity/timer.
+
+161 session/screen/attention/delivery checks and three wrapper gate/identity checks
+pass; typecheck and shared style guard pass. Existing ordinary handlePlayAudio lint
+and act/GoTrueClient warnings remain tracked. Real-browser storage/focus/pause
+acceptance is still pending; this is not proof of complete measured Statistics.
+See `407-study-time-integration.md`. Next: local real-data attention smoke, then
+Statistics read models/presentation and the remaining #407 gates. Production is not
+deployed.

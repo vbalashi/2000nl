@@ -32,7 +32,10 @@ import { useTrainingExclusion } from "../v2/useTrainingExclusion";
 import { trainingExclusionCopy } from "../v2/TrainingExcludeAction";
 import { TrainingIdiomCard } from "./TrainingIdiomCard";
 
+import { useRecordedStudyTime } from "../useRecordedStudyTime";
+
 type Props = {
+  studyTimeEnabled?: boolean;
   userId: string;
   session: PlatformIdiomExerciseSessionV2;
   contentLanguageCode: string;
@@ -82,6 +85,7 @@ const copy = {
 } satisfies Record<OnboardingLanguage, Record<string, unknown>>;
 
 export function TrainingIdiomSession({
+  studyTimeEnabled = false,
   userId,
   session,
   contentLanguageCode,
@@ -234,6 +238,9 @@ export function TrainingIdiomSession({
       await loadNext();
     },
   });
+
+  useRecordedStudyTime({ ownerId: userId, sessionId: session.sessionId, family: "idiom", entryId: candidate?.entryId, targetId: candidate?.targetId,
+    enabled: studyTimeEnabled && Boolean(candidate && content) && !loading && !terminal && !submitting && !exclusion.busy && !exclusion.failed });
 
   const grade = async (
     reviewResult: PlatformTrainingExerciseReviewResultV2,
