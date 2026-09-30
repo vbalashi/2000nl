@@ -1,0 +1,428 @@
+[
+  {
+    "name": "toggle list #1",
+    "ms": 1254,
+    "reqs": [
+      {
+        "m": "GET",
+        "p": "/auth/v1/user",
+        "ms": 42,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "remove_entries_from_user_list",
+        "ms": 234,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "GET",
+        "p": "/auth/v1/user",
+        "ms": 42,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_user_list_memberships_for_entries",
+        "ms": 187,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "GET",
+        "p": "/auth/v1/user",
+        "ms": 45,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 207,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 220,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_active_training_scope",
+        "ms": 238,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_detailed_training_stats",
+        "ms": 4697,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_word_list_summary",
+        "ms": 212,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "update_active_training_scope",
+        "ms": 100,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_training_scenarios",
+        "ms": 163,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_detailed_training_stats",
+        "ms": 1008,
+        "st": "cfExtPri"
+      }
+    ]
+  },
+  {
+    "name": "toggle list #2",
+    "ms": 891,
+    "reqs": [
+      {
+        "m": "GET",
+        "p": "/auth/v1/user",
+        "ms": 83,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "add_entry_to_user_list",
+        "ms": 114,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "GET",
+        "p": "/auth/v1/user",
+        "ms": 72,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_next_card",
+        "ms": 1531,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_user_list_memberships_for_entries",
+        "ms": 237,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "GET",
+        "p": "/auth/v1/user",
+        "ms": 68,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 104,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 113,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_active_training_scope",
+        "ms": 59,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_word_list_summary",
+        "ms": 95,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_training_scenarios",
+        "ms": 79,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "update_active_training_scope",
+        "ms": 112,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "/api/platform/v2/lookup",
+        "ms": 649,
+        "st": "auth.get-user;dur=127.6, auth.principal-session;dur=127.6, route.auth;dur=256.4, route.operation;dur=345.3, route.total;dur=602.7, lookup.exact-group;dur=221.3, lookup.user-state;dur=118.8, lookup.translations;dur=122.7, lookup.cross-references;dur=0.1, lookup.projection-input;dur=0.7, cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_next_card",
+        "ms": 404,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "/api/platform/v2/lookup",
+        "ms": 254,
+        "st": "auth.cache-hit;dur=0.6, route.auth;dur=0.8, route.operation;dur=207.3, route.total;dur=209.5, lookup.exact-group;dur=143.0, lookup.translations;dur=58.0, lookup.user-state;dur=62.9, lookup.cross-references;dur=0.1, lookup.projection-input;dur=0.7, cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_detailed_training_stats",
+        "ms": 958,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_next_card",
+        "ms": 436,
+        "st": "cfExtPri"
+      }
+    ]
+  },
+  {
+    "name": "toggle list #3",
+    "ms": 605,
+    "reqs": [
+      {
+        "m": "GET",
+        "p": "/auth/v1/user",
+        "ms": 82,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "remove_entries_from_user_list",
+        "ms": 76,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "/api/platform/v2/lookup",
+        "ms": 222,
+        "st": "auth.cache-hit;dur=0.5, route.auth;dur=1.0, route.operation;dur=156.3, route.total;dur=158.8, lookup.exact-group;dur=82.8, lookup.translations;dur=58.8, lookup.user-state;dur=72.2, lookup.cross-references;dur=0.1, lookup.projection-input;dur=0.6, cfExtPri"
+      },
+      {
+        "m": "GET",
+        "p": "/auth/v1/user",
+        "ms": 71,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "/api/platform/v1/audio/resolve",
+        "ms": 49,
+        "st": "route.total;dur=5.0, cfExtPri"
+      },
+      {
+        "m": "GET",
+        "p": "/api/tts",
+        "ms": 44,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_user_list_memberships_for_entries",
+        "ms": 98,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "GET",
+        "p": "/auth/v1/user",
+        "ms": 66,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 68,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 77,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_active_training_scope",
+        "ms": 53,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_training_scenarios",
+        "ms": 68,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_word_list_summary",
+        "ms": 49,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "update_active_training_scope",
+        "ms": 52,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_next_card",
+        "ms": 956,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_next_card",
+        "ms": 969,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_next_card",
+        "ms": 1085,
+        "st": "cfExtPri"
+      }
+    ]
+  },
+  {
+    "name": "toggle list #4",
+    "ms": 2464,
+    "reqs": [
+      {
+        "m": "POST",
+        "p": "get_detailed_training_stats",
+        "ms": 1565,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "GET",
+        "p": "/auth/v1/user",
+        "ms": 514,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "add_entry_to_user_list",
+        "ms": 898,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "GET",
+        "p": "/auth/v1/user",
+        "ms": 81,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "/api/platform/v2/lookup",
+        "ms": 1844,
+        "st": "auth.cache-hit;dur=0.5, route.auth;dur=0.8, route.operation;dur=1795.1, route.total;dur=1797.4, lookup.exact-group;dur=1554.0, lookup.user-state;dur=177.4, lookup.translations;dur=239.3, lookup.cross-references;dur=0.1, lookup.projection-input;dur=1.3, cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "/api/platform/v2/lookup",
+        "ms": 1102,
+        "st": "auth.cache-hit;dur=0.3, route.auth;dur=0.4, route.operation;dur=1059.7, route.total;dur=1061.6, lookup.exact-group;dur=807.9, lookup.translations;dur=183.2, lookup.user-state;dur=250.4, lookup.cross-references;dur=0.1, lookup.projection-input;dur=0.6, cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "/api/platform/v2/lookup",
+        "ms": 925,
+        "st": "auth.cache-hit;dur=0.9, route.auth;dur=1.1, route.operation;dur=876.9, route.total;dur=880.3, lookup.exact-group;dur=523.7, lookup.translations;dur=132.5, lookup.user-state;dur=351.8, lookup.cross-references;dur=0.1, lookup.projection-input;dur=0.6, cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "/api/platform/v1/audio/resolve",
+        "ms": 44,
+        "st": "route.total;dur=6.0, cfExtPri"
+      },
+      {
+        "m": "GET",
+        "p": "/api/tts",
+        "ms": 53,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "/api/platform/v1/audio/resolve",
+        "ms": 389,
+        "st": "route.total;dur=342.4, cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_user_list_memberships_for_entries",
+        "ms": 522,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "GET",
+        "p": "/api/tts",
+        "ms": 52,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "GET",
+        "p": "/auth/v1/user",
+        "ms": 47,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 64,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 228,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_training_scenarios",
+        "ms": 46,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_active_training_scope",
+        "ms": 53,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_next_card",
+        "ms": 818,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_word_list_summary",
+        "ms": 76,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "update_active_training_scope",
+        "ms": 133,
+        "st": "cfExtPri"
+      }
+    ]
+  }
+]
