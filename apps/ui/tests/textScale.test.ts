@@ -12,6 +12,11 @@ test('reading content grows faster than UI and large headwords at each enlarged 
  }
  expect(textSizeStyles('extra')['--practice-reading-small']).toBe('1.625rem');
 });
+test('the forms line is capped at 1.6x so it stays below the headword on Extra',()=>{
+ expect(textSizeStyles('standard')['--practice-reading-forms']).toBe('1.125rem');
+ expect(textSizeStyles('large')['--practice-reading-forms']).toBe('1.6875rem');
+ expect(textSizeStyles('extra')['--practice-reading-forms']).toBe('1.8rem');
+});
 test('legacy and invalid values have explicit migration behavior',()=>{
  expect(normalizeTextSize('normal')).toBe('standard');
  expect(normalizeTextSize('largest')).toBe('large');

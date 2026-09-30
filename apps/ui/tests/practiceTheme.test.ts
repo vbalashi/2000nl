@@ -26,5 +26,11 @@ for(const name of ['lavender','blue','graphite'])for(const dark of [false,true])
   for(const ink of ['danger','warning','success','info']) expect(contrast(p[ink],p['surface-hover']),`${ink} rating on hover`).toBeGreaterThanOrEqual(4.5);
   for(const [ink,bg] of [['on-accent','accent'],['on-accent','accent-hover'],['selected-text','selected'],['success','success-soft'],['warning','warning-soft'],['danger','danger-soft'],['info','info-soft']])expect(contrast(p[ink],p[bg]),`${ink} on ${bg}`).toBeGreaterThanOrEqual(4.5);
  });
+ test(`${name} ${dark?'dark':'light'}: selected states and activity levels stay legible`,()=>{
+  const p=palette(name,dark);
+  expect(contrast(p['text-secondary'],p.selected),'secondary on selected').toBeGreaterThanOrEqual(4.5);
+  for(const level of ['activity-1','activity-2','activity-3'])expect(contrast(p[level],p.canvas),`${level} on canvas`).toBeGreaterThanOrEqual(3);
+  expect(contrast(p['activity-3'],p.canvas)).toBeGreaterThan(contrast(p['activity-1'],p.canvas));
+ });
  test(`${name} ${dark?'dark':'light'}: focus visible on canvas and panels`,()=>{const p=palette(name,dark);for(const surface of ['canvas','surface','hero'])expect(contrast(p.focus,p[surface])).toBeGreaterThanOrEqual(3);});
 }

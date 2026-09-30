@@ -25,4 +25,19 @@ if(process.argv.includes('--check')){
  const guardedPreview=['prototype.module.css','trainingHome.module.css','libraryStudy.module.css'];
  const bad=inventory.filter(row=>(row.selected||row.file.startsWith('components/')||guardedPreview.includes(path.basename(row.file)))&&!row.file.endsWith('practiceTheme.module.css')).filter(row=>row.colors.length||row.fontSizes.some(value=>/\dpx\b/.test(value))||row.fontFamilies.some(value=>value!=='inherit'&&value!=='var(--default-font-family)'&&!value.startsWith('var(--practice-font-')));
  if(bad.length){console.error('Untokenized presentation styles:',bad.map(row=>row.file).join(', '));process.exitCode=1;}else console.log('Shared theme guard passed.');
+ // Working screens still carry legacy literals; counts may only fall.
+ const baselineFile=path.join(ui,'scripts/practice-style-baseline.json');
+ const legacyPattern=/#[0-9a-f]{6}\b|#[0-9a-f]{3}\b|\b(?:text|bg|border|ring|from|to|via|fill|stroke|outline|divide|shadow)-(?:slate|gray|zinc|neutral|stone|indigo|violet|purple|blue|sky|cyan|teal|emerald|green|lime|amber|yellow|orange|red|rose|pink|white|black)(?:-\d{2,3})?\b|\btext-\[\d+(?:\.\d+)?px\]/gi;
+ const sourceFiles=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(item=>item.isDirectory()?sourceFiles(path.join(dir,item.name)):/\.(tsx?|css)$/.test(item.name)&&!/\.test\./.test(item.name)?[path.join(dir,item.name)]:[]);
+ const counts=Object.fromEntries(['components/training','components/navigation'].flatMap(dir=>sourceFiles(path.join(ui,dir)))
+  .map(file=>[path.relative(ui,file),(fs.readFileSync(file,'utf8').match(legacyPattern)||[]).length]).filter(([,n])=>n>0).sort());
+ if(process.argv.includes('--update-baseline')){fs.writeFileSync(baselineFile,JSON.stringify(counts,null,1)+'\n');console.log('Legacy literal baseline updated.');}
+ else{
+  const baseline=JSON.parse(fs.readFileSync(baselineFile,'utf8'));
+  const grown=Object.entries(counts).filter(([file,n])=>n>(baseline[file]??0));
+  const stale=Object.entries(baseline).filter(([file,n])=>(counts[file]??0)<n);
+  if(grown.length){console.error('New legacy colour/size literals:',grown.map(([f,n])=>`${f} ${baseline[f]??0}→${n}`).join(', '));process.exitCode=1;}
+  else console.log(`Legacy literal ratchet passed (${Object.values(counts).reduce((a,b)=>a+b,0)} remaining).`);
+  if(stale.length)console.log('Baseline can be lowered (--check --update-baseline):',stale.map(([f])=>f).join(', '));
+ }
 }else console.log(JSON.stringify(report,null,2));

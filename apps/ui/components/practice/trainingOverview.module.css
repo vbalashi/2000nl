@@ -15,6 +15,9 @@
 :global([data-text-size="extra"]) .heroActions .start{flex:1 1 100%}
 :global([data-text-size="extra"]) .heroActions .configure{margin-left:auto}
 @media(max-width:430px){
+ .heroActions{flex-wrap:wrap;gap:6px 18px}
+ .heroActions .start{flex:1 1 100%}
+ .heroActions .configure{margin-left:auto}
  :global([data-text-size="extra"]) .numbers{grid-template-columns:1fr;gap:8px;margin:24px 0}
  :global([data-text-size="extra"]) .numbers>div{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:baseline;gap:14px}
  :global([data-text-size="extra"]) .numbers dd{grid-column:1;grid-row:1;order:0}

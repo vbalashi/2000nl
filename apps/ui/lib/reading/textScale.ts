@@ -76,6 +76,8 @@ export function textSizeStyles(
     prompt: 28,
   }))
     vars[`--practice-reading-${role}`] = rem(base, scale.reading);
+  // Owner decision: the forms line stays below the headword on the largest scale.
+  vars["--practice-reading-forms"] = rem(18, Math.min(scale.reading, 1.6));
   vars["--practice-definition-size"] = vars["--practice-reading-definition"];
   vars["--practice-literary-size"] = vars["--practice-reading-literary"];
   return vars;

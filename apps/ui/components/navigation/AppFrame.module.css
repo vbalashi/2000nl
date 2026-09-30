@@ -4,6 +4,7 @@
   --app-frame-muted: var(--practice-text-muted, #64748b);
   --app-frame-line: var(--practice-border, #cbd5e1);
   --app-frame-control-surface: var(--practice-surface-subtle, rgb(241 245 249 / 0.8));
+  --app-frame-active: var(--practice-surface, #ffffff);
   display: flex;
   height: 100dvh;
   min-height: 100dvh;
@@ -19,6 +20,7 @@
   --app-frame-muted: var(--practice-text-muted, #bfc7d4);
   --app-frame-line: var(--practice-border, #394353);
   --app-frame-control-surface: var(--practice-surface-subtle, rgb(30 41 59 / 0.8));
+  --app-frame-active: var(--practice-surface, #334155);
 }
 
 .header {
@@ -48,7 +50,7 @@
 }
 
 .brandAccent {
-  color: #8b89f6;
+  color: var(--practice-accent, #8b89f6);
 }
 
 .desktopNav {
@@ -66,8 +68,54 @@
 }
 
 .desktopNav button:focus-visible {
-  outline: 2px solid #8b89f6;
+  outline: 2px solid var(--practice-focus, #8b89f6);
   outline-offset: 2px;
+}
+
+.primaryNav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--app-frame-line);
+  border-radius: 12px;
+  background: var(--app-frame-control-surface);
+  padding: 4px;
+  font-size: var(--practice-text-caption, 0.75rem);
+}
+
+.primaryNav button {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-frame-muted);
+  padding: 0 12px;
+  font-size: inherit;
+  font-weight: 500;
+}
+
+.primaryNav button:hover {
+  color: var(--app-frame-ink);
+}
+
+.primaryNav button[aria-current="page"] {
+  background: var(--app-frame-active);
+  color: var(--practice-selected-text, var(--app-frame-ink));
+  box-shadow: 0 1px 2px var(--practice-shadow, rgb(15 23 42 / 0.08));
+}
+
+.primaryNav button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.primaryNav svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
 .utilities {
@@ -105,13 +153,13 @@
 
 .mobileMenuButton:focus-visible,
 .menu button:focus-visible {
-  outline: 2px solid #8b89f6;
+  outline: 2px solid var(--practice-focus, #8b89f6);
   outline-offset: 2px;
 }
 
 .mobileMenuButton[aria-expanded="true"] {
-  border-color: #8b89f6;
-  background: rgb(139 137 246 / 0.15);
+  border-color: var(--practice-control-border, #8b89f6);
+  background: var(--practice-selected, rgb(139 137 246 / 0.15));
 }
 
 .mobileMenuButton:disabled {
@@ -144,8 +192,8 @@
   color: var(--app-frame-ink);
   padding: 0 10px;
   text-align: left;
-  font-size: var(--practice-text-body, 0.875rem);
-  font-weight: 600;
+  font-size: var(--practice-text-small, 0.8125rem);
+  font-weight: 500;
 }
 
 .menu > nav {
@@ -200,6 +248,10 @@
     min-width: 0;
     justify-content: flex-end;
   }
+
+  .brand {
+    font-size: var(--practice-text-title-sm, 20px);
+  }
 }
 
 @media (max-width: 359px) {
@@ -216,4 +268,3 @@
   }
 }
 
-.desktopNav > nav {font-size:var(--practice-text-body, 0.875rem);}
