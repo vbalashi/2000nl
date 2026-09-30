@@ -34,6 +34,13 @@ import type { TrainingSetupDraft } from "@/lib/training/setups/types";
 export type { TrainingSetupDraft } from "@/lib/training/setups/types";
 
 export const DEFAULT_SESSION_SIZE: TrainingSessionSize = 10;
+/** A material chosen elsewhere (Statistics); opens the builder, never starts a run by itself. */
+export type TrainingMaterialIntent = {
+  key: number;
+  userId: string;
+  languageCode: string;
+  material: Pick<TrainingSetupDraft, "materialMode"> & Partial<Pick<TrainingSetupDraft, "listValue" | "dictionaryIds">>;
+};
 
 export type {TrainingSetupOption} from "@/lib/training/setups/availability";
 import type {TrainingSetupOption} from "@/lib/training/setups/availability";
@@ -91,6 +98,8 @@ type Props = {
   activeSessionLabel?: string;
   ownedSession?: OwnedTrainingOverviewSession;
   onContinue: () => void;
+  materialIntent?: TrainingMaterialIntent | null;
+  onMaterialIntentConsumed?: () => void;
   onStart: (
     draft: TrainingSetupDraft,
   ) => boolean | void | Promise<boolean | void>;
@@ -474,6 +483,8 @@ export function TrainingTodaySetup({
   activeSessionLabel,
   ownedSession,
   onContinue,
+  materialIntent = null,
+  onMaterialIntentConsumed,
   onStart,
   onRetry,
 }: Props) {
@@ -669,6 +680,29 @@ export function TrainingTodaySetup({
       void requestStart(selected.draft);
     } else setPresetMessage(t.chooseGoal);
   }, [selectedIntent, userId, trainingLanguageCode, trainingLanguageLoading, scenarioLoading, pendingLanguage, account.status, account.snapshot.document.trainings, startBlocked, accountCopy.conflict, scenarios, lists, dictionaries, requestStart, t.chooseGoal, t.materialUnavailable]);
+
+  const handledMaterialIntent = useRef<number | null>(null);
+  useEffect(() => {
+    if (!materialIntent || handledMaterialIntent.current === materialIntent.key) return;
+    const finish = () => { handledMaterialIntent.current = materialIntent.key; onMaterialIntentConsumed?.(); };
+    if (materialIntent.userId !== userId) { finish(); return; }
+    if (material.status !== "ready") return;
+    if (!trainingLanguageOptions.some(option => option.value === materialIntent.languageCode)) {
+      finish(); setPresetMessage(t.materialUnavailable); return;
+    }
+    if (materialIntent.languageCode !== trainingLanguageCode) {
+      if (pendingLanguage !== materialIntent.languageCode) {
+        setPendingLanguage(materialIntent.languageCode);
+        onTrainingLanguageChange?.(materialIntent.languageCode);
+      }
+      return;
+    }
+    if (trainingLanguageLoading || pendingLanguage) return;
+    finish();
+    setSelectedIntent(null); setTrainingName(null); setEditingPresetId(null); setPresetMessage("");
+    setDraft({ ...initialDraft, sessionSize: initialDraft.sessionSize ?? DEFAULT_SESSION_SIZE, ...materialIntent.material });
+    setScreen("setup");
+  }, [materialIntent, onMaterialIntentConsumed, userId, material.status, trainingLanguageOptions, trainingLanguageCode, trainingLanguageLoading, pendingLanguage, onTrainingLanguageChange, initialDraft, t.materialUnavailable]);
 
   if (screen === "today" && status !== "ready") {
     return status === "error" ? (

@@ -786,3 +786,33 @@ console errors on Statistics.
 Next: material read model (collections/dictionaries + All; due and started/total in
 cards) with language tabs from account material order; then Training session card
 surface/ratings/reveal/header; then mobile tab navigation.
+
+## Statistics material scope on real read models — 2026-10-01
+
+Migration 189 adds read-only `get_training_material_progress_v1(language)`: All
+enabled material, each readable enabled dictionary (live ACL, user dictionaries
+never disabled) and each curated/own collection with entries in the language.
+Coverage = distinct started meanings / total; due = scheduled directions due before
+the 04:00 study-day end, excluding cards first introduced today (same rule as the
+current counters). Capped at 200 named materials; nothing is written. Contract
+`2000nl-db-189` with `training-material-progress-probe.sql` in the read-only
+postflight.
+
+`/api/training/material-progress` (first-party bearer, `language` only) validates
+rows fail-closed. `AccountStatistics` owns language tabs (account material order,
+paused languages cannot start), the material picker/dialog, queue and coverage;
+each read has its own loading/error/retry. "Practise" hands a
+`TrainingMaterialIntent` to the builder: it switches language first, opens the
+builder with the chosen material and never starts a run; another account's intent
+is dropped. The legacy zero/2000 fallback is no longer shown on the approved path.
+
+Validation: disposable SQL/FSRS 269 tests (material progress + activity included),
+manifest validate and retaining check at 189, 8 new UI/API tests (route, intent),
+54 Statistics/setup tests, typecheck, targeted lint, style guard. Headless local QA
+at 1024px and 320px (dark): real queue 4 / coverage 2 of 18 163, material switch,
+Practise → builder with VanDale Dutch and no run; fixed tiny-ratio "0 %" and
+clipped material chips at 320px.
+
+Open: language tabs with several configured languages and the paused state not yet
+seen in a browser; EN/NL copy reviewed only through the localization test.
+Next: Training session card surface/ratings/reveal/header, then mobile tab navigation.

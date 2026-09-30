@@ -525,3 +525,6 @@
 
 -- Read-only per-study-day learner activity for Statistics.
 \i db/migrations/188_training_activity_days.sql
+
+-- Read-only review queue and coverage per learning material for Statistics.
+\i db/migrations/189_training_material_progress.sql

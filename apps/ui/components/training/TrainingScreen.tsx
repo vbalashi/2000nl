@@ -93,6 +93,7 @@ import { StatisticsDestination } from "@/components/navigation/StatisticsDestina
 import {
   TrainingTodaySetup,
   DEFAULT_SESSION_SIZE,
+  type TrainingMaterialIntent,
   type TrainingSetupDraft,
 } from "./pilot/TrainingTodaySetup";
 import { TrainingIdiomSession } from "./pilot/TrainingIdiomSession";
@@ -450,6 +451,8 @@ function TrainingScreenContent({
   } | null>(null);
   const [detailInitialGroup, setDetailInitialGroup] =
     useState<PlatformHeadwordGroupV2 | null>(null);
+  const [statisticsMaterialIntent, setStatisticsMaterialIntent] =
+    useState<TrainingMaterialIntent | null>(null);
   const [stats, setStats] = useState<DetailedStats>({
     newWordsToday: 0,
     newCardsToday: 0,
@@ -2411,6 +2414,8 @@ function TrainingScreenContent({
       >
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
           <TrainingTodaySetup
+            materialIntent={statisticsMaterialIntent}
+            onMaterialIntentConsumed={() => setStatisticsMaterialIntent(null)}
             userId={user.id}
             trainingLanguageCode={currentTrainingLanguage}
             trainingLanguageOptions={trainingLanguageOptions}
@@ -2691,9 +2696,16 @@ function TrainingScreenContent({
         open={visibleDestination === "statistics"}
         interfaceLanguage={onboardingLang}
         stats={stats}
-        statsStatus={trainingStatsStatus}
-        materialLabel={trainingFocusFilter.dictionaryScope ? undefined : wordListLabel || undefined}
         onStartTraining={() => onRequestDestination("training")}
+        onPractiseMaterial={(languageCode, material) => {
+          setStatisticsMaterialIntent({
+            key: Date.now(), userId: user.id, languageCode,
+            material: material.kind === "all" ? { materialMode: "all-dictionaries" }
+              : material.kind === "dictionary" ? { materialMode: "selected-dictionaries", dictionaryIds: [material.id!] }
+              : { materialMode: "collection", listValue: `${material.listType}:${material.id}` },
+          });
+          onRequestDestination("training");
+        }}
         onHistory={openTrainingHistory}
       />
       {destination === TRAINING_HISTORY_DESTINATION ? (

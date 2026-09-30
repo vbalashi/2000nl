@@ -1,35 +1,8 @@
-/* Prototype-only language/material pickers and demo controls. Shared sections live in components/practice/statistics. */
+/* Prototype-only demo controls. Shared sections live in components/practice/statistics. */
 .statistics{color:var(--practice-text);padding-bottom:24px;font-family:var(--practice-font-ui)}
 .srOnly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.languageRow{display:flex;justify-content:flex-start;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:18px}
-.languageTabs{display:flex;max-width:100%;border:1px solid var(--practice-border);border-radius:8px;background:var(--practice-surface);overflow:hidden}
-.statistics .languageTabs button,.moreLanguage{position:relative;display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:26px;box-sizing:border-box;padding:4px 13px;border:0;border-right:1px solid var(--practice-control-border);background:transparent;font-size:var(--practice-text-caption);line-height:1.35;color:var(--practice-text-muted);white-space:normal;overflow-wrap:anywhere}
-.statistics .languageTabs button[aria-pressed=true]{background:var(--practice-surface-subtle);color:var(--practice-text-secondary)}
-.moreLanguage{border-right:0}
-.moreLanguage[data-active="true"]{background:var(--practice-canvas)}
-.moreLanguage select{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
-.moreLanguage:focus-within{outline:2px solid var(--practice-focus);outline-offset:-2px}
 .recentActivity{display:flex;align-items:center;gap:8px;min-height:44px;margin:-16px 0 8px;padding:8px 0;border:0;background:none;font:inherit;font-size:var(--practice-text-small);color:var(--practice-accent);cursor:pointer}
 .recentActivity:focus-visible{outline:2px solid var(--practice-focus);outline-offset:3px}
-.trainingScopes{margin-bottom:18px}
-.trainingScopes .languageTabs{width:fit-content}
-.statistics .trainingScopes .scopeMore{border-right:0}
-.materialTitle{margin:0 0 8px;font-size:var(--practice-text-title-sm);font-weight:550;line-height:1.3;color:var(--practice-text)}
-.materialHint{margin:0 0 14px;font-size:var(--practice-text-label);line-height:1.5;color:var(--practice-text-muted)}
-.scopeDialog{width:min(440px,calc(100vw - 40px));max-height:80dvh;padding:0;border:1px solid var(--practice-border);border-radius:18px;background:var(--practice-surface);color:var(--practice-text-secondary);box-shadow:0 24px 90px var(--practice-shadow)}
-.scopeDialog::backdrop{background:var(--practice-backdrop);backdrop-filter:blur(5px)}
-.dialogInner{padding:22px}
-.dialogHeading{display:flex;align-items:center;justify-content:space-between;gap:16px}
-.dialogHeading h2{margin:0;font-size:var(--practice-text-lead);font-weight:500}
-.statistics .dialogHeading button{flex-shrink:0;padding:6px;border:0;border-radius:8px;background:transparent;color:var(--practice-text-muted)}
-.dialogHint{margin:8px 0 20px;font-size:var(--practice-text-caption);color:var(--practice-text-muted)}
-.scopeOptions{display:flex;flex-direction:column;gap:8px}
-.statistics .scopeOptions button{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;border:1px solid var(--practice-control-border);border-radius:10px;background:var(--practice-surface);text-align:left;color:var(--practice-text-secondary)}
-.statistics .scopeOptions button[aria-pressed=true]{background:var(--practice-canvas)}
-.scopeOptions button>span{min-width:0;overflow-wrap:anywhere}
-.scopeOptions button>svg{flex-shrink:0}
-.scopeOptions strong{display:block;font-size:var(--practice-text-body);font-weight:500}
-.scopeOptions small{display:block;margin-top:5px;font-size:var(--practice-text-label);line-height:1.5;color:var(--practice-text-muted)}
 .notes{padding-top:14px;border-top:1px solid var(--practice-border);font-size:var(--practice-text-label);color:var(--practice-text-muted)}
 .notes summary{cursor:pointer}
 .notes p{max-width:570px;line-height:1.7}
@@ -39,11 +12,3 @@
 /* Match Library and Builder: keep page scrolling, hide only its scrollbar. */
 :global(html):has(.statistics){scrollbar-width:none}
 :global(html):has(.statistics)::-webkit-scrollbar{display:none}
-@media(max-width:600px){
- .languageTabs,.trainingScopes .languageTabs{width:100%}
- .statistics .languageTabs button,.moreLanguage{flex:1;padding:4px 10px}
- .statistics .trainingScopes .languageTabs button{padding:4px 12px;font-size:var(--practice-text-label);white-space:nowrap}
- .statistics .trainingScopes .scopeMore{flex:0}
- :global([data-text-size="extra"]) .languageRow .languageTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media(max-width:400px){.languageRow .languageTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}

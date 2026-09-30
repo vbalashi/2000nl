@@ -264,7 +264,7 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 188 in order
+An enabled deployment must apply or verify migrations 123 through 189 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -633,3 +633,14 @@ current study-day counter definitions across meaning, idiom and sentence history
 measured time is delegated to the migration-187 reader. No table, grant or
 learner state changes. Apply via retaining migration with the checksummed
 manifest and forward/read-only probe chains; no reset/import is required.
+
+## Material review queue and coverage (migration 189)
+
+Migration 189 adds read-only authenticated
+`get_training_material_progress_v1(language)` for the Statistics material
+section: All enabled material, each readable enabled dictionary (personal
+dictionaries stay enabled) and each curated/own collection with entries in the
+language. Coverage counts distinct started meaning cards over readable, enabled
+entries; due counts scheduled directions as the current study-day counters do.
+Dictionary ACLs are evaluated live; no grants, tables or learner state change.
+Apply with the checksummed manifest via retaining migration.

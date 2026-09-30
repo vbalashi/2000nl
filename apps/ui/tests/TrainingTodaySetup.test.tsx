@@ -696,6 +696,33 @@ test("approved source picker selects dictionaries on the same screen",async()=>{
 });
 
 
+test("a Statistics material opens the builder in its language without starting a run",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const onStart=vi.fn(),onTrainingLanguageChange=vi.fn(),onMaterialIntentConsumed=vi.fn();
+ const intent={key:1,userId:"stats-intent",languageCode:"en",material:{materialMode:"selected-dictionaries" as const,dictionaryIds:[dictionaryA]}};
+ const props={...baseProps,userId:"stats-intent",trainingLanguageCode:"nl",hasOwnedSession:false,onStart,onTrainingLanguageChange,onMaterialIntentConsumed,
+  trainingLanguageOptions:[{value:"nl",label:"Dutch"},{value:"en",label:"English"}],dictionaries:[{value:dictionaryA,label:"Dictionary A"}]};
+ const view=render(<TrainingTodaySetup {...props} materialIntent={intent}/>);
+ await waitFor(()=>expect(onTrainingLanguageChange).toHaveBeenCalledWith("en"));
+ expect(onMaterialIntentConsumed).not.toHaveBeenCalled();
+ view.rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" materialIntent={intent}/>);
+ await waitFor(()=>expect(onMaterialIntentConsumed).toHaveBeenCalledOnce());
+ await screen.findByRole("button",{name:"Start training"});
+ expect(onStart).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ expect(onStart).toHaveBeenCalledWith(expect.objectContaining({materialMode:"selected-dictionaries",dictionaryIds:[dictionaryA]}));
+});
+
+test("a Statistics material for another account is ignored",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const onStart=vi.fn(),onMaterialIntentConsumed=vi.fn(),onTrainingLanguageChange=vi.fn();
+ render(<TrainingTodaySetup {...baseProps} userId="stats-owner" trainingLanguageCode="nl" hasOwnedSession={false} onStart={onStart} onTrainingLanguageChange={onTrainingLanguageChange}
+  onMaterialIntentConsumed={onMaterialIntentConsumed} materialIntent={{key:2,userId:"someone-else",languageCode:"nl",material:{materialMode:"all-dictionaries"}}}/>);
+ await waitFor(()=>expect(onMaterialIntentConsumed).toHaveBeenCalledOnce());
+ await screen.findByRole("button",{name:"Create training"});
+ expect(onStart).not.toHaveBeenCalled();expect(onTrainingLanguageChange).not.toHaveBeenCalled();
+});
+
 test("switching accounts discards an open builder draft", async () => {
   vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const onStart = vi.fn();
