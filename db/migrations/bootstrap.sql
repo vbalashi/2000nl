@@ -512,3 +512,6 @@
 
 -- Account material selection preferences; separate from dictionary ACLs.
 \i db/migrations/183_account_material_preferences.sql
+
+-- New-run material selection snapshots; current runs retain their saved scope.
+\i db/migrations/184_training_material_selection_snapshot.sql

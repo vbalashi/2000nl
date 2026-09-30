@@ -259,3 +259,11 @@ Account material settings (migration 183) have a disposable integration check:
 It creates/removes a separate local database and checks account isolation,
 concurrent revision conflicts, document constraints, unrelated settings and an
 existing session row. It does not reset or import into the canonical QA database.
+
+The material launch/resume policy (migration 184) has its own disposable check:
+`LOCAL_SUPABASE_DB_URL=... node --test db/scripts/training_material_selection_snapshot.integration.test.mjs`.
+It bootstraps and reapplies DDL in a separate database, tests all current start
+families and cached v1 receipts, frozen membership/replacement after pause,
+forged client snapshots, mixed-language collection filtering, disabled dictionary
+selection and independent dictionary access revocation. Fixtures create no
+learning action events and roll back; the database is removed afterward.

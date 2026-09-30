@@ -227,3 +227,36 @@ The authenticated security-invoker save RPC derives the principal from `auth.uid
 Validation: 35 checks across six model/client/API/body-reader and existing saved-training characterization suites, typecheck and targeted lint; 43 local harness/deploy checks. A disposable SQL integration checks own-row isolation, two concurrent devices (one save and one conflict with the winner's snapshot), stale revision, partial preference preservation, invalid direct writes, anonymous denial, idempotent DDL and an existing session row preserved byte-for-byte. This establishes storage behavior, not a completed pause/resume workflow. Migration 183 and its read-only probe are checksum-pinned in the reviewed forward manifest. Retaining local application passes contract 183 and the bounded read probe (1,434ms); the full local read-only check retains 18,163 entries, 68,102 forms, 161,795 search fields, two learner states and zero review rows.
 
 Pending next: server planning/new-start enforcement with frozen material selection for existing runs; account Settings controls and updated Training/Library material selectors. Existing all-readable catalog RPCs must remain available to resume and Settings. No pause/toggle production control is exposed yet. The rest of the approved Library/Statistics/history/navigation and active-session adapters remain pending. Rollout remains opt-in; production deployment is unperformed.
+
+## New-run material policy checkpoint — 2026-09-30
+
+Migration 184 applies the accepted pause rule at the existing server plan/start
+boundary. Plans and fresh starts resolve current account material preferences;
+a caller-supplied older snapshot is replaced. Sessions save the resulting
+selection in their existing filter. The ordinary scheduler, idiom/translation
+source relations and member replacement use the saved snapshot rather than
+current preferences. Pausing a language or disabling a dictionary does not
+rewrite members, learning state, saved setups or existing receipts. Existing
+sessions without snapshots retain their old scope. Dictionary access checks
+remain live and cannot be bypassed by the snapshot.
+
+The receipt check precedes material resolution for every current start family,
+including cached v1 calls. Compatibility candidate variants preserve legacy
+global scope, ranking, pair exclusion and source binding; material filtering
+occurs before offset/limit. Guarded edits use latest installed definitions and
+compile related CTE changes atomically. Existing all-readable catalog RPCs are
+unchanged for Settings and resume validation. The checksum-pinned forward/read
+contract advances to 184; production deployment remains unperformed.
+
+Validation covers idempotent DDL, current-policy plans, forged snapshots,
+mixed-language collection filtering, both extra-exercise families and cached
+starts/retries, unchanged existing members, resume, replacement after pause,
+private-list isolation, disabled dictionary rejection, independent access
+revocation and absence of learning action events. The existing exact-filter
+characterization now includes the additive server-authored material snapshot.
+Validation passes 259 scheduler/FSRS checks across 24 suites, 43 harness/deploy
+checks, disposable material integration, typecheck and targeted lint. Retaining
+local apply passes contract 184 and its bounded read probe (1,469ms); read-only
+verification retains 18,163 entries, 161,795 search fields, two learner states
+and zero review rows. Account Settings controls, selector adapters and the
+remaining approved screens/presentation are still pending; rollout is opt-in.

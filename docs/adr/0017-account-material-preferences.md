@@ -27,8 +27,7 @@ reject duplicates, invalid codes/UUIDs, unknown fields and oversized documents.
 Only the material columns and update timestamp are written. No browser
 restoration/import or optimistic success fallback is introduced.
 
-For the next integration stage, distinguish a new run from continuation of an
-existing run. New launches/plans must resolve the account's current material
+Distinguish a new run from continuation of an existing run. New launches/plans must resolve the account's current material
 preferences on the server, in addition to existing entitlement checks. A
 started run must retain its frozen material selection when preferences change,
 including member replacement; entitlement revocation continues to be checked.
@@ -42,3 +41,20 @@ No functioning pause/toggle UI is exposed before server launch/selection
 integration and resume tests establish these semantics. Existing selectors,
 current sessions, saved setups, progress and access checks are unchanged by
 this migration. The presentation rollout remains opt-in.
+
+Migration 184 implements that server boundary. Plans and new starts resolve the
+account document and overwrite any caller-supplied material snapshot. New runs
+store the snapshot in their existing `training_filter`; source relations and
+replacement candidates consume it without rereading mutable settings. Existing
+sessions with no snapshot retain their previous scope. Access/entitlement checks
+remain independent and live. Idempotent receipts are checked before resolving
+current settings, including cached v1 idiom/translation starts.
+
+The cached candidate contracts keep their global scope and ordering through
+private filtered variants derived from the latest installed definitions. Their
+material predicate runs before ordering/offset/limit, so disabled candidates do
+not consume a page's quota. Future changes to those legacy candidate definitions
+must also update these derived variants or retire the cached start boundary.
+
+Account Settings controls and Training/Library selector adapters remain pending;
+storage and server enforcement alone are not completed product integration.

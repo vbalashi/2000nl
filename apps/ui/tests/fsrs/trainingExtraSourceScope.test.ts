@@ -270,6 +270,11 @@ async function sourceEntries(
       expect(storedRows[0]).toEqual({
         training_filter: {
           ...startFilter,
+          materialSelection: {
+            schemaVersion: 1,
+            allowedLanguageCodes: null,
+            disabledDictionaryIds: [],
+          },
           dictionaryScope: {
             ...startFilter.dictionaryScope,
             dictionaryIds: [...startFilter.dictionaryScope.dictionaryIds].sort(),
