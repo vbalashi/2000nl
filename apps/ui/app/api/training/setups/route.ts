@@ -1,3 +1,4 @@
+import { readBoundedJson } from "@/lib/http/readBoundedJson";
 import { NextRequest } from "next/server";
 import { getAuthenticatedSupabase, jsonNoStore } from "@/lib/platform/serverSupabase";
 import { MAX_TRAINING_SETUPS_BYTES, parseTrainingSetupsDocument, parseTrainingSetupsSnapshot } from "@/lib/training/setups/model";
@@ -24,34 +25,9 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const auth = await accountAuth(request);
   if (auth instanceof Response) return auth;
-  const limit = MAX_TRAINING_SETUPS_BYTES;
-  if (Number(request.headers.get("content-length")) > limit) {
-    return jsonNoStore({ error: "training_setups_too_large" }, 413);
-  }
-  let body: unknown;
-  try {
-    const reader = request.body?.getReader();
-    if (!reader) return jsonNoStore({ error: "invalid_training_setups" }, 400);
-    const chunks: Uint8Array[] = [];
-    let bytes = 0;
-    try {
-      while (true) {
-        const chunk = await reader.read();
-        if (chunk.done) break;
-        bytes += chunk.value.byteLength;
-        if (bytes > limit) {
-          await reader.cancel();
-          return jsonNoStore({ error: "training_setups_too_large" }, 413);
-        }
-        chunks.push(chunk.value);
-      }
-    } finally {
-      reader.releaseLock();
-    }
-    body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-  } catch {
-    return jsonNoStore({ error: "invalid_training_setups" }, 400);
-  }
+  const parsed = await readBoundedJson(request, MAX_TRAINING_SETUPS_BYTES);
+  if ("error" in parsed) return jsonNoStore({error: parsed.error === "too_large" ? "training_setups_too_large" : "invalid_training_setups"}, parsed.error === "too_large" ? 413 : 400);
+  const body = parsed.body;
   if (body === null || typeof body !== "object" || Array.isArray(body)) {
     return jsonNoStore({ error: "invalid_training_setups" }, 400);
   }

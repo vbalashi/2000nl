@@ -509,3 +509,6 @@
 \i db/migrations/181_four_step_text_preferences.sql
 
 \i db/migrations/182_account_practice_palette.sql
+
+-- Account material selection preferences; separate from dictionary ACLs.
+\i db/migrations/183_account_material_preferences.sql

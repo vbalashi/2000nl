@@ -253,3 +253,9 @@ if a failed run leaves one behind; do not reset the canonical imported DB.
 `db-local-supabase.sh apply` uses the managed, checksum-pinned forward migration gate. Use `reset --confirm-reset` / `all --confirm-reset` only for a deliberate fresh DB; those paths retain bootstrap. An unmanaged/pre-baseline database fails closed rather than being silently bootstrapped.
 
 On 2026-09-30, the previous `apply` replayed bootstrap on the imported local corpus and failed in migration 120: its content-node source-order update collided with `platform_v2_content_nodes_active_source_order_idx`. Earlier statements had already reinstated old function definitions and retired overloads. Local recovery compared the populated DB with a disposable clean bootstrap at the same checkout, restored 15 non-extension function definitions, and removed the two legacy `*_without_known` signatures without cascading. The two digest adapters retain the intentional Supabase extension namespace. Word-entry, learner-state and review counts were unchanged. This is a harness replay failure, not stale dictionary data or a reason to reset user data. Managed probes and browser checks must pass after recovery.
+
+Account material settings (migration 183) have a disposable integration check:
+`LOCAL_SUPABASE_DB_URL=... node --test db/scripts/account_material_preferences.integration.test.mjs`.
+It creates/removes a separate local database and checks account isolation,
+concurrent revision conflicts, document constraints, unrelated settings and an
+existing session row. It does not reset or import into the canonical QA database.
