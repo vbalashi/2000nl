@@ -45,9 +45,11 @@ export function useLibraryHeadwordGroupSearch({
   ]);
   const sameScope = !material || state.groupScopeKey === scopeKey;
   const requestSequenceRef = useRef(0);
+  const requestControllerRef = useRef<AbortController | null>(null);
   const groupCursor = sameScope
     ? (state.groupPageCursors[state.page - 1] ?? null)
     : null;
+
   const selectedGroupResult = useMemo(
     () =>
       state.groupResults.find(
@@ -57,6 +59,8 @@ export function useLibraryHeadwordGroupSearch({
   );
 
   const beginSearch = useCallback(() => {
+    requestControllerRef.current?.abort();
+    requestControllerRef.current = new AbortController();
     requestSequenceRef.current += 1;
     return requestSequenceRef.current;
   }, []);
@@ -96,6 +100,7 @@ export function useLibraryHeadwordGroupSearch({
           translationTargetLanguageCode:
             translationLanguageCode === "off" ? null : translationLanguageCode,
           cursor: groupCursor,
+          signal: requestControllerRef.current?.signal,
         });
       } catch (cause) {
         if (
@@ -118,6 +123,7 @@ export function useLibraryHeadwordGroupSearch({
         }
         throw cause;
       }
+
       if (!isCurrentSearch(requestId)) return false;
 
       const nextGroups = buildLibraryHeadwordGroupResults(result.groups, result.librarySearch?.matchingEntryIds).filter(

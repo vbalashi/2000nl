@@ -76,6 +76,8 @@ type Props = {
   >;
 };
 
+const SEARCH_INPUT_DEBOUNCE_MS = 250;
+
 const languageLabel = (code: string) => {
   if (code === "nl") return "Nederlands";
   if (code === "en") return "English";
@@ -578,9 +580,24 @@ export function DictionarySearchTab({
     updateSearchState,
   ]);
 
+  const lastSearchedQueryRef = useRef<string | null>(null);
   useEffect(() => {
-    void runSearch();
-  }, [runSearch]);
+    const trimmed = query.trim();
+    const typed =
+      lastSearchedQueryRef.current !== null &&
+      lastSearchedQueryRef.current !== trimmed;
+    const run = () => {
+      lastSearchedQueryRef.current = trimmed;
+      void runSearch();
+    };
+    // Typing debounces; restored queries, pagination, filters and clearing run at once.
+    if (!typed || !trimmed) {
+      run();
+      return;
+    }
+    const timer = window.setTimeout(run, SEARCH_INPUT_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [query, runSearch]);
 
   useEffect(() => {
     if (!autoFocusQuery) return;

@@ -278,6 +278,27 @@ describe("DictionarySearchTab Headword Group results", () => {
     oldSearch.reject(new Error("lookup_http_503"));
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
   });
+
+  test("debounces typing into one lookup and aborts the superseded one", async () => {
+    fetchGroupPage.mockReset();
+    fetchGroupPage.mockResolvedValue({
+      groups: [nextPageGroup],
+      selectedTierComplete: true,
+      nextGroupCursor: null,
+    });
+
+    render(<Harness />);
+    await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(1));
+    const initialSignal = fetchGroupPage.mock.calls[0][0].signal as AbortSignal;
+    const input = screen.getByPlaceholderText("Zoek in het woordenboek...");
+    for (const value of ["h", "hu", "hui", "huis"]) {
+      fireEvent.change(input, { target: { value } });
+    }
+
+    await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(2));
+    expect(fetchGroupPage.mock.calls[1][0]).toMatchObject({ query: "huis" });
+    expect(initialSignal.aborted).toBe(true);
+  });
 });
 
 const scopeA="8746de41-779a-444d-be38-287efc416d8f",scopeB="8746de41-779a-444d-be38-287efc416d8a";
