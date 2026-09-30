@@ -205,3 +205,16 @@ test("check invokes only a read-only psql session and reports receipts separatel
   assert.match(calls, /read-only-postflight-180.sql/);
   assert.doesNotMatch(calls, /\\i db\/deploy-contract\/postflight-179.sql/);
 });
+
+
+test("retaining apply uses the reviewed migration gate without replaying historical bootstrap", (t) => {
+  const f=fixture(t);
+  const result=f.run(["apply"]);
+  assert.equal(result.status,0,result.stderr);
+  const calls=f.calls();
+  assert.match(calls,/pg_try_advisory_lock/);
+  assert.match(calls,/app_db_contract_migrations/);
+  assert.match(calls,/123_authoritative_training_session_plan/);
+  assert.doesNotMatch(calls,/-f db\/migrations\/bootstrap.sql/);
+  assert.doesNotMatch(calls,/fixture-secret/);
+});

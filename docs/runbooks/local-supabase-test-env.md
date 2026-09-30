@@ -246,3 +246,10 @@ The check now verifies revoked execute privileges and API auth denial without
 repeating that native-engine failure. This is an environment limitation, not a
 passing direct-denial invocation test. Clean only the exact scoped test database
 if a failed run leaves one behind; do not reset the canonical imported DB.
+
+
+### Retaining updates must not replay bootstrap
+
+`db-local-supabase.sh apply` uses the managed, checksum-pinned forward migration gate. Use `reset --confirm-reset` / `all --confirm-reset` only for a deliberate fresh DB; those paths retain bootstrap. An unmanaged/pre-baseline database fails closed rather than being silently bootstrapped.
+
+On 2026-09-30, the previous `apply` replayed bootstrap on the imported local corpus and failed in migration 120: its content-node source-order update collided with `platform_v2_content_nodes_active_source_order_idx`. Earlier statements had already reinstated old function definitions and retired overloads. Local recovery compared the populated DB with a disposable clean bootstrap at the same checkout, restored 15 non-extension function definitions, and removed the two legacy `*_without_known` signatures without cascading. The two digest adapters retain the intentional Supabase extension namespace. Word-entry, learner-state and review counts were unchanged. This is a harness replay failure, not stale dictionary data or a reason to reset user data. Managed probes and browser checks must pass after recovery.
