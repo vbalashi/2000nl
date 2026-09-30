@@ -17,6 +17,11 @@ update in **16.73 seconds**. The update wrote one word row, reconciled one entry
 and refreshed one entry; the initial load made zero historical-reconciler calls.
 Final counts: 18,163 active bindings, 40,403 active nodes, 568 projection rows.
 
+After strengthening parent/binding identity verification, another complete run
+took 21.835/8.666/18.203 seconds on Apple M2 Max (64 GiB host RAM), PostgreSQL
+17.6 in local Docker. Exact stage metrics, corpus checksum and implementation
+commit are recorded in [benchmark evidence](../diagnostics/issue-397-staged-import-benchmark-2026-09-30.json).
+
 The earlier 155.74/9.12-second observations from 2026-09-29 belong to intermediate
 implementations. A later final-version run that day was interrupted; resource
 contention was a hypothesis, not a proven explanation. Those earlier timings
