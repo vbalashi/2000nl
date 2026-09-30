@@ -574,3 +574,16 @@ preparation does not authorize production deployment.
 ## Shared text preferences (migration 181)
 
 Migration 181 adds the fourth `extra` value to the existing phone and desktop reading-profile constraints without rewriting saved values or other account settings. Approved frontend presentation adapts the legacy IDs explicitly into the shared proportional card/interface scale. Forward and read-only postflight chains verify both bounded columns/constraints. This is not a scheduling or learning-state migration. The application contract remains opt-in for the approved presentation; migration compatibility alone does not imply full-screen rollout acceptance.
+
+## Library material search (migration 185)
+
+The service-only `lookup_platform_v2_library_entries` adapter resolves account
+material preferences before group selection and keyset pagination. It retains live
+ACLs, keeps personal dictionaries enabled, and binds the effective scope into cursor
+identity. Normal Platform lookup and exact training/full-word group reads retain
+their existing behavior. The first-party Library API must derive the passed user ID
+from authentication; never expose this RPC directly to browser roles. A changed
+material scope requires restarting search at its first page. Migration 185's
+postflight verifies helper/client grants, scope placement, identity projection and
+cursor binding. The local retaining apply uses the reviewed manifest; do not reset
+a populated database to install this additive boundary.

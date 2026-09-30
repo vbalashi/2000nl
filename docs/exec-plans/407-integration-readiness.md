@@ -321,3 +321,40 @@ Typecheck and targeted lint pass. Browser QA confirms a disabled real VanDale
 source is absent from fresh-run dictionary choices, with save/start unavailable
 when no source is selected. Test account preferences were restored; no run or
 learning action was created. Production rollout remains opt-in and unperformed.
+
+## Library search material boundary checkpoint — 2026-09-30
+
+The current Library hook filters a selected dictionary after receiving an ordinary
+V2 lookup page. This can hide all groups on a page while its cursor still points
+into the unfiltered corpus. Migration 185 establishes the server boundary needed
+to remove that behavior: a service-only first-party Library lookup resolves current
+account material settings and an explicit dictionary scope before candidate tiers,
+ranking and group-atomic pagination. Personal dictionaries remain enabled; dictionary
+ACLs and entitlements remain live. The scope is part of the opaque cursor identity,
+with canonical explicit ID sets, so a cursor cannot cross dictionary selection or
+changed material preferences.
+
+The latest installed private lookup implementation is reused through a guarded
+scoped variant, preserving its existing group bounds, source identity, ranking,
+form fallback and access rules. Ordinary Platform lookup, external clients, exact
+full-word reads and training group reads are unchanged. The helper is not granted
+to client roles; only the server role can call the public scoped adapter. Its user
+ID must be derived from the authenticated first-party request in the next stage.
+No learner state, session or action is created by search.
+
+Validation: a disposable integration applies migration 185 twice and tests filtering
+before the page, canonical ID sets across pages, invalid cross-scope/stale cursors,
+paused languages, disabled sources, personal-dictionary retention, private access,
+access revocation, form fallback after excluding another source's headword tier,
+unchanged ordinary lookup and absence of learning state/history/session mutations.
+The read-only postflight pins grants, server account resolution, scope-before-ranking,
+identity projection and cursor boundaries. All 259 existing FSRS/scheduler checks
+and 43 local deploy/harness checks pass. The checksum-pinned contract advances to
+185; retaining local apply passes its bounded probe in 1,523ms. Read-only local
+verification passes without resetting/importing the database.
+
+This is the server foundation, not completed Library UI integration. Next, route
+first-party Library search through this boundary and consume scoped pages directly;
+connect active-language/source selectors without filtering retrieved groups. The
+approved Library visual adapter, other screens and active-session presentation
+remain pending. Production is not deployed.

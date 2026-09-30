@@ -515,3 +515,6 @@
 
 -- New-run material selection snapshots; current runs retain their saved scope.
 \i db/migrations/184_training_material_selection_snapshot.sql
+
+-- First-party Library search material scope, applied before ranked pagination.
+\i db/migrations/185_library_material_lookup.sql
