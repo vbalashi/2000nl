@@ -240,7 +240,19 @@ test("inlines chained postflight and pre-switch probes for stdin clients", async
   assert.match(sql, /included-pre-switch/);
   assert.doesNotMatch(sql, /\\i db\/deploy-contract\/postflight-122\.sql/);
   assert.doesNotMatch(sql, /\\i db\/deploy-contract\/pre-switch-read-probe-122\.sql/);
-  assert.doesNotMatch(sql, /BEGIN;\nSELECT 'included-postflight';\nCOMMIT;/);
+  assert.match(sql, /BEGIN;\nSELECT 'included-postflight';\nCOMMIT;/);
+});
+
+test("preserves rollback boundaries of behavioral postflight fixtures", async () => {
+  const { capture, result } = await applyFixture("success", async (root) => {
+    await writeFile(path.join(root, "db/deploy-contract/postflight-122.sql"),
+      "BEGIN;\nSELECT 'temporary-behavior-fixture';\nROLLBACK;\n");
+    await writeFile(path.join(root, "db/deploy-contract/postflight-123.sql"),
+      "\\i db/deploy-contract/postflight-122.sql\n");
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(await readFile(capture, "utf8"),
+    /BEGIN;\nSELECT 'temporary-behavior-fixture';\nROLLBACK;/);
 });
 
 test("keeps final contract receipts when populated replay emits many notices", async () => {

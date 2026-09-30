@@ -189,15 +189,8 @@ async function inlinePsqlIncludes(repoRoot, source, stack = []) {
     let included = await readFile(absolutePath, "utf8");
     included = await inlinePsqlIncludes(repoRoot, included, [...stack, absolutePath]);
 
-    // Chained postflight files historically carry their own transaction wrappers.
-    // The current postflight must remain one transaction when sent via stdin or a
-    // container client, so inline only the body of those established wrappers.
-    if (/^postflight-\d+\.sql$/i.test(path.basename(absolutePath))) {
-      included = included
-        .split("\n")
-        .filter((includedLine) => !["BEGIN;", "COMMIT;"].includes(includedLine.trim()))
-        .join("\n");
-    }
+    // Preserve transaction boundaries, especially behavioral probes ending in
+    // ROLLBACK. Removing BEGIN makes their test writes commit independently.
     output.push(`-- inlined ${relativePath}\n${included.trimEnd()}`);
   }
   return output.join("\n");
