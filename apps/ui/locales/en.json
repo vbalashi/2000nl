@@ -459,6 +459,7 @@
       }
     },
     "languagePicker": {
+      "loading": "Loading languages…",
       "close": "Close language selection",
       "search": "Search languages",
       "placeholder": "Search by language name or code…",

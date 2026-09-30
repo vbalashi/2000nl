@@ -135,7 +135,8 @@ export async function updateUserPreferences(params: {
     updates.audio_quality = params.audioQuality;
   }
   if (params.translationLang !== undefined) {
-    updates.translation_lang = params.translationLang;
+    // NULL remains the legacy/unset default on reads; explicit Off must survive reload.
+    updates.translation_lang = params.translationLang ?? "off";
   }
   // Handle preferences JSONB field
   if (params.preferences !== undefined) {

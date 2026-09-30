@@ -1,0 +1,109 @@
+.picker {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--practice-border);
+  border-radius: var(--practice-radius-dialog);
+  padding: 20px;
+  width: min(470px, calc(100vw - 32px));
+  height: min(620px, 85dvh);
+  max-height: 85dvh;
+  overflow: hidden;
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-body);
+}
+.picker::backdrop {
+  background: var(--practice-backdrop);
+  backdrop-filter: blur(5px);
+}
+.picker header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.picker h2 {
+  font-size: var(--practice-text-body-lg);
+  margin: 0;
+}
+.picker header button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  min-width: 28px;
+  min-height: 28px;
+}
+.picker input {
+  flex-shrink: 0;
+  width: 100%;
+  border: 1px solid var(--practice-control-border);
+  border-radius: var(--practice-radius-control);
+  padding: 10px;
+  margin-top: 16px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.picker p,
+.picker footer {
+  font-size: var(--practice-text-label);
+  color: var(--practice-text-muted);
+  line-height: 1.6;
+  flex-shrink: 0;
+}
+.picker p {
+  margin-top: 8px;
+}
+.results {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  margin: 12px 0;
+}
+.results::-webkit-scrollbar {
+  display: none;
+}
+.results button {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: var(--practice-radius-control);
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: var(--practice-text-caption);
+  cursor: pointer;
+}
+.results button:hover,
+.results button[aria-current="true"] {
+  background: var(--practice-canvas);
+  border-color: var(--practice-control-border);
+}
+.results button > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.results small {
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-label);
+}
+.results span small {
+  display: block;
+  margin-top: 4px;
+}
+.results button > small {
+  flex-shrink: 0;
+}
+.picker button:focus-visible,
+.picker input:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}

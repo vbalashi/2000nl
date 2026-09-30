@@ -1,5 +1,5 @@
 import React from "react";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, beforeAll, afterAll, expect, test, vi } from "vitest";
 import {
   cleanup,
   fireEvent,
@@ -41,11 +41,10 @@ test("approved settings keep production callback ownership and an existing extra
   vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const p = props();
   render(<SettingsDestination {...p} />);
-  expect(screen.getByLabelText("Translation language")).toHaveValue("de");
-  expect(screen.getByRole("option", { name: "German" })).toBeTruthy();
-  fireEvent.change(screen.getByLabelText("Translation language"), {
-    target: { value: "off" },
-  });
+  expect(screen.getByLabelText("Translation language")).toHaveTextContent(
+    "German",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Off" }));
   expect(p.onTranslationLanguageChange).toHaveBeenCalledWith(null);
   fireEvent.change(screen.getByLabelText("Interface language"), {
     target: { value: "ru" },
@@ -135,4 +134,52 @@ test("appearance keeps the account text profile owner when its panel is reopened
     "true",
   );
   expect(repository.load).toHaveBeenCalledOnce();
+});
+
+const dialogPrototype = HTMLDialogElement.prototype;
+const originalShow = Object.getOwnPropertyDescriptor(
+  dialogPrototype,
+  "showModal",
+);
+const originalClose = Object.getOwnPropertyDescriptor(dialogPrototype, "close");
+beforeAll(() => {
+  Object.defineProperties(dialogPrototype, {
+    showModal: {
+      configurable: true,
+      value() {
+        this.setAttribute("open", "");
+      },
+    },
+    close: {
+      configurable: true,
+      value() {
+        this.removeAttribute("open");
+      },
+    },
+  });
+});
+afterAll(() => {
+  if (originalShow)
+    Object.defineProperty(dialogPrototype, "showModal", originalShow);
+  else Reflect.deleteProperty(dialogPrototype, "showModal");
+  if (originalClose)
+    Object.defineProperty(dialogPrototype, "close", originalClose);
+  else Reflect.deleteProperty(dialogPrototype, "close");
+});
+test("searching another translation language emits its canonical code and restores picker focus", async () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const p = props();
+  render(<SettingsDestination {...p} />);
+  const opener = screen.getByLabelText("Translation language");
+  opener.focus();
+  fireEvent.click(opener);
+  const search = await screen.findByRole("textbox");
+  fireEvent.change(search, { target: { value: "pol" } });
+  const dialog = screen.getByRole("dialog");
+  fireEvent.click(
+    within(dialog).getByRole("button", { name: "Polish polski pl" }),
+  );
+  expect(p.onTranslationLanguageChange).toHaveBeenCalledWith("pl");
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(opener).toHaveFocus();
 });

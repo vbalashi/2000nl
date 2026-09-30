@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { languageDisplayName } from "@/lib/languages/languageDisplayName";
 import { Languages, Palette, Keyboard, UserRound } from "lucide-react";
 import { getUiMessages } from "@/lib/uiMessages";
 import { getTrainingHotkeys } from "@/components/training/trainingHotkeys";
@@ -17,6 +18,11 @@ const interfaceLanguages = [
   { code: "nl", name: "Nederlands" },
   { code: "ru", name: "Русский" },
 ] as const;
+const TranslationLanguagePicker = React.lazy(() =>
+  import("@/components/practice/settings/LanguagePicker").then((module) => ({
+    default: module.LanguagePicker,
+  })),
+);
 /** Account preference callbacks remain owned by the production controller. */
 export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
   const copy = getUiMessages(props.interfaceLanguage).settings;
@@ -26,22 +32,12 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
     { id: "shortcuts", label: copy.shortcuts, Icon: Keyboard },
     { id: "account", label: copy.account, Icon: UserRound },
   ] as const;
-  const extraTranslation =
-    props.translationLanguage &&
-    !interfaceLanguages.some((item) => item.code === props.translationLanguage)
-      ? props.translationLanguage
-      : null;
-  const languageName = (code: string) => {
-    try {
-      return (
-        new Intl.DisplayNames([props.interfaceLanguage], {
-          type: "language",
-        }).of(code) ?? code
-      );
-    } catch {
-      return code;
-    }
-  };
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+  React.useEffect(() => {
+    if (!props.open) setPickerOpen(false);
+  }, [props.open]);
+  const translationOff =
+    !props.translationLanguage || props.translationLanguage === "off";
   return (
     <SettingsLayout
       active={props.open}
@@ -52,50 +48,80 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
       {(section) => {
         if (section === "languages")
           return (
-            <SettingsPanel title={copy.languages}>
-              <SettingsRow title={copy.interfaceLanguage}>
-                <select
-                  className={s.select}
-                  aria-label={copy.interfaceLanguage}
-                  value={props.interfaceLanguage}
-                  onChange={(event) =>
-                    void props.onInterfaceLanguageChange(
-                      event.target.value as typeof props.interfaceLanguage,
-                    )
+            <>
+              <SettingsPanel title={copy.languages}>
+                <SettingsRow title={copy.interfaceLanguage}>
+                  <select
+                    className={s.select}
+                    aria-label={copy.interfaceLanguage}
+                    value={props.interfaceLanguage}
+                    onChange={(event) =>
+                      void props.onInterfaceLanguageChange(
+                        event.target.value as typeof props.interfaceLanguage,
+                      )
+                    }
+                  >
+                    {interfaceLanguages.map(({ code, name }) => (
+                      <option key={code} value={code} lang={code}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </SettingsRow>
+                <SettingsRow
+                  title={copy.translationLanguage}
+                  hint={copy.translationHint}
+                >
+                  <div className={s.options}>
+                    <button
+                      type="button"
+                      aria-pressed={translationOff}
+                      onClick={() => props.onTranslationLanguageChange(null)}
+                    >
+                      {copy.off}
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={copy.translationLanguage}
+                      aria-haspopup="dialog"
+                      aria-expanded={pickerOpen}
+                      onClick={() => setPickerOpen(true)}
+                    >
+                      {translationOff
+                        ? copy.chooseLanguage
+                        : languageDisplayName(
+                            props.interfaceLanguage,
+                            props.translationLanguage!,
+                          )}{" "}
+                    </button>
+                  </div>
+                </SettingsRow>
+              </SettingsPanel>
+              {pickerOpen && (
+                <React.Suspense
+                  fallback={
+                    <p role="status">
+                      {
+                        getUiMessages(props.interfaceLanguage).languagePicker
+                          .loading
+                      }
+                    </p>
                   }
                 >
-                  {interfaceLanguages.map(({ code, name }) => (
-                    <option key={code} value={code} lang={code}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </SettingsRow>
-              <SettingsRow title={copy.translationLanguage}>
-                <select
-                  className={s.select}
-                  aria-label={copy.translationLanguage}
-                  value={props.translationLanguage ?? "off"}
-                  onChange={(event) =>
-                    props.onTranslationLanguageChange(
-                      event.target.value === "off" ? null : event.target.value,
-                    )
-                  }
-                >
-                  <option value="off">{copy.off}</option>
-                  {interfaceLanguages.map(({ code, name }) => (
-                    <option key={code} value={code} lang={code}>
-                      {name}
-                    </option>
-                  ))}
-                  {extraTranslation && (
-                    <option value={extraTranslation}>
-                      {languageName(extraTranslation)}
-                    </option>
-                  )}
-                </select>
-              </SettingsRow>
-            </SettingsPanel>
+                  <TranslationLanguagePicker
+                    title={copy.translationLanguage}
+                    language={props.interfaceLanguage}
+                    selectedCode={
+                      translationOff ? null : props.translationLanguage
+                    }
+                    onChoose={(item) =>
+                      props.onTranslationLanguageChange(item.code)
+                    }
+                    onClose={() => setPickerOpen(false)}
+                  />
+                </React.Suspense>
+              )}
+            </>
           );
         if (section === "appearance")
           return (

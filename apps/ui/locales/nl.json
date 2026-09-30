@@ -459,6 +459,7 @@
       }
     },
     "languagePicker": {
+      "loading": "Talen laden…",
       "close": "Taalkeuze sluiten",
       "search": "Talen zoeken",
       "placeholder": "Zoek op taalnaam of code…",

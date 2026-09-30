@@ -1,12 +1,9 @@
-import catalog from "./languageCatalog.json";
+import {catalogCodeFromName} from "@/lib/languages/languageCatalog";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
-
-const byName = new Map(catalog.map(language => [language.name, language.code]));
-byName.set("Русский", "ru");
 
 /** Preview names remain stable values; ISO codes only drive their presentation. */
 export function previewLanguageCode(name: string): string | undefined {
-  return byName.get(name);
+  return catalogCodeFromName(name);
 }
 
 export function previewLanguageName(locale: OnboardingLanguage, name: string): string {

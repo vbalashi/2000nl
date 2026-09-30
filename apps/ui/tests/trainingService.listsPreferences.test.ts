@@ -1003,6 +1003,26 @@ describe("trainingService list and preference characterization", () => {
     });
   });
 
+  test.each([
+    [null, "off"],
+    ["pl", "pl"],
+  ])(
+    "translation preference %s persists without changing learning scope",
+    async (translationLang, stored) => {
+      const { updateUserPreferences } = await importService();
+      queueFrom("user_settings", { data: { user_id: "user-1" }, error: null });
+      queueFrom("user_settings", { data: null, error: null });
+      await expect(
+        updateUserPreferences({ userId: "user-1", translationLang }),
+      ).resolves.toEqual({ error: null });
+      expect(queries[1].upsert).toHaveBeenCalledWith(
+        { user_id: "user-1", translation_lang: stored },
+        { onConflict: "user_id" },
+      );
+      expect(rpc).not.toHaveBeenCalled();
+    },
+  );
+
   test("updateUserPreferences seeds audio quality default for new settings rows", async () => {
     const { updateUserPreferences } = await importService();
 
