@@ -11,7 +11,7 @@
 .progress{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--practice-border);border-radius:3px;overflow:hidden}
 .progress>span{display:block;height:100%;background:var(--practice-accent);transition:width .25s var(--practice-motion)}
 .card.card{position:relative;top:auto;display:flex;flex-direction:column;gap:0;flex:1;min-height:0;max-height:none;background:var(--practice-surface);border:0;box-shadow:none;border-radius:var(--practice-radius-panel);padding:24px 24px 0;overflow:hidden;scrollbar-width:none}
-.card::-webkit-scrollbar,.history::-webkit-scrollbar{display:none}
+.card::-webkit-scrollbar{display:none}
 .cardTools{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .cardTools>div{display:flex;gap:8px}
 .round{width:36px;height:36px;border:1px solid var(--practice-border);border-radius:50%;color:var(--practice-text-secondary);background:var(--practice-surface)}
@@ -48,18 +48,8 @@
 .finished p strong{font-size:var(--practice-text-number);font-weight:500}
 .textButton{background:none;border:0;color:var(--practice-accent);font:inherit;cursor:pointer;padding:10px}
 .articleHost.articleHost{display:flex;flex-direction:column;flex:1;min-height:0;padding-bottom:0}
-.history{overflow:auto;overscroll-behavior:contain;scrollbar-width:none;padding:0 22px 28px}
-.history .caption{text-align:left;margin:0 0 26px}
-.history h3{font-size:var(--practice-text-caption);font-weight:500;color:var(--practice-text-muted);margin:28px 0 8px}
-.history ol{list-style:none;padding:0;margin:0}
-.history li{display:flex;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid var(--practice-border)}
-.history li>div{display:grid;gap:5px}
-.history strong{font-weight:500;font-size:var(--practice-text-body-lg)}
-.history span,.history time{font-size:var(--practice-text-caption);color:var(--practice-text-muted)}
-.history .result{text-align:right;flex-shrink:0}
-.result strong{font-family:var(--practice-font-ui);font-size:var(--practice-text-small);color:var(--rating)}
 @keyframes answer{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:700px){.session{height:100%;min-height:0;gap:12px;padding:12px 0 max(12px,env(safe-area-inset-bottom))}.chrome{min-height:60px}.card.card{min-height:0;padding:16px 16px 0}.prompt{padding:20px 2px 16px}.prompt:not([data-revealed=true]){min-height:0}.caption{font-size:var(--practice-text-label)}.count{margin-right:0}.sessionTitle>span{font-size:var(--practice-text-body)}.history{padding:0 18px 24px}}
+@media(max-width:700px){.session{height:100%;min-height:0;gap:12px;padding:12px 0 max(12px,env(safe-area-inset-bottom))}.chrome{min-height:60px}.card.card{min-height:0;padding:16px 16px 0}.prompt{padding:20px 2px 16px}.prompt:not([data-revealed=true]){min-height:0}.caption{font-size:var(--practice-text-label)}.count{margin-right:0}.sessionTitle>span{font-size:var(--practice-text-body)}}
 @media(prefers-reduced-motion:reduce){.answerViewport,.promptTranslation{animation:none!important}.progress>span{transition:none}}
 
 .definition{font-family:var(--practice-font-definition);font-size:var(--practice-definition-size);line-height:var(--practice-definition-leading)}
@@ -71,10 +61,6 @@
 .previewTools .caption{text-align:left}
 .variationButton{display:flex;align-items:center;justify-content:center;gap:5px;min-height:28px;background:none;border:0;color:var(--practice-text-muted);font-size:var(--practice-text-label);cursor:pointer;flex-shrink:0}
 .variationButton:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
-.result [data-rating=Again]{--rating:var(--practice-danger)}
-.result [data-rating=Hard]{--rating:var(--practice-warning)}
-.result [data-rating=Good]{--rating:var(--practice-success)}
-.result [data-rating=Easy]{--rating:var(--practice-info)}
 
 /* In reverse practice the question travels into the body, below the pinned word. */
 .answerViewport[data-moving-question=true]{visibility:visible;overflow:visible}
@@ -93,14 +79,11 @@
 .secondaryActions>button:focus-visible{outline:2px solid var(--practice-focus);outline-offset:3px;border-radius:4px}
 .secondaryActions>button:disabled{cursor:default;opacity:.5}
 .markedCard>div{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:var(--practice-text-small);color:var(--practice-text-secondary)}
-.result [data-rating=Known]{--rating:var(--practice-success)}
-.result [data-rating=Excluded]{--rating:var(--practice-text-muted)}
 
 /* Enlarged prompts stay readable without consuming the entire answer viewport. */
 .prompt{max-height:45%;overflow-y:auto;scrollbar-width:none}
 .prompt:not([data-revealed=true]){max-height:none;overflow-y:auto}
 .cardTools{flex-wrap:wrap}
-.history li{flex-wrap:wrap}
 @media(max-height:650px){.session{gap:6px}.chrome{min-height:44px;padding-bottom:8px}.prompt{padding-block:8px}.card.card{padding-top:8px}}
 
 /* FLIP starts outside the compact answer-side header. Clip only after landing. */

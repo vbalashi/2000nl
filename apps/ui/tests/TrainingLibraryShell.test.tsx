@@ -259,3 +259,19 @@ test("returning from History replaces its entry so Back cannot loop into History
   });
   expect(window.location.search).not.toBe("?destination=history");
 });
+
+
+test("approved history returns to its Statistics origin without remounting Training", () => {
+  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+  try {
+    window.history.replaceState({},"","/");
+    render(<TrainingLibraryShell user={{id:"user-1"} as User} />);
+    fireEvent.click(screen.getByRole("button",{name:"Statistics"}));
+    fireEvent.click(screen.getByRole("button",{name:"History"}));
+    expect(screen.getByText("destination history")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button",{name:"Return from History"}));
+    expect(screen.getByText("destination statistics")).toBeInTheDocument();
+    expect(new URL(window.location.href).searchParams.get("destination")).toBe("statistics");
+    expect(trainingMounts).toBe(1);
+  } finally { vi.unstubAllEnvs(); }
+});

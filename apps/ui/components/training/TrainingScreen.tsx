@@ -6,7 +6,6 @@ import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/Acco
 import React from "react";
 import { TrainingExclusionUndoNotice } from "./v2/TrainingExclusionUndoNotice";
 import { useCallback, useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import type { User } from "@supabase/supabase-js";
 import { Joyride, Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
@@ -85,6 +84,8 @@ import { AppFrame } from "@/components/navigation/AppFrame";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
 import { SettingsDestination } from "@/components/navigation/SettingsDestination";
 import { ReadingPreferencesProvider } from "@/components/reading/ReadingPreferencesProvider";
+import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import { TrainingHistoryDestination } from "@/components/navigation/TrainingHistoryDestination";
 import { StatisticsDestination } from "@/components/navigation/StatisticsDestination";
 import {
   TrainingTodaySetup,
@@ -131,14 +132,6 @@ type Props = {
   onNavigationBlockedChange?: (blocked: boolean) => void;
   trainingTodaySetupEnabled?: boolean;
 };
-
-const LazyTrainingHistoryDestination = dynamic(
-  () =>
-    import("@/components/navigation/TrainingHistoryDestination").then(
-      (module) => module.TrainingHistoryDestination,
-    ),
-  { ssr: false },
-);
 
 const DEFAULT_LANGUAGE_OPTIONS = [{ value: "nl", label: "Nederlands" }];
 
@@ -218,6 +211,11 @@ function TrainingScreenContent({
     preferences: initialPreferences,
   } = startupSnapshot;
   const historyButtonRef = useRef<HTMLButtonElement>(null);
+  const historyBackgroundRef = useRef<AppDestination>(destination === "history" ? "training" : destination);
+  if (destination !== "history") historyBackgroundRef.current = destination;
+  const visibleDestination = destination === "history" && sharedArticlePresentationV1Enabled()
+    ? historyBackgroundRef.current : destination;
+
   const previousDestinationRef = useRef(destination);
   const returnedToTraining =
     destination === "training" && previousDestinationRef.current !== "training";
@@ -2394,12 +2392,12 @@ function TrainingScreenContent({
     >
       <div
         data-training-session-layout={v2SessionLayoutVisible ? "v2" : undefined}
-        aria-hidden={destination !== "training"}
+        aria-hidden={visibleDestination !== "training"}
         data-training-today-setup={
           trainingTodaySetupEnabled ? "enabled" : "disabled"
         }
         data-training-pilot-surface={trainingPilot.surface}
-        className={`${destination === "training" ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden bg-transparent text-slate-900 dark:text-slate-100 ${
+        className={`${visibleDestination === "training" ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden bg-transparent text-slate-900 dark:text-slate-100 ${
           v2SessionLayoutVisible
             ? `font-sense-sans ${sessionStyles.viewport}`
             : "dark:bg-background-dark"
@@ -2665,7 +2663,7 @@ function TrainingScreenContent({
         />
       )}
       <LibraryDestination
-        open={destination === "library"}
+        open={visibleDestination === "library"}
         userId={user.id}
         language={currentTrainingLanguage}
         translationLang={translationLang}
@@ -2680,13 +2678,14 @@ function TrainingScreenContent({
         }}
       />
       <StatisticsDestination
-        open={destination === "statistics"}
+        open={visibleDestination === "statistics"}
         interfaceLanguage={onboardingLang}
         stats={stats}
         onStartTraining={() => onRequestDestination("training")}
+        onHistory={openTrainingHistory}
       />
       {destination === TRAINING_HISTORY_DESTINATION ? (
-        <LazyTrainingHistoryDestination
+        <TrainingHistoryDestination
           open
           userId={user.id}
           interfaceLanguage={onboardingLang}

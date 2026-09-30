@@ -132,6 +132,10 @@
   box-shadow: 0 0 0 2px var(--practice-shadow);
 }
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   min-height: 28px;
   padding: 4px 12px;
   border: 1px solid var(--practice-border);

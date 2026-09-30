@@ -190,6 +190,32 @@
     "zn": "zelfstandig naamwoord"
   },
   "ui": {
+    "trainingHistory": {
+      "close": "Geschiedenis sluiten",
+      "title": "Geschiedenis",
+      "eyebrow": "Training",
+      "subtitle": "De laatste 50 trainingsactiviteiten uit de afgelopen 24 uur.",
+      "back": "Terug naar training",
+      "loading": "Geschiedenis laden…",
+      "empty": "Nog geen trainingsactiviteit in de afgelopen 24 uur.",
+      "error": "Geschiedenis kon niet worden geladen.",
+      "retry": "Opnieuw proberen",
+      "list": "Recente trainingsactiviteit",
+      "truncated": "De 50 meest recente trainingsactiviteiten worden getoond.",
+      "events": {
+        "learning_started": "Gestart met leren",
+        "review_fail": "Opnieuw",
+        "review_hard": "Moeilijk",
+        "review_success": "Goed",
+        "review_easy": "Makkelijk"
+      },
+      "modes": {
+        "word-to-definition": "Woord → betekenis",
+        "definition-to-word": "Betekenis → woord",
+        "listen-recognize": "Luisteren → herkennen",
+        "listen-type": "Luisteren → typen"
+      }
+    },
     "appearancePreferences": {
       "loading": "Weergave laden…",
       "loadError": "Weergave kon niet worden geladen.",

@@ -1,89 +1,20 @@
 "use client";
 
 import React from "react";
+import { getUiMessages } from "@/lib/uiMessages";
+import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import { PracticePanel } from "@/components/practice/ui/PracticePanel";
+import { RecentActivityList, type ActivityRow } from "@/components/practice/RecentActivityList";
+import activityStyle from "@/components/practice/recentActivity.module.css";
+import theme from "@/components/practice/ui/practiceTheme.module.css";
+import stateStyle from "@/components/practice/library/libraryWorkspace.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import {
   fetchRecentTrainingHistory,
   type RecentTrainingHistoryItem,
 } from "@/lib/training/trainingHistoryService";
 
-const copy = {
-  nl: {
-    title: "Geschiedenis",
-    eyebrow: "Training",
-    subtitle: "De laatste 50 trainingsactiviteiten uit de afgelopen 24 uur.",
-    back: "Terug naar training",
-    loading: "Geschiedenis laden…",
-    empty: "Nog geen trainingsactiviteit in de afgelopen 24 uur.",
-    error: "Geschiedenis kon niet worden geladen.",
-    retry: "Opnieuw proberen",
-    list: "Recente trainingsactiviteit",
-    truncated: "De 50 meest recente trainingsactiviteiten worden getoond.",
-    events: {
-      learning_started: "Gestart met leren",
-      review_fail: "Opnieuw",
-      review_hard: "Moeilijk",
-      review_success: "Goed",
-      review_easy: "Makkelijk",
-    },
-    modes: {
-      "word-to-definition": "Woord → betekenis",
-      "definition-to-word": "Betekenis → woord",
-      "listen-recognize": "Luisteren → herkennen",
-      "listen-type": "Luisteren → typen",
-    },
-  },
-  en: {
-    title: "History",
-    eyebrow: "Training",
-    subtitle: "The latest 50 training activities from the last 24 hours.",
-    back: "Back to training",
-    loading: "Loading history…",
-    empty: "No training activity in the last 24 hours.",
-    error: "History could not be loaded.",
-    retry: "Try again",
-    list: "Recent training activity",
-    truncated: "Showing the 50 most recent training activities.",
-    events: {
-      learning_started: "Started learning",
-      review_fail: "Again",
-      review_hard: "Hard",
-      review_success: "Good",
-      review_easy: "Easy",
-    },
-    modes: {
-      "word-to-definition": "Word → meaning",
-      "definition-to-word": "Meaning → word",
-      "listen-recognize": "Listen → recognize",
-      "listen-type": "Listen → type",
-    },
-  },
-  ru: {
-    title: "История",
-    eyebrow: "Тренировка",
-    subtitle: "Последние 50 действий в тренировке за прошедшие 24 часа.",
-    back: "Вернуться к тренировке",
-    loading: "Загрузка истории…",
-    empty: "За последние 24 часа действий в тренировке не было.",
-    error: "Не удалось загрузить историю.",
-    retry: "Попробовать снова",
-    list: "Недавние действия в тренировке",
-    truncated: "Показаны 50 самых недавних действий в тренировке.",
-    events: {
-      learning_started: "Начало изучения",
-      review_fail: "Снова",
-      review_hard: "Трудно",
-      review_success: "Хорошо",
-      review_easy: "Легко",
-    },
-    modes: {
-      "word-to-definition": "Слово → значение",
-      "definition-to-word": "Значение → слово",
-      "listen-recognize": "Слушать → узнать",
-      "listen-type": "Слушать → ввести",
-    },
-  },
-} as const;
+
 
 const localeByLanguage: Record<OnboardingLanguage, string> = {
   nl: "nl-NL",
@@ -135,7 +66,8 @@ export function TrainingHistoryDestination({
   interfaceLanguage,
   onReturnToTraining,
 }: Props) {
-  const text = copy[interfaceLanguage];
+  const text = getUiMessages(interfaceLanguage).trainingHistory;
+  const approved = sharedArticlePresentationV1Enabled();
   const headingRef = React.useRef<HTMLHeadingElement>(null);
   const [loadState, setLoadState] = React.useState<LoadState>({
     userId: null,
@@ -186,6 +118,30 @@ export function TrainingHistoryDestination({
           items: [],
           hasMore: false,
         };
+  if (approved) {
+    if (!open) return null;
+    const tones = { learning_started: "Started", review_fail: "Again", review_hard: "Hard", review_success: "Good", review_easy: "Easy" } as const;
+    const items: ActivityRow[] = visibleLoadState.items.map((item, index) => ({
+      id: `${item.entryId}-${item.reviewedAt}-${item.cardTypeId}-${item.reviewResult}-${index}`,
+      word: item.headword,
+      at: item.reviewedAt,
+      exercise: text.modes[item.cardTypeId],
+      result: text.events[item.reviewResult],
+      tone: tones[item.reviewResult],
+    }));
+    return <div className={theme.theme} data-colour-mode="app">
+      <PracticePanel title={text.title} language={interfaceLanguage} closeLabel={text.close} onClose={onReturnToTraining}>
+        {visibleLoadState.status === "loading" || visibleLoadState.status === "idle" ?
+          <div className={activityStyle.state}><p className={stateStyle.notice} role="status">{text.loading}</p></div> : null}
+        {visibleLoadState.status === "error" ? <div className={`${activityStyle.state} ${stateStyle.error}`} role="alert">
+          <p>{text.error}</p><button type="button" className={stateStyle.button} onClick={() => setRequestVersion(version => version + 1)}>{text.retry}</button>
+        </div> : null}
+        {visibleLoadState.status === "ready" && <RecentActivityList items={items} locale={interfaceLanguage}
+          scopeLabel={text.subtitle} emptyLabel={text.empty} listLabel={text.list} />}
+        {visibleLoadState.status === "ready" && visibleLoadState.hasMore && <div className={activityStyle.state}><p className={stateStyle.notice}>{text.truncated}</p></div>}
+      </PracticePanel>
+    </div>;
+  }
   return (
     <section
       aria-hidden={!open}

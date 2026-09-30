@@ -593,3 +593,40 @@ test. No account setting, entry or learner state was written during browser QA.
 Remaining gates are pointer-only collection summaries, full Library empty/error
 runtime acceptance, Statistics/history/mobile navigation, shared typography/color
 consistency and active-session acceptance. Production is not deployed.
+
+
+## Shared recent history checkpoint — 2026-09-30
+
+The approved History destination and prototype now share RecentActivityList,
+semantic typography/colors and the animated PracticePanel. EN/NL/RU strings live
+in the UI catalogs. Statistics provides a Recent activity entry point; closing
+history returns to its actual originating screen and restores trigger focus.
+The existing 50-actions/24-hour service, principal guard and fetch-on-open owner
+remain intact. Loading, retry, empty and truncated states are explicit.
+
+Browser QA exposed a real stylesheet-loading regression: the dynamically loaded
+history component rendered an unstyled native dialog even after reload. History
+is now imported with the main screen, ensuring its panel CSS is available; the
+history request still runs only when opened. At 320x620 with larger account text,
+the panel occupies x=0..320, y=12..620, with no horizontal document overflow and an
+independent scrollable list. Real local history reads two existing learner actions;
+Statistics return/focus was verified. No learner/account data was written. A full
+50-item runtime scroll remains an acceptance check rather than a claimed result.
+
+Validation: 99 checks across TrainingScreen, History destination, shell navigation,
+history service and message catalogs pass. Typecheck, targeted lint, semantic style
+guard and whitespace checks pass. Existing act/inert test warnings remain visible.
+History coverage is still limited by the real service to Learn/review and its four
+word exercise modes; broader action/card-family coverage and immutable event IDs
+remain backend work. Production is not deployed.
+
+Owner decision for the next Statistics slice: Study time measures active time on
+an open training card only. Background tabs, loading, history and settings do not
+count. Store this as a distinct measured duration, not a value inferred from review
+counts or full session wall time. The previous frozen-material decision remains:
+started sessions may resume/finish; dictionary disabling and language pausing affect
+new launches/material choices, subject to live authorization checks.
+
+Next: real Statistics read model and approved screen adaptation, including active
+card duration; then remaining Library, mobile navigation, typography/color and
+active-session acceptance gates.
