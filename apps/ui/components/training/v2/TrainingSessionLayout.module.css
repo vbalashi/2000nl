@@ -14,6 +14,24 @@
   --session-ink: #bfc7d4;
   --session-line: #394353;
 }
+/* Approved presentation inherits the account palette from the app frame. */
+.viewport.viewportApproved {
+  --session-surface: var(--practice-canvas);
+  --session-ink: var(--practice-text-secondary);
+  --session-line: var(--practice-border);
+}
+.viewportApproved .utilities button:hover {
+  background: var(--practice-surface-hover);
+}
+.viewportApproved .utilities button:focus-visible {
+  outline-color: var(--practice-focus);
+}
+.viewportApproved .progress {
+  background: var(--practice-border);
+}
+.viewportApproved .progress > div {
+  background: var(--practice-accent);
+}
 .main {
   display: flex;
   flex: 1;

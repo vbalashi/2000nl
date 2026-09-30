@@ -84,7 +84,10 @@ import { AppFrame } from "@/components/navigation/AppFrame";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
 import { SettingsDestination } from "@/components/navigation/SettingsDestination";
 import { ReadingPreferencesProvider } from "@/components/reading/ReadingPreferencesProvider";
-import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import {
+  sharedArticlePresentationV1Enabled,
+  trainingPresentationV1Enabled,
+} from "@/lib/platform/platformV2Rollout";
 import { TrainingHistoryDestination } from "@/components/navigation/TrainingHistoryDestination";
 import { StatisticsDestination } from "@/components/navigation/StatisticsDestination";
 import {
@@ -2400,8 +2403,10 @@ function TrainingScreenContent({
         data-training-pilot-surface={trainingPilot.surface}
         className={`${visibleDestination === "training" ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden bg-transparent text-slate-900 dark:text-slate-100 ${
           v2SessionLayoutVisible
-            ? `font-sense-sans ${sessionStyles.viewport}`
-            : "dark:bg-background-dark"
+            ? `font-sense-sans ${sessionStyles.viewport} ${trainingPresentationV1Enabled() ? sessionStyles.viewportApproved : ""}`
+            : trainingPresentationV1Enabled()
+              ? ""
+              : "dark:bg-background-dark"
         }`}
       >
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
