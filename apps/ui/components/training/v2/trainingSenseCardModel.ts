@@ -9,12 +9,14 @@ import type {
   PlatformHeadwordGroupV2,
   PlatformSenseCardCapabilityV2,
   PlatformSenseCardEntryV2,
+  PlatformWordDetailsV2,
 } from "../../../../../packages/shared/types/platformV2";
 
 export type TrainingSenseCardContent = PlatformV2SenseContentNode;
 
 export type TrainingSenseCardModel = {
   entryId: string;
+  wordDetails?:PlatformWordDetailsV2;
   headword: string;
   article?: string;
   partOfSpeech?: string;
@@ -94,6 +96,7 @@ export function buildTrainingSenseCardModel({
 
   return {
     entryId: entry.entryId,
+    ...(entry.wordDetails?{wordDetails:entry.wordDetails}:{}),
     headword: group.header.displayPronunciation ?? group.header.text,
     ...(group.header.article ? { article: group.header.article } : {}),
     ...(partOfSpeech ? { partOfSpeech } : {}),

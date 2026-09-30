@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import {sharedArticlePresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
 import {ArticleContentNode,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
+import {ArticleSenseRelations} from "@/components/practice/article/ArticleWordDetails";
+import {lexicalRelationDetail} from "@/components/practice/article/wordDetailsPresentation";
 import {ProductionArticleReading} from "@/components/practice/article/ProductionArticleReading";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -321,6 +323,7 @@ export function TrainingCardAnswerBody({
       >
         {approvedArticle ? <ProductionArticleReading>
           {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>)}
+          <ArticleSenseRelations relation={lexicalRelationDetail(model.wordDetails)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage}/>
           <ArticleMeaningDetails definition={null} details={[...usagePatterns,...examples,...idioms,...notes]} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>
         </ProductionArticleReading> : <>        {definitions.length ? (
           <div className="space-y-3 pt-1">

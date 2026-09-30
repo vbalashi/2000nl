@@ -4,6 +4,8 @@ import React from "react";
 import {sharedArticlePresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
 import {ArticleTranslation,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
 import {ProductionArticleReading} from "@/components/practice/article/ProductionArticleReading";
+import {ArticleWordForms,ArticleSenseRelations} from "@/components/practice/article/ArticleWordDetails";
+import {commonWordForms,wordFormDetail,lexicalRelationDetail} from "@/components/practice/article/wordDetailsPresentation";
 import reading from "@/components/practice/article/articleContent.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
@@ -82,6 +84,12 @@ export function LibrarySenseCardGroup({
   const [viewState, setViewState] = React.useState<LibrarySenseCardViewState>(
     () => initialViewState(model, activeMeaningId),
   );
+  const [formsOpen,setFormsOpen]=React.useState(false);
+  const formsId=React.useId();
+  const approvedArticle=sharedArticlePresentationV1Enabled();
+  const commonForms=commonWordForms(model.meanings.map(m=>m.wordDetails),model.formPartOfSpeech??" ");
+  const formsKey=JSON.stringify(commonForms);
+  React.useEffect(()=>{setFormsOpen(false);},[model.headword,formsKey]);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const [scrollEdges, setScrollEdges] = React.useState({
     top: true,
@@ -276,6 +284,7 @@ export function LibrarySenseCardGroup({
             ) : undefined
           }
         />
+        {approvedArticle&&commonForms&&<ProductionArticleReading><ArticleWordForms detail={commonForms} headword={model.headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="summary" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></ProductionArticleReading>}
       </header>
 
       <div className="relative min-h-0 flex-1">
@@ -286,6 +295,7 @@ export function LibrarySenseCardGroup({
             bottomOverlayReserve ? "pb-16" : "pb-4"
           }`}
         >
+          {approvedArticle&&commonForms&&<ProductionArticleReading><ArticleWordForms detail={commonForms} headword={model.headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="body" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></ProductionArticleReading>}
           <div className="space-y-3">
             {model.presentations.map((presentation) => {
               if (presentation.kind === "cross-reference") {
@@ -337,6 +347,9 @@ export function LibrarySenseCardGroup({
                 <MeaningCard
                   key={identity}
                   meaning={meaning}
+                  showSenseForms={!commonForms}
+                  formPartOfSpeech={model.formPartOfSpeech}
+                  headword={model.headword}
                   contentLanguage={contentLanguage}
                   translationLanguage={translationLanguage}
                   groupPartOfSpeech={model.partOfSpeech}
@@ -380,6 +393,9 @@ export function LibrarySenseCardGroup({
 
 function MeaningCard({
   meaning,
+  showSenseForms,
+  formPartOfSpeech,
+  headword,
   groupPartOfSpeech,
   state,
   interfaceLanguage,
@@ -396,6 +412,9 @@ function MeaningCard({
   onAction,
 }: {
   meaning: LibrarySenseCardModel;
+  headword:string;
+  showSenseForms?:boolean;
+  formPartOfSpeech?:string;
   groupPartOfSpeech: string | null;
   state: LibrarySenseCardViewState[string];
   interfaceLanguage: OnboardingLanguage;
@@ -417,6 +436,9 @@ function MeaningCard({
     onActiveMeaningChange?.(meaning.entryId);
     if (!state.expanded) onToggleExpanded();
   };
+  const [formsOpen,setFormsOpen]=React.useState(false);
+  const formsId=React.useId();
+  const senseForms=wordFormDetail(meaning.wordDetails,formPartOfSpeech??" ");
   const approvedArticle = sharedArticlePresentationV1Enabled();
   const hasVisibleLeadTranslation =
     state.translationVisible &&
@@ -530,7 +552,7 @@ function MeaningCard({
           expandedClassName={hasVisibleLeadTranslation ? "mt-4" : "mt-3"}
         >
           <div onClick={(event) => event.stopPropagation()}>
-            {approvedArticle ? <ProductionArticleReading><ArticleMeaningDetails definition={meaning.definition} details={meaning.details} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible}/></ProductionArticleReading> : <>            {meaning.details.length ? (
+            {approvedArticle ? <ProductionArticleReading><ArticleSenseRelations relation={lexicalRelationDetail(meaning.wordDetails)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage}/>{showSenseForms&&senseForms&&<><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="summary" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="body" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></>}<ArticleMeaningDetails definition={meaning.definition} details={meaning.details} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible}/></ProductionArticleReading> : <>            {meaning.details.length ? (
               <div className="space-y-4">
                 {orderMeaningDetails(meaning.details).map(
                   (item, index, orderedDetails) => {

@@ -4,7 +4,10 @@ export type TrainingCardPrompt =
   | { kind: "expression"; text: string; article?: string }
   | { kind: "explanation"; text: string };
 
+import type {PlatformWordDetailsV2} from "../../../../packages/shared/types/platformV2";
+
 export type TrainingCardAnswer = {
+  wordDetails?:PlatformWordDetailsV2;
   headword: string;
   article?: string;
   partOfSpeech?: string;

@@ -10,6 +10,7 @@ import type {
   PlatformHeadwordGroupV2,
   PlatformSenseCardCapabilityV2,
   PlatformSenseCardEntryV2,
+  PlatformWordDetailsV2,
 } from "../../../../../packages/shared/types/platformV2";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 
@@ -41,6 +42,7 @@ export type LibrarySenseContent = PlatformV2SenseContentNode;
 
 export type LibrarySenseCardModel = {
   entryId: string;
+  wordDetails?: PlatformWordDetailsV2;
   cardTypeId: CardTypeId;
   displayOrdinal: number | null;
   partOfSpeech: string | null;
@@ -76,6 +78,7 @@ export type LibraryGroupPresentation =
 
 export type LibrarySenseCardGroupModel = {
   article: string | null;
+  formPartOfSpeech?: string;
   headword: string;
   audioCapability: PlatformAudioCapabilityV2 | null;
   partOfSpeech: string | null;
@@ -170,6 +173,7 @@ export function buildLibrarySenseCardGroupModel(
   );
   return {
     article: group.header.article ?? null,
+    formPartOfSpeech: group.header.partOfSpeech?.sourceValue,
     headword: group.header.displayPronunciation ?? group.header.text,
     audioCapability: group.header.audio ?? null,
     partOfSpeech: localizePlatformSemanticTerm(
@@ -219,6 +223,7 @@ function buildMeaning(
 
   return {
     entryId: entry.entryId,
+    ...(entry.wordDetails ? {wordDetails:entry.wordDetails} : {}),
     cardTypeId: entry.card?.cardTypeId ?? requestedCardTypeId,
     displayOrdinal: entryCount > 1 ? entry.meaningOrdinal : null,
     partOfSpeech: localizePlatformSemanticTerm(
