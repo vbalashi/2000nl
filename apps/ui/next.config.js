@@ -59,6 +59,10 @@ rolloutEnv.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 =
   envNonEmpty(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1) ??
   rolloutEnv.NEXT_PUBLIC_TRAINING_PRESENTATION_V1;
 
+// Shared article reading can be reviewed independently of session chrome.
+rolloutEnv.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1 =
+  envNonEmpty(process.env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1) ?? "false";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,

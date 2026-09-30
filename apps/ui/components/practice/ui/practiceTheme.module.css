@@ -90,7 +90,8 @@
  --practice-accent: #45454b; --practice-accent-hover: #303033; --practice-focus: #56565f;
  --practice-example: #929198; --practice-activity-1: #e1e0dd; --practice-activity-2: #bfbdba; --practice-activity-3: #919095;
 }
-.theme[data-colour-mode=dark] {
+.theme[data-colour-mode=dark],
+.theme[data-colour-mode=app]:is(:global(.dark) *) {
  --practice-canvas: #191720; --practice-surface: #25212e; --practice-surface-subtle: #2c2637;
  --practice-surface-hover: #3b3149; --practice-hero: #30283d; --practice-hero-end: #282331;
  --practice-text: #f0eaf7; --practice-text-secondary: #d2c5e0; --practice-text-muted: #b6a6c8;

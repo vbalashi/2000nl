@@ -178,6 +178,7 @@ describe("/api/health", () => {
         platformV2TrainingUi: true,
         trainingTodaySetupV1: true,
         trainingPresentationV1: false,
+        sharedArticlePresentationV1: false,
       },
     });
   });

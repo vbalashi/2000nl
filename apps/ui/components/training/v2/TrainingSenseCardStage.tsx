@@ -33,6 +33,8 @@ type Props = {
   onHintOpened?: () => void;
   mode: TrainingMode;
   interfaceLanguage: OnboardingLanguage;
+  contentLanguage?: string;
+  translationLanguage?: string;
   busy?: boolean;
   focusOnMount?: boolean;
   onPlayAudio?: () => void;
@@ -50,6 +52,8 @@ export function TrainingSenseCardStage({
   onHintOpened,
   mode,
   interfaceLanguage,
+  contentLanguage,
+  translationLanguage,
   busy = false,
   focusOnMount = false,
   onPlayAudio,
@@ -240,6 +244,8 @@ export function TrainingSenseCardStage({
               onOpenDetails={onOpenDetails}
             />
             <AnswerBody
+              contentLanguage={contentLanguage}
+              translationLanguage={translationLanguage}
               model={answerModel}
               translationVisible={Boolean(contextPrompt) || translationVisible}
               interfaceLanguage={interfaceLanguage}

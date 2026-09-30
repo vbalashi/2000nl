@@ -1,7 +1,8 @@
 "use client";
+import {ArticleTranslation,ArticleContentNode,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
 import {WordIdentity} from "@/components/practice/ui/WordIdentity";
 import React, { useContext, useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, Languages, Volume2, X, List, Quote, Repeat2 } from "lucide-react";
+import { ChevronDown, Languages, Volume2, X, Repeat2 } from "lucide-react";
 import type { LibrarySenseCardGroupModel, LibrarySenseCardModel, LibrarySenseContent } from "@/components/training/library-v2/librarySenseCardModel";
 import { SenseCardReveal } from "@/components/training/SenseCardChrome";
 import { LibraryIconButton, MeaningActions, DemoLearningState } from "./LibraryActions";
@@ -24,16 +25,15 @@ export function NumberedMeaningFrame({ ordinal, numbering, open, exposure, child
   return <article className={s.meaningCard} data-numbering={numbering} data-expanded={open} data-exposure={exposure?"frame":"inline"}>{exposure&&<span className={s.frameExposure} aria-hidden="true">{exposure}</span>}{numbering === "corner" && ordinal != null && <span className={s.cornerNumber} aria-hidden="true">{ordinal}</span>}{children}</article>;
 }
 export function TranslatedText({text,visible,emphasis=false}:{text?:string|null;visible:boolean;emphasis?:boolean}) {
-  return text?<SenseCardReveal open={visible}><p lang="en" className={emphasis?s.translationEmphasis:s.translation}>{text}</p></SenseCardReveal>:null;
+ return <ArticleTranslation text={text} visible={visible} emphasis={emphasis} language="en" classes={s}/>;
 }
-export function LibraryContentNode({ node,translationVisible=false }: { node: LibrarySenseContent;translationVisible?:boolean }) {
-  const copy=getUiMessages(useContext(InterfaceLanguageContext)).article;
-  return <div className={s.contentNode} data-kind={node.kind}><div className={s.contentPair}><span className={s.nodeRole} data-role={node.kind === "example" ? "example" : "explanation"}>{node.kind === "example" ? copy.example : node.kind === "idiom-explanation" || node.kind === "definition" ? copy.explanation : copy.note}</span><p lang="nl" className={node.kind === "example" || node.kind === "idiom" ? s.literary : s.explanation}>{node.text}</p><TranslatedText text={node.translation} visible={translationVisible}/></div>{node.children.length > 0 && <div className={s.children}>{node.children.map(child => <LibraryContentNode key={child.contentNodeId} node={child} translationVisible={translationVisible}/>)}</div>}</div>;
+export function LibraryContentNode({node,translationVisible=false}:{node:LibrarySenseContent;translationVisible?:boolean}) {
+ const interfaceLanguage=useContext(InterfaceLanguageContext);
+ return <ArticleContentNode node={node} translationVisible={translationVisible} interfaceLanguage={interfaceLanguage} contentLanguage="nl" translationLanguage="en" classes={s}/>;
 }
-export function MeaningContent({ meaning,translationVisible=false }: { meaning: LibrarySenseCardModel;translationVisible?:boolean }) {
-  const copy=getUiMessages(useContext(InterfaceLanguageContext)).article;
-  const groups = [{ id:"examples",label: copy.examples, nodes: meaning.details.filter(n => n.kind === "example") }, { id:"expressions",label: copy.expressions, nodes: meaning.details.filter(n => n.kind !== "example") }];
-  return <>{meaning.definition?.children.map(n => <LibraryContentNode key={n.contentNodeId} node={n} translationVisible={translationVisible}/>)}{groups.filter(g => g.nodes.length).map(group => <section className={s.contentSection} key={group.id}><h3>{group.id==="examples"?<List size={12}/>:<Quote size={12}/>}<span>{group.label}</span></h3>{group.nodes.map(n => <LibraryContentNode key={n.contentNodeId} node={n} translationVisible={translationVisible}/>)}</section>)}</>;
+export function MeaningContent({meaning,translationVisible=false}:{meaning:LibrarySenseCardModel;translationVisible?:boolean}) {
+ const interfaceLanguage=useContext(InterfaceLanguageContext);
+ return <ArticleMeaningDetails definition={meaning.definition} details={meaning.details} translationVisible={translationVisible} interfaceLanguage={interfaceLanguage} contentLanguage="nl" translationLanguage="en" classes={s}/>;
 }
 export function MeaningCard({ readOnly=false, preview=false, meaning, defaultOpen, expandAll, focusMeaning, study, translationVisible, onNotice }: { readOnly?:boolean; preview?:boolean; translationVisible:boolean; meaning: LibrarySenseCardModel; defaultOpen: boolean; focusMeaning?:string; expandAll?:{expanded:boolean;revision:number}; study: LibraryStudy; onNotice: (s: string) => void }) {
   const copy=getUiMessages(useContext(InterfaceLanguageContext)).article;

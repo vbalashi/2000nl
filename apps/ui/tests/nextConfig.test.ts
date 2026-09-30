@@ -17,7 +17,7 @@ function readDistDir(nextDistDir?: string) {
   );
 }
 
-function readRolloutEnv(profile?: string, translationExercises?: string, presentation?: string) {
+function readRolloutEnv(profile?: string, translationExercises?: string, presentation?: string, sharedArticle?: string) {
   const env = { ...process.env };
   if (profile) env.APP_ROLLOUT_PROFILE = profile;
   else delete env.APP_ROLLOUT_PROFILE;
@@ -25,6 +25,9 @@ function readRolloutEnv(profile?: string, translationExercises?: string, present
   else delete env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED;
   if (presentation) env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 = presentation;
   else delete env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1;
+
+  if (sharedArticle) env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1 = sharedArticle;
+  else delete env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1;
 
   return JSON.parse(
     execFileSync(
@@ -89,4 +92,10 @@ describe("rollout profile compilation", () => {
     expect(readRolloutEnv("pilot", undefined, "true").NEXT_PUBLIC_TRAINING_PRESENTATION_V1).toBe("true");
     expect(readRolloutEnv("pilot", undefined, "false").NEXT_PUBLIC_TRAINING_PRESENTATION_V1).toBe("false");
   });
+});
+
+test("shared article presentation defaults off and supports independent opt-in/rollback",()=>{
+ expect(readRolloutEnv("pilot").NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1).toBe("false");
+ expect(readRolloutEnv("pilot",undefined,undefined,"true").NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1).toBe("true");
+ expect(readRolloutEnv("pilot",undefined,"true","false").NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1).toBe("false");
 });

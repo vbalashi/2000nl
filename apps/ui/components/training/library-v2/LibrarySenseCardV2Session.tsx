@@ -652,6 +652,8 @@ function SenseCardV2Session({
     <div className="relative flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1">
         <LibrarySenseCardGroup
+          contentLanguage={contentLanguageCode}
+          translationLanguage={translationLanguage??undefined}
           model={model}
           interfaceLanguage={interfaceLanguage}
           busyIdentity={busyIdentity}

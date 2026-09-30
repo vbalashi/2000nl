@@ -756,6 +756,8 @@ export function TrainingSenseCardV2Session({
           {trainingExclusionCopy[interfaceLanguage].failed}
         </p> : null}
         <TrainingSenseCardStage
+          contentLanguage={contentLanguageCode}
+          translationLanguage={translationTargetLanguageCode && translationTargetLanguageCode !== "off" ? translationTargetLanguageCode : undefined}
           model={model}
           contextPrompt={wordInContext && contextResult?.state === "ready"
             ? contextResult.prompt : undefined}

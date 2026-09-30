@@ -1,6 +1,10 @@
 "use client";
 
 import React from "react";
+import {sharedArticlePresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
+import {ArticleTranslation,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
+import {ProductionArticleReading} from "@/components/practice/article/ProductionArticleReading";
+import reading from "@/components/practice/article/articleContent.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -30,6 +34,8 @@ import {
 type Props = {
   model: LibrarySenseCardGroupModel;
   interfaceLanguage: OnboardingLanguage;
+  contentLanguage?: string;
+  translationLanguage?: string;
   busyIdentity?: string | null;
   audioBusy?: boolean;
   onPlayAudio?: () => void;
@@ -56,6 +62,8 @@ const DETAILS_SCROLL_FADE_HEIGHT = 44;
 export function LibrarySenseCardGroup({
   model,
   interfaceLanguage,
+  contentLanguage,
+  translationLanguage,
   busyIdentity = null,
   audioBusy = false,
   onPlayAudio,
@@ -329,6 +337,8 @@ export function LibrarySenseCardGroup({
                 <MeaningCard
                   key={identity}
                   meaning={meaning}
+                  contentLanguage={contentLanguage}
+                  translationLanguage={translationLanguage}
                   groupPartOfSpeech={model.partOfSpeech}
                   state={
                     viewState[identity] ?? {
@@ -373,6 +383,8 @@ function MeaningCard({
   groupPartOfSpeech,
   state,
   interfaceLanguage,
+  contentLanguage,
+  translationLanguage,
   busy,
   translationState,
   collectionCount,
@@ -387,6 +399,8 @@ function MeaningCard({
   groupPartOfSpeech: string | null;
   state: LibrarySenseCardViewState[string];
   interfaceLanguage: OnboardingLanguage;
+  contentLanguage?: string;
+  translationLanguage?: string;
   busy: boolean;
   translationState: "pending" | "failed" | null;
   collectionCount: number;
@@ -403,6 +417,7 @@ function MeaningCard({
     onActiveMeaningChange?.(meaning.entryId);
     if (!state.expanded) onToggleExpanded();
   };
+  const approvedArticle = sharedArticlePresentationV1Enabled();
   const hasVisibleLeadTranslation =
     state.translationVisible &&
     Boolean(meaning.entryTranslation || meaning.definition?.translation);
@@ -430,7 +445,11 @@ function MeaningCard({
           className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3"
         >
           <div className="min-w-0">
-            {meaning.entryTranslation ? (
+            {approvedArticle ? <ProductionArticleReading>
+              <ArticleTranslation text={[meaning.entryTranslation,...meaning.entryTranslationAlternatives].filter(Boolean).join(" · ")} visible={state.translationVisible} emphasis language={translationLanguage}/>
+              <p className={reading.definitionText} lang={contentLanguage}>{meaning.definition?.text??"—"}</p>
+              <ArticleTranslation text={meaning.definition?.translation} visible={state.translationVisible} language={translationLanguage}/>
+            </ProductionArticleReading> : <>            {meaning.entryTranslation ? (
               <SenseCardReveal open={state.translationVisible}>
                 <p className="mb-1 text-[length:var(--reading-translation-emphasis-size,15px)] font-[650] text-amber-700 dark:text-[#dbc47e]">
                   {[
@@ -451,7 +470,8 @@ function MeaningCard({
                   {meaning.definition.translation}
                 </p>
               </SenseCardReveal>
-            ) : null}
+            ) : null}</>}
+
           </div>
           <div
             className="flex shrink-0 items-center gap-2"
@@ -486,7 +506,7 @@ function MeaningCard({
             </button>
           </div>
         </div>
-        {meaning.definition?.children.length ? (
+        {!approvedArticle && meaning.definition?.children.length ? (
           <div className="mt-2 space-y-2 pl-4">
             {meaning.definition.children.map((child) => (
               <NestedContent
@@ -510,7 +530,7 @@ function MeaningCard({
           expandedClassName={hasVisibleLeadTranslation ? "mt-4" : "mt-3"}
         >
           <div onClick={(event) => event.stopPropagation()}>
-            {meaning.details.length ? (
+            {approvedArticle ? <ProductionArticleReading><ArticleMeaningDetails definition={meaning.definition} details={meaning.details} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible}/></ProductionArticleReading> : <>            {meaning.details.length ? (
               <div className="space-y-4">
                 {orderMeaningDetails(meaning.details).map(
                   (item, index, orderedDetails) => {
@@ -563,7 +583,8 @@ function MeaningCard({
                   },
                 )}
               </div>
-            ) : null}
+            ) : null}</>}
+
 
             <div
               data-testid="library-primary-actions"

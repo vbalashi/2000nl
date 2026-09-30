@@ -10,6 +10,9 @@ import {
   Route,
   Volume2,
 } from "lucide-react";
+import {sharedArticlePresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
+import {ArticleContentNode,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
+import {ProductionArticleReading} from "@/components/practice/article/ProductionArticleReading";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -248,13 +251,18 @@ export function TrainingCardAnswerBody({
   model,
   translationVisible,
   interfaceLanguage,
+  contentLanguage,
+  translationLanguage,
   onReachEnd,
 }: {
   model: TrainingCardAnswer;
   translationVisible: boolean;
   interfaceLanguage: OnboardingLanguage;
+  contentLanguage?: string;
+  translationLanguage?: string;
   onReachEnd: () => void;
 }) {
+  const approvedArticle = sharedArticlePresentationV1Enabled();
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const continuationFocusPendingRef = React.useRef(false);
   const [scrollState, setScrollState] = React.useState({
@@ -311,7 +319,10 @@ export function TrainingCardAnswerBody({
         style={{ maskImage, WebkitMaskImage: maskImage }}
         className="h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {definitions.length ? (
+        {approvedArticle ? <ProductionArticleReading>
+          {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>)}
+          <ArticleMeaningDetails definition={null} details={[...usagePatterns,...examples,...idioms,...notes]} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>
+        </ProductionArticleReading> : <>        {definitions.length ? (
           <div className="space-y-3 pt-1">
             {definitions.map((item) => (
               <ContentItem
@@ -383,7 +394,8 @@ export function TrainingCardAnswerBody({
               />
             ))}
           </ContentSection>
-        ) : null}
+        ) : null}</>}
+
       </div>
       {scrollState.bottom ? (
         <button

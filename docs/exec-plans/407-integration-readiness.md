@@ -103,3 +103,13 @@ Training overview, Builder, Settings, Training session/history, shared Library a
 The next implementation slice remains the shared article/full-word presentation inside the existing production Training/Library seams. Reuse the already prepared catalogs and theme/text tokens, bind the production locale/preference owner, and keep its lookup and actions authoritative. Do not copy Statistics fixture formulas, training-name callbacks, sample history, or demo notes into production telemetry. Real Statistics loading/error/empty states must come from its actual data adapter.
 
 Before rollout, the earlier acceptance gates still apply: DB/index readiness, real persistence/failure recovery, browser zoom/text spacing, landscape, keyboard/focus/reduced motion and palette contrast. Localization fixture checks do not close these gates.
+
+## Shared article presentation checkpoint — 2026-09-30
+
+`components/practice/article/ArticleContent.tsx` owns normalized article rendering and `articleContent.module.css` owns the reading styles. The prototype composes these same styles; production Training and Library consume the same renderer through `ProductionArticleReading`. Lookup, learning actions, collections, translation requests and scheduling remain in their existing controllers. Source/translation language tags and EN/NL/RU interface labels are independent. No fixture data enters production.
+
+`NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1` is an independent explicit opt-in, default off. Local review enables it together with the earlier Training presentation switch; either switch can be rolled back independently. Production mode follows the existing app dark class. Text sizing bridges the current three-value reading preference (definition 20px at normal, 25px at largest); migration to four shared steps and the palette preference owner are subsequent tasks, not silently introduced persistence contracts.
+
+Validated: typecheck, practice style guard, 166 tests in 13 suites, 12 existing full-word-panel browser cases and 12 Training reading browser cases across short/narrow/wide screens, normal/largest reading and light/dark. The largest-text Russian prototype Library follow-up also passed. These browser cases use controlled lookup fixtures and establish presentation/controller compatibility, not live-data acceptance. Existing Training audio effect dependency lint warning remains; local DB ledger/index warnings remain open.
+
+Next: bring the pinned word header and real additional word details into this shared presentation, then integrate preference/theme ownership and the remaining screens in order. The rollout remains off by default until owner review and the earlier real-data acceptance gates are satisfied.
