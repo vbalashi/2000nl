@@ -2691,6 +2691,8 @@ function TrainingScreenContent({
         open={visibleDestination === "statistics"}
         interfaceLanguage={onboardingLang}
         stats={stats}
+        statsStatus={trainingStatsStatus}
+        materialLabel={trainingFocusFilter.dictionaryScope ? undefined : wordListLabel || undefined}
         onStartTraining={() => onRequestDestination("training")}
         onHistory={openTrainingHistory}
       />

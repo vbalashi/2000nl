@@ -522,3 +522,6 @@
 
 -- Independent measured active card time (no scheduler mutation).
 \i db/migrations/187_training_active_time.sql
+
+-- Read-only per-study-day learner activity for Statistics.
+\i db/migrations/188_training_activity_days.sql

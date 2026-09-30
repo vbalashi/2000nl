@@ -622,3 +622,14 @@ The checked-in manifest and forward/read-only probe chains include the exact
 migration checksum. Apply via retaining migration; no reset/import is required.
 Installing this boundary does not enable browser collection or accept the complete
 Statistics screen. Local preparation does not authorize production deployment.
+
+## Learner activity per study day (migration 188)
+
+Migration 188 adds one read-only authenticated RPC,
+`get_training_activity_days_v1(language, days)`, for Statistics activity,
+calendar and streaks. The principal comes from `auth.uid()`; days end at the
+server-derived current 04:00 study day (at most 366). New/review counts reuse the
+current study-day counter definitions across meaning, idiom and sentence history;
+measured time is delegated to the migration-187 reader. No table, grant or
+learner state changes. Apply via retaining migration with the checksummed
+manifest and forward/read-only probe chains; no reset/import is required.

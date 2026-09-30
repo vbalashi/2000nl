@@ -1,14 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { History } from "lucide-react";
-import { getUiMessages } from "@/lib/uiMessages";
-import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
+import { sharedArticlePresentationV1Enabled, trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import workspace from "@/components/practice/library/libraryWorkspace.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { DetailedStats } from "@/lib/types";
-import { MeasuredStudyTime } from "@/components/practice/MeasuredStudyTime";
-import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import { StatisticsActivity } from "@/components/practice/statistics/StatisticsActivity";
+import { StatisticsQueue } from "@/components/practice/statistics/StatisticsMaterial";
+import statisticsStyles from "@/components/practice/statistics/statistics.module.css";
+import { useActivityCalendar } from "@/lib/training/activity/useActivityCalendar";
 
 const copy = {
   nl: {
@@ -49,13 +51,50 @@ type Props = {
   open: boolean;
   interfaceLanguage: OnboardingLanguage;
   stats: DetailedStats;
+  statsStatus?: "pending" | "ready" | "error";
+  materialLabel?: string;
   onStartTraining: () => void;
   onHistory?: () => void;
 };
 
-export function StatisticsDestination({
-  userId,
-  languageCode,
+export function StatisticsDestination(props: Props) {
+  return trainingPresentationV1Enabled() && props.userId && props.languageCode
+    ? <ApprovedStatistics {...props} userId={props.userId} languageCode={props.languageCode} />
+    : <LegacyStatistics {...props} />;
+}
+
+function ApprovedStatistics({ userId, languageCode, open, interfaceLanguage, stats, statsStatus = "ready", materialLabel, onStartTraining, onHistory }: Props & { userId: string; languageCode: string }) {
+  const ui = getUiMessages(interfaceLanguage);
+  const copy = ui.statistics;
+  const [refresh, setRefresh] = useState(0);
+  const activity = useActivityCalendar(userId, languageCode, open, refresh);
+  const language = new Intl.DisplayNames(interfaceLanguage, { type: "language" }).of(languageCode) ?? languageCode;
+  const recentActivity = onHistory ? <button type="button" className={statisticsStyles.recentActivity} onClick={onHistory}>
+    <History size={17} aria-hidden="true" />{copy.recentActivity}</button> : null;
+  return (
+    <section aria-hidden={!open} aria-label={ui.navigation.statistics} className={`${open ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden`}>
+      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
+        <div className={`${statisticsStyles.statistics} ${statisticsStyles.page}`} lang={interfaceLanguage}>
+          <h1 className={statisticsStyles.srOnly}>{ui.navigation.statistics}</h1>
+          {activity.status === "ready"
+            ? <StatisticsActivity interfaceLanguage={interfaceLanguage} calendar={activity.calendar} recentActivity={recentActivity} />
+            : <div className={statisticsStyles.status} aria-live="polite">
+              {activity.status === "loading" ? <p role="status">{copy.activityLoading}</p>
+                : <><p role="alert">{copy.activityUnavailable}</p><button type="button" onClick={() => setRefresh(n => n + 1)}>{copy.timeRetry}</button></>}
+              {recentActivity}
+            </div>}
+          {statsStatus === "ready" && <StatisticsQueue interfaceLanguage={interfaceLanguage} due={stats.reviewCardsDue}
+            description={materialLabel ? `${language} · ${materialLabel}` : language}
+            practiseLabel={materialLabel ? formatUiMessage(copy.practise, { material: materialLabel }) : ui.trainingOverview.start}
+            onPractise={onStartTraining} />}
+          <details className={statisticsStyles.notes}><summary>{copy.about}</summary><p>{copy.accountNotes}</p></details>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LegacyStatistics({
   open,
   interfaceLanguage,
   stats,
@@ -112,7 +151,6 @@ export function StatisticsDestination({
           {sharedArticlePresentationV1Enabled() && onHistory && <button type="button" className={workspace.button} onClick={onHistory}>
             <History size={16} aria-hidden="true" />{getUiMessages(interfaceLanguage).statistics.recentActivity}
           </button>}
-          {trainingPresentationV1Enabled() && userId && languageCode && <MeasuredStudyTime ownerId={userId} languageCode={languageCode} interfaceLanguage={interfaceLanguage} open={open} />}
           <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {metrics.map((metric) => (
               <section

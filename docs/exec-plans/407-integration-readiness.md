@@ -735,3 +735,54 @@ temporary tabs closed, no preference/learner action changes. Full screen adaptat
 remains open: real history calendar/highlights and material/queue/launch/read scope,
 including removal of the old loading fallback that briefly displays zero/2000.
 See `407-study-time-integration.md`. Production remains undeployed.
+
+## Independent review — 2026-09-30 (new agent, from d5e754fa)
+
+Whole-series review against source and the running local UI (not prior reports).
+Screenshots: `/tmp/407-review-*.png`, `/tmp/407qa/*.png` (evidence only).
+
+| Requirement | Current implementation | Direct evidence | Remaining gap |
+| --- | --- | --- | --- |
+| Owners intact (data, prefs, actions, scheduling) | Production never imports `app/dev`/fixtures; setups/material/palette/text are account-owned; actions go through Platform V2 | grep of `components`/`lib`; `/api/training/setups`, `/api/settings/material` route code | none found |
+| Shared article + full-word panel | `ProductionArticleReading`/`ArticleWordForms` in Training answer and Library; drawer opens `TrainingMoreSenseCardV2Session` with the current `entryId` | `TrainingScreen.tsx` drawer; live card `ervaren`/`natuurlijk` | sequential current-meaning reveal in drawer not verified visually |
+| Training session presentation | Flag adds geometry only: legacy card surface, legacy `Учить`/rating buttons (hardcoded slate/hex in `TrainingCardTemplates.tsx`), no `RatingControls`, no `usePromptReveal`; header shows queue label, not training name | source grep; live 1024px session screenshot vs prototype | P1: approved card surface, ratings, reveal motion, header |
+| Palette canvas | Legacy `dark:bg-background-dark` and session `#171c24` painted over palette | computed styles (`rgb(15,23,42)` wrapper) | fixed in 842afc4a |
+| Statistics | Legacy layout + separate time block; no per-day history read model | `StatisticsDestination.tsx`; DB inventory | activity/calendar/highlights done below; material chips/coverage/language tabs open |
+| Mobile navigation | Production uses a header dropdown menu; prototype uses a bottom tab bar | 390px screenshots of both | P1 open |
+| Background-tab time | Integrated browser tab reported `visibilityState: hidden`; two open sessions (one revealed ≈1 min) wrote zero receipts | `private.training_active_time_v1` counts per session | normal-browser focus-loss (visible but unfocused) still open |
+
+The IAB note in the study-time plan (both tabs focused/visible) did not reproduce:
+the VS Code integrated browser reported hidden, which is a useful negative check.
+
+## Statistics activity on real history — 2026-09-30
+
+Owner decisions: Activity/calendar/streaks count all exercise families in the
+learning language; the material section uses collections/dictionaries plus All
+enabled material (read model pending).
+
+Migration 188 adds read-only `get_training_activity_days_v1(language, days≤366)`.
+The server derives the principal and the current 04:00 study day; new = start-learning
+or first graded `new` review (per card, per day), reviews = later graded reviews,
+and for idiom/sentence the first `review-exercise` of a target is new, later ones are
+reviews. Measured time is delegated to the migration-187 reader. History is not
+filtered by current access/material preferences. `/api/training/activity` (first-party
+bearer) validates a complete consecutive calendar; the client computes Today/Week/
+Month, streaks, best day and 30-day average from it.
+
+`components/practice/statistics` now owns Activity, the year/two-month calendar,
+day detail, highlights, queue and coverage. The prototype renders the same components
+through an explicit fixture adapter; its obsolete CSS was removed. Production shows
+loading/error/retry instead of zeros, a dash for unmeasured time, and the measured-since
+note; the queue appears only once the current-scope counters are ready. The
+separate `MeasuredStudyTime` block is replaced by the Study time metric.
+
+Validation: 267 disposable SQL/FSRS tests (3 new), 43 harness/deploy tests (a stale
+`read-only-postflight-186` expectation now reads the manifest), retaining apply +
+read-only check at contract 188 (bounded probe 1474 ms), 30 focused UI tests, 83
+TrainingScreen/theme tests, typecheck, targeted lint and style guard. Headless local
+QA at 1024px and 390px: real data (2 new today, 4 min), no horizontal overflow, no
+console errors on Statistics.
+
+Next: material read model (collections/dictionaries + All; due and started/total in
+cards) with language tabs from account material order; then Training session card
+surface/ratings/reveal/header; then mobile tab navigation.

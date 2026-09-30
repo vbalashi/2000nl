@@ -202,7 +202,8 @@ test("check invokes only a read-only psql session and reports receipts separatel
   assert.match(calls, /learner_card_states/);
   assert.match(calls, /actual.checksum_sha256 <> expected.checksum_sha256/);
   assert.match(calls, /local_supabase_probe.sql/);
-  assert.match(calls, /read-only-postflight-186.sql/);
+  const manifest = JSON.parse(readFileSync(path.join(root, "packages/shared/deployment/db-contract.json"), "utf8"));
+  assert.ok(calls.includes(manifest.readOnlyPostflightProbe.file));
   assert.doesNotMatch(calls, /\\i db\/deploy-contract\/postflight-179.sql/);
 });
 
