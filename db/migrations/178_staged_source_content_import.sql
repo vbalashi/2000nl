@@ -234,11 +234,14 @@ BEGIN
           AND (stored.id IS NULL OR
             ROW(stored.kind, stored.diagnostic_locator,
                 stored.source_native_key, stored.source_text_fingerprint,
-                stored.canonical_source_text, stored_parent.diagnostic_locator)
+                stored.canonical_source_text, stored_parent.source_order,
+                stored_parent.entry_id, stored_parent.binding_state)
             IS DISTINCT FROM
             ROW(incoming.kind, incoming.source_path,
                 incoming.source_native_key, incoming.fingerprint,
-                incoming.source_text, incoming_parent.source_path)
+                incoming.source_text, incoming_parent.source_order,
+                incoming_parent.entry_id,
+                CASE WHEN incoming_parent.id IS NOT NULL THEN 'active'::text END)
           )
       )
     )

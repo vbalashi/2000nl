@@ -455,7 +455,8 @@ def test_staged_fresh_import_matches_ordinary_reconciliation(
                     SELECT binding.source_entry_key, entry.raw,
                            node.kind, node.source_native_key,
                            node.source_text_fingerprint, node.diagnostic_locator,
-                           parent.diagnostic_locator,
+                           parent.diagnostic_locator, parent.source_order,
+                           parent.kind, parent.source_native_key,
                            node.canonical_source_text, node.source_order,
                            node.identity_evidence, node.reconciliation_decision,
                            EXISTS (SELECT 1
@@ -544,6 +545,138 @@ def test_staged_update_reconciles_only_changed_word(tmp_path: Path) -> None:
     assert {key: value for key, value in before.items() if key != "test:article:a1:1"} == {
         key: value for key, value in after.items() if key != "test:article:a1:1"
     }
+
+
+@pytest.mark.parametrize("tamper", ["parent", "native", "locator"])
+def test_identical_replay_repairs_node_structure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, tamper: str,
+) -> None:
+    database_url = _require_local_test_database()
+    slug = "pytest-node-structure-" + uuid4().hex
+    _write_manifest(tmp_path, rich_content=True)
+    original = source_import_module.platform_v2_content_node_inputs
+    def native_inputs(payload):
+        nodes = original(payload)
+        for node in nodes:
+            if node["kind"] == "definition":
+                node["sourceNativeKey"] = "test-definition-native"
+        return nodes
+    monkeypatch.setattr(source_import_module, "platform_v2_content_node_inputs", native_inputs)
+    def run_import():
+        return import_entries(data_dir=tmp_path, database_url=database_url,
+                              dictionary_slug=slug, dictionary_name="Node structure",
+                              nt2_slug=slug + "-list", nt2_name="Node structure")
+    run_import()
+    with psycopg2.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT entry.id FROM public.word_entries entry
+                JOIN public.dictionaries dictionary ON dictionary.id = entry.dictionary_id
+                WHERE dictionary.slug = %s
+                  AND entry.raw #>> '{_source,source_entry_key}' = 'test:article:a1:1'
+            """, (slug,))
+            entry_id = cursor.fetchone()[0]
+            if tamper == "parent":
+                cursor.execute("""
+                    UPDATE private.platform_v2_content_nodes
+                    SET parent_content_node_id = NULL
+                    WHERE entry_id = %s AND kind = 'idiom-explanation'
+                """, (entry_id,))
+            elif tamper == "native":
+                cursor.execute("""
+                    UPDATE private.platform_v2_content_nodes
+                    SET source_native_key = 'corrupted-native'
+                    WHERE entry_id = %s AND kind = 'definition'
+                """, (entry_id,))
+            else:
+                cursor.execute("""
+                    UPDATE private.platform_v2_content_nodes
+                    SET diagnostic_locator = 'raw.corrupted.path'
+                    WHERE entry_id = %s AND kind = 'definition'
+                """, (entry_id,))
+            assert cursor.rowcount == 1
+    repaired = run_import()
+    assert repaired.no_op is False
+    assert repaired.stage_metrics["reconciled_entries"] == 1
+    assert run_import().no_op is True
+
+
+@pytest.mark.parametrize("tamper", ["group", "ordinal"])
+def test_identical_replay_rejects_binding_identity_drift(tmp_path: Path, tamper: str) -> None:
+    database_url = _require_local_test_database()
+    slug = "pytest-binding-structure-" + uuid4().hex
+    _write_manifest(tmp_path)
+    def run_import():
+        return import_entries(data_dir=tmp_path, database_url=database_url,
+                              dictionary_slug=slug, dictionary_name="Binding structure",
+                              nt2_slug=slug + "-list", nt2_name="Binding structure")
+    run_import()
+    with psycopg2.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE private.source_entry_bindings binding
+                SET source_group_key = CASE WHEN %s = 'group' THEN 'tampered-group'
+                                            ELSE binding.source_group_key END,
+                    sense_ordinal = CASE WHEN %s = 'ordinal' THEN 99
+                                         ELSE binding.sense_ordinal END
+                FROM public.dictionaries dictionary
+                WHERE dictionary.id = binding.dictionary_id AND dictionary.slug = %s
+                  AND binding.source_entry_key = 'test:article:a1:1'
+            """, (tamper, tamper, slug))
+    with pytest.raises(RuntimeError, match="binding identity drifted"):
+        run_import()
+
+
+def test_staged_parent_move_with_same_locator_preserves_exact_node_ids(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    database_url = _require_local_test_database()
+    slug = "pytest-same-locator-" + uuid4().hex
+    _write_manifest(tmp_path)
+    original = source_import_module.platform_v2_content_node_inputs
+    parent_key = "parent-a"
+    def custom_inputs(payload):
+        nodes = original(payload)
+        if payload["_source"]["source_entry_key"] == "test:article:a1:1":
+            for key in ("parent-a", "parent-b"):
+                nodes.append({"inputKey": key, "kind": "idiom",
+                              "sourcePath": "raw.same.locator", "sourceNativeKey": key,
+                              "sourceTextFingerprint": key, "sourceText": key})
+            nodes.append({"inputKey": "child", "kind": "example",
+                          "sourcePath": "raw.child", "sourceNativeKey": "child",
+                          "sourceTextFingerprint": "child", "sourceText": "child",
+                          "parentInputKey": parent_key})
+        return nodes
+    monkeypatch.setattr(source_import_module, "platform_v2_content_node_inputs", custom_inputs)
+    def run_import():
+        return import_entries(data_dir=tmp_path, database_url=database_url,
+                              dictionary_slug=slug, dictionary_name="Same locator",
+                              nt2_slug=slug + "-list", nt2_name="Same locator")
+    def links():
+        with psycopg2.connect(database_url) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT node.source_native_key, node.id, node.parent_content_node_id
+                    FROM private.platform_v2_content_nodes node
+                    JOIN public.word_entries entry ON entry.id = node.entry_id
+                    JOIN public.dictionaries dictionary ON dictionary.id = entry.dictionary_id
+                    WHERE dictionary.slug = %s AND node.binding_state = 'active'
+                      AND node.source_native_key IS NOT NULL
+                """, (slug,))
+                return {key: (node_id, parent_id) for key, node_id, parent_id in cursor.fetchall()}
+    run_import()
+    before = links()
+    assert before["child"][1] == before["parent-a"][0]
+    parent_key = "parent-b"
+    result = run_import()
+    after = links()
+    assert result.no_op is False
+    assert result.stage_metrics["reconciled_entries"] == 1
+    assert {key: row[0] for key, row in before.items()} == {
+        key: row[0] for key, row in after.items()
+    }
+    assert after["child"][1] == after["parent-b"][0]
+    assert run_import().no_op is True
 
 
 def test_source_batch_failure_rolls_back_bindings_nodes_and_projection(

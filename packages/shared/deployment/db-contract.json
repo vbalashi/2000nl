@@ -295,7 +295,7 @@
     {
       "migrationId": 178,
       "file": "db/migrations/178_staged_source_content_import.sql",
-      "sha256": "d6c5fcc133c389374f386937466f9eab420e7d88a45960fe43c2010af771d09a"
+      "sha256": "722ceb2261e01fc7d0d4a80921634ea5eb3ddf0a65eb9c11ec5bb0fa1f47ae17"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-178.sql",

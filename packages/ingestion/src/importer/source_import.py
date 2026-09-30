@@ -213,6 +213,10 @@ def _completed_manifest_is_noop(
 
     for source_entry_key, content_fingerprint in expected.items():
         binding = bindings[source_entry_key]
+        artifact = artifacts_by_key[source_entry_key]
+        if (binding["source_group_key"] != artifact.source_group_key
+                or binding["sense_ordinal"] != artifact.sense_ordinal):
+            raise RuntimeError("Completed manifest exists but source binding identity drifted")
         if (
             binding["manifest_checksum"] != manifest.manifest_sha256
             or binding["content_fingerprint_version"]
@@ -256,41 +260,39 @@ def _completed_manifest_is_noop(
 
     cursor.execute(
         """
-        select entry_id::text, kind, source_text_fingerprint,
-               canonical_source_text, source_order
-        from private.platform_v2_content_nodes
-        where entry_id = any(%s::uuid[])
-          and binding_state = 'active'
+        select node.entry_id::text, node.kind, node.source_text_fingerprint,
+               node.canonical_source_text, node.source_order,
+               node.source_native_key, node.diagnostic_locator,
+               parent.source_order, parent.entry_id::text, parent.binding_state
+        from private.platform_v2_content_nodes as node
+        left join private.platform_v2_content_nodes as parent
+          on parent.id = node.parent_content_node_id
+        where node.entry_id = any(%s::uuid[])
+          and node.binding_state = 'active'
         """,
         (word_entry_ids,),
     )
-    actual_nodes: dict[
-        str,
-        list[tuple[str, str, str | None, int | None]],
-    ] = {}
-    for (
-        entry_id,
-        kind,
-        fingerprint,
-        source_text,
-        source_order,
-    ) in cursor.fetchall():
-        actual_nodes.setdefault(entry_id, []).append(
-            (kind, fingerprint, source_text, source_order)
-        )
+    actual_nodes: dict[str, list[tuple]] = {}
+    for entry_id, *node_shape in cursor.fetchall():
+        actual_nodes.setdefault(entry_id, []).append(tuple(node_shape))
     for source_entry_key, artifact in artifacts_by_key.items():
         entry_id = bindings[source_entry_key]["word_entry_id"]
+        inputs = platform_v2_content_node_inputs(artifact.payload)
+        input_orders = {node["inputKey"]: index
+                        for index, node in enumerate(inputs, start=1)}
         expected_nodes = [
             (
                 node["kind"],
                 node["sourceTextFingerprint"],
                 node["sourceText"],
                 source_order,
+                node.get("sourceNativeKey"),
+                node["sourcePath"],
+                input_orders.get(node.get("parentInputKey")),
+                entry_id if node.get("parentInputKey") else None,
+                "active" if node.get("parentInputKey") else None,
             )
-            for source_order, node in enumerate(
-                platform_v2_content_node_inputs(artifact.payload),
-                start=1,
-            )
+            for source_order, node in enumerate(inputs, start=1)
         ]
         actual_entry_nodes = actual_nodes.get(entry_id, [])
         if (
