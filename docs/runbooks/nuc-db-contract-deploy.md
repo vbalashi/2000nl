@@ -587,3 +587,23 @@ material scope requires restarting search at its first page. Migration 185's
 postflight verifies helper/client grants, scope placement, identity projection and
 cursor binding. The local retaining apply uses the reviewed manifest; do not reset
 a populated database to install this additive boundary.
+
+## Library POS/article search (migration 186)
+
+`lookup_platform_v2_library_filtered_entries` adds a service-only first-party
+query boundary with canonical `parts` and optional `article` (`de`/`het`). It
+reuses account material selection and live ACLs from migration 185. POS/article
+predicates run in all indexed and personal fallback branches before headword vs
+inflection tier choice and group pagination. Article restrictions apply only to
+nouns; mixed POS selection keeps non-nouns. Both-article noun genders match either
+article, and unknown gender does not satisfy a specific article.
+
+A matching article still returns all its senses with unchanged presentation
+identity. Consumers must select a matching sense for the preview without deleting
+other senses from the full article. `page.totalGroups` counts matching whole
+articles before paging. Filter sets are bounded, canonicalized and included in
+cursor identity. The existing migration-185 RPC, external Platform lookup and
+exact-group reads are unchanged. The additive boundary does not write learner
+state, sessions or history. Install it with retaining apply and the checksummed
+manifest; do not recreate a populated database. The approved filter dialog/API
+adapter must explicitly opt into this new RPC before the behavior is visible.

@@ -518,3 +518,4 @@
 
 -- First-party Library search material scope, applied before ranked pagination.
 \i db/migrations/185_library_material_lookup.sql
+\i db/migrations/186_library_entry_filters.sql

@@ -433,3 +433,34 @@ short/large-text screens. The inherited personal-entry translation editor still
 hardcodes EN and needs an explicit language-owner binding; this checkpoint does
 not claim it is resolved. Remaining Statistics/history/mobile navigation and
 active-session acceptance gates are unchanged. Production is not deployed.
+
+## Library POS/article query foundation — 2026-09-30
+
+Migration 186 adds a separate service-only filtered Library RPC. It validates ten
+canonical POS choices and optional noun article, applies predicates before lookup
+tiers and paging, retains whole-article identity and live material/ACL constraints,
+and returns the total matching article count independently of page size. Removing
+an exact headword via a POS filter permits an eligible inflection match; noun
+article selection retains other selected parts of speech. Both-article genders
+match either choice; unknown gender does not satisfy a selected article. Canonical
+filter sets bind cursor identity. Existing Library/Platform/exact read behavior is
+unchanged and no learning state is created by search.
+
+Validation: a disposable Postgres integration fixture exercises mixed-sense article
+preservation, pre-page counts, cursor canonicalization and scope rejection, article
+and unknown-gender cases, form-tier fallback, personal entries without search
+index, all ten POS aliases, malformed filter rejection and no learner writes.
+The migration is replayed twice; the previous material-scope fixture and read-only
+postflight also pass. All 259 FSRS/security/learning checks and 43 deployment/local
+harness tests pass. Retaining apply installed contract 186 in the populated local
+QA database; its bounded read probe passed in 1492 ms against the 2000 ms budget.
+Read-only real-corpus `goed` queries returned three matching articles without POS
+restriction, one noun article, one adjective article and no `de` noun article;
+whole-article sense counts remained intact. No account preference or learning
+action was changed.
+
+This is the query foundation, not completed Library filters. Next connect the
+first-party API/client to these validated filters and extract the approved chips
+panel with real language/source options, draft/cancel/apply behavior and matching
+sense selection. Remaining collection/editor, Statistics/history/mobile navigation
+and active-session acceptance gates remain open. Production is not deployed.
