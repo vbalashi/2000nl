@@ -1353,7 +1353,9 @@ function TrainingScreenContent({
   );
 
   const handleListsUpdated = useCallback(async () => {
-    beginSessionScopeChange();
+    const previousListKey = wordListId
+      ? `${wordListType ?? "curated"}:${wordListId}`
+      : null;
     const reloadForList = (
       list: WordListSummary,
       refreshedScope: ActiveTrainingScope,
@@ -1362,6 +1364,12 @@ function TrainingScreenContent({
       // default scenario below is authoritative for the replacement request,
       // so the hydration effect must not replay the intermediate snapshot.
       lastAppliedActiveTrainingScopeRef.current = refreshedScope;
+      if (previousListKey === `${list.type}:${list.id}`) {
+        // Editing collections must not end the running Training session.
+        void loadStats({ listId: list.id, listType: list.type });
+        return;
+      }
+      beginSessionScopeChange();
       const nextScenario = list.default_scenario_id ?? activeScenario;
       setActiveScenario(nextScenario, { persist: false });
       persistCurrentTrainingScope({
@@ -1388,6 +1396,8 @@ function TrainingScreenContent({
     persistCurrentTrainingScope,
     refreshListsAfterUpdate,
     setActiveScenario,
+    wordListId,
+    wordListType,
   ]);
 
   const handleScenarioChange = useCallback(

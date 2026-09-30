@@ -442,8 +442,9 @@ function SenseCardV2Session({
       if (result.error) throw result.error;
       const membershipsReady = await refreshMemberships();
       if (!isCurrent()) return;
-      await onListsUpdated?.();
-      if (!isCurrent() || !membershipsReady) return;
+      // List counts elsewhere may refresh after the saved membership is shown.
+      void Promise.resolve(onListsUpdated?.()).catch(() => undefined);
+      if (!membershipsReady) return;
       setCollectionStatus(
         platformV2Message(interfaceLanguage, "senseCard.collections.saved"),
       );

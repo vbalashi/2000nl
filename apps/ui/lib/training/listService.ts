@@ -103,6 +103,18 @@ const READ_ONLY_REASONS = new Set([
   "unavailable",
 ]);
 
+// The RPCs enforce auth.uid() server-side; the local session only names the caller.
+async function sessionUserId(): Promise<{
+  userId: string | null;
+  error: { message: string } | null;
+}> {
+  const { data, error } = await supabase.auth.getSession();
+  return {
+    userId: data?.session?.user?.id ?? null,
+    error: error ? { message: error.message } : null,
+  };
+}
+
 const mapEntryLearningListMembership = (
   row: EntryLearningListMembershipRpcList,
 ): EntryLearningListMembership | null => {
@@ -134,8 +146,7 @@ const mapEntryLearningListMembership = (
 export async function fetchCuratedLists(
   languageCode?: string,
 ): Promise<WordListSummary[]> {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData?.user?.id ?? null;
+  const { userId, error: userError } = await sessionUserId();
   if (userError || !userId) {
     console.error(
       "Error resolving user before fetching curated lists",
@@ -547,8 +558,7 @@ export async function removeWordsFromUserList(
   const uniqueWordIds = Array.from(new Set(wordIds.filter(Boolean)));
   if (!uniqueWordIds.length) return { error: null };
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData?.user?.id ?? null;
+  const { userId, error: userError } = await sessionUserId();
   if (userError || !userId) {
     const error = userError ?? { message: "not_authenticated" };
     console.error("Error resolving user before removing words from list", error);
@@ -568,8 +578,7 @@ export async function removeWordsFromUserList(
 }
 
 export async function deleteUserList(listId: string): Promise<{ error: any }> {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData?.user?.id ?? null;
+  const { userId, error: userError } = await sessionUserId();
   if (userError || !userId) {
     const error = userError ?? { message: "not_authenticated" };
     console.error("Error resolving user before deleting user list", error);
@@ -657,8 +666,7 @@ export async function addWordsToUserList(
     return { error: null };
   }
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData?.user?.id ?? null;
+  const { userId, error: userError } = await sessionUserId();
   if (userError || !userId) {
     const error = userError ?? { message: "not_authenticated" };
     console.error("Error resolving user before adding words to list", error);
@@ -692,8 +700,7 @@ export async function fetchUserListMembership(
 ): Promise<Set<string>> {
   if (!wordIds.length) return new Set();
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData?.user?.id ?? null;
+  const { userId, error: userError } = await sessionUserId();
   if (userError || !userId) {
     console.error(
       "Error resolving user before fetching list membership",
@@ -735,8 +742,7 @@ export async function fetchEntryListMemberships(
   );
   if (!uniqueEntryIds.length) return membershipsByEntry;
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData?.user?.id ?? null;
+  const { userId, error: userError } = await sessionUserId();
   if (userError || !userId) {
     const error = userError ?? { message: "not_authenticated" };
     console.error("Error resolving user before fetching entry list memberships", error);

@@ -311,6 +311,37 @@ describe("LibrarySenseCardV2Session", () => {
     expect(trainNext).toHaveBeenCalledWith(financeEntry.entryId);
   });
 
+  test("releases a collection toggle once the membership is saved, without waiting for list reloads", async () => {
+    const { addWordsToUserList } = await import("@/lib/trainingService");
+    vi.mocked(addWordsToUserList).mockResolvedValue({ error: null });
+    const onListsUpdated = vi.fn(() => new Promise<void>(() => undefined));
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId={financeEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        userId="user-1"
+        userLists={[
+          { id: "list-a", name: "Mijn lijst", type: "user", language_code: "nl" },
+        ]}
+        onListsUpdated={onListsUpdated}
+      />,
+    );
+
+    await screen.findByTestId("library-sense-card-group");
+    fireEvent.click(screen.getAllByRole("button", { name: /^Collections/ })[0]);
+    fireEvent.click(await screen.findByLabelText(/Mijn lijst/));
+
+    await waitFor(() => expect(onListsUpdated).toHaveBeenCalledOnce());
+    await waitFor(() =>
+      expect(screen.getByLabelText(/Mijn lijst/)).not.toBeDisabled(),
+    );
+    expect(addWordsToUserList).toHaveBeenCalledWith("list-a", [expect.any(String)]);
+  });
+
   test("keeps idiom reporting on the sole global Library action", async () => {
     fetchGroup.mockResolvedValue({
       ...goedGroup,
