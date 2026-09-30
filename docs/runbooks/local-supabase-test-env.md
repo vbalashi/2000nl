@@ -122,8 +122,19 @@ scripts/db-local-supabase.sh import
 scripts/db-local-supabase.sh probe
 ```
 
-Full-corpus import performance is tracked in #397; it is not required for the
-small #393 browser acceptance fixture.
+Migration 178 uses staging: a clean empty-dictionary import of the 18,163-artifact
+Van Dale corpus took 20.39 seconds on 2026-09-30; identical replay took 8.78
+seconds; a one-definition update took 16.73 seconds. These observations exclude
+bootstrap, forms and search indexing. Host load and larger content changes can
+extend the time. The 155.74-second figure from 2026-09-29 describes an earlier
+implementation. Full-corpus performance is tracked in #397; it is not required
+for the small #393 browser acceptance fixture.
+
+The full import is needed only to populate an empty database or apply a changed
+source manifest. It is not part of `start`, `apply`, `probe`, `test-ingestion`,
+browser QA, or normal UI startup. See [dictionary-import.md](dictionary-import.md)
+for what each stage does and for cheaper alternatives, or the
+[Russian explanation](dictionary-import.ru.md).
 
 Unacknowledged `all` and `reset` stop before any service/database command.
 Local wrapper commands accept only loopback PostgreSQL URIs with an explicit port and without connection

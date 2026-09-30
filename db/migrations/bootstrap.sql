@@ -494,3 +494,7 @@
 \i db/migrations/174_word_context_reverse_eligibility.sql
 \i db/migrations/175_word_context_member_source.sql
 \i db/migrations/176_word_context_action_evidence.sql
+
+-- Batch source binding/content reconciliation for practical full imports.
+\i db/migrations/177_batch_source_content_reconciliation.sql
+\i db/migrations/178_staged_source_content_import.sql

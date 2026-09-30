@@ -35,6 +35,25 @@ existing Platform UUIDs. `import_words_db.py` defaults to the seeded
 natural-key writes are rejected, including for test fixtures; committed tests
 generate a small versioned manifest instead.
 
+The importer is a content deployment, not a normal application-start step.
+Run it for a new/empty database or after publishing a changed source manifest;
+do not run it merely to start the UI, execute normal tests, or reuse an already
+populated database. With staging (migration 178), the complete 18,163-artifact
+corpus took 20.39 seconds on a clean local DB on 2026-09-30. Identical replay took
+8.78 seconds; changing one definition took 16.73 seconds and reconciled only one
+word. These are observations, not guaranteed times for arbitrary host load or
+mass content changes. The 155.74-second figure is a historical measurement of an
+intermediate implementation from 2026-09-29, not the current expected runtime.
+
+The importer does more than insert 18,000 word rows. It validates the manifest,
+preserves stable word and Content Node UUIDs, reconciles definitions/examples,
+updates source bindings and the NT2 list, and rebuilds the derived
+"unrenderable ordinary meaning" projection in bounded batches. Word forms and
+search documents remain separate explicit jobs. See
+[`docs/runbooks/dictionary-import.md`](../../docs/runbooks/dictionary-import.md)
+for the operation-by-operation explanation and the decision guide, or the
+[Russian explanation](../../docs/runbooks/dictionary-import.ru.md).
+
 Source generation promotes a meaning to the explicit `cross_reference`
 contract only when its entire local content is one exact token ending in `-`
 and that token is also a source headword. Meanings with examples, notes,

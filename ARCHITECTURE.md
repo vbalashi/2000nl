@@ -51,6 +51,13 @@ and the linked full contract.
 
 Owns import pipelines and normalization from external dictionary artifacts into the relational model.
 
+Versioned source import uses transaction-local staging: fresh Content Nodes are
+created in bulk; existing nodes are compared in SQL and only changed entries
+invoke durable-identity reconciliation. Source membership/identity changes stay
+behind explicit reconciliation plans. Normal QA uses fixtures rather than
+reimporting the complete corpus. See [ADR-0016](docs/adr/0016-staged-dictionary-import.md)
+and [import scenarios](docs/runbooks/dictionary-import.ru.md).
+
 ### `packages/scraper`
 
 Owns source-specific data extraction. Output must remain compatible with ingestion contracts.

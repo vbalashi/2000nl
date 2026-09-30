@@ -6,7 +6,8 @@ Timestamps from filesystem (local timezone):
 | --- | --- | --- |
 | `packages/ingestion/scripts/process_raw_words.py` | 2026-07-29 | Parse raw Van Dale HTML into structured, collision-safe JSON artifacts and a deterministic checksummed source manifest. |
 | `packages/ingestion/scripts/generate_source_reconciliation_plan.py` | 2026-07-29 | Reconcile the first versioned manifest with existing production UUIDs and fail closed on ambiguous or unreviewed matches. |
-| `packages/ingestion/scripts/import_words_db.py` | 2026-07-29 | Import a versioned source manifest through the binding ledger, preserving existing UUIDs and making an identical completed manifest a true no-op. |
+| `packages/ingestion/scripts/import_words_db.py` | 2026-09-30 | Deploy a versioned manifest via staging: bulk-insert fresh nodes and reconcile changed existing nodes. Local 18,163-artifact measurement: initial 20.39s, no-op 8.78s, one-entry update 16.73s. |
+| `packages/ingestion/scripts/benchmark_source_import.py` | 2026-09-30 | Exercise initial/no-op/one-entry update with stage timings and budgets in an owned disposable loopback DB; source files and the canonical DB are preserved. |
 | `packages/ingestion/scripts/import_word_forms.py` | 2026-07-29 | Rebuild inflected/derived forms by versioned source-entry key; exact manifest/binding coverage is required. |
 | `packages/ingestion/scripts/generate_complete_fixture_dictionaries.py` | 2026-09-20 | Generate four synthetic multilingual QA dictionaries with complete VanDale-shaped entries and manifests. |
 | `packages/ingestion/scripts/dictionary_identity_wave0_audit.py` | 2026-07-24 | Generate or verify the deterministic read-only Wave 0 source manifest, collision report, and hashes under `docs/architecture/evidence/dictionary-identity-wave0/`. |
@@ -22,3 +23,7 @@ source-binding path as the production importer.
 For the synthetic local dictionaries, use
 `scripts/import-complete-local-dictionaries.sh`; it runs the same versioned
 entry importer and then rebuilds dictionary-scoped forms.
+
+For the full Van Dale corpus, expected runtime, internal stages, and guidance on
+when an import is actually needed are documented in
+[`docs/runbooks/dictionary-import.md`](../../docs/runbooks/dictionary-import.md).
