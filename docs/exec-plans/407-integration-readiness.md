@@ -531,3 +531,40 @@ This completes the search-filter connection, not the whole Library acceptance
 gate. Owned collection/editor presentation, personal translation language,
 Statistics/history/mobile navigation and active-session acceptance remain open.
 Production is not deployed.
+
+## Collection rows and personal translation checkpoint — 2026-09-30
+
+The approved collection/flat-entry path now uses the shared Library list and rows
+instead of separate Tailwind cards. Entry IDs, list paging, hydration and actions
+remain with their existing owners. Definition previews stay visible for individual
+collection entries, including when an article is open and on narrow screens, so
+multiple senses of one headword remain distinguishable. Only de/het evidence is
+rendered as a Dutch article; generic gender metadata is not presented as an article.
+Counts/status messages use the shared workspace text tokens.
+
+Personal entry creation no longer hardcodes English. The input names the selected
+translation language and the existing create-user-entry action receives that
+language. Off disables the field and omits translation data. Draft translation text
+is bound to the target under which it was entered; changing the target cannot
+silently relabel existing text. Content/entry identity, private ownership and
+collection/train-next mutations retain their existing boundaries.
+
+Validation: 17 DictionarySearchTab checks pass, including Russian target, Off,
+mid-edit target change and collection entry selection; all 70 TrainingScreen
+checks pass after correcting its obsolete English expectation for a Russian
+startup preference. The five other presentation/localization suites passed their
+16 checks. Typecheck, targeted lint, semantic style guard and whitespace checks
+pass. The first combined run failed at the old translation-label assertion and
+left its one-shot next-card mock unused, cascading into a later train-next test;
+correcting the selected-language expectation makes all 70 checks pass. Existing
+act/inert warnings remain tracked rather than hidden.
+
+Authenticated local browser QA reads the real VanDale 2k collection (4031 entries),
+selects aandacht by its original entry identity, and confirms the shared full
+article. The personal editor shows the account's English translation target in
+its Russian interface. No QA entry or learner action was created in the database.
+
+Remaining Library acceptance still includes editor placement/overflow, empty/error
+presentation and pointer-only collection summaries. Statistics/history/mobile
+navigation, typography/color consistency and active-session acceptance remain
+open. Production is not deployed.

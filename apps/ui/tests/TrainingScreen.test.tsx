@@ -158,7 +158,7 @@ const userDictionaryGedoe = {
     headword: "gedoe",
     languageCode: "nl",
     definition: "lastige situatie",
-    translation: { languageCode: "en", text: "hassle" },
+    translation: { languageCode: "ru", text: "суета" },
   },
   is_nt2_2000: false,
 };
@@ -2976,8 +2976,8 @@ test("dictionary search can create a private user dictionary entry", async () =>
     fireEvent.change(screen.getByLabelText("Definition"), {
       target: { value: "lastige situatie" },
     });
-    fireEvent.change(screen.getByLabelText("Translation"), {
-      target: { value: "hassle" },
+    fireEvent.change(screen.getByLabelText("Translation · Russian"), {
+      target: { value: "суета" },
     });
     fireEvent.click(
       screen.getByRole("button", { name: "Save to my dictionary" }),
@@ -2989,7 +2989,7 @@ test("dictionary search can create a private user dictionary entry", async () =>
           headword: "gedoe",
           languageCode: "nl",
           definition: "lastige situatie",
-          translation: { languageCode: "en", text: "hassle" },
+          translation: { languageCode: "ru", text: "суета" },
         },
       }),
     );

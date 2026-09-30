@@ -17,6 +17,7 @@ export function LibraryResultList({
   countPosition = "near",
   hasDetail = false,
   showSource = false,
+  entrySelection = false,
 }: {
   children: React.ReactNode;
   language: OnboardingLanguage;
@@ -25,6 +26,8 @@ export function LibraryResultList({
   countPosition?: "near" | "edge";
   hasDetail?: boolean;
   showSource?: boolean;
+  /** Individual collection entries need their definition to distinguish sibling senses. */
+  entrySelection?: boolean;
 }) {
   return (
     <div
@@ -36,6 +39,7 @@ export function LibraryResultList({
       data-count-position={countPosition}
       data-has-detail={hasDetail}
       data-show-source={showSource}
+      data-entry-selection={entrySelection}
     >
       {children}
     </div>

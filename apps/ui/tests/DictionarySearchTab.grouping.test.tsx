@@ -149,7 +149,7 @@ const deferred = <T,>() => {
   return { promise, resolve, reject };
 };
 
-function Harness({initial = {},locale="nl"}: {initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru"} = {}) {
+function Harness({initial = {},locale="nl",translationLang="en",collection=false}: {collection?:boolean;initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru";translationLang?:string|null} = {}) {
   const [state, setState] = React.useState<DictionarySearchTabState>(() => ({
     ...createDictionarySearchTabState(),
     query: "goed",
@@ -161,11 +161,11 @@ function Harness({initial = {},locale="nl"}: {initial?: Partial<DictionarySearch
       open
       userId="user-1"
       language="nl"
-      translationLang="en"
+      translationLang={translationLang}
       interfaceLanguage={locale}
       userLists={[]}
-      viewedListId={null}
-      viewedList={null}
+      viewedListId={collection ? "owned-list" : null}
+      viewedList={collection ? {id:"owned-list",name:"My collection",type:"user",language_code:"nl"} : null}
       viewedListName="Van Dale"
       reloadLists={async () => {}}
       notifyListsUpdated={() => {}}
@@ -371,4 +371,55 @@ test("approved chips panel excludes disabled sources, cancels drafts and applies
 beforeEach(()=>{
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", {configurable:true,value:function(this:HTMLDialogElement){this.setAttribute("open","");}});
   Object.defineProperty(HTMLDialogElement.prototype, "close", {configurable:true,value:function(this:HTMLDialogElement){this.removeAttribute("open");}});
+});
+
+
+test("personal entry translations use the account target language rather than English", async () => {
+  const service = await import("@/lib/trainingService");
+  vi.mocked(service.createUserDictionaryEntry).mockResolvedValue("created-entry");
+  render(<Harness locale="en" translationLang="ru" />);
+  fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
+  fireEvent.change(screen.getByLabelText(/Translation · Russian/), {target:{value:"хороший"}});
+  fireEvent.click(screen.getByRole("button", {name:"Save to my dictionary"}));
+  await waitFor(() => expect(service.createUserDictionaryEntry).toHaveBeenLastCalledWith({entry:{headword:"goed",languageCode:"nl",translation:{languageCode:"ru",text:"хороший"}}}));
+});
+
+test("turning translations off disables the field and omits an existing translation draft", async () => {
+  const service = await import("@/lib/trainingService");
+  vi.mocked(service.createUserDictionaryEntry).mockResolvedValue("created-entry");
+  const view = render(<Harness locale="en" translationLang="ru" />);
+  fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
+  fireEvent.change(screen.getByLabelText(/Translation · Russian/), {target:{value:"хороший"}});
+  fireEvent.change(screen.getByLabelText("Definition"), {target:{value:"goed zijn"}});
+  view.rerender(<Harness locale="en" translationLang={null} />);
+  expect(screen.getByLabelText("Translation")).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", {name:"Save to my dictionary"}));
+  await waitFor(() => expect(service.createUserDictionaryEntry).toHaveBeenLastCalledWith({entry:{headword:"goed",languageCode:"nl",definition:"goed zijn"}}));
+});
+
+
+test("owned collection entries use shared Library rows while retaining entry selection", async () => {
+  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+  const service = await import("@/lib/trainingService");
+  vi.mocked(service.fetchWordsForList).mockResolvedValueOnce({items:[{id:"owned-entry",headword:"huis",gender:"het",language_code:"nl",dictionary_name:"Personal",part_of_speech:"zn",raw:{meanings:[{definition:"een gebouw"}]}}],total:1});
+  render(<Harness locale="en" collection initial={{applyListFilter:true}} />);
+  const row = await screen.findByRole("button", {name:/het huis/});
+  expect(row).toHaveTextContent("1 meaning");
+  expect(row).toHaveTextContent("een gebouw");
+  fireEvent.click(row);
+  await waitFor(() => expect(service.fetchDictionaryEntryById).toHaveBeenCalledWith("owned-entry","user-1"));
+  expect(service.fetchWordsForList).toHaveBeenCalledWith("owned-list","user",expect.objectContaining({query:"goed",page:1}));
+});
+
+test("changing translation target never retags an old draft with a different language", async () => {
+  const service = await import("@/lib/trainingService");
+  vi.mocked(service.createUserDictionaryEntry).mockResolvedValue("created-entry");
+  const view = render(<Harness locale="en" translationLang="ru" />);
+  fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
+  fireEvent.change(screen.getByLabelText(/Translation · Russian/), {target:{value:"хороший"}});
+  fireEvent.change(screen.getByLabelText("Definition"), {target:{value:"goed zijn"}});
+  view.rerender(<Harness locale="en" translationLang="de" />);
+  expect(screen.getByLabelText(/Translation · German/)).toHaveValue("");
+  fireEvent.click(screen.getByRole("button", {name:"Save to my dictionary"}));
+  await waitFor(() => expect(service.createUserDictionaryEntry).toHaveBeenLastCalledWith({entry:{headword:"goed",languageCode:"nl",definition:"goed zijn"}}));
 });

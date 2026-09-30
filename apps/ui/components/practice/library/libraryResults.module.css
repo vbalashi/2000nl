@@ -163,3 +163,7 @@
 .list[data-show-source="true"] .source {
   display: inline;
 }
+
+.list[data-entry-selection="true"] .preview {
+  display: -webkit-box;
+}

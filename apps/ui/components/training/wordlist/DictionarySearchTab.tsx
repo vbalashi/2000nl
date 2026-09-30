@@ -9,6 +9,7 @@ import {
 
 import React from "react";
 import { SlidersHorizontal } from "lucide-react";
+import { LibraryResultList, LibraryResultRow } from "@/components/practice/library/LibraryResultList";
 import { AccountLibraryFilters } from "@/components/practice/library/AccountLibraryFilters";
 import { EMPTY_LIBRARY_ENTRY_FILTERS } from "@/lib/platform/librarySearchScope";
 import { LIBRARY_PART_LABELS } from "@/components/practice/library/LibraryFilters";
@@ -169,6 +170,8 @@ export function DictionarySearchTab({
   const [customHeadword, setCustomHeadword] = useState("");
   const [customDefinition, setCustomDefinition] = useState("");
   const [customTranslation, setCustomTranslation] = useState("");
+  const [customTranslationLanguage, setCustomTranslationLanguage] =
+    useState(translationLang);
   const [customExample, setCustomExample] = useState("");
   const [customNotes, setCustomNotes] = useState("");
   const [customEntrySaving, setCustomEntrySaving] = useState(false);
@@ -407,7 +410,10 @@ export function DictionarySearchTab({
   const createCustomEntry = useCallback(async () => {
     const headword = (customHeadword || query).trim();
     const definition = customDefinition.trim();
-    const translation = customTranslation.trim();
+    const translation =
+      translationLang && customTranslationLanguage === translationLang
+        ? customTranslation.trim()
+        : "";
     const example = customExample.trim();
     const notes = customNotes.trim();
 
@@ -429,7 +435,7 @@ export function DictionarySearchTab({
           languageCode: searchLanguage,
           ...(definition ? { definition } : {}),
           ...(translation
-            ? { translation: { languageCode: "en", text: translation } }
+            ? { translation: { languageCode: translationLang!, text: translation } }
             : {}),
           ...(example ? { example: { source: example } } : {}),
           ...(notes ? { notes } : {}),
@@ -462,6 +468,8 @@ export function DictionarySearchTab({
     customHeadword,
     customNotes,
     customTranslation,
+    customTranslationLanguage,
+    translationLang,
     handleUserDictionaryEntryCreated,
     query,
     searchLanguage,
@@ -930,12 +938,23 @@ export function DictionarySearchTab({
                       : "grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300"
                   }
                 >
-                  <span>{copy.translation}</span>
+                  <span>
+                    {copy.translation}
+                    {translationLang
+                      ? ` · ${languageDisplayName(interfaceLanguage, translationLang)}`
+                      : ""}
+                  </span>
                   <input
-                    value={customTranslation}
-                    onChange={(event) =>
-                      setCustomTranslation(event.target.value)
+                    disabled={!translationLang}
+                    value={
+                      translationLang && customTranslationLanguage === translationLang
+                        ? customTranslation
+                        : ""
                     }
+                    onChange={(event) => {
+                      setCustomTranslation(event.target.value);
+                      setCustomTranslationLanguage(translationLang);
+                    }}
                     className={
                       approved
                         ? workspace.field
@@ -1007,13 +1026,13 @@ export function DictionarySearchTab({
               </div>
             </div>
           ) : customEntryMessage ? (
-            <div className="mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+            <div role="status" className={approved ? workspace.notice : "mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300"}>
               {customEntryMessage}
             </div>
           ) : null}
         </div>
 
-        <div className="space-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+        <div className={approved ? workspace.scope : "space-y-0.5 text-xs text-slate-500 dark:text-slate-400"}>
           <div>{resultCountLabel}</div>
         </div>
       </div>
@@ -1055,6 +1074,24 @@ export function DictionarySearchTab({
             selectedHeadwordGroupId={selectedHeadwordGroupId}
             onSelect={openGroupDetail}
           />
+        ) : approved && wordResults.length ? (
+          <LibraryResultList language={interfaceLanguage} listing="preview" entrySelection hasDetail={Boolean(detailSelection)}
+            showSource={new Set(wordResults.map(entry => entry.dictionary_id)).size > 1}>
+            {wordResults.map(entry => <LibraryResultRow
+              key={entry.id}
+              headword={entry.headword}
+              article={entry.gender === "de" || entry.gender === "het" ? entry.gender : null}
+              parts={entry.part_of_speech ? [entry.part_of_speech] : []}
+              source={entry.dictionary_name ?? copy.dictionaryEntry}
+              core={entry.is_nt2_2000 ? "2K" : null}
+              meaningCount={1}
+              contentLanguage={entry.language_code ?? searchLanguage}
+              language={interfaceLanguage}
+              selected={detailSelection?.entryId === entry.id}
+              preview={firstDefinition(entry, copy.noDefinition)}
+              onSelect={() => void openEntryDetail(entry)}
+            />)}
+          </LibraryResultList>
         ) : wordResults.length ? (
           <div className="space-y-2">
             {wordResults.map((entry, index) => {
