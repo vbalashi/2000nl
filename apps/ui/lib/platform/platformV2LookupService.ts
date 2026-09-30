@@ -253,6 +253,29 @@ export async function performPlatformV2Lookup(
           ),
         )
       : Promise.resolve<RpcResult>({ data: [], error: null });
+  // Cross-reference targets depend only on the looked-up entries.
+  const crossReferencePromise = measure(
+    timings,
+    "lookup.cross-references",
+    () =>
+      resolvePlatformV2CrossReferenceTargets(context.service, {
+        sources: entries.flatMap((entry) => {
+          const query = platformV2CrossReferenceQuery(entry);
+          return query && entry.dictionary_id
+            ? [{
+                sourceEntryId: entry.id,
+                sourceDictionaryId: entry.dictionary_id,
+                query,
+              }]
+            : [];
+        }),
+        userId:
+          context.kind === "authenticated" ? context.auth.user.id : null,
+        catalog: context.kind === "catalog",
+        contentLanguageCode: request.contentLanguageCode ?? null,
+      }),
+  );
+  crossReferencePromise.catch(() => undefined);
   const [identityResult, stateResult, eagerTranslationResult] = await Promise.all([
     identityPromise,
     statePromise,
@@ -328,27 +351,7 @@ export async function performPlatformV2Lookup(
       serverTiming: serverTiming(),
     };
   }
-  const crossReferenceTargets = await measure(
-    timings,
-    "lookup.cross-references",
-    () =>
-      resolvePlatformV2CrossReferenceTargets(context.service, {
-        sources: entries.flatMap((entry) => {
-          const query = platformV2CrossReferenceQuery(entry);
-          return query && entry.dictionary_id
-            ? [{
-                sourceEntryId: entry.id,
-                sourceDictionaryId: entry.dictionary_id,
-                query,
-              }]
-            : [];
-        }),
-        userId:
-          context.kind === "authenticated" ? context.auth.user.id : null,
-        catalog: context.kind === "catalog",
-        contentLanguageCode: request.contentLanguageCode ?? null,
-      }),
-  );
+  const crossReferenceTargets = await crossReferencePromise;
 
   try {
     const projectionEntries = await measure(
