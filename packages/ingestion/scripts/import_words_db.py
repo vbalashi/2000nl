@@ -156,6 +156,8 @@ def main() -> None:
         reconciliation_plan=args.reconciliation_plan,
     )
 
+    if getattr(stats, "stage_metrics", None):
+        logging.info("Import stage metrics: %s", stats.stage_metrics)
     if getattr(stats, "no_op", False):
         logging.info(
             "Manifest already imported: verified %d files with no database changes.",

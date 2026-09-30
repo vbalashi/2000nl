@@ -5,17 +5,29 @@ checksummed source corpus into the durable database state used by Library,
 Training, dictionary lookup, connected clients, and later form/search jobs. It
 is not required every time the application, local Supabase, or a test starts.
 
+The [Russian explanation](dictionary-import.ru.md) describes each operation and
+which checks apply to empty-database loading versus updates.
+
 ## Runtime expectation
 
 The checked-in Van Dale corpus used for the issue #397 measurement contains
-18,163 artifacts. On 2026-09-29, a clean local import completed in **155.74
-seconds**. An identical completed-manifest replay completed in **9.12 seconds**
-and made no content changes.
+18,163 artifacts. On 2026-09-30, migration 178 staging completed initial import
+in **20.39 seconds**, identical replay in **8.78 seconds**, and a one-definition
+update in **16.73 seconds**. The update wrote one word row, reconciled one entry,
+and refreshed one entry; the initial load made zero historical-reconciler calls.
+Final counts: 18,163 active bindings, 40,403 active nodes, 568 projection rows.
+
+The earlier 155.74/9.12-second observations from 2026-09-29 belong to intermediate
+implementations. A later final-version run that day was interrupted; resource
+contention was a hypothesis, not a proven explanation. Those earlier timings
+must not be represented as verification of every subsequent implementation.
 
 These are dated measurements, not universal guarantees or lower bounds. CPU,
 Docker, disk, antivirus/indexing, and concurrent agents can make the initial or
-changed import slower. Operators should expect roughly several minutes for a
-changed full corpus. A run that is substantially beyond that range should be
+changed import slower. Budgets on the supported local setup are 60 seconds for
+initial/one-entry update and 15 seconds for identical replay. Mass content
+updates still invoke identity reconciliation for genuinely changed entries and
+have a different cost. A run substantially beyond the relevant budget should be
 inspected for an active PostgreSQL statement, lock wait, or resource contention
 rather than blindly restarted: cancelling the enclosing transaction discards
 all work from that attempt.
@@ -41,11 +53,11 @@ database row. For every run the importer does the following:
 4. **Upsert source bindings and word data.** The importer records which source
    release owns each entry and updates its normalized dictionary payload. It
    refuses ambiguous membership, silent deletion, or unsafe re-keying.
-5. **Reconcile Content Nodes.** Definitions, examples, idioms, usage notes, and
-   their parent/child relationships become individually identified nodes.
-   Existing node UUIDs are preserved when the same semantic content survives a
-   new release. This is substantially more work than inserting one row per
-   headword, but it preserves exercise/report identity across reimports.
+5. **Stage and apply Content Nodes.** COPY loads prepared source data into
+   transaction-local staging. Entries with no node history are inserted in bulk
+   and their parents linked afterwards. SQL compares actual existing node
+   content/order/parents; only changed entries use the established UUID-preserving
+   reconciler. Retired history counts as history and cannot take the fresh path.
 6. **Refresh derived training eligibility.** Some later ordinary meanings
    cannot be trained directly until they have usable context. The database
    derives that exceptional set from source groups and Content Nodes. Migration
@@ -60,7 +72,7 @@ The importer intentionally does **not** rebuild everything. `word_forms` and
 dictionary search documents are separate jobs because many workflows need the
 canonical dictionary update without paying for both derived indexes immediately.
 
-## Why 18,000 entries still take minutes
+## Where the remaining time goes
 
 The expensive unit is not “one word”. A word may contain several meanings and
 many Content Nodes, and each existing identity must be compared rather than
@@ -68,12 +80,17 @@ blindly replaced. The complete measured result contained about 40,000 active
 Content Nodes. PostgreSQL must maintain constraints and indexes for those rows,
 check group relationships, and preserve all-or-nothing transaction semantics.
 
-Migration 177 removed the accidental quadratic-like part—refreshing the same
-group projection after individual row changes—but it did not remove the useful
-validation and identity work. More speed is possible, but only with a larger
-design change such as staging the whole release and applying set-based diffs.
-That would need parity tests for node identities, report atoms, list membership,
-and training eligibility before replacing the current fail-closed path.
+Migration 177 reduced repeated group refresh; migration 178 additionally removes
+per-entry historical comparison from fresh loads, skips reconciliation of
+unchanged nodes, and refreshes projection entries only when structural bindings
+or content change. File/manifest validation alone took 7.86 seconds in the
+recorded initial run. Word writes took 1.50s, COPY 0.85s, staging/bindings 1.55s,
+nodes 1.72s, projection 4.77s, and commit 0.23s. These timers do not include
+bootstrap, benchmark corpus copying, forms, or search indexing.
+
+Fresh local tests still validate files, duplicates, kinds and parent references;
+they do not need historical UUID matching. A test of update behavior deliberately
+creates prior fixture state first. Ordinary QA may use the smaller fixture.
 
 ## When to run what
 
@@ -98,6 +115,18 @@ scripts/db-local-supabase.sh probe
 Do not use the local wrapper against staging or production. Production content
 deployments follow the reviewed database contract and the operational handoff.
 
+## Reproduce the measurements
+
+```bash
+.venv/bin/python packages/ingestion/scripts/benchmark_source_import.py \
+  --data-dir /absolute/path/to/words_content
+```
+
+The harness creates a unique loopback-only disposable database, bootstraps it,
+runs initial/no-op/one-entry update, prints stage timings and counts, enforces
+60/15/60-second budgets, and removes the database in a `finally` block. The
+changed corpus is a temporary private copy; original files remain unchanged.
+
 ## Could it be faster?
 
 Yes, but the safe options are different depending on the goal:
@@ -107,13 +136,13 @@ Yes, but the safe options are different depending on the goal:
   what the task is testing.
 - **Take the no-op path:** do not regenerate manifests unnecessarily. The same
   manifest is verified and exits without reconciliation.
-- **Update only changed content:** the importer already preserves identities,
-  but today a changed manifest still performs broad comparison and transactional
-  reconciliation. A future staged diff could narrow writes further.
-- **Build a bulk staging pipeline:** load source rows into temporary tables,
-  compute set differences in SQL, and apply only inserts/updates/retirements.
-  This is the likely next major optimization, but it must retain the current
-  atomicity and identity guarantees.
+- **Update only changed content:** staging now detects actual node differences
+  and invokes historical reconciliation only for changed entries. Membership
+  additions/removals and moved source identities continue to require an explicit
+  reviewed plan; staging does not automatically delete existing entries.
+- **Reduce file verification cost:** a prepared archive or safely invalidated
+  verification cache could reduce the 7–9 seconds spent on thousands of files.
+  This needs a separate design for detecting source changes.
 
 Therefore the target is not “make every full import instant.” The operational
 target is: do not run it when it is unnecessary; make identical replay cheap;

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import json
 from pathlib import Path
+import time
 from typing import Optional
 from uuid import uuid4
 
@@ -19,6 +20,7 @@ from importer.db import (
 )
 from importer.dictionary_entry_parser import parse_dictionary_file
 from importer.reconciliation import load_reconciliation_plan
+from importer.staged_import import apply_staged_content
 from importer.source_manifest import (
     SourceArtifact,
     load_source_manifest,
@@ -42,6 +44,7 @@ class SourceImportStats:
     processed: int = 0
     no_op: bool = False
     run_id: Optional[str] = None
+    stage_metrics: dict = field(default_factory=dict)
 
     @property
     def updated(self) -> int:
@@ -70,9 +73,7 @@ def _verify_source_schema(cursor) -> None:
             to_regprocedure(
                 'private.reconcile_platform_v2_content_nodes(uuid,text,jsonb)'
             ),
-                to_regprocedure(
-                    'private.reconcile_platform_v2_source_batch_v1(jsonb,boolean)'
-                ),
+            to_regprocedure('private.apply_staged_source_import_v1()'),
             to_regprocedure(
                 'private.begin_platform_v2_source_import_v1()'
             ),
@@ -120,7 +121,7 @@ def _verify_source_schema(cursor) -> None:
         or not management_column
     ):
         raise RuntimeError(
-            "Platform V2 identity/import migrations through 177 are not applied"
+            "Platform V2 identity/import migrations through 178 are not applied"
         )
 
 
@@ -433,8 +434,10 @@ def import_source_manifest(
     reason: str = "Approved versioned source manifest import",
     refresh_search_documents: bool = False,
 ) -> SourceImportStats:
+    started = time.monotonic()
     manifest = load_source_manifest(data_dir)
     stats = SourceImportStats(total_files=len(manifest.artifacts))
+    stats.stage_metrics["manifest_seconds"] = time.monotonic() - started
     connection = psycopg2.connect(database_url)
 
     with connection as conn:
@@ -446,6 +449,7 @@ def import_source_manifest(
                 from public.dictionaries
                 where language_code = %s
                   and slug = %s
+                for update
                 """,
                 (language_code, dictionary_slug),
             )
@@ -718,13 +722,19 @@ def import_source_manifest(
                     dictionary_id=dictionary_id,
                     language_code=language_code,
                 )
-                target.append(row)
+                if not active_bindings or source_rows[word_entry_id] != row["raw"]:
+                    target.append(row)
                 resolved.append(
                     (artifact, row, decision_payload)
                 )
 
+            write_started = time.monotonic()
             _bulk_update_entries(cursor, updates)
             _bulk_insert_entries(cursor, inserts)
+            stats.stage_metrics["word_write_seconds"] = (
+                time.monotonic() - write_started
+            )
+            stats.stage_metrics["word_rows_written"] = len(updates) + len(inserts)
 
             source_batches = [
                 {
@@ -752,33 +762,7 @@ def import_source_manifest(
                 }
                 for artifact, row, decision_payload in resolved
             ]
-            cursor.execute(
-                "select private.begin_platform_v2_source_import_v1()"
-            )
-            for offset in range(0, len(source_batches), 500):
-                source_batch = source_batches[offset : offset + 500]
-                next_offset = offset + len(source_batch)
-                drain_after_batch = (
-                    next_offset == len(source_batches)
-                    or source_batch[-1]["source_group_key"]
-                    != source_batches[next_offset]["source_group_key"]
-                )
-                cursor.execute(
-                    """
-                    select private.reconcile_platform_v2_source_batch_v1(
-                        %s::jsonb, %s
-                    )
-                    """,
-                    (
-                        psycopg2.extras.Json(
-                            source_batch
-                        ),
-                        drain_after_batch,
-                    ),
-                )
-            cursor.execute(
-                "select private.finish_platform_v2_source_import_v1()"
-            )
+            stats.stage_metrics.update(apply_staged_content(cursor, source_batches))
 
             nt2_rows = [
                 (list_id, row["id"], artifact.source_index)
@@ -861,4 +845,7 @@ def import_source_manifest(
                 ),
             )
 
+        commit_started = time.monotonic()
+        conn.commit()
+        stats.stage_metrics["commit_seconds"] = time.monotonic() - commit_started
     return stats

@@ -41,6 +41,7 @@ def _write_manifest(
     first_is_nt2: bool = True,
     second_source_index: int = 2,
     swap_group_senses: bool = False,
+    rich_content: bool = False,
 ) -> None:
     root.mkdir(parents=True, exist_ok=True)
     artifacts = [
@@ -160,6 +161,15 @@ def _write_manifest(
         },
     ]
 
+    if rich_content:
+        artifacts[0]["payload"]["meanings"][0].update({
+            "context": "op de bank",
+            "examples": ["ik zit op de bank", "ik zit op de bank"],
+            "idioms": [{"expression": "op de bank zitten",
+                        "explanation": "niet meedoen",
+                        "examples": ["hij zit op de bank"]}],
+            "note": "een gebruiksnotitie",
+        })
     records = []
     for artifact in artifacts:
         path = root / artifact["filename"]
@@ -312,6 +322,9 @@ def test_source_import_batches_projection_refresh_at_scale(tmp_path: Path) -> No
     elapsed = time.monotonic() - started
 
     assert imported.processed == 600
+    assert imported.stage_metrics["fresh_entries"] == 600
+    assert imported.stage_metrics["reconciled_entries"] == 0
+    assert imported.stage_metrics["refreshed_entries"] == 600
     assert elapsed < 10, f"600-entry source import took {elapsed:.2f}s"
 
     def snapshot() -> tuple[list[tuple], list[tuple], list[str]]:
@@ -393,6 +406,8 @@ def test_source_import_batches_projection_refresh_at_scale(tmp_path: Path) -> No
     )
     changed_elapsed = time.monotonic() - changed_started
     assert changed.changed == 600
+    assert changed.stage_metrics["fresh_entries"] == 0
+    assert changed.stage_metrics["reconciled_entries"] == 600
     assert changed_elapsed < 10, (
         f"600-entry changed replay took {changed_elapsed:.2f}s"
     )
@@ -417,6 +432,118 @@ def test_source_import_batches_projection_refresh_at_scale(tmp_path: Path) -> No
                 (dictionary_slug,),
             )
             assert cursor.fetchone()[0] == 400
+
+
+def test_staged_fresh_import_matches_ordinary_reconciliation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    database_url = _require_local_test_database()
+    _write_manifest(tmp_path, rich_content=True)
+    suffix = uuid4().hex
+
+    def run_import(slug: str):
+        return import_entries(
+            data_dir=tmp_path, database_url=database_url,
+            dictionary_slug=slug, dictionary_name="Parity dictionary",
+            nt2_slug=slug + "-list", nt2_name="Parity list",
+        )
+
+    def snapshot(slug: str) -> list[tuple]:
+        with psycopg2.connect(database_url) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT binding.source_entry_key, entry.raw,
+                           node.kind, node.source_native_key,
+                           node.source_text_fingerprint, node.diagnostic_locator,
+                           parent.diagnostic_locator,
+                           node.canonical_source_text, node.source_order,
+                           node.identity_evidence, node.reconciliation_decision,
+                           EXISTS (SELECT 1
+                             FROM private.unrenderable_ordinary_direct_entries_v1 projection
+                             WHERE projection.entry_id = entry.id),
+                           (SELECT jsonb_agg(jsonb_build_array(atom.atom_order,
+                                    atom.role, atom.source_text) ORDER BY atom.atom_order)
+                            FROM private.platform_v2_report_atom_source(entry.id) atom)
+                    FROM public.dictionaries dictionary
+                    JOIN private.source_entry_bindings binding
+                      ON binding.dictionary_id = dictionary.id
+                    JOIN public.word_entries entry ON entry.id = binding.word_entry_id
+                    JOIN private.platform_v2_content_nodes node ON node.entry_id = entry.id
+                    LEFT JOIN private.platform_v2_content_nodes parent
+                      ON parent.id = node.parent_content_node_id
+                    WHERE dictionary.slug = %s AND node.binding_state = 'active'
+                    ORDER BY binding.source_entry_key, node.source_order
+                """, (slug,))
+                return cursor.fetchall()
+
+    staged_slug = "pytest-staged-parity-" + suffix
+    ordinary_slug = "pytest-ordinary-parity-" + suffix
+    run_import(staged_slug)
+
+    def ordinary_content(cursor, rows: list[dict]) -> dict:
+        # No import marker: each ordinary write executes established triggers.
+        for row in rows:
+            cursor.execute("""
+                INSERT INTO private.source_entry_bindings (
+                  dictionary_id, identity_scheme_version, source_entry_key,
+                  source_group_key, sense_ordinal, word_entry_id, binding_state,
+                  first_seen_run_id, last_seen_run_id, manifest_checksum,
+                  content_fingerprint_version, content_fingerprint,
+                  identity_evidence, reconciliation_decision
+                ) VALUES (%(dictionary_id)s, %(identity_scheme_version)s,
+                  %(source_entry_key)s, %(source_group_key)s, %(sense_ordinal)s,
+                  %(word_entry_id)s, 'active', %(run_id)s, %(run_id)s,
+                  %(manifest_checksum)s, %(content_fingerprint_version)s,
+                  %(content_fingerprint)s, %(identity_evidence)s,
+                  %(reconciliation_decision)s)
+            """, {key: psycopg2.extras.Json(value) if isinstance(value, dict)
+                  else value for key, value in row.items()})
+            cursor.execute(
+                "select private.reconcile_platform_v2_content_nodes(%s,%s,%s)",
+                (row["word_entry_id"], row["manifest_checksum"],
+                 psycopg2.extras.Json(row["nodes"])),
+            )
+        return {}
+
+    monkeypatch.setattr(source_import_module, "apply_staged_content", ordinary_content)
+    run_import(ordinary_slug)
+    assert snapshot(staged_slug) == snapshot(ordinary_slug)
+
+
+def test_staged_update_reconciles_only_changed_word(tmp_path: Path) -> None:
+    database_url = _require_local_test_database()
+    slug = "pytest-staged-diff-" + uuid4().hex
+    def run_import():
+        return import_entries(data_dir=tmp_path, database_url=database_url,
+                              dictionary_slug=slug, dictionary_name="Diff test",
+                              nt2_slug=slug + "-list", nt2_name="Diff list")
+    def node_ids():
+        with psycopg2.connect(database_url) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT binding.source_entry_key, node.id::text
+                    FROM private.source_entry_bindings binding
+                    JOIN public.dictionaries dictionary ON dictionary.id = binding.dictionary_id
+                    JOIN private.platform_v2_content_nodes node ON node.entry_id = binding.word_entry_id
+                    WHERE dictionary.slug = %s AND node.binding_state = 'active'
+                    ORDER BY binding.source_entry_key, node.id
+                """, (slug,))
+                return dict(cursor.fetchall())
+    _write_manifest(tmp_path)
+    run_import()
+    before = node_ids()
+    _write_manifest(tmp_path, first_definition="een nieuw zitmeubel")
+    stats = run_import()
+    after = node_ids()
+    assert stats.changed == 1
+    assert stats.stage_metrics["fresh_entries"] == 0
+    assert stats.stage_metrics["reconciled_entries"] == 1
+    assert stats.stage_metrics["word_rows_written"] == 1
+    assert stats.stage_metrics["refreshed_entries"] == 1
+    assert before["test:article:a1:1"] != after["test:article:a1:1"]
+    assert {key: value for key, value in before.items() if key != "test:article:a1:1"} == {
+        key: value for key, value in after.items() if key != "test:article:a1:1"
+    }
 
 
 def test_source_batch_failure_rolls_back_bindings_nodes_and_projection(
