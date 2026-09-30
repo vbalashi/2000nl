@@ -92,7 +92,10 @@ type Inputs = {
   trainingSessionId?: string | null;
   sessionScopeKey: string;
   selection: TrainingTurnSelectionPort;
-  refreshAfterAccepted: (input: { statsLabel: string }) => Promise<void>;
+  refreshAfterAccepted: (input: {
+    statsLabel: string;
+    sessionComplete?: boolean;
+  }) => Promise<void>;
   onSessionCardAccepted?: (cardKey: string) => void;
 };
 
@@ -757,13 +760,16 @@ export function useTrainingTurnController(input: Inputs) {
         | "accepted-next-unavailable"
       >
     > => {
-      const backgroundRefresh = refreshAfterAccepted(options).catch((cause) => {
-        trainingDebug.log("Training counters refresh failed", cause);
-      });
-
       const reachedSessionLimit =
         sessionPlannedTotal !== null &&
         completedActionCountRef.current >= sessionPlannedTotal;
+      const backgroundRefresh = refreshAfterAccepted({
+        statsLabel: options.statsLabel,
+        sessionComplete: reachedSessionLimit,
+      }).catch((cause) => {
+        trainingDebug.log("Training counters refresh failed", cause);
+      });
+
       if (reachedSessionLimit) {
         presentWord(null);
         acceptedTransitionRetryRef.current = null;
@@ -838,6 +844,12 @@ export function useTrainingTurnController(input: Inputs) {
         void backgroundRefresh;
         if (stalled) return "accepted-next-unavailable";
         if (loadOutcome === "session-complete") {
+          void refreshAfterAccepted({
+            statsLabel: options.statsLabel,
+            sessionComplete: true,
+          }).catch((cause) => {
+            trainingDebug.log("Training counters refresh failed", cause);
+          });
           return "accepted-session-complete";
         }
         return loadOutcome === "loaded"

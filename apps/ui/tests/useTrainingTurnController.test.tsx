@@ -232,6 +232,9 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.setCurrentWord).toHaveBeenCalledWith(null);
     expect(controller.selectNext).not.toHaveBeenCalled();
     expect(controller.result.current.usableCandidatesExhausted).toBe(true);
+    expect(controller.refreshAfterAccepted).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionComplete: true }),
+    );
   });
 
   test("prepared V2 candidate stays owned until its DTO is ready", async () => {

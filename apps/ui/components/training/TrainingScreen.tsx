@@ -7,6 +7,9 @@ import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/Acco
 import React from "react";
 import { TrainingExclusionUndoNotice } from "./v2/TrainingExclusionUndoNotice";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+
+const ACCEPTED_STATS_REFRESH_DELAY_MS = 1_500;
+const ACCEPTED_STATS_REFRESH_MIN_INTERVAL_MS = 10_000;
 import type { User } from "@supabase/supabase-js";
 import { Joyride, Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
@@ -783,9 +786,49 @@ function TrainingScreenContent({
     trainingSessionId,
     resolveScenarioModes: trainingScenarioCatalog.resolveModes,
   });
+  const acceptedStatsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const acceptedStatsLastRunAtRef = useRef(0);
+  useEffect(
+    () => () => {
+      if (acceptedStatsTimerRef.current) {
+        clearTimeout(acceptedStatsTimerRef.current);
+        acceptedStatsTimerRef.current = null;
+      }
+    },
+    [],
+  );
+  // The detailed stats aggregate is the dominant DB cost of a Training answer,
+  // so accepted answers refresh it on a trailing, rate-limited schedule.
   const refreshAfterAccepted = useCallback(
-    async ({ statsLabel }: { statsLabel: string }) => {
-      await loadStats(undefined, statsLabel);
+    async ({
+      statsLabel,
+      sessionComplete,
+    }: {
+      statsLabel: string;
+      sessionComplete?: boolean;
+    }) => {
+      const run = () => {
+        acceptedStatsTimerRef.current = null;
+        acceptedStatsLastRunAtRef.current = Date.now();
+        return loadStats(undefined, statsLabel);
+      };
+      if (sessionComplete) {
+        if (acceptedStatsTimerRef.current) {
+          clearTimeout(acceptedStatsTimerRef.current);
+        }
+        await run();
+        return;
+      }
+      if (acceptedStatsTimerRef.current) return;
+      const delay = Math.max(
+        ACCEPTED_STATS_REFRESH_DELAY_MS,
+        acceptedStatsLastRunAtRef.current +
+          ACCEPTED_STATS_REFRESH_MIN_INTERVAL_MS -
+          Date.now(),
+      );
+      acceptedStatsTimerRef.current = setTimeout(() => void run(), delay);
     },
     [loadStats],
   );
