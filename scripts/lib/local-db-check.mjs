@@ -1,4 +1,7 @@
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 // libpq accepts host overrides in URI query parameters. Only permit sslmode.
 function validateTarget() {
@@ -22,6 +25,18 @@ function checkSql() {
   const contract = JSON.parse(readFileSync(
     new URL("../../packages/shared/deployment/db-contract.json", import.meta.url), "utf8",
   ));
+  const readProbe = contract.readOnlyPostflightProbe;
+  if (readProbe) {
+    const repoRoot = fileURLToPath(new URL("../../", import.meta.url));
+    if (!/^db\/deploy-contract\/[a-z0-9-]+\.sql$/.test(readProbe.file ?? "")) {
+      throw new Error("Invalid read-only postflight probe path.");
+    }
+    const probePath = path.resolve(repoRoot, readProbe.file);
+    const checksum = createHash("sha256").update(readFileSync(probePath)).digest("hex");
+    if (!probePath.startsWith(repoRoot) || checksum !== readProbe.sha256) {
+      throw new Error("Read-only postflight probe does not match its manifest.");
+    }
+  }
   const quote = (value) => `'${String(value).replaceAll("'", "''")}'`;
   const expected = JSON.stringify(contract.migrations.map((migration) => ({
     migration_id: migration.migrationId,
@@ -59,7 +74,7 @@ END;
 $ledger$;
 COMMIT;
 \\i db/scripts/local_supabase_probe.sql
-\\i ${contract.postflightProbe}
+\\i ${readProbe?.file ?? contract.postflightProbe}
 `;
 }
 

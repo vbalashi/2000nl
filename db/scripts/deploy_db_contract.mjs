@@ -132,6 +132,17 @@ async function readManifest(repoRoot, manifestPath) {
       `DB rollout cannot be enabled before migration ${manifest.rollout.requiredMigrationId}`,
     );
   }
+  if (manifest.readOnlyPostflightProbe) {
+    const probe = manifest.readOnlyPostflightProbe;
+    if (!/^db\/deploy-contract\/[a-z0-9-]+\.sql$/.test(probe.file ?? "")) {
+      throw new Error("Invalid read-only postflight probe path");
+    }
+    const source = await readFile(insideRepo(repoRoot, probe.file));
+    if (!sha256Pattern.test(probe.sha256 ?? "") ||
+        createHash("sha256").update(source).digest("hex") !== probe.sha256) {
+      throw new Error("Read-only postflight probe checksum mismatch");
+    }
+  }
   return manifest;
 }
 

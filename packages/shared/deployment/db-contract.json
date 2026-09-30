@@ -305,5 +305,9 @@
     "statementTimeoutMs": 10000,
     "performanceBudgetMs": 2000,
     "overBudgetAction": "warn"
+  },
+  "readOnlyPostflightProbe": {
+    "file": "db/deploy-contract/read-only-postflight-178.sql",
+    "sha256": "b3f21e4eb4c4f12b72a665867777c862e3fb39af553c9f8b69944eaff8302520"
   }
 }

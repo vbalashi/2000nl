@@ -41,7 +41,9 @@ scripts/ui-local-dev.sh --port 3100
 
 `check` never starts services, applies migrations, imports, or resets. It reports
 content/progress counts, verifies managed migration receipts against the current
-manifest, and runs existing platform/postflight checks with read-only sessions.
+manifest, and runs existing platform and the checksum-pinned read-only postflight with read-only sessions.
+Behavioral import postflights (177–178) create temporary test content and roll it
+back; they remain in the managed deployment gate and are not called by `check`.
 If the stack is stopped, use `start` and repeat `check`.
 
 A matching health version alone does not prove the schema was verified. Missing

@@ -442,7 +442,7 @@ test("the repository contract enables the current training rollout contract", ()
   assert.equal(result.status, 0, result.stderr);
   assert.equal(
     result.stdout.trim(),
-    "enabled 176 333",
+    "enabled 178 397",
   );
 });
 
@@ -518,4 +518,24 @@ test("a failed attempt can be recovered by rerunning the same immutable contract
   const recovered = await applyFixture("success");
   assert.equal(recovered.result.status, 0, recovered.result.stderr);
   assert.match(recovered.result.stdout, /compatible fixture-123/);
+});
+
+
+test("read-only probe is independently checksum pinned without replacing deployment postflight", async () => {
+  const root = await fixture();
+  const manifestPath = path.join(root, "packages/shared/deployment/db-contract.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  const probe = "SELECT 1;\n";
+  await writeFile(path.join(root, "db/deploy-contract/read-only-postflight-123.sql"), probe);
+  manifest.readOnlyPostflightProbe = {
+    file: "db/deploy-contract/read-only-postflight-123.sql",
+    sha256: createHash("sha256").update(probe).digest("hex"),
+  };
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  const valid = spawnSync(process.execPath, [runner, "validate", "--repo-root", root], { encoding: "utf8" });
+  assert.equal(valid.status, 0, valid.stderr);
+  await writeFile(path.join(root, manifest.readOnlyPostflightProbe.file), "SELECT 2;\n");
+  const invalid = spawnSync(process.execPath, [runner, "validate", "--repo-root", root], { encoding: "utf8" });
+  assert.notEqual(invalid.status, 0);
+  assert.match(invalid.stderr, /Read-only postflight probe checksum mismatch/);
 });
