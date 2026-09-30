@@ -568,3 +568,28 @@ Remaining Library acceptance still includes editor placement/overflow, empty/err
 presentation and pointer-only collection summaries. Statistics/history/mobile
 navigation, typography/color consistency and active-session acceptance remain
 open. Production is not deployed.
+
+## Personal editor viewport and Library states — 2026-09-30
+
+The approved personal-entry form now uses a shared native dialog presentation
+surface, retaining the existing draft fields and create-user-entry action owner.
+Its form scrolls inside the viewport and its save controls stay at the bottom.
+Opening the editor no longer consumes the fixed search toolbar and squeezes the
+result list. Cancel/Escape restores the actual Add entry trigger. A pending save
+disables submission and dismissal; existing legacy presentation remains compatible.
+Library empty/error/loading states now use semantic theme and text-size tokens
+instead of independent slate/rose colors and fixed Tailwind text sizes.
+
+Validation: 19 DictionarySearchTab checks pass, including modal cancellation with
+no mutation and pending-save dismissal/duplicate-submission guards; the shared row
+check also passes. Typecheck, targeted lint, shared style guard and whitespace
+checks pass. Existing act warnings remain visible. Real local browser QA confirms
+RU labels and the English account translation target, native Escape/focus return,
+and no horizontal overflow at 320px with larger text. At 320x380, dialog bounds
+are y=16..364, the body scrolls (437px content in 282px), and Save remains visible
+at y=322..351. This is a short-viewport simulation, not a physical mobile keyboard
+test. No account setting, entry or learner state was written during browser QA.
+
+Remaining gates are pointer-only collection summaries, full Library empty/error
+runtime acceptance, Statistics/history/mobile navigation, shared typography/color
+consistency and active-session acceptance. Production is not deployed.

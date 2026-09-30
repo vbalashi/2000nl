@@ -170,3 +170,10 @@
 .filterButton[data-active=true]{background:var(--practice-surface-subtle);color:var(--practice-accent)}
 .filterButton:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
 .filterButton:disabled{opacity:.5}
+.editorActions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; position: sticky; bottom: -20px; background: var(--practice-surface); padding-block: 12px; }
+.error { display: grid; gap: 12px; padding: 16px; color: var(--practice-danger); font-size: var(--practice-text-small); line-height: 1.5; }
+.error p { margin: 0; }
+.error .button { justify-self: start; }
+.empty { min-height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: center; }
+.emptyTitle { color: var(--practice-text); font-size: var(--practice-text-body); font-weight: 500; }
+.skeleton { height: 64px; border-radius: var(--practice-radius-dialog); background: var(--practice-surface-subtle); }

@@ -423,3 +423,35 @@ test("changing translation target never retags an old draft with a different lan
   fireEvent.click(screen.getByRole("button", {name:"Save to my dictionary"}));
   await waitFor(() => expect(service.createUserDictionaryEntry).toHaveBeenLastCalledWith({entry:{headword:"goed",languageCode:"nl",definition:"goed zijn"}}));
 });
+
+test("approved personal editor is a cancellable modal without creating an entry", async () => {
+  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+  const service = await import("@/lib/trainingService");
+  vi.mocked(service.createUserDictionaryEntry).mockClear();
+  render(<Harness locale="en" />);
+  fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
+  const editor = screen.getByRole("dialog", {name:"Add entry"});
+  expect(within(editor).getByLabelText("Headword")).toHaveValue("goed");
+  fireEvent(editor, new Event("cancel", {bubbles:true,cancelable:true}));
+  expect(screen.queryByRole("dialog", {name:"Add entry"})).not.toBeInTheDocument();
+  expect(service.createUserDictionaryEntry).not.toHaveBeenCalled();
+});
+
+test("pending entry creation prevents dismissal and duplicate submission", async () => {
+  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+  const service = await import("@/lib/trainingService");
+  const pending = deferred<string>();
+  vi.mocked(service.createUserDictionaryEntry).mockClear().mockReturnValueOnce(pending.promise);
+  render(<Harness locale="en" />);
+  fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
+  const editor = screen.getByRole("dialog", {name:"Add entry"});
+  fireEvent.change(within(editor).getByLabelText("Definition"), {target:{value:"goed zijn"}});
+  fireEvent.click(within(editor).getByRole("button", {name:"Save to my dictionary"}));
+  await waitFor(() => expect(within(editor).getByRole("button", {name:"Close"})).toBeDisabled());
+  expect(within(editor).getByRole("button", {name:"Save to my dictionary"})).toBeDisabled();
+  fireEvent(editor, new Event("cancel", {bubbles:true,cancelable:true}));
+  expect(editor).toBeInTheDocument();
+  pending.resolve("created-entry");
+  await waitFor(() => expect(screen.queryByRole("dialog", {name:"Add entry"})).not.toBeInTheDocument());
+  expect(service.createUserDictionaryEntry).toHaveBeenCalledOnce();
+});

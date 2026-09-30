@@ -10,6 +10,7 @@ import {
 import React from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { LibraryResultList, LibraryResultRow } from "@/components/practice/library/LibraryResultList";
+import { LibraryEntryEditor } from "@/components/practice/library/LibraryEntryEditor";
 import { AccountLibraryFilters } from "@/components/practice/library/AccountLibraryFilters";
 import { EMPTY_LIBRARY_ENTRY_FILTERS } from "@/lib/platform/librarySearchScope";
 import { LIBRARY_PART_LABELS } from "@/components/practice/library/LibraryFilters";
@@ -889,7 +890,7 @@ export function DictionarySearchTab({
           </div>
 
           {customEntryOpen ? (
-            <div className="mt-3 grid gap-2">
+            <LibraryEntryEditor modal={approved} locale={interfaceLanguage} busy={customEntrySaving} onClose={() => setCustomEntryOpen(false)}>
               <div className="grid gap-2 sm:grid-cols-2">
                 <label
                   className={
@@ -999,7 +1000,7 @@ export function DictionarySearchTab({
                   }
                 />
               </label>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className={approved ? workspace.editorActions : "flex flex-wrap items-center gap-3"}>
                 <button
                   type="button"
                   disabled={customEntrySaving}
@@ -1024,7 +1025,7 @@ export function DictionarySearchTab({
                   </span>
                 ) : null}
               </div>
-            </div>
+            </LibraryEntryEditor>
           ) : customEntryMessage ? (
             <div role="status" className={approved ? workspace.notice : "mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300"}>
               {customEntryMessage}
@@ -1047,12 +1048,12 @@ export function DictionarySearchTab({
         {searchError ? (
           <div
             role="alert"
-            className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200"
+            className={approved ? workspace.error : "rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200"}
           >
             <p>{searchError}</p>
             <button
               type="button"
-              className="mt-3 rounded-full border border-current px-3 py-1.5 font-semibold"
+              className={approved ? workspace.button : "mt-3 rounded-full border border-current px-3 py-1.5 font-semibold"}
               onClick={() => void runSearch()}
             >
               {copy.retry}
@@ -1063,7 +1064,7 @@ export function DictionarySearchTab({
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
-                className="h-20 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800"
+                className={approved ? workspace.skeleton : "h-20 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800"}
               />
             ))}
           </div>
@@ -1173,18 +1174,18 @@ export function DictionarySearchTab({
             })}
           </div>
         ) : (
-          <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 text-center">
-            <div className="text-base font-semibold text-slate-900 dark:text-white">
+          <div className={approved ? workspace.empty : "flex min-h-[260px] flex-col items-center justify-center gap-3 text-center"}>
+            <div className={approved ? workspace.emptyTitle : "text-base font-semibold text-slate-900 dark:text-white"}>
               {emptyHeading}
             </div>
-            <div className="max-w-[440px] text-sm text-slate-600 dark:text-slate-300">
+            <div className={approved ? workspace.notice : "max-w-[440px] text-sm text-slate-600 dark:text-slate-300"}>
               {emptyDescription}
             </div>
             {hasResettableLookupState ? (
               <button
                 type="button"
                 onClick={resetLookup}
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                className={approved ? workspace.button : "rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"}
               >
                 {copy.clearSearch}
               </button>
