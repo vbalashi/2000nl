@@ -244,6 +244,11 @@ BEGIN
     RAISE EXCEPTION
       'db-contract-gate: ordinary binding move changed new-group projection';
   END IF;
+  DELETE FROM private.source_entry_bindings
+  WHERE first_seen_run_id = v_run_id;
+  DELETE FROM public.word_entries
+  WHERE id IN (v_first_entry_id, v_old_group_entry_id, v_new_group_entry_id);
+  DELETE FROM private.dictionary_import_runs WHERE id = v_run_id;
 END
 $ordinary_projection_trigger_contract$;
-ROLLBACK;
+COMMIT;

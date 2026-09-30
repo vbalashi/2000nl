@@ -80,6 +80,11 @@ BEGIN
      OR to_regclass('pg_temp.platform_v2_import_refresh_entries') IS NOT NULL THEN
     RAISE EXCEPTION 'db-contract-gate: staged update identity/cleanup changed';
   END IF;
+  DELETE FROM private.platform_v2_content_nodes
+  WHERE entry_id IN (v_first, v_second);
+  DELETE FROM private.source_entry_bindings WHERE first_seen_run_id = v_run;
+  DELETE FROM public.word_entries WHERE id IN (v_first, v_second);
+  DELETE FROM private.dictionary_import_runs WHERE id = v_run;
 END;
 $staged_import_contract$;
-ROLLBACK;
+COMMIT;
