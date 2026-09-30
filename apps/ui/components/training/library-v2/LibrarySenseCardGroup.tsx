@@ -443,6 +443,15 @@ function MeaningCard({
   const formsId=React.useId();
   const senseForms=wordFormDetail(meaning.wordDetails,formPartOfSpeech??" ");
   const approvedArticle = sharedArticlePresentationV1Enabled();
+  const exposure = meaning.undoKnown ? (
+    <span className={approvedArticle ? surfaces.known : "shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300"}>
+      {t("senseCard.known.marked")}
+    </span>
+  ) : meaning.repeatCount > 0 ? (
+    <ExposureBadge count={meaning.repeatCount} tone="light" />
+  ) : (
+    <NewExposureBadge label={t("senseCard.state.new")} tone="light" />
+  );
   const hasVisibleLeadTranslation =
     state.translationVisible &&
     Boolean(meaning.entryTranslation || meaning.definition?.translation);
@@ -457,6 +466,7 @@ function MeaningCard({
         state.expanded ? "pb-3 pt-4" : "py-2.5"
       }`}
     >
+      {approvedArticle ? <span className={surfaces.frameExposure}>{exposure}</span> : null}
       {meaning.displayOrdinal != null ? (
         <span className={`absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center ${approvedArticle ? surfaces.ordinal : "bg-slate-50 font-mono text-xs font-semibold text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300"}`}>
           {meaning.displayOrdinal}
@@ -502,15 +512,7 @@ function MeaningCard({
             className="flex shrink-0 items-center gap-2"
             data-testid="sense-card-top-actions"
           >
-            {meaning.undoKnown ? (
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300">
-                {t("senseCard.known.marked")}
-              </span>
-            ) : meaning.repeatCount > 0 ? (
-              <ExposureBadge count={meaning.repeatCount} tone="light" />
-            ) : (
-              <NewExposureBadge label={t("senseCard.state.new")} tone="light" />
-            )}
+            {approvedArticle ? null : exposure}
             <button
               type="button"
               aria-label={t(

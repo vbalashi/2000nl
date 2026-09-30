@@ -21,3 +21,23 @@
   font-size: var(--practice-text-label);
   font-variant-numeric: tabular-nums;
 }
+/* Owner default exposure: "frame" — the badge sits on the card border, not in the text column. */
+.frameExposure {
+  position: absolute;
+  top: -10px;
+  right: 12px;
+  display: inline-flex;
+  padding: 0 5px;
+  background: var(--practice-surface);
+  pointer-events: none;
+}
+.frameExposure > span {
+  min-height: 18px;
+  padding: 0;
+  border: 0;
+}
+.known {
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-label);
+  color: var(--practice-success);
+}
