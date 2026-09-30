@@ -1,0 +1,62 @@
+{
+  "date": "2026-09-30",
+  "timezone": "Europe/Amsterdam",
+  "implementationCommit": "da2f4bdc",
+  "cpu": "Apple M2 Max",
+  "hostMemoryGiB": 64,
+  "postgresVersion": "17.6",
+  "environment": "disposable loopback PostgreSQL database in local Docker",
+  "corpusManifestSha256": "53496b238a88473891ecedd4a1f95151a05383d39c7a51d333bdb48a6e69b08b",
+  "artifactCount": 18163,
+  "sourceRecordCount": 14449,
+  "excludes": ["bootstrap", "benchmark corpus copying", "word forms", "search documents"],
+  "budgetsSeconds": {"initial": 60, "no_op": 15, "one_entry_changed": 60},
+  "runs": [
+    {
+      "case": "initial",
+      "seconds": 21.835,
+      "entries": 18163,
+      "stages": {
+        "manifest_seconds": 8.88327933405526,
+        "word_write_seconds": 1.508431167108938,
+        "word_rows_written": 18163,
+        "copy_seconds": 0.781197875039652,
+        "binding_seconds": 1.632267,
+        "node_seconds": 1.681591,
+        "fresh_entries": 18163,
+        "reconciled_entries": 0,
+        "refreshed_entries": 18163,
+        "projection_seconds": 4.719184,
+        "commit_seconds": 0.2317937088664621
+      }
+    },
+    {
+      "case": "no_op",
+      "seconds": 8.666,
+      "entries": 18163,
+      "no_op": true,
+      "stages": {"manifest_seconds": 6.496413292130455}
+    },
+    {
+      "case": "one_entry_changed",
+      "seconds": 18.203,
+      "entries": 18163,
+      "changed": 1,
+      "stages": {
+        "manifest_seconds": 10.229643875034526,
+        "word_write_seconds": 0.006056708050891757,
+        "word_rows_written": 1,
+        "copy_seconds": 0.7780672500375658,
+        "binding_seconds": 0.63835,
+        "node_seconds": 1.133454,
+        "fresh_entries": 150,
+        "reconciled_entries": 1,
+        "refreshed_entries": 1,
+        "projection_seconds": 0.024559,
+        "commit_seconds": 0.24350966699421406
+      }
+    }
+  ],
+  "freshEntriesNote": "Includes entries with empty node arrays: 150 such entries still have no node history on replay and require no insertion or reconciliation.",
+  "finalCounts": {"activeBindings": 18163, "activeNodes": 40403, "projectionEntries": 568}
+}

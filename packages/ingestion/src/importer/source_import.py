@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import json
 from pathlib import Path
+import time
 from typing import Optional
 from uuid import uuid4
 
@@ -19,6 +20,7 @@ from importer.db import (
 )
 from importer.dictionary_entry_parser import parse_dictionary_file
 from importer.reconciliation import load_reconciliation_plan
+from importer.staged_import import apply_staged_content
 from importer.source_manifest import (
     SourceArtifact,
     load_source_manifest,
@@ -42,6 +44,7 @@ class SourceImportStats:
     processed: int = 0
     no_op: bool = False
     run_id: Optional[str] = None
+    stage_metrics: dict = field(default_factory=dict)
 
     @property
     def updated(self) -> int:
@@ -70,6 +73,13 @@ def _verify_source_schema(cursor) -> None:
             to_regprocedure(
                 'private.reconcile_platform_v2_content_nodes(uuid,text,jsonb)'
             ),
+            to_regprocedure('private.apply_staged_source_import_v1()'),
+            to_regprocedure(
+                'private.begin_platform_v2_source_import_v1()'
+            ),
+            to_regprocedure(
+                'private.finish_platform_v2_source_import_v1()'
+            ),
             (
                 select count(*) = 2
                 from information_schema.columns
@@ -92,6 +102,9 @@ def _verify_source_schema(cursor) -> None:
         headword_groups,
         content_nodes,
         reconcile_nodes,
+        reconcile_source_batch,
+        begin_source_import,
+        finish_source_import,
         report_atom_columns,
         management_column,
     ) = cursor.fetchone()
@@ -101,11 +114,14 @@ def _verify_source_schema(cursor) -> None:
         or headword_groups is None
         or content_nodes is None
         or reconcile_nodes is None
+        or reconcile_source_batch is None
+        or begin_source_import is None
+        or finish_source_import is None
         or not report_atom_columns
         or not management_column
     ):
         raise RuntimeError(
-            "Platform V2 identity migrations 102, 105, 106, and 120 are not applied"
+            "Platform V2 identity/import migrations through 178 are not applied"
         )
 
 
@@ -197,6 +213,10 @@ def _completed_manifest_is_noop(
 
     for source_entry_key, content_fingerprint in expected.items():
         binding = bindings[source_entry_key]
+        artifact = artifacts_by_key[source_entry_key]
+        if (binding["source_group_key"] != artifact.source_group_key
+                or binding["sense_ordinal"] != artifact.sense_ordinal):
+            raise RuntimeError("Completed manifest exists but source binding identity drifted")
         if (
             binding["manifest_checksum"] != manifest.manifest_sha256
             or binding["content_fingerprint_version"]
@@ -240,41 +260,39 @@ def _completed_manifest_is_noop(
 
     cursor.execute(
         """
-        select entry_id::text, kind, source_text_fingerprint,
-               canonical_source_text, source_order
-        from private.platform_v2_content_nodes
-        where entry_id = any(%s::uuid[])
-          and binding_state = 'active'
+        select node.entry_id::text, node.kind, node.source_text_fingerprint,
+               node.canonical_source_text, node.source_order,
+               node.source_native_key, node.diagnostic_locator,
+               parent.source_order, parent.entry_id::text, parent.binding_state
+        from private.platform_v2_content_nodes as node
+        left join private.platform_v2_content_nodes as parent
+          on parent.id = node.parent_content_node_id
+        where node.entry_id = any(%s::uuid[])
+          and node.binding_state = 'active'
         """,
         (word_entry_ids,),
     )
-    actual_nodes: dict[
-        str,
-        list[tuple[str, str, str | None, int | None]],
-    ] = {}
-    for (
-        entry_id,
-        kind,
-        fingerprint,
-        source_text,
-        source_order,
-    ) in cursor.fetchall():
-        actual_nodes.setdefault(entry_id, []).append(
-            (kind, fingerprint, source_text, source_order)
-        )
+    actual_nodes: dict[str, list[tuple]] = {}
+    for entry_id, *node_shape in cursor.fetchall():
+        actual_nodes.setdefault(entry_id, []).append(tuple(node_shape))
     for source_entry_key, artifact in artifacts_by_key.items():
         entry_id = bindings[source_entry_key]["word_entry_id"]
+        inputs = platform_v2_content_node_inputs(artifact.payload)
+        input_orders = {node["inputKey"]: index
+                        for index, node in enumerate(inputs, start=1)}
         expected_nodes = [
             (
                 node["kind"],
                 node["sourceTextFingerprint"],
                 node["sourceText"],
                 source_order,
+                node.get("sourceNativeKey"),
+                node["sourcePath"],
+                input_orders.get(node.get("parentInputKey")),
+                entry_id if node.get("parentInputKey") else None,
+                "active" if node.get("parentInputKey") else None,
             )
-            for source_order, node in enumerate(
-                platform_v2_content_node_inputs(artifact.payload),
-                start=1,
-            )
+            for source_order, node in enumerate(inputs, start=1)
         ]
         actual_entry_nodes = actual_nodes.get(entry_id, [])
         if (
@@ -418,8 +436,10 @@ def import_source_manifest(
     reason: str = "Approved versioned source manifest import",
     refresh_search_documents: bool = False,
 ) -> SourceImportStats:
+    started = time.monotonic()
     manifest = load_source_manifest(data_dir)
     stats = SourceImportStats(total_files=len(manifest.artifacts))
+    stats.stage_metrics["manifest_seconds"] = time.monotonic() - started
     connection = psycopg2.connect(database_url)
 
     with connection as conn:
@@ -431,6 +451,7 @@ def import_source_manifest(
                 from public.dictionaries
                 where language_code = %s
                   and slug = %s
+                for update
                 """,
                 (language_code, dictionary_slug),
             )
@@ -703,115 +724,47 @@ def import_source_manifest(
                     dictionary_id=dictionary_id,
                     language_code=language_code,
                 )
-                target.append(row)
+                if not active_bindings or source_rows[word_entry_id] != row["raw"]:
+                    target.append(row)
                 resolved.append(
                     (artifact, row, decision_payload)
                 )
 
+            write_started = time.monotonic()
             _bulk_update_entries(cursor, updates)
             _bulk_insert_entries(cursor, inserts)
-
-            psycopg2.extras.execute_values(
-                cursor,
-                """
-                insert into private.source_entry_bindings (
-                    dictionary_id,
-                    identity_scheme_version,
-                    source_entry_key,
-                    source_group_key,
-                    sense_ordinal,
-                    word_entry_id,
-                    binding_state,
-                    first_seen_run_id,
-                    last_seen_run_id,
-                    manifest_checksum,
-                    content_fingerprint_version,
-                    content_fingerprint,
-                    identity_evidence,
-                    reconciliation_decision
-                )
-                values %s
-                on conflict (
-                    dictionary_id,
-                    identity_scheme_version,
-                    source_entry_key
-                )
-                do update set
-                    source_group_key = excluded.source_group_key,
-                    sense_ordinal = excluded.sense_ordinal,
-                    word_entry_id = excluded.word_entry_id,
-                    binding_state = 'active',
-                    last_seen_run_id = excluded.last_seen_run_id,
-                    manifest_checksum = excluded.manifest_checksum,
-                    content_fingerprint_version =
-                        excluded.content_fingerprint_version,
-                    content_fingerprint = excluded.content_fingerprint,
-                    identity_evidence = excluded.identity_evidence,
-                    reconciliation_decision =
-                        excluded.reconciliation_decision,
-                    updated_at = now()
-                """,
-                [
-                    (
-                        dictionary_id,
-                        artifact.identity_scheme_version,
-                        artifact.source_entry_key,
-                        artifact.source_group_key,
-                        artifact.sense_ordinal,
-                        row["id"],
-                        "active",
-                        run_id,
-                        run_id,
-                        manifest.manifest_sha256,
-                        artifact.fingerprint_version,
-                        artifact.content_fingerprint,
-                        psycopg2.extras.Json(
-                            artifact.payload["_source"].get(
-                                "identity_evidence",
-                                {},
-                            )
-                            | {
-                                "source_index": artifact.source_index,
-                                "pos_evidence": artifact.payload[
-                                    "_source"
-                                ].get("pos_evidence", {}),
-                            }
-                        ),
-                        psycopg2.extras.Json(decision_payload),
-                    )
-                    for artifact, row, decision_payload in resolved
-                ],
-                page_size=500,
+            stats.stage_metrics["word_write_seconds"] = (
+                time.monotonic() - write_started
             )
+            stats.stage_metrics["word_rows_written"] = len(updates) + len(inserts)
 
-            psycopg2.extras.execute_values(
-                cursor,
-                """
-                select private.reconcile_platform_v2_content_nodes(
-                    source.entry_id::uuid,
-                    source.source_revision,
-                    source.nodes::jsonb
-                )
-                from (values %s) as source (
-                    entry_id,
-                    source_revision,
-                    nodes
-                )
-                """,
-                [
-                    (
-                        row["id"],
-                        manifest.manifest_sha256,
-                        psycopg2.extras.Json(
-                            platform_v2_content_node_inputs(
-                                artifact.payload
-                            )
-                        ),
+            source_batches = [
+                {
+                    "dictionary_id": dictionary_id,
+                    "identity_scheme_version": artifact.identity_scheme_version,
+                    "source_entry_key": artifact.source_entry_key,
+                    "source_group_key": artifact.source_group_key,
+                    "sense_ordinal": artifact.sense_ordinal,
+                    "word_entry_id": row["id"],
+                    "run_id": run_id,
+                    "manifest_checksum": manifest.manifest_sha256,
+                    "content_fingerprint_version": artifact.fingerprint_version,
+                    "content_fingerprint": artifact.content_fingerprint,
+                    "identity_evidence": artifact.payload["_source"].get(
+                        "identity_evidence", {}
                     )
-                    for artifact, row, _ in resolved
-                ],
-                page_size=500,
-            )
+                    | {
+                        "source_index": artifact.source_index,
+                        "pos_evidence": artifact.payload["_source"].get(
+                            "pos_evidence", {}
+                        ),
+                    },
+                    "reconciliation_decision": decision_payload,
+                    "nodes": platform_v2_content_node_inputs(artifact.payload),
+                }
+                for artifact, row, decision_payload in resolved
+            ]
+            stats.stage_metrics.update(apply_staged_content(cursor, source_batches))
 
             nt2_rows = [
                 (list_id, row["id"], artifact.source_index)
@@ -894,4 +847,7 @@ def import_source_manifest(
                 ),
             )
 
+        commit_started = time.monotonic()
+        conn.commit()
+        stats.stage_metrics["commit_seconds"] = time.monotonic() - commit_started
     return stats

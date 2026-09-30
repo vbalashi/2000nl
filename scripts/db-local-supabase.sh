@@ -30,6 +30,8 @@ Commands:
   check                 Read-only content, migration receipts and contract checks.
   fixture               Load the deterministic small local dictionary fixture.
   import [data-dir]     Import dictionary JSON files (default: db/data/words_content).
+                        Staged 18k-entry initial load: ~20s; one-word update: ~17s.
+                        Identical replay: ~9s. Measured locally 2026-09-30.
   test-fsrs             Run apps/ui FSRS tests in a disposable local database.
   test-ingestion        Run scraper/ingestion tests in a disposable local database.
   all --confirm-reset   Erase DB, bootstrap, test in disposable databases, load
@@ -110,6 +112,15 @@ import_dictionary() {
 
   local python_bin
   python_bin="$(ingestion_python)"
+
+  cat <<'EOF'
+Dictionary import verifies every artifact. Migration 178 uses bulk insertion
+without historical reconciliation on an empty dictionary, and reconciles only
+changed existing Content Nodes. Local 2026-09-30 measurements for 18k Van Dale
+entries: initial 20.39s; identical replay 8.78s; one-word update 16.73s.
+Mass content changes can take longer. Forms and search indexing are separate.
+See docs/runbooks/dictionary-import.ru.md for purposes and scenarios.
+EOF
 
   (cd "$repo_root" && PYTHONPATH="$repo_root/packages/ingestion/src${PYTHONPATH:+:$PYTHONPATH}" \
     "$python_bin" packages/ingestion/scripts/import_words_db.py \

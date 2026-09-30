@@ -264,9 +264,33 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 176 in order
+An enabled deployment must apply or verify migrations 123 through 178 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
+
+Migration 177 replaces the full dictionary import's repeated row-trigger group
+refresh with a private, bounded batch boundary. Each batch upserts source
+bindings, reconciles durable Content Node identities, deduplicates affected
+source groups, and bounded drains rebuild each affected source group once as
+the manifest advances. Group-aware batch boundaries do not split a source
+group. The manifest-level finish verifies that no derived refresh remains;
+deferred constraint triggers force that finish if an importer omits it.
+Ordinary interactive writes retain immediate trigger refresh. A failed batch
+rolls back bindings, Content Nodes, and projection together; no trigger is
+disabled globally and no public or service-role grant is added. The intermediate
+implementation recorded 155.74 seconds for the full corpus on 2026-09-29; this
+is historical evidence, not a guaranteed runtime for later implementations.
+
+Migration 178 adds transaction-local COPY staging. Entries without any node
+history receive bulk-created nodes; actual node differences select the existing
+identity reconciler for changed entries only. Binding release-metadata updates
+do not enqueue training projection refresh. Deferred commit protection and the
+ordinary interactive paths from 177 remain. The replaced drain is checked
+behaviorally in postflight 178; postflight 177 characterizes ordinary writes.
+On 2026-09-30, the complete 18,163-artifact local corpus took 20.39s initially,
+8.78s for no-op, and 16.73s for one changed definition. Local budgets are 60/15/60s
+for these scenarios, and 10s for the CI 600-entry changed replay. See
+[dictionary-import.md](dictionary-import.md) and its reproducible benchmark.
 
 Migration 163 preserves the extra-exercise eligibility RPC signature and
 boolean policy while replacing its all-word-entry scan with a lookup of the
