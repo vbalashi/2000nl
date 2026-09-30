@@ -211,6 +211,9 @@
       "history": "История"
     },
     "trainingOverview": {
+      "wordInContext": "Слово в контексте",
+      "allDictionaries": "Все доступные словари",
+      "allDue": "Все к повторению",
       "loading": "Загрузка тренировок…",
       "retry": "Повторить",
       "currentTraining": "Текущая тренировка",

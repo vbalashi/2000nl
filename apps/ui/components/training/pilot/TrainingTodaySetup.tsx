@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ChevronDown, Plus } from "lucide-react";
 import { TrainingLexicalPreview } from "./TrainingLexicalPreview";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -21,6 +21,8 @@ import { useAccountTrainingSetups } from "@/lib/training/setups/useAccountTraini
 import type { SavedTraining } from "@/lib/training/setups/model";
 import { getUiMessages } from "@/lib/uiMessages";
 import { SavedTrainingControls } from "@/components/practice/SavedTrainingControls";
+import {trainingPresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
+import {AccountTrainingOverview, type OwnedTrainingOverviewSession} from "./AccountTrainingOverview";
 import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
 
 export type TrainingPilotStatus =
@@ -31,37 +33,11 @@ export type { TrainingSetupDraft } from "@/lib/training/setups/types";
 
 export const DEFAULT_SESSION_SIZE: TrainingSessionSize = 10;
 
-export type TrainingSetupOption = {
-  value: string;
-  label: string;
-  modes?: TrainingMode[];
-};
+export type {TrainingSetupOption} from "@/lib/training/setups/availability";
+import type {TrainingSetupOption} from "@/lib/training/setups/availability";
 
-export const isTrainingSetupDraftSupported = (
-  draft: Pick<TrainingSetupDraft, "scenarioId" | "modes">,
-  scenarios: TrainingSetupOption[],
-) => {
-  const scenario = scenarios.find(
-    (option) => option.value === draft.scenarioId,
-  );
-  return Boolean(
-    scenario?.modes?.length &&
-    draft.modes.length > 0 &&
-    draft.modes.every((mode) => scenario.modes?.includes(mode)),
-  );
-};
-
-export const isTrainingSetupMaterialAvailable = (
-  draft: Pick<TrainingSetupDraft, "listValue" | "materialMode" | "dictionaryIds">,
-  lists: TrainingSetupOption[],
-  dictionaries: TrainingSetupOption[] = [],
-) => {
-  if (draft.materialMode === "all-dictionaries") return dictionaries.length > 0;
-  if (draft.materialMode === "selected-dictionaries") {
-    return Boolean(draft.dictionaryIds?.some((id) => dictionaries.some((source) => source.value === id)));
-  }
-  return lists.some((option) => option.value === draft.listValue);
-};
+export {isTrainingSetupDraftSupported, isTrainingSetupMaterialAvailable} from "@/lib/training/setups/availability";
+import {isTrainingSetupDraftSupported, isTrainingSetupMaterialAvailable} from "@/lib/training/setups/availability";
 
 const defaultModesForScenario = (scenario: TrainingSetupOption) => {
   const modes = scenario.modes ?? [];
@@ -111,6 +87,7 @@ type Props = {
   replacementWarning?: boolean;
   hasOwnedSession?: boolean;
   activeSessionLabel?: string;
+  ownedSession?: OwnedTrainingOverviewSession;
   onContinue: () => void;
   onStart: (
     draft: TrainingSetupDraft,
@@ -493,6 +470,7 @@ export function TrainingTodaySetup({
   replacementWarning = false,
   hasOwnedSession = true,
   activeSessionLabel,
+  ownedSession,
   onContinue,
   onStart,
   onRetry,
@@ -509,11 +487,15 @@ export function TrainingTodaySetup({
   const canSaveAccount = Boolean(userId && trainingLanguageCode);
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const editingTraining = presets.find(item => item.id === editingPresetId);
+  const [trainingName, setTrainingName] = useState<string|null>(null);
   const [presetMessage, setPresetMessage] = useState("");
+  const [selectedIntent, setSelectedIntent] = useState<{id:string;userId:string|undefined;language:string;action:"edit"|"launch"}|null>(null);
   const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
 
   useEffect(() => {
     setEditingPresetId(null);
+    setSelectedIntent(null);
+    setTrainingName(null);
     setPresetMessage("");
     // A different signed-in account must not retain the previous account's editor.
   }, [userId]);
@@ -604,6 +586,8 @@ export function TrainingTodaySetup({
   );
 
   const openSetup = () => {
+    setSelectedIntent(null);
+    setTrainingName(null);
     setEditingPresetId(null);
     setPresetMessage("");
     setDraft({
@@ -626,7 +610,7 @@ export function TrainingTodaySetup({
     const presetName = `${selectedList ?? t.list} · ${activeFamily === "idiom" ? t.idioms : activeFamily === "sentence" ? t.sentences : activeFamily === "word-in-context" ? t.wordInContext : t.words} · ${mixLabel} · ${sizeLabel}`;
     const preset: SavedTraining = {
       id: editingPresetId ?? crypto.randomUUID(),
-      name: presetName.slice(0, 160),
+      name: (trainingPresentationV1Enabled() ? trainingName?.trim() || selectedList || getUiMessages(interfaceLanguage).builder.customTraining : presetName).slice(0, 160),
       languageCode: trainingLanguageCode,
       draft,
     };
@@ -647,12 +631,28 @@ export function TrainingTodaySetup({
     return result === "saved";
   };
 
-  const requestStart = async (nextDraft: TrainingSetupDraft) => {
+  const requestStart = useCallback(async (nextDraft: TrainingSetupDraft) => {
     if (trainingLanguageLoading || pendingLanguage || startBlocked || !isTrainingSetupMaterialAvailable(nextDraft, lists, dictionaries)) return;
     if (nextDraft.family === "word-in-context" && translationTargetLanguageCode === null) return;
     const started = await onStart(nextDraft);
     if (started === false) setScreen("today");
-  };
+  }, [trainingLanguageLoading, pendingLanguage, startBlocked, lists, dictionaries, translationTargetLanguageCode, onStart]);
+
+  useEffect(() => {
+    if (!selectedIntent || selectedIntent.userId !== userId || selectedIntent.language !== trainingLanguageCode || trainingLanguageLoading || scenarioLoading || pendingLanguage || account.status !== "ready" || (selectedIntent.action === "launch" && startBlocked)) return;
+    const selected = account.snapshot.document.trainings.find(item => item.id === selectedIntent.id && item.languageCode === trainingLanguageCode);
+    setSelectedIntent(null);
+    if (!selected) { setPresetMessage(accountCopy.conflict); return; }
+    if (selectedIntent.action === "edit") {
+      setDraft({...selected.draft,sessionSize:selected.draft.sessionSize??DEFAULT_SESSION_SIZE});
+      setTrainingName(selected.name);
+      setEditingPresetId(selected.id); setPresetMessage(""); setScreen("setup");
+    } else if (!isTrainingSetupMaterialAvailable(selected.draft,lists,dictionaries)) {
+      setPresetMessage(t.materialUnavailable);
+    } else if (isTrainingSetupDraftSupported(selected.draft,scenarios)) {
+      void requestStart(selected.draft);
+    } else setPresetMessage(t.chooseGoal);
+  }, [selectedIntent, userId, trainingLanguageCode, trainingLanguageLoading, scenarioLoading, pendingLanguage, account.status, account.snapshot.document.trainings, startBlocked, accountCopy.conflict, scenarios, lists, dictionaries, requestStart, t.chooseGoal, t.materialUnavailable]);
 
   if (screen === "today" && status !== "ready") {
     return status === "error" ? (
@@ -676,6 +676,26 @@ export function TrainingTodaySetup({
         context="training"
       />
     );
+  }
+
+  if (screen === "today" && trainingPresentationV1Enabled()) {
+    return <AccountTrainingOverview interfaceLanguage={interfaceLanguage} languageCode={trainingLanguageCode??"nl"}
+      languageOptions={trainingLanguageOptions} lists={lists} dictionaries={dictionaries} scenarios={scenarios}
+      snapshot={account.snapshot} accountStatus={account.status} initialDraft={initialDraft}
+      ownedSession={hasOwnedSession?ownedSession:undefined} activeSessionLabel={activeSessionLabel}
+      pending={startPending||scenarioLoading||Boolean(selectedIntent)} ready={!startBlocked&&!trainingLanguageLoading}
+      continueDisabled={continueDisabled} materialUnavailable={t.materialUnavailable} partialMaterialNotice={t.partialDictionaryAccess} setupUnavailable={t.chooseGoal}
+      translationUnavailable={t.contextLanguageNeeded} translationLanguage={translationTargetLanguageCode}
+      onCreate={openSetup} onDefaultLaunch={()=>void requestStart(initialDraft)} onContinue={onContinue}
+      onRetry={()=>void account.reload()} onSelect={(training,action)=>{
+        if (!trainingLanguageOptions.some(option=>option.value===training.languageCode)) { setPresetMessage(t.materialUnavailable); return; }
+        setSelectedIntent({id:training.id,userId,language:training.languageCode,action});
+        if(training.languageCode!==trainingLanguageCode)onTrainingLanguageChange?.(training.languageCode);
+      }}>
+      {presetMessage&&<p role="status">{presetMessage}</p>}
+      {sessionResumeStatus!=="ready"&&<p role={sessionResumeStatus==="error"?"alert":"status"}>{sessionResumeStatus==="pending"?t.resumePending:t.resumeError}{sessionResumeStatus==="error"&&<button onClick={onRetryResume}>{t.retryResume}</button>}</p>}
+      {cardPreparationStatus==="error"&&<p role="alert">{t.cardError}<button onClick={onRetryCard}>{t.retryCard}</button></p>}
+    </AccountTrainingOverview>;
   }
 
   if (screen === "today") {
@@ -850,6 +870,7 @@ export function TrainingTodaySetup({
                           type="button"
                           onClick={() => {
                             setDraft({ ...preset.draft, sessionSize: preset.draft.sessionSize ?? DEFAULT_SESSION_SIZE });
+                            setTrainingName(preset.name);
                             setEditingPresetId(preset.id);
                             setPresetMessage("");
                             setScreen("setup");
@@ -945,6 +966,11 @@ export function TrainingTodaySetup({
         <h1 className="sr-only">
           {t.setupHeading}
         </h1>
+        {trainingPresentationV1Enabled()&&<label className="mt-4 block text-sm">
+          {getUiMessages(interfaceLanguage).builder.trainingName}
+          <input className="mt-1 block w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 dark:border-slate-600" maxLength={160}
+            value={trainingName??selectedList??""} onChange={event=>setTrainingName(event.target.value)} placeholder={getUiMessages(interfaceLanguage).builder.namePlaceholder}/>
+        </label>}
         {sessionResumeStatus !== "ready" ? (
           <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
             <p

@@ -211,6 +211,9 @@
       "history": "History"
     },
     "trainingOverview": {
+      "wordInContext": "Word in context",
+      "allDictionaries": "All accessible dictionaries",
+      "allDue": "All due",
       "loading": "Loading training…",
       "retry": "Try again",
       "currentTraining": "Current training",

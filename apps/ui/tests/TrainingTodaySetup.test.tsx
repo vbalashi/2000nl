@@ -1,6 +1,6 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
   TrainingTodaySetup,
   type TrainingSetupDraft,
@@ -18,6 +18,7 @@ vi.mock("@/lib/training/setups/client", () => ({
   },
 }));
 beforeEach(() => accounts.clear());
+afterEach(()=>{vi.unstubAllEnvs();});
 const seedAccount = (userId: string, trainings: unknown[]) => accounts.set(userId, { revision: 0, document: { schemaVersion: 1, trainings: trainings.map((item: any) => ({ ...item, languageCode: "nl" })), mainTrainingId: null } });
 
 const initialDraft: TrainingSetupDraft = {
@@ -571,4 +572,86 @@ test("empty candidate state can recover to its selected lexical filter setup", (
     "aria-pressed",
     "true",
   );
+});
+
+
+test("approved overview launches the account main training rather than the current default", async () => {
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const savedDraft={...initialDraft,sessionSize:5,newReviewRatio:4};
+ accounts.set("overview-main",{revision:1,document:{schemaVersion:1,mainTrainingId:"main",trainings:[{id:"main",name:"My five words",languageCode:"nl",draft:savedDraft}]}});
+ const onStart=vi.fn();
+ render(<TrainingTodaySetup {...baseProps} userId="overview-main" trainingLanguageCode="nl" hasOwnedSession={false} onStart={onStart}/>);
+ await screen.findByRole("heading",{name:"My five words"});
+ expect(screen.queryByText("Good morning")).toBeNull();
+ fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(savedDraft));
+});
+
+test("approved overview waits for the saved language catalog before launching", async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const savedDraft={...initialDraft,listValue:"english-list",sessionSize:5};
+ accounts.set("multilingual",{revision:1,document:{schemaVersion:1,mainTrainingId:"english",trainings:[{id:"english",name:"English words",languageCode:"en",draft:savedDraft}]}});
+ const onStart=vi.fn(),onTrainingLanguageChange=vi.fn();
+ const props={...baseProps,userId:"multilingual",trainingLanguageCode:"nl",hasOwnedSession:false,onStart,onTrainingLanguageChange,trainingLanguageOptions:[{value:"nl",label:"Dutch"},{value:"en",label:"English"}]};
+ const view=render(<TrainingTodaySetup {...props}/>);
+ await screen.findByRole("heading",{name:"English words"});
+ fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ expect(onTrainingLanguageChange).toHaveBeenCalledWith("en");expect(onStart).not.toHaveBeenCalled();
+ view.rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" trainingLanguageLoading lists={[]}/>);
+ expect(onStart).not.toHaveBeenCalled();
+ view.rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" lists={[{value:"english-list",label:"English source"}]}/>);
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(savedDraft));
+});
+
+test("approved overview resumes an owned session independently of edited presets",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const onContinue=vi.fn(),onStart=vi.fn();
+ render(<TrainingTodaySetup {...baseProps} userId="owned-overview" trainingLanguageCode="nl" hasOwnedSession ownedSession={{id:"actual-session",completed:3,total:10}} activeSessionLabel="Actual run" onContinue={onContinue} onStart={onStart}/>);
+ await screen.findByRole("heading",{name:"Actual run"});
+ expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow","3");
+ expect(screen.getByText("done").nextElementSibling).toHaveTextContent("3");
+ expect(screen.queryByText("done today")).toBeNull();
+ fireEvent.click(screen.getByRole("button",{name:"Continue training"}));
+ expect(onContinue).toHaveBeenCalledOnce();expect(onStart).not.toHaveBeenCalled();
+});
+
+test("approved builder stores a chosen name without repeating the configuration", async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ render(<TrainingTodaySetup {...baseProps} userId="named-overview" trainingLanguageCode="nl" hasOwnedSession={false}/>);
+ await screen.findByRole("button",{name:"Create training"});
+ fireEvent.click(screen.getByRole("button",{name:"Create training"}));
+ fireEvent.change(screen.getByLabelText("Training name"),{target:{value:"Five useful words"}});
+ fireEvent.click(screen.getByRole("button",{name:"Save training"}));
+ await screen.findByText("Saved to your account");
+ expect(accounts.get("named-overview")?.document.trainings[0].name).toBe("Five useful words");
+ fireEvent.click(screen.getByRole("button",{name:"Back to Today"}));
+ await screen.findByRole("heading",{name:"Five useful words"});
+ fireEvent.click(screen.getByRole("button",{name:"Edit Five useful words"}));
+ await waitFor(()=>expect(screen.getByLabelText("Training name")).toHaveValue("Five useful words"));
+});
+
+test("approved overview discloses unavailable dictionaries without losing saved references", async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const savedDraft={...initialDraft,sessionSize:10,materialMode:"selected-dictionaries" as const,dictionaryIds:[dictionaryA,dictionaryLost]};
+ accounts.set("partial-overview",{revision:1,document:{schemaVersion:1,mainTrainingId:"partial",trainings:[{id:"partial",name:"Partial source",languageCode:"nl",draft:savedDraft}]}});
+ render(<TrainingTodaySetup {...baseProps} userId="partial-overview" trainingLanguageCode="nl" hasOwnedSession={false} dictionaries={[{value:dictionaryA,label:"Available source"}]}/>);
+ await screen.findByRole("heading",{name:"Partial source"});
+ expect(screen.getByRole("status")).toHaveTextContent("Some selected dictionaries are unavailable");
+ expect(screen.getByRole("button",{name:"Start training"})).toBeEnabled();
+ expect(accounts.get("partial-overview")?.document.trainings[0].draft.dictionaryIds).toEqual([dictionaryA,dictionaryLost]);
+});
+
+test("a queued language switch cannot launch a previous account's training",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const savedDraft={...initialDraft,listValue:"english-list",sessionSize:5};
+ accounts.set("old-owner",{revision:1,document:{schemaVersion:1,mainTrainingId:"english",trainings:[{id:"english",name:"Old owner's training",languageCode:"en",draft:savedDraft}]}});
+ const onStart=vi.fn(),onTrainingLanguageChange=vi.fn();
+ const props={...baseProps,userId:"old-owner",trainingLanguageCode:"nl",hasOwnedSession:false,onStart,onTrainingLanguageChange,trainingLanguageOptions:[{value:"nl",label:"Dutch"},{value:"en",label:"English"}]};
+ const view=render(<TrainingTodaySetup {...props}/>);
+ await screen.findByRole("heading",{name:"Old owner's training"});
+ fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ view.rerender(<TrainingTodaySetup {...props} userId="new-owner" trainingLanguageCode="en" lists={[{value:"english-list",label:"English source"}]}/>);
+ await screen.findByRole("button",{name:"Create training"});
+ expect(onStart).not.toHaveBeenCalled();
+ expect(screen.queryByRole("heading",{name:"Old owner's training"})).toBeNull();
 });

@@ -211,6 +211,9 @@
       "history": "Geschiedenis"
     },
     "trainingOverview": {
+      "wordInContext": "Woord in context",
+      "allDictionaries": "Alle beschikbare woordenboeken",
+      "allDue": "Alles verschuldigd",
       "loading": "Trainingen laden…",
       "retry": "Opnieuw proberen",
       "currentTraining": "Huidige training",
