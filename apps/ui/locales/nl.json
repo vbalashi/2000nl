@@ -190,6 +190,33 @@
     "zn": "zelfstandig naamwoord"
   },
   "ui": {
+    "trainingBuilder": {
+      "wordInContext": "Woord in context",
+      "reviewsOnly": "Alleen herhalen",
+      "newOnly": "Alleen nieuw",
+      "allDictionaries": "Alle toegankelijke woordenboeken",
+      "selectDictionary": "Kies woordenboeken",
+      "materialUnavailable": "Het gekozen materiaal is niet beschikbaar. Kies ander materiaal voordat je start.",
+      "collectionMode": "Eén collectie",
+      "chosenDictionaries": "Gekozen woordenboeken",
+      "loadingDictionaries": "Woordenboeken laden…",
+      "partialDictionaryAccess": "Sommige gekozen woordenboeken zijn niet beschikbaar; deze sessie gebruikt alleen de toegankelijke.",
+      "contextLanguageNeeded": "Kies een vertaaltaal in Instellingen voor deze oefening.",
+      "meaning": "Betekenis",
+      "activity": "Recente activiteit",
+      "activityHelp": "Optioneel: filter op datum en bron; dit selecteert niet alleen vergeten woorden.",
+      "source": "Bron",
+      "allSources": "Alle bronnen",
+      "youtube": "YouTube",
+      "date": "Periode",
+      "allDates": "Alle tijd",
+      "today": "Vandaag",
+      "yesterday": "Gisteren",
+      "daysAgo": "Dagen geleden",
+      "allDueToday": "Alles wat moet",
+      "allDueHelp": "Dit schakelt over naar alleen herhalingen; nieuwe kaarten tellen niet mee.",
+      "mixHelp": "Streepritme; de verhouding hangt af van beschikbare kaarten."
+    },
     "accountTrainingSetups": {
       "loading": "Bewaarde trainingen laden…",
       "empty": "Nog geen bewaarde trainingen.",
@@ -246,6 +273,12 @@
       "learningLanguage": {"Dutch": "Nederlands", "English": "Engels", "German": "Duits"}
     },
     "builder": {
+      "ratioOne": "1 nieuw : {count} herhaling",
+      "ratioFew": "1 nieuw : {count} herhalingen",
+      "ratioMany": "1 nieuw : {count} herhalingen",
+      "ratioOther": "1 nieuw : {count} herhalingen",
+      "lexicalUnavailable": "Filters voor deze taal zijn nog niet aangesloten.",
+      "anyArticle": "Elk lidwoord",
       "title": "Training samenstellen",
       "back": "Terug naar Training",
       "language": "Taal",

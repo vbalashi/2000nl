@@ -1,0 +1,114 @@
+.section {
+  padding: 0 4px 5px;
+  background: var(--practice-surface-subtle);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  color: var(--practice-text-secondary);
+}
+.section:has(> .heading:hover) {
+  background: var(--practice-surface-hover);
+}
+.section:has(> .heading:focus-visible) {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+.heading {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr) 17px;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  min-height: 51px;
+  padding: 12.5px 18px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-family: var(--practice-font-ui);
+}
+.heading:focus-visible {
+  outline: none;
+}
+.title {
+  font-size: var(--practice-text-body-lg);
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+.summary {
+  font-size: var(--practice-text-small);
+  color: var(--practice-text-muted);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.chevron,
+.rotated {
+  color: var(--practice-text-muted);
+  transition: transform 0.44s var(--practice-motion);
+}
+.rotated {
+  transform: rotate(180deg);
+}
+.reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  overflow: hidden;
+  min-height: 0;
+  transition:
+    grid-template-rows 0.44s var(--practice-motion),
+    visibility 0s 0.44s;
+}
+.reveal.open {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition-delay: 0s;
+}
+.reveal > div {
+  overflow: hidden;
+  min-height: 0;
+  background: var(--practice-canvas);
+  border-radius: 0 0 8px 8px;
+}
+.body {
+  padding: 22px 18px 26px;
+}
+@media (max-width: 700px) {
+  .heading {
+    grid-template-columns: 90px minmax(0, 1fr) 17px;
+    gap: 12px;
+    padding: 11.5px 12px;
+  }
+  .title {
+    font-size: var(--practice-text-body);
+  }
+  .summary {
+    font-size: var(--practice-text-caption);
+  }
+  .body {
+    padding: 20px 12px 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .chevron,
+  .rotated {
+    transition: none;
+  }
+}
+:global([data-text-size="large"]) .heading,
+:global([data-text-size="extra"]) .heading {
+  grid-template-columns: 1fr 17px;
+}
+:global([data-text-size="large"]) .summary,
+:global([data-text-size="extra"]) .summary {
+  grid-column: 1/-1;
+  grid-row: 2;
+}
+:global([data-text-size="large"]) .chevron,
+:global([data-text-size="large"]) .rotated,
+:global([data-text-size="extra"]) .chevron,
+:global([data-text-size="extra"]) .rotated {
+  grid-column: 2;
+  grid-row: 1;
+}

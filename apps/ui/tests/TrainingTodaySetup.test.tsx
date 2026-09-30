@@ -1,6 +1,6 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterAll, beforeAll, afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
   TrainingTodaySetup,
   type TrainingSetupDraft,
@@ -17,6 +17,10 @@ vi.mock("@/lib/training/setups/client", () => ({
     return { kind: "saved", snapshot };
   },
 }));
+const dialogPrototype=HTMLDialogElement.prototype;
+const showModalDescriptor=Object.getOwnPropertyDescriptor(dialogPrototype,"showModal"),closeDescriptor=Object.getOwnPropertyDescriptor(dialogPrototype,"close");
+beforeAll(()=>{Object.defineProperties(dialogPrototype,{showModal:{configurable:true,value(){this.setAttribute("open","");}},close:{configurable:true,value(){this.removeAttribute("open");}}});});
+afterAll(()=>{if(showModalDescriptor)Object.defineProperty(dialogPrototype,"showModal",showModalDescriptor);else Reflect.deleteProperty(dialogPrototype,"showModal");if(closeDescriptor)Object.defineProperty(dialogPrototype,"close",closeDescriptor);else Reflect.deleteProperty(dialogPrototype,"close");});
 beforeEach(() => accounts.clear());
 afterEach(()=>{vi.unstubAllEnvs();});
 const seedAccount = (userId: string, trainings: unknown[]) => accounts.set(userId, { revision: 0, document: { schemaVersion: 1, trainings: trainings.map((item: any) => ({ ...item, languageCode: "nl" })), mainTrainingId: null } });
@@ -620,13 +624,17 @@ test("approved builder stores a chosen name without repeating the configuration"
  render(<TrainingTodaySetup {...baseProps} userId="named-overview" trainingLanguageCode="nl" hasOwnedSession={false}/>);
  await screen.findByRole("button",{name:"Create training"});
  fireEvent.click(screen.getByRole("button",{name:"Create training"}));
- fireEvent.change(screen.getByLabelText("Training name"),{target:{value:"Five useful words"}});
  fireEvent.click(screen.getByRole("button",{name:"Save training"}));
+ fireEvent.change(screen.getByLabelText("Training name"),{target:{value:"Five useful words"}});
+ fireEvent.click(within(screen.getByRole("dialog")).getByRole("button",{name:"Save training"}));
+ await waitFor(()=>expect(screen.queryByRole("dialog")).toBeNull());
  await screen.findByText("Saved to your account");
  expect(accounts.get("named-overview")?.document.trainings[0].name).toBe("Five useful words");
- fireEvent.click(screen.getByRole("button",{name:"Back to Today"}));
+ fireEvent.click(screen.getByRole("button",{name:"Back to Training"}));
  await screen.findByRole("heading",{name:"Five useful words"});
  fireEvent.click(screen.getByRole("button",{name:"Edit Five useful words"}));
+ await screen.findByRole("button",{name:"Update training"});
+ fireEvent.click(screen.getByRole("button",{name:"Update training"}));
  await waitFor(()=>expect(screen.getByLabelText("Training name")).toHaveValue("Five useful words"));
 });
 
@@ -654,4 +662,55 @@ test("a queued language switch cannot launch a previous account's training",asyn
  await screen.findByRole("button",{name:"Create training"});
  expect(onStart).not.toHaveBeenCalled();
  expect(screen.queryByRole("heading",{name:"Old owner's training"})).toBeNull();
+});
+
+
+test("approved builder opens every section collapsed and resets when creating again",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ render(<TrainingTodaySetup {...baseProps} userId="builder-sections" trainingLanguageCode="nl" hasOwnedSession={false}/>);
+ await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));
+ for(const name of ["Language","Source","Exercises","Filters","Session"])expect(screen.getByRole("button",{name:new RegExp(`^${name} `)})).toHaveAttribute("aria-expanded","false");
+ expect(screen.queryByRole("button",{name:"Nouns"})).toBeNull();
+ fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
+ expect(screen.getByRole("button",{name:"Nouns"})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Back to Training"}));fireEvent.click(screen.getByRole("button",{name:"Create training"}));
+ expect(screen.getByRole("button",{name:/^Filters /})).toHaveAttribute("aria-expanded","false");
+});
+
+test("approved lexical chips and noun subfilters preserve the canonical launch payload",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");const onStart=vi.fn();
+ render(<TrainingTodaySetup {...baseProps} userId="builder-lexical" trainingLanguageCode="nl" hasOwnedSession={false} onStart={onStart}/>);
+ await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
+ fireEvent.click(screen.getByRole("button",{name:"Verbs"}));fireEvent.click(screen.getByRole("button",{name:"Noun subfilters"}));
+ fireEvent.click(within(screen.getByRole("dialog")).getByRole("button",{name:"de"}));fireEvent.click(screen.getByRole("button",{name:"Close noun subfilters"}));
+ fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ expect(onStart).toHaveBeenCalledWith(expect.objectContaining({partOfSpeech:["ww","zn"],nounArticles:["de"]}));
+});
+
+test("approved source picker selects dictionaries on the same screen",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");const onStart=vi.fn();
+ render(<TrainingTodaySetup {...baseProps} userId="builder-source" trainingLanguageCode="nl" hasOwnedSession={false} dictionaries={[{value:dictionaryA,label:"Dictionary A"}]} onStart={onStart}/>);
+ await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));fireEvent.click(screen.getByRole("button",{name:/^Source /}));
+ fireEvent.click(screen.getByRole("button",{name:"Selected dictionaries"}));fireEvent.click(screen.getByRole("button",{name:"Dictionary A"}));fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ expect(onStart).toHaveBeenCalledWith(expect.objectContaining({materialMode:"selected-dictionaries",dictionaryIds:[dictionaryA]}));
+});
+
+
+test("switching accounts discards an open builder draft", async () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const onStart = vi.fn();
+  const props = { ...baseProps, trainingLanguageCode: "nl", hasOwnedSession: false, onStart };
+  const view = render(<TrainingTodaySetup {...props} userId="previous-builder-owner" />);
+  await screen.findByRole("button", { name: "Create training" });
+  fireEvent.click(screen.getByRole("button", { name: "Create training" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  fireEvent.click(screen.getByRole("button", { name: "Verbs" }));
+  view.rerender(<TrainingTodaySetup {...props} userId="next-builder-owner" />);
+  await screen.findByRole("button", { name: "Create training" });
+  expect(screen.queryByRole("heading", { name: "Build training" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Create training" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(onStart).toHaveBeenCalledOnce();
+  expect(onStart.mock.calls[0][0].partOfSpeech).toEqual(baseProps.initialDraft.partOfSpeech);
+  expect(accounts.get("next-builder-owner")).toBeUndefined();
 });

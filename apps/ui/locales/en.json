@@ -190,6 +190,33 @@
     "zn": "noun"
   },
   "ui": {
+    "trainingBuilder": {
+      "wordInContext": "Word in context",
+      "reviewsOnly": "Reviews only",
+      "newOnly": "New only",
+      "allDictionaries": "All accessible dictionaries",
+      "selectDictionary": "Choose dictionaries",
+      "materialUnavailable": "Selected material is unavailable. Choose another before starting.",
+      "collectionMode": "One collection",
+      "chosenDictionaries": "Selected dictionaries",
+      "loadingDictionaries": "Loading dictionaries…",
+      "partialDictionaryAccess": "Some selected dictionaries are unavailable; this session will use only those you can access.",
+      "contextLanguageNeeded": "Choose a translation language in Settings to use this exercise.",
+      "meaning": "Meaning",
+      "activity": "Recent activity",
+      "activityHelp": "Optional: narrow by event date and source; this does not mean forgotten words only.",
+      "source": "Source",
+      "allSources": "All sources",
+      "youtube": "YouTube",
+      "date": "Time window",
+      "allDates": "All time",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo": "Days ago",
+      "allDueToday": "All due",
+      "allDueHelp": "Selecting this switches the mix to Reviews only; new cards are not included.",
+      "mixHelp": "Target rhythm; the actual mix depends on available cards."
+    },
     "accountTrainingSetups": {
       "loading": "Loading saved training…",
       "empty": "No saved training yet.",
@@ -246,6 +273,12 @@
       "learningLanguage": {"Dutch": "Dutch", "English": "English", "German": "German"}
     },
     "builder": {
+      "ratioOne": "1 new : {count} review",
+      "ratioFew": "1 new : {count} reviews",
+      "ratioMany": "1 new : {count} reviews",
+      "ratioOther": "1 new : {count} reviews",
+      "lexicalUnavailable": "Lexical filters for this language are not connected yet.",
+      "anyArticle": "Any article",
       "title": "Session builder",
       "back": "Back to Training",
       "language": "Language",

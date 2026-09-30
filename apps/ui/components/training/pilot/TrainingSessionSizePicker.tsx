@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import s from "@/components/practice/builder/builderControls.module.css";
 import type { TrainingSessionSize } from "@/lib/types";
 
 const BASE_STEPS: TrainingSessionSize[] = [
@@ -24,12 +25,14 @@ const nearestStepIndex = (steps: TrainingSessionSize[], value: number) => {
 export function TrainingSessionSizePicker({
   value,
   onChange,
+  approved=false,
   label,
   exercisesLabel,
   allDueLabel,
   allDueHelp,
   allowAllDueToday = true,
 }: {
+  approved?:boolean;
   value: TrainingSessionSize;
   onChange: (value: TrainingSessionSize) => void;
   label: string;
@@ -52,15 +55,15 @@ export function TrainingSessionSizePicker({
     : exercisesLabel(value);
 
   return (
-    <div>
-      <div className="flex items-baseline justify-between gap-3">
+    <div className={approved?s.rangeGroup:undefined}>
+      <div className={approved?s.labelRow:"flex items-baseline justify-between gap-3"}>
         <label
           htmlFor="training-session-size"
-          className="text-sm font-semibold text-slate-950 dark:text-white"
+          className={approved?s.label:"text-sm font-semibold text-slate-950 dark:text-white"}
         >
           {label}
         </label>
-        <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+        <span className={approved?s.selection:"text-sm font-semibold text-indigo-700 dark:text-indigo-300"}>
           {selectedLabel}
         </span>
       </div>
@@ -73,8 +76,9 @@ export function TrainingSessionSizePicker({
         value={selectedIndex}
         onChange={(event) => onChange(steps[Number(event.target.value)])}
         aria-valuetext={selectedLabel}
-        className="mt-4 h-8 w-full cursor-pointer accent-indigo-500"
+        className={approved?s.range:"mt-4 h-8 w-full cursor-pointer accent-indigo-500"}
       />
+      {approved?<div className={s.ends}><span>{steps[0]}</span><span>{steps.at(-1)==="all-due-today"?allDueLabel:steps.at(-1)}</span></div>:<>
       <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
         {steps.map((step) => (
           <span key={step} className="w-7 text-center first:text-left last:w-auto last:text-right">
@@ -82,8 +86,9 @@ export function TrainingSessionSizePicker({
           </span>
         ))}
       </div>
+      </>}
       {value === "all-due-today" ? (
-        <p className="mt-1 text-xs leading-4 text-slate-500 dark:text-slate-400">
+        <p className={approved?s.help:"mt-1 text-xs leading-4 text-slate-500 dark:text-slate-400"}>
           {allDueHelp}
         </p>
       ) : null}

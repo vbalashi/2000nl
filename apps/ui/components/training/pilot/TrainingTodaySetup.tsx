@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ChevronDown, Plus } from "lucide-react";
 import { TrainingLexicalPreview } from "./TrainingLexicalPreview";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -22,6 +22,7 @@ import type { SavedTraining } from "@/lib/training/setups/model";
 import { getUiMessages } from "@/lib/uiMessages";
 import { SavedTrainingControls } from "@/components/practice/SavedTrainingControls";
 import {trainingPresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
+import {ApprovedTrainingBuilder} from "./ApprovedTrainingBuilder";
 import {AccountTrainingOverview, type OwnedTrainingOverviewSession} from "./AccountTrainingOverview";
 import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
 
@@ -492,13 +493,13 @@ export function TrainingTodaySetup({
   const [selectedIntent, setSelectedIntent] = useState<{id:string;userId:string|undefined;language:string;action:"edit"|"launch"}|null>(null);
   const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
 
+  const editorOwner=useRef(userId);
   useEffect(() => {
-    setEditingPresetId(null);
-    setSelectedIntent(null);
-    setTrainingName(null);
-    setPresetMessage("");
-    // A different signed-in account must not retain the previous account's editor.
-  }, [userId]);
+    if(editorOwner.current===userId)return;
+    editorOwner.current=userId;
+    setEditingPresetId(null);setSelectedIntent(null);setTrainingName(null);setPresetMessage("");setPendingLanguage(null);
+    setDraft({...initialDraft,sessionSize:initialDraft.sessionSize??DEFAULT_SESSION_SIZE});setScreen("today");
+  }, [userId, initialDraft]);
 
   useEffect(() => {
     if (pendingLanguage === trainingLanguageCode && !trainingLanguageLoading) {
@@ -598,7 +599,7 @@ export function TrainingTodaySetup({
   };
 
   const savePreset = async () => {
-    if (!canSaveAccount || !trainingLanguageCode || account.status !== "ready" || account.pending || !draftScenarioSupported || !draftMaterialAvailable || trainingLanguageLoading || pendingLanguage) return;
+    if (!canSaveAccount || !trainingLanguageCode || account.status !== "ready" || account.pending || !draftScenarioSupported || !draftMaterialAvailable || trainingLanguageLoading || pendingLanguage) return false;
     const sizeLabel = draft.sessionSize === "all-due-today"
       ? t.allDueToday
       : t.exercises(draft.sessionSize);
@@ -615,13 +616,14 @@ export function TrainingTodaySetup({
       draft,
     };
     const result = await account.save(preset, editingPresetId === null);
-    if (result === "unavailable") return;
+    if (result === "unavailable") return false;
     if (result === "saved") {
       setEditingPresetId(preset.id);
       setPresetMessage(accountCopy.saved);
     } else {
       setPresetMessage(result === "conflict" ? accountCopy.conflict : accountCopy.saveFailed);
     }
+    return result === "saved";
   };
 
   const accountAction = async (action: () => Promise<string>) => {
@@ -950,6 +952,27 @@ export function TrainingTodaySetup({
             : current.sessionSize,
       };
     });
+
+  if (trainingPresentationV1Enabled()) return <ApprovedTrainingBuilder
+    interfaceLanguage={interfaceLanguage} draft={draft} languageCode={trainingLanguageCode??"nl"} languageOptions={trainingLanguageOptions}
+    lists={lists} dictionaries={dictionaries} sources={sources} scenarios={scenarios}
+    languagePending={trainingLanguageLoading||Boolean(pendingLanguage)||startPending} dictionariesLoading={dictionariesLoading} translationLanguage={translationTargetLanguageCode}
+    name={trainingName??selectedList??""} onNameChange={setTrainingName} onLanguageChange={language=>{if(language!==trainingLanguageCode){setPendingLanguage(language);onTrainingLanguageChange?.(language);}}}
+    onDraftChange={setDraft} onSelectFamily={selectFamily} onToggleMode={toggleMode} onMixChange={changeMix} onBack={()=>setScreen("today")}
+    onSave={savePreset} onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft)} canSave={canSaveAccount}
+    saveDisabled={account.status!=="ready"||account.pending||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
+    startDisabled={startPending||scenarioLoading||startBlocked||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
+    saveLabel={editingPresetId?accountCopy.update:accountCopy.save} startLabel={startPending?t.starting:scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable?t.materialUnavailable:replacementWarning?t.startHere:t.start}
+    saveNotice={presetMessage} notice={<>
+      {presetMessage&&<p role="status">{presetMessage}</p>}
+      {replacementWarning&&<p role="status">{t.replacementWarning}</p>}
+      {sessionResumeStatus!=="ready"&&<p role={sessionResumeStatus==="error"?"alert":"status"}>{sessionResumeStatus==="pending"?t.resumePending:t.resumeError}{sessionResumeStatus==="error"&&<button onClick={onRetryResume}>{t.retryResume}</button>}</p>}
+      {cardPreparationStatus==="error"&&<p role="alert">{t.cardError}<button onClick={onRetryCard}>{t.retryCard}</button></p>}
+    </>}
+    accountControls={editingTraining&&<SavedTrainingControls name={editingTraining.name} language={interfaceLanguage}
+      main={account.snapshot.document.mainTrainingId===editingTraining.id} hasOthers={account.snapshot.document.trainings.length>1} pending={account.pending||account.status!=="ready"}
+      onMain={()=>accountAction(()=>account.makeMain(editingTraining.id))} onDelete={async()=>{const removed=await accountAction(()=>account.remove(editingTraining.id));if(removed){setEditingPresetId(null);setScreen("today");}return removed;}}/>}/>
+  ;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">

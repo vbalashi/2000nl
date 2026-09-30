@@ -2,7 +2,7 @@ import {expect,test} from 'vitest';
 import en from '@/locales/en.json';
 import nl from '@/locales/nl.json';
 import ru from '@/locales/ru.json';
-import {formatExerciseCount,formatMeaningAvailability,formatUiMessage} from '@/lib/uiMessages';
+import {formatExerciseCount,formatMeaningAvailability,formatUiMessage,formatUiCount,getUiMessages} from '@/lib/uiMessages';
 import {balances} from '@/app/dev/session-builder-prototype/model';
 
 function leaves(value:unknown,prefix=''):Record<string,string>{
@@ -44,3 +44,5 @@ test('meaning availability handles Russian plurals and localized large counts',(
  expect(formatMeaningAvailability('en',1000)).toBe('1,000 meanings available');
  expect(formatMeaningAvailability('nl',1000)).toBe('1.000 betekenissen beschikbaar');
 });
+
+ test('training ratios follow interface plural rules even for preserved saved ratios',()=>{expect(formatUiCount('en',1,getUiMessages('en').builder,'ratio')).toBe('1 new : 1 review');expect(formatUiCount('nl',2,getUiMessages('nl').builder,'ratio')).toBe('1 nieuw : 2 herhalingen');expect(formatUiCount('ru',1,getUiMessages('ru').builder,'ratio')).toBe('1 новая : 1 повторение');expect(formatUiCount('ru',5,getUiMessages('ru').builder,'ratio')).toBe('1 новая : 5 повторений');expect(formatUiCount('ru',21,getUiMessages('ru').builder,'ratio')).toBe('1 новая : 21 повторение');});

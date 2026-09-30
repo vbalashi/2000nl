@@ -1,5 +1,6 @@
 "use client";
 
+import {BuilderSection} from "@/components/practice/builder/BuilderSection";
 import React, { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ChartNoAxesColumn, ChevronDown, Library, LoaderCircle, Play, Settings, Sun, Moon, Monitor } from "lucide-react";
 import {textSizeStyles} from "@/lib/reading/textScale";
@@ -29,7 +30,8 @@ import {Action, Choice, DesignContext, Directions, InterfaceLanguageContext, Mod
 import {BuilderSnapshot, comparisonChannel, Variant} from "./variants";
 import {VariantSwitcher} from "./ComparisonLab";
 
-function Section({id, title, summary, open, onToggle, children}: {id: string; title: string; summary: React.ReactNode; open: boolean; onToggle: () => void; children: React.ReactNode}) {
+function Section({id, title, summary, open, onToggle, children,disclosure}: {disclosure:"frame"|"flat";id: string; title: string; summary: React.ReactNode; open: boolean; onToggle: () => void; children: React.ReactNode}) {
+  if(disclosure==="frame")return <BuilderSection id={id} title={title} summary={summary} open={open} onToggle={onToggle}>{children}</BuilderSection>;
   return <section className={s.section}>
     <button className={s.sectionHeading} onClick={onToggle} aria-expanded={open} aria-controls={`${id}-body`}>
       <span className={s.sectionTitle}>{title}</span><span className={s.summary} data-testid={`${id}-summary`}>{summary}</span>
@@ -161,20 +163,20 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
       {screen === "settings" ? null : screen === "builder" ? <>
         <div lang={interfaceLanguage} className={s.title}><button className={s.iconButton} aria-label={copy.back} onClick={() => setScreen("home")}><ArrowLeft size={20}/></button><h1>{editingTraining===null?copy.title:presets[editingTraining].name}</h1></div>
         <div lang={interfaceLanguage} className={s.panel}>
-          <Section id="language" title={copy.language} summary={learningLanguage} open={open.includes("language")} onToggle={()=>toggleSection("language")}>
+          <Section disclosure={disclosure} id="language" title={copy.language} summary={learningLanguage} open={open.includes("language")} onToggle={()=>toggleSection("language")}>
             <BuilderScopePicker page="language" draft={draft} interfaceLanguage={interfaceLanguage} onApply={patch=>{update(patch);setNounOpen(false);}}/>
           </Section>
-          <Section id="source" title={copy.source} summary={source.name} open={open.includes("source")} onToggle={()=>toggleSection("source")}>
+          <Section disclosure={disclosure} id="source" title={copy.source} summary={source.name} open={open.includes("source")} onToggle={()=>toggleSection("source")}>
             <BuilderScopePicker key={draft.language} page="source" draft={draft} interfaceLanguage={interfaceLanguage} onApply={update}/>
           </Section>
-          <Section id="exercises" title={copy.exercises} summary={summary} open={open.includes("exercises")} onToggle={() => toggleSection("exercises")}>
+          <Section disclosure={disclosure} id="exercises" title={copy.exercises} summary={summary} open={open.includes("exercises")} onToggle={() => toggleSection("exercises")}>
             <div className={s.field}><h2>{copy.exerciseType}</h2><div className={s.choices}>{(["Words","Idioms","Translation"] as const).map(t => <Choice key={t} active={draft.types.includes(t)} onClick={() => chooseExercise(t)}>{messages.trainingOverview.exerciseType[t]}</Choice>)}</div></div>
             {previewType === "Translation" ? <TranslationDirectionPreview from={translationLanguage} to={draft.language}/> : <div className={s.field}><h2>{copy.direction} <span className={s.muted}>{previewType === "Idioms" ? copy.idiomExample : copy.meaningExample}</span></h2>
               <Directions values={draft.directions} contentLanguage={draft.language==="Dutch"?"nl":"en"} pair={pair} onChange={directions=>update({directions})}/>
             </div>}
             <div className={s.field}><h2>{copy.answerMode}</h2><div className={s.choices}>{(["Reveal & self-rate","Type the answer"] as const).map(mode => <Choice key={mode} active={draft.mode === mode} onClick={() => update({mode})}>{copy.answerModes[mode]}</Choice>)}</div></div>
           </Section>
-          <Section id="filters" title={copy.filters} summary={<span className={s.inlineSummary}>{draft.parts.length ? draft.parts.map((p,i) => <React.Fragment key={p}>{i > 0 && <span className={s.separator}>·</span>}<span>{copy.parts[p]}{p === "Nouns" && draft.article && activeDot}</span></React.Fragment>) : copy.allParts}</span>} open={open.includes("filters")} onToggle={() => toggleSection("filters")}>
+          <Section disclosure={disclosure} id="filters" title={copy.filters} summary={<span className={s.inlineSummary}>{draft.parts.length ? draft.parts.map((p,i) => <React.Fragment key={p}>{i > 0 && <span className={s.separator}>·</span>}<span>{copy.parts[p]}{p === "Nouns" && draft.article && activeDot}</span></React.Fragment>) : copy.allParts}</span>} open={open.includes("filters")} onToggle={() => toggleSection("filters")}>
             <div className={s.field}><h2>{copy.partOfSpeech}</h2><div className={s.parts}>{parts.map(part => <div className={`${s.part} ${draft.parts.includes(part) ? s.selected : ""} ${part === "Nouns" && nounPresent ? s.activePart : ""}`} key={part}>
               <button aria-pressed={draft.parts.includes(part)} onClick={() => {
                 const removing = draft.parts.includes(part);
@@ -186,7 +188,7 @@ export function BuilderPrototype({variant="current",embedded=false,showSwitcher=
             </div>)}</div></div>
             <div className={`${s.nounReveal} ${nounOpen ? s.nounRevealOpen : ""}`} inert={!nounOpen} aria-hidden={!nounOpen}><div><div id="noun-panel" className={s.nounPanel}><h2>{copy.article}</h2><div className={s.choices}>{(["de","het"] as const).map(article => <Choice key={article} active={draft.article === article} onClick={() => update({article: draft.article ? null : article})}>{article}</Choice>)}</div></div></div></div>
           </Section>
-          <Section id="session" title={copy.session} summary={<span>{formatExerciseCount(interfaceLanguage,draft.size)} · {balanceLabel}</span>} open={open.includes("session")} onToggle={() => toggleSection("session")}>
+          <Section disclosure={disclosure} id="session" title={copy.session} summary={<span>{formatExerciseCount(interfaceLanguage,draft.size)} · {balanceLabel}</span>} open={open.includes("session")} onToggle={() => toggleSection("session")}>
             <div className={s.sessionFields}><label>{copy.sessionSize} <strong>{formatExerciseCount(interfaceLanguage,draft.size)}</strong><RangeControl label={copy.sessionSize} min={5} max={50} step={5} value={draft.size} onChange={size=>update({size})}/><span className={s.rangeEnds}><span>5</span><span>50</span></span></label>
             <label>{copy.balanceLabel} <strong>{balanceLabel}</strong><RangeControl label={copy.balanceLabel} min={0} max={balances.length-1} value={draft.balance} onChange={balance=>update({balance})}/><span className={s.rangeEnds}><span>{copy.review}</span><span>{copy.new}</span></span></label></div>
           </Section>
