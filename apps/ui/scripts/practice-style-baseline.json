@@ -30,7 +30,7 @@
  "components/training/pilot/TrainingSessionSizePicker.tsx": 8,
  "components/training/pilot/TrainingTodaySetup.tsx": 175,
  "components/training/useTrainingTurnController.ts": 1,
- "components/training/v2/TrainingCardTemplates.tsx": 119,
+ "components/training/v2/TrainingCardTemplates.tsx": 118,
  "components/training/v2/TrainingKnownUndoNotice.tsx": 2,
  "components/training/v2/TrainingSenseCardStage.tsx": 20,
  "components/training/v2/TrainingSenseCardV2Session.tsx": 49,

@@ -9,7 +9,9 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
-import { senseCardQuietActionClassName } from "../SenseCardChrome";
+import { senseCardQuietAction } from "../SenseCardChrome";
+import approvedCard from "../approvedTrainingCard.module.css";
+import { RatingControls, type Rating } from "@/components/practice/RatingControls";
 import {
   TrainingCardAnswerHeader as EntityHeader,
   TrainingCardAnswerBody as AnswerBody,
@@ -19,9 +21,8 @@ import {
   TrainingCardFaceControls,
   TrainingCardReviewButton,
   TrainingCardIconButton as IconButton,
-  trainingCardStageClassName,
+  trainingStageClassName,
   trainingReviewGridClassName,
-  approvedTrainingReviewGridClassName,
 } from "./TrainingCardTemplates";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import type { TrainingSenseCardModel } from "./trainingSenseCardModel";
@@ -194,7 +195,7 @@ export function TrainingSenseCardStage({
       data-testid="training-sense-card-stage"
       data-side={answerVisible ? "answer" : "face"}
       data-visual-spec={approvedPresentation ? "training-approved-v1" : "training-v1.0"}
-      className={trainingCardStageClassName}
+      className={trainingStageClassName()}
     >
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
@@ -291,7 +292,7 @@ export function TrainingSenseCardStage({
           answerVisible
             ? model.reviewCapabilities.length
               ? approvedPresentation
-                ? "h-[94px] min-h-[94px] sm:h-[78px] sm:min-h-[78px]"
+                ? "min-h-[78px]"
                 : "h-[120px] min-h-[120px] sm:h-[76px] sm:min-h-[76px]"
               : "h-[76px] min-h-[76px]"
             : reportAction || exclusionAction || model.markKnownCapability
@@ -445,6 +446,13 @@ function FaceDock({
   );
 }
 
+const reviewRating: Record<TrainingSenseCardModel["reviewCapabilities"][number]["reviewResult"], Rating> = {
+  fail: "Again",
+  hard: "Hard",
+  success: "Good",
+  easy: "Easy",
+};
+
 function AnswerDock({
   model,
   mode,
@@ -477,6 +485,16 @@ function AnswerDock({
       : model.reviewCapabilities;
 
   if (model.isKnown && model.undoKnownCapability) {
+    if (approvedPresentation) return (
+      <div className={approvedCard.known}>
+        <span className="inline-flex items-center gap-2">
+          <Check aria-hidden="true" className="h-4 w-4" /> {t("senseCard.known.marked")}
+        </span>
+        <button ref={primaryActionRef} type="button" disabled={busy} onClick={() => onAction(model.undoKnownCapability!)}>
+          {t(model.undoKnownCapability.messageKey)}
+        </button>
+      </div>
+    );
     return (
       <div className="flex min-h-12 flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-400/60 bg-emerald-50 px-4 py-2 text-sm dark:bg-[#18352b]">
         <span className="inline-flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-200">
@@ -496,21 +514,44 @@ function AnswerDock({
     );
   }
 
+  const reviewLabel = (capability: (typeof reviewCapabilities)[number]) =>
+    mode === "listen-recognize"
+      ? t(capability.reviewResult === "fail" ? "senseCard.listening.fail" : "senseCard.listening.success")
+      : t(capability.messageKey);
+
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className={approvedPresentation ? approvedCard.dock : "flex h-full flex-col gap-2"}>
       {model.learnCapability ? (
         <button
           ref={primaryActionRef}
           type="button"
           disabled={busy}
           onClick={() => onAction(model.learnCapability!)}
-          className="mx-auto block h-11 shrink-0 w-[94%] rounded-xl border border-indigo-400/60 bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-[#292650] dark:text-indigo-100 dark:hover:bg-[#332f60]"
+          className={approvedPresentation ? approvedCard.primary : "mx-auto block h-11 shrink-0 w-[94%] rounded-xl border border-indigo-400/60 bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-[#292650] dark:text-indigo-100 dark:hover:bg-[#332f60]"}
         >
           {t(model.learnCapability.messageKey)}
         </button>
       ) : null}
 
-      {reviewCapabilities.length ? (
+      {reviewCapabilities.length && approvedPresentation ? (
+        <div data-testid="training-review-grid" className="shrink-0">
+          <RatingControls
+            language={interfaceLanguage}
+            height="adaptive"
+            disabled={busy}
+            label={t("senseCard.sections.reviewPrompt")}
+            firstRef={primaryActionRef}
+            options={reviewCapabilities.map((capability) => ({
+              rating: reviewRating[capability.reviewResult],
+              label: reviewLabel(capability),
+            }))}
+            onRate={(rating) => {
+              const capability = reviewCapabilities.find((candidate) => reviewRating[candidate.reviewResult] === rating);
+              if (capability) onAction(capability);
+            }}
+          />
+        </div>
+      ) : reviewCapabilities.length ? (
         <div
           role="group"
           aria-label={t("senseCard.sections.reviewPrompt")}
@@ -518,25 +559,16 @@ function AnswerDock({
         >
           <div
             data-testid="training-review-grid"
-            className={approvedPresentation ? approvedTrainingReviewGridClassName : trainingReviewGridClassName}
+            className={trainingReviewGridClassName}
           >
             {reviewCapabilities.map((capability, index) => (
               <TrainingCardReviewButton
                 key={capability.reviewResult}
                 result={capability.reviewResult}
-                approvedPresentation={approvedPresentation}
                 buttonRef={index === 0 ? primaryActionRef : undefined}
                 busy={busy}
                 onClick={() => onAction(capability)}
-                label={
-                  mode === "listen-recognize"
-                    ? t(
-                        capability.reviewResult === "fail"
-                          ? "senseCard.listening.fail"
-                          : "senseCard.listening.success",
-                      )
-                    : t(capability.messageKey)
-                }
+                label={reviewLabel(capability)}
               />
             ))}
           </div>
@@ -575,7 +607,7 @@ function MarkKnownAction({
       type="button"
       disabled={busy}
       onClick={() => onAction(capability)}
-      className={senseCardQuietActionClassName}
+      className={senseCardQuietAction()}
     >
       <Check aria-hidden="true" className="h-4 w-4" /> {label}
     </button>

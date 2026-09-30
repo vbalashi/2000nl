@@ -73,11 +73,18 @@
   color: var(--session-ink, #334155);
 }
 .sessionApproved .name {
-  font-size: 0.875rem;
-  font-weight: 650;
+  font-size: var(--practice-text-body-lg);
+  font-weight: 550;
+  color: var(--practice-text);
 }
 .sessionApproved .position {
-  font-size: 0.8125rem;
+  font-size: var(--practice-text-body);
+  font-weight: 550;
+}
+@media (max-width: 700px) {
+  .sessionApproved .name {
+    font-size: var(--practice-text-body);
+  }
 }
 .sessionApproved .progress {
   height: 3px;

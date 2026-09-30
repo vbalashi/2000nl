@@ -38,7 +38,7 @@ function TrainingSenseCardStage(
 }
 
 describe("TrainingSenseCardStage", () => {
-  test("uses compact two-row mobile ratings and full-height wide ratings in the approved presentation", () => {
+  test("approved presentation rates through the shared controls and dispatches the owning capability", () => {
     vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
     try {
       const model = buildTrainingSenseCardModel({
@@ -46,15 +46,20 @@ describe("TrainingSenseCardStage", () => {
         entry: singleSenseEntry,
         interfaceLanguage: "en",
       });
+      const onAction = vi.fn();
       render(<TrainingSenseCardStage model={model} mode="word-to-definition"
-        interfaceLanguage="en" onAction={vi.fn()} />);
+        interfaceLanguage="en" onAction={onAction} />);
       fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
       expect(screen.getByTestId("training-sense-card-stage"))
         .toHaveAttribute("data-visual-spec", "training-approved-v1");
-      expect(screen.getByTestId("training-review-grid"))
-        .toHaveClass("h-[62px]", "sm:h-[46px]");
-      expect(screen.getByRole("button", { name: "Again" }))
-        .toHaveClass("h-[28px]", "sm:h-[46px]", "before:left-0");
+      const grid = screen.getByTestId("training-review-grid");
+      const buttons = Array.from(grid.querySelectorAll("button[data-rating]"));
+      expect(buttons.map((button) => button.getAttribute("data-rating"))).toEqual(["Again", "Hard", "Good", "Easy"]);
+      expect(buttons.every((button) => !button.className.includes("slate"))).toBe(true);
+      fireEvent.click(screen.getByRole("button", { name: "Hard" }));
+      expect(onAction).toHaveBeenLastCalledWith(expect.objectContaining({ reviewResult: "hard" }));
+      fireEvent.click(screen.getByRole("button", { name: "Again" }));
+      expect(onAction).toHaveBeenLastCalledWith(expect.objectContaining({ reviewResult: "fail" }));
     } finally {
       vi.unstubAllEnvs();
     }

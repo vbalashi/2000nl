@@ -14,7 +14,7 @@ import {
   TrainingCardAnswerBody,
   TrainingCardFaceControls,
   TrainingCardReviewButton,
-  trainingCardStageClassName,
+  trainingStageClassName,
   trainingReviewGridClassName,
 } from "./TrainingCardTemplates";
 
@@ -131,7 +131,7 @@ export function TrainingExerciseCard({
       aria-label={t("senseCard.training.cardChanged")}
       data-testid="training-exercise-card"
       data-side={revealed ? "answer" : "face"}
-      className={trainingCardStageClassName}
+      className={trainingStageClassName()}
     >
       {notice}
       <TrainingCardShell answerVisible={revealed}>

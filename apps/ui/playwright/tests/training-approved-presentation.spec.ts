@@ -35,7 +35,14 @@ for (const width of [402, 1024]) {
     expect(gridBox && stageBox && buttonBox).toBeTruthy();
     expect(buttonBox!.y + buttonBox!.height).toBeLessThanOrEqual(768);
     expect(stageBox!.y + stageBox!.height).toBeLessThanOrEqual(768);
-    expect(Math.round(gridBox!.height)).toBe(width < 640 ? 62 : 46);
+    // Columns follow the measured label widths, not a viewport breakpoint; hit areas stay >=44px.
+    expect(buttonBox!.height).toBeGreaterThanOrEqual(44);
+    const columns = await reviewGrid.locator("[data-columns]").getAttribute("data-columns");
+    expect(["2", "4"]).toContain(columns);
+    const ratingRows = new Set(await reviewGrid.locator("button[data-rating]").evaluateAll(
+      (buttons) => buttons.map((button) => Math.round(button.getBoundingClientRect().top)),
+    ));
+    expect(ratingRows.size).toBe(columns === "4" ? 1 : 2);
     await page.screenshot({ path: testInfo.outputPath(`approved-session-${width}.png`) });
     await page.close();
   });

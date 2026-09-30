@@ -6,6 +6,15 @@ afterEach(() => {
   cleanup();
 });
 
+// jsdom lacks ResizeObserver; shared practice controls measure with it.
+if (typeof globalThis.ResizeObserver === "undefined") {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+}
+
 const createMemoryStorage = (): Storage => {
   const items = new Map<string, string>();
 

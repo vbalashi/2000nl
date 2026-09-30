@@ -2,7 +2,7 @@
 import React from "react";
 import { EyeOff } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { senseCardQuietActionClassName } from "../SenseCardChrome";
+import { senseCardQuietAction } from "../SenseCardChrome";
 export const trainingExclusionCopy = {
   en: {
     label: "Exclude",
@@ -42,7 +42,7 @@ export function TrainingExcludeAction({
   return (
     <button
       type="button"
-      className={`${senseCardQuietActionClassName} min-w-0`}
+      className={`${senseCardQuietAction()} min-w-0`}
       disabled={disabled}
       onClick={onClick}
       title={t.help}
