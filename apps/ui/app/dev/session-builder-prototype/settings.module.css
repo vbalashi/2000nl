@@ -43,3 +43,18 @@
 .textSizes button:last-child{border-right:0}
 .textSizes button[aria-pressed=true]{background:var(--practice-selected);color:var(--practice-selected-text);font-weight:600}
 .textSizes button:focus-visible{outline-offset:-3px}
+
+/* Long localized names must fit without reducing the chosen text size. */
+.languageList li{gap:12px}
+.languageList li>span{min-width:0;overflow-wrap:anywhere}
+.languageList small,.languageActions{flex-shrink:0}
+.themes{grid-template-columns:repeat(auto-fit,minmax(min(100%,120px),1fr))}
+.theme{min-width:0}
+.theme strong{overflow-wrap:anywhere}
+.row>div:first-child{min-width:0}
+.row>div:last-child{max-width:100%}
+.options{max-width:100%}
+.options button{min-width:0;min-height:28px;height:auto;overflow-wrap:anywhere}
+.languageList li{flex-wrap:wrap}
+.languageList li>span{flex:1 0 auto;max-width:100%}
+.languageActions{margin-left:auto}

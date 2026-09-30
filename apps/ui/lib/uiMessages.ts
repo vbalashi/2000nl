@@ -48,3 +48,17 @@ export function formatMeaningAvailability(language: OnboardingLanguage, count: n
   const template = category === "one" ? copy.meaningOne : category === "few" ? copy.meaningFew : category === "many" ? copy.meaningMany : copy.meaningOther;
   return formatUiMessage(template, { count: new Intl.NumberFormat(language).format(count) });
 }
+
+/** Count nouns use the interface locale, independently of dictionary content. */
+export function formatUiCount<Prefix extends string>(
+  language: OnboardingLanguage,
+  count: number,
+  messages: Record<`${Prefix}${"One" | "Few" | "Many" | "Other"}`, string>,
+  prefix: Prefix,
+): string {
+  const category = new Intl.PluralRules(language).select(count);
+  const suffix = category === "one" ? "One" : category === "few" ? "Few" : category === "many" ? "Many" : "Other";
+  const template = messages[`${prefix}${suffix}`];
+  if (typeof template !== "string") throw new Error(`Missing count message: ${prefix}${suffix}`);
+  return formatUiMessage(template, { count: new Intl.NumberFormat(language).format(count) });
+}
