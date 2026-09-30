@@ -107,3 +107,14 @@ test("operation errors and unavailable server clients remain explicit", async ()
   );
   expect((await POST(request(base))).status).toBe(503);
 });
+
+test("filters canonicalize before lookup; invalid filters stop before the service role",async()=>{
+ await POST(request({...base,filters:{parts:["verb","noun","noun"],article:"de"}}));
+ expect(operation.mock.calls[0][2]).toEqual({dictionaryIds:null,filters:{parts:["noun","verb"],article:"de"}});
+ service.mockClear(); operation.mockClear();
+ for(const filters of [null,[],{parts:["unknown"]},{article:"de"},{parts:Array(11).fill("noun")},{extra:true}]){
+  const response=await POST(request({...base,filters}));expect(response.status).toBe(400);
+  expect(await response.json()).toEqual({error:"invalid_library_filters"});
+ }
+ expect(service).not.toHaveBeenCalled();expect(operation).not.toHaveBeenCalled();
+});

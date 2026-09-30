@@ -1,3 +1,4 @@
+import type { LibrarySearchScope, LibrarySearchSummary } from "./librarySearchScope";
 import { requestPlatformV2Lookup } from "./platformV2LookupTransport";
 import { fetchDictionaryMeaningTranslation } from "@/lib/translation/translationApiClient";
 import type { CardTypeId } from "../../../../packages/shared/types/platform";
@@ -8,6 +9,7 @@ import type {
 
 export type PlatformV2LibraryGroupPage = {
   groups: PlatformHeadwordGroupV2[];
+  librarySearch?: LibrarySearchSummary;
   selectedTierComplete: boolean;
   nextGroupCursor: string | null;
 };
@@ -17,7 +19,7 @@ type PlatformV2LibraryLookupInput = {
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   signal?: AbortSignal;
-  libraryScope?: { dictionaryIds: string[] | null };
+  libraryScope?: LibrarySearchScope;
 } & (
   | { query: string; entryId?: never; cursor?: string | null }
   | { entryId: string; query?: never; cursor?: never }
@@ -25,7 +27,7 @@ type PlatformV2LibraryLookupInput = {
 
 async function fetchPlatformV2LibraryLookup(
   input: PlatformV2LibraryLookupInput,
-): Promise<PlatformLookupV2Response> {
+): Promise<PlatformLookupV2Response & { librarySearch?: LibrarySearchSummary }> {
   const result = await requestPlatformV2Lookup({
     signal: input.signal,
     libraryScope: input.libraryScope,
@@ -72,7 +74,7 @@ export async function fetchPlatformV2LibraryGroupPage(input: {
   translationTargetLanguageCode: string | null;
   cursor?: string | null;
   signal?: AbortSignal;
-  libraryScope?: { dictionaryIds: string[] | null };
+  libraryScope?: LibrarySearchScope;
 }): Promise<PlatformV2LibraryGroupPage> {
   const payload = await fetchPlatformV2LibraryLookup({
     ...input,
@@ -80,6 +82,7 @@ export async function fetchPlatformV2LibraryGroupPage(input: {
   });
   return {
     groups: payload.groups,
+    ...(input.libraryScope?.filters && payload.librarySearch ? {librarySearch:payload.librarySearch} : {}),
     selectedTierComplete: payload.page.selectedTierComplete,
     nextGroupCursor: payload.page.nextGroupCursor,
   };

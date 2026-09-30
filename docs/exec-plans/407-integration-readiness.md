@@ -464,3 +464,35 @@ first-party API/client to these validated filters and extract the approved chips
 panel with real language/source options, draft/cancel/apply behavior and matching
 sense selection. Remaining collection/editor, Statistics/history/mobile navigation
 and active-session acceptance gates remain open. Production is not deployed.
+
+## Library filter API/client checkpoint — 2026-09-30
+
+The first-party search route accepts a closed canonical `filters` object with ten
+POS choices and optional noun article. Invalid shapes stop before service-role
+lookup. Filtered requests opt into migration 186; missing filters retain the
+existing migration-185 boundary. Ordinary external and exact-group reads remain
+unchanged. The response adds first-party-only `librarySearch` metadata: exact
+matching-article count and matching entry identities derived from the same raw
+POS/article evidence. The main V2 projection and full article are reused without
+removing senses or cross-references.
+
+Transport validates count/match metadata against the returned group identities
+and rejects missing/malformed filtered contracts. Search state can carry filters;
+they bind its query/cursor scope. Filter changes start from the first page; late
+responses cannot replace the current search. Results choose a matching sense for
+opening and keep the complete article. Total groups are independent of page size.
+
+Validation: 73 targeted route, service-boundary, client/transport, filter-predicate,
+group-search and Library grouping characterizations pass. A real authenticated
+HTTP smoke uses the local dev-only QA session helper with no persisted token and
+no learning action. `goed` returns three articles/twelve entries with no POS
+restriction, one noun article/four entries, one adjective article/six entries and
+zero noun/de articles. Typecheck, targeted lint and shared style guard pass.
+
+The UI panel remains pending: replace inline Language/Source controls with the
+shared approved chips dialog, real catalogue options and draft/cancel/apply/count
+preview. The existing grouped-result adapter ignores cross-reference-only groups;
+its row/opening presentation must also be reconciled so the exact article count
+and visible articles agree. This is not a completed Library acceptance gate.
+Collection/editor, Statistics/history/mobile navigation and active-session work
+remain open. Production is not deployed.

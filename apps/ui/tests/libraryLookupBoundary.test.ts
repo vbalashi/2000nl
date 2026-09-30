@@ -80,3 +80,20 @@ test("connected client and exact-entry calls cannot enter the scoped Library bou
   ).toBe(403);
   expect(exact.service.supabase.rpc).not.toHaveBeenCalled();
 });
+
+test("filtered queries use the new RPC and carry empty-result first-party counts",async()=>{
+ const c=context();vi.mocked(c.service.supabase.rpc).mockResolvedValue({data:{items:[],page:{selectedTierComplete:true,nextGroupCursor:null,totalGroups:0}},error:null} as never);
+ const filters={parts:["noun" as const],article:"het" as const};
+ const result=await performPlatformV2Lookup(c,request,{dictionaryIds:null,filters});
+ expect(result.status).toBe(200);expect(result.payload).toMatchObject({librarySearch:{totalGroups:0,matchingEntryIds:[]}});
+ expect(c.service.supabase.rpc).toHaveBeenCalledWith("lookup_platform_v2_library_filtered_entries",expect.objectContaining({p_user_id:"actual-owner",p_dictionary_ids:null,p_filters:filters}));
+});
+test("invalid filtered counts fail closed; DB filter errors remain 400",async()=>{
+ const c=context();
+ for(const totalGroups of [undefined,-1,1.5,"3"]){
+  vi.mocked(c.service.supabase.rpc).mockResolvedValue({data:{items:[],page:{totalGroups}},error:null} as never);
+  expect((await performPlatformV2Lookup(c,request,{dictionaryIds:null,filters:{parts:[],article:null}})).status).toBe(409);
+ }
+ vi.mocked(c.service.supabase.rpc).mockResolvedValue({data:{error:"invalid_library_filters"},error:null} as never);
+ expect(await performPlatformV2Lookup(c,request,{dictionaryIds:null,filters:{parts:[],article:null}})).toMatchObject({status:400,payload:{error:"invalid_library_filters"}});
+});

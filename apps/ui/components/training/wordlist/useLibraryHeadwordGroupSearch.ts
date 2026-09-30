@@ -27,12 +27,17 @@ export function useLibraryHeadwordGroupSearch({
 }: Input) {
   const material = useAccountMaterial();
   const scoped = Boolean(material);
+  const filterKey = state.entryFilters ? JSON.stringify({
+    parts: [...new Set(state.entryFilters.parts)].sort(), article: state.entryFilters.article,
+  }) : null;
+  const filters = useMemo(() => filterKey ? JSON.parse(filterKey) as NonNullable<DictionarySearchTabState["entryFilters"]> : undefined, [filterKey]);
   const scopeKey = JSON.stringify([
     material?.userId,
     material?.snapshot?.revision,
     contentLanguageCode,
     dictionaryId,
     state.query,
+    ...(filters ? [filters] : []),
   ]);
   const sameScope = !material || state.groupScopeKey === scopeKey;
   const requestSequenceRef = useRef(0);
@@ -63,6 +68,7 @@ export function useLibraryHeadwordGroupSearch({
       groupResults: [],
       groupPageCursors: [null],
       groupHasMore: false,
+      groupTotal: null,
       selectedHeadwordGroupId: null,
     }));
   }, [setState]);
@@ -77,6 +83,7 @@ export function useLibraryHeadwordGroupSearch({
             ? {
                 libraryScope: {
                   dictionaryIds: dictionaryId ? [dictionaryId] : null,
+                  ...(filters ? { filters } : {}),
                 },
               }
             : {}),
@@ -109,7 +116,7 @@ export function useLibraryHeadwordGroupSearch({
       }
       if (!isCurrentSearch(requestId)) return false;
 
-      const nextGroups = buildLibraryHeadwordGroupResults(result.groups).filter(
+      const nextGroups = buildLibraryHeadwordGroupResults(result.groups, result.librarySearch?.matchingEntryIds).filter(
         (group) =>
           scoped ||
           !dictionaryId ||
@@ -138,7 +145,8 @@ export function useLibraryHeadwordGroupSearch({
               ? current.selectedHeadwordGroupId
               : (selected?.headwordGroupId ?? null),
           wordResults: [],
-          wordTotal: nextGroups.length,
+          wordTotal: result.librarySearch?.totalGroups ?? nextGroups.length,
+          groupTotal: result.librarySearch?.totalGroups ?? null,
           detailSelection:
             current.detailSelection ??
             (selected
@@ -156,6 +164,7 @@ export function useLibraryHeadwordGroupSearch({
     [
       contentLanguageCode,
       scoped,
+      filters,
       scopeKey,
       dictionaryId,
       groupCursor,

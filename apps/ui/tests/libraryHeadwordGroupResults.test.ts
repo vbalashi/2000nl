@@ -104,3 +104,10 @@ describe("Library Headword Group results", () => {
     });
   });
 });
+
+test("filtered result chooses the matching sense and preserves the complete article",()=>{
+ const article=group("mixed","dictionary","Dictionary",undefined,[sense("adjective","bn"),sense("noun","zn")]);
+ const results=buildLibraryHeadwordGroupResults([article],["noun"]);
+ expect(results[0]).toMatchObject({selectedEntryId:"noun",partOfSpeechLabels:["bn","zn"],meaningCount:2});
+ expect(results[0].group).toBe(article);expect(buildLibraryHeadwordGroupResults([article],[])).toEqual([]);
+});

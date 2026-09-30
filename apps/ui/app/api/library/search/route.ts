@@ -8,7 +8,7 @@ import {
 import { readBoundedJson } from "@/lib/http/readBoundedJson";
 import { parsePlatformV2LookupRequest } from "@/lib/platform/platformV2LookupRequest";
 import { performPlatformV2Lookup } from "@/lib/platform/platformV2LookupService";
-import { parseLibrarySearchScope } from "@/lib/platform/librarySearchScope";
+import { parseLibraryEntryFilters, parseLibrarySearchScope } from "@/lib/platform/librarySearchScope";
 import { platformV2LookupEnabled } from "@/lib/platform/platformV2Rollout";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,6 +41,12 @@ export async function POST(request: NextRequest) {
       : undefined;
   const scope = parseLibrarySearchScope(dictionaryIds);
   if (!scope) return jsonNoStore({ error: "invalid_dictionary_scope" }, 400);
+  const filters = parseLibraryEntryFilters(
+    body.body && typeof body.body === "object"
+      ? (body.body as Record<string, unknown>).filters : undefined,
+  );
+  if (filters === null) return jsonNoStore({ error: "invalid_library_filters" }, 400);
+  if (filters !== undefined) scope.filters = filters;
   const service = getPlatformServiceSupabase();
   if (service instanceof Response) return service;
   const result = await performPlatformV2Lookup(

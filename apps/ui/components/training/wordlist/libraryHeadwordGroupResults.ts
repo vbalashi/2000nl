@@ -13,6 +13,7 @@ export type LibraryHeadwordGroupResult = {
 
 export function buildLibraryHeadwordGroupResults(
   groups: PlatformHeadwordGroupV2[],
+  matchingEntryIds?: readonly string[],
 ): LibraryHeadwordGroupResult[] {
   const results = new Map<string, LibraryHeadwordGroupResult>();
 
@@ -31,7 +32,9 @@ export function buildLibraryHeadwordGroupResults(
     const senseEntries = group.entries.filter(
       (entry) => entry.kind === "sense-card",
     );
-    const representative = senseEntries[0];
+    const representative = matchingEntryIds
+      ? senseEntries.find(entry => matchingEntryIds.includes(entry.entryId))
+      : senseEntries[0];
     if (!representative) continue;
 
     results.set(group.headwordGroupId, {

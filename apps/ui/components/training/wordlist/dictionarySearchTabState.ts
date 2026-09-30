@@ -1,3 +1,4 @@
+import type { LibraryEntryFilters } from "@/lib/platform/librarySearchScope";
 import type { DictionaryEntry } from "@/lib/types";
 import type { LibraryHeadwordGroupResult } from "./libraryHeadwordGroupResults";
 
@@ -9,6 +10,8 @@ export type DictionarySearchTabState = {
   groupPageCursors: Array<string | null>;
   groupHasMore: boolean;
   groupScopeKey?: string | null;
+  entryFilters?: LibraryEntryFilters;
+  groupTotal?: number | null;
   selectedHeadwordGroupId: string | null;
   wordTotal: number;
   page: number;

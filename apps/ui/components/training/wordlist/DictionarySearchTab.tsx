@@ -143,6 +143,7 @@ export function DictionarySearchTab({
     groupResults,
     groupPageCursors,
     groupHasMore,
+    groupTotal,
     selectedHeadwordGroupId,
     wordTotal,
     page,
@@ -585,7 +586,7 @@ export function DictionarySearchTab({
       ? formatUiMessage(copy.pageScope, {
           count: formatUiCount(
             interfaceLanguage,
-            useViewedListFilter ? wordTotal : groupResults.length,
+            useViewedListFilter ? wordTotal : (groupTotal ?? groupResults.length),
             copy,
             useViewedListFilter ? "entry" : "group",
           ),

@@ -1,4 +1,4 @@
-import type { LibrarySearchScope } from "./librarySearchScope";
+import { libraryEntryMatchesFilters, type LibrarySearchScope } from "./librarySearchScope";
 import type {
   CardTypeId,
   DictionaryLookupResult,
@@ -96,16 +96,20 @@ export async function performPlatformV2Lookup(
   if (!request.cardTypeId.trim()) {
     return { payload: { error: "missing_card_type_id" }, status: 400 };
   }
+  const queryRpc = libraryScope?.filters
+    ? "lookup_platform_v2_library_filtered_entries"
+    : libraryScope ? "lookup_platform_v2_library_entries" : "lookup_platform_v2_entries";
   const lookupResolution = request.entryId
     ? await resolveExactReadableGroup(context, request, timings)
       : {
         ok: true as const,
         query,
         result: await measure<RpcResult>(timings, "lookup.db", async () =>
-          await context.service.supabase.rpc(libraryScope ? "lookup_platform_v2_library_entries" : "lookup_platform_v2_entries", {
+          await context.service.supabase.rpc(queryRpc, {
             p_user_id:
               context.kind === "authenticated" ? context.auth.user.id : null,
             ...(libraryScope ? {p_dictionary_ids:libraryScope.dictionaryIds} : {p_catalog:context.kind === "catalog"}),
+            ...(libraryScope?.filters ? { p_filters: libraryScope.filters } : {}),
             p_query: query,
             p_language_code: request.contentLanguageCode ?? null,
             p_cursor: request.cursor ?? null,
@@ -139,9 +143,9 @@ export async function performPlatformV2Lookup(
       serverTiming: serverTiming(),
     };
   }
-  if (lookupPayload.error === "invalid_cursor") {
+  if (["invalid_cursor", "invalid_library_filters", "invalid_dictionary_scope"].includes(String(lookupPayload.error))) {
     return {
-      payload: { error: "invalid_cursor" },
+      payload: { error: lookupPayload.error },
       status: 400,
       serverTiming: serverTiming(),
     };
@@ -169,6 +173,15 @@ export async function performPlatformV2Lookup(
   }
   const entries = lookupEntries(lookupResult.data);
   const page = lookupPage(lookupPayload);
+  const rawPage = asRecord(lookupPayload.page);
+  if (libraryScope?.filters && (!Number.isSafeInteger(rawPage.totalGroups) || Number(rawPage.totalGroups) < 0))
+    return { payload: { error: "library_search_contract_invalid" }, status: 409 };
+  const librarySearch = libraryScope?.filters ? {
+    totalGroups: Number(rawPage.totalGroups),
+    matchingEntryIds: entries.filter(entry => libraryEntryMatchesFilters(
+      entry.part_of_speech, entry.gender, libraryScope.filters!,
+    )).map(entry => entry.id),
+  } : undefined;
 
   const responseRequest: PlatformLookupV2Response["request"] = {
     contentLanguageCode: request.contentLanguageCode ?? null,
@@ -179,12 +192,10 @@ export async function performPlatformV2Lookup(
   };
   if (entries.length === 0) {
     return {
-      payload: projectPlatformLookupV2({
-        query: responseQuery,
-        request: responseRequest,
-        entries: [],
-        page,
-      }),
+      payload: {
+        ...projectPlatformLookupV2({ query: responseQuery, request: responseRequest, entries: [], page }),
+        ...(librarySearch ? { librarySearch } : {}),
+      },
       status: 200,
       serverTiming: serverTiming(),
     };
@@ -464,12 +475,10 @@ export async function performPlatformV2Lookup(
     );
 
     return {
-      payload: projectPlatformLookupV2({
-        query: responseQuery,
-        request: responseRequest,
-        entries: projectionEntries,
-        page,
-      }),
+      payload: {
+        ...projectPlatformLookupV2({ query: responseQuery, request: responseRequest, entries: projectionEntries, page }),
+        ...(librarySearch ? { librarySearch } : {}),
+      },
       status: 200,
       serverTiming: serverTiming(),
     };
