@@ -569,3 +569,8 @@ is unchanged. It preserves RPC bodies, permissions, cursor hashing and learning
 behavior. Postflight hashes a known value; retaining readiness uses a separate
 read-only chain. Contract 179 is appended with its exact checksum. This local
 preparation does not authorize production deployment.
+
+
+## Shared text preferences (migration 181)
+
+Migration 181 adds the fourth `extra` value to the existing phone and desktop reading-profile constraints without rewriting saved values or other account settings. Approved frontend presentation adapts the legacy IDs explicitly into the shared proportional card/interface scale. Forward and read-only postflight chains verify both bounded columns/constraints. This is not a scheduling or learning-state migration. The application contract remains opt-in for the approved presentation; migration compatibility alone does not imply full-screen rollout acceptance.

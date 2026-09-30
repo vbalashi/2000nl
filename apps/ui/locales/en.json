@@ -190,6 +190,13 @@
     "zn": "noun"
   },
   "ui": {
+    "textPreferences": {
+      "description": "Cards and interface scale together. Reading text grows more than headings.",
+      "profile": "Device profile",
+      "phone": "Phone",
+      "desktop": "Computer / tablet",
+      "profileHint": "This browser selects a profile; both sizes are saved to your account. Resizing the window does not switch profiles."
+    },
     "trainingBuilder": {
       "wordInContext": "Word in context",
       "reviewsOnly": "Reviews only",

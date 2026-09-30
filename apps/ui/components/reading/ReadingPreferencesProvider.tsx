@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import {accountTextSize,accountTextSizeStyles} from "@/lib/reading/textScale";
 import { defaultReadingPreferences, detectReadingDevice, readingSizeStyles, type ReadingDevice, type ReadingPreferences, type ReadingSize } from "@/lib/reading/readingSize";
 import { readingPreferencesRepository, type ReadingPreferencesRepository } from "@/lib/reading/readingPreferencesRepository";
 
@@ -86,7 +87,7 @@ function ReadingSession({ userId, repository = readingPreferencesRepository, chi
   };
 
   return <Context.Provider value={{ preferences, device, deviceStored, loadStatus, saveStatus, setDevice, save, reload: () => setLoadAttempt((n) => n + 1) }}>
-    <div className="contents" data-reading-device={device} data-reading-size={preferences[device]} style={readingSizeStyles[preferences[device]]}>
+    <div className="contents" data-reading-device={device} data-reading-size={preferences[device]} data-text-size={process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 === "true" ? accountTextSize[preferences[device]] : undefined} style={{...readingSizeStyles[preferences[device]], ...(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 === "true" ? accountTextSizeStyles(preferences[device]) : {})}}>
       {children}
     </div>
   </Context.Provider>;

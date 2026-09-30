@@ -18,3 +18,11 @@ test('legacy and invalid values have explicit migration behavior',()=>{
  expect(normalizeTextSize('extra')).toBe('extra');
  expect(normalizeTextSize(null)).toBe('standard');
 });
+
+test('stored size IDs adapt explicitly and propagate through nested theme aliases', async()=>{
+ const {accountTextSize,accountTextSizeStyles}=await import('@/lib/reading/textScale');
+ expect(accountTextSize).toEqual({normal:'standard',large:'larger',largest:'large',extra:'extra'});
+ const styles=accountTextSizeStyles('largest');
+ expect(styles['--account-practice-text-body']).toBe(styles['--practice-text-body']);
+ expect(styles['--account-practice-reading-definition']).toBe('1.875rem');
+});

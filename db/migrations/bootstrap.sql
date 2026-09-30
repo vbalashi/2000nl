@@ -504,3 +504,6 @@
 
 -- Account-owned saved/main training configuration, independent of progress.
 \i db/migrations/180_account_training_setups.sql
+
+-- Shared four-step card/interface text preferences.
+\i db/migrations/181_four_step_text_preferences.sql

@@ -190,6 +190,13 @@
     "zn": "zelfstandig naamwoord"
   },
   "ui": {
+    "textPreferences": {
+      "description": "Kaarten en interface groeien samen. Leestekst groeit meer dan koppen.",
+      "profile": "Apparaatprofiel",
+      "phone": "Telefoon",
+      "desktop": "Computer / tablet",
+      "profileHint": "Deze browser kiest een profiel; beide groottes worden in je account opgeslagen. Een smaller venster verandert het profiel niet."
+    },
     "trainingBuilder": {
       "wordInContext": "Woord in context",
       "reviewsOnly": "Alleen herhalen",

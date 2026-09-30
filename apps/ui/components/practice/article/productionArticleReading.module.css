@@ -1,9 +1,9 @@
-/* Compatibility bridge to the existing three-step account preference owner. */
+/* Existing reading variables support legacy screens; approved articles resolve the shared account scale. */
 .bridge {
- --practice-definition-size: calc(var(--reading-body-size, 16px) * 1.25);
- --practice-literary-size: var(--reading-literary-size, 16px);
- --practice-literary-leading: var(--reading-literary-leading, 1.4);
- --practice-reading-small: var(--reading-nested-size, 13px);
- --practice-reading-caption: var(--reading-translation-size, 13px);
- --practice-reading-body: var(--reading-literary-size, 16px);
+ --practice-definition-size: var(--account-practice-definition-size, calc(var(--reading-body-size, 16px) * 1.25));
+ --practice-literary-size: var(--account-practice-literary-size, var(--reading-literary-size, 16px));
+ --practice-literary-leading: var(--account-practice-literary-leading, var(--reading-literary-leading, 1.4));
+ --practice-reading-small: var(--account-practice-reading-small, var(--reading-nested-size, 13px));
+ --practice-reading-caption: var(--account-practice-reading-caption, var(--reading-translation-size, 13px));
+ --practice-reading-body: var(--account-practice-reading-body, var(--reading-literary-size, 16px));
 }
