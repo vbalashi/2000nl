@@ -14,16 +14,17 @@ describe("NUC database contract deployment", () => {
     expect(contract.baseline.migrationId).toBe(122);
     expect(contract.ledger.file).toBe("db/deploy-contract/ledger-v1.sql");
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
+    const ids = contract.migrations.map((migration) => migration.migrationId);
+    const latest = ids[ids.length - 1];
     expect(contract.rollout).toEqual({
       status: "enabled",
-      requiredMigrationId: 180,
+      requiredMigrationId: latest,
       coordinationIssue: 407,
       compatibilityPhase: "legacy-first-party-compatible",
       strictEnforcementIssue: 399,
     });
-    expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180,
-    ]);
+    expect(contract.contractId).toBe(`2000nl-db-${latest}`);
+    expect(ids).toEqual(Array.from({ length: latest - 122 }, (_, index) => 123 + index));
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
         new RegExp(`^db/migrations/${migration.migrationId}_`),

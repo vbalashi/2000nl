@@ -20,7 +20,7 @@ export function SavedTrainingControls({ name, main, hasOthers, language, pending
       </button>
       <button className={s.delete} disabled={pending} onClick={() => setDeleting(true)}><Trash2 size={15} aria-hidden="true" /> {copy.delete}</button>
     </div>
-    {deleting && <DialogSurface className={s.modal} aria-labelledby={titleId} onDismiss={() => { if (!pending) setDeleting(false); }}>
+    {deleting && <DialogSurface className={s.modal} lang={language} aria-labelledby={titleId} onDismiss={() => { if (!pending) setDeleting(false); }}>
       <div className={s.content}>
         <h2 id={titleId}>{copy.deleteTitle}</h2>
         <p>{formatUiMessage(copy.deleteNotice, { name })}</p>

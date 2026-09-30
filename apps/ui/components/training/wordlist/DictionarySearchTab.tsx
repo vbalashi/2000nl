@@ -673,7 +673,7 @@ export function DictionarySearchTab({
                   groupHasMore: false,
                 });
               }}
-              className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className={approved ? workspace.clearSearch : "absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"}
             >
               <span className="sr-only">{copy.clearSearch}</span>x
             </button>
@@ -709,7 +709,7 @@ export function DictionarySearchTab({
                 {part === "noun" && searchState.entryFilters?.article ? ` (${searchState.entryFilters.article})` : ""}
               </React.Fragment>)}
           </div>
-          <label className="hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300">
+          <label className={approved ? workspace.onlyCollection : "hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300"}>
             {copy.onlyCollection}
             <input
               type="checkbox"

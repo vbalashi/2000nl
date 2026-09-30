@@ -52,7 +52,7 @@ test('delete dialog localizes user-visible copy and keeps a custom training name
  const dialog=screen.getByRole('dialog',{name:'Удалить тренировку?'});
  expect(dialog).toHaveAttribute('lang','ru');
  expect(dialog).toHaveTextContent('«My exact title»');
- expect(screen.getByRole('button',{name:'Закрыть диалог'})).toBeInTheDocument();
+ expect(screen.getByRole('button',{name:'Отмена'})).toHaveFocus();
  fireEvent.click(screen.getAllByRole('button',{name:'Удалить тренировку'})[1]);
  expect(onDelete).toHaveBeenCalledOnce();
 });

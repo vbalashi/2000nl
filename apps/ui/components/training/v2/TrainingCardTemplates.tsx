@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import {sharedArticlePresentationV1Enabled, trainingPresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
 import approved from "../approvedTrainingCard.module.css";
+import chrome from "@/components/practice/article/senseChrome.module.css";
 import {ArticleContentNode,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
 import {ArticleSenseRelations} from "@/components/practice/article/ArticleWordDetails";
 import {lexicalRelationDetail} from "@/components/practice/article/wordDetailsPresentation";
@@ -93,17 +94,17 @@ export function TrainingCardAnswerHeader({
   return (
     <header className="relative z-10 flex shrink-0 flex-col gap-0">
       <div className="mb-2 flex min-h-[34px] items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-[7px] text-[13px] text-slate-500 dark:text-[#BFC7D4]">
+        <div className={trainingPresentationV1Enabled() ? chrome.metadata : "flex min-w-0 items-center gap-[7px] text-[13px] text-slate-500 dark:text-[#BFC7D4]"}>
           {model.partOfSpeech ? (
-            <span className="inline-flex items-center gap-2 font-medium">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-[#37D99B]" />
+            <span className={trainingPresentationV1Enabled() ? chrome.pos : "inline-flex items-center gap-2 font-medium"}>
+              <span className={trainingPresentationV1Enabled() ? chrome.dot : "h-2 w-2 rounded-full bg-emerald-500 dark:bg-[#37D99B]"} />
               <span title={model.partOfSpeech}>
                 {trainingPartOfSpeechLabel(model.partOfSpeech)}
               </span>
             </span>
           ) : null}
           {model.coreVocabularyLabel ? (
-            <span className="rounded-md bg-indigo-500/10 px-2 py-1 font-semibold text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]">
+            <span className={trainingPresentationV1Enabled() ? chrome.badge : "rounded-md bg-indigo-500/10 px-2 py-1 font-semibold text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]"}>
               {model.coreVocabularyLabel}
             </span>
           ) : null}
@@ -204,20 +205,20 @@ export function TrainingCardFace({
         // Space scrolls a focused reading region; it must not reveal the answer.
         if (event.key === " ") event.stopPropagation();
       }}
-      className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:thin] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400"
+      className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:thin] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--practice-focus,#818cf8)]"
     >
       <div className="flex min-h-full flex-col p-[18px]">
         {partOfSpeechChip ? (
           <span
             data-testid="training-face-part-of-speech"
-            className="inline-flex max-w-full self-start rounded-md bg-indigo-500/10 px-2 py-1 text-xs font-medium text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]"
+            className={trainingPresentationV1Enabled() ? `${chrome.chip} self-start` : "inline-flex max-w-full self-start rounded-md bg-indigo-500/10 px-2 py-1 text-xs font-medium text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]"}
           >
             {partOfSpeechChip}
           </span>
         ) : null}
         <div className="my-auto flex shrink-0 flex-col items-center gap-4 px-10 py-3 text-center">
           {label ? (
-            <span className="rounded-md bg-indigo-500/10 px-2 py-1 font-sense-sans text-xs font-semibold text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]">
+            <span className={trainingPresentationV1Enabled() ? chrome.chip : "rounded-md bg-indigo-500/10 px-2 py-1 font-sense-sans text-xs font-semibold text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]"}>
               {label}
             </span>
           ) : null}
@@ -417,7 +418,7 @@ export function TrainingCardAnswerBody({
               behavior: "smooth",
             });
           }}
-          className="absolute bottom-2 left-1/2 z-10 flex h-7 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 text-slate-600 shadow-lg hover:bg-slate-100 hover:text-slate-900 dark:border-slate-600 dark:bg-[#171b22]/95 dark:text-slate-300 dark:hover:border-slate-400 dark:hover:text-white"
+          className={trainingPresentationV1Enabled() ? chrome.scrollCue : "absolute bottom-2 left-1/2 z-10 flex h-7 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 text-slate-600 shadow-lg hover:bg-slate-100 hover:text-slate-900 dark:border-slate-600 dark:bg-[#171b22]/95 dark:text-slate-300 dark:hover:border-slate-400 dark:hover:text-white"}
         >
           <ChevronDown aria-hidden="true" className="h-4 w-4" />
         </button>
@@ -636,7 +637,7 @@ export function TrainingCardIconButton({
       aria-pressed={active}
       disabled={disabled}
       onClick={onClick}
-      className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border outline-none transition focus-visible:shadow-[inset_0_-3px_0_rgba(79,70,229,0.65)] disabled:opacity-50 dark:focus-visible:shadow-[inset_0_-3px_0_rgba(165,180,252,0.75)] ${
+      className={trainingPresentationV1Enabled() ? chrome.iconAction : `flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border outline-none transition focus-visible:shadow-[inset_0_-3px_0_rgba(79,70,229,0.65)] disabled:opacity-50 dark:focus-visible:shadow-[inset_0_-3px_0_rgba(165,180,252,0.75)] ${
         active
           ? "border-slate-300 bg-indigo-100 text-indigo-700 dark:border-slate-600 dark:bg-indigo-400/10 dark:text-indigo-200"
           : "border-slate-300 bg-white text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:bg-transparent dark:text-slate-300 dark:hover:border-slate-400"

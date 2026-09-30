@@ -3,6 +3,8 @@
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import actions from "@/components/practice/article/articleActions.module.css";
 
 type Props = {
   entryId: string;
@@ -21,6 +23,7 @@ export function LibraryDetailsActions({
   const [copyStatus, setCopyStatus] = React.useState<string | null>(null);
   const entryIdRef = React.useRef(entryId);
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
+  const approved = sharedArticlePresentationV1Enabled();
 
   React.useEffect(() => {
     entryIdRef.current = entryId;
@@ -30,7 +33,7 @@ export function LibraryDetailsActions({
   return (
     <div
       data-testid="library-details-actions"
-      className="shrink-0 space-y-2 border-t border-slate-200 pt-3 text-xs dark:border-slate-700"
+      className={approved ? actions.footer : "shrink-0 space-y-2 border-t border-slate-200 pt-3 text-xs dark:border-slate-700"}
     >
       <div className="flex flex-wrap items-start gap-2">
         {leadingAction ? <div className="shrink-0">{leadingAction}</div> : null}
@@ -55,7 +58,7 @@ export function LibraryDetailsActions({
                   setCopyBusy(false);
                 }
               }}
-              className="rounded-xl border border-slate-300 px-3 py-2 font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-600 dark:text-slate-200"
+              className={approved ? actions.button : "rounded-xl border border-slate-300 px-3 py-2 font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-600 dark:text-slate-200"}
             >
               {t("senseCard.actions.copy")}
             </button>
@@ -63,7 +66,7 @@ export function LibraryDetailsActions({
         </div>
       </div>
       {copyStatus ? (
-        <p role="status" className="font-semibold text-slate-600 dark:text-slate-300">
+        <p role="status" className={approved ? actions.status : "font-semibold text-slate-600 dark:text-slate-300"}>
           {copyStatus}
         </p>
       ) : null}

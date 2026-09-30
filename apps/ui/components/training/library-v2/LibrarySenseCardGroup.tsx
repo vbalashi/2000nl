@@ -9,6 +9,7 @@ import {commonWordForms,wordFormDetail,lexicalRelationDetail} from "@/components
 import reading from "@/components/practice/article/articleContent.module.css";
 import articleActions from "@/components/practice/article/articleActions.module.css";
 import surfaces from "@/components/practice/article/articleSurfaces.module.css";
+import chrome from "@/components/practice/article/senseChrome.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -521,7 +522,7 @@ function MeaningCard({
                 onActiveMeaningChange?.(meaning.entryId);
                 onToggleExpanded();
               }}
-              className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:text-slate-800 dark:bg-[#171b22] dark:text-slate-400 dark:hover:text-slate-100"
+              className={approvedArticle ? chrome.toggle : "flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:text-slate-800 dark:bg-[#171b22] dark:text-slate-400 dark:hover:text-slate-100"}
             >
               <ChevronIcon
                 className="h-3.5 w-3.5"

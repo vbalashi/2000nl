@@ -1,0 +1,192 @@
+/* Approved sense-card chrome shared by Training and the article (prototype Metadata/badges). */
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 2px;
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-label);
+  line-height: 18px;
+  color: var(--practice-text-muted);
+}
+.pos {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.dot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--practice-relation);
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: var(--practice-canvas);
+  color: var(--practice-text-muted);
+  font-weight: 500;
+}
+.article {
+  color: var(--practice-text-muted);
+}
+.headword {
+  color: var(--practice-text);
+}
+.section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-label);
+  font-weight: 550;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--practice-text-muted);
+}
+.sectionLine {
+  flex: 1;
+  height: 1px;
+  background: var(--practice-border);
+}
+.sectionCount {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+}
+.headerAction {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--practice-border);
+  border-radius: 50%;
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+  cursor: pointer;
+}
+.headerAction:hover {
+  background: var(--practice-surface-hover);
+}
+.headerAction[aria-pressed="true"] {
+  border-color: var(--practice-control-border);
+  background: var(--practice-selected);
+  color: var(--practice-selected-text);
+}
+.headerAction:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+.headerAction:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.exposure {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--practice-border);
+  border-radius: 6px;
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-label);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  color: var(--practice-text-muted);
+}
+.toggle {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--practice-surface-subtle);
+  color: var(--practice-text-muted);
+  cursor: pointer;
+}
+.toggle:hover {
+  color: var(--practice-text-secondary);
+}
+.toggle:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+.iconAction {
+  position: relative;
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--practice-border);
+  border-radius: 50%;
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+  cursor: pointer;
+}
+.iconAction::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+}
+.iconAction:hover {
+  background: var(--practice-surface-hover);
+}
+.iconAction[aria-pressed="true"] {
+  border-color: var(--practice-control-border);
+  background: var(--practice-selected);
+  color: var(--practice-selected-text);
+}
+.iconAction:focus-visible,
+.scrollCue:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+.iconAction:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 22px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--practice-surface-subtle);
+  color: var(--practice-text-secondary);
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-caption);
+  font-weight: 500;
+}
+.scrollCue {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 28px;
+  border: 1px solid var(--practice-border);
+  border-radius: 999px;
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+  box-shadow: 0 4px 12px var(--practice-shadow);
+  transform: translateX(-50%);
+  cursor: pointer;
+}
+.scrollCue:hover {
+  background: var(--practice-surface-hover);
+}
