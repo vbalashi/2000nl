@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
+import { authenticatedAccountRequest } from "@/lib/preferences/accountRequest";
 import { parseStudyTimeMeasurement, type StudyTimeMeasurement } from "./model";
 import type { ActiveStudyDuration } from "../activeStudyClock";
 
@@ -47,8 +48,9 @@ export function deliverStudyTime(duration: ActiveStudyDuration): void {
         const controller = new AbortController();
         const timeout = window.setTimeout(() => controller.abort(), 8000);
         try {
-          const response = await fetch("/api/training/study-time", { method: "POST", credentials: "same-origin", keepalive: true,
-            headers: { "Content-Type": "application/json" }, body: JSON.stringify(measurement), signal: controller.signal });
+          const response = await authenticatedAccountRequest("/api/training/study-time", duration.ownerId, {
+            method: "POST", credentials: "same-origin", keepalive: true,
+            body: JSON.stringify(measurement), signal: controller.signal });
           if (!response.ok) return response.status >= 500 || response.status === 429 ? "retry" : "rejected";
           const body = await response.json();
           return body?.accepted === true && typeof body.duplicate === "boolean" ? "accepted" : "rejected";

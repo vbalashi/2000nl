@@ -164,3 +164,44 @@ acceptance must still verify real stored increments, paused intervals and focus/
 background transitions against an authenticated local owned session before measured
 Statistics is accepted. Next: that real-data attention smoke, followed by full
 Statistics history/material/read models and the approved shared presentation.
+
+## Authenticated browser acceptance — 2026-09-30
+
+The first real local smoke exposed a transport mismatch: the receipt delivery
+used a same-origin cookie request, but the existing first-party API authenticates
+the account bearer token. The visible card was ready and focused, yet POST
+`/api/training/study-time` returned 401 and the private measurement table remained
+empty. This is a client request defect, not another local schema mismatch.
+
+Delivery now reuses `authenticatedAccountRequest`, which captures the token only
+for the expected account and refuses an intervening account switch. The existing
+queue guard remains; no cookie-auth workaround or server auth relaxation was
+introduced. Two regressions exercise the actual exported delivery function,
+including a switch between the queue check and token capture. The prior queue-only
+tests could not catch this missing header.
+
+The authenticated local QA account started an ordinary owned session and revealed
+its first card without grading, learning, excluding or sending a report. The store
+changed from zero receipts to real positive measurements. Opening History settled
+the previous interval at 116,322 ms; it remained exactly unchanged for more than
+one 15-second sampling cycle. Returning to the card resumed measurements. Opening
+the full-word article settled at 159,704 ms and remained unchanged over another
+cycle. Opening Report settled at 216,143 ms and also remained unchanged over a
+cycle; the form was cancelled without submission. The session was left resumable,
+and both agent-created tabs were closed. Evidence: `/tmp/407-active-time-card.png`.
+
+The in-app browser reports `hasFocus() === true` and visible for both tool tabs,
+even after an attempted tab activation; its health URL was also blocked by its
+browser client. No focus/visibility overrides were installed. Consequently this
+smoke proves actual persistence and History/article/report pause-resume, not real
+background-tab behavior. Automated focus, visibility and pagehide checks pass;
+normal-browser background acceptance and live idiom/sentence duration smokes remain
+open. The auxiliary tab was promptly closed; aggregate totals above are pause
+checkpoints, not a calibrated duration claim or a user-facing statistic.
+
+Validation: 23 tests across authenticated delivery, delivery queue, attention,
+recording wrapper and API; typecheck and targeted lint pass. An initial local
+read attempted a connection URI through PGDATABASE and failed; the read was rerun
+with explicit validated local connection selection. No reset or schema change.
+Next: adapt real measured-time/history read models into Statistics, retaining
+explicit coverage and unavailable states and the remaining acceptance gates.

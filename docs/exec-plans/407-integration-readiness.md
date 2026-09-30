@@ -699,3 +699,20 @@ acceptance is still pending; this is not proof of complete measured Statistics.
 See `407-study-time-integration.md`. Next: local real-data attention smoke, then
 Statistics read models/presentation and the remaining #407 gates. Production is not
 deployed.
+
+## Active-time authenticated transport acceptance — 2026-09-30
+
+The real local ordinary-session smoke uncovered 401 responses from a cookie-only
+measurement POST. Delivery now uses the existing expected-account bearer request
+helper; no server authentication change. Two actual-delivery regressions cover the
+missing header and the account switch between queue guard and token capture.
+23 attention/delivery/wrapper/API tests, typecheck and targeted lint pass.
+
+Stored positive increments and paused intervals are verified in the local private
+store: History, full-word article and Report remain unchanged beyond a sampling
+cycle, with increments resumed on the card. No grade/Learn/exclusion/report action
+was submitted. The QA session remains resumable; temporary tabs are closed. Tool
+tabs both report focus/visible, so normal-browser background acceptance is still
+open, as are live idiom/sentence smokes and full Statistics. Exact checkpoints and
+limitations are in `407-study-time-integration.md`. Next: measured/historical
+Statistics read models and presentation; production remains undeployed.
