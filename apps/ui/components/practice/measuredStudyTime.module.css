@@ -1,0 +1,13 @@
+.summary{margin-block:24px;color:var(--practice-text);font-family:var(--practice-font-ui)}
+.heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.heading h2{margin:0;font-size:var(--practice-text-title-sm);font-weight:550;line-height:1.3}
+.periods{display:flex;flex-wrap:wrap;gap:3px;padding:3px;border-radius:10px;background:var(--practice-surface-subtle)}
+.periods button,.status button{font:inherit;font-size:var(--practice-text-label);padding:6px 13px;border:0;border-radius:7px;background:transparent;color:var(--practice-text-secondary);cursor:pointer}
+.periods button[aria-pressed=true]{background:var(--practice-surface);color:var(--practice-text)}
+.periods button:focus-visible,.status button:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
+.scope,.status{font-size:var(--practice-text-label);color:var(--practice-text-muted);line-height:1.5}
+.scope{margin:10px 0 0}
+.value{margin:18px 0 8px;font-size:var(--practice-text-number);font-weight:500;font-variant-numeric:tabular-nums;line-height:1.15}
+.status p{margin:4px 0}
+.status button{border:1px solid var(--practice-control-border);margin-top:8px}
+@media(max-width:600px){.heading h2{font-size:var(--practice-text-lead)}}

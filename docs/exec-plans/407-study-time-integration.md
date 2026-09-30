@@ -205,3 +205,53 @@ read attempted a connection URI through PGDATABASE and failed; the read was reru
 with explicit validated local connection selection. No reset or schema change.
 Next: adapt real measured-time/history read models into Statistics, retaining
 explicit coverage and unavailable states and the remaining acceptance gates.
+
+## Measured-time Statistics read/presentation — 2026-09-30
+
+The working Statistics destination now includes the shared `MeasuredStudyTime`
+component behind the existing Training presentation flag. It reads only while
+Statistics is open, uses an expected-account authenticated request, aborts stale
+or timed-out reads and never flashes a previous account/scope result. The existing
+current training counters stay separately labelled by study day; the time-period
+control does not pretend to filter those counters.
+
+The existing GET supports `period=Today|Week|Month`, alongside its unchanged
+explicit date-range mode. It obtains the persisted timezone and measurement
+coverage from one bounded authenticated SQL read, derives the current study date
+from server time and that timezone, and makes one further bounded read when the
+period requires it. A changed timezone/coverage between reads fails closed. No
+private-table query, service role, client timezone or schema change is introduced.
+Today is the current 04:00 study day; Week means seven study days ending today;
+Month starts on the first of the current study calendar month. The response has
+explicit dates and an `asOf` instant; the client validates this envelope before
+rendering. SQL continues to own duration attribution.
+
+The summary sums recorded milliseconds before formatting whole minutes and shows
+`<1 min` for a positive sub-minute total. Errors/loading/pre-coverage periods are
+not fabricated zeros. A period intersecting the measurement start explicitly
+shows “Measured since …; earlier time is not available.” Coverage classification
+is conservative for the first study day, even if tracking began exactly at 04:00.
+Language scope is all training in that language across exercise families, not the
+current saved setup/material. The exact selected date range is visible. EN/NL/RU
+strings share existing catalogs; fonts/colors use account presentation tokens.
+
+Validation: 26 period/API/reader/presentation/catalog checks and 83 existing
+TrainingScreen/theme checks pass; three existing Statistics prototype localization
+checks also pass. Final date-label presentation checks pass again. Initial
+typechecks caught union narrowing in the component and a cleanup callback return
+type in a test; both were fixed, and final typecheck, targeted lint and shared style
+guard pass. Existing TrainingScreen act/inert/GoTrueClient test warnings remain.
+
+Authenticated local browser acceptance shows 4 minutes for 249,436 stored ms;
+Today/Week/Month reads all match the same currently measured data. The store stays
+unchanged while Statistics is open. At 320×620, with account Larger text and dark
+system appearance, the new section fits a 288 px content width with document width
+320 and no horizontal overflow. The temporary viewport was reset and QA tabs were
+closed. Screenshots: `/tmp/407-measured-time-mobile.png` and
+`/tmp/407-measured-time-statistics.png`. No learner action or preference was changed.
+
+This completes the duration read/display slice, not the full Statistics screen.
+Remaining: canonical historical exercise activity, calendar/highlights, material
+queue/coverage/read scope and actual launch; replace the legacy statistics layout
+and its initial zero/2000 fallback with explicit load/error state. Also retain the
+normal-browser background and live idiom/sentence duration acceptance gates.

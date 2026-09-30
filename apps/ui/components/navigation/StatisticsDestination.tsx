@@ -7,6 +7,8 @@ import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rol
 import workspace from "@/components/practice/library/libraryWorkspace.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { DetailedStats } from "@/lib/types";
+import { MeasuredStudyTime } from "@/components/practice/MeasuredStudyTime";
+import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 
 const copy = {
   nl: {
@@ -42,6 +44,8 @@ const copy = {
 } satisfies Record<OnboardingLanguage, Record<string, string>>;
 
 type Props = {
+  userId?: string;
+  languageCode?: string;
   open: boolean;
   interfaceLanguage: OnboardingLanguage;
   stats: DetailedStats;
@@ -50,6 +54,8 @@ type Props = {
 };
 
 export function StatisticsDestination({
+  userId,
+  languageCode,
   open,
   interfaceLanguage,
   stats,
@@ -106,6 +112,7 @@ export function StatisticsDestination({
           {sharedArticlePresentationV1Enabled() && onHistory && <button type="button" className={workspace.button} onClick={onHistory}>
             <History size={16} aria-hidden="true" />{getUiMessages(interfaceLanguage).statistics.recentActivity}
           </button>}
+          {trainingPresentationV1Enabled() && userId && languageCode && <MeasuredStudyTime ownerId={userId} languageCode={languageCode} interfaceLanguage={interfaceLanguage} open={open} />}
           <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {metrics.map((metric) => (
               <section

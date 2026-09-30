@@ -716,3 +716,22 @@ tabs both report focus/visible, so normal-browser background acceptance is still
 open, as are live idiom/sentence smokes and full Statistics. Exact checkpoints and
 limitations are in `407-study-time-integration.md`. Next: measured/historical
 Statistics read models and presentation; production remains undeployed.
+
+## Measured duration in working Statistics — 2026-09-30
+
+The shared measured-time section reads server-owned Today/last-seven-study-days/
+current-study-month durations with explicit date ranges, current language scope,
+coverage-start warning, loading/error/retry and sub-minute/known-zero distinction.
+It uses account typography/theme tokens and EN/NL/RU catalogs behind the existing
+presentation flag. No demo minutes, client timezone or new schema. Account/scope
+replacement aborts stale reads and cannot show another account's time.
+
+26 time-period/read/presentation/API/catalog checks, 83 TrainingScreen/theme checks,
+three prototype Statistics locale checks, final typecheck/lint/style guard pass.
+Initial type errors were repaired; existing screen test warnings remain. Real
+local UI shows 4 min for 249,436 stored ms, with the table unchanged on Statistics;
+day/week/month and 320 px Larger-text dark appearance are verified. Viewport reset,
+temporary tabs closed, no preference/learner action changes. Full screen adaptation
+remains open: real history calendar/highlights and material/queue/launch/read scope,
+including removal of the old loading fallback that briefly displays zero/2000.
+See `407-study-time-integration.md`. Production remains undeployed.

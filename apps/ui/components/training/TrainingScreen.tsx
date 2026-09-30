@@ -2681,6 +2681,8 @@ function TrainingScreenContent({
         }}
       />
       <StatisticsDestination
+        userId={user.id}
+        languageCode={currentTrainingLanguage}
         open={visibleDestination === "statistics"}
         interfaceLanguage={onboardingLang}
         stats={stats}

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { beforeEach,expect,test,vi } from "vitest";
+import { afterEach,beforeEach,expect,test,vi } from "vitest";
 const { auth,rpc } = vi.hoisted(() => ({ auth:vi.fn(),rpc:vi.fn() }));
 vi.mock("@/lib/platform/serverSupabase",() => ({ getAuthenticatedSupabase:auth,jsonNoStore:(body:unknown,status=200) => Response.json(body,{status,headers:{"cache-control":"no-store"}}) }));
 import { GET,POST } from "@/app/api/training/study-time/route";
@@ -8,6 +8,7 @@ const measurement = { measurementId:id,sessionId:id,family:"meaning",entryId:id,
 const post = (body:unknown=measurement) => new NextRequest("http://localhost/api/training/study-time",{method:"POST",body:JSON.stringify(body)});
 const get = (suffix="?start=2026-09-30&end=2026-09-30&language=nl") => new NextRequest(`http://localhost/api/training/study-time${suffix}`);
 beforeEach(() => { vi.clearAllMocks(); auth.mockResolvedValue({supabase:{rpc},principal:{authKind:"first_party"},user:{id}}); rpc.mockResolvedValue({data:{accepted:true,duplicate:false},error:null}); });
+afterEach(() => { vi.useRealTimers(); });
 test("authenticates before parsing or reading; connected clients cannot use the app-local endpoint",async () => {
   auth.mockResolvedValue(Response.json({error:"unauthorized"},{status:401}));
   expect((await POST(post())).status).toBe(401); expect((await GET(get())).status).toBe(401);
@@ -46,5 +47,20 @@ test("reads validated daily durations with explicit coverage and no client timez
 });
 test("rejects excessive/invalid calendar ranges and unsupported scope hints",async () => {
   for (const suffix of ["?start=2026-02-30&end=2026-03-01","?start=2026-09-30&end=2026-09-01","?start=2025-01-01&end=2026-01-02","?start=2026-09-30&end=2026-09-30&userId=victim","?start=2026-09-30&end=2026-09-30&language=bad_lang"]) expect((await GET(get(suffix))).status).toBe(400);
+  expect(rpc).not.toHaveBeenCalled();
+});
+test("period reads use server time and persisted timezone, with no browser day/timezone override", async () => {
+  vi.useFakeTimers(); vi.setSystemTime(new Date("2026-09-30T01:00:00Z"));
+  rpc.mockImplementation(async (_name, args) => ({ data: {
+    timezone: "Europe/Amsterdam", coverageStartedAt: "2026-09-29T09:00:00Z",
+    days: [{ date: args.p_start_date, activeMilliseconds: 12345 }],
+  }, error: null }));
+  const response = await GET(get("?period=Today&language=nl"));
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({ startDate: "2026-09-29", endDate: "2026-09-29", asOf: "2026-09-30T01:00:00.000Z", timezone: "Europe/Amsterdam" });
+  expect(rpc.mock.calls[1][1]).toEqual({ p_start_date: "2026-09-29", p_end_date: "2026-09-29", p_language_code: "nl" });
+  rpc.mockClear();
+  for (const suffix of ["?period=Year", "?period=Today&timezone=UTC", "?period=Today&start=2026-01-01", "?period=Week&language=bad_lang"])
+    expect((await GET(get(suffix))).status).toBe(400);
   expect(rpc).not.toHaveBeenCalled();
 });
