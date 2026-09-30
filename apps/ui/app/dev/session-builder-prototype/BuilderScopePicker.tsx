@@ -7,7 +7,7 @@ import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import {getUiMessages} from "@/lib/uiMessages";
 import {previewLanguageName} from "./previewLanguage";
 import s from "./prototype.module.css";
-import f from "./libraryFilters.module.css";
+import f from "@/components/practice/library/libraryFilters.module.css";
 import p from "./builderScope.module.css";
 
 export function BuilderScopePicker({ page, draft, onApply, interfaceLanguage="en" }: {

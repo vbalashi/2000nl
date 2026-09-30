@@ -177,6 +177,7 @@ function Harness({initial = {},locale="nl"}: {initial?: Partial<DictionarySearch
 
 describe("DictionarySearchTab Headword Group results", () => {
   beforeEach(() => {
+
     fetchGroupPage.mockReset();
     fetchGroupPage
       .mockResolvedValueOnce({
@@ -342,4 +343,32 @@ test("approved Library copy and grouped rows follow interface locale without cha
  expect(row).toHaveTextContent("1 значение");expect(row).toHaveAttribute("aria-pressed","true");
  expect(screen.getByRole("button",{name:"Добавить запись"})).toBeInTheDocument();
  expect(screen.getByRole("button",{name:"Далее"})).toBeDisabled();
+});
+
+test("approved chips panel excludes disabled sources, cancels drafts and applies filters on the first page",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1","true");
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ const {getUiMessages}=await import("@/lib/uiMessages");const copy=getUiMessages("nl");
+ readableSources.mockReset().mockResolvedValue([source(scopeA,"Disabled A"),source(scopeB,"Enabled B")]);
+ const group=goedGroup("enabled-b",scopeB,"Enabled B",[sense("entry-b","zn")]);
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[group],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,matchingEntryIds:["entry-b"]}});
+ const repository=materialRepository();render(<AccountMaterialProvider userId="user-1" repository={repository}><Harness/></AccountMaterialProvider>);
+ await screen.findByTestId("library-headword-group-enabled-b");
+ expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));
+ fireEvent.click(screen.getByRole("button",{name:new RegExp(`^${copy.builder.source}`)}));
+ await screen.findByRole("button",{name:"Enabled B"});expect(screen.queryByRole("button",{name:"Disabled A"})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Enabled B"}));fireEvent.click(screen.getByRole("button",{name:copy.library.ok}));
+ fireEvent.click(screen.getByRole("button",{name:copy.builder.cancel}));
+ expect(fetchGroupPage.mock.calls.filter(call=>!call[0].signal).at(-1)?.[0].libraryScope.dictionaryIds).toBeNull();
+ fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));fireEvent.click(screen.getByRole("button",{name:copy.builder.parts.Nouns}));
+ await waitFor(()=>expect(screen.getByRole("button",{name:copy.library.showResults})).toBeEnabled());
+ fireEvent.click(screen.getByRole("button",{name:copy.library.showResults}));
+ await waitFor(()=>expect(fetchGroupPage.mock.calls.filter(call=>!call[0].signal).at(-1)?.[0]).toMatchObject({cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:["noun"],article:null}}}));
+ expect(repository.save).not.toHaveBeenCalled();
+});
+
+beforeEach(()=>{
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", {configurable:true,value:function(this:HTMLDialogElement){this.setAttribute("open","");}});
+  Object.defineProperty(HTMLDialogElement.prototype, "close", {configurable:true,value:function(this:HTMLDialogElement){this.removeAttribute("open");}});
 });

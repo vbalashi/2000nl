@@ -165,3 +165,8 @@
   font-size: var(--practice-text-caption);
   line-height: 1.5;
 }
+.searchRow{display:flex;align-items:stretch;gap:8px}
+.filterButton{display:grid;place-items:center;width:44px;flex:none;border:1px solid var(--practice-border);border-radius:12px;background:var(--practice-surface);color:var(--practice-text-muted)}
+.filterButton[data-active=true]{background:var(--practice-surface-subtle);color:var(--practice-accent)}
+.filterButton:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
+.filterButton:disabled{opacity:.5}

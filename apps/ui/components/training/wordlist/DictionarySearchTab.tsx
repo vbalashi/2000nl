@@ -8,6 +8,10 @@ import {
 } from "@/lib/uiMessages";
 
 import React from "react";
+import { SlidersHorizontal } from "lucide-react";
+import { AccountLibraryFilters } from "@/components/practice/library/AccountLibraryFilters";
+import { EMPTY_LIBRARY_ENTRY_FILTERS } from "@/lib/platform/librarySearchScope";
+import { LIBRARY_PART_LABELS } from "@/components/practice/library/LibraryFilters";
 import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import workspace from "@/components/practice/library/libraryWorkspace.module.css";
@@ -152,6 +156,7 @@ export function DictionarySearchTab({
     detailSelection,
     mobileDetailOpen,
   } = searchState;
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [availableLanguages, setAvailableLanguages] = useState<
@@ -220,6 +225,7 @@ export function DictionarySearchTab({
     contentLanguageCode: searchLanguage,
     translationLanguageCode: translationLang,
     dictionaryId,
+    defaultFilters: approved && materialEnabled ? EMPTY_LIBRARY_ENTRY_FILTERS : undefined,
   });
   const detailEntryInCurrentResults = useMemo(
     () =>
@@ -614,7 +620,8 @@ export function DictionarySearchTab({
             : "shrink-0 space-y-3 border-b border-slate-100 p-4 dark:border-slate-800"
         }
       >
-        <div className="relative">
+        <div className={approved && materialEnabled ? workspace.searchRow : undefined}>
+        <div className="relative min-w-0 flex-1">
           <svg
             className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
             viewBox="0 0 24 24"
@@ -663,6 +670,20 @@ export function DictionarySearchTab({
             </button>
           ) : null}
         </div>
+        {approved && materialEnabled && <button type="button" className={workspace.filterButton}
+          aria-label={copy.filters} aria-haspopup="dialog" disabled={useViewedListFilter || !searchMaterialReady}
+          data-active={Boolean(searchState.entryFilters?.parts.length || dictionaryId)} onClick={()=>setFiltersOpen(true)}>
+          <SlidersHorizontal size={18}/>
+        </button>}
+        </div>
+        {filtersOpen && <AccountLibraryFilters locale={interfaceLanguage} query={query}
+          value={{languageCode:searchLanguage,dictionaryId,...(searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS)}}
+          onClose={()=>setFiltersOpen(false)} onApply={draft=>{
+            updateSearchState({languageCode:draft.languageCode,dictionaryId:draft.dictionaryId,
+              entryFilters:{parts:[...draft.parts].sort(),article:draft.article},page:1,groupPageCursors:[null],groupHasMore:false,
+              groupTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});
+            setFiltersOpen(false);
+          }}/>}
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div
@@ -674,6 +695,10 @@ export function DictionarySearchTab({
           >
             {languageDisplayName(interfaceLanguage, searchLanguage)} ·{" "}
             {resultScopeLabel}
+            {!useViewedListFilter && searchState.entryFilters?.parts.map(part=>
+              <React.Fragment key={part}> · {getUiMessages(interfaceLanguage).builder.parts[LIBRARY_PART_LABELS[part]]}
+                {part === "noun" && searchState.entryFilters?.article ? ` (${searchState.entryFilters.article})` : ""}
+              </React.Fragment>)}
           </div>
           <label className="hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300">
             {copy.onlyCollection}
@@ -707,6 +732,7 @@ export function DictionarySearchTab({
             )}
           </p>
         )}
+        {!(approved && materialEnabled) && (<>
         <div
           className={
             approved
@@ -807,6 +833,7 @@ export function DictionarySearchTab({
             </label>
           </div>
         </div>
+        </>)}
 
         <div
           className={

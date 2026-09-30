@@ -647,7 +647,15 @@
       "examples": "Примеры",
       "definitions": "В определениях",
       "alphabetical": "По алфавиту",
-      "moreActions": "Другие действия с карточкой"
+      "moreActions": "Другие действия с карточкой",
+      "matchingGroupOne": "{count} подходящая статья",
+      "matchingGroupFew": "{count} подходящие статьи",
+      "matchingGroupMany": "{count} подходящих статей",
+      "matchingGroupOther": "{count} подходящей статьи",
+      "referenceOne": "{count} ссылка",
+      "referenceFew": "{count} ссылки",
+      "referenceMany": "{count} ссылок",
+      "referenceOther": "{count} ссылки"
     },
     "collections": {
       "title": "Коллекции",

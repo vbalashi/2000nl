@@ -647,7 +647,15 @@
       "examples": "Voorbeeldzinnen",
       "definitions": "Binnen definities",
       "alphabetical": "Alfabetisch",
-      "moreActions": "Meer kaartacties"
+      "moreActions": "Meer kaartacties",
+      "matchingGroupOne": "{count} passend artikel",
+      "matchingGroupFew": "{count} passende artikelen",
+      "matchingGroupMany": "{count} passende artikelen",
+      "matchingGroupOther": "{count} passende artikelen",
+      "referenceOne": "{count} verwijzing",
+      "referenceFew": "{count} verwijzingen",
+      "referenceMany": "{count} verwijzingen",
+      "referenceOther": "{count} verwijzingen"
     },
     "collections": {
       "title": "Collecties",

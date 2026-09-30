@@ -1,4 +1,5 @@
 "use client";
+import type { LibraryEntryFilters } from "@/lib/platform/librarySearchScope";
 import { useAccountMaterial } from "@/components/practice/material/AccountMaterialProvider";
 
 import { useCallback, useMemo, useRef } from "react";
@@ -16,6 +17,7 @@ type Input = {
   contentLanguageCode: string;
   translationLanguageCode: string | null;
   dictionaryId: string | null;
+  defaultFilters?: LibraryEntryFilters;
 };
 
 export function useLibraryHeadwordGroupSearch({
@@ -24,11 +26,13 @@ export function useLibraryHeadwordGroupSearch({
   contentLanguageCode,
   translationLanguageCode,
   dictionaryId,
+  defaultFilters,
 }: Input) {
   const material = useAccountMaterial();
   const scoped = Boolean(material);
-  const filterKey = state.entryFilters ? JSON.stringify({
-    parts: [...new Set(state.entryFilters.parts)].sort(), article: state.entryFilters.article,
+  const currentFilters = state.entryFilters ?? defaultFilters;
+  const filterKey = currentFilters ? JSON.stringify({
+    parts: [...new Set(currentFilters.parts)].sort(), article: currentFilters.article,
   }) : null;
   const filters = useMemo(() => filterKey ? JSON.parse(filterKey) as NonNullable<DictionarySearchTabState["entryFilters"]> : undefined, [filterKey]);
   const scopeKey = JSON.stringify([

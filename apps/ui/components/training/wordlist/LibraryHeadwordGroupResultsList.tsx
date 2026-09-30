@@ -59,6 +59,7 @@ export function LibraryHeadwordGroupResultsList({
                 source={result.dictionaryLabel}
                 core={coreVocabularyLabel(result, interfaceLanguage)}
                 meaningCount={result.meaningCount}
+                referenceCount={result.referenceCount}
                 homographNumber={result.homographNumber}
                 contentLanguage={result.group.dictionary.sourceLanguageCode}
                 language={interfaceLanguage}

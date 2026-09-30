@@ -1,36 +1,7 @@
 "use client";
-
-import React, { useContext, useEffect, useRef } from "react";
-import {DialogSurface} from "@/components/practice/ui/DialogSurface";
-import { X } from "lucide-react";
-import { Choice } from "./VariantControls";
-import {getUiMessages} from "@/lib/uiMessages";
-import {InterfaceLanguageContext} from "./VariantControls";
-import s from "./prototype.module.css";
-import f from "./libraryFilters.module.css";
-
-export function NounFilterPopover({ anchor, article, onChange, onClose }: {
-  anchor: HTMLButtonElement; article: "de" | "het" | null;
-  onChange: (article: "de" | "het" | null) => void; onClose: () => void;
-}) {
-  const locale=useContext(InterfaceLanguageContext);const copy=getUiMessages(locale);
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const dialog = ref.current!;
-    const place = () => {
-      const bounds = anchor.getBoundingClientRect();
-      const width = dialog.offsetWidth;
-      const height = dialog.offsetHeight;
-      dialog.style.left = `${Math.max(12, Math.min(bounds.left - 12, window.innerWidth - width - 12))}px`;
-      dialog.style.top = `${Math.max(12, Math.min(bounds.bottom + 10, window.innerHeight - height - 12))}px`;
-    };
-    place();
-    window.addEventListener("resize", place);
-    return () => { window.removeEventListener("resize", place);  };
-  }, [anchor]);
-  return <DialogSurface onDismiss={onClose} ref={ref} className={f.popover} aria-label={copy.builder.nounArticle} lang={locale} onCancel={event => { event.preventDefault(); event.stopPropagation(); onClose(); }}>
-    <div className={f.popoverHeader}><h3>{copy.builder.nounArticle}</h3><button className={f.icon} aria-label={copy.builder.closeNounSubfilters} onClick={onClose}><X size={17}/></button></div>
-    <div className={s.choices}>{(["de", "het"] as const).map(value => <Choice key={value} active={!article || article === value} onClick={() => onChange(article ? null : value)}>{value}</Choice>)}</div>
-    <p className={f.help}>{copy.library.bothArticles}</p>
-  </DialogSurface>;
+import React, { useContext } from "react";
+import { NounFilterPopover as SharedPopover } from "@/components/practice/library/NounFilterPopover";
+import { InterfaceLanguageContext } from "./VariantControls";
+export function NounFilterPopover(props: Omit<React.ComponentProps<typeof SharedPopover>, "locale">) {
+ return <SharedPopover {...props} locale={useContext(InterfaceLanguageContext)}/>;
 }

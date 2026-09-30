@@ -647,7 +647,15 @@
       "examples": "Example sentences",
       "definitions": "In definitions",
       "alphabetical": "Alphabetical",
-      "moreActions": "More card actions"
+      "moreActions": "More card actions",
+      "matchingGroupOne": "{count} matching article",
+      "matchingGroupFew": "{count} matching articles",
+      "matchingGroupMany": "{count} matching articles",
+      "matchingGroupOther": "{count} matching articles",
+      "referenceOne": "{count} reference",
+      "referenceFew": "{count} references",
+      "referenceMany": "{count} references",
+      "referenceOther": "{count} references"
     },
     "collections": {
       "title": "Collections",

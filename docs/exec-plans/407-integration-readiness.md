@@ -496,3 +496,38 @@ its row/opening presentation must also be reconciled so the exact article count
 and visible articles agree. This is not a completed Library acceptance gate.
 Collection/editor, Statistics/history/mobile navigation and active-session work
 remain open. Production is not deployed.
+
+## Shared Library filters UI checkpoint — 2026-09-30
+
+Approved Library search now opens the shared chips dialog. Language and Source use
+real account/catalogue identities; drafts remain private until Apply, Cancel
+restores focus without changing the query, and Apply resets paging atomically.
+The noun chevron opens the nearby article picker. A debounced, abortable read
+previews the server's matching-article total; failures remain explicit and
+retryable, with no fabricated counts or learner writes. Paused languages and
+disabled dictionaries are excluded from new material selection. The started-run
+policy remains unchanged: frozen material can be resumed/finished, subject to live
+ACLs; disabling material affects new launches, not historical progress.
+
+The prototype and production UI share the filter dialog, noun popover and semantic
+styles. Prototype alternative layouts and fixture counts stay in dev wrappers.
+Builder's inline material picker reuses the extracted styles. Cross-reference-only
+articles now have visible result rows, reference counts and their own opening
+identity instead of disappearing while still contributing to the server count.
+Whole articles and exact read ownership remain intact.
+
+Validation: 101 existing/focused tests pass, plus three preview-controller checks
+for stale-response suppression, retry without Apply, and unavailable material.
+Typecheck, targeted lint, style guard and diff whitespace checks pass. Existing
+Training tests emit act warnings and the existing SenseCardReveal emits an inert
+warning; this checkpoint does not claim those unrelated warnings are resolved.
+Authenticated browser QA on the actual local UI checks goed -> Nouns/het -> one
+article with all four meanings, source Cancel, focus return, and aangezien's
+cross-reference-only article. At 320px viewport with the account's larger text
+profile, the dialog has no horizontal overflow and keeps actions inside the
+viewport. Prototype chips and Builder language expansion remain functional.
+
+This completes the search-filter connection, not the whole Library acceptance
+gate. Owned collection/editor presentation, personal translation language,
+Statistics/history/mobile navigation and active-session acceptance remain open.
+Production is not deployed.

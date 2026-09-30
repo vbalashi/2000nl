@@ -50,6 +50,7 @@ export function LibraryResultRow({
   source,
   core,
   meaningCount,
+  referenceCount,
   homographNumber,
   contentLanguage,
   language,
@@ -65,6 +66,7 @@ export function LibraryResultRow({
   source: string;
   core?: string | null;
   meaningCount: number;
+  referenceCount?: number;
   homographNumber?: number;
   contentLanguage: string;
   language: OnboardingLanguage;
@@ -76,9 +78,9 @@ export function LibraryResultRow({
 }) {
   const count = formatUiCount(
     language,
-    meaningCount,
+    referenceCount ?? meaningCount,
     getUiMessages(language).library,
-    "meaning",
+    referenceCount === undefined ? "meaning" : "reference",
   );
   return (
     <button
