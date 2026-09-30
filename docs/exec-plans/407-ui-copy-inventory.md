@@ -4,7 +4,7 @@ Date: 2026-09-30. Required interface locales: English, Dutch, Russian. This is a
 
 ## First localized slice
 
-`apps/ui/locales/{en,nl,ru}.json` owns `ui.navigation`, `ui.trainingOverview`, `ui.builder`, `ui.builderScope`, `ui.settings`, `ui.languagePicker`, `ui.trainingHotkeys`, `ui.trainingSession`, `ui.cardActions`, `ui.library`, `ui.collections`, `ui.wordDetails`, and shared `ui.article` labels. The shared `AppDestinationNav`, `AppFrame`, and `TrainingOverview` read those catalogs. The prototype's interface-language selector drives the Training overview, primary navigation, and all Builder sections and save/delete dialogs. This selector remains prototype state; the production preference owner must replace it in the real Settings flow.
+`apps/ui/locales/{en,nl,ru}.json` owns `ui.navigation`, `ui.trainingOverview`, `ui.builder`, `ui.builderScope`, `ui.settings`, `ui.languagePicker`, `ui.trainingHotkeys`, `ui.trainingSession`, `ui.cardActions`, `ui.library`, `ui.collections`, `ui.wordDetails`, `ui.statistics`, and shared `ui.article` labels. The shared `AppDestinationNav`, `AppFrame`, and `TrainingOverview` read those catalogs. The prototype's interface-language selector drives the Training overview, primary navigation, and all Builder sections and save/delete dialogs. This selector remains prototype state; the production preference owner must replace it in the real Settings flow.
 
 The first slice covers visible labels, accessible names, loading/error/empty states, resume/start/edit/create actions, progress, source-unavailable notices, exercise/direction/language labels, exercise counts with locale plural rules, and the illustrative-activity note. Saved training and source names remain data. `tests/uiMessages.test.ts` rejects missing/blank keys or mismatched placeholders in EN/NL/RU.
 
@@ -40,13 +40,21 @@ Locale-switch tests preserve filter drafts, search, expanded forms, collection s
 
 Validation: 42 tests across eight suites, typecheck, targeted lint and shared theme guard passed. Narrow Russian maximum-text follow-up verified the final wrapping and settled filter screen. Backend preferences/actions and the database are unchanged; these checks use illustrative fixtures. Local health still reports a local search-index/deployment-ledger warning, so this is not live-data acceptance. Next: Statistics localization, then the integration checklist.
 
-## Remaining approved surfaces and copy to migrate with each screen
+## Statistics localization checkpoint
+
+All approved Statistics labels, material descriptions, queue/coverage hints, chart accessible names and day details now use EN/NL/RU catalogs. Dates, date ranges, month captions, numbers and percentages follow the interface locale; days and ready-card counts use plural rules. The displayed year range now describes the actual illustrative history (29 September 2025–28 September 2026), rather than an approximate October–September caption. Built-in material names are localized for display; training callbacks still receive the original language/material values. Development-only fixture switches remain English with their own language marker.
+
+Locale-switch checks preserve period, learning language, material, selected day, open material dialog and empty state. Validation: 45 tests across nine suites, typecheck, targeted lint and shared theme guard passed. Fixture browser checks covered EN/NL/RU at 320/430/1024px, standard/maximum text, period/material/language choices, calendar paging, empty state and recent history. Screenshot inspection found clipped language tabs and tight month captions: narrow/enlarged language tabs use two columns and the month caption wraps between fixed arrows. Six additional narrow maximum-text checks verified final geometry. No telemetry, history data source, preference persistence or backend behavior changed.
+
+Approved prototype screen copy is now prepared for all three locales. This does not certify production localization: each production adapter must use these catalogs and pass real-data, persistence, accessibility and failure-state acceptance. Next: continue staged production presentation integration with the shared article/full-word panel and existing preference/action owners.
+
+## Approved surfaces and production integration boundaries
 
 | Surface and source | User-facing copy to inventory and localize | Integration boundary |
 | --- | --- | --- |
 | Training: `TrainingSessionPrototype`, `SessionCardActions`, `RecentActivity`, shared `RatingControls` (localized) | EN/NL/RU session/history/actions complete; shared article details now localized through Library | Reuse production action semantics and translation request path. The answer and full-word panel must use the same article presentation as Library. |
 | Library (localized): `LibraryPrototype`, `LibraryFilters`, `LibraryArticle`, `LibraryOverlays`, `LibraryActions`, `LibraryStudyPanel`, `LibraryWordDetails` | Search, filter steps and counts, article/part labels, result and no-result states, study status, details/relations headings, collection actions, report/known/exclude, dialogs, audio/translation feedback | Dictionary and translated article content are not UI messages. Preserve shared word/article components. |
-| Statistics: `StatisticsPrototype` | Section titles, metrics, date/number units, material controls, activity/history entry, empty/loading/errors, accessible chart labels | Counts and dates require locale formatting from real activity; do not transplant illustrative fixture values. |
+| Statistics: `StatisticsPrototype` (localized) | EN/NL/RU illustrative activity, metrics, queue, coverage, date/number units, material controls, history entry and accessible chart labels complete; production loading/errors follow its real adapter | Counts and dates require locale formatting from real activity; do not transplant illustrative fixture values. |
 | Settings: `SettingsPrototype`, `LanguagePicker` (localized) | EN/NL/RU copy complete; Library preview uses the shared localized Library components | Bind real preference owner on integration. Inert prototype controls must not be presented as working production features. |
 | Shared shell: `AppFrame`, `AppUtilityNav`, `SettingsDestination` | Navigation, settings, utility actions, keyboard descriptions, responsive menu labels | Migrate remaining component-local EN/NL/RU maps into the same catalogs when their screen is integrated. |
 

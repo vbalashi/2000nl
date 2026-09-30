@@ -1,6 +1,6 @@
 # Prototype integration readiness
 
-Date: 2026-09-29. Scope: source-level handoff review, not another completed browser/accessibility audit.
+Date: 2026-09-29; localization checkpoint updated 2026-09-30. Scope: source-level handoff review and fixture localization validation, not complete production/browser accessibility acceptance.
 Baseline: f1ed5fc4 plus pending reveal-clipping, Statistics scrollbar and resumed-session counter fixes.
 
 ## Verdict
@@ -11,7 +11,7 @@ The prototype is a presentation reference, not a replacement runtime. Transfer s
 
 | Surface | Current behavior | Integration requirement |
 | --- | --- | --- |
-| Interface language | Settings-local state; navigation is supplied `en` | Bind the existing locale owner; translate all labels, including ratings, dialogs and errors. |
+| Interface language | Prototype context; approved screens and navigation use EN/NL/RU catalogs | Bind the existing locale owner; translate all labels, including ratings, dialogs and errors. |
 | Translation language | Shared prototype selection; exercise generator still hardcodes English → Dutch; fixture translations | Resolve exercise prompts and translations from the selected language. Explicitly handle Off and unavailable translation. |
 | Learning languages / dictionary enablement | Local Settings state | Connect account preferences to source eligibility, Library, builder and Statistics; define consequences of pausing/removing a source. |
 | Text size | Four working shared scales; local per-device preview persistence | Integrate existing reading preferences provider; explicitly migrate the three-value server contract. |
@@ -46,7 +46,7 @@ Evidence: `SettingsPrototype.tsx`, `BuilderPrototype.tsx`, `sessionPreviewModel.
 
 Supply approved recipe, current reference screenshots, shared-component map, this wiring matrix, production owner/API mapping, and acceptance scenarios. Require staged integration, beginning with one real training flow and the shared Library article. Keep prototype reachable for comparison. A visual match alone is not completion; no scheduler/auth/data-model redesign is authorized by this handoff.
 
-Pending fixes are uncommitted at this checkpoint; freeze an exact clean commit before dispatching implementation work. No new task or external messages were created by this review.
+The earlier pending presentation fixes and staged localization are committed checkpoints; freeze the final exact clean commit before dispatching implementation work. No new task or external messages were created by this review.
 
 ## Owner clarification and proposed operating sequence — 2026-09-29
 
@@ -95,3 +95,11 @@ The first production change should be a thin adapter and one complete meaning-ca
 The meaning-card session now has an opt-in `NEXT_PUBLIC_TRAINING_PRESENTATION_V1` rollout, off in the pilot profile until visual review. It keeps the existing Platform V2 lookup, session plan, action callbacks, history and close behavior. When enabled, its progress header is frameless, the duplicate daily-count footer is hidden, and rating buttons use the approved colored left edge and text: two compact rows on narrow screens, one 46px row on wider screens. The card remains height-constrained, with the metadata/headword and actions outside its scrolling answer region. Set the flag to `true` for local review; set it back to `false` for an immediate presentation rollback. This switch is independent of the Platform V2 training/data rollout and does not alter idiom or sentence exercises.
 
 This is a first visual slice, not acceptance of the entire prototype. The Library article renderer, full-word panel, history styling, training overview, settings and remaining locale copy still need staged integration. Local QA health currently reports the platform RPC as ready but the DB deployment ledger and grouped dictionary search index as warnings; do not sign off real-data browser behavior until that environment is repaired.
+
+## Prototype localization complete — 2026-09-30
+
+Training overview, Builder, Settings, Training session/history, shared Library article/actions/forms/collections and Statistics now consume the existing EN/NL/RU catalogs. See `407-ui-copy-inventory.md` for scope and validation evidence. Development-only Variations/inspectors and fixture switches remain separate. Locale switches preserve canonical selection/action values and local preview state; translated display labels must never become backend IDs.
+
+The next implementation slice remains the shared article/full-word presentation inside the existing production Training/Library seams. Reuse the already prepared catalogs and theme/text tokens, bind the production locale/preference owner, and keep its lookup and actions authoritative. Do not copy Statistics fixture formulas, training-name callbacks, sample history, or demo notes into production telemetry. Real Statistics loading/error/empty states must come from its actual data adapter.
+
+Before rollout, the earlier acceptance gates still apply: DB/index readiness, real persistence/failure recovery, browser zoom/text spacing, landscape, keyboard/focus/reduced motion and palette contrast. Localization fixture checks do not close these gates.

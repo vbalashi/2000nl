@@ -59,3 +59,16 @@
 /* Match Library and Builder: keep page scrolling, hide only its scrollbar. */
 :global(html):has(.statistics){scrollbar-width:none}
 :global(html):has(.statistics)::-webkit-scrollbar{display:none}
+
+/* Localized scope names need room to wrap at enlarged text sizes. */
+.languageRow .languageTabs{max-width:100%}
+.statistics .languageTabs button,.statistics .moreLanguage{min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.35;padding-top:4px;padding-bottom:4px}
+.scopeOptions button>span{min-width:0;overflow-wrap:anywhere}
+.scopeOptions button>svg,.dialogHeading>button,.queue button>svg{flex-shrink:0}
+.statistics .queue button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:600px){
+ .mobileHistoryNav{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px}
+ .mobileHistoryNav>span{text-align:center;line-height:1.5}
+ :global([data-text-size="extra"]) .languageRow .languageTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:400px){.languageRow .languageTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
