@@ -816,3 +816,29 @@ clipped material chips at 320px.
 Open: language tabs with several configured languages and the paused state not yet
 seen in a browser; EN/NL copy reviewed only through the localization test.
 Next: Training session card surface/ratings/reveal/header, then mobile tab navigation.
+
+## Independent audit response — 2026-10-01
+
+Source: parallel read-only audit (`HANDOFF-for-implementer.md`, OS temp) at `f12434f8`.
+Owner decisions D1–D5 applied in `83d403f1`: brand accent/focus follow the palette;
+forms line capped at 1.6× (Extra 28.8px); muted ink resolves to secondary inside
+`aria-pressed/selected/current` states (the real selected fills are `aria-pressed`);
+heatmap levels at ≥3/4.5/7:1 to canvas in all six palettes (contrast tests added).
+Primary navigation now uses frame roles (12px/500, muted inactive); 320px brand and
+overview actions no longer collide/overflow.
+
+`43f4a46f`: the approved Training card uses practice roles and the text scale for
+stage, shell, Show answer, hint, Learn, Known and quiet actions; ratings render via
+shared `RatingControls` with capability-owned labels/actions (columns follow measured
+labels, hit area ≥44px); face headword uses the 44px display role; session name/
+position scale. The Playwright spec now asserts behaviour, not 62/46px heights.
+
+The style guard now ratchets legacy colour/size literals in `components/training`
+and `components/navigation` (`scripts/practice-style-baseline.json`, 1376 remaining,
+mostly flag-off legacy branches, Library search/editor and legacy Settings/Statistics).
+The earlier "zero literal colors" claim applies to prototype files only.
+
+Open from the audit: live rating row (QA first card is new; Learn writes state —
+not pressed), article action row slim/toolbar (item 3), reveal motion
+(`usePromptReveal`), mobile tab bar, computed-style matrix (palettes × modes ×
+Standard/Extra), RU/320 and 844×390 snapshots for Library, zoom/keyboard/portals.
