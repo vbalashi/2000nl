@@ -630,3 +630,33 @@ new launches/material choices, subject to live authorization checks.
 Next: real Statistics read model and approved screen adaptation, including active
 card duration; then remaining Library, mobile navigation, typography/color and
 active-session acceptance gates.
+
+
+## Active study measurement foundation — 2026-09-30
+
+Added a separate monotonic clock and browser attention hook for the approved
+active-card duration. This is a prepared measurement seam, not enabled telemetry:
+actual card-owner eligibility and durable persistence remain the next slice.
+It does not change FSRS, action history or displayed Statistics values.
+
+The adapter accepts an owned principal/session/family/card identity, pauses through
+explicit caller eligibility and document visibility/window focus, flushes on
+checkpoint/replacement/unmount/pagehide, and resumes after pageshow. Reveal does
+not restart the card clock. Fifteen-second checkpoints and rejection of unknown
+gaps over thirty seconds prevent sleep/suspension from inflating study time.
+
+Validation: 12 clock/attention tests pass, including fractional and backward-clock
+handling, paused/loading/background intervals, identity/account replacement,
+StrictMode/reveal continuity and timer/listener cleanup. Typecheck, targeted lint
+and whitespace checks pass. The initial test invocation used the UI cwd with
+repository-relative file paths: it ran only the five clock tests. Correcting the
+paths created the hook suite and the combined 12-check run passed. No database
+or account data was changed, and no UI/browser acceptance is claimed for an
+unconnected measurement hook.
+
+`docs/exec-plans/407-study-time-integration.md` records the measurement semantics,
+actual owner/overlay gates, authenticated/idempotent storage requirements,
+study-day attribution and remaining real Statistics acceptance. Next: dedicated
+server duration storage with SQL ownership/replay tests, then integrate the ordinary,
+idiom and sentence owners before showing measured time. The broader approved
+Statistics and remaining #407 gates are still open. Production is not deployed.
