@@ -1,9 +1,11 @@
 "use client";
-import React, { useId, useState, type ReactNode } from "react";
+import React, { useContext, useId, useState, type ReactNode } from "react";
 import { ArrowLeftRight, ChevronDown, Link2 } from "lucide-react";
 import { SenseCardReveal } from "@/components/training/SenseCardChrome";
 import type { LibrarySenseCardGroupModel } from "@/components/training/library-v2/librarySenseCardModel";
 import fixture from "./word-details-fixture.json";
+import {getUiMessages,formatUiMessage} from "@/lib/uiMessages";
+import {InterfaceLanguageContext} from "./VariantControls";
 import s from "./wordDetails.module.css";
 
 // Canonical VanDale records for this local visual prototype.
@@ -44,6 +46,8 @@ function headline(detail:Detail, variant:"primary"|"complete"):{values:string[];
 }
 type FormsProps={model:LibrarySenseCardGroupModel;variant?:"primary"|"complete";part:"summary"|"body";open:boolean;onToggle:()=>void;id:string};
 export function WordForms({model,variant="primary",part,open,onToggle,id}:FormsProps){
+ const locale=useContext(InterfaceLanguageContext);const copy=getUiMessages(locale).wordDetails;
+ const labelOf=(label:string)=>copy.forms[label as keyof typeof copy.forms]??label;
  const detail=details[`${model.headword}-${model.partOfSpeech}`];if(!detail)return null;
  const lead=headline(detail,variant);const shown=lead.values;if(!shown.length)return null;
  const f=formValues(detail);const covered=new Set(shown.flatMap(v=>v.split(/[,·]/).map(x=>x.trim())));
@@ -69,14 +73,14 @@ export function WordForms({model,variant="primary",part,open,onToggle,id}:FormsP
   const label=lead.label||form?.label||inferredVerbLabel||"Form";
   return [{label:label==="Inflected form"?"Inflected":label,value}];
  });
- const line=<span className={s.formItems}>{named.map(({label,value},index)=><span className={s.formItem} key={`${label}-${index}`}><span className={s.formKind}>{label}</span><span className={s.formLine} lang="nl">{value}</span></span>)}</span>;
- if(part==="summary")return <div className={s.forms} aria-label={`Forms of ${model.headword}`}>
-  {hasDetails?<button className={s.formToggle} aria-label={`${open?"Hide":"Show"} more forms of ${model.headword}`} aria-expanded={open} aria-controls={id} onClick={onToggle}>{line}<ChevronDown size={16} className={open?s.rotated:undefined}/></button>:line}
+ const line=<span className={s.formItems}>{named.map(({label,value},index)=><span className={s.formItem} key={`${label}-${index}`}><span className={s.formKind}>{labelOf(label)}</span><span className={s.formLine} lang="nl">{value}</span></span>)}</span>;
+ if(part==="summary")return <div className={s.forms} aria-label={formatUiMessage(copy.formsOf,{word:model.headword})}>
+  {hasDetails?<button className={s.formToggle} aria-label={formatUiMessage(open?copy.hideForms:copy.showForms,{word:model.headword})} aria-expanded={open} aria-controls={id} onClick={onToggle}>{line}<ChevronDown size={16} className={open?s.rotated:undefined}/></button>:line}
  </div>;
  if(!hasDetails)return null;
  return <SenseCardReveal open={open}><div id={id} inert={!open} aria-hidden={!open} className={s.expandedForms}>
-   {(extra.length>0||showPerfect)&&<dl className={s.facts}>{extra.map(f=><div key={f.label}><dt>{f.label}</dt><dd lang="nl">{f.value}</dd></div>)}{showPerfect&&<div><dt>Perfect</dt><dd lang="nl">{perfect}</dd></div>}</dl>}
-   {persons.length>0&&<table className={s.table} aria-label={`Verb forms for ${model.headword}`}><thead><tr><th scope="col">Person</th><th scope="col">Present</th><th scope="col">Past</th></tr></thead><tbody>{persons.map(person=><tr key={person}><th scope="row">{person.replaceAll("_"," / ")}</th><td lang="nl">{table.present?.[person]||"—"}</td><td lang="nl">{table.past?.[person]||"—"}</td></tr>)}</tbody></table>}
+   {(extra.length>0||showPerfect)&&<dl className={s.facts}>{extra.map(f=><div key={f.label}><dt>{labelOf(f.label)}</dt><dd lang="nl">{f.value}</dd></div>)}{showPerfect&&<div><dt>{copy.forms.Perfect}</dt><dd lang="nl">{perfect}</dd></div>}</dl>}
+   {persons.length>0&&<table className={s.table} aria-label={formatUiMessage(copy.verbForms,{word:model.headword})}><thead><tr><th scope="col">{copy.person}</th><th scope="col">{copy.forms.Present}</th><th scope="col">{copy.forms.Past}</th></tr></thead><tbody>{persons.map(person=><tr key={person}><th scope="row" lang="nl">{person.replaceAll("_"," / ")}</th><td lang="nl">{table.present?.[person]||"—"}</td><td lang="nl">{table.past?.[person]||"—"}</td></tr>)}</tbody></table>}
   </div></SenseCardReveal>;
 }
 
@@ -88,9 +92,10 @@ function Disclosure({label,children}:{label:string;children:ReactNode}) {
  </div>;
 }
 export function SenseRelations({entryId,compact=false}:{entryId:string;compact?:boolean}) {
+ const copy=getUiMessages(useContext(InterfaceLanguageContext)).wordDetails;
  const relation=relationsByEntry[entryId];
- const groups=[{label:"Synonyms",values:relation?.synonyms||[]},{label:"Antonyms",values:relation?.antonyms||[]}].filter(g=>g.values.length);
+ const groups=[{id:"synonyms",label:copy.synonyms,values:relation?.synonyms||[]},{id:"antonyms",label:copy.antonyms,values:relation?.antonyms||[]}].filter(g=>g.values.length);
  if(!groups.length)return null;
- const content=<div className={s.relations}>{groups.map(g=><div className={s.relationGroup} data-kind={g.label.toLowerCase()} key={g.label}><h3>{g.label==="Synonyms"?<Link2 size={12}/>:<ArrowLeftRight size={12}/>}<span>{g.label}</span></h3><p lang="nl">{g.values.join(" · ")}</p></div>)}</div>;
- return <section aria-label="Relations for this meaning" className={s.sense}>{compact?<Disclosure label={groups.map(g=>g.label).join(" · ")}>{content}</Disclosure>:content}</section>;
+ const content=<div className={s.relations}>{groups.map(g=><div className={s.relationGroup} data-kind={g.id} key={g.id}><h3>{g.id==="synonyms"?<Link2 size={12}/>:<ArrowLeftRight size={12}/>}<span>{g.label}</span></h3><p lang="nl">{g.values.join(" · ")}</p></div>)}</div>;
+ return <section aria-label={copy.relations} className={s.sense}>{compact?<Disclosure label={groups.map(g=>g.label).join(" · ")}>{content}</Disclosure>:content}</section>;
 }

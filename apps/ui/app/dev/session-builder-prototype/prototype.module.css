@@ -145,7 +145,7 @@
 .material{flex-wrap:wrap}
 .material .secondary{width:100%}
 .mobileNav{display:flex;position:fixed;bottom:0;left:0;right:0;gap:8px;justify-content:space-around;background:var(--practice-surface);border-top:1px solid var(--practice-border);padding:8px 12px max(12px,env(safe-area-inset-bottom));z-index:10}
-.mobileNav button{display:flex;flex:1;flex-direction:column;align-items:center;gap:4px;font-size:var(--practice-text-label);min-height:46px;border:0;border-radius:9px;background:var(--practice-surface);color:var(--practice-text-muted);padding:6px}
+.mobileNav button{display:flex;flex:1;min-width:0;overflow-wrap:anywhere;flex-direction:column;align-items:center;gap:4px;font-size:var(--practice-text-label);min-height:46px;border:0;border-radius:9px;background:var(--practice-surface);color:var(--practice-text-muted);padding:6px}
 .mobileNav button[aria-current=page]{background:var(--soft);color:var(--accent)}
 .modal{max-height:calc(100dvh - 24px)}
 .sourceTools{padding:14px}

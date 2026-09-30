@@ -10,11 +10,11 @@ export function LibraryStudyPanel({ study, onChange, density, onDensity, onBrows
   const [open, setOpen] = useState(false);
   const active = studyPresets.find(p => Object.keys(p.values).every(k => p.values[k as StudyKey] === study[k as StudyKey]));
   return <>
-    <aside className={s.studyDock} aria-label="Design comparison">
+    <aside className={s.studyDock} aria-label="Design comparison" lang="en">
       <span>Library study · {active?.name || "Custom"}</span>
       <button onClick={() => { dialog.current?.showModal(); setOpen(true); }} aria-expanded={open}><SlidersHorizontal size={14}/> Variations</button>
     </aside>
-    <dialog aria-labelledby="library-study-title" ref={dialog} className={s.studyDialog} onClose={() => setOpen(false)} onClick={e => { if (e.target === e.currentTarget) dialog.current?.close(); }}>
+    <dialog lang="en" aria-labelledby="library-study-title" ref={dialog} className={s.studyDialog} onClose={() => setOpen(false)} onClick={e => { if (e.target === e.currentTarget) dialog.current?.close(); }}>
       <div className={s.studySheet}>
         <header><div><h2 id="library-study-title">Library variation matrix</h2><p>Local demo · every choice updates the same components.</p></div><button aria-label="Close variations" onClick={() => dialog.current?.close()}><X size={18}/></button></header>
         <div className={s.studyPresets}>{studyPresets.map(p => <button key={p.id} aria-pressed={active?.id === p.id} onClick={() => onChange({ ...p.values })}><strong>{p.name}</strong><span>{p.description}</span></button>)}</div>

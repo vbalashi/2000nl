@@ -1,5 +1,5 @@
 "use client";
-import React,{useState,useEffect,useRef} from "react";
+import React,{useContext,useState,useEffect,useRef} from "react";
 import {Search,SlidersHorizontal,X} from "lucide-react";
 import {goedGroups} from "./GoedLibraryPreview";
 import {LibraryArticle,Metadata,LibraryButton} from "./LibraryArticle";
@@ -9,6 +9,8 @@ import {LibraryStudy,studyDefaults,readStudy,studyUrl} from "./libraryStudy";
 import type {LibrarySenseCardGroupModel} from "@/components/training/library-v2/librarySenseCardModel";
 import {demoWordTranslations} from "./libraryTranslationFixture";
 import additionalEntries from "./library-extra-fixture.json";
+import {getUiMessages,formatUiCount} from "@/lib/uiMessages";
+import {InterfaceLanguageContext} from "./VariantControls";
 import s from "./library.module.css";
 import {LibraryFilters,defaultLibraryFilter,matchesLibraryFilter,libraryFilterSummary} from "./LibraryFilters";
 import {detailGroups} from "./LibraryWordDetails";
@@ -30,6 +32,7 @@ const words=[
 type Variant="compact"|"reading";
 function toModel(w:typeof words[number]):LibrarySenseCardGroupModel{if("detailIndex" in w)return detailGroups[w.detailIndex as number];if("goedIndex" in w)return goedGroups[w.goedIndex as number];const meaning={entryId:w.word,cardTypeId:"word-to-definition" as const,displayOrdinal:1,partOfSpeech:w.pos,definition:{contentNodeId:w.word+"-d",parentContentNodeId:null,kind:"definition" as const,text:w.definition,children:[]},entryTranslation:demoWordTranslations[w.word]||w.translation,entryTranslationAlternatives:[],translationStatus:null,details:[{contentNodeId:w.word+"-e",parentContentNodeId:null,kind:"example" as const,text:w.example,children:[]}],repeatCount:0,startLearning:null,markKnown:null,undoKnown:null,reportCapability:null};return {article:w.article,headword:w.word,partOfSpeech:w.pos,coreVocabularyLabel:null,audioCapability:null,senseCount:1,meanings:[meaning],crossReferences:[],presentations:[{kind:"sense-card",meaning}]};}
 export function LibraryPrototype(){
+ const locale=useContext(InterfaceLanguageContext);const copy=getUiMessages(locale).library;
  const toolbarRef=useRef<HTMLDivElement>(null);
  useEffect(()=>{
   const toolbar=toolbarRef.current;if(!toolbar)return;
@@ -45,11 +48,11 @@ export function LibraryPrototype(){
  function updateStudy(next:LibraryStudy){setStudy(next);studyUrl(next);}
  const searched=words.filter(w=>`${w.word} ${w.translation}`.toLowerCase().includes(query.toLowerCase()));
  const results=searched.filter(w=>matchesLibraryFilter(w,filter));const word=results.find(w=>`${w.word}-${w.pos}`===selected);
- return <DemoCollectionsProvider><section className={s.library} data-density={variant} data-listing={study.listing} data-count-position={study.countPosition} aria-label="Library"><h1 className={s.srOnly}>Library</h1>
- <div ref={toolbarRef} className={s.searchToolbar}><div className={s.searchRow}><label className={s.search}><Search size={18}/><input aria-label="Search words" placeholder="Find a word or a meaning…" value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button aria-label="Clear search" onClick={()=>setQuery("")}><X size={16}/></button>}</label><button className={`${s.filterButton} ${filters?s.active:""}`} aria-label="Search filters" aria-haspopup="dialog" aria-expanded={filters} data-filtered={filter.source!=="All sources"||filter.parts.length>0||filter.language!=="Dutch"||undefined} onClick={()=>setFilters(!filters)}><SlidersHorizontal size={17}/></button></div>
+ return <DemoCollectionsProvider><section className={s.library} data-density={variant} data-listing={study.listing} data-count-position={study.countPosition} aria-label={copy.title} lang={locale}><h1 className={s.srOnly}>{copy.title}</h1>
+ <div ref={toolbarRef} className={s.searchToolbar}><div className={s.searchRow}><label className={s.search}><Search size={18}/><input aria-label={copy.search} placeholder={copy.searchPlaceholder} value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button aria-label={copy.clearSearch} onClick={()=>setQuery("")}><X size={16}/></button>}</label><button className={`${s.filterButton} ${filters?s.active:""}`} aria-label={copy.filters} aria-haspopup="dialog" aria-expanded={filters} data-filtered={filter.source!=="All sources"||filter.parts.length>0||filter.language!=="Dutch"||undefined} onClick={()=>setFilters(!filters)}><SlidersHorizontal size={17}/></button></div>
 
- <div className={s.scope}><span>{libraryFilterSummary(filter)}</span><span>{results.length} {results.length===1?"entry":"entries"}</span></div></div>
- <div className={`${s.workspace} ${word?s.hasDetail:""}`}><div className={s.list} tabIndex={0} aria-label="Dictionary entries">{results.map(w=>{const m=toModel(w);return <button key={`${w.word}-${w.pos}`} className={s.row} aria-pressed={selected===`${w.word}-${w.pos}`} title="Click to collapse meanings; double-click to expand all" onClick={()=>{const id=`${w.word}-${w.pos}`;setExpandAll(v=>({expanded:false,revision:v.revision+1}));setSelected(id);}} onDoubleClick={()=>{if(window.matchMedia("(min-width:701px)").matches)setExpandAll(v=>({expanded:true,revision:v.revision+1}));}}><span className={s.rowMain}><span className={s.word}>{w.article&&<span>{w.article} </span>}{w.word}</span></span><span className={s.listMeta}><Metadata pos={w.pos} core={m.coreVocabularyLabel}/><span className={s.listSource}>· {w.source}</span><span className={s.count} aria-label={`${m.senseCount} ${m.senseCount===1?"meaning":"meanings"}`} title={`${m.senseCount} ${m.senseCount===1?"meaning":"meanings"}`}>{m.senseCount} {m.senseCount===1?"meaning":"meanings"}</span></span>{study.listing==="preview"&&<span className={s.snippet}>{w.definition}</span>}</button>})}{!results.length&&<div className={s.empty}><h2>No matching words</h2><LibraryButton onClick={()=>{setQuery("");setFilter(defaultLibraryFilter);}}>Clear search and filters</LibraryButton></div>}</div>
+ <div className={s.scope}><span>{libraryFilterSummary(filter,locale)}</span><span>{formatUiCount(locale,results.length,copy,"entry")}</span></div></div>
+ <div className={`${s.workspace} ${word?s.hasDetail:""}`}><div className={s.list} tabIndex={0} aria-label={copy.entries}>{results.map(w=>{const m=toModel(w);return <button key={`${w.word}-${w.pos}`} className={s.row} aria-pressed={selected===`${w.word}-${w.pos}`} title={copy.rowHint} onClick={()=>{const id=`${w.word}-${w.pos}`;setExpandAll(v=>({expanded:false,revision:v.revision+1}));setSelected(id);}} onDoubleClick={()=>{if(window.matchMedia("(min-width:701px)").matches)setExpandAll(v=>({expanded:true,revision:v.revision+1}));}}><span className={s.rowMain}><span lang="nl" className={s.word}>{w.article&&<span>{w.article} </span>}{w.word}</span></span><span className={s.listMeta}><Metadata pos={w.pos} core={m.coreVocabularyLabel}/><span className={s.listSource}>· {w.source}</span><span className={s.count} aria-label={formatUiCount(locale,m.senseCount,copy,"meaning")} title={formatUiCount(locale,m.senseCount,copy,"meaning")}>{formatUiCount(locale,m.senseCount,copy,"meaning")}</span></span>{study.listing==="preview"&&<span lang="nl" className={s.snippet}>{w.definition}</span>}</button>})}{!results.length&&<div className={s.empty}><h2>{copy.noWords}</h2><LibraryButton onClick={()=>{setQuery("");setFilter(defaultLibraryFilter);}}>{copy.clearFilters}</LibraryButton></div>}</div>
  {word&&<LibraryArticle key={`${word.word}-${word.pos}`} expandAll={expandAll} model={toModel(word)} source={word.source} study={study} onClose={()=>setSelected(null)}/>}
  </div>
  {filters&&<LibraryFilters layout={study.filterLayout} value={filter} sources={Array.from(new Set(words.map(w=>w.source)))} count={next=>searched.filter(w=>matchesLibraryFilter(w,next)).length} onClose={()=>setFilters(false)} onApply={next=>{setFilter(next);setFilters(false);}}/>}

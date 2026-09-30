@@ -835,7 +835,7 @@
 /* Keep secondary actions visually quieter than the learning action. */
 .library .detail .secondaryActions>button{font-size:var(--practice-text-label);font-weight:400;line-height:1.45;color:var(--practice-text-muted)}
 .library .detail .secondaryActions>button>svg{width:12px;height:12px}
-.library .detail .secondaryActions>button[aria-label="More card actions"]>svg{width:16px;height:16px}
+.library .detail .secondaryActions>button[data-action="more"]>svg{width:16px;height:16px}
 @media(min-width:701px){.library .detail .actionGroup .secondaryActions{margin-top:10px}}
 /* Reading studies share content; only the nested hierarchy changes. */
 .nodeRole{display:none}
