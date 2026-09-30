@@ -1,4 +1,5 @@
 "use client";
+import { useNewTrainingMaterial } from "@/components/practice/material/useNewTrainingMaterial";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ChevronDown, Plus } from "lucide-react";
@@ -444,7 +445,7 @@ function ChoiceButton({
 export function TrainingTodaySetup({
   userId,
   trainingLanguageCode,
-  trainingLanguageOptions = [{ value: "nl", label: "Nederlands" }],
+  trainingLanguageOptions: readableLanguageOptions = [{ value: "nl", label: "Nederlands" }],
   trainingLanguageLoading = false,
   onTrainingLanguageChange,
   interfaceLanguage,
@@ -454,8 +455,8 @@ export function TrainingTodaySetup({
   initialDraft,
   stats,
   scenarios,
-  lists,
-  dictionaries = [],
+  lists: readableLists,
+  dictionaries: readableDictionaries = [],
   dictionariesLoading = false,
   sources,
   startPending = false,
@@ -463,7 +464,7 @@ export function TrainingTodaySetup({
   statsStatus = "ready",
   sessionResumeStatus = "ready",
   cardPreparationStatus = "ready",
-  startBlocked = false,
+  startBlocked: externalStartBlocked = false,
   continueDisabled = false,
   onRetryStats,
   onRetryResume,
@@ -476,6 +477,19 @@ export function TrainingTodaySetup({
   onStart,
   onRetry,
 }: Props) {
+  const material = useNewTrainingMaterial({
+    languageCode: trainingLanguageCode, interfaceLanguage,
+    languages: readableLanguageOptions, lists: readableLists, dictionaries: readableDictionaries,
+  });
+  const {languages: trainingLanguageOptions, lists, dictionaries} = material;
+  const startBlocked = externalStartBlocked || material.status !== "ready";
+  const materialCopy = getUiMessages(interfaceLanguage).materialPreferences;
+  const materialNotice = material.status === "ready"
+    ? !material.currentLanguageAllowed ? <p role="status">{copy[interfaceLanguage].materialUnavailable}</p> : null
+    : <p role={material.status === "error" ? "alert" : "status"}>
+      {material.status === "error" ? materialCopy.loadError : materialCopy.loading}
+      {material.status === "error" && <button type="button" onClick={material.reload}>{materialCopy.retry}</button>}
+    </p>;
   const t = copy[interfaceLanguage];
   const [screen, setScreen] = useState<"today" | "setup">("today");
   const [draft, setDraft] = useState({
@@ -634,11 +648,11 @@ export function TrainingTodaySetup({
   };
 
   const requestStart = useCallback(async (nextDraft: TrainingSetupDraft) => {
-    if (trainingLanguageLoading || pendingLanguage || startBlocked || !isTrainingSetupMaterialAvailable(nextDraft, lists, dictionaries)) return;
+    if (trainingLanguageLoading || pendingLanguage || startBlocked || !material.currentLanguageAllowed || !isTrainingSetupMaterialAvailable(nextDraft, lists, dictionaries)) return;
     if (nextDraft.family === "word-in-context" && translationTargetLanguageCode === null) return;
     const started = await onStart(nextDraft);
     if (started === false) setScreen("today");
-  }, [trainingLanguageLoading, pendingLanguage, startBlocked, lists, dictionaries, translationTargetLanguageCode, onStart]);
+  }, [trainingLanguageLoading, pendingLanguage, startBlocked, material.currentLanguageAllowed, lists, dictionaries, translationTargetLanguageCode, onStart]);
 
   useEffect(() => {
     if (!selectedIntent || selectedIntent.userId !== userId || selectedIntent.language !== trainingLanguageCode || trainingLanguageLoading || scenarioLoading || pendingLanguage || account.status !== "ready" || (selectedIntent.action === "launch" && startBlocked)) return;
@@ -690,10 +704,11 @@ export function TrainingTodaySetup({
       translationUnavailable={t.contextLanguageNeeded} translationLanguage={translationTargetLanguageCode}
       onCreate={openSetup} onDefaultLaunch={()=>void requestStart(initialDraft)} onContinue={onContinue}
       onRetry={()=>void account.reload()} onSelect={(training,action)=>{
-        if (!trainingLanguageOptions.some(option=>option.value===training.languageCode)) { setPresetMessage(t.materialUnavailable); return; }
+        if (!(action === "edit" ? readableLanguageOptions : trainingLanguageOptions).some(option=>option.value===training.languageCode)) { setPresetMessage(t.materialUnavailable); return; }
         setSelectedIntent({id:training.id,userId,language:training.languageCode,action});
         if(training.languageCode!==trainingLanguageCode)onTrainingLanguageChange?.(training.languageCode);
       }}>
+      {materialNotice}
       {presetMessage&&<p role="status">{presetMessage}</p>}
       {sessionResumeStatus!=="ready"&&<p role={sessionResumeStatus==="error"?"alert":"status"}>{sessionResumeStatus==="pending"?t.resumePending:t.resumeError}{sessionResumeStatus==="error"&&<button onClick={onRetryResume}>{t.retryResume}</button>}</p>}
       {cardPreparationStatus==="error"&&<p role="alert">{t.cardError}<button onClick={onRetryCard}>{t.retryCard}</button></p>}
@@ -961,9 +976,10 @@ export function TrainingTodaySetup({
     onDraftChange={setDraft} onSelectFamily={selectFamily} onToggleMode={toggleMode} onMixChange={changeMix} onBack={()=>setScreen("today")}
     onSave={savePreset} onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft)} canSave={canSaveAccount}
     saveDisabled={account.status!=="ready"||account.pending||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
-    startDisabled={startPending||scenarioLoading||startBlocked||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
+    startDisabled={startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
     saveLabel={editingPresetId?accountCopy.update:accountCopy.save} startLabel={startPending?t.starting:scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable?t.materialUnavailable:replacementWarning?t.startHere:t.start}
     saveNotice={presetMessage} notice={<>
+      {materialNotice}
       {presetMessage&&<p role="status">{presetMessage}</p>}
       {replacementWarning&&<p role="status">{t.replacementWarning}</p>}
       {sessionResumeStatus!=="ready"&&<p role={sessionResumeStatus==="error"?"alert":"status"}>{sessionResumeStatus==="pending"?t.resumePending:t.resumeError}{sessionResumeStatus==="error"&&<button onClick={onRetryResume}>{t.retryResume}</button>}</p>}

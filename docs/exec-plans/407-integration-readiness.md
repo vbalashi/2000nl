@@ -294,3 +294,30 @@ new-material selector adapters are next; existing-session resume must continue t
 use the readable catalog and the frozen server snapshot. Other approved screens,
 billing/general preference error handling and active-session presentation remain
 pending. Rollout remains opt-in; production deployment is unperformed.
+
+## Training new-material selector checkpoint — 2026-09-30
+
+The approved Training setup now consumes the account material provider through a
+small new-run adapter. Language choices follow active account order and use the
+shared localized language names. Source choices exclude disabled dictionary IDs.
+The current paused language cannot launch a fresh run; the constructor can switch
+to an active language. Failed/pending material reads block fresh launches and have
+localized feedback/retry, without hiding the independent owned-session continue
+control. Paused/disabled saved setups remain stored and editable; no automatic
+language switch or scope write occurs when account preferences change.
+
+The readable Training catalog and controller/resume scope are unchanged. The new
+adapter applies only to overview launch and constructor selection, and the server
+still resolves actual collection contents, mixed-language scope and new-run
+availability. Collection membership cannot be inferred from dictionary options;
+its authoritative eligibility remains the server policy/plan boundary. Library
+search selection is not yet adapted and is the next stage, including preserving
+pagination/count accuracy instead of removing individual results after retrieval.
+
+Validation passes the 39 Training setup tests (including paused language, disabled
+source, preserved saved setup, read failure/retry and independent resume), 13
+account-material tests and the 70 existing TrainingScreen characterizations.
+Typecheck and targeted lint pass. Browser QA confirms a disabled real VanDale
+source is absent from fresh-run dictionary choices, with save/start unavailable
+when no source is selected. Test account preferences were restored; no run or
+learning action was created. Production rollout remains opt-in and unperformed.

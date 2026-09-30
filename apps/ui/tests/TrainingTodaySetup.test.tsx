@@ -714,3 +714,69 @@ test("switching accounts discards an open builder draft", async () => {
   expect(onStart.mock.calls[0][0].partOfSpeech).toEqual(baseProps.initialDraft.partOfSpeech);
   expect(accounts.get("next-builder-owner")).toBeUndefined();
 });
+
+test("paused material blocks fresh runs while an owned session still resumes", async () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const { AccountMaterialProvider } = await import("@/components/practice/material/AccountMaterialProvider");
+  const onContinue = vi.fn(), onStart = vi.fn(), onTrainingLanguageChange = vi.fn();
+  const repository = {
+    load: async () => ({ revision: 1, document: { schemaVersion: 1 as const, learningLanguages: [{code:"nl",paused:true},{code:"en",paused:false}], disabledDictionaryIds: [dictionaryA] } }),
+    save: vi.fn(),
+    languages: async () => ["nl", "en"].map(code => ({code,label:code,dictionaryCount:1,curatedListCount:1,userListCount:0,hasTrainingEligibleLists:true})),
+  };
+  render(<AccountMaterialProvider userId="paused-run" repository={repository}>
+    <TrainingTodaySetup {...baseProps} userId="paused-run" trainingLanguageCode="nl" trainingLanguageOptions={[{value:"nl",label:"Dutch"},{value:"en",label:"English"}]} dictionaries={[{value:dictionaryA,label:"Dictionary A"}]} hasOwnedSession ownedSession={{id:"old-run",completed:3,total:10}} activeSessionLabel="Old run" onContinue={onContinue} onStart={onStart} onTrainingLanguageChange={onTrainingLanguageChange}/>
+  </AccountMaterialProvider>);
+  const continueButton = await screen.findByRole("button",{name:"Continue training"});
+  expect(continueButton).toBeEnabled();
+  fireEvent.click(continueButton);
+  expect(onContinue).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole("button",{name:"Create training"}));
+  fireEvent.click(screen.getByRole("button",{name:/^Language /}));
+  expect(screen.queryByRole("button",{name:"Dutch"})).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button",{name:"English"}));
+  expect(onTrainingLanguageChange).toHaveBeenCalledWith("en");
+  expect(onStart).not.toHaveBeenCalled();
+});
+
+test("a disabled dictionary is omitted from source choices without modifying the saved setup", async () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const { AccountMaterialProvider } = await import("@/components/practice/material/AccountMaterialProvider");
+  const saved = { id:"saved-disabled",name:"Saved disabled source",languageCode:"nl",draft:{...initialDraft,materialMode:"selected-dictionaries" as const,dictionaryIds:[dictionaryA]} };
+  accounts.set("disabled-source", {revision:0,document:{schemaVersion:1,mainTrainingId:saved.id,trainings:[saved]}});
+  const onStart = vi.fn();
+  const repository = {
+    load: async () => ({revision:1,document:{schemaVersion:1 as const,learningLanguages:[],disabledDictionaryIds:[dictionaryA]}}),
+    save: vi.fn(),
+    languages: async () => [{code:"nl",label:"Dutch",dictionaryCount:2,curatedListCount:1,userListCount:0,hasTrainingEligibleLists:true}],
+  };
+  render(<AccountMaterialProvider userId="disabled-source" repository={repository}>
+    <TrainingTodaySetup {...baseProps} userId="disabled-source" trainingLanguageCode="nl" hasOwnedSession={false} dictionaries={[{value:dictionaryA,label:"Dictionary A"},{value:dictionaryB,label:"Dictionary B"}]} onStart={onStart}/>
+  </AccountMaterialProvider>);
+  await screen.findByText("Saved disabled source");
+  expect(screen.getByRole("button",{name:"Start training"})).toBeDisabled();
+  fireEvent.click(screen.getByRole("button",{name:"Create training"}));
+  fireEvent.click(screen.getByRole("button",{name:/^Source /}));
+  fireEvent.click(screen.getByRole("button",{name:"Selected dictionaries"}));
+  expect(screen.queryByRole("button",{name:"Dictionary A"})).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button",{name:"Dictionary B"}));
+  fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({dictionaryIds:[dictionaryB]}));
+  expect(accounts.get("disabled-source")?.document.trainings[0]).toEqual(saved);
+});
+
+test("material preference load failure blocks fresh launches but leaves resume available", async () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const { AccountMaterialProvider } = await import("@/components/practice/material/AccountMaterialProvider");
+  const onContinue = vi.fn(), onStart = vi.fn();
+  const repository = {load:vi.fn().mockRejectedValue(new Error("offline")),save:vi.fn(),languages:async()=>[]};
+  render(<AccountMaterialProvider userId="material-offline" repository={repository}>
+    <TrainingTodaySetup {...baseProps} userId="material-offline" trainingLanguageCode="nl" hasOwnedSession ownedSession={{id:"owned-offline",completed:3,total:10}} onContinue={onContinue} onStart={onStart}/>
+  </AccountMaterialProvider>);
+  await screen.findByText("Material preferences could not be loaded.");
+  fireEvent.click(screen.getByRole("button",{name:"Continue training"}));
+  expect(onContinue).toHaveBeenCalledOnce();
+  expect(onStart).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button",{name:"Retry"}));
+  await waitFor(()=>expect(repository.load).toHaveBeenCalledTimes(2));
+});
