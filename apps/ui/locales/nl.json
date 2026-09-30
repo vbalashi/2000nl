@@ -466,6 +466,7 @@
       "empty": "Geen talen gevonden.",
       "more": "Meer tonen",
       "footer": "Namen en codes: SIL ISO 639-3. De vertaalkwaliteit verschilt per taal.",
+      "learningFooter": "Je kunt een taal toevoegen voordat er woordenboeken beschikbaar zijn.",
       "languageOne": "{count} taal",
       "languageFew": "{count} talen",
       "languageMany": "{count} talen",
@@ -725,6 +726,18 @@
         "Week": "Week",
         "Month": "Maand"
       }
+    },
+    "materialPreferences": {
+      "loading": "Materiaal laden…",
+      "loadError": "Materiaalvoorkeuren konden niet worden geladen.",
+      "saveError": "Opslaan kon niet worden bevestigd. Probeer opnieuw.",
+      "conflict": "Bijgewerkt op een ander apparaat. Controleer de huidige selectie en probeer opnieuw.",
+      "saving": "Opslaan…",
+      "saved": "Opgeslagen",
+      "retry": "Opnieuw proberen",
+      "catalogError": "Woordenboeken konden niet worden geladen.",
+      "useDictionary": "Gebruik {name}",
+      "selectionHint": "Wijzigingen gelden voor nieuwe trainingen. Je kunt een begonnen sessie voortzetten."
     }
   },
   "wordDetails": {

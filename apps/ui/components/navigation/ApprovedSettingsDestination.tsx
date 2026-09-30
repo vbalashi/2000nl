@@ -1,7 +1,11 @@
 "use client";
 import React from "react";
+import {
+  LearningMaterialSettings,
+  DictionaryMaterialSettings,
+} from "@/components/practice/material/MaterialSettings";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
-import { Languages, Palette, Keyboard, UserRound } from "lucide-react";
+import { Languages, Palette, Keyboard, UserRound, Library } from "lucide-react";
 import { getUiMessages } from "@/lib/uiMessages";
 import { getTrainingHotkeys } from "@/components/training/trainingHotkeys";
 import {
@@ -28,6 +32,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
   const copy = getUiMessages(props.interfaceLanguage).settings;
   const sections = [
     { id: "languages", label: copy.languages, Icon: Languages },
+    { id: "dictionaries", label: copy.dictionaries, Icon: Library },
     { id: "appearance", label: copy.appearance, Icon: Palette },
     { id: "shortcuts", label: copy.shortcuts, Icon: Keyboard },
     { id: "account", label: copy.account, Icon: UserRound },
@@ -97,6 +102,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
                   </div>
                 </SettingsRow>
               </SettingsPanel>
+              <LearningMaterialSettings language={props.interfaceLanguage} />
               {pickerOpen && (
                 <React.Suspense
                   fallback={
@@ -122,6 +128,10 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
                 </React.Suspense>
               )}
             </>
+          );
+        if (section === "dictionaries")
+          return (
+            <DictionaryMaterialSettings language={props.interfaceLanguage} />
           );
         if (section === "appearance")
           return (

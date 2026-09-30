@@ -466,6 +466,7 @@
       "empty": "No matching languages.",
       "more": "Show more",
       "footer": "Names and codes: SIL ISO 639-3. Translation quality varies by language.",
+      "learningFooter": "You can add a language before dictionaries become available.",
       "languageOne": "{count} language",
       "languageFew": "{count} languages",
       "languageMany": "{count} languages",
@@ -725,6 +726,18 @@
         "Week": "Week",
         "Month": "Month"
       }
+    },
+    "materialPreferences": {
+      "loading": "Loading material…",
+      "loadError": "Material preferences could not be loaded.",
+      "saveError": "Could not confirm the save. Try again.",
+      "conflict": "Updated on another device. Review the current selection and try again.",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "retry": "Retry",
+      "catalogError": "Dictionaries could not be loaded.",
+      "useDictionary": "Use {name}",
+      "selectionHint": "Changes apply to new training. You can continue an already-started session."
     }
   },
   "wordDetails": {

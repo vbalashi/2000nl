@@ -1,5 +1,6 @@
 "use client";
 import { applyResolvedTheme } from "@/lib/preferences/resolvedTheme";
+import { AccountMaterialProvider } from "@/components/practice/material/AccountMaterialProvider";
 import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/AccountPracticeAppearanceProvider";
 
 import React from "react";
@@ -193,7 +194,9 @@ export function TrainingScreen(props: Props) {
   return (
     <ReadingPreferencesProvider userId={props.user.id}>
       <AccountPracticeAppearanceProvider userId={props.user.id}>
-        <TrainingScreenContent {...props} />
+        <AccountMaterialProvider userId={props.user.id}>
+          <TrainingScreenContent {...props} />
+        </AccountMaterialProvider>
       </AccountPracticeAppearanceProvider>
     </ReadingPreferencesProvider>
   );

@@ -260,3 +260,37 @@ local apply passes contract 184 and its bounded read probe (1,469ms); read-only
 verification retains 18,163 entries, 161,795 search fields, two learner states
 and zero review rows. Account Settings controls, selector adapters and the
 remaining approved screens/presentation are still pending; rollout is opt-in.
+
+## Account material Settings checkpoint — 2026-09-30
+
+The opt-in approved Settings surface now edits account-owned learning-language
+order/pause and dictionary enablement. A keyed account provider owns the accepted
+server snapshot and revision; it has no browser persistence or migration. Changes
+are non-optimistic, duplicate writes are guarded, stale/account-switched responses
+are ignored, and a conflict adopts the server winner without replaying the user's
+outdated change. Loading, save failure and catalog failure have distinct localized
+feedback. Focus/visibility refresh retrieves changes made on another device.
+
+The shared searchable picker adds canonical ISO learning-language codes, including
+languages without content, and uses a learning-specific footer. The last active
+language cannot be paused. Dictionary Settings uses the real authenticated readable
+catalog and entry counts; personal dictionaries remain enabled. Empty inventory is
+not substituted for a failed request. Existing all-readable catalog callers retain
+their behavior through a strict, abortable adapter rather than a global filter.
+Controls reuse Settings layout, text/colour roles, and EN/NL/RU messages. Pending
+writes preserve opener/control focus instead of disabling the focused element.
+
+Validation covers implicit catalog editing, canonical additions, ordering, last
+active protection, non-optimistic saves, duplicate prevention, conflict adoption,
+errors/retry, account switching, stale reads, real dictionary identity, personal
+inventory, modal focus and three interface locales. Typecheck, targeted lint and
+shared style guard pass. Browser QA verifies pause persistence after reload,
+dictionary switching and 320px layout with the largest account text profile
+(document width remains 320px). QA material preferences and text size were restored
+through their existing owners; no learning action or translation request was sent.
+
+This completes these Settings controls, not the full integration. Training/Library
+new-material selector adapters are next; existing-session resume must continue to
+use the readable catalog and the frozen server snapshot. Other approved screens,
+billing/general preference error handling and active-session presentation remain
+pending. Rollout remains opt-in; production deployment is unperformed.

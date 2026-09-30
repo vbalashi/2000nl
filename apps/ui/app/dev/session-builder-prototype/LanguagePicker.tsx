@@ -5,10 +5,12 @@ import { LanguagePicker as SharedLanguagePicker } from "@/components/practice/se
 /** The preview keeps its existing name values; the shared picker emits canonical identity. */
 export function LanguagePicker({
   title,
+  purpose,
   onChoose,
   onClose,
 }: {
   title: string;
+  purpose?: "learning" | "translation";
   onChoose: (name: string) => void;
   onClose: () => void;
 }) {
@@ -17,6 +19,7 @@ export function LanguagePicker({
     <SharedLanguagePicker
       title={title}
       language={language}
+      purpose={purpose}
       onChoose={(item) => onChoose(item.name)}
       onClose={onClose}
     />

@@ -16,12 +16,14 @@ export function LanguagePicker({
   title,
   language,
   selectedCode,
+  purpose = "translation",
   onChoose,
   onClose,
 }: {
   title: string;
   language: OnboardingLanguage;
   selectedCode?: string | null;
+  purpose?: "learning" | "translation";
   onChoose: (item: CatalogLanguage) => void;
   onClose: () => void;
 }) {
@@ -91,7 +93,9 @@ export function LanguagePicker({
           </button>
         )}
       </div>
-      <footer>{copy.footer}</footer>
+      <footer>
+        {purpose === "learning" ? copy.learningFooter : copy.footer}
+      </footer>
     </DialogSurface>
   );
 }

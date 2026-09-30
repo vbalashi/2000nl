@@ -175,34 +175,55 @@ export async function fetchUserLists(
 
 export async function fetchAvailableLearningLanguages(
   userId: string,
+  signal?: AbortSignal,
 ): Promise<AvailableLearningLanguage[]> {
-  const { data, error } = await supabase.rpc("get_available_learning_languages", {
+  const request = supabase.rpc("get_available_learning_languages", {
     p_user_id: userId,
   });
+  const { data, error } = await (signal
+    ? request.abortSignal(signal)
+    : request);
 
   if (error || !Array.isArray(data)) {
-    if (error) console.error("Error fetching available learning languages", error);
+    if (error)
+      console.error("Error fetching available learning languages", error);
     throw error ?? new Error("learning_languages_unavailable");
   }
 
   return data.map(mapAvailableLearningLanguage);
 }
 
+/** Strict catalog read for preference controls: failure is not an empty catalog. */
+export async function fetchAvailableDictionarySourcesStrict(
+  params: {
+    userId: string;
+    languageCode: string;
+  },
+  signal?: AbortSignal,
+): Promise<AvailableDictionarySource[]> {
+  const request = supabase.rpc("get_available_dictionary_sources", {
+    p_user_id: params.userId,
+    p_language_code: params.languageCode,
+  });
+  const { data, error } = await (signal
+    ? request.abortSignal(signal)
+    : request);
+  if (error || !Array.isArray(data))
+    throw error ?? new Error("dictionary_sources_unavailable");
+  return data.map(mapAvailableDictionarySource);
+}
+
+/** Preserve the legacy selector fallback; new settings use the strict boundary. */
 export async function fetchAvailableDictionarySources(params: {
   userId: string;
   languageCode: string;
 }): Promise<AvailableDictionarySource[]> {
-  const { data, error } = await supabase.rpc("get_available_dictionary_sources", {
-    p_user_id: params.userId,
-    p_language_code: params.languageCode,
-  });
-
-  if (error || !Array.isArray(data)) {
-    if (error) console.error("Error fetching available dictionary sources", error);
+  try {
+    return await fetchAvailableDictionarySourcesStrict(params);
+  } catch (error) {
+    console.error("Error fetching available dictionary sources", error);
     return [];
   }
-
-  return data.map(mapAvailableDictionarySource);
 }
 
 export async function fetchAvailableLists(

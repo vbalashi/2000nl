@@ -263,3 +263,25 @@
 .options button:last-child{border-right:0}
 .options button[aria-pressed=true]{background:var(--practice-selected);color:var(--practice-selected-text)}
 .subheading{font-size:var(--practice-text-small);font-weight:500;margin:22px 0 6px}
+
+/* Material controls share the existing settings typography and control roles. */
+.materialLanguages { list-style: none; padding: 0; margin: 12px 0; }
+.materialLanguages li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--practice-border); font-size: var(--practice-text-caption); }
+.materialLanguages li:last-child { border-bottom: 0; }
+.materialLanguages li > span { display: flex; align-items: baseline; min-width: 0; overflow-wrap: anywhere; }
+.materialLanguages small { color: var(--practice-text-muted); margin-right: 14px; flex-shrink: 0; }
+.materialActions { display: flex; gap: 8px; flex-shrink: 0; margin-left: auto; }
+.materialActions button, .materialAction { min-height: 28px; padding: 4px 10px; border: 1px solid var(--practice-control-border); border-radius: var(--practice-radius-control); background: var(--practice-surface); color: var(--practice-text-secondary); font-size: var(--practice-text-label); cursor: pointer; }
+.materialActions button { display: grid; place-items: center; }
+.materialAction { margin-top: 12px; }
+.materialFeedback { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; color: var(--practice-text-muted); font-size: var(--practice-text-label); line-height: 1.5; margin: 8px 0; }
+.materialFeedback .materialAction { margin-top: 0; }
+.materialDictionaryGroup { margin-top: 24px; }
+.materialDictionaryGroup .row { flex-direction: row; align-items: center; gap: 12px; }
+.materialToggle { width: 34px; height: 20px; border: 0; padding: 2px; flex-shrink: 0; border-radius: 12px; background: var(--practice-surface-hover); cursor: pointer; }
+.materialToggle span { display: block; width: 16px; height: 16px; background: var(--practice-surface); border-radius: 50%; box-shadow: 0 1px 3px var(--practice-shadow); transition: transform .15s var(--practice-motion); }
+.materialToggle[aria-checked=true] { background: var(--practice-accent); }
+.materialToggle[aria-checked=true] span { transform: translateX(14px); }
+.materialToggle:disabled, .materialToggle[aria-disabled=true], .materialActions button:disabled, .materialActions button[aria-disabled=true], .materialAction:disabled, .materialAction[aria-disabled=true] { opacity: .55; cursor: default; }
+@media(max-width:650px) { .materialLanguages li { border: 0; font-size: var(--practice-text-body); } }
+@media(prefers-reduced-motion:reduce) { .materialToggle span { transition: none; } }
