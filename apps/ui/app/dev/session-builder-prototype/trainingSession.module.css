@@ -105,3 +105,4 @@
 
 /* FLIP starts outside the compact answer-side header. Clip only after landing. */
 .prompt[data-moving=true]{overflow:visible}
+.secondaryActions>button svg{flex-shrink:0}

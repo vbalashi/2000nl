@@ -62,3 +62,11 @@ export function formatUiCount<Prefix extends string>(
   if (typeof template !== "string") throw new Error(`Missing count message: ${prefix}${suffix}`);
   return formatUiMessage(template, { count: new Intl.NumberFormat(language).format(count) });
 }
+
+/** Normalize display names without changing dictionary POS identity. */
+export function getPartOfSpeechLabel(language:OnboardingLanguage,part:string|null):string|null {
+ const aliases:Record<string,string>={noun:"zn",verb:"ww",adjective:"bn",adverb:"bw",preposition:"vz",pronoun:"vnw",numeral:"tw",article:"lidw",interjection:"tsw",conjunction:"vw",abbreviation:"afk",prefix:"vv"};
+ const catalog={en:en.partOfSpeech,nl:nl.partOfSpeech,ru:ru.partOfSpeech}[language];
+ const key=aliases[part??""]??part;
+ return key&&key in catalog?catalog[key as keyof typeof catalog]:part;
+}

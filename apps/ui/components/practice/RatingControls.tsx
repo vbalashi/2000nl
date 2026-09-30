@@ -1,6 +1,7 @@
 "use client";
 import React,{useLayoutEffect,useRef,useState} from "react";
 import {getTrainingRatingLabels} from "@/components/training/trainingHotkeys";
+import {getUiMessages} from "@/lib/uiMessages";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import s from "./ratingControls.module.css";
 export type Rating="Again"|"Hard"|"Good"|"Easy";
@@ -16,7 +17,7 @@ export function RatingControls({language="en",ink="tonal",marker="left",layout="
  },[language,height]);
  const displayedColumns=layout==="two"?2:columns;
  const displayedHeight=height==="adaptive"?(displayedColumns===2?28:46):height;
- return <div ref={ref} className={s.ratings} data-ink={ink} data-marker={marker} data-columns={displayedColumns} style={{"--rating-height":`${displayedHeight}px`} as React.CSSProperties} aria-label="Rate your answer">
+ return <div ref={ref} className={s.ratings} data-ink={ink} data-marker={marker} data-columns={displayedColumns} style={{"--rating-height":`${displayedHeight}px`} as React.CSSProperties} aria-label={getUiMessages(language).trainingSession.rate} lang={language}>
   <div ref={measure} className={s.measure} aria-hidden="true">{Object.values(labels).map(label=><span key={label}>{label}</span>)}</div>
   {(Object.entries(labels) as [Rating,string][]).map(([rating,label])=><button type="button" disabled={disabled} key={rating} data-rating={rating} onClick={()=>onRate(rating)}><span>{label}</span></button>)}
  </div>;
