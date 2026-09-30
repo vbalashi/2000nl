@@ -1,4 +1,5 @@
 "use client";
+import { useAccountMaterial } from "@/components/practice/material/AccountMaterialProvider";
 
 import { useCallback, useMemo, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
@@ -24,8 +25,20 @@ export function useLibraryHeadwordGroupSearch({
   translationLanguageCode,
   dictionaryId,
 }: Input) {
+  const material = useAccountMaterial();
+  const scoped = Boolean(material);
+  const scopeKey = JSON.stringify([
+    material?.userId,
+    material?.snapshot?.revision,
+    contentLanguageCode,
+    dictionaryId,
+    state.query,
+  ]);
+  const sameScope = !material || state.groupScopeKey === scopeKey;
   const requestSequenceRef = useRef(0);
-  const groupCursor = state.groupPageCursors[state.page - 1] ?? null;
+  const groupCursor = sameScope
+    ? (state.groupPageCursors[state.page - 1] ?? null)
+    : null;
   const selectedGroupResult = useMemo(
     () =>
       state.groupResults.find(
@@ -56,38 +69,74 @@ export function useLibraryHeadwordGroupSearch({
 
   const runGroupSearch = useCallback(
     async (query: string, requestId: number) => {
-      const result = await fetchPlatformV2LibraryGroupPage({
-        query,
-        cardTypeId: "word-to-definition",
-        contentLanguageCode,
-        translationTargetLanguageCode:
-          translationLanguageCode === "off" ? null : translationLanguageCode,
-        cursor: groupCursor,
-      });
+      let result;
+      try {
+        result = await fetchPlatformV2LibraryGroupPage({
+          query,
+          ...(scoped
+            ? {
+                libraryScope: {
+                  dictionaryIds: dictionaryId ? [dictionaryId] : null,
+                },
+              }
+            : {}),
+          cardTypeId: "word-to-definition",
+          contentLanguageCode,
+          translationTargetLanguageCode:
+            translationLanguageCode === "off" ? null : translationLanguageCode,
+          cursor: groupCursor,
+        });
+      } catch (cause) {
+        if (
+          scoped &&
+          groupCursor &&
+          cause instanceof Error &&
+          cause.name === "PlatformV2LibraryLookupError" &&
+          "kind" in cause &&
+          cause.kind === "invalid-cursor"
+        ) {
+          if (isCurrentSearch(requestId))
+            setState((current) => ({
+              ...current,
+              page: 1,
+              groupPageCursors: [null],
+              groupHasMore: false,
+              groupScopeKey: null,
+            }));
+          return false;
+        }
+        throw cause;
+      }
       if (!isCurrentSearch(requestId)) return false;
 
       const nextGroups = buildLibraryHeadwordGroupResults(result.groups).filter(
         (group) =>
+          scoped ||
           !dictionaryId ||
           group.group.dictionary.dictionaryId === dictionaryId,
       );
       setState((current) => {
-        const nextCursors = current.groupPageCursors.slice(0, current.page);
-        nextCursors[current.page] = result.nextGroupCursor;
+        const previousScope = !scoped || current.groupScopeKey === scopeKey;
+        const page = previousScope ? current.page : 1;
+        const nextCursors = previousScope
+          ? current.groupPageCursors.slice(0, page)
+          : [null];
+        nextCursors[page] = result.nextGroupCursor;
         const selectedStillVisible = nextGroups.find(
-          (group) =>
-            group.headwordGroupId === current.selectedHeadwordGroupId,
+          (group) => group.headwordGroupId === current.selectedHeadwordGroupId,
         );
         const selected = selectedStillVisible ?? nextGroups[0] ?? null;
         return {
           ...current,
           groupResults: nextGroups,
+          page,
+          groupScopeKey: scopeKey,
           groupPageCursors: nextCursors,
           groupHasMore: Boolean(result.nextGroupCursor),
           selectedHeadwordGroupId:
             current.detailSelection && !selectedStillVisible
               ? current.selectedHeadwordGroupId
-              : selected?.headwordGroupId ?? null,
+              : (selected?.headwordGroupId ?? null),
           wordResults: [],
           wordTotal: nextGroups.length,
           detailSelection:
@@ -96,7 +145,8 @@ export function useLibraryHeadwordGroupSearch({
               ? {
                   entryId: selected.selectedEntryId,
                   headword: selected.headword,
-                  contentLanguageCode: selected.group.dictionary.sourceLanguageCode,
+                  contentLanguageCode:
+                    selected.group.dictionary.sourceLanguageCode,
                 }
               : null),
         };
@@ -105,6 +155,8 @@ export function useLibraryHeadwordGroupSearch({
     },
     [
       contentLanguageCode,
+      scoped,
+      scopeKey,
       dictionaryId,
       groupCursor,
       isCurrentSearch,

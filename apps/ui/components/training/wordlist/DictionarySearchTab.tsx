@@ -1,4 +1,6 @@
 "use client";
+import { useLibraryMaterialSelection } from "@/components/practice/material/useLibraryMaterialSelection";
+import { getUiMessages } from "@/lib/uiMessages";
 
 import React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -171,7 +173,14 @@ export function DictionarySearchTab({
   );
 
   const searchLanguage = languageCode ?? language;
-  const selectedDictionary = dictionarySources.find(
+  const material = useLibraryMaterialSelection(open,searchLanguage,interfaceLanguage);
+  const materialEnabled = Boolean(material);
+  const materialCopy = getUiMessages(interfaceLanguage).materialPreferences;
+  const scopeLanguages = material ? material.languages : availableLanguages;
+  const scopeDictionaries = material ? material.dictionaries : dictionarySources;
+  const searchMaterialReady = !material || (material.status === "ready" && material.currentLanguageAllowed && (!dictionaryId || scopeDictionaries.some(item=>item.id===dictionaryId)));
+
+  const selectedDictionary = scopeDictionaries.find(
     (source) => source.id === dictionaryId,
   );
   const sourceLabel = selectedDictionary
@@ -205,9 +214,16 @@ export function DictionarySearchTab({
     [detailSelection, selectedGroupResult, useViewedListFilter, wordResults],
   );
 
+  const listPage = useViewedListFilter ? page : 1;
   const runSearch = useCallback(async () => {
     if (!open) return;
     const requestId = beginSearch();
+    if (!useViewedListFilter && !searchMaterialReady) {
+      updateSearchState({wordResults:[],groupResults:[],wordTotal:0,groupHasMore:false});
+      setSearchLoading(false);
+      setSearchError(null);
+      return;
+    }
     const hasQuery = Boolean(query.trim());
     if (!hasQuery && !useViewedListFilter) {
       updateSearchState({
@@ -236,7 +252,7 @@ export function DictionarySearchTab({
         viewedList?.type ?? "curated",
         {
           query: trimmedQuery,
-          page,
+          page: listPage,
           pageSize,
         },
       );
@@ -285,12 +301,13 @@ export function DictionarySearchTab({
     clearGroupSearch,
     isCurrentSearch,
     onSearchStateChange,
-    page,
+    listPage,
     query,
     updateSearchState,
     useViewedListFilter,
     runGroupSearch,
     searchLanguage,
+    searchMaterialReady,
     viewedList?.type,
     viewedListId,
   ]);
@@ -420,7 +437,7 @@ export function DictionarySearchTab({
   }, [language, open, searchState.languageCode, updateSearchState]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || materialEnabled) return;
     let cancelled = false;
     const loadSearchScope = async () => {
       try {
@@ -434,10 +451,10 @@ export function DictionarySearchTab({
     return () => {
       cancelled = true;
     };
-  }, [open, userId]);
+  }, [open, userId, materialEnabled]);
 
   useEffect(() => {
-    if (!open || !searchLanguage) return;
+    if (!open || materialEnabled || !searchLanguage) return;
     let cancelled = false;
     const loadSources = async () => {
       const sources = await fetchAvailableDictionarySources({
@@ -463,7 +480,19 @@ export function DictionarySearchTab({
     return () => {
       cancelled = true;
     };
-  }, [dictionaryId, open, searchLanguage, updateSearchState, userId]);
+  }, [dictionaryId, open, searchLanguage, updateSearchState, userId, materialEnabled]);
+
+  const activeLanguage = material?.languages[0]?.code;
+  const materialReady = material?.status === "ready";
+  const selectedSourceAvailable = !dictionaryId || scopeDictionaries.some(item=>item.id===dictionaryId);
+  useEffect(() => {
+    if (!open || !materialReady || useViewedListFilter) return;
+    if (!material?.currentLanguageAllowed && activeLanguage) {
+      updateSearchState({languageCode:activeLanguage,dictionaryId:null,page:1,groupPageCursors:[null],groupHasMore:false});
+    } else if (!selectedSourceAvailable) {
+      updateSearchState({dictionaryId:null,page:1,groupPageCursors:[null],groupHasMore:false});
+    }
+  },[open,materialReady,material?.currentLanguageAllowed,activeLanguage,selectedSourceAvailable,useViewedListFilter,updateSearchState]);
 
   useEffect(() => {
     void runSearch();
@@ -585,6 +614,10 @@ export function DictionarySearchTab({
           </label>
         </div>
 
+        {material && material.status !== "ready" && <p role={material.status === "error" ? "alert" : "status"}>
+          {material.status === "error" ? materialCopy.catalogError : materialCopy.loading}
+          {material.status === "error" && <button type="button" onClick={material.reload}>{materialCopy.retry}</button>}
+        </p>}
         <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-950/40">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Zoekbereik
@@ -603,12 +636,12 @@ export function DictionarySearchTab({
                     groupHasMore: false,
                   });
                 }}
-                disabled={useViewedListFilter}
+                disabled={useViewedListFilter || (Boolean(material) && !materialReady)}
                 className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
               >
-                {(availableLanguages.length
-                  ? availableLanguages
-                  : [{ code: searchLanguage, label: languageLabel(searchLanguage) }]
+                {(scopeLanguages.length
+                  ? scopeLanguages
+                  : material ? [] : [{ code: searchLanguage, label: languageLabel(searchLanguage) }]
                 ).map((option) => (
                   <option key={option.code} value={option.code}>
                     {option.label}
@@ -629,11 +662,11 @@ export function DictionarySearchTab({
                     groupHasMore: false,
                   });
                 }}
-                disabled={useViewedListFilter}
+                disabled={useViewedListFilter || (Boolean(material) && !materialReady)}
                 className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
               >
                 <option value="all">Alle bronnen</option>
-                {dictionarySources.map((source) => (
+                {scopeDictionaries.map((source) => (
                   <option key={source.id} value={source.id}>
                     {source.name}
                   </option>

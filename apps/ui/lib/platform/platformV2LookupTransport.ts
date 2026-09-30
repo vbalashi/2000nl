@@ -20,6 +20,7 @@ export async function requestPlatformV2Lookup(input: {
   body: PlatformLookupV2Request;
   signal?: AbortSignal;
   timeoutMs?: number;
+  libraryScope?: { dictionaryIds: string[] | null };
 }): Promise<PlatformV2LookupTransportResult> {
   const controller = new AbortController();
   const detach = forwardAbortSignal(input.signal, controller);
@@ -38,14 +39,14 @@ export async function requestPlatformV2Lookup(input: {
       throw new DOMException("Aborted", "AbortError");
     }
     const response = await platformFetchWithTimeout(
-      "/api/platform/v2/lookup",
+      input.libraryScope ? "/api/library/search" : "/api/platform/v2/lookup",
       {
       method: "POST",
       credentials: "same-origin",
       cache: "no-store",
       signal: controller.signal,
       headers,
-      body: JSON.stringify(input.body),
+      body: JSON.stringify({...input.body,...(input.libraryScope ? {dictionaryIds:input.libraryScope.dictionaryIds} : {})}),
       },
       input.timeoutMs,
     );

@@ -358,3 +358,37 @@ first-party Library search through this boundary and consume scoped pages direct
 connect active-language/source selectors without filtering retrieved groups. The
 approved Library visual adapter, other screens and active-session presentation
 remain pending. Production is not deployed.
+
+
+## Library scoped query integration checkpoint — 2026-09-30
+
+Approved-presentation Library dictionary searches now call a first-party API adapter
+for migration 185. The adapter derives the principal from authenticated server
+context, validates bounded query/dictionary inputs, and reuses the existing V2
+projection. Exact full-word reads, connected-client lookup and owned-collection
+browsing retain their existing readable boundaries. No browser user ID is trusted.
+
+Library language/source controls consume the account material provider and strict
+readable dictionary inventory. Paused languages and disabled sources are absent
+from new search choices. A paused local search language switches to the first
+active language without modifying account settings or an existing training run.
+Pending/failed material reads block new dictionary queries and expose retry.
+Server-scoped groups are consumed directly, preserving group-atomic pagination;
+legacy presentation remains compatible. Scope/revision changes reset the first
+page, and an invalid stale non-first-page cursor triggers one fresh first-page
+request. Open articles and collection membership are not rewritten by search.
+
+Validation: 86 tests across seven suites pass, covering first-party principal
+ownership, connected-client rejection, input/body bounds, ordinary lookup
+compatibility, scoped transport, source/language selection, pagination and stale
+cursor recovery. Typecheck, targeted lint, shared style guard and diff checks pass.
+Browser QA against the real local database searches `goed` and switches from all
+sources to VanDale Dutch, displaying its three headword groups and the shared
+article. No account preference, learner state, session or grading action was
+changed by this QA. Screenshot: `/tmp/407-library-scoped-search.png`.
+
+This completes search/material plumbing, not the approved Library shell. The
+legacy search layout and its remaining copy must still move to the approved
+Library presentation and EN/NL/RU catalogs. Statistics/history/mobile navigation,
+general preference and billing error states, and final active-session acceptance
+remain pending. Production rollout remains opt-in and unperformed.

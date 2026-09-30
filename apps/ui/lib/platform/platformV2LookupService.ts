@@ -1,3 +1,4 @@
+import type { LibrarySearchScope } from "./librarySearchScope";
 import type {
   CardTypeId,
   DictionaryLookupResult,
@@ -71,7 +72,13 @@ type RpcResult = {
 export async function performPlatformV2Lookup(
   context: PlatformV2LookupContext,
   request: PlatformLookupV2Request,
+  libraryScope?: LibrarySearchScope,
 ): Promise<PlatformV2LookupOperationResult> {
+  if (libraryScope && (
+    context.kind !== "authenticated" ||
+    context.auth.principal.authKind !== "first_party" ||
+    request.entryId || request.intent !== "dictionary-lookup"
+  )) return { payload: { error: "library_query_required" }, status: 403 };
   const timings: Array<{ name: string; durationMs: number }> = [];
   const serverTiming = () =>
     timings
@@ -95,10 +102,10 @@ export async function performPlatformV2Lookup(
         ok: true as const,
         query,
         result: await measure<RpcResult>(timings, "lookup.db", async () =>
-          await context.service.supabase.rpc("lookup_platform_v2_entries", {
+          await context.service.supabase.rpc(libraryScope ? "lookup_platform_v2_library_entries" : "lookup_platform_v2_entries", {
             p_user_id:
               context.kind === "authenticated" ? context.auth.user.id : null,
-            p_catalog: context.kind === "catalog",
+            ...(libraryScope ? {p_dictionary_ids:libraryScope.dictionaryIds} : {p_catalog:context.kind === "catalog"}),
             p_query: query,
             p_language_code: request.contentLanguageCode ?? null,
             p_cursor: request.cursor ?? null,

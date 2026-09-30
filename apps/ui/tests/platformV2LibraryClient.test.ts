@@ -427,3 +427,14 @@ describe("fetchPlatformV2LibraryGroupPage", () => {
     }
   });
 });
+
+test("scoped Library page uses the first-party endpoint, preserving scope and cursor",async()=>{
+ const fetchMock=vi.fn().mockResolvedValue(new Response(JSON.stringify(payload),{status:200}));vi.stubGlobal("fetch",fetchMock);
+ await fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,cursor:"scoped-cursor",libraryScope:{dictionaryIds:[]}});
+ expect(fetchMock.mock.calls[0][0]).toBe("/api/library/search");
+ expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual(expect.objectContaining({dictionaryIds:[],cursor:"scoped-cursor",intent:"dictionary-lookup"}));
+});
+test("an obsolete scoped cursor has a distinct recoverable error",async()=>{
+ vi.stubGlobal("fetch",vi.fn().mockResolvedValue(new Response(JSON.stringify({error:"invalid_cursor"}),{status:400})));
+ await expect(fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,cursor:"old",libraryScope:{dictionaryIds:null}})).rejects.toMatchObject({kind:"invalid-cursor",status:400});
+});

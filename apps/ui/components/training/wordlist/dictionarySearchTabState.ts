@@ -8,6 +8,7 @@ export type DictionarySearchTabState = {
   groupResults: LibraryHeadwordGroupResult[];
   groupPageCursors: Array<string | null>;
   groupHasMore: boolean;
+  groupScopeKey?: string | null;
   selectedHeadwordGroupId: string | null;
   wordTotal: number;
   page: number;
@@ -28,6 +29,7 @@ export const createDictionarySearchTabState = (): DictionarySearchTabState => ({
   groupResults: [],
   groupPageCursors: [null],
   groupHasMore: false,
+  groupScopeKey: null,
   selectedHeadwordGroupId: null,
   wordTotal: 0,
   page: 1,

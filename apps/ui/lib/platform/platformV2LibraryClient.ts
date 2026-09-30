@@ -17,6 +17,7 @@ type PlatformV2LibraryLookupInput = {
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   signal?: AbortSignal;
+  libraryScope?: { dictionaryIds: string[] | null };
 } & (
   | { query: string; entryId?: never; cursor?: string | null }
   | { entryId: string; query?: never; cursor?: never }
@@ -27,6 +28,7 @@ async function fetchPlatformV2LibraryLookup(
 ): Promise<PlatformLookupV2Response> {
   const result = await requestPlatformV2Lookup({
     signal: input.signal,
+    libraryScope: input.libraryScope,
     body: {
       ...(input.entryId !== undefined
         ? { entryId: input.entryId }
@@ -41,6 +43,10 @@ async function fetchPlatformV2LibraryLookup(
     },
   });
   if (result.state === "http-error") {
+    if (input.libraryScope && result.status === 400) {
+      const error = await result.response.json().catch(() => null);
+      if (error?.error === "invalid_cursor") throw new PlatformV2LibraryLookupError("invalid-cursor",400);
+    }
     throw new PlatformV2LibraryLookupError("http-error", result.status);
   }
   if (result.state === "contract-mismatch") {
@@ -51,7 +57,7 @@ async function fetchPlatformV2LibraryLookup(
 
 export class PlatformV2LibraryLookupError extends Error {
   constructor(
-    readonly kind: "http-error" | "contract-mismatch",
+    readonly kind: "http-error" | "contract-mismatch" | "invalid-cursor",
     readonly status?: number,
   ) {
     super(kind === "http-error" ? `lookup_http_${status}` : kind);
@@ -66,6 +72,7 @@ export async function fetchPlatformV2LibraryGroupPage(input: {
   translationTargetLanguageCode: string | null;
   cursor?: string | null;
   signal?: AbortSignal;
+  libraryScope?: { dictionaryIds: string[] | null };
 }): Promise<PlatformV2LibraryGroupPage> {
   const payload = await fetchPlatformV2LibraryLookup({
     ...input,

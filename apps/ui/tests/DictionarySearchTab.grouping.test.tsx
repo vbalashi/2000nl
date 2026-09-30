@@ -1,6 +1,6 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   createDictionarySearchTabState,
   DictionarySearchTab,
@@ -9,6 +9,9 @@ import {
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 
 const fetchGroupPage = vi.fn();
+const readableSources = vi.fn();
+vi.mock("@/lib/training/listService",()=>({fetchAvailableDictionarySourcesStrict:(...args:unknown[])=>readableSources(...args),fetchAvailableLearningLanguages:vi.fn()}));
+afterEach(()=>{vi.unstubAllEnvs();});
 
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
   fetchPlatformV2LibraryGroupPage: (...args: unknown[]) =>
@@ -146,11 +149,12 @@ const deferred = <T,>() => {
   return { promise, resolve, reject };
 };
 
-function Harness() {
+function Harness({initial = {}}: {initial?: Partial<DictionarySearchTabState>} = {}) {
   const [state, setState] = React.useState<DictionarySearchTabState>(() => ({
     ...createDictionarySearchTabState(),
     query: "goed",
     languageCode: "nl",
+    ...initial,
   }));
   return (
     <DictionarySearchTab
@@ -273,4 +277,53 @@ describe("DictionarySearchTab Headword Group results", () => {
     oldSearch.reject(new Error("lookup_http_503"));
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
   });
+});
+
+const scopeA="8746de41-779a-444d-be38-287efc416d8f",scopeB="8746de41-779a-444d-be38-287efc416d8a";
+const materialRepository=(paused=false)=>({
+ load:async()=>({revision:1,document:{schemaVersion:1 as const,learningLanguages:[{code:"nl",paused},{code:"en",paused:false}],disabledDictionaryIds:[scopeA]}}),
+ save:vi.fn(),languages:async()=>["nl","en"].map(code=>({code,label:code,dictionaryCount:2,curatedListCount:0,userListCount:0,hasTrainingEligibleLists:true})),
+});
+const source=(id:string,name:string)=>({id,name,languageCode:"nl",slug:name,kind:"curated",isEditable:false,entryCount:10});
+
+test("approved search choices exclude disabled material and changed source starts at the first scoped page",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([source(scopeA,"Disabled A"),source(scopeB,"Enabled B")]);
+ const group=goedGroup("enabled-b",scopeB,"Enabled B",[sense("entry-b","zn")]);
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[group],selectedTierComplete:true,nextGroupCursor:"next-scoped"});
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness/></AccountMaterialProvider>);
+ await screen.findByTestId("library-headword-group-enabled-b");
+ expect(screen.queryByRole("option",{name:"Disabled A"})).not.toBeInTheDocument();
+ expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:null},cursor:null}));
+ fireEvent.click(within(screen.getByTestId("library-group-pagination")).getByRole("button",{name:"Volgende"}));
+ await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor:"next-scoped"})));
+ fireEvent.change(screen.getByLabelText("Woordenboekbron"),{target:{value:scopeB}});
+ await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:[scopeB]},cursor:null})));
+ expect(screen.getByTestId("library-headword-group-enabled-b")).toBeInTheDocument();
+});
+
+test("a server cursor invalidated by another device restarts scoped search once",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+ fetchGroupPage.mockReset().mockRejectedValueOnce(Object.assign(new Error("invalid-cursor"),{name:"PlatformV2LibraryLookupError",kind:"invalid-cursor"})).mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness initial={{page:2,groupPageCursors:[null,"stale"],groupScopeKey:JSON.stringify(["user-1",1,"nl",null,"goed"])}}/></AccountMaterialProvider>);
+ await screen.findByTestId("library-headword-group-group-goed-main");
+ expect(fetchGroupPage.mock.calls[0][0].cursor).toBe("stale");
+ expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor:null}));
+ expect(fetchGroupPage).toHaveBeenCalledTimes(2);
+ expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+test("Library picks an active local search language without changing the training scope",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([]);
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[],selectedTierComplete:true,nextGroupCursor:null});
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository(true)}><Harness/></AccountMaterialProvider>);
+ await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalled());
+ expect(screen.getByLabelText("Leertaal")).toHaveValue("en");
+ expect(screen.queryByRole("option",{name:"Nederlands"})).not.toBeInTheDocument();
+ expect(fetchGroupPage.mock.calls.every(call=>call[0].contentLanguageCode==="en")).toBe(true);
 });
