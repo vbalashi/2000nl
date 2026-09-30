@@ -519,3 +519,6 @@
 -- First-party Library search material scope, applied before ranked pagination.
 \i db/migrations/185_library_material_lookup.sql
 \i db/migrations/186_library_entry_filters.sql
+
+-- Independent measured active card time (no scheduler mutation).
+\i db/migrations/187_training_active_time.sql

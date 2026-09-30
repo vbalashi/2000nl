@@ -607,3 +607,18 @@ exact-group reads are unchanged. The additive boundary does not write learner
 state, sessions or history. Install it with retaining apply and the checksummed
 manifest; do not recreate a populated database. The approved filter dialog/API
 adapter must explicitly opt into this new RPC before the behavior is visible.
+
+
+## Measured active card time (migration 187)
+
+Migration 187 adds independent private attention receipts and a coverage-start
+record, not a scheduler/review mutation. Authenticated RPCs derive the principal,
+verify owned latched entry/direction or exercise-target membership, bound duration
+and capture window, and serialize immutable measurement IDs. Exact retries do not
+add time; conflicts are rejected. Client/service roles have no direct table access.
+The read model splits recorded intervals at the learner-local 04:00 boundary and
+returns coverage metadata; empty joins explicitly filter missing receipt IDs.
+The checked-in manifest and forward/read-only probe chains include the exact
+migration checksum. Apply via retaining migration; no reset/import is required.
+Installing this boundary does not enable browser collection or accept the complete
+Statistics screen. Local preparation does not authorize production deployment.

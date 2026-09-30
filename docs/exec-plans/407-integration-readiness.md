@@ -660,3 +660,24 @@ study-day attribution and remaining real Statistics acceptance. Next: dedicated
 server duration storage with SQL ownership/replay tests, then integrate the ordinary,
 idiom and sentence owners before showing measured time. The broader approved
 Statistics and remaining #407 gates are still open. Production is not deployed.
+
+
+## Active-time server storage — 2026-09-30
+
+Dedicated duration storage and first-party write/read API now exist under migration
+187. Principal/session/member/family identities are validated in the database;
+retries replay immutable receipts, conflicting payloads do not add milliseconds.
+The bounded read model splits intervals at the persisted learner-local 04:00 day
+and carries measurement coverage metadata. No FSRS/action/session progress state
+is changed. The browser measurement hook is still unconnected, so this milestone
+does not imply live collection or completed Statistics presentation.
+
+264 disposable SQL/FSRS tests pass, including five new active-time storage cases;
+18 clock/hook/API checks and 19 deployment runner checks pass. Typecheck and targeted
+lint pass. Initial SQL tests exposed a NULL aggregate bug that inflated empty days
+and a reserved fixture alias; both are fixed and the suite rerun passed. Exact
+manifest/probe chains target contract 187. Retaining local apply passed without a
+reset; see `407-study-time-integration.md` for semantics and remaining integration.
+Next: bounded client delivery, actual ordinary/idiom/sentence readiness/overlay
+pause gates, then full approved Statistics with real historical read models.
+Production is not deployed; all other #407 acceptance gates remain open.
