@@ -878,11 +878,11 @@ test("search action opens the dedicated dictionary search surface", async () => 
   fireEvent.keyDown(window, { key: "s" });
 
   await screen.findByTestId("library-workspace");
-  await screen.findByPlaceholderText(/zoek in het woordenboek/i);
+  await screen.findByRole("textbox",{name:"Search words"});
   expect(screen.getByTestId("library-workspace")).toBeInTheDocument();
-  expect(screen.getByText(/Zoekt in VanDale woordenboek/i)).toBeInTheDocument();
-  expect(screen.getByText("Typ een woord om te zoeken")).toBeInTheDocument();
-  expect(screen.getByLabelText(/alleen deze lijst/i)).toBeInTheDocument();
+  expect(screen.getByText(/Searching All sources/i)).toBeInTheDocument();
+  expect(screen.getByText("Type a word to search")).toBeInTheDocument();
+  expect(screen.getByLabelText(/only this collection/i)).toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: "Zoeken" }),
   ).not.toBeInTheDocument();
@@ -2545,7 +2545,7 @@ test("superseded resume restores every still-permitted setup setting before Star
   expect(screen.getByLabelText("Collection")).toHaveValue(
     `user:${userOwnedList.id}`,
   );
-  expect(screen.getByLabelText("Source")).toHaveValue(
+  expect(screen.getByRole("combobox",{name:"Source"})).toHaveValue(
     "source:source-youtube-1",
   );
   expect(screen.getByLabelText("Time window")).toHaveValue("daysAgo");
@@ -2646,7 +2646,7 @@ test("pilot Setup applies source and date filters only when Start commits the dr
   fireEvent.change(screen.getByLabelText("Time window"), {
     target: { value: "today" },
   });
-  fireEvent.change(screen.getByLabelText("Source"), {
+  fireEvent.change(screen.getByRole("combobox",{name:"Source"}), {
     target: { value: "source:source-youtube-1" },
   });
   expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
@@ -2928,14 +2928,12 @@ test("dictionary search scope changes lookup language without changing training"
   await screen.findByRole("heading", { name: "huis" });
 
   fireEvent.keyDown(window, { key: "s" });
-  await screen.findByText("Zoekbereik");
+  await screen.findByText("Search scope");
 
-  const languageSelect = screen.getByLabelText("Leertaal");
+  const languageSelect = screen.getByRole("combobox",{name:"Language"});
   fireEvent.change(languageSelect, { target: { value: "en" } });
 
-  const queryInput = await screen.findByPlaceholderText(
-    /zoek in het woordenboek/i,
-  );
+  const queryInput = await screen.findByRole("textbox",{name:"Search words"});
   fireEvent.change(queryInput, { target: { value: "bank" } });
 
   await waitFor(() =>
@@ -2970,19 +2968,19 @@ test("dictionary search can create a private user dictionary entry", async () =>
     fireEvent.keyDown(window, { key: "s" });
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "Eigen entry toevoegen" }),
+      await screen.findByRole("button", { name: "Add entry" }),
     );
-    fireEvent.change(screen.getByLabelText("Hoofdwoord"), {
+    fireEvent.change(screen.getByLabelText("Headword"), {
       target: { value: "gedoe" },
     });
-    fireEvent.change(screen.getByLabelText("Definitie"), {
+    fireEvent.change(screen.getByLabelText("Definition"), {
       target: { value: "lastige situatie" },
     });
-    fireEvent.change(screen.getByLabelText("Vertaling"), {
+    fireEvent.change(screen.getByLabelText("Translation"), {
       target: { value: "hassle" },
     });
     fireEvent.click(
-      screen.getByRole("button", { name: "Opslaan in mijn woordenboek" }),
+      screen.getByRole("button", { name: "Save to my dictionary" }),
     );
 
     await waitFor(() =>
@@ -3000,7 +2998,7 @@ test("dictionary search can create a private user dictionary entry", async () =>
       "user-1",
     );
     expect(
-      await screen.findByText("Eigen entry toegevoegd aan mijn woordenboek."),
+      await screen.findByText("Entry added to my dictionary."),
     ).toBeInTheDocument();
     expect(screen.getAllByText("gedoe").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/My dictionary/i).length).toBeGreaterThan(0);
@@ -3053,9 +3051,7 @@ test("dictionary lookup preserves an open entry with an explicit stale-detail la
     await screen.findByRole("heading", { name: "huis" });
     fireEvent.keyDown(window, { key: "s" });
 
-    const queryInput = await screen.findByPlaceholderText(
-      /zoek in het woordenboek/i,
-    );
+    const queryInput = await screen.findByRole("textbox",{name:"Search words"});
     fireEvent.change(queryInput, { target: { value: "huis" } });
     await screen.findByText("Details");
 
@@ -3064,7 +3060,7 @@ test("dictionary lookup preserves an open entry with an explicit stale-detail la
     await screen.findByText("boom");
     expect(
       await screen.findByText(
-        "Deze entry is bewaard terwijl de zoekresultaten veranderden.",
+        "This entry stays open while search results change.",
       ),
     ).toBeInTheDocument();
   } finally {
@@ -3101,9 +3097,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
     await screen.findByRole("heading", { name: "huis" });
     fireEvent.keyDown(window, { key: "s" });
 
-    const queryInput = await screen.findByPlaceholderText(
-      /zoek in het woordenboek/i,
-    );
+    const queryInput = await screen.findByRole("textbox",{name:"Search words"});
     fireEvent.change(queryInput, { target: { value: "ste" } });
     await waitFor(() =>
       expect(searchDictionaryGroups).toHaveBeenCalledWith(
@@ -3170,9 +3164,7 @@ test("dictionary lookup preserves server Headword Group order", async () => {
   await screen.findByRole("heading", { name: "huis" });
   fireEvent.keyDown(window, { key: "s" });
 
-  const queryInput = await screen.findByPlaceholderText(
-    /zoek in het woordenboek/i,
-  );
+  const queryInput = await screen.findByRole("textbox",{name:"Search words"});
   fireEvent.change(queryInput, { target: { value: "huis" } });
 
   const exact = await screen.findByRole("button", {
@@ -3196,17 +3188,17 @@ test("dictionary lookup empty state names the dictionary source search", async (
     await screen.findByRole("heading", { name: "huis" });
     fireEvent.keyDown(window, { key: "s" });
     fireEvent.change(
-      await screen.findByPlaceholderText(/zoek in het woordenboek/i),
+      await screen.findByRole("textbox",{name:"Search words"}),
       {
         target: { value: "zzzz" },
       },
     );
 
     expect(
-      await screen.findByText("Geen woordenboekresultaten gevonden."),
+      await screen.findByText("No matching words"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/De zoekopdracht in VanDale woordenboek vond niets/i),
+      screen.getByText("No matches in All sources."),
     ).toBeInTheDocument();
   } finally {
     restoreDefaultSearchResults();
@@ -3389,7 +3381,7 @@ test("search detail trains a selected entry as the next card without changing ac
 
     fireEvent.keyDown(window, { key: "s" });
     fireEvent.change(
-      await screen.findByPlaceholderText(/zoek in het woordenboek/i),
+      await screen.findByRole("textbox",{name:"Search words"}),
       {
         target: { value: "boom" },
       },
@@ -3454,7 +3446,7 @@ test("keeps the current V2 card when a selected-word warm fails", async () => {
 
     fireEvent.keyDown(window, { key: "s" });
     fireEvent.change(
-      await screen.findByPlaceholderText(/zoek in het woordenboek/i),
+      await screen.findByRole("textbox",{name:"Search words"}),
       { target: { value: "boom" } },
     );
     await screen.findAllByText("boom");
@@ -3523,7 +3515,7 @@ test("search detail copies a trusted entry into the user dictionary", async () =
 
     fireEvent.keyDown(window, { key: "s" });
     fireEvent.change(
-      await screen.findByPlaceholderText(/zoek in het woordenboek/i),
+      await screen.findByRole("textbox",{name:"Search words"}),
       {
         target: { value: "huis" },
       },
@@ -3576,7 +3568,7 @@ test("next-card override is one-shot and normal training resumes after review", 
 
     fireEvent.keyDown(window, { key: "s" });
     fireEvent.change(
-      await screen.findByPlaceholderText(/zoek in het woordenboek/i),
+      await screen.findByRole("textbox",{name:"Search words"}),
       {
         target: { value: "boom" },
       },

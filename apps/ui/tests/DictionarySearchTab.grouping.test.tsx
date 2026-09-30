@@ -149,7 +149,7 @@ const deferred = <T,>() => {
   return { promise, resolve, reject };
 };
 
-function Harness({initial = {}}: {initial?: Partial<DictionarySearchTabState>} = {}) {
+function Harness({initial = {},locale="nl"}: {initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru"} = {}) {
   const [state, setState] = React.useState<DictionarySearchTabState>(() => ({
     ...createDictionarySearchTabState(),
     query: "goed",
@@ -162,7 +162,7 @@ function Harness({initial = {}}: {initial?: Partial<DictionarySearchTabState>} =
       userId="user-1"
       language="nl"
       translationLang="en"
-      interfaceLanguage="nl"
+      interfaceLanguage={locale}
       userLists={[]}
       viewedListId={null}
       viewedList={null}
@@ -269,7 +269,7 @@ describe("DictionarySearchTab Headword Group results", () => {
       });
 
     render(<Harness />);
-    fireEvent.change(screen.getByPlaceholderText("Zoek in het woordenboek..."), {
+    fireEvent.change(screen.getByRole("textbox",{name:"Woorden zoeken"}), {
       target: { value: "gracht" },
     });
 
@@ -326,4 +326,20 @@ test("Library picks an active local search language without changing the trainin
  expect(screen.getByLabelText("Leertaal")).toHaveValue("en");
  expect(screen.queryByRole("option",{name:"Nederlands"})).not.toBeInTheDocument();
  expect(fetchGroupPage.mock.calls.every(call=>call[0].contentLanguageCode==="en")).toBe(true);
+});
+
+
+test("approved Library copy and grouped rows follow interface locale without changing entry selection",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1","true");
+ fetchGroupPage.mockResolvedValue({groups:[homographGroup],nextGroupCursor:null});
+ const view=render(<Harness locale="en"/>);
+ const row=await screen.findByTestId("library-headword-group-group-goed-homograph");
+ expect(row).toHaveTextContent("noun");expect(row).toHaveTextContent("1 meaning");
+ expect(screen.getByRole("textbox",{name:"Search words"})).toHaveValue("goed");
+ view.rerender(<Harness locale="ru"/>);
+ expect(screen.getByRole("textbox",{name:"Поиск слов"})).toHaveValue("goed");
+ expect(await screen.findByTestId("library-headword-group-group-goed-homograph")).toHaveTextContent("существительное");
+ expect(row).toHaveTextContent("1 значение");expect(row).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByRole("button",{name:"Добавить запись"})).toBeInTheDocument();
+ expect(screen.getByRole("button",{name:"Далее"})).toBeDisabled();
 });

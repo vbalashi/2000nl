@@ -1,6 +1,10 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import { getUiMessages } from "@/lib/uiMessages";
+import theme from "@/components/practice/ui/practiceTheme.module.css";
+import workspace from "@/components/practice/library/libraryWorkspace.module.css";
 import {
   createDictionarySearchTabState,
   DictionarySearchTab,
@@ -13,10 +17,7 @@ import type {
   WordListSummary,
 } from "@/lib/types";
 
-const copy: Record<
-  OnboardingLanguage,
-  { title: string; eyebrow: string }
-> = {
+const copy: Record<OnboardingLanguage, { title: string; eyebrow: string }> = {
   nl: {
     title: "Bibliotheek",
     eyebrow: "Woorden, bronnen en collecties",
@@ -67,6 +68,7 @@ export function LibraryDestination({
     [lists],
   );
   const text = copy[interfaceLanguage];
+  const approved = sharedArticlePresentationV1Enabled();
 
   return (
     <section
@@ -75,16 +77,27 @@ export function LibraryDestination({
     >
       <div
         data-testid="library-workspace"
-        className="mx-auto flex min-h-0 w-full max-w-[1200px] flex-1 flex-col px-4 pb-4 pt-5 sm:px-6 md:px-8"
+        className={
+          approved
+            ? `${theme.theme} ${workspace.workspace}`
+            : "mx-auto flex min-h-0 w-full max-w-[1200px] flex-1 flex-col px-4 pb-4 pt-5 sm:px-6 md:px-8"
+        }
+        data-colour-mode={approved ? "app" : undefined}
       >
-        <div className="mb-4 flex-none">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
-            {text.eyebrow}
-          </p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-950 dark:text-white">
-            {text.title}
+        {approved ? (
+          <h1 className="sr-only">
+            {getUiMessages(interfaceLanguage).library.title}
           </h1>
-        </div>
+        ) : (
+          <div className="mb-4 flex-none">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+              {text.eyebrow}
+            </p>
+            <h1 className="mt-1 text-2xl font-bold text-slate-950 dark:text-white">
+              {text.title}
+            </h1>
+          </div>
+        )}
         <div className="min-h-0 flex-1 overflow-hidden">
           <DictionarySearchTab
             open={open}

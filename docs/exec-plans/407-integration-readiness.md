@@ -392,3 +392,44 @@ legacy search layout and its remaining copy must still move to the approved
 Library presentation and EN/NL/RU catalogs. Statistics/history/mobile navigation,
 general preference and billing error states, and final active-session acceptance
 remain pending. Production rollout remains opt-in and unperformed.
+
+
+## Shared Library results and copy checkpoint — 2026-09-30
+
+`components/practice/library/LibraryResultList` owns the approved compact word
+rows and list surface. Production grouped Library and the prototype now use this
+one renderer: shared reading/UI fonts, WordIdentity article treatment, POS colours,
+core-vocabulary indicators and localized sense counts. Prototype-only density,
+listing/count placement and double-click experiments remain explicit presentation
+props. Obsolete row/list rules were removed from the prototype stylesheet.
+Production retains exact group identity, homograph numbers, dictionary ownership,
+selection and ordering. Multiple-source pages keep source names visible, including
+at narrow widths; source labels are user/provider content and are not translated.
+
+The approved Library workspace drops the extra heading and outer search frame;
+its rows, search field, scope controls and pagination consume shared semantic
+fonts/colours. The actual article, forms, relations and actions retain their
+existing production adapters. Search/custom-entry UI labels, validation, errors,
+empty states, navigation and page/group counts use the existing EN/NL/RU catalogs.
+Changing interface locale preserves query and selected entry. The placeholder
+now promises word search, matching the current headword/form lookup boundary.
+
+Validation: 93 tests in six suites pass, including the existing 70 TrainingScreen
+characterizations, grouped pagination/state and locale switching, shared-row
+article/content-language and select/expand intents, and catalog/parameter/plural
+parity. A subsequent 22-test focused regression passes after indicator/source and
+CSS cleanup. Typecheck, targeted lint, shared style guard and diff checks pass.
+Browser QA verifies the reference prototype and real local `goed` groups/article,
+320px layout, mobile article selection, and the largest account reading profile.
+At 320px the document width remains 320px; overflowing rows scroll within the
+list and pagination stays outside it. The pre-existing Increased desktop profile
+was restored after QA; no learning action or material preference was changed.
+Screenshot: `/tmp/407-library-shared-list.png`.
+
+Library migration is still incomplete: extract/connect the approved filter dialog
+with server POS/article filtering before pagination; replace the temporary inline
+Language/Source selects; adapt owned-collection rows and entry-editor layout for
+short/large-text screens. The inherited personal-entry translation editor still
+hardcodes EN and needs an explicit language-owner binding; this checkpoint does
+not claim it is resolved. Remaining Statistics/history/mobile navigation and
+active-session acceptance gates are unchanged. Production is not deployed.

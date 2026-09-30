@@ -1,0 +1,165 @@
+.list {
+  background: var(--practice-surface);
+  border: 1px solid var(--practice-border);
+  border-radius: 14px;
+  overflow: hidden;
+  color: var(--practice-text);
+  font-family: var(--practice-font-ui);
+}
+.row {
+  width: 100%;
+  min-height: 50px;
+  padding: 10px 14px;
+  display: grid;
+  gap: 5px;
+  border: 0;
+  border-bottom: 1px solid var(--practice-border);
+  background: var(--practice-surface);
+  text-align: left;
+  color: inherit;
+  position: relative;
+  transition: background 0.15s;
+}
+.row:last-child {
+  border-bottom: 0;
+}
+.row:hover {
+  background: var(--practice-surface-hover);
+}
+.row[aria-pressed="true"] {
+  background: var(--practice-canvas);
+}
+.row:focus-visible,
+.list:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: -2px;
+}
+.word {
+  font-family: var(--practice-font-reading);
+  font-size: var(--practice-text-title-sm);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.word sup {
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-label);
+  color: var(--practice-text-muted);
+  margin-left: 5px;
+}
+.metadata {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  font-size: var(--practice-text-label);
+  line-height: 1.5;
+  color: var(--practice-text-muted);
+}
+.pos {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.pos i {
+  height: 5px;
+  width: 5px;
+  background: var(--practice-text-muted);
+  border-radius: 50%;
+  flex: none;
+}
+.pos:is([data-part="noun"], [data-part="zn"]) i {
+  background: var(--practice-info);
+}
+.pos:is([data-part="verb"], [data-part="ww"]) i {
+  background: var(--practice-danger);
+}
+.pos:is([data-part="adjective"], [data-part="bn"]) i {
+  background: var(--practice-success);
+}
+.pos:is([data-part="adverb"], [data-part="bw"]) i {
+  background: var(--practice-warning);
+}
+.pos:is([data-part="preposition"], [data-part="vz"]) i {
+  background: var(--practice-accent);
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 5px;
+  min-height: 18px;
+  background: var(--practice-canvas);
+  color: var(--practice-text-muted);
+  border-radius: 5px;
+  font-weight: 500;
+}
+.count {
+  font-variant-numeric: tabular-nums;
+}
+.count::before {
+  content: "·";
+  margin-right: 6px;
+}
+.preview {
+  font-size: var(--practice-text-caption);
+  line-height: 1.5;
+  color: var(--practice-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.list[data-listing="metadata"] .count,
+.list:not([data-listing="preview"]) .preview {
+  display: none;
+}
+.list[data-density="reading"] .row {
+  min-height: 72px;
+  padding-block: 12px;
+}
+.list[data-has-detail="true"] :is(.source, .preview) {
+  display: none;
+}
+.list[data-count-position="edge"][data-has-detail="false"] .row {
+  padding-right: 110px;
+}
+.list[data-count-position="edge"][data-has-detail="false"] .count {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.list[data-count-position="edge"][data-has-detail="false"] .count::before {
+  content: none;
+}
+@media (max-width: 700px) {
+  .row {
+    min-height: 64px;
+  }
+  .source,
+  .preview {
+    display: none;
+  }
+  .list[data-count-position="edge"][data-has-detail="false"] .row {
+    padding-right: 14px;
+  }
+  .list[data-count-position="edge"][data-has-detail="false"] .count {
+    position: static;
+    transform: none;
+  }
+  .list[data-count-position="edge"][data-has-detail="false"] .count::before {
+    content: "·";
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    transition: none;
+  }
+}
+
+.list > div:not(:last-child) .row {
+  border-bottom: 1px solid var(--practice-border);
+}
+
+.list[data-show-source="true"] .source {
+  display: inline;
+}

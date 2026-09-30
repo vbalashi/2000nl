@@ -2,7 +2,7 @@
 import React,{useContext,useState,useEffect,useRef} from "react";
 import {Search,SlidersHorizontal,X} from "lucide-react";
 import {goedGroups} from "./GoedLibraryPreview";
-import {LibraryArticle,Metadata,LibraryButton} from "./LibraryArticle";
+import {LibraryArticle,LibraryButton} from "./LibraryArticle";
 import {DemoCollectionsProvider} from "./LibraryOverlays";
 import {LibraryStudyPanel} from "./LibraryStudyPanel";
 import {LibraryStudy,studyDefaults,readStudy,studyUrl} from "./libraryStudy";
@@ -12,6 +12,7 @@ import additionalEntries from "./library-extra-fixture.json";
 import {getUiMessages,formatUiCount} from "@/lib/uiMessages";
 import {InterfaceLanguageContext} from "./VariantControls";
 import s from "./library.module.css";
+import {LibraryResultList,LibraryResultRow} from "@/components/practice/library/LibraryResultList";
 import {LibraryFilters,defaultLibraryFilter,matchesLibraryFilter,libraryFilterSummary} from "./LibraryFilters";
 import {detailGroups} from "./LibraryWordDetails";
 const words=[
@@ -52,7 +53,7 @@ export function LibraryPrototype(){
  <div ref={toolbarRef} className={s.searchToolbar}><div className={s.searchRow}><label className={s.search}><Search size={18}/><input aria-label={copy.search} placeholder={copy.searchPlaceholder} value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button aria-label={copy.clearSearch} onClick={()=>setQuery("")}><X size={16}/></button>}</label><button className={`${s.filterButton} ${filters?s.active:""}`} aria-label={copy.filters} aria-haspopup="dialog" aria-expanded={filters} data-filtered={filter.source!=="All sources"||filter.parts.length>0||filter.language!=="Dutch"||undefined} onClick={()=>setFilters(!filters)}><SlidersHorizontal size={17}/></button></div>
 
  <div className={s.scope}><span>{libraryFilterSummary(filter,locale)}</span><span>{formatUiCount(locale,results.length,copy,"entry")}</span></div></div>
- <div className={`${s.workspace} ${word?s.hasDetail:""}`}><div className={s.list} tabIndex={0} aria-label={copy.entries}>{results.map(w=>{const m=toModel(w);return <button key={`${w.word}-${w.pos}`} className={s.row} aria-pressed={selected===`${w.word}-${w.pos}`} title={copy.rowHint} onClick={()=>{const id=`${w.word}-${w.pos}`;setExpandAll(v=>({expanded:false,revision:v.revision+1}));setSelected(id);}} onDoubleClick={()=>{if(window.matchMedia("(min-width:701px)").matches)setExpandAll(v=>({expanded:true,revision:v.revision+1}));}}><span className={s.rowMain}><span lang="nl" className={s.word}>{w.article&&<span>{w.article} </span>}{w.word}</span></span><span className={s.listMeta}><Metadata pos={w.pos} core={m.coreVocabularyLabel}/><span className={s.listSource}>· {w.source}</span><span className={s.count} aria-label={formatUiCount(locale,m.senseCount,copy,"meaning")} title={formatUiCount(locale,m.senseCount,copy,"meaning")}>{formatUiCount(locale,m.senseCount,copy,"meaning")}</span></span>{study.listing==="preview"&&<span lang="nl" className={s.snippet}>{w.definition}</span>}</button>})}{!results.length&&<div className={s.empty}><h2>{copy.noWords}</h2><LibraryButton onClick={()=>{setQuery("");setFilter(defaultLibraryFilter);}}>{copy.clearFilters}</LibraryButton></div>}</div>
+ <div className={`${s.workspace} ${word?s.hasDetail:""}`}><LibraryResultList language={locale} density={variant} listing={study.listing} countPosition={study.countPosition} hasDetail={Boolean(word)}>{results.map(w=>{const m=toModel(w);return <LibraryResultRow key={`${w.word}-${w.pos}`} headword={w.word} article={w.article} parts={[w.pos]} core={m.coreVocabularyLabel} source={w.source} meaningCount={m.senseCount} contentLanguage="nl" language={locale} selected={selected===`${w.word}-${w.pos}`} preview={w.definition} onSelect={()=>{const id=`${w.word}-${w.pos}`;setExpandAll(v=>({expanded:false,revision:v.revision+1}));setSelected(id);}} onExpandAll={()=>{if(window.matchMedia("(min-width:701px)").matches)setExpandAll(v=>({expanded:true,revision:v.revision+1}));}}/>})}{!results.length&&<div className={s.empty}><h2>{copy.noWords}</h2><LibraryButton onClick={()=>{setQuery("");setFilter(defaultLibraryFilter);}}>{copy.clearFilters}</LibraryButton></div>}</LibraryResultList>
  {word&&<LibraryArticle key={`${word.word}-${word.pos}`} expandAll={expandAll} model={toModel(word)} source={word.source} study={study} onClose={()=>setSelected(null)}/>}
  </div>
  {filters&&<LibraryFilters layout={study.filterLayout} value={filter} sources={Array.from(new Set(words.map(w=>w.source)))} count={next=>searched.filter(w=>matchesLibraryFilter(w,next)).length} onClose={()=>setFilters(false)} onApply={next=>{setFilter(next);setFilters(false);}}/>}
