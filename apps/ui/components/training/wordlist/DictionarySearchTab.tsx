@@ -1285,6 +1285,12 @@ export function DictionarySearchTab({
         >
           {detailSelection ? (
             <div className="flex h-full min-h-0 flex-col">
+              {approved ? (
+                <div className={detailEntryInCurrentResults ? workspace.srOnly : workspace.detailNotice}>
+                  <h2>{copy.details}</h2>
+                  {!detailEntryInCurrentResults ? <p>{copy.retainedEntry}</p> : null}
+                </div>
+              ) : (
               <div className="border-b border-slate-100 bg-slate-50 px-5 py-2 text-xs dark:border-slate-800 dark:bg-slate-900">
                 <div className="font-semibold text-slate-700 dark:text-slate-200">
                   {copy.details}
@@ -1295,6 +1301,7 @@ export function DictionarySearchTab({
                   </div>
                 ) : null}
               </div>
+              )}
               <div className="min-h-0 flex-1">
                 <LibraryWordDetail
                   entryId={detailSelection.entryId}

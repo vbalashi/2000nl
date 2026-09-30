@@ -7,6 +7,8 @@ import {ProductionArticleReading} from "@/components/practice/article/Production
 import {ArticleWordForms,ArticleSenseRelations} from "@/components/practice/article/ArticleWordDetails";
 import {commonWordForms,wordFormDetail,lexicalRelationDetail} from "@/components/practice/article/wordDetailsPresentation";
 import reading from "@/components/practice/article/articleContent.module.css";
+import articleActions from "@/components/practice/article/articleActions.module.css";
+import surfaces from "@/components/practice/article/articleSurfaces.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -242,7 +244,7 @@ export function LibrarySenseCardGroup({
   return (
     <section
       data-testid="library-sense-card-group"
-      className="relative flex h-full flex-col overflow-hidden bg-slate-50 font-sense-sans text-slate-900 [container-type:inline-size] dark:bg-[#11151d] dark:text-slate-100"
+      className={`relative flex h-full flex-col overflow-hidden [container-type:inline-size] ${approvedArticle ? surfaces.group : "bg-slate-50 font-sense-sans text-slate-900 dark:bg-[#11151d] dark:text-slate-100"}`}
     >
       <header className="shrink-0 px-4 pb-5 pt-4 sm:px-7">
         <SenseCardHeadwordLockup
@@ -304,10 +306,10 @@ export function LibrarySenseCardGroup({
                   <article
                     key={reference.crossReferenceId}
                     data-testid={`library-cross-reference-${reference.crossReferenceId}`}
-                    className="relative rounded-[22px] border border-slate-300 bg-white px-5 py-5 shadow-sm dark:border-slate-600 dark:bg-[#20252f]"
+                    className={`relative px-5 py-5 ${approvedArticle ? surfaces.card : "rounded-[22px] border border-slate-300 bg-white shadow-sm dark:border-slate-600 dark:bg-[#20252f]"}`}
                   >
                     {reference.displayOrdinal != null ? (
-                      <span className="absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center bg-slate-50 font-mono text-xs font-semibold text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300">
+                      <span className={`absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center ${approvedArticle ? surfaces.ordinal : "bg-slate-50 font-mono text-xs font-semibold text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300"}`}>
                         {reference.displayOrdinal}
                       </span>
                     ) : null}
@@ -450,12 +452,12 @@ function MeaningCard({
       data-entry-id={meaning.entryId}
       data-expanded={state.expanded ? "true" : "false"}
       onClick={activateCard}
-      className={`relative rounded-[22px] border border-slate-300 bg-white px-[clamp(1rem,4cqw,1.25rem)] shadow-sm outline-none transition-[padding,border-color,box-shadow] duration-300 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-[#20252f] dark:shadow-none ${
+      className={`relative px-[clamp(1rem,4cqw,1.25rem)] outline-none transition-[padding,border-color,box-shadow] duration-300 ease-out motion-reduce:transition-none ${approvedArticle ? surfaces.card : "rounded-[22px] border border-slate-300 bg-white shadow-sm focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-[#20252f] dark:shadow-none"} ${
         state.expanded ? "pb-3 pt-4" : "py-2.5"
       }`}
     >
       {meaning.displayOrdinal != null ? (
-        <span className="absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center bg-slate-50 font-mono text-xs font-semibold text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300">
+        <span className={`absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center ${approvedArticle ? surfaces.ordinal : "bg-slate-50 font-mono text-xs font-semibold text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300"}`}>
           {meaning.displayOrdinal}
         </span>
       ) : null}
@@ -608,6 +610,56 @@ function MeaningCard({
             ) : null}</>}
 
 
+            {approvedArticle ? (
+              <div data-testid="library-primary-actions" className={articleActions.group}>
+                {onTrainNext ? (
+                  <button
+                    type="button"
+                    className={articleActions.primary}
+                    onClick={() => {
+                      onActiveMeaningChange?.(meaning.entryId);
+                      onTrainNext(meaning);
+                    }}
+                  >
+                    {t("senseCard.training.next")}
+                  </button>
+                ) : null}
+                <div data-testid="library-service-actions" className={articleActions.row}>
+                  {onOpenCollections ? (
+                    <button
+                      type="button"
+                      className={articleActions.quiet}
+                      onClick={() => {
+                        onActiveMeaningChange?.(meaning.entryId);
+                        onOpenCollections(meaning);
+                      }}
+                    >
+                      <ListIcon className="h-3.5 w-3.5" />
+                      {t("senseCard.collections.label")}
+                      {collectionCount > 0 ? ` · ${collectionCount}` : ""}
+                    </button>
+                  ) : null}
+                  <span className={articleActions.spacer} />
+                  {meaning.startLearning ? (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className={articleActions.quiet}
+                      onClick={() => onAction(meaning.startLearning!)}
+                    >
+                      {t(meaning.startLearning.messageKey)}
+                    </button>
+                  ) : null}
+                  <KnownAction
+                    meaning={meaning}
+                    interfaceLanguage={interfaceLanguage}
+                    busy={busy}
+                    onAction={onAction}
+                    approved
+                  />
+                </div>
+              </div>
+            ) : <>
             <div
               data-testid="library-primary-actions"
               className="mt-4 grid grid-cols-[minmax(0,3fr)_minmax(7.5rem,1fr)] gap-2 text-xs"
@@ -664,6 +716,7 @@ function MeaningCard({
                 onAction={onAction}
               />
             </div>
+            </>}
             {translationState ? (
               <div
                 role={translationState === "failed" ? "alert" : "status"}
@@ -698,13 +751,31 @@ function KnownAction({
   interfaceLanguage,
   busy,
   onAction,
+  approved = false,
 }: {
   meaning: LibrarySenseCardModel;
   interfaceLanguage: OnboardingLanguage;
   busy: boolean;
   onAction: (capability: LibraryMutationCapability) => void;
+  approved?: boolean;
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
+  if (approved && (meaning.undoKnown || meaning.markKnown)) {
+    const capability = meaning.undoKnown ?? meaning.markKnown!;
+    return (
+      <button
+        type="button"
+        disabled={busy}
+        data-state={meaning.undoKnown ? "known" : undefined}
+        className={articleActions.quiet}
+        onClick={() => onAction(capability)}
+      >
+        {meaning.undoKnown
+          ? `${t("senseCard.known.marked")} · ${t(capability.messageKey)}`
+          : `✓ ${t(capability.messageKey)}`}
+      </button>
+    );
+  }
   if (meaning.undoKnown) {
     return (
       <button

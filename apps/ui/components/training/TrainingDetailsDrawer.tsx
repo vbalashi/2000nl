@@ -3,6 +3,8 @@
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { WordDetailsHeader } from "./WordDetailsHeader";
+import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import sheet from "@/components/practice/article/wordDetailsSheet.module.css";
 
 type Props = {
   open: boolean;
@@ -87,20 +89,21 @@ export function TrainingDetailsDrawer({
 
   if (!open) return null;
 
+  const approved = sharedArticlePresentationV1Enabled();
   const overlayOpacity = Math.max(0.1, 0.3 - swipeOffset / 700);
 
   return (
     <div className="fixed inset-0 z-40">
       <div
-        className="absolute inset-0 bg-black/30"
-        style={{ opacity: overlayOpacity }}
+        className={`absolute inset-0 ${approved ? sheet.backdrop : "bg-black/30"}`}
+        style={{ opacity: approved ? overlayOpacity / 0.3 : overlayOpacity }}
         onClick={onClose}
         aria-hidden="true"
       />
 
       <div className="absolute inset-y-0 right-0 w-full max-w-full sm:w-[460px]">
         <div
-          className="relative flex h-full flex-col bg-white shadow-2xl dark:bg-slate-900"
+          className={`relative flex h-full flex-col ${approved ? sheet.panel : "bg-white shadow-2xl dark:bg-slate-900"}`}
           style={{
             transform: swipeOffset ? `translateX(${swipeOffset}px)` : undefined,
             transition: swipeEngaged ? "none" : "transform 200ms ease-out",

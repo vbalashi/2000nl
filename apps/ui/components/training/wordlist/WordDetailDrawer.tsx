@@ -6,6 +6,8 @@ import type {
 import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { WordDetailsHeader } from "../WordDetailsHeader";
+import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import sheet from "@/components/practice/article/wordDetailsSheet.module.css";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 
 type Props = {
@@ -59,12 +61,12 @@ export function WordDetailDrawer({
   return (
     <div className="absolute inset-0 z-30">
       <div
-        className="absolute inset-0 bg-black/20"
+        className={`absolute inset-0 ${sharedArticlePresentationV1Enabled() ? sheet.backdrop : "bg-black/20"}`}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      <div className="absolute inset-y-0 right-0 flex w-full max-w-full flex-col overflow-hidden bg-white shadow-2xl dark:bg-slate-900 sm:w-[460px]">
+      <div className={`absolute inset-y-0 right-0 flex w-full max-w-full flex-col overflow-hidden sm:w-[460px] ${sharedArticlePresentationV1Enabled() ? sheet.panel : "bg-white shadow-2xl dark:bg-slate-900"}`}>
         <WordDetailsHeader onClose={onClose} interfaceLanguage={interfaceLanguage} />
         <div className="min-h-0 flex-1">
           <LibraryWordDetail

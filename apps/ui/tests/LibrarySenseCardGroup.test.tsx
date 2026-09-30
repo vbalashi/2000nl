@@ -212,6 +212,38 @@ describe("LibrarySenseCardGroup", () => {
     expect(screen.queryByText("7")).not.toBeInTheDocument();
   });
 
+  test("approved article groups the same actions as primary + quiet row", () => {
+    vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+    try {
+      const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
+      const markKnown = model.meanings[1].markKnown;
+      const onOpenCollections = vi.fn(), onTrainNext = vi.fn(), onAction = vi.fn();
+      render(
+        <LibrarySenseCardGroup
+          model={{ ...model, meanings: [{ ...model.meanings[0], markKnown }, model.meanings[1]] }}
+          interfaceLanguage="en"
+          collectionCounts={{ "entry-bank-furniture": 2 }}
+          onOpenCollections={onOpenCollections}
+          onTrainNext={onTrainNext}
+          onAction={onAction}
+        />,
+      );
+      const card = screen.getByTestId("library-sense-card-entry-bank-furniture");
+      const actions = within(card).getByTestId("library-primary-actions");
+      const quietRow = within(actions).getByTestId("library-service-actions");
+      const trainNext = within(actions).getAllByRole("button")[0];
+      expect(quietRow).not.toContainElement(trainNext);
+      expect(within(quietRow).getByRole("button", { name: "Collections · 2" })).toBeInTheDocument();
+      fireEvent.click(trainNext);
+      expect(onTrainNext).toHaveBeenCalledWith(expect.objectContaining({ entryId: "entry-bank-furniture" }));
+      fireEvent.click(within(quietRow).getByRole("button", { name: /Mark as known/ }));
+      expect(onAction).toHaveBeenCalledWith(markKnown);
+      expect(actions.innerHTML).not.toMatch(/slate|indigo|emerald/);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   test("keeps Library actions and never renders Training grading controls", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
     const markKnown = model.meanings[1].markKnown;

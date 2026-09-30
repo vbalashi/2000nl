@@ -1,0 +1,50 @@
+/* Approved word-details sheet chrome (Library and Training drawers). */
+.backdrop {
+  background: var(--practice-backdrop);
+}
+.panel {
+  background: var(--practice-surface);
+  color: var(--practice-text);
+  box-shadow: 0 24px 90px var(--practice-shadow);
+}
+.header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--practice-border);
+  background: var(--practice-surface);
+}
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-small);
+  font-weight: 550;
+  color: var(--practice-text-secondary);
+}
+.close {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--practice-border);
+  border-radius: 50%;
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+  font-size: var(--practice-text-lead);
+  cursor: pointer;
+}
+.close:hover {
+  background: var(--practice-surface-hover);
+}
+.close:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}

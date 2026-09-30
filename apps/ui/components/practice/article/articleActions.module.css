@@ -1,0 +1,73 @@
+/* Approved article actions: primary + quiet row (owner defaults: slim, toolbar). */
+.group {
+  display: grid;
+  gap: 4px;
+  margin-top: var(--practice-space-section);
+  font-family: var(--practice-font-ui);
+}
+.primary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid var(--practice-border);
+  border-radius: 9px;
+  background: var(--practice-surface-hover);
+  color: var(--practice-text);
+  font: inherit;
+  font-size: var(--practice-text-caption);
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.primary::after,
+.quiet::after {
+  content: "";
+  position: absolute;
+  inset: -8px 0;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.spacer {
+  flex: 1;
+  min-width: 0;
+}
+.quiet {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--practice-text-label);
+  color: var(--practice-text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.quiet:hover {
+  color: var(--practice-text-secondary);
+}
+.quiet[data-state="known"] {
+  color: var(--practice-success);
+}
+.primary:disabled,
+.quiet:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.primary:focus-visible,
+.quiet:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}

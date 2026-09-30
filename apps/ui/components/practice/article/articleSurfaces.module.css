@@ -1,0 +1,23 @@
+/* Approved article surfaces shared by Library and the Training word panel. */
+.group {
+  background: var(--practice-surface);
+  color: var(--practice-text);
+  font-family: var(--practice-font-ui);
+}
+.card {
+  border: 1px solid var(--practice-border);
+  border-radius: 11px;
+  background: var(--practice-surface);
+  box-shadow: none;
+}
+.card:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+.ordinal {
+  background: var(--practice-surface);
+  color: var(--practice-text-muted);
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-label);
+  font-variant-numeric: tabular-nums;
+}
