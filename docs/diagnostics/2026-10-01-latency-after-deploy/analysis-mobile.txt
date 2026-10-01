@@ -1,0 +1,63 @@
+answers=22, session-complete=2, timeouts=0
+dwell   500ms: transition.total n=7 p50=331 p95=596 max=596; renewal rate 0.00
+dwell  3000ms: transition.total n=7 p50=362 p95=1585 max=1585; renewal rate 0.00
+dwell  8000ms: transition.total n=8 p50=435 p95=662 max=662; renewal rate 0.00
+with renewal    : n=0
+without renewal : n=22 p50=357 p95=662 max=1585
+review.mutation         n=22 p50=341 p95=645 max=1564
+review.mutation.request n=22 p50=322 p95=626 max=1544
+next-card.lookup (renewal) n=0
+card.render             n=22 p50=14 p95=17 max=20
+--- per-answer API requests: server timing (ms)
+/api/platform/v1/audio/resolve auth-miss                       miss-rate=0.00 n=1
+/api/platform/v1/audio/resolve cfExtPri                        n=1 p50=0 p95=0 max=0
+/api/platform/v1/audio/resolve client-total                    n=1 p50=113 p95=113 max=113
+/api/platform/v1/audio/resolve route.total                     n=1 p50=3 p95=3 max=3
+/api/platform/v2/actions auth-miss                             miss-rate=0.00 n=22
+/api/platform/v2/actions auth.cache-hit                        n=22 p50=1 p95=1 max=3
+/api/platform/v2/actions cfExtPri                              n=22 p50=0 p95=0 max=0
+/api/platform/v2/actions client-total                          n=22 p50=320 p95=625 max=1543
+/api/platform/v2/actions route.auth                            n=22 p50=1 p95=1 max=3
+/api/platform/v2/actions route.operation                       n=22 p50=244 p95=575 max=1496
+/api/platform/v2/actions route.total                           n=22 p50=246 p95=579 max=1499
+/api/platform/v2/lookup auth-miss                              miss-rate=0.00 n=1
+/api/platform/v2/lookup auth.cache-hit                         n=1 p50=1 p95=1 max=1
+/api/platform/v2/lookup cfExtPri                               n=1 p50=0 p95=0 max=0
+/api/platform/v2/lookup client-total                           n=1 p50=793 p95=793 max=793
+/api/platform/v2/lookup lookup.cross-references                n=1 p50=0 p95=0 max=0
+/api/platform/v2/lookup lookup.exact-group                     n=1 p50=580 p95=580 max=580
+/api/platform/v2/lookup lookup.projection-input                n=1 p50=3 p95=3 max=3
+/api/platform/v2/lookup lookup.translations                    n=1 p50=102 p95=102 max=102
+/api/platform/v2/lookup lookup.user-state                      n=1 p50=145 p95=145 max=145
+/api/platform/v2/lookup route.auth                             n=1 p50=1 p95=1 max=1
+/api/platform/v2/lookup route.operation                        n=1 p50=728 p95=728 max=728
+/api/platform/v2/lookup route.total                            n=1 p50=732 p95=732 max=732
+/api/training/study-time auth-miss                             miss-rate=0.00 n=45
+/api/training/study-time cfExtPri                              n=45 p50=0 p95=0 max=0
+/api/training/study-time client-total                          n=45 p50=149 p95=486 max=918
+requests per answer n=22 p50=4 p95=5 max=6
+--- per-answer direct Supabase requests (ms)
+POST get_next_training_session_card                            n=16 p50=133 p95=190 max=190
+POST get_detailed_training_stats                               n=1 p50=1093 p95=1093 max=1093
+--- session start click→first card: n=3 p50=3842 p95=7914 max=7914
+  POST get_next_training_session_card                          n=6 p50=167 p95=428 max=428
+  POST /api/platform/v2/lookup                                 n=6 p50=413 p95=1479 max=1479
+  POST get_detailed_training_stats                             n=4 p50=1154 p95=4511 max=4511
+  POST /api/platform/v1/audio/resolve                          n=4 p50=261 p95=686 max=686
+  GET /api/tts                                                 n=4 p50=136 p95=138 max=138
+  POST update_active_training_scope                            n=3 p50=121 p95=166 max=166
+  POST start_training_session                                  n=3 p50=1826 p95=6168 max=6168
+  POST get_training_session_plan                               n=2 p50=477 p95=1140 max=1140
+  POST /api/training/study-time                                n=1 p50=191 p95=191 max=191
+--- page load → Start visible: n=1 p50=2074 p95=2074 max=2074
+  GET /rest/v1/user_settings                                   n=3 p50=217 p95=365 max=365
+  POST get_available_word_lists                                n=2 p50=195 p95=438 max=438
+  POST get_available_learning_languages                        n=2 p50=249 p95=284 max=284
+  POST get_learning_preferences                                n=1 p50=369 p95=369 max=369
+  POST get_active_training_scope                               n=1 p50=192 p95=192 max=192
+  POST get_training_filter_sources                             n=1 p50=195 p95=195 max=195
+  POST get_training_scenarios                                  n=1 p50=294 p95=294 max=294
+  POST get_available_dictionary_sources                        n=1 p50=332 p95=332 max=332
+  POST get_word_list_summary                                   n=1 p50=125 p95=125 max=125
+  GET /api/settings/material                                   n=1 p50=417 p95=417 max=417
+  GET /api/training/setups                                     n=1 p50=430 p95=430 max=430
