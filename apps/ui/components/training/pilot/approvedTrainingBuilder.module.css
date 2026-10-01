@@ -347,14 +347,14 @@
 }
 
 /* Direction cards share the reference's divided heading and reading hierarchy. */
-.direction { display:grid; grid-template-rows:auto 1fr auto 1fr; min-height:200px; padding:10px; gap:6px; }
+.direction { display:grid; grid-template-rows:auto 1fr auto 1fr; min-height:172px; padding:10px; gap:6px; }
 .directionHeading { border-bottom:1px solid var(--practice-control-border); padding-bottom:8px; }
 .directionArrow { justify-self:center; color:var(--practice-text-muted); }
 .prompt { font-size:var(--practice-reading-literary); margin-top:0; align-self:center; }
 .answer { font-size:var(--practice-reading-body); align-self:center; }
 /* Keep independent, bounded cards when the available row becomes narrow. */
 .directions { display: flex; flex-wrap: wrap; gap: 12px; }
-.direction { flex: 1 1 calc((100% - 12px) / 2); min-width: min(100%, 170px); max-width: 244px; min-height: 200px; }
+.direction { flex: 1 1 calc((100% - 12px) / 2); min-width: min(100%, 170px); max-width: 244px; min-height: 172px; }
 .prompt, .answer { overflow-wrap: anywhere; }
 
 .activity summary::-webkit-details-marker { display: none; }
