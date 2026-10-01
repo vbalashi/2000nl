@@ -47,3 +47,43 @@ for (const width of [402, 1024]) {
     await page.close();
   });
 }
+
+test("moving question starts at the face origin and unlocks ratings only after arrival", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await setupAuthenticatedTrainingAttributionPage(page, 0, { visualProfile: "answer" });
+  await page.getByRole("button", { name: /Training starten|Start training|Начать тренировку/i }).click();
+  const stage = page.getByTestId("training-sense-card-stage");
+  const heading = stage.getByRole("heading", { level: 2 });
+  const origin = await heading.evaluate(node => node.parentElement!.getBoundingClientRect().toJSON());
+  await page.getByRole("button", { name: /Show answer|Antwoord tonen|Показать ответ/i }).click();
+  const overlay = page.locator("[data-training-reveal-overlay]");
+  await expect(overlay).toHaveCount(1);
+  const initial = await overlay.evaluate(node => ({ left: parseFloat((node as HTMLElement).style.left), top: parseFloat((node as HTMLElement).style.top), opacity: getComputedStyle(node).opacity }));
+  expect(initial.left).toBeCloseTo(origin.left, 1);
+  expect(initial.top).toBeCloseTo(origin.top, 1);
+  expect(initial.opacity).toBe("1");
+  const again = page.getByRole("button", { name: /Again|Opnieuw|Снова/i });
+  await expect(again).toBeDisabled();
+  await expect(overlay).toHaveCount(0);
+  await expect(again).toBeEnabled();
+  await expect(heading).toBeVisible();
+  await expect(again).toBeFocused();
+});
+
+test("reverse definition moves as the same question, with reduced-motion bypass", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/dev/sense-card-gate?prototype=reading&mode=reverse&clean=1");
+  const question = await page.getByTestId("reverse-prompt").textContent();
+  await page.getByRole("button", { name: "Antwoord tonen", exact: true }).click();
+  const overlay = page.locator("[data-training-reveal-overlay]");
+  await expect(overlay).toHaveText(question!);
+  await expect(overlay).toHaveCount(0);
+  await expect(page.getByTestId("training-sense-card-stage")).toHaveAttribute("data-side", "answer");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.reload();
+  await page.getByRole("button", { name: "Antwoord tonen", exact: true }).click();
+  await expect(overlay).toHaveCount(0);
+  await expect(page.getByTestId("training-sense-card-stage")).not.toHaveAttribute("data-reveal-moving", "true");
+});

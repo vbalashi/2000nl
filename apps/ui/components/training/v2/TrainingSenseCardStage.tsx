@@ -12,6 +12,7 @@ import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout"
 import { senseCardQuietAction } from "../SenseCardChrome";
 import approvedCard from "../approvedTrainingCard.module.css";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
+import { useTrainingPromptReveal } from "@/components/practice/ui/useTrainingPromptReveal";
 import {
   TrainingCardAnswerHeader as EntityHeader,
   TrainingCardAnswerBody as AnswerBody,
@@ -110,6 +111,23 @@ export function TrainingSenseCardStage({
   );
   const listeningMode = mode === "listen-recognize";
   const approvedPresentation = trainingPresentationV1Enabled();
+  const revealContentId = contextPrompt?.contentNodeId ?? reversePrompt?.contentNodeId;
+  const revealTranslation = Boolean(contextPrompt);
+  const revealSource = React.useCallback((root: HTMLElement) =>
+    mode === "definition-to-word"
+      ? root.querySelector<HTMLElement>('[data-testid="reverse-prompt"]')
+      : root.querySelector<HTMLElement>('[data-testid="sense-card-headword-lockup"] h2')?.parentElement ?? null,
+  [mode]);
+  const revealTarget = React.useCallback((root: HTMLElement) => {
+    if (mode !== "definition-to-word") return root.querySelector<HTMLElement>('[data-testid="sense-card-headword-lockup"] h2')?.parentElement ?? null;
+    const content = Array.from(root.querySelectorAll<HTMLElement>("[data-content-node-id]"))
+      .find(node => node.dataset.contentNodeId === revealContentId);
+    return content?.querySelector<HTMLElement>(revealTranslation ? '[data-content-translation="true"]' : ":scope > div > p") ?? null;
+  }, [mode, revealContentId, revealTranslation]);
+  const { capture, moving } = useTrainingPromptReveal({ root: stageRef, revealed: answerVisible,
+    enabled: approvedPresentation && !listeningMode, identity: model.entryId,
+    source: revealSource, target: revealTarget });
+  const revealAnswer = React.useCallback(() => { capture(); onSideChange("answer"); }, [capture, onSideChange]);
 
   React.useEffect(() => {
     if (!focusOnMount) return;
@@ -130,16 +148,19 @@ export function TrainingSenseCardStage({
       ),
     );
     window.requestAnimationFrame(() => {
-      if (answerVisible) {
+      if (answerVisible && !moving) {
         primaryAnswerActionRef.current?.focus();
       } else showAnswerRef.current?.focus();
     });
-  }, [answerVisible, t]);
+  }, [answerVisible, t, moving]);
+  React.useEffect(() => {
+    if (answerVisible && !moving) primaryAnswerActionRef.current?.focus();
+  }, [answerVisible, moving]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (areTrainingHotkeysSuspended()) return;
-      if (event.metaKey || event.ctrlKey || event.altKey || busy) {
+      if (event.metaKey || event.ctrlKey || event.altKey || busy || moving) {
         return;
       }
       const targetInsideStage =
@@ -153,7 +174,7 @@ export function TrainingSenseCardStage({
         targetInsideStage
       ) {
         event.preventDefault();
-        onSideChange(answerVisible ? "face" : "answer");
+        if (answerVisible) onSideChange("face"); else revealAnswer();
         return;
       }
       const key = event.key.toLowerCase();
@@ -185,7 +206,7 @@ export function TrainingSenseCardStage({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [answerVisible, busy, hint, model, onAction, onSideChange, toggleHint]);
+  }, [answerVisible, busy, moving, hint, model, onAction, onSideChange, revealAnswer, toggleHint]);
 
   return (
     <section
@@ -194,6 +215,7 @@ export function TrainingSenseCardStage({
       aria-label={t("senseCard.training.cardChanged")}
       data-testid="training-sense-card-stage"
       data-side={answerVisible ? "answer" : "face"}
+      data-reveal-moving={moving ? "true" : undefined}
       data-visual-spec={approvedPresentation ? "training-approved-v1" : "training-v1.0"}
       className={trainingStageClassName()}
     >
@@ -228,7 +250,7 @@ export function TrainingSenseCardStage({
               }
               translationLabel={t("senseCard.translation.request")}
               audioLabel={t("senseCard.audio.play")}
-              busy={busy}
+              busy={busy || moving}
               moreLabel={t("senseCard.wordDetails.open")}
               onPlayAudio={onPlayAudio}
               onToggleTranslation={() => {
@@ -258,7 +280,7 @@ export function TrainingSenseCardStage({
             mode={mode}
             interfaceLanguage={interfaceLanguage}
             onPlayAudio={onPlayAudio}
-            busy={busy}
+            busy={busy || moving}
             contentLabel={t("senseCard.training.content")}
           />
         ) : (
@@ -304,7 +326,7 @@ export function TrainingSenseCardStage({
           <AnswerDock
             model={model}
             mode={mode}
-            busy={busy}
+            busy={busy || moving}
             interfaceLanguage={interfaceLanguage}
             primaryActionRef={primaryAnswerActionRef}
             onAction={onAction}
@@ -323,7 +345,7 @@ export function TrainingSenseCardStage({
             hideHintLabel={t("senseCard.hint.hide")}
             showAnswerLabel={t("senseCard.answer.show")}
             onToggleHint={toggleHint}
-            onShowAnswer={() => onSideChange("answer")}
+            onShowAnswer={revealAnswer}
             showAnswerRef={showAnswerRef}
             onAction={onAction}
             reportAction={reportAction}

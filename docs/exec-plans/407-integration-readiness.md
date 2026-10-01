@@ -894,3 +894,27 @@ moving-prompt reveal has therefore not yet been integrated on the approved worki
 Training path. Next implement and verify this seam, including reverse/context
 prompts, reduced motion, focus and grading lock; then continue live-data and the
 remaining zoom/landscape/keyboard/word-sheet matrix. No final rollout sign-off.
+
+## Working meaning-card reveal — 2026-10-01
+
+The approved `TrainingSenseCardStage` now captures the visible question before the
+side change. A non-interactive, aria-hidden snapshot starts at that exact rect in
+the first frame and moves to the answer's matching word/definition in 420ms. The
+answer content fades in after arrival; grading and its hotkeys stay blocked during
+movement, then focus goes to the first available action. Context-word prompts
+resolve their latched example translation by content-node identity. No controller,
+lookup, scheduling, capability identity or learning mutation changed.
+
+The shared presentation hook owns only the temporary motion layer/lock: reduced
+motion or a missing target skips movement; cancellation, resizing and unmount
+restore visibility/remove the snapshot. Failed animation execution falls back to a
+usable answer. Existing flag-off presentation stays immediate.
+
+Validation: typecheck, targeted lint, unchanged style ratchet; 83 stage/session/
+motion tests, including first-frame origin, grade lock, reduced motion, cancel,
+unmount and unsupported animation. Four browser cases prove direct/reverse
+motion, initial snapshot origin/opacity, arrival/focus and reduced-motion bypass,
+plus retained 402/1024px dock bounds. Browser uses transport or dev fixtures, not
+live state-write proof. Context translation target selection needs a dedicated
+browser scenario, and idiom/sentence `TrainingExerciseCard` still needs the same
+transition seam. The entire accepted reveal scope is not yet complete.
