@@ -6,7 +6,8 @@ import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import s from "@/components/practice/library/libraryOverlays.module.css";
-import { X } from "lucide-react";
+import { getUiMessages } from "@/lib/uiMessages";
+import { Plus, X } from "lucide-react";
 import type {
   EntryLearningListMembership,
   WordListSummary,
@@ -50,11 +51,14 @@ export function LibraryCollectionsPicker({
   const titleId = React.useId();
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [query, setQuery] = React.useState("");
+  const [creating, setCreating] = React.useState(false);
+  const copy = getUiMessages(interfaceLanguage).collections;
   const [newListName, setNewListName] = React.useState("");
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
 
   React.useEffect(() => {
     if (!open) return;
+    setCreating(false);
     setQuery("");
     setNewListName("");
   }, [open]);
@@ -83,51 +87,7 @@ export function LibraryCollectionsPicker({
         list.name.toLocaleLowerCase().includes(normalizedQuery)),
   );
 
-  const content = (
-      <section
-        role={approved ? undefined : "dialog"}
-        aria-modal={approved ? undefined : true}
-        aria-labelledby={titleId}
-        className={approved ? `${s.sheet} ${s.production}` : "flex max-h-[min(680px,calc(100dvh-2rem))] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-2xl dark:border-slate-600 dark:bg-[#20252f]"}
-      >
-        <header data-dialog-part="heading" className="flex items-start gap-4 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">
-              {headword}
-            </p>
-            <h2
-              id={titleId}
-              className="mt-1 text-xl font-semibold text-slate-950 dark:text-white"
-            >
-              {t("senseCard.collections.title")}
-            </h2>
-            <p className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">
-              {definition}
-            </p>
-          </div>
-          <button
-            type="button"
-            aria-label={platformV2Message(interfaceLanguage, "common.close")}
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-600 transition hover:bg-slate-200 dark:bg-[#171b22] dark:text-slate-300 dark:hover:bg-slate-700"
-          >
-            {approved ? <X aria-hidden="true" size={18} /> : "×"}
-          </button>
-        </header>
-
-        <div data-dialog-part="fields" className="space-y-3 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
-          <label className="block">
-            <span className="sr-only">{t("senseCard.collections.search")}</span>
-            <input
-              ref={searchRef}
-              autoFocus
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t("senseCard.collections.search")}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-[#171b22] dark:text-slate-100"
-            />
-          </label>
-          <form
+  const createForm = (<form
             className="flex gap-2"
             onSubmit={(event) => {
               event.preventDefault();
@@ -138,6 +98,7 @@ export function LibraryCollectionsPicker({
             }}
           >
             <input
+              autoFocus={approved}
               value={newListName}
               aria-label={t("senseCard.collections.createPlaceholder")}
               onChange={(event) => setNewListName(event.target.value)}
@@ -151,7 +112,54 @@ export function LibraryCollectionsPicker({
             >
               {t("senseCard.collections.create")}
             </button>
-          </form>
+          </form>);
+
+  const content = (
+      <section
+        role={approved ? undefined : "dialog"}
+        aria-modal={approved ? undefined : true}
+        aria-labelledby={titleId}
+        className={approved ? `${s.sheet} ${s.production}` : "flex max-h-[min(680px,calc(100dvh-2rem))] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-2xl dark:border-slate-600 dark:bg-[#20252f]"}
+      >
+        <header data-dialog-part="heading" className="flex items-start gap-4 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
+          <div className="min-w-0 flex-1">
+            <p className={approved ? "sr-only" : "text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300"}>
+              {headword}
+            </p>
+            <h2
+              id={titleId}
+              className="mt-1 text-xl font-semibold text-slate-950 dark:text-white"
+            >
+              {approved ? copy.title : t("senseCard.collections.title")}
+            </h2>
+            <p className={approved ? "sr-only" : "mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400"}>
+              {definition}
+            </p>
+          </div>
+          <button
+            type="button"
+            aria-label={platformV2Message(interfaceLanguage, "common.close")}
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-600 transition hover:bg-slate-200 dark:bg-[#171b22] dark:text-slate-300 dark:hover:bg-slate-700"
+          >
+            {approved ? <X aria-hidden="true" size={18} /> : "×"}
+          </button>
+        </header>
+
+        {approved ? <p className={s.hint}>{copy.hint}</p> : null}
+        <div data-dialog-part="fields" className="space-y-3 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
+          <label className="block">
+            <span className="sr-only">{t("senseCard.collections.search")}</span>
+            <input
+              ref={searchRef}
+              autoFocus
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("senseCard.collections.search")}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-[#171b22] dark:text-slate-100"
+            />
+          </label>
+          {!approved ? createForm : null}
         </div>
 
         <div data-dialog-part="body" role={approved ? "region" : undefined} aria-label={approved ? t("senseCard.collections.title") : undefined} tabIndex={approved ? 0 : undefined} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
@@ -215,6 +223,13 @@ export function LibraryCollectionsPicker({
             </p>
           ) : null}
         </div>
+
+        {approved ? <div className={s.creation}>
+          {creating ? createForm : <button type="button" disabled={editingBlocked}
+            onClick={() => { setNewListName(query); setCreating(true); }}>
+            <Plus aria-hidden="true" size={15} />{copy.new}
+          </button>}
+        </div> : null}
 
         <footer data-dialog-part="footer" className="flex min-h-12 items-center justify-between gap-3 border-t border-slate-200 px-5 py-3 dark:border-slate-700">
           <p role="status" className="text-xs text-emerald-700 dark:text-emerald-300">

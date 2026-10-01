@@ -84,3 +84,19 @@ describe("membership read recovery", () => {
     expect(create).not.toHaveBeenCalled();expect(toggle).not.toHaveBeenCalled();
   });
 });
+
+test("approved picker opens creation on demand and keeps its existing callback", () => {
+  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value() { this.open = true; } });
+  Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value() { this.open = false; } });
+  const create = vi.fn();
+  render(<LibraryCollectionsPicker open headword="huis" definition="a house" interfaceLanguage="en"
+    userLists={[]} memberships={[]} busyListId={null} status={null}
+    onClose={vi.fn()} onToggleList={vi.fn()} onCreateList={create} />);
+  expect(screen.queryByPlaceholderText("New collection name")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /New collection/i }));
+  fireEvent.change(screen.getByPlaceholderText("New collection name"), { target: { value: "  Verbs  " } });
+  fireEvent.submit(screen.getByPlaceholderText("New collection name").closest("form")!);
+  expect(create).toHaveBeenCalledWith("Verbs");
+  vi.unstubAllEnvs();
+});

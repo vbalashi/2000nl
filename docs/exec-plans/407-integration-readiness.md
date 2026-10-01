@@ -1836,3 +1836,15 @@ Retains28px target, focus-visible outline and existing collapse/expand handlers.
 Browser verified computed transparent background and transform8/-8; click collapse
 and Enter expand succeed, aria-expanded=true. Final settled screenshot saved at
 /tmp/407qa/correction7-chevron.png. CSS-only; diff passes. Next8 collections dialog.
+
+### 2026-10-01 — correction8 compact collection picker
+
+Approved picker uses shared localized prototype title/hint and plus creation after
+the list. Search retained from reference. Headword/definition context sr-only;
+legacy header/form remain unchanged. One shared form preserves real create callback
+and pending/membership-read guards. Form appears on demand and focuses its input;
+status/error/retry remain visible and server operation ownership untouched.
+Browser confirms compact initial picker and creation focus. Screenshot:
+/tmp/407qa/correction8-collections.png. Seven tests including creation callback,
+loading/failed membership recovery, dialogs pass; typecheck/lint/diff pass.
+Next9 visible Word details header removal with accessible name retained.

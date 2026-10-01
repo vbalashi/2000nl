@@ -46,3 +46,5 @@
 .menu{margin:0;width:min(210px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
 .menu button:disabled{opacity:.45;cursor:default}
 @media(prefers-reduced-motion:reduce){.menu{animation:none}}
+
+.creation{padding:0 0 12px}.production .creation>button{border:0;background:transparent;padding-inline:0}
