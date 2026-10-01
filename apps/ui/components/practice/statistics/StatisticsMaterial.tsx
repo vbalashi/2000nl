@@ -6,12 +6,12 @@ import { formatUiCount, formatUiMessage, getUiMessages } from "@/lib/uiMessages"
 import s from "./statistics.module.css";
 
 /** Approved review queue for one resolved material scope. */
-export function StatisticsQueue({ interfaceLanguage: locale, due, description, practiseLabel, onPractise }: {
+export function StatisticsQueue({ interfaceLanguage: locale, due, practiseLabel, onPractise }: {
   interfaceLanguage: OnboardingLanguage; due: number; description: string; practiseLabel: string; onPractise?: () => void;
 }) {
   const copy = getUiMessages(locale).statistics;
   return <section className={s.queue} lang={locale}>
-    <div><span className={s.queueLabel}>{copy.dueNow}</span><h2>{formatUiCount(locale, due, copy, "ready")}</h2><p>{description} · {copy.readyNow}</p></div>
+    <div><h2>{formatUiCount(locale, due, copy, "ready")}</h2></div>
     {onPractise && <button type="button" onClick={onPractise}>{practiseLabel}<ArrowUpRight size={15} aria-hidden="true" /></button>}
   </section>;
 }
