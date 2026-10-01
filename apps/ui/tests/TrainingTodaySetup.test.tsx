@@ -827,8 +827,8 @@ test("approved reverse idiom preview names its expression answer", async () => {
  await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));fireEvent.click(screen.getByRole("button",{name:/^Source /}));
  fireEvent.click(screen.getByRole("button",{name:"Selected dictionaries"}));
  fireEvent.change(screen.getByRole("textbox",{name:"Search sources"}),{target:{value:"Dictionary 5"}});
- expect(screen.queryByRole("button",{name:"Dictionary 0",exact:true})).not.toBeInTheDocument();
+ expect(screen.queryByRole("button",{name:"Dictionary 0"})).not.toBeInTheDocument();
  view.rerender(<TrainingTodaySetup {...props} dictionaries={dictionaries.slice(0,5)}/>);
  expect(screen.queryByRole("textbox",{name:"Search sources"})).not.toBeInTheDocument();
- expect(screen.getByRole("button",{name:"Dictionary 0",exact:true})).toBeInTheDocument();
+ expect(screen.getByRole("button",{name:"Dictionary 0"})).toBeInTheDocument();
  });

@@ -2029,3 +2029,7 @@ Russian training-family labels use Идиомы consistently across shared catal
 ### Owner corrections 20/23
 
 Approved source search shares the reference search CSS. It appears only for more than five choices in the current material mode; hidden queries are ignored on shorter catalogs. Existing account catalog, selection, ACL and launch owners retained. 42 setup tests and new six-to-five filtering regression pass; typecheck pass. Actual local short dictionary/collection catalogs verified without search.
+
+### Owner correction 21
+
+Investigated action-event predicate in migration161 and study-day targeting in147. Clarified disclosure label/help in EN/NL/RU; any action outcome qualifies, dates/source narrow events, not forgotten-only progress. End chevron replaces browser default marker. Selection and scheduling unchanged. Browser verified; typecheck and lexical/source regressions pass. Corrected invalid testing-library exact options introduced in preceding boundary test.

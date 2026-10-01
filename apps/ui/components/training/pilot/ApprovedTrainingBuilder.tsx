@@ -554,7 +554,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                 )}
               </div>
               <details className={s.activity}>
-                <summary>{c.activity}</summary>
+                <summary><span>{c.activity}</span><ChevronDown size={15} aria-hidden="true" /></summary>
                 <p className={s.help}>{c.activityHelp}</p>
                 <label className={s.field}>
                   {c.source}

@@ -172,6 +172,10 @@
   color: var(--practice-text-secondary);
 }
 .activity summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
   cursor: pointer;
   padding: 8px 0;
 }
@@ -352,3 +356,6 @@
 .directions { display: flex; flex-wrap: wrap; gap: 12px; }
 .direction { flex: 0 1 calc((100% - 12px) / 2); min-width: min(100%, 170px); max-width: 244px; min-height: 200px; }
 .prompt, .answer { overflow-wrap: anywhere; }
+
+.activity summary::-webkit-details-marker { display: none; }
+.activity[open] summary svg { transform: rotate(180deg); }
