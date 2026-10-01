@@ -39,12 +39,12 @@ export function SenseCardHeadwordLockup({
   tone: Tone;
   headerActions?: React.ReactNode;
   showMetadata?: boolean;
-  variant?: "default" | "training-face" | "training-answer";
+  variant?: "default" | "training-face" | "training-answer" | "article";
 }) {
   const longHeadword = headword.replaceAll("·", "").length > 18;
   const training = variant !== "default";
   const answer = variant === "training-answer";
-  const trainingWordSize = longHeadword
+  const trainingWordSize = variant === "article" ? "text-[length:var(--practice-text-headword,36px)]" : longHeadword
     ? "text-[length:var(--reading-headword-long-size,32px)] sm:text-[length:var(--reading-headword-long-size-sm,40px)]"
     : answer
       ? "text-[length:var(--reading-headword-answer-size,44px)]"
@@ -111,7 +111,7 @@ export function SenseCardHeadwordLockup({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center font-sense-serif">
             <div
-              className={`flex min-w-0 items-baseline ${training ? `${trainingWordSize} gap-[0.22rem]` : "gap-[0.22em]"} ${
+              className={`flex min-w-0 items-baseline ${training ? `${trainingWordSize} ${variant === "article" ? "gap-[0.22em]" : "gap-[0.22rem]"}` : "gap-[0.22em]"} ${
                 longHeadword ? "flex-1" : ""
               }`}
             >

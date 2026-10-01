@@ -271,7 +271,7 @@ export function LibrarySenseCardGroup({
         <SenseCardHeadwordLockup
           article={model.article}
           headword={model.headword}
-          variant="training-answer"
+          variant={approvedArticle ? "article" : "training-answer"}
           partOfSpeech={model.partOfSpeech}
           coreVocabularyLabel={model.coreVocabularyLabel}
           tone="light"
