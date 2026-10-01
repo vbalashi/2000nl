@@ -39,6 +39,8 @@ function Exercise({ direction }: { direction: "direct" | "reverse" }) {
 describe("exercise card field bindings", () => {
   test("direct and reverse share the exact full answer; direction changes only the face", () => {
     expect(build("direct").answer).toEqual(build("reverse").answer);
+    expect(build("direct").promptTarget).toEqual({ contentNodeId: content.expression.contentNodeId, kind: "text" });
+    expect(build("reverse").promptTarget).toEqual({ contentNodeId: content.explanation.contentNodeId, kind: "text" });
     expect(build("direct").prompt).toEqual({
       kind: "expression",
       text: content.expression.text,
@@ -205,4 +207,18 @@ test("keyboard grading works after reveal transfers focus to Again", () => {
   fireEvent.keyDown(document.activeElement!, { key: "k" });
   expect(onGrade).toHaveBeenCalledTimes(1);
   expect(onGrade).toHaveBeenCalledWith("success");
+});
+
+test("approved exercises reuse adaptive ratings and preserve the grade callback", () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  try {
+    const onGrade = vi.fn();
+    render(<TrainingExerciseCard presentation={build("direct")} interfaceLanguage="en"
+      revealed busy={false} onReveal={vi.fn()} onGrade={onGrade} />);
+    const hard = screen.getByRole("button", { name: "Hard", exact: true });
+    expect(hard).toHaveAttribute("data-rating", "Hard");
+    expect(hard.closest("[data-columns]")).not.toBeNull();
+    fireEvent.click(hard);
+    expect(onGrade).toHaveBeenCalledWith("hard");
+  } finally { vi.unstubAllEnvs(); }
 });

@@ -918,3 +918,28 @@ plus retained 402/1024px dock bounds. Browser uses transport or dev fixtures, no
 live state-write proof. Context translation target selection needs a dedicated
 browser scenario, and idiom/sentence `TrainingExerciseCard` still needs the same
 transition seam. The entire accepted reveal scope is not yet complete.
+
+## Idiom/sentence reveal and shared ratings — 2026-10-01
+
+`TrainingExerciseCard` now uses the same visual-only reveal hook. Its projection
+provides an explicit `promptTarget` (content node + text/translation): direct idiom
+→ expression, reverse idiom → its owned explanation, sentence translation → the
+selected example's ready target-language translation. This is a UI presentation
+field, not an API/DB identity or new scheduling contract. The source fingerprint,
+translation readiness checks and grade/action owner remain unchanged.
+
+Captured descendant font sizes remain relative during motion so a large expression
+can shrink into the article's reading size. Approved exercise ratings now reuse
+`RatingControls` (adaptive 46/28 visual size, palette/text roles, measured columns)
+rather than the leftover 42px legacy buttons. The existing `onGrade` callback and
+fail/hard/success/easy values are preserved; motion blocks buttons and hotkeys until
+arrival, then restores first-grade focus. Flag-off legacy stays available.
+
+Validation: typecheck, targeted lint/style guard; 15 projection/card/motion tests,
+including selected node identities and shared-rating callback; three browser cases
+with the real card and controlled dev content fixtures (direct/reverse idiom,
+sentence translation). A first draft accidentally placed ratings in the answer
+slot; the browser checks failed, the placement was corrected, and the repeated
+checks pass. No claim of live scheduling/mutation acceptance from these fixtures.
+Still open: context-word browser reveal, live exercise mutation/resume matrix,
+remaining visual/zoom/landscape/keyboard/portal checks and owner rollout review.

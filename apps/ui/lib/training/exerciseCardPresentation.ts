@@ -21,6 +21,8 @@ export type TrainingCardAnswer = {
 
 export type TrainingExercisePresentation = {
   label: string;
+  /** Presentation identity of the same question on the answer, never inferred from text. */
+  promptTarget: { contentNodeId: string; kind: "text" | "translation" };
   answerTranslationInitiallyVisible?: boolean;
   prompt: TrainingCardPrompt;
   hint?: { text: string; label: string };

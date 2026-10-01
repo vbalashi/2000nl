@@ -2,6 +2,7 @@
 import React from "react";
 import { TrainingExerciseCard } from "@/components/training/v2/TrainingExerciseCard";
 import { buildIdiomCardPresentation } from "@/lib/training/idiomCardPresentation";
+import { buildSentenceCardPresentation } from "@/lib/training/sentenceCardPresentation";
 import {
   gateFurnitureEntry,
   gateSingleSenseGroup,
@@ -46,6 +47,7 @@ const content: IdiomExerciseContent = {
 
 /** Fixed presentation fixture; no session, auth, or learning-state writes. */
 export function ExerciseCardGate() {
+  const [sentence, setSentence] = React.useState(false);
   const [direction, setDirection] = React.useState<"direct" | "reverse">(
     "direct",
   );
@@ -63,9 +65,11 @@ export function ExerciseCardGate() {
       <div className="flex h-full flex-col gap-3 bg-slate-100 p-4 dark:bg-[#11141A]">
         <nav className="flex shrink-0 flex-wrap gap-3 text-sm dark:text-white">
           <span>Presentation fixture</span>
+          <button onClick={() => { setSentence(true); setRevealed(false); }}>Sentence</button>
           <button
             onClick={() => {
               setDirection("direct");
+              setSentence(false);
               setRevealed(false);
             }}
           >
@@ -74,6 +78,7 @@ export function ExerciseCardGate() {
           <button
             onClick={() => {
               setDirection("reverse");
+              setSentence(false);
               setRevealed(false);
             }}
           >
@@ -82,8 +87,16 @@ export function ExerciseCardGate() {
           <button onClick={() => setDark((v) => !v)}>Light / dark</button>
         </nav>
         <TrainingExerciseCard
-          key={direction}
-          presentation={buildIdiomCardPresentation({
+          key={sentence ? "sentence" : direction}
+          presentation={sentence ? buildSentenceCardPresentation({
+            content: { group: content.group, entry: content.entry, sentence: {
+              ...content.examples[0], parentContentNodeId: null,
+              translations: [{ translationId: "gate-sentence-en", targetLanguageCode: "en",
+                status: "ready", text: "I am tired of his nagging.",
+                sourceTextFingerprint: content.examples[0].sourceTextFingerprint,
+                translationPolicyVersion: "gate-v1" }],
+            } }, interfaceLanguage: "en", translationTargetLanguageCode: "en",
+          })! : buildIdiomCardPresentation({
             content,
             direction,
             interfaceLanguage: "en",

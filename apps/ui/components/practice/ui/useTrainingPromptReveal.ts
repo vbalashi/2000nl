@@ -14,6 +14,14 @@ function snapshot(node: HTMLElement): Snapshot {
     const style = getComputedStyle(source);
     cloneNodes[index].style.cssText = Array.from(style)
       .map(key => `${key}:${style.getPropertyValue(key)};`).join("");
+    // Preserve relative sizes so a captured headword can become a smaller expression.
+    if (index > 0) {
+      const parentSize = parseFloat(getComputedStyle(source.parentElement!).fontSize);
+      const size = parseFloat(style.fontSize);
+      if (parentSize && size) cloneNodes[index].style.fontSize = `${size / parentSize}em`;
+      const leading = parseFloat(style.lineHeight);
+      if (size && leading) cloneNodes[index].style.lineHeight = `${leading / size}em`;
+    }
     cloneNodes[index].removeAttribute("id");
     cloneNodes[index].removeAttribute("data-testid");
     cloneNodes[index].removeAttribute("tabindex");
