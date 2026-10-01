@@ -79,7 +79,7 @@ export function SenseCardReportAction({
   );
 }
 
-function SenseCardReportSheet({
+export function SenseCardReportSheet({
   snapshot,
   interfaceLanguage,
   onClose,

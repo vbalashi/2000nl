@@ -273,7 +273,8 @@ describe("LibrarySenseCardGroup", () => {
       expect(within(quietRow).getByRole("button", { name: "Collections · 2" })).toBeInTheDocument();
       fireEvent.click(trainNext);
       expect(onTrainNext).toHaveBeenCalledWith(expect.objectContaining({ entryId: "entry-bank-furniture" }));
-      fireEvent.click(within(quietRow).getByRole("button", { name: /Mark as known/ }));
+      fireEvent.click(within(quietRow).getByRole("button", { name: "More card actions" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: /Mark as known/ }));
       expect(onAction).toHaveBeenCalledWith(markKnown);
       expect(actions.innerHTML).not.toMatch(/slate|indigo|emerald/);
     } finally {

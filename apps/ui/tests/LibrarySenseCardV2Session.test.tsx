@@ -29,6 +29,7 @@ const fetchCrossReferenceTarget = vi.fn();
 const requestTranslation = vi.fn();
 const performAction = vi.fn();
 const queueDiagnosticReport = vi.fn();
+const freezeSnapshot = vi.fn((input: unknown) => input);
 const fetchMemberships = vi.fn();
 const removeFromList = vi.fn();
 
@@ -140,7 +141,7 @@ vi.mock("@/lib/platform/platformV2TrainingActionClient", () => ({
 }));
 
 vi.mock("@/lib/feedback/diagnosticReportClient", () => ({
-  freezeSenseCardDiagnosticSnapshot: (input: unknown) => input,
+  freezeSenseCardDiagnosticSnapshot: (input: unknown) => freezeSnapshot(input),
   buildSenseCardDiagnosticReport: (input: unknown) => Promise.resolve(input),
   queuePreparedSenseCardDiagnosticReport: (...args: unknown[]) =>
     queueDiagnosticReport(...args),
@@ -169,6 +170,7 @@ describe("LibrarySenseCardV2Session", () => {
     performAction.mockReset();
     requestTranslation.mockReset();
     queueDiagnosticReport.mockReset();
+    freezeSnapshot.mockClear();
     fetchMemberships.mockReset();
     removeFromList.mockReset();
     removeFromList.mockResolvedValue({error:null});
@@ -207,6 +209,39 @@ describe("LibrarySenseCardV2Session", () => {
     await waitFor(()=>expect(checkbox).not.toBeChecked());
     expect(checkbox).toBeEnabled(); expect(removeFromList).toHaveBeenCalledOnce();
     expect(performAction).not.toHaveBeenCalled();
+  });
+
+  test("approved Report is selected in the meaning menu and restores that menu opener", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+    const originalShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype,"showModal");
+    const originalClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype,"close");
+    Object.defineProperty(HTMLDialogElement.prototype,"showModal",{configurable:true,value:function(){this.setAttribute("open","");}});
+    Object.defineProperty(HTMLDialogElement.prototype,"close",{configurable:true,value:function(){this.removeAttribute("open");}});
+    let view: ReturnType<typeof render> | undefined;
+    try {
+      fetchGroup.mockResolvedValue(groupWithFinanceReportRevision());
+      view = render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} headword="bank"
+        contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" />);
+      await screen.findByTestId("library-sense-card-group");
+      expect(screen.queryByRole("button",{name:"Report"})).toBeNull();
+      const card=screen.getByTestId(`library-sense-card-${financeEntry.entryId}`);
+      const more=within(card).getByRole("button",{name:"More card actions"});fireEvent.click(more);
+      fireEvent.click(screen.getByRole("menuitem",{name:"Report"}));
+      const dialog=await screen.findByRole("dialog",{name:"What is wrong?"});
+      expect(freezeSnapshot).toHaveBeenLastCalledWith(expect.objectContaining({
+        route: "library", entry: expect.objectContaining({entryId: financeEntry.entryId}),
+      }));
+      fireEvent.click(within(dialog).getByRole("button",{name:"Back"}));
+      await waitFor(()=>expect(more).toHaveFocus());
+      expect(performAction).not.toHaveBeenCalled();expect(queueDiagnosticReport).not.toHaveBeenCalled();
+    } finally {
+      view?.unmount();
+      for(const [key,descriptor] of [["showModal",originalShow],["close",originalClose]] as const) {
+        if(descriptor) Object.defineProperty(HTMLDialogElement.prototype,key,descriptor);
+        else Reflect.deleteProperty(HTMLDialogElement.prototype,key);
+      }
+      vi.unstubAllEnvs();
+    }
   });
 
   test("uses one global report action and no per-node flags", async () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { LibraryMeaningActions } from "./LibraryMeaningActions";
 import {sharedArticlePresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
 import {ArticleTranslation,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
 import {ProductionArticleReading} from "@/components/practice/article/ProductionArticleReading";
@@ -53,6 +54,8 @@ type Props = {
   onRequestTranslation?: (entryId: string, cardTypeId: CardTypeId) => void;
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
+  onReport?: (meaning: LibrarySenseCardModel) => void;
+  reportableEntryIds?: ReadonlySet<string>;
   onFollowCrossReference?: (target: {
     query: string;
     sourceDictionaryId: string;
@@ -82,6 +85,8 @@ export function LibrarySenseCardGroup({
   onRequestTranslation,
   onOpenCollections,
   onTrainNext,
+  onReport,
+  reportableEntryIds,
   onFollowCrossReference,
   onAction,
   bottomOverlayReserve = false,
@@ -389,6 +394,8 @@ export function LibrarySenseCardGroup({
                   }
                   onOpenCollections={onOpenCollections}
                   onTrainNext={onTrainNext}
+                  onReport={onReport}
+                  reportableEntryIds={reportableEntryIds}
                   onAction={(capability) => {
                     onActiveMeaningChange?.(capability.target.entryId);
                     onAction(capability);
@@ -423,6 +430,8 @@ function MeaningCard({
   onRetryTranslation,
   onOpenCollections,
   onTrainNext,
+  onReport,
+  reportableEntryIds,
   onAction,
 }: {
   meaning: LibrarySenseCardModel;
@@ -442,6 +451,8 @@ function MeaningCard({
   onRetryTranslation: () => void;
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
+  onReport?: (meaning: LibrarySenseCardModel) => void;
+  reportableEntryIds?: ReadonlySet<string>;
   onAction: (capability: LibraryMutationCapability) => void;
 }) {
   const t = (key: string, variables?: Record<string, string | number>) =>
@@ -625,54 +636,11 @@ function MeaningCard({
 
 
             {approvedArticle ? (
-              <div data-testid="library-primary-actions" className={articleActions.group}>
-                {onTrainNext ? (
-                  <button
-                    type="button"
-                    className={articleActions.primary}
-                    onClick={() => {
-                      onActiveMeaningChange?.(meaning.entryId);
-                      onTrainNext(meaning);
-                    }}
-                  >
-                    {t("senseCard.training.next")}
-                  </button>
-                ) : null}
-                <div data-testid="library-service-actions" className={articleActions.row}>
-                  {onOpenCollections ? (
-                    <button
-                      type="button"
-                      className={articleActions.quiet}
-                      onClick={() => {
-                        onActiveMeaningChange?.(meaning.entryId);
-                        onOpenCollections(meaning);
-                      }}
-                    >
-                      <ListIcon className="h-3.5 w-3.5" />
-                      {t("senseCard.collections.label")}
-                      {collectionCount > 0 ? ` · ${collectionCount}` : ""}
-                    </button>
-                  ) : null}
-                  <span className={articleActions.spacer} />
-                  {meaning.startLearning ? (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      className={articleActions.quiet}
-                      onClick={() => onAction(meaning.startLearning!)}
-                    >
-                      {t(meaning.startLearning.messageKey)}
-                    </button>
-                  ) : null}
-                  <KnownAction
-                    meaning={meaning}
-                    interfaceLanguage={interfaceLanguage}
-                    busy={busy}
-                    onAction={onAction}
-                    approved
-                  />
-                </div>
-              </div>
+              <LibraryMeaningActions meaning={meaning} language={interfaceLanguage} busy={busy} collectionCount={collectionCount}
+                onAction={onAction}
+                onCollections={onOpenCollections ? () => { onActiveMeaningChange?.(meaning.entryId); onOpenCollections(meaning); } : undefined}
+                onTrainNext={onTrainNext ? () => { onActiveMeaningChange?.(meaning.entryId); onTrainNext(meaning); } : undefined}
+                onReport={onReport && reportableEntryIds?.has(meaning.entryId) ? () => onReport(meaning) : undefined} />
             ) : <>
             <div
               data-testid="library-primary-actions"

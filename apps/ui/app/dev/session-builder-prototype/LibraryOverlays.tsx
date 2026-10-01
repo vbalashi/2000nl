@@ -1,6 +1,6 @@
 "use client";
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
-import {createPortal} from "react-dom";
+import React, { createContext, useContext, useRef, useState } from "react";
+import {ActionMenu} from "@/components/practice/ui/ActionMenu";
 import {DialogSurface} from "@/components/practice/ui/DialogSurface";
 import { X, Search, Plus, Check, Flag, EyeOff } from "lucide-react";
 import {formatUiMessage,formatUiCount,getUiMessages} from "@/lib/uiMessages";
@@ -8,23 +8,11 @@ import {InterfaceLanguageContext} from "./VariantControls";
 import s from "@/components/practice/library/libraryOverlays.module.css";
 export function CardActionMenu({ anchor, onClose, onAction, includeReport=true }: { includeReport?:boolean; anchor: HTMLButtonElement; onClose: () => void; onAction: (action: "report" | "known" | "excluded") => void }) {
   const locale=useContext(InterfaceLanguageContext);const copy=getUiMessages(locale).cardActions;
-  const menu = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{top:number;left:number}|null>(null);
-  useEffect(() => {
-    const r=anchor.getBoundingClientRect();
-    const menuHeight=menu.current?.getBoundingClientRect().height||(includeReport?148:104);
-    setPosition({left:Math.max(12,Math.min(r.right-210,window.innerWidth-222)),top:r.bottom+8+menuHeight<window.innerHeight?r.bottom+8:Math.max(12,r.top-menuHeight-8)});
-    menu.current?.querySelector<HTMLButtonElement>('button')?.focus();
-    const outside=(e:PointerEvent)=>{if(!menu.current?.contains(e.target as Node)&&!anchor.contains(e.target as Node))onClose();};
-    const dismiss=()=>onClose();document.addEventListener('pointerdown',outside);window.addEventListener('resize',dismiss);window.addEventListener('scroll',dismiss,true);
-    return()=>{document.removeEventListener('pointerdown',outside);window.removeEventListener('resize',dismiss);window.removeEventListener('scroll',dismiss,true);};
-  },[anchor,onClose,includeReport]);
-  useEffect(()=>{if(position)menu.current?.querySelector<HTMLButtonElement>("button")?.focus();},[position]);
-  return createPortal(<div ref={menu} role="menu" aria-label={copy.title} lang={locale} className={s.menu} style={{top:position?.top,left:position?.left,visibility:position?'visible':'hidden'}} onKeyDown={e=>{
-    const buttons=[...e.currentTarget.querySelectorAll<HTMLButtonElement>('button')];const index=buttons.indexOf(document.activeElement as HTMLButtonElement);
-    if(e.key==='Escape'||e.key==='Tab'){if(e.key==='Escape')e.preventDefault();onClose();}
-    if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();buttons[e.key==='Home'?0:e.key==='End'?buttons.length-1:(index+(e.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length]?.focus();}
-  }}>{([['excluded',copy.exclude,EyeOff],['known',copy.known,Check],['report',copy.report,Flag]] as const).filter(([action])=>includeReport||action!=="report").map(([action,label,Icon])=><button role="menuitem" key={action} onClick={()=>onAction(action)}><Icon size={15}/>{label}</button>)}</div>,anchor.closest("[data-practice-palette]")||document.body);
+  return <ActionMenu anchor={anchor} title={copy.title} language={locale} onClose={onClose}
+    items={([['excluded',copy.exclude,EyeOff],['known',copy.known,Check],['report',copy.report,Flag]] as const)
+      .filter(([action])=>includeReport||action!=="report")
+      .map(([action,label,Icon])=>({id:action,label,icon:<Icon size={15}/>,onSelect:()=>onAction(action)}))} />;
+
 }
 export function LibraryModal({title,onClose,children}:{title:string;onClose:()=>void;children:React.ReactNode}){
  const locale=useContext(InterfaceLanguageContext);const copy=getUiMessages(locale).cardActions;

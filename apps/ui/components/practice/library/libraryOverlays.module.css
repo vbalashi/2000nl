@@ -42,3 +42,7 @@
 .production.production [data-report-state=rejected] span{background:var(--practice-danger-soft);color:var(--practice-danger)}
 
 .production.production [role=alert]{color:var(--practice-danger)}
+
+.menu{margin:0;width:min(210px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
+.menu button:disabled{opacity:.45;cursor:default}
+@media(prefers-reduced-motion:reduce){.menu{animation:none}}

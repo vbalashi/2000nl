@@ -1324,3 +1324,41 @@ unit test used an incorrect card test ID; corrected to the actual owner markup.
 Remaining: final approved Library action arrangement (current adapter still has
 inline Known/Learn and a separate Report footer), native zoom/focus, live gated
 sentence and final whole-product owner/rollout acceptance. Goal stays active.
+
+
+## Approved Library meaning actions and shared top-layer menu — 2026-10-01
+
+Approved Library actions now use the article's wide primary Learn (Undo for known)
+and a quiet Collections/More row. Known and Report are meaning-menu actions;
+legacy presentation is unchanged. Train next remains available only through the
+existing owner callback when no primary capability applies. No review capability
+is invented in Library. Report freezes the selected meaning entry and uses the
+same Report sheet/outbox as Training. Copy to user dictionary retains its owner.
+
+ActionMenu is shared with the prototype wrapper, inherits the containing palette,
+uses the native popover top layer above native dialogs, bounds measured content
+to the viewport, supports arrows/Home/End/Escape, and dismisses on external scroll
+and resize. Menu-internal scroll does not dismiss it. Closing Report/Escape returns
+focus to the selected meaning's More trigger. No server action contract changed.
+
+Final checks: 53 unit/component/catalog tests, including selected Report snapshot
+identity, no mutation on cancellation, exact Learn/Known owner capabilities and
+busy guards; typecheck, targeted lint, style guard (1362 unchanged legacy literals),
+and diff check. Nine existing browser regressions cover EN/NL/RU Extra Report and
+word-panel/collection recovery; they do not directly cover the new Library menu.
+Separate live local Library huis checks at 320x568, 430x932 and 844x390 verify the
+new menu's actual native top layer, bounds, Escape/focus, Report cancellation and
+underlying dialog retention. No Learn/Known/grade or Report submission was sent.
+Settled screenshots inspected: /tmp/407qa/library-live-menu-320-2026-10-01.png and
+library-live-menu-844-2026-10-01.png. First screenshot captured the arrival animation;
+retaken after animation completion. Draft QA used a wrong RU dialog title and
+clicked an offscreen opener before scroll settled; corrected both test assumptions.
+
+Exclude remains pending a product answer: without a session, should exclusion
+cover every ordinary mode (including audio), or only word/definition? Existing
+exclude-pair requires a real trainingSessionId. Do not fabricate one or broaden
+scope silently. Asked the owner asynchronously; no answer yet. Remaining independent
+gates: native browser zoom/OS focus, live gated sentence and final whole-product
+owner/rollout acceptance. History decision rechecked: latest 50 accepted actions,
+no 24-hour cutoff, implemented by the current v1 service/RPC (190/191), legacy RPC
+retained solely for older clients. Goal stays active; no deployment claimed.

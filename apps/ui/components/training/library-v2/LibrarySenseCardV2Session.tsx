@@ -1,4 +1,5 @@
 "use client";
+import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -22,7 +23,7 @@ import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/typ
 import { LibrarySenseCardGroup } from "./LibrarySenseCardGroup";
 import { LibraryCollectionsPicker } from "./LibraryCollectionsPicker";
 import { LibraryDetailsActions } from "./LibraryDetailsActions";
-import { SenseCardReportAction } from "@/components/feedback/SenseCardReportSheet";
+import { SenseCardReportAction, SenseCardReportSheet } from "@/components/feedback/SenseCardReportSheet";
 import { freezeSenseCardDiagnosticSnapshot } from "@/lib/feedback/diagnosticReportClient";
 import {
   buildLibrarySenseCardGroupModel,
@@ -117,6 +118,7 @@ function SenseCardV2Session({
   const [collectionBusyListId, setCollectionBusyListId] = React.useState<
     string | null
   >(null);
+  const [reportSnapshot, setReportSnapshot] = React.useState<ReturnType<typeof freezeSenseCardDiagnosticSnapshot> | null>(null);
   const [collectionStatus, setCollectionStatus] = React.useState<string | null>(
     null,
   );
@@ -150,6 +152,7 @@ function SenseCardV2Session({
     setCollectionsEntryId(null);
     setCollectionBusyListId(null);
     setCollectionStatus(null);
+    setReportSnapshot(null);
   }, [detailIdentity]);
 
   React.useEffect(() => {
@@ -656,6 +659,9 @@ function SenseCardV2Session({
     ),
   );
   const showGlobalDetailsActions = context === "library";
+  const approved = sharedArticlePresentationV1Enabled();
+  const reportableEntryIds = new Set((group?.entries ?? []).flatMap(entry => entry.kind === "sense-card" && entry.reportContentRevision &&
+    entry.capabilities.some(capability => capability.actionId === "report-content" && capability.target.kind === "entry") ? [entry.entryId] : []));
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
@@ -707,12 +713,19 @@ function SenseCardV2Session({
             setActiveReferenceTarget(target);
           }}
           onAction={(capability) => void handleAction(capability)}
-          bottomOverlayReserve={showGlobalDetailsActions && canReport}
+          onReport={approved && showGlobalDetailsActions ? meaning => {
+            if (!group) return;
+            const entry = group.entries.find(candidate => candidate.kind === "sense-card" && candidate.entryId === meaning.entryId);
+            if (entry?.kind !== "sense-card" || !reportableEntryIds.has(entry.entryId)) return;
+            setReportSnapshot(freezeSenseCardDiagnosticSnapshot({route:"library",group,entry}));
+          } : undefined}
+          reportableEntryIds={reportableEntryIds}
+          bottomOverlayReserve={!approved && showGlobalDetailsActions && canReport}
         />
       </div>
       {showGlobalDetailsActions &&
       activeSenseEntry &&
-      (onCopyToUserDictionary || canReport) ? (
+      (onCopyToUserDictionary || (!approved && canReport)) ? (
         <LibraryDetailsActions
           entryId={activeMeaningId}
           interfaceLanguage={interfaceLanguage}
@@ -720,7 +733,7 @@ function SenseCardV2Session({
             activeSenseEntry ? onCopyToUserDictionary : undefined
           }
           leadingAction={
-            canReport && group && selectedActiveEntry?.kind === "sense-card" ? (
+            !approved && canReport && group && selectedActiveEntry?.kind === "sense-card" ? (
               <SenseCardReportAction
                 snapshot={freezeSenseCardDiagnosticSnapshot({
                   route: "library",
@@ -734,6 +747,7 @@ function SenseCardV2Session({
           }
         />
       ) : null}
+      {reportSnapshot ? <SenseCardReportSheet snapshot={reportSnapshot} interfaceLanguage={interfaceLanguage} onClose={() => setReportSnapshot(null)} /> : null}
       <LibraryCollectionsPicker
         open={Boolean(collectionsMeaning)}
         headword={model.headword}
