@@ -34,7 +34,7 @@ async function visibleDesktopNavigation(page: Page) {
 async function frameSnapshot(page: Page) {
   const root = page.locator('[data-app-frame="true"]');
   const header = root.locator('[data-app-header="true"]');
-  const logo = header.getByLabel("2000nl");
+  const logo = header.getByLabel("2000nl", { exact: true });
   const utility = header
     .getByRole("button", { name: /Thema|Theme|Тема/ })
     .first();
@@ -89,7 +89,7 @@ test.describe("stable application frame @pilot", () => {
     await expect(
       page.locator('[data-app-primary-navigation="desktop"] nav:visible'),
     ).toHaveCount(1);
-    await expect(page.getByLabel("2000nl")).toBeVisible();
+    await expect(page.getByLabel("2000nl", { exact: true })).toBeVisible();
     await expect(
       page.getByRole("button", { name: /Thema|Theme|Тема/ }),
     ).toBeVisible();
@@ -332,7 +332,7 @@ test.describe("stable application frame @pilot", () => {
       await expect(page.locator('[data-app-mobile-navigation="tabs"]')).toBeHidden();
     } else {
       await expect(page.getByTestId("app-header")).toBeVisible();
-      const brand = page.getByLabel("2000nl");
+      const brand = page.getByLabel("2000nl", { exact: true });
       await expect(brand).toBeVisible();
       expect(
         await brand.evaluate(
