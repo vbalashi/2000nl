@@ -496,7 +496,9 @@ export function ApprovedTrainingBuilder(p: Props) {
                             ? c.meaning
                             : family === "sentence"
                               ? language(p.languageCode)
-                              : o.exerciseType.Words}
+                              : family === "idiom"
+                                ? o.exerciseType.Idioms
+                                : o.exerciseType.Words}
                         </span>
                       </button>
                     ))}

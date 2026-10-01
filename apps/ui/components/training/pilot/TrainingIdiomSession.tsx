@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import {
   fetchNextPlatformV2IdiomTrainingSessionExercise,
   markPlatformV2IdiomTrainingSessionMemberUnavailable,
@@ -271,9 +272,11 @@ export function TrainingIdiomSession({
 
   return (
     <TrainingSessionV2Layout
+      approvedPresentation={trainingPresentationV1Enabled()}
       phase={loading ? "loading" : error && !candidate ? "failure" : "ready"}
       chrome={
         <TrainingSessionChrome
+          approvedPresentation={trainingPresentationV1Enabled()}
           interfaceLanguage={interfaceLanguage}
           scenario="idiom"
           mode={

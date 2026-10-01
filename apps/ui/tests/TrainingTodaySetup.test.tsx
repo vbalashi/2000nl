@@ -807,3 +807,14 @@ test("material preference load failure blocks fresh launches but leaves resume a
   fireEvent.click(screen.getByRole("button",{name:"Retry"}));
   await waitFor(()=>expect(repository.load).toHaveBeenCalledTimes(2));
 });
+
+test("approved reverse idiom preview names its expression answer", async () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  render(<TrainingTodaySetup {...baseProps} userId="builder-idiom-direction" trainingLanguageCode="nl" hasOwnedSession={false}
+    scenarios={[...baseProps.scenarios, { value: "idiom", label: "Idioms", modes: ["word-to-definition", "definition-to-word"] }]} />);
+  fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Exercises / }));
+  fireEvent.click(screen.getByRole("button", { name: /^Idioms$/ }));
+  expect(screen.getByRole("button", { name: /^Reverse Meaning Idioms$/ })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /^Reverse Meaning Words$/ })).not.toBeInTheDocument();
+});

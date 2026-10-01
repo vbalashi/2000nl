@@ -1079,3 +1079,40 @@ Report was opened and cancelled with focus restored; proof
 prove server acceptance or live offline delivery. Remaining: native zoom, live
 idiom/sentence and broader Library state/action acceptance, focus-loss study-time
 measurement, final owner review. #407 remains active and rollout unchanged.
+
+## Live idiom acceptance and exercise shell alignment — 2026-10-01
+
+Live local test account: created a ten-item direct idiom session from VanDale 2k,
+opened kiezen tussen een aantal zaken, revealed its owned explanation/example,
+graded Good, and received het verschil tussen … en … at 1/10. After browser
+reload (Library URL restored) and navigation to Training, the same next prompt
+and 1/10 remained. History dismissal restored its opener and left the session
+unchanged. Real accepted exercise mutation/resume is proven by server-backed UI
+state, not fixture counters; no production account or report was touched.
+
+The live run found that idiom/sentence sessions had not passed the presentation
+flag to shared chrome/layout: they retained the framed header and duplicate
+daily footer. Both now use the same approved shell and hide that footer under
+the existing rollout, preserving legacy flag-off behavior and action/stat owners.
+The builder reverse idiom preview now labels the answer as Idioms instead of
+Words. 32 session/chrome regressions and 42 setup tests pass, including approved
+and legacy shell checks and direction-label regression. Typecheck, targeted
+lint/style guard pass; 1376 legacy literal count unchanged. The added builder
+test initially used a Testing Library option absent from the installed types;
+it was corrected to an anchored name matcher before final validation. Visual proof:
+/tmp/407qa/live-idiom-answer-2026-10-01.jpg and
+/tmp/407qa/live-idiom-resume-2026-10-01.jpg. Sentence live launch stays gated by
+the unchanged local translation exercise rollout.
+
+**Next concrete integration gap: history omits exercise-family actions.** Live
+History did not show the accepted idiom grade. Current RPC
+get_recent_training_review_history (migration 130) unions user_card_action_events
+start-learning and user_review_log only. Idiom/sentence actions are durably stored
+in user_training_exercise_action_events (migrations 151/154/166); they are not
+queried. trainingHistoryService.ts also validates card_type_id against four word
+TrainingModes. Extend an authenticated shared read projection and presentation
+with exercise family/direction/target identity and label; preserve dictionary
+access, 24-hour/50 limit, deterministic ordering and no duplicate ordinary
+events. Do not disguise exercises as word card modes or add client-only history.
+This is not a missing write and not proof that the full history requirement is
+complete. Goal remains active; no rollout or deployment was performed.

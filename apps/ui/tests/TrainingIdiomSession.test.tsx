@@ -9,7 +9,7 @@ import React from "react";
 import { readIdiomTrainingStats } from "@/lib/training/idiomStatsClient";
 vi.mock("@/lib/training/idiomStatsClient", () => ({ readIdiomTrainingStats: vi.fn() }));
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TrainingIdiomSession } from "@/components/training/pilot/TrainingIdiomSession";
 import {
   fetchNextPlatformV2IdiomTrainingSessionExercise,
@@ -547,4 +547,17 @@ test("active time waits for prepared idiom content and pauses with the enclosing
   fireEvent.click(screen.getByRole("button",{name:"Show answer"}));
   expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(true);
   rerender(view(false)); expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
+});
+
+afterEach(() => { vi.unstubAllEnvs(); });
+
+test.each([true, false])("approved session shell is shared while rollout is %s", async (approved) => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", String(approved));
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({ state: "ready", content } as never);
+  render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} />);
+  await screen.findByRole("button", { name: "Show answer" });
+  expect(screen.getByTestId("training-session-chrome")).toHaveAttribute("data-visual-spec", approved ? "training-approved-v1" : "training-height-b");
+  if (approved) expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
+  else expect(screen.getByTestId("training-session-footer-progress")).toBeInTheDocument();
 });
