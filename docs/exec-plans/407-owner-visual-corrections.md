@@ -33,7 +33,7 @@
 - [x] **27.** Различить словарь VanDale и опубликованную2K коллекцию, убрать двусмысленные дубли; личные коллекции отдельно.
 - [x] **28.** Убрать дублирующее Начато/не начато либо краткие человеческие подписи охвата без искажения данных.
 - [x] **29.** Раздел Биллинг и подписки: проверить рабочую интеграцию; не добавлять фиктивные платежные действия.
-- [ ] **30.** Автоматический профиль устройства без ручного селектора; новое уточнение supersedes ручной выбор, сохранить настройки профилей.
+- [x] **30.** Автоматический профиль устройства без ручного селектора; новое уточнение supersedes ручной выбор, сохранить настройки профилей.
 - [ ] **31.** Text size компактно как режим темы, справа; сохранить масштаб и доступность.
 - [ ] **32.** Preview стандартным общим renderer, с рамкой; без отдельной несовпадающей разметки.
 - [x] **33.** Логотип кликабелен → Training/home; соблюдать блокировку pending action.
@@ -108,3 +108,5 @@
 Пункт28: удалена повторяющая legend с процентом начато/числом не начато. Основной счётчик8 из18 163, accessible progressbar и пояснение сохраняются. Browser actual section text подтверждён;3 localization tests иtypecheck pass. Screenshot /tmp/407qa/correction28-coverage.png.
 
 Пункт29 — исследование: ApprovedSettingsDestination sections languages/dictionaries/appearance/shortcuts/account, billing отсутствует сознательно. Prototype SettingsPrototype содержит disabled демонстрационные billing controls; initial product notes2026-07-06 описывают будущую подписку. В runtime/API/package нет Stripe/Paddle/checkout/payment portal/invoices integration. DB004 subscription_tier и dictionary minimum_subscription_tier — access entitlement, не доказательство оплаченной подписки. Рабочую оплату нельзя показать без отдельного backend/provider contract; фиктивные действия не добавлены. Результат объяснён владельцу.
+
+Пункт30: approved профиль определяется detectReadingDevice (UA/client hints), старый localStorage override игнорируется; viewport resize не переключает его. Ручной selector/temporary-storage message убраны из approved UI. Account phone/desktop размеры и legacy behavior сохранены. Browser отсутствиеselector подтверждено, typecheck/12 existing tests плюс phone-vs-stored-desktop regression pass. Screenshot /tmp/407qa/correction30-auto-profile.png.

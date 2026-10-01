@@ -3,7 +3,7 @@ import React from "react";
 import layout from "@/components/practice/settings/settings.module.css";
 import { getUiMessages } from "@/lib/uiMessages";
 import { accountTextSize, textSizes } from "@/lib/reading/textScale";
-import { readingSizes, type ReadingDevice } from "@/lib/reading/readingSize";
+import { readingSizes } from "@/lib/reading/readingSize";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { useReadingSettings } from "./ReadingPreferencesProvider";
 import { readingSettingsCopy } from "./readingSettingsCopy";
@@ -32,19 +32,6 @@ export function ApprovedTextSizeSection({
     >
       <h2>{text.textSize}</h2>
       <p>{prefs.description}</p>
-      <label className={s.profile}>
-        {prefs.profile}
-        <select
-          aria-label={prefs.profile}
-          value={settings.device}
-          onChange={(event) =>
-            settings.setDevice(event.target.value as ReadingDevice)
-          }
-        >
-          <option value="phone">{prefs.phone}</option>
-          <option value="desktop">{prefs.desktop}</option>
-        </select>
-      </label>
       <div className={s.sizes} role="group" aria-label={text.textSize}>
         {readingSizes.map((size) => {
           const display = textSizes.find(
@@ -67,7 +54,6 @@ export function ApprovedTextSizeSection({
         })}
       </div>
       <p className={s.hint}>{prefs.profileHint}</p>
-      {!settings.deviceStored && <p role="status">{status.temporary}</p>}
       {settings.loadStatus === "loading" && (
         <p role="status">{status.loading}</p>
       )}

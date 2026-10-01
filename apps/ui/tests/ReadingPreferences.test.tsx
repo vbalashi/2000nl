@@ -101,3 +101,17 @@ test("switching accounts drops a previous account's pending load", async () => {
   expect(screen.getByLabelText("Phone text size")).toHaveValue("normal");
   expect(screen.getByLabelText("Computer / tablet text size")).toHaveValue("large");
 });
+
+test("approved settings detect phone despite a legacy override and save only its account profile",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ try {
+ vi.spyOn(navigator,"userAgent","get").mockReturnValue("iPhone");
+ window.localStorage.setItem("2000nl.reading-device.v1","desktop");
+ const repository:ReadingPreferencesRepository={load:vi.fn().mockResolvedValue({phone:"normal",desktop:"large"}),save:vi.fn().mockResolvedValue(undefined)};
+ render(settings(repository));
+ const normal=await screen.findByRole("button",{name:"Standard"});await waitFor(()=>expect(normal).toBeEnabled());
+ expect(normal).toHaveAttribute("aria-pressed","true");expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Larger"}));
+ await waitFor(()=>expect(repository.save).toHaveBeenCalledWith("reader","phone","large"));
+ } finally {vi.unstubAllEnvs();}
+});

@@ -45,7 +45,7 @@ function ReadingSession({ userId, repository = readingPreferencesRepository, chi
 
   React.useEffect(() => {
     let selected = detectReadingDevice(navigator);
-    try {
+    if (process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true") try {
       const stored = window.localStorage.getItem(deviceKey);
       if (stored === "phone" || stored === "desktop") selected = stored;
     } catch { setDeviceStored(false); }

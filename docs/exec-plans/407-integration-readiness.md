@@ -2061,3 +2061,7 @@ Removed redundant coverage percentage/unstarted legend. Primary started/total, a
 ### Owner correction 29: billing integration audit
 
 No payment provider, checkout, invoice or billing-portal runtime exists in apps/ui. Prototype billing is disabled demonstration UI; subscription_tier is an access entitlement in DB004, not billing status. Approved Settings intentionally excludes payment controls. Product subscription intent remains future work requiring a separate provider/backend contract. No fabricated purchasing actions or subscription claims introduced.
+
+### Owner correction 30
+
+Approved reading profile is detected automatically, ignores legacy browser override and has no manual picker. Existing account sizes remain independent; legacy UI retains previous behavior. Browser proof, typecheck, twelve existing tests and explicit phone detection/save regression pass.
