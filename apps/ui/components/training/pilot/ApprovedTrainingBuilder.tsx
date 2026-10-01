@@ -468,7 +468,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                       const direct = mode === "word-to-definition";
                       const prompt = example ? example[direct ? 0 : 1] : direct
                         ? family === "idiom" ? o.exerciseType.Idioms : o.exerciseType.Words
-                        : family === "sentence" ? p.translationLanguage ? language(p.translationLanguage) : b.chooseTranslation : c.meaning;
+                        : family === "word-in-context" ? c.contextPrompt : family === "sentence" ? p.translationLanguage ? language(p.translationLanguage) : b.chooseTranslation : c.meaning;
                       const answer = example ? example[direct ? 1 : 0] : direct ? c.meaning
                         : family === "sentence" ? language(p.languageCode) : family === "idiom" ? o.exerciseType.Idioms : o.exerciseType.Words;
                       return <DirectionCard key={mode} label={direct ? o.direction.Direct : o.direction.Reverse}

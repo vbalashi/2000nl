@@ -240,6 +240,7 @@
       "profileHint": "This browser selects a profile; both sizes are saved to your account. Resizing the window does not switch profiles."
     },
     "trainingBuilder": {
+      "contextPrompt": "Example translation",
       "wordInContext": "Word in context",
       "reviewsOnly": "Reviews only",
       "newOnly": "New only",

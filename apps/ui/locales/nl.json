@@ -240,6 +240,7 @@
       "profileHint": "Deze browser kiest een profiel; beide groottes worden in je account opgeslagen. Een smaller venster verandert het profiel niet."
     },
     "trainingBuilder": {
+      "contextPrompt": "Vertaling van het voorbeeld",
       "wordInContext": "Woord in context",
       "reviewsOnly": "Alleen herhalen",
       "newOnly": "Alleen nieuw",
