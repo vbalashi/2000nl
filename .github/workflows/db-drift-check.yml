@@ -109,9 +109,8 @@ jobs:
             # Skip if no SQL files
             [ -f "$file" ] || continue
 
-            # Check for auth.uid() without (select ...) wrapper
-            if grep -n 'auth\.uid()' "$file" | grep -v '(select auth.uid())' | grep -q .; then
-              echo "::error file=$file::Contains non-optimized auth.uid() - use (select auth.uid()) for 99% faster queries"
+            # Row-level calls need an initplan; UUID initializers run once per function.
+            if ! node scripts/check-auth-uid-patterns.mjs "$file"; then
               ISSUES_FOUND=true
             fi
 
