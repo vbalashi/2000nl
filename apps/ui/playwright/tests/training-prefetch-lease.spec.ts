@@ -92,6 +92,7 @@ test("prepared card lease survives immediate and delayed answers", async ({
         realDateNow() + (clock.__trainingLeaseClockOffsetMs ?? 0);
     });
     await setupAuthenticatedTrainingAttributionPage(page, 0, {
+      devTestLogin: process.env.PLAYWRIGHT_USE_DEV_LOGIN === "true",
       lookupDelayMs: 250,
       actionDelayMs: 250,
       advanceLeaseClockMs: 29_000,
@@ -103,7 +104,7 @@ test("prepared card lease survives immediate and delayed answers", async ({
 
     await page
       .getByRole("button", {
-        name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen/i,
+        name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Начать тренировку|Start training/i,
       })
       .click();
     await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
