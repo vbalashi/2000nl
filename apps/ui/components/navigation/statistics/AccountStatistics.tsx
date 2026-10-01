@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback, useState } from "react";
-import { History } from "lucide-react";
+import { History, ChevronRight } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { formatUiCount, formatUiMessage, getUiMessages } from "@/lib/uiMessages";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
@@ -40,7 +40,7 @@ export function AccountStatistics({ userId, languageCode, open, interfaceLanguag
   const selected = materials.find(item => materialKey(item) === chosenMaterial) ?? materials[0];
   const name = (item: MaterialProgress) => item.kind === "all" ? copy.allLearning : item.name!;
   const recentActivity = onHistory ? <button type="button" className={s.recentActivity} onClick={onHistory}>
-    <History size={17} aria-hidden="true" />{copy.recentActivity}</button> : null;
+    <History size={17} aria-hidden="true" />{copy.recentActivity}<ChevronRight size={15} aria-hidden="true" /></button> : null;
   const status = (message: string, failed: boolean) => <div className={s.status} aria-live="polite">
     {failed ? <><p role="alert">{message}</p><button type="button" onClick={retry}>{copy.timeRetry}</button></> : <p role="status">{message}</p>}
   </div>;

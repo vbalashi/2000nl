@@ -2041,3 +2041,7 @@ Short learning-language catalogs (up to five) show choices directly without sear
 ### Owner correction 24
 
 Calendar layout uses its container width: year when wide, existing paged two-month view below700px. Removed horizontal overflow and fixed minimum widths. Bounded square day grid prevents sparse stretching and small-width overflow. Browser700/320 proof, earlier-month navigation, nine Statistics tests pass. Server calendar and day selection untouched.
+
+### Owner correction 25
+
+History entry has a trailing decorative chevron. Existing navigation handler retained; actual history open/close verified. Typecheck and three localization tests pass.
