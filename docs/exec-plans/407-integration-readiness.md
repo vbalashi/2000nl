@@ -2085,3 +2085,7 @@ Actual NL Extra395px exposed clipped filter and pagination buttons despite docum
 ### Scaled calendar threshold
 
 Final RU Light/Extra desktop audit exposed crowded terminal month labels. Calendar container query now scales with its label font (63.636em), preserving700px threshold at11px Normal. Actual1280px Extra uses months, Normal uses year; day navigation/data owners unchanged. Nine Statistics tests pass. Library article/collections/filters also verified without writes. Final audit remains open.
+
+## Заключительная сверка завершена
+
+[Итоговый аудит34 пунктов](407-owner-final-audit.md) подтверждает текущий результат implementation6cf51fcf:303 tests26suites, typecheck/lint иlocal SQL pass; actual browser evidence сохранена в постоянный каталог. Предыдущие pending записи описывают историю и superseded итоговым аудитом. Translation false/rollout hold сохранены, production/push/merge не выполнялись. Owner visual acceptance не приписывается.
