@@ -266,9 +266,9 @@
 }
 
 .tabBarNav button:disabled { opacity: 0.5; }
-.tabBarNav svg { flex-shrink: 0; }
+.tabBarNav svg { flex-shrink: 0; width:20px;height:20px;stroke-width:1.5; }
 
-@media (min-width: 768px) {
+@media (min-width: 701px) {
   .header {
     padding-right: 24px;
     padding-left: 24px;
@@ -279,7 +279,7 @@
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 700px) {
   .tabBar { display: block; }
   .frame[data-immersive="true"] > .header,
   .frame[data-immersive="true"] > .tabBar { display: none; }

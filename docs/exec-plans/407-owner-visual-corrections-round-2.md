@@ -16,7 +16,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 - [x] 4 — Learning-language surface matches Settings; Plus + Add language quiet action.
 - [x] 8 — Interface-language menu rounded, accessible, consistent with app.
 - [x] 27 — Add truthful read-only Billing & subscriptions section; do not invent payment status/invoices.
-- [ ] 9 — Compare prototype navigation icons and shared tablet/mobile/desktop thresholds.
+- [x] 9 — Compare prototype navigation icons and shared tablet/mobile/desktop thresholds.
 - [ ] 10 — Compact rounded desktop navigation and smoother selection.
 - [ ] 17 — Search persists only within current page lifetime, clears on reload.
 - [ ] 18 — Collection filtering belongs inside filter, remove duplicate toolbar toggle.
