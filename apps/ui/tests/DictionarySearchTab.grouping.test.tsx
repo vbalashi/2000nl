@@ -482,3 +482,21 @@ test("approved Library browses immediately with server totals and cursor paging"
   fireEvent.click(screen.getByRole("button",{name:"Next"}));
   await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",cursor:"browse-next"})));
 });
+
+test("initial browse loading does not show an empty result and failure can retry", async () => {
+  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+  const pending=deferred<unknown>();
+  readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+  fetchGroupPage.mockReset().mockReturnValueOnce(pending.promise).mockResolvedValue({groups:[homographGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,matchingEntryIds:["entry-goed-zn"]}});
+  render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider>);
+  await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalled());
+  expect(screen.queryByText("No words found")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("library-headword-group-group-goed-homograph")).not.toBeInTheDocument();
+  await act(async()=>{pending.reject(new Error("lookup_http_503"));});
+  expect(await screen.findByRole("alert")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button",{name:"Try again"}));
+  await screen.findByTestId("library-headword-group-group-goed-homograph");
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});

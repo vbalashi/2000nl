@@ -1,8 +1,11 @@
--- Read-only smoke on the populated local QA database; runs inside a rollback.
+-- Populated local QA regression. Temporary ACL/preferences changes are rolled back.
 BEGIN;
 DO $$
+<<library_initial_browse>>
 DECLARE
  owner uuid := (SELECT user_id FROM public.user_settings LIMIT 1);
+ dictionary_id uuid;
+ scoped_page jsonb;
  first_page jsonb;
  next_page jsonb;
  filtered jsonb;
@@ -37,6 +40,25 @@ BEGIN
  IF query_page ? 'error' OR jsonb_array_length(query_page->'items')=0 THEN RAISE EXCEPTION 'Existing query lookup failed'; END IF;
  IF has_function_privilege('authenticated','public.lookup_platform_v2_library_filtered_entries(uuid,text,text,uuid[],text,integer,integer,jsonb)','EXECUTE') THEN
    RAISE EXCEPTION 'Browser role gained direct RPC execution'; END IF;
+ -- Cursors are bound to filters and source scope, including empty-query browsing.
+ query_page := public.lookup_platform_v2_library_filtered_entries(owner,'','nl',NULL,first_page->'page'->>'nextGroupCursor',10,50,'{"parts":["noun"],"article":"het"}'::jsonb);
+ IF query_page->>'error' IS DISTINCT FROM 'invalid_cursor' THEN RAISE EXCEPTION 'Filter cursor scope widened'; END IF;
+ dictionary_id := (first_page->'items'->0->>'dictionary_id')::uuid;
+ scoped_page := public.lookup_platform_v2_library_filtered_entries(owner,'','nl',ARRAY[dictionary_id],NULL,10,50,filters);
+ IF scoped_page ? 'error' OR jsonb_array_length(scoped_page->'items')=0 THEN RAISE EXCEPTION 'Scoped fixture has no entries'; END IF;
+ query_page := public.lookup_platform_v2_library_filtered_entries(owner,'','nl',ARRAY[dictionary_id],first_page->'page'->>'nextGroupCursor',10,50,filters);
+ IF query_page->>'error' IS DISTINCT FROM 'invalid_cursor' THEN RAISE EXCEPTION 'Source cursor scope widened'; END IF;
+ UPDATE public.user_settings SET material_preferences=jsonb_build_object('schemaVersion',1,'learningLanguages','[]'::jsonb,'disabledDictionaryIds',jsonb_build_array(dictionary_id::text)) WHERE user_id=owner;
+ query_page := public.lookup_platform_v2_library_filtered_entries(owner,'','nl',ARRAY[dictionary_id],NULL,10,50,filters);
+ IF query_page ? 'error' OR jsonb_array_length(query_page->'items')<>0 THEN RAISE EXCEPTION 'Disabled dictionary visible in browse'; END IF;
+ UPDATE public.user_settings SET material_preferences='{"schemaVersion":1,"learningLanguages":[{"code":"nl","paused":true},{"code":"en","paused":false}],"disabledDictionaryIds":[]}'::jsonb WHERE user_id=owner;
+ query_page := public.lookup_platform_v2_library_filtered_entries(owner,'','nl',NULL,NULL,10,50,filters);
+ IF query_page ? 'error' OR jsonb_array_length(query_page->'items')<>0 THEN RAISE EXCEPTION 'Paused language visible in browse'; END IF;
+ UPDATE public.user_settings SET material_preferences='{"schemaVersion":1,"learningLanguages":[],"disabledDictionaryIds":[]}'::jsonb WHERE user_id=owner;
+ UPDATE public.dictionaries SET visibility='private',owner_user_id=NULL WHERE id=dictionary_id;
+ DELETE FROM public.dictionary_entitlements WHERE dictionary_entitlements.dictionary_id=library_initial_browse.dictionary_id;
+ query_page := public.lookup_platform_v2_library_filtered_entries(owner,'','nl',ARRAY[dictionary_id],NULL,10,50,filters);
+ IF query_page ? 'error' OR jsonb_array_length(query_page->'items')<>0 THEN RAISE EXCEPTION 'Unreadable dictionary visible in browse'; END IF;
  RAISE NOTICE 'Browse smoke passed: % total groups; filters, pages, scope and legacy lookup preserved',first_page->'page'->>'totalGroups';
 END;
 $$;

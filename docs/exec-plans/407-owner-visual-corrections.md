@@ -17,7 +17,7 @@
 - [x] **11.** Разъяснить контракт Только эта коллекция; затем убрать/оформить понятную область.
 - [x] **12.** Убрать Мой словарь / Добавить запись из первичного toolbar, сохранить существующий API/данные.
 - [x] **13.** Убрать Введите слово для поиска из toolbar.
-- [ ] **14.** Library сразу показывает упорядоченные результаты текущего фильтра без запроса; реальные данные, пагинация, ACL, загрузка/ошибки.
+- [x] **14.** Library сразу показывает упорядоченные результаты текущего фильтра без запроса; реальные данные, пагинация, ACL, загрузка/ошибки.
 - [ ] **15.** Library Filters: число результатов/загрузка/ошибка, не требовать поисковое слово.
 - [ ] **16.** Артикли только de/het; обе/ни одной — нет ограничения; единый выбор Builder/Library.
 - [ ] **17.** Направление: общие карточки референса с разделителем и конкретными примерами выбранного языка; fallback без образца.
@@ -72,3 +72,5 @@
 Пункт12: approved Library не показывает блок My dictionary/Add entry в основной панели. Legacy редактор, createUserDictionaryEntry API и данные сохранены; копирование существующей статьи остаётся доступным. Устаревшие modal-trigger тесты заменены отсутствием primary controls и проверками legacy закрытия/защиты от повторного создания. Tests20pass, typecheck/lint pass; browser actual Library screenshot /tmp/407qa/correction12-toolbar.png.
 
 Пункт13: при пустом запросе approved toolbar больше не рендерит copy.typeQuery и пустой контейнер строки. Счётчик при запросе/collection scope сохранён, legacy подсказка прежняя. Tests23pass включая EN/NL/RU, typecheck/lint pass. Browser no-query/all-sources подтверждён, screenshot /tmp/407qa/correction13-toolbar.png; пустые результаты остаются задачей14.
+
+Пункт14: scoped approved Library сразу загружает alphabetic whole-group результаты текущего фильтра через серверный browse path. Пагинация/число/ACL/material selection сохранены; Platform empty lookup прежний. Browser cold reload14449groups и две страницы, screenshot /tmp/407qa/correction14-initial.png. SQL rollback regression проверяет закрытый словарь, disabled dictionary, paused nl, cursor filters/source invalidation, порядок/неповторение/фильтры. UI initial loading/failure/retry regression passes; grouping25 + earlier route29/hook2, typecheck/lint pass.
