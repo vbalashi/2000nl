@@ -1957,3 +1957,13 @@ Approved DictionarySearchTab omits the personal-entry controls block; legacy edi
 ### Owner correction13 — omit idle query instruction (2026-10-01)
 
 Approved toolbar no longer renders typeQuery or its empty row for an idle global lookup. Query/collection counts and legacy behavior remain unchanged. Grouping23pass (EN/NL/RU absence coverage); typecheck/focused lint pass. New tests await asynchronous initialization, removing act warnings in the checks changed with corrections12/13. Actual Library all-sources/no-query verified: `/tmp/407qa/correction13-toolbar.png`. Initial results still absent; correction14 remains open.
+
+### Owner correction14 — initial browsing contract diagnosis (2026-10-01)
+
+Correction14 remains open. Actual no-query/all-sources Library shows no results (screenshot `/tmp/407qa/correction13-toolbar.png`). Authoritative blockers identified:
+
+- `DictionarySearchTab.runSearch` clears all results/detail for empty query outside collection mode, before the grouped request.
+- `/api/library/search` uses the shared `parsePlatformV2LookupRequest`, which rejects empty query; `performPlatformV2Lookup` independently rejects it.
+- The Library-specific database implementation is cloned from the atomic group lookup (185/186). Its inherited initial `v_raw_query IS NULL` branch returns an empty page, and candidate branches only match exact headwords/forms. Removing only the UI guard cannot satisfy the requested behavior.
+
+Owning implementation: first-party Library browse path, preserving existing Platform lookup requirements and connected-client rejection. Add explicit parser allowance only for Library dictionary intent, service allowance only under authenticated first-party Library scope, and a Library-only DB browse branch preserving eligible dictionaries (ACL/entitlements/material preferences), POS/article filters, whole-group identity, count, and deterministic cursor paging. Keep normalized alphabetical ordering with a stable group-ID tie-breaker; ensure cursor scope includes the selection and empty query. Preserve unindexed personal-entry fallback. Do not load the full corpus in the browser or substitute collection-only results. Validate SQL ACL/filters/count/next-page continuity and API/transport/UI readiness/error states before marking14 complete. No production rollout/gate changes.
