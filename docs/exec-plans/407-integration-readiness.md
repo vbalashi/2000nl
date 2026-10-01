@@ -1819,3 +1819,12 @@ it now inherits the real light practice theme, without preference writes. Browse
 verified transparent group, border0, canvas#f3f4f8, and visible framed meanings.
 Screenshot /tmp/407qa/correction5-flat.png. Existing dialog3tests pass; typecheck,
 targeted lint and diff pass. No dictionary/actions/scheduling changes. Next6 badges.
+
+### 2026-10-01 — correction6 markers above meaning frames
+
+Shared article surfaces now use exact prototype above-marker geometry: top-20,
+ordinal left5, status right8, transparent backgrounds, height16 and margin22/32.
+No changed status calculations, ordering, identity or callbacks. Browser fixture
+with real theme confirms both marker bottoms207 are above frame top210; screenshot
+shows expanded and collapsed meanings and continuous borders. Screenshot:
+/tmp/407qa/correction6-above.png. CSS-only change; diff check passes. Next7 chevron.
