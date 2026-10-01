@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { ChevronUp } from "lucide-react";
+import { ChevronUp, Plus } from "lucide-react";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import {
@@ -150,7 +150,7 @@ export function LearningMaterialSettings({
       </ol>
       <button
         type="button"
-        className={s.materialAction}
+        className={s.addLanguage}
         disabled={!account.snapshot}
         aria-disabled={disabled}
         aria-haspopup="dialog"
@@ -159,7 +159,7 @@ export function LearningMaterialSettings({
           if (!disabled) setPicker(true);
         }}
       >
-        {copy.addLanguage}
+        <Plus size={16} aria-hidden="true" />{copy.addLanguage}
       </button>
       {picker && (
         <React.Suspense
