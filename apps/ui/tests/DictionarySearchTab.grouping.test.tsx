@@ -290,7 +290,7 @@ describe("DictionarySearchTab Headword Group results", () => {
     render(<Harness />);
     await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(1));
     const initialSignal = fetchGroupPage.mock.calls[0][0].signal as AbortSignal;
-    const input = screen.getByPlaceholderText("Zoek in het woordenboek...");
+    const input = screen.getByRole("textbox", { name: "Woorden zoeken" });
     for (const value of ["h", "hu", "hui", "huis"]) {
       fireEvent.change(input, { target: { value } });
     }
@@ -381,11 +381,11 @@ test("approved chips panel excludes disabled sources, cancels drafts and applies
  await screen.findByRole("button",{name:"Enabled B"});expect(screen.queryByRole("button",{name:"Disabled A"})).not.toBeInTheDocument();
  fireEvent.click(screen.getByRole("button",{name:"Enabled B"}));fireEvent.click(screen.getByRole("button",{name:copy.library.ok}));
  fireEvent.click(screen.getByRole("button",{name:copy.builder.cancel}));
- expect(fetchGroupPage.mock.calls.filter(call=>!call[0].signal).at(-1)?.[0].libraryScope.dictionaryIds).toBeNull();
+ expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).at(-1)?.[0].libraryScope.dictionaryIds).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));fireEvent.click(screen.getByRole("button",{name:copy.builder.parts.Nouns}));
  await waitFor(()=>expect(screen.getByRole("button",{name:copy.library.showResults})).toBeEnabled());
  fireEvent.click(screen.getByRole("button",{name:copy.library.showResults}));
- await waitFor(()=>expect(fetchGroupPage.mock.calls.filter(call=>!call[0].signal).at(-1)?.[0]).toMatchObject({cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:["noun"],article:null}}}));
+ await waitFor(()=>expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).at(-1)?.[0]).toMatchObject({cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:["noun"],article:null}}}));
  expect(repository.save).not.toHaveBeenCalled();
 });
 

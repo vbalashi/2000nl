@@ -797,7 +797,7 @@ function TrainingScreenContent({
         acceptedStatsTimerRef.current = null;
       }
     },
-    [],
+    [loadStats],
   );
   // The detailed stats aggregate is the dominant DB cost of a Training answer,
   // so accepted answers refresh it on a trailing, rate-limited schedule.
