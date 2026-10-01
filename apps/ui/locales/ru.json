@@ -98,7 +98,7 @@
       "definition": "Определение",
       "usagePattern": "Способ употребления",
       "examples": "Примеры",
-      "idioms": "Выражения",
+      "idioms": "Идиомы",
       "notes": "Заметки",
       "reviewPrompt": "Насколько хорошо вы знаете это значение?"
     },
@@ -318,7 +318,7 @@
       "exerciseMany": "{count} упражнений",
       "exerciseOther": "{count} упражнения",
       "illustrativeActivity": "Пример активности · сохранён только в этом прототипе.",
-      "exerciseType": {"Words": "Слова", "Idioms": "Выражения", "Translation": "Перевод"},
+      "exerciseType": {"Words": "Слова", "Idioms": "Идиомы", "Translation": "Перевод"},
       "direction": {"Direct": "Прямой", "Reverse": "Обратный"},
       "learningLanguage": {"Dutch": "Нидерландский", "English": "Английский", "German": "Немецкий"}
     },

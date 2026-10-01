@@ -2021,3 +2021,7 @@ Real browser selected context exposed wrong abstract prompt label Meaning. Added
 ### Owner follow-up 17–18: compact direction cards and concrete context preview
 
 Direction cards use wrapping flex items capped at 244px, minimum 170px, with no full-row stretching. Browser proof: two columns at 483px; bounded wrapping at 320px. Context previews share the selected-language sentence pair; prompt language follows the translation language, answer the learning language. No scheduling or translation rollout gate changes. Typecheck, DirectionCard (4 tests), lint pass with existing unrelated hook warning. Owner visual acceptance pending.
+
+### Owner correction 19
+
+Russian training-family labels use Идиомы consistently across shared catalogs and approved Builder. Article usage heading is distinct and retained. EN/NL labels checked; 11 builder/session/statistics localization tests pass. Actual browser choice and summary verified; no domain keys changed.
