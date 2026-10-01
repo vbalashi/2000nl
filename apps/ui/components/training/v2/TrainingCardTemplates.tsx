@@ -322,11 +322,18 @@ export function TrainingCardAnswerBody({
       <div
         ref={scrollRef}
         data-testid="training-answer-scroll"
+        role="region"
+        aria-label={t("senseCard.training.content")}
+        tabIndex={0}
+        onKeyDown={event => {
+          // Space scrolls reading content rather than turning the card over.
+          if (event.key === " ") event.stopPropagation();
+        }}
         data-scroll-top={scrollState.top ? "faded" : "clear"}
         data-scroll-bottom={scrollState.bottom ? "faded" : "clear"}
         onScroll={updateScrollState}
         style={{ maskImage, WebkitMaskImage: maskImage }}
-        className="h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className={`h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${approved.answerScroll}`}
       >
         {approvedArticle ? <ProductionArticleReading>
           {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>)}

@@ -23,6 +23,15 @@
   background: var(--practice-surface);
   box-shadow: none;
 }
+/* Short windows keep the same text roles, trading outer air for reading space. */
+@media (max-height: 500px) {
+  .stage.stage { gap: 8px; }
+  .shell.shell { padding: 12px; }
+}
+.answerScroll:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: -2px;
+}
 .headerRow {
   display: flex;
   flex-wrap: wrap;

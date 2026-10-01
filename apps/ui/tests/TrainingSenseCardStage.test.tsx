@@ -38,6 +38,20 @@ function TrainingSenseCardStage(
 }
 
 describe("TrainingSenseCardStage", () => {
+  test("answer reading is keyboard reachable and Space does not turn it back over", () => {
+    const model = buildTrainingSenseCardModel({ group: singleSenseGroup,
+      entry: singleSenseEntry, interfaceLanguage: "en" });
+    render(<TrainingSenseCardStage model={model} mode="word-to-definition"
+      interfaceLanguage="en" onAction={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    const reading = screen.getByTestId("training-answer-scroll");
+    expect(reading).toHaveAttribute("role", "region");
+    expect(reading).toHaveAttribute("tabindex", "0");
+    expect(reading.getAttribute("aria-label")).toBeTruthy();
+    reading.focus();
+    fireEvent.keyDown(reading, { key: " " });
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute("data-side", "answer");
+  });
   test("approved presentation rates through the shared controls and dispatches the owning capability", () => {
     vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
     try {

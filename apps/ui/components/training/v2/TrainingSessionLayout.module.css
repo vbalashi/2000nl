@@ -45,6 +45,11 @@
   padding-top: 14px;
   padding-bottom: 14px;
 }
+@media (max-height: 500px) {
+  .main.mainApproved { padding-top: 4px; padding-bottom: 4px; }
+  .mainApproved .stack { gap: 6px; }
+  .session.sessionApproved { height: 48px; }
+}
 .stack {
   display: flex;
   flex-direction: column;

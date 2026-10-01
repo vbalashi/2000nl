@@ -995,3 +995,27 @@ then only the current meaning expanded. Temporary visual proof:
 `/tmp/407qa/live-word-panel-2026-10-01.jpg`. Remaining: short landscape/zoom and
 text spacing, nested collection/report portals, live other exercise families,
 Library actions/layout matrix and owner rollout review. Integration stays active.
+
+## Short-window reading and keyboard reflow — 2026-10-01
+
+The new EN/NL/RU Extra matrix found a genuine landscape failure at 844×390:
+ratings fit, but the pinned header left only 28px of answer viewport. Reduced
+outer padding alone was insufficient (43px). Active approved Training now also
+uses immersive app chrome in short windows ≤1024px wide/≤500px high, including
+phone landscape above the mobile width breakpoint. Close/history remain in the
+session row. Short-window session/card gaps and outer padding tighten without
+reducing text or rating touch targets. Tall and legacy presentation stay unchanged.
+
+The answer scroll region now has an accessible name and a keyboard focus stop;
+Space scrolls it instead of triggering the card-side hotkey. End/Home reach both
+extremes while ratings stay visible. Added a unit regression for that hotkey seam.
+
+Validation: typecheck, 19 stage tests, targeted lint, unchanged style guard. Ten
+browser cases passed across navigation, word-panel sequencing and reflow; the six
+EN/NL/RU reflow cases were repeated with stronger End-to-bottom assertions. They
+cover 844×390 and 640×400 CSS space (200%-zoom-equivalent to 1280×800, not native
+browser zoom), Extra, and text-spacing overrides: 1.5 line height, .12em letters,
+.16em words, 2em paragraph spacing. Visually inspected Russian short-window
+captures before/after. Fixture transport proves layout/keyboard, not live grading.
+Remaining: native zoom, other exercise-family live runs, nested portals and Library
+acceptance. This checkpoint does not close the full #407 goal or enable rollout.
