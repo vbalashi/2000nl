@@ -36,6 +36,7 @@ import type {
 } from "@/lib/types";
 import { hidePerfectParticiple } from "@/lib/definitionFormat";
 import { getAllMeanings } from "@/lib/wordUtils";
+import { WordDetailsCloseProvider } from "../WordDetailsHeader";
 import { WordDetailDrawer } from "./WordDetailDrawer";
 import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
@@ -59,6 +60,7 @@ type Props = {
   translationLang: string | null;
   interfaceLanguage: OnboardingLanguage;
   userLists: WordListSummary[];
+  collections?: WordListSummary[];
   viewedListId: string | null;
   viewedList: WordListSummary | null;
   viewedListName: string;
@@ -130,9 +132,10 @@ export function DictionarySearchTab({
   translationLang,
   interfaceLanguage,
   userLists,
-  viewedListId,
-  viewedList,
-  viewedListName,
+  collections,
+  viewedListId: defaultViewedListId,
+  viewedList: defaultViewedList,
+  viewedListName: defaultViewedListName,
   reloadLists,
   notifyListsUpdated,
   onOpenListMembership,
@@ -159,6 +162,10 @@ export function DictionarySearchTab({
     detailSelection,
     mobileDetailOpen,
   } = searchState;
+  const filterCollections = collections ?? [...userLists,...(defaultViewedList ? [defaultViewedList] : [])].filter((item,index,items)=>items.findIndex(other=>other.id===item.id)===index);
+  const viewedList = searchState.collectionId ? filterCollections.find(item=>item.id===searchState.collectionId) ?? null : defaultViewedList;
+  const viewedListId = searchState.collectionId ? viewedList?.id ?? null : defaultViewedListId;
+  const viewedListName = viewedList?.name ?? defaultViewedListName;
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -340,6 +347,7 @@ export function DictionarySearchTab({
     isCurrentSearch,
     onSearchStateChange,
     listPage,
+    pageSize,
     query,
     updateSearchState,
     useViewedListFilter,
@@ -596,7 +604,7 @@ export function DictionarySearchTab({
     wordTotal,
   );
   const resultScopeLabel = useViewedListFilter
-    ? formatUiMessage(copy.collectionScope, { name: viewedListName })
+    ? approved ? viewedListName : formatUiMessage(copy.collectionScope, { name: viewedListName })
     : approved ? sourceLabel : formatUiMessage(copy.sourceScope, { source: sourceLabel });
   const groupedSearchActive = !useViewedListFilter;
   const resultCountLabel =
@@ -690,10 +698,10 @@ export function DictionarySearchTab({
           <SlidersHorizontal size={18}/>
         </button>}
         </div>
-        {filtersOpen && <AccountLibraryFilters locale={interfaceLanguage} query={query} collection={viewedList}
-          value={{languageCode:searchLanguage,dictionaryId,applyListFilter,...(searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS)}}
+        {filtersOpen && <AccountLibraryFilters locale={interfaceLanguage} query={query} collection={viewedList} collections={filterCollections}
+          value={{languageCode:searchLanguage,dictionaryId,applyListFilter,collectionId:applyListFilter ? viewedListId : null,...(searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS)}}
           onClose={()=>setFiltersOpen(false)} onApply={draft=>{
-            updateSearchState({languageCode:draft.languageCode,dictionaryId:draft.dictionaryId,applyListFilter:Boolean(draft.applyListFilter),
+            updateSearchState({languageCode:draft.languageCode,dictionaryId:draft.dictionaryId,applyListFilter:Boolean(draft.applyListFilter),collectionId:draft.collectionId ?? null,
               entryFilters:{parts:[...draft.parts].sort(),article:draft.article},page:1,groupPageCursors:[null],groupHasMore:false,
               groupTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});
             setFiltersOpen(false);
@@ -1312,7 +1320,8 @@ export function DictionarySearchTab({
                 ) : null}
               </div>
               )}
-              <div className="min-h-0 flex-1">
+              <div className="flex min-h-0 flex-1 flex-col">
+                <WordDetailsCloseProvider onClose={() => updateSearchState({detailSelection:null,selectedHeadwordGroupId:null,mobileDetailOpen:false})} interfaceLanguage={interfaceLanguage}>
                 <LibraryWordDetail
                   entryId={detailSelection.entryId}
                   initialGroup={selectedGroupResult?.group}
@@ -1331,6 +1340,7 @@ export function DictionarySearchTab({
                   onCopyToUserDictionary={handleCopyToUserDictionary}
                   viewport="desktop"
                 />
+                </WordDetailsCloseProvider>
               </div>
             </div>
           ) : (

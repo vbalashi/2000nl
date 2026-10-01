@@ -30,8 +30,9 @@ type PreviewScope = {
 };
 
 /** Draft previews read account material; only Apply changes the main search. */
-export function AccountLibraryFilters({ value, query, locale, collection, onClose, onApply }: {
+export function AccountLibraryFilters({ value, query, locale, collection, collections = [], onClose, onApply }: {
   collection?: WordListSummary | null;
+  collections?: WordListSummary[];
   value: LibraryFilterDraft;
   query: string;
   locale: OnboardingLanguage;
@@ -43,7 +44,8 @@ export function AccountLibraryFilters({ value, query, locale, collection, onClos
   const material = useLibraryMaterialSelection(true, draft.languageCode, locale);
   const copy = getUiMessages(locale).library;
   const materialCopy = getUiMessages(locale).materialPreferences;
-  const ready = draft.applyListFilter ? Boolean(collection) : Boolean(
+  const selectedCollection = draft.collectionId ? collections.find(item=>item.id===draft.collectionId) : collection;
+  const ready = draft.applyListFilter ? Boolean(selectedCollection) : Boolean(
     material?.status === "ready" && material.currentLanguageAllowed &&
     (!draft.dictionaryId || material.dictionaries.some(source => source.id === draft.dictionaryId)),
   );
@@ -56,7 +58,7 @@ export function AccountLibraryFilters({ value, query, locale, collection, onClos
     available: ready,
     userId: account?.userId,
     revision: account?.snapshot?.revision,
-    ...(draft.applyListFilter && collection ? {collectionId:collection.id,collectionType:collection.type} : {}),
+    ...(draft.applyListFilter && selectedCollection ? {collectionId:selectedCollection.id,collectionType:selectedCollection.type} : {}),
   };
   const key = JSON.stringify(scope);
   const [attempt, setAttempt] = useState(0);
@@ -128,6 +130,7 @@ export function AccountLibraryFilters({ value, query, locale, collection, onClos
   return <LibraryFilters
     value={value}
     collectionLabel={collection ? collection.name : undefined}
+    collectionOptions={collections.map(item=>({id:item.id,label:item.name}))}
     locale={locale}
     onDraftChange={setDraft}
     onClose={onClose}

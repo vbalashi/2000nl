@@ -8,15 +8,15 @@ import { DialogSurface } from "../ui/DialogSurface";
 import { NounArticleChoices } from "../ui/NounArticleChoices";
 import { NounFilterPopover } from "./NounFilterPopover";
 import f from "./libraryFilters.module.css";
-export type LibraryFilterDraft = LibraryEntryFilters & { languageCode: string; dictionaryId: string | null; applyListFilter?: boolean };
+export type LibraryFilterDraft = LibraryEntryFilters & { languageCode: string; dictionaryId: string | null; applyListFilter?: boolean; collectionId?: string | null };
 export type LibraryFilterOption = { id: string | null; label: string };
 export const LIBRARY_PART_LABELS = {
  noun: "Nouns", verb: "Verbs", adjective: "Adjectives", adverb: "Adverbs", pronoun: "Pronouns",
  preposition: "Prepositions", conjunction: "Conjunctions", numeral: "Numerals", article: "Articles", interjection: "Interjections",
 } as const;
 export function LibraryFilters({ value, languageOptions, sourceOptions, locale, countContent, sourceNotice,
-  canApply = true, collectionLabel, onDraftChange, onClose, onApply, layout = "chips" }: {
-  collectionLabel?: string;
+  canApply = true, collectionLabel, collectionOptions = [], onDraftChange, onClose, onApply, layout = "chips" }: {
+  collectionLabel?: string; collectionOptions?: LibraryFilterOption[];
   value: LibraryFilterDraft; languageOptions: LibraryFilterOption[]; sourceOptions: LibraryFilterOption[];
   locale: OnboardingLanguage; countContent: React.ReactNode; sourceNotice?: React.ReactNode; canApply?: boolean;
   onDraftChange?: (draft: LibraryFilterDraft) => void; onClose: () => void; onApply: (draft: LibraryFilterDraft) => void;
@@ -29,7 +29,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
     const removing = draft.parts.includes(part);
     update({ parts: removing ? draft.parts.filter(p => p !== part) : [...draft.parts, part], ...(part === "noun" && removing ? { article: null } : {}) });
   };
-  const [page, setPage] = useState<"main" | "language" | "source" | "noun">("main");
+  const [page, setPage] = useState<"main" | "language" | "source" | "noun" | "collection">("main");
   const [query, setQuery] = useState("");
   const [nounAnchor, setNounAnchor] = useState<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -47,8 +47,8 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
     setPage(next);
   };
   const back = () => setPage("main");
-  const title = page === "main" ? copy.filterTitle : page === "language" ? builder.language : page === "source" ? builder.source : builder.nounArticle;
-  const options = page === "language" ? languageOptions : [{ id: null, label: copy.allSources }, ...sourceOptions];
+  const title = page === "main" ? copy.filterTitle : page === "language" ? builder.language : page === "source" ? builder.source : page === "collection" ? messages.builderScope.collections : builder.nounArticle;
+  const options = page === "collection" ? [{id:null,label:copy.allSources},...collectionOptions] : page === "language" ? languageOptions : [{ id: null, label: copy.allSources }, ...sourceOptions];
   const languageName = languageOptions.find(option => option.id === draft.languageCode)?.label ?? draft.languageCode;
   const sourceName = draft.dictionaryId ? sourceOptions.find(option => option.id === draft.dictionaryId)?.label ?? copy.noSources : copy.allSources;
   const visibleOptions = options.filter(option => `${option.id ?? ""} ${option.label}`.toLowerCase().includes(query.trim().toLowerCase()));
@@ -63,7 +63,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
     <div className={f.viewport}>
       <div className={f.track} data-child={page !== "main"}>
         <div className={f.page} ref={node=>{node?.toggleAttribute("inert",page !== "main");}} aria-hidden={page !== "main"}>
-          {collectionLabel && <div className={f.group}><button type="button" role="switch" aria-checked={Boolean(draft.applyListFilter)} className={f.row} onClick={() => update({applyListFilter:!draft.applyListFilter,dictionaryId:null,parts:[],article:null})}><span>{collectionLabel}</span><span className={f.check} aria-hidden="true">{draft.applyListFilter && <Check size={13}/>}</span></button></div>}
+          {collectionOptions.length > 0 && <div className={f.group}><button type="button" className={f.row} onClick={event=>navigate("collection",event.currentTarget)}><span>{messages.builderScope.collections}</span><span className={f.value}>{draft.applyListFilter ? collectionOptions.find(option=>option.id===draft.collectionId)?.label ?? collectionLabel : copy.allSources}</span><ChevronRight size={17}/></button></div>}
           <div hidden={draft.applyListFilter}>
           <div className={f.group}>
             <button type="button" className={f.row} onClick={event => navigate("language", event.currentTarget)}><span>{builder.language}</span><span className={f.value}>{languageName}</span><ChevronRight size={17}/></button>
@@ -96,10 +96,11 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
           </> : <>
             <label className={f.search}><Search size={17}/><input aria-label={page === "language" ? copy.searchLanguages : copy.searchSources} placeholder={page === "language" ? copy.languagesPlaceholder : copy.sourcesPlaceholder} value={query} onChange={event => setQuery(event.target.value)}/></label>
             {page === "source" && sourceNotice}
-            <div className={f.group}>{visibleOptions.map(option => <button type="button" key={option.id ?? "all"} className={f.row} aria-pressed={(page === "language" ? draft.languageCode : draft.dictionaryId) === option.id} onClick={() => {
+            <div className={f.group}>{visibleOptions.map(option => <button type="button" key={option.id ?? "all"} className={f.row} aria-pressed={(page === "collection" ? draft.collectionId ?? null : page === "language" ? draft.languageCode : draft.dictionaryId) === option.id} onClick={() => {
               if (page === "language") { if (option.id && option.id !== draft.languageCode) update({ languageCode: option.id, dictionaryId: null, article: null }); }
+              else if(page === "collection") update({collectionId:option.id,applyListFilter:Boolean(option.id),dictionaryId:null,parts:[],article:null});
               else update({ dictionaryId: option.id });
-            }}><span>{option.label}</span><span className={f.check} aria-hidden="true">{(page === "language" ? draft.languageCode : draft.dictionaryId) === option.id && <Check size={13}/>}</span></button>)}</div>
+            }}><span>{option.label}</span><span className={f.check} aria-hidden="true">{(page === "collection" ? draft.collectionId ?? null : page === "language" ? draft.languageCode : draft.dictionaryId) === option.id && <Check size={13}/>}</span></button>)}</div>
             {!visibleOptions.length && <p className={f.help}>{page === "language" ? copy.noLanguages : copy.noSources}</p>}
           </>}
         </div>

@@ -106,6 +106,7 @@ export function LibraryDestination({
             translationLang={translationLang}
             interfaceLanguage={interfaceLanguage}
             userLists={userLists}
+            collections={lists}
             viewedListId={viewedList?.id ?? null}
             viewedList={viewedList}
             viewedListName={viewedList?.name ?? "VanDale 2k"}

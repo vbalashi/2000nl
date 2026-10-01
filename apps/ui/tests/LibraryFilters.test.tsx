@@ -29,3 +29,14 @@ beforeEach(()=>{
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", {configurable:true,value:function(this:HTMLDialogElement){this.setAttribute("open","");}});
   Object.defineProperty(HTMLDialogElement.prototype, "close", {configurable:true,value:function(this:HTMLDialogElement){this.removeAttribute("open");}});
 });
+
+test("collection choice stays in draft, clears incompatible filters, and applies a real collection ID",()=>{
+ const apply=vi.fn();render(<LibraryFilters {...props} value={{...value,parts:["noun"],article:"het"}} collectionOptions={[{id:"a",label:"My A"},{id:"b",label:"My B"}]} onClose={()=>{}} onApply={apply}/>);
+ fireEvent.click(screen.getByRole("button",{name:/^Collections/}));
+ fireEvent.click(screen.getByRole("button",{name:"My B"}));
+ expect(apply).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole("button",{name:"OK"}));
+ expect(screen.queryByRole("button",{name:"Nouns"})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Show results"}));
+ expect(apply).toHaveBeenCalledWith({...value,applyListFilter:true,collectionId:"b"});
+});

@@ -5,6 +5,7 @@ import type { LibraryHeadwordGroupResult } from "./libraryHeadwordGroupResults";
 export type DictionarySearchTabState = {
   query: string;
   applyListFilter: boolean;
+  collectionId?: string | null;
   wordResults: DictionaryEntry[];
   groupResults: LibraryHeadwordGroupResult[];
   groupPageCursors: Array<string | null>;
