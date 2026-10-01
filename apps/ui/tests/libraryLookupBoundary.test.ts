@@ -43,7 +43,7 @@ test("scoped search calls only the server adapter with the authenticated owner a
       p_query: "goed",
       p_language_code: "nl",
       p_cursor: null,
-      p_group_limit: 10,
+      p_group_limit: 25,
       p_group_entry_bound: 50,
       p_dictionary_ids: [],
     },

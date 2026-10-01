@@ -81,19 +81,21 @@ export async function fetchPlatformV2LibraryGroupPage(input: {
     ...input,
     cursor: input.cursor ?? null,
   });
-  const groups = [...payload.groups];
+  const groups = input.libraryScope ? [...payload.groups] : payload.groups;
   let last = payload;
+  const matchingEntryIds = [...(payload.librarySearch?.matchingEntryIds ?? [])];
   // The RPC bounds each atomic read to 25 groups. Combine cursor pages only
   // for the first-party Library; generic connected-client lookup is unchanged.
   while (input.libraryScope && last.page.nextGroupCursor && groups.length < LIBRARY_PAGE_SIZE) {
     const next = await fetchPlatformV2LibraryLookup({...input,cursor:last.page.nextGroupCursor});
     groups.push(...next.groups);
+    matchingEntryIds.push(...(next.librarySearch?.matchingEntryIds ?? []));
     if (next.page.nextGroupCursor === last.page.nextGroupCursor) throw new Error("library_cursor_did_not_advance");
     last = next;
   }
   return {
     groups,
-    ...(input.libraryScope?.filters && payload.librarySearch ? {librarySearch:payload.librarySearch} : {}),
+    ...(input.libraryScope?.filters && payload.librarySearch ? {librarySearch:{...payload.librarySearch,matchingEntryIds:[...new Set(matchingEntryIds)]}} : {}),
     selectedTierComplete: last.page.selectedTierComplete,
     nextGroupCursor: last.page.nextGroupCursor,
   };

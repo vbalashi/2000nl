@@ -467,3 +467,20 @@ test("filtered summary accepts matched cross-reference identities without turnin
   });
   expect(result.groups).toEqual([pointerGroup]);
 });
+
+ test("first-party Library combines cursor reads and their matching entry projections",async()=>{
+  const fetchMock=vi.fn().mockImplementation(async(_url,init)=>{
+    const body=JSON.parse(init.body);
+    return new Response(JSON.stringify({...payload,
+      page:{selectedTierComplete:true,nextGroupCursor:body.cursor ? null : "second"},
+      librarySearch:{totalGroups:2,matchingEntryIds:[body.cursor ? furnitureEntry.entryId : financeEntry.entryId]},
+    }),{status:200});
+  });
+  vi.stubGlobal("fetch",fetchMock);
+  const result=await fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}});
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(fetchMock.mock.calls[1][1].body).cursor).toBe("second");
+  expect(result.groups).toHaveLength(2);
+  expect(result.librarySearch?.matchingEntryIds).toEqual([financeEntry.entryId,furnitureEntry.entryId]);
+  expect(result.nextGroupCursor).toBeNull();
+ });
