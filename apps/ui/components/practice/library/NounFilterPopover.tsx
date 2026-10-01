@@ -5,6 +5,7 @@ import {DialogSurface} from "@/components/practice/ui/DialogSurface";
 import { X } from "lucide-react";
 import {getUiMessages} from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { NounArticleChoices } from "../ui/NounArticleChoices";
 import f from "./libraryFilters.module.css";
 
 export function NounFilterPopover({ locale, anchor, article, onChange, onClose }: {
@@ -28,7 +29,7 @@ export function NounFilterPopover({ locale, anchor, article, onChange, onClose }
   }, [anchor]);
   return <DialogSurface onDismiss={onClose} ref={ref} className={f.popover} aria-label={copy.builder.nounArticle} lang={locale} onCancel={event => { event.preventDefault(); event.stopPropagation(); onClose(); }}>
     <div className={f.popoverHeader}><h3>{copy.builder.nounArticle}</h3><button type="button" className={f.icon} aria-label={copy.builder.closeNounSubfilters} onClick={onClose}><X size={17}/></button></div>
-    <div className={f.parts}>{(["de", "het"] as const).map(value => <button type="button" className={f.chip} key={value} aria-pressed={!article || article === value} data-selected={!article || article === value} onClick={() => onChange(article ? null : value)}>{value}</button>)}</div>
+    <div className={f.parts}><NounArticleChoices article={article} onChange={onChange} className={f.chip}/></div>
     <p className={f.help}>{copy.library.bothArticles}</p>
   </DialogSurface>;
 }

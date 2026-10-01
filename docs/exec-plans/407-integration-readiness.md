@@ -1991,3 +1991,7 @@ Extended populated-local SQL regression uses transaction-local modifications to 
 ### Owner correction15 — browse filter preview count (2026-10-01)
 
 Removed the empty-query gate and instruction from AccountLibraryFilters preview. Existing scoped server count is used for empty query; material readiness,250ms debounce, aborted-preview protection and retry remain unchanged. Draft preview is read-only; Apply remains the only search-state update. Filters suites7pass, typecheck/lint pass. Browser current no-query scoped noun+verb filter reports10937 matching articles, screenshot `/tmp/407qa/correction15-count.png`; canceled after inspection. Correction15 complete.
+
+### Owner correction16 — independent article choices (2026-10-01)
+
+Removed Any article from approved Builder; existing de/het toggles share the new toggle helper. Shared UI NounArticleChoices retains four local selection states while projecting a single selected article or null to Library's existing contract. Both Library chips popover and rows variant use it, preserving aria-pressed. Four-state regression passes; existing filters7pass and initial typecheck/lint pass. Correction16 remains open: Builder currently stores both article values, so investigate/normalize its selection boundary to ensure both means no restriction (including missing-article nouns), then browser-verify both surfaces. No scheduler change intended.

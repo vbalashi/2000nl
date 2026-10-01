@@ -8,6 +8,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { toggleNounArticle } from "@/components/practice/ui/NounArticleChoices";
 import { BuilderSection } from "@/components/practice/builder/BuilderSection";
 import { BuilderChoice } from "@/components/practice/builder/BuilderChoice";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
@@ -734,14 +735,6 @@ export function ApprovedTrainingBuilder(p: Props) {
             </button>
           </header>
           <div className={s.choices}>
-            <BuilderChoice
-              active={!p.draft.nounArticles?.length}
-              onClick={() =>
-                p.onDraftChange((current) => ({ ...current, nounArticles: [] }))
-              }
-            >
-              {b.anyArticle}
-            </BuilderChoice>
             {(["de", "het"] as const).map((article) => (
               <BuilderChoice
                 key={article}
@@ -754,9 +747,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                           new Set([...current.partOfSpeech, "zn" as const]),
                         )
                       : current.partOfSpeech,
-                    nounArticles: current.nounArticles?.includes(article)
-                      ? current.nounArticles.filter((item) => item !== article)
-                      : [...(current.nounArticles ?? []), article],
+                    nounArticles: toggleNounArticle(current.nounArticles ?? [], article),
                   }))
                 }
               >

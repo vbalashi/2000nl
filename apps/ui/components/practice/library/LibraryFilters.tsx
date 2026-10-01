@@ -5,6 +5,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
 import { LIBRARY_PARTS, type LibraryEntryFilters, type LibraryPart } from "@/lib/platform/librarySearchScope";
 import { DialogSurface } from "../ui/DialogSurface";
+import { NounArticleChoices } from "../ui/NounArticleChoices";
 import { NounFilterPopover } from "./NounFilterPopover";
 import f from "./libraryFilters.module.css";
 export type LibraryFilterDraft = LibraryEntryFilters & { languageCode: string; dictionaryId: string | null };
@@ -87,9 +88,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
         <div className={f.page} ref={node=>{node?.toggleAttribute("inert",page === "main");}} aria-hidden={page === "main"}>
           {page === "noun" ? <>
             <p className={f.help}>{copy.articleHelp}</p>
-            <div className={f.group}>{(["de", "het"] as const).map(article => <button type="button" key={article} className={f.row} aria-pressed={!draft.article || draft.article === article} onClick={() => update({ article: draft.article ? null : article })}>
-              <span>{article}</span><span className={f.check} aria-hidden="true">{(!draft.article || draft.article === article) && <Check size={13}/>}</span>
-            </button>)}</div>
+            <div className={f.group}><NounArticleChoices article={draft.article} onChange={article => update({ article })} className={f.row}/></div>
           </> : <>
             <label className={f.search}><Search size={17}/><input aria-label={page === "language" ? copy.searchLanguages : copy.searchSources} placeholder={page === "language" ? copy.languagesPlaceholder : copy.sourcesPlaceholder} value={query} onChange={event => setQuery(event.target.value)}/></label>
             {page === "source" && sourceNotice}
