@@ -9,12 +9,12 @@ const outFile = `${OUT}/${label}-${Date.now()}.jsonl`;
 const emit = (rec) => fs.appendFileSync(outFile, JSON.stringify(rec) + "\n");
 
 const { browser, page, net } = await openAuthed({ mobile });
-const startBtn = () => page.getByRole("button", { name: /^Start current setup$/i });
+const startBtn = () => page.getByRole("button", { name: /^(Start current setup|Start training|Continue training|Начать тренировку|Продолжить тренировку)$/i });
 const ready = page.locator('[data-training-v2-state="ready"]').first();
 
 async function startSession(kind) {
   await startBtn().waitFor({ timeout: 30000 });
-  await page.waitForFunction(() => [...document.querySelectorAll("button")].some((x) => /^Start current setup$/i.test((x.textContent || "").trim()) && !x.disabled), null, { timeout: 60000 });
+  await page.waitForFunction(() => [...document.querySelectorAll("button")].some((x) => /^(Start current setup|Start training|Continue training|Начать тренировку|Продолжить тренировку)$/i.test((x.textContent || "").trim()) && !x.disabled), null, { timeout: 60000 });
   const netMark = net.length;
   const ts = Date.now();
   await startBtn().click();
@@ -42,7 +42,7 @@ for (let i = 0; answered < N && i < N * 2; i++) {
   }
   const learn = page.getByRole("button", { name: /^(Begin met leren|Учить|Start learning|Learn|Leren)$/i }).first();
   const good = page.getByRole("button", { name: /^(Goed|Хорошо|Good)/i }).first();
-  const back = page.getByRole("button", { name: /Back to Today/i }).first();
+  const back = page.getByRole("button", { name: /Back to (Today|Training)|Вернуться к тренировке/i }).first();
   if (await back.isVisible().catch(() => false)) {
     await back.click();
     await startSession("restart");
@@ -61,7 +61,7 @@ for (let i = 0; answered < N && i < N * 2; i++) {
     .waitForFunction(
       (b) =>
         window.__lat.timings.slice(b).find((e) => e.stage === "transition.total") ||
-        ([...document.querySelectorAll("button")].some((x) => /Back to Today/i.test(x.textContent || "")) && { outcome: "session-complete" }),
+        ([...document.querySelectorAll("button")].some((x) => /Back to (Today|Training)|Вернуться к тренировке/i.test(x.textContent || "")) && { outcome: "session-complete" }),
       before,
       { timeout: 30000 },
     )

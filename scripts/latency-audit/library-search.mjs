@@ -9,7 +9,7 @@ await page.screenshot({ path: `${OUT}/library.png` });
 console.log((await visibleButtons(page)).slice(0, 60).join("\n"));
 console.log(JSON.stringify(await page.$$eval("input, textarea", (els) => els.map((e) => ({ type: e.type, ph: e.placeholder, aria: e.getAttribute("aria-label"), name: e.name })))));
 
-const input = page.locator('input[type="search"], input[placeholder*="earch" i], input[placeholder*="oek" i]').first();
+const input = page.getByRole("textbox", {name: /Search words|Поиск слов|Woorden zoeken/i});
 const mark = net.length;
 const t0 = Date.now();
 await input.pressSequentially("huis", { delay: 120 });
