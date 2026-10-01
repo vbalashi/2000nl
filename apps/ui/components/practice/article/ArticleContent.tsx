@@ -37,7 +37,12 @@ export function ArticleContentNode({node,interfaceLanguage,contentLanguage,trans
 
 export function ArticleMeaningDetails({definition,details,...presentation}:Presentation&{definition:PlatformV2SenseContentNode|null;details:PlatformV2SenseContentNode[]}){
  const classes=presentation.classes??s;const copy=getUiMessages(presentation.interfaceLanguage).article;
- const groups=[{id:"examples",label:copy.examples,nodes:details.filter(n=>n.kind==="example")},{id:"expressions",label:copy.expressions,nodes:details.filter(n=>n.kind!=="example")}];
+ const groups=[
+  {id:"examples",label:copy.examples,nodes:details.filter(n=>n.kind==="example")},
+  {id:"usage",label:copy.usage,nodes:details.filter(n=>n.kind==="usage-pattern")},
+  {id:"expressions",label:copy.expressions,nodes:details.filter(n=>n.kind==="idiom"||n.kind==="idiom-explanation")},
+  {id:"notes",label:copy.note,nodes:details.filter(n=>!["example","usage-pattern","idiom","idiom-explanation"].includes(n.kind))},
+ ];
  return <>{definition?.children.map(node=><ArticleContentNode key={node.contentNodeId} node={node} {...presentation}/>)}{groups.filter(g=>g.nodes.length).map(group=><section className={classes.contentSection} key={group.id} data-section={group.id}><h3>{group.id==="examples"?<List size={12} aria-hidden="true"/>:<Quote size={12} aria-hidden="true"/>}<span>{group.label}</span></h3>{group.nodes.map(node=><ArticleContentNode key={node.contentNodeId} node={node} {...presentation}/>)}</section>)}</>;
 }
 

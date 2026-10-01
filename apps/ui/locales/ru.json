@@ -611,7 +611,8 @@
     },
     "article": {
       "examples": "Примеры",
-      "expressions": "Выражения и употребление",
+      "expressions": "Выражения",
+      "usage": "Употребление",
       "example": "Пример",
       "explanation": "Объяснение",
       "note": "Примечание",

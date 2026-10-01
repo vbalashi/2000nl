@@ -611,7 +611,8 @@
     },
     "article": {
       "examples": "Voorbeelden",
-      "expressions": "Uitdrukkingen en gebruik",
+      "expressions": "Uitdrukkingen",
+      "usage": "Gebruik",
       "example": "Voorbeeld",
       "explanation": "Uitleg",
       "note": "Opmerking",

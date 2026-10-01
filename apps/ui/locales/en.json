@@ -611,7 +611,8 @@
     },
     "article": {
       "examples": "Examples",
-      "expressions": "Expressions & usage",
+      "expressions": "Expressions",
+      "usage": "Usage",
       "example": "Example",
       "explanation": "Explanation",
       "note": "Note",

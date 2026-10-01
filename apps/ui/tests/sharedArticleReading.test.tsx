@@ -84,3 +84,11 @@ test.each(['en','nl','ru'] as const)('Library word exclusion menu is read-only u
  expect(exclude).toHaveBeenCalledTimes(1);expect(action).not.toHaveBeenCalled();expect(report).not.toHaveBeenCalled();
  expect(screen.queryByRole('menu')).not.toBeInTheDocument();expect(card).toHaveAttribute('data-expanded','true');
 });
+
+test('source usage patterns are separate from idioms and examples',()=>{
+ const node=(id:string,kind:'usage-pattern'|'example'|'idiom',text:string)=>({contentNodeId:id,parentContentNodeId:null,kind,text,children:[]});
+ const view=render(<ArticleMeaningDetails definition={null} details={[node('context','usage-pattern','iemand doet een plaats aan'),node('example','example','het schip deed de haven van Rotterdam aan'),node('idiom','idiom','een expression')]} interfaceLanguage="ru" contentLanguage="nl"/>);
+ expect(view.container.querySelector('[data-section="usage"]')).toHaveTextContent('iemand doet een plaats aan');
+ expect(view.container.querySelector('[data-section="expressions"]')).not.toHaveTextContent('iemand doet een plaats aan');
+ expect(view.container.querySelector('[data-section="examples"]')).toHaveTextContent('het schip deed de haven van Rotterdam aan');
+});
