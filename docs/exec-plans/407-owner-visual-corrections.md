@@ -20,7 +20,7 @@
 - [x] **14.** Library сразу показывает упорядоченные результаты текущего фильтра без запроса; реальные данные, пагинация, ACL, загрузка/ошибки.
 - [x] **15.** Library Filters: число результатов/загрузка/ошибка, не требовать поисковое слово.
 - [x] **16.** Артикли только de/het; обе/ни одной — нет ограничения; единый выбор Builder/Library.
-- [ ] **17.** Направление: общие карточки референса с разделителем и конкретными примерами выбранного языка; fallback без образца.
+- [x] **17.** Направление: общие карточки референса с разделителем и конкретными примерами выбранного языка; fallback без образца.
 - [ ] **18.** Сверить слово в контексте с решениями, объяснить выключенный Translation/gates; не менять production gates молча.
 - [ ] **19.** Русская подпись Идиомы / Устойчивые выражения и идиомы; согласованные EN/NL.
 - [ ] **20.** Поиск источников визуально как в референсе; общий с23.
@@ -78,3 +78,5 @@
 Пункт15: фильтры отправляют пустой query в существующий scoped preview, footer показывает real count/loading/error+retry без typeQuery. Debounce/cancellation/material guards/draft-only behavior сохранены. Tests7pass включая пустой query failure/retry, typecheck/lint pass. Browser RU no-query VanDale Dutch noun+verb count10937, screenshot /tmp/407qa/correction15-count.png; закрыто Отменой без применения draft.
 
 Пункт16: только de/het, independent toggles; обе/ни одной — no restriction. Общая семантика в lib/training/nounArticles, UI drafts retain both, Library canonical null и Training RPC normalization без nounArticles при обеих. Builder summary/dot тоже показывают ограничение только для одного артикля. Tests81pass плюс filters7, typecheck/lint; browser Library both/none и Builder both/summary verified, /tmp/407qa/correction16-library.png и correction16-builder.png. Черновики отменены, ничего не сохранено/запущено.
+
+Пункт17: DirectionCard общий с non-Radix prototype, divided heading/grid/readable example hierarchy. Meaning/idiom examples NL/EN; sentence pair uses known selected source+translation languages NL/EN/RU, otherwise localized labels; context without approved sample uses fallback. lang tags follow shown content; direction owner/callbacks/available modes preserved. Browser NL word cards/divider, reverse toggle и idiom sample verified; screenshot /tmp/407qa/correction17-directions.png. Tests TrainingTodaySetup41+corrected1, DirectionCard4, typecheck/lint pass.

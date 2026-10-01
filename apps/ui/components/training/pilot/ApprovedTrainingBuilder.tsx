@@ -464,7 +464,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                         scenario?.modes?.includes(mode),
                     )
                     .map((mode) => {
-                      const example = directionExample(p.languageCode, family);
+                      const example = directionExample(p.languageCode, family, p.translationLanguage);
                       const direct = mode === "word-to-definition";
                       const prompt = example ? example[direct ? 0 : 1] : direct
                         ? family === "idiom" ? o.exerciseType.Idioms : o.exerciseType.Words
@@ -473,8 +473,8 @@ export function ApprovedTrainingBuilder(p: Props) {
                         : family === "sentence" ? language(p.languageCode) : family === "idiom" ? o.exerciseType.Idioms : o.exerciseType.Words;
                       return <DirectionCard key={mode} label={direct ? o.direction.Direct : o.direction.Reverse}
                         selected={p.draft.modes.includes(mode)} onClick={() => p.onToggleMode(mode)}
-                        prompt={prompt} answer={answer} promptLanguage={example ? p.languageCode : undefined}
-                        answerLanguage={example ? p.languageCode : undefined}
+                        prompt={prompt} answer={answer} promptLanguage={example ? !direct && family === "sentence" ? p.translationLanguage ?? undefined : p.languageCode : undefined}
+                        answerLanguage={example ? direct && family === "sentence" ? p.translationLanguage ?? undefined : p.languageCode : undefined}
                         classes={{card:s.direction,heading:s.directionHeading,check:s.directionCheck,prompt:s.prompt,arrow:s.directionArrow,answer:s.answer}}/>;
                     })}
                 </div>

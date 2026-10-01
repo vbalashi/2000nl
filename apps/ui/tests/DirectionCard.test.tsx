@@ -18,3 +18,9 @@ test("unknown language and unsupported family use label fallback rather than ano
   expect(directionExample("nl","sentence")).toBeNull();
   expect(directionExample("en","idiom")?.[0]).toBe("Break the ice");
 });
+
+test("translation examples require both selected languages",()=>{
+  expect(directionExample("nl","sentence","ru")).toEqual(["Ik ga met de fiets naar mijn werk.","Я езжу на работу на велосипеде."]);
+  expect(directionExample("en","sentence","nl")).toEqual(["I cycle to work.","Ik ga met de fiets naar mijn werk."]);
+  expect(directionExample("nl","sentence","fr")).toBeNull();
+});
