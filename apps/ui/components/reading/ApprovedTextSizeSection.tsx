@@ -27,7 +27,6 @@ export function ApprovedTextSizeSection({
   if (!settings) return null;
   const copy = getUiMessages(language),
     text = copy.settings,
-    prefs = copy.textPreferences,
     status = readingSettingsCopy[language];
   const active = settings.preferences[settings.device];
   const saveStatus = settings.saveStatus[settings.device];
@@ -60,8 +59,6 @@ export function ApprovedTextSizeSection({
         })}
       </div>
       </div>
-      <p className={s.hint}>{prefs.description}</p>
-      <p className={s.hint}>{prefs.profileHint}</p>
       {settings.loadStatus === "loading" && (
         <p role="status">{status.loading}</p>
       )}
@@ -74,7 +71,6 @@ export function ApprovedTextSizeSection({
         </div>
       )}
       {saveStatus === "saving" && <p role="status">{status.saving}</p>}
-      {saveStatus === "saved" && <p role="status">{status.saved}</p>}
       {saveStatus === "error" && (
         <div role="alert">
           <p>{status.saveError}</p>
