@@ -818,3 +818,17 @@ test("approved reverse idiom preview names its expression answer", async () => {
   expect(screen.getByRole("button", { name: /^Reverse Meteen zeggen waar het om gaat\. Met de deur in huis vallen$/ })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /^Reverse Meaning Words$/ })).not.toBeInTheDocument();
 });
+
+ test("approved source search appears above five choices and hidden queries cannot hide short lists",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const dictionaries=Array.from({length:6},(_,index)=>({value:`dictionary-${index}`,label:`Dictionary ${index}`}));
+ const props={...baseProps,userId:"source-search-boundary",trainingLanguageCode:"nl",hasOwnedSession:false};
+ const view=render(<TrainingTodaySetup {...props} dictionaries={dictionaries}/>);
+ await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));fireEvent.click(screen.getByRole("button",{name:/^Source /}));
+ fireEvent.click(screen.getByRole("button",{name:"Selected dictionaries"}));
+ fireEvent.change(screen.getByRole("textbox",{name:"Search sources"}),{target:{value:"Dictionary 5"}});
+ expect(screen.queryByRole("button",{name:"Dictionary 0",exact:true})).not.toBeInTheDocument();
+ view.rerender(<TrainingTodaySetup {...props} dictionaries={dictionaries.slice(0,5)}/>);
+ expect(screen.queryByRole("textbox",{name:"Search sources"})).not.toBeInTheDocument();
+ expect(screen.getByRole("button",{name:"Dictionary 0",exact:true})).toBeInTheDocument();
+ });

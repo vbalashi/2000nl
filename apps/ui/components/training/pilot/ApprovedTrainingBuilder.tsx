@@ -33,6 +33,7 @@ import type {
 import { TrainingMixPicker } from "./TrainingMixPicker";
 import { TrainingSessionSizePicker } from "./TrainingSessionSizePicker";
 import s from "./approvedTrainingBuilder.module.css";
+import filters from "@/components/practice/library/libraryFilters.module.css";
 
 type Props = {
   interfaceLanguage: OnboardingLanguage;
@@ -210,8 +211,8 @@ export function ApprovedTrainingBuilder(p: Props) {
     setValue: (query: string) => void,
     label: string,
   ) => (
-    <label className={s.search}>
-      <Search size={16} aria-hidden="true" />
+    <label className={`${filters.search} ${s.search}`}>
+      <Search size={17} aria-hidden="true" />
       <input
         aria-label={label}
         placeholder={label}
@@ -350,6 +351,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                 ))}
               </div>
               {materialMode !== "all-dictionaries" &&
+                (materialMode === "collection" ? p.lists.length : p.dictionaries.length) > 5 &&
                 search(
                   sourceQuery,
                   setSourceQuery,
@@ -367,7 +369,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                     ? p.dictionaries
                     : []
                 )
-                  .filter((option) => matches(option, sourceQuery))
+                  .filter((option) => matches(option, (materialMode === "collection" ? p.lists.length : p.dictionaries.length) > 5 ? sourceQuery : ""))
                   .map((option) =>
                     row(
                       option,

@@ -2025,3 +2025,7 @@ Direction cards use wrapping flex items capped at 244px, minimum 170px, with no 
 ### Owner correction 19
 
 Russian training-family labels use Идиомы consistently across shared catalogs and approved Builder. Article usage heading is distinct and retained. EN/NL labels checked; 11 builder/session/statistics localization tests pass. Actual browser choice and summary verified; no domain keys changed.
+
+### Owner corrections 20/23
+
+Approved source search shares the reference search CSS. It appears only for more than five choices in the current material mode; hidden queries are ignored on shorter catalogs. Existing account catalog, selection, ACL and launch owners retained. 42 setup tests and new six-to-five filtering regression pass; typecheck pass. Actual local short dictionary/collection catalogs verified without search.
