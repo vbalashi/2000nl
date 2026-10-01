@@ -382,6 +382,8 @@ afterAll(() => {
   else Reflect.deleteProperty(dialogPrototype, "close");
 });
 test("learning picker uses canonical identity, relevant guidance and restores opener focus while saving", async () => {
+  // This test characterizes selection and focus, independently of lazy chunk compilation.
+  await import("@/components/practice/settings/LanguagePicker");
   const repo = repository();
   let finish!: (
     result: Awaited<ReturnType<MaterialRepository["save"]>>,
