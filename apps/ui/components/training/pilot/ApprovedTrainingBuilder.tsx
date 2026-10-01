@@ -8,7 +8,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { toggleNounArticle } from "@/components/practice/ui/NounArticleChoices";
+import { toggleNounArticle } from "@/lib/training/nounArticles";
 import { BuilderSection } from "@/components/practice/builder/BuilderSection";
 import { BuilderChoice } from "@/components/practice/builder/BuilderChoice";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";

@@ -1,13 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 
-export type NounArticle = "de" | "het";
-export function toggleNounArticle(selected: readonly NounArticle[], article: NounArticle): NounArticle[] {
-  return selected.includes(article) ? selected.filter(item => item !== article) : [...selected, article];
-}
-export function singleNounArticle(selected: readonly NounArticle[]): NounArticle | null {
-  return selected.length === 1 ? selected[0] : null;
-}
+import { singleNounArticle, toggleNounArticle, type NounArticle } from "@/lib/training/nounArticles";
 
 /** Retain both/no selections locally; the Library contract stores a single restriction. */
 export function NounArticleChoices({ article, onChange, className }: {

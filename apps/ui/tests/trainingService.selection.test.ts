@@ -117,6 +117,20 @@ describe("trainingService next-word selection", () => {
     });
   });
 
+  test("both noun articles and neither produce the same unrestricted training plan", async () => {
+    const { createTrainingSessionPlanKey } = await importService();
+    const { isTrainingFocusFilterActive } = await import("@/lib/training/selectionService");
+    const empty = {dateWindow:"all" as const};
+    const both = {...empty,nounArticles:["de","het"] as ("de"|"het")[]};
+    expect(isTrainingFocusFilterActive(both)).toBe(false);
+    expect(createTrainingSessionPlanKey("user-1",["word-to-definition"],{cardFilter:"both",trainingFilter:{...both,partOfSpeech:["zn"]}})).toBe(
+      createTrainingSessionPlanKey("user-1",["word-to-definition"],{cardFilter:"both",trainingFilter:{...empty,partOfSpeech:["zn"]}}),
+    );
+    expect(createTrainingSessionPlanKey("user-1",["word-to-definition"],{cardFilter:"both",trainingFilter:both})).toBe(
+      createTrainingSessionPlanKey("user-1",["word-to-definition"],{cardFilter:"both",trainingFilter:empty}),
+    );
+  });
+
   test("creates an exact stable plan key from user, modes, list, and filter", async () => {
     const { createTrainingSessionPlanKey } = await importService();
     const scope = {

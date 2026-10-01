@@ -1,3 +1,4 @@
+import { singleNounArticle } from "./nounArticles";
 import { supabase } from "../supabaseClient";
 import { trainingDebug } from "../trainingDebug";
 import type {
@@ -153,7 +154,7 @@ export const isTrainingFocusFilterActive = (
     Boolean(filter.sourceKind) ||
     Boolean(filter.externalId) ||
     Boolean(filter.partOfSpeech?.length) ||
-    Boolean(filter.nounArticles?.length) ||
+    Boolean(singleNounArticle(filter.nounArticles ?? [])) ||
     Boolean(filter.dictionaryScope);
 };
 
@@ -926,6 +927,7 @@ function normalizeTrainingFocusFilter(
   filter: TrainingFocusFilter,
   includeBrowserTimezone = false,
 ) {
+  const article = singleNounArticle(filter.nounArticles ?? []);
   return {
     dateWindow: filter.dateWindow,
     ...(filter.presentationMode === "word-in-context"
@@ -941,8 +943,8 @@ function normalizeTrainingFocusFilter(
     ...(filter.partOfSpeech?.length
       ? { partOfSpeech: [...new Set(filter.partOfSpeech)].sort() }
       : {}),
-    ...(filter.nounArticles?.length
-      ? { nounArticles: [...new Set(filter.nounArticles)].sort() }
+    ...(article
+      ? { nounArticles: [article] }
       : {}),
     ...(filter.dictionaryScope
       ? { dictionaryScope: {
