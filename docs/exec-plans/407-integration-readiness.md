@@ -2045,3 +2045,7 @@ Calendar layout uses its container width: year when wide, existing paged two-mon
 ### Owner correction 25
 
 History entry has a trailing decorative chevron. Existing navigation handler retained; actual history open/close verified. Typecheck and three localization tests pass.
+
+### Owner correction 26
+
+Statistics always renders learning-language context. One language is a noninteractive label; multiple languages retain selection and overflow. Existing account catalog/API language scope retained. Actual browser one-language proof, typecheck and three localization tests pass.

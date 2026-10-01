@@ -113,3 +113,5 @@
  .mobileHeatGrid button{background:var(--practice-surface-subtle)}
 }
 .monthLabels span:last-child{justify-self:end}
+
+.singleLanguage{font-size:var(--practice-text-small);color:var(--practice-text-muted)}

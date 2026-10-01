@@ -14,6 +14,7 @@ export function StatisticsLanguageTabs({ interfaceLanguage, languages, value, on
   interfaceLanguage: OnboardingLanguage; languages: StatisticsChoice[]; value: string; onChange: (id: string) => void;
 }) {
   const copy = getUiMessages(interfaceLanguage).statistics;
+  if (languages.length === 1) return <div className={s.languageRow}><span className={s.singleLanguage} aria-label={copy.learningLanguage}>{languages[0].label}</span></div>;
   const rest = languages.slice(VISIBLE);
   const selectedRest = rest.find(item => item.id === value);
   return <div className={s.languageRow}><div className={s.choiceTabs} role="group" aria-label={copy.learningLanguage}>

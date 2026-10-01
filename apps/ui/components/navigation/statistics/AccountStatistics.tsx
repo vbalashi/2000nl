@@ -46,7 +46,7 @@ export function AccountStatistics({ userId, languageCode, open, interfaceLanguag
   </div>;
   return <div className={`${s.statistics} ${s.page}`} lang={interfaceLanguage}>
     <h1 className={s.srOnly}>{ui.navigation.statistics}</h1>
-    {languages.length > 1 && <StatisticsLanguageTabs interfaceLanguage={interfaceLanguage} value={scope.code}
+    {<StatisticsLanguageTabs interfaceLanguage={interfaceLanguage} value={scope.code}
       languages={languages.map(item => ({ id: item.code, label: languageDisplayName(interfaceLanguage, item.code) }))}
       onChange={code => { setChosenLanguage(code); setChosenMaterial("all"); }} />}
     {activity.status === "ready"
