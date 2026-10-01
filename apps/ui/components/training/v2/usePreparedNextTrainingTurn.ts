@@ -210,7 +210,7 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
             : "proactive-refresh-failed",
         });
         return warmResult;
-      });
+      }, () => false as const);
       candidate.v2Ready = refreshed;
       return refreshed;
     },
