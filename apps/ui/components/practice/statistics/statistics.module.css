@@ -115,3 +115,5 @@
 .monthLabels span:last-child{justify-self:end}
 
 .singleLanguage{font-size:var(--practice-text-small);color:var(--practice-text-muted)}
+
+.scopeGroup{margin:14px 0 2px;font-size:var(--practice-text-small);font-weight:500;color:var(--practice-text-muted)}

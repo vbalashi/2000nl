@@ -2049,3 +2049,7 @@ History entry has a trailing decorative chevron. Existing navigation handler ret
 ### Owner correction 26
 
 Statistics always renders learning-language context. One language is a noninteractive label; multiple languages retain selection and overflow. Existing account catalog/API language scope retained. Actual browser one-language proof, typecheck and three localization tests pass.
+
+### Owner correction 27
+
+Server read-only route adds curated catalog slug via authenticated RLS read; no schema or scheduling writes. Statistics hides the known vandale-all mirror only when a matching-size VanDale dictionary is present. Type-qualified names distinguish dictionary/2K/personal collection; personal options grouped separately. Browser actual scopes verified, typecheck, five API tests and three localization tests pass. Canonical material keys and launch callbacks retained.

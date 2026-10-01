@@ -36,9 +36,12 @@ export function AccountStatistics({ userId, languageCode, open, interfaceLanguag
   const progress = useAccountRead(`/api/training/material-progress?${query}`, userId, parseMaterial, open, refresh);
   const [chosenMaterial, setChosenMaterial] = useState("all");
   const languageLabel = languageDisplayName(interfaceLanguage, scope.code);
-  const materials = progress.status === "ready" ? progress.value.materials : [];
+  const materials = progress.status === "ready" ? progress.value.materials.filter(item =>
+    // Legacy full-dictionary mirror is redundant when its dictionary scope is present.
+    !(item.kind === "collection" && item.listType === "curated" && item.slug === "vandale-all" &&
+      progress.value.materials.some(dictionary => dictionary.kind === "dictionary" && dictionary.total === item.total && /^VanDale\b/i.test(dictionary.name ?? "")))) : [];
   const selected = materials.find(item => materialKey(item) === chosenMaterial) ?? materials[0];
-  const name = (item: MaterialProgress) => item.kind === "all" ? copy.allLearning : item.name!;
+  const name = (item: MaterialProgress) => item.kind === "all" ? copy.allLearning : `${item.name} · ${item.kind === "dictionary" ? copy.materialDictionary : item.personal ? copy.materialOwnCollection : copy.materialCollection}`;
   const recentActivity = onHistory ? <button type="button" className={s.recentActivity} onClick={onHistory}>
     <History size={17} aria-hidden="true" />{copy.recentActivity}<ChevronRight size={15} aria-hidden="true" /></button> : null;
   const status = (message: string, failed: boolean) => <div className={s.status} aria-live="polite">
@@ -56,7 +59,7 @@ export function AccountStatistics({ userId, languageCode, open, interfaceLanguag
       ? status(progress.status === "loading" ? copy.materialLoading : copy.materialUnavailable, progress.status === "error")
       : <>
         <StatisticsMaterialPicker interfaceLanguage={interfaceLanguage} languageLabel={languageLabel} value={materialKey(selected)} onChange={setChosenMaterial}
-          options={materials.map(item => ({ id: materialKey(item), label: name(item), short: item.kind === "all" ? copy.all : undefined,
+          options={[...materials].sort((a,b)=>Number(a.personal)-Number(b.personal)).map(item => ({ group: item.personal ? copy.materialOwnCollection : undefined, id: materialKey(item), label: name(item), short: item.kind === "all" ? copy.all : undefined,
             description: `${item.kind === "all" ? copy.allEnabledDescription : item.kind === "dictionary" ? copy.materialDictionary : item.personal ? copy.materialOwnCollection : copy.materialCollection} · ${formatUiCount(interfaceLanguage, item.total, copy, "card")}` }))} />
         <StatisticsQueue interfaceLanguage={interfaceLanguage} due={selected.due}
           description={selected.kind === "all" ? formatUiMessage(copy.allMaterial, { language: languageLabel }) : `${languageLabel} · ${name(selected)}`}

@@ -4,6 +4,7 @@ export type MaterialProgress = {
   listType: "curated" | "user" | null;
   name: string | null;
   personal: boolean;
+  slug?: string;
   total: number;
   started: number;
   due: number;
@@ -34,7 +35,7 @@ export function parseMaterialProgress(value: unknown, languageCode: string): Mat
       || typeof m.name !== "string" || !m.name || typeof m.personal !== "boolean") return null;
     const listType = m.kind === "collection" ? m.listType : null;
     if (m.kind === "collection" && listType !== "curated" && listType !== "user") return null;
-    materials.push({ kind: m.kind, id: m.id, listType: listType as MaterialProgress["listType"], name: m.name, personal: m.personal, total: m.total, started: m.started, due: m.due });
+    materials.push({ kind: m.kind, id: m.id, listType: listType as MaterialProgress["listType"], name: m.name, personal: m.personal, ...(typeof m.slug === "string" ? {slug:m.slug} : {}), total: m.total, started: m.started, due: m.due });
   }
   return { languageCode, materials };
 }

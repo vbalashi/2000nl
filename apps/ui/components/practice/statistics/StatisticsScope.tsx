@@ -6,7 +6,7 @@ import { getUiMessages } from "@/lib/uiMessages";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import s from "./statistics.module.css";
 
-export type StatisticsChoice = { id: string; label: string; short?: string; description?: string };
+export type StatisticsChoice = { id: string; label: string; short?: string; description?: string; group?: string };
 const VISIBLE = 3;
 
 /** Learning-language scope for Statistics; overflow languages live in a native select. */
@@ -45,9 +45,9 @@ export function StatisticsMaterialPicker({ interfaceLanguage, languageLabel, opt
     {open && <DialogSurface onDismiss={() => setOpen(false)} className={s.scopeDialog} aria-labelledby={titleId}><div className={s.dialogInner}>
       <div className={s.dialogHeading}><h2 id={titleId}>{copy.chooseMaterial}</h2><button type="button" aria-label={copy.closeSelection} onClick={() => setOpen(false)}><X size={18} aria-hidden="true" /></button></div>
       <p className={s.dialogHint}>{languageLabel} · {copy.learningMaterial}</p>
-      <div className={s.scopeOptions}>{options.map(item => <button key={item.id} type="button" aria-pressed={value === item.id} onClick={() => { onChange(item.id); setOpen(false); }}>
+      <div className={s.scopeOptions}>{options.map((item,index) => <React.Fragment key={item.id}>{item.group && item.group !== options[index-1]?.group && <h3 className={s.scopeGroup}>{item.group}</h3>}<button key={item.id} type="button" aria-pressed={value === item.id} onClick={() => { onChange(item.id); setOpen(false); }}>
         <span><strong>{item.label}</strong>{item.description && <small>{item.description}</small>}</span>{value === item.id && <Check size={17} aria-hidden="true" />}
-      </button>)}</div>
+      </button></React.Fragment>)}</div>
     </div></DialogSurface>}
   </div>;
 }

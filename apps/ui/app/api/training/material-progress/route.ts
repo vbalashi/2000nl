@@ -16,6 +16,15 @@ export async function GET(request: NextRequest) {
   try {
     const { data, error } = await auth.supabase.rpc("get_training_material_progress_v1", { p_language_code: languageCode });
     const page = error ? null : parseMaterialProgress(data, languageCode);
-    return page ? jsonNoStore(page) : jsonNoStore({ error: "material_progress_unavailable" }, 503);
+    if (!page) return jsonNoStore({ error: "material_progress_unavailable" }, 503);
+    const curatedIds = page.materials.filter(item => item.kind === "collection" && item.listType === "curated").map(item => item.id!);
+    if (curatedIds.length) {
+      const catalog = await auth.supabase.from("word_lists").select("id,slug").in("id", curatedIds);
+      if (catalog.error) return jsonNoStore({ error: "material_progress_unavailable" }, 503);
+      const slugs = new Map((catalog.data ?? []).map(item => [item.id, item.slug]));
+      page.materials = page.materials.map(item => item.kind === "collection" && item.listType === "curated" && slugs.has(item.id)
+        ? {...item, slug: slugs.get(item.id)} : item);
+    }
+    return jsonNoStore(page);
   } catch { return jsonNoStore({ error: "material_progress_unavailable" }, 503); }
 }

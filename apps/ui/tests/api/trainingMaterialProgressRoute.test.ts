@@ -63,3 +63,16 @@ test("fails closed on errors, foreign languages and malformed rows", async () =>
   rpc.mockRejectedValue(new Error("network"));
   expect((await GET(get())).status).toBe(503);
 });
+
+test("curated material gets its catalog slug and errors fail closed", async()=>{
+ const catalogRead=vi.fn().mockResolvedValue({data:[{id:LIST,slug:"nt2-2000"}],error:null});
+ const select=vi.fn().mockReturnValue({in:catalogRead});const from=vi.fn().mockReturnValue({select});
+ auth.mockResolvedValue({supabase:{rpc,from},principal:{authKind:"first_party"}});
+ const original=page();const data={...original,materials:original.materials.map((item,index)=>index===2?{...item,listType:"curated",personal:false}:item)};
+ rpc.mockResolvedValue({data,error:null});
+ const response=await GET(get());
+ expect(response.status).toBe(200);expect((await response.json()).materials[2].slug).toBe("nt2-2000");
+ expect(from).toHaveBeenCalledWith("word_lists");expect(catalogRead).toHaveBeenCalledWith("id",[LIST]);
+ catalogRead.mockResolvedValue({data:null,error:{message:"private"}});
+ expect((await GET(get())).status).toBe(503);
+});

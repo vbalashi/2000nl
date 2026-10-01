@@ -30,7 +30,7 @@
 - [x] **24.** Statistics без горизонтального scrollbar: адаптивный период/колонки, доступные дни.
 - [x] **25.** Шеврон в конце Последние действия.
 - [x] **26.** Показывать язык Statistics даже при одном; выбор при нескольких.
-- [ ] **27.** Различить словарь VanDale и опубликованную2K коллекцию, убрать двусмысленные дубли; личные коллекции отдельно.
+- [x] **27.** Различить словарь VanDale и опубликованную2K коллекцию, убрать двусмысленные дубли; личные коллекции отдельно.
 - [ ] **28.** Убрать дублирующее Начато/не начато либо краткие человеческие подписи охвата без искажения данных.
 - [ ] **29.** Раздел Биллинг и подписки: проверить рабочую интеграцию; не добавлять фиктивные платежные действия.
 - [ ] **30.** Автоматический профиль устройства без ручного селектора; новое уточнение supersedes ручной выбор, сохранить настройки профилей.
@@ -100,3 +100,7 @@
 Пункт25: end ChevronRight у кнопки Последние действия, декоративный aria-hidden; существующий onHistory сохранён. Browser переход history и закрытие обратно работают. Typecheck и три localization tests pass. Screenshot /tmp/407qa/correction25-history.png.
 
 Пункт26: язык Statistics всегда виден; при одном — спокойная подпись с accessible name, при нескольких — прежние tabs/overflow selector. Account catalog и scope fetch/reset сохранены. Actual browser NL label над метриками подтверждён, typecheck и3 localization tests pass. Screenshot /tmp/407qa/correction26-language.png.
+
+Пункт27 в работе: migration189 возвращает dictionary.name/word_lists.name; отдельная legacy коллекция VanDale (full) описана archive0039, nt2-2000=VanDale2k по001. Добавлен тип к display labels; снятие зеркального full-дубля и отдельный показ published2k/личных коллекций ещё требуют сверки catalog identity. Не завершён.
+
+Пункт27 завершение: read-only material API дополняет curated rows каноническим slug из word_lists с той же authenticated Supabase/RLS сессией; ошибки каталога fail closed. UI исключает только известное legacy vandale-all зеркало при совпадении total с представленным VanDale dictionary, остальные коллекции сохранены. Короткие/полные labels содержат тип, personal варианты в отдельной группе. Actual browser показывает VanDale Dutch · Словарь и VanDale2k · Коллекция,18 163/4 031. Typecheck,5 API tests и3 Statistics localization tests pass. Screenshot /tmp/407qa/correction27-materials.png.
