@@ -394,7 +394,7 @@ test("learning picker uses canonical identity, relevant guidance and restores op
   );
   render(view(repo));
   const opener = screen.getByRole("button", { name: "Add language" });
-  await waitFor(() => expect(opener).toBeEnabled());
+  await waitFor(() => expect(opener).toHaveAttribute("aria-disabled", "false"));
   opener.focus();
   fireEvent.click(opener);
   const search = await screen.findByRole("textbox");
