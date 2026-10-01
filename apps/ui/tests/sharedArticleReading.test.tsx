@@ -1,4 +1,6 @@
 import React from 'react';
+import {getUiMessages} from '@/lib/uiMessages';
+import {platformV2Message} from '@/lib/platform/platformV2ClientI18n';
 import {fireEvent,render,screen,within} from '@testing-library/react';
 import {afterEach,expect,test,vi} from 'vitest';
 import {ArticleContentNode,ArticleMeaningDetails,ArticleReadingFrame} from '@/components/practice/article/ArticleContent';
@@ -61,6 +63,11 @@ test('approved Library keeps selected meaning and dispatches original server cap
  expect(action).toHaveBeenCalledWith(selected.startLearning);
  fireEvent.click(within(card).getByRole('button',{name:'Collections'}));
  expect(collections).toHaveBeenCalledWith(selected);
- fireEvent.click(within(card).getByRole('button',{name:/✓/}));
+ fireEvent.click(within(card).getByRole('button',{name:getUiMessages('en').library.moreActions}));
+ expect(action).toHaveBeenCalledTimes(1);
+ const menu=screen.getByRole('menu');
+ fireEvent.click(within(menu).getByRole('menuitem',{name:platformV2Message('en',selected.markKnown!.messageKey)}));
  expect(action).toHaveBeenLastCalledWith(selected.markKnown);
+ expect(card).toHaveAttribute('data-expanded','true');
+ expect(screen.queryByRole('menu')).not.toBeInTheDocument();
 });

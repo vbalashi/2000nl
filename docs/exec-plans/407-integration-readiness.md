@@ -1547,3 +1547,33 @@ unchanged. Remaining substantive gates: Library exclusion scope answer, existing
 provider configuration for real sentence success/reveal/grade/resume, and final
 whole-product owner acceptance before enabling rollout/deployment. No production
 rollout or push performed; goal remains active.
+
+
+## Whole UI suite and disposable SQL regression checkpoint — 2026-10-01
+
+Ran the app-owned npm test suite against current implementation after integration
+checkpoints. First result:1 failed/1577 passed/260 skipped;196 executable files
+were covered, one failed. Failure was the sharedArticleReading test still looking
+for a standalone checkmark button removed by the approved Library action menu.
+Updated its interaction to open the real More menu and select the capability's
+localized Known label. Retained original selected-meaning assertions and added
+no-write-on-open, selected meaning still expanded and menu closure checks. No
+production component, capability, source identity or mutation semantics changed.
+
+Focused5 tests pass, then the full rerun passes196 files/1578 tests,25 files/260
+tests skipped,82.82s. Those skips are DB-gated checks, not green SQL acceptance.
+Ran the canonical scripts/db-local-supabase.sh test-fsrs separately against its
+owned disposable database:28 files/272 tests pass,10.54s, wrapper exits0. Its
+normal dropdb path and EXIT cleanup completed; no reset/import/apply to the
+working local database or production target was requested. Counts are reported
+per suite and must not be added as unique tests because utility tests overlap.
+
+Post-change typecheck, targeted test lint and diff check pass. Full run retains
+the documented Vite CJS/Node localStorage/multiple GoTrue-client harness warnings
+and expected failure-path diagnostics; no failures on final runs. Logs are QA
+evidence at /tmp/407qa/full-ui-unit-2026-10-01.log (initial failure),
+/tmp/407qa/full-ui-unit-final-2026-10-01.log and
+/tmp/407qa/full-fsrs-2026-10-01.log. These suites do not prove successful live
+translation-provider operation, complete screen-reader/device acceptance or owner
+visual sign-off. Existing provider-config and Library exclusion-scope questions
+remain unanswered; deployment flags stay unchanged. Goal remains active.
