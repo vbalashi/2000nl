@@ -9,6 +9,12 @@ import { useReadingSettings } from "./ReadingPreferencesProvider";
 import { readingSettingsCopy } from "./readingSettingsCopy";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import s from "./textPreferences.module.css";
+import { ProductionArticleReading } from "@/components/practice/article/ProductionArticleReading";
+import { ArticleContentNode, ArticleMeaningDetails } from "@/components/practice/article/ArticleContent";
+import { SenseCardHeadwordLockup } from "@/components/training/SenseCardChrome";
+import type { PlatformV2SenseContentNode } from "@/lib/platform/projections/platformV2SenseContent";
+const previewDefinition: PlatformV2SenseContentNode = {contentNodeId:"preview-definition",parentContentNodeId:null,kind:"definition",text:"een vervoermiddel met twee wielen",children:[]};
+const previewExample: PlatformV2SenseContentNode = {contentNodeId:"preview-example",parentContentNodeId:null,kind:"example",text:"Ik ga met de fiets naar mijn werk.",translation:"I cycle to work.",children:[]};
 
 export function ApprovedTextSizeSection({
   language,
@@ -81,12 +87,11 @@ export function ApprovedTextSizeSection({
         </div>
       )}
       <div className={s.preview} aria-label={status.preview}>
-        <span className={s.headword}>
-          <small>de</small> fiets
-        </span>
-        <p className={s.definition}>een vervoermiddel met twee wielen</p>
-        <p className={s.example}>Ik ga met de fiets naar mijn werk.</p>
-        <p className={s.translation}>I cycle to work.</p>
+        <ProductionArticleReading>
+          <SenseCardHeadwordLockup article="de" headword="fiets" tone="light" variant="training-answer" showMetadata={false}/>
+          <ArticleContentNode node={previewDefinition} interfaceLanguage={language} contentLanguage="nl" lead/>
+          <ArticleMeaningDetails definition={null} details={[previewExample]} interfaceLanguage={language} contentLanguage="nl" translationLanguage="en" translationVisible/>
+        </ProductionArticleReading>
       </div>
     </section>
   );

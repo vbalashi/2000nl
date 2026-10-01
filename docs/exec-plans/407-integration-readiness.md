@@ -2069,3 +2069,7 @@ Approved reading profile is detected automatically, ignores legacy browser overr
 ### Owner correction 31
 
 Compact right-aligned text-size selector with wrapping header. Accessible labels, selection, disabled/save/retry callbacks and account scaling preserved. Actual browser, typecheck and profile save regression pass.
+
+### Owner correction 32
+
+Settings preview now consumes shared production article/headword/content renderers with illustrative normalized nodes and a visible frame. Scoped settings selectors avoid overriding nested renderer typography. Actual browser headword44px, typecheck and fourteen shared-article/reading tests verified. Full final correction audit remains pending; no final owner acceptance or deployment implied.

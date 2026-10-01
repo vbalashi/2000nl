@@ -5,12 +5,12 @@
   border-radius: var(--practice-radius-panel);
   grid-column: 1 / -1;
 }
-.section h2 {
+.section > h2, .section .header h2 {
   font-size: var(--practice-text-title-sm);
   font-weight: 600;
 }
-.section p,
-.embedded p {
+.section > p,
+.embedded > p {
   margin-top: 8px;
   font-size: var(--practice-text-body);
   line-height: 1.5;
@@ -95,7 +95,7 @@
 }
 
 /* Settings embeds the same controls without adding another framed panel. */
-.embedded h2{font-size:var(--practice-text-body-lg);font-weight:500;color:var(--practice-text-secondary);margin-bottom:20px}
+.embedded .header h2{font-size:var(--practice-text-body-lg);font-weight:500;color:var(--practice-text-secondary);margin-bottom:20px}
 
 .header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
 .header h2{margin:0}
@@ -103,3 +103,5 @@
 .sizes button{flex:0 0 auto;min-width:36px;min-height:28px;padding:6px 10px;border:0;border-radius:7px;font-size:var(--practice-text-label);background:transparent}
 .sizes button[aria-pressed="true"]{background:var(--practice-surface);color:var(--practice-text-secondary);box-shadow:0 1px 3px var(--practice-shadow)}
 .sizes button:focus-visible{outline:2px solid var(--practice-focus);outline-offset:-2px}
+
+.preview{border:1px solid var(--practice-border)}

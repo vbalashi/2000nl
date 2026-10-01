@@ -35,7 +35,7 @@
 - [x] **29.** Раздел Биллинг и подписки: проверить рабочую интеграцию; не добавлять фиктивные платежные действия.
 - [x] **30.** Автоматический профиль устройства без ручного селектора; новое уточнение supersedes ручной выбор, сохранить настройки профилей.
 - [x] **31.** Text size компактно как режим темы, справа; сохранить масштаб и доступность.
-- [ ] **32.** Preview стандартным общим renderer, с рамкой; без отдельной несовпадающей разметки.
+- [x] **32.** Preview стандартным общим renderer, с рамкой; без отдельной несовпадающей разметки.
 - [x] **33.** Логотип кликабелен → Training/home; соблюдать блокировку pending action.
 - [x] **34.** Загрузка: логотип/фон/краткий статус без рамок, без Indigo flash, предпочтение до первого UI, плавное появление/reduced motion.
 
@@ -112,3 +112,5 @@
 Пункт30: approved профиль определяется detectReadingDevice (UA/client hints), старый localStorage override игнорируется; viewport resize не переключает его. Ручной selector/temporary-storage message убраны из approved UI. Account phone/desktop размеры и legacy behavior сохранены. Browser отсутствиеselector подтверждено, typecheck/12 existing tests плюс phone-vs-stored-desktop regression pass. Screenshot /tmp/407qa/correction30-auto-profile.png.
 
 Пункт31: text-size compact segmented control справа от заголовка, без full-width растяжения; перенос header при недостаточной ширине. aria-label/pressed/disabled/retry/account save сохранены, focus outline добавлен. Browser desktop подтверждён, typecheck и approved auto-profile/save regression pass. Screenshot /tmp/407qa/correction31-compact-size.png.
+
+Пункт32: preview использует ProductionArticleReading, SenseCardHeadwordLockup и ArticleContentNode/ArticleMeaningDetails с illustrative normalized nodes, без собственных reading p/span classes. Добавлена рамка. Settings styles ограничены прямыми детьми/header, не переопределяют вложенную article typography. Browser headword44px подтверждён; typecheck/14 sharedArticle+reading tests pass. Screenshot /tmp/407qa/correction32-shared-preview.png. Полная итоговая проверка34 пунктов ещё предстоит.
