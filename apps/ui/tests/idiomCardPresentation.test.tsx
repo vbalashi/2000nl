@@ -215,7 +215,7 @@ test("approved exercises reuse adaptive ratings and preserve the grade callback"
     const onGrade = vi.fn();
     render(<TrainingExerciseCard presentation={build("direct")} interfaceLanguage="en"
       revealed busy={false} onReveal={vi.fn()} onGrade={onGrade} />);
-    const hard = screen.getByRole("button", { name: "Hard", exact: true });
+    const hard = screen.getByRole("button", { name: /^Hard$/ });
     expect(hard).toHaveAttribute("data-rating", "Hard");
     expect(hard.closest("[data-columns]")).not.toBeNull();
     fireEvent.click(hard);

@@ -94,7 +94,7 @@ export function ReadingSizePrototype({ persistedSettings = false }: { persistedS
   const fixtureKey = readFixture(searchParams.get("fixture"));
   const modeKey = readMode(searchParams.get("mode"));
   const trainingMode: TrainingMode =
-    modeKey === "reverse" ? "definition-to-word" : "word-to-definition";
+    modeKey === "reverse" || searchParams.get("context") === "1" ? "definition-to-word" : "word-to-definition";
   const translationsEnabled = searchParams.get("translations") !== "off";
   const clean = searchParams.get("clean") === "1";
   const [side, setSide] = React.useState<"face" | "answer">("face");
@@ -160,6 +160,9 @@ export function ReadingSizePrototype({ persistedSettings = false }: { persistedS
     entry: fixture.entry,
     interfaceLanguage: "nl",
   });
+  const contextExample = searchParams.get("context") === "1"
+    ? model.examples.find(node => node.kind === "example" && node.translation)
+    : undefined;
 
   return (
     <div
@@ -212,6 +215,12 @@ export function ReadingSizePrototype({ persistedSettings = false }: { persistedS
           <div className="contents">
             <TrainingSenseCardStage
               model={model}
+              contextPrompt={contextExample?.translation ? {
+                contentNodeId: contextExample.contentNodeId,
+                sourceTextFingerprint: "reading-context-fixture",
+                sourceText: contextExample.text,
+                text: contextExample.translation,
+              } : undefined}
               mode={trainingMode}
               interfaceLanguage="nl"
               side={side}

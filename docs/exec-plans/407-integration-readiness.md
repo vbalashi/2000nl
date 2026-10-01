@@ -943,3 +943,28 @@ slot; the browser checks failed, the placement was corrected, and the repeated
 checks pass. No claim of live scheduling/mutation acceptance from these fixtures.
 Still open: context-word browser reveal, live exercise mutation/resume matrix,
 remaining visual/zoom/landscape/keyboard/portal checks and owner rollout review.
+
+## Context reveal and live meaning-session persistence — 2026-10-01
+
+The reading dev gate can now latch a translated context example by content-node
+identity. A dedicated browser check proves the moving question starts at its
+original rect, lands on exactly one matching translation, and restores rating
+focus only after arrival. This is controlled-content evidence, not a live context
+launch. Typecheck and 10 idiom/sentence tests pass; the new context browser case
+passes. Corrected a Testing Library query introduced in the preceding checkpoint:
+its role options do not accept `exact`; an anchored name regex preserves the same
+intent. The subsequent typecheck verifies that correction.
+
+Signed-in IAB QA on the real local contract-189 database, Russian, 703×987:
+started a 10-card meaning session; revealed `wensen`, explicitly started learning;
+revealed `het nummer`, graded Good; progress advanced to 2/10 and `tussen`.
+History contains both actions after reload. Closing the run showed 2 done / 8
+remaining; reloading resumed the same `tussen` face at 2/10. Closing history
+restored that card and opener focus. No console errors were captured. These are
+authorized writes to the local test account, not transport fixtures. Evidence:
+`/tmp/407qa/live-resume-2026-10-01.jpg` (temporary artifact).
+
+This closes the tested meaning-session mutation/history/resume path only. Real
+idiom/sentence/context launches, short landscape/zoom/text-spacing, drawer
+sequencing/focus/portals and owner rollout review remain open. The local pilot
+still has translation exercises disabled; no production flag or DB reset changed.
