@@ -5,7 +5,7 @@
 Порядок:3 (маленький пропуск),1 (название/resume),4 (reveal),5–10 (статья/панели),33/2/34 (хедер/загрузка),11–15 (Library),16–23 (Builder),24–28 (Statistics),29–32 (Settings). Пункты11/18/21/29 сначала исследовать/объяснить, не удалять поведение молча.
 
 - [x] **1.** Название тренировки в сессии; передавать выбранное имя, сохранять при resume, все семейства.
-- [ ] **2.** Кнопка темы как в прототипе; сохранить Light/Dark/System владельца.
+- [x] **2.** Кнопка темы как в прототипе; сохранить Light/Dark/System владельца.
 - [x] **3.** Шеврон Exclude при раскрываемом меню; состояние открытия.
 - [x] **4.** Убрать мигание примеров после переноса prompt при reveal; reduced motion.
 - [x] **5.** Фон полного слова без лишней внешней карточки/рамки, как flat референс.
@@ -60,3 +60,5 @@
 Пункт10: approved header border-bottom0, legacy прежний. Browser реальная Settings вкладка без навигации/изменения preferences: border0, высота58px. Снимок /tmp/407qa/correction10-header.png; AppFrame tests/typecheck/diff проходят.
 
 Пункт33: логотип — native button с локализованным назначением, вызывает существующий onNavigate(training), disabled при navigationDisabled. В BrandLogo optional span для валидной вложенности, прочие p callers прежние. Browser отдельная вкладка Settings→/Training; никакого запуска/оценки. Тест10pass включая pending lock, typecheck/lint/diff pass. Снимок /tmp/407qa/correction33-logo.png.
+
+Пункт2: quiet approved button использует Sun/Moon/Monitor по сохранённому режиму, как BuilderPrototype; legacy SunMoon прежний. Размер18px/stroke1.5/tooltip/цикл/onCycleTheme/server preference сохранены. Browser read-only подтвердил системный Monitor и подпись; снимок /tmp/407qa/correction2-theme.png. AppFrame9tests/typecheck/lint/diff pass.

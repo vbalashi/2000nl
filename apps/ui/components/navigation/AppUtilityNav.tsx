@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Settings, SunMoon } from "lucide-react";
+import { Monitor, Moon, Settings, Sun, SunMoon } from "lucide-react";
 import { Tooltip } from "@/components/Tooltip";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
@@ -94,6 +94,9 @@ export function AppUtilityNav({
 }: AppUtilityNavProps) {
   const text = copy[interfaceLanguage];
   const themeLabel = `${text.theme}: ${text[themePreference]}`;
+  const ThemeIcon = appearance === "quiet"
+    ? { light: Sun, dark: Moon, system: Monitor }[themePreference]
+    : SunMoon;
 
   return (
     <div className="flex items-center gap-1 justify-self-end text-sm text-slate-500 md:gap-2 dark:text-slate-300">
@@ -103,7 +106,7 @@ export function AppUtilityNav({
         disabled={disabled}
         appearance={appearance}
       >
-        <SunMoon
+        <ThemeIcon
           aria-hidden="true"
           className={appearance === "quiet" ? "h-[18px] w-[18px]" : "h-5 w-5"}
           strokeWidth={appearance === "quiet" ? 1.5 : 2}

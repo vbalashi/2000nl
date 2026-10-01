@@ -1878,3 +1878,13 @@ owner callback and no callback while pending; ten tests/typecheck/lint/diff pass
 Separate browser QA tab navigated Settings→/ with Training overview visible; no
 start/grade, owner Settings tab unchanged. QA tab closed after screenshot saved
 /tmp/407qa/correction33-logo.png. Next2 theme icon, then34 initial loading.
+
+### 2026-10-01 — correction2 mode-specific theme icon
+
+Reference BuilderPrototype uses Sun(light), Moon(dark), Monitor(system)18px;
+approved utility previously always SunMoon. Quiet appearance now uses exact
+mode-specific components, retains18px/stroke1.5, labels/tooltip/disabled guard
+and existing cycle callback/preference owner. Legacy default SunMoon unchanged.
+Actual Settings tab inspected read-only: saved system label and Monitor icon;
+no preferences mutated. Screenshot /tmp/407qa/correction2-theme.png. Nine existing
+AppFrame tests/typecheck/lint/diff pass. Next34 initial theme/loading flash.
