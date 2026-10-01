@@ -1931,3 +1931,13 @@ conditions reset, trace global removed and tab closed. No preferences/session wr
 Screenshot /tmp/407qa/correction34-loading.png. Raw CDP new-document instrumentation
 unsupported; no claim of full reload frame trace, readiness tested at real provider seam.
 Next11 collection-only scope semantics, then12–15 Library presentation/loading.
+
+### 2026-10-01 — correction11 explicit collection search scope
+
+Library viewedList is activeList or first accessible list. Toggle switches grouped
+dictionary search to fetchWordsForList(viewedListId), without collection/progress
+mutation. Approved label now names exact collection on EN/NL/RU; absent list hides
+control, legacy unchanged. Browser actual VanDale2k scope4031records,20per page.
+Grouping19tests/typecheck/lint/diff pass. Screenshot correction11-scope.png.
+This actual page revealed a separate Library aside surface still framing the flat
+article despite correction5 group fix. Follow-up required before continuing12.

@@ -670,6 +670,7 @@
       "trainNotice": "Daarna trainen · geen sessie gestart",
       "markNotice": "{state} · alleen lokaal voorbeeld",
       "onlyCollection": "Alleen deze lijst",
+      "onlyNamedCollection": "Alleen collectie “{name}”",
       "searchScope": "Zoekbereik",
       "learningLanguage": "Leertaal",
       "dictionarySource": "Woordenboekbron",

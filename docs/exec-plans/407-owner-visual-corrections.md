@@ -14,7 +14,7 @@
 - [x] **8.** Коллекции: простой заголовок/подсказка, плюс создания вместо перегруженной формы; сохранить реальные действия/ошибки.
 - [x] **9.** Убрать видимый заголовок Сведения о слове; сохранить accessible dialog name/закрытие.
 - [x] **10.** Убрать горизонтальный разделитель хедера approved UI.
-- [ ] **11.** Разъяснить контракт Только эта коллекция; затем убрать/оформить понятную область.
+- [x] **11.** Разъяснить контракт Только эта коллекция; затем убрать/оформить понятную область.
 - [ ] **12.** Убрать Мой словарь / Добавить запись из первичного toolbar, сохранить существующий API/данные.
 - [ ] **13.** Убрать Введите слово для поиска из toolbar.
 - [ ] **14.** Library сразу показывает упорядоченные результаты текущего фильтра без запроса; реальные данные, пагинация, ACL, загрузка/ошибки.
@@ -64,3 +64,5 @@
 Пункт2: quiet approved button использует Sun/Moon/Monitor по сохранённому режиму, как BuilderPrototype; legacy SunMoon прежний. Размер18px/stroke1.5/tooltip/цикл/onCycleTheme/server preference сохранены. Browser read-only подтвердил системный Monitor и подпись; снимок /tmp/407qa/correction2-theme.png. AppFrame9tests/typecheck/lint/diff pass.
 
 Пункт34: нейтральный startup с логотипом и простым статусом, без навигации/Indigo indicator/рамки. Account palette readiness gate не монтирует цветной интерфейс до real repository load, failure+retry видимы; существующий владелец предпочтений сохранён. Theme mode в layout effect до первого UI paint; ready fade220ms с reduced motion bypass. Browser slow network показал logo, затем saved graphite/system; временные условия сети/trace убраны, QA вкладка закрыта. Tests25pass; TrainingScreen69pass плюс один устаревший queue-title assertion исправлен под пункт1 и отдельно проходит; typecheck/lint/diff pass. Снимок /tmp/407qa/correction34-loading.png.
+
+Пункт11: контракт investigated — active training list (fallback first accessible) ограничивает fetchWordsForList, не меняет состав/прогресс. Approved подпись с конкретным viewedListName на EN/NL/RU, без коллекции control скрыт; legacy прежний. Browser4031 entries/20-per-page в VanDale2k, scope checked; screenshot /tmp/407qa/correction11-scope.png. Tests19pass, typecheck/lint/diff pass. Этот screenshot также обнаружил оставшийся внешний Library aside фон пункта5; следующий короткий follow-up исправляет его.

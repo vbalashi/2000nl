@@ -670,6 +670,7 @@
       "trainNotice": "Тренировать дальше · тренировка не запущена",
       "markNotice": "{state} · только локальная демонстрация",
       "onlyCollection": "Только эта коллекция",
+      "onlyNamedCollection": "Только коллекция «{name}»",
       "searchScope": "Область поиска",
       "learningLanguage": "Язык",
       "dictionarySource": "Источник",

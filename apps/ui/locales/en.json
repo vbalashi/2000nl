@@ -670,6 +670,7 @@
       "trainNotice": "Train next · no session started",
       "markNotice": "{state} · local demo only",
       "onlyCollection": "Only this collection",
+      "onlyNamedCollection": "Only collection “{name}”",
       "searchScope": "Search scope",
       "learningLanguage": "Language",
       "dictionarySource": "Source",

@@ -709,8 +709,8 @@ export function DictionarySearchTab({
                 {part === "noun" && searchState.entryFilters?.article ? ` (${searchState.entryFilters.article})` : ""}
               </React.Fragment>)}
           </div>
-          <label className={approved ? workspace.onlyCollection : "hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300"}>
-            {copy.onlyCollection}
+          {(!approved || viewedListId) && <label className={approved ? workspace.onlyCollection : "hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300"}>
+            {approved ? formatUiMessage(copy.onlyNamedCollection, { name: viewedListName }) : copy.onlyCollection}
             <input
               type="checkbox"
               checked={applyListFilter}
@@ -726,7 +726,7 @@ export function DictionarySearchTab({
               }}
               className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-600"
             />
-          </label>
+          </label>}
         </div>
 
         {material && material.status !== "ready" && (
