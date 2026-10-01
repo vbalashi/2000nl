@@ -260,7 +260,7 @@ export function DictionarySearchTab({
       return;
     }
     const hasQuery = Boolean(query.trim());
-    if (!hasQuery && !useViewedListFilter) {
+    if (!hasQuery && !useViewedListFilter && !(approved && materialEnabled)) {
       updateSearchState({
         wordResults: [],
         groupResults: [],
@@ -278,7 +278,7 @@ export function DictionarySearchTab({
     try {
       const trimmedQuery = query.trim() || undefined;
       if (!useViewedListFilter) {
-        await runGroupSearch(trimmedQuery!, requestId);
+        await runGroupSearch(trimmedQuery ?? "", requestId);
         return;
       }
 
@@ -332,6 +332,8 @@ export function DictionarySearchTab({
     }
   }, [
     open,
+    approved,
+    materialEnabled,
     beginSearch,
     clearGroupSearch,
     isCurrentSearch,
@@ -597,7 +599,7 @@ export function DictionarySearchTab({
     : formatUiMessage(copy.sourceScope, { source: sourceLabel });
   const groupedSearchActive = !useViewedListFilter;
   const resultCountLabel =
-    query.trim() || useViewedListFilter
+    query.trim() || useViewedListFilter || (approved && materialEnabled)
       ? formatUiMessage(copy.pageScope, {
           count: formatUiCount(
             interfaceLanguage,
@@ -611,12 +613,12 @@ export function DictionarySearchTab({
       : approved ? null : copy.typeQuery;
   const emptyHeading = useViewedListFilter
     ? copy.emptyCollection
-    : query.trim()
+    : query.trim() || (approved && materialEnabled)
       ? copy.noWords
       : copy.emptyQuery;
   const emptyDescription = useViewedListFilter
     ? formatUiMessage(copy.emptyCollectionHint, { name: viewedListName })
-    : query.trim()
+    : query.trim() || (approved && materialEnabled)
       ? formatUiMessage(copy.noResultsHint, { source: sourceLabel })
       : copy.emptyQueryHint;
 

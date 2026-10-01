@@ -16,6 +16,9 @@ BEGIN
    -- Allow the empty-query candidate path instead of returning an empty page.
    start_at := strpos(definition,'    IF v_raw_query IS NULL THEN');
    end_at := strpos(definition,'    v_query := normalize_dictionary_search_text(v_raw_query);');
+   IF start_at=0 AND strpos(definition,'AND (v_raw_query IS NULL OR document.normalized_headword = v_query)')>0 THEN
+     CONTINUE; -- Already applied to this Library base.
+   END IF;
    IF start_at=0 OR end_at<=start_at THEN RAISE EXCEPTION 'Library browse guard anchor changed: %',signature; END IF;
    definition := substr(definition,1,start_at-1) || substr(definition,end_at);
    before_text := 'AND document.normalized_headword = v_query';

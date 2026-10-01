@@ -468,3 +468,17 @@ test.each(["en", "nl", "ru"] as const)("approved Library toolbar omits query ins
   await act(async () => { render(<Harness locale={locale} initial={{query:""}} />); });
   expect(screen.queryByText(getUiMessages(locale).library.typeQuery)).not.toBeInTheDocument();
 });
+
+test("approved Library browses immediately with server totals and cursor paging", async () => {
+  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+  readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+  fetchGroupPage.mockReset().mockResolvedValue({groups:[homographGroup],selectedTierComplete:false,nextGroupCursor:"browse-next",librarySearch:{totalGroups:42,matchingEntryIds:["entry-goed-zn"]}});
+  render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider>);
+  await screen.findByTestId("library-headword-group-group-goed-homograph");
+  expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}}));
+  expect(screen.getByText(/42.*page 1/i)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button",{name:"Next"}));
+  await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",cursor:"browse-next"})));
+});
