@@ -2033,3 +2033,7 @@ Approved source search shares the reference search CSS. It appears only for more
 ### Owner correction 21
 
 Investigated action-event predicate in migration161 and study-day targeting in147. Clarified disclosure label/help in EN/NL/RU; any action outcome qualifies, dates/source narrow events, not forgotten-only progress. End chevron replaces browser default marker. Selection and scheduling unchanged. Browser verified; typecheck and lexical/source regressions pass. Corrected invalid testing-library exact options introduced in preceding boundary test.
+
+### Owner correction 22
+
+Short learning-language catalogs (up to five) show choices directly without search. Hidden query ignored; larger catalogs retain search. Existing account language/selection ownership preserved. Actual one-language browser proof, typecheck and six language/source tests pass.

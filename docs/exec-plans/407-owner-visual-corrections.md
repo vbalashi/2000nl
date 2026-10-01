@@ -25,7 +25,7 @@
 - [x] **19.** Русская подпись Идиомы / Устойчивые выражения и идиомы; согласованные EN/NL.
 - [x] **20.** Поиск источников визуально как в референсе; общий с23.
 - [x] **21.** Проверить происхождение фильтра Недавняя активность; объяснить контракт, согласовать понятное оформление.
-- [ ] **22.** Убрать поиск из короткого списка изучаемых языков Builder.
+- [x] **22.** Убрать поиск из короткого списка изучаемых языков Builder.
 - [x] **23.** Поиск источников только при количестве более пяти.
 - [ ] **24.** Statistics без горизонтального scrollbar: адаптивный период/колонки, доступные дни.
 - [ ] **25.** Шеврон в конце Последние действия.
@@ -92,3 +92,5 @@
 Пункты20/23: поиск Builder использует тот же libraryFilters.search, что референсный BuilderScopePicker (фон canvas, без border, 12px radius, body type, иконка17), сохраняет focus outline. Источники показывают поиск только при >5 вариантах текущего режима. При сокращении списка скрытый запрос игнорируется, смена режима очищает запрос. Browser подтвердил отсутствие поиска в коротких lists/dictionaries; 42 setup tests плюс отдельный boundary/filter regression pass, typecheck pass. Screenshot /tmp/407qa/correction20-23-sources.png.
 
 Пункт21: контракт проверен по migration147 training_filter_target_date_at и161 training_extra_source_scope: user_card_action_events по user/entry, обычным направлениям, study-day date и source; фильтра по результату ошибки нет. Название уточнено «Действия со словами», раскрываемое пояснение объясняет день/источник/все результаты. EN/NL согласованы, end chevron без native marker. Подбор/сохранение/FSRS не изменены. Browser раскрытие подтверждено, typecheck и два relevant tests pass. Screenshot /tmp/407qa/correction21-activity.png.
+
+Пункт22: approved Builder не показывает поиск для ≤5 изучаемых языков; короткий список игнорирует скрытый запрос. Языки по-прежнему account-owned, выбор вызывает существующий onLanguageChange. Browser один NL без поля поиска, typecheck и6 relevant tests pass. Screenshot /tmp/407qa/correction22-languages.png.

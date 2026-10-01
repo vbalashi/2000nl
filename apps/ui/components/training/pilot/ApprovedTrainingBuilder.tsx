@@ -284,7 +284,7 @@ export function ApprovedTrainingBuilder(p: Props) {
             b.language,
             language(p.languageCode),
             <>
-              {search(
+              {p.languageOptions.length > 5 && search(
                 languageQuery,
                 setLanguageQuery,
                 getUiMessages(p.interfaceLanguage).builderScope.searchLanguages,
@@ -295,7 +295,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                     ...option,
                     label: language(option.value),
                   }))
-                  .filter((option) => matches(option, languageQuery))
+                  .filter((option) => matches(option, p.languageOptions.length > 5 ? languageQuery : ""))
                   .map((option) =>
                     row(option, option.value === p.languageCode, () =>
                       p.onLanguageChange(option.value),
@@ -305,7 +305,7 @@ export function ApprovedTrainingBuilder(p: Props) {
               {!p.languageOptions.some((option) =>
                 matches(
                   { ...option, label: language(option.value) },
-                  languageQuery,
+                  p.languageOptions.length > 5 ? languageQuery : "",
                 ),
               ) && (
                 <p className={s.help}>
