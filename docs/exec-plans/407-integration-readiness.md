@@ -1752,3 +1752,10 @@ from these JSON-returning RPCs; corrected to their actual item id/mode shape, no
 product change. All29 SQL files/278 tests and UI typecheck pass; diff check clean.
 This closes an evidence gap between mark storage and actual queue selection.
 Owner visual acceptance remains pending; no rollout/production change.
+
+## Owner visual correction queue — 2026-10-01
+
+Owner supplied33 browser comments plus loading-theme flash. All recorded in
+407-owner-visual-corrections.md. Prior technical checks did not constitute visual
+approval. First small correction: visible Exclude menu chevron; next investigate
+durable training name in header/resume. No rollout or scheduling change.

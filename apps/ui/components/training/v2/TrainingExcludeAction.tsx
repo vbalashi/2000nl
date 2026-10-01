@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { getUiMessages } from "@/lib/uiMessages";
-import { Check, EyeOff } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, EyeOff } from "lucide-react";
 import { ActionMenu } from "@/components/practice/ui/ActionMenu";
 import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -49,6 +49,9 @@ export function TrainingExcludeAction({
     >
       <EyeOff size={16} className="shrink-0" aria-hidden="true" />
       <span className="break-words">{t.label}</span>
+      {hasMenu && (anchor
+        ? <ChevronUp size={14} className="shrink-0" aria-hidden="true" />
+        : <ChevronDown size={14} className="shrink-0" aria-hidden="true" />)}
     </button>
     {anchor && hasMenu && knownAction ? <ActionMenu
       anchor={anchor} language={language} title={getUiMessages(language).cardActions.title}
