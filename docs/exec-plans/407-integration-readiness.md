@@ -2057,3 +2057,7 @@ Server read-only route adds curated catalog slug via authenticated RLS read; no 
 ### Owner correction 28
 
 Removed redundant coverage percentage/unstarted legend. Primary started/total, accessible bar and progress explanation remain. Browser actual text, three localization tests and typecheck verified.
+
+### Owner correction 29: billing integration audit
+
+No payment provider, checkout, invoice or billing-portal runtime exists in apps/ui. Prototype billing is disabled demonstration UI; subscription_tier is an access entitlement in DB004, not billing status. Approved Settings intentionally excludes payment controls. Product subscription intent remains future work requiring a separate provider/backend contract. No fabricated purchasing actions or subscription claims introduced.
