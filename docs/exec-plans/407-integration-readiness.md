@@ -2037,3 +2037,7 @@ Investigated action-event predicate in migration161 and study-day targeting in14
 ### Owner correction 22
 
 Short learning-language catalogs (up to five) show choices directly without search. Hidden query ignored; larger catalogs retain search. Existing account language/selection ownership preserved. Actual one-language browser proof, typecheck and six language/source tests pass.
+
+### Owner correction 24
+
+Calendar layout uses its container width: year when wide, existing paged two-month view below700px. Removed horizontal overflow and fixed minimum widths. Bounded square day grid prevents sparse stretching and small-width overflow. Browser700/320 proof, earlier-month navigation, nine Statistics tests pass. Server calendar and day selection untouched.
