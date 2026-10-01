@@ -139,3 +139,29 @@ test("system changes respect explicit account theme until the controller release
   applyResolvedTheme(root, false);
   expect(root.classList.contains("dark")).toBe(false);
 });
+
+test("startup waits for the account palette before mounting coloured controls", async () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  let finish!: (palette: "graphite") => void;
+  const repository = { load: vi.fn(() => new Promise<"graphite">(resolve => { finish = resolve; })), save: vi.fn() };
+  render(<AccountPracticeAppearanceProvider userId="a" repository={repository} requireReady>
+    <State />
+  </AccountPracticeAppearanceProvider>);
+  expect(screen.getByTestId("startup-logo-screen")).toBeInTheDocument();
+  expect(screen.queryByText("lavender")).not.toBeInTheDocument();
+  await act(async () => finish("graphite"));
+  expect(screen.getByText("graphite")).toBeInTheDocument();
+  expect(screen.queryByTestId("startup-logo-screen")).not.toBeInTheDocument();
+});
+
+test("startup palette failure remains visible and retry mounts the selected appearance", async () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const repository = { load: vi.fn().mockRejectedValueOnce(new Error()).mockResolvedValue("blue"), save: vi.fn() };
+  render(<AccountPracticeAppearanceProvider userId="a" repository={repository} requireReady><State /></AccountPracticeAppearanceProvider>);
+  await screen.findByText("Appearance could not be loaded.");
+  expect(screen.queryByText("lavender")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+  await screen.findByText("blue");
+  expect(repository.load).toHaveBeenCalledTimes(2);
+  expect(repository.save).not.toHaveBeenCalled();
+});

@@ -6,7 +6,7 @@ import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/Acco
 
 import React from "react";
 import { TrainingExclusionUndoNotice } from "./v2/TrainingExclusionUndoNotice";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Joyride, Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
@@ -192,7 +192,7 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
 export function TrainingScreen(props: Props) {
   return (
     <ReadingPreferencesProvider userId={props.user.id}>
-      <AccountPracticeAppearanceProvider userId={props.user.id}>
+      <AccountPracticeAppearanceProvider userId={props.user.id} requireReady interfaceLanguage={props.startupSnapshot?.interfaceLanguage}>
         <AccountMaterialProvider userId={props.user.id}>
           <TrainingScreenContent {...props} />
         </AccountMaterialProvider>
@@ -1054,8 +1054,8 @@ function TrainingScreenContent({
     resetFocusQueue();
   }, [resetFocusQueue]);
 
-  // Apply theme to document (client-side only)
-  useEffect(() => {
+  // Apply account mode before the first coloured interface frame.
+  useLayoutEffect(() => {
     if (typeof window === "undefined") {
       return;
     }

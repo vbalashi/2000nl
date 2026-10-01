@@ -3656,7 +3656,7 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
-      /New \+ review0/,
+      /Test list0 \/ 2/,
     );
     expect(screen.getByTestId("training-session-position")).toHaveTextContent(
       "0 / 2",

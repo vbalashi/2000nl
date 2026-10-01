@@ -1,5 +1,9 @@
 "use client";
 import React from "react";
+import { StartupLogoScreen } from "@/components/training/pilot/StartupLogoScreen";
+import startup from "@/components/training/pilot/startupLogo.module.css";
+import { getUiMessages } from "@/lib/uiMessages";
+import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import {
   practicePaletteRepository,
   type PracticePaletteRepository,
@@ -20,6 +24,8 @@ export const useAccountPracticeAppearance = () => React.useContext(Context);
 /** Palette alone belongs here. The existing theme-mode and reading-profile owners remain authoritative. */
 export function AccountPracticeAppearanceProvider(props: {
   userId: string;
+  requireReady?: boolean;
+  interfaceLanguage?: OnboardingLanguage;
   repository?: PracticePaletteRepository;
   children: React.ReactNode;
 }) {
@@ -31,8 +37,12 @@ function AccountAppearanceSession({
   userId,
   repository = practicePaletteRepository,
   children,
+  requireReady = false,
+  interfaceLanguage = "en",
 }: {
   userId: string;
+  requireReady?: boolean;
+  interfaceLanguage?: OnboardingLanguage;
   repository?: PracticePaletteRepository;
   children: React.ReactNode;
 }) {
@@ -81,6 +91,13 @@ function AccountAppearanceSession({
       pending.current = false;
     }
   };
+  if (requireReady && loadStatus !== "ready") {
+    const copy = getUiMessages(interfaceLanguage).appearancePreferences;
+    return <StartupLogoScreen><div role={loadStatus === "error" ? "alert" : "status"}>
+      <p>{loadStatus === "error" ? copy.loadError : copy.loading}</p>
+      {loadStatus === "error" ? <button onClick={() => setAttempt(current => current + 1)}>{copy.retry}</button> : null}
+    </div></StartupLogoScreen>;
+  }
   return (
     <Context.Provider
       value={{
@@ -97,7 +114,7 @@ function AccountAppearanceSession({
         data-practice-palette={palette}
         data-account-palette={palette}
       >
-        {children}
+        {requireReady ? <div className={startup.ready}>{children}</div> : children}
       </div>
     </Context.Provider>
   );

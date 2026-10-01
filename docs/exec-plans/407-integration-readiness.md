@@ -1888,3 +1888,46 @@ and existing cycle callback/preference owner. Legacy default SunMoon unchanged.
 Actual Settings tab inspected read-only: saved system label and Monitor icon;
 no preferences mutated. Screenshot /tmp/407qa/correction2-theme.png. Nine existing
 AppFrame tests/typecheck/lint/diff pass. Next34 initial theme/loading flash.
+
+### 2026-10-01 — correction34 investigation, not complete
+
+Authoritative startup inspection identifies two distinct early appearances:
+1. HomePage loads auth and general preferences, renders TrainingBootstrapShell
+   with full AppFrame(system mode) and framed TrainingPilotStatePanel beforehand.
+2. TrainingScreen mounts AccountPracticeAppearanceProvider after that boundary.
+   Provider initializes palette lavender, renders children immediately, then
+   independently loads practice_palette; selected palette replaces visible default.
+   Theme mode applies in TrainingScreenContent useEffect after paint.
+
+No current code change yet; correction34 remains unchecked. Palette repository
+withPreferenceDeadline already owns private user_settings lookup, errors and save.
+Keep it authoritative. Proposed narrow implementation: common logo/status startup
+surface without frame/navigation, hide coloured interface until palette readiness,
+preserve visible retry on palette failure; apply saved theme before paint and fade
+ready UI with reduced-motion bypass. Verify delayed palette resolution cannot
+render lavender controls, failure/retry, initial bootstrap/loading locale behavior,
+and actual browser reload sequence. Avoid a second preference store or changing
+auth/scheduling owners. Inspect existing HomePage.loading tests and palette provider
+consumers before changing mount sequencing (children might own material loading).
+
+### 2026-10-01 — correction34 startup appearance fixed
+
+Approved bootstrap reuses a neutral StartupLogoScreen with logo/plain status and
+existing long-running/error/retry state copy, no navigation/frame/Indigo indicator.
+Before interface language is known only logo is visible, avoiding invented locale.
+Palette provider optional requireReady gate is enabled at real TrainingScreen boundary:
+children mount only after server-owned palette load; failure shows localized appearance
+error/retry. Existing provider consumers and gate-off path preserve behavior. No
+second preference store. Saved account mode applied in layout effect before coloured
+interface paint, ready UI fades220ms, reduced-motion disables fade.
+
+Delayed-palette regression proves no lavender controls before selected graphite;
+failure/retry and EN/NL/RU logo bootstrap tests, existing appearance/HomePage tests25
+pass. Full TrainingScreen run69/70 passed; sole failure was stale pre-correction1
+queue-title expectation, updated to existing material-name contract and rerun passes.
+Typecheck and focused lint/diff pass. Browser QA separate tab with2000ms network
+latency confirmed neutral logo, later saved graphite/system Settings. Network
+conditions reset, trace global removed and tab closed. No preferences/session writes.
+Screenshot /tmp/407qa/correction34-loading.png. Raw CDP new-document instrumentation
+unsupported; no claim of full reload frame trace, readiness tested at real provider seam.
+Next11 collection-only scope semantics, then12–15 Library presentation/loading.

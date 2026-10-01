@@ -37,7 +37,7 @@
 - [ ] **31.** Text size компактно как режим темы, справа; сохранить масштаб и доступность.
 - [ ] **32.** Preview стандартным общим renderer, с рамкой; без отдельной несовпадающей разметки.
 - [x] **33.** Логотип кликабелен → Training/home; соблюдать блокировку pending action.
-- [ ] **34.** Загрузка: логотип/фон/краткий статус без рамок, без Indigo flash, предпочтение до первого UI, плавное появление/reduced motion.
+- [x] **34.** Загрузка: логотип/фон/краткий статус без рамок, без Indigo flash, предпочтение до первого UI, плавное появление/reduced motion.
 
 Проверять референс desktop/mobile, EN/NL/RU, Normal/Extra, Light/Dark; реальные владельцы данных/действий и scheduling сохраняются.
 
@@ -62,3 +62,5 @@
 Пункт33: логотип — native button с локализованным назначением, вызывает существующий onNavigate(training), disabled при navigationDisabled. В BrandLogo optional span для валидной вложенности, прочие p callers прежние. Browser отдельная вкладка Settings→/Training; никакого запуска/оценки. Тест10pass включая pending lock, typecheck/lint/diff pass. Снимок /tmp/407qa/correction33-logo.png.
 
 Пункт2: quiet approved button использует Sun/Moon/Monitor по сохранённому режиму, как BuilderPrototype; legacy SunMoon прежний. Размер18px/stroke1.5/tooltip/цикл/onCycleTheme/server preference сохранены. Browser read-only подтвердил системный Monitor и подпись; снимок /tmp/407qa/correction2-theme.png. AppFrame9tests/typecheck/lint/diff pass.
+
+Пункт34: нейтральный startup с логотипом и простым статусом, без навигации/Indigo indicator/рамки. Account palette readiness gate не монтирует цветной интерфейс до real repository load, failure+retry видимы; существующий владелец предпочтений сохранён. Theme mode в layout effect до первого UI paint; ready fade220ms с reduced motion bypass. Browser slow network показал logo, затем saved graphite/system; временные условия сети/trace убраны, QA вкладка закрыта. Tests25pass; TrainingScreen69pass плюс один устаревший queue-title assertion исправлен под пункт1 и отдельно проходит; typecheck/lint/diff pass. Снимок /tmp/407qa/correction34-loading.png.
