@@ -68,6 +68,9 @@ export function TrainingHistoryDestination({
 }: Props) {
   const text = getUiMessages(interfaceLanguage).trainingHistory;
   const approved = sharedArticlePresentationV1Enabled();
+  const exerciseLabel = (item: RecentTrainingHistoryItem) => item.exercise
+    ? text.exercises[item.exercise.family === "translation" ? "translation" : item.exercise.direction === "reverse" ? "idiomReverse" : "idiomDirect"]
+    : text.modes[item.cardTypeId];
   const headingRef = React.useRef<HTMLHeadingElement>(null);
   const [loadState, setLoadState] = React.useState<LoadState>({
     userId: null,
@@ -121,11 +124,11 @@ export function TrainingHistoryDestination({
   if (approved) {
     if (!open) return null;
     const tones = { learning_started: "Started", review_fail: "Again", review_hard: "Hard", review_success: "Good", review_easy: "Easy" } as const;
-    const items: ActivityRow[] = visibleLoadState.items.map((item, index) => ({
-      id: `${item.entryId}-${item.reviewedAt}-${item.cardTypeId}-${item.reviewResult}-${index}`,
-      word: item.headword,
+    const items: ActivityRow[] = visibleLoadState.items.map((item) => ({
+      id: item.activityId,
+      word: item.exercise?.text ?? item.headword,
       at: item.reviewedAt,
-      exercise: text.modes[item.cardTypeId],
+      exercise: exerciseLabel(item),
       result: text.events[item.reviewResult],
       tone: tones[item.reviewResult],
     }));
@@ -201,16 +204,16 @@ export function TrainingHistoryDestination({
               <ol aria-label={text.list} className="divide-y divide-slate-100 dark:divide-slate-800">
                 {visibleLoadState.items.map((item) => {
                   const eventLabel = text.events[item.reviewResult];
-                  const modeLabel = text.modes[item.cardTypeId];
+                  const modeLabel = exerciseLabel(item);
                   return (
                     <li
-                      key={`${item.entryId}-${item.reviewedAt}-${item.reviewResult}`}
+                      key={item.activityId}
                       className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
                     >
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                           <span className="font-semibold text-slate-950 dark:text-white">
-                            {item.headword}
+                            {item.exercise?.text ?? item.headword}
                           </span>
                           {item.partOfSpeech ? (
                             <span className="text-xs text-slate-500 dark:text-slate-400">

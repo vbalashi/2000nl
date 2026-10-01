@@ -19,6 +19,8 @@ describe("recent Training history", () => {
     rpc.mockResolvedValueOnce({
       data: [
         {
+          activity_id: "word-review:1",
+          exercise_family: "meaning", exercise_direction: null, target_id: null, exercise_text: null,
           entry_id: "entry-1",
           headword: "bank",
           part_of_speech: "zn.",
@@ -34,6 +36,7 @@ describe("recent Training history", () => {
     await expect(fetchRecentTrainingHistory()).resolves.toEqual({
       items: [
         {
+          activityId: "word-review:1",
           entryId: "entry-1",
           headword: "bank",
           partOfSpeech: "zn.",
@@ -44,7 +47,7 @@ describe("recent Training history", () => {
       ],
       hasMore: true,
     });
-    expect(rpc).toHaveBeenCalledWith("get_recent_training_review_history", {
+    expect(rpc).toHaveBeenCalledWith("get_recent_training_activity_v1", {
       p_limit: 50,
     });
   });
@@ -53,6 +56,8 @@ describe("recent Training history", () => {
     rpc.mockResolvedValueOnce({
       data: [
         {
+          activity_id: "word-review:1",
+          exercise_family: "meaning", exercise_direction: null, target_id: null, exercise_text: null,
           entry_id: "entry-1",
           headword: "bank",
           part_of_speech: "zn.",
@@ -89,7 +94,9 @@ describe("recent Training history", () => {
   test("fails and diagnoses a malformed row instead of silently showing an empty history", async () => {
     const diagnostic = vi.spyOn(console, "error").mockImplementation(() => undefined);
     rpc.mockResolvedValueOnce({
-      data: [{ entry_id: "entry-1", headword: "bank" }],
+      data: [{ activity_id: "word-review:1",
+          exercise_family: "meaning", exercise_direction: null, target_id: null, exercise_text: null,
+          entry_id: "entry-1", headword: "bank" }],
       error: null,
     });
 
@@ -106,7 +113,9 @@ describe("recent Training history", () => {
   test("rejects inconsistent truncation metadata", async () => {
     const diagnostic = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const row = {
-      entry_id: "entry-1",
+      activity_id: "word-review:1",
+          exercise_family: "meaning", exercise_direction: null, target_id: null, exercise_text: null,
+          entry_id: "entry-1",
       headword: "bank",
       part_of_speech: null,
       review_result: "review_success",
@@ -134,6 +143,8 @@ describe("recent Training history", () => {
     rpc.mockResolvedValueOnce({
       data: [
         {
+          activity_id: "word-review:1",
+          exercise_family: "meaning", exercise_direction: null, target_id: null, exercise_text: null,
           entry_id: "entry-1",
           headword: "bank",
           part_of_speech: "zn.",
@@ -156,4 +167,29 @@ describe("recent Training history", () => {
     );
     diagnostic.mockRestore();
   });
+});
+
+const exerciseRow = {
+  activity_id: "exercise-review:1", entry_id: "entry-1", headword: "gaan", part_of_speech: "verb",
+  review_result: "review_success", card_type_id: null, exercise_family: "idiom", exercise_direction: "reverse",
+  target_id: "target-1", exercise_text: "ervoor gaan", reviewed_at: "2026-08-21T11:59:00.000Z", has_more: false,
+};
+test.each([ ["idiom", "direct"], ["idiom", "reverse"], ["translation", "recall"] ])("projects %s/%s without inventing a word mode", async (family, direction) => {
+  rpc.mockResolvedValueOnce({ data: [{ ...exerciseRow, exercise_family: family, exercise_direction: direction }], error: null });
+  const page = await fetchRecentTrainingHistory();
+  expect(page.items[0]).toMatchObject({ activityId: "exercise-review:1", cardTypeId: null,
+    exercise: { family, direction, targetId: "target-1", text: "ervoor gaan" } });
+});
+test("keeps an exercise whose historical text is no longer available", async () => {
+  rpc.mockResolvedValueOnce({ data: [{ ...exerciseRow, exercise_text: null }], error: null });
+  expect((await fetchRecentTrainingHistory()).items[0].exercise?.text).toBeNull();
+});
+test.each([
+  { exercise_family: "translation", exercise_direction: "direct" },
+  { card_type_id: "word-to-definition" }, { target_id: null }, { exercise_family: "unknown" },
+])("rejects inconsistent exercise identity %j", async invalid => {
+  const diagnostic = vi.spyOn(console,"error").mockImplementation(()=>undefined);
+  rpc.mockResolvedValueOnce({ data: [{ ...exerciseRow, ...invalid }], error: null });
+  await expect(fetchRecentTrainingHistory()).rejects.toThrow("training_history_contract_mismatch");
+  diagnostic.mockRestore();
 });

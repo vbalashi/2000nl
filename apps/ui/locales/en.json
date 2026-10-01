@@ -194,10 +194,10 @@
       "close": "Close history",
       "title": "History",
       "eyebrow": "Training",
-      "subtitle": "The latest 50 training activities from the last 24 hours.",
+      "subtitle": "Your 50 most recent training actions.",
       "back": "Back to training",
       "loading": "Loading history…",
-      "empty": "No training activity in the last 24 hours.",
+      "empty": "No training activity yet.",
       "error": "History could not be loaded.",
       "retry": "Try again",
       "list": "Recent training activity",
@@ -208,6 +208,11 @@
         "review_hard": "Hard",
         "review_success": "Good",
         "review_easy": "Easy"
+      },
+      "exercises": {
+        "idiomDirect": "Idiom → meaning",
+        "idiomReverse": "Meaning → idiom",
+        "translation": "Sentence translation"
       },
       "modes": {
         "word-to-definition": "Word → meaning",

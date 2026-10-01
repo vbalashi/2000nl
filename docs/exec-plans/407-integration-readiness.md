@@ -1116,3 +1116,38 @@ access, 24-hour/50 limit, deterministic ordering and no duplicate ordinary
 events. Do not disguise exercises as word card modes or add client-only history.
 This is not a missing write and not proof that the full history requirement is
 complete. Goal remains active; no rollout or deployment was performed.
+
+## Unified recent history and owner window clarification — 2026-10-01
+
+Recovered active goal and clean #407 worktree at 94223dd3; no uncommitted code
+was present in this checkout. The previous checkpoint identified missing idiom
+history correctly. Added get_recent_training_activity_v1, preserving the legacy
+RPC. It reads ordinary Learn/reviews plus accepted idiom/sentence reviews, with
+learner/access guards, stable event IDs, global 50 cap and localized family labels.
+Node text is used only while its fingerprint matches the target; stale/unavailable
+text falls back to headword, not raw source context or a guessed phrase.
+
+The owner clarified that history should show the latest 50 regardless of age.
+No accepted 24-hour requirement was found in current decisions/discussions; the
+old window was implementation behavior. Recorded the new accepted decision in
+2026-10-01-01-recent-training-history.md and current-decisions.md. Previous
+24-hour notes above describe the superseded implementation, not the new contract.
+
+Migration 190 is additive, has exact manifest checksum and read-only postflight;
+local forward apply passed and contract is 2000nl-db-190. No reset, production
+mutation, gate enablement, push or deployment. All 272 SQL/FSRS regressions pass,
+including family merge, actions older than 24h, isolation/access, unchanged legacy
+RPC, excluded views/non-grades, stale-text privacy, global cap and stable ordering.
+30 focused UI/catalog/service tests, typecheck, targeted lint, style guard pass.
+Existing async act warnings in the history retry test remain; no failed assertions.
+Two draft edit commands used the wrong cwd and wrote nothing; rerun in repo root
+succeeded before final verification.
+
+Live local IAB History now shows the prior accepted kiezen tussen een aantal
+zaken Good at 08:55 alongside ordinary actions. Closing returns to the unchanged
+het verschil tussen … en … face, 1/10, with History focus restored. Screenshot:
+/tmp/407qa/unified-history-2026-10-01.jpg. This is actual persisted exercise history,
+not a new grade or fixture. Remaining: bounded all-time history query work for
+large accounts; native zoom, gated live sentence and broader Library acceptance,
+active-time focus loss, remaining exercise-specific action presentation and final
+owner/rollout review. #407 remains active.

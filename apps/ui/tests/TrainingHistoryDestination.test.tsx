@@ -22,6 +22,7 @@ test("loads recent authoritative activity only when opened and returns to Traini
   fetchRecentTrainingHistory.mockResolvedValueOnce({
     items: [
       {
+        activityId: "word-review:1",
         entryId: "entry-1",
         headword: "bank",
         partOfSpeech: "zn.",
@@ -83,7 +84,7 @@ test("distinguishes an empty day from a load failure and retries", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Try again" }));
   await waitFor(() => expect(fetchRecentTrainingHistory).toHaveBeenCalledTimes(2));
   expect(
-    await screen.findByText("No training activity in the last 24 hours."),
+    await screen.findByText("No training activity yet."),
   ).toBeInTheDocument();
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 });
@@ -94,6 +95,7 @@ test("never renders principal A history while principal B is loading", async () 
     .mockResolvedValueOnce({
       items: [
         {
+          activityId: "word-review:a",
           entryId: "entry-a",
           headword: "private-a",
           partOfSpeech: null,
@@ -127,7 +129,7 @@ test("never renders principal A history while principal B is loading", async () 
   expect(screen.getByText("Loading history…")).toBeInTheDocument();
   resolveUserB({ items: [], hasMore: false });
   expect(
-    await screen.findByText("No training activity in the last 24 hours."),
+    await screen.findByText("No training activity yet."),
   ).toBeInTheDocument();
 });
 
@@ -165,5 +167,23 @@ test("approved history failures and principal changes never present stale action
   await screen.findByText("private-a");
   view.rerender(<TrainingHistoryDestination {...props} userId="b" />);
   expect(screen.queryByText("private-a")).not.toBeInTheDocument();
-  expect(await screen.findByText("No training activity in the last 24 hours.")).toBeInTheDocument();
+  expect(await screen.findByText("No training activity yet.")).toBeInTheDocument();
+});
+
+test.each([
+  ["en", "Meaning → idiom", "Sentence translation"],
+  ["nl", "Betekenis → uitdrukking", "Zinsvertaling"],
+  ["ru", "Значение → выражение", "Перевод предложения"],
+] as const)("renders exercise history in %s with an honest missing-text fallback", async (language, idiomLabel, sentenceLabel) => {
+  fetchRecentTrainingHistory.mockResolvedValueOnce({ items: [
+    { activityId:"idiom-event",entryId:"entry",headword:"gaan",partOfSpeech:null,reviewResult:"review_success",cardTypeId:null,
+      exercise:{family:"idiom",direction:"reverse",targetId:"target",text:"ervoor gaan"},reviewedAt:"2026-08-21T11:59:00Z" },
+    { activityId:"sentence-event",entryId:"entry",headword:"huis",partOfSpeech:null,reviewResult:"review_hard",cardTypeId:null,
+      exercise:{family:"translation",direction:"recall",targetId:"other",text:null},reviewedAt:"2026-08-20T11:59:00Z" },
+  ],hasMore:false });
+  render(<TrainingHistoryDestination open userId="user" interfaceLanguage={language} onReturnToTraining={vi.fn()} />);
+  expect(await screen.findByText("ervoor gaan")).toBeInTheDocument();
+  expect(screen.getByText("huis")).toBeInTheDocument();
+  expect(screen.getByText(idiomLabel)).toBeInTheDocument();
+  expect(screen.getByText(sentenceLabel)).toBeInTheDocument();
 });
