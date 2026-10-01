@@ -29,7 +29,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 - [x] 13 — Close inline with audio/translation; larger gap before close.
 - [x] 14 — Compare Normal headword size and article gap with prototype.
 - [x] 12 — Expose canonical exclusion action alongside Known in article.
-- [ ] 16 — Investigate action history/Undo; document separate case if additional contract work required.
+- [x] 16 — Investigate action history/Undo; document separate case if additional contract work required.
 - [x] 7 — Resolve consistent capitalization of standalone language labels; grammar/content untouched.
 
 ## Additional clarification retained
@@ -39,3 +39,5 @@ The owner rejected generic “Translation example → Words” wording. Use a co
 ## Verification
 
 Use narrow checks per checkpoint, then relevant typecheck/component tests and local browser review against prototype. No push, merge or deployment. Open questions are deferred until independent work is complete.
+
+Comment 16 researched and recorded in [separate case](407-action-history-undo-case.md). History UI/long-lived Undo is not yet implemented; owner allowed separate work. Confirm eligibility policy at final review.
