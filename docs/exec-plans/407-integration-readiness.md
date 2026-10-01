@@ -1848,3 +1848,14 @@ Browser confirms compact initial picker and creation focus. Screenshot:
 /tmp/407qa/correction8-collections.png. Seven tests including creation callback,
 loading/failed membership recovery, dialogs pass; typecheck/lint/diff pass.
 Next9 visible Word details header removal with accessible name retained.
+
+### 2026-10-01 — correction9 remove visible word-panel title row
+
+Shared approved WordDetailsHeader only renders close control; background transparent
+and divider removed. Space for the40px close target remains. PracticePanel retains
+localized accessible dialog name; legacy header unchanged. Added real drawer fixture
+to existing SenseCard QA harness, no lookup/actions or progress writes. Browser
+verified RU panel without visible title/divider and close callback. Screenshot:
+/tmp/407qa/correction9-header.png. Strengthened dialog regression checks named
+dialog without title text plus animated dismissal; three tests/typecheck/lint/diff
+pass. Next10 app header divider.

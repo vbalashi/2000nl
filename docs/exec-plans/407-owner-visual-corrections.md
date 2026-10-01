@@ -12,7 +12,7 @@
 - [x] **6.** Номер/состояние значения над карточкой, не в разрыве рамки.
 - [x] **7.** Шеврон значения без фоновой кнопки, ближе к правому верхнему углу.
 - [x] **8.** Коллекции: простой заголовок/подсказка, плюс создания вместо перегруженной формы; сохранить реальные действия/ошибки.
-- [ ] **9.** Убрать видимый заголовок Сведения о слове; сохранить accessible dialog name/закрытие.
+- [x] **9.** Убрать видимый заголовок Сведения о слове; сохранить accessible dialog name/закрытие.
 - [ ] **10.** Убрать горизонтальный разделитель хедера approved UI.
 - [ ] **11.** Разъяснить контракт Только эта коллекция; затем убрать/оформить понятную область.
 - [ ] **12.** Убрать Мой словарь / Добавить запись из первичного toolbar, сохранить существующий API/данные.
@@ -54,3 +54,5 @@
 Пункт7: шеврон без фоновой заливки, смещение8px к верхнему правому углу; зона28px и focus-visible сохранены. Browser computed transparent; мышью свернуть и Enter раскрыть проверены, aria-expanded=true. Снимок /tmp/407qa/correction7-chevron.png. CSS-only; diff check pass.
 
 Пункт8: заголовок/подсказка из общей локализации референса; headword/definition остаются sr-only context. Форма создания открывается плюсом после списка, фокус в имя; legacy форма прежняя. Поиск/чекбоксы/статусы/ошибки/блокировки/реальные callbacks сохранены. Проверки7tests, typecheck/lint/diff; browser initial and creation focus, снимок /tmp/407qa/correction8-collections.png.
+
+Пункт9: approved WordDetailsHeader содержит только close, без текста/заливки/разделителя; PracticePanel aria-label сохраняет название диалога. Общий Library/Training header, legacy прежний. Dialog test3pass включая имя/отсутствие visible текста/animated close; typecheck/lint/diff pass. Browser fixture open/close, снимок /tmp/407qa/correction9-header.png.

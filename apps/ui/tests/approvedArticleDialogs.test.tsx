@@ -51,6 +51,8 @@ test("Library uses the shared panel's animated dismissal on the approved path", 
   const view = render(<WordDetailDrawer selection={{ entryId: "entry-1", headword: "bank" }} open
     onClose={onClose} userId="user-1" contentLanguageCode="nl" translationLang="en"
     interfaceLanguage="ru" userLists={[]} />);
+  expect(screen.getByRole("dialog", { name: "Сведения о слове" })).toBeInTheDocument();
+  expect(screen.queryByText("Сведения о слове")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Закрыть" }));
   expect(onClose).not.toHaveBeenCalled();
   expect(screen.getByRole("dialog")).toHaveAttribute("data-closing", "true");

@@ -11,7 +11,6 @@ export function WordDetailsHeader({ onClose, interfaceLanguage }: {
 }) {
   if (sharedArticlePresentationV1Enabled()) return (
     <header className={sheet.header}>
-      <span className={sheet.title}>{platformV2Message(interfaceLanguage, "senseCard.wordDetails.open")}</span>
       <button type="button" aria-label={platformV2Message(interfaceLanguage, "common.close")} onClick={onClose} className={sheet.close}>
         <X aria-hidden="true" size={18} />
       </button>
