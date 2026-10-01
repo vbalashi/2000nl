@@ -2,6 +2,7 @@
 import { useWordDetailsClose } from "../WordDetailsHeader";
 
 import React from "react";
+import { X } from "lucide-react";
 import { LibraryMeaningActions } from "./LibraryMeaningActions";
 import {sharedArticlePresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
 import {ArticleTranslation,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
@@ -305,7 +306,7 @@ export function LibrarySenseCardGroup({
                 ) : null}
                 {closeDetails && <span className={surfaces.closeAction}><SenseCardHeaderAction
                   label={platformV2Message(interfaceLanguage,"common.close")} onClick={closeDetails}>
-                  <span aria-hidden="true">×</span>
+                  <X size={18} aria-hidden="true" />
                 </SenseCardHeaderAction></span>}
               </>
             ) : undefined

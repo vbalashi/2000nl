@@ -8,6 +8,7 @@ import sheet from "@/components/practice/article/wordDetailsSheet.module.css";
 const WordDetailsCloseContext = React.createContext<(() => void) | null>(null);
 export const useWordDetailsClose = () => React.useContext(WordDetailsCloseContext);
 export function WordDetailsCloseProvider({onClose,interfaceLanguage,children}:{onClose:()=>void;interfaceLanguage:OnboardingLanguage;children:React.ReactNode}) {
+  if (!sharedArticlePresentationV1Enabled()) return <>{children}</>;
   return <WordDetailsCloseContext.Provider value={onClose}><div className={sheet.closeHost}>
     <div className={sheet.fallbackClose}><WordDetailsHeader onClose={onClose} interfaceLanguage={interfaceLanguage}/></div>
     {children}
