@@ -1716,3 +1716,23 @@ and active guidance check passed. First managed apply rejected the missing
 transaction wrapper; added the required BEGIN/COMMIT and regenerated checksum
 before retry. Full integration goal remains active; this closes the Known
 semantics mismatch, not the remaining UI/integration acceptance work.
+
+## Consolidated acceptance audit and live directional Known — 2026-10-01
+
+After local193 apply, canonical3100 health reports healthy local DB193; source
+launch stamp remains old while Next dev serves current worktree/HMR. Reused that
+server without restarting the user's process. Automated authenticated Library
+QA marked huis known via actual menu/action endpoint: HTTP200, only one active
+word-to-definition mark with direction scope. Actual UI Undo HTTP200 removed that
+exact mark; read-only DB check confirms zero active marks left. No grade/exclude
+or unrelated user state was changed. Screenshot and reproducible scenario under
+/tmp/407qa/directional-known-library-marked.png and directional-known-live.cjs.
+
+Rechecked41 presentation/catalog/appearance/article/overview tests across8files;
+all pass. Shared style guard/legacy1362 ratchet pass. Consolidated current recipe,
+component/data owners, evidence coverage and explicit remaining owner visual
+acceptance in 407-production-acceptance.md. This replaces reliance on scattered
+historical pending notes; no claim of device/screen-reader or production rollout
+acceptance. Asked owner for root UI visual acceptance asynchronously; can continue
+independent evidence/cleanup but cannot infer approval from elapsed time. Goal
+remains active pending concrete visual feedback/final acceptance.
