@@ -1393,3 +1393,42 @@ no horizontal overflow, then original height and focus restoration. Three pass;
 1362 and diff check pass. Remaining: Training native zoom/real focus loss, live
 gated sentence, pending Library Exclude product scope and final owner/rollout.
 Goal remains active. No deployment claimed.
+
+
+## Live Training native zoom and real attention gate — 2026-10-01
+
+Started the local QA account's authoritative ordinary VanDale 2k session through
+Start training; revealed the ouder answer without Learn or grade. Native Chrome
+keyboard zoom200% measured717x473/DPR4; zoom400%358x236/DPR8. Main Learn stayed
+fully on-screen (46px, y152.75–198.75), no horizontal overflow. The answer region
+remained keyboard scrollable (28px viewport/162px content at400%); End reached the
+example. This is a short viewport usability limit, not a claim of spacious400%
+reading. The default100% viewport1434x947/DPR2 was restored. Full-word short-panel
+handling is covered separately by the prior Library/controlled-panel checkpoint.
+
+Observed actual /api/training/study-time network receipts, not mocked requests.
+Initial attention results were invalid for OS-focus proof: the Chrome browser-use
+runtime enables focus emulation, so raising Finder alone still reported hasFocus
+true and emitted receipts. Disabled Emulation.setFocusEmulationEnabled only on the
+dedicated QA tab; CDP Runtime.evaluate confirmed visible but unfocused. After
+separating buffered/final active receipts, an18-second unfocused interval produced
+zero new measurements. Native click on the neutral session heading returned real
+focus=true; subsequent active receipts resumed with HTTP200 and ordinary elapsed
+samples (no background interval added). History, while native modal open longer
+than the15-second sample checkpoint, emitted zero new measurements after its last
+active flush. Closing history restored focus to its opener and preserved the same
+ungraded answer/0 of10 position. History itself displayed a previous-day event
+older than24h, consistent with the accepted latest50 rule.
+
+Original focus-emulation setting was restored before closing the dedicated QA tab.
+Codex app access is blocked by computer-use policy; did not attempt to bypass it,
+used Finder instead. No file was opened/modified in Finder. QA wrote real session
+start/resume and active-time receipts through existing owners; no Learn/Known,
+grade/exclusion/Report action was sent. Scope: one ordinary new-card session/RU;
+not all exercise families or every locale/reading scale. Existing controlled Report
+attention test was rerun and passed (22.3s), verifying its15-second pause and same
+resume identity. Documentation diff check passed; no implementation change in
+this checkpoint.
+Remaining: pending Library Exclude scope, live gated sentence and final whole-
+product acceptance/rollout. This does not approve enabling deployment flags.
+Goal stays active.
