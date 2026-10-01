@@ -110,6 +110,7 @@ function SenseCardV2Session({
   const [membershipsByEntryId, setMembershipsByEntryId] = React.useState<
     Record<string, EntryLearningListMembership[]>
   >({});
+  const [membershipState, setMembershipState] = React.useState<"loading" | "ready" | "failed">("loading");
   const [collectionsEntryId, setCollectionsEntryId] = React.useState<
     string | null
   >(null);
@@ -145,6 +146,7 @@ function SenseCardV2Session({
     setBusyIdentity(null);
     setError(null);
     setMembershipsByEntryId({});
+    setMembershipState("loading");
     setCollectionsEntryId(null);
     setCollectionBusyListId(null);
     setCollectionStatus(null);
@@ -321,18 +323,19 @@ function SenseCardV2Session({
       entryIds: string[],
       expectedDetailIdentity: string,
     ) => {
-      if (expectedDetailIdentity !== detailIdentityRef.current) return;
+      if (expectedDetailIdentity !== detailIdentityRef.current) return false;
       const expectedMembershipGeneration = ++membershipGeneration.current;
       const isCurrent = () =>
         expectedDetailIdentity === detailIdentityRef.current &&
         expectedMembershipGeneration === membershipGeneration.current;
       if (!userId || !entryIds.length) {
-        if (isCurrent()) setMembershipsByEntryId({});
-        return;
+        if (isCurrent()) { setMembershipsByEntryId({}); setMembershipState("ready"); }
+        return isCurrent();
       }
+      setMembershipState("loading");
       try {
         const memberships = await fetchEntryListMemberships(entryIds);
-        if (!isCurrent()) return;
+        if (!isCurrent()) return false;
         setMembershipsByEntryId(
           Object.fromEntries(
             entryIds.map((meaningEntryId) => [
@@ -341,8 +344,12 @@ function SenseCardV2Session({
             ]),
           ),
         );
+        setMembershipState("ready");
+        return true;
       } catch {
-        if (isCurrent()) setMembershipsByEntryId({});
+        // A failed read is unknown, not an empty membership set.
+        if (isCurrent()) setMembershipState("failed");
+        return false;
       }
     },
     [userId],
@@ -411,7 +418,7 @@ function SenseCardV2Session({
 
   const refreshMemberships = React.useCallback(async () => {
     if (!model) return;
-    await loadMemberships(
+    return loadMemberships(
       model.meanings.map((meaning) => meaning.entryId),
       detailIdentity,
     );
@@ -427,10 +434,10 @@ function SenseCardV2Session({
         ? await removeWordsFromUserList(list.id, [collectionsEntryId])
         : await addWordsToUserList(list.id, [collectionsEntryId]);
       if (result.error) throw result.error;
-      await refreshMemberships();
+      const membershipsReady = await refreshMemberships();
       if (!isCurrent()) return;
       await onListsUpdated?.();
-      if (!isCurrent()) return;
+      if (!isCurrent() || !membershipsReady) return;
       setCollectionStatus(
         platformV2Message(interfaceLanguage, "senseCard.collections.saved"),
       );
@@ -459,10 +466,10 @@ function SenseCardV2Session({
       if (!created?.id) throw new Error("create_list_failed");
       const result = await addWordsToUserList(created.id, [collectionsEntryId]);
       if (result.error) throw result.error;
-      await refreshMemberships();
+      const membershipsReady = await refreshMemberships();
       if (!isCurrent()) return;
       await onListsUpdated?.();
-      if (!isCurrent()) return;
+      if (!isCurrent() || !membershipsReady) return;
       setCollectionStatus(
         platformV2Message(interfaceLanguage, "senseCard.collections.saved"),
       );
@@ -739,6 +746,8 @@ function SenseCardV2Session({
             : []
         }
         busyListId={collectionBusyListId}
+        membershipState={membershipState}
+        onRetryMemberships={() => { setCollectionStatus(null); void refreshMemberships(); }}
         status={collectionStatus}
         onClose={() => setCollectionsEntryId(null)}
         onToggleList={(list, included) => void handleToggleList(list, included)}

@@ -130,6 +130,9 @@
       "states": { "sent": { "title": "Sent", "body": "Thanks. Your report has been received." }, "queued": { "title": "Saved for later", "body": "It will be sent automatically when you are online again." }, "scheduled": { "title": "Retry scheduled", "body": "It will be sent again automatically." }, "rejected": { "title": "Could not send", "body": "This report is not supported by the current app version or you are not signed in." } }
     },
     "collections": {
+      "loadingMembership": "Loading collection membership…",
+      "membershipFailed": "Collection membership could not be loaded. Your saved collections have not been cleared.",
+      "retryMembership": "Reload membership",
       "label": "Collections",
       "title": "Collections for this meaning",
       "search": "Search collections",

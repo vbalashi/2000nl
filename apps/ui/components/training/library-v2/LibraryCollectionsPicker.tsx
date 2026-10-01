@@ -21,6 +21,8 @@ type Props = {
   memberships: EntryLearningListMembership[];
   busyListId: string | null;
   status: string | null;
+  membershipState?: "loading" | "ready" | "failed";
+  onRetryMemberships?: () => void;
   onClose: () => void;
   onToggleList: (list: WordListSummary, included: boolean) => void;
   onCreateList: (name: string) => void;
@@ -36,11 +38,14 @@ export function LibraryCollectionsPicker({
   memberships,
   busyListId,
   status,
+  membershipState = "ready",
+  onRetryMemberships,
   onClose,
   onToggleList,
   onCreateList,
   onOpenListMembership,
 }: Props) {
+  const editingBlocked = busyListId !== null || membershipState !== "ready";
   const approved = sharedArticlePresentationV1Enabled();
   const titleId = React.useId();
   const searchRef = React.useRef<HTMLInputElement>(null);
@@ -127,7 +132,7 @@ export function LibraryCollectionsPicker({
             onSubmit={(event) => {
               event.preventDefault();
               const name = newListName.trim();
-              if (!name) return;
+              if (!name || editingBlocked) return;
               onCreateList(name);
               setNewListName("");
             }}
@@ -141,7 +146,7 @@ export function LibraryCollectionsPicker({
             />
             <button
               type="submit"
-              disabled={!newListName.trim() || busyListId !== null}
+              disabled={!newListName.trim() || editingBlocked}
               className="rounded-xl border border-indigo-500 px-3 py-2 text-sm font-semibold text-indigo-700 disabled:opacity-50 dark:text-indigo-200"
             >
               {t("senseCard.collections.create")}
@@ -149,7 +154,12 @@ export function LibraryCollectionsPicker({
           </form>
         </div>
 
-        <div data-dialog-part="body" className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+        <div data-dialog-part="body" role={approved ? "region" : undefined} aria-label={approved ? t("senseCard.collections.title") : undefined} tabIndex={approved ? 0 : undefined} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+          {membershipState === "loading" ? <p role="status">{t("senseCard.collections.loadingMembership")}</p> : null}
+          {membershipState === "failed" ? <div>
+            <p role="alert">{t("senseCard.collections.membershipFailed")}</p>
+            {onRetryMemberships ? <button type="button" onClick={onRetryMemberships}>{t("senseCard.collections.retryMembership")}</button> : null}
+          </div> : null}
           {visibleLists.length ? (
             <div className="space-y-1">
               {visibleLists.map((list) => {
@@ -163,7 +173,7 @@ export function LibraryCollectionsPicker({
                       id={`library-collection-${list.id}`}
                       type="checkbox"
                       checked={included}
-                      disabled={busyListId !== null}
+                      disabled={editingBlocked}
                       onChange={() => onToggleList(list, included)}
                       className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
@@ -199,11 +209,11 @@ export function LibraryCollectionsPicker({
                 );
               })}
             </div>
-          ) : (
+          ) : membershipState === "ready" ? (
             <p className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
               {t("senseCard.collections.empty")}
             </p>
-          )}
+          ) : null}
         </div>
 
         <footer data-dialog-part="footer" className="flex min-h-12 items-center justify-between gap-3 border-t border-slate-200 px-5 py-3 dark:border-slate-700">

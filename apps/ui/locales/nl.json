@@ -130,6 +130,9 @@
       "states": { "sent": { "title": "Verzonden", "body": "Bedankt. Je melding is ontvangen." }, "queued": { "title": "Bewaard voor later", "body": "De melding wordt automatisch verstuurd zodra je weer online bent." }, "scheduled": { "title": "Opnieuw gepland", "body": "De melding wordt automatisch opnieuw verstuurd." }, "rejected": { "title": "Versturen niet mogelijk", "body": "Deze melding wordt niet ondersteund door de huidige appversie of je bent niet aangemeld." } }
     },
     "collections": {
+      "loadingMembership": "Collectielidmaatschap laden…",
+      "membershipFailed": "Het collectielidmaatschap kon niet worden geladen. Je opgeslagen collecties zijn niet gewist.",
+      "retryMembership": "Lidmaatschap opnieuw laden",
       "label": "Collecties",
       "title": "Collecties voor deze betekenis",
       "search": "Zoek collecties",

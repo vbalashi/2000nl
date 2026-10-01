@@ -30,6 +30,7 @@ const requestTranslation = vi.fn();
 const performAction = vi.fn();
 const queueDiagnosticReport = vi.fn();
 const fetchMemberships = vi.fn();
+const removeFromList = vi.fn();
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -149,7 +150,7 @@ vi.mock("@/lib/trainingService", () => ({
   addWordsToUserList: vi.fn(),
   createUserList: vi.fn(),
   fetchEntryListMemberships: (...args: unknown[]) => fetchMemberships(...args),
-  removeWordsFromUserList: vi.fn(),
+  removeWordsFromUserList: (...args: unknown[]) => removeFromList(...args),
 }));
 
 describe("LibrarySenseCardV2Session", () => {
@@ -169,6 +170,8 @@ describe("LibrarySenseCardV2Session", () => {
     requestTranslation.mockReset();
     queueDiagnosticReport.mockReset();
     fetchMemberships.mockReset();
+    removeFromList.mockReset();
+    removeFromList.mockResolvedValue({error:null});
     fetchGroup.mockResolvedValue(multiSenseBankGroup);
     performAction.mockResolvedValue({
       contractVersion: "platform-action-v2",
@@ -179,6 +182,31 @@ describe("LibrarySenseCardV2Session", () => {
     });
     queueDiagnosticReport.mockResolvedValue({ state: "sent" });
     fetchMemberships.mockResolvedValue(new Map());
+  });
+
+  test("an accepted collection removal followed by failed read is not reported as saved; retry only reads", async () => {
+    const listId = "qa-list";
+    fetchMemberships.mockResolvedValueOnce(new Map([[financeEntry.entryId,[membership(listId)]]]))
+      .mockRejectedValueOnce(new Error("membership_offline"))
+      .mockResolvedValue(new Map([[financeEntry.entryId,[]]]));
+    render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} headword="bank"
+      contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"
+      userId="qa-user" userLists={[{id:listId,name:listId,type:"user",item_count:1}]} />);
+    await screen.findByTestId("library-sense-card-group");
+    await waitFor(()=>expect(fetchMemberships).toHaveBeenCalledOnce());
+    const card=screen.getByTestId(`library-sense-card-${financeEntry.entryId}`);
+    fireEvent.click(within(card).getByRole("button",{name:/^Collections/}));
+    const checkbox=screen.getByRole("checkbox",{name:new RegExp(listId)});
+    await waitFor(()=>expect(checkbox).toBeChecked());
+    fireEvent.click(checkbox);
+    await screen.findByRole("alert");
+    expect(screen.getByRole("alert")).toHaveTextContent("Collection membership could not be loaded");
+    expect(checkbox).toBeChecked(); expect(checkbox).toBeDisabled();
+    expect(screen.queryByText("Collection membership updated")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button",{name:"Reload membership"}));
+    await waitFor(()=>expect(checkbox).not.toBeChecked());
+    expect(checkbox).toBeEnabled(); expect(removeFromList).toHaveBeenCalledOnce();
+    expect(performAction).not.toHaveBeenCalled();
   });
 
   test("uses one global report action and no per-node flags", async () => {

@@ -1,3 +1,4 @@
+import { platformV2Message } from "../../lib/platform/platformV2ClientI18n";
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 
@@ -18,6 +19,12 @@ for (const width of [320, 390, 1024]) {
     await page.getByRole("button", { name: /Training starten|Start training|Начать тренировку/i }).click();
     await page.getByRole("button", { name: /Show answer|Antwoord tonen|Показать ответ/i }).click();
     await expect(page.getByRole("button", { name: /Again|Opnieuw|Снова/i })).toBeEnabled();
+    const language = width === 320 ? "ru" : width === 390 ? "nl" : "en";
+    const t = (key: string) => platformV2Message(language, key);
+    let membershipUnavailable = true;
+    await page.route("**/rest/v1/rpc/get_user_list_memberships_for_entries", route => route.fulfill(
+      membershipUnavailable ? { status: 503, json: { code: "QA_READ_FAILED", message: "temporary read failure" } } : { json: [] },
+    ));
     const stage = page.getByTestId("training-sense-card-stage");
     const opener = stage.getByRole("button", { name: /Word details|Woorddetails|Сведения о слове/i });
     await opener.click();
@@ -39,6 +46,15 @@ for (const width of [320, 390, 1024]) {
     await expect(picker).toBeVisible();
     await expect(picker.getByRole("textbox").first()).toBeFocused();
     expect(await picker.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+    await expect(picker.getByRole("alert")).toContainText(t("senseCard.collections.membershipFailed"));
+    await expect(picker.getByText(t("senseCard.collections.empty"), { exact: true })).toHaveCount(0);
+    await picker.getByPlaceholder(t("senseCard.collections.createPlaceholder")).fill("QA, not submitted");
+    const create = picker.getByRole("button", { name: t("senseCard.collections.create"), exact: true });
+    await expect(create).toBeDisabled();
+    membershipUnavailable = false;
+    await picker.getByRole("button", { name: t("senseCard.collections.retryMembership"), exact: true }).click();
+    await expect(picker.getByRole("alert")).toHaveCount(0);
+    await expect(create).toBeEnabled();
     await expect(picker.getByRole("button", { name: /^(Done|Gereed|Готово)$/ })).toBeInViewport({ ratio: 1 });
     await page.keyboard.press("Escape");
     await expect(picker).toHaveCount(0);

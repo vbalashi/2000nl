@@ -1,6 +1,6 @@
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, test, vi } from "vitest";
 import { LibraryCollectionsPicker } from "@/components/training/library-v2/LibraryCollectionsPicker";
 
 describe("LibraryCollectionsPicker", () => {
@@ -63,5 +63,24 @@ describe("LibraryCollectionsPicker", () => {
     expect(onOpenListMembership).toHaveBeenCalledWith(
       expect.objectContaining({ listId: "daily-review" }),
     );
+  });
+});
+
+
+describe("membership read recovery", () => {
+  test.each(["loading", "failed"] as const)("%s blocks editing without presenting unknown membership as empty", state => {
+    const retry=vi.fn(), toggle=vi.fn(), create=vi.fn();
+    render(<LibraryCollectionsPicker open headword="huis" definition="a house" interfaceLanguage="en"
+      userLists={[]} memberships={[]} busyListId={null} status={null} membershipState={state}
+      onRetryMemberships={retry} onClose={vi.fn()} onToggleList={toggle} onCreateList={create} />);
+    expect(screen.queryByText("No collections found")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("New collection name"),{target:{value:"New"}});
+    expect(screen.getByRole("button",{name:"Create"})).toBeDisabled();
+    fireEvent.submit(screen.getByPlaceholderText("New collection name").closest("form")!);
+    if(state==="failed") {
+      expect(screen.getByRole("alert")).toHaveTextContent("Collection membership could not be loaded");
+      fireEvent.click(screen.getByRole("button",{name:"Reload membership"}));expect(retry).toHaveBeenCalledOnce();
+    } else expect(screen.getByText("Loading collection membership…")).toBeInTheDocument();
+    expect(create).not.toHaveBeenCalled();expect(toggle).not.toHaveBeenCalled();
   });
 });

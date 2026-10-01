@@ -40,3 +40,5 @@
 .production.production fieldset label:hover,.production.production [data-dialog-part=body]>div>div:hover{background:var(--practice-surface-hover)}
 .production.production [data-report-state] span{background:var(--practice-success-soft);color:var(--practice-success)}
 .production.production [data-report-state=rejected] span{background:var(--practice-danger-soft);color:var(--practice-danger)}
+
+.production.production [role=alert]{color:var(--practice-danger)}

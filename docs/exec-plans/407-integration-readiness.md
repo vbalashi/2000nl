@@ -1281,3 +1281,46 @@ warning in the untouched auto-play effect (verified against HEAD). No new server
 canonical local health is ok/contract191. Remaining whole-product gates, including
 native zoom/OS focus, live gated sentence, broader Library persistence/actions and
 final owner/rollout review, remain open. #407 stays active; no deployment claimed.
+
+## Live Library collections and unknown-read recovery — 2026-10-01
+
+Verified the local signed-in Library huis article and nested Collections through
+standalone Playwright on canonical 3100 (health ok/local/contract191). Created a
+uniquely named QA user collection through the actual UI/RPC, observed the meaning
+membership checked and persisted after reload, then removed it through the UI and
+verified unchecked membership after reload. Injected one controlled 503 removal:
+the original mark remains checked, failure is shown, and later accepted removal
+works. Collections were cleaned using the existing authenticated delete RPC;
+read-only SQL confirms zero QA407 collections remain. No grades/learning actions
+or Report were sent. The first script used Playwright uncheck(), whose synchronous
+state assertion conflicts with a deliberately rejected controlled checkbox;
+changed to click followed by explicit failure/checked assertions.
+
+Found and fixed a real non-ready-state defect: loadMemberships swallowed read
+failure, erased the last known membership and let an accepted write display Saved
+without confirmed refreshed membership. It now distinguishes loading/ready/failed,
+preserves the last successful result, keeps existing identity/generation guards,
+blocks editing while the result is unknown, and gives a localized read-only Retry.
+Failed reads are not empty collections. After an accepted mutation plus failed
+refresh, Saved is withheld; Retry reads membership without repeating the mutation.
+The picker shares its existing theme/error ink and keyboard scrolling region.
+Collection creation/removal remains in the existing list-service/RPC owner.
+
+Final live case mixed a real accepted removal with a controlled 503 membership
+read. It displayed the explicit read error and retained disabled checked state;
+Retry reconciled the actual unchecked server result with exactly one removal
+request. Reload confirmed persistence and cleanup returned HTTP204/zero leftovers.
+Proofs: /tmp/407qa/library-live-created-2026-10-01.png,
+/tmp/407qa/library-live-failed-remove-2026-10-01.png and
+/tmp/407qa/library-live-read-failure-2026-10-01.png. Request failure is simulated;
+creation, accepted membership writes/reads/reloads and cleanup use the local DB.
+
+Validation: 35 component/owner/catalog tests; three extended production word-panel
+browser cases at EN/NL/RU and 320/390/1024px verify failed membership read, no false
+empty state, disabled Create, read-only recovery, focus/Escape and unchanged
+underlying answer. Browser transport in this matrix is controlled, not live.
+Typecheck, targeted lint, style guard (1362 literals) and diff check pass. Draft
+unit test used an incorrect card test ID; corrected to the actual owner markup.
+Remaining: final approved Library action arrangement (current adapter still has
+inline Known/Learn and a separate Report footer), native zoom/focus, live gated
+sentence and final whole-product owner/rollout acceptance. Goal stays active.
