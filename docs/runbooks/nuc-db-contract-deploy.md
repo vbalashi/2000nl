@@ -264,7 +264,7 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 178 in order
+An enabled deployment must apply or verify migrations 123 through 194 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -557,3 +557,124 @@ before opening the site.
   default; mutations require their own owning issue.
 
 See `docs/runbooks/production-login.md` for the identity and cleanup contract.
+
+## Pgcrypto namespace compatibility (migration 179)
+
+The #407 fresh local Supabase acceptance found Library lookup failing at an
+unqualified `digest` call: pgcrypto lived in `extensions`, outside the legacy
+RPC's fixed search path. Plain-Postgres CI already exposed public digest
+adapters and therefore hid the mismatch. Migration 179 adds only missing
+immutable, schema-qualified text/bytea adapters; a public pgcrypto installation
+is unchanged. It preserves RPC bodies, permissions, cursor hashing and learning
+behavior. Postflight hashes a known value; retaining readiness uses a separate
+read-only chain. Contract 179 is appended with its exact checksum. This local
+preparation does not authorize production deployment.
+
+
+## Shared text preferences (migration 181)
+
+Migration 181 adds the fourth `extra` value to the existing phone and desktop reading-profile constraints without rewriting saved values or other account settings. Approved frontend presentation adapts the legacy IDs explicitly into the shared proportional card/interface scale. Forward and read-only postflight chains verify both bounded columns/constraints. This is not a scheduling or learning-state migration. The application contract remains opt-in for the approved presentation; migration compatibility alone does not imply full-screen rollout acceptance.
+
+## Library material search (migration 185)
+
+The service-only `lookup_platform_v2_library_entries` adapter resolves account
+material preferences before group selection and keyset pagination. It retains live
+ACLs, keeps personal dictionaries enabled, and binds the effective scope into cursor
+identity. Normal Platform lookup and exact training/full-word group reads retain
+their existing behavior. The first-party Library API must derive the passed user ID
+from authentication; never expose this RPC directly to browser roles. A changed
+material scope requires restarting search at its first page. Migration 185's
+postflight verifies helper/client grants, scope placement, identity projection and
+cursor binding. The local retaining apply uses the reviewed manifest; do not reset
+a populated database to install this additive boundary.
+
+## Library POS/article search (migration 186)
+
+`lookup_platform_v2_library_filtered_entries` adds a service-only first-party
+query boundary with canonical `parts` and optional `article` (`de`/`het`). It
+reuses account material selection and live ACLs from migration 185. POS/article
+predicates run in all indexed and personal fallback branches before headword vs
+inflection tier choice and group pagination. Article restrictions apply only to
+nouns; mixed POS selection keeps non-nouns. Both-article noun genders match either
+article, and unknown gender does not satisfy a specific article.
+
+A matching article still returns all its senses with unchanged presentation
+identity. Consumers must select a matching sense for the preview without deleting
+other senses from the full article. `page.totalGroups` counts matching whole
+articles before paging. Filter sets are bounded, canonicalized and included in
+cursor identity. The existing migration-185 RPC, external Platform lookup and
+exact-group reads are unchanged. The additive boundary does not write learner
+state, sessions or history. Install it with retaining apply and the checksummed
+manifest; do not recreate a populated database. The approved filter dialog/API
+adapter must explicitly opt into this new RPC before the behavior is visible.
+
+
+## Measured active card time (migration 187)
+
+Migration 187 adds independent private attention receipts and a coverage-start
+record, not a scheduler/review mutation. Authenticated RPCs derive the principal,
+verify owned latched entry/direction or exercise-target membership, bound duration
+and capture window, and serialize immutable measurement IDs. Exact retries do not
+add time; conflicts are rejected. Client/service roles have no direct table access.
+The read model splits recorded intervals at the learner-local 04:00 boundary and
+returns coverage metadata; empty joins explicitly filter missing receipt IDs.
+The checked-in manifest and forward/read-only probe chains include the exact
+migration checksum. Apply via retaining migration; no reset/import is required.
+Installing this boundary does not enable browser collection or accept the complete
+Statistics screen. Local preparation does not authorize production deployment.
+
+## Learner activity per study day (migration 188)
+
+Migration 188 adds one read-only authenticated RPC,
+`get_training_activity_days_v1(language, days)`, for Statistics activity,
+calendar and streaks. The principal comes from `auth.uid()`; days end at the
+server-derived current 04:00 study day (at most 366). New/review counts reuse the
+current study-day counter definitions across meaning, idiom and sentence history;
+measured time is delegated to the migration-187 reader. No table, grant or
+learner state changes. Apply via retaining migration with the checksummed
+manifest and forward/read-only probe chains; no reset/import is required.
+
+## Material review queue and coverage (migration 189)
+
+Migration 189 adds read-only authenticated
+`get_training_material_progress_v1(language)` for the Statistics material
+section: All enabled material, each readable enabled dictionary (personal
+dictionaries stay enabled) and each curated/own collection with entries in the
+language. Coverage counts distinct started meaning cards over readable, enabled
+entries; due counts scheduled directions as the current study-day counters do.
+Dictionary ACLs are evaluated live; no grants, tables or learner state change.
+Apply with the checksummed manifest via retaining migration.
+
+## Ordinary headword exclusions (migration 192)
+
+`perform_training_headword_exclusion_as_principal_v1` is a service-only mutation
+boundary for the first-party UI. The API derives the learner from authentication.
+An explicit headword target resolves durable Headword Group identity from an entry;
+all its meanings are unavailable in the two ordinary recall directions across
+saved setups and future launches. Audio modes, idioms and sentence exercises
+retain their existing independent pair exclusions. No Known or FSRS state is
+rewritten. Existing pair APIs and immutable receipts remain compatible.
+
+A Training request must consume its owned current session member atomically;
+Library requests carry neither a fabricated session nor a card direction. Undo
+requires the exact user's active mark. Event UUID/hash receipts make uncertain
+retries safe, including a delayed exclusion retry after Undo. The active-group
+partial index and shared headword lock cover planning, latched availability and
+review races; legacy review lock ordering also includes the headword lock.
+
+The manifest registers migration 192 and forward/read-only postflight checks.
+Use retaining local `apply`; do not reset a populated database. This registration
+does not authorize NUC/production rollout or flag enablement.
+
+## Directional Known (migration 193)
+
+New Known marks use the selected card direction. Existing ordinary paired marks
+retain server-owned `meaning` scope, immutable action receipts and paired Undo.
+Undo of a historical mark clears only its sibling with the same originating
+event; an independent directional mark is not cleared. Audio remains directional.
+The migration does not rewrite FSRS or action history, or enable rollout flags.
+Forward/read-only postflight verifies the default, trigger guard and table boundary.
+
+## Library browse and approved presentation release (migration 194)
+
+Migration 194 enables empty-query alphabetical browsing in the two private first-party Library lookup bases. Platform lookup query requirements and private function grants remain unchanged. Contract 194 includes the exact migration checksum and read-only probes for the indexed/personal browse paths, alphabetical ranking, and restricted execution. The release enables both independent presentation flags at build time through Docker arguments; the same flags are present in the runtime image. Rollback can select the previous image while the additive forward database contract remains compatible.

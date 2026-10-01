@@ -104,3 +104,17 @@ describe("Library Headword Group results", () => {
     });
   });
 });
+
+test("filtered result chooses the matching sense and preserves the complete article",()=>{
+ const article=group("mixed","dictionary","Dictionary",undefined,[sense("adjective","bn"),sense("noun","zn")]);
+ const results=buildLibraryHeadwordGroupResults([article],["noun"]);
+ expect(results[0]).toMatchObject({selectedEntryId:"noun",partOfSpeechLabels:["bn","zn"],meaningCount:2});
+ expect(results[0].group).toBe(article);expect(buildLibraryHeadwordGroupResults([article],[])).toEqual([]);
+});
+
+test("cross-reference-only articles remain visible and open their exact identity",()=>{
+ const article=group("pointer-group","dictionary","Dictionary",undefined,[]);
+ article.entryCount=1;article.entries=[{kind:"cross-reference",crossReferenceId:"pointer",meaningOrdinal:1,label:null,text:"ander woord",target:{query:"ander woord"},capabilities:[]}];
+ const result=buildLibraryHeadwordGroupResults([article],["pointer"])[0];
+ expect(result).toMatchObject({selectedEntryId:"pointer",meaningCount:0,referenceCount:1});expect(result.group).toBe(article);
+});

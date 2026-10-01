@@ -11,13 +11,16 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "audit:practice-styles": "node scripts/audit-practice-styles.mjs",
+    "check:practice-styles": "node scripts/audit-practice-styles.mjs --check",
     "test": "vitest run",
     "test:platform": "vitest run tests/api/platform*.test.ts",
     "test:watch": "vitest --watch",
     "eval:translation": "vite-node scripts/eval-translation-prompt.ts",
-    "test:e2e": "playwright test --grep-invert @pilot && APP_ROLLOUT_PROFILE=pilot playwright test --grep @pilot",
+    "test:e2e": "playwright test --grep-invert @pilot && APP_ROLLOUT_PROFILE=pilot playwright test --grep @pilot && APP_ROLLOUT_PROFILE=pilot NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1=true playwright test playwright/tests/word-details-presentation.spec.ts",
     "test:e2e:training-attribution": "APP_ROLLOUT_PROFILE=pilot playwright test playwright/tests/training-attribution.spec.ts",
-    "test-account": "node scripts/test-account.js"
+    "test-account": "node scripts/test-account.js",
+    "dev:builder-prototype": "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=prototype-placeholder next dev --hostname 0.0.0.0 --port 3100"
   },
   "dependencies": {
     "@google-cloud/text-to-speech": "^6.4.0",
@@ -32,6 +35,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.41.0",
+    "@radix-ui/themes": "3.1.6",
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.5.9",

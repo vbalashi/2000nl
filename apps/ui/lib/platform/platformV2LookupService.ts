@@ -1,3 +1,5 @@
+import { LIBRARY_RPC_GROUP_LIMIT } from "./libraryPagination";
+import { libraryEntryMatchesFilters, type LibrarySearchScope } from "./librarySearchScope";
 import type {
   CardTypeId,
   DictionaryLookupResult,
@@ -71,7 +73,13 @@ type RpcResult = {
 export async function performPlatformV2Lookup(
   context: PlatformV2LookupContext,
   request: PlatformLookupV2Request,
+  libraryScope?: LibrarySearchScope,
 ): Promise<PlatformV2LookupOperationResult> {
+  if (libraryScope && (
+    context.kind !== "authenticated" ||
+    context.auth.principal.authKind !== "first_party" ||
+    request.entryId || request.intent !== "dictionary-lookup"
+  )) return { payload: { error: "library_query_required" }, status: 403 };
   const timings: Array<{ name: string; durationMs: number }> = [];
   const serverTiming = () =>
     timings
@@ -83,26 +91,30 @@ export async function performPlatformV2Lookup(
   const query = request.query?.trim() ?? "";
   const intent = validIntent(request.intent);
 
-  if (!request.entryId && !query) {
+  if (!request.entryId && !query && !libraryScope) {
     return { payload: { error: "missing_query" }, status: 400 };
   }
   if (!request.cardTypeId.trim()) {
     return { payload: { error: "missing_card_type_id" }, status: 400 };
   }
+  const queryRpc = libraryScope?.filters
+    ? "lookup_platform_v2_library_filtered_entries"
+    : libraryScope ? "lookup_platform_v2_library_entries" : "lookup_platform_v2_entries";
   const lookupResolution = request.entryId
     ? await resolveExactReadableGroup(context, request, timings)
       : {
         ok: true as const,
         query,
         result: await measure<RpcResult>(timings, "lookup.db", async () =>
-          await context.service.supabase.rpc("lookup_platform_v2_entries", {
+          await context.service.supabase.rpc(queryRpc, {
             p_user_id:
               context.kind === "authenticated" ? context.auth.user.id : null,
-            p_catalog: context.kind === "catalog",
+            ...(libraryScope ? {p_dictionary_ids:libraryScope.dictionaryIds} : {p_catalog:context.kind === "catalog"}),
+            ...(libraryScope?.filters ? { p_filters: libraryScope.filters } : {}),
             p_query: query,
             p_language_code: request.contentLanguageCode ?? null,
             p_cursor: request.cursor ?? null,
-            p_group_limit: LOOKUP_GROUP_PAGE_SIZE,
+            p_group_limit: libraryScope ? LIBRARY_RPC_GROUP_LIMIT : LOOKUP_GROUP_PAGE_SIZE,
             p_group_entry_bound: LOOKUP_GROUP_ENTRY_SAFETY_BOUND,
           }),
         ),
@@ -132,9 +144,9 @@ export async function performPlatformV2Lookup(
       serverTiming: serverTiming(),
     };
   }
-  if (lookupPayload.error === "invalid_cursor") {
+  if (["invalid_cursor", "invalid_library_filters", "invalid_dictionary_scope"].includes(String(lookupPayload.error))) {
     return {
-      payload: { error: "invalid_cursor" },
+      payload: { error: lookupPayload.error },
       status: 400,
       serverTiming: serverTiming(),
     };
@@ -162,6 +174,15 @@ export async function performPlatformV2Lookup(
   }
   const entries = lookupEntries(lookupResult.data);
   const page = lookupPage(lookupPayload);
+  const rawPage = asRecord(lookupPayload.page);
+  if (libraryScope?.filters && (!Number.isSafeInteger(rawPage.totalGroups) || Number(rawPage.totalGroups) < 0))
+    return { payload: { error: "library_search_contract_invalid" }, status: 409 };
+  const librarySearch = libraryScope?.filters ? {
+    totalGroups: Number(rawPage.totalGroups),
+    matchingEntryIds: entries.filter(entry => libraryEntryMatchesFilters(
+      entry.part_of_speech, entry.gender, libraryScope.filters!,
+    )).map(entry => entry.id),
+  } : undefined;
 
   const responseRequest: PlatformLookupV2Response["request"] = {
     contentLanguageCode: request.contentLanguageCode ?? null,
@@ -172,12 +193,10 @@ export async function performPlatformV2Lookup(
   };
   if (entries.length === 0) {
     return {
-      payload: projectPlatformLookupV2({
-        query: responseQuery,
-        request: responseRequest,
-        entries: [],
-        page,
-      }),
+      payload: {
+        ...projectPlatformLookupV2({ query: responseQuery, request: responseRequest, entries: [], page }),
+        ...(librarySearch ? { librarySearch } : {}),
+      },
       status: 200,
       serverTiming: serverTiming(),
     };
@@ -234,6 +253,29 @@ export async function performPlatformV2Lookup(
           ),
         )
       : Promise.resolve<RpcResult>({ data: [], error: null });
+  // Cross-reference targets depend only on the looked-up entries.
+  const crossReferencePromise = measure(
+    timings,
+    "lookup.cross-references",
+    () =>
+      resolvePlatformV2CrossReferenceTargets(context.service, {
+        sources: entries.flatMap((entry) => {
+          const query = platformV2CrossReferenceQuery(entry);
+          return query && entry.dictionary_id
+            ? [{
+                sourceEntryId: entry.id,
+                sourceDictionaryId: entry.dictionary_id,
+                query,
+              }]
+            : [];
+        }),
+        userId:
+          context.kind === "authenticated" ? context.auth.user.id : null,
+        catalog: context.kind === "catalog",
+        contentLanguageCode: request.contentLanguageCode ?? null,
+      }),
+  );
+  crossReferencePromise.catch(() => undefined);
   const [identityResult, stateResult, eagerTranslationResult] = await Promise.all([
     identityPromise,
     statePromise,
@@ -309,27 +351,7 @@ export async function performPlatformV2Lookup(
       serverTiming: serverTiming(),
     };
   }
-  const crossReferenceTargets = await measure(
-    timings,
-    "lookup.cross-references",
-    () =>
-      resolvePlatformV2CrossReferenceTargets(context.service, {
-        sources: entries.flatMap((entry) => {
-          const query = platformV2CrossReferenceQuery(entry);
-          return query && entry.dictionary_id
-            ? [{
-                sourceEntryId: entry.id,
-                sourceDictionaryId: entry.dictionary_id,
-                query,
-              }]
-            : [];
-        }),
-        userId:
-          context.kind === "authenticated" ? context.auth.user.id : null,
-        catalog: context.kind === "catalog",
-        contentLanguageCode: request.contentLanguageCode ?? null,
-      }),
-  );
+  const crossReferenceTargets = await crossReferencePromise;
 
   try {
     const projectionEntries = await measure(
@@ -457,12 +479,10 @@ export async function performPlatformV2Lookup(
     );
 
     return {
-      payload: projectPlatformLookupV2({
-        query: responseQuery,
-        request: responseRequest,
-        entries: projectionEntries,
-        page,
-      }),
+      payload: {
+        ...projectPlatformLookupV2({ query: responseQuery, request: responseRequest, entries: projectionEntries, page }),
+        ...(librarySearch ? { librarySearch } : {}),
+      },
       status: 200,
       serverTiming: serverTiming(),
     };

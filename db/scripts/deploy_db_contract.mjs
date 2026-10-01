@@ -132,6 +132,17 @@ async function readManifest(repoRoot, manifestPath) {
       `DB rollout cannot be enabled before migration ${manifest.rollout.requiredMigrationId}`,
     );
   }
+  if (manifest.readOnlyPostflightProbe) {
+    const probe = manifest.readOnlyPostflightProbe;
+    if (!/^db\/deploy-contract\/[a-z0-9-]+\.sql$/.test(probe.file ?? "")) {
+      throw new Error("Invalid read-only postflight probe path");
+    }
+    const source = await readFile(insideRepo(repoRoot, probe.file));
+    if (!sha256Pattern.test(probe.sha256 ?? "") ||
+        createHash("sha256").update(source).digest("hex") !== probe.sha256) {
+      throw new Error("Read-only postflight probe checksum mismatch");
+    }
+  }
   return manifest;
 }
 
@@ -178,15 +189,8 @@ async function inlinePsqlIncludes(repoRoot, source, stack = []) {
     let included = await readFile(absolutePath, "utf8");
     included = await inlinePsqlIncludes(repoRoot, included, [...stack, absolutePath]);
 
-    // Chained postflight files historically carry their own transaction wrappers.
-    // The current postflight must remain one transaction when sent via stdin or a
-    // container client, so inline only the body of those established wrappers.
-    if (/^postflight-\d+\.sql$/i.test(path.basename(absolutePath))) {
-      included = included
-        .split("\n")
-        .filter((includedLine) => !["BEGIN;", "COMMIT;"].includes(includedLine.trim()))
-        .join("\n");
-    }
+    // Preserve transaction boundaries, especially behavioral probes ending in
+    // ROLLBACK. Removing BEGIN makes their test writes commit independently.
     output.push(`-- inlined ${relativePath}\n${included.trimEnd()}`);
   }
   return output.join("\n");

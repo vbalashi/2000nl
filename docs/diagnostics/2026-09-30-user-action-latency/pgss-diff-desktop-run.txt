@@ -1,0 +1,31 @@
+fn [role] | calls | mean_ms | total_ms | tmp_blk
+get_detailed_training_stats [authenticated] | 58 | 1310.1 | 75987 | 0
+perform_platform_v2_card_action_as_principal [service_role] | 58 | 301.1 | 17464 | 0
+read_platform_v2_training_group [service_role] | 124 | 124.6 | 15453 | 0
+start_training_session [authenticated] | 5 | 2158.1 | 10790 | 1580
+get_next_training_session_card [authenticated] | 63 | 100.9 | 6354 | 0
+get_training_session_plan [authenticated] | 5 | 1267.0 | 6335 | 1580
+get_platform_v2_card_states_for_entries [authenticated] | 124 | 39.0 | 4833 | 0
+select json_agg(json_build_object($1, queryid::text, $2, userid::regro [postgres] | 1 | 1059.5 | 1060 | 773
+get_training_session_snapshot [authenticated] | 27 | 29.6 | 799 | 0
+update_active_training_scope [authenticated] | 5 | 107.5 | 537 | 0
+fetch_dictionary_entry_by_id_gated [authenticated] | 29 | 18.3 | 531 | 0
+word_entry_translations [service_role] | 29 | 16.4 | 476 | 0
+select set_config('search_path', $1, true), set_config($2, $3, true),  [authenticated] | 316 | 1.5 | 475 | 0
+select set_config('search_path', $1, true), set_config('role', $2, tru [service_role] | 475 | 0.6 | 306 | 0
+WITH pgrst_source AS ( SELECT "public"."word_entry_translations"."id", [service_role] | 124 | 2.1 | 259 | 0
+WITH pgrst_source AS (UPDATE "public"."word_entry_translations" SET "e [service_role] | 29 | 5.9 | 172 | 0
+SELECT * FROM pgbouncer.get_auth($1) [pgbouncer] | 9 | 15.3 | 137 | 0
+SELECT users.aud, users.banned_until, users.confirmation_sent_at, user [supabase_auth_admin] | 84 | 1.5 | 124 | 0
+SELECT t.oid, t.typname, t.typsend, t.typreceive, t.typoutput, t.typin [pgbouncer] | 1 | 101.7 | 102 | 0
+DELETE FROM sessions WHERE user_id = $1 [supabase_auth_admin] | 1 | 90.1 | 90 | 0
+WITH pgrst_source AS ( SELECT "public"."connected_client_sessions"."id [service_role] | 83 | 1.0 | 80 | 0
+SELECT sessions.aal, sessions.created_at, sessions.factor_id, sessions [supabase_auth_admin] | 84 | 0.5 | 44 | 0
+SELECT mfa_factors.created_at, mfa_factors.factor_type, mfa_factors.fr [supabase_auth_admin] | 84 | 0.3 | 25 | 0
+SELECT mfa_amr_claims.authentication_method, mfa_amr_claims.created_at [supabase_auth_admin] | 84 | 0.3 | 24 | 0
+WITH pgrst_source AS ( SELECT "public"."word_entry_translations"."word [service_role] | 29 | 0.6 | 17 | 0
+SELECT identities.created_at, identities.email, identities.id, identit [supabase_auth_admin] | 84 | 0.2 | 13 | 0
+BEGIN ISOLATION LEVEL READ COMMITTED READ WRITE [authenticator] | 3 | 0.7 | 2 | 0
+SHOW transaction_read_only [supabase_admin] | 2 | 0.0 | 0 | 0
+commit [supabase_auth_admin] | 1 | 0.0 | 0 | 0
+begin [supabase_auth_admin] | 1 | 0.0 | 0 | 0

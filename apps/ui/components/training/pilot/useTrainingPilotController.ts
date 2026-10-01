@@ -44,6 +44,7 @@ type TrainingScope = {
 };
 
 export type TrainingSessionStartContext = {
+  sessionName?: string;
   languageCode: string;
   scope: TrainingScope;
   draft: TrainingSetupDraft;
@@ -96,7 +97,7 @@ type PilotControllerParams = {
   listOptions: TrainingSetupOption[];
   dictionaryOptions: TrainingSetupOption[];
   sourceOptions: TrainingSetupOption[];
-  onCommitDraft: (draft: TrainingSetupDraft) => Promise<boolean>;
+  onCommitDraft: (draft: TrainingSetupDraft, sessionName?: string) => Promise<boolean>;
   onRetry: () => Promise<unknown> | void;
   initialTransitionId?: string;
   loadTrainingScenarios?: () => Promise<TrainingScenario[]>;
@@ -127,7 +128,7 @@ export function useCommitTrainingPilotDraft({
     null,
   );
   return useCallback(
-    async (draft: TrainingSetupDraft) => {
+    async (draft: TrainingSetupDraft, sessionName?: string) => {
       if (!userId) return false;
       const collectionMode = !draft.materialMode || draft.materialMode === "collection";
       const selectedList = collectionMode ? resolveList(draft.listValue) : null;
@@ -227,6 +228,7 @@ export function useCommitTrainingPilotDraft({
         }
         startRequestRef.current = null;
         onSessionReady?.(idiomSession, {
+          sessionName,
           languageCode,
           scope,
           draft,
@@ -270,7 +272,7 @@ export function useCommitTrainingPilotDraft({
           return false;
         }
         startRequestRef.current = null;
-        onSessionReady?.(translationSession, { languageCode, scope, draft, focusFilter });
+        onSessionReady?.(translationSession, { sessionName, languageCode, scope, draft, focusFilter });
         onPlanReady?.({ requestedTotal: translationSession.requestedTotal, plannedNew: translationSession.plannedNew, plannedReview: translationSession.plannedReview, plannedPractice: 0, plannedTotal: translationSession.plannedTotal, plannedAt: translationSession.plannedAt });
         reportError(null);
         if (selectedList) applyListLocally(selectedList);
@@ -310,6 +312,7 @@ export function useCommitTrainingPilotDraft({
       }
       startRequestRef.current = null;
       onSessionReady?.(session, {
+        sessionName,
         languageCode,
         scope,
         draft,
@@ -474,7 +477,7 @@ export function useTrainingPilotController({
   }, [interfaceLanguage, scenarios, scenariosResolved, translationTargetLanguageCode]);
 
   const startSession = useCallback(
-    async (draft: TrainingSetupDraft) => {
+    async (draft: TrainingSetupDraft, sessionName?: string) => {
       const scenarioSupported = isTrainingSetupDraftSupported(
         draft,
         scenarioOptions,
@@ -485,7 +488,7 @@ export function useTrainingPilotController({
       startPendingRef.current = true;
       setStartPending(true);
       try {
-        const committed = await onCommitDraft(draft);
+        const committed = await onCommitDraft(draft, sessionName);
         if (committed) {
           setExerciseFamily(draft.family ?? "meaning");
           setSessionGeneration((generation) => generation + 1);

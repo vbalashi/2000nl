@@ -1,0 +1,113 @@
+.section {
+  padding: 20px;
+  background: var(--practice-surface);
+  border: 1px solid var(--practice-border);
+  border-radius: var(--practice-radius-panel);
+  grid-column: 1 / -1;
+}
+.section > h2, .section .header h2 {
+  font-size: var(--practice-text-title-sm);
+  font-weight: 600;
+}
+.section > p,
+.embedded > p {
+  margin-top: 8px;
+  font-size: var(--practice-text-body);
+  line-height: 1.5;
+}
+.profile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+  font-size: var(--practice-text-body);
+}
+.profile select {
+  border: 1px solid var(--practice-control-border);
+  background: var(--practice-surface);
+  border-radius: var(--practice-radius-control);
+  padding: 6px 10px;
+  font: inherit;
+  max-width: 100%;
+}
+.sizes {
+  display: flex;
+  margin-top: 16px;
+  border: 1px solid var(--practice-control-border);
+  border-radius: var(--practice-radius-control);
+  overflow: hidden;
+}
+.sizes button {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  min-height: 36px;
+  padding: 6px 2px;
+  font-size: var(--practice-text-body);
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+}
+.sizes button[aria-pressed="true"] {
+  background: var(--practice-selected);
+  color: var(--practice-selected-text);
+}
+.sizes button:disabled {
+  opacity: 0.5;
+}
+.section .hint,
+.embedded .hint {
+  font-size: var(--practice-text-small);
+  color: var(--practice-text-muted);
+}
+.preview {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--practice-canvas);
+  border-radius: var(--practice-radius-panel);
+}
+.headword {
+  font-family: var(--practice-font-reading);
+  font-size: var(--practice-text-headword);
+  line-height: 1.2;
+}
+.headword small {
+  font-size: 0.65em;
+  color: var(--practice-text-muted);
+}
+.section .definition,
+.embedded .definition {
+  font-family: var(--practice-font-reading);
+  font-size: var(--practice-reading-definition);
+  line-height: var(--practice-definition-leading);
+}
+.section .example,
+.embedded .example {
+  font-family: var(--practice-font-reading);
+  font-size: var(--practice-reading-literary);
+  font-style: italic;
+}
+.section .translation,
+.embedded .translation {
+  font-size: var(--practice-reading-small);
+  color: var(--practice-text-secondary);
+  margin-top: var(--practice-space-pair);
+}
+
+/* Settings embeds the same controls without adding another framed panel. */
+.embedded .header h2{font-size:var(--practice-text-body-lg);font-weight:500;color:var(--practice-text-secondary);margin-bottom:20px}
+
+.header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.header h2{margin:0}
+.sizes{width:fit-content;max-width:100%;margin:0 0 0 auto;flex-shrink:0;padding:3px;gap:3px;border:0;border-radius:10px;background:var(--practice-surface-subtle)}
+.sizes button{flex:0 0 auto;min-width:36px;min-height:28px;padding:6px 10px;border:0;border-radius:7px;font-size:var(--practice-text-label);background:transparent}
+.sizes button[aria-pressed="true"]{background:var(--practice-surface);color:var(--practice-text-secondary);box-shadow:0 1px 3px var(--practice-shadow)}
+.sizes button:focus-visible{outline:2px solid var(--practice-focus);outline-offset:-2px}
+
+.preview{border:1px solid var(--practice-border)}
+
+.preferenceRow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:18px 0;border:0}.preferenceRow h2,.preferenceRow h3{margin:0;font-size:var(--practice-text-body);font-weight:500;color:var(--practice-text-secondary)}.preferenceRow>:last-child{margin-left:auto}.paletteRow{align-items:flex-start}.paletteRow>:last-child{flex:0 1 390px;max-width:100%;margin-top:0}.embedded .preferenceRow h2{margin:0;font-size:var(--practice-text-body)}
+
+.embedded .preferenceRow,.section .preferenceRow{flex-direction:row;align-items:center;justify-content:space-between}.embedded .paletteRow,.section .paletteRow{align-items:flex-start}.preferenceRow>div:first-child{margin-left:0}.preferenceRow>div:last-child{margin-left:auto}
+
+.embedded .preferenceRow h3,.section .preferenceRow h3{font-size:var(--practice-text-body);font-weight:500;margin:0}

@@ -1,6 +1,9 @@
 "use client";
 
 import React from "react";
+import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import { getUiMessages } from "@/lib/uiMessages";
+import { TrainingSessionState } from "./TrainingSessionState";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 
@@ -13,6 +16,12 @@ export function TrainingUsableCandidatesExhausted({
   interfaceLanguage,
   onExit,
 }: Props) {
+  if (trainingPresentationV1Enabled()) return (
+    <div className="h-full min-h-0" data-testid="training-usable-candidates-exhausted" data-training-renderer="v2" data-training-v2-state="exhausted">
+      <TrainingSessionState title={platformV2Message(interfaceLanguage, "senseCard.training.exhausted")}
+        announcement="status" action={{label: getUiMessages(interfaceLanguage).trainingSession.back, onClick: onExit}} />
+    </div>
+  );
   return (
     <div
       data-testid="training-usable-candidates-exhausted"

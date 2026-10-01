@@ -54,6 +54,14 @@ const rolloutEnv = Object.fromEntries(
 // baseline pilot profile used for ordinary Training and idioms.
 rolloutEnv.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED =
   envNonEmpty(process.env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED) ?? "false";
+// The approved session presentation is an independent, reversible rollout.
+rolloutEnv.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 =
+  envNonEmpty(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1) ??
+  rolloutEnv.NEXT_PUBLIC_TRAINING_PRESENTATION_V1;
+
+// Shared article reading can be reviewed independently of session chrome.
+rolloutEnv.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1 =
+  envNonEmpty(process.env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1) ?? "false";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

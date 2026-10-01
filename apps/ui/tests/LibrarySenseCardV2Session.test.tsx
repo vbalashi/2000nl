@@ -29,7 +29,9 @@ const fetchCrossReferenceTarget = vi.fn();
 const requestTranslation = vi.fn();
 const performAction = vi.fn();
 const queueDiagnosticReport = vi.fn();
+const freezeSnapshot = vi.fn((input: unknown) => input);
 const fetchMemberships = vi.fn();
+const removeFromList = vi.fn();
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -139,7 +141,7 @@ vi.mock("@/lib/platform/platformV2TrainingActionClient", () => ({
 }));
 
 vi.mock("@/lib/feedback/diagnosticReportClient", () => ({
-  freezeSenseCardDiagnosticSnapshot: (input: unknown) => input,
+  freezeSenseCardDiagnosticSnapshot: (input: unknown) => freezeSnapshot(input),
   buildSenseCardDiagnosticReport: (input: unknown) => Promise.resolve(input),
   queuePreparedSenseCardDiagnosticReport: (...args: unknown[]) =>
     queueDiagnosticReport(...args),
@@ -149,7 +151,7 @@ vi.mock("@/lib/trainingService", () => ({
   addWordsToUserList: vi.fn(),
   createUserList: vi.fn(),
   fetchEntryListMemberships: (...args: unknown[]) => fetchMemberships(...args),
-  removeWordsFromUserList: vi.fn(),
+  removeWordsFromUserList: (...args: unknown[]) => removeFromList(...args),
 }));
 
 describe("LibrarySenseCardV2Session", () => {
@@ -168,7 +170,10 @@ describe("LibrarySenseCardV2Session", () => {
     performAction.mockReset();
     requestTranslation.mockReset();
     queueDiagnosticReport.mockReset();
+    freezeSnapshot.mockClear();
     fetchMemberships.mockReset();
+    removeFromList.mockReset();
+    removeFromList.mockResolvedValue({error:null});
     fetchGroup.mockResolvedValue(multiSenseBankGroup);
     performAction.mockResolvedValue({
       contractVersion: "platform-action-v2",
@@ -179,6 +184,64 @@ describe("LibrarySenseCardV2Session", () => {
     });
     queueDiagnosticReport.mockResolvedValue({ state: "sent" });
     fetchMemberships.mockResolvedValue(new Map());
+  });
+
+  test("an accepted collection removal followed by failed read is not reported as saved; retry only reads", async () => {
+    const listId = "qa-list";
+    fetchMemberships.mockResolvedValueOnce(new Map([[financeEntry.entryId,[membership(listId)]]]))
+      .mockRejectedValueOnce(new Error("membership_offline"))
+      .mockResolvedValue(new Map([[financeEntry.entryId,[]]]));
+    render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} headword="bank"
+      contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"
+      userId="qa-user" userLists={[{id:listId,name:listId,type:"user",item_count:1}]} />);
+    await screen.findByTestId("library-sense-card-group");
+    await waitFor(()=>expect(fetchMemberships).toHaveBeenCalledOnce());
+    const card=screen.getByTestId(`library-sense-card-${financeEntry.entryId}`);
+    fireEvent.click(within(card).getByRole("button",{name:/^Collections/}));
+    const checkbox=screen.getByRole("checkbox",{name:new RegExp(listId)});
+    await waitFor(()=>expect(checkbox).toBeChecked());
+    fireEvent.click(checkbox);
+    await screen.findByRole("alert");
+    expect(screen.getByRole("alert")).toHaveTextContent("Collection membership could not be loaded");
+    expect(checkbox).toBeChecked(); expect(checkbox).toBeDisabled();
+    expect(screen.queryByText("Collection membership updated")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button",{name:"Reload membership"}));
+    await waitFor(()=>expect(checkbox).not.toBeChecked());
+    expect(checkbox).toBeEnabled(); expect(removeFromList).toHaveBeenCalledOnce();
+    expect(performAction).not.toHaveBeenCalled();
+  });
+
+  test("approved Report is selected in the meaning menu and restores that menu opener", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+    const originalShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype,"showModal");
+    const originalClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype,"close");
+    Object.defineProperty(HTMLDialogElement.prototype,"showModal",{configurable:true,value:function(){this.setAttribute("open","");}});
+    Object.defineProperty(HTMLDialogElement.prototype,"close",{configurable:true,value:function(){this.removeAttribute("open");}});
+    let view: ReturnType<typeof render> | undefined;
+    try {
+      fetchGroup.mockResolvedValue(groupWithFinanceReportRevision());
+      view = render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} headword="bank"
+        contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" />);
+      await screen.findByTestId("library-sense-card-group");
+      expect(screen.queryByRole("button",{name:"Report"})).toBeNull();
+      const card=screen.getByTestId(`library-sense-card-${financeEntry.entryId}`);
+      const more=within(card).getByRole("button",{name:"More card actions"});fireEvent.click(more);
+      fireEvent.click(screen.getByRole("menuitem",{name:"Report"}));
+      const dialog=await screen.findByRole("dialog",{name:"What is wrong?"});
+      expect(freezeSnapshot).toHaveBeenLastCalledWith(expect.objectContaining({
+        route: "library", entry: expect.objectContaining({entryId: financeEntry.entryId}),
+      }));
+      fireEvent.click(within(dialog).getByRole("button",{name:"Back"}));
+      await waitFor(()=>expect(more).toHaveFocus());
+      expect(performAction).not.toHaveBeenCalled();expect(queueDiagnosticReport).not.toHaveBeenCalled();
+    } finally {
+      view?.unmount();
+      for(const [key,descriptor] of [["showModal",originalShow],["close",originalClose]] as const) {
+        if(descriptor) Object.defineProperty(HTMLDialogElement.prototype,key,descriptor);
+        else Reflect.deleteProperty(HTMLDialogElement.prototype,key);
+      }
+      vi.unstubAllEnvs();
+    }
   });
 
   test("uses one global report action and no per-node flags", async () => {
@@ -246,6 +309,37 @@ describe("LibrarySenseCardV2Session", () => {
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     fireEvent.click(screen.getByRole("button", { name: "Train next" }));
     expect(trainNext).toHaveBeenCalledWith(financeEntry.entryId);
+  });
+
+  test("releases a collection toggle once the membership is saved, without waiting for list reloads", async () => {
+    const { addWordsToUserList } = await import("@/lib/trainingService");
+    vi.mocked(addWordsToUserList).mockResolvedValue({ error: null });
+    const onListsUpdated = vi.fn(() => new Promise<void>(() => undefined));
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId={financeEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        userId="user-1"
+        userLists={[
+          { id: "list-a", name: "Mijn lijst", type: "user", language_code: "nl" },
+        ]}
+        onListsUpdated={onListsUpdated}
+      />,
+    );
+
+    await screen.findByTestId("library-sense-card-group");
+    fireEvent.click(screen.getAllByRole("button", { name: /^Collections/ })[0]);
+    fireEvent.click(await screen.findByLabelText(/Mijn lijst/));
+
+    await waitFor(() => expect(onListsUpdated).toHaveBeenCalledOnce());
+    await waitFor(() =>
+      expect(screen.getByLabelText(/Mijn lijst/)).not.toBeDisabled(),
+    );
+    expect(addWordsToUserList).toHaveBeenCalledWith("list-a", [expect.any(String)]);
   });
 
   test("keeps idiom reporting on the sole global Library action", async () => {

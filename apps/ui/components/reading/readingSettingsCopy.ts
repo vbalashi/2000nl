@@ -3,7 +3,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 export const readingSettingsCopy = {
   en: {
     title: "Reading text", description: "Separate sizes for phone and computer. Buttons and navigation stay the same size.",
-    phone: "Phone text size", desktop: "Computer / tablet text size", normal: "Normal", large: "Large", largest: "Largest",
+    phone: "Phone text size", desktop: "Computer / tablet text size", normal: "Normal", large: "Large", largest: "Largest", extra: "Extra large",
     device: "Profile for this browser", phoneDevice: "Phone", desktopDevice: "Computer / tablet",
     deviceHint: "Resizing the window does not switch profiles. This choice stays in this browser; the two text sizes are saved to your account.",
     temporary: "This browser cannot store the device choice. It applies until you leave this page.",
@@ -12,7 +12,7 @@ export const readingSettingsCopy = {
   },
   nl: {
     title: "Leestekst", description: "Aparte groottes voor telefoon en computer. Knoppen en navigatie blijven even groot.",
-    phone: "Tekstgrootte op telefoon", desktop: "Tekstgrootte op computer / tablet", normal: "Normaal", large: "Groot", largest: "Extra groot",
+    phone: "Tekstgrootte op telefoon", desktop: "Tekstgrootte op computer / tablet", normal: "Normaal", large: "Groot", largest: "Extra groot", extra: "Zeer groot",
     device: "Profiel voor deze browser", phoneDevice: "Telefoon", desktopDevice: "Computer / tablet",
     deviceHint: "Een smaller venster verandert het profiel niet. Deze keuze blijft in deze browser; beide tekstgroottes worden in je account opgeslagen.",
     temporary: "Deze browser kan de apparaatkeuze niet bewaren. De keuze geldt totdat je deze pagina verlaat.",
@@ -21,7 +21,7 @@ export const readingSettingsCopy = {
   },
   ru: {
     title: "Размер текста для чтения", description: "Отдельные размеры для телефона и компьютера. Кнопки и навигация не увеличиваются.",
-    phone: "Размер текста на телефоне", desktop: "Размер текста на компьютере / планшете", normal: "Обычный", large: "Крупный", largest: "Очень крупный",
+    phone: "Размер текста на телефоне", desktop: "Размер текста на компьютере / планшете", normal: "Обычный", large: "Крупный", largest: "Очень крупный", extra: "Максимальный",
     device: "Профиль для этого браузера", phoneDevice: "Телефон", desktopDevice: "Компьютер / планшет",
     deviceHint: "Сужение окна не переключает профиль. Этот выбор хранится в браузере, а оба размера текста — в аккаунте.",
     temporary: "Браузер не может сохранить выбор устройства. Он действует до ухода с этой страницы.",

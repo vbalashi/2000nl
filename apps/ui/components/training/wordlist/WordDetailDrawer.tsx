@@ -5,7 +5,11 @@ import type {
 } from "@/lib/types";
 import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { WordDetailsHeader } from "../WordDetailsHeader";
+import { WordDetailsHeader, WordDetailsCloseProvider } from "../WordDetailsHeader";
+import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import sheet from "@/components/practice/article/wordDetailsSheet.module.css";
+import { getUiMessages } from "@/lib/uiMessages";
+import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 
 type Props = {
@@ -43,8 +47,13 @@ export function WordDetailDrawer({
   onCopyToUserDictionary,
   onOpenListMembership,
 }: Props) {
+  const approved = sharedArticlePresentationV1Enabled();
+  const [entered, setEntered] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(false);
+  React.useEffect(() => { setExpanded(false); setEntered(open); }, [open, selection?.entryId]);
+  React.useEffect(() => { if (!open) setEntered(false); }, [open]);
   React.useEffect(() => {
-    if (!open) return;
+    if (!open || approved) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onClose();
@@ -52,36 +61,49 @@ export function WordDetailDrawer({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, approved]);
 
   if (!open || !selection) return null;
+
+  const detail = (revealActiveMeaning: boolean) => <LibraryWordDetail
+    revealActiveMeaning={revealActiveMeaning}
+    entryId={selection.entryId}
+    initialGroup={initialGroup}
+    headword={selection.headword}
+    contentLanguageCode={selection.contentLanguageCode ?? contentLanguageCode}
+    translationTargetLanguageCode={translationLang}
+    interfaceLanguage={interfaceLanguage}
+    userId={userId}
+    userLists={userLists}
+    onListsUpdated={onListsUpdated}
+    onTrainWord={onTrainWord}
+    onCopyToUserDictionary={onCopyToUserDictionary}
+    onOpenListMembership={onOpenListMembership}
+    viewport="mobile"
+  />;
+
+  if (approved) return <section className={sheet.librarySheet} data-expanded={expanded}
+    aria-label={platformV2Message(interfaceLanguage,"senseCard.wordDetails.open")}>
+    <button type="button" className={sheet.handle} aria-expanded={expanded}
+      aria-label={getUiMessages(interfaceLanguage).library[expanded ? "collapseCard" : "expandCard"]}
+      onClick={() => setExpanded(value => !value)}><span aria-hidden="true"/></button>
+    <WordDetailsCloseProvider onClose={onClose} interfaceLanguage={interfaceLanguage}>
+      <div className="min-h-0 flex-1">{detail(entered)}</div>
+    </WordDetailsCloseProvider>
+  </section>;
 
   return (
     <div className="absolute inset-0 z-30">
       <div
-        className="absolute inset-0 bg-black/20"
+        className={`absolute inset-0 ${sharedArticlePresentationV1Enabled() ? sheet.backdrop : "bg-black/20"}`}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      <div className="absolute inset-y-0 right-0 flex w-full max-w-full flex-col overflow-hidden bg-white shadow-2xl dark:bg-slate-900 sm:w-[460px]">
+      <div className={`absolute inset-y-0 right-0 flex w-full max-w-full flex-col overflow-hidden sm:w-[460px] ${sharedArticlePresentationV1Enabled() ? sheet.panel : "bg-white shadow-2xl dark:bg-slate-900"}`}>
         <WordDetailsHeader onClose={onClose} interfaceLanguage={interfaceLanguage} />
         <div className="min-h-0 flex-1">
-          <LibraryWordDetail
-            entryId={selection.entryId}
-            initialGroup={initialGroup}
-            headword={selection.headword}
-            contentLanguageCode={selection.contentLanguageCode ?? contentLanguageCode}
-            translationTargetLanguageCode={translationLang}
-            interfaceLanguage={interfaceLanguage}
-            userId={userId}
-            userLists={userLists}
-            onListsUpdated={onListsUpdated}
-            onTrainWord={onTrainWord}
-            onCopyToUserDictionary={onCopyToUserDictionary}
-            onOpenListMembership={onOpenListMembership}
-            viewport="mobile"
-          />
+          {detail(true)}
         </div>
       </div>
     </div>

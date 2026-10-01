@@ -8,14 +8,24 @@ export type TrainingHistoryReviewResult =
   | "review_success"
   | "review_easy";
 
-export type RecentTrainingHistoryItem = {
+type HistoryIdentity = {
+  activityId: string;
   entryId: string;
   headword: string;
   partOfSpeech: string | null;
   reviewResult: TrainingHistoryReviewResult;
-  cardTypeId: TrainingMode;
   reviewedAt: string;
 };
+
+export type RecentTrainingHistoryItem = HistoryIdentity & (
+  | { cardTypeId: TrainingMode; exercise?: never }
+  | { cardTypeId: null; exercise: {
+      family: "idiom" | "translation";
+      direction: "direct" | "reverse" | "recall";
+      targetId: string;
+      text: string | null;
+    } }
+);
 
 export type RecentTrainingHistoryPage = {
   items: RecentTrainingHistoryItem[];
@@ -23,6 +33,11 @@ export type RecentTrainingHistoryPage = {
 };
 
 type RecentTrainingHistoryRow = {
+  activity_id?: unknown;
+  exercise_family?: unknown;
+  exercise_direction?: unknown;
+  target_id?: unknown;
+  exercise_text?: unknown;
   entry_id?: unknown;
   headword?: unknown;
   part_of_speech?: unknown;
@@ -61,10 +76,10 @@ const projectHistoryRow = (
   row: RecentTrainingHistoryRow,
 ): RecentTrainingHistoryItem => {
   if (
+    !isString(row.activity_id) ||
     !isString(row.entry_id) ||
     !isString(row.headword) ||
     !isReviewResult(row.review_result) ||
-    !isTrainingMode(row.card_type_id) ||
     !isValidTimestamp(row.reviewed_at) ||
     typeof row.has_more !== "boolean" ||
     (row.part_of_speech !== null &&
@@ -73,20 +88,37 @@ const projectHistoryRow = (
     throw new Error("training_history_contract_mismatch");
   }
 
-  return {
+  const ordinary = row.exercise_family === "meaning";
+  const exercise = (row.exercise_family === "idiom" &&
+    (row.exercise_direction === "direct" || row.exercise_direction === "reverse")) ||
+    (row.exercise_family === "translation" && row.exercise_direction === "recall");
+  if (ordinary ? (!isTrainingMode(row.card_type_id) || row.exercise_direction !== null ||
+      row.target_id !== null || row.exercise_text !== null) :
+    (!exercise || row.card_type_id !== null || !isString(row.target_id) ||
+      (row.exercise_text !== null && !isString(row.exercise_text)))) {
+    throw new Error("training_history_contract_mismatch");
+  }
+
+  const identity: HistoryIdentity = {
+    activityId: row.activity_id,
     entryId: row.entry_id,
     headword: row.headword,
-    partOfSpeech:
-      typeof row.part_of_speech === "string" ? row.part_of_speech : null,
+    partOfSpeech: row.part_of_speech as string | null,
     reviewResult: row.review_result,
-    cardTypeId: row.card_type_id,
     reviewedAt: row.reviewed_at,
   };
+  if (ordinary) return { ...identity, cardTypeId: row.card_type_id as TrainingMode };
+  return { ...identity, cardTypeId: null, exercise: {
+    family: row.exercise_family as "idiom" | "translation",
+    direction: row.exercise_direction as "direct" | "reverse" | "recall",
+    targetId: row.target_id as string,
+    text: row.exercise_text as string | null,
+  } };
 };
 
 export async function fetchRecentTrainingHistory(): Promise<RecentTrainingHistoryPage> {
   const { data, error } = await supabase.rpc(
-    "get_recent_training_review_history",
+    "get_recent_training_activity_v1",
     {
       p_limit: 50,
     },

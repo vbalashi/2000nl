@@ -49,7 +49,14 @@ type PlatformAuthCacheEntry = {
 
 let serviceClientCache: ServiceClientCache | null = null;
 const platformAuthCache = new Map<string, PlatformAuthCacheEntry>();
+const inflightPlatformAuth = new Map<
+  string,
+  Promise<{ user: User; principal: PlatformPrincipal } | null>
+>();
 const PLATFORM_AUTH_CACHE_MAX_ENTRIES = 256;
+const FIRST_PARTY_AUTH_CACHE_DEFAULT_TTL_MS = 60_000;
+const FIRST_PARTY_AUTH_CACHE_MAX_TTL_MS = 300_000;
+const TOKEN_EXPIRY_SKEW_MS = 5_000;
 
 function platformAuthCacheTtlMs() {
   const parsed = Number(process.env.PLATFORM_AUTH_CACHE_TTL_MS);
@@ -57,8 +64,38 @@ function platformAuthCacheTtlMs() {
   return 5_000;
 }
 
+// Connected-client grants are revocable, so they keep the short TTL above.
+// First-party bearer tokens stay valid until `exp` regardless of this cache.
+function firstPartyAuthCacheTtlMs(token: string) {
+  const parsed = Number(process.env.PLATFORM_FIRST_PARTY_AUTH_CACHE_TTL_MS);
+  const configured = Number.isFinite(parsed)
+    ? Math.max(0, Math.min(parsed, FIRST_PARTY_AUTH_CACHE_MAX_TTL_MS))
+    : FIRST_PARTY_AUTH_CACHE_DEFAULT_TTL_MS;
+  const expiresAtMs = bearerTokenExpiresAtMs(token);
+  if (expiresAtMs === null) return Math.min(configured, platformAuthCacheTtlMs());
+  return Math.max(
+    0,
+    Math.min(configured, expiresAtMs - TOKEN_EXPIRY_SKEW_MS - Date.now()),
+  );
+}
+
+function bearerTokenExpiresAtMs(token: string): number | null {
+  const payload = token.split(".")[1];
+  if (!payload) return null;
+  try {
+    const claims = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    return typeof claims?.exp === "number" ? claims.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
 function platformAuthCacheEnabled() {
-  return process.env.NODE_ENV !== "test" && platformAuthCacheTtlMs() > 0;
+  return (
+    (process.env.NODE_ENV !== "test" ||
+      process.env.PLATFORM_AUTH_CACHE_IN_TESTS === "1") &&
+    platformAuthCacheTtlMs() > 0
+  );
 }
 
 function readPlatformAuthCache(token: string): PlatformAuthCacheEntry | null {
@@ -79,6 +116,11 @@ function writePlatformAuthCache(
   principal: PlatformPrincipal,
 ) {
   if (!platformAuthCacheEnabled()) return;
+  const ttlMs =
+    principal.authKind === "first_party"
+      ? firstPartyAuthCacheTtlMs(token)
+      : platformAuthCacheTtlMs();
+  if (ttlMs <= 0) return;
   const tokenHash = sha256Hex(token);
   if (platformAuthCache.size >= PLATFORM_AUTH_CACHE_MAX_ENTRIES) {
     const firstKey = platformAuthCache.keys().next().value;
@@ -87,8 +129,13 @@ function writePlatformAuthCache(
   platformAuthCache.set(tokenHash, {
     user,
     principal,
-    expiresAtMs: Date.now() + platformAuthCacheTtlMs(),
+    expiresAtMs: Date.now() + ttlMs,
   });
+}
+
+export function resetPlatformAuthCacheForTests() {
+  platformAuthCache.clear();
+  inflightPlatformAuth.clear();
 }
 
 function createServiceSupabaseClient(
@@ -279,6 +326,45 @@ export async function getAuthenticatedSupabase(
     };
   }
 
+  const tokenHash = sha256Hex(token);
+  const pending = platformAuthCacheEnabled()
+    ? inflightPlatformAuth.get(tokenHash)
+    : undefined;
+  if (pending) {
+    const waitStartedAt = performance.now();
+    const shared = await pending;
+    recordAuthTiming(instrumentation, "auth.coalesced", performance.now() - waitStartedAt);
+    if (shared) {
+      const supabase = createAuthenticatedBearerClient(token);
+      if (supabase instanceof NextResponse) return supabase;
+      return { supabase, ...shared };
+    }
+  }
+
+  const resolution = resolveAuthenticatedSupabase(request, token, instrumentation);
+  if (platformAuthCacheEnabled() && !pending) {
+    const shared = resolution.then(
+      (auth) =>
+        auth instanceof NextResponse
+          ? null
+          : { user: auth.user, principal: auth.principal },
+      () => null,
+    );
+    inflightPlatformAuth.set(tokenHash, shared);
+    void shared.then(() => {
+      if (inflightPlatformAuth.get(tokenHash) === shared) {
+        inflightPlatformAuth.delete(tokenHash);
+      }
+    });
+  }
+  return resolution;
+}
+
+async function resolveAuthenticatedSupabase(
+  request: Request,
+  token: string,
+  instrumentation?: TimingEntrySink,
+): Promise<AuthenticatedSupabase | NextResponse> {
   const auth = await getAuthenticatedUserSupabase(request, instrumentation);
   if (auth instanceof NextResponse) return auth;
 

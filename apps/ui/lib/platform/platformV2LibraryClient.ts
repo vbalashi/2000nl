@@ -1,3 +1,5 @@
+import { LIBRARY_PAGE_SIZE } from "./libraryPagination";
+import type { LibrarySearchScope, LibrarySearchSummary } from "./librarySearchScope";
 import { requestPlatformV2Lookup } from "./platformV2LookupTransport";
 import { fetchDictionaryMeaningTranslation } from "@/lib/translation/translationApiClient";
 import type { CardTypeId } from "../../../../packages/shared/types/platform";
@@ -8,6 +10,7 @@ import type {
 
 export type PlatformV2LibraryGroupPage = {
   groups: PlatformHeadwordGroupV2[];
+  librarySearch?: LibrarySearchSummary;
   selectedTierComplete: boolean;
   nextGroupCursor: string | null;
 };
@@ -17,6 +20,7 @@ type PlatformV2LibraryLookupInput = {
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   signal?: AbortSignal;
+  libraryScope?: LibrarySearchScope;
 } & (
   | { query: string; entryId?: never; cursor?: string | null }
   | { entryId: string; query?: never; cursor?: never }
@@ -24,9 +28,10 @@ type PlatformV2LibraryLookupInput = {
 
 async function fetchPlatformV2LibraryLookup(
   input: PlatformV2LibraryLookupInput,
-): Promise<PlatformLookupV2Response> {
+): Promise<PlatformLookupV2Response & { librarySearch?: LibrarySearchSummary }> {
   const result = await requestPlatformV2Lookup({
     signal: input.signal,
+    libraryScope: input.libraryScope,
     body: {
       ...(input.entryId !== undefined
         ? { entryId: input.entryId }
@@ -41,6 +46,10 @@ async function fetchPlatformV2LibraryLookup(
     },
   });
   if (result.state === "http-error") {
+    if (input.libraryScope && result.status === 400) {
+      const error = await result.response.json().catch(() => null);
+      if (error?.error === "invalid_cursor") throw new PlatformV2LibraryLookupError("invalid-cursor",400);
+    }
     throw new PlatformV2LibraryLookupError("http-error", result.status);
   }
   if (result.state === "contract-mismatch") {
@@ -51,7 +60,7 @@ async function fetchPlatformV2LibraryLookup(
 
 export class PlatformV2LibraryLookupError extends Error {
   constructor(
-    readonly kind: "http-error" | "contract-mismatch",
+    readonly kind: "http-error" | "contract-mismatch" | "invalid-cursor",
     readonly status?: number,
   ) {
     super(kind === "http-error" ? `lookup_http_${status}` : kind);
@@ -66,15 +75,29 @@ export async function fetchPlatformV2LibraryGroupPage(input: {
   translationTargetLanguageCode: string | null;
   cursor?: string | null;
   signal?: AbortSignal;
+  libraryScope?: LibrarySearchScope;
 }): Promise<PlatformV2LibraryGroupPage> {
   const payload = await fetchPlatformV2LibraryLookup({
     ...input,
     cursor: input.cursor ?? null,
   });
+  const groups = input.libraryScope ? [...payload.groups] : payload.groups;
+  let last = payload;
+  const matchingEntryIds = [...(payload.librarySearch?.matchingEntryIds ?? [])];
+  // The RPC bounds each atomic read to 25 groups. Combine cursor pages only
+  // for the first-party Library; generic connected-client lookup is unchanged.
+  while (input.libraryScope && last.page.nextGroupCursor && groups.length < LIBRARY_PAGE_SIZE) {
+    const next = await fetchPlatformV2LibraryLookup({...input,cursor:last.page.nextGroupCursor});
+    groups.push(...next.groups);
+    matchingEntryIds.push(...(next.librarySearch?.matchingEntryIds ?? []));
+    if (next.page.nextGroupCursor === last.page.nextGroupCursor) throw new Error("library_cursor_did_not_advance");
+    last = next;
+  }
   return {
-    groups: payload.groups,
-    selectedTierComplete: payload.page.selectedTierComplete,
-    nextGroupCursor: payload.page.nextGroupCursor,
+    groups,
+    ...(input.libraryScope?.filters && payload.librarySearch ? {librarySearch:{...payload.librarySearch,matchingEntryIds:[...new Set(matchingEntryIds)]}} : {}),
+    selectedTierComplete: last.page.selectedTierComplete,
+    nextGroupCursor: last.page.nextGroupCursor,
   };
 }
 

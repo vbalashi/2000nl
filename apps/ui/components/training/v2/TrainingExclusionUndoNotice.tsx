@@ -7,6 +7,7 @@ import {
   getExclusionUndo,
   subscribeExclusionUndo,
   rememberExclusionUndo,
+  completeExclusionUndo,
 } from "./trainingExclusionUndoStore";
 import { trainingExclusionCopy } from "./TrainingExcludeAction";
 export function TrainingExclusionUndoNotice({
@@ -34,7 +35,7 @@ export function TrainingExclusionUndoNotice({
     setFailed(false);
     try {
       await performTrainingExclusion(pending.request);
-      if (getExclusionUndo() === pending) rememberExclusionUndo(null);
+      completeExclusionUndo(pending);
     } catch {
       if (getExclusionUndo() === pending) setFailed(true);
     } finally {
@@ -59,7 +60,7 @@ export function TrainingExclusionUndoNotice({
           </button>
         }
       >
-        {failed ? t.failed : t.done}
+        {failed ? t.failed : pending.request.actionId === "restore-headword" ? t.headwordDone : t.done}
       </TransientNotice>
     </div>
   );

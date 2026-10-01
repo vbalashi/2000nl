@@ -24,7 +24,7 @@ Commands:
   stop                  Stop the local Supabase Docker stack.
   status                Show Supabase local service status.
   env                   Print shell exports for local DB/UI/test usage.
-  apply                 Apply db/migrations/bootstrap.sql to local Supabase.
+  apply                 Apply reviewed forward migrations through the managed gate.
   reset --confirm-reset Erase local Supabase DB, then apply bootstrap.sql.
   probe                 Run SQL contract probes against local Supabase.
   check                 Read-only content, migration receipts and contract checks.
@@ -359,7 +359,17 @@ case "$cmd" in
     print_env
     ;;
   apply)
-    apply_bootstrap
+    ensure_psql
+    # Bootstrap is a fresh-database path: replaying old migrations over populated
+    # content can revert newer RPCs before failing on historical data updates.
+    migration_db_url="$(LOCAL_SUPABASE_DB_URL="$local_db_url" node -e '
+      const url = new URL(process.env.LOCAL_SUPABASE_DB_URL);
+      if (!url.searchParams.has("sslmode")) url.searchParams.set("sslmode", "disable");
+      process.stdout.write(url.href);
+    ')"
+    (cd "$repo_root" && SUPABASE_DB_URL="$migration_db_url" \
+      node db/scripts/deploy_db_contract.mjs apply \
+        --app-commit "$(git -C "$repo_root" rev-parse HEAD)")
     ;;
   reset)
     ensure_supabase

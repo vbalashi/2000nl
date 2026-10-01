@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { ApprovedSettingsDestination } from "./ApprovedSettingsDestination";
 import { ReadingSettingsSection } from "@/components/reading/ReadingSettingsSection";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
@@ -63,7 +64,8 @@ const copy = {
   },
 } satisfies Record<OnboardingLanguage, Record<string, string>>;
 
-type Props = {
+export type SettingsDestinationProps = {
+  onExit: () => void;
   open: boolean;
   interfaceLanguage: OnboardingLanguage;
   themePreference: ThemePreference;
@@ -77,7 +79,13 @@ type Props = {
   onSignOut: () => void | Promise<void>;
 };
 
-export function SettingsDestination({
+export function SettingsDestination(props: SettingsDestinationProps) {
+  if (process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 === "true")
+    return <ApprovedSettingsDestination {...props} />;
+  return <LegacySettingsDestination {...props} />;
+}
+
+function LegacySettingsDestination({
   open,
   interfaceLanguage,
   themePreference,
@@ -87,7 +95,7 @@ export function SettingsDestination({
   onTranslationLanguageChange,
   userEmail,
   onSignOut,
-}: Props) {
+}: SettingsDestinationProps) {
   const text = copy[interfaceLanguage];
   const themeOptions: Array<{ value: ThemePreference; label: string }> = [
     { value: "light", label: text.light },
@@ -95,11 +103,6 @@ export function SettingsDestination({
     { value: "system", label: text.system },
   ];
   const hotkeys = getTrainingHotkeys(interfaceLanguage);
-  const cycleTheme = () => {
-    const options: ThemePreference[] = ["system", "light", "dark"];
-    const currentIndex = options.indexOf(themePreference);
-    onThemeChange(options[(currentIndex + 1) % options.length]);
-  };
 
   return (
     <section

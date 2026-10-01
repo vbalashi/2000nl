@@ -1,4 +1,5 @@
 import React from "react";
+import {TrainingCardAnswerHeader} from "@/components/training/v2/TrainingCardTemplates";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { TrainingSenseCardStage as TrainingSenseCardStageView } from "@/components/training/v2/TrainingSenseCardStage";
@@ -38,6 +39,46 @@ function TrainingSenseCardStage(
 }
 
 describe("TrainingSenseCardStage", () => {
+  test("answer reading is keyboard reachable and Space does not turn it back over", () => {
+    const model = buildTrainingSenseCardModel({ group: singleSenseGroup,
+      entry: singleSenseEntry, interfaceLanguage: "en" });
+    render(<TrainingSenseCardStage model={model} mode="word-to-definition"
+      interfaceLanguage="en" onAction={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    const reading = screen.getByTestId("training-answer-scroll");
+    expect(reading).toHaveAttribute("role", "region");
+    expect(reading).toHaveAttribute("tabindex", "0");
+    expect(reading.getAttribute("aria-label")).toBeTruthy();
+    reading.focus();
+    fireEvent.keyDown(reading, { key: " " });
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute("data-side", "answer");
+  });
+  test("approved presentation rates through the shared controls and dispatches the owning capability", () => {
+    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+    try {
+      const model = buildTrainingSenseCardModel({
+        group: singleSenseGroup,
+        entry: singleSenseEntry,
+        interfaceLanguage: "en",
+      });
+      const onAction = vi.fn();
+      render(<TrainingSenseCardStage model={model} mode="word-to-definition"
+        interfaceLanguage="en" onAction={onAction} />);
+      fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+      expect(screen.getByTestId("training-sense-card-stage"))
+        .toHaveAttribute("data-visual-spec", "training-approved-v1");
+      const grid = screen.getByTestId("training-review-grid");
+      const buttons = Array.from(grid.querySelectorAll("button[data-rating]"));
+      expect(buttons.map((button) => button.getAttribute("data-rating"))).toEqual(["Again", "Hard", "Good", "Easy"]);
+      expect(buttons.every((button) => !button.className.includes("slate"))).toBe(true);
+      fireEvent.click(screen.getByRole("button", { name: "Hard" }));
+      expect(onAction).toHaveBeenLastCalledWith(expect.objectContaining({ reviewResult: "hard" }));
+      fireEvent.click(screen.getByRole("button", { name: "Again" }));
+      expect(onAction).toHaveBeenLastCalledWith(expect.objectContaining({ reviewResult: "fail" }));
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
   test("context presentation keeps the normal actions and shows only the latched example", () => {
     const base = buildTrainingSenseCardModel({
       group: singleSenseGroup,
@@ -829,4 +870,13 @@ describe("TrainingSenseCardStage", () => {
       expect(screen.getByRole("button", { name: "Opnieuw" })).toHaveFocus(),
     );
   });
+});
+
+test("approved answer keeps the unavailable translation button visible without dispatching",()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ try {
+ const toggle=vi.fn();render(<TrainingCardAnswerHeader model={{headword:"aandoen",repeatCount:0,definitions:[],examples:[]}} translationVisible={false} translationAvailable={false} translationLabel="Translation is off. Choose a translation language in Settings." audioLabel="Play" moreLabel="More" busy={false} onToggleTranslation={toggle}/>);
+ const button=screen.getByRole("button",{name:"Translation is off. Choose a translation language in Settings."});
+ expect(button).toBeDisabled();fireEvent.click(button);expect(toggle).not.toHaveBeenCalled();
+ } finally {vi.unstubAllEnvs();}
 });

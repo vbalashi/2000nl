@@ -19,10 +19,17 @@ describe("platform dictionary content audio links", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
     delete process.env.NEXT_PUBLIC_SITE_URL;
     fs.rmSync(publicRoot, { recursive: true, force: true });
   });
+
+  // Default root is `${cwd}/public`; an app root without public/audio is not inspectable.
+  const useUninspectableDefaultAudioRoot = () => {
+    delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+    vi.spyOn(process, "cwd").mockReturnValue(publicRoot);
+  };
 
   test("keeps local curated audio only when the file exists", () => {
     const audioPath = path.join(publicRoot, "audio", "nl", "s");
@@ -84,7 +91,7 @@ describe("platform dictionary content audio links", () => {
   });
 
   test("keeps local curated links when the default audio root is not inspectable", () => {
-    delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+    useUninspectableDefaultAudioRoot();
 
     expect(
       normalizeAudioLinks({
@@ -96,7 +103,7 @@ describe("platform dictionary content audio links", () => {
   });
 
   test("removes publicly missing local curated links when the default audio root is not inspectable", async () => {
-    delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+    useUninspectableDefaultAudioRoot();
     process.env.NEXT_PUBLIC_SITE_URL = "https://2000.dilum.io";
     vi.stubGlobal(
       "fetch",
@@ -115,7 +122,7 @@ describe("platform dictionary content audio links", () => {
   });
 
   test("keeps publicly available local curated links when the default audio root is not inspectable", async () => {
-    delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+    useUninspectableDefaultAudioRoot();
     process.env.NEXT_PUBLIC_SITE_URL = "https://2000.dilum.io";
     vi.stubGlobal(
       "fetch",
@@ -137,7 +144,7 @@ describe("platform dictionary content audio links", () => {
 
   test("does not let a slow public audio probe block dictionary content", async () => {
     vi.useFakeTimers();
-    delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+    useUninspectableDefaultAudioRoot();
     process.env.NEXT_PUBLIC_SITE_URL = "https://2000.dilum.io";
     vi.stubGlobal(
       "fetch",

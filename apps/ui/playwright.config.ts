@@ -9,12 +9,12 @@ export default defineConfig({
   reporter: "list",
   use: {
     // Use a dedicated port to avoid colliding with a developer's already-running `npm run dev`.
-    baseURL: "http://127.0.0.1:3100",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100",
     trace: "on-first-retry",
     actionTimeout: 0,
     screenshot: "only-on-failure"
   },
-  webServer: {
+  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
     command:
       "NEXT_FONT_GOOGLE_MOCKED_RESPONSES=$PWD/playwright/fixtures/next-font-google-mocked-responses.cjs NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=test-anon npm run dev -- --hostname 0.0.0.0 --port 3100",
     url: "http://127.0.0.1:3100",

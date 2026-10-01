@@ -14,6 +14,18 @@ export function parseTrainingExclusionRequest(
   const v = object(value),
     target = object(v.target);
   if (!uuid(v.clientEventId)) return null;
+  if (target.kind === "headword") {
+    if (!keys(target, ["kind", "entryId", "cardTypeId"]) || !uuid(target.entryId)) return null;
+    if (v.actionId === "exclude-headword") {
+      if (!keys(v, ["actionId", "clientEventId", "target", "trainingSessionId"])) return null;
+      if (v.trainingSessionId !== undefined) {
+        if (!uuid(v.trainingSessionId) || !["word-to-definition", "definition-to-word"].includes(String(target.cardTypeId))) return null;
+      } else if (target.cardTypeId !== undefined) return null;
+    } else if (v.actionId === "restore-headword") {
+      if (!keys(v, ["actionId", "clientEventId", "target", "exclusionId"]) || !uuid(v.exclusionId) || target.cardTypeId !== undefined) return null;
+    } else return null;
+    return v as TrainingExclusionRequest;
+  }
   if (target.kind === "meaning") {
     if (
       !keys(target, ["kind", "entryId", "cardTypeId"]) ||

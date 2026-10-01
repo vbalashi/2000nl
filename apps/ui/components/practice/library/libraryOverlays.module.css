@@ -1,0 +1,50 @@
+.menu{position:fixed;z-index:1000;width:210px;padding:5px;border:1px solid var(--practice-border);border-radius:12px;background:var(--practice-surface);box-shadow:0 12px 40px var(--practice-shadow);color:var(--practice-text-secondary);font-family:var(--practice-font-ui);animation:arrive .13s ease-out}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:9px 12px;border:1px solid transparent;border-radius:8px;background:transparent;color:inherit;text-align:left;font-size:var(--practice-text-caption);font-weight:400;outline:none;transition:background .12s,border-color .12s,transform .12s}
+.menu button:hover,.menu button:focus-visible{background:var(--practice-canvas);border-color:var(--practice-control-border)}.menu button:active{background:var(--practice-surface-subtle);transform:scale(.98)}
+.dialog{width:min(420px,calc(100vw - 28px));max-height:calc(100dvh - 40px);padding:0;border:1px solid var(--practice-border);border-radius:18px;background:var(--practice-surface);color:var(--practice-text-secondary);box-shadow:0 20px 70px var(--practice-shadow);font-family:var(--practice-font-ui)}
+.dialog::backdrop{background:var(--practice-backdrop);backdrop-filter:blur(5px)}.sheet{padding:20px}.sheet header{display:flex;align-items:center;justify-content:space-between;gap:12px}.sheet h2{font-size:var(--practice-text-lead);font-weight:500;margin:0}.sheet button{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--practice-control-border);background:var(--practice-surface);color:var(--practice-text-secondary);border-radius:8px;padding:8px 11px;font-size:var(--practice-text-caption);min-height:36px}.sheet header button{border:0;padding:6px}.sheet button:hover{background:var(--practice-canvas)}.sheet button:focus-visible,.sheet input:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}.sheet button:disabled{opacity:.45}.hint{font-size:var(--practice-text-caption);color:var(--practice-text-muted);margin:9px 0 15px}.search{display:flex;gap:8px;align-items:center;border:1px solid var(--practice-control-border);border-radius:9px;padding:10px}.search input{min-width:0;width:100%;border:0;background:none;font:inherit;font-size:var(--practice-text-caption);color:inherit;outline:none}.collectionList{margin:12px 0;max-height:260px;overflow:auto}.collectionRow{display:flex;align-items:center;gap:10px;min-height:46px;padding:8px;border:1px solid transparent;border-radius:8px;font-size:var(--practice-text-caption)}.collectionRow:hover{background:var(--practice-surface);border-color:var(--practice-border)}.collectionRow input{accent-color:var(--practice-accent);width:16px;height:16px}.collectionRow small{margin-left:auto;font-size:var(--practice-text-label);color:var(--practice-text-muted)}.sheet .create{border:0;padding-left:6px}.createRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.createRow input{flex:1;min-width:100px;border:1px solid var(--practice-control-border);border-radius:8px;padding:8px;font-size:var(--practice-text-caption);color:inherit;background:var(--practice-surface)}.createRow small{color:var(--practice-text-muted);font-size:var(--practice-text-label)}.sheet footer{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px}.sheet footer span{font-size:var(--practice-text-label);color:var(--practice-text-muted)}.sheet footer button{background:var(--practice-surface-subtle);border-color:var(--practice-control-border);color:var(--practice-text)}.reportForm{display:grid;gap:12px;margin-top:18px}.reportForm select{background:var(--practice-surface);color:inherit;border:1px solid var(--practice-control-border);padding:10px;border-radius:8px}.reportForm p{font-size:var(--practice-text-label);color:var(--practice-text-muted)}@keyframes arrive{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.menu{animation:none}.menu button{transition:none}}
+
+/* Native selects and long localized headings must fit narrow dialogs. */
+.reportForm select{width:100%;min-width:0;font-family:var(--practice-font-ui);font-size:var(--practice-text-caption);color:inherit;background:var(--practice-surface)}
+.reportForm button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.sheet header h2{min-width:0;overflow-wrap:anywhere}
+.sheet header button,.menu svg{flex-shrink:0}
+.menu button{overflow-wrap:anywhere}
+
+/* Production form adapters retain their action/state owners and use the same
+   modal, font and palette roles as the approved prototype. Specificity keeps
+   flag-off utility colours from overriding these roles in dark mode. */
+.production.production{display:flex;flex-direction:column;gap:12px;max-height:calc(100dvh - 40px);overflow:hidden}
+.production.production [data-dialog-part]{padding:0;border-color:var(--practice-border)}
+.production.production [data-dialog-part=heading],.production.production [data-dialog-part=fields],.production.production [data-dialog-part=footer]{flex-shrink:0}
+.production.production [data-dialog-part=body]{min-height:0;max-height:none;overflow:auto;flex:1 1 auto}
+.production.production [data-dialog-part=body]:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--practice-focus)}
+.production.production [data-dialog-part=footer]{padding-top:12px}
+.production.production h2{font-size:var(--practice-text-lead);color:var(--practice-text);line-height:1.35}
+.production.production h3{font-size:var(--practice-text-body-lg);color:var(--practice-text)}
+.production.production p,.production.production label,.production.production textarea,.production.production input,.production.production button{font-family:var(--practice-font-ui);font-size:var(--practice-text-caption);line-height:1.5;color:var(--practice-text-secondary)}
+.production.production p{font-size:var(--practice-text-label);color:var(--practice-text-muted)}
+.production.production fieldset{background:var(--practice-surface);border-color:var(--practice-border)}
+.production.production fieldset label{border-color:var(--practice-border);background:transparent}
+.production.production label[data-selected=true]{background:var(--practice-selected);color:var(--practice-selected-text)}
+.production.production input:not([type=radio]):not([type=checkbox]),.production.production textarea{background:var(--practice-surface);border-color:var(--practice-control-border);height:auto;min-height:36px}
+.production.production input::placeholder,.production.production textarea::placeholder{color:var(--practice-text-muted)}
+.production.production input[type=radio],.production.production input[type=checkbox]{appearance:auto;accent-color:var(--practice-accent);background:none;flex-shrink:0}
+.production.production input:focus-visible,.production.production textarea:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px;box-shadow:none}
+.production.production label span{font-size:var(--practice-text-caption);color:inherit}
+.production.production label span+span{font-size:var(--practice-text-label);color:var(--practice-text-muted)}
+.production.production button{height:auto;min-height:36px;background:var(--practice-surface);border-color:var(--practice-control-border);color:var(--practice-text-secondary)}
+.production.production button:hover{background:var(--practice-surface-hover)}
+.production.production [data-dialog-part=footer] button:last-child{background:var(--practice-selected);color:var(--practice-selected-text)}
+.production.production [data-dialog-part=heading]>span[aria-hidden]{display:none}
+.production.production fieldset label:hover,.production.production [data-dialog-part=body]>div>div:hover{background:var(--practice-surface-hover)}
+.production.production [data-report-state] span{background:var(--practice-success-soft);color:var(--practice-success)}
+.production.production [data-report-state=rejected] span{background:var(--practice-danger-soft);color:var(--practice-danger)}
+
+.production.production [role=alert]{color:var(--practice-danger)}
+
+.menu{margin:0;width:min(210px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
+.menu button:disabled{opacity:.45;cursor:default}
+@media(prefers-reduced-motion:reduce){.menu{animation:none}}
+
+.creation{padding:0 0 12px}.production .creation>button{border:0;background:transparent;padding-inline:0}

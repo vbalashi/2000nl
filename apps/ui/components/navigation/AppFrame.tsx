@@ -7,6 +7,8 @@ import { AppDestinationNav, appDestinationLabel } from "./AppDestinationNav";
 import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
 import type { AppDestination } from "./appDestination";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { getUiMessages } from "@/lib/uiMessages";
+import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import styles from "./AppFrame.module.css";
 
@@ -17,6 +19,8 @@ export type AppFrameProps = {
   settingsActive?: boolean;
   navigationDisabled?: boolean;
   utilitiesDisabled?: boolean;
+  /** Active practice session: on narrow screens the app chrome steps aside. */
+  immersive?: boolean;
   onNavigate: (destination: AppDestination) => void;
   onCycleTheme: AppUtilityNavProps["onCycleTheme"];
   onOpenSettings: AppUtilityNavProps["onOpenSettings"];
@@ -24,13 +28,12 @@ export type AppFrameProps = {
   className?: string;
 };
 
-type AppHeaderProps = Omit<AppFrameProps, "children" | "className">;
+type AppHeaderProps = Omit<AppFrameProps, "children" | "className" | "immersive">;
 
-const mobileLabels = {
-  nl: { destinations: "Navigatie" },
-  en: { destinations: "Destinations" },
-  ru: { destinations: "Разделы" },
-} as const;
+const primaryDestination = (destination: AppDestination) =>
+  destination === "training" || destination === "library" || destination === "statistics"
+    ? destination
+    : null;
 
 function MobileMenu({
   activeDestination,
@@ -89,7 +92,7 @@ function MobileMenu({
         aria-controls={menuId}
         aria-expanded={open}
         aria-haspopup="true"
-        aria-label={`${mobileLabels[interfaceLanguage].destinations}: ${currentLabel}`}
+        aria-label={`${getUiMessages(interfaceLanguage).navigation.destinations}: ${currentLabel}`}
         onClick={() => setOpen((current) => !current)}
       >
         <Menu aria-hidden="true" className="h-4 w-4" />
@@ -102,7 +105,7 @@ function MobileMenu({
           id={menuId}
           className={styles.menu}
           role="group"
-          aria-label={mobileLabels[interfaceLanguage].destinations}
+          aria-label={getUiMessages(interfaceLanguage).navigation.destinations}
         >
           <AppDestinationNav
             active={
@@ -133,16 +136,18 @@ function AppHeader({
   onCycleTheme,
   onOpenSettings,
 }: AppHeaderProps) {
+  const tabs = trainingPresentationV1Enabled();
   return (
     <header
-      className={`${styles.header} ${styles.headerWithMenu}`}
+      className={`${styles.header} ${tabs ? styles.headerApproved : styles.headerWithMenu}`}
       data-testid="app-header"
       data-app-header="true"
     >
-      <BrandLogo
-        className={styles.brand}
-        accentClassName={styles.brandAccent}
-      />
+      <button type="button" className={styles.brandLink}
+        aria-label={`2000nl: ${appDestinationLabel(interfaceLanguage, "training")}`}
+        disabled={navigationDisabled} onClick={() => onNavigate("training")}>
+        <BrandLogo as="span" className={styles.brand} accentClassName={styles.brandAccent} />
+      </button>
       <div className={styles.desktopNav} data-app-primary-navigation="desktop">
         <AppDestinationNav
           active={
@@ -157,7 +162,7 @@ function AppHeader({
           onNavigate={onNavigate}
         />
       </div>
-      <div
+      {tabs ? null : <div
         className={styles.mobileMenu}
         data-app-mobile-navigation="menu"
       >
@@ -167,7 +172,7 @@ function AppHeader({
           navigationDisabled={navigationDisabled}
           onNavigate={onNavigate}
         />
-      </div>
+      </div>}
       <div className={styles.utilities}>
         <AppUtilityNav
           interfaceLanguage={interfaceLanguage}
@@ -186,22 +191,36 @@ function AppHeader({
 export function AppFrame({
   className,
   children,
+  immersive = false,
   ...headerProps
 }: AppFrameProps) {
   const onNavigate = (destination: AppDestination) => {
     headerProps.onNavigate(destination);
   };
+  const tabs = trainingPresentationV1Enabled();
 
   return (
     <div
       className={`${styles.frame}${className ? ` ${className}` : ""}`}
       data-app-frame="true"
+      data-immersive={tabs && immersive ? "true" : undefined}
     >
       <AppHeader
         {...headerProps}
         onNavigate={onNavigate}
       />
       <main className={styles.content}>{children}</main>
+      {tabs ? (
+        <div className={styles.tabBar} data-app-mobile-navigation="tabs">
+          <AppDestinationNav
+            variant="tabs"
+            active={primaryDestination(headerProps.activeDestination)}
+            interfaceLanguage={headerProps.interfaceLanguage}
+            disabled={headerProps.navigationDisabled}
+            onNavigate={onNavigate}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

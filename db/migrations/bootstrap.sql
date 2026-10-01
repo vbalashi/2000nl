@@ -498,3 +498,42 @@
 -- Batch source binding/content reconciliation for practical full imports.
 \i db/migrations/177_batch_source_content_reconciliation.sql
 \i db/migrations/178_staged_source_content_import.sql
+
+-- Match the pgcrypto namespace on Supabase and plain Postgres.
+\i db/migrations/179_pgcrypto_namespace_compatibility.sql
+
+-- Account-owned saved/main training configuration, independent of progress.
+\i db/migrations/180_account_training_setups.sql
+
+-- Shared four-step card/interface text preferences.
+\i db/migrations/181_four_step_text_preferences.sql
+
+\i db/migrations/182_account_practice_palette.sql
+
+-- Account material selection preferences; separate from dictionary ACLs.
+\i db/migrations/183_account_material_preferences.sql
+
+-- New-run material selection snapshots; current runs retain their saved scope.
+\i db/migrations/184_training_material_selection_snapshot.sql
+
+-- First-party Library search material scope, applied before ranked pagination.
+\i db/migrations/185_library_material_lookup.sql
+\i db/migrations/186_library_entry_filters.sql
+
+-- Independent measured active card time (no scheduler mutation).
+\i db/migrations/187_training_active_time.sql
+
+-- Read-only per-study-day learner activity for Statistics.
+\i db/migrations/188_training_activity_days.sql
+
+-- Read-only review queue and coverage per learning material for Statistics.
+\i db/migrations/189_training_material_progress.sql
+
+-- Unified bounded recent action history and ordinary headword exclusions.
+\i db/migrations/190_recent_training_activity.sql
+\i db/migrations/191_bound_recent_training_activity.sql
+\i db/migrations/192_training_headword_exclusions.sql
+
+\i db/migrations/193_directional_known_marks.sql
+
+\i db/migrations/194_library_initial_browse.sql

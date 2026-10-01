@@ -78,6 +78,7 @@ type PrefetchedLookup = {
   cacheOwnerId: string;
   promise: Promise<PlatformV2TrainingLookupResult>;
   result: PlatformV2TrainingLookupResult | null;
+  readyAt: number | null;
   expiresAt: number;
   controller: AbortController;
   consumed: boolean;
@@ -86,6 +87,9 @@ type PrefetchedLookup = {
 };
 
 const PREFETCH_TTL_MS = 30_000;
+// Upper bound on how old a prepared card may be when a progress action extends
+// its lease; older preparations are refetched instead of reused.
+export const PREPARED_CARD_MAX_REUSE_AGE_MS = 5 * 60_000;
 const MAX_PREFETCHED_LOOKUPS = 24;
 const prefetchedLookups = new Map<string, PrefetchedLookup>();
 
@@ -178,10 +182,26 @@ function prefetchPlatformV2TrainingEntryWithLease(
     existing.expiresAt - Date.now() <=
       PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS
   ) {
-    recordTerminalPrefetchOutcome(existing, "renewal-required");
-    existing.controller.abort();
-    prefetchedLookups.delete(key);
-    existing = null;
+    const now = Date.now();
+    const reusable =
+      existing.result === null
+        ? true
+        : existing.result.state === "ready" &&
+          existing.readyAt !== null &&
+          now - existing.readyAt <= PREPARED_CARD_MAX_REUSE_AGE_MS;
+    if (reusable) {
+      existing.expiresAt =
+        now + Math.max(PREFETCH_TTL_MS, PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS);
+      recordPrefetchOutcome(
+        input.transitionId ?? existing.transitionId,
+        "lease-extended",
+      );
+    } else {
+      recordTerminalPrefetchOutcome(existing, "renewal-required");
+      existing.controller.abort();
+      prefetchedLookups.delete(key);
+      existing = null;
+    }
   }
   if (existing) {
     recordPrefetchOutcome(
@@ -207,6 +227,7 @@ function prefetchPlatformV2TrainingEntryWithLease(
     cacheOwnerId: input.cacheOwnerId,
     promise: Promise.resolve({ state: "entry-not-found" }),
     result: null,
+    readyAt: null,
     expiresAt: Date.now() + PREFETCH_TTL_MS,
     controller: new AbortController(),
     consumed: false,
@@ -227,6 +248,7 @@ function prefetchPlatformV2TrainingEntryWithLease(
       detachInputSignal();
       if (result.state === "ready") {
         record.result = result;
+        record.readyAt = Date.now();
         if (leasePolicy === "progress-action") {
           recordPrefetchOutcome(input.transitionId, "renewal-ready");
         }

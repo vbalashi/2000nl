@@ -1,0 +1,245 @@
+/* Approved Training card: palette roles and the account text scale, no literals. */
+.stage {
+  --reading-headword-face-size: var(--practice-text-display);
+  --reading-headword-answer-size: var(--practice-text-display);
+  color: var(--practice-text);
+}
+.stage header,
+.stage [data-testid="training-answer-scroll"] {
+  transition: opacity 140ms ease-out;
+}
+.stage[data-reveal-moving="true"] header,
+.stage[data-reveal-moving="true"] [data-testid="training-answer-scroll"] {
+  opacity: 0;
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage header,
+  .stage [data-testid="training-answer-scroll"] { transition: none; }
+}
+.shell {
+  border: 0;
+  border-radius: var(--practice-radius-panel);
+  background: var(--practice-surface);
+  box-shadow: none;
+}
+/* Short windows keep the same text roles, trading outer air for reading space. */
+@media (max-height: 500px) {
+  .stage.stage { gap: 8px; }
+  .shell.shell { padding: 12px; }
+}
+.answerScroll:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: -2px;
+}
+.headerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 34px;
+  margin-bottom: 8px;
+}
+.headerRow > :first-child {
+  min-width: min-content;
+  max-width: 100%;
+  flex: 1 1 auto;
+}
+.headerRow > :last-child {
+  margin-left: auto;
+}
+.primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 6px 22px;
+  border: 1px solid var(--practice-control-border);
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-selected);
+  color: var(--practice-selected-text);
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-body);
+  font-weight: 550;
+  line-height: 1.3;
+  cursor: pointer;
+}
+.primary:hover {
+  background: var(--practice-surface-hover);
+}
+.primary:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.hint {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 46px;
+  min-height: 46px;
+  border: 1px solid var(--practice-control-border);
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+  cursor: pointer;
+}
+.hint:hover {
+  background: var(--practice-surface-hover);
+}
+.primary:focus-visible,
+.hint:focus-visible,
+.quietAction:focus-visible,
+.known button:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+.quietAction {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-label);
+  line-height: 1.3;
+  color: var(--practice-text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.quietAction:hover {
+  color: var(--practice-text-secondary);
+}
+.quietAction:disabled {
+  opacity: 0.5;
+}
+.known {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 46px;
+  padding: 8px 16px;
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-success-soft);
+  color: var(--practice-success);
+  font-size: var(--practice-text-body);
+}
+.known button {
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--practice-accent);
+  cursor: pointer;
+}
+.dock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.secondaryActions {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--practice-space-content) var(--practice-space-section);
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--practice-radius-dialog);
+  background: var(--practice-surface);
+  color: var(--practice-text);
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-body);
+  line-height: 1.5;
+}
+.stateReading {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--practice-space-section);
+  scrollbar-width: none;
+}
+.stateReading::-webkit-scrollbar { display: none; }
+.stateReading:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: -2px;
+}
+.stateContent {
+  margin: auto;
+  max-width: 100%;
+  text-align: center;
+}
+.stateContent h1 {
+  margin: 0;
+  font-size: var(--practice-text-title);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.stateContent p {
+  margin: var(--practice-space-content) 0 0;
+  color: var(--practice-text-secondary);
+}
+.stateActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--practice-space-content);
+  flex-shrink: 0;
+  justify-content: center;
+  padding: var(--practice-space-section);
+}
+
+.notice {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  align-items: flex-start;
+  gap: var(--practice-space-section);
+  margin-bottom: var(--practice-space-section);
+  padding: var(--practice-space-content) var(--practice-space-section);
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-info-soft);
+  color: var(--practice-info);
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-body);
+  line-height: 1.5;
+}
+.notice > span {
+  min-height: 0;
+  max-width: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  overflow-wrap: anywhere;
+}
+.notice[data-tone=error] {
+  background: var(--practice-danger-soft);
+  color: var(--practice-danger);
+}
+
+.notice > button { flex-shrink: 0; }
+
+.notice > span::-webkit-scrollbar { display: none; }
+.notice > span:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: -2px;
+}
+
+.stateActions > button { min-width: 0; max-width: 100%; }
+.primary[data-kind=secondary] {
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+}
+.primary[data-kind=secondary]:hover { background: var(--practice-surface-hover); }

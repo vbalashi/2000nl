@@ -10,6 +10,13 @@ import {
   Route,
   Volume2,
 } from "lucide-react";
+import {sharedArticlePresentationV1Enabled, trainingPresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
+import approved from "../approvedTrainingCard.module.css";
+import chrome from "@/components/practice/article/senseChrome.module.css";
+import {ArticleContentNode,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
+import {ArticleSenseRelations} from "@/components/practice/article/ArticleWordDetails";
+import {lexicalRelationDetail} from "@/components/practice/article/wordDetailsPresentation";
+import {ProductionArticleReading} from "@/components/practice/article/ProductionArticleReading";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -28,6 +35,14 @@ import type {
 export const trainingCardStageClassName =
   "mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-[10px] font-sense-sans text-slate-900 dark:text-[#F4F6FA] [container-type:inline-size]";
 
+export const approvedTrainingCardStageClassName =
+  `mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-[10px] font-sense-sans [container-type:inline-size] ${approved.stage}`;
+
+/** Stage classes for the active presentation; approved screens use palette roles. */
+export function trainingStageClassName() {
+  return trainingPresentationV1Enabled() ? approvedTrainingCardStageClassName : trainingCardStageClassName;
+}
+
 export function TrainingCardShell({
   answerVisible,
   children,
@@ -38,7 +53,7 @@ export function TrainingCardShell({
   return (
     <article
       data-testid="training-sense-card-shell"
-      className={`relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden rounded-[14px] border border-slate-300 bg-slate-50 shadow-[0_18px_55px_rgba(15,23,42,0.12)] dark:border-[#4B5360] dark:bg-[#20252D] dark:shadow-none ${answerVisible ? "gap-[6px] p-[18px]" : ""}`}
+      className={`relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden ${trainingPresentationV1Enabled() ? approved.shell : "rounded-[14px] border border-slate-300 bg-slate-50 shadow-[0_18px_55px_rgba(15,23,42,0.12)] dark:border-[#4B5360] dark:bg-[#20252D] dark:shadow-none"} ${answerVisible ? "gap-[6px] p-[18px]" : ""}`}
     >
       {children}
     </article>
@@ -78,18 +93,18 @@ export function TrainingCardAnswerHeader({
 }) {
   return (
     <header className="relative z-10 flex shrink-0 flex-col gap-0">
-      <div className="mb-2 flex min-h-[34px] items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-[7px] text-[13px] text-slate-500 dark:text-[#BFC7D4]">
+      <div className={trainingPresentationV1Enabled() ? approved.headerRow : "mb-2 flex min-h-[34px] items-center justify-between gap-2"}>
+        <div className={trainingPresentationV1Enabled() ? chrome.metadata : "flex min-w-0 items-center gap-[7px] text-[13px] text-slate-500 dark:text-[#BFC7D4]"}>
           {model.partOfSpeech ? (
-            <span className="inline-flex items-center gap-2 font-medium">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-[#37D99B]" />
+            <span className={trainingPresentationV1Enabled() ? chrome.pos : "inline-flex items-center gap-2 font-medium"}>
+              <span className={trainingPresentationV1Enabled() ? chrome.dot : "h-2 w-2 rounded-full bg-emerald-500 dark:bg-[#37D99B]"} />
               <span title={model.partOfSpeech}>
                 {trainingPartOfSpeechLabel(model.partOfSpeech)}
               </span>
             </span>
           ) : null}
           {model.coreVocabularyLabel ? (
-            <span className="rounded-md bg-indigo-500/10 px-2 py-1 font-semibold text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]">
+            <span className={trainingPresentationV1Enabled() ? chrome.badge : "rounded-md bg-indigo-500/10 px-2 py-1 font-semibold text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]"}>
               {model.coreVocabularyLabel}
             </span>
           ) : null}
@@ -110,11 +125,11 @@ export function TrainingCardAnswerHeader({
               <Volume2 aria-hidden="true" className="h-5 w-5" />
             </TrainingCardIconButton>
           ) : null}
-          {translationAvailable ? (
+          {translationAvailable || trainingPresentationV1Enabled() ? (
             <TrainingCardIconButton
               label={translationLabel}
               active={translationVisible}
-              disabled={busy}
+              disabled={busy || !translationAvailable}
               onClick={onToggleTranslation}
             >
               <Languages aria-hidden="true" className="h-5 w-5" />
@@ -190,20 +205,20 @@ export function TrainingCardFace({
         // Space scrolls a focused reading region; it must not reveal the answer.
         if (event.key === " ") event.stopPropagation();
       }}
-      className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:thin] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400"
+      className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:thin] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--practice-focus,#818cf8)]"
     >
       <div className="flex min-h-full flex-col p-[18px]">
         {partOfSpeechChip ? (
           <span
             data-testid="training-face-part-of-speech"
-            className="inline-flex max-w-full self-start rounded-md bg-indigo-500/10 px-2 py-1 text-xs font-medium text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]"
+            className={trainingPresentationV1Enabled() ? `${chrome.chip} self-start` : "inline-flex max-w-full self-start rounded-md bg-indigo-500/10 px-2 py-1 text-xs font-medium text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]"}
           >
             {partOfSpeechChip}
           </span>
         ) : null}
         <div className="my-auto flex shrink-0 flex-col items-center gap-4 px-10 py-3 text-center">
           {label ? (
-            <span className="rounded-md bg-indigo-500/10 px-2 py-1 font-sense-sans text-xs font-semibold text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]">
+            <span className={trainingPresentationV1Enabled() ? chrome.chip : "rounded-md bg-indigo-500/10 px-2 py-1 font-sense-sans text-xs font-semibold text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]"}>
               {label}
             </span>
           ) : null}
@@ -231,7 +246,7 @@ export function TrainingCardFace({
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
               {hintLabel}
             </p>
-            <p className="border-l-[3px] border-indigo-400 pl-3 font-sense-serif text-[length:var(--reading-hint-size,18px)] italic leading-[var(--reading-hint-leading,28px)] text-slate-800 dark:text-slate-200">
+            <p className="border-l-[3px] border-[color:var(--practice-border,#818cf8)] pl-3 font-sense-serif text-[length:var(--reading-hint-size,18px)] italic leading-[var(--reading-hint-leading,28px)] text-slate-800 dark:text-slate-200">
               {hint.text}
             </p>
           </aside>
@@ -245,13 +260,18 @@ export function TrainingCardAnswerBody({
   model,
   translationVisible,
   interfaceLanguage,
+  contentLanguage,
+  translationLanguage,
   onReachEnd,
 }: {
   model: TrainingCardAnswer;
   translationVisible: boolean;
   interfaceLanguage: OnboardingLanguage;
+  contentLanguage?: string;
+  translationLanguage?: string;
   onReachEnd: () => void;
 }) {
+  const approvedArticle = sharedArticlePresentationV1Enabled();
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const continuationFocusPendingRef = React.useRef(false);
   const [scrollState, setScrollState] = React.useState({
@@ -302,13 +322,24 @@ export function TrainingCardAnswerBody({
       <div
         ref={scrollRef}
         data-testid="training-answer-scroll"
+        role="region"
+        aria-label={t("senseCard.training.content")}
+        tabIndex={0}
+        onKeyDown={event => {
+          // Space scrolls reading content rather than turning the card over.
+          if (event.key === " ") event.stopPropagation();
+        }}
         data-scroll-top={scrollState.top ? "faded" : "clear"}
         data-scroll-bottom={scrollState.bottom ? "faded" : "clear"}
         onScroll={updateScrollState}
         style={{ maskImage, WebkitMaskImage: maskImage }}
-        className="h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className={`h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${approved.answerScroll}`}
       >
-        {definitions.length ? (
+        {approvedArticle ? <ProductionArticleReading>
+          {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>)}
+          <ArticleSenseRelations relation={lexicalRelationDetail(model.wordDetails)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage}/>
+          <ArticleMeaningDetails definition={null} details={[...usagePatterns,...examples,...idioms,...notes]} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>
+        </ProductionArticleReading> : <>        {definitions.length ? (
           <div className="space-y-3 pt-1">
             {definitions.map((item) => (
               <ContentItem
@@ -380,7 +411,8 @@ export function TrainingCardAnswerBody({
               />
             ))}
           </ContentSection>
-        ) : null}
+        ) : null}</>}
+
       </div>
       {scrollState.bottom ? (
         <button
@@ -393,7 +425,7 @@ export function TrainingCardAnswerBody({
               behavior: "smooth",
             });
           }}
-          className="absolute bottom-2 left-1/2 z-10 flex h-7 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 text-slate-600 shadow-lg hover:bg-slate-100 hover:text-slate-900 dark:border-slate-600 dark:bg-[#171b22]/95 dark:text-slate-300 dark:hover:border-slate-400 dark:hover:text-white"
+          className={trainingPresentationV1Enabled() ? chrome.scrollCue : "absolute bottom-2 left-1/2 z-10 flex h-7 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 text-slate-600 shadow-lg hover:bg-slate-100 hover:text-slate-900 dark:border-slate-600 dark:bg-[#171b22]/95 dark:text-slate-300 dark:hover:border-slate-400 dark:hover:text-white"}
         >
           <ChevronDown aria-hidden="true" className="h-4 w-4" />
         </button>
@@ -525,6 +557,7 @@ export function TrainingCardFaceControls({
   onShowAnswer: () => void;
   showAnswerRef: React.RefObject<HTMLButtonElement>;
 }) {
+  const approvedPresentation = trainingPresentationV1Enabled();
   return (
     <div className="flex gap-2">
       {hintAvailable ? (
@@ -533,7 +566,7 @@ export function TrainingCardFaceControls({
           aria-label={hintVisible ? hideHintLabel : showHintLabel}
           disabled={busy}
           onClick={onToggleHint}
-          className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-indigo-700 outline-none transition hover:bg-indigo-50 focus-visible:bg-indigo-100 disabled:opacity-50 dark:border-[#7B8491] dark:bg-[#171B22] dark:text-[#9D94FF] dark:hover:border-indigo-400/70 dark:hover:bg-[#201f36] dark:focus-visible:bg-[#252348]"
+          className={approvedPresentation ? approved.hint : "flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-indigo-700 outline-none transition hover:bg-indigo-50 focus-visible:bg-indigo-100 disabled:opacity-50 dark:border-[#7B8491] dark:bg-[#171B22] dark:text-[#9D94FF] dark:hover:border-indigo-400/70 dark:hover:bg-[#201f36] dark:focus-visible:bg-[#252348]"}
         >
           <Lightbulb aria-hidden="true" className="h-5 w-5" />
         </button>
@@ -544,7 +577,7 @@ export function TrainingCardFaceControls({
         aria-label={showAnswerLabel}
         disabled={busy}
         onClick={onShowAnswer}
-        className="h-[46px] flex-1 rounded-xl border border-indigo-400 bg-indigo-600 px-4 text-sm font-bold text-white outline-none transition hover:bg-indigo-700 focus-visible:bg-indigo-700 disabled:opacity-50 dark:border-[#8B89F6] dark:bg-[#262648] dark:text-[#F4F6FA] dark:hover:bg-[#332f60] dark:focus-visible:bg-[#3a356b]"
+        className={approvedPresentation ? `${approved.primary} flex-1` : "h-[46px] flex-1 rounded-xl border border-indigo-400 bg-indigo-600 px-4 text-sm font-bold text-white outline-none transition hover:bg-indigo-700 focus-visible:bg-indigo-700 disabled:opacity-50 dark:border-[#8B89F6] dark:bg-[#262648] dark:text-[#F4F6FA] dark:hover:bg-[#332f60] dark:focus-visible:bg-[#3a356b]"}
       >
         <span>{showAnswerLabel}</span>
       </button>
@@ -570,7 +603,7 @@ export function TrainingCardReviewButton({
       type="button"
       disabled={busy}
       onClick={onClick}
-      className={`relative h-[42px] overflow-hidden rounded-xl border border-slate-300 bg-white px-2 text-xs font-bold outline-none transition before:absolute before:inset-y-0 before:left-0 before:w-1 hover:bg-slate-100 focus-visible:bg-slate-100 disabled:opacity-50 dark:border-[#7B8491] dark:bg-[#11141A] dark:hover:bg-[#202630] dark:focus-visible:bg-[#202630] ${reviewTone[result]}`}
+      className={`relative overflow-hidden rounded-xl border border-slate-300 bg-white px-2 font-bold outline-none transition before:absolute before:inset-y-0 before:left-0 before:w-1 hover:bg-slate-100 focus-visible:bg-slate-100 disabled:opacity-50 dark:border-[#7B8491] dark:bg-[#11141A] dark:hover:bg-[#202630] dark:focus-visible:bg-[#202630] h-[42px] text-xs ${reviewTone[result]}`}
     >
       {label}
     </button>
@@ -608,10 +641,11 @@ export function TrainingCardIconButton({
     <button
       type="button"
       aria-label={label}
+      title={label}
       aria-pressed={active}
       disabled={disabled}
       onClick={onClick}
-      className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border outline-none transition focus-visible:shadow-[inset_0_-3px_0_rgba(79,70,229,0.65)] disabled:opacity-50 dark:focus-visible:shadow-[inset_0_-3px_0_rgba(165,180,252,0.75)] ${
+      className={trainingPresentationV1Enabled() ? chrome.iconAction : `flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border outline-none transition focus-visible:shadow-[inset_0_-3px_0_rgba(79,70,229,0.65)] disabled:opacity-50 dark:focus-visible:shadow-[inset_0_-3px_0_rgba(165,180,252,0.75)] ${
         active
           ? "border-slate-300 bg-indigo-100 text-indigo-700 dark:border-slate-600 dark:bg-indigo-400/10 dark:text-indigo-200"
           : "border-slate-300 bg-white text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:bg-transparent dark:text-slate-300 dark:hover:border-slate-400"
@@ -628,7 +662,8 @@ export function TrainingCardSecondaryActions({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-6 min-h-6 shrink-0 items-center justify-between gap-3">
+    <div data-testid="training-secondary-actions" className={trainingPresentationV1Enabled()
+      ? approved.secondaryActions : "flex h-6 min-h-6 shrink-0 items-center justify-between gap-3"}>
       {children}
     </div>
   );

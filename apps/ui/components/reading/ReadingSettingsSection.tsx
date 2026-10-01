@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import {ApprovedTextSizeSection} from "./ApprovedTextSizeSection";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { readingSizes, type ReadingDevice, type ReadingSize } from "@/lib/reading/readingSize";
 import { SenseCardHeadwordLockup } from "@/components/training/SenseCardChrome";
@@ -13,6 +14,7 @@ const retryClass = "mt-2 min-h-11 rounded-xl border border-indigo-400 px-4 text-
 export function ReadingSettingsSection({ language }: { language: OnboardingLanguage }) {
   const settings = useReadingSettings();
   if (!settings) return null;
+  if (process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 === "true") return <ApprovedTextSizeSection language={language}/>;
   const text = readingSettingsCopy[language];
   return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-slate-800 dark:bg-slate-900">
     <h2 className="text-base font-bold">{text.title}</h2>

@@ -1,9 +1,15 @@
 "use client";
+import { getUiMessages } from "@/lib/uiMessages";
+import { applyResolvedTheme } from "@/lib/preferences/resolvedTheme";
+import { AccountMaterialProvider } from "@/components/practice/material/AccountMaterialProvider";
+import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/AccountPracticeAppearanceProvider";
 
 import React from "react";
 import { TrainingExclusionUndoNotice } from "./v2/TrainingExclusionUndoNotice";
-import { useCallback, useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+
+const ACCEPTED_STATS_REFRESH_DELAY_MS = 1_500;
+const ACCEPTED_STATS_REFRESH_MIN_INTERVAL_MS = 10_000;
 import type { User } from "@supabase/supabase-js";
 import { Joyride, Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
@@ -59,6 +65,7 @@ import {
   TrainingSenseCardV2Session,
 } from "./v2/TrainingSenseCardV2Session";
 import { TrainingUsableCandidatesExhausted } from "./v2/TrainingUsableCandidatesExhausted";
+import { TrainingSessionState } from "./v2/TrainingSessionState";
 import { TrainingUnsupportedMode } from "./v2/TrainingUnsupportedMode";
 import {
   TrainingSessionSurface,
@@ -82,10 +89,16 @@ import { AppFrame } from "@/components/navigation/AppFrame";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
 import { SettingsDestination } from "@/components/navigation/SettingsDestination";
 import { ReadingPreferencesProvider } from "@/components/reading/ReadingPreferencesProvider";
+import {
+  sharedArticlePresentationV1Enabled,
+  trainingPresentationV1Enabled,
+} from "@/lib/platform/platformV2Rollout";
+import { TrainingHistoryDestination } from "@/components/navigation/TrainingHistoryDestination";
 import { StatisticsDestination } from "@/components/navigation/StatisticsDestination";
 import {
   TrainingTodaySetup,
   DEFAULT_SESSION_SIZE,
+  type TrainingMaterialIntent,
   type TrainingSetupDraft,
 } from "./pilot/TrainingTodaySetup";
 import { TrainingIdiomSession } from "./pilot/TrainingIdiomSession";
@@ -128,14 +141,6 @@ type Props = {
   onNavigationBlockedChange?: (blocked: boolean) => void;
   trainingTodaySetupEnabled?: boolean;
 };
-
-const LazyTrainingHistoryDestination = dynamic(
-  () =>
-    import("@/components/navigation/TrainingHistoryDestination").then(
-      (module) => module.TrainingHistoryDestination,
-    ),
-  { ssr: false },
-);
 
 const DEFAULT_LANGUAGE_OPTIONS = [{ value: "nl", label: "Nederlands" }];
 
@@ -190,7 +195,11 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
 export function TrainingScreen(props: Props) {
   return (
     <ReadingPreferencesProvider userId={props.user.id}>
-      <TrainingScreenContent {...props} />
+      <AccountPracticeAppearanceProvider userId={props.user.id} requireReady interfaceLanguage={props.startupSnapshot?.interfaceLanguage}>
+        <AccountMaterialProvider userId={props.user.id}>
+          <TrainingScreenContent {...props} />
+        </AccountMaterialProvider>
+      </AccountPracticeAppearanceProvider>
     </ReadingPreferencesProvider>
   );
 }
@@ -211,6 +220,11 @@ function TrainingScreenContent({
     preferences: initialPreferences,
   } = startupSnapshot;
   const historyButtonRef = useRef<HTMLButtonElement>(null);
+  const historyBackgroundRef = useRef<AppDestination>(destination === "history" ? "training" : destination);
+  if (destination !== "history") historyBackgroundRef.current = destination;
+  const visibleDestination = destination === "history" && sharedArticlePresentationV1Enabled()
+    ? historyBackgroundRef.current : destination;
+
   const previousDestinationRef = useRef(destination);
   const returnedToTraining =
     destination === "training" && previousDestinationRef.current !== "training";
@@ -270,6 +284,7 @@ function TrainingScreenContent({
   const [sessionResumeRecord, setSessionResumeRecord] = useState<
     TrainingSessionResumeRecord | null | undefined
   >(() => (trainingTodaySetupEnabled ? undefined : null));
+  const [sessionDisplayName, setSessionDisplayName] = useState<string | undefined>();
   const [sessionResumeError, setSessionResumeError] = useState(false);
   const [sessionReplacementWarning, setSessionReplacementWarning] =
     useState(false);
@@ -442,6 +457,8 @@ function TrainingScreenContent({
   } | null>(null);
   const [detailInitialGroup, setDetailInitialGroup] =
     useState<PlatformHeadwordGroupV2 | null>(null);
+  const [statisticsMaterialIntent, setStatisticsMaterialIntent] =
+    useState<TrainingMaterialIntent | null>(null);
   const [stats, setStats] = useState<DetailedStats>({
     newWordsToday: 0,
     newCardsToday: 0,
@@ -769,9 +786,49 @@ function TrainingScreenContent({
     trainingSessionId,
     resolveScenarioModes: trainingScenarioCatalog.resolveModes,
   });
+  const acceptedStatsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const acceptedStatsLastRunAtRef = useRef(0);
+  useEffect(
+    () => () => {
+      if (acceptedStatsTimerRef.current) {
+        clearTimeout(acceptedStatsTimerRef.current);
+        acceptedStatsTimerRef.current = null;
+      }
+    },
+    [loadStats],
+  );
+  // The detailed stats aggregate is the dominant DB cost of a Training answer,
+  // so accepted answers refresh it on a trailing, rate-limited schedule.
   const refreshAfterAccepted = useCallback(
-    async ({ statsLabel }: { statsLabel: string }) => {
-      await loadStats(undefined, statsLabel);
+    async ({
+      statsLabel,
+      sessionComplete,
+    }: {
+      statsLabel: string;
+      sessionComplete?: boolean;
+    }) => {
+      const run = () => {
+        acceptedStatsTimerRef.current = null;
+        acceptedStatsLastRunAtRef.current = Date.now();
+        return loadStats(undefined, statsLabel);
+      };
+      if (sessionComplete) {
+        if (acceptedStatsTimerRef.current) {
+          clearTimeout(acceptedStatsTimerRef.current);
+        }
+        await run();
+        return;
+      }
+      if (acceptedStatsTimerRef.current) return;
+      const delay = Math.max(
+        ACCEPTED_STATS_REFRESH_DELAY_MS,
+        acceptedStatsLastRunAtRef.current +
+          ACCEPTED_STATS_REFRESH_MIN_INTERVAL_MS -
+          Date.now(),
+      );
+      acceptedStatsTimerRef.current = setTimeout(() => void run(), delay);
     },
     [loadStats],
   );
@@ -860,6 +917,7 @@ function TrainingScreenContent({
       ? `${currentPresentationId}:${currentWord.id}:${currentMode}`
       : null;
   const beginSessionScopeChange = useCallback(() => {
+    setSessionDisplayName(undefined);
     sessionResumeGenerationRef.current += 1;
     resetPlatformProgressActionPending();
     trainingScenarioCatalog.invalidate();
@@ -1039,8 +1097,8 @@ function TrainingScreenContent({
     resetFocusQueue();
   }, [resetFocusQueue]);
 
-  // Apply theme to document (client-side only)
-  useEffect(() => {
+  // Apply account mode before the first coloured interface frame.
+  useLayoutEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
@@ -1048,24 +1106,17 @@ function TrainingScreenContent({
     const root = document.documentElement;
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-    const applyTheme = (pref: ThemePreference) => {
-      const useDark =
-        pref === "dark" || (pref === "system" && mediaQuery.matches);
-      root.classList.toggle("dark", useDark);
+    root.dataset.accountThemeMode = themePreference;
+    const apply = () => applyResolvedTheme(root, mediaQuery.matches);
+    apply();
+    mediaQuery.addEventListener("change", apply);
+    return () => {
+      mediaQuery.removeEventListener("change", apply);
+      if (root.dataset.accountThemeMode === themePreference) {
+        delete root.dataset.accountThemeMode;
+        applyResolvedTheme(root, mediaQuery.matches);
+      }
     };
-
-    applyTheme(themePreference);
-
-    if (themePreference !== "system") {
-      return;
-    }
-
-    const handleSystemChange = (event: MediaQueryListEvent) => {
-      root.classList.toggle("dark", event.matches);
-    };
-
-    mediaQuery.addEventListener("change", handleSystemChange);
-    return () => mediaQuery.removeEventListener("change", handleSystemChange);
   }, [themePreference]);
 
   const handleTrainWord = useCallback(
@@ -1302,7 +1353,9 @@ function TrainingScreenContent({
   );
 
   const handleListsUpdated = useCallback(async () => {
-    beginSessionScopeChange();
+    const previousListKey = wordListId
+      ? `${wordListType ?? "curated"}:${wordListId}`
+      : null;
     const reloadForList = (
       list: WordListSummary,
       refreshedScope: ActiveTrainingScope,
@@ -1311,6 +1364,12 @@ function TrainingScreenContent({
       // default scenario below is authoritative for the replacement request,
       // so the hydration effect must not replay the intermediate snapshot.
       lastAppliedActiveTrainingScopeRef.current = refreshedScope;
+      if (previousListKey === `${list.type}:${list.id}`) {
+        // Editing collections must not end the running Training session.
+        void loadStats({ listId: list.id, listType: list.type });
+        return;
+      }
+      beginSessionScopeChange();
       const nextScenario = list.default_scenario_id ?? activeScenario;
       setActiveScenario(nextScenario, { persist: false });
       persistCurrentTrainingScope({
@@ -1337,6 +1396,8 @@ function TrainingScreenContent({
     persistCurrentTrainingScope,
     refreshListsAfterUpdate,
     setActiveScenario,
+    wordListId,
+    wordListType,
   ]);
 
   const handleScenarioChange = useCallback(
@@ -1410,6 +1471,7 @@ function TrainingScreenContent({
     startTranslationSession: startPlatformV2TranslationTrainingSession,
     reportError: setTrainingLoadError,
     onSessionReady: (session, context) => {
+      setSessionDisplayName(context.sessionName?.trim() || undefined);
       setSessionReplacementWarning(false);
       setSessionConsumedCardKeys([]);
       setSessionCompletedActions(0);
@@ -1424,6 +1486,7 @@ function TrainingScreenContent({
           void writeTrainingSessionResume({
             family: "idiom",
             sessionId: session.sessionId,
+            sessionName: context.sessionName,
             userId: user.id,
             languageCode: context.languageCode,
             listId: context.scope.listId,
@@ -1449,7 +1512,8 @@ function TrainingScreenContent({
         replaceTrainingSessionId(null);
         setLatchedSessionPlan(null);
         if (user.id) void writeTrainingSessionResume({
-          family: "sentence", sessionId: session.sessionId, userId: user.id,
+          family: "sentence", sessionId: session.sessionId,
+            sessionName: context.sessionName, userId: user.id,
           languageCode: context.languageCode, listId: context.scope.listId,
           listType: context.scope.listType, scenarioId: "sentences",
           modes: context.draft.modes, cardFilter: context.draft.cardFilter,
@@ -1473,6 +1537,7 @@ function TrainingScreenContent({
       void writeTrainingSessionResume({
         ...(context.draft.family === "word-in-context" ? { family: "word-in-context" as const } : {}),
         sessionId: session.sessionId,
+            sessionName: context.sessionName,
         userId: user.id,
         languageCode: context.languageCode,
         listId: context.scope.listId,
@@ -1635,6 +1700,7 @@ function TrainingScreenContent({
         return;
       }
       setSessionResumeRecord(record);
+      setSessionDisplayName(record?.sessionName);
     });
     return () => {
       cancelled = true;
@@ -1672,6 +1738,7 @@ function TrainingScreenContent({
       return;
     }
     const record = sessionResumeRecord;
+    setSessionDisplayName(record.sessionName);
     const savedLanguagePermitted = trainingLanguageCodes.includes(
       record.languageCode,
     );
@@ -2329,6 +2396,9 @@ function TrainingScreenContent({
   );
   const sessionChromeVisible =
     trainingTodaySetupEnabled && trainingPilot.surface === "session";
+  const displayedSessionName = sessionDisplayName ||
+    (!trainingFocusFilter.dictionaryScope ? wordListLabel : undefined) ||
+    getUiMessages(onboardingLang).trainingOverview.currentTraining;
   const sessionChrome = sessionChromeVisible
     ? {
         interfaceLanguage: onboardingLang,
@@ -2336,6 +2406,7 @@ function TrainingScreenContent({
         mode: currentMode,
         cardFilter,
         presentation: sessionPresentation,
+        sessionName: displayedSessionName,
         onHistory: openTrainingHistory,
         historyButtonRef,
         onClose: trainingPilot.returnToToday,
@@ -2381,6 +2452,7 @@ function TrainingScreenContent({
       : nextCardOverrideNotice
         ? { kind: "status", message: nextCardOverrideNotice }
         : null;
+  const studyTimeEnabled = destination === "training" && !detailsOpen && !showHotkeys && !showLanguageSelection && !navigationBlocked && !loadingWord && !sessionAuthorityChecking;
   return (
     <AppFrame
       activeDestination={destination}
@@ -2388,25 +2460,30 @@ function TrainingScreenContent({
       themePreference={themePreference}
       settingsActive={destination === "settings"}
       navigationDisabled={navigationBlocked}
+      immersive={visibleDestination === "training" && v2SessionLayoutVisible}
       onNavigate={onRequestDestination}
       onCycleTheme={cycleThemePreference}
       onOpenSettings={openAppSettings}
     >
       <div
         data-training-session-layout={v2SessionLayoutVisible ? "v2" : undefined}
-        aria-hidden={destination !== "training"}
+        aria-hidden={visibleDestination !== "training"}
         data-training-today-setup={
           trainingTodaySetupEnabled ? "enabled" : "disabled"
         }
         data-training-pilot-surface={trainingPilot.surface}
-        className={`${destination === "training" ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden bg-transparent text-slate-900 dark:text-slate-100 ${
+        className={`${visibleDestination === "training" ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden bg-transparent text-slate-900 dark:text-slate-100 ${
           v2SessionLayoutVisible
-            ? `font-sense-sans ${sessionStyles.viewport}`
-            : "dark:bg-background-dark"
+            ? `font-sense-sans ${sessionStyles.viewport} ${trainingPresentationV1Enabled() ? sessionStyles.viewportApproved : ""}`
+            : trainingPresentationV1Enabled()
+              ? ""
+              : "dark:bg-background-dark"
         }`}
       >
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
           <TrainingTodaySetup
+            materialIntent={statisticsMaterialIntent}
+            onMaterialIntentConsumed={() => setStatisticsMaterialIntent(null)}
             userId={user.id}
             trainingLanguageCode={currentTrainingLanguage}
             trainingLanguageOptions={trainingLanguageOptions}
@@ -2445,7 +2522,8 @@ function TrainingScreenContent({
             scenarioLoading={trainingPilot.scenarioLoading}
             replacementWarning={sessionReplacementWarning}
             hasOwnedSession={Boolean(trainingSessionId || idiomSession || sentenceSession)}
-            activeSessionLabel={
+            ownedSession={activeExerciseFamily === "idiom" && idiomSession ? {id:idiomSession.sessionId,completed:idiomSession.completedActions,total:idiomSession.plannedTotal} : activeExerciseFamily === "sentence" && sentenceSession ? {id:sentenceSession.sessionId,completed:sentenceSession.completedActions,total:sentenceSession.plannedTotal} : trainingSessionId ? {id:trainingSessionId,completed:sessionCompletedActions,total:latchedSessionPlan?.plannedTotal??sessionPlannedTotal} : undefined}
+            activeSessionLabel={sessionDisplayName || (
               activeExerciseFamily === "idiom"
                 ? onboardingLang === "ru"
                   ? "Тренировка идиом"
@@ -2454,7 +2532,7 @@ function TrainingScreenContent({
                     : "Idiom training"
                 : trainingFocusFilter.dictionaryScope
                   ? undefined
-                  : wordListLabel || undefined
+                  : wordListLabel || undefined)
             }
             onContinue={handleContinueTrainingSession}
             onStart={trainingPilot.startSession}
@@ -2462,6 +2540,8 @@ function TrainingScreenContent({
           />
         ) : activeExerciseFamily === "idiom" && idiomSession ? (
           <TrainingIdiomSession
+            sessionName={displayedSessionName}
+            studyTimeEnabled={studyTimeEnabled}
             key={idiomSession.sessionId}
             userId={user.id}
             session={idiomSession}
@@ -2482,9 +2562,10 @@ function TrainingScreenContent({
             onOpenDetails={handleShowCurrentWordDetails}
           />
         ) : activeExerciseFamily === "sentence" && sentenceSession && typeof translationLang === "string" && translationLang !== "off" ? (
-          <TrainingSentenceSession key={sentenceSession.sessionId} userId={user.id} session={sentenceSession} contentLanguageCode={currentTrainingLanguage} translationTargetLanguageCode={translationLang} interfaceLanguage={onboardingLang} onExit={exitIdiomSession} onSessionSuperseded={() => { setSentenceSession(null); setActiveExerciseFamily("meaning"); setExerciseFamilyForResume("meaning"); handleTrainingSessionSuperseded(); }} onHistory={openTrainingHistory} onPlayResolvedAudio={(url, label) => playAudio(url, label)} onOpenDetails={handleShowCurrentWordDetails} />
+          <TrainingSentenceSession sessionName={displayedSessionName} studyTimeEnabled={studyTimeEnabled} key={sentenceSession.sessionId} userId={user.id} session={sentenceSession} contentLanguageCode={currentTrainingLanguage} translationTargetLanguageCode={translationLang} interfaceLanguage={onboardingLang} onExit={exitIdiomSession} onSessionSuperseded={() => { setSentenceSession(null); setActiveExerciseFamily("meaning"); setExerciseFamilyForResume("meaning"); handleTrainingSessionSuperseded(); }} onHistory={openTrainingHistory} onPlayResolvedAudio={(url, label) => playAudio(url, label)} onOpenDetails={handleShowCurrentWordDetails} />
         ) : v2SessionOwned && currentWord && v2SessionMode ? (
           <TrainingSenseCardV2Session
+            studyTimeEnabled={studyTimeEnabled}
             key={
               currentPresentationIdentity ??
               `${user.id}:${currentWord.id}:${currentMode}`
@@ -2551,6 +2632,10 @@ function TrainingScreenContent({
                 interfaceLanguage={onboardingLang}
                 onExit={trainingPilot.returnToToday}
               />
+            ) : trainingPresentationV1Enabled() ? (
+              <div className="h-full min-h-0" data-testid="training-v2-loading" data-training-renderer="v2" data-training-v2-state="loading">
+                <TrainingSessionState loading title={platformV2Message(onboardingLang, "senseCard.training.loading")} />
+              </div>
             ) : (
               <div
                 role="status"
@@ -2583,10 +2668,11 @@ function TrainingScreenContent({
             setDetailInitialGroup(null);
           }}
         >
-          {detailSelection ? (
+          {entered => detailSelection ? (
             <div className="flex h-full min-h-0 flex-col gap-3">
               <div className="min-h-0 flex-1">
                 <TrainingMoreSenseCardV2Session
+                  revealActiveMeaning={entered}
                   entryId={detailSelection.entryId}
                   initialGroup={detailInitialGroup ?? undefined}
                   headword={detailSelection.headword}
@@ -2664,7 +2750,7 @@ function TrainingScreenContent({
         />
       )}
       <LibraryDestination
-        open={destination === "library"}
+        open={visibleDestination === "library"}
         userId={user.id}
         language={currentTrainingLanguage}
         translationLang={translationLang}
@@ -2679,13 +2765,25 @@ function TrainingScreenContent({
         }}
       />
       <StatisticsDestination
-        open={destination === "statistics"}
+        userId={user.id}
+        languageCode={currentTrainingLanguage}
+        open={visibleDestination === "statistics"}
         interfaceLanguage={onboardingLang}
         stats={stats}
         onStartTraining={() => onRequestDestination("training")}
+        onPractiseMaterial={(languageCode, material) => {
+          setStatisticsMaterialIntent({
+            key: Date.now(), userId: user.id, languageCode,
+            material: material.kind === "all" ? { materialMode: "all-dictionaries" }
+              : material.kind === "dictionary" ? { materialMode: "selected-dictionaries", dictionaryIds: [material.id!] }
+              : { materialMode: "collection", listValue: `${material.listType}:${material.id}` },
+          });
+          onRequestDestination("training");
+        }}
+        onHistory={openTrainingHistory}
       />
       {destination === TRAINING_HISTORY_DESTINATION ? (
-        <LazyTrainingHistoryDestination
+        <TrainingHistoryDestination
           open
           userId={user.id}
           interfaceLanguage={onboardingLang}
@@ -2695,6 +2793,7 @@ function TrainingScreenContent({
         />
       ) : null}
       <SettingsDestination
+        onExit={() => onRequestDestination("training")}
         open={destination === "settings"}
         interfaceLanguage={onboardingLang}
         themePreference={themePreference}

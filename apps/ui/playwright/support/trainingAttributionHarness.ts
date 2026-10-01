@@ -1,4 +1,6 @@
 import type { Page, Route } from "@playwright/test";
+import { emptyTrainingSetups } from "../../lib/training/setups/model";
+import { emptyMaterialPreferences } from "../../lib/training/material/model";
 import {
   buildFakeSupabaseSession,
   installSupabaseSession,
@@ -134,6 +136,8 @@ const entries: FixtureEntry[] = Array.from({ length: 64 }, (_, index) => ({
   },
 }));
 
+const fixtureEntries = entries;
+
 const userSession = {
   id: "training-attribution-user",
   email: "test@2000nl.test",
@@ -168,10 +172,20 @@ export async function setupAuthenticatedTrainingAttributionPage(
     sessionOutcomes?: Array<"statement-timeout" | "card" | "empty">;
     /** One valid deterministic state used only for visual QA. */
     visualProfile?: TrainingVisualState;
+    /** Account appearance/reading preferences for layout acceptance, never production defaults. */
+    settingsOverrides?: Record<string, unknown>;
+    /** Diagnostic reporting validates dictionary entry UUIDs before transport. */
+    useUuidEntryIds?: boolean;
+    /** Attention delivery validates owned session UUIDs independently of entry IDs. */
+    useUuidSessionId?: boolean;
     /** Use the local app's dev-only test login instead of installing a mocked session. */
     devTestLogin?: boolean;
   } = {},
 ) {
+  const fixtureSessionId = options.useUuidSessionId ? "40710000-0000-4000-8000-000000000001" : "training-session-fixture";
+  const entries = options.useUuidEntryIds ? fixtureEntries.map((entry, index) => ({
+    ...entry, id: `40700000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+  })) : fixtureEntries;
   let nextEntryIndex = 0;
   let actionCount = 0;
   let requestSequence = 0;
@@ -210,7 +224,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   let pendingActionReceipt: Record<string, unknown> | null = null;
   const splitDelayMs = injectedDelayMs > 0 ? Math.ceil(injectedDelayMs * 0.55) : 0;
   const visualFixture = options.visualProfile
-    ? buildTrainingVisualFixtureBundle(options.visualProfile, entries)
+    ? buildTrainingVisualFixtureBundle(options.visualProfile, entries, { diagnosticReportReady: options.useUuidEntryIds })
     : null;
   const schedulerOutcomes = [...(options.schedulerOutcomes ?? [])];
   const sessionOutcomes = [...(options.sessionOutcomes ?? [])];
@@ -223,7 +237,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
         ? (target as Record<string, unknown>).entryId
         : undefined;
     if (
-      sessionId === "training-session-fixture" &&
+      sessionId === fixtureSessionId &&
       typeof entryId === "string"
     ) {
       consumedSessionEntryIds.add(entryId);
@@ -269,6 +283,25 @@ export async function setupAuthenticatedTrainingAttributionPage(
       return;
     }
     await fulfillJson(route, userSession, "auth");
+  });
+
+  // These reads moved from browser-only presets to account-owned endpoints.
+  // Keep the fixture self-contained; its fake principal must never reach the real server.
+  let setupSnapshot = emptyTrainingSetups();
+  let materialSnapshot = emptyMaterialPreferences();
+  await page.route("**/api/training/setups", async (route) => {
+    if (route.request().method() === "PUT") {
+      const { document } = route.request().postDataJSON();
+      setupSnapshot = { revision: setupSnapshot.revision + 1, document };
+    }
+    await fulfillJson(route, setupSnapshot, "setups");
+  });
+  await page.route("**/api/settings/material", async (route) => {
+    if (route.request().method() === "PUT") {
+      const { document } = route.request().postDataJSON();
+      materialSnapshot = { revision: materialSnapshot.revision + 1, document };
+    }
+    await fulfillJson(route, materialSnapshot, "material-preferences");
   });
 
   await page.route("**/api/platform/v2/lookup", async (route) => {
@@ -443,9 +476,9 @@ export async function setupAuthenticatedTrainingAttributionPage(
       await fulfillJson(
         route,
         visualFixture
-          ? { sessionId: "training-session-fixture", ...visualFixture.plan }
+          ? { sessionId: fixtureSessionId, ...visualFixture.plan }
           : {
-              sessionId: "training-session-fixture",
+              sessionId: fixtureSessionId,
               plannedNew: 30,
               plannedReview: 20,
               plannedPractice: 0,
@@ -488,7 +521,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
       await fulfillJson(
         route,
         {
-          sessionId: "training-session-fixture",
+          sessionId: fixtureSessionId,
           runStatus: "active",
           runGeneration: 1,
           sessionSize: plan.plannedTotal,
@@ -881,7 +914,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
         route,
         method === "GET" || method === "HEAD"
           ? visualFixture
-            ? visualFixture.settings
+            ? { ...visualFixture.settings, ...options.settingsOverrides }
             : {
                 ...learningPreferences(),
                 theme_preference: "system",
@@ -1493,7 +1526,7 @@ function wordListSummary() {
     language_code: "nl",
     primary_language_code: "nl",
     is_primary: true,
-    word_list_items: [{ count: entries.length }],
+    word_list_items: [{ count: fixtureEntries.length }],
   };
 }
 

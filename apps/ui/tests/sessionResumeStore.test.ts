@@ -159,6 +159,14 @@ describe("training session resume store", () => {
     expect(await readTrainingSessionResume("user-1")).toEqual(idiomRecord);
   });
 
+  test("preserves the launch name across reload for every exercise family", async () => {
+    for (const family of ['meaning', 'idiom', 'sentence', 'word-in-context'] as const) {
+      const named = { ...record, family, sessionName: 'My focused training' };
+      await writeTrainingSessionResume(named);
+      expect(await readTrainingSessionResume(record.userId)).toEqual(named);
+    }
+  });
+
   test("round-trips a stepped session size beyond the former 5/10 choices", async () => {
     const stepped = { ...record, sessionSize: 30 };
     await writeTrainingSessionResume(stepped);

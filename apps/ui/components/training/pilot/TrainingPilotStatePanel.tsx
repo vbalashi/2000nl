@@ -7,6 +7,7 @@ type SharedProps = {
   interfaceLanguage: OnboardingLanguage;
   context: "bootstrap" | "training";
   copyVisible?: boolean;
+  plain?: boolean;
 };
 
 type Props =
@@ -145,9 +146,9 @@ export function TrainingPilotStatePanel(props: Props) {
         aria-busy={busy}
         aria-label={copyVisible ? undefined : stateCopy.heading}
         aria-live="polite"
-        className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/60 md:p-12"
+        className={props.plain ? "text-center" : "w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/60 md:p-12"}
       >
-        {busy ? (
+        {props.plain ? null : busy ? (
           <div
             data-testid="training-loading-indicator"
             aria-hidden="true"

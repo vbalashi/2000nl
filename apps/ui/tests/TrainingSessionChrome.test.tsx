@@ -135,3 +135,35 @@ test("renders only the authoritative planned total and fraction", () => {
   const track = screen.getByTestId("training-session-progress-track");
   expect(track.firstElementChild).toHaveStyle({ width: `${(10 / 23) * 100}%` });
 });
+
+test("offers the approved frameless header without changing session controls or progress", () => {
+  const onClose = vi.fn();
+  render(
+    <TrainingSessionChrome
+      interfaceLanguage="en"
+      scenario="understanding"
+      mode="word-to-definition"
+      cardFilter="both"
+      presentation={{ kind: "planned", position: 2, total: 5, fraction: 0.4 }}
+      approvedPresentation
+      onClose={onClose}
+    />,
+  );
+  const chrome = screen.getByTestId("training-session-chrome");
+  expect(chrome).toHaveAttribute("data-visual-spec", "training-approved-v1");
+  expect(screen.getByTestId("training-session-position")).toHaveTextContent("2 / 5");
+  expect(screen.getByTestId("training-session-progress-track").firstElementChild)
+    .toHaveStyle({ width: "40%" });
+  fireEvent.click(screen.getByRole("button", { name: "Close session" }));
+  expect(onClose).toHaveBeenCalledOnce();
+});
+
+test("shows the selected training name instead of the queue label", () => {
+  render(<TrainingSessionChrome interfaceLanguage="ru" scenario="understanding"
+    mode="word-to-definition" cardFilter="both" sessionName="Мои пять слов"
+    presentation={{kind:"planned",position:2,total:5,fraction:0.4}} onClose={vi.fn()}
+    approvedPresentation />);
+  expect(screen.getByTestId("training-session-name")).toHaveTextContent("Мои пять слов");
+  expect(screen.queryByText("Новые + повторение")).not.toBeInTheDocument();
+  expect(screen.getByTestId("training-session-position")).toHaveTextContent("2 / 5");
+});

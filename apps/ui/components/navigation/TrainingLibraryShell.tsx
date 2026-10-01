@@ -1,5 +1,6 @@
 "use client";
 
+import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { TrainingScreen } from "@/components/training/TrainingScreen";
@@ -47,6 +48,7 @@ export function TrainingLibraryShell({ user, startupSnapshot }: Props) {
   );
   const [navigationBlocked, setNavigationBlocked] = useState(false);
   const historyPositionRef = useRef(0);
+  const historyOriginRef = useRef<AppDestination>("training");
   const currentUrlRef = useRef(
     typeof window === "undefined" ? "" : window.location.href,
   );
@@ -54,6 +56,7 @@ export function TrainingLibraryShell({ user, startupSnapshot }: Props) {
   const requestDestination = useCallback(
     (nextDestination: AppDestination) => {
       if (navigationBlocked || nextDestination === destination) return;
+      if (nextDestination === TRAINING_HISTORY_DESTINATION) historyOriginRef.current = destination;
       const nextPosition = historyPositionRef.current + 1;
       const nextUrl = appDestinationUrl(window.location.href, nextDestination);
       window.history.pushState(
@@ -70,14 +73,15 @@ export function TrainingLibraryShell({ user, startupSnapshot }: Props) {
 
   const returnFromHistory = useCallback(() => {
     if (destination !== TRAINING_HISTORY_DESTINATION) return;
-    const nextUrl = appDestinationUrl(window.location.href, "training");
+    const target = sharedArticlePresentationV1Enabled() ? historyOriginRef.current : "training";
+    const nextUrl = appDestinationUrl(window.location.href, target);
     window.history.replaceState(
       stateAtPosition(historyPositionRef.current),
       "",
       nextUrl,
     );
     currentUrlRef.current = nextUrl;
-    setDestination("training");
+    setDestination(target);
   }, [destination]);
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import s from "@/components/practice/builder/builderControls.module.css";
 import type { CardFilter } from "@/lib/types";
 
 const MIX_STEPS = [
@@ -37,12 +38,14 @@ export function TrainingMixPicker({
   cardFilter,
   ratio,
   onChange,
+  approved=false,
   label,
   reviewsOnly,
   newOnly,
   ratioLabel,
   help,
 }: {
+  approved?:boolean;
   cardFilter: CardFilter;
   ratio: number;
   onChange: (index: number) => void;
@@ -60,15 +63,15 @@ export function TrainingMixPicker({
       : ratioLabel(ratio);
 
   return (
-    <div>
-      <div className="flex items-baseline justify-between gap-3">
+    <div className={approved?s.rangeGroup:undefined}>
+      <div className={approved?s.labelRow:"flex items-baseline justify-between gap-3"}>
         <label
           htmlFor="training-session-mix"
-          className="text-sm font-semibold text-slate-950 dark:text-white"
+          className={approved?s.label:"text-sm font-semibold text-slate-950 dark:text-white"}
         >
           {label}
         </label>
-        <span className="text-right text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+        <span className={approved?s.selection:"text-right text-sm font-semibold text-indigo-700 dark:text-indigo-300"}>
           {selectedLabel}
         </span>
       </div>
@@ -81,8 +84,9 @@ export function TrainingMixPicker({
         value={index}
         onChange={(event) => onChange(Number(event.target.value))}
         aria-valuetext={selectedLabel}
-        className="mt-3 h-8 w-full cursor-pointer accent-indigo-500"
+        className={approved?s.range:"mt-3 h-8 w-full cursor-pointer accent-indigo-500"}
       />
+      {approved?<div className={s.ends}><span>{reviewsOnly}</span><span>{newOnly}</span></div>:<>
       <div className="grid grid-cols-7 text-[10px] text-slate-500 dark:text-slate-400 sm:text-xs">
         {[reviewsOnly, "1:5", "1:4", "1:3", "1:2", "1:1", newOnly].map((stepLabel, stepIndex) => (
           <span
@@ -91,11 +95,12 @@ export function TrainingMixPicker({
             className={`truncate text-center first:text-left last:text-right ${stepIndex === index ? "font-bold text-indigo-700 dark:text-indigo-300" : ""}`}
             title={stepLabel}
           >
-            {stepIndex === 0 ? "Review" : stepIndex === 6 ? "New" : stepLabel}
+            {stepIndex === 0 ? reviewsOnly : stepIndex === 6 ? newOnly : stepLabel}
           </span>
         ))}
       </div>
-      <p className="mt-1 text-xs leading-4 text-slate-500 dark:text-slate-400">
+      </>}
+      <p className={approved?s.help:"mt-1 text-xs leading-4 text-slate-500 dark:text-slate-400"}>
         {help}
       </p>
     </div>

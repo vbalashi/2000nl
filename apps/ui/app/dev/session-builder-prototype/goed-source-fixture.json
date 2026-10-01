@@ -1,0 +1,744 @@
+[
+  {
+    "article": "het",
+    "headword": "goed",
+    "audioCapability": {
+      "audioId": "local-preview-zn",
+      "actionId": "play-audio",
+      "contentLanguageCode": "nl"
+    },
+    "partOfSpeech": "noun",
+    "coreVocabularyLabel": "2K",
+    "senseCount": 3,
+    "meanings": [
+      {
+        "entryId": "004395_a4439_goed_zn_1",
+        "cardTypeId": "word-to-definition",
+        "displayOrdinal": 1,
+        "partOfSpeech": "noun",
+        "definition": {
+          "contentNodeId": "004395_a4439_goed_zn_1-d",
+          "parentContentNodeId": null,
+          "kind": "definition",
+          "text": "de dingen; de voorwerpen",
+          "children": []
+        },
+        "entryTranslation": null,
+        "entryTranslationAlternatives": [],
+        "translationStatus": null,
+        "details": [
+          {
+            "contentNodeId": "004395_a4439_goed_zn_1-e0",
+            "parentContentNodeId": null,
+            "kind": "example",
+            "text": "de goederen worden vervoerd per schip",
+            "children": []
+          }
+        ],
+        "repeatCount": 0,
+        "startLearning": null,
+        "markKnown": null,
+        "undoKnown": null,
+        "reportCapability": null
+      },
+      {
+        "entryId": "004395_a4439_goed_zn_2",
+        "cardTypeId": "word-to-definition",
+        "displayOrdinal": 2,
+        "partOfSpeech": "noun",
+        "definition": {
+          "contentNodeId": "004395_a4439_goed_zn_2-d",
+          "parentContentNodeId": null,
+          "kind": "definition",
+          "text": "dat wat goed is",
+          "children": []
+        },
+        "entryTranslation": null,
+        "entryTranslationAlternatives": [],
+        "translationStatus": null,
+        "details": [
+          {
+            "contentNodeId": "004395_a4439_goed_zn_2-e0",
+            "parentContentNodeId": null,
+            "kind": "example",
+            "text": "zij heeft veel goed gedaan voor de stad",
+            "children": []
+          },
+          {
+            "contentNodeId": "004395_a4439_goed_zn_2-i0",
+            "parentContentNodeId": null,
+            "kind": "idiom",
+            "text": "iets komt ten goede aan iemand of iets",
+            "children": [
+              {
+                "contentNodeId": "004395_a4439_goed_zn_2-ix0",
+                "parentContentNodeId": null,
+                "kind": "idiom-explanation",
+                "text": "iets is bestemd voor iemand of iets; iets is gunstig voor iemand of iets",
+                "children": []
+              },
+              {
+                "contentNodeId": "004395_a4439_goed_zn_2-i0-example0",
+                "parentContentNodeId": "004395_a4439_goed_zn_2-i0",
+                "kind": "example",
+                "text": "het geld dat we met deze actie verdienen, komt ten goede aan de slachtoffers van de brand",
+                "children": []
+              }
+            ]
+          }
+        ],
+        "repeatCount": 0,
+        "startLearning": null,
+        "markKnown": null,
+        "undoKnown": null,
+        "reportCapability": null
+      },
+      {
+        "entryId": "004395_a4439_goed_zn_3",
+        "cardTypeId": "word-to-definition",
+        "displayOrdinal": 3,
+        "partOfSpeech": "noun",
+        "definition": {
+          "contentNodeId": "004395_a4439_goed_zn_3-d",
+          "parentContentNodeId": null,
+          "kind": "definition",
+          "text": "de stof; de kleren",
+          "children": []
+        },
+        "entryTranslation": null,
+        "entryTranslationAlternatives": [],
+        "translationStatus": null,
+        "details": [
+          {
+            "contentNodeId": "004395_a4439_goed_zn_3-e0",
+            "parentContentNodeId": null,
+            "kind": "example",
+            "text": "het vuile goed kun je in de machine doen",
+            "children": []
+          }
+        ],
+        "repeatCount": 0,
+        "startLearning": null,
+        "markKnown": null,
+        "undoKnown": null,
+        "reportCapability": null
+      }
+    ],
+    "crossReferences": [],
+    "presentations": [
+      {
+        "kind": "sense-card",
+        "meaning": {
+          "entryId": "004395_a4439_goed_zn_1",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 1,
+          "partOfSpeech": "noun",
+          "definition": {
+            "contentNodeId": "004395_a4439_goed_zn_1-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "de dingen; de voorwerpen",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "004395_a4439_goed_zn_1-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "de goederen worden vervoerd per schip",
+              "children": []
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        }
+      },
+      {
+        "kind": "sense-card",
+        "meaning": {
+          "entryId": "004395_a4439_goed_zn_2",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 2,
+          "partOfSpeech": "noun",
+          "definition": {
+            "contentNodeId": "004395_a4439_goed_zn_2-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "dat wat goed is",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "004395_a4439_goed_zn_2-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "zij heeft veel goed gedaan voor de stad",
+              "children": []
+            },
+            {
+              "contentNodeId": "004395_a4439_goed_zn_2-i0",
+              "parentContentNodeId": null,
+              "kind": "idiom",
+              "text": "iets komt ten goede aan iemand of iets",
+              "children": [
+                {
+                  "contentNodeId": "004395_a4439_goed_zn_2-ix0",
+                  "parentContentNodeId": null,
+                  "kind": "idiom-explanation",
+                  "text": "iets is bestemd voor iemand of iets; iets is gunstig voor iemand of iets",
+                  "children": []
+                },
+                {
+                  "contentNodeId": "004395_a4439_goed_zn_2-i0-example0",
+                  "parentContentNodeId": "004395_a4439_goed_zn_2-i0",
+                  "kind": "example",
+                  "text": "het geld dat we met deze actie verdienen, komt ten goede aan de slachtoffers van de brand",
+                  "children": []
+                }
+              ]
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        }
+      },
+      {
+        "kind": "sense-card",
+        "meaning": {
+          "entryId": "004395_a4439_goed_zn_3",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 3,
+          "partOfSpeech": "noun",
+          "definition": {
+            "contentNodeId": "004395_a4439_goed_zn_3-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "de stof; de kleren",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "004395_a4439_goed_zn_3-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "het vuile goed kun je in de machine doen",
+              "children": []
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        }
+      }
+    ]
+  },
+  {
+    "article": null,
+    "headword": "goed",
+    "audioCapability": {
+      "audioId": "local-preview-bw",
+      "actionId": "play-audio",
+      "contentLanguageCode": "nl"
+    },
+    "partOfSpeech": "adverb",
+    "coreVocabularyLabel": "2K",
+    "senseCount": 1,
+    "meanings": [
+      {
+        "entryId": "004397_a4441_goed_bw_1",
+        "cardTypeId": "word-to-definition",
+        "displayOrdinal": 1,
+        "partOfSpeech": "adverb",
+        "definition": {
+          "contentNodeId": "004397_a4441_goed_bw_1-d",
+          "parentContentNodeId": null,
+          "kind": "definition",
+          "text": "heel; erg",
+          "children": []
+        },
+        "entryTranslation": null,
+        "entryTranslationAlternatives": [],
+        "translationStatus": null,
+        "details": [
+          {
+            "contentNodeId": "004397_a4441_goed_bw_1-e0",
+            "parentContentNodeId": null,
+            "kind": "example",
+            "text": "het kind is goed verkouden",
+            "children": []
+          }
+        ],
+        "repeatCount": 0,
+        "startLearning": null,
+        "markKnown": null,
+        "undoKnown": null,
+        "reportCapability": null
+      }
+    ],
+    "crossReferences": [],
+    "presentations": [
+      {
+        "kind": "sense-card",
+        "meaning": {
+          "entryId": "004397_a4441_goed_bw_1",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 1,
+          "partOfSpeech": "adverb",
+          "definition": {
+            "contentNodeId": "004397_a4441_goed_bw_1-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "heel; erg",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "004397_a4441_goed_bw_1-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "het kind is goed verkouden",
+              "children": []
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        }
+      }
+    ]
+  },
+  {
+    "article": null,
+    "headword": "goed",
+    "audioCapability": {
+      "audioId": "local-preview-bn",
+      "actionId": "play-audio",
+      "contentLanguageCode": "nl"
+    },
+    "partOfSpeech": "adjective",
+    "coreVocabularyLabel": "2K",
+    "senseCount": 3,
+    "meanings": [
+      {
+        "entryId": "004396_a4440_goed_bn_1",
+        "cardTypeId": "word-to-definition",
+        "displayOrdinal": 1,
+        "partOfSpeech": "adjective",
+        "definition": {
+          "contentNodeId": "004396_a4440_goed_bn_1-d",
+          "parentContentNodeId": null,
+          "kind": "definition",
+          "text": "iets wat goed is, heeft een hoge kwaliteit",
+          "children": []
+        },
+        "entryTranslation": null,
+        "entryTranslationAlternatives": [],
+        "translationStatus": null,
+        "details": [
+          {
+            "contentNodeId": "004396_a4440_goed_bn_1-e0",
+            "parentContentNodeId": null,
+            "kind": "example",
+            "text": "Ruud is een goede leraar",
+            "children": []
+          },
+          {
+            "contentNodeId": "004396_a4440_goed_bn_1-e1",
+            "parentContentNodeId": null,
+            "kind": "example",
+            "text": "heb je een goede vakantie gehad?",
+            "children": []
+          },
+          {
+            "contentNodeId": "004396_a4440_goed_bn_1-i0",
+            "parentContentNodeId": null,
+            "kind": "idiom",
+            "text": "iets valt in goede aarde",
+            "children": [
+              {
+                "contentNodeId": "004396_a4440_goed_bn_1-ix0",
+                "parentContentNodeId": null,
+                "kind": "idiom-explanation",
+                "text": "iets wordt gewaardeerd",
+                "children": []
+              },
+              {
+                "contentNodeId": "004396_a4440_goed_bn_1-i0-example0",
+                "parentContentNodeId": "004396_a4440_goed_bn_1-i0",
+                "kind": "example",
+                "text": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+                "children": []
+              }
+            ]
+          },
+          {
+            "contentNodeId": "004396_a4440_goed_bn_1-i1",
+            "parentContentNodeId": null,
+            "kind": "idiom",
+            "text": "alles goed?",
+            "children": [
+              {
+                "contentNodeId": "004396_a4440_goed_bn_1-ix1",
+                "parentContentNodeId": null,
+                "kind": "idiom-explanation",
+                "text": "dit zeg je als je wilt weten hoe het met iemand gaat",
+                "children": []
+              }
+            ]
+          }
+        ],
+        "repeatCount": 0,
+        "startLearning": null,
+        "markKnown": null,
+        "undoKnown": null,
+        "reportCapability": null
+      },
+      {
+        "entryId": "004396_a4440_goed_bn_2",
+        "cardTypeId": "word-to-definition",
+        "displayOrdinal": 2,
+        "partOfSpeech": "adjective",
+        "definition": {
+          "contentNodeId": "004396_a4440_goed_bn_2-d",
+          "parentContentNodeId": null,
+          "kind": "definition",
+          "text": "iets wat goed is, is juist of klopt",
+          "children": []
+        },
+        "entryTranslation": null,
+        "entryTranslationAlternatives": [],
+        "translationStatus": null,
+        "details": [
+          {
+            "contentNodeId": "004396_a4440_goed_bn_2-e0",
+            "parentContentNodeId": null,
+            "kind": "example",
+            "text": "ze gaf het goede antwoord",
+            "children": []
+          },
+          {
+            "contentNodeId": "004396_a4440_goed_bn_2-i0",
+            "parentContentNodeId": null,
+            "kind": "idiom",
+            "text": "alles goed en wel, maar …",
+            "children": [
+              {
+                "contentNodeId": "004396_a4440_goed_bn_2-ix0",
+                "parentContentNodeId": null,
+                "kind": "idiom-explanation",
+                "text": "dat kan wel zo zijn, maar …",
+                "children": []
+              }
+            ]
+          },
+          {
+            "contentNodeId": "004396_a4440_goed_bn_2-i1",
+            "parentContentNodeId": null,
+            "kind": "idiom",
+            "text": "zo goed als …",
+            "children": [
+              {
+                "contentNodeId": "004396_a4440_goed_bn_2-ix1",
+                "parentContentNodeId": null,
+                "kind": "idiom-explanation",
+                "text": "vrijwel helemaal",
+                "children": []
+              },
+              {
+                "contentNodeId": "004396_a4440_goed_bn_2-i1-example0",
+                "parentContentNodeId": "004396_a4440_goed_bn_2-i1",
+                "kind": "example",
+                "text": "die schoenen zijn nog zo goed als nieuw",
+                "children": []
+              }
+            ]
+          },
+          {
+            "contentNodeId": "004396_a4440_goed_bn_2-i2",
+            "parentContentNodeId": null,
+            "kind": "idiom",
+            "text": "zo goed en zo kwaad als het gaat",
+            "children": [
+              {
+                "contentNodeId": "004396_a4440_goed_bn_2-ix2",
+                "parentContentNodeId": null,
+                "kind": "idiom-explanation",
+                "text": "zo goed als in de situatie mogelijk is",
+                "children": []
+              }
+            ]
+          }
+        ],
+        "repeatCount": 0,
+        "startLearning": null,
+        "markKnown": null,
+        "undoKnown": null,
+        "reportCapability": null
+      },
+      {
+        "entryId": "004396_a4440_goed_bn_3",
+        "cardTypeId": "word-to-definition",
+        "displayOrdinal": 3,
+        "partOfSpeech": "adjective",
+        "definition": {
+          "contentNodeId": "004396_a4440_goed_bn_3-d",
+          "parentContentNodeId": null,
+          "kind": "definition",
+          "text": "iets wat goed is, is geschikt voor het doel",
+          "children": []
+        },
+        "entryTranslation": null,
+        "entryTranslationAlternatives": [],
+        "translationStatus": null,
+        "details": [
+          {
+            "contentNodeId": "004396_a4440_goed_bn_3-e0",
+            "parentContentNodeId": null,
+            "kind": "example",
+            "text": "het is goed om veel fruit te eten",
+            "children": []
+          },
+          {
+            "contentNodeId": "004396_a4440_goed_bn_3-e1",
+            "parentContentNodeId": null,
+            "kind": "example",
+            "text": "dit lijkt me een goed moment om iets te eten",
+            "children": []
+          }
+        ],
+        "repeatCount": 0,
+        "startLearning": null,
+        "markKnown": null,
+        "undoKnown": null,
+        "reportCapability": null
+      }
+    ],
+    "crossReferences": [],
+    "presentations": [
+      {
+        "kind": "sense-card",
+        "meaning": {
+          "entryId": "004396_a4440_goed_bn_1",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 1,
+          "partOfSpeech": "adjective",
+          "definition": {
+            "contentNodeId": "004396_a4440_goed_bn_1-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "iets wat goed is, heeft een hoge kwaliteit",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "004396_a4440_goed_bn_1-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "Ruud is een goede leraar",
+              "children": []
+            },
+            {
+              "contentNodeId": "004396_a4440_goed_bn_1-e1",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "heb je een goede vakantie gehad?",
+              "children": []
+            },
+            {
+              "contentNodeId": "004396_a4440_goed_bn_1-i0",
+              "parentContentNodeId": null,
+              "kind": "idiom",
+              "text": "iets valt in goede aarde",
+              "children": [
+                {
+                  "contentNodeId": "004396_a4440_goed_bn_1-ix0",
+                  "parentContentNodeId": null,
+                  "kind": "idiom-explanation",
+                  "text": "iets wordt gewaardeerd",
+                  "children": []
+                },
+                {
+                  "contentNodeId": "004396_a4440_goed_bn_1-i0-example0",
+                  "parentContentNodeId": "004396_a4440_goed_bn_1-i0",
+                  "kind": "example",
+                  "text": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "contentNodeId": "004396_a4440_goed_bn_1-i1",
+              "parentContentNodeId": null,
+              "kind": "idiom",
+              "text": "alles goed?",
+              "children": [
+                {
+                  "contentNodeId": "004396_a4440_goed_bn_1-ix1",
+                  "parentContentNodeId": null,
+                  "kind": "idiom-explanation",
+                  "text": "dit zeg je als je wilt weten hoe het met iemand gaat",
+                  "children": []
+                }
+              ]
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        }
+      },
+      {
+        "kind": "sense-card",
+        "meaning": {
+          "entryId": "004396_a4440_goed_bn_2",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 2,
+          "partOfSpeech": "adjective",
+          "definition": {
+            "contentNodeId": "004396_a4440_goed_bn_2-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "iets wat goed is, is juist of klopt",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "004396_a4440_goed_bn_2-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "ze gaf het goede antwoord",
+              "children": []
+            },
+            {
+              "contentNodeId": "004396_a4440_goed_bn_2-i0",
+              "parentContentNodeId": null,
+              "kind": "idiom",
+              "text": "alles goed en wel, maar …",
+              "children": [
+                {
+                  "contentNodeId": "004396_a4440_goed_bn_2-ix0",
+                  "parentContentNodeId": null,
+                  "kind": "idiom-explanation",
+                  "text": "dat kan wel zo zijn, maar …",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "contentNodeId": "004396_a4440_goed_bn_2-i1",
+              "parentContentNodeId": null,
+              "kind": "idiom",
+              "text": "zo goed als …",
+              "children": [
+                {
+                  "contentNodeId": "004396_a4440_goed_bn_2-ix1",
+                  "parentContentNodeId": null,
+                  "kind": "idiom-explanation",
+                  "text": "vrijwel helemaal",
+                  "children": []
+                },
+                {
+                  "contentNodeId": "004396_a4440_goed_bn_2-i1-example0",
+                  "parentContentNodeId": "004396_a4440_goed_bn_2-i1",
+                  "kind": "example",
+                  "text": "die schoenen zijn nog zo goed als nieuw",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "contentNodeId": "004396_a4440_goed_bn_2-i2",
+              "parentContentNodeId": null,
+              "kind": "idiom",
+              "text": "zo goed en zo kwaad als het gaat",
+              "children": [
+                {
+                  "contentNodeId": "004396_a4440_goed_bn_2-ix2",
+                  "parentContentNodeId": null,
+                  "kind": "idiom-explanation",
+                  "text": "zo goed als in de situatie mogelijk is",
+                  "children": []
+                }
+              ]
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        }
+      },
+      {
+        "kind": "sense-card",
+        "meaning": {
+          "entryId": "004396_a4440_goed_bn_3",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 3,
+          "partOfSpeech": "adjective",
+          "definition": {
+            "contentNodeId": "004396_a4440_goed_bn_3-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "iets wat goed is, is geschikt voor het doel",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "004396_a4440_goed_bn_3-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "het is goed om veel fruit te eten",
+              "children": []
+            },
+            {
+              "contentNodeId": "004396_a4440_goed_bn_3-e1",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "dit lijkt me een goed moment om iets te eten",
+              "children": []
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        }
+      }
+    ]
+  }
+]

@@ -92,7 +92,10 @@ type Inputs = {
   trainingSessionId?: string | null;
   sessionScopeKey: string;
   selection: TrainingTurnSelectionPort;
-  refreshAfterAccepted: (input: { statsLabel: string }) => Promise<void>;
+  refreshAfterAccepted: (input: {
+    statsLabel: string;
+    sessionComplete?: boolean;
+  }) => Promise<void>;
   onSessionCardAccepted?: (cardKey: string) => void;
 };
 
@@ -226,6 +229,7 @@ export function useTrainingTurnController(input: Inputs) {
   const {
     warmWord,
     refreshForCard: refreshPreparedNextTurn,
+    revalidateAfterCommit: revalidatePreparedAfterCommit,
     consumeForCard: consumePreparedNextTurn,
     reset: resetPreparedNextTurn,
     nextTransitionId,
@@ -756,13 +760,16 @@ export function useTrainingTurnController(input: Inputs) {
         | "accepted-next-unavailable"
       >
     > => {
-      const backgroundRefresh = refreshAfterAccepted(options).catch((cause) => {
-        trainingDebug.log("Training counters refresh failed", cause);
-      });
-
       const reachedSessionLimit =
         sessionPlannedTotal !== null &&
         completedActionCountRef.current >= sessionPlannedTotal;
+      const backgroundRefresh = refreshAfterAccepted({
+        statsLabel: options.statsLabel,
+        sessionComplete: reachedSessionLimit,
+      }).catch((cause) => {
+        trainingDebug.log("Training counters refresh failed", cause);
+      });
+
       if (reachedSessionLimit) {
         presentWord(null);
         acceptedTransitionRetryRef.current = null;
@@ -779,6 +786,7 @@ export function useTrainingTurnController(input: Inputs) {
 
       let prefetched = transition.prefetched;
       if (prefetched?.v2Ready) {
+        revalidatePreparedAfterCommit(prefetched, transition.word.id);
         const warmResult = await prefetched.v2Ready.catch(() => false);
         if (transition.loadGeneration !== loadGenerationRef.current) {
           // Scope changes/reset invalidate a detached prefetch just as they
@@ -836,6 +844,12 @@ export function useTrainingTurnController(input: Inputs) {
         void backgroundRefresh;
         if (stalled) return "accepted-next-unavailable";
         if (loadOutcome === "session-complete") {
+          void refreshAfterAccepted({
+            statsLabel: options.statsLabel,
+            sessionComplete: true,
+          }).catch((cause) => {
+            trainingDebug.log("Training counters refresh failed", cause);
+          });
           return "accepted-session-complete";
         }
         return loadOutcome === "loaded"
@@ -853,12 +867,13 @@ export function useTrainingTurnController(input: Inputs) {
       presentWord,
       reportCardLoadFailure,
       refreshAfterAccepted,
+      revalidatePreparedAfterCommit,
       sessionPlannedTotal,
     ],
   );
 
   const acceptPlatformProgressAction = useCallback(
-    async (capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" }) => {
+    async (capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" | "exclude-headword" }) => {
       if (!currentWord || actionLoadingRef.current) {
         return "accepted-next-unavailable" as const;
       }
@@ -867,7 +882,7 @@ export function useTrainingTurnController(input: Inputs) {
       try {
         // Exclusion affects both directions: a prefetched reverse card may now
         // be unavailable and must return through the authoritative selector.
-        if (capability.actionId === "exclude-pair") resetPreparedNextTurn();
+        if (capability.actionId === "exclude-pair" || capability.actionId === "exclude-headword") resetPreparedNextTurn();
         const transition = beginAcceptedCardTransition();
         if (!transition) return "accepted-next-unavailable" as const;
         return await finishAcceptedCardTransition(transition, {

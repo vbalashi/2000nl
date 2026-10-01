@@ -1,6 +1,18 @@
 "use client";
+import { useWordDetailsClose } from "../WordDetailsHeader";
 
 import React from "react";
+import { X } from "lucide-react";
+import { LibraryMeaningActions } from "./LibraryMeaningActions";
+import {sharedArticlePresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
+import {ArticleTranslation,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
+import {ProductionArticleReading} from "@/components/practice/article/ProductionArticleReading";
+import {ArticleWordForms,ArticleSenseRelations} from "@/components/practice/article/ArticleWordDetails";
+import {commonWordForms,wordFormDetail,lexicalRelationDetail} from "@/components/practice/article/wordDetailsPresentation";
+import reading from "@/components/practice/article/articleContent.module.css";
+import articleActions from "@/components/practice/article/articleActions.module.css";
+import surfaces from "@/components/practice/article/articleSurfaces.module.css";
+import chrome from "@/components/practice/article/senseChrome.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -28,8 +40,11 @@ import {
 } from "./librarySenseCardModel";
 
 type Props = {
+  revealActiveMeaning?: boolean;
   model: LibrarySenseCardGroupModel;
   interfaceLanguage: OnboardingLanguage;
+  contentLanguage?: string;
+  translationLanguage?: string;
   busyIdentity?: string | null;
   audioBusy?: boolean;
   onPlayAudio?: () => void;
@@ -41,6 +56,10 @@ type Props = {
   onRequestTranslation?: (entryId: string, cardTypeId: CardTypeId) => void;
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
+  onReport?: (meaning: LibrarySenseCardModel) => void;
+  onExclude?: () => void;
+  exclusionDisabled?: boolean;
+  reportableEntryIds?: ReadonlySet<string>;
   onFollowCrossReference?: (target: {
     query: string;
     sourceDictionaryId: string;
@@ -54,8 +73,11 @@ type Props = {
 const DETAILS_SCROLL_FADE_HEIGHT = 44;
 
 export function LibrarySenseCardGroup({
+  revealActiveMeaning = true,
   model,
   interfaceLanguage,
+  contentLanguage,
+  translationLanguage,
   busyIdentity = null,
   audioBusy = false,
   onPlayAudio,
@@ -67,13 +89,23 @@ export function LibrarySenseCardGroup({
   onRequestTranslation,
   onOpenCollections,
   onTrainNext,
+  onReport,
+  onExclude,
+  exclusionDisabled,
+  reportableEntryIds,
   onFollowCrossReference,
   onAction,
   bottomOverlayReserve = false,
 }: Props) {
   const [viewState, setViewState] = React.useState<LibrarySenseCardViewState>(
-    () => initialViewState(model, activeMeaningId),
+    () => initialViewState(model, activeMeaningId, revealActiveMeaning),
   );
+  const [formsOpen,setFormsOpen]=React.useState(false);
+  const formsId=React.useId();
+  const approvedArticle=sharedArticlePresentationV1Enabled();
+  const commonForms=commonWordForms(model.meanings.map(m=>m.wordDetails),model.formPartOfSpeech??" ");
+  const formsKey=JSON.stringify(commonForms);
+  React.useEffect(()=>{setFormsOpen(false);},[model.headword,formsKey]);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const [scrollEdges, setScrollEdges] = React.useState({
     top: true,
@@ -82,7 +114,7 @@ export function LibrarySenseCardGroup({
   const meaningById = new Map(
     model.meanings.map((meaning) => [meaning.entryId, meaning]),
   );
-  const activeMeaningScrollKey = activeMeaningId
+  const activeMeaningScrollKey = activeMeaningId && revealActiveMeaning
     ? `${activeMeaningId}\u0000${model.meanings
         .map((meaning) => meaning.entryId)
         .join("\u0000")}`
@@ -92,7 +124,13 @@ export function LibrarySenseCardGroup({
   React.useEffect(() => {
     setViewState((current) => {
       const next = reconcileLibrarySenseCardViewState(current, model.meanings);
-      const activeMeaning = activeMeaningId
+      if (!revealActiveMeaning) return collapsedViewState(next);
+      // A slow lookup may arrive after the sheet. Do not also expand its first
+      // meaning by default when a different training meaning is selected.
+      if (activeMeaningId) for (const identity of Object.keys(next)) {
+        if (!current[identity]) next[identity] = { ...next[identity], expanded: false };
+      }
+      const activeMeaning = activeMeaningId && revealActiveMeaning
         ? model.meanings.find((meaning) => meaning.entryId === activeMeaningId)
         : null;
       if (!activeMeaning) return next;
@@ -105,7 +143,7 @@ export function LibrarySenseCardGroup({
         [identity]: { ...next[identity], expanded: true },
       };
     });
-  }, [activeMeaningId, model.meanings]);
+  }, [activeMeaningId, model.meanings, revealActiveMeaning]);
 
   const updateEntry = (
     identity: string,
@@ -180,6 +218,7 @@ export function LibrarySenseCardGroup({
     };
   }, [model, updateScrollEdges, viewState]);
 
+  const closeDetails = useWordDetailsClose();
   const translationsVisible = model.meanings.every((meaning) => {
     const identity = librarySenseCardIdentity(
       meaning.entryId,
@@ -226,25 +265,27 @@ export function LibrarySenseCardGroup({
   return (
     <section
       data-testid="library-sense-card-group"
-      className="relative flex h-full flex-col overflow-hidden bg-slate-50 font-sense-sans text-slate-900 [container-type:inline-size] dark:bg-[#11151d] dark:text-slate-100"
+      className={`relative flex h-full flex-col overflow-hidden [container-type:inline-size] ${approvedArticle ? surfaces.group : "bg-slate-50 font-sense-sans text-slate-900 dark:bg-[#11151d] dark:text-slate-100"}`}
     >
-      <header className="shrink-0 px-4 pb-5 pt-4 sm:px-7">
+      <header tabIndex={approvedArticle ? 0 : undefined} aria-label={approvedArticle ? model.headword : undefined}
+        className={`shrink-0 px-4 pb-5 pt-4 sm:px-7 ${approvedArticle ? surfaces.header : ""}`}>
         <SenseCardHeadwordLockup
           article={model.article}
           headword={model.headword}
-          variant="training-answer"
+          variant={approvedArticle ? "article" : "training-answer"}
           partOfSpeech={model.partOfSpeech}
           coreVocabularyLabel={model.coreVocabularyLabel}
           tone="light"
           headerActions={
-            translationEnabled || (onPlayAudio && model.audioCapability) ? (
+            closeDetails || approvedArticle || translationEnabled || (onPlayAudio && model.audioCapability) ? (
               <>
-                {translationEnabled ? (
+                {translationEnabled || approvedArticle ? (
                   <SenseCardHeaderAction
                     label={platformV2Message(
                       interfaceLanguage,
-                      "senseCard.translation.request",
+                      translationEnabled ? "senseCard.translation.request" : "senseCard.translation.disabled",
                     )}
+                    disabled={!translationEnabled}
                     accent
                     pressed={translationsVisible}
                     onClick={toggleGroupTranslation}
@@ -264,20 +305,29 @@ export function LibrarySenseCardGroup({
                     <AudioIcon />
                   </SenseCardHeaderAction>
                 ) : null}
+                {closeDetails && <span className={surfaces.closeAction}><SenseCardHeaderAction
+                  label={platformV2Message(interfaceLanguage,"common.close")} onClick={closeDetails}>
+                  <X size={18} aria-hidden="true" />
+                </SenseCardHeaderAction></span>}
               </>
             ) : undefined
           }
         />
+        {approvedArticle&&commonForms&&<ProductionArticleReading><ArticleWordForms detail={commonForms} headword={model.headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="summary" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></ProductionArticleReading>}
       </header>
 
       <div className="relative min-h-0 flex-1">
         <div
           ref={scrollRef}
           data-testid="library-sense-card-scroll-region"
-          className={`h-full overflow-y-auto px-3 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden ${
+          role="region"
+          aria-label={platformV2Message(interfaceLanguage, "senseCard.wordDetails.open")}
+          tabIndex={0}
+          className={`${surfaces.readingRegion} h-full overflow-y-auto overscroll-contain px-3 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden ${
             bottomOverlayReserve ? "pb-16" : "pb-4"
           }`}
         >
+          {approvedArticle&&commonForms&&<ProductionArticleReading><ArticleWordForms detail={commonForms} headword={model.headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="body" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></ProductionArticleReading>}
           <div className="space-y-3">
             {model.presentations.map((presentation) => {
               if (presentation.kind === "cross-reference") {
@@ -286,10 +336,10 @@ export function LibrarySenseCardGroup({
                   <article
                     key={reference.crossReferenceId}
                     data-testid={`library-cross-reference-${reference.crossReferenceId}`}
-                    className="relative rounded-[22px] border border-slate-300 bg-white px-5 py-5 shadow-sm dark:border-slate-600 dark:bg-[#20252f]"
+                    className={`relative px-5 py-5 ${approvedArticle ? surfaces.card : "rounded-[22px] border border-slate-300 bg-white shadow-sm dark:border-slate-600 dark:bg-[#20252f]"}`}
                   >
                     {reference.displayOrdinal != null ? (
-                      <span className="absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center bg-slate-50 font-mono text-xs font-semibold text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300">
+                      <span className={`absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center ${approvedArticle ? surfaces.ordinal : "bg-slate-50 font-mono text-xs font-semibold text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300"}`}>
                         {reference.displayOrdinal}
                       </span>
                     ) : null}
@@ -329,6 +379,11 @@ export function LibrarySenseCardGroup({
                 <MeaningCard
                   key={identity}
                   meaning={meaning}
+                  showSenseForms={!commonForms}
+                  formPartOfSpeech={model.formPartOfSpeech}
+                  headword={model.headword}
+                  contentLanguage={contentLanguage}
+                  translationLanguage={translationLanguage}
                   groupPartOfSpeech={model.partOfSpeech}
                   state={
                     viewState[identity] ?? {
@@ -352,6 +407,10 @@ export function LibrarySenseCardGroup({
                   }
                   onOpenCollections={onOpenCollections}
                   onTrainNext={onTrainNext}
+                  onReport={onReport}
+                  onExclude={onExclude}
+                  exclusionDisabled={exclusionDisabled}
+                  reportableEntryIds={reportableEntryIds}
                   onAction={(capability) => {
                     onActiveMeaningChange?.(capability.target.entryId);
                     onAction(capability);
@@ -370,9 +429,14 @@ export function LibrarySenseCardGroup({
 
 function MeaningCard({
   meaning,
+  showSenseForms,
+  formPartOfSpeech,
+  headword,
   groupPartOfSpeech,
   state,
   interfaceLanguage,
+  contentLanguage,
+  translationLanguage,
   busy,
   translationState,
   collectionCount,
@@ -381,12 +445,21 @@ function MeaningCard({
   onRetryTranslation,
   onOpenCollections,
   onTrainNext,
+  onReport,
+  onExclude,
+  exclusionDisabled,
+  reportableEntryIds,
   onAction,
 }: {
   meaning: LibrarySenseCardModel;
+  headword:string;
+  showSenseForms?:boolean;
+  formPartOfSpeech?:string;
   groupPartOfSpeech: string | null;
   state: LibrarySenseCardViewState[string];
   interfaceLanguage: OnboardingLanguage;
+  contentLanguage?: string;
+  translationLanguage?: string;
   busy: boolean;
   translationState: "pending" | "failed" | null;
   collectionCount: number;
@@ -395,6 +468,10 @@ function MeaningCard({
   onRetryTranslation: () => void;
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
+  onReport?: (meaning: LibrarySenseCardModel) => void;
+  onExclude?: () => void;
+  exclusionDisabled?: boolean;
+  reportableEntryIds?: ReadonlySet<string>;
   onAction: (capability: LibraryMutationCapability) => void;
 }) {
   const t = (key: string, variables?: Record<string, string | number>) =>
@@ -403,6 +480,19 @@ function MeaningCard({
     onActiveMeaningChange?.(meaning.entryId);
     if (!state.expanded) onToggleExpanded();
   };
+  const [formsOpen,setFormsOpen]=React.useState(false);
+  const formsId=React.useId();
+  const senseForms=wordFormDetail(meaning.wordDetails,formPartOfSpeech??" ");
+  const approvedArticle = sharedArticlePresentationV1Enabled();
+  const exposure = meaning.undoKnown ? (
+    <span className={approvedArticle ? surfaces.known : "shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300"}>
+      {t("senseCard.known.marked")}
+    </span>
+  ) : meaning.repeatCount > 0 ? (
+    <ExposureBadge count={meaning.repeatCount} tone="light" />
+  ) : (
+    <NewExposureBadge label={t("senseCard.state.new")} tone="light" />
+  );
   const hasVisibleLeadTranslation =
     state.translationVisible &&
     Boolean(meaning.entryTranslation || meaning.definition?.translation);
@@ -413,12 +503,13 @@ function MeaningCard({
       data-entry-id={meaning.entryId}
       data-expanded={state.expanded ? "true" : "false"}
       onClick={activateCard}
-      className={`relative rounded-[22px] border border-slate-300 bg-white px-[clamp(1rem,4cqw,1.25rem)] shadow-sm outline-none transition-[padding,border-color,box-shadow] duration-300 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-[#20252f] dark:shadow-none ${
+      className={`relative px-[clamp(1rem,4cqw,1.25rem)] outline-none transition-[padding,border-color,box-shadow] duration-300 ease-out motion-reduce:transition-none ${approvedArticle ? surfaces.card : "rounded-[22px] border border-slate-300 bg-white shadow-sm focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-[#20252f] dark:shadow-none"} ${
         state.expanded ? "pb-3 pt-4" : "py-2.5"
       }`}
     >
+      {approvedArticle ? <span className={surfaces.frameExposure}>{exposure}</span> : null}
       {meaning.displayOrdinal != null ? (
-        <span className="absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center bg-slate-50 font-mono text-xs font-semibold text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300">
+        <span className={`absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center ${approvedArticle ? surfaces.ordinal : "bg-slate-50 font-mono text-xs font-semibold text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300"}`}>
           {meaning.displayOrdinal}
         </span>
       ) : null}
@@ -430,7 +521,11 @@ function MeaningCard({
           className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3"
         >
           <div className="min-w-0">
-            {meaning.entryTranslation ? (
+            {approvedArticle ? <ProductionArticleReading>
+              <ArticleTranslation text={[meaning.entryTranslation,...meaning.entryTranslationAlternatives].filter(Boolean).join(" · ")} visible={state.translationVisible} emphasis language={translationLanguage}/>
+              <p className={reading.definitionText} lang={contentLanguage}>{meaning.definition?.text??"—"}</p>
+              <ArticleTranslation text={meaning.definition?.translation} visible={state.translationVisible} language={translationLanguage}/>
+            </ProductionArticleReading> : <>            {meaning.entryTranslation ? (
               <SenseCardReveal open={state.translationVisible}>
                 <p className="mb-1 text-[length:var(--reading-translation-emphasis-size,15px)] font-[650] text-amber-700 dark:text-[#dbc47e]">
                   {[
@@ -451,21 +546,14 @@ function MeaningCard({
                   {meaning.definition.translation}
                 </p>
               </SenseCardReveal>
-            ) : null}
+            ) : null}</>}
+
           </div>
           <div
             className="flex shrink-0 items-center gap-2"
             data-testid="sense-card-top-actions"
           >
-            {meaning.undoKnown ? (
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300">
-                {t("senseCard.known.marked")}
-              </span>
-            ) : meaning.repeatCount > 0 ? (
-              <ExposureBadge count={meaning.repeatCount} tone="light" />
-            ) : (
-              <NewExposureBadge label={t("senseCard.state.new")} tone="light" />
-            )}
+            {approvedArticle ? null : exposure}
             <button
               type="button"
               aria-label={t(
@@ -477,7 +565,7 @@ function MeaningCard({
                 onActiveMeaningChange?.(meaning.entryId);
                 onToggleExpanded();
               }}
-              className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:text-slate-800 dark:bg-[#171b22] dark:text-slate-400 dark:hover:text-slate-100"
+              className={approvedArticle ? chrome.toggle : "flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:text-slate-800 dark:bg-[#171b22] dark:text-slate-400 dark:hover:text-slate-100"}
             >
               <ChevronIcon
                 className="h-3.5 w-3.5"
@@ -486,7 +574,7 @@ function MeaningCard({
             </button>
           </div>
         </div>
-        {meaning.definition?.children.length ? (
+        {!approvedArticle && meaning.definition?.children.length ? (
           <div className="mt-2 space-y-2 pl-4">
             {meaning.definition.children.map((child) => (
               <NestedContent
@@ -510,7 +598,7 @@ function MeaningCard({
           expandedClassName={hasVisibleLeadTranslation ? "mt-4" : "mt-3"}
         >
           <div onClick={(event) => event.stopPropagation()}>
-            {meaning.details.length ? (
+            {approvedArticle ? <ProductionArticleReading><ArticleSenseRelations relation={lexicalRelationDetail(meaning.wordDetails)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage}/>{showSenseForms&&senseForms&&<><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="summary" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="body" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></>}<ArticleMeaningDetails definition={meaning.definition} details={meaning.details} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible}/></ProductionArticleReading> : <>            {meaning.details.length ? (
               <div className="space-y-4">
                 {orderMeaningDetails(meaning.details).map(
                   (item, index, orderedDetails) => {
@@ -563,8 +651,17 @@ function MeaningCard({
                   },
                 )}
               </div>
-            ) : null}
+            ) : null}</>}
 
+
+            {approvedArticle ? (
+              <LibraryMeaningActions meaning={meaning} language={interfaceLanguage} busy={busy} collectionCount={collectionCount}
+                onAction={onAction}
+                onExclude={onExclude} exclusionDisabled={exclusionDisabled}
+                onCollections={onOpenCollections ? () => { onActiveMeaningChange?.(meaning.entryId); onOpenCollections(meaning); } : undefined}
+                onTrainNext={onTrainNext ? () => { onActiveMeaningChange?.(meaning.entryId); onTrainNext(meaning); } : undefined}
+                onReport={onReport && reportableEntryIds?.has(meaning.entryId) ? () => onReport(meaning) : undefined} />
+            ) : <>
             <div
               data-testid="library-primary-actions"
               className="mt-4 grid grid-cols-[minmax(0,3fr)_minmax(7.5rem,1fr)] gap-2 text-xs"
@@ -621,6 +718,7 @@ function MeaningCard({
                 onAction={onAction}
               />
             </div>
+            </>}
             {translationState ? (
               <div
                 role={translationState === "failed" ? "alert" : "status"}
@@ -655,13 +753,31 @@ function KnownAction({
   interfaceLanguage,
   busy,
   onAction,
+  approved = false,
 }: {
   meaning: LibrarySenseCardModel;
   interfaceLanguage: OnboardingLanguage;
   busy: boolean;
   onAction: (capability: LibraryMutationCapability) => void;
+  approved?: boolean;
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
+  if (approved && (meaning.undoKnown || meaning.markKnown)) {
+    const capability = meaning.undoKnown ?? meaning.markKnown!;
+    return (
+      <button
+        type="button"
+        disabled={busy}
+        data-state={meaning.undoKnown ? "known" : undefined}
+        className={articleActions.quiet}
+        onClick={() => onAction(capability)}
+      >
+        {meaning.undoKnown
+          ? `${t("senseCard.known.marked")} · ${t(capability.messageKey)}`
+          : `✓ ${t(capability.messageKey)}`}
+      </button>
+    );
+  }
   if (meaning.undoKnown) {
     return (
       <button
@@ -793,6 +909,7 @@ function ContentSectionHeader({
 }
 
 function ScrollFade({ edge }: { edge: "top" | "bottom" }) {
+  const approvedArticle = sharedArticlePresentationV1Enabled();
   const isTop = edge === "top";
   return (
     <div
@@ -801,14 +918,14 @@ function ScrollFade({ edge }: { edge: "top" | "bottom" }) {
       // Leave at least half of a short reading region free from decoration.
       // Keep the selected-meaning scroll inset above in sync with this cap.
       style={{ height: `min(${DETAILS_SCROLL_FADE_HEIGHT}px, 25%)` }}
-      className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-4 ${
-        isTop
+      className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-4 ${approvedArticle ? surfaces.scrollFade : ""} ${
+        approvedArticle ? (isTop ? "top-0 items-start pt-1" : "bottom-0 items-end pb-1") : isTop
           ? "top-0 items-start bg-gradient-to-b from-slate-50 via-slate-50/90 to-transparent pt-1 dark:from-[#11151d] dark:via-[#11151d]/90"
           : "bottom-0 items-end bg-gradient-to-t from-slate-50 via-slate-50/90 to-transparent pb-1 dark:from-[#11151d] dark:via-[#11151d]/90"
       }`}
     >
       <SmallIcon
-        className={`h-4 w-4 text-slate-400 ${isTop ? "" : "rotate-180"}`}
+        className={`h-4 w-4 ${approvedArticle ? surfaces.scrollFadeIcon : "text-slate-400"} ${isTop ? "" : "rotate-180"}`}
       >
         <path d="m6 14 6-6 6 6" />
       </SmallIcon>
@@ -819,8 +936,10 @@ function ScrollFade({ edge }: { edge: "top" | "bottom" }) {
 function initialViewState(
   model: LibrarySenseCardGroupModel,
   activeMeaningId: string | null = null,
+  revealActiveMeaning = true,
 ): LibrarySenseCardViewState {
   const state = reconcileLibrarySenseCardViewState({}, model.meanings);
+  if (!revealActiveMeaning) return collapsedViewState(state);
   if (!activeMeaningId) return state;
   const meaning = model.meanings.find(
     (candidate) => candidate.entryId === activeMeaningId,
@@ -843,6 +962,12 @@ function initialViewState(
       }),
     ),
   };
+}
+
+function collapsedViewState(state: LibrarySenseCardViewState): LibrarySenseCardViewState {
+  return Object.fromEntries(Object.entries(state).map(([identity, value]) => [
+    identity, { ...value, expanded: false },
+  ]));
 }
 
 const contentPresentation: Record<

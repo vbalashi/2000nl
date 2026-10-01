@@ -1,0 +1,142 @@
+# #407 — очередь исправлений визуальной приёмки
+
+2026-10-01. Все33 browser comments и замечание загрузки сохранены под исходными номерами. Рабочий вид не принят: прежние зелёные технические проверки не доказывают сходство с прототипом. Исправления последовательно, узкая проверка и коммит каждого завершённого этапа.
+
+Порядок:3 (маленький пропуск),1 (название/resume),4 (reveal),5–10 (статья/панели),33/2/34 (хедер/загрузка),11–15 (Library),16–23 (Builder),24–28 (Statistics),29–32 (Settings). Пункты11/18/21/29 сначала исследовать/объяснить, не удалять поведение молча.
+
+- [x] **1.** Название тренировки в сессии; передавать выбранное имя, сохранять при resume, все семейства.
+- [x] **2.** Кнопка темы как в прототипе; сохранить Light/Dark/System владельца.
+- [x] **3.** Шеврон Exclude при раскрываемом меню; состояние открытия.
+- [x] **4.** Убрать мигание примеров после переноса prompt при reveal; reduced motion.
+- [x] **5.** Фон полного слова без лишней внешней карточки/рамки, как flat референс.
+- [x] **6.** Номер/состояние значения над карточкой, не в разрыве рамки.
+- [x] **7.** Шеврон значения без фоновой кнопки, ближе к правому верхнему углу.
+- [x] **8.** Коллекции: простой заголовок/подсказка, плюс создания вместо перегруженной формы; сохранить реальные действия/ошибки.
+- [x] **9.** Убрать видимый заголовок Сведения о слове; сохранить accessible dialog name/закрытие.
+- [x] **10.** Убрать горизонтальный разделитель хедера approved UI.
+- [x] **11.** Разъяснить контракт Только эта коллекция; затем убрать/оформить понятную область.
+- [x] **12.** Убрать Мой словарь / Добавить запись из первичного toolbar, сохранить существующий API/данные.
+- [x] **13.** Убрать Введите слово для поиска из toolbar.
+- [x] **14.** Library сразу показывает упорядоченные результаты текущего фильтра без запроса; реальные данные, пагинация, ACL, загрузка/ошибки.
+- [x] **15.** Library Filters: число результатов/загрузка/ошибка, не требовать поисковое слово.
+- [x] **16.** Артикли только de/het; обе/ни одной — нет ограничения; единый выбор Builder/Library.
+- [x] **17.** Направление: общие карточки референса с разделителем и конкретными примерами выбранного языка; fallback без образца.
+- [x] **18.** Сверить слово в контексте с решениями, объяснить выключенный Translation/gates; не менять production gates молча.
+- [x] **19.** Русская подпись Идиомы / Устойчивые выражения и идиомы; согласованные EN/NL.
+- [x] **20.** Поиск источников визуально как в референсе; общий с23.
+- [x] **21.** Проверить происхождение фильтра Недавняя активность; объяснить контракт, согласовать понятное оформление.
+- [x] **22.** Убрать поиск из короткого списка изучаемых языков Builder.
+- [x] **23.** Поиск источников только при количестве более пяти.
+- [x] **24.** Statistics без горизонтального scrollbar: адаптивный период/колонки, доступные дни.
+- [x] **25.** Шеврон в конце Последние действия.
+- [x] **26.** Показывать язык Statistics даже при одном; выбор при нескольких.
+- [x] **27.** Различить словарь VanDale и опубликованную2K коллекцию, убрать двусмысленные дубли; личные коллекции отдельно.
+- [x] **28.** Убрать дублирующее Начато/не начато либо краткие человеческие подписи охвата без искажения данных.
+- [x] **29.** Раздел Биллинг и подписки: проверить рабочую интеграцию; не добавлять фиктивные платежные действия.
+- [x] **30.** Автоматический профиль устройства без ручного селектора; новое уточнение supersedes ручной выбор, сохранить настройки профилей.
+- [x] **31.** Text size компактно как режим темы, справа; сохранить масштаб и доступность.
+- [x] **32.** Preview стандартным общим renderer, с рамкой; без отдельной несовпадающей разметки.
+- [x] **33.** Логотип кликабелен → Training/home; соблюдать блокировку pending action.
+- [x] **34.** Загрузка: логотип/фон/краткий статус без рамок, без Indigo flash, предпочтение до первого UI, плавное появление/reduced motion.
+
+Проверять референс desktop/mobile, EN/NL/RU, Normal/Extra, Light/Dark; реальные владельцы данных/действий и scheduling сохраняются.
+
+Пункт3: ChevronDown/Up только для существующего меню; aria-expanded и владельцы действий неизменны. Проверки TrainingExcludeAction и typecheck проходят.
+
+Пункт1: имя выбранной настройки передаётся отдельным display-параметром в owner запуска, сохраняется в существующей записи восстановления конкретной сессии и используется всеми тремя заголовками. Пресеты остаются серверными; подпись не является scheduling/identity. Старые записи используют имя материала, dictionary-scope без подписи — локализованное Current training. Проверены98 сценариев6suite, дополнительно имена всех семейств/roundtrip и приоритет имени над queue-label. Оригинальная вкладка владельца Settings не переключалась; финальная визуальная проверка владельцем остаётся возможной.
+
+Пункт4: кадры реальной TrainingSenseCardStage воспроизвели разрыв — overlay уже удалён, header/answer opacity0. Общий motion owner теперь сохраняет прибывший prompt поверх ответа до полной видимости настоящего текста. Фокус/снятие action lock после переноса, плавное появление деталей и reduced motion сохранены. Регрессия сначала красная, затем6tests зелёные; typecheck/lint проходят. Повторный browser trace100frames: blank=[]; скриншот /tmp/407qa/correction4-reveal.png.
+
+Пункт5: общая внешняя статья прозрачная, border/radius/shadow0 как flat reference; собственные поверхности/рамки значений сохранены. Training drawer больше не добавляет p-3 вокруг статьи. QA harness теперь наследует реальную practiceTheme вместо hardcoded dark canvas без токенов. Browser computed background transparent, border0; screenshot /tmp/407qa/correction5-flat.png. Dialog tests3pass, typecheck/lint/diff pass.
+
+Пункт6: CSS соответствует marker-placement=above референса: top-20px, прозрачные маркеры, номер слева5px, статус справа8px, внешние интервалы22/32px. Browser подтвердил bottom207px у обоих маркеров при top210px рамки; expanded/collapsed видны на снимке /tmp/407qa/correction6-above.png. Изменение только CSS, значения/статусы сохранены; diff check проходит.
+
+Пункт7: шеврон без фоновой заливки, смещение8px к верхнему правому углу; зона28px и focus-visible сохранены. Browser computed transparent; мышью свернуть и Enter раскрыть проверены, aria-expanded=true. Снимок /tmp/407qa/correction7-chevron.png. CSS-only; diff check pass.
+
+Пункт8: заголовок/подсказка из общей локализации референса; headword/definition остаются sr-only context. Форма создания открывается плюсом после списка, фокус в имя; legacy форма прежняя. Поиск/чекбоксы/статусы/ошибки/блокировки/реальные callbacks сохранены. Проверки7tests, typecheck/lint/diff; browser initial and creation focus, снимок /tmp/407qa/correction8-collections.png.
+
+Пункт9: approved WordDetailsHeader содержит только close, без текста/заливки/разделителя; PracticePanel aria-label сохраняет название диалога. Общий Library/Training header, legacy прежний. Dialog test3pass включая имя/отсутствие visible текста/animated close; typecheck/lint/diff pass. Browser fixture open/close, снимок /tmp/407qa/correction9-header.png.
+
+Пункт10: approved header border-bottom0, legacy прежний. Browser реальная Settings вкладка без навигации/изменения preferences: border0, высота58px. Снимок /tmp/407qa/correction10-header.png; AppFrame tests/typecheck/diff проходят.
+
+Пункт33: логотип — native button с локализованным назначением, вызывает существующий onNavigate(training), disabled при navigationDisabled. В BrandLogo optional span для валидной вложенности, прочие p callers прежние. Browser отдельная вкладка Settings→/Training; никакого запуска/оценки. Тест10pass включая pending lock, typecheck/lint/diff pass. Снимок /tmp/407qa/correction33-logo.png.
+
+Пункт2: quiet approved button использует Sun/Moon/Monitor по сохранённому режиму, как BuilderPrototype; legacy SunMoon прежний. Размер18px/stroke1.5/tooltip/цикл/onCycleTheme/server preference сохранены. Browser read-only подтвердил системный Monitor и подпись; снимок /tmp/407qa/correction2-theme.png. AppFrame9tests/typecheck/lint/diff pass.
+
+Пункт34: нейтральный startup с логотипом и простым статусом, без навигации/Indigo indicator/рамки. Account palette readiness gate не монтирует цветной интерфейс до real repository load, failure+retry видимы; существующий владелец предпочтений сохранён. Theme mode в layout effect до первого UI paint; ready fade220ms с reduced motion bypass. Browser slow network показал logo, затем saved graphite/system; временные условия сети/trace убраны, QA вкладка закрыта. Tests25pass; TrainingScreen69pass плюс один устаревший queue-title assertion исправлен под пункт1 и отдельно проходит; typecheck/lint/diff pass. Снимок /tmp/407qa/correction34-loading.png.
+
+Пункт11: контракт investigated — active training list (fallback first accessible) ограничивает fetchWordsForList, не меняет состав/прогресс. Approved подпись с конкретным viewedListName на EN/NL/RU, без коллекции control скрыт; legacy прежний. Browser4031 entries/20-per-page в VanDale2k, scope checked; screenshot /tmp/407qa/correction11-scope.png. Tests19pass, typecheck/lint/diff pass. Этот screenshot также обнаружил оставшийся внешний Library aside фон пункта5; следующий короткий follow-up исправляет его.
+
+Пункт5 follow-up: реальный Library aside также теперь transparent/radius0. Browser computed rgba0/radius0, framed meanings сохранены; /tmp/407qa/correction5-library-flat.png. Это закрывает пропущенный внешний контейнер, который изолированный fixture не покрывал. CSS-only, diff check pass.
+
+Пункт12: approved Library не показывает блок My dictionary/Add entry в основной панели. Legacy редактор, createUserDictionaryEntry API и данные сохранены; копирование существующей статьи остаётся доступным. Устаревшие modal-trigger тесты заменены отсутствием primary controls и проверками legacy закрытия/защиты от повторного создания. Tests20pass, typecheck/lint pass; browser actual Library screenshot /tmp/407qa/correction12-toolbar.png.
+
+Пункт13: при пустом запросе approved toolbar больше не рендерит copy.typeQuery и пустой контейнер строки. Счётчик при запросе/collection scope сохранён, legacy подсказка прежняя. Tests23pass включая EN/NL/RU, typecheck/lint pass. Browser no-query/all-sources подтверждён, screenshot /tmp/407qa/correction13-toolbar.png; пустые результаты остаются задачей14.
+
+Пункт14: scoped approved Library сразу загружает alphabetic whole-group результаты текущего фильтра через серверный browse path. Пагинация/число/ACL/material selection сохранены; Platform empty lookup прежний. Browser cold reload14449groups и две страницы, screenshot /tmp/407qa/correction14-initial.png. SQL rollback regression проверяет закрытый словарь, disabled dictionary, paused nl, cursor filters/source invalidation, порядок/неповторение/фильтры. UI initial loading/failure/retry regression passes; grouping25 + earlier route29/hook2, typecheck/lint pass.
+
+Пункт15: фильтры отправляют пустой query в существующий scoped preview, footer показывает real count/loading/error+retry без typeQuery. Debounce/cancellation/material guards/draft-only behavior сохранены. Tests7pass включая пустой query failure/retry, typecheck/lint pass. Browser RU no-query VanDale Dutch noun+verb count10937, screenshot /tmp/407qa/correction15-count.png; закрыто Отменой без применения draft.
+
+Пункт16: только de/het, independent toggles; обе/ни одной — no restriction. Общая семантика в lib/training/nounArticles, UI drafts retain both, Library canonical null и Training RPC normalization без nounArticles при обеих. Builder summary/dot тоже показывают ограничение только для одного артикля. Tests81pass плюс filters7, typecheck/lint; browser Library both/none и Builder both/summary verified, /tmp/407qa/correction16-library.png и correction16-builder.png. Черновики отменены, ничего не сохранено/запущено.
+
+Пункт17: DirectionCard общий с non-Radix prototype, divided heading/grid/readable example hierarchy. Meaning/idiom examples NL/EN; sentence pair uses known selected source+translation languages NL/EN/RU, otherwise localized labels; context without approved sample uses fallback. lang tags follow shown content; direction owner/callbacks/available modes preserved. Browser NL word cards/divider, reverse toggle и idiom sample verified; screenshot /tmp/407qa/correction17-directions.png. Tests TrainingTodaySetup41+corrected1, DirectionCard4, typecheck/lint pass.
+
+Пункт18: ADR0015 и принятое уточнение состава подтверждают ordinary reverse context: перевод примера→целевое значение, определение в подсказке/ответе, единый reverse FSRS. Runtime family/snapshot/resume подтверждены. Отдельный sentence Translation scenario допускается controller только при gate+target; сервер route/action тоже gated. Local health gate=false, independent rollout hold в production acceptance сохранён. Исправлена misleading direction подпись context на EN/NL/RU; browser mobile selected reverse Перевод примера→Слова, screenshot /tmp/407qa/correction18-context.png. Targeted contract test/typecheck/lint pass; никакого save/start/gate change.
+
+### Уточнение владельца к №17–18 — 1 октября
+
+Исправлено после повторного замечания: карточки направления ограничены шириной 244px, две стоят рядом при достаточной ширине (проверено на 483px); при 320px переносятся и не растягиваются. Для «Слово в контексте» известная пара выбранных языков показывает конкретный пример и его точный перевод вместо общих названий. NL/RU: «Я езжу на работу на велосипеде.» → «Ik ga met de fiets naar mijn werk.». Проверены браузер, типы, lint и четыре теста DirectionCard. Владелец ещё не подтвердил внешний вид.
+
+Пункт19: русские family labels в общем каталоге и Builder теперь «Идиомы», согласованы с controller/legacy/Statistics; EN Idioms и NL Uitdrukkingen обозначают ту же семью. Раздел статьи «Выражения и употребление» сохранён как другой контент. Browser подтвердил выбор и summary; 11 localization tests pass. Screenshot /tmp/407qa/correction19-idioms.png.
+
+Пункты20/23: поиск Builder использует тот же libraryFilters.search, что референсный BuilderScopePicker (фон canvas, без border, 12px radius, body type, иконка17), сохраняет focus outline. Источники показывают поиск только при >5 вариантах текущего режима. При сокращении списка скрытый запрос игнорируется, смена режима очищает запрос. Browser подтвердил отсутствие поиска в коротких lists/dictionaries; 42 setup tests плюс отдельный boundary/filter regression pass, typecheck pass. Screenshot /tmp/407qa/correction20-23-sources.png.
+
+Пункт21: контракт проверен по migration147 training_filter_target_date_at и161 training_extra_source_scope: user_card_action_events по user/entry, обычным направлениям, study-day date и source; фильтра по результату ошибки нет. Название уточнено «Действия со словами», раскрываемое пояснение объясняет день/источник/все результаты. EN/NL согласованы, end chevron без native marker. Подбор/сохранение/FSRS не изменены. Browser раскрытие подтверждено, typecheck и два relevant tests pass. Screenshot /tmp/407qa/correction21-activity.png.
+
+Пункт22: approved Builder не показывает поиск для ≤5 изучаемых языков; короткий список игнорирует скрытый запрос. Языки по-прежнему account-owned, выбор вызывает существующий onLanguageChange. Browser один NL без поля поиска, typecheck и6 relevant tests pass. Screenshot /tmp/407qa/correction22-languages.png.
+
+Пункт24: календарь адаптируется к ширине history container, а не viewport. При ≤700px показывает существующую двухмесячную навигацию; ширина сетки ограничена300px, квадратные дни не переполняют узкий блок. Годовая сетка без min-width/overflow-x:auto, подписи согласованы с колонками. Browser700/320 подтвердил отсутствие overflow (scrollWidth==clientWidth), переход к прошлым месяцам работает. Данные сервера/кнопки дней/доступные подписи сохранены. Девять Statistics tests pass; screenshot /tmp/407qa/correction24-adaptive.png.
+
+Пункт25: end ChevronRight у кнопки Последние действия, декоративный aria-hidden; существующий onHistory сохранён. Browser переход history и закрытие обратно работают. Typecheck и три localization tests pass. Screenshot /tmp/407qa/correction25-history.png.
+
+Пункт26: язык Statistics всегда виден; при одном — спокойная подпись с accessible name, при нескольких — прежние tabs/overflow selector. Account catalog и scope fetch/reset сохранены. Actual browser NL label над метриками подтверждён, typecheck и3 localization tests pass. Screenshot /tmp/407qa/correction26-language.png.
+
+Пункт27 в работе: migration189 возвращает dictionary.name/word_lists.name; отдельная legacy коллекция VanDale (full) описана archive0039, nt2-2000=VanDale2k по001. Добавлен тип к display labels; снятие зеркального full-дубля и отдельный показ published2k/личных коллекций ещё требуют сверки catalog identity. Не завершён.
+
+Пункт27 завершение: read-only material API дополняет curated rows каноническим slug из word_lists с той же authenticated Supabase/RLS сессией; ошибки каталога fail closed. UI исключает только известное legacy vandale-all зеркало при совпадении total с представленным VanDale dictionary, остальные коллекции сохранены. Короткие/полные labels содержат тип, personal варианты в отдельной группе. Actual browser показывает VanDale Dutch · Словарь и VanDale2k · Коллекция,18 163/4 031. Typecheck,5 API tests и3 Statistics localization tests pass. Screenshot /tmp/407qa/correction27-materials.png.
+
+Пункт28: удалена повторяющая legend с процентом начато/числом не начато. Основной счётчик8 из18 163, accessible progressbar и пояснение сохраняются. Browser actual section text подтверждён;3 localization tests иtypecheck pass. Screenshot /tmp/407qa/correction28-coverage.png.
+
+Пункт29 — исследование: ApprovedSettingsDestination sections languages/dictionaries/appearance/shortcuts/account, billing отсутствует сознательно. Prototype SettingsPrototype содержит disabled демонстрационные billing controls; initial product notes2026-07-06 описывают будущую подписку. В runtime/API/package нет Stripe/Paddle/checkout/payment portal/invoices integration. DB004 subscription_tier и dictionary minimum_subscription_tier — access entitlement, не доказательство оплаченной подписки. Рабочую оплату нельзя показать без отдельного backend/provider contract; фиктивные действия не добавлены. Результат объяснён владельцу.
+
+Пункт30: approved профиль определяется detectReadingDevice (UA/client hints), старый localStorage override игнорируется; viewport resize не переключает его. Ручной selector/temporary-storage message убраны из approved UI. Account phone/desktop размеры и legacy behavior сохранены. Browser отсутствиеselector подтверждено, typecheck/12 existing tests плюс phone-vs-stored-desktop regression pass. Screenshot /tmp/407qa/correction30-auto-profile.png.
+
+Пункт31: text-size compact segmented control справа от заголовка, без full-width растяжения; перенос header при недостаточной ширине. aria-label/pressed/disabled/retry/account save сохранены, focus outline добавлен. Browser desktop подтверждён, typecheck и approved auto-profile/save regression pass. Screenshot /tmp/407qa/correction31-compact-size.png.
+
+Пункт32: preview использует ProductionArticleReading, SenseCardHeadwordLockup и ArticleContentNode/ArticleMeaningDetails с illustrative normalized nodes, без собственных reading p/span classes. Добавлена рамка. Settings styles ограничены прямыми детьми/header, не переопределяют вложенную article typography. Browser headword44px подтверждён; typecheck/14 sharedArticle+reading tests pass. Screenshot /tmp/407qa/correction32-shared-preview.png. Полная итоговая проверка34 пунктов ещё предстоит.
+
+## Итоговая проверка — 1 октября, в работе
+
+Текущий HEAD6ea228fd, clean checkout. 15 suites194 tests плюс3 suites21 tests =215 pass; typecheck pass; lint единственный прежний missing handlePlayAudio dependency warning. Локальная SQL regression library_initial_browse прошла с14 449 groups, filters/pages/scope/ACL, rollback. Health3100 ok/local/contract193; translation gatefalse сохранён. Health commit/qaSource.commit — статический startup stamp2fa40926, не текущий HEAD; его нельзя использовать как доказательство текущего кода.
+
+Settings320: реальные controls178px, clientWidth==scrollWidth320; общий preview/headword44px. Снимок /tmp/407qa/final-settings-mobile.png. Полная visual matrix текущих экранов EN/NL/RU, Normal/Extra, Light/Dark ещё не доказана — goal остаётся active. Следующий шаг: завершить эту проверку, исправить найденные расхождения, проверить владельцев данных/действий по каждому пункту перед completion.
+
+Итоговая visual проверка Settings: реальный approved UI в RU, EN, NL (обычный текст, system/light), RU dark/Extra на320px. Пример shared renderer/рамка/переносы подтверждены; document width==scrollWidth320. UI language ru, text normal, mode system восстановлены, profile desktop автоматически остаётсяdesktop при viewport320. Screenshots final-dark-extra-mobile, final-settings-en/nl в/tmp/407qa. Эта проверка доказывает Settings30–32; оставшаяся текущая visual сверка Builder/Library/Statistics в этих режимах ещё открыта.
+
+Итоговая проверка Builder/Library/Statistics RU dark/Extra на395px: Library article и Statistics помещаются без горизонтального переполнения; календарь использует навигацию по месяцам. Screenshots /tmp/407qa/final-library-dark-extra.png и final-statistics-dark-extra.png. Direction card после переноса может вырасти до244px, но не растягивается на всю строку: flex-grow1 при прежнем max-width244px. Реальный browser Normal/system:395px card244×200;700px две карточки244×200 с одинаковой y. Word-in-context показывает конкретную пару «Я езжу на работу на велосипеде.» → «Ik ga met de fiets naar mijn werk.». Screenshot /tmp/407qa/final-direction-compact.png. Оригинальные ru/normal/system и viewport восстановлены. Полная EN/NL visual matrix Builder/Library/Statistics ещё открыта.
+
+Итоговая visual сверка EN/NL: Builder и Statistics Normal/system-light на755px; EN Library settled initial14,449 groups. NL Library Normal screenshot зафиксировал загрузку, не считается доказательством settled списка. NL dark/Extra395px settled Library14.449 и Statistics, EN dark/Extra320px Builder/Library/Statistics подтверждены screenshots final-{builder,library,statistics}-{en,nl}*. Найдено реальное обрезание Library filters/Next при Extra: results flex-column теперь min-width0, pagination допускает перенос подписи и группы кнопок. Browser после правки NL395: right379px у обеих кнопок внутри viewport; EN320 кнопки видимы полностью. Screenshots final-library-nl-dark-extra-fixed.png и final-library-en-dark-extra.png.25 DictionarySearchTab tests иtypecheck pass, diff check pass. Search/API/cursor/action callbacks не изменены. RU/normal/system/Graphite и исходный viewport восстановлены. Не вся комбинационная матрица и не итоговая сверка34 пунктов завершены.
+
+Итоговая RU Light/Extra1280: Library article flat, status above frame, backgroundless chevron, accessible close/header and compact Collections verified; creation reveal focuses name without save. Filters settled1 result and de/het-only dialog verified; drafts cancelled. Screenshots final-library-article-ru.png, final-collections-ru.png, final-library-ru-light-extra-desktop.png, final-filters-ru-light-extra.png. Statistics Extra revealed last year-month labels crowding at792px content width. Calendar container now uses label font size and63.636em threshold (700px at11px Normal), scales threshold with preference. Actual Extra1280 switches to months; Normal1280 retains year. Screenshots final-statistics-scaled-calendar.png, final-statistics-normal-calendar.png. Nine Statistics tests pass; CSS-only, unchanged data/day action owners. RU/Normal/System/viewport restored. Full final combination/ownership audit remains pending.
+
+Итоговый audit54e83b19: current source TrainingScreen1421–1487 передаёт sessionName в все family resume records, восстановление1650/1688 читает его, headers используют sessionDisplayName. sessionResumeStore сохраняет строковое имя; явная regression round-trips все4семейства.43 tests6suites passed: sessionResumeStore9, useCommitTrainingPilotDraft7, trainingPromptReveal6, TrainingSessionChrome11, TrainingExcludeAction6, LibraryCollectionsPicker4. Tests проверяют имена, восстановление, callbacks и handoff; не подменяют визуальную приёмку.
+
+EN Light/Extra actual browser1280/320: Settings appearance, Builder, Library kilo (desktop article/mobile results), Statistics settled activity/calendar verified. Screenshots /tmp/407qa/matrix-en-light-extra-{settings,builder,library,statistics}-{desktop,mobile}.png. Library controls/labels видимы; calendar switches to months with scaled threshold. Original RU/Normal/System and viewport restored. Это новые8view checks; NL Light/Extra и Dark/Normal combinations, дополнительные mobile preview/details/overlays и финальная requirement-by-requirement ownership сверка ещё не закрыты. Goal active.
+
+Итоговая NL matrix4a461a23: Light/Extra и Dark/Normal,1280/320, actual Settings/Builder/Library kilo/Statistics —16views проверены. Screenshots /tmp/407qa/matrix-nl-{light-extra,dark-normal}-{settings,builder,library,statistics}-{desktop,mobile}.png. Light/Extra mobile screenshot включает полный shared preview с примером/переводом; desktop article flat/statusabove, mobile search/pagination полностью в пределах ширины. Dark/Normal desktop year и mobile month nav сохранены. Проверен computed ancestor chain Statistics: нет filter/transform/opacity изменений. Переходы/профиль/данные/учебные действия не менялись, save/start/create не выполнялись. RU/Normal/System/Graphite и viewport восстановлены. Следующие открытые матрицы EN/RU Dark/Normal; финальная сверка всех34 инвариантов ещё pending.
+
+Итоговая EN/RU Dark/Normal matrix2e43c644: actual1280/320 Settings/Builder/Library kilo/Statistics —16views подтверждены. Screenshots /tmp/407qa/matrix-{en,ru}-dark-normal-{settings,builder,library,statistics}-{desktop,mobile}.png. Desktop viewport подтверждён innerWidth1280/innerHeight900 после завершения resize; initial screenshot до settled resize заменён. Card cap/side-by-side desktop и wrapmobile, Library controls/article/status, yeardesktop/monthmobile подтверждены. Нового кода не потребовалось. Original RU/Normal/System/Graphite и viewport восстановлены. Следующий обязательный шаг: завершить requirement-by-requirement аудит34 пунктов по current source, evidence/tests/gates и связать окончательный вердикт с точным HEAD. Goal остаётся active.
+
+## Заключительная сверка завершена
+
+[Итоговый аудит34 пунктов](407-owner-final-audit.md) подтверждает текущий результат implementation6cf51fcf:303 tests26suites, typecheck/lint иlocal SQL pass; actual browser evidence сохранена в постоянный каталог. Предыдущие pending записи описывают историю и superseded итоговым аудитом. Translation false/rollout hold сохранены, production/push/merge не выполнялись. Owner visual acceptance не приписывается.

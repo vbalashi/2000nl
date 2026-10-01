@@ -1,12 +1,26 @@
 import React from "react";
 import { Repeat2 } from "lucide-react";
 import { HeadwordWithPronunciationBreaks } from "./HeadwordWithPronunciationBreaks";
+import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import approvedCard from "./approvedTrainingCard.module.css";
+import chrome from "@/components/practice/article/senseChrome.module.css";
+import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+
+/** Approved chrome is shared by the Training card and the article. */
+function approvedChrome() {
+  return trainingPresentationV1Enabled() || sharedArticlePresentationV1Enabled();
+}
 
 type Tone = "light" | "dark";
 
 // Shared Training dock treatment: a quiet text action with a visible keyboard focus.
 export const senseCardQuietActionClassName =
   "inline-flex h-6 min-h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border-0 bg-transparent px-0 font-sense-sans text-[11.5px] font-normal leading-none text-slate-500 outline-none hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-50 dark:text-[#7B8694] dark:hover:text-slate-100";
+
+/** Quiet action class for the active presentation (approved: palette roles and text scale). */
+export function senseCardQuietAction() {
+  return trainingPresentationV1Enabled() ? approvedCard.quietAction : senseCardQuietActionClassName;
+}
 
 export function SenseCardHeadwordLockup({
   article,
@@ -25,20 +39,23 @@ export function SenseCardHeadwordLockup({
   tone: Tone;
   headerActions?: React.ReactNode;
   showMetadata?: boolean;
-  variant?: "default" | "training-face" | "training-answer";
+  variant?: "default" | "training-face" | "training-answer" | "article";
 }) {
   const longHeadword = headword.replaceAll("·", "").length > 18;
   const training = variant !== "default";
   const answer = variant === "training-answer";
-  const trainingWordSize = longHeadword
+  const trainingWordSize = variant === "article" ? "text-[length:var(--practice-text-headword,36px)]" : longHeadword
     ? "text-[length:var(--reading-headword-long-size,32px)] sm:text-[length:var(--reading-headword-long-size-sm,40px)]"
     : answer
       ? "text-[length:var(--reading-headword-answer-size,44px)]"
       : "text-[length:var(--reading-headword-face-size,48px)]";
-  const primaryText =
-    tone === "dark" ? "text-slate-50" : "text-slate-900 dark:text-slate-100";
-  const mutedText =
-    tone === "dark" ? "text-slate-400" : "text-slate-500 dark:text-slate-400";
+  const approved = approvedChrome();
+  const primaryText = approved
+    ? chrome.headword
+    : tone === "dark" ? "text-slate-50" : "text-slate-900 dark:text-slate-100";
+  const mutedText = approved
+    ? chrome.article
+    : tone === "dark" ? "text-slate-400" : "text-slate-500 dark:text-slate-400";
   const metadataVisible =
     showMetadata && Boolean(partOfSpeech || coreVocabularyLabel);
 
@@ -46,23 +63,23 @@ export function SenseCardHeadwordLockup({
     <div className="relative min-w-0" data-testid="sense-card-headword-lockup">
       {metadataVisible || headerActions ? (
         <div
-          className="flex min-h-10 min-w-0 items-start justify-between gap-3"
+          className="flex min-h-8 min-w-0 items-center justify-between gap-3"
           data-testid="sense-card-header-row"
         >
           {metadataVisible ? (
             <div
-              className={`flex min-h-5 min-w-0 flex-wrap items-center gap-2 pt-0.5 text-[clamp(0.68rem,2.9cqw,0.78rem)] ${mutedText}`}
+              className={approved ? chrome.metadata : `flex min-h-5 min-w-0 flex-wrap items-center gap-2 pt-0.5 text-[clamp(0.68rem,2.9cqw,0.78rem)] ${mutedText}`}
               data-testid="sense-card-metadata"
             >
               {partOfSpeech ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className={approved ? chrome.pos : "inline-flex items-center gap-2"}>
+                  <span className={approved ? chrome.dot : "h-2 w-2 rounded-full bg-emerald-500"} />
                   {partOfSpeech}
                 </span>
               ) : null}
               {coreVocabularyLabel ? (
                 <span
-                  className={`rounded-md px-2 py-0.5 font-semibold ${
+                  className={approved ? chrome.badge : `rounded-md px-2 py-0.5 font-semibold ${
                     tone === "dark"
                       ? "bg-indigo-400/10 text-indigo-200"
                       : "bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-200"
@@ -94,7 +111,7 @@ export function SenseCardHeadwordLockup({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center font-sense-serif">
             <div
-              className={`flex min-w-0 items-baseline ${training ? `${trainingWordSize} gap-[0.22rem]` : "gap-[0.22em]"} ${
+              className={`flex min-w-0 items-baseline ${training ? `${trainingWordSize} ${variant === "article" ? "gap-[0.22em]" : "gap-[0.22rem]"}` : "gap-[0.22em]"} ${
                 longHeadword ? "flex-1" : ""
               }`}
             >
@@ -114,7 +131,7 @@ export function SenseCardHeadwordLockup({
                 data-long-headword={longHeadword ? "true" : "false"}
                 className={`min-w-0 break-words tracking-[-0.035em] ${primaryText} ${
                   training
-                    ? "text-[1em] font-medium leading-[1]"
+                    ? variant === "article" ? "text-[length:var(--practice-text-headword,36px)] font-medium leading-[1.1]" : "text-[1em] font-medium leading-[1]"
                     : longHeadword
                       ? "text-[1.75rem] font-normal leading-[0.96] sm:text-[2.2rem]"
                       : "text-[2.65rem] font-normal leading-[0.92] sm:text-[3rem]"
@@ -150,9 +167,10 @@ export function SenseCardHeaderAction({
       type="button"
       disabled={disabled}
       aria-label={label}
+      title={label}
       aria-pressed={pressed}
       onClick={onClick}
-      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-50 ${
+      className={approvedChrome() ? chrome.headerAction : `flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-50 ${
         accent
           ? "border-indigo-300 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-300 dark:hover:bg-indigo-400/10"
           : "border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -174,22 +192,23 @@ export function SenseSectionHeader({
   count?: number;
   tone: Tone;
 }) {
+  const approved = approvedChrome();
   return (
     <div
       data-testid="sense-section-header"
-      className="mb-2 flex items-center gap-2 text-[clamp(0.56rem,2.25cqw,0.66rem)] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400"
+      className={approved ? chrome.section : "mb-2 flex items-center gap-2 text-[clamp(0.56rem,2.25cqw,0.66rem)] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400"}
     >
       {icon ? <span className="shrink-0">{icon}</span> : null}
       <span className="shrink-0">{label}</span>
       <span
-        className={`h-px flex-1 ${
+        className={approved ? chrome.sectionLine : `h-px flex-1 ${
           tone === "dark"
             ? "bg-slate-700/55"
             : "bg-slate-300/60 dark:bg-slate-700/55"
         }`}
       />
       {typeof count === "number" ? (
-        <span className="font-mono font-medium tracking-normal">{count}</span>
+        <span className={approved ? chrome.sectionCount : "font-mono font-medium tracking-normal"}>{count}</span>
       ) : null}
     </div>
   );
@@ -227,7 +246,7 @@ export function SenseCardReveal({
 export function ExposureBadge({ count, tone }: { count: number; tone: Tone }) {
   return (
     <span
-      className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 font-mono text-[10px] ${
+      className={approvedChrome() ? chrome.exposure : `inline-flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 font-mono text-[10px] ${
         tone === "dark"
           ? "border-slate-700 text-slate-400"
           : "border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400"
@@ -249,7 +268,7 @@ export function NewExposureBadge({
 }) {
   return (
     <span
-      className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 font-mono text-[9px] font-semibold uppercase tracking-[0.06em] ${
+      className={approvedChrome() ? chrome.exposure : `inline-flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 font-mono text-[9px] font-semibold uppercase tracking-[0.06em] ${
         tone === "dark"
           ? "border-slate-700 text-slate-400"
           : "border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400"

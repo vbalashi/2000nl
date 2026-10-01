@@ -427,3 +427,60 @@ describe("fetchPlatformV2LibraryGroupPage", () => {
     }
   });
 });
+
+test("scoped Library page uses the first-party endpoint, preserving scope and cursor",async()=>{
+ const fetchMock=vi.fn().mockResolvedValue(new Response(JSON.stringify(payload),{status:200}));vi.stubGlobal("fetch",fetchMock);
+ await fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,cursor:"scoped-cursor",libraryScope:{dictionaryIds:[]}});
+ expect(fetchMock.mock.calls[0][0]).toBe("/api/library/search");
+ expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual(expect.objectContaining({dictionaryIds:[],cursor:"scoped-cursor",intent:"dictionary-lookup"}));
+});
+test("an obsolete scoped cursor has a distinct recoverable error",async()=>{
+ vi.stubGlobal("fetch",vi.fn().mockResolvedValue(new Response(JSON.stringify({error:"invalid_cursor"}),{status:400})));
+ await expect(fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,cursor:"old",libraryScope:{dictionaryIds:null}})).rejects.toMatchObject({kind:"invalid-cursor",status:400});
+});
+
+test("filtered pages carry validated count/match metadata without trimming senses",async()=>{
+ const fetchMock=vi.fn().mockResolvedValue(new Response(JSON.stringify({...payload,librarySearch:{totalGroups:7,matchingEntryIds:[furnitureEntry.entryId]}}),{status:200}));vi.stubGlobal("fetch",fetchMock);
+ const filters={parts:["noun" as const],article:"de" as const};
+ const result=await fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null,filters}});
+ expect(fetchMock.mock.calls[0][0]).toBe("/api/library/search");expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({filters});
+ expect(result.librarySearch).toEqual({totalGroups:7,matchingEntryIds:[furnitureEntry.entryId]});expect(result.groups).toEqual([multiSenseBankGroup]);
+});
+test("filtered pages reject missing or unrelated count/match metadata",async()=>{
+ for(const librarySearch of [undefined,{totalGroups:-1,matchingEntryIds:[]},{totalGroups:"7",matchingEntryIds:[financeEntry.entryId]},{totalGroups:0,matchingEntryIds:[financeEntry.entryId]},{totalGroups:1,matchingEntryIds:["outside-this-page"]},{totalGroups:1,matchingEntryIds:[]},{totalGroups:1,matchingEntryIds:[financeEntry.entryId,financeEntry.entryId]}]){
+ vi.stubGlobal("fetch",vi.fn().mockResolvedValue(new Response(JSON.stringify({...payload,librarySearch}),{status:200})));
+ await expect(fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}})).rejects.toMatchObject({kind:"contract-mismatch"});
+ }
+});
+
+test("filtered summary accepts matched cross-reference identities without turning them into sense cards", async () => {
+  const pointer = {
+    kind: "cross-reference" as const, crossReferenceId: "pointer", meaningOrdinal: 1,
+    label: null, text: "daar-", target: {query: "daar-"}, capabilities: [],
+  };
+  const pointerGroup = {...multiSenseBankGroup, senseCount: 0, entryCount: 1, entries: [pointer]};
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+    ...payload, groups: [pointerGroup], librarySearch: {totalGroups: 1, matchingEntryIds: ["pointer"]},
+  }), {status: 200})));
+  const result = await fetchPlatformV2LibraryGroupPage({query: "daar", cardTypeId: "word-to-definition", contentLanguageCode: "nl",
+    translationTargetLanguageCode: null, libraryScope: {dictionaryIds: null, filters: {parts: [], article: null}},
+  });
+  expect(result.groups).toEqual([pointerGroup]);
+});
+
+ test("first-party Library combines cursor reads and their matching entry projections",async()=>{
+  const fetchMock=vi.fn().mockImplementation(async(_url,init)=>{
+    const body=JSON.parse(init.body);
+    return new Response(JSON.stringify({...payload,
+      page:{selectedTierComplete:true,nextGroupCursor:body.cursor ? null : "second"},
+      librarySearch:{totalGroups:2,matchingEntryIds:[body.cursor ? furnitureEntry.entryId : financeEntry.entryId]},
+    }),{status:200});
+  });
+  vi.stubGlobal("fetch",fetchMock);
+  const result=await fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}});
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(fetchMock.mock.calls[1][1].body).cursor).toBe("second");
+  expect(result.groups).toHaveLength(2);
+  expect(result.librarySearch?.matchingEntryIds).toEqual([financeEntry.entryId,furnitureEntry.entryId]);
+  expect(result.nextGroupCursor).toBeNull();
+ });

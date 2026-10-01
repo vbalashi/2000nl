@@ -1,3 +1,4 @@
+import type { LibrarySearchScope, LibrarySearchSummary } from "./librarySearchScope";
 import type {
   PlatformLookupV2Request,
   PlatformLookupV2Response,
@@ -10,7 +11,7 @@ import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
 export type PlatformV2LookupTransportResult =
   | {
       state: "ready";
-      payload: PlatformLookupV2Response;
+      payload: PlatformLookupV2Response & { librarySearch?: LibrarySearchSummary };
       response: Response;
     }
   | { state: "http-error"; status: number; response: Response }
@@ -20,6 +21,7 @@ export async function requestPlatformV2Lookup(input: {
   body: PlatformLookupV2Request;
   signal?: AbortSignal;
   timeoutMs?: number;
+  libraryScope?: LibrarySearchScope;
 }): Promise<PlatformV2LookupTransportResult> {
   const controller = new AbortController();
   const detach = forwardAbortSignal(input.signal, controller);
@@ -38,14 +40,20 @@ export async function requestPlatformV2Lookup(input: {
       throw new DOMException("Aborted", "AbortError");
     }
     const response = await platformFetchWithTimeout(
-      "/api/platform/v2/lookup",
+      input.libraryScope ? "/api/library/search" : "/api/platform/v2/lookup",
       {
       method: "POST",
       credentials: "same-origin",
       cache: "no-store",
       signal: controller.signal,
       headers,
-      body: JSON.stringify(input.body),
+      body: JSON.stringify({
+        ...input.body,
+        ...(input.libraryScope ? {
+          dictionaryIds: input.libraryScope.dictionaryIds,
+          ...(input.libraryScope.filters ? { filters: input.libraryScope.filters } : {}),
+        } : {}),
+      }),
       },
       input.timeoutMs,
     );
@@ -57,6 +65,8 @@ export async function requestPlatformV2Lookup(input: {
     if (!isPlatformLookupV2Response(payload)) {
       return { state: "contract-mismatch", response };
     }
+    if (input.libraryScope?.filters && !validLibrarySearchSummary(payload))
+      return { state: "contract-mismatch", response };
     return { state: "ready", payload, response };
   } catch (error) {
     if (timedOut) throw new Error("platform_request_timeout");
@@ -83,4 +93,17 @@ function raceWithAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> 
       },
     );
   });
+}
+
+function validLibrarySearchSummary(payload: PlatformLookupV2Response): payload is PlatformLookupV2Response & { librarySearch: LibrarySearchSummary } {
+  const summary = (payload as PlatformLookupV2Response & { librarySearch?: unknown }).librarySearch;
+  if (!summary || typeof summary !== "object") return false;
+  const { totalGroups, matchingEntryIds } = summary as Record<string, unknown>;
+  if (!Number.isSafeInteger(totalGroups) || Number(totalGroups) < payload.groups.length ||
+    !Array.isArray(matchingEntryIds) || matchingEntryIds.length > 1000 ||
+    matchingEntryIds.some(id => typeof id !== "string" || !id.length || id.length > 128) ||
+    new Set(matchingEntryIds).size !== matchingEntryIds.length) return false;
+  const visible = new Set(payload.groups.flatMap(group => group.entries.flatMap(entry => [entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId])));
+  return matchingEntryIds.every(id => visible.has(id)) && payload.groups.every(group =>
+    group.entries.some(entry => matchingEntryIds.includes(entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId)));
 }

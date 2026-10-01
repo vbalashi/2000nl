@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-export const readingSizes = ["normal", "large", "largest"] as const;
+export const readingSizes = ["normal", "large", "largest", "extra"] as const;
 export type ReadingSize = (typeof readingSizes)[number];
 export type ReadingDevice = "phone" | "desktop";
 export type ReadingPreferences = Record<ReadingDevice, ReadingSize>;
@@ -54,6 +54,24 @@ export const readingSizeStyles: Record<ReadingSize, ReadingStyleVars> = {
     "--reading-headword-answer-size": "46px",
     "--reading-headword-long-size": "34px",
     "--reading-headword-long-size-sm": "42px",
+  },
+  extra: {
+    "--reading-body-size": "32px",
+    "--reading-body-leading": "1.4",
+    "--reading-body-prompt-size": "clamp(2.4rem, 7cqi, 3.8rem)",
+    "--reading-literary-size": "32px",
+    "--reading-literary-leading": "1.5",
+    "--reading-hint-size": "32px",
+    "--reading-hint-leading": "44px",
+    "--reading-nested-size": "26px",
+    "--reading-nested-leading": "1.45",
+    "--reading-translation-size": "26px",
+    "--reading-translation-leading": "1.45",
+    "--reading-translation-emphasis-size": "28px",
+    "--reading-headword-face-size": "62.4px",
+    "--reading-headword-answer-size": "57.2px",
+    "--reading-headword-long-size": "41.6px",
+    "--reading-headword-long-size-sm": "52px",
   },
   largest: {
     "--reading-body-size": "20px",

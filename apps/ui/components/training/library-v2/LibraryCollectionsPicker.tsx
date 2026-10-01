@@ -3,6 +3,11 @@
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import { DialogSurface } from "@/components/practice/ui/DialogSurface";
+import s from "@/components/practice/library/libraryOverlays.module.css";
+import { getUiMessages } from "@/lib/uiMessages";
+import { Plus, X } from "lucide-react";
 import type {
   EntryLearningListMembership,
   WordListSummary,
@@ -17,6 +22,8 @@ type Props = {
   memberships: EntryLearningListMembership[];
   busyListId: string | null;
   status: string | null;
+  membershipState?: "loading" | "ready" | "failed";
+  onRetryMemberships?: () => void;
   onClose: () => void;
   onToggleList: (list: WordListSummary, included: boolean) => void;
   onCreateList: (name: string) => void;
@@ -32,29 +39,38 @@ export function LibraryCollectionsPicker({
   memberships,
   busyListId,
   status,
+  membershipState = "ready",
+  onRetryMemberships,
   onClose,
   onToggleList,
   onCreateList,
   onOpenListMembership,
 }: Props) {
+  const editingBlocked = busyListId !== null || membershipState !== "ready";
+  const approved = sharedArticlePresentationV1Enabled();
+  const titleId = React.useId();
+  const searchRef = React.useRef<HTMLInputElement>(null);
   const [query, setQuery] = React.useState("");
+  const [creating, setCreating] = React.useState(false);
+  const copy = getUiMessages(interfaceLanguage).collections;
   const [newListName, setNewListName] = React.useState("");
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
 
   React.useEffect(() => {
     if (!open) return;
+    setCreating(false);
     setQuery("");
     setNewListName("");
   }, [open]);
 
   React.useEffect(() => {
-    if (!open) return;
+    if (!open || approved) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
+  }, [onClose, open, approved]);
 
   if (!open) return null;
 
@@ -71,32 +87,52 @@ export function LibraryCollectionsPicker({
         list.name.toLocaleLowerCase().includes(normalizedQuery)),
   );
 
-  return (
-    <div
-      className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[1px]"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
+  const createForm = (<form
+            className="flex gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const name = newListName.trim();
+              if (!name || editingBlocked) return;
+              onCreateList(name);
+              setNewListName("");
+            }}
+          >
+            <input
+              autoFocus={approved}
+              value={newListName}
+              aria-label={t("senseCard.collections.createPlaceholder")}
+              onChange={(event) => setNewListName(event.target.value)}
+              placeholder={t("senseCard.collections.createPlaceholder")}
+              className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-[#171b22] dark:text-slate-100"
+            />
+            <button
+              type="submit"
+              disabled={!newListName.trim() || editingBlocked}
+              className="rounded-xl border border-indigo-500 px-3 py-2 text-sm font-semibold text-indigo-700 disabled:opacity-50 dark:text-indigo-200"
+            >
+              {t("senseCard.collections.create")}
+            </button>
+          </form>);
+
+  const content = (
       <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="library-collections-title"
-        className="flex max-h-[min(680px,calc(100dvh-2rem))] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-2xl dark:border-slate-600 dark:bg-[#20252f]"
+        role={approved ? undefined : "dialog"}
+        aria-modal={approved ? undefined : true}
+        aria-labelledby={titleId}
+        className={approved ? `${s.sheet} ${s.production}` : "flex max-h-[min(680px,calc(100dvh-2rem))] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-2xl dark:border-slate-600 dark:bg-[#20252f]"}
       >
-        <header className="flex items-start gap-4 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
+        <header data-dialog-part="heading" className="flex items-start gap-4 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">
+            <p className={approved ? "sr-only" : "text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300"}>
               {headword}
             </p>
             <h2
-              id="library-collections-title"
+              id={titleId}
               className="mt-1 text-xl font-semibold text-slate-950 dark:text-white"
             >
-              {t("senseCard.collections.title")}
+              {approved ? copy.title : t("senseCard.collections.title")}
             </h2>
-            <p className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">
+            <p className={approved ? "sr-only" : "mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400"}>
               {definition}
             </p>
           </div>
@@ -106,14 +142,16 @@ export function LibraryCollectionsPicker({
             onClick={onClose}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-600 transition hover:bg-slate-200 dark:bg-[#171b22] dark:text-slate-300 dark:hover:bg-slate-700"
           >
-            ×
+            {approved ? <X aria-hidden="true" size={18} /> : "×"}
           </button>
         </header>
 
-        <div className="space-y-3 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
+        {approved ? <p className={s.hint}>{copy.hint}</p> : null}
+        <div data-dialog-part="fields" className="space-y-3 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
           <label className="block">
             <span className="sr-only">{t("senseCard.collections.search")}</span>
             <input
+              ref={searchRef}
               autoFocus
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -121,33 +159,15 @@ export function LibraryCollectionsPicker({
               className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-[#171b22] dark:text-slate-100"
             />
           </label>
-          <form
-            className="flex gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const name = newListName.trim();
-              if (!name) return;
-              onCreateList(name);
-              setNewListName("");
-            }}
-          >
-            <input
-              value={newListName}
-              onChange={(event) => setNewListName(event.target.value)}
-              placeholder={t("senseCard.collections.createPlaceholder")}
-              className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-[#171b22] dark:text-slate-100"
-            />
-            <button
-              type="submit"
-              disabled={!newListName.trim() || busyListId !== null}
-              className="rounded-xl border border-indigo-500 px-3 py-2 text-sm font-semibold text-indigo-700 disabled:opacity-50 dark:text-indigo-200"
-            >
-              {t("senseCard.collections.create")}
-            </button>
-          </form>
+          {!approved ? createForm : null}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+        <div data-dialog-part="body" role={approved ? "region" : undefined} aria-label={approved ? t("senseCard.collections.title") : undefined} tabIndex={approved ? 0 : undefined} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+          {membershipState === "loading" ? <p role="status">{t("senseCard.collections.loadingMembership")}</p> : null}
+          {membershipState === "failed" ? <div>
+            <p role="alert">{t("senseCard.collections.membershipFailed")}</p>
+            {onRetryMemberships ? <button type="button" onClick={onRetryMemberships}>{t("senseCard.collections.retryMembership")}</button> : null}
+          </div> : null}
           {visibleLists.length ? (
             <div className="space-y-1">
               {visibleLists.map((list) => {
@@ -161,7 +181,7 @@ export function LibraryCollectionsPicker({
                       id={`library-collection-${list.id}`}
                       type="checkbox"
                       checked={included}
-                      disabled={busyListId !== null}
+                      disabled={editingBlocked}
                       onChange={() => onToggleList(list, included)}
                       className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
@@ -197,14 +217,21 @@ export function LibraryCollectionsPicker({
                 );
               })}
             </div>
-          ) : (
+          ) : membershipState === "ready" ? (
             <p className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
               {t("senseCard.collections.empty")}
             </p>
-          )}
+          ) : null}
         </div>
 
-        <footer className="flex min-h-12 items-center justify-between gap-3 border-t border-slate-200 px-5 py-3 dark:border-slate-700">
+        {approved ? <div className={s.creation}>
+          {creating ? createForm : <button type="button" disabled={editingBlocked}
+            onClick={() => { setNewListName(query); setCreating(true); }}>
+            <Plus aria-hidden="true" size={15} />{copy.new}
+          </button>}
+        </div> : null}
+
+        <footer data-dialog-part="footer" className="flex min-h-12 items-center justify-between gap-3 border-t border-slate-200 px-5 py-3 dark:border-slate-700">
           <p role="status" className="text-xs text-emerald-700 dark:text-emerald-300">
             {status}
           </p>
@@ -217,6 +244,12 @@ export function LibraryCollectionsPicker({
           </button>
         </footer>
       </section>
+  );
+  return approved ? <DialogSurface className={s.dialog} lang={interfaceLanguage}
+    aria-labelledby={titleId} initialFocusRef={searchRef} onDismiss={onClose}>{content}</DialogSurface> : (
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[1px]"
+      role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+      {content}
     </div>
   );
 }

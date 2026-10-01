@@ -4,7 +4,10 @@ export type TrainingCardPrompt =
   | { kind: "expression"; text: string; article?: string }
   | { kind: "explanation"; text: string };
 
+import type {PlatformWordDetailsV2} from "../../../../packages/shared/types/platformV2";
+
 export type TrainingCardAnswer = {
+  wordDetails?:PlatformWordDetailsV2;
   headword: string;
   article?: string;
   partOfSpeech?: string;
@@ -18,6 +21,8 @@ export type TrainingCardAnswer = {
 
 export type TrainingExercisePresentation = {
   label: string;
+  /** Presentation identity of the same question on the answer, never inferred from text. */
+  promptTarget: { contentNodeId: string; kind: "text" | "translation" };
   answerTranslationInitiallyVisible?: boolean;
   prompt: TrainingCardPrompt;
   hint?: { text: string; label: string };

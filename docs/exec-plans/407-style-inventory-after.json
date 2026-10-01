@@ -1,0 +1,601 @@
+{
+  "scope": "CSS declarations, including fallback literals; not computed on-screen colors or loaded font count",
+  "allPrototype": {
+    "files": 13,
+    "uniqueColors": 91,
+    "colorOccurrences": 118,
+    "uniqueFontSizes": 29,
+    "fontFamilies": [
+      "var(--font-sense-sans),Inter,sans-serif",
+      "inherit",
+      "var(--practice-font-definition)",
+      "var(--practice-font-reading)",
+      "var(--practice-font-ui)",
+      "var(--default-font-family)"
+    ],
+    "important": 48
+  },
+  "selectedLeaves": {
+    "files": 10,
+    "uniqueColors": 0,
+    "colorOccurrences": 0,
+    "uniqueFontSizes": 20,
+    "fontFamilies": [
+      "inherit",
+      "var(--practice-font-definition)",
+      "var(--practice-font-reading)",
+      "var(--practice-font-ui)"
+    ],
+    "important": 27
+  },
+  "inventory": [
+    {
+      "file": "app/dev/session-builder-prototype/builderScope.module.css",
+      "selected": true,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-text-body)",
+        "var(--practice-text-body-lg)",
+        "var(--practice-text-caption)",
+        "var(--practice-text-label)",
+        "var(--practice-text-small)"
+      ],
+      "fontFamilies": [],
+      "important": 0
+    },
+    {
+      "file": "app/dev/session-builder-prototype/comparison.module.css",
+      "selected": false,
+      "colors": [
+        "#1112",
+        "#15152530",
+        "#20203005",
+        "#21232b",
+        "#252631",
+        "#262627",
+        "#272932",
+        "#292b36",
+        "#303440",
+        "#484455",
+        "#626472",
+        "#626570",
+        "#636574",
+        "#6554c1",
+        "#6653c8",
+        "#6655a6",
+        "#67647d",
+        "#6e37c3",
+        "#737583",
+        "#767886",
+        "#777a89",
+        "#7865d6",
+        "#7b7c89",
+        "#838592",
+        "#868897",
+        "#8a8c98",
+        "#8a8c99",
+        "#8c8f9c",
+        "#9294a0",
+        "#9a9baa",
+        "#b9adff",
+        "#d7d2ff",
+        "#dcddea",
+        "#dedfe6",
+        "#dfe1e7",
+        "#e1e2e8",
+        "#e5e5ec",
+        "#e6e7ed",
+        "#e7e7ed",
+        "#e8e9ee",
+        "#e9eaf0",
+        "#eeebfc",
+        "#eeeff3",
+        "#efedf5",
+        "#f0eff5",
+        "#f2eafa",
+        "#f2f2f6",
+        "#f5f3fc",
+        "#fff",
+        "#ffffff15",
+        "#ffffff20",
+        "white"
+      ],
+      "colorOccurrences": 65,
+      "fontSizes": [
+        "10px",
+        "11px",
+        "12px",
+        "13px",
+        "14px",
+        "21px",
+        "28px",
+        "9px"
+      ],
+      "fontFamilies": [
+        "var(--font-sense-sans),Inter,sans-serif"
+      ],
+      "important": 0
+    },
+    {
+      "file": "app/dev/session-builder-prototype/library.module.css",
+      "selected": true,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-definition-size)",
+        "var(--practice-literary-size)",
+        "var(--practice-text-body)",
+        "var(--practice-text-body-lg)",
+        "var(--practice-text-caption)",
+        "var(--practice-text-headword)",
+        "var(--practice-text-label)",
+        "var(--practice-text-page)",
+        "var(--practice-text-small)",
+        "var(--practice-text-title)",
+        "var(--practice-text-title-sm)",
+        "var(--preview-body,var(--practice-text-body))",
+        "var(--preview-literary,var(--practice-text-body-lg))"
+      ],
+      "fontFamilies": [
+        "inherit",
+        "var(--practice-font-definition)",
+        "var(--practice-font-reading)",
+        "var(--practice-font-ui)"
+      ],
+      "important": 1
+    },
+    {
+      "file": "app/dev/session-builder-prototype/libraryFilters.module.css",
+      "selected": true,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-text-body)",
+        "var(--practice-text-caption)",
+        "var(--practice-text-label)",
+        "var(--practice-text-lead)",
+        "var(--practice-text-small)"
+      ],
+      "fontFamilies": [],
+      "important": 0
+    },
+    {
+      "file": "app/dev/session-builder-prototype/libraryOverlays.module.css",
+      "selected": true,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-text-caption)",
+        "var(--practice-text-label)",
+        "var(--practice-text-lead)"
+      ],
+      "fontFamilies": [
+        "var(--practice-font-ui)"
+      ],
+      "important": 0
+    },
+    {
+      "file": "app/dev/session-builder-prototype/libraryStudy.module.css",
+      "selected": false,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-text-caption)",
+        "var(--practice-text-label)",
+        "var(--practice-text-lead)"
+      ],
+      "fontFamilies": [
+        "var(--practice-font-ui)"
+      ],
+      "important": 0
+    },
+    {
+      "file": "app/dev/session-builder-prototype/palette.module.css",
+      "selected": false,
+      "colors": [
+        "#047857",
+        "#0f172a",
+        "#0f172a1f",
+        "#0f766e",
+        "#10b981",
+        "#202335",
+        "#2dd4bf",
+        "#34b88b",
+        "#37254f",
+        "#42495a",
+        "#475569",
+        "#49366d",
+        "#4d7c0f",
+        "#4e3fd1",
+        "#4f46e5",
+        "#64748b",
+        "#6557ba",
+        "#697083",
+        "#6d5ac9",
+        "#71798b",
+        "#71798c",
+        "#777e91",
+        "#818cf8",
+        "#84cc16",
+        "#b7acec",
+        "#c3b5e2",
+        "#cbd5e1",
+        "#cfc2e9",
+        "#d8cfee",
+        "#dde2eb",
+        "#dedee8",
+        "#e0e3eb",
+        "#e11d48",
+        "#e2e3eb",
+        "#eeebff",
+        "#f1f5f9",
+        "#f5f5f8",
+        "#f8fafc",
+        "#fb7185",
+        "#fff",
+        "white"
+      ],
+      "colorOccurrences": 53,
+      "fontSizes": [
+        "10px",
+        "11px",
+        "12px",
+        "14px",
+        "17px"
+      ],
+      "fontFamilies": [
+        "var(--font-sense-sans),Inter,sans-serif"
+      ],
+      "important": 0
+    },
+    {
+      "file": "app/dev/session-builder-prototype/prototype.module.css",
+      "selected": false,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-text-body)",
+        "var(--practice-text-body-lg)",
+        "var(--practice-text-caption)",
+        "var(--practice-text-label)",
+        "var(--practice-text-lead)",
+        "var(--practice-text-page)",
+        "var(--practice-text-small)",
+        "var(--practice-text-title)",
+        "var(--practice-text-title-sm)"
+      ],
+      "fontFamilies": [
+        "var(--default-font-family)",
+        "var(--practice-font-reading)",
+        "var(--practice-font-ui)"
+      ],
+      "important": 21
+    },
+    {
+      "file": "app/dev/session-builder-prototype/settings.module.css",
+      "selected": true,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        ".65em",
+        ".85em",
+        "1.7em",
+        "1em",
+        "var(--practice-text-body)",
+        "var(--practice-text-body-lg)",
+        "var(--practice-text-caption)",
+        "var(--practice-text-label)",
+        "var(--practice-text-lead)",
+        "var(--practice-text-small)",
+        "var(--practice-text-title)",
+        "var(--practice-text-title-sm)"
+      ],
+      "fontFamilies": [
+        "var(--practice-font-reading)"
+      ],
+      "important": 12
+    },
+    {
+      "file": "app/dev/session-builder-prototype/statistics.module.css",
+      "selected": true,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-text-body)",
+        "var(--practice-text-caption)",
+        "var(--practice-text-label)",
+        "var(--practice-text-lead)",
+        "var(--practice-text-number)",
+        "var(--practice-text-page)",
+        "var(--practice-text-small)",
+        "var(--practice-text-title)",
+        "var(--practice-text-title-sm)"
+      ],
+      "fontFamilies": [
+        "var(--practice-font-ui)"
+      ],
+      "important": 13
+    },
+    {
+      "file": "app/dev/session-builder-prototype/trainingHome.module.css",
+      "selected": false,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-text-body)",
+        "var(--practice-text-caption)",
+        "var(--practice-text-label)",
+        "var(--practice-text-small)"
+      ],
+      "fontFamilies": [],
+      "important": 0
+    },
+    {
+      "file": "app/dev/session-builder-prototype/trainingSession.module.css",
+      "selected": true,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-definition-size)",
+        "var(--practice-text-body)",
+        "var(--practice-text-body-lg)",
+        "var(--practice-text-caption)",
+        "var(--practice-text-display)",
+        "var(--practice-text-label)",
+        "var(--practice-text-number)",
+        "var(--practice-text-page)",
+        "var(--practice-text-small)"
+      ],
+      "fontFamilies": [
+        "var(--practice-font-definition)",
+        "var(--practice-font-reading)",
+        "var(--practice-font-ui)"
+      ],
+      "important": 1
+    },
+    {
+      "file": "app/dev/session-builder-prototype/wordDetails.module.css",
+      "selected": true,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-literary-size)",
+        "var(--practice-text-body)",
+        "var(--practice-text-caption)",
+        "var(--practice-text-label)",
+        "var(--practice-text-lead)",
+        "var(--practice-text-small)"
+      ],
+      "fontFamilies": [
+        "var(--practice-font-reading)"
+      ],
+      "important": 0
+    },
+    {
+      "file": "components/practice/ratingControls.module.css",
+      "selected": false,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-text-body)"
+      ],
+      "fontFamilies": [
+        "var(--practice-font-ui)"
+      ],
+      "important": 0
+    },
+    {
+      "file": "components/practice/trainingOverview.module.css",
+      "selected": true,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-text-body)",
+        "var(--practice-text-body-lg)",
+        "var(--practice-text-caption)",
+        "var(--practice-text-display)",
+        "var(--practice-text-headword)",
+        "var(--practice-text-label)",
+        "var(--practice-text-number)",
+        "var(--practice-text-small)"
+      ],
+      "fontFamilies": [
+        "var(--practice-font-reading)"
+      ],
+      "important": 0
+    },
+    {
+      "file": "components/practice/ui/practicePanel.module.css",
+      "selected": true,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        "var(--practice-text-title-sm)"
+      ],
+      "fontFamilies": [
+        "var(--practice-font-ui)"
+      ],
+      "important": 0
+    },
+    {
+      "file": "components/practice/ui/practiceTheme.module.css",
+      "selected": false,
+      "colors": [
+        "#08060b40",
+        "#08060b99",
+        "#141b24",
+        "#182637",
+        "#191720",
+        "#19191b",
+        "#1e2936",
+        "#1e2a3b",
+        "#21172f1c",
+        "#21172f66",
+        "#233142",
+        "#24182f",
+        "#242427",
+        "#243449",
+        "#243b34",
+        "#25212e",
+        "#252528",
+        "#282331",
+        "#28282b",
+        "#284a79",
+        "#29394c",
+        "#29394e",
+        "#2a3a51",
+        "#2c2637",
+        "#2c2c30",
+        "#2e4056",
+        "#30283d",
+        "#303033",
+        "#303034",
+        "#303a50",
+        "#304c6f",
+        "#315f9f",
+        "#345987",
+        "#353539",
+        "#356f60",
+        "#374a61",
+        "#382e45",
+        "#386aa0",
+        "#39393f",
+        "#3b3149",
+        "#3d3321",
+        "#434348",
+        "#45454b",
+        "#45638a",
+        "#456d9f",
+        "#465c77",
+        "#482c37",
+        "#49366d",
+        "#493d59",
+        "#49494f",
+        "#4f3e64",
+        "#505054",
+        "#516783",
+        "#555064",
+        "#56565f",
+        "#604d7c",
+        "#626268",
+        "#62626a",
+        "#65517b",
+        "#659888",
+        "#6c6079",
+        "#71608d",
+        "#7697c3",
+        "#7753b0",
+        "#7895b9",
+        "#799cc8",
+        "#7ea1d0",
+        "#7ea7da",
+        "#805514",
+        "#80b4a3",
+        "#829ab6",
+        "#919095",
+        "#919199",
+        "#91bffc",
+        "#929198",
+        "#934556",
+        "#9480ac",
+        "#949398",
+        "#94d0b7",
+        "#9984c7",
+        "#9c8bad",
+        "#9cc6f0",
+        "#9dbfe9",
+        "#a0a0aa",
+        "#a38abf",
+        "#a4b9d3",
+        "#a68cc2",
+        "#a7a7b1",
+        "#b2b2b9",
+        "#b3cef0",
+        "#b69ad9",
+        "#b6a6c8",
+        "#b8cde7",
+        "#bfbdba",
+        "#c0d2e9",
+        "#c2a8e2",
+        "#c5a163",
+        "#c7a669",
+        "#c9a2fb",
+        "#c9c9d2",
+        "#ccddf3",
+        "#cebcdf",
+        "#cfcfd2",
+        "#d0d0d5",
+        "#d0dce9",
+        "#d2baf0",
+        "#d2c5e0",
+        "#d7d6d3",
+        "#d9d8d5",
+        "#dce6f3",
+        "#ddd5e8",
+        "#ded4ef",
+        "#dfe9f5",
+        "#e0efff",
+        "#e1e0dd",
+        "#e1eaf7",
+        "#e1efe9",
+        "#e2be7c",
+        "#e3e2df",
+        "#e3edf8",
+        "#e5dcef",
+        "#e5e5e8",
+        "#e7e1f0",
+        "#e8e7e4",
+        "#eae4f3",
+        "#eaf0f8",
+        "#eaf1fb",
+        "#edf2fa",
+        "#eeedeb",
+        "#efebf4",
+        "#efeff0",
+        "#f0adba",
+        "#f0e3ff",
+        "#f0eaf7",
+        "#f0edf6",
+        "#f0efed",
+        "#f1f1f3",
+        "#f2f5fa",
+        "#f3f4f8",
+        "#f4f4f3",
+        "#f6e9cd",
+        "#f7e5e9",
+        "#ffffff",
+        "#ffffff0a",
+        "#ffffff60"
+      ],
+      "colorOccurrences": 148,
+      "fontSizes": [],
+      "fontFamilies": [
+        "var(--practice-font-ui)"
+      ],
+      "important": 3
+    },
+    {
+      "file": "components/practice/ui/primitives.module.css",
+      "selected": false,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [],
+      "fontFamilies": [],
+      "important": 0
+    },
+    {
+      "file": "components/practice/ui/wordIdentity.module.css",
+      "selected": false,
+      "colors": [],
+      "colorOccurrences": 0,
+      "fontSizes": [
+        ".55em"
+      ],
+      "fontFamilies": [
+        "var(--practice-font-reading)"
+      ],
+      "important": 0
+    }
+  ]
+}

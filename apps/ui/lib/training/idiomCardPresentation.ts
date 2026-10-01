@@ -34,6 +34,7 @@ export function buildIdiomCardPresentation({
     })),
   });
   return {
+    promptTarget: { contentNodeId: direction === "direct" ? content.expression.contentNodeId : content.explanation.contentNodeId, kind: "text" },
     label: { en: "Idiom", nl: "Uitdrukking", ru: "Идиома" }[interfaceLanguage],
     prompt:
       direction === "direct"

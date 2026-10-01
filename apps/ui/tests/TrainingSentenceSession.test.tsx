@@ -1,6 +1,9 @@
+import { getUiMessages } from "@/lib/uiMessages";
+const recordedStudy = vi.hoisted(() => vi.fn());
+vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TrainingSentenceSession } from "@/components/training/pilot/TrainingSentenceSession";
 import { fetchNextPlatformV2TranslationTrainingSessionExercise, markPlatformV2TranslationTrainingSessionMemberUnavailable, performPlatformV2TranslationExerciseAction } from "@/lib/platform/platformV2TranslationExerciseClient";
 import { loadSentenceExerciseContent, prepareSentenceExerciseTranslation } from "@/lib/training/sentenceExerciseLoader";
@@ -94,4 +97,75 @@ test("a pending translation stays on the same session member and can be retried"
   expect(await screen.findByText("Переведённый пример.")).toBeVisible();
   expect(markPlatformV2TranslationTrainingSessionMemberUnavailable).not.toHaveBeenCalled();
   expect(performPlatformV2TranslationExerciseAction).not.toHaveBeenCalled();
+});
+
+
+test("active time waits for prepared sentence content and pauses with the enclosing surface", async () => {
+  vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValue(candidate);
+  vi.mocked(loadSentenceExerciseContent).mockResolvedValue({state:"ready",content} as never);
+  const view = (enabled: boolean) => <TrainingSentenceSession studyTimeEnabled={enabled} userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} />;
+  const {rerender}=render(view(true));
+  expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
+  await waitFor(()=>expect(recordedStudy.mock.lastCall?.[0]).toMatchObject({family:"sentence",ownerId:"user-1",sessionId:session.sessionId,entryId:candidate.entryId,targetId:candidate.targetId,enabled:true}));
+  fireEvent.click(screen.getByRole("button",{name:"Show answer"}));
+  expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(true);
+  rerender(view(false)); expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
+});
+
+afterEach(() => { vi.unstubAllEnvs(); });
+
+test.each([true, false])("approved session shell is shared while rollout is %s", async (approved) => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", String(approved));
+  vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValue(candidate);
+  vi.mocked(loadSentenceExerciseContent).mockResolvedValue({ state: "ready", content } as never);
+  render(<TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} />);
+  await screen.findByRole("button", { name: "Show answer" });
+  expect(screen.getByTestId("training-session-chrome")).toHaveAttribute("data-visual-spec", approved ? "training-approved-v1" : "training-height-b");
+  if (approved) expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
+  else expect(screen.getByTestId("training-session-footer-progress")).toBeInTheDocument();
+});
+
+for (const language of ["en", "nl", "ru"] as const) {
+  test(`approved sentence preparation failure has separate retry and exit owners in ${language}`, async () => {
+    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+    vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValue(candidate);
+    vi.mocked(loadSentenceExerciseContent).mockRejectedValue(new Error("lookup_unavailable"));
+    const onExit = vi.fn();
+    const labels = getUiMessages(language);
+    render(<TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl"
+      translationTargetLanguageCode="ru" interfaceLanguage={language} onExit={onExit} />);
+    expect(await screen.findByRole("alert")).toHaveTextContent(labels.trainingExercises.sentence.failed);
+    fireEvent.click(screen.getByRole("button", {name:labels.trainingExercises.sentence.retry}));
+    await waitFor(()=>expect(loadSentenceExerciseContent).toHaveBeenCalledTimes(2));
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", {name:labels.trainingSession.back}));
+    expect(onExit).toHaveBeenCalledOnce();
+    expect(performPlatformV2TranslationExerciseAction).not.toHaveBeenCalled();
+    expect(markPlatformV2TranslationTrainingSessionMemberUnavailable).not.toHaveBeenCalled();
+  });
+}
+
+test("parent callback replacement keeps the revealed sentence and does not reload its member",async()=>{
+ vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValue(candidate);
+ vi.mocked(loadSentenceExerciseContent).mockResolvedValue({state:"ready",content} as never);
+ const view=(onSessionSuperseded:()=>void)=><TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} onSessionSuperseded={onSessionSuperseded}/>;
+ const rendered=render(view(vi.fn()));await screen.findByRole("button",{name:"Show answer"});
+ fireEvent.click(screen.getByRole("button",{name:"Show answer"}));expect(screen.getByText(content.sentence.text)).toBeVisible();
+ rendered.rerender(view(vi.fn()));
+ await waitFor(()=>expect(screen.getByRole("button",{name:"Good"})).toBeVisible());
+ expect(screen.queryByRole("button",{name:"Show answer"})).not.toBeInTheDocument();
+ expect(fetchNextPlatformV2TranslationTrainingSessionExercise).toHaveBeenCalledTimes(1);
+ expect(performPlatformV2TranslationExerciseAction).not.toHaveBeenCalled();
+});
+
+test("the next authoritative supersession uses the latest callback without reloading on callback replacement",async()=>{
+ const previous=vi.fn(),latest=vi.fn();
+ vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValueOnce(candidate).mockResolvedValueOnce({status:"superseded"} as never);
+ vi.mocked(loadSentenceExerciseContent).mockResolvedValue({state:"ready",content} as never);
+ vi.mocked(performPlatformV2TranslationExerciseAction).mockResolvedValue({} as never);
+ const view=(callback:()=>void)=><TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} onSessionSuperseded={callback}/>;
+ const rendered=render(view(previous));await screen.findByRole("button",{name:"Show answer"});
+ fireEvent.click(screen.getByRole("button",{name:"Show answer"}));rendered.rerender(view(latest));
+ fireEvent.click(screen.getByRole("button",{name:"Good"}));await waitFor(()=>expect(latest).toHaveBeenCalledTimes(1));
+ expect(previous).not.toHaveBeenCalled();expect(fetchNextPlatformV2TranslationTrainingSessionExercise).toHaveBeenCalledTimes(2);
 });

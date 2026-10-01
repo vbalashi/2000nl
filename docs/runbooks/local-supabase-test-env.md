@@ -41,7 +41,9 @@ scripts/ui-local-dev.sh --port 3100
 
 `check` never starts services, applies migrations, imports, or resets. It reports
 content/progress counts, verifies managed migration receipts against the current
-manifest, and runs existing platform/postflight checks with read-only sessions.
+manifest, and runs existing platform and the checksum-pinned read-only postflight with read-only sessions.
+Behavioral import postflights (177–178) create temporary test content and roll it
+back; they remain in the managed deployment gate and are not called by `check`.
 If the stack is stopped, use `start` and repeat `check`.
 
 A matching health version alone does not prove the schema was verified. Missing
@@ -225,3 +227,43 @@ scripts/db-local-supabase.sh probe
 Use the reviewed deployment gate for a populated staging database. Bootstrap is
 for a fresh disposable target only. Never pass a remote URL to the local wrapper.
 Keep staging project secrets out of committed files.
+
+Fresh Supabase keeps `pgcrypto` in `extensions`. Migration 179 supplies the
+public `digest(text,text)` / `digest(bytea,text)` compatibility surface already
+used in plain-Postgres tests; do not move the extension or patch individual
+RPC search paths by hand. The readiness probe hashes a known value, and
+`LOCAL_SUPABASE_DB_URL=... node --test db/scripts/pgcrypto-namespace.test.mjs`
+checks both extension layouts in disposable databases. A passing index check
+alone does not prove Library lookup; verify a real imported word after reset.
+
+Account saved-training SQL validation uses a disposable database:
+`LOCAL_SUPABASE_DB_URL=... node --test db/scripts/account_training_setups.integration.test.mjs`.
+It applies own-row RLS and races two expected-revision saves, keeping one winner.
+On 2026-09-30 the local Supabase PostgreSQL backend segfaulted while rejecting a
+direct anon call to the new revoked RPC (server log: `SET ROLE anon; SELECT
+public.save_account_training_setups_v1(...)`, signal 11); the server recovered.
+The check now verifies revoked execute privileges and API auth denial without
+repeating that native-engine failure. This is an environment limitation, not a
+passing direct-denial invocation test. Clean only the exact scoped test database
+if a failed run leaves one behind; do not reset the canonical imported DB.
+
+
+### Retaining updates must not replay bootstrap
+
+`db-local-supabase.sh apply` uses the managed, checksum-pinned forward migration gate. Use `reset --confirm-reset` / `all --confirm-reset` only for a deliberate fresh DB; those paths retain bootstrap. An unmanaged/pre-baseline database fails closed rather than being silently bootstrapped.
+
+On 2026-09-30, the previous `apply` replayed bootstrap on the imported local corpus and failed in migration 120: its content-node source-order update collided with `platform_v2_content_nodes_active_source_order_idx`. Earlier statements had already reinstated old function definitions and retired overloads. Local recovery compared the populated DB with a disposable clean bootstrap at the same checkout, restored 15 non-extension function definitions, and removed the two legacy `*_without_known` signatures without cascading. The two digest adapters retain the intentional Supabase extension namespace. Word-entry, learner-state and review counts were unchanged. This is a harness replay failure, not stale dictionary data or a reason to reset user data. Managed probes and browser checks must pass after recovery.
+
+Account material settings (migration 183) have a disposable integration check:
+`LOCAL_SUPABASE_DB_URL=... node --test db/scripts/account_material_preferences.integration.test.mjs`.
+It creates/removes a separate local database and checks account isolation,
+concurrent revision conflicts, document constraints, unrelated settings and an
+existing session row. It does not reset or import into the canonical QA database.
+
+The material launch/resume policy (migration 184) has its own disposable check:
+`LOCAL_SUPABASE_DB_URL=... node --test db/scripts/training_material_selection_snapshot.integration.test.mjs`.
+It bootstraps and reapplies DDL in a separate database, tests all current start
+families and cached v1 receipts, frozen membership/replacement after pause,
+forged client snapshots, mixed-language collection filtering, disabled dictionary
+selection and independent dictionary access revocation. Fixtures create no
+learning action events and roll back; the database is removed afterward.

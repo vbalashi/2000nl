@@ -1,55 +1,66 @@
 "use client";
 import React from "react";
-import { EyeOff } from "lucide-react";
+import { getUiMessages } from "@/lib/uiMessages";
+import { Check, ChevronDown, ChevronUp, EyeOff } from "lucide-react";
+import { ActionMenu } from "@/components/practice/ui/ActionMenu";
+import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { senseCardQuietActionClassName } from "../SenseCardChrome";
+import { senseCardQuietAction } from "../SenseCardChrome";
+/** Compatibility adapter; exclusion and undo copy has one catalog owner. */
 export const trainingExclusionCopy = {
-  en: {
-    label: "Exclude",
-    help: "Exclude this pair from training in both directions",
-    done: "Pair excluded from training",
-    undo: "Undo",
-    failed: "Could not complete the action. Try again.",
-    dismiss: "Dismiss",
-  },
-  nl: {
-    label: "Uitsluiten",
-    help: "Sluit dit paar in beide richtingen uit van training",
-    done: "Paar uitgesloten van training",
-    undo: "Ongedaan maken",
-    failed: "De actie is niet gelukt. Probeer opnieuw.",
-    dismiss: "Sluiten",
-  },
-  ru: {
-    label: "Исключить",
-    help: "Исключить эту пару из тренировок в обоих направлениях",
-    done: "Пара исключена из тренировок",
-    undo: "Отменить",
-    failed: "Не удалось выполнить действие. Повторите попытку.",
-    dismiss: "Закрыть",
-  },
+  en: getUiMessages("en").trainingSession.exclusion,
+  nl: getUiMessages("nl").trainingSession.exclusion,
+  ru: getUiMessages("ru").trainingSession.exclusion,
 };
 export function TrainingExcludeAction({
   language,
   disabled,
   onClick,
+  knownAction,
+  scope = "pair",
 }: {
+  scope?: "headword" | "pair";
   language: OnboardingLanguage;
   disabled: boolean;
   onClick: () => void;
+  knownAction?: { label: string; onClick: () => void };
 }) {
-  const t = trainingExclusionCopy[language];
-  return (
+  const copy = trainingExclusionCopy[language];
+  const t = scope === "headword" ? {...copy,label:copy.headwordLabel,help:copy.headwordHelp} : copy;
+  const [anchor, setAnchor] = React.useState<HTMLButtonElement | null>(null);
+  const trigger = React.useRef<HTMLButtonElement>(null);
+  const close = React.useCallback(() => {
+    setAnchor(null);
+    trigger.current?.focus({ preventScroll: true });
+  }, []);
+  const hasMenu = trainingPresentationV1Enabled() && Boolean(knownAction);
+  return (<>
+
     <button
+      ref={trigger}
       type="button"
-      className={`${senseCardQuietActionClassName} min-w-0`}
+      className={`${senseCardQuietAction()} min-w-0`}
       disabled={disabled}
-      onClick={onClick}
+      onClick={event => hasMenu ? anchor ? close() : setAnchor(event.currentTarget) : onClick()}
+      aria-haspopup={hasMenu ? "menu" : undefined}
+      aria-expanded={hasMenu ? Boolean(anchor) : undefined}
       title={t.help}
       aria-label={t.help}
     >
       <EyeOff size={16} className="shrink-0" aria-hidden="true" />
       <span className="break-words">{t.label}</span>
+      {hasMenu && (anchor
+        ? <ChevronUp size={14} className="shrink-0" aria-hidden="true" />
+        : <ChevronDown size={14} className="shrink-0" aria-hidden="true" />)}
     </button>
-  );
+    {anchor && hasMenu && knownAction ? <ActionMenu
+      anchor={anchor} language={language} title={getUiMessages(language).cardActions.title}
+      onClose={close} items={[
+        { id: "exclude", label: t.label, icon: <EyeOff size={15} aria-hidden="true" />,
+          disabled, onSelect: () => { close(); onClick(); } },
+        { id: "known", label: knownAction.label, icon: <Check size={15} aria-hidden="true" />,
+          disabled, onSelect: () => { close(); knownAction.onClick(); } },
+      ]} /> : null}
+    </>);
+
 }

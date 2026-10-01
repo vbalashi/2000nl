@@ -50,7 +50,7 @@ The learner-facing projection of one Dictionary Entry for one card type, enriche
 _Avoid_: headword group, multi-meaning article
 
 **Known Mark**:
-A reversible user decision that one Dictionary Meaning does not need ordinary meaning training in either recall direction. It preserves prior directional scheduling state and does not mark other meanings, idioms or sentence exercises known.
+A reversible user decision that one Dictionary Meaning does not need ordinary meaning training in the selected recall direction. New decisions are directional; pre-193 paired decisions retain their historical scope and paired Undo. It preserves prior directional scheduling state and does not mark other meanings, idioms or sentence exercises known.
 _Avoid_: Easy review, hidden card, deleting prior state
 
 **Training Exercise**:

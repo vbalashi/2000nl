@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-178",
+  "contractId": "2000nl-db-194",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 178,
-    "coordinationIssue": 397,
+    "requiredMigrationId": 194,
+    "coordinationIssue": 407,
     "compatibilityPhase": "legacy-first-party-compatible",
     "strictEnforcementIssue": 399
   },
@@ -296,14 +296,98 @@
       "migrationId": 178,
       "file": "db/migrations/178_staged_source_content_import.sql",
       "sha256": "722ceb2261e01fc7d0d4a80921634ea5eb3ddf0a65eb9c11ec5bb0fa1f47ae17"
+    },
+    {
+      "migrationId": 179,
+      "file": "db/migrations/179_pgcrypto_namespace_compatibility.sql",
+      "sha256": "3312c3a250bf4201229f54ea70e064dc9d1b4fb6635126e01f42e8ffb5353ad8"
+    },
+    {
+      "migrationId": 180,
+      "file": "db/migrations/180_account_training_setups.sql",
+      "sha256": "504cb997e642fa061be7c20a558f4c8fc329ef1da9a22ddaef779744ac96e08a"
+    },
+    {
+      "migrationId": 181,
+      "file": "db/migrations/181_four_step_text_preferences.sql",
+      "sha256": "bea552b4a904f1bd086cdb0d3f330153569208e686b3c64684fae36a203e9a0b"
+    },
+    {
+      "migrationId": 182,
+      "file": "db/migrations/182_account_practice_palette.sql",
+      "sha256": "e4c2ee10a2d4497d6921d490ad37972d72efcbe8742679348a7b789bc0bede41"
+    },
+    {
+      "migrationId": 183,
+      "file": "db/migrations/183_account_material_preferences.sql",
+      "sha256": "9c0a6be17e72218c6c376c7088dc2f68e717e7314d76d51fc5c690db2139c65e"
+    },
+    {
+      "migrationId": 184,
+      "file": "db/migrations/184_training_material_selection_snapshot.sql",
+      "sha256": "b393c60bf79fe17325907ffa675549cc00852a4d25888642fb001ff2342c47b7"
+    },
+    {
+      "migrationId": 185,
+      "file": "db/migrations/185_library_material_lookup.sql",
+      "sha256": "212325d1724111f47ec7b8d86f1913bb8a9923c0ba6fe81848a56e1d8ecc6fce"
+    },
+    {
+      "migrationId": 186,
+      "file": "db/migrations/186_library_entry_filters.sql",
+      "sha256": "92ff4bed8f8fc6cd8d41917e7b6bd3e0857e4ee32e15df68347d8797a3d31a6f"
+    },
+    {
+      "migrationId": 187,
+      "file": "db/migrations/187_training_active_time.sql",
+      "sha256": "26dc1364539c6e24c808b45a6c0eeebc6cdb78a2de05b70228d29f471bf0911a"
+    },
+    {
+      "migrationId": 188,
+      "file": "db/migrations/188_training_activity_days.sql",
+      "sha256": "8d4839e852007021432ce13b3e3329eb938b5aed377d5f6a0d6943b88011f068"
+    },
+    {
+      "migrationId": 189,
+      "file": "db/migrations/189_training_material_progress.sql",
+      "sha256": "c37881e6fa9ac3db1aac0704c4e62183905289769d752bcca1ec59120fb86e68"
+    },
+    {
+      "migrationId": 190,
+      "file": "db/migrations/190_recent_training_activity.sql",
+      "sha256": "513f6527c72738aef11f31b533889be5ff836e07488fcc937917c8989dfb9460"
+    },
+    {
+      "migrationId": 191,
+      "file": "db/migrations/191_bound_recent_training_activity.sql",
+      "sha256": "27952c658fb8e22d0f3afdbf67f3135565815214e8b3bb55887580648c9360ca"
+    },
+    {
+      "migrationId": 192,
+      "file": "db/migrations/192_training_headword_exclusions.sql",
+      "sha256": "88ba6ad5651826d0277c45ee1d9e9cc868c90211b8dde8a97e516ac10a63f3ec"
+    },
+    {
+      "migrationId": 193,
+      "file": "db/migrations/193_directional_known_marks.sql",
+      "sha256": "8b60db57c3115874e73c05e0182a642fb9908de41292748532fb4f06a8faae94"
+    },
+    {
+      "migrationId": 194,
+      "file": "db/migrations/194_library_initial_browse.sql",
+      "sha256": "bfad43e4ecb64640c1dcb0dde15f5a0943f13b612a0f7c616997317ddf69fd14"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-178.sql",
+  "postflightProbe": "db/deploy-contract/postflight-194.sql",
   "preSwitchReadProbe": {
     "file": "db/deploy-contract/pre-switch-read-probe-164.sql",
     "sha256": "e4ea2002e4d65225d28ac4d7313426d4ca2ae91e2a6c514d223783e174d74a88",
     "statementTimeoutMs": 10000,
     "performanceBudgetMs": 2000,
     "overBudgetAction": "warn"
+  },
+  "readOnlyPostflightProbe": {
+    "file": "db/deploy-contract/read-only-postflight-194.sql",
+    "sha256": "7184b86ae86e16859d9b994fdfd398b5e40a159640c8b725fd4eaf5de43ffd1a"
   }
 }

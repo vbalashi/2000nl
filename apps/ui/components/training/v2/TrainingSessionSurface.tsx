@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import approved from "../approvedTrainingCard.module.css";
+import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { FooterStats, type FooterStatsProps } from "../FooterStats";
 import {
   TrainingSessionChrome,
@@ -39,6 +41,14 @@ export function TrainingSessionNotice({
 }: {
   notice: TrainingSessionNoticeInput;
 }) {
+  if (trainingPresentationV1Enabled()) return <div
+    role={notice.kind === "error" ? "alert" : "status"}
+    data-tone={notice.kind} className={approved.notice}>
+    <span tabIndex={0}>{notice.message}</span>
+    {notice.kind === "error" ? <button type="button" className={approved.primary}
+      disabled={notice.retryDisabled} onClick={notice.onRetry}>{notice.retryLabel}</button> : null}
+  </div>;
+
   if (notice.kind === "status") {
     return (
       <div
@@ -76,11 +86,18 @@ export function TrainingSessionSurface({
   readySurface,
   children,
 }: TrainingSessionSurfaceProps) {
+  const approvedPresentation = trainingPresentationV1Enabled() && Boolean(chrome);
   return (
     <TrainingSessionV2Layout
       phase={phase}
-      chrome={chrome ? <TrainingSessionChrome {...chrome} /> : null}
-      footer={<FooterStats {...footer} />}
+      chrome={chrome ? (
+        <TrainingSessionChrome
+          {...chrome}
+          approvedPresentation={approvedPresentation}
+        />
+      ) : null}
+      footer={approvedPresentation ? null : <FooterStats {...footer} />}
+      approvedPresentation={approvedPresentation}
       notice={notice ? <TrainingSessionNotice notice={notice} /> : null}
       readySurface={readySurface}
     >

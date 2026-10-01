@@ -1,6 +1,10 @@
 "use client";
+import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 
 import React from "react";
+import { useTrainingExclusion } from "../v2/useTrainingExclusion";
+import { TrainingExclusionUndoNotice } from "../v2/TrainingExclusionUndoNotice";
+import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -22,7 +26,7 @@ import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/typ
 import { LibrarySenseCardGroup } from "./LibrarySenseCardGroup";
 import { LibraryCollectionsPicker } from "./LibraryCollectionsPicker";
 import { LibraryDetailsActions } from "./LibraryDetailsActions";
-import { SenseCardReportAction } from "@/components/feedback/SenseCardReportSheet";
+import { SenseCardReportAction, SenseCardReportSheet } from "@/components/feedback/SenseCardReportSheet";
 import { freezeSenseCardDiagnosticSnapshot } from "@/lib/feedback/diagnosticReportClient";
 import {
   buildLibrarySenseCardGroupModel,
@@ -31,6 +35,7 @@ import {
 } from "./librarySenseCardModel";
 
 type Props = {
+  revealActiveMeaning?: boolean;
   entryId: string;
   initialGroup?: PlatformHeadwordGroupV2;
   headword: string;
@@ -57,6 +62,7 @@ export function TrainingMoreSenseCardV2Session(props: Props) {
 }
 
 function SenseCardV2Session({
+  revealActiveMeaning = true,
   context,
   entryId,
   initialGroup,
@@ -108,12 +114,14 @@ function SenseCardV2Session({
   const [membershipsByEntryId, setMembershipsByEntryId] = React.useState<
     Record<string, EntryLearningListMembership[]>
   >({});
+  const [membershipState, setMembershipState] = React.useState<"loading" | "ready" | "failed">("loading");
   const [collectionsEntryId, setCollectionsEntryId] = React.useState<
     string | null
   >(null);
   const [collectionBusyListId, setCollectionBusyListId] = React.useState<
     string | null
   >(null);
+  const [reportSnapshot, setReportSnapshot] = React.useState<ReturnType<typeof freezeSenseCardDiagnosticSnapshot> | null>(null);
   const [collectionStatus, setCollectionStatus] = React.useState<string | null>(
     null,
   );
@@ -143,9 +151,11 @@ function SenseCardV2Session({
     setBusyIdentity(null);
     setError(null);
     setMembershipsByEntryId({});
+    setMembershipState("loading");
     setCollectionsEntryId(null);
     setCollectionBusyListId(null);
     setCollectionStatus(null);
+    setReportSnapshot(null);
   }, [detailIdentity]);
 
   React.useEffect(() => {
@@ -319,18 +329,19 @@ function SenseCardV2Session({
       entryIds: string[],
       expectedDetailIdentity: string,
     ) => {
-      if (expectedDetailIdentity !== detailIdentityRef.current) return;
+      if (expectedDetailIdentity !== detailIdentityRef.current) return false;
       const expectedMembershipGeneration = ++membershipGeneration.current;
       const isCurrent = () =>
         expectedDetailIdentity === detailIdentityRef.current &&
         expectedMembershipGeneration === membershipGeneration.current;
       if (!userId || !entryIds.length) {
-        if (isCurrent()) setMembershipsByEntryId({});
-        return;
+        if (isCurrent()) { setMembershipsByEntryId({}); setMembershipState("ready"); }
+        return isCurrent();
       }
+      setMembershipState("loading");
       try {
         const memberships = await fetchEntryListMemberships(entryIds);
-        if (!isCurrent()) return;
+        if (!isCurrent()) return false;
         setMembershipsByEntryId(
           Object.fromEntries(
             entryIds.map((meaningEntryId) => [
@@ -339,8 +350,12 @@ function SenseCardV2Session({
             ]),
           ),
         );
+        setMembershipState("ready");
+        return true;
       } catch {
-        if (isCurrent()) setMembershipsByEntryId({});
+        // A failed read is unknown, not an empty membership set.
+        if (isCurrent()) setMembershipState("failed");
+        return false;
       }
     },
     [userId],
@@ -409,7 +424,7 @@ function SenseCardV2Session({
 
   const refreshMemberships = React.useCallback(async () => {
     if (!model) return;
-    await loadMemberships(
+    return loadMemberships(
       model.meanings.map((meaning) => meaning.entryId),
       detailIdentity,
     );
@@ -425,10 +440,11 @@ function SenseCardV2Session({
         ? await removeWordsFromUserList(list.id, [collectionsEntryId])
         : await addWordsToUserList(list.id, [collectionsEntryId]);
       if (result.error) throw result.error;
-      await refreshMemberships();
+      const membershipsReady = await refreshMemberships();
       if (!isCurrent()) return;
-      await onListsUpdated?.();
-      if (!isCurrent()) return;
+      // List counts elsewhere may refresh after the saved membership is shown.
+      void Promise.resolve(onListsUpdated?.()).catch(() => undefined);
+      if (!membershipsReady) return;
       setCollectionStatus(
         platformV2Message(interfaceLanguage, "senseCard.collections.saved"),
       );
@@ -457,10 +473,10 @@ function SenseCardV2Session({
       if (!created?.id) throw new Error("create_list_failed");
       const result = await addWordsToUserList(created.id, [collectionsEntryId]);
       if (result.error) throw result.error;
-      await refreshMemberships();
+      const membershipsReady = await refreshMemberships();
       if (!isCurrent()) return;
       await onListsUpdated?.();
-      if (!isCurrent()) return;
+      if (!isCurrent() || !membershipsReady) return;
       setCollectionStatus(
         platformV2Message(interfaceLanguage, "senseCard.collections.saved"),
       );
@@ -583,16 +599,24 @@ function SenseCardV2Session({
     [],
   );
 
+  const exclusionEntryId = model?.meanings[0]?.entryId ?? entryId;
+  const headwordExclusion = useTrainingExclusion({
+    context: "library", userId:userId ?? "", identity:group?.headwordGroupId ?? entryId,
+    sessionId:null, target:{kind:"headword",entryId:exclusionEntryId},
+    onAccepted:async()=>{},
+  });
+  const exclusionError = headwordExclusion.failed ? getUiMessages(interfaceLanguage).trainingSession.exclusion.failed : null;
+
   const lookupErrorText = lookupError
     ? platformV2Message(interfaceLanguage, `senseCard.lookup.${lookupError}`)
     : null;
   const errorNotice =
-    lookupErrorText || error ? (
+    lookupErrorText || error || exclusionError ? (
       <p
         role="alert"
         className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
       >
-        {lookupErrorText ?? error}
+        {lookupErrorText ?? error ?? exclusionError}
         {lookupError ? (
           <button
             type="button"
@@ -647,11 +671,17 @@ function SenseCardV2Session({
     ),
   );
   const showGlobalDetailsActions = context === "library";
+  const approved = sharedArticlePresentationV1Enabled();
+  const reportableEntryIds = new Set((group?.entries ?? []).flatMap(entry => entry.kind === "sense-card" && entry.reportContentRevision &&
+    entry.capabilities.some(capability => capability.actionId === "report-content" && capability.target.kind === "entry") ? [entry.entryId] : []));
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
+      {userId ? <TrainingExclusionUndoNotice userId={userId} language={interfaceLanguage}/> : null}
       <div className="min-h-0 flex-1">
         <LibrarySenseCardGroup
+          contentLanguage={contentLanguageCode}
+          translationLanguage={translationLanguage??undefined}
           model={model}
           interfaceLanguage={interfaceLanguage}
           busyIdentity={busyIdentity}
@@ -669,6 +699,7 @@ function SenseCardV2Session({
             ),
           )}
           activeMeaningId={activeMeaningId}
+          revealActiveMeaning={revealActiveMeaning}
           onActiveMeaningChange={setActiveMeaningId}
           onRequestTranslation={(meaningEntryId, meaningCardTypeId) =>
             void handleRequestTranslation(
@@ -695,12 +726,21 @@ function SenseCardV2Session({
             setActiveReferenceTarget(target);
           }}
           onAction={(capability) => void handleAction(capability)}
-          bottomOverlayReserve={showGlobalDetailsActions && canReport}
+          onExclude={approved && userId && group?.headwordGroupId && model.meanings.length ? () => void headwordExclusion.exclude() : undefined}
+          exclusionDisabled={headwordExclusion.busy || Boolean(busyIdentity)}
+          onReport={approved && showGlobalDetailsActions ? meaning => {
+            if (!group) return;
+            const entry = group.entries.find(candidate => candidate.kind === "sense-card" && candidate.entryId === meaning.entryId);
+            if (entry?.kind !== "sense-card" || !reportableEntryIds.has(entry.entryId)) return;
+            setReportSnapshot(freezeSenseCardDiagnosticSnapshot({route:"library",group,entry}));
+          } : undefined}
+          reportableEntryIds={reportableEntryIds}
+          bottomOverlayReserve={!approved && showGlobalDetailsActions && canReport}
         />
       </div>
       {showGlobalDetailsActions &&
       activeSenseEntry &&
-      (onCopyToUserDictionary || canReport) ? (
+      (!approved && (onCopyToUserDictionary || canReport)) ? (
         <LibraryDetailsActions
           entryId={activeMeaningId}
           interfaceLanguage={interfaceLanguage}
@@ -708,7 +748,7 @@ function SenseCardV2Session({
             activeSenseEntry ? onCopyToUserDictionary : undefined
           }
           leadingAction={
-            canReport && group && selectedActiveEntry?.kind === "sense-card" ? (
+            !approved && canReport && group && selectedActiveEntry?.kind === "sense-card" ? (
               <SenseCardReportAction
                 snapshot={freezeSenseCardDiagnosticSnapshot({
                   route: "library",
@@ -722,6 +762,7 @@ function SenseCardV2Session({
           }
         />
       ) : null}
+      {reportSnapshot ? <SenseCardReportSheet snapshot={reportSnapshot} interfaceLanguage={interfaceLanguage} onClose={() => setReportSnapshot(null)} /> : null}
       <LibraryCollectionsPicker
         open={Boolean(collectionsMeaning)}
         headword={model.headword}
@@ -734,6 +775,8 @@ function SenseCardV2Session({
             : []
         }
         busyListId={collectionBusyListId}
+        membershipState={membershipState}
+        onRetryMemberships={() => { setCollectionStatus(null); void refreshMemberships(); }}
         status={collectionStatus}
         onClose={() => setCollectionsEntryId(null)}
         onToggleList={(list, included) => void handleToggleList(list, included)}

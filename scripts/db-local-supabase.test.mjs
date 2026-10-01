@@ -202,5 +202,20 @@ test("check invokes only a read-only psql session and reports receipts separatel
   assert.match(calls, /learner_card_states/);
   assert.match(calls, /actual.checksum_sha256 <> expected.checksum_sha256/);
   assert.match(calls, /local_supabase_probe.sql/);
-  assert.match(calls, /postflight-\d+.sql/);
+  const manifest = JSON.parse(readFileSync(path.join(root, "packages/shared/deployment/db-contract.json"), "utf8"));
+  assert.ok(calls.includes(manifest.readOnlyPostflightProbe.file));
+  assert.doesNotMatch(calls, /\\i db\/deploy-contract\/postflight-179.sql/);
+});
+
+
+test("retaining apply uses the reviewed migration gate without replaying historical bootstrap", (t) => {
+  const f=fixture(t);
+  const result=f.run(["apply"]);
+  assert.equal(result.status,0,result.stderr);
+  const calls=f.calls();
+  assert.match(calls,/pg_try_advisory_lock/);
+  assert.match(calls,/app_db_contract_migrations/);
+  assert.match(calls,/123_authoritative_training_session_plan/);
+  assert.doesNotMatch(calls,/-f db\/migrations\/bootstrap.sql/);
+  assert.doesNotMatch(calls,/fixture-secret/);
 });

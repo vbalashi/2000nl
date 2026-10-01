@@ -670,11 +670,11 @@ test("the Library dictionary search surface renders @pilot", async ({ page }) =>
   await expect(
     page.getByRole("heading", { level: 1, name: /Library|Bibliotheek/ }),
   ).toBeVisible();
-  await expect(page.getByPlaceholder("Zoek in het woordenboek...")).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Search words", exact: true })).toBeVisible();
   await expect(
-    page.getByText("Nederlands · Zoekt in VanDale woordenboek"),
+    page.getByText("Dutch · Searching All dictionaries"),
   ).toBeVisible();
-  await page.getByPlaceholder("Zoek in het woordenboek...").fill("huis");
+  await page.getByRole("textbox", { name: "Search words", exact: true }).fill("huis");
   const headwordResult = page.getByTestId(
     "library-headword-group-group-word-1",
   );
@@ -715,7 +715,7 @@ test("the Library dictionary search surface renders on mobile @pilot", async ({
   await expect(
     page.getByRole("heading", { level: 1, name: /Library|Bibliotheek/ }),
   ).toBeVisible();
-  await page.getByPlaceholder("Zoek in het woordenboek...").fill("huis");
+  await page.getByRole("textbox", { name: "Search words", exact: true }).fill("huis");
   await expect(
     page.getByTestId("library-headword-group-group-word-1"),
   ).toBeVisible();

@@ -31,6 +31,7 @@ export function TrainingSessionV2Layout({
   footer,
   notice,
   readySurface,
+  approvedPresentation = false,
   children,
 }: {
   phase: TrainingSessionLayoutPhase;
@@ -38,16 +39,17 @@ export function TrainingSessionV2Layout({
   footer: React.ReactNode;
   notice?: React.ReactNode;
   readySurface?: TrainingSessionReadySurface;
+  approvedPresentation?: boolean;
   children: React.ReactNode;
 }) {
-  const showFooter = phase !== "failure";
+  const showFooter = phase !== "failure" && !approvedPresentation;
   const interaction = phase === "ready" ? readySurface : undefined;
   return (
     <>
       <div
         data-training-session-main
         data-training-session-phase={phase}
-        className={styles.main}
+        className={`${styles.main} ${approvedPresentation ? styles.mainApproved : ""}`}
       >
         <section className={styles.stack}>
           {chrome}

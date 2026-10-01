@@ -27,6 +27,7 @@ export function buildSentenceCardPresentation({
     }],
   });
   return {
+    promptTarget: { contentNodeId: content.sentence.contentNodeId, kind: "translation" },
     label: { en: "Translate into Dutch", nl: "Vertaal naar het Nederlands", ru: "Переведите на нидерландский" }[interfaceLanguage],
     prompt: { kind: "explanation", text: prompt.text },
     answerTranslationInitiallyVisible: true,

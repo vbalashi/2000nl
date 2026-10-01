@@ -8,7 +8,11 @@ import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
-import { senseCardQuietActionClassName } from "../SenseCardChrome";
+import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import { senseCardQuietAction } from "../SenseCardChrome";
+import approvedCard from "../approvedTrainingCard.module.css";
+import { RatingControls, type Rating } from "@/components/practice/RatingControls";
+import { useTrainingPromptReveal } from "@/components/practice/ui/useTrainingPromptReveal";
 import {
   TrainingCardAnswerHeader as EntityHeader,
   TrainingCardAnswerBody as AnswerBody,
@@ -18,7 +22,7 @@ import {
   TrainingCardFaceControls,
   TrainingCardReviewButton,
   TrainingCardIconButton as IconButton,
-  trainingCardStageClassName,
+  trainingStageClassName,
   trainingReviewGridClassName,
 } from "./TrainingCardTemplates";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
@@ -31,6 +35,8 @@ type Props = {
   onHintOpened?: () => void;
   mode: TrainingMode;
   interfaceLanguage: OnboardingLanguage;
+  contentLanguage?: string;
+  translationLanguage?: string;
   busy?: boolean;
   focusOnMount?: boolean;
   onPlayAudio?: () => void;
@@ -48,6 +54,8 @@ export function TrainingSenseCardStage({
   onHintOpened,
   mode,
   interfaceLanguage,
+  contentLanguage,
+  translationLanguage,
   busy = false,
   focusOnMount = false,
   onPlayAudio,
@@ -102,6 +110,24 @@ export function TrainingSenseCardStage({
     model.requestTranslationCapability,
   );
   const listeningMode = mode === "listen-recognize";
+  const approvedPresentation = trainingPresentationV1Enabled();
+  const revealContentId = contextPrompt?.contentNodeId ?? reversePrompt?.contentNodeId;
+  const revealTranslation = Boolean(contextPrompt);
+  const revealSource = React.useCallback((root: HTMLElement) =>
+    mode === "definition-to-word"
+      ? root.querySelector<HTMLElement>('[data-testid="reverse-prompt"]')
+      : root.querySelector<HTMLElement>('[data-testid="sense-card-headword-lockup"] h2')?.parentElement ?? null,
+  [mode]);
+  const revealTarget = React.useCallback((root: HTMLElement) => {
+    if (mode !== "definition-to-word") return root.querySelector<HTMLElement>('[data-testid="sense-card-headword-lockup"] h2')?.parentElement ?? null;
+    const content = Array.from(root.querySelectorAll<HTMLElement>("[data-content-node-id]"))
+      .find(node => node.dataset.contentNodeId === revealContentId);
+    return content?.querySelector<HTMLElement>(revealTranslation ? '[data-content-translation="true"]' : ":scope > div > p") ?? null;
+  }, [mode, revealContentId, revealTranslation]);
+  const { capture, moving } = useTrainingPromptReveal({ root: stageRef, revealed: answerVisible,
+    enabled: approvedPresentation && !listeningMode, identity: model.entryId,
+    source: revealSource, target: revealTarget });
+  const revealAnswer = React.useCallback(() => { capture(); onSideChange("answer"); }, [capture, onSideChange]);
 
   React.useEffect(() => {
     if (!focusOnMount) return;
@@ -122,16 +148,19 @@ export function TrainingSenseCardStage({
       ),
     );
     window.requestAnimationFrame(() => {
-      if (answerVisible) {
+      if (answerVisible && !moving) {
         primaryAnswerActionRef.current?.focus();
       } else showAnswerRef.current?.focus();
     });
-  }, [answerVisible, t]);
+  }, [answerVisible, t, moving]);
+  React.useEffect(() => {
+    if (answerVisible && !moving) primaryAnswerActionRef.current?.focus();
+  }, [answerVisible, moving]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (areTrainingHotkeysSuspended()) return;
-      if (event.metaKey || event.ctrlKey || event.altKey || busy) {
+      if (event.metaKey || event.ctrlKey || event.altKey || busy || moving) {
         return;
       }
       const targetInsideStage =
@@ -145,7 +174,7 @@ export function TrainingSenseCardStage({
         targetInsideStage
       ) {
         event.preventDefault();
-        onSideChange(answerVisible ? "face" : "answer");
+        if (answerVisible) onSideChange("face"); else revealAnswer();
         return;
       }
       const key = event.key.toLowerCase();
@@ -177,7 +206,7 @@ export function TrainingSenseCardStage({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [answerVisible, busy, hint, model, onAction, onSideChange, toggleHint]);
+  }, [answerVisible, busy, moving, hint, model, onAction, onSideChange, revealAnswer, toggleHint]);
 
   return (
     <section
@@ -186,8 +215,9 @@ export function TrainingSenseCardStage({
       aria-label={t("senseCard.training.cardChanged")}
       data-testid="training-sense-card-stage"
       data-side={answerVisible ? "answer" : "face"}
-      data-visual-spec="training-v1.0"
-      className={trainingCardStageClassName}
+      data-reveal-moving={moving ? "true" : undefined}
+      data-visual-spec={approvedPresentation ? "training-approved-v1" : "training-v1.0"}
+      className={trainingStageClassName()}
     >
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
@@ -218,9 +248,9 @@ export function TrainingSenseCardStage({
               translationAvailable={
                 hasTranslation(model) || translationActionAvailable
               }
-              translationLabel={t("senseCard.translation.request")}
+              translationLabel={t(hasTranslation(model) || translationActionAvailable ? "senseCard.translation.request" : "senseCard.translation.disabled")}
               audioLabel={t("senseCard.audio.play")}
-              busy={busy}
+              busy={busy || moving}
               moreLabel={t("senseCard.wordDetails.open")}
               onPlayAudio={onPlayAudio}
               onToggleTranslation={() => {
@@ -237,6 +267,8 @@ export function TrainingSenseCardStage({
               onOpenDetails={onOpenDetails}
             />
             <AnswerBody
+              contentLanguage={contentLanguage}
+              translationLanguage={translationLanguage}
               model={answerModel}
               translationVisible={Boolean(contextPrompt) || translationVisible}
               interfaceLanguage={interfaceLanguage}
@@ -248,7 +280,7 @@ export function TrainingSenseCardStage({
             mode={mode}
             interfaceLanguage={interfaceLanguage}
             onPlayAudio={onPlayAudio}
-            busy={busy}
+            busy={busy || moving}
             contentLabel={t("senseCard.training.content")}
           />
         ) : (
@@ -281,7 +313,9 @@ export function TrainingSenseCardStage({
         className={`shrink-0 ${
           answerVisible
             ? model.reviewCapabilities.length
-              ? "h-[120px] min-h-[120px] sm:h-[76px] sm:min-h-[76px]"
+              ? approvedPresentation
+                ? "min-h-[78px]"
+                : "h-[120px] min-h-[120px] sm:h-[76px] sm:min-h-[76px]"
               : "h-[76px] min-h-[76px]"
             : reportAction || exclusionAction || model.markKnownCapability
               ? "h-[76px] min-h-[76px]"
@@ -292,12 +326,13 @@ export function TrainingSenseCardStage({
           <AnswerDock
             model={model}
             mode={mode}
-            busy={busy}
+            busy={busy || moving}
             interfaceLanguage={interfaceLanguage}
             primaryActionRef={primaryAnswerActionRef}
             onAction={onAction}
             reportAction={reportAction}
             exclusionAction={exclusionAction}
+            approvedPresentation={approvedPresentation}
           />
         ) : (
           <FaceDock
@@ -310,7 +345,7 @@ export function TrainingSenseCardStage({
             hideHintLabel={t("senseCard.hint.hide")}
             showAnswerLabel={t("senseCard.answer.show")}
             onToggleHint={toggleHint}
-            onShowAnswer={() => onSideChange("answer")}
+            onShowAnswer={revealAnswer}
             showAnswerRef={showAnswerRef}
             onAction={onAction}
             reportAction={reportAction}
@@ -433,6 +468,13 @@ function FaceDock({
   );
 }
 
+const reviewRating: Record<TrainingSenseCardModel["reviewCapabilities"][number]["reviewResult"], Rating> = {
+  fail: "Again",
+  hard: "Hard",
+  success: "Good",
+  easy: "Easy",
+};
+
 function AnswerDock({
   model,
   mode,
@@ -442,6 +484,7 @@ function AnswerDock({
   onAction,
   reportAction,
   exclusionAction,
+  approvedPresentation,
 }: {
   model: TrainingSenseCardModel;
   mode: TrainingMode;
@@ -451,6 +494,7 @@ function AnswerDock({
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
   reportAction?: React.ReactNode;
   exclusionAction?: React.ReactNode;
+  approvedPresentation: boolean;
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
   const reviewCapabilities =
@@ -463,6 +507,16 @@ function AnswerDock({
       : model.reviewCapabilities;
 
   if (model.isKnown && model.undoKnownCapability) {
+    if (approvedPresentation) return (
+      <div className={approvedCard.known}>
+        <span className="inline-flex items-center gap-2">
+          <Check aria-hidden="true" className="h-4 w-4" /> {t("senseCard.known.marked")}
+        </span>
+        <button ref={primaryActionRef} type="button" disabled={busy} onClick={() => onAction(model.undoKnownCapability!)}>
+          {t(model.undoKnownCapability.messageKey)}
+        </button>
+      </div>
+    );
     return (
       <div className="flex min-h-12 flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-400/60 bg-emerald-50 px-4 py-2 text-sm dark:bg-[#18352b]">
         <span className="inline-flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-200">
@@ -482,21 +536,44 @@ function AnswerDock({
     );
   }
 
+  const reviewLabel = (capability: (typeof reviewCapabilities)[number]) =>
+    mode === "listen-recognize"
+      ? t(capability.reviewResult === "fail" ? "senseCard.listening.fail" : "senseCard.listening.success")
+      : t(capability.messageKey);
+
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className={approvedPresentation ? approvedCard.dock : "flex h-full flex-col gap-2"}>
       {model.learnCapability ? (
         <button
           ref={primaryActionRef}
           type="button"
           disabled={busy}
           onClick={() => onAction(model.learnCapability!)}
-          className="mx-auto block h-11 shrink-0 w-[94%] rounded-xl border border-indigo-400/60 bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-[#292650] dark:text-indigo-100 dark:hover:bg-[#332f60]"
+          className={approvedPresentation ? approvedCard.primary : "mx-auto block h-11 shrink-0 w-[94%] rounded-xl border border-indigo-400/60 bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-[#292650] dark:text-indigo-100 dark:hover:bg-[#332f60]"}
         >
           {t(model.learnCapability.messageKey)}
         </button>
       ) : null}
 
-      {reviewCapabilities.length ? (
+      {reviewCapabilities.length && approvedPresentation ? (
+        <div data-testid="training-review-grid" className="shrink-0">
+          <RatingControls
+            language={interfaceLanguage}
+            height="adaptive"
+            disabled={busy}
+            label={t("senseCard.sections.reviewPrompt")}
+            firstRef={primaryActionRef}
+            options={reviewCapabilities.map((capability) => ({
+              rating: reviewRating[capability.reviewResult],
+              label: reviewLabel(capability),
+            }))}
+            onRate={(rating) => {
+              const capability = reviewCapabilities.find((candidate) => reviewRating[candidate.reviewResult] === rating);
+              if (capability) onAction(capability);
+            }}
+          />
+        </div>
+      ) : reviewCapabilities.length ? (
         <div
           role="group"
           aria-label={t("senseCard.sections.reviewPrompt")}
@@ -513,15 +590,7 @@ function AnswerDock({
                 buttonRef={index === 0 ? primaryActionRef : undefined}
                 busy={busy}
                 onClick={() => onAction(capability)}
-                label={
-                  mode === "listen-recognize"
-                    ? t(
-                        capability.reviewResult === "fail"
-                          ? "senseCard.listening.fail"
-                          : "senseCard.listening.success",
-                      )
-                    : t(capability.messageKey)
-                }
+                label={reviewLabel(capability)}
               />
             ))}
           </div>
@@ -560,7 +629,7 @@ function MarkKnownAction({
       type="button"
       disabled={busy}
       onClick={() => onAction(capability)}
-      className={senseCardQuietActionClassName}
+      className={senseCardQuietAction()}
     >
       <Check aria-hidden="true" className="h-4 w-4" /> {label}
     </button>

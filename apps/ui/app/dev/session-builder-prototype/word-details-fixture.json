@@ -1,0 +1,918 @@
+{
+  "groups": [
+    {
+      "article": "de",
+      "headword": "fiets",
+      "partOfSpeech": "noun",
+      "coreVocabularyLabel": "2K",
+      "audioCapability": null,
+      "senseCount": 1,
+      "meanings": [
+        {
+          "entryId": "003634_a3580_fiets_zn_1",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 1,
+          "partOfSpeech": "noun",
+          "definition": {
+            "contentNodeId": "003634_a3580_fiets_zn_1-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "een vervoermiddel met twee wielen waarop je kunt rijden door je voeten te bewegen",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "003634_a3580_fiets_zn_1-i0",
+              "parentContentNodeId": null,
+              "kind": "idiom",
+              "text": "een elektrische fiets",
+              "children": [
+                {
+                  "contentNodeId": "003634_a3580_fiets_zn_1-ix0",
+                  "parentContentNodeId": null,
+                  "kind": "idiom-explanation",
+                  "text": "een fiets met een motortje zodat je niet zo hard hoeft te trappen",
+                  "children": []
+                }
+              ]
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        }
+      ],
+      "crossReferences": [],
+      "presentations": [
+        {
+          "kind": "sense-card",
+          "meaning": {
+            "entryId": "003634_a3580_fiets_zn_1",
+            "cardTypeId": "word-to-definition",
+            "displayOrdinal": 1,
+            "partOfSpeech": "noun",
+            "definition": {
+              "contentNodeId": "003634_a3580_fiets_zn_1-d",
+              "parentContentNodeId": null,
+              "kind": "definition",
+              "text": "een vervoermiddel met twee wielen waarop je kunt rijden door je voeten te bewegen",
+              "children": []
+            },
+            "entryTranslation": null,
+            "entryTranslationAlternatives": [],
+            "translationStatus": null,
+            "details": [
+              {
+                "contentNodeId": "003634_a3580_fiets_zn_1-i0",
+                "parentContentNodeId": null,
+                "kind": "idiom",
+                "text": "een elektrische fiets",
+                "children": [
+                  {
+                    "contentNodeId": "003634_a3580_fiets_zn_1-ix0",
+                    "parentContentNodeId": null,
+                    "kind": "idiom-explanation",
+                    "text": "een fiets met een motortje zodat je niet zo hard hoeft te trappen",
+                    "children": []
+                  }
+                ]
+              }
+            ],
+            "repeatCount": 0,
+            "startLearning": null,
+            "markKnown": null,
+            "undoKnown": null,
+            "reportCapability": null
+          }
+        }
+      ]
+    },
+    {
+      "article": "",
+      "headword": "gaan",
+      "partOfSpeech": "verb",
+      "coreVocabularyLabel": "2K",
+      "audioCapability": null,
+      "senseCount": 5,
+      "meanings": [
+        {
+          "entryId": "003836_a3773_gaan_ww_1",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 1,
+          "partOfSpeech": "verb",
+          "definition": {
+            "contentNodeId": "003836_a3773_gaan_ww_1-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "bewegen in een bepaalde richting",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "003836_a3773_gaan_ww_1-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "de heer Libregts gaat elke dag om acht uur naar zijn werk",
+              "children": []
+            },
+            {
+              "contentNodeId": "003836_a3773_gaan_ww_1-i0",
+              "parentContentNodeId": null,
+              "kind": "idiom",
+              "text": "ervoor gaan",
+              "children": [
+                {
+                  "contentNodeId": "003836_a3773_gaan_ww_1-ix0",
+                  "parentContentNodeId": null,
+                  "kind": "idiom-explanation",
+                  "text": "alles proberen om iets te bereiken",
+                  "children": []
+                }
+              ]
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        },
+        {
+          "entryId": "003836_a3773_gaan_ww_2",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 2,
+          "partOfSpeech": "verb",
+          "definition": {
+            "contentNodeId": "003836_a3773_gaan_ww_2-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "beginnen met een activiteit",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "003836_a3773_gaan_ww_2-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "vroeger gingen we eten zodra mijn vader thuiskwam",
+              "children": []
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        },
+        {
+          "entryId": "003836_a3773_gaan_ww_3",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 3,
+          "partOfSpeech": "verb",
+          "definition": {
+            "contentNodeId": "003836_a3773_gaan_ww_3-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "kunnen; mogelijk zijn",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "003836_a3773_gaan_ww_3-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "hoeveel eieren gaan er in deze doos?",
+              "children": []
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        },
+        {
+          "entryId": "003836_a3773_gaan_ww_4",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 4,
+          "partOfSpeech": "verb",
+          "definition": {
+            "contentNodeId": "003836_a3773_gaan_ww_4-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "het geluid maken dat bij iets hoort",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "003836_a3773_gaan_ww_4-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "ze liep meteen naar de deur toen de bel ging",
+              "children": []
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        },
+        {
+          "entryId": "003836_a3773_gaan_ww_5",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 5,
+          "partOfSpeech": "verb",
+          "definition": {
+            "contentNodeId": "003836_a3773_gaan_ww_5-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "003836_a3773_gaan_ww_5-i0",
+              "parentContentNodeId": null,
+              "kind": "idiom",
+              "text": "het gaat goed, slecht enz. (met iemand of iets)",
+              "children": [
+                {
+                  "contentNodeId": "003836_a3773_gaan_ww_5-ix0",
+                  "parentContentNodeId": null,
+                  "kind": "idiom-explanation",
+                  "text": "het is goed, slecht enz. (met iemand of iets)",
+                  "children": []
+                },
+                {
+                  "contentNodeId": "003836_a3773_gaan_ww_5-ie0-0",
+                  "parentContentNodeId": null,
+                  "kind": "example",
+                  "text": "hoe gaat het met je?",
+                  "children": []
+                },
+                {
+                  "contentNodeId": "003836_a3773_gaan_ww_5-ie0-1",
+                  "parentContentNodeId": null,
+                  "kind": "example",
+                  "text": "het gaat niet goed met de economie",
+                  "children": []
+                }
+              ]
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        }
+      ],
+      "crossReferences": [],
+      "presentations": [
+        {
+          "kind": "sense-card",
+          "meaning": {
+            "entryId": "003836_a3773_gaan_ww_1",
+            "cardTypeId": "word-to-definition",
+            "displayOrdinal": 1,
+            "partOfSpeech": "verb",
+            "definition": {
+              "contentNodeId": "003836_a3773_gaan_ww_1-d",
+              "parentContentNodeId": null,
+              "kind": "definition",
+              "text": "bewegen in een bepaalde richting",
+              "children": []
+            },
+            "entryTranslation": null,
+            "entryTranslationAlternatives": [],
+            "translationStatus": null,
+            "details": [
+              {
+                "contentNodeId": "003836_a3773_gaan_ww_1-e0",
+                "parentContentNodeId": null,
+                "kind": "example",
+                "text": "de heer Libregts gaat elke dag om acht uur naar zijn werk",
+                "children": []
+              },
+              {
+                "contentNodeId": "003836_a3773_gaan_ww_1-i0",
+                "parentContentNodeId": null,
+                "kind": "idiom",
+                "text": "ervoor gaan",
+                "children": [
+                  {
+                    "contentNodeId": "003836_a3773_gaan_ww_1-ix0",
+                    "parentContentNodeId": null,
+                    "kind": "idiom-explanation",
+                    "text": "alles proberen om iets te bereiken",
+                    "children": []
+                  }
+                ]
+              }
+            ],
+            "repeatCount": 0,
+            "startLearning": null,
+            "markKnown": null,
+            "undoKnown": null,
+            "reportCapability": null
+          }
+        },
+        {
+          "kind": "sense-card",
+          "meaning": {
+            "entryId": "003836_a3773_gaan_ww_2",
+            "cardTypeId": "word-to-definition",
+            "displayOrdinal": 2,
+            "partOfSpeech": "verb",
+            "definition": {
+              "contentNodeId": "003836_a3773_gaan_ww_2-d",
+              "parentContentNodeId": null,
+              "kind": "definition",
+              "text": "beginnen met een activiteit",
+              "children": []
+            },
+            "entryTranslation": null,
+            "entryTranslationAlternatives": [],
+            "translationStatus": null,
+            "details": [
+              {
+                "contentNodeId": "003836_a3773_gaan_ww_2-e0",
+                "parentContentNodeId": null,
+                "kind": "example",
+                "text": "vroeger gingen we eten zodra mijn vader thuiskwam",
+                "children": []
+              }
+            ],
+            "repeatCount": 0,
+            "startLearning": null,
+            "markKnown": null,
+            "undoKnown": null,
+            "reportCapability": null
+          }
+        },
+        {
+          "kind": "sense-card",
+          "meaning": {
+            "entryId": "003836_a3773_gaan_ww_3",
+            "cardTypeId": "word-to-definition",
+            "displayOrdinal": 3,
+            "partOfSpeech": "verb",
+            "definition": {
+              "contentNodeId": "003836_a3773_gaan_ww_3-d",
+              "parentContentNodeId": null,
+              "kind": "definition",
+              "text": "kunnen; mogelijk zijn",
+              "children": []
+            },
+            "entryTranslation": null,
+            "entryTranslationAlternatives": [],
+            "translationStatus": null,
+            "details": [
+              {
+                "contentNodeId": "003836_a3773_gaan_ww_3-e0",
+                "parentContentNodeId": null,
+                "kind": "example",
+                "text": "hoeveel eieren gaan er in deze doos?",
+                "children": []
+              }
+            ],
+            "repeatCount": 0,
+            "startLearning": null,
+            "markKnown": null,
+            "undoKnown": null,
+            "reportCapability": null
+          }
+        },
+        {
+          "kind": "sense-card",
+          "meaning": {
+            "entryId": "003836_a3773_gaan_ww_4",
+            "cardTypeId": "word-to-definition",
+            "displayOrdinal": 4,
+            "partOfSpeech": "verb",
+            "definition": {
+              "contentNodeId": "003836_a3773_gaan_ww_4-d",
+              "parentContentNodeId": null,
+              "kind": "definition",
+              "text": "het geluid maken dat bij iets hoort",
+              "children": []
+            },
+            "entryTranslation": null,
+            "entryTranslationAlternatives": [],
+            "translationStatus": null,
+            "details": [
+              {
+                "contentNodeId": "003836_a3773_gaan_ww_4-e0",
+                "parentContentNodeId": null,
+                "kind": "example",
+                "text": "ze liep meteen naar de deur toen de bel ging",
+                "children": []
+              }
+            ],
+            "repeatCount": 0,
+            "startLearning": null,
+            "markKnown": null,
+            "undoKnown": null,
+            "reportCapability": null
+          }
+        },
+        {
+          "kind": "sense-card",
+          "meaning": {
+            "entryId": "003836_a3773_gaan_ww_5",
+            "cardTypeId": "word-to-definition",
+            "displayOrdinal": 5,
+            "partOfSpeech": "verb",
+            "definition": {
+              "contentNodeId": "003836_a3773_gaan_ww_5-d",
+              "parentContentNodeId": null,
+              "kind": "definition",
+              "text": "",
+              "children": []
+            },
+            "entryTranslation": null,
+            "entryTranslationAlternatives": [],
+            "translationStatus": null,
+            "details": [
+              {
+                "contentNodeId": "003836_a3773_gaan_ww_5-i0",
+                "parentContentNodeId": null,
+                "kind": "idiom",
+                "text": "het gaat goed, slecht enz. (met iemand of iets)",
+                "children": [
+                  {
+                    "contentNodeId": "003836_a3773_gaan_ww_5-ix0",
+                    "parentContentNodeId": null,
+                    "kind": "idiom-explanation",
+                    "text": "het is goed, slecht enz. (met iemand of iets)",
+                    "children": []
+                  },
+                  {
+                    "contentNodeId": "003836_a3773_gaan_ww_5-ie0-0",
+                    "parentContentNodeId": null,
+                    "kind": "example",
+                    "text": "hoe gaat het met je?",
+                    "children": []
+                  },
+                  {
+                    "contentNodeId": "003836_a3773_gaan_ww_5-ie0-1",
+                    "parentContentNodeId": null,
+                    "kind": "example",
+                    "text": "het gaat niet goed met de economie",
+                    "children": []
+                  }
+                ]
+              }
+            ],
+            "repeatCount": 0,
+            "startLearning": null,
+            "markKnown": null,
+            "undoKnown": null,
+            "reportCapability": null
+          }
+        }
+      ]
+    },
+    {
+      "article": "het",
+      "headword": "huis",
+      "partOfSpeech": "noun",
+      "coreVocabularyLabel": "2K",
+      "audioCapability": null,
+      "senseCount": 1,
+      "meanings": [
+        {
+          "entryId": "005080_a5102_huis_zn_1",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 1,
+          "partOfSpeech": "noun",
+          "definition": {
+            "contentNodeId": "005080_a5102_huis_zn_1-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "een gebouw om in te wonen",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "005080_a5102_huis_zn_1-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "hij woont in een groot huis in Gent",
+              "children": []
+            },
+            {
+              "contentNodeId": "005080_a5102_huis_zn_1-e1",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "wil je thee, want ik heb geen koffie in huis",
+              "children": []
+            },
+            {
+              "contentNodeId": "005080_a5102_huis_zn_1-i0",
+              "parentContentNodeId": null,
+              "kind": "idiom",
+              "text": "van huis uit …",
+              "children": [
+                {
+                  "contentNodeId": "005080_a5102_huis_zn_1-ix0",
+                  "parentContentNodeId": null,
+                  "kind": "idiom-explanation",
+                  "text": "vanuit je opvoeding of je gezin",
+                  "children": []
+                },
+                {
+                  "contentNodeId": "005080_a5102_huis_zn_1-ie0-0",
+                  "parentContentNodeId": null,
+                  "kind": "example",
+                  "text": "van huis uit ben ik niet gewend zuinig te zijn",
+                  "children": []
+                }
+              ]
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        }
+      ],
+      "crossReferences": [],
+      "presentations": [
+        {
+          "kind": "sense-card",
+          "meaning": {
+            "entryId": "005080_a5102_huis_zn_1",
+            "cardTypeId": "word-to-definition",
+            "displayOrdinal": 1,
+            "partOfSpeech": "noun",
+            "definition": {
+              "contentNodeId": "005080_a5102_huis_zn_1-d",
+              "parentContentNodeId": null,
+              "kind": "definition",
+              "text": "een gebouw om in te wonen",
+              "children": []
+            },
+            "entryTranslation": null,
+            "entryTranslationAlternatives": [],
+            "translationStatus": null,
+            "details": [
+              {
+                "contentNodeId": "005080_a5102_huis_zn_1-e0",
+                "parentContentNodeId": null,
+                "kind": "example",
+                "text": "hij woont in een groot huis in Gent",
+                "children": []
+              },
+              {
+                "contentNodeId": "005080_a5102_huis_zn_1-e1",
+                "parentContentNodeId": null,
+                "kind": "example",
+                "text": "wil je thee, want ik heb geen koffie in huis",
+                "children": []
+              },
+              {
+                "contentNodeId": "005080_a5102_huis_zn_1-i0",
+                "parentContentNodeId": null,
+                "kind": "idiom",
+                "text": "van huis uit …",
+                "children": [
+                  {
+                    "contentNodeId": "005080_a5102_huis_zn_1-ix0",
+                    "parentContentNodeId": null,
+                    "kind": "idiom-explanation",
+                    "text": "vanuit je opvoeding of je gezin",
+                    "children": []
+                  },
+                  {
+                    "contentNodeId": "005080_a5102_huis_zn_1-ie0-0",
+                    "parentContentNodeId": null,
+                    "kind": "example",
+                    "text": "van huis uit ben ik niet gewend zuinig te zijn",
+                    "children": []
+                  }
+                ]
+              }
+            ],
+            "repeatCount": 0,
+            "startLearning": null,
+            "markKnown": null,
+            "undoKnown": null,
+            "reportCapability": null
+          }
+        }
+      ]
+    },
+    {
+      "article": "",
+      "headword": "ieder",
+      "partOfSpeech": "pronoun",
+      "coreVocabularyLabel": "2K",
+      "audioCapability": null,
+      "senseCount": 1,
+      "meanings": [
+        {
+          "entryId": "005186_a5200_ieder_vnw_1",
+          "cardTypeId": "word-to-definition",
+          "displayOrdinal": 1,
+          "partOfSpeech": "pronoun",
+          "definition": {
+            "contentNodeId": "005186_a5200_ieder_vnw_1-d",
+            "parentContentNodeId": null,
+            "kind": "definition",
+            "text": "dit woord gebruik je als je alle mensen, dieren of zaken bedoelt",
+            "children": []
+          },
+          "entryTranslation": null,
+          "entryTranslationAlternatives": [],
+          "translationStatus": null,
+          "details": [
+            {
+              "contentNodeId": "005186_a5200_ieder_vnw_1-e0",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "iedere keer dat Imran naar huis ging, vergat hij wel iets",
+              "children": []
+            },
+            {
+              "contentNodeId": "005186_a5200_ieder_vnw_1-e1",
+              "parentContentNodeId": null,
+              "kind": "example",
+              "text": "Sinterklaas gaf ieder kind een cadeautje",
+              "children": []
+            },
+            {
+              "contentNodeId": "005186_a5200_ieder_vnw_1-i0",
+              "parentContentNodeId": null,
+              "kind": "idiom",
+              "text": "hij kan ieder moment komen",
+              "children": [
+                {
+                  "contentNodeId": "005186_a5200_ieder_vnw_1-ix0",
+                  "parentContentNodeId": null,
+                  "kind": "idiom-explanation",
+                  "text": "hij zal heel snel komen",
+                  "children": []
+                }
+              ]
+            }
+          ],
+          "repeatCount": 0,
+          "startLearning": null,
+          "markKnown": null,
+          "undoKnown": null,
+          "reportCapability": null
+        }
+      ],
+      "crossReferences": [],
+      "presentations": [
+        {
+          "kind": "sense-card",
+          "meaning": {
+            "entryId": "005186_a5200_ieder_vnw_1",
+            "cardTypeId": "word-to-definition",
+            "displayOrdinal": 1,
+            "partOfSpeech": "pronoun",
+            "definition": {
+              "contentNodeId": "005186_a5200_ieder_vnw_1-d",
+              "parentContentNodeId": null,
+              "kind": "definition",
+              "text": "dit woord gebruik je als je alle mensen, dieren of zaken bedoelt",
+              "children": []
+            },
+            "entryTranslation": null,
+            "entryTranslationAlternatives": [],
+            "translationStatus": null,
+            "details": [
+              {
+                "contentNodeId": "005186_a5200_ieder_vnw_1-e0",
+                "parentContentNodeId": null,
+                "kind": "example",
+                "text": "iedere keer dat Imran naar huis ging, vergat hij wel iets",
+                "children": []
+              },
+              {
+                "contentNodeId": "005186_a5200_ieder_vnw_1-e1",
+                "parentContentNodeId": null,
+                "kind": "example",
+                "text": "Sinterklaas gaf ieder kind een cadeautje",
+                "children": []
+              },
+              {
+                "contentNodeId": "005186_a5200_ieder_vnw_1-i0",
+                "parentContentNodeId": null,
+                "kind": "idiom",
+                "text": "hij kan ieder moment komen",
+                "children": [
+                  {
+                    "contentNodeId": "005186_a5200_ieder_vnw_1-ix0",
+                    "parentContentNodeId": null,
+                    "kind": "idiom-explanation",
+                    "text": "hij zal heel snel komen",
+                    "children": []
+                  }
+                ]
+              }
+            ],
+            "repeatCount": 0,
+            "startLearning": null,
+            "markKnown": null,
+            "undoKnown": null,
+            "reportCapability": null
+          }
+        }
+      ]
+    }
+  ],
+  "details": {
+    "goed-adjective": {
+      "forms": [
+        {
+          "label": "Inflected form",
+          "value": "goede"
+        },
+        {
+          "label": "Comparative",
+          "value": "beter"
+        },
+        {
+          "label": "Superlative",
+          "value": "best"
+        }
+      ],
+      "conjugation": {},
+      "pos": "bn",
+      "relations": {
+        "004396_a4440_goed_bn_1": {
+          "synonyms": [],
+          "antonyms": [
+            "slecht"
+          ]
+        },
+        "004396_a4440_goed_bn_2": {
+          "synonyms": [],
+          "antonyms": [
+            "fout"
+          ]
+        },
+        "004396_a4440_goed_bn_3": {
+          "synonyms": [
+            "gunstig"
+          ],
+          "antonyms": [
+            "slecht"
+          ]
+        },
+        "004396_a4440_goed_bn_4": {
+          "synonyms": [],
+          "antonyms": []
+        },
+        "004396_a4440_goed_bn_5": {
+          "synonyms": [],
+          "antonyms": []
+        },
+        "004396_a4440_goed_bn_6": {
+          "synonyms": [],
+          "antonyms": []
+        }
+      }
+    },
+    "fiets-noun": {
+      "forms": [
+        {
+          "label": "Plural",
+          "value": "fietsen"
+        },
+        {
+          "label": "Diminutive",
+          "value": "fietsje"
+        }
+      ],
+      "conjugation": {},
+      "pos": "zn",
+      "relations": {
+        "003634_a3580_fiets_zn_1": {
+          "synonyms": [
+            "het rijwiel"
+          ],
+          "antonyms": []
+        }
+      }
+    },
+    "gaan-verb": {
+      "forms": [
+        {
+          "label": "Principal forms",
+          "value": "ging, is gegaan"
+        }
+      ],
+      "conjugation": {
+        "present": {
+          "ik": "ga",
+          "jij": "gaat",
+          "u": "gaat",
+          "hij_zij_het": "gaat",
+          "wij": "gaan",
+          "jullie": "gaan",
+          "zij": "gaan"
+        },
+        "past": {
+          "ik": "ging",
+          "jij": "ging",
+          "u": "ging",
+          "hij_zij_het": "ging",
+          "wij": "gingen",
+          "jullie": "gingen",
+          "zij": "gingen"
+        },
+        "perfect": {
+          "auxiliary": "is",
+          "participle": "gegaan"
+        }
+      },
+      "pos": "ww",
+      "relations": {
+        "003836_a3773_gaan_ww_1": {
+          "synonyms": [],
+          "antonyms": []
+        },
+        "003836_a3773_gaan_ww_2": {
+          "synonyms": [],
+          "antonyms": []
+        },
+        "003836_a3773_gaan_ww_3": {
+          "synonyms": [],
+          "antonyms": []
+        },
+        "003836_a3773_gaan_ww_4": {
+          "synonyms": [],
+          "antonyms": []
+        },
+        "003836_a3773_gaan_ww_5": {
+          "synonyms": [],
+          "antonyms": []
+        }
+      }
+    },
+    "huis-noun": {
+      "forms": [
+        {
+          "label": "Plural",
+          "value": "huizen"
+        },
+        {
+          "label": "Diminutive",
+          "value": "huisje"
+        }
+      ],
+      "conjugation": {},
+      "pos": "zn",
+      "relations": {
+        "005080_a5102_huis_zn_1": {
+          "synonyms": [
+            "de woning"
+          ],
+          "antonyms": []
+        }
+      }
+    },
+    "ieder-pronoun": {
+      "forms": [],
+      "conjugation": {},
+      "pos": "vnw",
+      "relations": {
+        "005186_a5200_ieder_vnw_1": {
+          "synonyms": [
+            "elk"
+          ],
+          "antonyms": []
+        }
+      }
+    }
+  }
+}

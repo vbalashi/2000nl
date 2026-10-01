@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type {
   PlatformContentNodeV2,
   PlatformHeadwordGroupV2,
@@ -80,13 +81,16 @@ function buildTrainingVisualFixtureProfile(state: TrainingVisualState) {
 export function buildTrainingVisualFixtureBundle(
   state: TrainingVisualState,
   entries: readonly FixtureEntry[],
+  options: { diagnosticReportReady?: boolean } = {},
 ): TrainingVisualFixtureBundle {
   const profile = buildTrainingVisualFixtureProfile(state);
   const lookupGroups = Object.freeze(
     Object.fromEntries(
       entries.map((entry) => [
         entry.id,
-        buildTrainingVisualLookupGroup(entry, state),
+        options.diagnosticReportReady
+          ? diagnosticReportGroup(buildTrainingVisualLookupGroup(entry, state))
+          : buildTrainingVisualLookupGroup(entry, state),
       ]),
     ) as Record<string, PlatformHeadwordGroupV2>,
   );
@@ -128,6 +132,20 @@ export function buildTrainingVisualFixtureBundle(
       }),
     }),
   });
+}
+
+function diagnosticReportGroup(group: PlatformHeadwordGroupV2): PlatformHeadwordGroupV2 {
+  const hash = (text: string) => createHash("sha256").update(text).digest("hex");
+  return { ...group, entries: group.entries.map(entry => entry.kind !== "sense-card" ? entry : ({
+    ...entry,
+    contentNodes: entry.contentNodes.map(node => ({
+      ...node, sourceTextFingerprint: hash(node.text),
+      translations: node.translations.map(translation => ({
+        ...translation, translationId: hash(`${node.contentNodeId}:${translation.text}`),
+        sourceTextFingerprint: hash(node.text),
+      })),
+    })),
+  })) };
 }
 
 function buildTrainingVisualLookupGroup(

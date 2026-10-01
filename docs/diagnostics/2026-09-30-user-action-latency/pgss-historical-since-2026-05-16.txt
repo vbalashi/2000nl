@@ -1,0 +1,49 @@
+                              fn                              | calls | mean_ms | max_ms | total_s | hit_blk | rd_blk | tmp_blk 
+--------------------------------------------------------------+-------+---------+--------+---------+---------+--------+---------
+ read_platform_v2_training_group                              |  4007 |     687 |   7863 |    2753 |   45946 |    198 |       0
+ get_detailed_training_stats                                  |  1027 |    1997 |   7950 |    2051 |   49939 |     60 |       0
+ get_next_card                                                |   912 |    1625 |   7925 |    1482 |   65714 |     72 |       0
+ get_next_card                                                |   466 |    2268 |   7753 |    1057 |   14054 |     43 |  121104
+ get_detailed_training_stats                                  |   406 |    2571 |   7611 |    1044 |   99176 |    106 |       0
+ search_word_entries_gated                                    |   323 |    2815 |   7949 |     909 |    6006 |      1 |  832042
+ lookup_dictionary_entries_v3                                 |   657 |     455 |   5584 |     299 |    3248 |      0 |       0
+ get_next_card                                                |   232 |    1155 |   6186 |     268 |   65489 |    333 |       0
+ read_platform_v2_presentation_identity                       |   349 |     704 |   7853 |     246 |   29480 |   1939 |       0
+ search_public_catalog_entries                                |    84 |    2682 |   6379 |     225 |    6296 |      0 |  241037
+ fetch_dictionary_entry_by_id_gated                           |  1837 |     109 |   3981 |     199 |    2496 |      0 |       0
+ lookup_platform_v2_entries                                   |   156 |    1181 |   6643 |     184 |   71860 |      3 |       0
+ get_training_session_plan                                    |    61 |    2590 |   7472 |     158 |   17773 |     14 |   22252
+ get_detailed_training_stats                                  |    65 |    2421 |   7335 |     157 |   15483 |     74 |       0
+ search_public_dictionary_groups_v1                           |  4861 |      30 |   2453 |     144 |    4077 |      0 |    2934
+ get_recent_training_history                                  |   197 |     708 |   6579 |     140 |   37124 |      0 |       0
+ get_platform_v2_card_states_for_entries                      |  4112 |      33 |    858 |     135 |     276 |      0 |       0
+ perform_platform_v2_card_action_as_principal                 |   615 |     219 |   1005 |     134 |    2073 |      0 |       0
+ get_available_word_lists                                     |   988 |     123 |   2275 |     121 |    1208 |      0 |       0
+ WITH pgrst_source AS ( SELECT "public"."dictionary_search_do |   417 |     286 |   1403 |     119 |    1472 |      2 |       0
+ start_training_session                                       |    33 |    3454 |   6734 |     114 |   20330 |     35 |   12164
+ search_dictionary_groups_v1                                  |   662 |     165 |   4982 |     109 |    1611 |      8 |     926
+ get_training_session_plan                                    |    69 |    1294 |   7351 |      89 |   13256 |     32 |   11844
+ get_training_session_plan                                    |    45 |    1953 |   6478 |      88 |  167355 |      0 |       0
+ get_next_card                                                |    35 |    2191 |   6522 |      77 |   28020 |     28 |       0
+ lookup_public_catalog_entries_v1                             |  1272 |      45 |   3621 |      57 |     492 |      0 |       0
+ get_next_card                                                |    62 |     873 |   3028 |      54 |   78018 |      0 |       0
+ perform_platform_v2_card_action_as_principal                 |   171 |     275 |   2682 |      47 |    1574 |      1 |       0
+ WITH pgrst_source AS ( SELECT "public"."dictionary_search_fi |   417 |     112 |    669 |      47 |     369 |      1 |       0
+ start_platform_v2_idiom_training_session                     |    17 |    2715 |   5875 |      46 |   45107 |      0 |       0
+ get_user_list_memberships_for_entries                        |   972 |      47 |   1880 |      46 |    1631 |      0 |       0
+ get_available_learning_languages                             |   500 |      90 |   1504 |      45 |    1144 |      0 |       0
+ get_training_session_snapshot                                |  2974 |      13 |    504 |      37 |     742 |      0 |       0
+ start_training_session                                       |     8 |    4076 |   7153 |      33 |   16360 |     85 |    4512
+ fetch_dictionary_entry_gated                                 |    54 |     519 |   5403 |      28 |   11229 |    240 |       0
+ search_word_entries_gated                                    |   101 |     252 |   1682 |      25 |    5270 |     65 |       0
+ get_next_card                                                |    18 |    1392 |   3589 |      25 |   26701 |    524 |       0
+ get_training_filter_sources                                  |   376 |      59 |    772 |      22 |     704 |      0 |       0
+ perform_platform_v2_card_action_as_principal                 |    65 |     336 |   1792 |      22 |    1475 |      1 |       0
+ get_next_training_session_card                               |   282 |      76 |    613 |      21 |     439 |      0 |       0
+ WITH pgrst_source AS ( SELECT "public"."dictionary_search_do |   417 |      50 |    961 |      21 |     262 |      0 |       0
+ get_available_dictionary_sources                             |   154 |     126 |   1911 |      19 |     754 |      4 |       0
+ lookup_platform_v2_entries                                   |    93 |     181 |   2638 |      17 |    1005 |      2 |       0
+ fetch_dictionary_entry_by_id_gated                           |   418 |      39 |    243 |      16 |     392 |      0 |       0
+ read_training_translation_stats_v1                           |     7 |    2242 |   4052 |      16 |   54706 |      0 |       0
+(45 rows)
+

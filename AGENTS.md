@@ -47,6 +47,10 @@ promotes a boundary change.
 - [docs/runbooks/worktrees.md](./docs/runbooks/worktrees.md) - required
   project-local checkout location and dependency bootstrap procedure.
 - [docs/runbooks](./docs/runbooks) - operational notes for Supabase auth, production debugging, and audio/TTS workflows.
+- [docs/runbooks/production-latency-measurement.md](./docs/runbooks/production-latency-measurement.md) -
+  required before latency/performance work: production measurement kit
+  (`scripts/latency-audit/`), safety rules, pitfalls and the 2026-09-30
+  baseline/evidence.
 - [packages/docs/README.md](./packages/docs/README.md) - deeper data-flow and contract docs.
 
 ## Working Rules

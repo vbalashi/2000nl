@@ -31,6 +31,7 @@ test("shows only the selected example after reveal, with its translation already
   expect(screen.getByText(presentation.prompt.text)).toBeVisible();
   expect(presentation.answer.examples.map((node) => node.contentNodeId)).toEqual([content.sentence.contentNodeId]);
   expect(presentation.answer.definitions).toEqual([]);
+  expect(presentation.promptTarget).toEqual({ contentNodeId: content.sentence.contentNodeId, kind: "translation" });
   expect(screen.getByRole("button", { name: "Again" })).toHaveFocus();
 });
 

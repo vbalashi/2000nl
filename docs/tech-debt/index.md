@@ -17,3 +17,7 @@ Feature notes, runbooks, and one-off documents still live together in a flat top
 ### Validation guidance is still somewhat duplicated
 
 Validation commands now have a canonical home in `AGENTS.md`, but related details still exist in `README.md`, `apps/ui/README.md`, and operational notes. Keep the duplication aligned or reduce it over time.
+
+### Local QA contract signal and grouped-search readiness
+
+Open evidence from 2026-09-29: [missing deployment ledger and empty search index](local-qa-contract-2026-09-29.md). UI expects `2000nl-db-176`; local health cannot read an actual contract, and the read-only checker confirms at least one ledger table is absent. This must be distinguished from a proven missing migration. Search backfill is a separate issue. The note includes reproduction, counts, repair boundaries and acceptance checks.

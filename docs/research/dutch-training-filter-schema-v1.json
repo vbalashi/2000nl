@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "status": "proposed-product-contract-not-runtime-implementation",
+  "language": "nl",
+  "countUnit": "distinct-meaning-entry",
+  "evaluation": {
+    "withinField": "or",
+    "betweenGlobalFields": "and",
+    "betweenPosBranches": "or",
+    "withinPosBranch": "and",
+    "emptyOptionalField": "unrestricted",
+    "unknownWhenConstrained": "exclude",
+    "applyExerciseEligibility": true
+  },
+  "fields": [
+    {
+      "id": "partOfSpeech",
+      "label": "Part of speech",
+      "kind": "multiSelect",
+      "scope": "branch-selector",
+      "availability": "initial",
+      "values": [
+        "noun",
+        "verb",
+        "adjective",
+        "adverb",
+        "pronoun",
+        "preposition",
+        "conjunction",
+        "numeral",
+        "article",
+        "interjection"
+      ],
+      "sourceCodes": [
+        "zn",
+        "ww",
+        "bn",
+        "bw",
+        "vnw",
+        "vz",
+        "vw",
+        "tw",
+        "lidw",
+        "tsw"
+      ],
+      "normalizeAllToEmpty": false,
+      "reason": "Visible options do not exhaust source classes; unrestricted also includes other and unclassified entries.",
+      "evidencePolicy": "Use normalized POS including article and conjugation-link derivation; do not restrict to known status. Track weak-rule review and PR515 data refresh separately."
+    },
+    {
+      "id": "noun.article",
+      "label": "Article",
+      "kind": "multiSelect",
+      "scope": "pos-branch",
+      "parent": {
+        "field": "partOfSpeech",
+        "value": "noun"
+      },
+      "availability": "initial",
+      "values": [
+        "de",
+        "het"
+      ],
+      "predicate": "normalized exact article equals any selected value",
+      "normalizeAllToEmpty": true,
+      "allSelectionPolicy": "Explicit product shortcut to unrestricted, including mixed and missing articles; not SQL union equivalence.",
+      "clearOnParentRemoval": true,
+      "summaryContribution": "one-if-constrained"
+    },
+    {
+      "id": "verb.perfectAuxiliary",
+      "label": "Perfect auxiliary",
+      "kind": "multiSelect",
+      "scope": "pos-branch",
+      "parent": {
+        "field": "partOfSpeech",
+        "value": "verb"
+      },
+      "availability": "after-normalization",
+      "requiresCapability": "nl.perfectAuxiliary.normalized",
+      "values": [
+        "hebben",
+        "zijn"
+      ],
+      "predicate": "normalized recorded auxiliary set overlaps selected values",
+      "mixedPolicy": "Both-recorded entries match either single selection; no claim about conditions of use.",
+      "normalizeAllToEmpty": true,
+      "allSelectionPolicy": "Explicit shortcut to unrestricted including missing auxiliary metadata.",
+      "clearOnParentRemoval": true,
+      "summaryContribution": "one-if-constrained"
+    },
+    {
+      "id": "content.hasSynonyms",
+      "label": "Has synonyms",
+      "kind": "positiveToggle",
+      "scope": "global",
+      "availability": "deferred-not-user-visible",
+      "predicate": "current meaning has at least one nonblank recorded synonym",
+      "offMeans": "unrestricted",
+      "reason": "No current learning use case; future dedicated relation exercises should apply eligibility automatically."
+    },
+    {
+      "id": "content.hasAntonyms",
+      "label": "Has antonyms",
+      "kind": "positiveToggle",
+      "scope": "global",
+      "availability": "deferred-not-user-visible",
+      "predicate": "current meaning has at least one nonblank recorded antonym",
+      "offMeans": "unrestricted",
+      "reason": "No current learning use case; future dedicated relation exercises should apply eligibility automatically."
+    }
+  ],
+  "ui": {
+    "posSelectionIndependentOfDisclosure": true,
+    "disclosureOnlyForAvailableChildren": true,
+    "openingUnselectedParentSelectsIt": true,
+    "activePosEditorCount": 1,
+    "switchingEditorPreservesSelections": true,
+    "closingEditorPreservesSelections": true,
+    "parentBadgeCounts": "constrained-child-fields-not-selected-values",
+    "posLayout": "wrap",
+    "desktopChildLayout": "label-left-options-right",
+    "mobileChildLayout": "focused-popover-below-parent-chip; dim-and-lightly-blur-background; outside-tap-same-chevron-Escape-dismiss; preserve-selection",
+    "globalContentLayout": "hidden-in-current-release",
+    "counts": "automatic-pending-animation-latest-response-only",
+    "zeroResults": "keep-selections-show-empty-state-disable-start",
+    "unsupportedCapability": "hide-control-never-silently-drop-saved-constraint",
+    "sectionSummaries": "always-visible-and-updated-live-even-while-expanded"
+  },
+  "outsideFilterSchema": {
+    "source": "one-required-searchable-dictionary-or-collection",
+    "exerciseTypes": "words-idioms-translation; separate-required-capability-controlled-selection; hide-standalone-example-sentences",
+    "directions": "direct-reverse-one-or-both-never-zero",
+    "answerMode": "separate-supported-exercise-setting",
+    "sessionSize": "requested-presentations-not-available-meaning-count",
+    "newReviewBalance": "scheduler-selection-policy-not-lexical-filter"
+  }
+}

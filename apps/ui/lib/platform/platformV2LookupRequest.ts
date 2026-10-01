@@ -4,7 +4,7 @@ import { isPlatformCardTypeId } from "./cardTypeRegistry";
 
 export function parsePlatformV2LookupRequest(
   value: unknown,
-  options: { allowAuthenticatedEntryId?: boolean } = {},
+  options: { allowAuthenticatedEntryId?: boolean; allowLibraryBrowse?: boolean } = {},
 ):
   | { ok: true; request: PlatformLookupV2Request }
   | { ok: false; error: string } {
@@ -34,7 +34,9 @@ export function parsePlatformV2LookupRequest(
   if (entryId && cursor) {
     return { ok: false, error: "cursor_not_allowed_with_entry_id" };
   }
-  if (!entryId && !query) return { ok: false, error: "missing_query" };
+  const libraryBrowse = options.allowLibraryBrowse &&
+    intent === "dictionary-lookup" && typeof body.query === "string";
+  if (!entryId && !query && !libraryBrowse) return { ok: false, error: "missing_query" };
 
   return {
     ok: true,

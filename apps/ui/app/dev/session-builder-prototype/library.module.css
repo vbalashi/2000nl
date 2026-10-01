@@ -1,0 +1,807 @@
+.library {
+  --lib-ink: var(--practice-text);
+  --lib-muted: var(--practice-text-muted);
+  --lib-line: var(--practice-border);
+  --lib-surface: var(--practice-surface);
+  --lib-soft: var(--practice-canvas);
+  --lib-accent: var(--practice-accent);
+  --lib-control: 34px;
+  color: var(--lib-ink);
+  padding-bottom: 120px;
+  font-family: var(--practice-font-ui);
+}
+.heading {
+  margin-bottom: 26px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+}
+.heading h1 {
+  margin: 0;
+  font-size: var(--practice-text-page);
+  line-height: 34px;
+  letter-spacing: -1px;
+  font-weight: 500;
+}
+.searchRow {
+  display: flex;
+  gap: 8px;
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--lib-line);
+  border-radius: 12px;
+  background: var(--lib-surface);
+  color: var(--lib-muted);
+}
+.search input {
+  width: 100%;
+  background: none;
+  border: 0;
+  outline: none;
+  color: var(--lib-ink);
+  font: inherit;
+  font-size: var(--practice-text-small);
+}
+.search:focus-within {
+  border-color: var(--practice-control-border);
+  box-shadow: 0 0 0 2px var(--practice-shadow);
+}
+.search button {
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--lib-muted);
+  display: flex;
+}
+.filterButton {
+  width: 44px;
+  border: 1px solid var(--lib-line);
+  border-radius: 12px;
+  background: var(--practice-surface);
+  color: var(--practice-text-muted);
+  display: grid;
+  place-items: center;
+}
+.active {
+  background: var(--lib-soft);
+}
+.filterPanel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--lib-line);
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: var(--practice-space-content);
+  background: var(--practice-surface);
+  font-size: var(--practice-text-caption);
+}
+.filterPanel label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.filterPanel select {
+  max-width: 170px;
+  padding: 7px;
+  border-radius: 7px;
+  border: 1px solid var(--lib-line);
+  background: var(--practice-surface);
+  color: var(--lib-ink);
+}
+.scope {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 30px;
+  font-size: var(--practice-text-label);
+  color: var(--lib-muted);
+  padding: 0 3px;
+}
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0,1fr);
+  gap: 16px;
+  align-items: start;
+}
+.hasDetail {
+  grid-template-columns: minmax(250px,.9fr) minmax(0,1.3fr);
+}
+.metadata {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--practice-text-label);
+  line-height: 18px;
+  color: var(--lib-muted);
+  flex-wrap: wrap;
+}
+.pos {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.pos i {
+  height: 5px;
+  width: 5px;
+  background: var(--practice-relation);
+  border-radius: 50%;
+  flex: none;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  min-height: 18px;
+  background: var(--practice-canvas);
+  color: var(--practice-text-muted);
+  border-radius: 5px;
+  font-size: var(--practice-text-label);
+  font-weight: 500;
+}
+.source {
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-label);
+  margin-left: 2px;
+}
+.articleHeader {
+  padding: 12px 16px 16px;
+  border-bottom: 1px solid var(--practice-border);
+}
+.headwordRow h2 {
+  font-family: var(--practice-font-reading);
+  font-size: var(--practice-text-headword);
+  font-weight: 500;
+  line-height: 1.1;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.iconButton {
+  height: 32px;
+  width: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--lib-line);
+  background: var(--lib-surface);
+  color: var(--practice-text-muted);
+  border-radius: 10px;
+  padding: 0;
+  flex-shrink: 0;
+}
+.iconButton:hover {
+  background: var(--lib-soft);
+}
+.articleMeta>.iconButton {
+  border-color: transparent;
+}
+.meaningCard:last-child {
+  margin-bottom: 0;
+}
+.meaningLead {
+  display: grid;
+  grid-template-columns: 14px minmax(0,1fr) auto 14px;
+  gap: 7px;
+  align-items: start;
+  width: 100%;
+  padding: 12px;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: var(--lib-ink);
+  font-size: var(--practice-text-body);
+  line-height: 1.35;
+}
+.ordinal {
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-label);
+  line-height: 19px;
+}
+.state {
+  font-size: var(--practice-text-label);
+  line-height: 19px;
+  color: var(--practice-text-muted);
+  white-space: nowrap;
+}
+.meaningLead>svg {
+  margin-top: 2px;
+  color: var(--practice-text-muted);
+  transition: transform .18s;
+}
+.rotated {
+  transform: rotate(180deg);
+}
+.contentSection { composes: contentSection from "../../../components/practice/article/articleContent.module.css"; }
+
+
+.contentNode { composes: contentNode from "../../../components/practice/article/articleContent.module.css"; }
+
+.literary { composes: literary from "../../../components/practice/article/articleContent.module.css"; }
+.explanation { composes: explanation from "../../../components/practice/article/articleContent.module.css"; }
+.children { composes: children from "../../../components/practice/article/articleContent.module.css"; }
+
+
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--lib-control);
+  padding: 5px 11px;
+  border: 1px solid var(--lib-line);
+  border-radius: 9px;
+  background: var(--practice-surface);
+  color: var(--practice-text-muted);
+  font-family: inherit;
+  font-size: var(--practice-text-caption);
+  font-weight: 400;
+  line-height: 1.2;
+}
+.button:hover {
+  background: var(--practice-surface);
+}
+.primary {
+  background: var(--practice-surface-hover);
+  border-color: var(--practice-border);
+  color: var(--practice-text);
+}
+.primary:hover {
+  background: var(--practice-surface-hover);
+}
+.notice {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: var(--practice-text-label);
+  color: var(--practice-text-muted);
+  border-top: 1px solid var(--lib-line);
+}
+.empty {
+  padding: 24px;
+  text-align: center;
+}
+.empty h2 {
+  font-size: var(--practice-text-body-lg);
+  margin: 0 0 12px;
+}
+.library button:focus-visible,.library select:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: -2px;
+}
+.library button:active {
+  transform: scale(.98);
+}
+/* Shared component options: geometry and state come from libraryStudy.ts. */
+.detail {
+  composes: detail from "../../../components/practice/article/articleContent.module.css";
+  border: 1px solid var(--lib-line);
+  border-radius: 14px;
+  background: var(--lib-surface);
+  position: sticky;
+  top: 16px;
+  min-width: 0;
+  overflow: hidden;
+  box-shadow: 0 3px 12px var(--practice-shadow);
+  --lib-control: 28px;
+  --lib-button-radius: 9px;
+  --lib-icon-radius: 11px;
+}
+.detail[data-controls=comfortable] {
+  --lib-control: 34px;
+}
+.detail[data-shape=pill] {
+  --lib-button-radius: 999px;
+  --lib-icon-radius: 50%;
+}
+.detail .button {
+  min-height: var(--lib-control);
+  padding: 4px 10px;
+  border-radius: var(--lib-button-radius);
+}
+.detail .iconButton {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--lib-icon-radius);
+}
+.articleMeta>.metadata {
+  flex: 1;
+  min-width: 0;
+}
+.returnButton {
+  border-color: transparent;
+  background: transparent;
+}
+.articleMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  gap: 7px;
+}
+.headerActions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 5px;
+}
+.headwordRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+.meaningScroll {
+  max-height: calc(100dvh - 310px);
+  min-height: 180px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--practice-surface-hover) transparent;
+  overscroll-behavior: contain;
+  padding: 16px 12px 12px;
+}
+.meaningCard {
+  border: 1px solid var(--lib-line);
+  border-radius: 11px;
+  background: var(--lib-surface);
+  position: relative;
+  overflow: visible;
+  margin-bottom: 14px;
+}
+.cornerNumber {
+  position: absolute;
+  left: -3px;
+  top: -8px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: var(--lib-surface);
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-label);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.meaningCard[data-numbering=corner] .meaningLead {
+  grid-template-columns: minmax(0,1fr) auto 14px;
+}
+.meaningCard[data-numbering=corner] .meaningBody {
+  padding-left: 12px;
+}
+.meaningBody {
+  padding: 0 12px 12px 33px;
+  padding-bottom: 10px;
+}
+
+
+
+
+
+
+
+
+
+
+.actionGroup {
+  container-type: inline-size;
+  margin-top: var(--practice-space-section);
+}
+.actionGroup .actions {
+  margin-top: 0;
+}
+.actionGroup[data-grouping=full] .actions>.button {
+  width: 100%;
+}
+.secondaryActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.secondaryActions>button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  gap: 4px;
+  min-height: 28px;
+  font-size: var(--practice-text-label);
+  color: var(--practice-text-muted);
+  white-space: nowrap;
+}
+.secondaryActions .reportAction {
+  margin-left: auto;
+}
+.secondaryActions>button:hover {
+  color: var(--practice-text-secondary);
+}
+.actionGroup[data-grouping=toolbar] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  align-items: center;
+}
+.actionGroup[data-grouping=toolbar] .secondaryActions {
+  flex: 1;
+  margin: 0;
+}
+.actionGroup[data-grouping=toolbar] .actionPanel {
+  flex-basis: 100%;
+}
+.actionPanel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: var(--practice-canvas);
+  border: 1px solid var(--practice-border);
+  border-radius: 9px;
+  padding: 8px;
+  margin-top: 5px;
+  font-size: var(--practice-text-label);
+}
+.actionPanel button {
+  border: 0;
+  border-radius: 5px;
+  background: var(--practice-surface);
+  padding: 7px 9px;
+  color: var(--practice-text-secondary);
+  font-size: var(--practice-text-label);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.actionPanel label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.actionPanel input {
+  accent-color: var(--practice-accent);
+}
+.actionPanel select {
+  max-width: 145px;
+  background: var(--practice-surface);
+  border: 1px solid var(--lib-line);
+  border-radius: 6px;
+  padding: 5px;
+}
+.reviewButtons {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 6px;
+  width: 100%;
+}
+.actionGroup:has(.reviewButtons) .actions {
+  width: 100%;
+}
+.actionGroup[data-grouping=split] .reviewButtons {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+}
+.library .detail .reviewButtons>button {
+  height: var(--lib-control);
+  min-height: var(--lib-control);
+  font-weight: 400;
+  background: var(--practice-surface);
+  border-color: var(--lib-line);
+  border-radius: var(--lib-button-radius);
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-label);
+}
+.library .detail .reviewButtons>button:hover {
+  background: var(--practice-surface);
+}
+.library .detail .reviewButtons>button::before {
+  width: 3px;
+}
+.ratingFeedback {
+  display: block;
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-label);
+  margin-top: 5px;
+}
+@media(max-width:700px) {
+  .library {
+  --lib-control: 40px;
+  padding-bottom: 200px;
+  }
+  .heading {
+  margin-bottom: 26px;
+  }
+  .heading h1 {
+  font-size: var(--practice-text-title);
+  }
+  .hasDetail {
+  display: block;
+  }
+  .detail {
+  position: relative;
+  top: auto;
+  }
+  .iconButton {
+  height: 40px;
+  width: 40px;
+  }
+  .articleHeader {
+  padding: 10px 14px 14px;
+  }
+  .meaningScroll {
+  max-height: none;
+  }
+  .filterPanel {
+  flex-wrap: wrap;
+  }
+  .filterPanel label {
+  flex: 1;
+  }
+  .meaningBody {
+  padding-left: 24px;
+  }
+  .meaningLead {
+  grid-template-columns: 12px minmax(0,1fr) auto 14px;
+  gap: 5px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .meaningLead>svg {
+  transition: none;
+  }
+  .library button:active {
+  transform: none;
+  }
+}
+@media(max-width:700px) {
+  .library {
+  padding-bottom: 155px;
+  }
+  .articleMeta {
+  flex-wrap: wrap;
+  }
+  .articleMeta>.metadata {
+  flex: 1;
+  min-width: 90px;
+  }
+  .articleHeader {
+  padding-bottom: 14px;
+  }
+  .detail .headwordRow {
+  margin-top: var(--practice-space-content);
+  }
+  .detail .iconButton {
+  width: 32px;
+  height: 32px;
+  position: relative;
+  margin: 4px 2px;
+  }
+  .detail .iconButton::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  }
+  .headerActions {
+  gap: 4px;
+  }
+  .detail .button {
+  position: relative;
+  margin: 4px 0;
+  }
+  .detail .button::after {
+  content: "";
+  position: absolute;
+  inset: -4px 0;
+  }
+  .secondaryActions {
+  gap: 12px;
+  margin-top: 0;
+  }
+  .secondaryActions>button {
+  min-height: 36px;
+  }
+  .reviewButtons {
+  row-gap: 10px;
+  padding: 4px 0;
+  }
+  .library .detail .reviewButtons>button {
+  position: relative;
+  overflow: visible;
+  }
+  .library .detail .reviewButtons>button::after {
+  content: "";
+  position: absolute;
+  inset: -4px 0;
+  }
+  .library .detail .reviewButtons>button::before {
+  border-radius: 4px 0 0 4px;
+  }
+}
+
+@container (max-width: 280px) {
+  .reportAction span { display: none; }
+}
+
+/* Owner review, 28 September: metadata-first list and floating actions. */
+.srOnly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.badge{min-height:14px;line-height:1.3;font-size:var(--practice-text-label);padding:0 4px;border-radius:4px}
+.articleHeader{border-bottom:0;padding-bottom:8px}
+
+
+
+
+.actionGroup[data-grouping=toolbar]{display:block}.actionGroup[data-grouping=toolbar] .secondaryActions{margin-top:4px}
+.actionGroup[data-grouping=toolbar] .actions>.button,.actionGroup[data-grouping=full] .actions>.button{width:100%}
+.actionGroup[data-learn-width=inset]:not([data-grouping=split]) .actions>.primary{width:84%;margin-left:8%;margin-right:8%}
+.library .detail .reviewButtons>button:nth-child(1){--rating-accent:var(--practice-danger);--rating-ink:var(--practice-danger)}
+.library .detail .reviewButtons>button:nth-child(2){--rating-accent:var(--practice-relation);--rating-ink:var(--practice-relation)}
+.library .detail .reviewButtons>button:nth-child(3){--rating-accent:var(--practice-relation);--rating-ink:var(--practice-relation)}
+.library .detail .reviewButtons>button:nth-child(4){--rating-accent:var(--practice-relation);--rating-ink:var(--practice-relation)}
+.library .detail .reviewButtons>button::before{background:var(--rating-accent)}
+.library .detail [data-rating-ink=exact] .reviewButtons>button{color:var(--rating-accent)}
+.library .detail [data-rating-ink=tonal] .reviewButtons>button{color:var(--rating-ink)}
+@media(max-width:700px){.articleHeader{padding-bottom:8px}}
+
+/* Exposure is a frame slot, shared by all meaning cards. */
+.frameExposure,.inlineExposure{display:inline-flex;align-items:center;gap:4px;font-size:var(--practice-text-label);line-height:1.45;color:var(--practice-text-muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.frameExposure{position:absolute;right:12px;top:-8px;padding:0 5px;background:var(--lib-surface);pointer-events:none}
+.meaningCard[data-numbering=corner][data-exposure=frame] .meaningLead{grid-template-columns:minmax(0,1fr) 14px}
+.meaningCard[data-numbering=inline][data-exposure=frame] .meaningLead{grid-template-columns:14px minmax(0,1fr) 14px}
+
+/* Translation pairs follow the source text inside its existing rail / soft block. */
+.translation { composes: translation from "../../../components/practice/article/articleContent.module.css"; }
+.translationEmphasis { composes: translationEmphasis from "../../../components/practice/article/articleContent.module.css"; }
+
+.meaningText{min-width:0;display:block}
+.meaningLead{align-items:start}
+.detail .languageControl[data-header-shape=circle]{border-radius:50%}
+.detail .languageControl[data-header-shape=rounded]{border-radius:10px}
+.languageControl[aria-pressed=true]{background:var(--practice-canvas);border-color:var(--practice-border);color:var(--practice-text-muted)}
+
+.contentPair { composes: contentPair from "../../../components/practice/article/articleContent.module.css"; }
+
+/* Keep secondary actions visually quieter than the learning action. */
+.library .detail .secondaryActions>button{font-size:var(--practice-text-label);font-weight:400;line-height:1.45;color:var(--practice-text-muted)}
+.library .detail .secondaryActions>button>svg{width:12px;height:12px}
+.library .detail .secondaryActions>button[data-action="more"]>svg{width:16px;height:16px}
+@media(min-width:701px){.library .detail .actionGroup .secondaryActions{margin-top:10px}}
+/* Reading studies share content; only the nested hierarchy changes. */
+.nodeRole { composes: nodeRole from "../../../components/practice/article/articleContent.module.css"; }
+
+
+
+
+
+
+
+
+
+
+/* The list belongs to document scrolling; only the article has its own scroll. */
+.library{position:relative;min-height:100dvh;padding-bottom:68px;--library-toolbar-height:82px;overflow-anchor:none}
+.searchToolbar{position:sticky;top:0;z-index:4;background:var(--practice-canvas);padding-top:8px;padding-bottom:1px}
+.library .workspace{align-items:start;overflow:visible;min-height:calc(100dvh - var(--library-toolbar-height) - 68px)}
+.library .workspace>.detail{position:sticky;top:calc(var(--library-toolbar-height) + 8px);max-height:calc(100dvh - var(--library-toolbar-height) - 24px);min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--practice-surface-hover) transparent;overscroll-behavior-y:auto}
+.library .meaningScroll{overflow:visible;max-height:none;min-height:0;overscroll-behavior:auto}
+@media(max-width:700px){.library{padding-bottom:150px}.library .workspace>.detail{display:block;max-height:calc(100dvh - var(--library-toolbar-height) - 150px)}}
+
+/* Border labels share one axis; transparent text never masks either surface. */
+
+
+/* Explanation stays inside the soft block; Example remains on its separator. */
+
+
+
+
+
+
+.detail[data-preview]{position:static;top:auto;max-height:none;width:100%;overflow:visible}.detail[data-preview] .meaningScroll{max-height:none;overflow:visible}
+
+/* The word is a page section; each meaning keeps its own surface. */
+.library .detail[data-article-frame=flat]{border:0;background:transparent;box-shadow:none;border-radius:0}
+.detail[data-article-frame=flat] .articleHeader{padding-left:4px;padding-right:4px}
+.detail[data-article-frame=flat] .meaningScroll{padding-left:3px;padding-right:3px}
+.library .filterButton{border:0;background:transparent;border-radius:10px}
+.library .filterButton:hover,.library .filterButton.active{background:var(--lib-soft)}
+.library .filterButton:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
+@media(max-width:700px){
+ .library .detail[data-article-frame=mobile]{border:0;background:transparent;box-shadow:none;border-radius:0}
+ .detail[data-article-frame=mobile] .articleHeader{padding-left:4px;padding-right:4px}
+ .detail[data-article-frame=mobile] .meaningScroll{padding-left:3px;padding-right:3px}
+}
+
+.detail[data-article-frame=flat] :is(.cornerNumber,.frameExposure){background:linear-gradient(to bottom,var(--practice-canvas) 8px,var(--lib-surface) 8px)}
+@media(max-width:700px){.detail[data-article-frame=mobile] :is(.cornerNumber,.frameExposure){background:linear-gradient(to bottom,var(--practice-canvas) 8px,var(--lib-surface) 8px)}}
+
+.library .detail .returnButton{background:var(--lib-surface);border:1px solid var(--lib-line);border-radius:50%}
+.library .detail .returnButton:hover{background:var(--lib-soft)}
+.detail[data-marker-placement=above] .meaningCard{margin-top:22px;margin-bottom:12px}
+.detail[data-marker-placement=above] .meaningCard :is(.cornerNumber,.frameExposure){top:-20px;background:transparent;padding:0;height:16px;line-height:1.45}
+.detail[data-marker-placement=above] .cornerNumber{left:5px;min-width:10px}
+.detail[data-marker-placement=above] .frameExposure{right:8px}
+.detail[data-marker-placement=above] .meaningScroll{padding-top:0}
+
+/* Fixed word header, scrollable meanings; page scrolling still owns the list. */
+.library .workspace>.detail{display:flex;flex-direction:column;overflow:hidden}
+.library .workspace>.detail>.articleHeader{flex-shrink:0}
+.library .workspace>.detail>.meaningViewport>.meaningScroll{min-height:0;overflow-y:auto;overscroll-behavior-y:auto}
+.library,.library *{scrollbar-width:none!important}.library::-webkit-scrollbar,.library *::-webkit-scrollbar{display:none}
+.detail[data-marker-placement=above] .meaningCard+.meaningCard{margin-top:32px}
+.sheetHandle{display:none}.library .detail .desktopClose{margin-left:16px;border:0;background:transparent;flex-shrink:0}
+@media(min-width:701px){.library .detail .mobileReturn{display:none}}
+@media(max-width:700px){.library .workspace.hasDetail{display:block}
+ .library .detail .desktopClose{display:none}
+ .library .workspace>.detail[data-sheet]{position:fixed;inset:auto 8px 72px;z-index:35;max-height:none;height:min(340px,60dvh);border:1px solid var(--lib-line);border-radius:22px 22px 12px 12px;background:var(--practice-canvas);box-shadow:0 -8px 30px var(--practice-shadow);transition:height .22s ease,bottom .22s ease;animation:sheetEnter .22s ease-out}
+ .library .workspace>.detail[data-sheet=full]{height:calc(100dvh - 8px);bottom:0;z-index:60;border-radius:22px 22px 0 0}
+ .library .detail>.sheetHandle{display:grid;place-items:center;flex-shrink:0;width:100%;height:28px;min-height:28px;padding:0;border:0;background:transparent;touch-action:none;cursor:ns-resize}
+ .sheetHandle span{height:4px;width:38px;border-radius:4px;background:var(--practice-selected)}
+ .library .workspace>.detail[data-sheet]>.articleHeader{padding:0 14px 8px}
+ .library .workspace>.detail[data-sheet]>.meaningViewport>.meaningScroll{padding:0 12px 20px;overscroll-behavior:contain}
+ .library:has([data-sheet]) :global(aside[aria-label="Design comparison"]){display:none}
+}
+@keyframes sheetEnter{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.library .workspace>.detail[data-sheet]{animation:none;transition:none}}
+
+@media(max-width:700px){.library .workspace>.detail[data-sheet=peek]{height:clamp(100px,calc(min(340px,60dvh) + var(--sheet-drag,0px)),calc(100dvh - 80px))}.library .workspace>.detail[data-sheet=full]{height:clamp(180px,calc(100dvh - 8px + var(--sheet-drag,0px)),calc(100dvh - 8px))}.library .workspace>.detail[data-dragging=true]{transition:none}}
+
+/* Shared close control; no transform or transparency remains after entry. */
+.library .detail .desktopClose{display:grid;background:var(--lib-surface);border:1px solid var(--lib-line);border-radius:50%;margin-left:16px}
+.library .detail .desktopClose:hover{background:var(--lib-soft)}
+@media(min-width:701px){
+ .workspace>.detail:not([data-preview]){animation:wordEnter .2s ease-out}
+ .workspace>.detail[data-closing=true]{animation:wordExit .18s ease-in forwards;pointer-events:none}
+}
+@keyframes wordEnter{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes wordExit{from{opacity:1;transform:none}to{opacity:0;transform:translateX(16px)}}
+@media(max-width:700px){
+ .library .detail .desktopClose{margin-left:10px}
+ .library .workspace>.detail[data-sheet=full]{bottom:72px;z-index:35;height:clamp(180px,calc(100dvh - 80px + var(--sheet-drag,0px)),calc(100dvh - 80px));border-radius:22px 22px 12px 12px}
+ .library .workspace>.detail[data-sheet]{filter:none;backdrop-filter:none;opacity:1}
+ .library .workspace>.detail[data-closing=true]{animation:sheetExit .18s ease-in forwards;pointer-events:none}
+}
+@keyframes sheetExit{from{transform:none}to{transform:translateY(calc(100% + 72px))}}
+@media(prefers-reduced-motion:reduce){.workspace>.detail:not([data-preview]),.workspace>.detail[data-closing=true]{animation:none}}
+
+/* Do not pass wheel/touch scrolling from meanings into the document. */
+.library .workspace>.detail>.meaningViewport>.meaningScroll{overscroll-behavior-y:contain}
+@media(min-width:701px){.library .workspace{min-height:100dvh}.library{padding-bottom:0}.library .workspace>.detail>.articleHeader{position:relative;z-index:1}}
+
+/* Pin the hints to the reading viewport, independently of its scrolling contents. */
+.meaningViewport{position:relative;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.meaningContents{display:flow-root}
+.library .workspace>.detail>.meaningViewport{flex:1;min-height:0}
+.library .workspace>.detail>.meaningViewport>.meaningScroll{flex:1;min-height:0}
+.scrollFade{position:absolute;inset-inline:0;z-index:2;display:flex;justify-content:center;height:min(38px,25%);pointer-events:none;color:var(--practice-text-muted)}
+.scrollFade[data-edge=top]{top:0;align-items:flex-start;padding-top:2px;background:linear-gradient(to bottom,var(--practice-canvas) 5%,var(--practice-highlight) 35%,var(--practice-highlight))}
+.scrollFade[data-edge=bottom]{bottom:0;align-items:flex-end;padding-bottom:2px;background:linear-gradient(to top,var(--practice-canvas) 5%,var(--practice-highlight) 35%,var(--practice-highlight))}
+.detail[data-preview]>.meaningViewport{overflow:visible}
+.filterButton[data-filtered=true]{color:var(--practice-text-muted);background:var(--practice-surface-subtle)}
+/* Keep the result column under its toolbar; scroll only its overflowing rows. */
+
+/* Morphology belongs to the title; only its expanded body enters the scroll area. */
+.wordIdentity{min-width:0}
+
+/* Same article renderer inside a training destination, without the Library peek sheet. */
+.library .detail[data-presentation=panel]{position:relative;inset:auto;display:flex;flex-direction:column;flex:1;min-height:0;height:100%;max-height:none;border:0;border-radius:0;box-shadow:none;background:var(--practice-canvas)}
+.library .detail[data-presentation=panel]>.articleHeader{flex-shrink:0;padding:0 18px 10px}
+.library .detail[data-presentation=panel]>.meaningViewport{flex:1;min-height:0}
+.library .detail[data-presentation=panel] .meaningScroll{height:100%;overflow-y:auto;overscroll-behavior:contain;padding:0 16px 24px}
+.library .detail[data-presentation=panel]>.articleHeader{padding-top:16px}
+
+.definitionText { composes: definitionText from "../../../components/practice/article/articleContent.module.css"; }

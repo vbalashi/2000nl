@@ -1,8 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 
+const approvedTabs = process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 === "true";
+
 const startButton =
-  /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten/i;
+  /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten|Training starten|Start training|Начать тренировку/i;
 const answerButton = /Antwoord tonen|Показать ответ|Show answer/i;
 
 async function preparePilotPage(
@@ -32,7 +34,7 @@ async function visibleDesktopNavigation(page: Page) {
 async function frameSnapshot(page: Page) {
   const root = page.locator('[data-app-frame="true"]');
   const header = root.locator('[data-app-header="true"]');
-  const logo = header.getByLabel("2000nl");
+  const logo = header.getByLabel("2000nl", { exact: true });
   const utility = header
     .getByRole("button", { name: /Thema|Theme|Тема/ })
     .first();
@@ -87,7 +89,7 @@ test.describe("stable application frame @pilot", () => {
     await expect(
       page.locator('[data-app-primary-navigation="desktop"] nav:visible'),
     ).toHaveCount(1);
-    await expect(page.getByLabel("2000nl")).toBeVisible();
+    await expect(page.getByLabel("2000nl", { exact: true })).toBeVisible();
     await expect(
       page.getByRole("button", { name: /Thema|Theme|Тема/ }),
     ).toBeVisible();
@@ -157,7 +159,7 @@ test.describe("stable application frame @pilot", () => {
     await page.getByRole("button", { name: answerButton }).click();
 
     const stage = page.getByTestId("training-sense-card-stage");
-    const headword = await stage.getByRole("heading").textContent();
+    const headword = await stage.getByRole("heading", { level: 2 }).textContent();
     const side = await stage.getAttribute("data-side");
     const trainingFrame = await frameSnapshot(page);
     expect(headword).toBe("bank");
@@ -170,7 +172,7 @@ test.describe("stable application frame @pilot", () => {
       const navigation = await visibleDesktopNavigation(page);
       await navigation.getByRole("button", { name: "Training" }).click();
       await expect(trainingRoot).toBeVisible();
-      await expect(stage.getByRole("heading")).toHaveText(headword!);
+      await expect(stage.getByRole("heading", { level: 2 })).toHaveText(headword!);
       await expect(stage).toHaveAttribute("data-side", side!);
     };
 
@@ -217,6 +219,7 @@ test.describe("stable application frame @pilot", () => {
   test("mobile Training has one reachable destination navigation treatment", async ({
     page,
   }, testInfo) => {
+    test.skip(approvedTabs, "The approved presentation uses the bottom tab bar (training-approved-navigation.spec).");
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
     await preparePilotPage(page);
@@ -269,6 +272,7 @@ test.describe("stable application frame @pilot", () => {
     test(`${viewport.name} light keeps navigation through Face, Answer and Library`, async ({
       page,
     }, testInfo) => {
+      test.skip(approvedTabs, "The approved presentation hides app chrome during a mobile session.");
       await page.setViewportSize({
         width: viewport.width,
         height: viewport.height,
@@ -323,21 +327,30 @@ test.describe("stable application frame @pilot", () => {
     await page.getByRole("button", { name: answerButton }).click();
     await expect(stage).toHaveAttribute("data-side", "answer");
 
-    await expect(page.getByTestId("app-header")).toBeVisible();
-    const brand = page.getByLabel("2000nl");
-    await expect(brand).toBeVisible();
-    expect(
-      await brand.evaluate(
-        (element) => element.scrollWidth <= element.clientWidth,
-      ),
-    ).toBe(true);
-    await expect(
-      page.getByRole("button", { name: /Navigatie: Training/ }),
-    ).toBeVisible();
+    if (approvedTabs) {
+      await expect(page.getByTestId("app-header")).toBeHidden();
+      await expect(page.locator('[data-app-mobile-navigation="tabs"]')).toBeHidden();
+    } else {
+      await expect(page.getByTestId("app-header")).toBeVisible();
+      const brand = page.getByLabel("2000nl", { exact: true });
+      await expect(brand).toBeVisible();
+      expect(
+        await brand.evaluate(
+          (element) => element.scrollWidth <= element.clientWidth,
+        ),
+      ).toBe(true);
+      await expect(
+        page.getByRole("button", { name: /Navigatie: Training/ }),
+      ).toBeVisible();
+    }
     await expect(
       page.getByRole("button", { name: "Sessie sluiten" }),
     ).toBeVisible();
-    await expect(page.getByText("Herhaling", { exact: true })).toBeVisible();
+    if (approvedTabs) {
+      await expect(page.getByTestId("training-review-grid")).toBeVisible();
+    } else {
+      await expect(page.getByText("Herhaling", { exact: true })).toBeVisible();
+    }
     expect(
       await page.locator("html").evaluate((element) => ({
         clientWidth: element.clientWidth,
@@ -347,15 +360,21 @@ test.describe("stable application frame @pilot", () => {
     await page.screenshot({
       path: testInfo.outputPath("compact-phone-training-dark.png"),
     });
-    await page.getByRole("button", { name: /Navigatie: Training/ }).click();
-    await page
-      .getByRole("group", { name: "Navigatie" })
-      .getByRole("button", { name: "Bibliotheek" })
-      .click();
+    if (approvedTabs) {
+      await page.getByRole("button", { name: "Sessie sluiten" }).click();
+      await page.locator('[data-app-mobile-navigation="tabs"]').getByRole("button", { name: "Bibliotheek" }).click();
+    } else {
+      await page.getByRole("button", { name: /Navigatie: Training/ }).click();
+      await page
+        .getByRole("group", { name: "Navigatie" })
+        .getByRole("button", { name: "Bibliotheek" })
+        .click();
+    }
     await expect(
       page.getByRole("heading", { name: "Bibliotheek" }),
     ).toBeVisible();
   });
+
 
   test("pending review action immediately blocks every session exit", async ({
     page,

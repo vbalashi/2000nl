@@ -1,8 +1,14 @@
 "use client";
 
 import React from "react";
+import { History } from "lucide-react";
+import { getUiMessages } from "@/lib/uiMessages";
+import { sharedArticlePresentationV1Enabled, trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import workspace from "@/components/practice/library/libraryWorkspace.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { DetailedStats } from "@/lib/types";
+import type { MaterialProgress } from "@/lib/training/activity/material";
+import { AccountStatistics } from "./statistics/AccountStatistics";
 
 const copy = {
   nl: {
@@ -38,17 +44,35 @@ const copy = {
 } satisfies Record<OnboardingLanguage, Record<string, string>>;
 
 type Props = {
+  userId?: string;
+  languageCode?: string;
   open: boolean;
   interfaceLanguage: OnboardingLanguage;
   stats: DetailedStats;
   onStartTraining: () => void;
+  onPractiseMaterial?: (languageCode: string, material: MaterialProgress) => void;
+  onHistory?: () => void;
 };
 
-export function StatisticsDestination({
+export function StatisticsDestination(props: Props) {
+  const { userId, languageCode, open, interfaceLanguage, onStartTraining, onPractiseMaterial, onHistory } = props;
+  if (!trainingPresentationV1Enabled() || !userId || !languageCode) return <LegacyStatistics {...props} />;
+  return (
+    <section aria-hidden={!open} aria-label={getUiMessages(interfaceLanguage).navigation.statistics} className={`${open ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden`}>
+      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
+        <AccountStatistics userId={userId} languageCode={languageCode} open={open} interfaceLanguage={interfaceLanguage}
+          onPractiseMaterial={onPractiseMaterial ?? (() => onStartTraining())} onHistory={onHistory} />
+      </div>
+    </section>
+  );
+}
+
+function LegacyStatistics({
   open,
   interfaceLanguage,
   stats,
   onStartTraining,
+  onHistory,
 }: Props) {
   const text = copy[interfaceLanguage];
   const total = Math.max(stats.totalWordsInList, 0);
@@ -97,6 +121,9 @@ export function StatisticsDestination({
             </button>
           </div>
 
+          {sharedArticlePresentationV1Enabled() && onHistory && <button type="button" className={workspace.button} onClick={onHistory}>
+            <History size={16} aria-hidden="true" />{getUiMessages(interfaceLanguage).statistics.recentActivity}
+          </button>}
           <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {metrics.map((metric) => (
               <section

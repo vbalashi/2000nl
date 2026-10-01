@@ -114,8 +114,8 @@ describe("trainingService list and preference characterization", () => {
   test("fetchCuratedLists reads curated list summaries through the explicit RPC", async () => {
     const { fetchCuratedLists } = await importService();
 
-    getUser.mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
+    getSession.mockResolvedValueOnce({
+      data: { session: { user: { id: "user-1" } } },
       error: null,
     });
     rpc.mockResolvedValueOnce({
@@ -798,8 +798,8 @@ describe("trainingService list and preference characterization", () => {
     expect(from).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
 
-    getUser.mockResolvedValue({
-      data: { user: { id: "user-1" } },
+    getSession.mockResolvedValue({
+      data: { session: { user: { id: "user-1" } } },
       error: null,
     });
     rpc.mockResolvedValue({ data: null, error: null });
@@ -830,8 +830,8 @@ describe("trainingService list and preference characterization", () => {
     expect(from).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
 
-    getUser.mockResolvedValue({
-      data: { user: { id: "user-1" } },
+    getSession.mockResolvedValue({
+      data: { session: { user: { id: "user-1" } } },
       error: null,
     });
     rpc
@@ -864,8 +864,8 @@ describe("trainingService list and preference characterization", () => {
     expect(from).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
 
-    getUser.mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
+    getSession.mockResolvedValueOnce({
+      data: { session: { user: { id: "user-1" } } },
       error: null,
     });
     rpc.mockResolvedValueOnce({ data: ["word-1", "word-2"], error: null });
@@ -888,8 +888,8 @@ describe("trainingService list and preference characterization", () => {
     expect(from).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
 
-    getUser.mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
+    getSession.mockResolvedValueOnce({
+      data: { session: { user: { id: "user-1" } } },
       error: null,
     });
     rpc.mockResolvedValueOnce({
@@ -1002,6 +1002,26 @@ describe("trainingService list and preference characterization", () => {
       trainingMode: "definition-to-word",
     });
   });
+
+  test.each([
+    [null, "off"],
+    ["pl", "pl"],
+  ])(
+    "translation preference %s persists without changing learning scope",
+    async (translationLang, stored) => {
+      const { updateUserPreferences } = await importService();
+      queueFrom("user_settings", { data: { user_id: "user-1" }, error: null });
+      queueFrom("user_settings", { data: null, error: null });
+      await expect(
+        updateUserPreferences({ userId: "user-1", translationLang }),
+      ).resolves.toEqual({ error: null });
+      expect(queries[1].upsert).toHaveBeenCalledWith(
+        { user_id: "user-1", translation_lang: stored },
+        { onConflict: "user_id" },
+      );
+      expect(rpc).not.toHaveBeenCalled();
+    },
+  );
 
   test("updateUserPreferences seeds audio quality default for new settings rows", async () => {
     const { updateUserPreferences } = await importService();

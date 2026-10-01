@@ -107,3 +107,24 @@ test.each([["word-to-definition"], {toString:"word-to-definition"}])("rejects no
   expect((await post({...body,target:{kind:"meaning",entryId:id,cardTypeId}})).status).toBe(400);
   expect(rpc).not.toHaveBeenCalled();
 });
+
+test.each([
+ {actionId:'exclude-headword',clientEventId:id,target:{kind:'headword',entryId:id}},
+ {actionId:'exclude-headword',clientEventId:id,trainingSessionId:id,target:{kind:'headword',entryId:id,cardTypeId:'definition-to-word'}},
+ {actionId:'restore-headword',clientEventId:id,exclusionId:id,target:{kind:'headword',entryId:id}},
+])('headword actions use their own atomic boundary and server principal',async value=>{
+ expect((await post(value)).status).toBe(200);
+ expect(rpc).toHaveBeenCalledWith('perform_training_headword_exclusion_as_principal_v1',expect.objectContaining({p_user_id:'server-user',p_entry_id:id,p_action:value.actionId}));
+ expect(rpc.mock.calls[0][1]).not.toHaveProperty('p_exercise_target_id');
+});
+test.each([
+ {actionId:'exclude-headword',clientEventId:id,userId:id,target:{kind:'headword',entryId:id}},
+ {actionId:'exclude-headword',clientEventId:id,trainingSessionId:id,target:{kind:'headword',entryId:id}},
+ {actionId:'exclude-headword',clientEventId:id,target:{kind:'headword',entryId:id,cardTypeId:'word-to-definition'}},
+ {actionId:'exclude-headword',clientEventId:id,trainingSessionId:id,target:{kind:'headword',entryId:id,cardTypeId:'listen-type'}},
+ {actionId:'restore-headword',clientEventId:id,exclusionId:id,target:{kind:'headword',entryId:id,cardTypeId:'word-to-definition'}},
+ {actionId:'exclude-pair',clientEventId:id,trainingSessionId:id,target:{kind:'headword',entryId:id}},
+ {...body,actionId:'exclude-headword'},
+])('rejects forged principal, mixed scope and incomplete headword context',async value=>{
+ expect((await post(value)).status).toBe(400);expect(rpc).not.toHaveBeenCalled();
+});

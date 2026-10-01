@@ -38,7 +38,7 @@ test("exposes all peer destinations in the selected interface language", () => {
     />,
   );
 
-  const mobileTabs = screen.getByRole("navigation", { name: "Primary" });
+  const mobileTabs = screen.getByRole("navigation", { name: "Основная навигация" });
   expect(
     within(mobileTabs).getByRole("button", { name: "Статистика" }),
   ).toHaveAttribute("aria-current", "page");

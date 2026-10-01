@@ -1,7 +1,9 @@
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { TrainingUsableCandidatesExhausted } from "@/components/training/v2/TrainingUsableCandidatesExhausted";
+
+afterEach(() => { vi.unstubAllEnvs(); });
 
 test.each([
   ["en", "No usable training cards remain in this session.", "Back to Today"],
@@ -23,3 +25,20 @@ test.each([
     expect(onExit).toHaveBeenCalledTimes(1);
   },
 );
+
+import { TrainingUnsupportedMode } from "@/components/training/v2/TrainingUnsupportedMode";
+import { getUiMessages } from "@/lib/uiMessages";
+import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+for (const interfaceLanguage of ["en", "nl", "ru"] as const) {
+  for (const [Component, key, role] of [
+    [TrainingUsableCandidatesExhausted, "exhausted", "status"],
+    [TrainingUnsupportedMode, "unsupportedMode", "alert"],
+  ] as const) test(`${interfaceLanguage} approved ${key} preserves exit ownership`, () => {
+    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+    const onExit = vi.fn();
+    render(<Component interfaceLanguage={interfaceLanguage} onExit={onExit} />);
+    expect(screen.getByRole(role)).toHaveTextContent(platformV2Message(interfaceLanguage, `senseCard.training.${key}`));
+    fireEvent.click(screen.getByRole("button",{name:getUiMessages(interfaceLanguage).trainingSession.back}));
+    expect(onExit).toHaveBeenCalledOnce();
+  });
+}

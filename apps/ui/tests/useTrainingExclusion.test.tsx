@@ -3,6 +3,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { useTrainingExclusion } from "@/components/training/v2/useTrainingExclusion";
 import {
   getExclusionUndo,
+  completeExclusionUndo,
   rememberExclusionUndo,
 } from "@/components/training/v2/trainingExclusionUndoStore";
 import { performTrainingExclusion } from "@/lib/platform/trainingExclusionClient";
@@ -19,7 +20,7 @@ test("uncertain retry reuses the request and acceptance advances only once", asy
     .mockRejectedValueOnce(new Error("timeout"))
     .mockResolvedValueOnce({
       status: "duplicate",
-      actionId: "exclude-pair",
+      actionId: "exclude-headword",
       clientEventId: "event",
       exclusionId: "mark",
       excluded: true,
@@ -31,7 +32,7 @@ test("uncertain retry reuses the request and acceptance advances only once", asy
       identity: "entry:direct",
       sessionId: "session",
       target: {
-        kind: "meaning",
+        kind: "headword",
         entryId: "entry",
         cardTypeId: "word-to-definition",
       },
@@ -46,9 +47,11 @@ test("uncertain retry reuses the request and acceptance advances only once", asy
     vi.mocked(performTrainingExclusion).mock.calls[0][0],
   );
   expect(onAccepted).toHaveBeenCalledTimes(1);
+  expect(vi.mocked(performTrainingExclusion).mock.calls[0][0]).toMatchObject({actionId:"exclude-headword",trainingSessionId:"session",target:{kind:"headword",entryId:"entry",cardTypeId:"word-to-definition"}});
+  expect(getExclusionUndo()?.request.target).not.toHaveProperty("cardTypeId");
   expect(getExclusionUndo()).toMatchObject({
     userId: "user",
-    request: { actionId: "restore-pair", exclusionId: "mark" },
+    request: { actionId: "restore-headword", exclusionId: "mark", target: {kind:"headword",entryId:"entry"} },
   });
   await act(() => result.current.exclude());
   expect(performTrainingExclusion).toHaveBeenCalledTimes(2);
@@ -88,4 +91,31 @@ test("superseded sessions recover instead of retrying the invalid session foreve
   expect(onSessionSuperseded).toHaveBeenCalledTimes(1);
   await act(()=>result.current.exclude());
   expect(performTrainingExclusion).toHaveBeenCalledTimes(1);
+});
+
+test("Library headword exclusion has no fabricated session or direction and keeps exact undo",async()=>{
+ vi.mocked(performTrainingExclusion).mockResolvedValue({status:"accepted",actionId:"exclude-headword",clientEventId:"event",exclusionId:"mark",excluded:true,family:"meaning"});
+ const onAccepted=vi.fn(async()=>{});
+ const {result}=renderHook(()=>useTrainingExclusion({context:"library",userId:"user",identity:"group",sessionId:null,target:{kind:"headword",entryId:"entry"},onAccepted}));
+ expect(result.current.available).toBe(true);await act(()=>result.current.exclude());
+ const request=vi.mocked(performTrainingExclusion).mock.calls[0][0];
+ expect(request).toMatchObject({actionId:"exclude-headword",target:{kind:"headword",entryId:"entry"}});
+ expect(request).not.toHaveProperty("trainingSessionId");expect(request.target).not.toHaveProperty("cardTypeId");
+ expect(getExclusionUndo()?.request).toMatchObject({actionId:"restore-headword",exclusionId:"mark"});
+ expect(onAccepted).toHaveBeenCalledTimes(1);
+});
+test("missing Training session cannot silently become a Library mutation",async()=>{
+ const {result}=renderHook(()=>useTrainingExclusion({userId:"user",identity:"group",sessionId:null,target:{kind:"headword",entryId:"entry"},onAccepted:vi.fn()}));
+ expect(result.current.available).toBe(false);await act(()=>result.current.exclude());expect(performTrainingExclusion).not.toHaveBeenCalled();
+});
+
+test("only an accepted exact Library undo enables exclusion again",async()=>{
+ vi.mocked(performTrainingExclusion).mockResolvedValue({status:"accepted",actionId:"exclude-headword",clientEventId:"event",exclusionId:"mark",excluded:true,family:"meaning"});
+ const {result}=renderHook(()=>useTrainingExclusion({context:"library",userId:"user",identity:"group",sessionId:null,target:{kind:"headword",entryId:"entry"},onAccepted:vi.fn(async()=>{})}));
+ await act(()=>result.current.exclude());const undo=getExclusionUndo()!;expect(result.current.busy).toBe(true);
+ act(()=>rememberExclusionUndo(null));expect(result.current.busy).toBe(true);
+ act(()=>completeExclusionUndo({...undo,userId:"another-user"}));expect(result.current.busy).toBe(true);
+ act(()=>completeExclusionUndo(undo));expect(result.current.busy).toBe(false);
+ await act(()=>result.current.exclude());expect(performTrainingExclusion).toHaveBeenCalledTimes(2);
+ expect(vi.mocked(performTrainingExclusion).mock.calls[1][0].clientEventId).not.toBe(vi.mocked(performTrainingExclusion).mock.calls[0][0].clientEventId);
 });

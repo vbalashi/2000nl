@@ -33,23 +33,22 @@ export async function POST(request: NextRequest) {
     return reply({ error: "invalid_training_exclusion_request" }, 400);
   const service = getPlatformServiceSupabase();
   if (service instanceof Response) return withPlatformCors(request, service);
-  const { data, error } = await service.supabase.rpc(
-    "perform_training_pair_exclusion_as_principal_v1",
-    {
-      p_user_id: auth.principal.userId,
-      p_action: input.actionId,
-      p_client_event_id: input.clientEventId,
-      p_entry_id: input.target.kind === "meaning" ? input.target.entryId : null,
-      p_card_type_id:
-        input.target.kind === "meaning" ? input.target.cardTypeId : null,
-      p_exercise_target_id:
-        input.target.kind === "exercise" ? input.target.targetId : null,
-      p_session_id:
-        input.actionId === "exclude-pair" ? input.trainingSessionId : null,
-      p_exclusion_id:
-        input.actionId === "restore-pair" ? input.exclusionId : null,
-    },
-  );
+  const headword = input.target.kind === "headword";
+  const common = {
+    p_user_id: auth.principal.userId,
+    p_action: input.actionId,
+    p_client_event_id: input.clientEventId,
+    p_entry_id: input.target.kind !== "exercise" ? input.target.entryId : null,
+    p_card_type_id: input.target.kind !== "exercise" ? input.target.cardTypeId ?? null : null,
+    p_session_id: "trainingSessionId" in input ? input.trainingSessionId ?? null : null,
+    p_exclusion_id: "exclusionId" in input ? input.exclusionId : null,
+  };
+  const { data, error } = headword
+    ? await service.supabase.rpc("perform_training_headword_exclusion_as_principal_v1", common)
+    : await service.supabase.rpc("perform_training_pair_exclusion_as_principal_v1", {
+      ...common,
+      p_exercise_target_id: input.target.kind === "exercise" ? input.target.targetId : null,
+    });
   if (error) {
     const expected = [
       "training_session_superseded",

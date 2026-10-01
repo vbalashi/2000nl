@@ -1,0 +1,361 @@
+.builder {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  background: var(--practice-canvas);
+  color: var(--practice-text);
+  font-family: var(--practice-font-ui);
+}
+.viewport {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 24px 16px;
+}
+.viewport::-webkit-scrollbar {
+  display: none;
+}
+.main {
+  max-width: 792px;
+  margin: 0 auto;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 28px;
+}
+.header h1 {
+  font-size: var(--practice-text-page);
+  font-weight: 500;
+  line-height: 1.2;
+  margin: 0;
+}
+.header > button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--practice-text-muted);
+  cursor: pointer;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: var(--practice-text-small);
+  margin: 0;
+}
+.field + .field {
+  margin-top: 22px;
+}
+.field h2 {
+  font-size: var(--practice-text-caption);
+  font-weight: 400;
+  color: var(--practice-text-muted);
+  margin: 0;
+}
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.search { margin: 16px 0; }
+.search:focus-within {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+.options {
+  display: flex;
+  flex-direction: column;
+}
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 10px;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--practice-border);
+  background: transparent;
+  color: var(--practice-text-secondary);
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-body);
+  cursor: pointer;
+}
+.option[aria-pressed="true"] {
+  color: var(--practice-selected-text);
+  background: var(--practice-surface-subtle);
+}
+.option:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.option span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.option span:last-child {
+  flex: none;
+  width: 16px;
+}
+.directions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 244px));
+  gap: 12px;
+}
+.direction {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-height: 180px;
+  padding: 14px;
+  border: 1px solid var(--practice-border);
+  border-radius: 14px;
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+  cursor: pointer;
+  text-align: center;
+}
+.direction[aria-pressed="true"] {
+  border-color: var(--practice-control-border);
+  background: var(--practice-surface-subtle);
+}
+.directionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-self: stretch;
+  text-align: left;
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-caption);
+}
+.directionHeading > span {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--practice-control-border);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.prompt {
+  font-family: var(--practice-font-reading);
+  font-size: var(--practice-text-title-sm);
+  font-weight: 500;
+  line-height: 1.3;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
+.answer {
+  font-family: var(--practice-font-reading);
+  font-size: var(--practice-text-lead);
+  line-height: 1.4;
+  color: var(--practice-text-muted);
+  overflow-wrap: anywhere;
+}
+.help {
+  font-size: var(--practice-text-caption);
+  line-height: 1.5;
+  color: var(--practice-text-muted);
+  margin: 12px 0 0;
+}
+.activity {
+  margin-top: 24px;
+  font-size: var(--practice-text-small);
+  color: var(--practice-text-secondary);
+}
+.activity summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+  cursor: pointer;
+  padding: 8px 0;
+}
+.activity .field {
+  margin-top: 14px;
+}
+.input,
+.field select {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--practice-control-border);
+  border-radius: 10px;
+  background: var(--practice-surface);
+  color: var(--practice-text);
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-small);
+}
+.sessionFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 30px;
+}
+.nounChoice {
+  display: flex;
+  border: 1px solid var(--practice-border);
+  border-radius: 100px;
+  background: var(--practice-surface);
+  overflow: hidden;
+}
+.nounChoice > button:first-child {
+  border: 0;
+  border-radius: 0;
+}
+.nounChoice > button:last-child {
+  display: grid;
+  place-items: center;
+  padding: 0 9px;
+  border: 0;
+  background: transparent;
+  color: var(--practice-text-muted);
+  cursor: pointer;
+}
+.notice {
+  font-size: var(--practice-text-small);
+  line-height: 1.5;
+  color: var(--practice-text-secondary);
+  margin-top: 16px;
+}
+.footer {
+  flex: none;
+  background: var(--practice-canvas);
+  padding: 14px 16px max(14px, env(safe-area-inset-bottom));
+}
+.footer > div {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  max-width: 792px;
+  margin: 0 auto;
+}
+.primary,
+.secondary {
+  min-height: 34px;
+  padding: 8px 18px;
+  border: 1px solid var(--practice-border);
+  border-radius: 100px;
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-small);
+  line-height: 1.4;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.primary {
+  background: var(--practice-selected);
+  color: var(--practice-selected-text);
+  border-color: var(--practice-control-border);
+}
+.secondary {
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+}
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.dialog {
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  border: 1px solid var(--practice-border);
+  border-radius: 20px;
+  padding: 22px;
+  background: var(--practice-surface);
+  color: var(--practice-text);
+  font-family: var(--practice-font-ui);
+  box-shadow: 0 12px 50px var(--practice-shadow);
+}
+.dialog::backdrop {
+  background: var(--practice-backdrop);
+  backdrop-filter: blur(5px);
+}
+.dialog h2 {
+  font-size: var(--practice-text-title-sm);
+  font-weight: 500;
+  margin: 0 0 18px;
+}
+.dialog > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+.dialog > header > button {
+  border: 0;
+  background: transparent;
+  color: var(--practice-text-muted);
+  cursor: pointer;
+}
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+@media (min-width: 768px) {
+  .viewport {
+    padding: 32px;
+  }
+  .footer {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+@media (max-width: 650px) {
+  .header h1 {
+    font-size: var(--practice-text-title);
+  }
+  .sessionFields {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .footer > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.nounDialog {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  margin: 0;
+  width: min(320px, calc(100vw - 32px));
+  left: clamp(16px, var(--noun-left, 16px), max(16px, calc(100vw - 336px)));
+  top: clamp(16px, var(--noun-top, 16px), max(16px, calc(100dvh - 180px)));
+}
+
+.dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--practice-accent);
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+/* Direction cards share the reference's divided heading and reading hierarchy. */
+.direction { display:grid; grid-template-rows:auto 1fr auto 1fr; min-height:172px; padding:10px; gap:6px; }
+.directionHeading { border-bottom:1px solid var(--practice-control-border); padding-bottom:8px; }
+.directionArrow { justify-self:center; color:var(--practice-text-muted); }
+.prompt { font-size:var(--practice-reading-literary); margin-top:0; align-self:center; }
+.answer { font-size:var(--practice-reading-body); align-self:center; }
+/* Keep independent, bounded cards when the available row becomes narrow. */
+.directions { display: flex; flex-wrap: wrap; gap: 12px; }
+.direction { flex: 1 1 calc((100% - 12px) / 2); min-width: min(100%, 170px); max-width: 244px; min-height: 172px; }
+.prompt, .answer { overflow-wrap: anywhere; }
+
+.activity summary::-webkit-details-marker { display: none; }
+.activity[open] summary svg { transform: rotate(180deg); }

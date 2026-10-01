@@ -35,6 +35,22 @@ describe("TrainingSessionV2Layout", () => {
     },
   );
 
+  test("keeps the approved card and controls in view without the duplicate daily footer", () => {
+    render(
+      <TrainingSessionV2Layout
+        phase="ready"
+        chrome={<div data-testid="chrome" />}
+        footer={<div data-testid="footer" />}
+        approvedPresentation
+      >
+        <div data-testid="card" />
+      </TrainingSessionV2Layout>,
+    );
+    expect(screen.getByTestId("chrome")).toBeInTheDocument();
+    expect(screen.getByTestId("card")).toBeInTheDocument();
+    expect(screen.queryByTestId("footer")).not.toBeInTheDocument();
+  });
+
   test.each(knownFailures)(
     "maps the known %s state to a recoverable render with session controls",
     (state) => {

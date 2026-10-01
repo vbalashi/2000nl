@@ -103,6 +103,18 @@ const READ_ONLY_REASONS = new Set([
   "unavailable",
 ]);
 
+// The RPCs enforce auth.uid() server-side; the local session only names the caller.
+async function sessionUserId(): Promise<{
+  userId: string | null;
+  error: { message: string } | null;
+}> {
+  const { data, error } = await supabase.auth.getSession();
+  return {
+    userId: data?.session?.user?.id ?? null,
+    error: error ? { message: error.message } : null,
+  };
+}
+
 const mapEntryLearningListMembership = (
   row: EntryLearningListMembershipRpcList,
 ): EntryLearningListMembership | null => {
@@ -134,8 +146,7 @@ const mapEntryLearningListMembership = (
 export async function fetchCuratedLists(
   languageCode?: string,
 ): Promise<WordListSummary[]> {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData?.user?.id ?? null;
+  const { userId, error: userError } = await sessionUserId();
   if (userError || !userId) {
     console.error(
       "Error resolving user before fetching curated lists",
@@ -175,34 +186,55 @@ export async function fetchUserLists(
 
 export async function fetchAvailableLearningLanguages(
   userId: string,
+  signal?: AbortSignal,
 ): Promise<AvailableLearningLanguage[]> {
-  const { data, error } = await supabase.rpc("get_available_learning_languages", {
+  const request = supabase.rpc("get_available_learning_languages", {
     p_user_id: userId,
   });
+  const { data, error } = await (signal
+    ? request.abortSignal(signal)
+    : request);
 
   if (error || !Array.isArray(data)) {
-    if (error) console.error("Error fetching available learning languages", error);
+    if (error)
+      console.error("Error fetching available learning languages", error);
     throw error ?? new Error("learning_languages_unavailable");
   }
 
   return data.map(mapAvailableLearningLanguage);
 }
 
+/** Strict catalog read for preference controls: failure is not an empty catalog. */
+export async function fetchAvailableDictionarySourcesStrict(
+  params: {
+    userId: string;
+    languageCode: string;
+  },
+  signal?: AbortSignal,
+): Promise<AvailableDictionarySource[]> {
+  const request = supabase.rpc("get_available_dictionary_sources", {
+    p_user_id: params.userId,
+    p_language_code: params.languageCode,
+  });
+  const { data, error } = await (signal
+    ? request.abortSignal(signal)
+    : request);
+  if (error || !Array.isArray(data))
+    throw error ?? new Error("dictionary_sources_unavailable");
+  return data.map(mapAvailableDictionarySource);
+}
+
+/** Preserve the legacy selector fallback; new settings use the strict boundary. */
 export async function fetchAvailableDictionarySources(params: {
   userId: string;
   languageCode: string;
 }): Promise<AvailableDictionarySource[]> {
-  const { data, error } = await supabase.rpc("get_available_dictionary_sources", {
-    p_user_id: params.userId,
-    p_language_code: params.languageCode,
-  });
-
-  if (error || !Array.isArray(data)) {
-    if (error) console.error("Error fetching available dictionary sources", error);
+  try {
+    return await fetchAvailableDictionarySourcesStrict(params);
+  } catch (error) {
+    console.error("Error fetching available dictionary sources", error);
     return [];
   }
-
-  return data.map(mapAvailableDictionarySource);
 }
 
 export async function fetchAvailableLists(
@@ -526,8 +558,7 @@ export async function removeWordsFromUserList(
   const uniqueWordIds = Array.from(new Set(wordIds.filter(Boolean)));
   if (!uniqueWordIds.length) return { error: null };
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData?.user?.id ?? null;
+  const { userId, error: userError } = await sessionUserId();
   if (userError || !userId) {
     const error = userError ?? { message: "not_authenticated" };
     console.error("Error resolving user before removing words from list", error);
@@ -547,8 +578,7 @@ export async function removeWordsFromUserList(
 }
 
 export async function deleteUserList(listId: string): Promise<{ error: any }> {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData?.user?.id ?? null;
+  const { userId, error: userError } = await sessionUserId();
   if (userError || !userId) {
     const error = userError ?? { message: "not_authenticated" };
     console.error("Error resolving user before deleting user list", error);
@@ -636,8 +666,7 @@ export async function addWordsToUserList(
     return { error: null };
   }
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData?.user?.id ?? null;
+  const { userId, error: userError } = await sessionUserId();
   if (userError || !userId) {
     const error = userError ?? { message: "not_authenticated" };
     console.error("Error resolving user before adding words to list", error);
@@ -671,8 +700,7 @@ export async function fetchUserListMembership(
 ): Promise<Set<string>> {
   if (!wordIds.length) return new Set();
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData?.user?.id ?? null;
+  const { userId, error: userError } = await sessionUserId();
   if (userError || !userId) {
     console.error(
       "Error resolving user before fetching list membership",
@@ -714,8 +742,7 @@ export async function fetchEntryListMemberships(
   );
   if (!uniqueEntryIds.length) return membershipsByEntry;
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const userId = userData?.user?.id ?? null;
+  const { userId, error: userError } = await sessionUserId();
   if (userError || !userId) {
     const error = userError ?? { message: "not_authenticated" };
     console.error("Error resolving user before fetching entry list memberships", error);

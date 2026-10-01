@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import { TrainingDetailsDrawer } from "@/components/training/TrainingDetailsDrawer";
+import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
 import { LibraryCollectionsPicker } from "@/components/training/library-v2/LibraryCollectionsPicker";
 import { LibrarySenseCardGroup } from "@/components/training/library-v2/LibrarySenseCardGroup";
 import { buildLibrarySenseCardGroupModel } from "@/components/training/library-v2/librarySenseCardModel";
@@ -25,6 +27,7 @@ export function SenseCardGateHarness() {
   const [trainingSide, setTrainingSide] = React.useState<"face" | "answer">(
     "face",
   );
+  const [wordPanelOpen, setWordPanelOpen] = React.useState(false);
   const [collectionsOpen, setCollectionsOpen] = React.useState(false);
   const [collectionIds, setCollectionIds] = React.useState(["daily-review"]);
   const reportEntry = {
@@ -95,7 +98,12 @@ export function SenseCardGateHarness() {
           display: none;
         }
       `}</style>
-      <main className="min-h-screen bg-[#0d1017] px-4 py-8 text-slate-100 sm:px-8">
+      <main data-colour-mode="light" className={`${practiceTheme.theme} min-h-screen bg-[var(--practice-canvas)] px-4 py-8 text-[var(--practice-text)] sm:px-8`}>
+        <button onClick={() => setWordPanelOpen(true)}>Open word panel fixture</button>
+        <TrainingDetailsDrawer open={wordPanelOpen} onClose={() => setWordPanelOpen(false)} interfaceLanguage="ru">
+          <LibrarySenseCardGroup model={buildLibrarySenseCardGroupModel(gateBankGroup, "ru")}
+            interfaceLanguage="ru" onAction={() => undefined} />
+        </TrainingDetailsDrawer>
         <DiagnosticReportOutboxGate
           snapshot={freezeSenseCardDiagnosticSnapshot({
             route: "library",

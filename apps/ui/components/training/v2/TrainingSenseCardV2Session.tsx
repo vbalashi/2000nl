@@ -1,8 +1,12 @@
 "use client";
+import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import { TrainingSessionState } from "./TrainingSessionState";
+import { getUiMessages } from "@/lib/uiMessages";
 import { useTrainingExclusion } from "./useTrainingExclusion";
 import { TrainingExcludeAction, trainingExclusionCopy } from "./TrainingExcludeAction";
 
 import React from "react";
+import { useRecordedStudyTime } from "../useRecordedStudyTime";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -59,6 +63,7 @@ import type { TrainingCardSwipeCommitOutcome } from "./useTrainingCardSwipeSurfa
 export { TrainingKnownUndoNotice } from "./TrainingKnownUndoNotice";
 
 type Props = {
+  studyTimeEnabled?: boolean;
   cacheOwnerId: string;
   nextTransitionId?: string;
   presentationIdentity: string | null;
@@ -86,7 +91,7 @@ type Props = {
     state: Exclude<TrainingV2SessionState, "loading" | "ready">,
   ) => void | Promise<void>;
   onProgressActionAccepted: (
-    capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" },
+    capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" | "exclude-headword" },
   ) => Promise<
     Extract<
       TrainingCardSwipeCommitOutcome,
@@ -116,6 +121,7 @@ type TrainingV2SessionState =
 
 export function TrainingSenseCardV2Session({
   cacheOwnerId,
+  studyTimeEnabled = false,
   nextTransitionId,
   presentationIdentity,
   word,
@@ -624,10 +630,12 @@ export function TrainingSenseCardV2Session({
     onPendingChange: onProgressActionPendingChange,
     onStarting: onProgressActionStarting,
     onSessionSuperseded: onTrainingSessionSuperseded,
-    target: { kind: "meaning", entryId: word.id, cardTypeId: mode },
+    target: mode === "word-to-definition" || mode === "definition-to-word"
+      ? { kind: "headword", entryId: word.id, cardTypeId: mode }
+      : { kind: "meaning", entryId: word.id, cardTypeId: mode },
     onAccepted: async () => {
       try {
-        await onProgressActionAccepted({ actionId: "exclude-pair" });
+        await onProgressActionAccepted({ actionId: mode === "word-to-definition" || mode === "definition-to-word" ? "exclude-headword" : "exclude-pair" });
       } catch (cause) {
         setAcceptedActionRecoveryPending(true);
         setError(
@@ -638,6 +646,9 @@ export function TrainingSenseCardV2Session({
       }
     },
   });
+
+  useRecordedStudyTime({ ownerId: cacheOwnerId, sessionId: trainingSessionId, family: "meaning", entryId: word.id, cardTypeId: mode,
+    enabled: studyTimeEnabled && sessionState === "ready" && !busy && !interactionDisabled && !acceptedActionRecoveryPending && !exclusion.busy && !exclusion.failed });
 
   const swipeSurface = useTrainingCardSwipeSurface({
     enabled: sessionState === "ready" && cardSide === "answer",
@@ -684,15 +695,21 @@ export function TrainingSenseCardV2Session({
 
   if (wordInContext && (!translationTargetLanguageCode ||
     (contextResult && contextResult.state !== "ready"))) {
+    const contextCopy = getUiMessages(interfaceLanguage).trainingSession.contextPreparation;
+    const contextMessage = !translationTargetLanguageCode ? contextCopy.languageNeeded
+      : contextResult?.state === "translation-pending" ? contextCopy.pending : contextCopy.unavailable;
+    if (trainingPresentationV1Enabled()) return renderLayout(
+      <div className="h-full min-h-0" data-testid="training-word-context-preparation">
+        <TrainingSessionState heading={false} title={contextMessage} action={translationTargetLanguageCode
+          ? { label: platformV2Message(interfaceLanguage, "senseCard.training.retry"), onClick: () => setContextRetry(value => value + 1) }
+          : undefined} />
+      </div>,
+    );
     return renderLayout(
       <div role="status" data-testid="training-word-context-preparation"
         className="mx-auto grid min-h-0 w-full max-w-[760px] flex-1 place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-center text-sm text-slate-700 dark:border-slate-600 dark:bg-[#1d222b] dark:text-slate-200">
         <div className="space-y-4">
-          <p>{!translationTargetLanguageCode
-            ? "Choose a translation language in Settings before starting this training."
-            : contextResult?.state === "translation-pending"
-              ? "Preparing this sentence translation…"
-              : "This example is not ready yet."}</p>
+          <p>{contextMessage}</p>
           {translationTargetLanguageCode ? <button type="button"
             className="rounded-xl border border-slate-400 px-4 py-2 font-semibold"
             onClick={() => setContextRetry((value) => value + 1)}>
@@ -704,6 +721,11 @@ export function TrainingSenseCardV2Session({
   }
 
   if (sessionState === "loading") {
+    if (trainingPresentationV1Enabled()) return renderLayout(
+      <div className="h-full min-h-0" data-testid="training-v2-loading" data-training-renderer="v2" data-training-v2-state="loading">
+        <TrainingSessionState loading title={platformV2Message(interfaceLanguage, "senseCard.training.loading")} />
+      </div>,
+    );
     return renderLayout(
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3">
           <div
@@ -756,6 +778,8 @@ export function TrainingSenseCardV2Session({
           {trainingExclusionCopy[interfaceLanguage].failed}
         </p> : null}
         <TrainingSenseCardStage
+          contentLanguage={contentLanguageCode}
+          translationLanguage={translationTargetLanguageCode && translationTargetLanguageCode !== "off" ? translationTargetLanguageCode : undefined}
           model={model}
           contextPrompt={wordInContext && contextResult?.state === "ready"
             ? contextResult.prompt : undefined}
@@ -781,6 +805,11 @@ export function TrainingSenseCardV2Session({
           }
           exclusionAction={exclusion.available ? (
             <TrainingExcludeAction language={interfaceLanguage}
+              scope={mode === "word-to-definition" || mode === "definition-to-word" ? "headword" : "pair"}
+              knownAction={model.markKnownCapability ? {
+                label: platformV2Message(interfaceLanguage, model.markKnownCapability.messageKey),
+                onClick: () => void handleAction(model.markKnownCapability!),
+              } : undefined}
               disabled={busy || exclusion.busy || interactionDisabled || acceptedActionRecoveryPending}
               onClick={() => void exclusion.exclude()} />
           ) : undefined}
@@ -867,6 +896,14 @@ function SessionV2Failure({
   onRetry: () => void;
   onExit?: () => void;
 }) {
+  if (trainingPresentationV1Enabled()) return (
+    <div className="h-full min-h-0" data-testid="training-v2-failure" data-training-renderer="v2" data-training-v2-state={state}>
+      <TrainingSessionState announcement="alert" title={platformV2Message(interfaceLanguage, "senseCard.training.loadFailed")}
+        action={{ label: platformV2Message(interfaceLanguage, "senseCard.training.retry"), onClick: onRetry }}
+        secondaryAction={onExit ? { label: getUiMessages(interfaceLanguage).trainingSession.back, onClick: onExit } : undefined} />
+      {detail ? <span className="sr-only">{detail}</span> : null}
+    </div>
+  );
   return (
     <div
       role="alert"

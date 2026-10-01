@@ -29,6 +29,8 @@
 
 ## Архив
 
+- [2026-09-30: пауза учебного материала и начатая тренировка](2026-09-30-02-paused-training-material.md)
+
 - [2026-09-30: staging-импорт и пустая база](2026-09-30-01-dictionary-import-staging.md)
 
 - [2026-09-25: очередь предложений и подготовка переводов](2026-09-25-01-sentence-queue.md)
@@ -36,3 +38,23 @@
 
 - [2026-09-25: слово в контексте, общий reverse FSRS](2026-09-25-03-word-in-context.md)
 - [2026-09-25: уточнение перехода без переноса оценок](2026-09-25-04-word-context-transition.md)
+
+- [2026-09-26: Builder, карточки, Lavender и Library](2026-09-26-01-builder-lavender-library.md)
+- [2026-09-26: сохранить существующую структуру Library](2026-09-26-02-library-existing-structure.md)
+- [2026-09-27: общие границы и варианты плотности Library](2026-09-27-01-library-density-variants.md)
+- [2026-09-27: компоненты Library и матрица сочетаний](2026-09-27-02-library-component-matrix.md)
+- [2026-09-28: всплывающие действия Library и состав списка](2026-09-28-01-library-overlays-and-list.md)
+
+- [2026-09-28: метка в рамке и группировка счётчиков Library](2026-09-28-02-library-frame-exposure.md)
+
+- [2026-09-28: переводы Library и круглые языковые кнопки](2026-09-28-03-library-translations.md)
+
+- [2026-09-28: читаемость вложенных переводов и Collections](2026-09-28-04-library-nested-reading.md)
+
+- [2026-09-28: прокрутка Library и выбор Literary example](2026-09-28-05-library-scrolling.md)
+
+- [2026-09-28: подписи ролей в границе блока](2026-09-28-06-library-border-labels.md)
+
+- [2026-09-28: утверждение Library и первый Statistics](2026-09-28-07-library-approved-statistics.md)
+
+- [Known и исключение headword](2026-10-01-02-known-headword-exclusion.md) — 2026-10-01.

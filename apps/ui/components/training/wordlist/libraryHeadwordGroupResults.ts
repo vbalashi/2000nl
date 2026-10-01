@@ -7,12 +7,14 @@ export type LibraryHeadwordGroupResult = {
   dictionaryLabel: string;
   partOfSpeechLabels: string[];
   meaningCount: number;
+  referenceCount?: number;
   selectedEntryId: string;
   group: PlatformHeadwordGroupV2;
 };
 
 export function buildLibraryHeadwordGroupResults(
   groups: PlatformHeadwordGroupV2[],
+  matchingEntryIds?: readonly string[],
 ): LibraryHeadwordGroupResult[] {
   const results = new Map<string, LibraryHeadwordGroupResult>();
 
@@ -31,8 +33,13 @@ export function buildLibraryHeadwordGroupResults(
     const senseEntries = group.entries.filter(
       (entry) => entry.kind === "sense-card",
     );
-    const representative = senseEntries[0];
-    if (!representative) continue;
+    const representative = matchingEntryIds
+      ? senseEntries.find(entry => matchingEntryIds.includes(entry.entryId))
+      : senseEntries[0];
+    const references = group.entries.filter(entry => entry.kind === "cross-reference");
+    const reference = references.find(entry => !matchingEntryIds || matchingEntryIds.includes(entry.crossReferenceId));
+    const selectedEntryId = representative?.entryId ?? reference?.crossReferenceId;
+    if (!selectedEntryId) continue;
 
     results.set(group.headwordGroupId, {
       headwordGroupId: group.headwordGroupId,
@@ -43,7 +50,8 @@ export function buildLibraryHeadwordGroupResults(
       dictionaryLabel: group.dictionary.displayName,
       partOfSpeechLabels,
       meaningCount: group.senseCount,
-      selectedEntryId: representative.entryId,
+      selectedEntryId,
+      ...(group.senseCount === 0 ? { referenceCount: references.length } : {}),
       group,
     });
   }
