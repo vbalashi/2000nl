@@ -31,6 +31,7 @@ import {
 } from "./librarySenseCardModel";
 
 type Props = {
+  revealActiveMeaning?: boolean;
   entryId: string;
   initialGroup?: PlatformHeadwordGroupV2;
   headword: string;
@@ -57,6 +58,7 @@ export function TrainingMoreSenseCardV2Session(props: Props) {
 }
 
 function SenseCardV2Session({
+  revealActiveMeaning = true,
   context,
   entryId,
   initialGroup,
@@ -671,6 +673,7 @@ function SenseCardV2Session({
             ),
           )}
           activeMeaningId={activeMeaningId}
+          revealActiveMeaning={revealActiveMeaning}
           onActiveMeaningChange={setActiveMeaningId}
           onRequestTranslation={(meaningEntryId, meaningCardTypeId) =>
             void handleRequestTranslation(

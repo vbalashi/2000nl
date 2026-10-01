@@ -17,6 +17,43 @@ import {
 } from "@/lib/platform/fixtures/senseCardV1GateFixture";
 
 describe("LibrarySenseCardGroup", () => {
+  test("delays the selected meaning until the containing panel has entered", () => {
+    const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
+    const selected = model.meanings[1].entryId;
+    const view = render(<LibrarySenseCardGroup model={model} interfaceLanguage="en"
+      activeMeaningId={selected} revealActiveMeaning={false} onAction={vi.fn()} />);
+    expect(view.container.querySelectorAll('[data-expanded="true"]')).toHaveLength(0);
+    view.rerender(<LibrarySenseCardGroup model={model} interfaceLanguage="en"
+      activeMeaningId={selected} revealActiveMeaning onAction={vi.fn()} />);
+    const expanded = view.container.querySelectorAll('[data-expanded="true"]');
+    expect(expanded).toHaveLength(1);
+    expect(expanded[0]).toHaveAttribute("data-entry-id", selected);
+  });
+
+  test("late-loaded meanings stay collapsed while the containing panel enters", () => {
+    const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
+    const selected = model.meanings[1].entryId;
+    const view = render(<LibrarySenseCardGroup model={{ ...model, meanings: [] }}
+      interfaceLanguage="en" activeMeaningId={selected} revealActiveMeaning={false} onAction={vi.fn()} />);
+    view.rerender(<LibrarySenseCardGroup model={model} interfaceLanguage="en"
+      activeMeaningId={selected} revealActiveMeaning={false} onAction={vi.fn()} />);
+    expect(view.container.querySelectorAll('[data-expanded="true"]')).toHaveLength(0);
+    view.rerender(<LibrarySenseCardGroup model={model} interfaceLanguage="en"
+      activeMeaningId={selected} revealActiveMeaning onAction={vi.fn()} />);
+    expect(view.container.querySelectorAll('[data-expanded="true"]')).toHaveLength(1);
+  });
+
+  test("lookup arriving after entry expands only the selected meaning", () => {
+    const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
+    const selected = model.meanings[1].entryId;
+    const view = render(<LibrarySenseCardGroup model={{ ...model, meanings: [] }}
+      interfaceLanguage="en" activeMeaningId={selected} onAction={vi.fn()} />);
+    view.rerender(<LibrarySenseCardGroup model={model} interfaceLanguage="en"
+      activeMeaningId={selected} onAction={vi.fn()} />);
+    const expanded = view.container.querySelectorAll('[data-expanded="true"]');
+    expect(expanded).toHaveLength(1);
+    expect(expanded[0]).toHaveAttribute("data-entry-id", selected);
+  });
   test("renders the goed expression, explanation, and example as one owned hierarchy", () => {
     const { container } = render(
       <LibrarySenseCardGroup

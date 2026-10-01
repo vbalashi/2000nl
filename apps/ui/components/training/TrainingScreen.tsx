@@ -2596,10 +2596,11 @@ function TrainingScreenContent({
             setDetailInitialGroup(null);
           }}
         >
-          {detailSelection ? (
+          {entered => detailSelection ? (
             <div className="flex h-full min-h-0 flex-col gap-3">
               <div className="min-h-0 flex-1">
                 <TrainingMoreSenseCardV2Session
+                  revealActiveMeaning={entered}
                   entryId={detailSelection.entryId}
                   initialGroup={detailInitialGroup ?? undefined}
                   headword={detailSelection.headword}

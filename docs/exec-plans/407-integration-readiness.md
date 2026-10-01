@@ -968,3 +968,30 @@ This closes the tested meaning-session mutation/history/resume path only. Real
 idiom/sentence/context launches, short landscape/zoom/text-spacing, drawer
 sequencing/focus/portals and owner rollout review remain open. The local pilot
 still has translation exercises disabled; no production flag or DB reset changed.
+
+## Training word-panel entry sequence — 2026-10-01
+
+The working Training details drawer now reuses `PracticePanel`/`DialogSurface`,
+the approved modal motion and theme roles. Native modality blocks the page behind
+it, Escape/backdrop/header close use the same animated dismissal, and unmount
+restores the opener. The flag-off drawer remains in place. Training passes panel
+arrival to the article presentation: all meanings start collapsed; only the
+selected entry expands after arrival. A slow lookup is also covered—whether it
+arrives during or after entry, the default first meaning must not expand alongside
+the selected meaning. No lookup, action or scheduling semantics change.
+
+Validation: typecheck; 116 existing drawer/session/group/panel tests before final
+edge-case additions, then 49 focused tests including three new sequencing cases;
+targeted lint/style guard (1376 legacy literals unchanged). Two browser scenarios
+at 390/1024px prove the 460ms entry precedes disclosure, native modality does not
+focus underlying app controls, Escape preserves the panel during exit and restores
+the opener, and the answer side survives. Native keyboard navigation can focus
+browser chrome; the assertion explicitly distinguishes that from background app
+focus. A missing helper brace was caught by typecheck/dev compilation, corrected
+before the successful runs. No failed draft is counted as acceptance.
+
+Live IAB: real `tussen` has four meanings; observed all four collapsed on entry,
+then only the current meaning expanded. Temporary visual proof:
+`/tmp/407qa/live-word-panel-2026-10-01.jpg`. Remaining: short landscape/zoom and
+text spacing, nested collection/report portals, live other exercise families,
+Library actions/layout matrix and owner rollout review. Integration stays active.

@@ -5,11 +5,13 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { WordDetailsHeader } from "./WordDetailsHeader";
 import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import sheet from "@/components/practice/article/wordDetailsSheet.module.css";
+import { PracticePanel } from "@/components/practice/ui/PracticePanel";
+import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  children: React.ReactNode;
+  children: React.ReactNode | ((entered: boolean) => React.ReactNode);
   interfaceLanguage: OnboardingLanguage;
 };
 
@@ -19,6 +21,14 @@ export function TrainingDetailsDrawer({
   children,
   interfaceLanguage,
 }: Props) {
+  const approved = sharedArticlePresentationV1Enabled();
+  const [entered, setEntered] = React.useState(false);
+  const dismissRef = React.useRef(onClose);
+  React.useEffect(() => {
+    if (!open) setEntered(false);
+  }, [open]);
+  // The shared panel owns animated dismissal; the legacy drawer closes immediately.
+  if (!approved) dismissRef.current = onClose;
   const [swipeOffset, setSwipeOffset] = React.useState(0);
   const [swipeEngaged, setSwipeEngaged] = React.useState(false);
   const swipeOffsetRef = React.useRef(0);
@@ -33,11 +43,11 @@ export function TrainingDetailsDrawer({
   React.useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !approved) onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, approved]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -71,7 +81,7 @@ export function TrainingDetailsDrawer({
       swipeActiveRef.current = false;
       setSwipeEngaged(false);
       updateSwipeOffset(0);
-      if (shouldClose) onClose();
+      if (shouldClose) dismissRef.current();
     };
 
     window.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -89,7 +99,26 @@ export function TrainingDetailsDrawer({
 
   if (!open) return null;
 
-  const approved = sharedArticlePresentationV1Enabled();
+  if (approved) return (
+    <PracticePanel
+      title={platformV2Message(interfaceLanguage, "senseCard.wordDetails.open")}
+      closeLabel={platformV2Message(interfaceLanguage, "common.close")}
+      language={interfaceLanguage}
+      headless
+      onClose={onClose}
+      onEntered={() => setEntered(true)}
+    >
+      {dismiss => {
+        dismissRef.current = dismiss;
+        return <>
+          <WordDetailsHeader onClose={dismiss} interfaceLanguage={interfaceLanguage} />
+          <div className="min-h-0 flex-1 p-3">
+            {typeof children === "function" ? children(entered) : children}
+          </div>
+        </>;
+      }}
+    </PracticePanel>
+  );
   const overlayOpacity = Math.max(0.1, 0.3 - swipeOffset / 700);
 
   return (
@@ -110,7 +139,7 @@ export function TrainingDetailsDrawer({
           }}
         >
           <WordDetailsHeader onClose={onClose} interfaceLanguage={interfaceLanguage} />
-          <div className="min-h-0 flex-1 p-3">{children}</div>
+          <div className="min-h-0 flex-1 p-3">{typeof children === "function" ? children(true) : children}</div>
         </div>
       </div>
     </div>

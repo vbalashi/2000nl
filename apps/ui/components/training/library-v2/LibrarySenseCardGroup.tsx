@@ -37,6 +37,7 @@ import {
 } from "./librarySenseCardModel";
 
 type Props = {
+  revealActiveMeaning?: boolean;
   model: LibrarySenseCardGroupModel;
   interfaceLanguage: OnboardingLanguage;
   contentLanguage?: string;
@@ -65,6 +66,7 @@ type Props = {
 const DETAILS_SCROLL_FADE_HEIGHT = 44;
 
 export function LibrarySenseCardGroup({
+  revealActiveMeaning = true,
   model,
   interfaceLanguage,
   contentLanguage,
@@ -85,7 +87,7 @@ export function LibrarySenseCardGroup({
   bottomOverlayReserve = false,
 }: Props) {
   const [viewState, setViewState] = React.useState<LibrarySenseCardViewState>(
-    () => initialViewState(model, activeMeaningId),
+    () => initialViewState(model, activeMeaningId, revealActiveMeaning),
   );
   const [formsOpen,setFormsOpen]=React.useState(false);
   const formsId=React.useId();
@@ -101,7 +103,7 @@ export function LibrarySenseCardGroup({
   const meaningById = new Map(
     model.meanings.map((meaning) => [meaning.entryId, meaning]),
   );
-  const activeMeaningScrollKey = activeMeaningId
+  const activeMeaningScrollKey = activeMeaningId && revealActiveMeaning
     ? `${activeMeaningId}\u0000${model.meanings
         .map((meaning) => meaning.entryId)
         .join("\u0000")}`
@@ -111,7 +113,13 @@ export function LibrarySenseCardGroup({
   React.useEffect(() => {
     setViewState((current) => {
       const next = reconcileLibrarySenseCardViewState(current, model.meanings);
-      const activeMeaning = activeMeaningId
+      if (!revealActiveMeaning) return collapsedViewState(next);
+      // A slow lookup may arrive after the sheet. Do not also expand its first
+      // meaning by default when a different training meaning is selected.
+      if (activeMeaningId) for (const identity of Object.keys(next)) {
+        if (!current[identity]) next[identity] = { ...next[identity], expanded: false };
+      }
+      const activeMeaning = activeMeaningId && revealActiveMeaning
         ? model.meanings.find((meaning) => meaning.entryId === activeMeaningId)
         : null;
       if (!activeMeaning) return next;
@@ -124,7 +132,7 @@ export function LibrarySenseCardGroup({
         [identity]: { ...next[identity], expanded: true },
       };
     });
-  }, [activeMeaningId, model.meanings]);
+  }, [activeMeaningId, model.meanings, revealActiveMeaning]);
 
   const updateEntry = (
     identity: string,
@@ -936,8 +944,10 @@ function ScrollFade({ edge }: { edge: "top" | "bottom" }) {
 function initialViewState(
   model: LibrarySenseCardGroupModel,
   activeMeaningId: string | null = null,
+  revealActiveMeaning = true,
 ): LibrarySenseCardViewState {
   const state = reconcileLibrarySenseCardViewState({}, model.meanings);
+  if (!revealActiveMeaning) return collapsedViewState(state);
   if (!activeMeaningId) return state;
   const meaning = model.meanings.find(
     (candidate) => candidate.entryId === activeMeaningId,
@@ -960,6 +970,12 @@ function initialViewState(
       }),
     ),
   };
+}
+
+function collapsedViewState(state: LibrarySenseCardViewState): LibrarySenseCardViewState {
+  return Object.fromEntries(Object.entries(state).map(([identity, value]) => [
+    identity, { ...value, expanded: false },
+  ]));
 }
 
 const contentPresentation: Record<
