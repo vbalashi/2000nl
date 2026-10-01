@@ -8,7 +8,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { WordDetailsHeader } from "../WordDetailsHeader";
 import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import sheet from "@/components/practice/article/wordDetailsSheet.module.css";
-import { PracticePanel } from "@/components/practice/ui/PracticePanel";
+import { getUiMessages } from "@/lib/uiMessages";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 
@@ -49,6 +49,8 @@ export function WordDetailDrawer({
 }: Props) {
   const approved = sharedArticlePresentationV1Enabled();
   const [entered, setEntered] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(false);
+  React.useEffect(() => { setExpanded(false); setEntered(open); }, [open, selection?.entryId]);
   React.useEffect(() => { if (!open) setEntered(false); }, [open]);
   React.useEffect(() => {
     if (!open || approved) return;
@@ -80,13 +82,14 @@ export function WordDetailDrawer({
     viewport="mobile"
   />;
 
-  if (approved) return <PracticePanel
-    title={platformV2Message(interfaceLanguage, "senseCard.wordDetails.open")}
-    language={interfaceLanguage} headless onClose={onClose} onEntered={() => setEntered(true)}
-  >{dismiss => <>
-    <WordDetailsHeader onClose={dismiss} interfaceLanguage={interfaceLanguage} />
+  if (approved) return <section className={sheet.librarySheet} data-expanded={expanded}
+    aria-label={platformV2Message(interfaceLanguage,"senseCard.wordDetails.open")}>
+    <button type="button" className={sheet.handle} aria-expanded={expanded}
+      aria-label={getUiMessages(interfaceLanguage).library[expanded ? "collapseCard" : "expandCard"]}
+      onClick={() => setExpanded(value => !value)}><span aria-hidden="true"/></button>
+    <WordDetailsHeader onClose={onClose} interfaceLanguage={interfaceLanguage} />
     <div className="min-h-0 flex-1">{detail(entered)}</div>
-  </>}</PracticePanel>;
+  </section>;
 
   return (
     <div className="absolute inset-0 z-30">

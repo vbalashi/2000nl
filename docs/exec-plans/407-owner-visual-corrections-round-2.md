@@ -25,7 +25,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 - [x] 21 — Remove duplicate bottom page/result prose, preserve whole-list scrolling.
 - [x] 24 — 50 words/page; floating centered arrows, current/total red label; final item scrolls above controls.
 - [x] 22 — Library desktop list/article panes, no training right drawer.
-- [ ] 23 — Mobile Library bottom sheet starts half-height; handle expands/collapses, X closes.
+- [x] 23 — Mobile Library bottom sheet starts half-height; handle expands/collapses, X closes.
 - [ ] 13 — Close inline with audio/translation; larger gap before close.
 - [ ] 14 — Compare Normal headword size and article gap with prototype.
 - [ ] 12 — Expose canonical exclusion action alongside Known in article.
