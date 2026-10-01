@@ -93,7 +93,7 @@ export function TrainingCardAnswerHeader({
 }) {
   return (
     <header className="relative z-10 flex shrink-0 flex-col gap-0">
-      <div className="mb-2 flex min-h-[34px] items-center justify-between gap-2">
+      <div className={trainingPresentationV1Enabled() ? approved.headerRow : "mb-2 flex min-h-[34px] items-center justify-between gap-2"}>
         <div className={trainingPresentationV1Enabled() ? chrome.metadata : "flex min-w-0 items-center gap-[7px] text-[13px] text-slate-500 dark:text-[#BFC7D4]"}>
           {model.partOfSpeech ? (
             <span className={trainingPresentationV1Enabled() ? chrome.pos : "inline-flex items-center gap-2 font-medium"}>

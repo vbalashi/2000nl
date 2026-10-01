@@ -871,3 +871,26 @@ word-sheet keyboard/portal behavior and reveal motion. The full #407 objective i
 unfinished. The goal tool still reports paused and exposes no resume operation;
 the owner's explicit resume instruction authorizes ongoing work, but automatic
 goal continuation needs the app's Resume control.
+
+## Compact appearance matrix and metadata collision — 2026-10-01
+
+Six palette/mode combinations × Standard/Extra on the actual approved Training
+components, Russian at 320×568, now have a transport-fixture browser matrix. It
+loads appearance/text preferences through their existing account owners, checks
+all rating labels and controls fit, and captures each answer. Visual inspection
+found that the long POS label at Extra overlapped audio/translation/details despite
+no document overflow. The approved answer header now wraps the toolbar as a unit
+when intrinsic metadata width requires it, preserving its right alignment. Added
+an explicit metadata/control intersection assertion; do not equate document width
+checks with complete layout acceptance.
+
+Also verified the existing forms/relations presentation at 320/430/1440px in both
+OS modes (6 browser cases). These are fixtures, not live persistence evidence.
+Typecheck, targeted lint/style guard and 11 shared-presentation tests pass.
+
+New source audit finding: `usePromptReveal` is currently imported only by
+`TrainingSessionPrototype`, not production `TrainingSenseCardStage`. The accepted
+moving-prompt reveal has therefore not yet been integrated on the approved working
+Training path. Next implement and verify this seam, including reverse/context
+prompts, reduced motion, focus and grading lock; then continue live-data and the
+remaining zoom/landscape/keyboard/word-sheet matrix. No final rollout sign-off.

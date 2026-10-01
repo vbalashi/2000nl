@@ -10,6 +10,23 @@
   background: var(--practice-surface);
   box-shadow: none;
 }
+.headerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 34px;
+  margin-bottom: 8px;
+}
+.headerRow > :first-child {
+  min-width: min-content;
+  max-width: 100%;
+  flex: 1 1 auto;
+}
+.headerRow > :last-child {
+  margin-left: auto;
+}
 .primary {
   display: flex;
   align-items: center;

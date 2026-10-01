@@ -170,6 +170,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
     sessionOutcomes?: Array<"statement-timeout" | "card" | "empty">;
     /** One valid deterministic state used only for visual QA. */
     visualProfile?: TrainingVisualState;
+    /** Account appearance/reading preferences for layout acceptance, never production defaults. */
+    settingsOverrides?: Record<string, unknown>;
     /** Use the local app's dev-only test login instead of installing a mocked session. */
     devTestLogin?: boolean;
   } = {},
@@ -902,7 +904,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
         route,
         method === "GET" || method === "HEAD"
           ? visualFixture
-            ? visualFixture.settings
+            ? { ...visualFixture.settings, ...options.settingsOverrides }
             : {
                 ...learningPreferences(),
                 theme_preference: "system",
