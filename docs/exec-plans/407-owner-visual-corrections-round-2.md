@@ -8,7 +8,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 - [x] 2 — Remove translation-language helper.
 - [x] 5 — Remove new-training/session continuation helper.
 - [x] 6 — Remove Published dictionaries heading.
-- [ ] 25 — Remove measured-since statistics note without changing time data.
+- [x] 25 — Remove measured-since statistics note without changing time data.
 - [ ] 26 — Review queue shows only localized due-card count and existing action.
 - [ ] 15 — Hint example rule uses theme palette.
 - [ ] 11 — Direction cards more compact vertically; retain bounded width and wrapping.

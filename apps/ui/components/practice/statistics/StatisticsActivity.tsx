@@ -62,10 +62,7 @@ export function StatisticsActivity({ interfaceLanguage: locale, calendar, recent
         <Metric value={number(summary.activeDays)} label={copy.activeDays} />
         <Metric value={timeValue} label={copy.studyTime} />
       </div>
-      {summary.timeCoverage === "unavailable" ? <p className={s.note}>{copy.timeUnmeasured}</p>
-        : summary.timeCoverage === "partial" && calendar.coverageStartedAt ? <p className={s.note}>{formatUiMessage(copy.measuredSince, {
-          date: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: calendar.timezone }).format(new Date(calendar.coverageStartedAt)),
-        })}</p> : null}
+
     </section>
     {recentActivity}
     <section className={`${s.section} ${s.history}`} aria-labelledby={ids.history}>
