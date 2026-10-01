@@ -1098,6 +1098,35 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
         );
         expect(filtered.rows).toEqual([]);
 
+        // New directional Known must not suppress an independent reverse
+        // review when a training asks for both recall directions.
+        await client.query(
+          `select handle_card_review($1, $2, 'definition-to-word', 'success', $3)`,
+          [userId, entryId, randomUUID()],
+        );
+        await client.query(
+          `update user_card_status set next_review_at = now() - interval '1 day',
+             fsrs_last_interval = 2
+           where user_id = $1 and entry_id = $2 and card_type_id = 'definition-to-word'`,
+          [userId, entryId],
+        );
+        for (const query of [
+          `select get_next_card(
+             $1, ARRAY['word-to-definition', 'definition-to-word']::text[],
+             ARRAY[]::uuid[], $2, 'user', 'review', 'review', ARRAY[]::text[], false
+           ) as item`,
+          `select get_next_filtered_card(
+             $1, ARRAY['word-to-definition', 'definition-to-word']::text[],
+             ARRAY[]::uuid[], $2, 'user', 'review', 'review', ARRAY[]::text[], '{}'::jsonb, false
+           ) as item`,
+        ]) {
+          const reverse = await client.query(query, [userId, listId]);
+          expect(reverse.rows).toHaveLength(1);
+          expect(reverse.rows[0].item).toMatchObject({
+            id: entryId, mode: 'definition-to-word',
+          });
+        }
+
         const bypassFunctions = await client.query(
           `select
              to_regprocedure('public.get_next_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[])') is null as card_removed,

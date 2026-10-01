@@ -1736,3 +1736,19 @@ historical pending notes; no claim of device/screen-reader or production rollout
 acceptance. Asked owner for root UI visual acceptance asynchronously; can continue
 independent evidence/cleanup but cannot infer approval from elapsed time. Goal
 remains active pending concrete visual feedback/final acceptance.
+
+## Directional Known scheduler selection proof — 2026-10-01
+
+Reviewed current consumers after193: state read joins exact card_type_id; latest
+ordinary scheduler excludes known_cards by exact mode. Sentence source familiarity
+uses Known as positive source eligibility, not as a blanket sentence exclusion.
+No stale runtime assumption requiring another behavior change was found.
+
+Strengthened the real SQL queue regression: mark direct Known, create an
+independent due reverse review, request both modes through get_next_card and
+get_next_filtered_card. Both return the same entry only in definition-to-word;
+known direct stays excluded. Initial assertion incorrectly expected table columns
+from these JSON-returning RPCs; corrected to their actual item id/mode shape, no
+product change. All29 SQL files/278 tests and UI typecheck pass; diff check clean.
+This closes an evidence gap between mark storage and actual queue selection.
+Owner visual acceptance remains pending; no rollout/production change.
