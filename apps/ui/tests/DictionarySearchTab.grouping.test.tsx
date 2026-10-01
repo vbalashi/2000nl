@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   createDictionarySearchTabState,
@@ -438,7 +438,7 @@ test("approved Library omits personal entry controls without calling the create 
 test("legacy personal editor can close without creating an entry", async () => {
   const service = await import("@/lib/trainingService");
   vi.mocked(service.createUserDictionaryEntry).mockClear();
-  render(<Harness locale="en" />);
+  await act(async () => { render(<Harness locale="en" />); });
   fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
   expect(screen.getByLabelText("Headword")).toHaveValue("goed");
   fireEvent.click(screen.getByRole("button", {name:"Close"}));
@@ -450,7 +450,7 @@ test("pending legacy entry creation prevents duplicate submission", async () => 
   const service = await import("@/lib/trainingService");
   const pending = deferred<string>();
   vi.mocked(service.createUserDictionaryEntry).mockClear().mockReturnValueOnce(pending.promise);
-  render(<Harness locale="en" />);
+  await act(async () => { render(<Harness locale="en" />); });
   fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
   fireEvent.change(screen.getByLabelText("Definition"), {target:{value:"goed zijn"}});
   const save = screen.getByRole("button", {name:"Save to my dictionary"});
@@ -460,4 +460,11 @@ test("pending legacy entry creation prevents duplicate submission", async () => 
   pending.resolve("created-entry");
   await waitFor(() => expect(screen.queryByLabelText("Headword")).not.toBeInTheDocument());
   expect(service.createUserDictionaryEntry).toHaveBeenCalledOnce();
+});
+
+test.each(["en", "nl", "ru"] as const)("approved Library toolbar omits query instruction in %s", async (locale) => {
+  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+  const {getUiMessages} = await import("@/lib/uiMessages");
+  await act(async () => { render(<Harness locale={locale} initial={{query:""}} />); });
+  expect(screen.queryByText(getUiMessages(locale).library.typeQuery)).not.toBeInTheDocument();
 });

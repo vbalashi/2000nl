@@ -608,7 +608,7 @@ export function DictionarySearchTab({
           page: number(page),
           source: sourceLabel,
         })
-      : copy.typeQuery;
+      : approved ? null : copy.typeQuery;
   const emptyHeading = useViewedListFilter
     ? copy.emptyCollection
     : query.trim()
@@ -1033,9 +1033,9 @@ export function DictionarySearchTab({
           ) : null}
         </div>}
 
-        <div className={approved ? workspace.scope : "space-y-0.5 text-xs text-slate-500 dark:text-slate-400"}>
+        {resultCountLabel && <div className={approved ? workspace.scope : "space-y-0.5 text-xs text-slate-500 dark:text-slate-400"}>
           <div>{resultCountLabel}</div>
-        </div>
+        </div>}
       </div>
 
       <div

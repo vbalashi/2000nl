@@ -1953,3 +1953,7 @@ This closes the fixture coverage gap found during correction11; next12 toolbar.
 ### Owner correction12 — remove personal entry toolbar (2026-10-01)
 
 Approved DictionarySearchTab omits the personal-entry controls block; legacy editor and API/data contracts remain intact. Existing article copy action stays available. Actual local Library confirms no My dictionary/Add entry row, results and framed meanings still visible. Screenshot: `/tmp/407qa/correction12-toolbar.png`. Grouping suite20pass; typecheck and focused lint pass. Replaced obsolete approved modal trigger expectations with primary-control absence and legacy cancellation/duplicate-submit checks.
+
+### Owner correction13 — omit idle query instruction (2026-10-01)
+
+Approved toolbar no longer renders typeQuery or its empty row for an idle global lookup. Query/collection counts and legacy behavior remain unchanged. Grouping23pass (EN/NL/RU absence coverage); typecheck/focused lint pass. New tests await asynchronous initialization, removing act warnings in the checks changed with corrections12/13. Actual Library all-sources/no-query verified: `/tmp/407qa/correction13-toolbar.png`. Initial results still absent; correction14 remains open.
