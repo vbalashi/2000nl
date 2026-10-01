@@ -118,3 +118,22 @@ test("filters canonicalize before lookup; invalid filters stop before the servic
  }
  expect(service).not.toHaveBeenCalled();expect(operation).not.toHaveBeenCalled();
 });
+
+test("explicit empty query permits first-party Library browsing with filters and cursor", async () => {
+  const response = await POST(request({...base, query:"  ", cursor:"browse-next", filters:{parts:["noun"],article:"het"}}));
+  expect(response.status).toBe(200);
+  expect(operation).toHaveBeenCalledWith(
+    {kind:"authenticated",auth:owner,service:client},
+    expect.objectContaining({query:"",cursor:"browse-next",intent:"dictionary-lookup"}),
+    {dictionaryIds:null,filters:{parts:["noun"],article:"het"}},
+  );
+});
+
+test("browse requires an explicit string query and does not widen Platform parsing", async () => {
+  const {parsePlatformV2LookupRequest} = await import("@/lib/platform/platformV2LookupRequest");
+  expect(parsePlatformV2LookupRequest({...base,query:""})).toEqual({ok:false,error:"missing_query"});
+  for (const query of [undefined,null,42]) {
+    expect((await POST(request({...base,query}))).status).toBe(400);
+  }
+  expect(operation).not.toHaveBeenCalled();
+});

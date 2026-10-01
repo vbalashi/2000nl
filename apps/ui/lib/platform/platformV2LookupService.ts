@@ -90,7 +90,7 @@ export async function performPlatformV2Lookup(
   const query = request.query?.trim() ?? "";
   const intent = validIntent(request.intent);
 
-  if (!request.entryId && !query) {
+  if (!request.entryId && !query && !libraryScope) {
     return { payload: { error: "missing_query" }, status: 400 };
   }
   if (!request.cardTypeId.trim()) {

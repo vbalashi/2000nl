@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       },
       body.error === "too_large" ? 413 : 400,
     );
-  const parsed = parsePlatformV2LookupRequest(body.body);
+  const parsed = parsePlatformV2LookupRequest(body.body, { allowLibraryBrowse: true });
   if (!parsed.ok) return jsonNoStore({ error: parsed.error }, 400);
   if (parsed.request.entryId || parsed.request.intent !== "dictionary-lookup")
     return jsonNoStore({ error: "library_query_required" }, 400);
