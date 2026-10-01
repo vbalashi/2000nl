@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import type { PlatformTranslationExerciseCandidateV2, PlatformTranslationExerciseSessionV2, PlatformTrainingExerciseReviewResultV2 } from "../../../../../packages/shared/types/platformV2";
@@ -7,6 +8,7 @@ import type { SentenceExerciseContent } from "@/lib/training/sentenceExerciseCon
 import { loadSentenceExerciseContent, prepareSentenceExerciseTranslation } from "@/lib/training/sentenceExerciseLoader";
 import { fetchNextPlatformV2TranslationTrainingSessionExercise, markPlatformV2TranslationTrainingSessionMemberUnavailable, performPlatformV2TranslationExerciseAction } from "@/lib/platform/platformV2TranslationExerciseClient";
 import { buildSentenceCardPresentation } from "@/lib/training/sentenceCardPresentation";
+import { TrainingSessionState } from "../v2/TrainingSessionState";
 import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
 import { TrainingSessionNotice } from "../v2/TrainingSessionSurface";
 import { TrainingSessionChrome } from "../v2/TrainingSessionChrome";
@@ -35,16 +37,11 @@ type Props = {
   onPlayResolvedAudio?: (url: string, label: string) => void;
   onOpenDetails?: (details: { group: SentenceExerciseContent["group"]; entry: SentenceExerciseContent["entry"] }) => void;
 };
-const copy = {
-  en: { title: "Example sentence training", back: "Back to setup", loading: "Preparing the next sentence…", empty: "No translated examples match this selection.", complete: "Sentence session complete", failed: "The next sentence could not be prepared.", retry: "Try again" },
-  nl: { title: "Voorbeeldzinnen trainen", back: "Terug naar instellen", loading: "De volgende zin wordt voorbereid…", empty: "Geen vertaalde voorbeelden passen bij deze selectie.", complete: "Sessie voorbeeldzinnen afgerond", failed: "De volgende zin kon niet worden voorbereid.", retry: "Opnieuw proberen" },
-  ru: { title: "Тренировка примеров", back: "Назад к настройкам", loading: "Готовим следующее предложение…", empty: "Нет переведённых примеров по этому выбору.", complete: "Тренировка предложений завершена", failed: "Не удалось подготовить следующее предложение.", retry: "Повторить" },
-} satisfies Record<OnboardingLanguage, Record<string, string>>;
 
 export function TrainingSentenceSession(props: Props) {
   const { userId, session, contentLanguageCode, translationTargetLanguageCode, interfaceLanguage, onExit, onSessionSuperseded, onHistory, onPlayResolvedAudio, onOpenDetails } = props;
   const studyTimeEnabled = props.studyTimeEnabled ?? false;
-  const t = copy[interfaceLanguage];
+  const t = getUiMessages(interfaceLanguage).trainingExercises.sentence;
   const [candidate, setCandidate] = useState<(PlatformTranslationExerciseCandidateV2 & { ordinal: number }) | null>(null);
   const [content, setContent] = useState<SentenceExerciseContent | null>(null);
   const [completed, setCompleted] = useState(session.completedActions);
@@ -140,8 +137,9 @@ export function TrainingSentenceSession(props: Props) {
     chrome={<TrainingSessionChrome approvedPresentation={trainingPresentationV1Enabled()} interfaceLanguage={interfaceLanguage} scenario="idiom" mode="word-to-definition" cardFilter="both" sessionName={t.title} presentation={{ kind: "planned", position: Math.min(completed, session.requestedTotal), total: session.requestedTotal, fraction: session.requestedTotal ? Math.min(completed / session.requestedTotal, 1) : 0 }} onHistory={onHistory} onClose={onExit} disabled={submitting || exclusion.busy} />}
     notice={failed || exclusion.failed ? <TrainingSessionNotice notice={{ kind: "error", message: exclusion.failed ? trainingExclusionCopy[interfaceLanguage].failed : t.failed, retryLabel: t.retry, retryDisabled: submitting || loading, onRetry: () => exclusion.failed ? void exclusion.exclude() : void loadNext() }} /> : null}
     footer={<TrainingSessionStatsFooter {...stats} interfaceLanguage={interfaceLanguage} />}>
-    {loading ? <div role="status" className="grid h-full min-h-0 place-items-center rounded-3xl border border-slate-300 bg-slate-50 text-sm font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">{t.loading}</div> : null}
-    {!loading && terminal ? <div role="status" className="grid h-full min-h-0 place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-center dark:border-slate-700 dark:bg-slate-900/50"><div><h1 className="text-2xl font-semibold text-slate-950 dark:text-white">{terminal === "complete" ? t.complete : t.empty}</h1><button type="button" onClick={onExit} className="mt-5 rounded-xl bg-indigo-500 px-4 py-3 font-semibold text-white">{t.back}</button></div></div> : null}
+      {loading ? <TrainingSessionState loading title={t.loading} /> : null}
+      {!loading && terminal ? <TrainingSessionState title={terminal === "complete" ? t.complete : t.empty}
+        action={{ label: trainingPresentationV1Enabled() ? getUiMessages(interfaceLanguage).trainingSession.back : t.back, onClick: onExit }} /> : null}
     {!loading && !terminal && candidate && content && presentation ? <TrainingExerciseCard key={`${session.sessionId}:${candidate.targetKey}`} presentation={presentation} interfaceLanguage={interfaceLanguage} revealed={revealed} onReveal={() => setRevealed(true)} busy={submitting || exclusion.busy || exclusion.failed} onGrade={(result) => void grade(result)} onPlayAudio={content.group.header.audio && onPlayResolvedAudio ? () => { void resolvePlatformV2Audio({ cacheOwnerId: userId, capability: content.group.header.audio!, text: content.sentence.text }).then((url) => onPlayResolvedAudio(url, content.sentence.text)).catch(() => setFailed(true)); } : undefined} onOpenDetails={onOpenDetails ? () => onOpenDetails({ group: content.group, entry: content.entry }) : undefined} secondaryActions={<TrainingCardSecondaryActions>{content.entry.reportContentRevision && content.entry.capabilities?.some((cap) => cap.actionId === "report-content") ? <SenseCardReportAction appearance="training-text" snapshot={freezeSenseCardDiagnosticSnapshot({ route: "training", group: content.group, entry: content.entry, target: { kind: "content-node", entryId: content.entry.entryId, contentNodeId: content.sentence.contentNodeId, nodeKind: "example", sourceTextFingerprint: content.sentence.sourceTextFingerprint } })} interfaceLanguage={interfaceLanguage} disabled={submitting || exclusion.busy} /> : <span />}{candidate ? <TrainingExcludeAction language={interfaceLanguage} disabled={submitting || exclusion.busy} onClick={() => void exclusion.exclude()} /> : null}</TrainingCardSecondaryActions>} /> : null}
   </TrainingSessionV2Layout>;
 }

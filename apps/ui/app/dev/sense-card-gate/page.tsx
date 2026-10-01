@@ -1,3 +1,4 @@
+import { TrainingSessionStateGate } from "./TrainingSessionStateGate";
 import { ExerciseCardGate } from "./ExerciseCardGate";
 import { SenseCardGateHarness } from "./SenseCardGateHarness";
 import {
@@ -18,12 +19,20 @@ export default async function SenseCardGatePage({
     wrapper?: string;
     fixture?: string;
     mode?: string;
+    language?: string;
+    family?: string;
+    state?: string;
   }>;
 }) {
   const searchParams = await query;
   if (process.env.NODE_ENV === "production") {
     return <main className="p-8">Not available in production.</main>;
   }
+  if (searchParams?.prototype === "session-states") return <TrainingSessionStateGate
+    language={searchParams.language === "ru" || searchParams.language === "nl" ? searchParams.language : "en"}
+    family={searchParams.family === "sentence" ? "sentence" : "idiom"}
+    state={searchParams.state === "empty" || searchParams.state === "loading" || searchParams.state === "error" ? searchParams.state : "complete"}
+    dark={searchParams.mode === "dark"} />;
   if (searchParams?.prototype === "exercise") return <ExerciseCardGate />;
   if (searchParams?.prototype === "reading") {
     return <ReadingSizePrototype />;

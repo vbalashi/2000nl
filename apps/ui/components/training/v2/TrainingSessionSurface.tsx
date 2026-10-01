@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import approved from "../approvedTrainingCard.module.css";
 import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { FooterStats, type FooterStatsProps } from "../FooterStats";
 import {
@@ -40,6 +41,14 @@ export function TrainingSessionNotice({
 }: {
   notice: TrainingSessionNoticeInput;
 }) {
+  if (trainingPresentationV1Enabled()) return <div
+    role={notice.kind === "error" ? "alert" : "status"}
+    data-tone={notice.kind} className={approved.notice}>
+    <span tabIndex={0}>{notice.message}</span>
+    {notice.kind === "error" ? <button type="button" className={approved.primary}
+      disabled={notice.retryDisabled} onClick={notice.onRetry}>{notice.retryLabel}</button> : null}
+  </div>;
+
   if (notice.kind === "status") {
     return (
       <div
@@ -56,7 +65,7 @@ export function TrainingSessionNotice({
       role="alert"
       className="mx-auto mb-3 flex w-full max-w-2xl items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-800 shadow-sm dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200"
     >
-      <span>{notice.message}</span>
+      <span tabIndex={0}>{notice.message}</span>
       <button
         type="button"
         disabled={notice.retryDisabled}

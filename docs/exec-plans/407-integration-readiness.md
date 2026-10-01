@@ -1209,3 +1209,37 @@ Emulation.setFocusEmulationEnabled, including the documented alternative snapsho
 standalone production Playwright remains usable. No browser/server restart or
 new QA port was used. Native zoom, real focus loss, live gated sentence/broader
 Library acceptance, remaining active-family copy and final owner review stay open.
+
+
+## Shared exercise states and catalog ownership — 2026-10-01
+
+Idiom and sentence loading/empty/completion copy now belongs to EN/NL/RU catalogs,
+with the generic training completion plural rules reused for idiom counts. Shared
+TrainingSessionState owns presentation only: onExit remains with each session;
+loading exposes no premature action. Approved screens use shared theme/text-size
+roles and the training primary action, with a separately scrolling, keyboard
+accessible message region and pinned return action. Legacy flag-off styling is
+consolidated without removing its fallback. Approved error/status notices now
+also use theme roles and retain the existing retry/disabled owners.
+
+A real geometry defect appeared at Extra in the Dutch short-window error state:
+side-by-side text squeezed into many lines and pushed Retry beyond the viewport.
+Notices now put readable text above Retry, bound message height and permit keyboard
+scrolling while the action remains visible. Production component fixture checks
+cover EN/NL/RU, idiom/sentence, loading/empty/completion/error, light 320x568 and dark
+320x240 (48 state visits). Return and retry calls in this fixture are local signals;
+this does not prove live grading, real network failures, or the full app shell.
+
+Validation: 45 component/session/catalog/layout tests, six browser cases,
+typecheck, targeted lint, diff check. Screenshots inspected: RU dark terminal at
+keyboard scroll end, NL dark sentence error. Proofs:
+/tmp/407qa/exercise-terminal-extra-ru-dark-2026-10-01.png and
+/tmp/407qa/exercise-error-extra-nl-dark-2026-10-01.png.
+Initial tests caught a wrong Dutch expected completion word, a Vitest cleanup
+return type, and selectors including Next development tools/status nodes; corrected
+scope and expectations. The actual Dutch Retry overflow above was fixed in code,
+then the whole browser matrix was rerun. Legacy baseline relocation explicitly
+moves 16 existing fallback literals to the shared component, removing 30 duplicated
+session literals: overall count falls from 1376 to 1362. No approved literal styles
+were introduced. Remaining gates: native zoom/OS focus, live gated sentence,
+broader Library acceptance and final owner/rollout review. Goal remains active.

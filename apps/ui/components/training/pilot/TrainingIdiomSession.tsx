@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { getUiMessages, formatUiCount } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import {
@@ -22,6 +23,7 @@ import {
   measureTrainingTransitionStage,
 } from "@/lib/training/trainingTransitionTiming";
 
+import { TrainingSessionState } from "../v2/TrainingSessionState";
 import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
 import { TrainingSessionNotice } from "../v2/TrainingSessionSurface";
 import { TrainingSessionChrome } from "../v2/TrainingSessionChrome";
@@ -52,38 +54,6 @@ type Props = {
   }) => void;
 };
 
-const copy = {
-  en: {
-    title: "Idiom training",
-    back: "Back to setup",
-    loading: "Preparing the next idiom…",
-    empty: "No explained idioms match this selection.",
-    complete: "Idiom session complete",
-    completeDetail: (count: number) => `${count} exercises completed`,
-    retry: "Try again",
-    failed: "The next idiom could not be prepared.",
-  },
-  nl: {
-    title: "Uitdrukkingen trainen",
-    back: "Terug naar instellen",
-    loading: "De volgende uitdrukking wordt voorbereid…",
-    empty: "Geen uitgelegde uitdrukkingen passen bij deze selectie.",
-    complete: "Sessie uitdrukkingen afgerond",
-    completeDetail: (count: number) => `${count} oefeningen afgerond`,
-    retry: "Opnieuw proberen",
-    failed: "De volgende uitdrukking kon niet worden voorbereid.",
-  },
-  ru: {
-    title: "Тренировка идиом",
-    back: "Назад к настройкам",
-    loading: "Готовим следующую идиому…",
-    empty: "По этому выбору нет идиом с объяснением.",
-    complete: "Сессия идиом завершена",
-    completeDetail: (count: number) => `Завершено упражнений: ${count}`,
-    retry: "Повторить",
-    failed: "Не удалось подготовить следующую идиому.",
-  },
-} satisfies Record<OnboardingLanguage, Record<string, unknown>>;
 
 export function TrainingIdiomSession({
   studyTimeEnabled = false,
@@ -98,7 +68,7 @@ export function TrainingIdiomSession({
   onPlayResolvedAudio,
   onOpenDetails,
 }: Props) {
-  const t = copy[interfaceLanguage];
+  const t = getUiMessages(interfaceLanguage).trainingExercises.idiom;
   const [candidate, setCandidate] =
     useState<PlatformIdiomExerciseCandidateV2 | null>(null);
   const [content, setContent] = useState<IdiomExerciseContent | null>(null);
@@ -323,36 +293,10 @@ export function TrainingIdiomSession({
         />
       }
     >
-      {loading ? (
-        <div
-          role="status"
-          className="grid h-full min-h-0 place-items-center rounded-3xl border border-slate-300 bg-slate-50 text-sm font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300"
-        >
-          {t.loading}
-        </div>
-      ) : null}
-      {!loading && terminal ? (
-        <div
-          role="status"
-          className="grid h-full min-h-0 place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-center dark:border-slate-700 dark:bg-slate-900/50"
-        >
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">
-              {terminal === "complete" ? t.complete : t.empty}
-            </h1>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              {terminal === "complete" ? t.completeDetail(completedCount) : ""}
-            </p>
-            <button
-              type="button"
-              onClick={onExit}
-              className="mt-5 rounded-xl bg-indigo-500 px-4 py-3 font-semibold text-white"
-            >
-              {t.back}
-            </button>
-          </div>
-        </div>
-      ) : null}
+      {loading ? <TrainingSessionState loading title={t.loading} /> : null}
+      {!loading && terminal ? <TrainingSessionState title={terminal === "complete" ? t.complete : t.empty}
+        detail={terminal === "complete" ? formatUiCount(interfaceLanguage, completedCount, getUiMessages(interfaceLanguage).trainingSession, "completed") : undefined}
+        action={{ label: trainingPresentationV1Enabled() ? getUiMessages(interfaceLanguage).trainingSession.back : t.back, onClick: onExit }} /> : null}
       {!loading && !terminal && candidate && content ? (
         <TrainingIdiomCard
           key={`${session.sessionId}:${candidate.targetKey}:${translationTargetLanguageCode ?? "off"}`}

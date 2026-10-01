@@ -515,6 +515,26 @@
       "easy": "Easy",
       "overview": "Show the shortcut overview"
     },
+    "trainingExercises": {
+      "idiom": {
+        "title": "Idiom training",
+        "back": "Back to setup",
+        "loading": "Preparing the next idiom…",
+        "empty": "No explained idioms match this selection.",
+        "complete": "Idiom session complete",
+        "retry": "Try again",
+        "failed": "The next idiom could not be prepared."
+      },
+      "sentence": {
+        "title": "Example sentence training",
+        "back": "Back to setup",
+        "loading": "Preparing the next sentence…",
+        "empty": "No translated examples match this selection.",
+        "complete": "Sentence session complete",
+        "failed": "The next sentence could not be prepared.",
+        "retry": "Try again"
+      }
+    },
     "trainingSession": {
       "exclusion": {
         "label": "Exclude",

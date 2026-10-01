@@ -515,6 +515,26 @@
       "easy": "Makkelijk",
       "overview": "Sneltoetsenoverzicht tonen"
     },
+    "trainingExercises": {
+      "idiom": {
+        "title": "Uitdrukkingen trainen",
+        "back": "Terug naar instellen",
+        "loading": "De volgende uitdrukking wordt voorbereid…",
+        "empty": "Geen uitgelegde uitdrukkingen passen bij deze selectie.",
+        "complete": "Sessie uitdrukkingen afgerond",
+        "retry": "Opnieuw proberen",
+        "failed": "De volgende uitdrukking kon niet worden voorbereid."
+      },
+      "sentence": {
+        "title": "Voorbeeldzinnen trainen",
+        "back": "Terug naar instellen",
+        "loading": "De volgende zin wordt voorbereid…",
+        "empty": "Geen vertaalde voorbeelden passen bij deze selectie.",
+        "complete": "Sessie voorbeeldzinnen afgerond",
+        "failed": "De volgende zin kon niet worden voorbereid.",
+        "retry": "Opnieuw proberen"
+      }
+    },
     "trainingSession": {
       "exclusion": {
         "label": "Uitsluiten",

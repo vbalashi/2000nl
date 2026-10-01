@@ -150,3 +150,87 @@
   justify-content: space-between;
   gap: var(--practice-space-content) var(--practice-space-section);
 }
+
+.state {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--practice-radius-dialog);
+  background: var(--practice-surface);
+  color: var(--practice-text);
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-body);
+  line-height: 1.5;
+}
+.stateReading {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--practice-space-section);
+  scrollbar-width: none;
+}
+.stateReading::-webkit-scrollbar { display: none; }
+.stateReading:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: -2px;
+}
+.stateContent {
+  margin: auto;
+  max-width: 100%;
+  text-align: center;
+}
+.stateContent h1 {
+  margin: 0;
+  font-size: var(--practice-text-title);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.stateContent p {
+  margin: var(--practice-space-content) 0 0;
+  color: var(--practice-text-secondary);
+}
+.stateActions {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  padding: var(--practice-space-section);
+}
+
+.notice {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  align-items: flex-start;
+  gap: var(--practice-space-section);
+  margin-bottom: var(--practice-space-section);
+  padding: var(--practice-space-content) var(--practice-space-section);
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-info-soft);
+  color: var(--practice-info);
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-body);
+  line-height: 1.5;
+}
+.notice > span {
+  min-height: 0;
+  max-width: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  overflow-wrap: anywhere;
+}
+.notice[data-tone=error] {
+  background: var(--practice-danger-soft);
+  color: var(--practice-danger);
+}
+
+.notice > button { flex-shrink: 0; }
+
+.notice > span::-webkit-scrollbar { display: none; }
+.notice > span:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: -2px;
+}
