@@ -13,7 +13,7 @@
 - [x] **7.** Шеврон значения без фоновой кнопки, ближе к правому верхнему углу.
 - [x] **8.** Коллекции: простой заголовок/подсказка, плюс создания вместо перегруженной формы; сохранить реальные действия/ошибки.
 - [x] **9.** Убрать видимый заголовок Сведения о слове; сохранить accessible dialog name/закрытие.
-- [ ] **10.** Убрать горизонтальный разделитель хедера approved UI.
+- [x] **10.** Убрать горизонтальный разделитель хедера approved UI.
 - [ ] **11.** Разъяснить контракт Только эта коллекция; затем убрать/оформить понятную область.
 - [ ] **12.** Убрать Мой словарь / Добавить запись из первичного toolbar, сохранить существующий API/данные.
 - [ ] **13.** Убрать Введите слово для поиска из toolbar.
@@ -56,3 +56,5 @@
 Пункт8: заголовок/подсказка из общей локализации референса; headword/definition остаются sr-only context. Форма создания открывается плюсом после списка, фокус в имя; legacy форма прежняя. Поиск/чекбоксы/статусы/ошибки/блокировки/реальные callbacks сохранены. Проверки7tests, typecheck/lint/diff; browser initial and creation focus, снимок /tmp/407qa/correction8-collections.png.
 
 Пункт9: approved WordDetailsHeader содержит только close, без текста/заливки/разделителя; PracticePanel aria-label сохраняет название диалога. Общий Library/Training header, legacy прежний. Dialog test3pass включая имя/отсутствие visible текста/animated close; typecheck/lint/diff pass. Browser fixture open/close, снимок /tmp/407qa/correction9-header.png.
+
+Пункт10: approved header border-bottom0, legacy прежний. Browser реальная Settings вкладка без навигации/изменения preferences: border0, высота58px. Снимок /tmp/407qa/correction10-header.png; AppFrame tests/typecheck/diff проходят.

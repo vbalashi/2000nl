@@ -1859,3 +1859,11 @@ verified RU panel without visible title/divider and close callback. Screenshot:
 /tmp/407qa/correction9-header.png. Strengthened dialog regression checks named
 dialog without title text plus animated dismissal; three tests/typecheck/lint/diff
 pass. Next10 app header divider.
+
+### 2026-10-01 — correction10 no app header divider
+
+Approved AppFrame header receives explicit headerApproved border-bottom0; legacy
+menu header unchanged. Actual owner Settings tab inspected read-only, no navigation
+or preferences writes: computed border0, height58px and screenshot match header
+composition without line. Screenshot /tmp/407qa/correction10-header.png. AppFrame
+tests/typecheck/diff pass. Next33 logo navigation, then2 theme control and34 loading.

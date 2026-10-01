@@ -334,3 +334,5 @@
   .frame[data-immersive="true"] > .header,
   .frame[data-immersive="true"] > .tabBar { display: none; }
 }
+
+.headerApproved { border-bottom: 0; }

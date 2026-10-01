@@ -139,7 +139,7 @@ function AppHeader({
   const tabs = trainingPresentationV1Enabled();
   return (
     <header
-      className={`${styles.header} ${tabs ? "" : styles.headerWithMenu}`}
+      className={`${styles.header} ${tabs ? styles.headerApproved : styles.headerWithMenu}`}
       data-testid="app-header"
       data-app-header="true"
     >
