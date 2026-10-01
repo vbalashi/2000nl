@@ -105,3 +105,9 @@
 .sizes button:focus-visible{outline:2px solid var(--practice-focus);outline-offset:-2px}
 
 .preview{border:1px solid var(--practice-border)}
+
+.preferenceRow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:18px 0;border:0}.preferenceRow h2,.preferenceRow h3{margin:0;font-size:var(--practice-text-body);font-weight:500;color:var(--practice-text-secondary)}.preferenceRow>:last-child{margin-left:auto}.paletteRow{align-items:flex-start}.paletteRow>:last-child{flex:0 1 390px;max-width:100%;margin-top:0}.embedded .preferenceRow h2{margin:0;font-size:var(--practice-text-body)}
+
+.embedded .preferenceRow,.section .preferenceRow{flex-direction:row;align-items:center;justify-content:space-between}.embedded .paletteRow,.section .paletteRow{align-items:flex-start}.preferenceRow>div:first-child{margin-left:0}.preferenceRow>div:last-child{margin-left:auto}
+
+.embedded .preferenceRow h3,.section .preferenceRow h3{font-size:var(--practice-text-body);font-weight:500;margin:0}

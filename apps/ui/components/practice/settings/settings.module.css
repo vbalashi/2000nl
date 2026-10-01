@@ -286,7 +286,10 @@
 @media(max-width:650px) { .materialLanguages li { border: 0; font-size: var(--practice-text-body); } }
 @media(prefers-reduced-motion:reduce) { .materialToggle span { transition: none; } }
 
-.addLanguage { display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:6px 0;border:0;background:transparent;color:var(--practice-text-muted);font-size:var(--practice-text-caption);cursor:pointer; }
+.addLanguage { margin-top:12px; }
 .addLanguage:disabled, .addLanguage[aria-disabled=true] { opacity:.55;cursor:default; }
 
 button.select { display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer; }
+
+.row>div:last-child:not(:first-child){margin-left:auto}
+@media(max-width:650px){.row>div:last-child:not(:first-child){align-self:flex-end}}

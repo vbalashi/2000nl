@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import {SegmentedControl} from "../practice/ui/SegmentedControl";
 import layout from "@/components/practice/settings/settings.module.css";
 import { getUiMessages } from "@/lib/uiMessages";
 import { accountTextSize, textSizes } from "@/lib/reading/textScale";
@@ -35,9 +36,9 @@ export function ApprovedTextSizeSection({
       className={`${theme.theme} ${embedded ? `${s.embedded} ${layout.panel}` : s.section}`}
       data-colour-mode="app"
     >
-      <div className={s.header}>
+      <div className={s.preferenceRow}>
       <h2>{text.textSize}</h2>
-      <div className={s.sizes} role="group" aria-label={text.textSize}>
+      <SegmentedControl label={text.textSize}>
         {readingSizes.map((size) => {
           const display = textSizes.find(
             (item) => item.id === accountTextSize[size],
@@ -57,7 +58,7 @@ export function ApprovedTextSizeSection({
             </button>
           );
         })}
-      </div>
+      </SegmentedControl>
       </div>
       {settings.loadStatus === "loading" && (
         <p role="status">{status.loading}</p>

@@ -10,7 +10,7 @@
   border-radius: var(--practice-radius-control);
   background: var(--practice-surface);
   color: var(--practice-text-secondary);
-  padding: 12px;
+  padding: 10px;
   text-align: left;
   font: inherit;
   cursor: pointer;
@@ -31,7 +31,7 @@
 .choices strong {
   display: block;
   overflow-wrap: anywhere;
-  font-size: var(--practice-text-body);
+  font-size: var(--practice-text-caption);
   font-weight: 500;
   margin-top: 8px;
 }

@@ -34,10 +34,10 @@ export function ApprovedAppearanceSection({
       data-colour-mode="app"
     >
       <h2>{copy.settings.appearance}</h2>
-      <SettingsRow title={copy.settings.colourMode}><SettingsOptions label={copy.settings.colourMode} items={modes.map(([id,key])=>({id,label:copy.builder.colourModes[key]}))} value={mode} onChange={onModeChange}/></SettingsRow>
+      <SettingsRow className={s.preferenceRow} title={copy.settings.colourMode}><SettingsOptions label={copy.settings.colourMode} items={modes.map(([id,key])=>({id,label:copy.builder.colourModes[key]}))} value={mode} onChange={onModeChange}/></SettingsRow>
       {appearance && (
         <>
-          <h3 className={layout.subheading}>{copy.settings.theme}</h3>
+          <div className={`${s.preferenceRow} ${s.paletteRow}`}><h3>{copy.settings.theme}</h3>
           <PaletteChoices
             mode={mode}
             language={language}
@@ -47,7 +47,7 @@ export function ApprovedAppearanceSection({
               appearance.saveStatus === "saving"
             }
             onChange={(value) => void appearance.save(value)}
-          />
+          /></div>
           {appearance.loadStatus === "loading" && (
             <p role="status">{status.loading}</p>
           )}

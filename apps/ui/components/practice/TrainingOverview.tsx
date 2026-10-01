@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import {AddAction} from "./ui/AddAction";
 import {ArrowRight, Play, Plus, SlidersHorizontal} from "lucide-react";
 import {IconAction} from "./ui/IconAction";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
@@ -44,7 +45,7 @@ export function TrainingOverview({state,interfaceLanguage="en",onLaunch,onResume
    {main.notice&&<p className={s.description} role="status">{main.notice}</p>}
    {!main.canLaunch&&main.unavailableReason&&<p className={s.description} role="status">{main.unavailableReason}</p>}
   </section>:!state.trainings.length?<section className={s.hero}><h2>{copy.firstTraining}</h2><button type="button" className={s.start} onClick={onCreate}><Plus size={17}/>{copy.create}</button></section>:null}
-  {state.trainings.length>0&&<><div className={s.savedHeading}><h2>{copy.saved}</h2><button type="button" onClick={onCreate}><Plus size={16}/>{copy.create}</button></div>
+  {state.trainings.length>0&&<><div className={s.savedHeading}><h2>{copy.saved}</h2><AddAction onClick={onCreate}>{copy.create}</AddAction></div>
   <div className={s.list}>{state.trainings.filter(item=>item.id!==main?.id).map(item=><div className={s.row} key={item.id}>
    <div className={s.rowText}><h3>{item.name}</h3><p>{item.summary}</p>{item.notice&&<p>{item.notice}</p>}{!item.canLaunch&&item.unavailableReason&&<p>{item.unavailableReason}</p>}</div>
    <IconAction className={s.icon} label={formatUiMessage(copy.edit,{name:item.name})} onClick={()=>onEdit(item.id)}><SlidersHorizontal size={17}/></IconAction>

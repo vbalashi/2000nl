@@ -1,4 +1,5 @@
 "use client";
+import {SegmentedControl} from "../ui/SegmentedControl";
 import React, { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -153,5 +154,5 @@ export function SettingsRow({
 }
 
 export function SettingsOptions<Key extends string>({label,items,value,onChange}:{label:string;items:{id:Key;label:string}[];value:Key;onChange:(value:Key)=>void}){
- return <div className={s.options} role="group" aria-label={label}>{items.map(item=><button key={item.id} type="button" aria-pressed={value===item.id} onClick={()=>onChange(item.id)}>{item.label}</button>)}</div>;
+ return <SegmentedControl label={label}>{items.map(item=><button key={item.id} type="button" aria-pressed={value===item.id} onClick={()=>onChange(item.id)}>{item.label}</button>)}</SegmentedControl>;
 }
