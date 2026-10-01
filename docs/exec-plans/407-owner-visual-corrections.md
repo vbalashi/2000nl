@@ -10,7 +10,7 @@
 - [x] **4.** Убрать мигание примеров после переноса prompt при reveal; reduced motion.
 - [x] **5.** Фон полного слова без лишней внешней карточки/рамки, как flat референс.
 - [x] **6.** Номер/состояние значения над карточкой, не в разрыве рамки.
-- [ ] **7.** Шеврон значения без фоновой кнопки, ближе к правому верхнему углу.
+- [x] **7.** Шеврон значения без фоновой кнопки, ближе к правому верхнему углу.
 - [ ] **8.** Коллекции: простой заголовок/подсказка, плюс создания вместо перегруженной формы; сохранить реальные действия/ошибки.
 - [ ] **9.** Убрать видимый заголовок Сведения о слове; сохранить accessible dialog name/закрытие.
 - [ ] **10.** Убрать горизонтальный разделитель хедера approved UI.
@@ -50,3 +50,5 @@
 Пункт5: общая внешняя статья прозрачная, border/radius/shadow0 как flat reference; собственные поверхности/рамки значений сохранены. Training drawer больше не добавляет p-3 вокруг статьи. QA harness теперь наследует реальную practiceTheme вместо hardcoded dark canvas без токенов. Browser computed background transparent, border0; screenshot /tmp/407qa/correction5-flat.png. Dialog tests3pass, typecheck/lint/diff pass.
 
 Пункт6: CSS соответствует marker-placement=above референса: top-20px, прозрачные маркеры, номер слева5px, статус справа8px, внешние интервалы22/32px. Browser подтвердил bottom207px у обоих маркеров при top210px рамки; expanded/collapsed видны на снимке /tmp/407qa/correction6-above.png. Изменение только CSS, значения/статусы сохранены; diff check проходит.
+
+Пункт7: шеврон без фоновой заливки, смещение8px к верхнему правому углу; зона28px и focus-visible сохранены. Browser computed transparent; мышью свернуть и Enter раскрыть проверены, aria-expanded=true. Снимок /tmp/407qa/correction7-chevron.png. CSS-only; diff check pass.

@@ -111,7 +111,8 @@
   height: 28px;
   border: 0;
   border-radius: 8px;
-  background: var(--practice-surface-subtle);
+  background: transparent;
+  transform: translate(8px, -8px);
   color: var(--practice-text-muted);
   cursor: pointer;
 }

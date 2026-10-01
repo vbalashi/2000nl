@@ -1828,3 +1828,11 @@ No changed status calculations, ordering, identity or callbacks. Browser fixture
 with real theme confirms both marker bottoms207 are above frame top210; screenshot
 shows expanded and collapsed meanings and continuous borders. Screenshot:
 /tmp/407qa/correction6-above.png. CSS-only change; diff check passes. Next7 chevron.
+
+### 2026-10-01 — correction7 quiet meaning chevron
+
+Shared approved toggle background transparent, shifted8px right/up towards corner.
+Retains28px target, focus-visible outline and existing collapse/expand handlers.
+Browser verified computed transparent background and transform8/-8; click collapse
+and Enter expand succeed, aria-expanded=true. Final settled screenshot saved at
+/tmp/407qa/correction7-chevron.png. CSS-only; diff passes. Next8 collections dialog.
