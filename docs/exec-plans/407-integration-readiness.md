@@ -1609,3 +1609,45 @@ checkout. No secret values or remote production DB connection were exposed.
 Use the local-Supabase QA wrapper when loading this configuration, so provider
 settings cannot redirect database/auth requests to an external deployment. Live
 translation success still needs retesting with the new local process configuration.
+
+## Headword exclusion implementation — 2026-10-01
+
+The owner selected all ordinary word trainings, independently of saved setup.
+Migration 192 adds private Headword Group exclusion marks and immutable event
+receipts, with a service-only atomic writer and strict first-party API parsing.
+The existing pair boundary is unchanged for old clients/audio/exercise families.
+Ordinary planning, daily queue availability, latched reads and review guards now
+respect group marks in both recall directions. Training consumes only its owned
+current member; Library supplies no fake session or direction. Undo restores the
+exact own mark without rewinding session actions, Known or FSRS. Delayed retries
+return their immutable original receipt rather than re-excluding after Undo.
+
+Training and Library use the shared exclusion/undo owner. Library's approved menu
+contains Exclude word, the original Known capability and Report; opening the menu
+is read-only. Copy is in EN/NL/RU catalogs. Training resets prefetched turns after
+group exclusion. Only a successful exact server Undo unlocks the still-open
+Library action; dismissal and another user's mark cannot unlock it.
+
+Evidence: all 277 SQL/FSRS tests pass in 29 files, including five new headword
+scenarios covering sibling/future meanings, directions, other groups/users,
+independent audio/idiom/sentence families, no progress rewrites, immutable retry,
+stale/foreign Undo, revoked dictionary access, session ordering/budget and a
+concurrent sibling review. An expanded candidate test initially failed because
+the scheduler read the old pair table directly; added a guarded patch preserving
+the latest scheduler body. A queue fixture initially used requested_total=0;
+corrected its test budget to the real finite-session contract. No product logic
+was changed to accommodate that fixture.
+
+Full UI run: 196 files / 1,593 tests pass, 26 DB files / 264 tests skipped and
+covered by the separate disposable DB run. Subsequent receipt/Undo additions:
+40 focused API, client, Library and hook checks pass; typecheck passes. Lint passes
+with the existing audio-effect dependency warning at TrainingSenseCardV2Session
+line618. Theme/style guard passes (legacy literal ratchet 1,362). Manifest validates
+contract192; migration/probe checksums are registered. Bootstrap additionally
+includes the previously omitted190/191 history migrations before192.
+
+Pending for this checkpoint: commit, retaining local forward apply/postflight and
+real authenticated browser Exclude/Undo smoke. Translation configuration is now
+present, but successful sentence provider/reveal/grade smoke still requires a new
+local QA process loading that environment. No production rollout/flag changes,
+push, merge or reset have been performed. Goal remains active.

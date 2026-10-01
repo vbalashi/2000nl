@@ -91,7 +91,7 @@ type Props = {
     state: Exclude<TrainingV2SessionState, "loading" | "ready">,
   ) => void | Promise<void>;
   onProgressActionAccepted: (
-    capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" },
+    capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" | "exclude-headword" },
   ) => Promise<
     Extract<
       TrainingCardSwipeCommitOutcome,
@@ -630,10 +630,12 @@ export function TrainingSenseCardV2Session({
     onPendingChange: onProgressActionPendingChange,
     onStarting: onProgressActionStarting,
     onSessionSuperseded: onTrainingSessionSuperseded,
-    target: { kind: "meaning", entryId: word.id, cardTypeId: mode },
+    target: mode === "word-to-definition" || mode === "definition-to-word"
+      ? { kind: "headword", entryId: word.id, cardTypeId: mode }
+      : { kind: "meaning", entryId: word.id, cardTypeId: mode },
     onAccepted: async () => {
       try {
-        await onProgressActionAccepted({ actionId: "exclude-pair" });
+        await onProgressActionAccepted({ actionId: mode === "word-to-definition" || mode === "definition-to-word" ? "exclude-headword" : "exclude-pair" });
       } catch (cause) {
         setAcceptedActionRecoveryPending(true);
         setError(
@@ -803,6 +805,7 @@ export function TrainingSenseCardV2Session({
           }
           exclusionAction={exclusion.available ? (
             <TrainingExcludeAction language={interfaceLanguage}
+              scope={mode === "word-to-definition" || mode === "definition-to-word" ? "headword" : "pair"}
               knownAction={model.markKnownCapability ? {
                 label: platformV2Message(interfaceLanguage, model.markKnownCapability.messageKey),
                 onClick: () => void handleAction(model.markKnownCapability!),

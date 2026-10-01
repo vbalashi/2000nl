@@ -5,9 +5,10 @@ import type {
   TrainingExclusionTarget,
 } from "../../../../../packages/shared/types/trainingExclusion";
 import { performTrainingExclusion } from "@/lib/platform/trainingExclusionClient";
-import { rememberExclusionUndo } from "./trainingExclusionUndoStore";
+import { rememberExclusionUndo, subscribeRestoredExclusion } from "./trainingExclusionUndoStore";
 /** Freeze an intentional request until accepted; uncertain retries reuse it. */
 export function useTrainingExclusion({
+  context = "training",
   userId,
   identity,
   sessionId,
@@ -17,6 +18,7 @@ export function useTrainingExclusion({
   onStarting,
   onSessionSuperseded,
 }: {
+  context?: "training" | "library";
   userId: string;
   identity: string;
   sessionId: string | null | undefined;
@@ -30,12 +32,14 @@ export function useTrainingExclusion({
     [failed, setFailed] = React.useState(false);
   const pending = React.useRef<TrainingExclusionRequest | null>(null);
   const accepted = React.useRef(false);
+  const acceptedMark = React.useRef<string | null>(null);
   const running = React.useRef(false),
     generation = React.useRef(0);
   React.useEffect(() => {
     const currentGeneration=++generation.current;
     pending.current = null;
     accepted.current = false;
+    acceptedMark.current = null;
     running.current = false;
     setBusy(false);
     setFailed(false);
@@ -43,8 +47,13 @@ export function useTrainingExclusion({
       generation.current=currentGeneration+1;
     };
   }, [identity, userId, sessionId]);
+  React.useEffect(()=>subscribeRestoredExclusion((owner,mark)=>{
+    if (context === "library" && owner === userId && acceptedMark.current === mark) {
+      accepted.current=false;acceptedMark.current=null;setBusy(false);setFailed(false);
+    }
+  }),[context,userId]);
   const exclude = async () => {
-    if (running.current || accepted.current || !sessionId) return;
+    if (running.current || accepted.current || !userId || (!sessionId && !(context === "library" && target.kind === "headword"))) return;
     running.current = true;
     setBusy(true);
     setFailed(false);
@@ -52,27 +61,28 @@ export function useTrainingExclusion({
     const token = {};
     onPendingChange?.(true, token);
     onStarting?.();
-    const request = pending.current ?? {
-      actionId: "exclude-pair" as const,
-      clientEventId: crypto.randomUUID(),
-      trainingSessionId: sessionId,
-      target,
-    };
+    const request: TrainingExclusionRequest = pending.current ?? (target.kind === "headword" ? {
+      actionId: "exclude-headword", clientEventId: crypto.randomUUID(), target,
+      ...(sessionId ? {trainingSessionId:sessionId} : {}),
+    } : {
+      actionId: "exclude-pair", clientEventId: crypto.randomUUID(), trainingSessionId: sessionId!, target,
+    });
     pending.current = request;
     try {
       const receipt = await performTrainingExclusion(request);
       rememberExclusionUndo({
         userId,
         request: {
-          actionId: "restore-pair",
+          actionId: request.target.kind === "headword" ? "restore-headword" : "restore-pair",
           clientEventId: crypto.randomUUID(),
           exclusionId: receipt.exclusionId,
-          target: request.target,
+          target: request.target.kind === "headword" ? { kind: "headword", entryId: request.target.entryId } : request.target,
         },
       });
       if (current !== generation.current) return;
       pending.current = null;
       accepted.current = true;
+      acceptedMark.current = receipt.exclusionId;
       await onAccepted();
     } catch (cause) {
       if (current !== generation.current) return;
@@ -87,7 +97,7 @@ export function useTrainingExclusion({
       onPendingChange?.(false, token);
       if (current === generation.current) {
         running.current = false;
-        setBusy(false);
+        setBusy(accepted.current);
       }
     }
   };
@@ -95,6 +105,6 @@ export function useTrainingExclusion({
     busy: busy || accepted.current,
     failed,
     exclude,
-    available: Boolean(sessionId),
+    available: Boolean(userId && (sessionId || (context === "library" && target.kind === "headword"))),
   };
 }

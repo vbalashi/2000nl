@@ -550,7 +550,10 @@
         "done": "Pair excluded from training",
         "undo": "Undo",
         "failed": "Could not complete the action. Try again.",
-        "dismiss": "Dismiss"
+        "dismiss": "Dismiss",
+        "headwordLabel": "Exclude word",
+        "headwordHelp": "Exclude every meaning of this word from ordinary word training in both directions",
+        "headwordDone": "Word excluded from word training"
       },
       "completedOne": "{count} exercise completed",
       "completedFew": "{count} exercises completed",

@@ -71,3 +71,16 @@ test('approved Library keeps selected meaning and dispatches original server cap
  expect(card).toHaveAttribute('data-expanded','true');
  expect(screen.queryByRole('menu')).not.toBeInTheDocument();
 });
+
+test.each(['en','nl','ru'] as const)('Library word exclusion menu is read-only until the explicit localized action (%s)',language=>{
+ vi.stubEnv('NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1','true');const action=vi.fn(),exclude=vi.fn(),report=vi.fn();
+ const model=buildLibrarySenseCardGroupModel(multiSenseBankGroup,language),selected=model.meanings[1];
+ render(<LibrarySenseCardGroup model={model} activeMeaningId={selected.entryId} interfaceLanguage={language} onAction={action} onExclude={exclude} onReport={report} reportableEntryIds={new Set([selected.entryId])}/>);
+ const card=screen.getByTestId('library-sense-card-'+selected.entryId);
+ fireEvent.click(within(card).getByRole('button',{name:getUiMessages(language).library.moreActions}));
+ expect(exclude).not.toHaveBeenCalled();expect(action).not.toHaveBeenCalled();expect(report).not.toHaveBeenCalled();
+ const menu=screen.getByRole('menu');expect(within(menu).getAllByRole('menuitem')).toHaveLength(3);
+ fireEvent.click(within(menu).getByRole('menuitem',{name:getUiMessages(language).trainingSession.exclusion.headwordLabel}));
+ expect(exclude).toHaveBeenCalledTimes(1);expect(action).not.toHaveBeenCalled();expect(report).not.toHaveBeenCalled();
+ expect(screen.queryByRole('menu')).not.toBeInTheDocument();expect(card).toHaveAttribute('data-expanded','true');
+});

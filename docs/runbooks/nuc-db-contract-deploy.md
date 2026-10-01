@@ -264,7 +264,7 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 189 in order
+An enabled deployment must apply or verify migrations 123 through 192 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -644,3 +644,24 @@ language. Coverage counts distinct started meaning cards over readable, enabled
 entries; due counts scheduled directions as the current study-day counters do.
 Dictionary ACLs are evaluated live; no grants, tables or learner state change.
 Apply with the checksummed manifest via retaining migration.
+
+## Ordinary headword exclusions (migration 192)
+
+`perform_training_headword_exclusion_as_principal_v1` is a service-only mutation
+boundary for the first-party UI. The API derives the learner from authentication.
+An explicit headword target resolves durable Headword Group identity from an entry;
+all its meanings are unavailable in the two ordinary recall directions across
+saved setups and future launches. Audio modes, idioms and sentence exercises
+retain their existing independent pair exclusions. No Known or FSRS state is
+rewritten. Existing pair APIs and immutable receipts remain compatible.
+
+A Training request must consume its owned current session member atomically;
+Library requests carry neither a fabricated session nor a card direction. Undo
+requires the exact user's active mark. Event UUID/hash receipts make uncertain
+retries safe, including a delayed exclusion retry after Undo. The active-group
+partial index and shared headword lock cover planning, latched availability and
+review races; legacy review lock ordering also includes the headword lock.
+
+The manifest registers migration 192 and forward/read-only postflight checks.
+Use retaining local `apply`; do not reset a populated database. This registration
+does not authorize NUC/production rollout or flag enablement.

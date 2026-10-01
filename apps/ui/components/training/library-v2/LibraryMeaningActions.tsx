@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, Flag, List, MoreHorizontal } from "lucide-react";
+import { Check, EyeOff, Flag, List, MoreHorizontal } from "lucide-react";
 import { ActionMenu, type ActionMenuItem } from "@/components/practice/ui/ActionMenu";
 import { getUiMessages } from "@/lib/uiMessages";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -10,7 +10,7 @@ import type { LibraryMutationCapability, LibrarySenseCardModel } from "./library
 import s from "@/components/practice/article/articleActions.module.css";
 
 /** Presentation adapter; authoritative capabilities and callbacks stay with the owner. */
-export function LibraryMeaningActions({ meaning, language, busy, collectionCount, onAction, onCollections, onTrainNext, onReport }: {
+export function LibraryMeaningActions({ meaning, language, busy, collectionCount, onAction, onCollections, onTrainNext, onReport, onExclude, exclusionDisabled }: {
   meaning: LibrarySenseCardModel;
   language: OnboardingLanguage;
   busy: boolean;
@@ -19,6 +19,8 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
   onCollections?: () => void;
   onTrainNext?: () => void;
   onReport?: () => void;
+  onExclude?: () => void;
+  exclusionDisabled?: boolean;
 }) {
   const [anchor, setAnchor] = React.useState<HTMLButtonElement | null>(null);
   const trigger = React.useRef<HTMLButtonElement>(null);
@@ -27,6 +29,8 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
   const labels = getUiMessages(language).library;
   const primary = meaning.undoKnown ?? meaning.startLearning;
   const items: ActionMenuItem[] = [];
+  if (onExclude) items.push({id:"exclude",label:getUiMessages(language).trainingSession.exclusion.headwordLabel,icon:<EyeOff size={15} aria-hidden="true"/>,disabled:busy || exclusionDisabled,
+    onSelect:()=>{close();onExclude();}});
   if (meaning.markKnown) items.push({id:"known",label:t(meaning.markKnown.messageKey),icon:<Check size={15} aria-hidden="true"/>,disabled:busy,
     onSelect:()=>{close();onAction(meaning.markKnown!);}});
   if (onReport) items.push({id:"report",label:t("senseCard.report"),icon:<Flag size={15} aria-hidden="true"/>,disabled:busy,

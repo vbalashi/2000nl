@@ -550,7 +550,10 @@
         "done": "Paar uitgesloten van training",
         "undo": "Ongedaan maken",
         "failed": "De actie is niet gelukt. Probeer opnieuw.",
-        "dismiss": "Sluiten"
+        "dismiss": "Sluiten",
+        "headwordLabel": "Woord uitsluiten",
+        "headwordHelp": "Sluit alle betekenissen van dit woord uit van gewone woordtraining in beide richtingen",
+        "headwordDone": "Woord uitgesloten van woordtraining"
       },
       "completedOne": "{count} oefening voltooid",
       "completedFew": "{count} oefeningen voltooid",

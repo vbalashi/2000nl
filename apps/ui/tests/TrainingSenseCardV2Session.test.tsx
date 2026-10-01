@@ -180,7 +180,7 @@ describe("TrainingSenseCardV2Session", () => {
         onProgressActionAccepted={onProgressActionAccepted} />);
       await screen.findByRole("heading", {name:"hand"});
       const exclusion = getUiMessages("en").trainingSession.exclusion;
-      fireEvent.click(screen.getByRole("button", {name:exclusion.help}));
+      fireEvent.click(screen.getByRole("button", {name:exclusion.headwordHelp}));
       expect(performAction).not.toHaveBeenCalled();
       fireEvent.click(screen.getByRole("menuitem", {name:platformV2Message("en",markKnown.messageKey)}));
       await waitFor(() => expect(onProgressActionAccepted).toHaveBeenCalledWith(markKnown));

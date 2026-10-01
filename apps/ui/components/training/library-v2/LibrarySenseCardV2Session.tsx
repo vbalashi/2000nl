@@ -2,6 +2,9 @@
 import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 
 import React from "react";
+import { useTrainingExclusion } from "../v2/useTrainingExclusion";
+import { TrainingExclusionUndoNotice } from "../v2/TrainingExclusionUndoNotice";
+import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -595,16 +598,24 @@ function SenseCardV2Session({
     [],
   );
 
+  const exclusionEntryId = model?.meanings[0]?.entryId ?? entryId;
+  const headwordExclusion = useTrainingExclusion({
+    context: "library", userId:userId ?? "", identity:group?.headwordGroupId ?? entryId,
+    sessionId:null, target:{kind:"headword",entryId:exclusionEntryId},
+    onAccepted:async()=>{},
+  });
+  const exclusionError = headwordExclusion.failed ? getUiMessages(interfaceLanguage).trainingSession.exclusion.failed : null;
+
   const lookupErrorText = lookupError
     ? platformV2Message(interfaceLanguage, `senseCard.lookup.${lookupError}`)
     : null;
   const errorNotice =
-    lookupErrorText || error ? (
+    lookupErrorText || error || exclusionError ? (
       <p
         role="alert"
         className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
       >
-        {lookupErrorText ?? error}
+        {lookupErrorText ?? error ?? exclusionError}
         {lookupError ? (
           <button
             type="button"
@@ -665,6 +676,7 @@ function SenseCardV2Session({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
+      {context === "library" && userId ? <TrainingExclusionUndoNotice userId={userId} language={interfaceLanguage}/> : null}
       <div className="min-h-0 flex-1">
         <LibrarySenseCardGroup
           contentLanguage={contentLanguageCode}
@@ -713,6 +725,8 @@ function SenseCardV2Session({
             setActiveReferenceTarget(target);
           }}
           onAction={(capability) => void handleAction(capability)}
+          onExclude={approved && context === "library" && userId && group?.headwordGroupId && model.meanings.length ? () => void headwordExclusion.exclude() : undefined}
+          exclusionDisabled={headwordExclusion.busy || Boolean(busyIdentity)}
           onReport={approved && showGlobalDetailsActions ? meaning => {
             if (!group) return;
             const entry = group.entries.find(candidate => candidate.kind === "sense-card" && candidate.entryId === meaning.entryId);

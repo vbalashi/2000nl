@@ -55,6 +55,8 @@ type Props = {
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
   onReport?: (meaning: LibrarySenseCardModel) => void;
+  onExclude?: () => void;
+  exclusionDisabled?: boolean;
   reportableEntryIds?: ReadonlySet<string>;
   onFollowCrossReference?: (target: {
     query: string;
@@ -86,6 +88,8 @@ export function LibrarySenseCardGroup({
   onOpenCollections,
   onTrainNext,
   onReport,
+  onExclude,
+  exclusionDisabled,
   reportableEntryIds,
   onFollowCrossReference,
   onAction,
@@ -396,6 +400,8 @@ export function LibrarySenseCardGroup({
                   onOpenCollections={onOpenCollections}
                   onTrainNext={onTrainNext}
                   onReport={onReport}
+                  onExclude={onExclude}
+                  exclusionDisabled={exclusionDisabled}
                   reportableEntryIds={reportableEntryIds}
                   onAction={(capability) => {
                     onActiveMeaningChange?.(capability.target.entryId);
@@ -432,6 +438,8 @@ function MeaningCard({
   onOpenCollections,
   onTrainNext,
   onReport,
+  onExclude,
+  exclusionDisabled,
   reportableEntryIds,
   onAction,
 }: {
@@ -453,6 +461,8 @@ function MeaningCard({
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
   onReport?: (meaning: LibrarySenseCardModel) => void;
+  onExclude?: () => void;
+  exclusionDisabled?: boolean;
   reportableEntryIds?: ReadonlySet<string>;
   onAction: (capability: LibraryMutationCapability) => void;
 }) {
@@ -639,6 +649,7 @@ function MeaningCard({
             {approvedArticle ? (
               <LibraryMeaningActions meaning={meaning} language={interfaceLanguage} busy={busy} collectionCount={collectionCount}
                 onAction={onAction}
+                onExclude={onExclude} exclusionDisabled={exclusionDisabled}
                 onCollections={onOpenCollections ? () => { onActiveMeaningChange?.(meaning.entryId); onOpenCollections(meaning); } : undefined}
                 onTrainNext={onTrainNext ? () => { onActiveMeaningChange?.(meaning.entryId); onTrainNext(meaning); } : undefined}
                 onReport={onReport && reportableEntryIds?.has(meaning.entryId) ? () => onReport(meaning) : undefined} />

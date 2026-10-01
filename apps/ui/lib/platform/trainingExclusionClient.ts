@@ -32,8 +32,10 @@ export async function performTrainingExclusion(
     data.actionId !== request.actionId ||
     typeof data.exclusionId !== "string" ||
     !data.exclusionId ||
-    data.excluded !== (request.actionId === "exclude-pair") ||
-    !["meaning", "idiom", "translation"].includes(data.family)
+    data.excluded !== (request.actionId === "exclude-pair" || request.actionId === "exclude-headword") ||
+    !["meaning", "idiom", "translation"].includes(data.family) ||
+    (request.target.kind === "headword" && (data.family !== "meaning" ||
+      typeof data.headwordGroupId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.headwordGroupId)))
   ) {
     throw new Error("invalid_training_exclusion_response");
   }

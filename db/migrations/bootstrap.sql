@@ -528,3 +528,8 @@
 
 -- Read-only review queue and coverage per learning material for Statistics.
 \i db/migrations/189_training_material_progress.sql
+
+-- Unified bounded recent action history and ordinary headword exclusions.
+\i db/migrations/190_recent_training_activity.sql
+\i db/migrations/191_bound_recent_training_activity.sql
+\i db/migrations/192_training_headword_exclusions.sql

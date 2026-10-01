@@ -17,13 +17,16 @@ export function TrainingExcludeAction({
   disabled,
   onClick,
   knownAction,
+  scope = "pair",
 }: {
+  scope?: "headword" | "pair";
   language: OnboardingLanguage;
   disabled: boolean;
   onClick: () => void;
   knownAction?: { label: string; onClick: () => void };
 }) {
-  const t = trainingExclusionCopy[language];
+  const copy = trainingExclusionCopy[language];
+  const t = scope === "headword" ? {...copy,label:copy.headwordLabel,help:copy.headwordHelp} : copy;
   const [anchor, setAnchor] = React.useState<HTMLButtonElement | null>(null);
   const trigger = React.useRef<HTMLButtonElement>(null);
   const close = React.useCallback(() => {
