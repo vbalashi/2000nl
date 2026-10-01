@@ -1867,3 +1867,14 @@ menu header unchanged. Actual owner Settings tab inspected read-only, no navigat
 or preferences writes: computed border0, height58px and screenshot match header
 composition without line. Screenshot /tmp/407qa/correction10-header.png. AppFrame
 tests/typecheck/diff pass. Next33 logo navigation, then2 theme control and34 loading.
+
+### 2026-10-01 — correction33 logo returns to Training
+
+AppFrame logo native button uses existing typed onNavigate(training), same pending
+navigationDisabled lock as destinations. Localized accessible label identifies
+destination, visible brand dimensions unchanged. Optional BrandLogo span avoids
+paragraph inside button, defaults preserve other callers. Unit regression verifies
+owner callback and no callback while pending; ten tests/typecheck/lint/diff pass.
+Separate browser QA tab navigated Settings→/ with Training overview visible; no
+start/grade, owner Settings tab unchanged. QA tab closed after screenshot saved
+/tmp/407qa/correction33-logo.png. Next2 theme icon, then34 initial loading.

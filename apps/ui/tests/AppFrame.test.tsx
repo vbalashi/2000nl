@@ -195,3 +195,19 @@ test("approved presentation replaces the mobile menu with a bottom tab bar", () 
     vi.unstubAllEnvs();
   }
 });
+
+
+test("logo navigates through the owner callback and obeys pending navigation lock", () => {
+  const onNavigate = vi.fn();
+  const props = { activeDestination: "settings" as const, interfaceLanguage: "en" as const,
+    themePreference: "system" as const, onNavigate, onCycleTheme: vi.fn(), onOpenSettings: vi.fn() };
+  const view = render(<AppFrame {...props}><p>Settings</p></AppFrame>);
+  fireEvent.click(screen.getByRole("button", { name: "2000nl: Training" }));
+  expect(onNavigate).toHaveBeenCalledWith("training");
+  onNavigate.mockClear();
+  view.rerender(<AppFrame {...props} navigationDisabled><p>Settings</p></AppFrame>);
+  const logo = screen.getByRole("button", { name: "2000nl: Training" });
+  expect(logo).toBeDisabled();
+  fireEvent.click(logo);
+  expect(onNavigate).not.toHaveBeenCalled();
+});

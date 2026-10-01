@@ -36,7 +36,7 @@
 - [ ] **30.** Автоматический профиль устройства без ручного селектора; новое уточнение supersedes ручной выбор, сохранить настройки профилей.
 - [ ] **31.** Text size компактно как режим темы, справа; сохранить масштаб и доступность.
 - [ ] **32.** Preview стандартным общим renderer, с рамкой; без отдельной несовпадающей разметки.
-- [ ] **33.** Логотип кликабелен → Training/home; соблюдать блокировку pending action.
+- [x] **33.** Логотип кликабелен → Training/home; соблюдать блокировку pending action.
 - [ ] **34.** Загрузка: логотип/фон/краткий статус без рамок, без Indigo flash, предпочтение до первого UI, плавное появление/reduced motion.
 
 Проверять референс desktop/mobile, EN/NL/RU, Normal/Extra, Light/Dark; реальные владельцы данных/действий и scheduling сохраняются.
@@ -58,3 +58,5 @@
 Пункт9: approved WordDetailsHeader содержит только close, без текста/заливки/разделителя; PracticePanel aria-label сохраняет название диалога. Общий Library/Training header, legacy прежний. Dialog test3pass включая имя/отсутствие visible текста/animated close; typecheck/lint/diff pass. Browser fixture open/close, снимок /tmp/407qa/correction9-header.png.
 
 Пункт10: approved header border-bottom0, legacy прежний. Browser реальная Settings вкладка без навигации/изменения preferences: border0, высота58px. Снимок /tmp/407qa/correction10-header.png; AppFrame tests/typecheck/diff проходят.
+
+Пункт33: логотип — native button с локализованным назначением, вызывает существующий onNavigate(training), disabled при navigationDisabled. В BrandLogo optional span для валидной вложенности, прочие p callers прежние. Browser отдельная вкладка Settings→/Training; никакого запуска/оценки. Тест10pass включая pending lock, typecheck/lint/diff pass. Снимок /tmp/407qa/correction33-logo.png.

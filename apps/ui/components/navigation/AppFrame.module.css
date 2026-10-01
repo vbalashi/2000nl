@@ -336,3 +336,7 @@
 }
 
 .headerApproved { border-bottom: 0; }
+
+.brandLink { justify-self:start;padding:0;border:0;background:none;color:inherit;cursor:pointer; }
+.brandLink:focus-visible { outline:2px solid var(--practice-focus);outline-offset:5px;border-radius:3px; }
+.brandLink:disabled { cursor:default; }

@@ -143,10 +143,11 @@ function AppHeader({
       data-testid="app-header"
       data-app-header="true"
     >
-      <BrandLogo
-        className={styles.brand}
-        accentClassName={styles.brandAccent}
-      />
+      <button type="button" className={styles.brandLink}
+        aria-label={`2000nl: ${appDestinationLabel(interfaceLanguage, "training")}`}
+        disabled={navigationDisabled} onClick={() => onNavigate("training")}>
+        <BrandLogo as="span" className={styles.brand} accentClassName={styles.brandAccent} />
+      </button>
       <div className={styles.desktopNav} data-app-primary-navigation="desktop">
         <AppDestinationNav
           active={
