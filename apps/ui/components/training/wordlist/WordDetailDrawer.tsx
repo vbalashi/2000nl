@@ -5,7 +5,7 @@ import type {
 } from "@/lib/types";
 import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { WordDetailsHeader } from "../WordDetailsHeader";
+import { WordDetailsHeader, WordDetailsCloseProvider } from "../WordDetailsHeader";
 import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import sheet from "@/components/practice/article/wordDetailsSheet.module.css";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -87,8 +87,9 @@ export function WordDetailDrawer({
     <button type="button" className={sheet.handle} aria-expanded={expanded}
       aria-label={getUiMessages(interfaceLanguage).library[expanded ? "collapseCard" : "expandCard"]}
       onClick={() => setExpanded(value => !value)}><span aria-hidden="true"/></button>
-    <WordDetailsHeader onClose={onClose} interfaceLanguage={interfaceLanguage} />
-    <div className="min-h-0 flex-1">{detail(entered)}</div>
+    <WordDetailsCloseProvider onClose={onClose} interfaceLanguage={interfaceLanguage}>
+      <div className="min-h-0 flex-1">{detail(entered)}</div>
+    </WordDetailsCloseProvider>
   </section>;
 
   return (

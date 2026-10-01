@@ -26,7 +26,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 - [x] 24 — 50 words/page; floating centered arrows, current/total red label; final item scrolls above controls.
 - [x] 22 — Library desktop list/article panes, no training right drawer.
 - [x] 23 — Mobile Library bottom sheet starts half-height; handle expands/collapses, X closes.
-- [ ] 13 — Close inline with audio/translation; larger gap before close.
+- [x] 13 — Close inline with audio/translation; larger gap before close.
 - [ ] 14 — Compare Normal headword size and article gap with prototype.
 - [ ] 12 — Expose canonical exclusion action alongside Known in article.
 - [ ] 16 — Investigate action history/Undo; document separate case if additional contract work required.

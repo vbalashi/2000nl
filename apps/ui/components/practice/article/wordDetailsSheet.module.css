@@ -56,3 +56,7 @@
 .handle:focus-visible { outline:2px solid var(--practice-focus);outline-offset:-3px; }
 @keyframes sheetEnter { from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1} }
 @media(prefers-reduced-motion:reduce){.librarySheet{transition:none;animation:none}}
+
+.closeHost { position:relative;display:flex;flex-direction:column;flex:1;min-height:0; }
+.fallbackClose { position:absolute;top:0;right:0;z-index:2; }
+.closeHost:has([data-testid=library-sense-card-group]) > .fallbackClose { display:none; }

@@ -5,6 +5,15 @@ import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rol
 import { X } from "lucide-react";
 import sheet from "@/components/practice/article/wordDetailsSheet.module.css";
 
+const WordDetailsCloseContext = React.createContext<(() => void) | null>(null);
+export const useWordDetailsClose = () => React.useContext(WordDetailsCloseContext);
+export function WordDetailsCloseProvider({onClose,interfaceLanguage,children}:{onClose:()=>void;interfaceLanguage:OnboardingLanguage;children:React.ReactNode}) {
+  return <WordDetailsCloseContext.Provider value={onClose}><div className={sheet.closeHost}>
+    <div className={sheet.fallbackClose}><WordDetailsHeader onClose={onClose} interfaceLanguage={interfaceLanguage}/></div>
+    {children}
+  </div></WordDetailsCloseContext.Provider>;
+}
+
 export function WordDetailsHeader({ onClose, interfaceLanguage }: {
   onClose: () => void;
   interfaceLanguage: OnboardingLanguage;

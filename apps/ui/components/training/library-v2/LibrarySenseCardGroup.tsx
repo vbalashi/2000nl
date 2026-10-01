@@ -1,4 +1,5 @@
 "use client";
+import { useWordDetailsClose } from "../WordDetailsHeader";
 
 import React from "react";
 import { LibraryMeaningActions } from "./LibraryMeaningActions";
@@ -216,6 +217,7 @@ export function LibrarySenseCardGroup({
     };
   }, [model, updateScrollEdges, viewState]);
 
+  const closeDetails = useWordDetailsClose();
   const translationsVisible = model.meanings.every((meaning) => {
     const identity = librarySenseCardIdentity(
       meaning.entryId,
@@ -274,7 +276,7 @@ export function LibrarySenseCardGroup({
           coreVocabularyLabel={model.coreVocabularyLabel}
           tone="light"
           headerActions={
-            translationEnabled || (onPlayAudio && model.audioCapability) ? (
+            closeDetails || translationEnabled || (onPlayAudio && model.audioCapability) ? (
               <>
                 {translationEnabled ? (
                   <SenseCardHeaderAction
@@ -301,6 +303,10 @@ export function LibrarySenseCardGroup({
                     <AudioIcon />
                   </SenseCardHeaderAction>
                 ) : null}
+                {closeDetails && <span className={surfaces.closeAction}><SenseCardHeaderAction
+                  label={platformV2Message(interfaceLanguage,"common.close")} onClick={closeDetails}>
+                  <span aria-hidden="true">×</span>
+                </SenseCardHeaderAction></span>}
               </>
             ) : undefined
           }

@@ -79,3 +79,5 @@
   background: transparent;
   line-height: 1.45;
 }
+
+.closeAction { display:inline-flex;margin-left:16px; }

@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { WordDetailsHeader } from "./WordDetailsHeader";
+import { WordDetailsHeader, WordDetailsCloseProvider } from "./WordDetailsHeader";
 import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import sheet from "@/components/practice/article/wordDetailsSheet.module.css";
 import { PracticePanel } from "@/components/practice/ui/PracticePanel";
@@ -110,12 +110,11 @@ export function TrainingDetailsDrawer({
     >
       {dismiss => {
         dismissRef.current = dismiss;
-        return <>
-          <WordDetailsHeader onClose={dismiss} interfaceLanguage={interfaceLanguage} />
+        return <WordDetailsCloseProvider onClose={dismiss} interfaceLanguage={interfaceLanguage}>
           <div className="min-h-0 flex-1">
             {typeof children === "function" ? children(entered) : children}
           </div>
-        </>;
+        </WordDetailsCloseProvider>;
       }}
     </PracticePanel>
   );
