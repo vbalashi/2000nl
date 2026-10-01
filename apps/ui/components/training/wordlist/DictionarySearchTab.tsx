@@ -8,6 +8,7 @@ import {
 } from "@/lib/uiMessages";
 
 import React from "react";
+import { LIBRARY_PAGE_SIZE } from "@/lib/platform/libraryPagination";
 import { SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { LibraryResultList, LibraryResultRow } from "@/components/practice/library/LibraryResultList";
 import { LibraryEntryEditor } from "@/components/practice/library/LibraryEntryEditor";
@@ -181,7 +182,7 @@ export function DictionarySearchTab({
   );
   const queryRef = useRef<HTMLInputElement | null>(null);
   const latestDetailRequestRef = useRef(0);
-  const pageSize = 20;
+  const pageSize = approved ? LIBRARY_PAGE_SIZE : 20;
   const updateSearchState = useCallback(
     (patch: Partial<DictionarySearchTabState>) => {
       onSearchStateChange((current) => ({ ...current, ...patch }));
@@ -623,7 +624,7 @@ export function DictionarySearchTab({
       : copy.emptyQueryHint;
 
   const results = (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+    <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${approved ? workspace.listPane : ""}`}>
       <div
         className={
           approved
@@ -1229,6 +1230,7 @@ export function DictionarySearchTab({
                 total: number(wordTotal),
               })}
         </span>}
+        {approved && <span className={workspace.pageIndicator}>{number(page)} / {number(Math.max(1,Math.ceil((useViewedListFilter ? wordTotal : (groupTotal ?? 0))/pageSize)))}</span>}
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -1238,6 +1240,7 @@ export function DictionarySearchTab({
                 page: Math.max(1, current.page - 1),
               }))
             }
+            aria-label={copy.previous}
             disabled={page === 1}
             className={
               approved
@@ -1245,7 +1248,7 @@ export function DictionarySearchTab({
                 : "rounded-full border border-slate-300 px-3 py-1 font-semibold disabled:opacity-50 dark:border-slate-700"
             }
           >
-            {copy.previous}
+            {approved ? <ChevronLeft size={18} aria-hidden="true"/> : copy.previous}
           </button>
           <button
             type="button"
@@ -1255,6 +1258,7 @@ export function DictionarySearchTab({
                 page: current.page + 1,
               }))
             }
+            aria-label={copy.next}
             disabled={
               groupedSearchActive ? !groupHasMore : page * pageSize >= wordTotal
             }
@@ -1264,7 +1268,7 @@ export function DictionarySearchTab({
                 : "rounded-full border border-slate-300 px-3 py-1 font-semibold disabled:opacity-50 dark:border-slate-700"
             }
           >
-            {copy.next}
+            {approved ? <ChevronRight size={18} aria-hidden="true"/> : copy.next}
           </button>
         </div>
       </div>

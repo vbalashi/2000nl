@@ -244,3 +244,9 @@
     display: flex;
   }
 }
+
+.listPane { position:relative; }
+.listPane .results { padding-bottom:86px; }
+.listPane .pagination { position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:5px;padding:7px 10px;border-radius:16px;background:var(--practice-surface);box-shadow:0 3px 15px var(--practice-shadow);z-index:2; }
+.listPane .pagination > div { margin:0;flex-wrap:nowrap; }
+.pageIndicator { color:var(--practice-danger);font-size:var(--practice-text-label);white-space:nowrap; }
