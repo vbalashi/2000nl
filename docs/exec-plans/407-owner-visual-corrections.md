@@ -18,7 +18,7 @@
 - [x] **12.** Убрать Мой словарь / Добавить запись из первичного toolbar, сохранить существующий API/данные.
 - [x] **13.** Убрать Введите слово для поиска из toolbar.
 - [x] **14.** Library сразу показывает упорядоченные результаты текущего фильтра без запроса; реальные данные, пагинация, ACL, загрузка/ошибки.
-- [ ] **15.** Library Filters: число результатов/загрузка/ошибка, не требовать поисковое слово.
+- [x] **15.** Library Filters: число результатов/загрузка/ошибка, не требовать поисковое слово.
 - [ ] **16.** Артикли только de/het; обе/ни одной — нет ограничения; единый выбор Builder/Library.
 - [ ] **17.** Направление: общие карточки референса с разделителем и конкретными примерами выбранного языка; fallback без образца.
 - [ ] **18.** Сверить слово в контексте с решениями, объяснить выключенный Translation/gates; не менять production gates молча.
@@ -74,3 +74,5 @@
 Пункт13: при пустом запросе approved toolbar больше не рендерит copy.typeQuery и пустой контейнер строки. Счётчик при запросе/collection scope сохранён, legacy подсказка прежняя. Tests23pass включая EN/NL/RU, typecheck/lint pass. Browser no-query/all-sources подтверждён, screenshot /tmp/407qa/correction13-toolbar.png; пустые результаты остаются задачей14.
 
 Пункт14: scoped approved Library сразу загружает alphabetic whole-group результаты текущего фильтра через серверный browse path. Пагинация/число/ACL/material selection сохранены; Platform empty lookup прежний. Browser cold reload14449groups и две страницы, screenshot /tmp/407qa/correction14-initial.png. SQL rollback regression проверяет закрытый словарь, disabled dictionary, paused nl, cursor filters/source invalidation, порядок/неповторение/фильтры. UI initial loading/failure/retry regression passes; grouping25 + earlier route29/hook2, typecheck/lint pass.
+
+Пункт15: фильтры отправляют пустой query в существующий scoped preview, footer показывает real count/loading/error+retry без typeQuery. Debounce/cancellation/material guards/draft-only behavior сохранены. Tests7pass включая пустой query failure/retry, typecheck/lint pass. Browser RU no-query VanDale Dutch noun+verb count10937, screenshot /tmp/407qa/correction15-count.png; закрыто Отменой без применения draft.

@@ -78,3 +78,17 @@ test("paused or unavailable material cannot trigger a preview or apply", async (
   await screen.findByText("0 matching articles");
   expect(screen.getByRole("button", { name: "Show results" })).toBeEnabled();
 });
+
+test("empty query previews the current filter and exposes loading, failure and retry", async () => {
+  let reject!: (cause: Error) => void;
+  mocked.fetchPage.mockImplementationOnce(()=>new Promise((_resolve,fail)=>{reject=fail;}));
+  mocked.fetchPage.mockResolvedValueOnce({librarySearch:{totalGroups:14449}});
+  render(<AccountLibraryFilters {...props} query="" />);
+  expect(screen.queryByText("Enter a word to search")).not.toBeInTheDocument();
+  await waitFor(()=>expect(mocked.fetchPage).toHaveBeenCalledTimes(1));
+  expect(mocked.fetchPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}}));
+  expect(screen.queryByText(/matching articles/)).not.toBeInTheDocument();
+  await act(async()=>{reject(new Error("offline"));});
+  fireEvent.click(await screen.findByRole("button",{name:"Try again"}));
+  await screen.findByText("14,449 matching articles");
+});

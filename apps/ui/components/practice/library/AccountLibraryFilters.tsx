@@ -58,7 +58,7 @@ export function AccountLibraryFilters({ value, query, locale, onClose, onApply }
 
   useEffect(() => {
     const request: PreviewScope = JSON.parse(key);
-    if (!request.query || !request.available) return;
+    if (!request.available) return;
     const controller = new AbortController();
     setPreview({ key, status: "loading" });
     const timer = window.setTimeout(() => {
@@ -99,8 +99,7 @@ export function AccountLibraryFilters({ value, query, locale, onClose, onApply }
   ) : null;
 
   let countContent: React.ReactNode = materialCopy.loading;
-  if (!query.trim()) countContent = copy.typeQuery;
-  else if (!ready) {
+  if (!ready) {
     if (material?.status === "error") countContent = materialCopy.catalogError;
     else if (material?.status === "ready") {
       countContent = material.currentLanguageAllowed ? copy.noSources : copy.noLanguages;
