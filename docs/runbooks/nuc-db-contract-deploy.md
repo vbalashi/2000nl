@@ -264,7 +264,7 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 192 in order
+An enabled deployment must apply or verify migrations 123 through 193 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -665,3 +665,12 @@ review races; legacy review lock ordering also includes the headword lock.
 The manifest registers migration 192 and forward/read-only postflight checks.
 Use retaining local `apply`; do not reset a populated database. This registration
 does not authorize NUC/production rollout or flag enablement.
+
+## Directional Known (migration 193)
+
+New Known marks use the selected card direction. Existing ordinary paired marks
+retain server-owned `meaning` scope, immutable action receipts and paired Undo.
+Undo of a historical mark clears only its sibling with the same originating
+event; an independent directional mark is not cleared. Audio remains directional.
+The migration does not rewrite FSRS or action history, or enable rollout flags.
+Forward/read-only postflight verifies the default, trigger guard and table boundary.

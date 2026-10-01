@@ -76,6 +76,22 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
           }),
         );
 
+        const directional = await client.query(
+          `select card_type_id, mark_scope from user_card_known_marks
+            where user_id = $1 and entry_id = $2 and cleared_at is null`,
+          [userId, entryId],
+        );
+        expect(directional.rows).toEqual([
+          { card_type_id: cardTypeId, mark_scope: 'direction' },
+        ]);
+        const reverse = await client.query(
+          `select known_mark_id from get_platform_v2_card_states_for_entries(
+             $1, ARRAY[$2]::uuid[], ARRAY['definition-to-word']::text[]
+           )`,
+          [userId, entryId],
+        );
+        expect(reverse.rows).toEqual([{ known_mark_id: null }]);
+
         const state = await client.query(
           `select fsrs_reps, fsrs_lapses, fsrs_last_grade, last_reviewed_at,
                   in_learning, hidden, frozen_until
@@ -147,7 +163,43 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
     );
   });
 
-  test("shares Known and its undo across directions without copying FSRS history", async () => {
+  test("undoes a new directional Known without clearing an independent reverse mark", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      await ensureUserWithSettings(client, userId);
+      const entryId = await insertWord(client, `directional-known-${randomUUID()}`);
+      const marks = [];
+      for (const direction of ['word-to-definition', 'definition-to-word']) {
+        const { rows } = await client.query(
+          `select perform_platform_v2_card_action(
+             $1::uuid, 'mark-known', $2::uuid, $3::text, 'untracked',
+             null, null, null, $4::uuid, null, 'first_party', null
+           ) as result`,
+          [userId, entryId, direction, randomUUID()],
+        );
+        expect(rows[0].result.status).toBe('accepted');
+        marks.push(rows[0].result.card);
+      }
+      const undo = await client.query(
+        `select perform_platform_v2_card_action(
+           $1::uuid, 'undo-known', $2::uuid, 'word-to-definition', $6::text,
+           $3::uuid, $4::text, null, $5::uuid, null, 'first_party', null
+         ) as result`,
+        [userId, entryId, marks[0].knownMark.markId, marks[0].knownMark.revision, randomUUID(), marks[0].stateRevision],
+      );
+      expect(undo.rows[0].result.status).toBe('accepted');
+      const remaining = await client.query(
+        `select id, card_type_id from user_card_known_marks
+          where user_id = $1 and entry_id = $2 and cleared_at is null`,
+        [userId, entryId],
+      );
+      expect(remaining.rows).toEqual([
+        { id: marks[1].knownMark.markId, card_type_id: 'definition-to-word' },
+      ]);
+    });
+  });
+
+  test("preserves historical meaning-wide Known and its paired undo without copying FSRS history", async () => {
     const userId = randomUUID();
     const directMarkEventId = randomUUID();
     const undoEventId = randomUUID();
@@ -168,6 +220,22 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
       );
       expect(marked.rows[0].result.card.knownMark).toEqual(
         expect.objectContaining({ markId: expect.any(String) }),
+      );
+
+      // Simulate an existing pre-193 decision. The old paired scope remains
+      // server-owned; new normal RPC inserts use the directional default.
+      await client.query(
+        `update user_card_known_marks set mark_scope = 'meaning'
+          where user_id = $1 and entry_id = $2`,
+        [userId, entryId],
+      );
+      await client.query(
+        `insert into user_card_known_marks
+           (user_id, entry_id, card_type_id, marked_at, mark_event_id, mark_scope)
+         select user_id, entry_id, 'definition-to-word', marked_at, mark_event_id, 'meaning'
+           from user_card_known_marks
+          where user_id = $1 and entry_id = $2 and card_type_id = 'word-to-definition'`,
+        [userId, entryId],
       );
 
       const bothDirections = await client.query(
@@ -1333,7 +1401,7 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
                where user_id = $1 and entry_id = $3) as marks`,
           [userId, clientEventId, entryId],
         );
-        expect(counts.rows).toEqual([{ events: 1, marks: 2 }]);
+        expect(counts.rows).toEqual([{ events: 1, marks: 1 }]);
       },
       userId,
     );

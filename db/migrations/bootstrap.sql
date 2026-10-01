@@ -533,3 +533,5 @@
 \i db/migrations/190_recent_training_activity.sql
 \i db/migrations/191_bound_recent_training_activity.sql
 \i db/migrations/192_training_headword_exclusions.sql
+
+\i db/migrations/193_directional_known_marks.sql

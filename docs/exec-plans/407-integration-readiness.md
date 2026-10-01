@@ -1698,3 +1698,21 @@ marks and exact Undo, preserving existing paired marks/receipts/history rather
 than deleting past learner decisions. Update the domain glossary and owning
 regressions together. This is concrete remaining work, not a completion claim or
 request for another product decision. Goal remains active; no push/merge/deploy.
+
+### 2026-10-01 — Directional Known, migration 193
+
+Owner confirmed Exclude across all ordinary word trainings; Known remains one
+meaning and selected direction. Migration 138's trigger was the mismatch.
+Migration 193 defaults new marks to server-owned directional scope; existing
+ordinary marks retain meaning scope and original paired Undo/receipts. Historical
+Undo matches originating event, never an independent new reverse mark. Audio
+remains directional; FSRS and history are not rewritten. Table writes remain
+RPC-only. Updated current decisions and CONTEXT; registered forward/read-only
+193 contract with exact checksum and bootstrap order.
+
+Validation: 29 disposable SQL suites / 278 tests passed, including independent
+reverse Known/Undo, legacy paired Undo, replay and scheduler protection. Typecheck
+and active guidance check passed. First managed apply rejected the missing
+transaction wrapper; added the required BEGIN/COMMIT and regenerated checksum
+before retry. Full integration goal remains active; this closes the Known
+semantics mismatch, not the remaining UI/integration acceptance work.
