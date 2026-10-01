@@ -2081,3 +2081,7 @@ Wrapped direction cards grow within the244px cap;700px shows two244×200 cards s
 ### Final multilingual narrow Library correction
 
 Actual NL Extra395px exposed clipped filter and pagination buttons despite document-level overflow being hidden. Added min-width0 to results flex child and wrapping to approved pagination. Verified both controls inside viewport in NL395 and EN320 dark/Extra.25 grouping tests and typecheck pass. API, query, cursor and action owners unchanged. Final full combination matrix remains open.
+
+### Scaled calendar threshold
+
+Final RU Light/Extra desktop audit exposed crowded terminal month labels. Calendar container query now scales with its label font (63.636em), preserving700px threshold at11px Normal. Actual1280px Extra uses months, Normal uses year; day navigation/data owners unchanged. Nine Statistics tests pass. Library article/collections/filters also verified without writes. Final audit remains open.
