@@ -67,7 +67,11 @@ export function useTrainingPromptReveal({ root, revealed, enabled, identity, sou
     node.style.visibility = "hidden";
     document.body.append(overlay);
     setMoving(true);
-    const restore = () => { overlay.remove(); node.style.visibility = visibility; };
+    let handoffFrame = 0;
+    const restore = () => {
+      cancelAnimationFrame(handoffFrame);
+      overlay.remove(); node.style.visibility = visibility;
+    };
     let animation: Animation;
     try {
       animation = overlay.animate([
@@ -77,7 +81,26 @@ export function useTrainingPromptReveal({ root, revealed, enabled, identity, sou
     } catch {
       restore(); setMoving(false); return;
     }
-    animation.onfinish = () => { restore(); setMoving(false); };
+    animation.onfinish = () => {
+      node.style.visibility = visibility;
+      setMoving(false);
+      // The answer container fades in after motion. Keep the arrived question
+      // over it until the real text is opaque, avoiding a blank handoff frame.
+      let frames = 0;
+      const handoff = () => {
+        let opacity = 1;
+        for (let ancestor: HTMLElement | null = node; ancestor; ancestor = ancestor.parentElement) {
+          const value = getComputedStyle(ancestor).opacity;
+          opacity *= value === "" ? 1 : Number(value);
+        }
+        if (opacity >= 0.999 || !node.isConnected || ++frames >= 60) {
+          restore();
+        } else {
+          handoffFrame = requestAnimationFrame(handoff);
+        }
+      };
+      handoff();
+    };
     animation.oncancel = () => { restore(); setMoving(false); };
     const cancel = () => animation.cancel();
     window.addEventListener("resize", cancel);

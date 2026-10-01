@@ -1774,3 +1774,36 @@ Current training for dictionary-scope starts. New scope clears the display snaps
 additional header override regression11chrome tests passes. Typecheck and targeted
 lint pass. No DB/API/scheduler changes. User Settings tab left unchanged during
 inspection; no live start/grade submitted. Next correction4 reveal blink.
+
+### 2026-10-01 — correction4 investigation, incomplete
+
+Verified canonical3100 health: local contract193, approved presentation enabled.
+Found actual production motion owner `useTrainingPromptReveal` (the older
+`usePromptReveal` hook has no callers). Both ordinary and exercise cards use it.
+Isolated `/dev/sense-card-gate` renders the real TrainingSenseCardStage against
+fixtures, without starting or grading a user session. Opened a temporary IAB tab
+and inspected its face/answer control. No production code changed yet.
+
+The motion hook removes its clone and restores target visibility at420ms; approved
+CSS independently fades the entire header and answer scroll from opacity0 over140ms.
+This is a candidate handoff discontinuity, not yet a confirmed diagnosis. Need an
+actual frame trace before changing it. Initial read-only browser sampling failed
+because the evaluate scope does not expose performance.now; no trace obtained.
+Use documented CDP developer capability or a supported browser timing harness next.
+Correction4 remains unchecked. Existing next-env.d.ts generated diff remains unstaged.
+
+### 2026-10-01 — correction4 fixed: continuous prompt handoff
+
+CDP frame trace of the real fixture stage confirmed420ms motion completion removed
+the overlay before the140ms parent opacity transition. Three sampled frames had
+no overlay and header opacity0. The shared ordinary/exercise motion hook now keeps
+the arrived inert clone until target and ancestors reach full opacity, with bounded
+RAF cleanup and cancellation/unmount cleanup. No action or scheduling changes.
+The existing motion lock ends on arrival; reduced motion bypass remains unchanged.
+
+Regression at the hook seam reproduces the ancestor fade and failed before fix
+(expected overlay not null); all6tests pass after fix, including reduced motion,
+cancel, unmount and unsupported animation. Typecheck and targeted lint pass.
+Original browser scenario repeated:100frames, zero blank frames; overlay persisted
+through opacity0→1 then removed. Temporary trace global deleted. Screenshot:
+/tmp/407qa/correction4-reveal.png. Next correction5 word details surface/frame.

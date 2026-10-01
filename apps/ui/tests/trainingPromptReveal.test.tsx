@@ -87,3 +87,24 @@ test("unsupported animation execution falls back to a usable answer", () => {
   expect(document.querySelector<HTMLElement>("[data-answer]")!.style.visibility).toBe("");
   expect(screen.getByRole("button", { name: "Grade" })).toBeEnabled();
 });
+
+
+test("keeps the arrived prompt visible while its answer ancestor fades in", () => {
+  const { animation } = motion();
+  let nextFrame: FrameRequestCallback | undefined;
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => { nextFrame = callback; return 1; });
+  vi.stubGlobal("cancelAnimationFrame", vi.fn());
+  render(<Harness />);
+  fireEvent.click(screen.getByRole("button", { name: "Reveal" }));
+  const answer = document.querySelector<HTMLElement>("[data-answer]")!;
+  answer.parentElement!.style.opacity = "0";
+  act(() => animation.onfinish?.());
+  expect(document.querySelector("[data-training-reveal-overlay]")).not.toBeNull();
+  expect(answer.style.visibility).toBe("");
+  answer.parentElement!.style.opacity = "0.5";
+  act(() => nextFrame?.(16));
+  expect(document.querySelector("[data-training-reveal-overlay]")).not.toBeNull();
+  answer.parentElement!.style.opacity = "1";
+  act(() => nextFrame?.(32));
+  expect(document.querySelector("[data-training-reveal-overlay]")).toBeNull();
+});
