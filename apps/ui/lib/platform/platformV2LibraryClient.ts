@@ -1,3 +1,4 @@
+import { LIBRARY_PAGE_SIZE } from "./libraryPagination";
 import type { LibrarySearchScope, LibrarySearchSummary } from "./librarySearchScope";
 import { requestPlatformV2Lookup } from "./platformV2LookupTransport";
 import { fetchDictionaryMeaningTranslation } from "@/lib/translation/translationApiClient";
@@ -80,11 +81,21 @@ export async function fetchPlatformV2LibraryGroupPage(input: {
     ...input,
     cursor: input.cursor ?? null,
   });
+  const groups = [...payload.groups];
+  let last = payload;
+  // The RPC bounds each atomic read to 25 groups. Combine cursor pages only
+  // for the first-party Library; generic connected-client lookup is unchanged.
+  while (input.libraryScope && last.page.nextGroupCursor && groups.length < LIBRARY_PAGE_SIZE) {
+    const next = await fetchPlatformV2LibraryLookup({...input,cursor:last.page.nextGroupCursor});
+    groups.push(...next.groups);
+    if (next.page.nextGroupCursor === last.page.nextGroupCursor) throw new Error("library_cursor_did_not_advance");
+    last = next;
+  }
   return {
-    groups: payload.groups,
+    groups,
     ...(input.libraryScope?.filters && payload.librarySearch ? {librarySearch:payload.librarySearch} : {}),
-    selectedTierComplete: payload.page.selectedTierComplete,
-    nextGroupCursor: payload.page.nextGroupCursor,
+    selectedTierComplete: last.page.selectedTierComplete,
+    nextGroupCursor: last.page.nextGroupCursor,
   };
 }
 

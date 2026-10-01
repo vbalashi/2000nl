@@ -1,4 +1,4 @@
-import { LIBRARY_PAGE_SIZE } from "./libraryPagination";
+import { LIBRARY_RPC_GROUP_LIMIT } from "./libraryPagination";
 import { libraryEntryMatchesFilters, type LibrarySearchScope } from "./librarySearchScope";
 import type {
   CardTypeId,
@@ -114,7 +114,7 @@ export async function performPlatformV2Lookup(
             p_query: query,
             p_language_code: request.contentLanguageCode ?? null,
             p_cursor: request.cursor ?? null,
-            p_group_limit: libraryScope ? LIBRARY_PAGE_SIZE : LOOKUP_GROUP_PAGE_SIZE,
+            p_group_limit: libraryScope ? LIBRARY_RPC_GROUP_LIMIT : LOOKUP_GROUP_PAGE_SIZE,
             p_group_entry_bound: LOOKUP_GROUP_ENTRY_SAFETY_BOUND,
           }),
         ),
