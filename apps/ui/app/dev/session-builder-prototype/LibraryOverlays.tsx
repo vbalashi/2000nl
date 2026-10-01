@@ -5,7 +5,7 @@ import {DialogSurface} from "@/components/practice/ui/DialogSurface";
 import { X, Search, Plus, Check, Flag, EyeOff } from "lucide-react";
 import {formatUiMessage,formatUiCount,getUiMessages} from "@/lib/uiMessages";
 import {InterfaceLanguageContext} from "./VariantControls";
-import s from "./libraryOverlays.module.css";
+import s from "@/components/practice/library/libraryOverlays.module.css";
 export function CardActionMenu({ anchor, onClose, onAction, includeReport=true }: { includeReport?:boolean; anchor: HTMLButtonElement; onClose: () => void; onAction: (action: "report" | "known" | "excluded") => void }) {
   const locale=useContext(InterfaceLanguageContext);const copy=getUiMessages(locale).cardActions;
   const menu = useRef<HTMLDivElement>(null);

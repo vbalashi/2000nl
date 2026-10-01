@@ -7,6 +7,7 @@ import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/typ
 import { LibrarySenseCardV2Session } from "./LibrarySenseCardV2Session";
 
 type Props = {
+  revealActiveMeaning?: boolean;
   entryId: string;
   initialGroup?: PlatformHeadwordGroupV2;
   headword: string;
@@ -23,6 +24,7 @@ type Props = {
 };
 
 export function LibraryWordDetail({
+  revealActiveMeaning,
   entryId,
   initialGroup,
   headword,
@@ -62,6 +64,7 @@ export function LibraryWordDetail({
 
   return (
     <LibrarySenseCardV2Session
+      revealActiveMeaning={revealActiveMeaning}
       entryId={entryId}
       initialGroup={initialGroup}
       headword={headword}

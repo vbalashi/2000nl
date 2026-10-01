@@ -1019,3 +1019,33 @@ browser zoom), Extra, and text-spacing overrides: 1.5 line height, .12em letters
 captures before/after. Fixture transport proves layout/keyboard, not live grading.
 Remaining: native zoom, other exercise-family live runs, nested portals and Library
 acceptance. This checkpoint does not close the full #407 goal or enable rollout.
+
+## Library panel and nested modal ownership — 2026-10-01
+
+The approved Library drawer now uses the same PracticePanel as Training: entry
+finishes before the current meaning expands, and dismissal restores the opener.
+The prototype overlay CSS moved to the shared practice library folder; neither
+production screen imports dev components. Collections and Report use native
+DialogSurface inside the account theme subtree. This fixes body portals being
+inert or behind an already modal word panel. Collection search receives initial
+focus; Escape closes only the top dialog and preserves the article. Existing
+collection/report transport, diagnostic privacy, retries, and legacy flag-off
+paths remain owned by their existing modules. The shared CSS adapter still
+bridges legacy markup; this is not a claim that all legacy literals are removed.
+
+Open native dialogs now suspend global Training shortcuts, including rating
+keys fired from noninteractive reading content. The article scroll region is
+keyboard focusable with a localized name and shared focus token.
+
+Validation: typecheck, targeted lint, unchanged style ratchet (1376 literals);
+92 component/owner regressions; three browser scenarios at 320/390/1024px with
+EN/NL/RU and Normal/Extra profiles. They cover entry/disclosure ordering, nested
+collection search focus, footer reachability, modal dismissal, opener restoration
+and no underlying grading. Live IAB Library huis confirmed nested Report and
+Collections styling and Escape behavior; Report was not submitted and collection
+membership was not changed. Proof: /tmp/407qa/library-collections-2026-10-01.jpg
+and /tmp/407qa/library-nested-report-2026-10-01.jpg. A jsdom selector-list cache
+false negative in the new shortcut test was corrected using separate DOM queries;
+browser behavior passed before and after. Remaining: compact Report matrix,
+native zoom, live other exercise families, Library actions/empty/error acceptance
+and owner rollout review. #407 stays active; no rollout was enabled.

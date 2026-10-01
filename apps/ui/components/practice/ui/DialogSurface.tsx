@@ -8,8 +8,10 @@ let previousOverflow = "";
 /** Native top-layer modal; deliberately stays in the themed DOM subtree. */
 export const DialogSurface = forwardRef<HTMLDialogElement, Omit<DialogHTMLAttributes<HTMLDialogElement>, "open" | "onClose"> & {
   onDismiss: () => void;
-}>(function DialogSurface({onDismiss, onCancel, onClick, children, ...props}, forwardedRef) {
+  initialFocusRef?: React.RefObject<HTMLElement>;
+}>(function DialogSurface({onDismiss, initialFocusRef, onCancel, onClick, children, ...props}, forwardedRef) {
   const ref = useRef<HTMLDialogElement>(null);
+  const initialFocusOnMount = useRef(initialFocusRef);
   // Capture before descendant autoFocus runs during commit, not after it has
   // moved focus into the dialog. Restoration must target the actual opener.
   const openerRef = useRef<HTMLElement | null>(typeof document !== "undefined" && document.activeElement instanceof HTMLElement ? document.activeElement : null);
@@ -22,6 +24,7 @@ export const DialogSurface = forwardRef<HTMLDialogElement, Omit<DialogHTMLAttrib
       document.documentElement.style.overflow = "hidden";
     }
     if (!dialog.open) dialog.showModal();
+    initialFocusOnMount.current?.current?.focus({preventScroll: true});
     return () => {
       if (dialog.open) dialog.close();
       if (!--scrollLocks) document.documentElement.style.overflow = previousOverflow;

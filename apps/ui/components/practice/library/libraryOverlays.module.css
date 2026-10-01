@@ -10,3 +10,32 @@
 .sheet header h2{min-width:0;overflow-wrap:anywhere}
 .sheet header button,.menu svg{flex-shrink:0}
 .menu button{overflow-wrap:anywhere}
+
+/* Production form adapters retain their action/state owners and use the same
+   modal, font and palette roles as the approved prototype. Specificity keeps
+   flag-off utility colours from overriding these roles in dark mode. */
+.production.production{display:flex;flex-direction:column;gap:12px;max-height:calc(100dvh - 40px);overflow:hidden}
+.production.production [data-dialog-part]{padding:0;border-color:var(--practice-border)}
+.production.production [data-dialog-part=heading],.production.production [data-dialog-part=fields],.production.production [data-dialog-part=footer]{flex-shrink:0}
+.production.production [data-dialog-part=body]{min-height:0;max-height:none;overflow:auto;flex:1 1 auto}
+.production.production [data-dialog-part=footer]{padding-top:12px}
+.production.production h2{font-size:var(--practice-text-lead);color:var(--practice-text);line-height:1.35}
+.production.production h3{font-size:var(--practice-text-body-lg);color:var(--practice-text)}
+.production.production p,.production.production label,.production.production textarea,.production.production input,.production.production button{font-family:var(--practice-font-ui);font-size:var(--practice-text-caption);line-height:1.5;color:var(--practice-text-secondary)}
+.production.production p{font-size:var(--practice-text-label);color:var(--practice-text-muted)}
+.production.production fieldset{background:var(--practice-surface);border-color:var(--practice-border)}
+.production.production fieldset label{border-color:var(--practice-border);background:transparent}
+.production.production label[data-selected=true]{background:var(--practice-selected);color:var(--practice-selected-text)}
+.production.production input:not([type=radio]):not([type=checkbox]),.production.production textarea{background:var(--practice-surface);border-color:var(--practice-control-border);height:auto;min-height:36px}
+.production.production input::placeholder,.production.production textarea::placeholder{color:var(--practice-text-muted)}
+.production.production input[type=radio],.production.production input[type=checkbox]{appearance:auto;accent-color:var(--practice-accent);background:none;flex-shrink:0}
+.production.production input:focus-visible,.production.production textarea:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px;box-shadow:none}
+.production.production label span{font-size:var(--practice-text-caption);color:inherit}
+.production.production label span+span{font-size:var(--practice-text-label);color:var(--practice-text-muted)}
+.production.production button{height:auto;min-height:36px;background:var(--practice-surface);border-color:var(--practice-control-border);color:var(--practice-text-secondary)}
+.production.production button:hover{background:var(--practice-surface-hover)}
+.production.production [data-dialog-part=footer] button:last-child{background:var(--practice-selected);color:var(--practice-selected-text)}
+.production.production [data-dialog-part=heading]>span[aria-hidden]{display:none}
+.production.production fieldset label:hover,.production.production [data-dialog-part=body]>div>div:hover{background:var(--practice-surface-hover)}
+.production.production [data-report-state] span{background:var(--practice-success-soft);color:var(--practice-success)}
+.production.production [data-report-state=rejected] span{background:var(--practice-danger-soft);color:var(--practice-danger)}

@@ -33,7 +33,8 @@ export const getTrainingHotkeys = (language: OnboardingLanguage) =>
 export function areTrainingHotkeysSuspended() {
   return (
     typeof document !== "undefined" &&
-    document.querySelector('[data-training-hotkeys-suspended="true"]') !== null
+    (document.querySelector('[data-training-hotkeys-suspended="true"]') !== null ||
+      document.querySelector('dialog[open]') !== null)
   );
 }
 

@@ -302,7 +302,10 @@ export function LibrarySenseCardGroup({
         <div
           ref={scrollRef}
           data-testid="library-sense-card-scroll-region"
-          className={`h-full overflow-y-auto px-3 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden ${
+          role="region"
+          aria-label={platformV2Message(interfaceLanguage, "senseCard.wordDetails.open")}
+          tabIndex={0}
+          className={`${surfaces.readingRegion} h-full overflow-y-auto overscroll-contain px-3 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden ${
             bottomOverlayReserve ? "pb-16" : "pb-4"
           }`}
         >
