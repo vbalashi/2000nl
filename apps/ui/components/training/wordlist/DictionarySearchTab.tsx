@@ -685,15 +685,15 @@ export function DictionarySearchTab({
           ) : null}
         </div>
         {approved && materialEnabled && <button type="button" className={workspace.filterButton}
-          aria-label={copy.filters} aria-haspopup="dialog" disabled={useViewedListFilter || !searchMaterialReady}
+          aria-label={copy.filters} aria-haspopup="dialog" disabled={!searchMaterialReady}
           data-active={Boolean(searchState.entryFilters?.parts.length || dictionaryId)} onClick={()=>setFiltersOpen(true)}>
           <SlidersHorizontal size={18}/>
         </button>}
         </div>
-        {filtersOpen && <AccountLibraryFilters locale={interfaceLanguage} query={query}
-          value={{languageCode:searchLanguage,dictionaryId,...(searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS)}}
+        {filtersOpen && <AccountLibraryFilters locale={interfaceLanguage} query={query} collection={viewedList}
+          value={{languageCode:searchLanguage,dictionaryId,applyListFilter,...(searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS)}}
           onClose={()=>setFiltersOpen(false)} onApply={draft=>{
-            updateSearchState({languageCode:draft.languageCode,dictionaryId:draft.dictionaryId,
+            updateSearchState({languageCode:draft.languageCode,dictionaryId:draft.dictionaryId,applyListFilter:Boolean(draft.applyListFilter),
               entryFilters:{parts:[...draft.parts].sort(),article:draft.article},page:1,groupPageCursors:[null],groupHasMore:false,
               groupTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});
             setFiltersOpen(false);

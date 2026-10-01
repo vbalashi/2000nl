@@ -8,14 +8,15 @@ import { DialogSurface } from "../ui/DialogSurface";
 import { NounArticleChoices } from "../ui/NounArticleChoices";
 import { NounFilterPopover } from "./NounFilterPopover";
 import f from "./libraryFilters.module.css";
-export type LibraryFilterDraft = LibraryEntryFilters & { languageCode: string; dictionaryId: string | null };
+export type LibraryFilterDraft = LibraryEntryFilters & { languageCode: string; dictionaryId: string | null; applyListFilter?: boolean };
 export type LibraryFilterOption = { id: string | null; label: string };
 export const LIBRARY_PART_LABELS = {
  noun: "Nouns", verb: "Verbs", adjective: "Adjectives", adverb: "Adverbs", pronoun: "Pronouns",
  preposition: "Prepositions", conjunction: "Conjunctions", numeral: "Numerals", article: "Articles", interjection: "Interjections",
 } as const;
 export function LibraryFilters({ value, languageOptions, sourceOptions, locale, countContent, sourceNotice,
-  canApply = true, onDraftChange, onClose, onApply, layout = "chips" }: {
+  canApply = true, collectionLabel, onDraftChange, onClose, onApply, layout = "chips" }: {
+  collectionLabel?: string;
   value: LibraryFilterDraft; languageOptions: LibraryFilterOption[]; sourceOptions: LibraryFilterOption[];
   locale: OnboardingLanguage; countContent: React.ReactNode; sourceNotice?: React.ReactNode; canApply?: boolean;
   onDraftChange?: (draft: LibraryFilterDraft) => void; onClose: () => void; onApply: (draft: LibraryFilterDraft) => void;
@@ -62,6 +63,8 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
     <div className={f.viewport}>
       <div className={f.track} data-child={page !== "main"}>
         <div className={f.page} ref={node=>{node?.toggleAttribute("inert",page !== "main");}} aria-hidden={page !== "main"}>
+          {collectionLabel && <div className={f.group}><button type="button" role="switch" aria-checked={Boolean(draft.applyListFilter)} className={f.row} onClick={() => update({applyListFilter:!draft.applyListFilter,dictionaryId:null,parts:[],article:null})}><span>{collectionLabel}</span><span className={f.check} aria-hidden="true">{draft.applyListFilter && <Check size={13}/>}</span></button></div>}
+          <div hidden={draft.applyListFilter}>
           <div className={f.group}>
             <button type="button" className={f.row} onClick={event => navigate("language", event.currentTarget)}><span>{builder.language}</span><span className={f.value}>{languageName}</span><ChevronRight size={17}/></button>
             <button type="button" className={f.row} onClick={event => navigate("source", event.currentTarget)}><span>{builder.source}</span><span className={f.value}>{sourceName}</span><ChevronRight size={17}/></button>
@@ -84,6 +87,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
             }}><ChevronRight size={17}/></button>}
           </div>)}</div>}
 
+          </div>
         </div>
         <div className={f.page} ref={node=>{node?.toggleAttribute("inert",page === "main");}} aria-hidden={page === "main"}>
           {page === "noun" ? <>

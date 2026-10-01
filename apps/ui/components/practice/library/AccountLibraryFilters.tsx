@@ -8,6 +8,8 @@ import { fetchPlatformV2LibraryGroupPage } from "@/lib/platform/platformV2Librar
 import { useAccountMaterial } from "../material/AccountMaterialProvider";
 import { useLibraryMaterialSelection } from "../material/useLibraryMaterialSelection";
 import { LibraryFilters, type LibraryFilterDraft } from "./LibraryFilters";
+import { fetchWordsForList } from "@/lib/trainingService";
+import type { WordListSummary } from "@/lib/types";
 import f from "./libraryFilters.module.css";
 
 type Preview = {
@@ -23,10 +25,13 @@ type PreviewScope = {
   available: boolean;
   userId?: string;
   revision?: number;
+  collectionId?: string;
+  collectionType?: "user" | "curated";
 };
 
 /** Draft previews read account material; only Apply changes the main search. */
-export function AccountLibraryFilters({ value, query, locale, onClose, onApply }: {
+export function AccountLibraryFilters({ value, query, locale, collection, onClose, onApply }: {
+  collection?: WordListSummary | null;
   value: LibraryFilterDraft;
   query: string;
   locale: OnboardingLanguage;
@@ -38,7 +43,7 @@ export function AccountLibraryFilters({ value, query, locale, onClose, onApply }
   const material = useLibraryMaterialSelection(true, draft.languageCode, locale);
   const copy = getUiMessages(locale).library;
   const materialCopy = getUiMessages(locale).materialPreferences;
-  const ready = Boolean(
+  const ready = draft.applyListFilter ? Boolean(collection) : Boolean(
     material?.status === "ready" && material.currentLanguageAllowed &&
     (!draft.dictionaryId || material.dictionaries.some(source => source.id === draft.dictionaryId)),
   );
@@ -51,6 +56,7 @@ export function AccountLibraryFilters({ value, query, locale, onClose, onApply }
     available: ready,
     userId: account?.userId,
     revision: account?.snapshot?.revision,
+    ...(draft.applyListFilter && collection ? {collectionId:collection.id,collectionType:collection.type} : {}),
   };
   const key = JSON.stringify(scope);
   const [attempt, setAttempt] = useState(0);
@@ -62,6 +68,10 @@ export function AccountLibraryFilters({ value, query, locale, onClose, onApply }
     const controller = new AbortController();
     setPreview({ key, status: "loading" });
     const timer = window.setTimeout(() => {
+      if (request.collectionId && request.collectionType) {
+        void fetchWordsForList(request.collectionId,request.collectionType,{query:request.query || undefined,page:1,pageSize:1}).then(result=>{if(!controller.signal.aborted)setPreview({key,status:"ready",total:result.total});}).catch(()=>{if(!controller.signal.aborted)setPreview({key,status:"error"});});
+        return;
+      }
       void fetchPlatformV2LibraryGroupPage({
         query: request.query,
         cardTypeId: "word-to-definition",
@@ -117,6 +127,7 @@ export function AccountLibraryFilters({ value, query, locale, onClose, onApply }
 
   return <LibraryFilters
     value={value}
+    collectionLabel={collection ? collection.name : undefined}
     locale={locale}
     onDraftChange={setDraft}
     onClose={onClose}
