@@ -368,7 +368,7 @@
 .directionArrow { justify-self:center; color:var(--practice-text-muted); }
 .prompt { font-size:var(--practice-reading-literary); margin-top:0; align-self:center; }
 .answer { font-size:var(--practice-reading-body); align-self:center; }
-@media (max-width:600px) {
-  .directions { grid-template-columns:1fr; }
-  .direction { min-height:0; padding:10px 12px; gap:4px; }
-}
+/* Keep independent, bounded cards when the available row becomes narrow. */
+.directions { display: flex; flex-wrap: wrap; gap: 12px; }
+.direction { flex: 0 1 calc((100% - 12px) / 2); min-width: min(100%, 170px); max-width: 244px; min-height: 200px; }
+.prompt, .answer { overflow-wrap: anywhere; }

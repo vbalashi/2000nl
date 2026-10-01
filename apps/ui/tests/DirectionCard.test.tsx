@@ -15,6 +15,7 @@ test.each(["nl","en"])("concrete %s examples preserve language and toggle callba
 test("unknown language and unsupported family use label fallback rather than another language's sample",()=>{
   expect(directionExample("fr","meaning")).toBeNull();
   expect(directionExample("nl","word-in-context")).toBeNull();
+  expect(directionExample("nl","word-in-context","ru")).toEqual(["Ik ga met de fiets naar mijn werk.","Я езжу на работу на велосипеде."]);
   expect(directionExample("nl","sentence")).toBeNull();
   expect(directionExample("en","idiom")?.[0]).toBe("Break the ice");
 });

@@ -10,7 +10,7 @@ export function directionExample(language: string, family: TrainingExerciseFamil
     if (language === "nl") return ["Met de deur in huis vallen", "Meteen zeggen waar het om gaat."];
     if (language === "en") return ["Break the ice", "Make people feel more relaxed when they first meet."];
   }
-  if (family === "sentence") {
+  if ((family === "sentence" || family === "word-in-context")) {
     const sentences: Record<string, string> = {
       nl: "Ik ga met de fiets naar mijn werk.",
       en: "I cycle to work.",
