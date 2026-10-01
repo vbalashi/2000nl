@@ -39,6 +39,12 @@ Remaining: CPU/wait-event/concurrent workload samples at the same time as a slow
 
 ## Next pass
 
+### Continuity checkpoint, 2026-10-01
+
+New user observations are separate open investigations: #519 periodic blinking, #520 apparent immediate repeated card. Ordinary Training idle test retains its card across two real authority polls; six accepted finite actions target six distinct entry/direction pairs under delayed mocked selection/projection. Actual in-app Library captured development Fast Refresh, followed by a 97-second network-quiet window. None proves the reported symptoms fixed. Details and limits: `../discovery/2026-10-01-card-continuity-next-pass.md`.
+
+Prior #440/#413 evidence was reviewed, avoiding duplicate timing work. Managed-host telemetry and exact equivalent browser/SQL scope remain missing. These issues were linked to the shared roadmap; no runtime or production change for the new symptoms.
+
 Review and deploy the two verified client corrections separately from scheduler optimization, then repeat the original QA trace and collect matched server wait/CPU evidence during slow requests. If slow intervals recur, investigate the expensive candidate/source-group work with parity fixtures before changing SQL. Presentation retirement stays a separate maintenance change.
 
 Evidence: `../diagnostics/2026-10-01-training-reliability/README.md`. No temporary debug logging remains. No production rollout in this pass.
