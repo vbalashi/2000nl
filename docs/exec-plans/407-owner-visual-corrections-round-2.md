@@ -20,7 +20,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 - [x] 10 — Compact rounded desktop navigation and smoother selection.
 - [x] 17 — Search persists only within current page lifetime, clears on reload.
 - [ ] 18 — Collection filtering belongs inside filter, remove duplicate toolbar toggle.
-- [ ] 20 — Metadata language + source, omit Search label.
+- [x] 20 — Metadata language + source, omit Search label.
 - [ ] 19 — Below search: language/source left, match count right, no duplicate summary.
 - [ ] 21 — Remove duplicate bottom page/result prose, preserve whole-list scrolling.
 - [ ] 24 — 50 words/page; floating centered arrows, current/total red label; final item scrolls above controls.

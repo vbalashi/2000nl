@@ -596,7 +596,7 @@ export function DictionarySearchTab({
   );
   const resultScopeLabel = useViewedListFilter
     ? formatUiMessage(copy.collectionScope, { name: viewedListName })
-    : formatUiMessage(copy.sourceScope, { source: sourceLabel });
+    : approved ? sourceLabel : formatUiMessage(copy.sourceScope, { source: sourceLabel });
   const groupedSearchActive = !useViewedListFilter;
   const resultCountLabel =
     query.trim() || useViewedListFilter || (approved && materialEnabled)
