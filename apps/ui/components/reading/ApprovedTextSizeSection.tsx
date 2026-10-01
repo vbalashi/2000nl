@@ -30,8 +30,8 @@ export function ApprovedTextSizeSection({
       className={`${theme.theme} ${embedded ? `${s.embedded} ${layout.panel}` : s.section}`}
       data-colour-mode="app"
     >
+      <div className={s.header}>
       <h2>{text.textSize}</h2>
-      <p>{prefs.description}</p>
       <div className={s.sizes} role="group" aria-label={text.textSize}>
         {readingSizes.map((size) => {
           const display = textSizes.find(
@@ -53,6 +53,8 @@ export function ApprovedTextSizeSection({
           );
         })}
       </div>
+      </div>
+      <p className={s.hint}>{prefs.description}</p>
       <p className={s.hint}>{prefs.profileHint}</p>
       {settings.loadStatus === "loading" && (
         <p role="status">{status.loading}</p>

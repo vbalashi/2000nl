@@ -2065,3 +2065,7 @@ No payment provider, checkout, invoice or billing-portal runtime exists in apps/
 ### Owner correction 30
 
 Approved reading profile is detected automatically, ignores legacy browser override and has no manual picker. Existing account sizes remain independent; legacy UI retains previous behavior. Browser proof, typecheck, twelve existing tests and explicit phone detection/save regression pass.
+
+### Owner correction 31
+
+Compact right-aligned text-size selector with wrapping header. Accessible labels, selection, disabled/save/retry callbacks and account scaling preserved. Actual browser, typecheck and profile save regression pass.
