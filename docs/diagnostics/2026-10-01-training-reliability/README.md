@@ -2,6 +2,8 @@
 
 Read-only, QA-only production SQL probes; no schema/session/scheduler changes. Individual statements bounded at 8 seconds, locks at 1 second. Scope is the QA persisted active collection; exact equality to the browser session’s ephemeral selection is not established. Session settings JIT, custom plan and I/O timing are local to the connection and rolled back. SQL requires the allowlisted QA email as a psql variable; no credential is retained. UUIDs in plan output have been hashed.
 
+`candidate-function.sql` is a catalog definition snapshot for inspection, not a migration or a script to execute.
+
 - `plan-one.log`: a single plan(10) statement timed out (>8s).
 - `plan-jit-off.log`: same public function with session JIT off, 4764.664 ms.
 - `plan-one-repeat.log`: subsequent default run, 1919.069 ms. This falsifies treating JIT as the demonstrated sole cause.

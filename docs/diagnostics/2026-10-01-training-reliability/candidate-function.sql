@@ -450,4 +450,3 @@ SELECT entry_id,card_type_id,queue_source,
   COALESCE(diagnostics.learning_due_count,0),LEAST(COALESCE(diagnostics.review_pool_size,0),10)
 FROM ordered CROSS JOIN daily CROSS JOIN limits CROSS JOIN diagnostics;
 $function$
-
