@@ -354,7 +354,7 @@
 .answer { font-size:var(--practice-reading-body); align-self:center; }
 /* Keep independent, bounded cards when the available row becomes narrow. */
 .directions { display: flex; flex-wrap: wrap; gap: 12px; }
-.direction { flex: 0 1 calc((100% - 12px) / 2); min-width: min(100%, 170px); max-width: 244px; min-height: 200px; }
+.direction { flex: 1 1 calc((100% - 12px) / 2); min-width: min(100%, 170px); max-width: 244px; min-height: 200px; }
 .prompt, .answer { overflow-wrap: anywhere; }
 
 .activity summary::-webkit-details-marker { display: none; }

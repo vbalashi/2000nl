@@ -2073,3 +2073,7 @@ Compact right-aligned text-size selector with wrapping header. Accessible labels
 ### Owner correction 32
 
 Settings preview now consumes shared production article/headword/content renderers with illustrative normalized nodes and a visible frame. Scoped settings selectors avoid overriding nested renderer typography. Actual browser headword44px, typecheck and fourteen shared-article/reading tests verified. Full final correction audit remains pending; no final owner acceptance or deployment implied.
+
+### Final responsive follow-up
+
+Wrapped direction cards grow within the244px cap;700px shows two244×200 cards side by side,395px preserves compact244×200 width. Concrete context sentence pair verified in the actual UI. RU dark/Extra Library and Statistics fit395px without horizontal overflow. No callback, scheduling or data owner changed. Remaining EN/NL screen matrix is still pending.
