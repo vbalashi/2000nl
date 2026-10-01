@@ -28,7 +28,7 @@ export function ArticleContentNode({node,interfaceLanguage,contentLanguage,trans
  return <div className={classes.contentNode} data-kind={node.kind} data-content-kind={node.kind} data-content-node-id={node.contentNodeId} data-parent-content-node-id={node.parentContentNodeId??undefined}>
   <div className={classes.contentPair}>
    {!lead&&<span className={classes.nodeRole} data-role={node.kind==="example"?"example":"explanation"}>{node.kind==="example"?copy.example:node.kind==="idiom-explanation"||node.kind==="definition"?copy.explanation:copy.note}</span>}
-   <p lang={contentLanguage} className={lead?classes.definitionText:literary?classes.literary:classes.explanation}>{node.text}</p>
+   <p lang={contentLanguage} className={lead?classes.definitionText:literary?classes.literary:node.kind==="usage-pattern"?classes.usagePattern:classes.explanation}>{node.text}</p>
    <ArticleTranslation text={node.translation} visible={translationVisible} language={translationLanguage} classes={classes}/>
   </div>
   {node.children.length>0&&<div className={classes.children}>{node.children.map(child=><ArticleContentNode key={child.contentNodeId} node={child} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} classes={classes}/>)}</div>}

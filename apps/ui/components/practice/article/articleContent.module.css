@@ -159,3 +159,5 @@
 .detail[data-nested-text-inset=inset][data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=explanation]{margin-left:-8px}
 .detail[data-example-line=none][data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=example]::after{display:none}
 .detail[data-nesting=hybrid] .contentSection>.contentNode{padding-left:var(--practice-content-inset)}
+
+.usagePattern{font-family:var(--practice-font-reading);font-size:var(--practice-literary-size);font-style:normal;line-height:var(--practice-literary-leading);color:var(--practice-text-secondary);margin:0}
