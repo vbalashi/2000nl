@@ -713,7 +713,9 @@ export function DictionarySearchTab({
                 {part === "noun" && searchState.entryFilters?.article ? ` (${searchState.entryFilters.article})` : ""}
               </React.Fragment>)}
           </div>
-          {(!approved || viewedListId) && <label className={approved ? workspace.onlyCollection : "hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300"}>
+          {approved && <span className={workspace.scope}>{formatUiCount(interfaceLanguage,
+            useViewedListFilter ? wordTotal : (groupTotal ?? groupResults.length),copy,"matchingGroup")}</span>}
+          {!approved && <label className={approved ? workspace.onlyCollection : "hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300"}>
             {approved ? formatUiMessage(copy.onlyNamedCollection, { name: viewedListName }) : copy.onlyCollection}
             <input
               type="checkbox"
@@ -1037,7 +1039,7 @@ export function DictionarySearchTab({
           ) : null}
         </div>}
 
-        {resultCountLabel && <div className={approved ? workspace.scope : "space-y-0.5 text-xs text-slate-500 dark:text-slate-400"}>
+        {!approved && resultCountLabel && <div className={approved ? workspace.scope : "space-y-0.5 text-xs text-slate-500 dark:text-slate-400"}>
           <div>{resultCountLabel}</div>
         </div>}
       </div>
