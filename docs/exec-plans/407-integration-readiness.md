@@ -2053,3 +2053,7 @@ Statistics always renders learning-language context. One language is a nonintera
 ### Owner correction 27
 
 Server read-only route adds curated catalog slug via authenticated RLS read; no schema or scheduling writes. Statistics hides the known vandale-all mirror only when a matching-size VanDale dictionary is present. Type-qualified names distinguish dictionary/2K/personal collection; personal options grouped separately. Browser actual scopes verified, typecheck, five API tests and three localization tests pass. Canonical material keys and launch callbacks retained.
+
+### Owner correction 28
+
+Removed redundant coverage percentage/unstarted legend. Primary started/total, accessible bar and progress explanation remain. Browser actual text, three localization tests and typecheck verified.

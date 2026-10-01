@@ -28,10 +28,6 @@ export function StatisticsCoverage({ interfaceLanguage: locale, started, total, 
     <div className={s.sectionHeading}><h2 id={id}>{copy.coverage}</h2><span>{scopeLabel}</span></div>
     <p className={s.progressTotal}><strong>{number(started)}</strong><span>{formatUiMessage(copy.ofCards, { total: number(total) })}</span></p>
     <div className={s.bar} role="progressbar" aria-label={copy.cardsStarted} aria-valuemin={0} aria-valuemax={total} aria-valuenow={started}><span style={{ width: `${ratio * 100}%` }} /></div>
-    <div className={s.legend}>
-      <span>{formatUiMessage(copy.started, { percent: new Intl.NumberFormat(locale, { style: "percent", maximumSignificantDigits: started > 0 && ratio < 0.01 ? 1 : undefined }).format(ratio) })}</span>
-      <span>{formatUiMessage(copy.notStarted, { count: number(Math.max(0, total - started)) })}</span>
-    </div>
     <p className={s.hint}>{copy.coverageHint}</p>
   </section>;
 }
