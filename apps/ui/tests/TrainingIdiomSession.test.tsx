@@ -1,3 +1,4 @@
+import { getUiMessages } from "@/lib/uiMessages";
 const recordedStudy = vi.hoisted(() => vi.fn());
 vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
 import { performTrainingExclusion } from "@/lib/platform/trainingExclusionClient";
@@ -13,6 +14,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TrainingIdiomSession } from "@/components/training/pilot/TrainingIdiomSession";
 import {
   fetchNextPlatformV2IdiomTrainingSessionExercise,
+  markPlatformV2IdiomTrainingSessionMemberUnavailable,
   performPlatformV2IdiomExerciseAction,
 } from "@/lib/platform/platformV2IdiomExerciseClient";
 import {
@@ -561,3 +563,23 @@ test.each([true, false])("approved session shell is shared while rollout is %s",
   if (approved) expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
   else expect(screen.getByTestId("training-session-footer-progress")).toBeInTheDocument();
 });
+
+for (const language of ["en", "nl", "ru"] as const) {
+  test(`approved idiom preparation failure has separate retry and exit owners in ${language}`, async () => {
+    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+    vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+    vi.mocked(loadIdiomExerciseContent).mockRejectedValue(new Error("lookup_unavailable"));
+    const onExit = vi.fn();
+    const labels = getUiMessages(language);
+    render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl"
+      translationTargetLanguageCode="ru" interfaceLanguage={language} onExit={onExit} />);
+    expect(await screen.findByRole("alert")).toHaveTextContent(labels.trainingExercises.idiom.failed);
+    fireEvent.click(screen.getByRole("button", {name:labels.trainingExercises.idiom.retry}));
+    await waitFor(()=>expect(loadIdiomExerciseContent).toHaveBeenCalledTimes(2));
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", {name:labels.trainingSession.back}));
+    expect(onExit).toHaveBeenCalledOnce();
+    expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
+    expect(markPlatformV2IdiomTrainingSessionMemberUnavailable).not.toHaveBeenCalled();
+  });
+}

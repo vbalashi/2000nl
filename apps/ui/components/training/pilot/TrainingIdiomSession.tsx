@@ -240,6 +240,8 @@ export function TrainingIdiomSession({
     }
   };
 
+  const preparationFailed = trainingPresentationV1Enabled() && error && !candidate && !loading && !terminal;
+
   return (
     <TrainingSessionV2Layout
       approvedPresentation={trainingPresentationV1Enabled()}
@@ -271,7 +273,7 @@ export function TrainingIdiomSession({
         />
       }
       notice={
-        error || exclusion.failed ? (
+        !preparationFailed && (error || exclusion.failed) ? (
           <TrainingSessionNotice
             notice={{
               kind: "error",
@@ -294,6 +296,9 @@ export function TrainingIdiomSession({
       }
     >
       {loading ? <TrainingSessionState loading title={t.loading} /> : null}
+      {preparationFailed ? <TrainingSessionState title={t.failed} announcement="alert"
+        action={{label:t.retry,onClick:()=>void loadNext()}}
+        secondaryAction={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
       {!loading && terminal ? <TrainingSessionState title={terminal === "complete" ? t.complete : t.empty}
         detail={terminal === "complete" ? formatUiCount(interfaceLanguage, completedCount, getUiMessages(interfaceLanguage).trainingSession, "completed") : undefined}
         action={{ label: trainingPresentationV1Enabled() ? getUiMessages(interfaceLanguage).trainingSession.back : t.back, onClick: onExit }} /> : null}

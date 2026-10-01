@@ -1432,3 +1432,37 @@ this checkpoint.
 Remaining: pending Library Exclude scope, live gated sentence and final whole-
 product acceptance/rollout. This does not approve enabling deployment flags.
 Goal stays active.
+
+
+## Live sentence preparation failure and shared recovery — 2026-10-01
+
+Used an isolated local QA server on3101 with translation exercises explicitly
+enabled; preserved the user-owned canonical3100 server and its disabled gate.
+The real sentence start reached /api/platform/translation HTTP500. A sanitized
+debug response reports provider_unknown_error:a916ee424eb2d8d4630b04a1, configured
+provider openai/fallback deepl, and hasKeys=false for OpenAI, DeepL and Gemini.
+This is missing local provider configuration, not a database contract mismatch.
+Requested an existing server env-file location; never printed secrets, fabricated
+translations or populated fake cache. Successful live reveal/grade/resume remains
+unverified until configuration is supplied.
+
+Found the approved sentence initial failure left an empty card with a top notice.
+Sentence and idiom owners now use the existing shared TrainingSessionState for
+initial preparation failures, with distinct localized Retry and Back actions.
+Failures after a candidate is displayed retain the existing notice. Legacy
+presentation, target identity, loaders, scheduling and unavailable-member policy
+are unchanged. Six EN/NL/RU recovery cases verify retry, exit and absence of grade
+or unavailable-member mutations;37 relevant component tests pass. Typecheck,
+targeted lint, unchanged style guard1362 and diff check pass.
+
+Actual authenticated sentence failure/retry/exit at320x240 passed without network
+mocks:5 next-read requests,0 action requests, both recovery controls on-screen.
+Inspected /tmp/407qa/live-sentence-failure-fixed-2026-10-01.png. First draft tests
+failed from a missing test import, corrected before passing. Initial QA guessed
+Russian Back wording incorrectly; corrected to the existing catalog label. An
+exploratory response-body diagnostic hung and was stopped; separate authenticated
+HTTP debug supplied the sanitized diagnosis. Those failed attempts are not counted
+as acceptance. Temporary3101 was stopped and generated Next config changes
+restored;3100 PID22759 remains listening. No provider keys, DB reset, grade or
+report submitted. Goal stays active; pending Library Exclude scope, provider
+configuration and final whole-product acceptance/rollout remain.

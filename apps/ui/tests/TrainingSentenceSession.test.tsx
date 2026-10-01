@@ -1,3 +1,4 @@
+import { getUiMessages } from "@/lib/uiMessages";
 const recordedStudy = vi.hoisted(() => vi.fn());
 vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
 import React from "react";
@@ -123,3 +124,23 @@ test.each([true, false])("approved session shell is shared while rollout is %s",
   if (approved) expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
   else expect(screen.getByTestId("training-session-footer-progress")).toBeInTheDocument();
 });
+
+for (const language of ["en", "nl", "ru"] as const) {
+  test(`approved sentence preparation failure has separate retry and exit owners in ${language}`, async () => {
+    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+    vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValue(candidate);
+    vi.mocked(loadSentenceExerciseContent).mockRejectedValue(new Error("lookup_unavailable"));
+    const onExit = vi.fn();
+    const labels = getUiMessages(language);
+    render(<TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl"
+      translationTargetLanguageCode="ru" interfaceLanguage={language} onExit={onExit} />);
+    expect(await screen.findByRole("alert")).toHaveTextContent(labels.trainingExercises.sentence.failed);
+    fireEvent.click(screen.getByRole("button", {name:labels.trainingExercises.sentence.retry}));
+    await waitFor(()=>expect(loadSentenceExerciseContent).toHaveBeenCalledTimes(2));
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", {name:labels.trainingSession.back}));
+    expect(onExit).toHaveBeenCalledOnce();
+    expect(performPlatformV2TranslationExerciseAction).not.toHaveBeenCalled();
+    expect(markPlatformV2TranslationTrainingSessionMemberUnavailable).not.toHaveBeenCalled();
+  });
+}
