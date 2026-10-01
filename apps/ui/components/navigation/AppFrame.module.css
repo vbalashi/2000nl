@@ -77,22 +77,23 @@
   align-items: center;
   gap: 4px;
   border: 1px solid var(--app-frame-line);
-  border-radius: 12px;
+  border-radius: 100px;
   background: var(--app-frame-control-surface);
-  padding: 4px;
+  padding: 3px;
   font-size: var(--practice-text-caption, 0.75rem);
 }
 
 .primaryNav button {
   display: flex;
-  min-height: 36px;
+  min-height: 32px;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 100px;
   background: transparent;
   color: var(--app-frame-muted);
-  padding: 0 12px;
+  padding: 0 10px;
+  transition:background .2s var(--practice-motion),color .2s var(--practice-motion),box-shadow .2s var(--practice-motion);
   font-size: inherit;
   font-weight: 500;
 }
@@ -340,3 +341,5 @@
 .brandLink { justify-self:start;padding:0;border:0;background:none;color:inherit;cursor:pointer; }
 .brandLink:focus-visible { outline:2px solid var(--practice-focus);outline-offset:5px;border-radius:3px; }
 .brandLink:disabled { cursor:default; }
+
+@media(prefers-reduced-motion:reduce){.primaryNav button{transition:none}}
