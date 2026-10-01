@@ -1466,3 +1466,40 @@ as acceptance. Temporary3101 was stopped and generated Next config changes
 restored;3100 PID22759 remains listening. No provider keys, DB reset, grade or
 report submitted. Goal stays active; pending Library Exclude scope, provider
 configuration and final whole-product acceptance/rollout remain.
+
+
+## Ordinary Training exclusion choices restored — 2026-10-01
+
+A current-source audit found another unfinished approved requirement: ordinary
+Training supplied Exclude as a direct action, hiding the stage's existing Known
+fallback. The authoritative model already supplies mark-known. The approved
+TrainingExcludeAction now accepts that capability-owned label/callback and opens
+the shared native ActionMenu with Exclude and Known. Selecting each invokes its
+existing owner; opening/dismissing does nothing. Known acceptance/undo and pair
+exclusion request identity/scope are unchanged. Legacy presentation stays direct;
+exercise families without a Known capability do not gain a fabricated action.
+Library exclusion scope still awaits its separate product answer.
+
+Six focused action tests cover EN/NL/RU separation, opener focus, unavailable Known,
+legacy and disabled behavior. A session-owner regression verifies the original
+Known capability reaches the accepted-progress callback, without another lookup.
+71 component/owner tests pass after adding it;20 unchanged stage/action-boundary
+tests passed earlier in this checkpoint. Typecheck, lint and style guard1362 pass;
+existing handlePlayAudio dependency lint warning remains at line618, untouched.
+Three controlled production browser cases at320x568/Extra verify two bounded menu
+items on Face/Answer, keyboard and pointer opening, Escape/opener focus and zero
+action/exclusion requests. Inspected RU Answer screenshot in test-results. This
+is controlled transport evidence, not new live grading or exclusion acceptance.
+
+Initial browser attempt used mocked auth and reached the real login page; stopped
+it and used the existing dev-login harness option. Initial pointer attempt opened
+during automated scroll-to-trigger, which dismisses anchored menus by design;
+waited two animation frames after scrolling, then keyboard Face/pointer Answer
+both pass. A draft test write used the wrong working directory and a subsequent
+root-level test command used an unrelated runner; neither is acceptance evidence.
+Correct app-owned runner and paths passed. No server restart or live mutation.
+
+Corrected practice-presentation.md's stale integration instruction of50/24h to
+the accepted latest50/no age cutoff; historical checkpoints remain unchanged.
+Remaining: Library exclusion decision, translation-provider configuration for
+live sentence success, and final owner/rollout acceptance. Goal active.

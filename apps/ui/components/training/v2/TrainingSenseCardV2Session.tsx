@@ -803,6 +803,10 @@ export function TrainingSenseCardV2Session({
           }
           exclusionAction={exclusion.available ? (
             <TrainingExcludeAction language={interfaceLanguage}
+              knownAction={model.markKnownCapability ? {
+                label: platformV2Message(interfaceLanguage, model.markKnownCapability.messageKey),
+                onClick: () => void handleAction(model.markKnownCapability!),
+              } : undefined}
               disabled={busy || exclusion.busy || interactionDisabled || acceptedActionRecoveryPending}
               onClick={() => void exclusion.exclude()} />
           ) : undefined}

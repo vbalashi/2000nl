@@ -167,6 +167,28 @@ describe("TrainingSenseCardV2Session", () => {
     rerender(view(false)); expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
   });
 
+  test("approved exclusion menu forwards the existing known capability without excluding", async () => {
+    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+    try {
+      const onProgressActionAccepted = vi.fn();
+      const markKnown = singleSenseEntry.capabilities.find(capability => capability.actionId === "mark-known")!;
+      performAction.mockResolvedValueOnce({contractVersion:"platform-action-v2", actionId:"mark-known",
+        clientEventId:"known-menu-event", accepted:true, card:singleSenseEntry.card});
+      render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition"
+        trainingSessionId="existing-session" contentLanguageCode="nl"
+        translationTargetLanguageCode="en" interfaceLanguage="en"
+        onProgressActionAccepted={onProgressActionAccepted} />);
+      await screen.findByRole("heading", {name:"hand"});
+      const exclusion = getUiMessages("en").trainingSession.exclusion;
+      fireEvent.click(screen.getByRole("button", {name:exclusion.help}));
+      expect(performAction).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole("menuitem", {name:platformV2Message("en",markKnown.messageKey)}));
+      await waitFor(() => expect(onProgressActionAccepted).toHaveBeenCalledWith(markKnown));
+      expect(performAction).toHaveBeenCalledOnce();
+      expect(fetchSingleSense).toHaveBeenCalledOnce();
+    } finally { vi.unstubAllEnvs(); }
+  });
+
   test("approved failed lookup keeps retry and exit separate without a review", async () => {
     vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
     try {
