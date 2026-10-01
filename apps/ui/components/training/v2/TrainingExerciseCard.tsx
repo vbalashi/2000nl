@@ -160,7 +160,7 @@ export function TrainingExerciseCard({
               model={presentation.answer}
               translationVisible={translationVisible}
               translationAvailable={translationAvailable}
-              translationLabel={t("senseCard.translation.request")}
+              translationLabel={t(translationAvailable ? "senseCard.translation.request" : "senseCard.translation.disabled")}
               audioLabel={t("senseCard.audio.play")}
               moreLabel={t("senseCard.wordDetails.open")}
               busy={actionBusy}

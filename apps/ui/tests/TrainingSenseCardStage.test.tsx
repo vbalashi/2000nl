@@ -1,4 +1,5 @@
 import React from "react";
+import {TrainingCardAnswerHeader} from "@/components/training/v2/TrainingCardTemplates";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { TrainingSenseCardStage as TrainingSenseCardStageView } from "@/components/training/v2/TrainingSenseCardStage";
@@ -869,4 +870,13 @@ describe("TrainingSenseCardStage", () => {
       expect(screen.getByRole("button", { name: "Opnieuw" })).toHaveFocus(),
     );
   });
+});
+
+test("approved answer keeps the unavailable translation button visible without dispatching",()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ try {
+ const toggle=vi.fn();render(<TrainingCardAnswerHeader model={{headword:"aandoen",repeatCount:0,definitions:[],examples:[]}} translationVisible={false} translationAvailable={false} translationLabel="Translation is off. Choose a translation language in Settings." audioLabel="Play" moreLabel="More" busy={false} onToggleTranslation={toggle}/>);
+ const button=screen.getByRole("button",{name:"Translation is off. Choose a translation language in Settings."});
+ expect(button).toBeDisabled();fireEvent.click(button);expect(toggle).not.toHaveBeenCalled();
+ } finally {vi.unstubAllEnvs();}
 });

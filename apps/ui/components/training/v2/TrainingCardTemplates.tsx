@@ -125,11 +125,11 @@ export function TrainingCardAnswerHeader({
               <Volume2 aria-hidden="true" className="h-5 w-5" />
             </TrainingCardIconButton>
           ) : null}
-          {translationAvailable ? (
+          {translationAvailable || trainingPresentationV1Enabled() ? (
             <TrainingCardIconButton
               label={translationLabel}
               active={translationVisible}
-              disabled={busy}
+              disabled={busy || !translationAvailable}
               onClick={onToggleTranslation}
             >
               <Languages aria-hidden="true" className="h-5 w-5" />
@@ -641,6 +641,7 @@ export function TrainingCardIconButton({
     <button
       type="button"
       aria-label={label}
+      title={label}
       aria-pressed={active}
       disabled={disabled}
       onClick={onClick}

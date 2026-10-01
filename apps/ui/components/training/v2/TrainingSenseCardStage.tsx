@@ -248,7 +248,7 @@ export function TrainingSenseCardStage({
               translationAvailable={
                 hasTranslation(model) || translationActionAvailable
               }
-              translationLabel={t("senseCard.translation.request")}
+              translationLabel={t(hasTranslation(model) || translationActionAvailable ? "senseCard.translation.request" : "senseCard.translation.disabled")}
               audioLabel={t("senseCard.audio.play")}
               busy={busy || moving}
               moreLabel={t("senseCard.wordDetails.open")}
