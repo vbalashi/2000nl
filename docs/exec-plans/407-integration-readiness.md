@@ -2077,3 +2077,7 @@ Settings preview now consumes shared production article/headword/content rendere
 ### Final responsive follow-up
 
 Wrapped direction cards grow within the244px cap;700px shows two244×200 cards side by side,395px preserves compact244×200 width. Concrete context sentence pair verified in the actual UI. RU dark/Extra Library and Statistics fit395px without horizontal overflow. No callback, scheduling or data owner changed. Remaining EN/NL screen matrix is still pending.
+
+### Final multilingual narrow Library correction
+
+Actual NL Extra395px exposed clipped filter and pagination buttons despite document-level overflow being hidden. Added min-width0 to results flex child and wrapping to approved pagination. Verified both controls inside viewport in NL395 and EN320 dark/Extra.25 grouping tests and typecheck pass. API, query, cursor and action owners unchanged. Final full combination matrix remains open.
