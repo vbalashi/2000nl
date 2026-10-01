@@ -739,7 +739,7 @@ function SenseCardV2Session({
       </div>
       {showGlobalDetailsActions &&
       activeSenseEntry &&
-      (onCopyToUserDictionary || (!approved && canReport)) ? (
+      (!approved && (onCopyToUserDictionary || canReport)) ? (
         <LibraryDetailsActions
           entryId={activeMeaningId}
           interfaceLanguage={interfaceLanguage}

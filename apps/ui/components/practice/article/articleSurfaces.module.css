@@ -81,3 +81,6 @@
 }
 
 .closeAction { display:inline-flex;margin-left:16px; }
+
+.header button { width:32px;height:32px; }
+.header button svg { width:16px;height:16px; }

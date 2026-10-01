@@ -32,7 +32,7 @@ beforeEach(()=>{
 
 test("collection choice stays in draft, clears incompatible filters, and applies a real collection ID",()=>{
  const apply=vi.fn();render(<LibraryFilters {...props} value={{...value,parts:["noun"],article:"het"}} collectionOptions={[{id:"a",label:"My A"},{id:"b",label:"My B"}]} onClose={()=>{}} onApply={apply}/>);
- fireEvent.click(screen.getByRole("button",{name:/^Collections/}));
+ fireEvent.click(screen.getByRole("button",{name:/^Source/}));
  fireEvent.click(screen.getByRole("button",{name:"My B"}));
  expect(apply).not.toHaveBeenCalled();
  fireEvent.click(screen.getByRole("button",{name:"OK"}));
@@ -40,3 +40,14 @@ test("collection choice stays in draft, clears incompatible filters, and applies
  fireEvent.click(screen.getByRole("button",{name:"Show results"}));
  expect(apply).toHaveBeenCalledWith({...value,applyListFilter:true,collectionId:"b"});
 });
+
+ test("dictionary and collection sources with the same ID remain distinct",()=>{
+ const apply=vi.fn();render(<LibraryFilters {...props} value={{...value,applyListFilter:true,collectionId:"source"}} collectionOptions={[{id:"source",label:"Real collection"}]} onClose={()=>{}} onApply={apply}/>);
+ expect(screen.queryByRole("button",{name:/^Collections/})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:/^Source/}));
+ expect(screen.getByRole("button",{name:"Real collection"})).toHaveAttribute("aria-pressed","true");
+ fireEvent.click(screen.getByRole("button",{name:"Real source"}));
+ fireEvent.click(screen.getByRole("button",{name:"OK"}));
+ fireEvent.click(screen.getByRole("button",{name:"Show results"}));
+ expect(apply).toHaveBeenCalledWith({...value,dictionaryId:"source",applyListFilter:false,collectionId:null});
+ });

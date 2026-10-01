@@ -63,7 +63,7 @@ export function SenseCardHeadwordLockup({
     <div className="relative min-w-0" data-testid="sense-card-headword-lockup">
       {metadataVisible || headerActions ? (
         <div
-          className="flex min-h-10 min-w-0 items-start justify-between gap-3"
+          className="flex min-h-8 min-w-0 items-center justify-between gap-3"
           data-testid="sense-card-header-row"
         >
           {metadataVisible ? (
@@ -131,7 +131,7 @@ export function SenseCardHeadwordLockup({
                 data-long-headword={longHeadword ? "true" : "false"}
                 className={`min-w-0 break-words tracking-[-0.035em] ${primaryText} ${
                   training
-                    ? "text-[1em] font-medium leading-[1]"
+                    ? variant === "article" ? "text-[length:var(--practice-text-headword,36px)] font-medium leading-[1.1]" : "text-[1em] font-medium leading-[1]"
                     : longHeadword
                       ? "text-[1.75rem] font-normal leading-[0.96] sm:text-[2.2rem]"
                       : "text-[2.65rem] font-normal leading-[0.92] sm:text-[3rem]"
@@ -167,6 +167,7 @@ export function SenseCardHeaderAction({
       type="button"
       disabled={disabled}
       aria-label={label}
+      title={label}
       aria-pressed={pressed}
       onClick={onClick}
       className={approvedChrome() ? chrome.headerAction : `flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-50 ${

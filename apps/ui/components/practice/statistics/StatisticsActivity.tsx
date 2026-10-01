@@ -10,7 +10,7 @@ import s from "./statistics.module.css";
 
 const utcDate = (date: string) => new Date(`${date}T00:00:00Z`);
 const weekdayOffset = (date: string) => (utcDate(date).getUTCDay() + 6) % 7;
-const MOBILE_MONTHS = 2;
+const MOBILE_MONTHS = 3;
 
 /** Approved Activity, study calendar and highlights over one server-owned activity calendar. */
 export function StatisticsActivity({ interfaceLanguage: locale, calendar, recentActivity }: {

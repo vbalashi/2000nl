@@ -277,14 +277,15 @@ export function LibrarySenseCardGroup({
           coreVocabularyLabel={model.coreVocabularyLabel}
           tone="light"
           headerActions={
-            closeDetails || translationEnabled || (onPlayAudio && model.audioCapability) ? (
+            closeDetails || approvedArticle || translationEnabled || (onPlayAudio && model.audioCapability) ? (
               <>
-                {translationEnabled ? (
+                {translationEnabled || approvedArticle ? (
                   <SenseCardHeaderAction
                     label={platformV2Message(
                       interfaceLanguage,
-                      "senseCard.translation.request",
+                      translationEnabled ? "senseCard.translation.request" : "senseCard.translation.disabled",
                     )}
+                    disabled={!translationEnabled}
                     accent
                     pressed={translationsVisible}
                     onClick={toggleGroupTranslation}

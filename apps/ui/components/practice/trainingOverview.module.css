@@ -28,3 +28,5 @@
 .hero{background:linear-gradient(120deg,var(--practice-hero),var(--practice-hero-end))}
 .start{background:var(--practice-accent);color:var(--practice-on-accent);border-color:var(--practice-accent)}
 .start:hover{background:var(--practice-accent-hover)}
+
+.row:last-child { border-bottom: 0; }

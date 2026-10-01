@@ -107,6 +107,7 @@
     },
     "translation": {
       "request": "Vertalen",
+      "disabled": "Vertaling staat uit. Kies een vertaaltaal in Instellingen.",
       "forMeaning": "Vertaling voor betekenis {number} tonen",
       "pending": "Vertaling wordt voorbereid…",
       "failed": "Vertaling kon niet worden geladen.",
@@ -834,7 +835,7 @@
       "recentActivity": "Recente activiteit",
       "studyActivity": "Leeractiviteit",
       "yearHeatmap": "Dagelijkse leeractiviteit in het afgelopen jaar",
-      "monthHeatmap": "Dagelijkse leeractiviteit over twee maanden",
+      "monthHeatmap": "Dagelijkse leeractiviteit over drie maanden",
       "earlierMonths": "Eerdere maanden",
       "laterMonths": "Latere maanden",
       "less": "Minder",

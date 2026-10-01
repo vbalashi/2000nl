@@ -107,6 +107,7 @@
     },
     "translation": {
       "request": "Translate",
+      "disabled": "Translation is off. Choose a translation language in Settings.",
       "forMeaning": "Show translation for meaning {number}",
       "pending": "Translation is being prepared…",
       "failed": "Translation could not be loaded.",
@@ -834,7 +835,7 @@
       "recentActivity": "Recent activity",
       "studyActivity": "Study activity",
       "yearHeatmap": "Daily study activity over the past year",
-      "monthHeatmap": "Daily study activity for two months",
+      "monthHeatmap": "Daily study activity for three months",
       "earlierMonths": "Earlier months",
       "laterMonths": "Later months",
       "less": "Less",
