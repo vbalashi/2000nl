@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
 import { LibraryCollectionsPicker } from "@/components/training/library-v2/LibraryCollectionsPicker";
 import { LibrarySenseCardGroup } from "@/components/training/library-v2/LibrarySenseCardGroup";
 import { buildLibrarySenseCardGroupModel } from "@/components/training/library-v2/librarySenseCardModel";
@@ -95,7 +96,7 @@ export function SenseCardGateHarness() {
           display: none;
         }
       `}</style>
-      <main className="min-h-screen bg-[#0d1017] px-4 py-8 text-slate-100 sm:px-8">
+      <main data-colour-mode="light" className={`${practiceTheme.theme} min-h-screen bg-[var(--practice-canvas)] px-4 py-8 text-[var(--practice-text)] sm:px-8`}>
         <DiagnosticReportOutboxGate
           snapshot={freezeSenseCardDiagnosticSnapshot({
             route: "library",

@@ -1,6 +1,9 @@
 /* Approved article surfaces shared by Library and the Training word panel. */
 .group {
-  background: var(--practice-surface);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   color: var(--practice-text);
   font-family: var(--practice-font-ui);
 }

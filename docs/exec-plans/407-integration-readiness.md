@@ -1807,3 +1807,15 @@ cancel, unmount and unsupported animation. Typecheck and targeted lint pass.
 Original browser scenario repeated:100frames, zero blank frames; overlay persisted
 through opacity0→1 then removed. Temporary trace global deleted. Screenshot:
 /tmp/407qa/correction4-reveal.png. Next correction5 word details surface/frame.
+
+### 2026-10-01 — correction5 flat outer word article
+
+Reference library CSS flat variant has transparent background, border0, radius0,
+shadow none. Shared production article group now matches these outer roles; meaning
+cards retain their own surface and border. Training Details approved wrapper loses
+extra p-3 that produced a separated inner rectangle. Legacy wrapper untouched.
+QA harness previously lacked practice tokens, making shared cards visually invalid;
+it now inherits the real light practice theme, without preference writes. Browser
+verified transparent group, border0, canvas#f3f4f8, and visible framed meanings.
+Screenshot /tmp/407qa/correction5-flat.png. Existing dialog3tests pass; typecheck,
+targeted lint and diff pass. No dictionary/actions/scheduling changes. Next6 badges.

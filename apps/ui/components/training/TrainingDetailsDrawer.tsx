@@ -112,7 +112,7 @@ export function TrainingDetailsDrawer({
         dismissRef.current = dismiss;
         return <>
           <WordDetailsHeader onClose={dismiss} interfaceLanguage={interfaceLanguage} />
-          <div className="min-h-0 flex-1 p-3">
+          <div className="min-h-0 flex-1">
             {typeof children === "function" ? children(entered) : children}
           </div>
         </>;
