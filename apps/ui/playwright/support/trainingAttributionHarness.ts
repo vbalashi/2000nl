@@ -136,6 +136,8 @@ const entries: FixtureEntry[] = Array.from({ length: 64 }, (_, index) => ({
   },
 }));
 
+const fixtureEntries = entries;
+
 const userSession = {
   id: "training-attribution-user",
   email: "test@2000nl.test",
@@ -172,10 +174,15 @@ export async function setupAuthenticatedTrainingAttributionPage(
     visualProfile?: TrainingVisualState;
     /** Account appearance/reading preferences for layout acceptance, never production defaults. */
     settingsOverrides?: Record<string, unknown>;
+    /** Diagnostic reporting validates dictionary entry UUIDs before transport. */
+    useUuidEntryIds?: boolean;
     /** Use the local app's dev-only test login instead of installing a mocked session. */
     devTestLogin?: boolean;
   } = {},
 ) {
+  const entries = options.useUuidEntryIds ? fixtureEntries.map((entry, index) => ({
+    ...entry, id: `40700000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+  })) : fixtureEntries;
   let nextEntryIndex = 0;
   let actionCount = 0;
   let requestSequence = 0;
@@ -214,7 +221,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   let pendingActionReceipt: Record<string, unknown> | null = null;
   const splitDelayMs = injectedDelayMs > 0 ? Math.ceil(injectedDelayMs * 0.55) : 0;
   const visualFixture = options.visualProfile
-    ? buildTrainingVisualFixtureBundle(options.visualProfile, entries)
+    ? buildTrainingVisualFixtureBundle(options.visualProfile, entries, { diagnosticReportReady: options.useUuidEntryIds })
     : null;
   const schedulerOutcomes = [...(options.schedulerOutcomes ?? [])];
   const sessionOutcomes = [...(options.sessionOutcomes ?? [])];
@@ -1516,7 +1523,7 @@ function wordListSummary() {
     language_code: "nl",
     primary_language_code: "nl",
     is_primary: true,
-    word_list_items: [{ count: entries.length }],
+    word_list_items: [{ count: fixtureEntries.length }],
   };
 }
 

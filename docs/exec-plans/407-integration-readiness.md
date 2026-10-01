@@ -1049,3 +1049,33 @@ false negative in the new shortcut test was corrected using separate DOM queries
 browser behavior passed before and after. Remaining: compact Report matrix,
 native zoom, live other exercise families, Library actions/empty/error acceptance
 and owner rollout review. #407 stays active; no rollout was enabled.
+
+## Report compact/Extra acceptance — 2026-10-01
+
+Added a production Training Report browser gate at 320×568 and 844×390, Extra,
+EN/NL/RU, lavender/blue/graphite and light/dark. Six scenarios verify bounded
+width, pinned Back/Send, category selection, cancellation clearing input,
+Escape/opener restoration and unchanged answer side. They also exercise the
+actual report capture/outbox through a controlled accepted transport response,
+then verify Sent and the focused/visible Close action. No live report is sent.
+The scrollable Report body now has a localized keyboard focus stop and shared
+focus styling; End reaches its bottom without moving the footer. Screenshots
+were inspected in Russian compact light and English short-window dark.
+
+The acceptance extension initially caught fixture incompatibility: attribution
+entries used non-UUID IDs and displayed node translations used non-SHA identity
+fields. These correctly fail diagnostic capture before transport. Added an
+opt-in report-ready fixture path and a capture-contract regression; existing
+attribution fixtures stay unchanged. Helper-scope/type errors in the draft were
+fixed before final acceptance. Next's dev badge also overlapped the mobile Report
+pointer target; the gate deliberately uses the actual keyboard activation path
+and does not claim that development badge as a product defect.
+
+Validation: six final browser cases passed after the keyboard-scroll addition;
+nine (Report plus existing word-panel sequence) passed before it. Four focused
+unit tests, typecheck, lint and unchanged style guard passed. Live Library huis
+Report was opened and cancelled with focus restored; proof
+/tmp/407qa/library-report-verified-2026-10-01.jpg. Controlled transport does not
+prove server acceptance or live offline delivery. Remaining: native zoom, live
+idiom/sentence and broader Library state/action acceptance, focus-loss study-time
+measurement, final owner review. #407 remains active and rollout unchanged.

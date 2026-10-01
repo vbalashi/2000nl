@@ -181,7 +181,10 @@ function SenseCardReportSheet({
           </h2>
         </div>
 
-        <div data-dialog-part="body" className="max-h-[calc(100dvh-8rem)] overflow-y-auto px-5 pb-3">
+        <div data-dialog-part="body" role={approved ? "region" : undefined}
+          aria-label={approved ? t("senseCard.reportSheet.title") : undefined}
+          tabIndex={approved ? 0 : undefined}
+          className="max-h-[calc(100dvh-8rem)] overflow-y-auto px-5 pb-3">
           {terminal ? (
             <ReportStatus state={delivery} t={t} />
           ) : (
