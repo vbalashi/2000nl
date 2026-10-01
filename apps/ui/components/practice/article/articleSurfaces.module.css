@@ -84,3 +84,7 @@
 
 .header [data-testid="sense-card-header-actions"] button { width:32px;height:32px; }
 .header [data-testid="sense-card-header-actions"] button svg { width:16px;height:16px; }
+
+.scrollFade{background:linear-gradient(to bottom,var(--practice-canvas),color-mix(in srgb,var(--practice-canvas) 90%,transparent),transparent)}
+.scrollFade[data-scroll-affordance="bottom"]{background:linear-gradient(to top,var(--practice-canvas),color-mix(in srgb,var(--practice-canvas) 90%,transparent),transparent)}
+.scrollFadeIcon{color:var(--practice-text-muted)}

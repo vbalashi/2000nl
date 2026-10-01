@@ -909,6 +909,7 @@ function ContentSectionHeader({
 }
 
 function ScrollFade({ edge }: { edge: "top" | "bottom" }) {
+  const approvedArticle = sharedArticlePresentationV1Enabled();
   const isTop = edge === "top";
   return (
     <div
@@ -917,14 +918,14 @@ function ScrollFade({ edge }: { edge: "top" | "bottom" }) {
       // Leave at least half of a short reading region free from decoration.
       // Keep the selected-meaning scroll inset above in sync with this cap.
       style={{ height: `min(${DETAILS_SCROLL_FADE_HEIGHT}px, 25%)` }}
-      className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-4 ${
-        isTop
+      className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-4 ${approvedArticle ? surfaces.scrollFade : ""} ${
+        approvedArticle ? (isTop ? "top-0 items-start pt-1" : "bottom-0 items-end pb-1") : isTop
           ? "top-0 items-start bg-gradient-to-b from-slate-50 via-slate-50/90 to-transparent pt-1 dark:from-[#11151d] dark:via-[#11151d]/90"
           : "bottom-0 items-end bg-gradient-to-t from-slate-50 via-slate-50/90 to-transparent pb-1 dark:from-[#11151d] dark:via-[#11151d]/90"
       }`}
     >
       <SmallIcon
-        className={`h-4 w-4 text-slate-400 ${isTop ? "" : "rotate-180"}`}
+        className={`h-4 w-4 ${approvedArticle ? surfaces.scrollFadeIcon : "text-slate-400"} ${isTop ? "" : "rotate-180"}`}
       >
         <path d="m6 14 6-6 6 6" />
       </SmallIcon>
