@@ -53,6 +53,10 @@ export function TrainingSentenceSession(props: Props) {
   const [terminal, setTerminal] = useState<"complete" | "empty" | null>(session.plannedTotal === 0 ? "empty" : null);
   const eventId = useRef<string | null>(null);
   const generation = useRef(0);
+  // A notification callback is not part of the session/content identity.
+  // Parent re-renders must not reload the member and hide its revealed answer.
+  const supersededCallback = useRef(onSessionSuperseded);
+  useEffect(() => { supersededCallback.current = onSessionSuperseded; }, [onSessionSuperseded]);
   const preparedMembers = useRef(new Set<string>());
   const stats = useTranslationTrainingStats(session.sessionId, completed);
 
@@ -76,13 +80,13 @@ export function TrainingSentenceSession(props: Props) {
           continue;
         }
         if (next.status === "completed" || next.status === "exhausted") { setTerminal(completedRef.current ? "complete" : "empty"); return; }
-        if (next.status === "superseded") { onSessionSuperseded?.(); return; }
+        if (next.status === "superseded") { supersededCallback.current?.(); return; }
         setFailed(true); return;
       }
       setFailed(true);
     } catch { if (current === generation.current) setFailed(true); }
     finally { if (current === generation.current) setLoading(false); }
-  }, [userId, session.sessionId, contentLanguageCode, translationTargetLanguageCode, onSessionSuperseded]);
+  }, [userId, session.sessionId, contentLanguageCode, translationTargetLanguageCode]);
   useEffect(() => {
     const generationRef = generation;
     void loadNext();

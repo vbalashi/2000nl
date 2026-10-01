@@ -1651,3 +1651,50 @@ real authenticated browser Exclude/Undo smoke. Translation configuration is now
 present, but successful sentence provider/reveal/grade smoke still requires a new
 local QA process loading that environment. No production rollout/flag changes,
 push, merge or reset have been performed. Goal remains active.
+
+## Runtime headword verification and sentence reveal regression — 2026-10-01
+
+Implementation commit a98c8a65d24ad85e2d71be27fd78a57946b8ba38 is installed in the
+retained local database via the managed forward gate. Contract192 is compatible;
+read-only check/postflight pass; bounded read probe1,500ms within2,000ms budget.
+Canonical3100 remains running and healthy. Actual authenticated Training Exclude
+returned a Headword Group receipt and consumed ordinal1 of10 once; exact Undo
+returned the same mark and did not rewind that action. Library Exclude/Undo also
+returned real receipts with consumption:null and no session/card direction. Its
+menu became enabled again after the accepted restore. No grades were sent in
+these exclusion scenarios; no active headword exclusion marks remain afterward.
+The first pointer menu test dismissed during programmatic scroll; settling scroll
+and keyboard activation verified the same live menu successfully.
+
+The reference .env.local configuration is now verified on a separate wrapped
+local3101 process, preserving the user's3100. Actual sentence face used English,
+answer used the scheduled Dutch sentence. A forced authenticated dictionary
+translation request to /api/platform/translation returned HTTP200/status:ready,
+X-Platform-Cache:provider, proving a provider call rather than cached readiness.
+No secret values were printed or committed. A real sentence Good action returned
+HTTP200; progress changed0/10→1/10 and the next sentence survived a page reload
+in that same browser context. One local QA sentence grade was intentionally
+recorded; it was not deleted from history or disguised as test-only state.
+
+This smoke discovered a real reveal bug: TrainingScreen passes an inline
+onSessionSuperseded callback. Its identity changes on parent re-render; the sentence
+loader's dependency list then reloads the unchanged member and hides the answer.
+The minimized parent-callback replacement test failed before the fix. Notification
+now uses the latest committed callback ref, while loading remains keyed by user,
+session and content/translation language. Both regression checks and existing
+sentence/idiom/loader cases pass (32 tests), as does typecheck. Actual reveal,
+accepted grade and same-context reload prove the original symptom fixed. Initial
+fresh-context resume attempt had no browser resume record; it did not test reload
+and is not counted as a failed same-context resume. Temporary3101 was stopped;
+its generated next-env/tsconfig changes were restored from exact pre-QA copies.
+
+**Next mandatory alignment: directional Known.** Reading canonical CONTEXT.md and
+migration138 revealed an older rule: sync_shared_meaning_known_mark automatically
+creates/clears the other recall-direction mark. Therefore the earlier claim that
+Known already matched the owner's one-direction decision was incorrect. The
+accepted2026-10-01 decision remains authoritative; current Known implementation
+is not yet aligned. Implement an additive forward contract with directional new
+marks and exact Undo, preserving existing paired marks/receipts/history rather
+than deleting past learner decisions. Update the domain glossary and owning
+regressions together. This is concrete remaining work, not a completion claim or
+request for another product decision. Goal remains active; no push/merge/deploy.
