@@ -2,13 +2,14 @@
 import React, { useId, useState } from "react";
 import {
   ArrowLeft,
-  ArrowDown,
   Check,
   ChevronDown,
   Search,
   X,
 } from "lucide-react";
 import { singleNounArticle, toggleNounArticle } from "@/lib/training/nounArticles";
+import { DirectionCard } from "@/components/practice/builder/DirectionCard";
+import { directionExample } from "@/lib/training/directionExamples";
 import { BuilderSection } from "@/components/practice/builder/BuilderSection";
 import { BuilderChoice } from "@/components/practice/builder/BuilderChoice";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
@@ -462,47 +463,20 @@ export function ApprovedTrainingBuilder(p: Props) {
                           mode === "definition-to-word") &&
                         scenario?.modes?.includes(mode),
                     )
-                    .map((mode) => (
-                      <button
-                        type="button"
-                        key={mode}
-                        className={s.direction}
-                        aria-pressed={p.draft.modes.includes(mode)}
-                        onClick={() => p.onToggleMode(mode)}
-                      >
-                        <span className={s.directionHeading}>
-                          {mode === "word-to-definition"
-                            ? o.direction.Direct
-                            : o.direction.Reverse}
-                          <span aria-hidden="true">
-                            {p.draft.modes.includes(mode) ? (
-                              <Check size={12} />
-                            ) : null}
-                          </span>
-                        </span>
-                        <span className={s.prompt}>
-                          {mode === "word-to-definition"
-                            ? family === "idiom"
-                              ? o.exerciseType.Idioms
-                              : o.exerciseType.Words
-                            : family === "sentence"
-                              ? p.translationLanguage
-                                ? language(p.translationLanguage)
-                                : b.chooseTranslation
-                              : c.meaning}
-                        </span>
-                        <ArrowDown size={15} aria-hidden="true" />
-                        <span className={s.answer}>
-                          {mode === "word-to-definition"
-                            ? c.meaning
-                            : family === "sentence"
-                              ? language(p.languageCode)
-                              : family === "idiom"
-                                ? o.exerciseType.Idioms
-                                : o.exerciseType.Words}
-                        </span>
-                      </button>
-                    ))}
+                    .map((mode) => {
+                      const example = directionExample(p.languageCode, family);
+                      const direct = mode === "word-to-definition";
+                      const prompt = example ? example[direct ? 0 : 1] : direct
+                        ? family === "idiom" ? o.exerciseType.Idioms : o.exerciseType.Words
+                        : family === "sentence" ? p.translationLanguage ? language(p.translationLanguage) : b.chooseTranslation : c.meaning;
+                      const answer = example ? example[direct ? 1 : 0] : direct ? c.meaning
+                        : family === "sentence" ? language(p.languageCode) : family === "idiom" ? o.exerciseType.Idioms : o.exerciseType.Words;
+                      return <DirectionCard key={mode} label={direct ? o.direction.Direct : o.direction.Reverse}
+                        selected={p.draft.modes.includes(mode)} onClick={() => p.onToggleMode(mode)}
+                        prompt={prompt} answer={answer} promptLanguage={example ? p.languageCode : undefined}
+                        answerLanguage={example ? p.languageCode : undefined}
+                        classes={{card:s.direction,heading:s.directionHeading,check:s.directionCheck,prompt:s.prompt,arrow:s.directionArrow,answer:s.answer}}/>;
+                    })}
                 </div>
               </div>
               <div className={s.field}>

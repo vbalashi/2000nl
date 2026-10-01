@@ -815,6 +815,6 @@ test("approved reverse idiom preview names its expression answer", async () => {
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Exercises / }));
   fireEvent.click(screen.getByRole("button", { name: /^Idioms$/ }));
-  expect(screen.getByRole("button", { name: /^Reverse Meaning Idioms$/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Reverse Meteen zeggen waar het om gaat\. Met de deur in huis vallen$/ })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /^Reverse Meaning Words$/ })).not.toBeInTheDocument();
 });

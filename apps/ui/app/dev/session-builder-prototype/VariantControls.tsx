@@ -3,6 +3,7 @@
 import React, {createContext, useContext, useEffect, useRef} from "react";
 import {ArrowDown, Check, X} from "lucide-react";
 import {Button, CheckboxCards, Dialog, IconButton, Slider} from "@radix-ui/themes";
+import {DirectionCard} from "@/components/practice/builder/DirectionCard";
 import {Direction, toggleRequired} from "./model";
 import {Variant} from "./variants";
 import s from "./prototype.module.css";
@@ -24,10 +25,11 @@ export function Directions({values,pair,onChange,contentLanguage}:{values:Direct
   if(variant==="radix")return <CheckboxCards.Root aria-label={messages.builder.direction} size="1" columns="2" gap="3" value={values} onValueChange={next=>{if(next.length)onChange(next as Direction[]);}} className={s.radixDirections}>
     {(["Direct","Reverse"] as const).map(direction=><CheckboxCards.Item key={direction} value={direction}><span className={s.radixDirectionBody}><span className={s.radixDirectionTitle}>{messages.trainingOverview.direction[direction]}</span><strong lang={contentLanguage} className={s.prompt}>{pair[direction==="Direct"?0:1]}</strong><ArrowDown size={13}/><span lang={contentLanguage} className={s.answer}>{pair[direction==="Direct"?1:0]}</span></span></CheckboxCards.Item>)}
   </CheckboxCards.Root>;
-  return <div className={s.directions}>{(["Direct","Reverse"] as const).map(direction=><button key={direction} className={`${s.direction} ${values.includes(direction)?s.directionSelected:""}`} aria-pressed={values.includes(direction)} onClick={()=>onChange(toggleRequired(values,direction))}>
-    <span className={s.directionHeading}>{messages.trainingOverview.direction[direction]}<span className={s.check}>{values.includes(direction)&&<Check size={12}/>}</span></span>
-    <strong lang={contentLanguage} className={s.prompt}>{pair[direction==="Direct"?0:1]}</strong><ArrowDown size={13} className={s.directionArrow}/><span lang={contentLanguage} className={s.answer}>{pair[direction==="Direct"?1:0]}</span>
-  </button>)}</div>;
+  return <div className={s.directions}>{(["Direct","Reverse"] as const).map(direction=><DirectionCard
+    key={direction} label={messages.trainingOverview.direction[direction]} selected={values.includes(direction)}
+    onClick={()=>onChange(toggleRequired(values,direction))} prompt={pair[direction==="Direct"?0:1]} answer={pair[direction==="Direct"?1:0]}
+    promptLanguage={contentLanguage} answerLanguage={contentLanguage}
+    classes={{card:`${s.direction} ${values.includes(direction)?s.directionSelected:""}`,heading:s.directionHeading,check:s.check,prompt:s.prompt,arrow:s.directionArrow,answer:s.answer}}/>)}</div>;
 }
 export function RangeControl({label,min,max,step=1,value,onChange}:{label:string;min:number;max:number;step?:number;value:number;onChange:(value:number)=>void}) {
   const variant=useContext(DesignContext);
