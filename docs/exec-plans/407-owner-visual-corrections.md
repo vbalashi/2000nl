@@ -114,3 +114,9 @@
 Пункт31: text-size compact segmented control справа от заголовка, без full-width растяжения; перенос header при недостаточной ширине. aria-label/pressed/disabled/retry/account save сохранены, focus outline добавлен. Browser desktop подтверждён, typecheck и approved auto-profile/save regression pass. Screenshot /tmp/407qa/correction31-compact-size.png.
 
 Пункт32: preview использует ProductionArticleReading, SenseCardHeadwordLockup и ArticleContentNode/ArticleMeaningDetails с illustrative normalized nodes, без собственных reading p/span classes. Добавлена рамка. Settings styles ограничены прямыми детьми/header, не переопределяют вложенную article typography. Browser headword44px подтверждён; typecheck/14 sharedArticle+reading tests pass. Screenshot /tmp/407qa/correction32-shared-preview.png. Полная итоговая проверка34 пунктов ещё предстоит.
+
+## Итоговая проверка — 1 октября, в работе
+
+Текущий HEAD6ea228fd, clean checkout. 15 suites194 tests плюс3 suites21 tests =215 pass; typecheck pass; lint единственный прежний missing handlePlayAudio dependency warning. Локальная SQL regression library_initial_browse прошла с14 449 groups, filters/pages/scope/ACL, rollback. Health3100 ok/local/contract193; translation gatefalse сохранён. Health commit/qaSource.commit — статический startup stamp2fa40926, не текущий HEAD; его нельзя использовать как доказательство текущего кода.
+
+Settings320: реальные controls178px, clientWidth==scrollWidth320; общий preview/headword44px. Снимок /tmp/407qa/final-settings-mobile.png. Полная visual matrix текущих экранов EN/NL/RU, Normal/Extra, Light/Dark ещё не доказана — goal остаётся active. Следующий шаг: завершить эту проверку, исправить найденные расхождения, проверить владельцев данных/действий по каждому пункту перед completion.
