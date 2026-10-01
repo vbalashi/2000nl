@@ -2,6 +2,7 @@ import {
   forwardAbortSignal,
 } from "./platformFetchWithTimeout";
 import { requestPlatformV2Lookup } from "./platformV2LookupTransport";
+import { onPlatformV2CardStateChanged } from "./platformV2CardStateChanges";
 import {
   clearPlatformV2TrainingMediaCache,
 } from "./platformV2TrainingMediaClient";
@@ -75,6 +76,7 @@ export type PlatformV2TrainingPrefetchInput =
   };
 
 type PrefetchedLookup = {
+  entryId: string;
   cacheOwnerId: string;
   promise: Promise<PlatformV2TrainingLookupResult>;
   result: PlatformV2TrainingLookupResult | null;
@@ -92,6 +94,17 @@ const PREFETCH_TTL_MS = 30_000;
 export const PREPARED_CARD_MAX_REUSE_AGE_MS = 5 * 60_000;
 const MAX_PREFETCHED_LOOKUPS = 24;
 const prefetchedLookups = new Map<string, PrefetchedLookup>();
+
+onPlatformV2CardStateChanged((entryId) => {
+  // Invalidate every direction/language projection of the changed meaning.
+  // Browser owners partition reads; invalidation carries no private card state.
+  for (const [key, record] of prefetchedLookups) {
+    if (record.entryId !== entryId) continue;
+    prefetchedLookups.delete(key);
+    recordTerminalPrefetchOutcome(record, "cancelled");
+    record.controller.abort();
+  }
+});
 
 export async function fetchPlatformV2TrainingEntry(
   input: PlatformV2TrainingLookupInput,
@@ -224,6 +237,7 @@ function prefetchPlatformV2TrainingEntryWithLease(
   );
 
   const record: PrefetchedLookup = {
+    entryId: input.entryId,
     cacheOwnerId: input.cacheOwnerId,
     promise: Promise.resolve({ state: "entry-not-found" }),
     result: null,
@@ -246,6 +260,10 @@ function prefetchPlatformV2TrainingEntryWithLease(
   }).then(
     (result) => {
       detachInputSignal();
+      // A response that raced an accepted action cannot publish old state.
+      if (record.controller.signal.aborted) {
+        throw new DOMException("Aborted", "AbortError");
+      }
       if (result.state === "ready") {
         record.result = result;
         record.readyAt = Date.now();

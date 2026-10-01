@@ -1,4 +1,5 @@
 import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
+import { publishPlatformV2CardStateChanged } from "./platformV2CardStateChanges";
 import {
   DEFAULT_PLATFORM_FETCH_TIMEOUT_MS,
   platformFetchWithTimeout,
@@ -151,6 +152,7 @@ async function performPlatformV2Action(
         : "platform_v2_action_failed",
     );
   }
+  publishPlatformV2CardStateChanged(request.target.entryId);
   return payload;
 }
 

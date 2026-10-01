@@ -2521,7 +2521,11 @@ function TrainingScreenContent({
             startPending={trainingPilot.startPending}
             scenarioLoading={trainingPilot.scenarioLoading}
             replacementWarning={sessionReplacementWarning}
-            hasOwnedSession={Boolean(trainingSessionId || idiomSession || sentenceSession)}
+            hasOwnedSession={
+              Boolean(trainingSessionId || idiomSession || sentenceSession) &&
+              !((activeExerciseFamily === "meaning" || activeExerciseFamily === "word-in-context") &&
+                usableCandidatesExhausted)
+            }
             ownedSession={activeExerciseFamily === "idiom" && idiomSession ? {id:idiomSession.sessionId,completed:idiomSession.completedActions,total:idiomSession.plannedTotal} : activeExerciseFamily === "sentence" && sentenceSession ? {id:sentenceSession.sessionId,completed:sentenceSession.completedActions,total:sentenceSession.plannedTotal} : trainingSessionId ? {id:trainingSessionId,completed:sessionCompletedActions,total:latchedSessionPlan?.plannedTotal??sessionPlannedTotal} : undefined}
             activeSessionLabel={sessionDisplayName || (
               activeExerciseFamily === "idiom"

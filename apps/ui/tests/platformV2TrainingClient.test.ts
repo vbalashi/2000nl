@@ -990,6 +990,62 @@ describe("fetchPlatformV2TrainingEntry", () => {
     ).toHaveLength(1);
   });
 
+  test("an accepted action prevents reuse of a prepared pre-action card on a later session", async () => {
+    const input = { cacheOwnerId: "test-user", entryId: singleSenseEntry.entryId,
+      cardTypeId: "word-to-definition" as const, contentLanguageCode: "nl", translationTargetLanguageCode: "en" };
+    const payload = { contractVersion: "platform-lookup-v2", query: "hand",
+      request: { contentLanguageCode: "nl", translationTargetLanguageCode: "en", cardTypeId: "word-to-definition", intent: "training-review" },
+      groups: [singleSenseGroup], page: { selectedTierComplete: true, nextGroupCursor: null } };
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(payload), {status:200}))
+      .mockResolvedValueOnce(new Response(JSON.stringify({contractVersion:"platform-action-v2", actionId:"start-learning", clientEventId:"event", accepted:true,
+        card:{...singleSenseEntry.card, stateRevision:"after-learning", scheduler:{phase:"learning"}}}), {status:200}));
+    vi.stubGlobal("fetch", fetchMock);
+    await prefetchPlatformV2TrainingEntry(input);
+    expect(peekPrefetchedPlatformV2TrainingEntry(input)).not.toBeNull();
+    await performPlatformV2TrainingAction({...startLearningCapability(), actionId:"start-learning", target:{kind:"sense-card", entryId:input.entryId, cardTypeId:input.cardTypeId, stateRevision:"before-learning"}});
+    expect(consumePrefetchedPlatformV2TrainingEntry(input)).toBeNull();
+  });
+
+  test("accepted Library actions also invalidate prepared state across directions", async () => {
+    const input = { cacheOwnerId:"test-user",entryId:singleSenseEntry.entryId,cardTypeId:"definition-to-word" as const,contentLanguageCode:"nl",translationTargetLanguageCode:"en" };
+    const payload={contractVersion:"platform-lookup-v2",query:"hand",request:{contentLanguageCode:"nl",translationTargetLanguageCode:"en",cardTypeId:"definition-to-word",intent:"training-review"},groups:[singleSenseGroup],page:{selectedTierComplete:true,nextGroupCursor:null}};
+    vi.stubGlobal("fetch",vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(payload))).mockResolvedValueOnce(new Response(JSON.stringify({contractVersion:"platform-action-v2",actionId:"start-learning",clientEventId:"event",accepted:true,card:singleSenseEntry.card}))));
+    await prefetchPlatformV2TrainingEntry(input);
+    await performPlatformV2LibraryAction({...startLearningCapability(),actionId:"start-learning",target:{kind:"sense-card",entryId:input.entryId,cardTypeId:"word-to-definition",stateRevision:"before"}});
+    expect(consumePrefetchedPlatformV2TrainingEntry(input)).toBeNull();
+  });
+
+  test("a lookup already in flight cannot publish its old revision after acceptance", async () => {
+    const input={cacheOwnerId:"test-user",entryId:singleSenseEntry.entryId,cardTypeId:"word-to-definition" as const,contentLanguageCode:"nl",translationTargetLanguageCode:"en"};
+    const payload={contractVersion:"platform-lookup-v2",query:"hand",request:{contentLanguageCode:"nl",translationTargetLanguageCode:"en",cardTypeId:"word-to-definition",intent:"training-review"},groups:[singleSenseGroup],page:{selectedTierComplete:true,nextGroupCursor:null}};
+    let resolveBody!: (value: unknown) => void;
+    const body=new Promise(resolve=>{resolveBody=resolve;});
+    const response=new Response(JSON.stringify(payload));vi.spyOn(response,"json").mockImplementation(()=>body);
+    const fetchMock=vi.fn().mockResolvedValueOnce(response).mockResolvedValueOnce(new Response(JSON.stringify({contractVersion:"platform-action-v2",actionId:"start-learning",clientEventId:"event",accepted:true,card:singleSenseEntry.card})));
+    vi.stubGlobal("fetch",fetchMock);
+    const pending=prefetchPlatformV2TrainingEntry(input);
+    const rejected=expect(pending).rejects.toMatchObject({name:"AbortError"});
+    await vi.waitFor(()=>expect(fetchMock).toHaveBeenCalledTimes(1));
+    await performPlatformV2TrainingAction({...startLearningCapability(),actionId:"start-learning",target:{kind:"sense-card",entryId:input.entryId,cardTypeId:input.cardTypeId,stateRevision:"before"}});
+    resolveBody(payload);await rejected;
+    expect(peekPrefetchedPlatformV2TrainingEntry(input)).toBeNull();
+  });
+
+  test.each([true, false])("mutation acceptance=%s invalidates only the changed meaning", async (accepted) => {
+    const input={cacheOwnerId:"test-user",entryId:singleSenseEntry.entryId,cardTypeId:"word-to-definition" as const,contentLanguageCode:"nl",translationTargetLanguageCode:"en"};
+    const other={...input,entryId:financeEntry.entryId};
+    const payload={contractVersion:"platform-lookup-v2",query:"hand",request:{contentLanguageCode:"nl",translationTargetLanguageCode:"en",cardTypeId:"word-to-definition",intent:"training-review"},groups:[singleSenseGroup,multiSenseBankGroup],page:{selectedTierComplete:true,nextGroupCursor:null}};
+    const fetchMock=vi.fn().mockImplementation(async (url:string)=>url.includes("lookup")
+      ? new Response(JSON.stringify(payload))
+      : new Response(JSON.stringify(accepted?{contractVersion:"platform-action-v2",actionId:"start-learning",clientEventId:"event",accepted:true,card:singleSenseEntry.card}:{error:"state_conflict"}),{status:accepted?200:409}));
+    vi.stubGlobal("fetch",fetchMock);
+    await prefetchPlatformV2TrainingEntry(input);await prefetchPlatformV2TrainingEntry(other);
+    const action=performPlatformV2TrainingAction({...startLearningCapability(),actionId:"start-learning",target:{kind:"sense-card",entryId:input.entryId,cardTypeId:input.cardTypeId,stateRevision:"before"}});
+    if(accepted)await action;else await expect(action).rejects.toThrow("state_conflict");
+    expect(Boolean(peekPrefetchedPlatformV2TrainingEntry(input))).toBe(!accepted);
+    expect(peekPrefetchedPlatformV2TrainingEntry(other)).toMatchObject({state:"ready",entry:{entryId:other.entryId}});
+  });
+
   test("prefetches the exact next card and exposes it synchronously to the session", async () => {
     const payload = {
       contractVersion: "platform-lookup-v2",

@@ -1,0 +1,3 @@
+## Supabase round trips (n=20)
+gotrue_health p50 51 p95 232 min 40
+postgrest_rpc p50 66 p95 533 min 47

@@ -1,0 +1,14 @@
+t
+t
+psql:<checkout>/tmp/training-reliability/plan-one.sql:11: ERROR:  canceling statement due to statement timeout
+CONTEXT:  SQL function "training_scheduler_candidates_v2" statement 1
+SQL function "training_session_members_v1" statement 1
+SQL statement "SELECT count(*) FILTER (WHERE queue_source = 'new')::integer,
+    count(*) FILTER (WHERE queue_source IN ('learning', 'review'))::integer,
+    count(*)::integer
+                                                          FROM private.training_session_members_v1(
+    p_user_id, p_card_type_ids, p_list_id, p_list_type,
+    p_card_filter, private.resolve_training_material_selection_v1(p_user_id,p_list_id,p_list_type,p_training_filter), v_size,
+    CASE WHEN p_card_filter = 'both' THEN p_new_review_ratio ELSE 2 END
+  )"
+PL/pgSQL function get_training_session_plan(uuid,text[],uuid,text,text,jsonb,text,integer) line 28 at SQL statement

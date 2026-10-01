@@ -1,0 +1,5 @@
+## config
+lrwxrwxrwx 1 root root 17 Oct  1 19:03 /app/public/audio -> ../../../db/audio
+audio-root:inspectable
+PLATFORM_AUDIO_PUBLIC_ROOT=/db
+NEXT_PUBLIC_SITE_URL=https://2000.dilum.io

@@ -85,3 +85,7 @@ jobs:
       - name: Run UI e2e smoke
         run: npm run test:e2e
         working-directory: apps/ui
+
+      - name: Verify completed and paused training sessions
+        run: npm run test:e2e:training-reliability
+        working-directory: apps/ui

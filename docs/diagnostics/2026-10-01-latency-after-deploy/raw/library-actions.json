@@ -1,0 +1,194 @@
+[
+  {
+    "name": "toggle list #1",
+    "ms": 274,
+    "reqs": [
+      {
+        "m": "POST",
+        "p": "add_entry_to_user_list",
+        "ms": 139,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_user_list_memberships_for_entries",
+        "ms": 91,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 65,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 85,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_active_training_scope",
+        "ms": 54,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_word_list_summary",
+        "ms": 59,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_detailed_training_stats",
+        "ms": 4869,
+        "st": "cfExtPri"
+      }
+    ]
+  },
+  {
+    "name": "toggle list #2",
+    "ms": 222,
+    "reqs": [
+      {
+        "m": "POST",
+        "p": "remove_entries_from_user_list",
+        "ms": 107,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_user_list_memberships_for_entries",
+        "ms": 88,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 64,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 95,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_active_training_scope",
+        "ms": 59,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_word_list_summary",
+        "ms": 52,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_detailed_training_stats",
+        "ms": 836,
+        "st": "cfExtPri"
+      }
+    ]
+  },
+  {
+    "name": "toggle list #3",
+    "ms": 132,
+    "reqs": [
+      {
+        "m": "POST",
+        "p": "add_entry_to_user_list",
+        "ms": 52,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_user_list_memberships_for_entries",
+        "ms": 51,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 53,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 58,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_active_training_scope",
+        "ms": 52,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_word_list_summary",
+        "ms": 53,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_detailed_training_stats",
+        "ms": 866,
+        "st": "cfExtPri"
+      }
+    ]
+  },
+  {
+    "name": "toggle list #4",
+    "ms": 148,
+    "reqs": [
+      {
+        "m": "POST",
+        "p": "remove_entries_from_user_list",
+        "ms": 53,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_user_list_memberships_for_entries",
+        "ms": 62,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 113,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_available_word_lists",
+        "ms": 131,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_active_training_scope",
+        "ms": 77,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_word_list_summary",
+        "ms": 87,
+        "st": "cfExtPri"
+      },
+      {
+        "m": "POST",
+        "p": "get_detailed_training_stats",
+        "ms": 866,
+        "st": "cfExtPri"
+      }
+    ]
+  }
+]
