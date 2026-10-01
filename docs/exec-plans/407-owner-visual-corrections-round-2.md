@@ -14,7 +14,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 - [x] 11 — Direction cards more compact vertically; retain bounded width and wrapping.
 - [x] 3 — Translation controls do not wrap unnecessarily at Normal size.
 - [x] 4 — Learning-language surface matches Settings; Plus + Add language quiet action.
-- [ ] 8 — Interface-language menu rounded, accessible, consistent with app.
+- [x] 8 — Interface-language menu rounded, accessible, consistent with app.
 - [ ] 27 — Add truthful read-only Billing & subscriptions section; do not invent payment status/invoices.
 - [ ] 9 — Compare prototype navigation icons and shared tablet/mobile/desktop thresholds.
 - [ ] 10 — Compact rounded desktop navigation and smoother selection.

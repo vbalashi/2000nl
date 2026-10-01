@@ -5,7 +5,7 @@ import {
   DictionaryMaterialSettings,
 } from "@/components/practice/material/MaterialSettings";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
-import { Languages, Palette, Keyboard, UserRound, Library } from "lucide-react";
+import { Languages, Palette, Keyboard, UserRound, Library, ChevronDown, Check } from "lucide-react";
 import { getUiMessages } from "@/lib/uiMessages";
 import { getTrainingHotkeys } from "@/components/training/trainingHotkeys";
 import {
@@ -16,6 +16,7 @@ import {
 import { ApprovedAppearanceSection } from "@/components/practice/ui/ApprovedAppearanceSection";
 import { ApprovedTextSizeSection } from "@/components/reading/ApprovedTextSizeSection";
 import type { SettingsDestinationProps } from "./SettingsDestination";
+import { ActionMenu } from "@/components/practice/ui/ActionMenu";
 import s from "@/components/practice/settings/settings.module.css";
 const interfaceLanguages = [
   { code: "en", name: "English" },
@@ -37,6 +38,10 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
     { id: "shortcuts", label: copy.shortcuts, Icon: Keyboard },
     { id: "account", label: copy.account, Icon: UserRound },
   ] as const;
+  const [interfaceAnchor, setInterfaceAnchor] = React.useState<HTMLButtonElement | null>(null);
+  const closeInterfaceMenu = React.useCallback(() => {
+    setInterfaceAnchor(anchor => { anchor?.focus(); return null; });
+  }, []);
   const [pickerOpen, setPickerOpen] = React.useState(false);
   React.useEffect(() => {
     if (!props.open) setPickerOpen(false);
@@ -56,22 +61,18 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
             <>
               <SettingsPanel title={copy.languages}>
                 <SettingsRow title={copy.interfaceLanguage}>
-                  <select
-                    className={s.select}
-                    aria-label={copy.interfaceLanguage}
-                    value={props.interfaceLanguage}
-                    onChange={(event) =>
-                      void props.onInterfaceLanguageChange(
-                        event.target.value as typeof props.interfaceLanguage,
-                      )
-                    }
-                  >
-                    {interfaceLanguages.map(({ code, name }) => (
-                      <option key={code} value={code} lang={code}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
+                  <button type="button" className={s.select} aria-label={copy.interfaceLanguage}
+                    aria-haspopup="menu" aria-expanded={Boolean(interfaceAnchor)}
+                    onClick={event => setInterfaceAnchor(event.currentTarget)}>
+                    {interfaceLanguages.find(item => item.code === props.interfaceLanguage)?.name}
+                    <ChevronDown size={14} aria-hidden="true" />
+                  </button>
+                  {interfaceAnchor && <ActionMenu anchor={interfaceAnchor} title={copy.interfaceLanguage}
+                    language={props.interfaceLanguage} onClose={closeInterfaceMenu}
+                    items={interfaceLanguages.map(item => ({ id:item.code,label:item.name,
+                      icon:item.code === props.interfaceLanguage ? <Check size={14} aria-hidden="true"/> : undefined,
+                      onSelect:() => { closeInterfaceMenu(); void props.onInterfaceLanguageChange(item.code); },
+                    }))}/>}
                 </SettingsRow>
                 <SettingsRow
                   title={copy.translationLanguage}

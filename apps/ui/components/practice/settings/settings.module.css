@@ -288,3 +288,5 @@
 
 .addLanguage { display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:6px 0;border:0;background:transparent;color:var(--practice-text-muted);font-size:var(--practice-text-caption);cursor:pointer; }
 .addLanguage:disabled, .addLanguage[aria-disabled=true] { opacity:.55;cursor:default; }
+
+button.select { display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer; }
