@@ -1577,3 +1577,35 @@ evidence at /tmp/407qa/full-ui-unit-2026-10-01.log (initial failure),
 translation-provider operation, complete screen-reader/device acceptance or owner
 visual sign-off. Existing provider-config and Library exclusion-scope questions
 remain unanswered; deployment flags stay unchanged. Goal remains active.
+
+
+## Owner resolves Exclude scope and translation configuration — 2026-10-01
+
+The owner confirmed all ordinary word trainings, not one saved setup. Known stays
+on one entry/card direction; Exclude spans all meanings of the selected headword
+in both word/definition directions. Idiom, sentence translation and audio remain
+independent. Recorded the superseding decision in discussions/2026-10-01-02-known-
+headword-exclusion.md and current-decisions.md. Goal is active again.
+
+Source audit: current pair key in migration168 covers one entry/recall or a separate
+audio mode; exercise keys carry family/node/fingerprint. Existing table, API and
+client accept only exclude-pair/restore-pair. Broadening the old key would silently
+change existing marks, so preserve that contract and add an explicit headword
+target/atomic boundary. Use durable private.platform_v2_headword_groups identity
+resolved from the entry's active binding (or user singleton group), not spelling.
+The next migration must extend private availability/read/review gates, retaining
+old pair checks and lock ordering; API/client/undo and Training/Library adapters
+then opt into the new headword boundary. Characterize both directions, sibling
+meanings, unaffected families/audio, idempotency/undo/concurrency/ACL and FSRS
+nonmutation before replacing the currently exposed ordinary Exclude behavior.
+This checkpoint records the decision and owning seams, not a completed feature.
+
+Owner authorized copying the reference checkout's apps/ui/.env.local or NUC
+configuration. Found the local reference file and copied it into the worktree
+with0600 permissions; git check-ignore confirms it stays out of version control.
+Only provider-key presence booleans were inspected: OpenAI/DeepL present, Gemini
+absent. Earlier failure resulted from checking only the worktree, not the reference
+checkout. No secret values or remote production DB connection were exposed.
+Use the local-Supabase QA wrapper when loading this configuration, so provider
+settings cannot redirect database/auth requests to an external deployment. Live
+translation success still needs retesting with the new local process configuration.

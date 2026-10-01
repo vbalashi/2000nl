@@ -56,3 +56,5 @@
 - [2026-09-28: подписи ролей в границе блока](2026-09-28-06-library-border-labels.md)
 
 - [2026-09-28: утверждение Library и первый Statistics](2026-09-28-07-library-approved-statistics.md)
+
+- [Known и исключение headword](2026-10-01-02-known-headword-exclusion.md) — 2026-10-01.
