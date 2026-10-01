@@ -176,10 +176,13 @@ export async function setupAuthenticatedTrainingAttributionPage(
     settingsOverrides?: Record<string, unknown>;
     /** Diagnostic reporting validates dictionary entry UUIDs before transport. */
     useUuidEntryIds?: boolean;
+    /** Attention delivery validates owned session UUIDs independently of entry IDs. */
+    useUuidSessionId?: boolean;
     /** Use the local app's dev-only test login instead of installing a mocked session. */
     devTestLogin?: boolean;
   } = {},
 ) {
+  const fixtureSessionId = options.useUuidSessionId ? "40710000-0000-4000-8000-000000000001" : "training-session-fixture";
   const entries = options.useUuidEntryIds ? fixtureEntries.map((entry, index) => ({
     ...entry, id: `40700000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
   })) : fixtureEntries;
@@ -234,7 +237,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
         ? (target as Record<string, unknown>).entryId
         : undefined;
     if (
-      sessionId === "training-session-fixture" &&
+      sessionId === fixtureSessionId &&
       typeof entryId === "string"
     ) {
       consumedSessionEntryIds.add(entryId);
@@ -473,9 +476,9 @@ export async function setupAuthenticatedTrainingAttributionPage(
       await fulfillJson(
         route,
         visualFixture
-          ? { sessionId: "training-session-fixture", ...visualFixture.plan }
+          ? { sessionId: fixtureSessionId, ...visualFixture.plan }
           : {
-              sessionId: "training-session-fixture",
+              sessionId: fixtureSessionId,
               plannedNew: 30,
               plannedReview: 20,
               plannedPractice: 0,
@@ -518,7 +521,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
       await fulfillJson(
         route,
         {
-          sessionId: "training-session-fixture",
+          sessionId: fixtureSessionId,
           runStatus: "active",
           runGeneration: 1,
           sessionSize: plan.plannedTotal,

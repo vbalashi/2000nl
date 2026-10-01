@@ -516,6 +516,14 @@
       "overview": "Sneltoetsenoverzicht tonen"
     },
     "trainingSession": {
+      "exclusion": {
+        "label": "Uitsluiten",
+        "help": "Sluit dit paar in beide richtingen uit van training",
+        "done": "Paar uitgesloten van training",
+        "undo": "Ongedaan maken",
+        "failed": "De actie is niet gelukt. Probeer opnieuw.",
+        "dismiss": "Sluiten"
+      },
       "completedOne": "{count} oefening voltooid",
       "completedFew": "{count} oefeningen voltooid",
       "completedMany": "{count} oefeningen voltooid",

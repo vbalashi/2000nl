@@ -23,6 +23,22 @@ for (const [index, language] of (["en", "nl", "ru"] as const).entries()) {
       const stage = page.getByTestId("training-sense-card-stage");
       await expect(stage).toHaveAttribute("data-side", "answer");
       const opener = page.getByRole("button", { name: t("senseCard.report"), exact: true });
+      const quietRow = stage.getByTestId("training-secondary-actions");
+      await expect(quietRow).toBeVisible();
+      expect(await quietRow.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+      const quietGeometry = await quietRow.evaluate(node => {
+        const box = node.getBoundingClientRect();
+        return [...node.querySelectorAll("button")].map(button => {
+          const rect = button.getBoundingClientRect();
+          const style = getComputedStyle(button);
+          return { contained: rect.top >= box.top - 1 && rect.bottom <= box.bottom + 1,
+            family: style.fontFamily, size: style.fontSize, color: style.color, weight: style.fontWeight };
+        });
+      });
+      expect(quietGeometry).toHaveLength(2);
+      expect(quietGeometry.every(item => item.contained)).toBe(true);
+      expect(quietGeometry[0]).toEqual(quietGeometry[1]);
+      await stage.screenshot({ path: testInfo.outputPath("quiet-actions-extra.png") });
       // Next dev badge overlaps the far-left Report label at 320px; use its real keyboard path.
       await opener.focus();
       await page.keyboard.press("Enter");

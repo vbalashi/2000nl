@@ -1167,3 +1167,45 @@ Contract now 2000nl-db-191. Read-only EXPLAIN on the actual local QA principal
 returned 8 rows (7 meaning,1 idiom) in 10.254ms/1846 buffer hits. This is a small
 live-account smoke, not a production-scale load test. Remaining acceptance gates
 listed above stay open; no rollout/deployment or goal completion was declared.
+
+## Exercise secondary actions and real modal attention gate — 2026-10-01
+
+Reviewed the exercise-family action owners: idiom/sentence cards already use shared
+TrainingExerciseCard/RatingControls and shared quiet Report/Exclude styles. Pair
+exclusion remains the existing explicit server boundary; this checkpoint does not
+invent exercise Known actions or mutate ordinary meaning state. Exclusion/Undo
+copy moved from the standalone component object to the EN/NL/RU catalogs with a
+compatibility adapter for existing consumers. The idiom action error also reuses
+the generic catalog failure copy. The approved secondary-action row now sizes from
+its children and shared spacing roles, allowing wrapping; legacy flag-off geometry
+stays unchanged. Its old fixed 24px height conflicted with scaled quiet actions.
+
+Six production Report browser cases now additionally verify that Report/Exclude
+have identical font family/size/weight/color and stay inside their action row at
+Extra, EN/NL/RU, 320x568 and 844x390, three palettes and light/dark. Screenshots were
+inspected in RU light mobile and graphite dark short window. The Next development
+badge overlaps the left Report target on mobile; the existing gate uses keyboard
+activation. This is a development-tool overlay, not a product icon/layout claim.
+
+Added an opt-in UUID session identity to the controlled production test harness,
+independent of entry UUIDs, without changing legacy fixture IDs. The actual
+useActiveStudyTime/delivery path now has a browser gate with real elapsed time:
+read a prepared face, open native Report, wait 17s (beyond 15s checkpoint), verify
+no further measurements, close and resume, reopen and verify duration attributed
+to the same session/entry/family. Transport is controlled/accepted; no live report
+or study-time write is sent. This proves modal exclusion/delivery integration,
+not real server acceptance or OS focus loss.
+
+Validation: 40 unit/service/catalog/session tests, seven browser cases, typecheck,
+targeted lint, unchanged style guard (1376 literals). A draft text extraction
+truncated a component export: typecheck and the browser caught it; restored before
+successful checks. Attempts to test real focus via a second tab in headless and
+headed Chromium did not produce document.hasFocus=false, so they are not counted
+as focus evidence. Fake elapsed-time stepping then made focus restoration timing
+unstable; replaced with real elapsed time, preserving the original production
+path rather than weakening assertions. Native OS focus-loss gate remains open.
+Live IAB tab26 inventory is present but observations time out at
+Emulation.setFocusEmulationEnabled, including the documented alternative snapshot;
+standalone production Playwright remains usable. No browser/server restart or
+new QA port was used. Native zoom, real focus loss, live gated sentence/broader
+Library acceptance, remaining active-family copy and final owner review stay open.

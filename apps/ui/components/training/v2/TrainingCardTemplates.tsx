@@ -661,7 +661,8 @@ export function TrainingCardSecondaryActions({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-6 min-h-6 shrink-0 items-center justify-between gap-3">
+    <div data-testid="training-secondary-actions" className={trainingPresentationV1Enabled()
+      ? approved.secondaryActions : "flex h-6 min-h-6 shrink-0 items-center justify-between gap-3"}>
       {children}
     </div>
   );

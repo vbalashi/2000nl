@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type {
   PlatformIdiomExerciseCandidateV2,
@@ -158,13 +159,7 @@ export function TrainingIdiomCard({
               role="alert"
               className="shrink-0 text-sm text-rose-600 dark:text-rose-300"
             >
-              {
-                {
-                  en: "The action failed. Please try the button again.",
-                  nl: "De actie is mislukt. Probeer de knop opnieuw.",
-                  ru: "Не удалось выполнить действие. Нажмите кнопку ещё раз.",
-                }[interfaceLanguage]
-              }
+              {getUiMessages(interfaceLanguage).trainingSession.exclusion.failed}
             </p>
           ) : null
         }

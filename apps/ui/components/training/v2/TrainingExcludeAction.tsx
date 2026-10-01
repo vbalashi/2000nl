@@ -1,33 +1,14 @@
 "use client";
 import React from "react";
+import { getUiMessages } from "@/lib/uiMessages";
 import { EyeOff } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { senseCardQuietAction } from "../SenseCardChrome";
+/** Compatibility adapter; exclusion and undo copy has one catalog owner. */
 export const trainingExclusionCopy = {
-  en: {
-    label: "Exclude",
-    help: "Exclude this pair from training in both directions",
-    done: "Pair excluded from training",
-    undo: "Undo",
-    failed: "Could not complete the action. Try again.",
-    dismiss: "Dismiss",
-  },
-  nl: {
-    label: "Uitsluiten",
-    help: "Sluit dit paar in beide richtingen uit van training",
-    done: "Paar uitgesloten van training",
-    undo: "Ongedaan maken",
-    failed: "De actie is niet gelukt. Probeer opnieuw.",
-    dismiss: "Sluiten",
-  },
-  ru: {
-    label: "Исключить",
-    help: "Исключить эту пару из тренировок в обоих направлениях",
-    done: "Пара исключена из тренировок",
-    undo: "Отменить",
-    failed: "Не удалось выполнить действие. Повторите попытку.",
-    dismiss: "Закрыть",
-  },
+  en: getUiMessages("en").trainingSession.exclusion,
+  nl: getUiMessages("nl").trainingSession.exclusion,
+  ru: getUiMessages("ru").trainingSession.exclusion,
 };
 export function TrainingExcludeAction({
   language,

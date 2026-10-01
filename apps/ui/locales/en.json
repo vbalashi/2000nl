@@ -516,6 +516,14 @@
       "overview": "Show the shortcut overview"
     },
     "trainingSession": {
+      "exclusion": {
+        "label": "Exclude",
+        "help": "Exclude this pair from training in both directions",
+        "done": "Pair excluded from training",
+        "undo": "Undo",
+        "failed": "Could not complete the action. Try again.",
+        "dismiss": "Dismiss"
+      },
       "completedOne": "{count} exercise completed",
       "completedFew": "{count} exercises completed",
       "completedMany": "{count} exercises completed",
