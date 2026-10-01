@@ -18,7 +18,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 - [x] 27 — Add truthful read-only Billing & subscriptions section; do not invent payment status/invoices.
 - [x] 9 — Compare prototype navigation icons and shared tablet/mobile/desktop thresholds.
 - [x] 10 — Compact rounded desktop navigation and smoother selection.
-- [ ] 17 — Search persists only within current page lifetime, clears on reload.
+- [x] 17 — Search persists only within current page lifetime, clears on reload.
 - [ ] 18 — Collection filtering belongs inside filter, remove duplicate toolbar toggle.
 - [ ] 20 — Metadata language + source, omit Search label.
 - [ ] 19 — Below search: language/source left, match count right, no duplicate summary.

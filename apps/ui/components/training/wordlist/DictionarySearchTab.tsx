@@ -647,6 +647,8 @@ export function DictionarySearchTab({
           </svg>
           <input
             ref={queryRef}
+            autoComplete="off"
+            name="library-query"
             value={query}
             onChange={(event) => {
               updateSearchState({
