@@ -418,6 +418,8 @@
       "dictionaries": "Woordenboeken",
       "appearance": "Weergave",
       "shortcuts": "Sneltoetsen",
+      "subscriptionsUnavailable": "Betaalde abonnementen zijn nog niet beschikbaar.",
+      "billingUnavailable": "Betalingen, factuurgegevens en facturen zijn nog niet aangesloten.",
       "billing": "Betaling en abonnementen",
       "account": "Account",
       "backSettings": "Terug naar instellingen",

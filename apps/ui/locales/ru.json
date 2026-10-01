@@ -418,6 +418,8 @@
       "dictionaries": "Словари",
       "appearance": "Оформление",
       "shortcuts": "Сочетания клавиш",
+      "subscriptionsUnavailable": "Платные подписки пока недоступны.",
+      "billingUnavailable": "Оплата, платёжные данные и счета пока не подключены.",
       "billing": "Оплата и подписки",
       "account": "Аккаунт",
       "backSettings": "Назад к настройкам",

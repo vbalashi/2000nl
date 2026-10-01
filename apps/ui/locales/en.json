@@ -418,6 +418,8 @@
       "dictionaries": "Dictionaries",
       "appearance": "Appearance",
       "shortcuts": "Shortcuts",
+      "subscriptionsUnavailable": "Paid subscriptions are not available yet.",
+      "billingUnavailable": "Payments, billing details and invoices are not connected yet.",
       "billing": "Billing & subscriptions",
       "account": "Account",
       "backSettings": "Back to settings",

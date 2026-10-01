@@ -5,7 +5,7 @@ import {
   DictionaryMaterialSettings,
 } from "@/components/practice/material/MaterialSettings";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
-import { Languages, Palette, Keyboard, UserRound, Library, ChevronDown, Check } from "lucide-react";
+import { Languages, Palette, Keyboard, UserRound, Library, CreditCard, ChevronDown, Check } from "lucide-react";
 import { getUiMessages } from "@/lib/uiMessages";
 import { getTrainingHotkeys } from "@/components/training/trainingHotkeys";
 import {
@@ -36,6 +36,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
     { id: "dictionaries", label: copy.dictionaries, Icon: Library },
     { id: "appearance", label: copy.appearance, Icon: Palette },
     { id: "shortcuts", label: copy.shortcuts, Icon: Keyboard },
+    { id: "billing", label: copy.billing, Icon: CreditCard },
     { id: "account", label: copy.account, Icon: UserRound },
   ] as const;
   const [interfaceAnchor, setInterfaceAnchor] = React.useState<HTMLButtonElement | null>(null);
@@ -148,6 +149,11 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
               />
             </>
           );
+        if (section === "billing")
+          return <>
+            <SettingsPanel title={copy.subscription}><p className={s.hint}>{copy.subscriptionsUnavailable}</p></SettingsPanel>
+            <SettingsPanel title={copy.billingDetails}><p className={s.hint}>{copy.billingUnavailable}</p></SettingsPanel>
+          </>;
         if (section === "shortcuts")
           return (
             <SettingsPanel title={copy.trainingShortcuts}>
