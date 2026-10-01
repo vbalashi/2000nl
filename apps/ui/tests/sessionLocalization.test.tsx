@@ -25,7 +25,7 @@ test('locale change preserves typed answer and reveal while grading emits canoni
  expect(screen.getByRole('textbox',{name:'Ваш ответ'})).toHaveValue('een fiets');
  fireEvent.click(screen.getByRole('button',{name:'Сравнить ответ'}));
  expect(screen.getByText('Ваш ответ: een fiets')).toBeInTheDocument();
- expect(screen.getByText('Выражения и употребление')).toBeInTheDocument();
+ expect(screen.getByText('Выражения')).toBeInTheDocument();
  fireEvent.click(screen.getByRole('button',{name:'Хорошо'}));
  expect(p.onAction.mock.calls[0][0]).toMatchObject({result:'Good',exercise:'Words · Direct'});
  expect(screen.getByText('My personal name')).toBeInTheDocument();

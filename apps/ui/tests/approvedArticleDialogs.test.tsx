@@ -45,18 +45,14 @@ test("Report stays inside the themed word panel and closes only its own modal", 
   await waitFor(() => expect(trigger).toHaveFocus());
 });
 
-test("Library uses the shared panel's animated dismissal on the approved path", () => {
-  vi.useFakeTimers();
+test("Library uses a non-modal bottom sheet and closes through its header action", () => {
   const onClose = vi.fn();
-  const view = render(<WordDetailDrawer selection={{ entryId: "entry-1", headword: "bank" }} open
+  const view = render(<WordDetailDrawer selection={{ entryId: "entry-1", headword: "huis" }} open
     onClose={onClose} userId="user-1" contentLanguageCode="nl" translationLang="en"
     interfaceLanguage="ru" userLists={[]} />);
-  expect(screen.getByRole("dialog", { name: "Сведения о слове" })).toBeInTheDocument();
-  expect(screen.queryByText("Сведения о слове")).not.toBeInTheDocument();
+  expect(screen.getByRole("region", {name: "Сведения о слове"})).toBeInTheDocument();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Закрыть" }));
-  expect(onClose).not.toHaveBeenCalled();
-  expect(screen.getByRole("dialog")).toHaveAttribute("data-closing", "true");
-  vi.advanceTimersByTime(340);
   expect(onClose).toHaveBeenCalledOnce();
-  view.unmount(); vi.useRealTimers();
+  view.unmount();
 });

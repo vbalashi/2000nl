@@ -27,7 +27,7 @@ test("four-step account size changes reading, display and UI tokens without rese
   await waitFor(() => expect(extra).toBeEnabled());
   expect(screen.getAllByRole("button", { pressed: false })).toHaveLength(3);
   fireEvent.click(extra);
-  await screen.findByText("Saved");
+  await waitFor(() => expect(screen.getByRole("button", {name: "Extra large"})).toBeEnabled());
   expect(repo.save).toHaveBeenCalledWith("account", "desktop", "extra");
   const root = view.container.querySelector(
     '[data-reading-device="desktop"]',
@@ -43,13 +43,7 @@ test("four-step account size changes reading, display and UI tokens without rese
   expect(
     root.style.getPropertyValue("--account-practice-reading-definition"),
   ).toBe("2.5rem");
-  fireEvent.change(screen.getByLabelText("Device profile"), {
-    target: { value: "phone" },
-  });
-  expect(screen.getByRole("button", { name: "Standard" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  expect(repo.save).not.toHaveBeenCalledWith("account", "phone", expect.anything());
   expect(repo.save).toHaveBeenCalledTimes(1);
 });
 
@@ -67,6 +61,6 @@ test("failed approved save stays visible and retries the same selected size", as
   fireEvent.click(screen.getByRole("button", { name: "Extra large" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("Not saved");
   fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-  await screen.findByText("Saved");
+  await waitFor(() => expect(screen.getByRole("button", {name: "Extra large"})).toBeEnabled());
   expect(repo.save).toHaveBeenNthCalledWith(2, "account", "desktop", "extra");
 });

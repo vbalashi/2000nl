@@ -552,7 +552,7 @@ vi.mock("@/lib/supabaseClient", () => ({
 
 vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
   prefetchPlatformV2TrainingEntry: (...args: unknown[]) =>
-    prefetchPlatformV2TrainingEntry(...args),
+    prefetchPlatformV2TrainingEntry(...args) ?? Promise.resolve({state: "ready", group: {header: {audio: null, text: "huis"}}, entry: {entryId: mockWord.id}}),
   preloadPlatformV2Audio: (...args: unknown[]) =>
     preloadPlatformV2Audio(...args),
   clearPlatformV2TrainingClientCaches: (...args: unknown[]) =>
@@ -880,8 +880,8 @@ test("search action opens the dedicated dictionary search surface", async () => 
   await screen.findByTestId("library-workspace");
   await screen.findByRole("textbox",{name:"Search words"});
   expect(screen.getByTestId("library-workspace")).toBeInTheDocument();
-  expect(screen.getByText(/Searching All sources/i)).toBeInTheDocument();
-  expect(screen.getByText("Type a word to search")).toBeInTheDocument();
+  expect(screen.getByText(/Searching All dictionaries/i)).toBeInTheDocument();
+  expect(screen.getByText("Search the dictionary")).toBeInTheDocument();
   expect(screen.getByLabelText(/only this collection/i)).toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: "Zoeken" }),
@@ -3198,7 +3198,7 @@ test("dictionary lookup empty state names the dictionary source search", async (
       await screen.findByText("No matching words"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("No matches in All sources."),
+      screen.getByText("No matches in All dictionaries."),
     ).toBeInTheDocument();
   } finally {
     restoreDefaultSearchResults();

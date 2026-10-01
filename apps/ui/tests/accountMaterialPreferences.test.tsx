@@ -287,7 +287,7 @@ test.each(["en", "nl", "ru"] as const)(
     await screen.findByRole("switch", {
       name:
         language === "ru"
-          ? "Изучать: английский"
+          ? "Изучать: Английский"
           : language === "nl"
             ? "Leer Engels"
             : "Study English",

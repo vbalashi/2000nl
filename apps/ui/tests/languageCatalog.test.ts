@@ -11,7 +11,7 @@ test("ISO aliases resolve the same canonical language independently of interface
     ).toBe(true);
   const spanish = searchCatalogLanguages("es")[0];
   expect(spanish.code).toBe("es");
-  expect(catalogLanguageLabel("ru", spanish)).toBe("испанский");
+  expect(catalogLanguageLabel("ru", spanish)).toBe("Испанский");
   expect(
     searchCatalogLanguages("espanol").some((item) => item.code === "es"),
   ).toBe(true);

@@ -674,3 +674,7 @@ Undo of a historical mark clears only its sibling with the same originating
 event; an independent directional mark is not cleared. Audio remains directional.
 The migration does not rewrite FSRS or action history, or enable rollout flags.
 Forward/read-only postflight verifies the default, trigger guard and table boundary.
+
+## Library browse and approved presentation release (migration 194)
+
+Migration 194 enables empty-query alphabetical browsing in the two private first-party Library lookup bases. Platform lookup query requirements and private function grants remain unchanged. Contract 194 includes the exact migration checksum and read-only probes for the indexed/personal browse paths, alphabetical ranking, and restricted execution. The release enables both independent presentation flags at build time through Docker arguments; the same flags are present in the runtime image. Rollback can select the previous image while the additive forward database contract remains compatible.
