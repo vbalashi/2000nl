@@ -1759,3 +1759,18 @@ Owner supplied33 browser comments plus loading-theme flash. All recorded in
 407-owner-visual-corrections.md. Prior technical checks did not constitute visual
 approval. First small correction: visible Exclude menu chevron; next investigate
 durable training name in header/resume. No rollout or scheduling change.
+
+## Owner correction1: session display name — 2026-10-01
+
+Saved-training launch was dropping the selected name. Optional launch display
+metadata now flows through pilot/commit into existing session-owned resume record
+and ordinary/idiom/sentence chrome. It is a launch snapshot, not inferred from
+current preset equality or scheduling identity. Existing user/owner isolation and
+server-authoritative session restoration stay unchanged. Old records remain valid;
+material fallback replaces queue title in approved ordinary chrome, with localized
+Current training for dictionary-scope starts. New scope clears the display snapshot.
+
+98 focused tests6files pass; strengthened26 family/resume/chrome checks pass;
+additional header override regression11chrome tests passes. Typecheck and targeted
+lint pass. No DB/API/scheduler changes. User Settings tab left unchanged during
+inspection; no live start/grade submitted. Next correction4 reveal blink.

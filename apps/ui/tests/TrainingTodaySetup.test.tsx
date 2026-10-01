@@ -588,7 +588,7 @@ test("approved overview launches the account main training rather than the curre
  await screen.findByRole("heading",{name:"My five words"});
  expect(screen.queryByText("Good morning")).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:"Start training"}));
- await waitFor(()=>expect(onStart).toHaveBeenCalledWith(savedDraft));
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(savedDraft, "My five words"));
 });
 
 test("approved overview waits for the saved language catalog before launching", async()=>{
@@ -604,7 +604,7 @@ test("approved overview waits for the saved language catalog before launching", 
  view.rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" trainingLanguageLoading lists={[]}/>);
  expect(onStart).not.toHaveBeenCalled();
  view.rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" lists={[{value:"english-list",label:"English source"}]}/>);
- await waitFor(()=>expect(onStart).toHaveBeenCalledWith(savedDraft));
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(savedDraft, "English words"));
 });
 
 test("approved overview resumes an owned session independently of edited presets",async()=>{

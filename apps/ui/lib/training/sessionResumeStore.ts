@@ -8,6 +8,8 @@ import type {
 } from "../types";
 
 export type TrainingSessionResumeRecord = {
+  /** Display snapshot only; never a scheduling or preset identity. */
+  sessionName?: string;
   sessionId: string;
   userId: string;
   /** The server-backed session family; old records are ordinary meaning sessions. */
@@ -268,6 +270,8 @@ const parseResumeRecord = (
   const listId = value.listId === null ? null : value.listId;
   if (listId !== null && typeof listId !== "string") return null;
   return {
+    ...(typeof value.sessionName === "string" && value.sessionName.trim()
+      ? { sessionName: value.sessionName.trim().slice(0, 160) } : {}),
     sessionId: value.sessionId,
     userId: value.userId,
     ownerId: value.ownerId,

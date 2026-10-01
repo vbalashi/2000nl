@@ -102,6 +102,7 @@ type Props = {
   onMaterialIntentConsumed?: () => void;
   onStart: (
     draft: TrainingSetupDraft,
+    sessionName?: string,
   ) => boolean | void | Promise<boolean | void>;
   onRetry: () => void;
 };
@@ -658,10 +659,10 @@ export function TrainingTodaySetup({
     return result === "saved";
   };
 
-  const requestStart = useCallback(async (nextDraft: TrainingSetupDraft) => {
+  const requestStart = useCallback(async (nextDraft: TrainingSetupDraft, sessionName?: string) => {
     if (trainingLanguageLoading || pendingLanguage || startBlocked || !material.currentLanguageAllowed || !isTrainingSetupMaterialAvailable(nextDraft, lists, dictionaries)) return;
     if (nextDraft.family === "word-in-context" && translationTargetLanguageCode === null) return;
-    const started = await onStart(nextDraft);
+    const started = await (sessionName ? onStart(nextDraft, sessionName) : onStart(nextDraft));
     if (started === false) setScreen("today");
   }, [trainingLanguageLoading, pendingLanguage, startBlocked, material.currentLanguageAllowed, lists, dictionaries, translationTargetLanguageCode, onStart]);
 
@@ -677,7 +678,7 @@ export function TrainingTodaySetup({
     } else if (!isTrainingSetupMaterialAvailable(selected.draft,lists,dictionaries)) {
       setPresetMessage(t.materialUnavailable);
     } else if (isTrainingSetupDraftSupported(selected.draft,scenarios)) {
-      void requestStart(selected.draft);
+      void requestStart(selected.draft, selected.name);
     } else setPresetMessage(t.chooseGoal);
   }, [selectedIntent, userId, trainingLanguageCode, trainingLanguageLoading, scenarioLoading, pendingLanguage, account.status, account.snapshot.document.trainings, startBlocked, accountCopy.conflict, scenarios, lists, dictionaries, requestStart, t.chooseGoal, t.materialUnavailable]);
 
@@ -1008,7 +1009,7 @@ export function TrainingTodaySetup({
     languagePending={trainingLanguageLoading||Boolean(pendingLanguage)||startPending} dictionariesLoading={dictionariesLoading} translationLanguage={translationTargetLanguageCode}
     name={trainingName??selectedList??""} onNameChange={setTrainingName} onLanguageChange={language=>{if(language!==trainingLanguageCode){setPendingLanguage(language);onTrainingLanguageChange?.(language);}}}
     onDraftChange={setDraft} onSelectFamily={selectFamily} onToggleMode={toggleMode} onMixChange={changeMix} onBack={()=>setScreen("today")}
-    onSave={savePreset} onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft)} canSave={canSaveAccount}
+    onSave={savePreset} onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft, trainingName?.trim() || undefined)} canSave={canSaveAccount}
     saveDisabled={account.status!=="ready"||account.pending||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
     startDisabled={startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
     saveLabel={editingPresetId?accountCopy.update:accountCopy.save} startLabel={startPending?t.starting:scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable?t.materialUnavailable:replacementWarning?t.startHere:t.start}

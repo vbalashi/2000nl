@@ -89,7 +89,7 @@ test("dictionary subset starts with no list and sends its exact IDs to the sessi
       ...draft,
       materialMode: "selected-dictionaries",
       dictionaryIds: ["dict-a", "dict-b"],
-    })).toBe(true);
+    }, "Focused vocabulary")).toBe(true);
   });
 
   expect(updateActiveTrainingScope).toHaveBeenCalledWith(expect.objectContaining({
@@ -114,6 +114,7 @@ test("dictionary subset starts with no list and sends its exact IDs to the sessi
   expect(onSessionReady).toHaveBeenCalledWith(
     expect.objectContaining({ sessionId: "session-1" }),
     expect.objectContaining({
+      sessionName: "Focused vocabulary",
       scope: { listId: null, listType: null },
       focusFilter: expect.objectContaining({ dictionaryScope: expect.objectContaining({ mode: "selected" }) }),
     }),
@@ -306,11 +307,11 @@ test("sentence start forwards exact scope, mix and lexical/activity filters to t
       materialMode: "selected-dictionaries", dictionaryIds: ["dict-1", "dict-2"],
       cardFilter: "review", newReviewRatio: 4, partOfSpeech: ["bn"],
       nounArticles: ["de"], sourceValue: "kind:youtube", sessionSize: 12,
-    })).toBe(true);
+    }, "My sentences")).toBe(true);
   });
   expect(startTranslationSession).toHaveBeenCalledWith(expect.objectContaining({
     sessionSize: 12, listId: null, listType: "curated", cardFilter: "review", newReviewRatio: 4,
     trainingFilter: expect.objectContaining({ dictionaryScope: { mode: "selected", languageCode: "nl", dictionaryIds: ["dict-1", "dict-2"] }, partOfSpeech: ["bn"], nounArticles: ["de"], sourceKind: "youtube" }),
   }));
-  expect(onSessionReady).toHaveBeenCalledWith(expect.objectContaining({ sessionId: "sentence-session-1" }), expect.objectContaining({ draft: expect.objectContaining({ family: "sentence" }) }));
+  expect(onSessionReady).toHaveBeenCalledWith(expect.objectContaining({ sessionId: "sentence-session-1" }), expect.objectContaining({ sessionName: "My sentences", draft: expect.objectContaining({ family: "sentence" }) }));
 });

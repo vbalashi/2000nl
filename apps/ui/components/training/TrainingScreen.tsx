@@ -1,4 +1,5 @@
 "use client";
+import { getUiMessages } from "@/lib/uiMessages";
 import { applyResolvedTheme } from "@/lib/preferences/resolvedTheme";
 import { AccountMaterialProvider } from "@/components/practice/material/AccountMaterialProvider";
 import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/AccountPracticeAppearanceProvider";
@@ -280,6 +281,7 @@ function TrainingScreenContent({
   const [sessionResumeRecord, setSessionResumeRecord] = useState<
     TrainingSessionResumeRecord | null | undefined
   >(() => (trainingTodaySetupEnabled ? undefined : null));
+  const [sessionDisplayName, setSessionDisplayName] = useState<string | undefined>();
   const [sessionResumeError, setSessionResumeError] = useState(false);
   const [sessionReplacementWarning, setSessionReplacementWarning] =
     useState(false);
@@ -872,6 +874,7 @@ function TrainingScreenContent({
       ? `${currentPresentationId}:${currentWord.id}:${currentMode}`
       : null;
   const beginSessionScopeChange = useCallback(() => {
+    setSessionDisplayName(undefined);
     sessionResumeGenerationRef.current += 1;
     resetPlatformProgressActionPending();
     trainingScenarioCatalog.invalidate();
@@ -1415,6 +1418,7 @@ function TrainingScreenContent({
     startTranslationSession: startPlatformV2TranslationTrainingSession,
     reportError: setTrainingLoadError,
     onSessionReady: (session, context) => {
+      setSessionDisplayName(context.sessionName?.trim() || undefined);
       setSessionReplacementWarning(false);
       setSessionConsumedCardKeys([]);
       setSessionCompletedActions(0);
@@ -1429,6 +1433,7 @@ function TrainingScreenContent({
           void writeTrainingSessionResume({
             family: "idiom",
             sessionId: session.sessionId,
+            sessionName: context.sessionName,
             userId: user.id,
             languageCode: context.languageCode,
             listId: context.scope.listId,
@@ -1454,7 +1459,8 @@ function TrainingScreenContent({
         replaceTrainingSessionId(null);
         setLatchedSessionPlan(null);
         if (user.id) void writeTrainingSessionResume({
-          family: "sentence", sessionId: session.sessionId, userId: user.id,
+          family: "sentence", sessionId: session.sessionId,
+            sessionName: context.sessionName, userId: user.id,
           languageCode: context.languageCode, listId: context.scope.listId,
           listType: context.scope.listType, scenarioId: "sentences",
           modes: context.draft.modes, cardFilter: context.draft.cardFilter,
@@ -1478,6 +1484,7 @@ function TrainingScreenContent({
       void writeTrainingSessionResume({
         ...(context.draft.family === "word-in-context" ? { family: "word-in-context" as const } : {}),
         sessionId: session.sessionId,
+            sessionName: context.sessionName,
         userId: user.id,
         languageCode: context.languageCode,
         listId: context.scope.listId,
@@ -1640,6 +1647,7 @@ function TrainingScreenContent({
         return;
       }
       setSessionResumeRecord(record);
+      setSessionDisplayName(record?.sessionName);
     });
     return () => {
       cancelled = true;
@@ -1677,6 +1685,7 @@ function TrainingScreenContent({
       return;
     }
     const record = sessionResumeRecord;
+    setSessionDisplayName(record.sessionName);
     const savedLanguagePermitted = trainingLanguageCodes.includes(
       record.languageCode,
     );
@@ -2334,6 +2343,9 @@ function TrainingScreenContent({
   );
   const sessionChromeVisible =
     trainingTodaySetupEnabled && trainingPilot.surface === "session";
+  const displayedSessionName = sessionDisplayName ||
+    (!trainingFocusFilter.dictionaryScope ? wordListLabel : undefined) ||
+    getUiMessages(onboardingLang).trainingOverview.currentTraining;
   const sessionChrome = sessionChromeVisible
     ? {
         interfaceLanguage: onboardingLang,
@@ -2341,6 +2353,7 @@ function TrainingScreenContent({
         mode: currentMode,
         cardFilter,
         presentation: sessionPresentation,
+        sessionName: displayedSessionName,
         onHistory: openTrainingHistory,
         historyButtonRef,
         onClose: trainingPilot.returnToToday,
@@ -2457,7 +2470,7 @@ function TrainingScreenContent({
             replacementWarning={sessionReplacementWarning}
             hasOwnedSession={Boolean(trainingSessionId || idiomSession || sentenceSession)}
             ownedSession={activeExerciseFamily === "idiom" && idiomSession ? {id:idiomSession.sessionId,completed:idiomSession.completedActions,total:idiomSession.plannedTotal} : activeExerciseFamily === "sentence" && sentenceSession ? {id:sentenceSession.sessionId,completed:sentenceSession.completedActions,total:sentenceSession.plannedTotal} : trainingSessionId ? {id:trainingSessionId,completed:sessionCompletedActions,total:latchedSessionPlan?.plannedTotal??sessionPlannedTotal} : undefined}
-            activeSessionLabel={
+            activeSessionLabel={sessionDisplayName || (
               activeExerciseFamily === "idiom"
                 ? onboardingLang === "ru"
                   ? "Тренировка идиом"
@@ -2466,7 +2479,7 @@ function TrainingScreenContent({
                     : "Idiom training"
                 : trainingFocusFilter.dictionaryScope
                   ? undefined
-                  : wordListLabel || undefined
+                  : wordListLabel || undefined)
             }
             onContinue={handleContinueTrainingSession}
             onStart={trainingPilot.startSession}
@@ -2474,6 +2487,7 @@ function TrainingScreenContent({
           />
         ) : activeExerciseFamily === "idiom" && idiomSession ? (
           <TrainingIdiomSession
+            sessionName={displayedSessionName}
             studyTimeEnabled={studyTimeEnabled}
             key={idiomSession.sessionId}
             userId={user.id}
@@ -2495,7 +2509,7 @@ function TrainingScreenContent({
             onOpenDetails={handleShowCurrentWordDetails}
           />
         ) : activeExerciseFamily === "sentence" && sentenceSession && typeof translationLang === "string" && translationLang !== "off" ? (
-          <TrainingSentenceSession studyTimeEnabled={studyTimeEnabled} key={sentenceSession.sessionId} userId={user.id} session={sentenceSession} contentLanguageCode={currentTrainingLanguage} translationTargetLanguageCode={translationLang} interfaceLanguage={onboardingLang} onExit={exitIdiomSession} onSessionSuperseded={() => { setSentenceSession(null); setActiveExerciseFamily("meaning"); setExerciseFamilyForResume("meaning"); handleTrainingSessionSuperseded(); }} onHistory={openTrainingHistory} onPlayResolvedAudio={(url, label) => playAudio(url, label)} onOpenDetails={handleShowCurrentWordDetails} />
+          <TrainingSentenceSession sessionName={displayedSessionName} studyTimeEnabled={studyTimeEnabled} key={sentenceSession.sessionId} userId={user.id} session={sentenceSession} contentLanguageCode={currentTrainingLanguage} translationTargetLanguageCode={translationLang} interfaceLanguage={onboardingLang} onExit={exitIdiomSession} onSessionSuperseded={() => { setSentenceSession(null); setActiveExerciseFamily("meaning"); setExerciseFamilyForResume("meaning"); handleTrainingSessionSuperseded(); }} onHistory={openTrainingHistory} onPlayResolvedAudio={(url, label) => playAudio(url, label)} onOpenDetails={handleShowCurrentWordDetails} />
         ) : v2SessionOwned && currentWord && v2SessionMode ? (
           <TrainingSenseCardV2Session
             studyTimeEnabled={studyTimeEnabled}

@@ -38,6 +38,7 @@ import { TrainingIdiomCard } from "./TrainingIdiomCard";
 import { useRecordedStudyTime } from "../useRecordedStudyTime";
 
 type Props = {
+  sessionName?: string;
   studyTimeEnabled?: boolean;
   userId: string;
   session: PlatformIdiomExerciseSessionV2;
@@ -56,6 +57,7 @@ type Props = {
 
 
 export function TrainingIdiomSession({
+  sessionName,
   studyTimeEnabled = false,
   userId,
   session,
@@ -257,7 +259,7 @@ export function TrainingIdiomSession({
               : "definition-to-word"
           }
           cardFilter="both"
-          sessionName={t.title}
+          sessionName={sessionName || t.title}
           presentation={{
             kind: "planned",
             position: Math.min(completedCount, session.requestedTotal),

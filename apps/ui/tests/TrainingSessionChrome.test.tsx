@@ -157,3 +157,13 @@ test("offers the approved frameless header without changing session controls or 
   fireEvent.click(screen.getByRole("button", { name: "Close session" }));
   expect(onClose).toHaveBeenCalledOnce();
 });
+
+test("shows the selected training name instead of the queue label", () => {
+  render(<TrainingSessionChrome interfaceLanguage="ru" scenario="understanding"
+    mode="word-to-definition" cardFilter="both" sessionName="Мои пять слов"
+    presentation={{kind:"planned",position:2,total:5,fraction:0.4}} onClose={vi.fn()}
+    approvedPresentation />);
+  expect(screen.getByTestId("training-session-name")).toHaveTextContent("Мои пять слов");
+  expect(screen.queryByText("Новые + повторение")).not.toBeInTheDocument();
+  expect(screen.getByTestId("training-session-position")).toHaveTextContent("2 / 5");
+});
