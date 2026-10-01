@@ -88,8 +88,8 @@
   width: auto;
   min-height: 0;
   overflow: hidden;
-  border-radius: var(--practice-radius-dialog);
-  background: var(--practice-surface);
+  border-radius: 0;
+  background: transparent;
 }
 .detailNotice {
   padding: 10px 20px;

@@ -1941,3 +1941,11 @@ control, legacy unchanged. Browser actual VanDale2k scope4031records,20per page.
 Grouping19tests/typecheck/lint/diff pass. Screenshot correction11-scope.png.
 This actual page revealed a separate Library aside surface still framing the flat
 article despite correction5 group fix. Follow-up required before continuing12.
+
+### 2026-10-01 — correction5 follow-up real Library container
+
+Actual DictionarySearchTab aside had its own surface/radius outside shared group.
+Removed both in approved workspace CSS; legacy untouched, meaning frames retained.
+Actual authenticated browser computed transparent/radius0 and screenshot confirms
+flat full article /tmp/407qa/correction5-library-flat.png. CSS-only diff passes.
+This closes the fixture coverage gap found during correction11; next12 toolbar.
