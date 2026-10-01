@@ -194,6 +194,8 @@
 }
 .stateActions {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--practice-space-content);
   flex-shrink: 0;
   justify-content: center;
   padding: var(--practice-space-section);
@@ -234,3 +236,10 @@
   outline: 2px solid var(--practice-focus);
   outline-offset: -2px;
 }
+
+.stateActions > button { min-width: 0; max-width: 100%; }
+.primary[data-kind=secondary] {
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+}
+.primary[data-kind=secondary]:hover { background: var(--practice-surface-hover); }

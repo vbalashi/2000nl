@@ -32,3 +32,14 @@ test("approved error retry respects the owner's busy guard", () => {
 test.each([ ["en",1,"1 exercise completed"],["nl",1,"1 oefening voltooid"],["ru",2,"Выполнено 2 упражнения"],["ru",21,"Выполнено 21 упражнение"] ] as const)("completion detail uses %s plural form for %s",(language,count,expected)=>{
   expect(formatUiCount(language,count,getUiMessages(language).trainingSession,"completed")).toBe(expected);
 });
+
+test("failure keeps both retry and exit with their separate owners", () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const retry = vi.fn(), exit = vi.fn();
+  render(<TrainingSessionState announcement="alert" title="Unavailable"
+    action={{label:"Retry",onClick:retry}} secondaryAction={{label:"Back",onClick:exit}} />);
+  expect(screen.getByRole("alert")).toHaveTextContent("Unavailable");
+  fireEvent.click(screen.getByRole("button",{name:"Retry"}));
+  expect(retry).toHaveBeenCalledOnce(); expect(exit).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button",{name:"Back"})); expect(exit).toHaveBeenCalledOnce();
+});

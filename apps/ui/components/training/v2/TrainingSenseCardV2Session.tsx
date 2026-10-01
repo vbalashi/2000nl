@@ -1,4 +1,7 @@
 "use client";
+import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import { TrainingSessionState } from "./TrainingSessionState";
+import { getUiMessages } from "@/lib/uiMessages";
 import { useTrainingExclusion } from "./useTrainingExclusion";
 import { TrainingExcludeAction, trainingExclusionCopy } from "./TrainingExcludeAction";
 
@@ -690,15 +693,21 @@ export function TrainingSenseCardV2Session({
 
   if (wordInContext && (!translationTargetLanguageCode ||
     (contextResult && contextResult.state !== "ready"))) {
+    const contextCopy = getUiMessages(interfaceLanguage).trainingSession.contextPreparation;
+    const contextMessage = !translationTargetLanguageCode ? contextCopy.languageNeeded
+      : contextResult?.state === "translation-pending" ? contextCopy.pending : contextCopy.unavailable;
+    if (trainingPresentationV1Enabled()) return renderLayout(
+      <div className="h-full min-h-0" data-testid="training-word-context-preparation">
+        <TrainingSessionState heading={false} title={contextMessage} action={translationTargetLanguageCode
+          ? { label: platformV2Message(interfaceLanguage, "senseCard.training.retry"), onClick: () => setContextRetry(value => value + 1) }
+          : undefined} />
+      </div>,
+    );
     return renderLayout(
       <div role="status" data-testid="training-word-context-preparation"
         className="mx-auto grid min-h-0 w-full max-w-[760px] flex-1 place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-center text-sm text-slate-700 dark:border-slate-600 dark:bg-[#1d222b] dark:text-slate-200">
         <div className="space-y-4">
-          <p>{!translationTargetLanguageCode
-            ? "Choose a translation language in Settings before starting this training."
-            : contextResult?.state === "translation-pending"
-              ? "Preparing this sentence translation…"
-              : "This example is not ready yet."}</p>
+          <p>{contextMessage}</p>
           {translationTargetLanguageCode ? <button type="button"
             className="rounded-xl border border-slate-400 px-4 py-2 font-semibold"
             onClick={() => setContextRetry((value) => value + 1)}>
@@ -710,6 +719,11 @@ export function TrainingSenseCardV2Session({
   }
 
   if (sessionState === "loading") {
+    if (trainingPresentationV1Enabled()) return renderLayout(
+      <div className="h-full min-h-0" data-testid="training-v2-loading" data-training-renderer="v2" data-training-v2-state="loading">
+        <TrainingSessionState loading title={platformV2Message(interfaceLanguage, "senseCard.training.loading")} />
+      </div>,
+    );
     return renderLayout(
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3">
           <div
@@ -875,6 +889,14 @@ function SessionV2Failure({
   onRetry: () => void;
   onExit?: () => void;
 }) {
+  if (trainingPresentationV1Enabled()) return (
+    <div className="h-full min-h-0" data-testid="training-v2-failure" data-training-renderer="v2" data-training-v2-state={state}>
+      <TrainingSessionState announcement="alert" title={platformV2Message(interfaceLanguage, "senseCard.training.loadFailed")}
+        action={{ label: platformV2Message(interfaceLanguage, "senseCard.training.retry"), onClick: onRetry }}
+        secondaryAction={onExit ? { label: getUiMessages(interfaceLanguage).trainingSession.back, onClick: onExit } : undefined} />
+      {detail ? <span className="sr-only">{detail}</span> : null}
+    </div>
+  );
   return (
     <div
       role="alert"

@@ -4,22 +4,34 @@ import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout"
 import approved from "../approvedTrainingCard.module.css";
 
 /** State presentation only; session termination and navigation stay with the owner. */
-export function TrainingSessionState({ title, detail, loading = false, action }: {
+export function TrainingSessionState({
+  title,
+  detail,
+  loading = false,
+  action,
+  secondaryAction,
+  announcement = "status",
+  heading = !loading,
+}: {
   title: string;
   detail?: string;
   loading?: boolean;
   action?: { label: string; onClick: () => void };
+  secondaryAction?: { label: string; onClick: () => void };
+  announcement?: "status" | "alert";
+  heading?: boolean;
 }) {
   if (trainingPresentationV1Enabled()) return (
     <section className={approved.state} data-testid="training-session-state" data-state={loading ? "loading" : "terminal"}>
       <div className={approved.stateReading} role="region" aria-label={title} tabIndex={0}>
-        <div className={approved.stateContent} role="status">
-          {loading ? <p>{title}</p> : <h1>{title}</h1>}
+        <div className={approved.stateContent} role={announcement}>
+          {heading ? <h1>{title}</h1> : <p>{title}</p>}
           {detail ? <p>{detail}</p> : null}
         </div>
       </div>
-      {action ? <footer className={approved.stateActions}>
-        <button type="button" className={approved.primary} onClick={action.onClick}>{action.label}</button>
+      {action || secondaryAction ? <footer className={approved.stateActions}>
+        {action ? <button type="button" className={approved.primary} onClick={action.onClick}>{action.label}</button> : null}
+        {secondaryAction ? <button type="button" className={approved.primary} data-kind="secondary" onClick={secondaryAction.onClick}>{secondaryAction.label}</button> : null}
       </footer> : null}
     </section>
   );

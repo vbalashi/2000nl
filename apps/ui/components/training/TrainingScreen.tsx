@@ -61,6 +61,7 @@ import {
   TrainingSenseCardV2Session,
 } from "./v2/TrainingSenseCardV2Session";
 import { TrainingUsableCandidatesExhausted } from "./v2/TrainingUsableCandidatesExhausted";
+import { TrainingSessionState } from "./v2/TrainingSessionState";
 import { TrainingUnsupportedMode } from "./v2/TrainingUnsupportedMode";
 import {
   TrainingSessionSurface,
@@ -2564,6 +2565,10 @@ function TrainingScreenContent({
                 interfaceLanguage={onboardingLang}
                 onExit={trainingPilot.returnToToday}
               />
+            ) : trainingPresentationV1Enabled() ? (
+              <div className="h-full min-h-0" data-testid="training-v2-loading" data-training-renderer="v2" data-training-v2-state="loading">
+                <TrainingSessionState loading title={platformV2Message(onboardingLang, "senseCard.training.loading")} />
+              </div>
             ) : (
               <div
                 role="status"

@@ -536,6 +536,11 @@
       }
     },
     "trainingSession": {
+      "contextPreparation": {
+        "languageNeeded": "Kies een vertaaltaal in Instellingen voordat je deze training start.",
+        "pending": "De vertaling van deze zin wordt voorbereid…",
+        "unavailable": "Dit voorbeeld is nog niet klaar."
+      },
       "exclusion": {
         "label": "Uitsluiten",
         "help": "Sluit dit paar in beide richtingen uit van training",

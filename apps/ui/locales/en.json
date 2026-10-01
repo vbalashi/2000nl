@@ -536,6 +536,11 @@
       }
     },
     "trainingSession": {
+      "contextPreparation": {
+        "languageNeeded": "Choose a translation language in Settings before starting this training.",
+        "pending": "Preparing this sentence translation…",
+        "unavailable": "This example is not ready yet."
+      },
       "exclusion": {
         "label": "Exclude",
         "help": "Exclude this pair from training in both directions",

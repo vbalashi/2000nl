@@ -1,6 +1,8 @@
 const recordedStudy = vi.hoisted(() => vi.fn());
 vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
 import React from "react";
+import { getUiMessages } from "@/lib/uiMessages";
+import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
@@ -163,6 +165,39 @@ describe("TrainingSenseCardV2Session", () => {
     fireEvent.click(screen.getByRole("button",{name:"Show answer"}));
     expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(true);
     rerender(view(false)); expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
+  });
+
+  test("approved failed lookup keeps retry and exit separate without a review", async () => {
+    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+    try {
+      fetchSingleSense.mockResolvedValue({state:"lookup-http-error",status:503});
+      const onRetryAlternative = vi.fn(), onExit = vi.fn();
+      render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition"
+        contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="ru" onProgressActionAccepted={vi.fn()}
+        onRetryAlternative={onRetryAlternative} onExit={onExit} />);
+      await screen.findByTestId("training-v2-failure");
+      expect(screen.getByRole("alert")).toHaveTextContent(platformV2Message("ru","senseCard.training.loadFailed"));
+      fireEvent.click(screen.getByRole("button",{name:platformV2Message("ru","senseCard.training.retry")}));
+      expect(onRetryAlternative).toHaveBeenCalledOnce(); expect(onExit).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole("button",{name:getUiMessages("ru").trainingSession.back}));
+      expect(onExit).toHaveBeenCalledOnce(); expect(performAction).not.toHaveBeenCalled();
+    } finally { vi.unstubAllEnvs(); }
+  });
+
+  test.each(["en", "nl", "ru"] as const)("pending context preparation follows %s without grading", async interfaceLanguage => {
+    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+    try {
+      loadContextPrompt.mockResolvedValue({ state: "translation-pending" });
+      render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext
+        trainingSessionId="session-context" contentLanguageCode="nl" translationTargetLanguageCode="ru"
+        interfaceLanguage={interfaceLanguage} onProgressActionAccepted={vi.fn()} />);
+      const text = getUiMessages(interfaceLanguage).trainingSession.contextPreparation;
+      await screen.findByText(text.pending);
+      const before = loadContextPrompt.mock.calls.length;
+      fireEvent.click(screen.getByRole("button",{name:platformV2Message(interfaceLanguage,"senseCard.training.retry")}));
+      await waitFor(() => expect(loadContextPrompt.mock.calls.length).toBeGreaterThan(before));
+      expect(performAction).not.toHaveBeenCalled();
+    } finally { vi.unstubAllEnvs(); }
   });
 
   test("context mode waits for its exact translation before allowing a review", async () => {

@@ -1243,3 +1243,41 @@ moves 16 existing fallback literals to the shared component, removing 30 duplica
 session literals: overall count falls from 1376 to 1362. No approved literal styles
 were introduced. Remaining gates: native zoom/OS focus, live gated sentence,
 broader Library acceptance and final owner/rollout review. Goal remains active.
+
+
+## Ordinary non-ready states and context locale gap — 2026-10-01
+
+The approved presentation now routes ordinary initial/session loading, unsupported
+mode, exhausted usable candidates, lookup failure and word-context preparation
+through TrainingSessionState. The exhausted screen's legacy 360px minimum no
+longer constrains the approved short-window layout. Existing data-state/test IDs,
+exit owners, alternate-candidate retry and context retry remain authoritative;
+loading does not expose a review. Failure presentation has separate retry and
+secondary exit actions, with alert/status semantics and scrolling message content.
+No scheduler, translation request parameters, session plan or DB contract changed.
+Flag-off geometry is retained. Restored the flag-off notice's original span markup
+(the prior shared notice checkpoint accidentally added a tab stop there).
+
+Three hardcoded context-preparation strings are now in EN/NL/RU trainingSession
+catalogs, including the Off-language instruction, pending translation and unavailable
+example. These are UI copy, not translated dictionary content. The context status
+uses body text instead of a display heading; its retry remains the existing exact
+context-preparation path. Tests in each locale verify retry invokes preparation
+without sending a learning action. A real session component lookup-failure test
+verifies separate Retry/Back owners with no review, using a controlled 503 read.
+
+Evidence: 70 TrainingScreen regression tests passed; 86 session/state/catalog tests
+passed on the final code (156 distinct checks across the five suites). Nine browser
+cases passed: existing 48 exercise state visits plus nine ordinary unsupported,
+exhausted and two-action failure states at Extra/320x240 in EN/NL/RU. The browser
+failure fixture renders the shared presentation, while the component test verifies
+its actual session-owner wiring. These are not live backend error injections.
+Typecheck, targeted lint, diff check and style guard passed (1362 legacy literals,
+unchanged). RU failure at keyboard scroll end inspected and preserved:
+/tmp/407qa/ordinary-failure-extra-ru-short-2026-10-01.png. Initial typecheck caught a
+missing rollout import and a missing nullable translation prop in the new fixture;
+added before final checks. Lint retains the pre-existing handlePlayAudio dependency
+warning in the untouched auto-play effect (verified against HEAD). No new server or QA port started;
+canonical local health is ok/contract191. Remaining whole-product gates, including
+native zoom/OS focus, live gated sentence, broader Library persistence/actions and
+final owner/rollout review, remain open. #407 stays active; no deployment claimed.

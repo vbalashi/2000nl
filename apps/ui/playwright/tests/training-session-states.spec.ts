@@ -1,4 +1,5 @@
 import { expect,test } from "@playwright/test";
+import { platformV2Message } from "../../lib/platform/platformV2ClientI18n";
 import { getUiMessages } from "../../lib/uiMessages";
 
 test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true","Approved presentation is opt-in.");
@@ -35,6 +36,30 @@ for (const language of ["en","nl","ru"] as const) for (const family of ["idiom",
      await back.click(); await expect(page.locator("output")).toHaveText("returned");
     }
    }
+  }
+ });
+}
+
+for (const language of ["en","nl","ru"] as const) {
+ test(`${language}: unavailable ordinary states retain pinned owner actions at Extra`,async({page},testInfo)=>{
+  await page.setViewportSize({width:320,height:240});
+  for (const state of ["unsupported","exhausted","failure"] as const) {
+   await page.goto(`/dev/sense-card-gate?prototype=session-states&language=${language}&state=${state}&mode=dark`);
+   const back=page.getByRole("button",{name:getUiMessages(language).trainingSession.back,exact:true});
+   await expect(back).toBeInViewport({ratio:1});
+   expect(await page.locator("body").evaluate(node=>node.scrollWidth<=window.innerWidth)).toBe(true);
+   const title=platformV2Message(language,`senseCard.training.${state==="unsupported"?"unsupportedMode":state==="exhausted"?"exhausted":"loadFailed"}`);
+   const reading=page.getByRole("region",{name:title,exact:true});
+   await reading.focus(); await page.keyboard.press("End");
+   await expect.poll(()=>reading.evaluate(node=>node.scrollHeight-node.clientHeight-node.scrollTop)).toBeLessThanOrEqual(1);
+   await expect(back).toBeInViewport({ratio:1});
+   if(state==="failure") {
+    const retry=page.getByRole("button",{name:platformV2Message(language,"senseCard.training.retry"),exact:true});
+    await expect(retry).toBeInViewport({ratio:1}); await retry.click();
+    await expect(page.locator("output")).toHaveText("retried");
+   }
+   if(language==="ru") await page.screenshot({path:testInfo.outputPath(`${state}-extra-short.png`)});
+   await back.click(); await expect(page.locator("output")).toHaveText("returned");
   }
  });
 }
