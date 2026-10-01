@@ -269,7 +269,6 @@ function DictionaryMaterialInventory({
               ))}
             </div>
           )}
-          <h3 className={s.subheading}>{copy.publishedDictionaries}</h3>
           {active.map((item) => {
             const sources = inventory.sources.filter(
               (source) =>
