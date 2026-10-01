@@ -478,7 +478,8 @@ test("approved Library browses immediately with server totals and cursor paging"
   render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider>);
   await screen.findByTestId("library-headword-group-group-goed-homograph");
   expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}}));
-  expect(screen.getByText(/42.*page 1/i)).toBeInTheDocument();
+  expect(screen.getByText("42 matching articles")).toBeInTheDocument();
+  expect(screen.getByText("1 / 1")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"Next"}));
   await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",cursor:"browse-next"})));
 });

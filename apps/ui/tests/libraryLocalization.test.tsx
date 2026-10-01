@@ -28,7 +28,7 @@ test('filter query, page and selections survive locale changes; apply emits stab
  expect(screen.getByRole('button',{name:'Существительные'})).toHaveAttribute('aria-pressed','true');
  fireEvent.click(screen.getByRole('button',{name:'Показать результаты'}));
  expect(apply).toHaveBeenCalledWith({...defaultLibraryFilter,parts:['Nouns'],source:'VanDale'});
- expect(libraryFilterSummary({...defaultLibraryFilter,parts:['Nouns'],article:'het'},'ru')).toBe('нидерландский · Все источники · Существительные (het)');
+ expect(libraryFilterSummary({...defaultLibraryFilter,parts:['Nouns'],article:'het'},'ru')).toBe('нидерландский · Все словари · Существительные (het)');
 });
 
 test('localized language search emits canonical language and clears language-specific source/article',()=>{

@@ -37,7 +37,7 @@ function desktop(label: string) {
     screen.getByRole("navigation", { name: "Settings sections" }),
   ).getByRole("button", { name: label });
 }
-test("approved settings keep production callback ownership and an existing extra translation language", () => {
+test("approved settings keep production callback ownership and an existing extra translation language", async () => {
   vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const p = props();
   render(<SettingsDestination {...p} />);
@@ -46,9 +46,8 @@ test("approved settings keep production callback ownership and an existing extra
   );
   fireEvent.click(screen.getByRole("button", { name: "Off" }));
   expect(p.onTranslationLanguageChange).toHaveBeenCalledWith(null);
-  fireEvent.change(screen.getByLabelText("Interface language"), {
-    target: { value: "ru" },
-  });
+  fireEvent.click(screen.getByLabelText("Interface language"));
+  fireEvent.click(await screen.findByRole("menuitem", {name:"Русский"}));
   expect(p.onInterfaceLanguageChange).toHaveBeenCalledWith("ru");
   fireEvent.click(desktop("Appearance"));
   fireEvent.click(screen.getByRole("button", { name: "Dark" }));

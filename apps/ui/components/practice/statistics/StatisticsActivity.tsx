@@ -62,7 +62,7 @@ export function StatisticsActivity({ interfaceLanguage: locale, calendar, recent
         <Metric value={number(summary.activeDays)} label={copy.activeDays} />
         <Metric value={timeValue} label={copy.studyTime} />
       </div>
-
+      {summary.timeCoverage === "unavailable" && <p className={s.note}>{copy.timeUnmeasured}</p>}
     </section>
     {recentActivity}
     <section className={`${s.section} ${s.history}`} aria-labelledby={ids.history}>

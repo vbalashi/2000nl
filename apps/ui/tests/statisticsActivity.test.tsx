@@ -53,7 +53,7 @@ describe("StatisticsActivity presentation", () => {
     render(<StatisticsActivity interfaceLanguage="ru" calendar={calendar({ 0: [2, 0, 249436], 1: [0, 3] }, "2026-09-30T18:54:00Z")} />);
     expect(screen.getByRole("button", { name: "Неделя" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("Время занятий").previousSibling).toHaveTextContent("4 мин");
-    expect(screen.getByText(/Измеряется с/)).toBeInTheDocument();
+    expect(screen.queryByText(/Измеряется с/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Сегодня" }));
     expect(screen.getByText("Повторения завершены").previousSibling).toHaveTextContent("0");
     const year = screen.getByRole("group", { name: "Учебная активность по дням за год" });
