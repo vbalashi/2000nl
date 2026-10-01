@@ -6,7 +6,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 
 - [x] 1 — Remove text-size explanation, device-profile explanation and ordinary Saved label; retain errors/retry.
 - [x] 2 — Remove translation-language helper.
-- [ ] 5 — Remove new-training/session continuation helper.
+- [x] 5 — Remove new-training/session continuation helper.
 - [ ] 6 — Remove Published dictionaries heading.
 - [ ] 25 — Remove measured-since statistics note without changing time data.
 - [ ] 26 — Review queue shows only localized due-card count and existing action.

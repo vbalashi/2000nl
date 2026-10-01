@@ -217,7 +217,6 @@ function DictionaryMaterialInventory({
     account.status !== "ready" || account.saveStatus === "saving";
   return (
     <SettingsPanel title={copy.dictionaries}>
-      <p className={s.hint}>{messages.selectionHint}</p>
       <MaterialFeedback language={language} />
       {inventory.status !== "ready" ? (
         <div
