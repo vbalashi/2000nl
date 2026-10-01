@@ -220,6 +220,54 @@
   flex-direction: column;
 }
 
+/* The approved phone navigation occupies its own frame row, outside page scrolling. */
+.tabBar {
+  display: none;
+  flex-shrink: 0;
+  padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--app-frame-line);
+  background: var(--app-frame-surface);
+}
+
+.tabBarNav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  font-size: var(--practice-text-caption, 0.75rem);
+}
+
+.tabBarNav button {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  min-height: 52px;
+  gap: 4px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-frame-muted);
+  font: inherit;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.tabBarNav button[aria-current="page"] {
+  background: var(--app-frame-active);
+  color: var(--app-frame-ink);
+}
+
+.tabBarNav button:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: -2px;
+}
+
+.tabBarNav button:disabled { opacity: 0.5; }
+.tabBarNav svg { flex-shrink: 0; }
+
 @media (min-width: 768px) {
   .header {
     padding-right: 24px;
@@ -232,6 +280,9 @@
 }
 
 @media (max-width: 767px) {
+  .tabBar { display: block; }
+  .frame[data-immersive="true"] > .header,
+  .frame[data-immersive="true"] > .tabBar { display: none; }
   .desktopNav {
     display: none;
   }
@@ -276,4 +327,3 @@
     padding-left: 8px;
   }
 }
-

@@ -166,3 +166,32 @@ test("shows the current secondary destination in the compact header control", ()
     screen.getByRole("button", { name: "Destinations: Settings" }),
   ).toHaveTextContent("Settings");
 });
+
+test("approved presentation replaces the mobile menu with a bottom tab bar", () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  try {
+    const onNavigate = vi.fn();
+    const { container, rerender } = render(
+      <AppFrame activeDestination="library" interfaceLanguage="en" themePreference="system"
+        onNavigate={onNavigate} onCycleTheme={vi.fn()} onOpenSettings={vi.fn()}>
+        <p>Destination content</p>
+      </AppFrame>,
+    );
+    expect(container.querySelector('[data-app-mobile-navigation="menu"]')).toBeNull();
+    const tabs = container.querySelector('[data-app-mobile-navigation="tabs"]') as HTMLElement;
+    expect(tabs).toBeInTheDocument();
+    expect(within(tabs).getByRole("button", { name: "Library" })).toHaveAttribute("aria-current", "page");
+    fireEvent.click(within(tabs).getByRole("button", { name: "Statistics" }));
+    expect(onNavigate).toHaveBeenCalledWith("statistics");
+    expect(container.querySelector("[data-app-frame]")).not.toHaveAttribute("data-immersive");
+    rerender(
+      <AppFrame activeDestination="training" interfaceLanguage="en" themePreference="system" immersive
+        onNavigate={onNavigate} onCycleTheme={vi.fn()} onOpenSettings={vi.fn()}>
+        <p>Session</p>
+      </AppFrame>,
+    );
+    expect(container.querySelector("[data-app-frame]")).toHaveAttribute("data-immersive", "true");
+  } finally {
+    vi.unstubAllEnvs();
+  }
+});

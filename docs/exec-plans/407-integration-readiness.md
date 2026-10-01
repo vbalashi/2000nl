@@ -842,3 +842,32 @@ Open from the audit: live rating row (QA first card is new; Learn writes state �
 not pressed), article action row slim/toolbar (item 3), reveal motion
 (`usePromptReveal`), mobile tab bar, computed-style matrix (palettes × modes ×
 Standard/Extra), RU/320 and 844×390 snapshots for Library, zoom/keyboard/portals.
+
+## Takeover: complete the unfinished mobile frame — 2026-10-01
+
+Recovered the successor's commits through `fec1f350` and its uncommitted frame
+markup/tests in the existing #407 worktree. The pending markup referred to absent
+`tabBar`/`tabBarNav` styles. Added the missing palette-aware bottom row with three
+equal zones, scaled captions, safe-area padding, keyboard focus and ≥44px touch
+targets. Under 768px, approved active meaning/idiom/sentence sessions hide both
+app header and tabs; desktop retains its header/navigation. Exiting restores tabs.
+The flag-off compact menu remains available.
+
+Updated the browser fixture harness for account-owned setups/material reads and
+writes, and the specs for the approved overview's new launch label. Earlier runs
+failed on stale fixture assumptions (missing account endpoints, old launch label,
+ambiguous heading and the retired daily footer), not an accepted product pass.
+
+Validation: typecheck, targeted lint, style guard (1376 legacy literals unchanged),
+37 focused unit/component tests; 4 approved navigation/card browser checks at
+320/390/402/1024px, plus 4 stable-frame checks (desktop return preserves card and
+side, compact session controls, pending-action navigation lock). Three legacy-only
+menu cases are deliberately skipped with the approved flag on. Screenshots were
+visually inspected at 320px. Browser checks use deterministic transport fixtures;
+they do not prove server persistence or finish the real-data acceptance matrix.
+
+Next: remaining audit/acceptance matrix, starting with palette/scale/locale layout,
+word-sheet keyboard/portal behavior and reveal motion. The full #407 objective is
+unfinished. The goal tool still reports paused and exposes no resume operation;
+the owner's explicit resume instruction authorizes ongoing work, but automatic
+goal continuation needs the app's Resume control.

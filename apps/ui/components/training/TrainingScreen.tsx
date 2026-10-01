@@ -2393,6 +2393,7 @@ function TrainingScreenContent({
       themePreference={themePreference}
       settingsActive={destination === "settings"}
       navigationDisabled={navigationBlocked}
+      immersive={visibleDestination === "training" && v2SessionLayoutVisible}
       onNavigate={onRequestDestination}
       onCycleTheme={cycleThemePreference}
       onOpenSettings={openAppSettings}

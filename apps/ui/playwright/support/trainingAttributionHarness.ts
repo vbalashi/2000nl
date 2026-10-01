@@ -1,4 +1,6 @@
 import type { Page, Route } from "@playwright/test";
+import { emptyTrainingSetups } from "../../lib/training/setups/model";
+import { emptyMaterialPreferences } from "../../lib/training/material/model";
 import {
   buildFakeSupabaseSession,
   installSupabaseSession,
@@ -269,6 +271,25 @@ export async function setupAuthenticatedTrainingAttributionPage(
       return;
     }
     await fulfillJson(route, userSession, "auth");
+  });
+
+  // These reads moved from browser-only presets to account-owned endpoints.
+  // Keep the fixture self-contained; its fake principal must never reach the real server.
+  let setupSnapshot = emptyTrainingSetups();
+  let materialSnapshot = emptyMaterialPreferences();
+  await page.route("**/api/training/setups", async (route) => {
+    if (route.request().method() === "PUT") {
+      const { document } = route.request().postDataJSON();
+      setupSnapshot = { revision: setupSnapshot.revision + 1, document };
+    }
+    await fulfillJson(route, setupSnapshot, "setups");
+  });
+  await page.route("**/api/settings/material", async (route) => {
+    if (route.request().method() === "PUT") {
+      const { document } = route.request().postDataJSON();
+      materialSnapshot = { revision: materialSnapshot.revision + 1, document };
+    }
+    await fulfillJson(route, materialSnapshot, "material-preferences");
   });
 
   await page.route("**/api/platform/v2/lookup", async (route) => {

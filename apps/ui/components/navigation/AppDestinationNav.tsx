@@ -32,6 +32,7 @@ type Props = {
   active: PrimaryNavigationDestination | null;
   interfaceLanguage: OnboardingLanguage;
   disabled?: boolean;
+  variant?: "bar" | "tabs";
   onNavigate: (destination: AppDestination) => void;
 };
 
@@ -39,6 +40,7 @@ export function AppDestinationNav({
   active,
   interfaceLanguage,
   disabled = false,
+  variant = "bar",
   onNavigate,
 }: Props) {
   const destinations: PrimaryNavigationDestination[] = [
@@ -50,7 +52,7 @@ export function AppDestinationNav({
     <nav
       lang={interfaceLanguage}
       aria-label={getUiMessages(interfaceLanguage).navigation.primary}
-      className={styles.primaryNav}
+      className={variant === "tabs" ? styles.tabBarNav : styles.primaryNav}
     >
       {destinations.map((destination) => (
         <button
