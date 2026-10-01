@@ -676,7 +676,7 @@ function SenseCardV2Session({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      {context === "library" && userId ? <TrainingExclusionUndoNotice userId={userId} language={interfaceLanguage}/> : null}
+      {userId ? <TrainingExclusionUndoNotice userId={userId} language={interfaceLanguage}/> : null}
       <div className="min-h-0 flex-1">
         <LibrarySenseCardGroup
           contentLanguage={contentLanguageCode}
@@ -725,7 +725,7 @@ function SenseCardV2Session({
             setActiveReferenceTarget(target);
           }}
           onAction={(capability) => void handleAction(capability)}
-          onExclude={approved && context === "library" && userId && group?.headwordGroupId && model.meanings.length ? () => void headwordExclusion.exclude() : undefined}
+          onExclude={approved && userId && group?.headwordGroupId && model.meanings.length ? () => void headwordExclusion.exclude() : undefined}
           exclusionDisabled={headwordExclusion.busy || Boolean(busyIdentity)}
           onReport={approved && showGlobalDetailsActions ? meaning => {
             if (!group) return;

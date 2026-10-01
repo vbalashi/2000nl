@@ -28,7 +28,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 - [x] 23 — Mobile Library bottom sheet starts half-height; handle expands/collapses, X closes.
 - [x] 13 — Close inline with audio/translation; larger gap before close.
 - [x] 14 — Compare Normal headword size and article gap with prototype.
-- [ ] 12 — Expose canonical exclusion action alongside Known in article.
+- [x] 12 — Expose canonical exclusion action alongside Known in article.
 - [ ] 16 — Investigate action history/Undo; document separate case if additional contract work required.
 - [ ] 7 — Resolve consistent capitalization of standalone language labels; grammar/content untouched.
 
