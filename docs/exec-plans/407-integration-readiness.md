@@ -1503,3 +1503,47 @@ Corrected practice-presentation.md's stale integration instruction of50/24h to
 the accepted latest50/no age cutoff; historical checkpoints remain unchanged.
 Remaining: Library exclusion decision, translation-provider configuration for
 live sentence success, and final owner/rollout acceptance. Goal active.
+
+
+## Optimized-build and production import-boundary audit — 2026-10-01
+
+Built exact implementation head f7a8fedf7f23b6318f8824e095fdcb4a6f12d8dd with
+approved Training/article flags enabled and sentence gate left disabled. Used
+isolated tmp/407-release-next output, local placeholder public Supabase values
+and the repository's font-response fixture. This verifies optimized compilation,
+full build type/lint/static generation and packaging, not genuine font downloads,
+provider configuration, authenticated production data or deployment. Build passes:
+root99.6kB/392kB first-load JS. Existing v1 API re-exported route-config warnings and
+the unchanged audio-effect dependency warning remain; they are not new UI errors.
+
+Scanned current components/lib/root route imports: no dev/prototype/fixture/test
+imports found. The root client-reference manifest initially appeared to contain
+nine dev modules, but its cross-route lookup includes unloaded entries. Checked
+the actual root app-build-manifest assets and their registered webpack factories:
+332 registered modules, none of those nine dev-module IDs loaded by the root.
+Do not mistake a client-reference lookup entry for a shipped root dependency.
+This does not remove dev bundles from the build artifact itself; experimental
+routes stay development-only, and shared approved components intentionally remain.
+
+Started the generated standalone server temporarily on3101: root HTTP200, builder
+prototype HTTP404, POST dev test-session HTTP404. The existing sense-card gate
+returns HTTP200 with only its disabled-production placeholder; verified no
+training-stage markup. It does not expose working prototype fixtures. This is
+local unauthenticated production-mode route isolation, not live action acceptance.
+Stopped exactly that owned server PID71839;3101 closed, canonical3100 PID22759
+preserved. Restored the two generated Next config files to their pre-build HEAD.
+
+Reran36 catalog/theme/account appearance/rating checks; six-palette contrast and
+UI interpolation completeness are covered by those existing assertions, not a
+whole-product accessibility certification. Post-restoration typecheck, style guard
+1362 and diff check pass. Rechecked current adapters: working setup mounts approved
+Overview/Builder; Settings mounts material/appearance/text owners; Statistics
+mounts AccountStatistics; Library mounts shared reading/forms/relations. These
+source facts do not substitute for final owner browser acceptance.
+
+Corrected two stale current-decision implementation summaries that still called
+all UI prototype-only or material UI pending. Historical ADR/checkpoints remain
+unchanged. Remaining substantive gates: Library exclusion scope answer, existing
+provider configuration for real sentence success/reveal/grade/resume, and final
+whole-product owner acceptance before enabling rollout/deployment. No production
+rollout or push performed; goal remains active.
