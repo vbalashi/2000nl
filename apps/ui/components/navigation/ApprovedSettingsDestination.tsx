@@ -75,7 +75,6 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
                 </SettingsRow>
                 <SettingsRow
                   title={copy.translationLanguage}
-                  hint={copy.translationHint}
                 >
                   <div className={s.options}>
                     <button
