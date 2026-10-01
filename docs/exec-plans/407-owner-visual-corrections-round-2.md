@@ -30,7 +30,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 - [x] 14 — Compare Normal headword size and article gap with prototype.
 - [x] 12 — Expose canonical exclusion action alongside Known in article.
 - [ ] 16 — Investigate action history/Undo; document separate case if additional contract work required.
-- [ ] 7 — Resolve consistent capitalization of standalone language labels; grammar/content untouched.
+- [x] 7 — Resolve consistent capitalization of standalone language labels; grammar/content untouched.
 
 ## Additional clarification retained
 

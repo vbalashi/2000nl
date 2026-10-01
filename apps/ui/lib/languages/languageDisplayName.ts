@@ -15,7 +15,8 @@ export function languageDisplayName(
       });
       displayNames.set(locale, names);
     }
-    return names.of(code) ?? fallback;
+    const label = names.of(code) ?? fallback;
+    return label.charAt(0).toLocaleUpperCase(locale) + label.slice(1);
   } catch {
     return fallback;
   }
