@@ -54,7 +54,7 @@ jobs:
         working-directory: apps/ui
 
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium chromium
         working-directory: apps/ui
 
       - name: Lint UI
