@@ -19,7 +19,7 @@
 - [x] **13.** Убрать Введите слово для поиска из toolbar.
 - [x] **14.** Library сразу показывает упорядоченные результаты текущего фильтра без запроса; реальные данные, пагинация, ACL, загрузка/ошибки.
 - [x] **15.** Library Filters: число результатов/загрузка/ошибка, не требовать поисковое слово.
-- [ ] **16.** Артикли только de/het; обе/ни одной — нет ограничения; единый выбор Builder/Library.
+- [x] **16.** Артикли только de/het; обе/ни одной — нет ограничения; единый выбор Builder/Library.
 - [ ] **17.** Направление: общие карточки референса с разделителем и конкретными примерами выбранного языка; fallback без образца.
 - [ ] **18.** Сверить слово в контексте с решениями, объяснить выключенный Translation/gates; не менять production gates молча.
 - [ ] **19.** Русская подпись Идиомы / Устойчивые выражения и идиомы; согласованные EN/NL.
@@ -76,3 +76,5 @@
 Пункт14: scoped approved Library сразу загружает alphabetic whole-group результаты текущего фильтра через серверный browse path. Пагинация/число/ACL/material selection сохранены; Platform empty lookup прежний. Browser cold reload14449groups и две страницы, screenshot /tmp/407qa/correction14-initial.png. SQL rollback regression проверяет закрытый словарь, disabled dictionary, paused nl, cursor filters/source invalidation, порядок/неповторение/фильтры. UI initial loading/failure/retry regression passes; grouping25 + earlier route29/hook2, typecheck/lint pass.
 
 Пункт15: фильтры отправляют пустой query в существующий scoped preview, footer показывает real count/loading/error+retry без typeQuery. Debounce/cancellation/material guards/draft-only behavior сохранены. Tests7pass включая пустой query failure/retry, typecheck/lint pass. Browser RU no-query VanDale Dutch noun+verb count10937, screenshot /tmp/407qa/correction15-count.png; закрыто Отменой без применения draft.
+
+Пункт16: только de/het, independent toggles; обе/ни одной — no restriction. Общая семантика в lib/training/nounArticles, UI drafts retain both, Library canonical null и Training RPC normalization без nounArticles при обеих. Builder summary/dot тоже показывают ограничение только для одного артикля. Tests81pass плюс filters7, typecheck/lint; browser Library both/none и Builder both/summary verified, /tmp/407qa/correction16-library.png и correction16-builder.png. Черновики отменены, ничего не сохранено/запущено.

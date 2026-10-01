@@ -8,7 +8,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { toggleNounArticle } from "@/lib/training/nounArticles";
+import { singleNounArticle, toggleNounArticle } from "@/lib/training/nounArticles";
 import { BuilderSection } from "@/components/practice/builder/BuilderSection";
 import { BuilderChoice } from "@/components/practice/builder/BuilderChoice";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
@@ -183,7 +183,7 @@ export function ApprovedTrainingBuilder(p: Props) {
     p.draft.partOfSpeech?.length
       ? p.draft.partOfSpeech.map(partName).join(" · ")
       : b.allParts,
-    p.draft.nounArticles?.join(" / "),
+    singleNounArticle(p.draft.nounArticles ?? []),
   ]
     .filter(Boolean)
     .join(" · ");
@@ -539,7 +539,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                             onClick={() => togglePart(part)}
                           >
                             {partName(part)}
-                            {Boolean(p.draft.nounArticles?.length) && (
+                            {Boolean(singleNounArticle(p.draft.nounArticles ?? [])) && (
                               <span
                                 className={s.dot}
                                 aria-hidden="true"
