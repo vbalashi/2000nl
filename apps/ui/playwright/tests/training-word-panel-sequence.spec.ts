@@ -60,6 +60,17 @@ for (const width of [320, 390, 1024]) {
     await expect(picker).toHaveCount(0);
     await expect(panel).toBeVisible();
     await expect(collections).toBeFocused();
+    // Native 400% zoom can reduce a desktop window to this short CSS viewport.
+    // Keep both the word header and the meaning content keyboard-scrollable.
+    await page.setViewportSize({width, height:240});
+    expect((await reading.boundingBox())!.height).toBeGreaterThan(40);
+    const wordHeader=panel.locator('[data-testid="library-sense-card-group"] > header');
+    await wordHeader.focus();await page.keyboard.press("End");
+    await expect.poll(()=>wordHeader.evaluate(node=>node.scrollTop)).toBeGreaterThan(0);
+    await reading.focus();await page.keyboard.press("End");
+    await expect.poll(()=>reading.evaluate(node=>node.scrollTop)).toBeGreaterThan(0);
+    expect(await panel.evaluate(node=>node.scrollWidth<=node.clientWidth)).toBe(true);
+    await page.setViewportSize({width,height:844});
     await panel.getByRole("button", { name: /Close|Sluiten|Закрыть/, exact: true }).focus();
     await page.keyboard.press("Shift+Tab");
     // Native modality permits browser chrome focus, but never the page behind it.

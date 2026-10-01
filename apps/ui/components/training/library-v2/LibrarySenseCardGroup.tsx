@@ -260,7 +260,8 @@ export function LibrarySenseCardGroup({
       data-testid="library-sense-card-group"
       className={`relative flex h-full flex-col overflow-hidden [container-type:inline-size] ${approvedArticle ? surfaces.group : "bg-slate-50 font-sense-sans text-slate-900 dark:bg-[#11151d] dark:text-slate-100"}`}
     >
-      <header className="shrink-0 px-4 pb-5 pt-4 sm:px-7">
+      <header tabIndex={approvedArticle ? 0 : undefined} aria-label={approvedArticle ? model.headword : undefined}
+        className={`shrink-0 px-4 pb-5 pt-4 sm:px-7 ${approvedArticle ? surfaces.header : ""}`}>
         <SenseCardHeadwordLockup
           article={model.article}
           headword={model.headword}

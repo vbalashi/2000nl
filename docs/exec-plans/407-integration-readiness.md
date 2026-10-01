@@ -1362,3 +1362,34 @@ gates: native browser zoom/OS focus, live gated sentence and final whole-product
 owner/rollout acceptance. History decision rechecked: latest 50 accepted actions,
 no 24-hour cutoff, implemented by the current v1 service/RPC (190/191), legacy RPC
 retained solely for older clients. Goal stays active; no deployment claimed.
+
+
+## Native Chrome zoom exposes a collapsed Library reading region — 2026-10-01
+
+Used a separate Chrome QA tab via the browser extension and native app keyboard,
+not CSS zoom or CDP page scaling. Local authenticated goed article: browser zoom
+200% gave viewport 717x473/DPR4 without horizontal overflow; native 400% gave
+358x236/DPR8. Found a real defect at 400%: unbounded pinned word header consumed
+the entire article body, so no meaning text was reachable. The shared approved
+Library/Training-word-panel header now reserves at least half the group's height
+for the reading body, permits keyboard scrolling when its lockup is larger than
+that allocation, and has the existing shared focus ink. Normal-height lockups
+remain fully visible and pinned. This deliberately relaxes the pinned-header
+requirement only when it cannot fit; it does not shrink the user's font setting.
+Legacy styles and data/action owners are unchanged.
+
+Native 400% retest measured 62px header/181px content and 62px reading region/1202px
+content: both respond to End and the last meaning is reachable. Screenshot/AX
+inspected; no horizontal overflow. Chrome was restored to the original100%:
+1434x947/DPR2, and the dedicated QA tab closed. No grading/action/report submitted.
+Read-only evaluator first rejected document.hasFocus (unsupported sandbox API);
+used only supported viewport DOM metrics instead. This is live Library zoom
+proof, not live Training zoom or OS focus-loss proof.
+
+Extended three controlled EN/NL/RU word-panel browser regressions (320/390/1024)
+to a 240px-high viewport: reading region >40px, keyboard header/body scrolling,
+no horizontal overflow, then original height and focus restoration. Three pass;
+45 existing component/owner tests, typecheck, targeted lint, unchanged style guard
+1362 and diff check pass. Remaining: Training native zoom/real focus loss, live
+gated sentence, pending Library Exclude product scope and final owner/rollout.
+Goal remains active. No deployment claimed.
