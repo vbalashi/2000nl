@@ -12,7 +12,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 - [x] 26 — Review queue shows only localized due-card count and existing action.
 - [x] 15 — Hint example rule uses theme palette.
 - [x] 11 — Direction cards more compact vertically; retain bounded width and wrapping.
-- [ ] 3 — Translation controls do not wrap unnecessarily at Normal size.
+- [x] 3 — Translation controls do not wrap unnecessarily at Normal size.
 - [ ] 4 — Learning-language surface matches Settings; Plus + Add language quiet action.
 - [ ] 8 — Interface-language menu rounded, accessible, consistent with app.
 - [ ] 27 — Add truthful read-only Billing & subscriptions section; do not invent payment status/invoices.
