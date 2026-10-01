@@ -8,7 +8,7 @@ import {
 } from "@/lib/uiMessages";
 
 import React from "react";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { LibraryResultList, LibraryResultRow } from "@/components/practice/library/LibraryResultList";
 import { LibraryEntryEditor } from "@/components/practice/library/LibraryEntryEditor";
 import { AccountLibraryFilters } from "@/components/practice/library/AccountLibraryFilters";
@@ -1210,7 +1210,7 @@ export function DictionarySearchTab({
             : "flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
         }
       >
-        <span>
+        {!approved && <span>
           {groupedSearchActive
             ? formatUiMessage(copy.pageCount, {
                 page: number(page),
@@ -1228,7 +1228,7 @@ export function DictionarySearchTab({
                 end: number(Math.min(wordTotal, page * pageSize)),
                 total: number(wordTotal),
               })}
-        </span>
+        </span>}
         <div className="flex items-center gap-2">
           <button
             type="button"

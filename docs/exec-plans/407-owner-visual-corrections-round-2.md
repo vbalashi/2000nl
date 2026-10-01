@@ -22,7 +22,7 @@ Goal: address every new browser comment and add Billing & subscriptions informat
 - [ ] 18 — Collection filtering belongs inside filter, remove duplicate toolbar toggle.
 - [x] 20 — Metadata language + source, omit Search label.
 - [x] 19 — Below search: language/source left, match count right, no duplicate summary.
-- [ ] 21 — Remove duplicate bottom page/result prose, preserve whole-list scrolling.
+- [x] 21 — Remove duplicate bottom page/result prose, preserve whole-list scrolling.
 - [ ] 24 — 50 words/page; floating centered arrows, current/total red label; final item scrolls above controls.
 - [ ] 22 — Library desktop list/article panes, no training right drawer.
 - [ ] 23 — Mobile Library bottom sheet starts half-height; handle expands/collapses, X closes.
