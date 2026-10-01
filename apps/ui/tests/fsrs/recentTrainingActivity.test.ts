@@ -62,13 +62,17 @@ async function auth(client: PoolClient, user: string) {
     await withTransaction(pool, async client => {
       const user = randomUUID(); await ensureUserWithSettings(client,user);
       const entry = await insertWord(client,`cap-${randomUUID()}`), exercise = await target(client,entry,"idiom","direct");
-      for (let i=0;i<51;i++) await event(client,user,exercise.id,"-3 days");
+      for (let i=0;i<31;i++) await event(client,user,exercise.id,"-3 days");
+      await client.query(`insert into user_review_log(user_id,word_id,mode,grade,review_type,reviewed_at)
+        select $1,$2,'word-to-definition',3,'review',now()-interval '3 days' from generate_series(1,31)`,[user,entry]);
       await auth(client,user);
       const a = (await client.query("select * from get_recent_training_activity_v1(100)")).rows;
       const b = (await client.query("select * from get_recent_training_activity_v1(50)")).rows;
       expect(a).toHaveLength(50); expect(a).toEqual(b);
       expect(new Set(a.map(r=>r.activity_id)).size).toBe(50);
       expect(a.every(r=>r.has_more)).toBe(true);
+      expect(a.filter(r=>r.exercise_family === "meaning")).toHaveLength(31);
+      expect(a.filter(r=>r.exercise_family === "idiom")).toHaveLength(19);
     });
   });
   test("requires a principal and grants execution only to authenticated clients", async () => {

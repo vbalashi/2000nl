@@ -1151,3 +1151,19 @@ not a new grade or fixture. Remaining: bounded all-time history query work for
 large accounts; native zoom, gated live sentence and broader Library acceptance,
 active-time focus loss, remaining exercise-specific action presentation and final
 owner/rollout review. #407 remains active.
+
+### Bounded all-time history follow-up
+
+Migration 191 replaces the exact migration-190 signature, leaving 190 immutable
+after local application. Each of the three accessible action streams is capped
+at limit+1 before the global merge (at most 153 projected candidates for 50 rows).
+Added learner/time/UUID indexes for ordinary reviews and Learn, complementing the
+exercise index. ACL rejection may still examine older rows; the bound is on merge
+candidates, not a claim that every possible scan examines only 153 rows.
+The mixed-stream cap test now includes 31 ordinary +31 idiom actions at one
+transaction timestamp, proving stable global ordering and no per-family 50 cap.
+All 272 SQL/FSRS tests passed again; lint and exact local postflight passed.
+Contract now 2000nl-db-191. Read-only EXPLAIN on the actual local QA principal
+returned 8 rows (7 meaning,1 idiom) in 10.254ms/1846 buffer hits. This is a small
+live-account smoke, not a production-scale load test. Remaining acceptance gates
+listed above stay open; no rollout/deployment or goal completion was declared.
