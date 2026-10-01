@@ -535,3 +535,5 @@
 \i db/migrations/192_training_headword_exclusions.sql
 
 \i db/migrations/193_directional_known_marks.sql
+
+\i db/migrations/194_library_initial_browse.sql
