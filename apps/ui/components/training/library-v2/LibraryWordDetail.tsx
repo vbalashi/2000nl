@@ -48,7 +48,7 @@ export function LibraryWordDetail({
       setViewportMatches(true);
       return;
     }
-    const media = window.matchMedia("(min-width: 1024px)");
+    const media = window.matchMedia("(min-width: 701px)");
     const sync = () =>
       setViewportMatches(viewport === "desktop" ? media.matches : !media.matches);
     sync();

@@ -1289,7 +1289,7 @@ export function DictionarySearchTab({
         <aside
           className={
             approved
-              ? `${workspace.detail} hidden lg:block`
+              ? workspace.detail
               : "hidden w-[380px] shrink-0 border-l border-slate-100 lg:block dark:border-slate-800"
           }
         >
@@ -1341,7 +1341,7 @@ export function DictionarySearchTab({
         </aside>
       </div>
 
-      <div className="lg:hidden">
+      <div className={approved ? workspace.mobileDetail : "lg:hidden"}>
         <WordDetailDrawer
           selection={detailSelection}
           initialGroup={selectedGroupResult?.group}

@@ -122,7 +122,7 @@
   white-space: nowrap;
   border: 0;
 }
-@media (min-width: 1024px) {
+@media (min-width: 701px) {
   .columns {
     display: grid;
     grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.4fr);
@@ -250,3 +250,6 @@
 .listPane .pagination { position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:5px;padding:7px 10px;border-radius:16px;background:var(--practice-surface);box-shadow:0 3px 15px var(--practice-shadow);z-index:2; }
 .listPane .pagination > div { margin:0;flex-wrap:nowrap; }
 .pageIndicator { color:var(--practice-danger);font-size:var(--practice-text-label);white-space:nowrap; }
+
+.detail { display:none; }
+@media(min-width:701px){.detail{display:block;min-width:0}.mobileDetail{display:none}}
