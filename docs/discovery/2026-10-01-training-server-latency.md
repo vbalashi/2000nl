@@ -1,0 +1,12 @@
+# Server-side latency follow-up
+
+Additional production browser evidence distinguishes three phenomena: fast state conflicts, slow accepted actions, and slow session planning. It does not establish machine CPU or storage saturation.
+
+- First follow-up start: 8,904 ms; restart: 2,816 ms. Confirmation starts: 4,862 / 3,326 / 8,856 ms. Third run included a 10,877 ms restart. All are click-to-ready times, not SQL-only measurements. Restart uses Adjust because completed Continue is disabled; therefore setup background work differs from a direct resume.
+- Third run action 18: transition 7,251.8 ms; accepted mutation request 7,242 ms, HTTP 200. Concurrent lookup 7,871.8 ms; stats request 9,476.3 ms, HTTP 500; snapshot 3,293.8 ms; study-time requests also slowed. This rules out rendering as the dominant delay for that event. It does not prove a particular resource bottleneck.
+- Read-only, QA-only SQL statistics probe after browser exit: public stats 544 / 221 / 216 / 217 / 216 ms. Five legacy portions 110–128 ms; local-day portions 105–111 ms. These are sequential warm measurements on one direction and all curated material, not exactly the selected collection/browser workload. The public function composes both portions, so summing public plus portions would double-count work.
+- A separate QA-only read-only plan(10) probe exceeded the 8-second statement timeout; the transaction rolled back. It never reached the later all-due probe. This reproduces planning latency without the browser or a training write. SQL timeout is a bound, not an 8-second completion measurement.
+
+`pg_stat_statements` snapshots around the first browser run show 10 additional stats calls, aggregate 19,314 ms, and three start/plan calls at about 3,300 ms mean. These counters are database-wide: other activity may contribute, and nested tracked statements must not be summed as independent time. They support prioritizing stats and plan investigation, not exact per-user attribution.
+
+Next diagnostic boundary: capture an exact selected-collection plan with safe EXPLAIN/buffers and session-scoped function timings; correlate the slow interval with DB wait events, active queries and host CPU/I/O. Compare background stats/study-time on/off under an otherwise identical isolated workload. Do not enlarge the server or alter FSRS based only on these samples. These deeper measurements and any optimization remain follow-up work.

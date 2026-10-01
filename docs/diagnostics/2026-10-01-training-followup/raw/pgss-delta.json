@@ -1,0 +1,142 @@
+[
+  {
+    "fn": "read_platform_v2_training_group",
+    "role": "service_role",
+    "calls": 26,
+    "totalMs": 3681.76,
+    "meanMs": 141.61
+  },
+  {
+    "fn": "get_available_learning_languages",
+    "role": "authenticated",
+    "calls": 4,
+    "totalMs": 334.96,
+    "meanMs": 83.74
+  },
+  {
+    "fn": "update_active_training_scope",
+    "role": "authenticated",
+    "calls": 3,
+    "totalMs": 61.64,
+    "meanMs": 20.55
+  },
+  {
+    "fn": "get_training_session_snapshot",
+    "role": "authenticated",
+    "calls": 3,
+    "totalMs": 38.48,
+    "meanMs": 12.83
+  },
+  {
+    "fn": "get_platform_v2_card_states_for_entries",
+    "role": "authenticated",
+    "calls": 26,
+    "totalMs": 872.58,
+    "meanMs": 33.56
+  },
+  {
+    "fn": "get_word_list_summary",
+    "role": "authenticated",
+    "calls": 2,
+    "totalMs": 26.89,
+    "meanMs": 13.45
+  },
+  {
+    "fn": "get_learning_preferences",
+    "role": "authenticated",
+    "calls": 2,
+    "totalMs": 118.14,
+    "meanMs": 59.07
+  },
+  {
+    "fn": "get_training_filter_sources",
+    "role": "authenticated",
+    "calls": 2,
+    "totalMs": 149.91,
+    "meanMs": 74.96
+  },
+  {
+    "fn": "record_training_active_time_v1",
+    "role": "authenticated",
+    "calls": 54,
+    "totalMs": 1910.46,
+    "meanMs": 35.38
+  },
+  {
+    "fn": "fetch_dictionary_entry_by_id_gated",
+    "role": "authenticated",
+    "calls": 9,
+    "totalMs": 311.36,
+    "meanMs": 34.6
+  },
+  {
+    "fn": "get_available_word_lists",
+    "role": "authenticated",
+    "calls": 4,
+    "totalMs": 700.08,
+    "meanMs": 175.02
+  },
+  {
+    "fn": "start_training_session",
+    "role": "authenticated",
+    "calls": 3,
+    "totalMs": 9906.22,
+    "meanMs": 3302.07
+  },
+  {
+    "fn": "get_training_session_plan",
+    "role": "authenticated",
+    "calls": 3,
+    "totalMs": 9899.2,
+    "meanMs": 3299.73
+  },
+  {
+    "fn": "get_detailed_training_stats",
+    "role": "authenticated",
+    "calls": 10,
+    "totalMs": 19314.43,
+    "meanMs": 1931.44
+  },
+  {
+    "fn": "get_available_dictionary_sources",
+    "role": "authenticated",
+    "calls": 2,
+    "totalMs": 480.56,
+    "meanMs": 240.28
+  },
+  {
+    "fn": "get_active_training_scope",
+    "role": "authenticated",
+    "calls": 2,
+    "totalMs": 65.48,
+    "meanMs": 32.74
+  },
+  {
+    "fn": "word_entry_translations",
+    "role": "service_role",
+    "calls": 9,
+    "totalMs": 154.45,
+    "meanMs": 17.16
+  },
+  {
+    "fn": "get_next_training_session_card",
+    "role": "authenticated",
+    "calls": 19,
+    "totalMs": 2328.72,
+    "meanMs": 122.56
+  },
+  {
+    "fn": "perform_platform_v2_card_action_as_principal",
+    "role": "service_role",
+    "calls": 14,
+    "totalMs": 2487.14,
+    "meanMs": 177.65
+  },
+  {
+    "fn": "get_training_scenarios",
+    "role": "authenticated",
+    "calls": 3,
+    "totalMs": 34.08,
+    "meanMs": 11.36
+  }
+]

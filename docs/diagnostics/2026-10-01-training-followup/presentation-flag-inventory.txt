@@ -1,0 +1,32 @@
+apps/ui/lib/platform/platformV2Rollout.ts: 32, 36, 56, 57
+apps/ui/components/training/useRecordedStudyTime.ts: 4, 9
+apps/ui/components/training/WordDetailsHeader.tsx: 4, 11, 22
+apps/ui/components/training/TrainingDetailsDrawer.tsx: 6, 24
+apps/ui/components/training/TrainingScreen.tsx: 93, 94, 225, 2477, 2478, 2635
+apps/ui/components/training/SenseCardChrome.tsx: 4, 7, 11, 22
+apps/ui/components/navigation/StatisticsDestination.tsx: 6, 59, 124
+apps/ui/components/navigation/LibraryDestination.tsx: 4, 71
+apps/ui/components/navigation/TrainingHistoryDestination.tsx: 5, 70
+apps/ui/components/navigation/AppFrame.tsx: 11, 139, 200
+apps/ui/components/navigation/TrainingLibraryShell.tsx: 3, 76
+apps/ui/components/feedback/SenseCardReportSheet.tsx: 7, 60, 65, 91
+apps/ui/components/training/wordlist/WordDetailDrawer.tsx: 9, 50, 98, 103
+apps/ui/components/training/wordlist/LibraryHeadwordGroupResultsList.tsx: 4, 37
+apps/ui/components/training/wordlist/DictionarySearchTab.tsx: 18, 150
+apps/ui/components/training/v2/TrainingUnsupportedMode.tsx: 4, 17
+apps/ui/components/training/v2/TrainingSessionState.tsx: 3, 24
+apps/ui/components/training/v2/TrainingSessionSurface.tsx: 5, 44, 89
+apps/ui/components/training/v2/TrainingSenseCardV2Session.tsx: 2, 701, 724, 899
+apps/ui/components/training/v2/TrainingExcludeAction.tsx: 6, 36
+apps/ui/components/training/v2/TrainingExerciseCard.tsx: 10, 73, 190
+apps/ui/components/training/v2/TrainingCardTemplates.tsx: 13, 43, 56, 96, 97, 99, 100, 107, 128, 214, 221, 274, 428, 560, 648, 665
+apps/ui/components/training/v2/TrainingUsableCandidatesExhausted.tsx: 4, 19
+apps/ui/components/training/v2/TrainingSenseCardStage.tsx: 11, 113
+apps/ui/components/training/pilot/TrainingSentenceSession.tsx: 5, 140, 142, 143, 151
+apps/ui/components/training/pilot/TrainingTodaySetup.tsx: 25, 640, 732, 1006, 1043
+apps/ui/components/training/pilot/TrainingIdiomSession.tsx: 6, 245, 249, 253, 306
+apps/ui/components/training/pilot/TrainingBootstrapShell.tsx: 4, 28
+apps/ui/components/training/library-v2/LibraryCollectionsPicker.tsx: 6, 50
+apps/ui/components/training/library-v2/LibrarySenseCardV2Session.tsx: 2, 674
+apps/ui/components/training/library-v2/LibraryDetailsActions.tsx: 6, 26
+apps/ui/components/training/library-v2/LibrarySenseCardGroup.tsx: 7, 105, 486, 912
