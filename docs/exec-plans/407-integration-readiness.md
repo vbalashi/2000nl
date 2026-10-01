@@ -1949,3 +1949,7 @@ Removed both in approved workspace CSS; legacy untouched, meaning frames retaine
 Actual authenticated browser computed transparent/radius0 and screenshot confirms
 flat full article /tmp/407qa/correction5-library-flat.png. CSS-only diff passes.
 This closes the fixture coverage gap found during correction11; next12 toolbar.
+
+### Owner correction12 — remove personal entry toolbar (2026-10-01)
+
+Approved DictionarySearchTab omits the personal-entry controls block; legacy editor and API/data contracts remain intact. Existing article copy action stays available. Actual local Library confirms no My dictionary/Add entry row, results and framed meanings still visible. Screenshot: `/tmp/407qa/correction12-toolbar.png`. Grouping suite20pass; typecheck and focused lint pass. Replaced obsolete approved modal trigger expectations with primary-control absence and legacy cancellation/duplicate-submit checks.

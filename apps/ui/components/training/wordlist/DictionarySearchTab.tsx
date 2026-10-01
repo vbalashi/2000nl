@@ -844,7 +844,7 @@ export function DictionarySearchTab({
         </div>
         </>)}
 
-        <div
+        {!approved && <div
           className={
             approved
               ? workspace.entryControls
@@ -1031,7 +1031,7 @@ export function DictionarySearchTab({
               {customEntryMessage}
             </div>
           ) : null}
-        </div>
+        </div>}
 
         <div className={approved ? workspace.scope : "space-y-0.5 text-xs text-slate-500 dark:text-slate-400"}>
           <div>{resultCountLabel}</div>

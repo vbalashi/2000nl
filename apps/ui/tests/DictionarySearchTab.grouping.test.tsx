@@ -341,7 +341,7 @@ test("approved Library copy and grouped rows follow interface locale without cha
  expect(screen.getByRole("textbox",{name:"Поиск слов"})).toHaveValue("goed");
  expect(await screen.findByTestId("library-headword-group-group-goed-homograph")).toHaveTextContent("существительное");
  expect(row).toHaveTextContent("1 значение");expect(row).toHaveAttribute("aria-pressed","true");
- expect(screen.getByRole("button",{name:"Добавить запись"})).toBeInTheDocument();
+ expect(screen.queryByRole("button",{name:"Добавить запись"})).not.toBeInTheDocument();
  expect(screen.getByRole("button",{name:"Далее"})).toBeDisabled();
 });
 
@@ -424,34 +424,40 @@ test("changing translation target never retags an old draft with a different lan
   await waitFor(() => expect(service.createUserDictionaryEntry).toHaveBeenLastCalledWith({entry:{headword:"goed",languageCode:"nl",definition:"goed zijn"}}));
 });
 
-test("approved personal editor is a cancellable modal without creating an entry", async () => {
+test("approved Library omits personal entry controls without calling the create API", async () => {
   vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
   const service = await import("@/lib/trainingService");
   vi.mocked(service.createUserDictionaryEntry).mockClear();
   render(<Harness locale="en" />);
-  fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
-  const editor = screen.getByRole("dialog", {name:"Add entry"});
-  expect(within(editor).getByLabelText("Headword")).toHaveValue("goed");
-  fireEvent(editor, new Event("cancel", {bubbles:true,cancelable:true}));
-  expect(screen.queryByRole("dialog", {name:"Add entry"})).not.toBeInTheDocument();
+  await waitFor(() => expect(fetchGroupPage).toHaveBeenCalled());
+  expect(screen.queryByText("My dictionary")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", {name:"Add entry"})).not.toBeInTheDocument();
   expect(service.createUserDictionaryEntry).not.toHaveBeenCalled();
 });
 
-test("pending entry creation prevents dismissal and duplicate submission", async () => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+test("legacy personal editor can close without creating an entry", async () => {
+  const service = await import("@/lib/trainingService");
+  vi.mocked(service.createUserDictionaryEntry).mockClear();
+  render(<Harness locale="en" />);
+  fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
+  expect(screen.getByLabelText("Headword")).toHaveValue("goed");
+  fireEvent.click(screen.getByRole("button", {name:"Close"}));
+  expect(screen.queryByLabelText("Headword")).not.toBeInTheDocument();
+  expect(service.createUserDictionaryEntry).not.toHaveBeenCalled();
+});
+
+test("pending legacy entry creation prevents duplicate submission", async () => {
   const service = await import("@/lib/trainingService");
   const pending = deferred<string>();
   vi.mocked(service.createUserDictionaryEntry).mockClear().mockReturnValueOnce(pending.promise);
   render(<Harness locale="en" />);
   fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
-  const editor = screen.getByRole("dialog", {name:"Add entry"});
-  fireEvent.change(within(editor).getByLabelText("Definition"), {target:{value:"goed zijn"}});
-  fireEvent.click(within(editor).getByRole("button", {name:"Save to my dictionary"}));
-  await waitFor(() => expect(within(editor).getByRole("button", {name:"Close"})).toBeDisabled());
-  expect(within(editor).getByRole("button", {name:"Save to my dictionary"})).toBeDisabled();
-  fireEvent(editor, new Event("cancel", {bubbles:true,cancelable:true}));
-  expect(editor).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Definition"), {target:{value:"goed zijn"}});
+  const save = screen.getByRole("button", {name:"Save to my dictionary"});
+  fireEvent.click(save);
+  await waitFor(() => expect(save).toBeDisabled());
+  fireEvent.click(save);
   pending.resolve("created-entry");
-  await waitFor(() => expect(screen.queryByRole("dialog", {name:"Add entry"})).not.toBeInTheDocument());
+  await waitFor(() => expect(screen.queryByLabelText("Headword")).not.toBeInTheDocument());
   expect(service.createUserDictionaryEntry).toHaveBeenCalledOnce();
 });

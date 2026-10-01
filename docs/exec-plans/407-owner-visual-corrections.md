@@ -15,7 +15,7 @@
 - [x] **9.** Убрать видимый заголовок Сведения о слове; сохранить accessible dialog name/закрытие.
 - [x] **10.** Убрать горизонтальный разделитель хедера approved UI.
 - [x] **11.** Разъяснить контракт Только эта коллекция; затем убрать/оформить понятную область.
-- [ ] **12.** Убрать Мой словарь / Добавить запись из первичного toolbar, сохранить существующий API/данные.
+- [x] **12.** Убрать Мой словарь / Добавить запись из первичного toolbar, сохранить существующий API/данные.
 - [ ] **13.** Убрать Введите слово для поиска из toolbar.
 - [ ] **14.** Library сразу показывает упорядоченные результаты текущего фильтра без запроса; реальные данные, пагинация, ACL, загрузка/ошибки.
 - [ ] **15.** Library Filters: число результатов/загрузка/ошибка, не требовать поисковое слово.
@@ -68,3 +68,5 @@
 Пункт11: контракт investigated — active training list (fallback first accessible) ограничивает fetchWordsForList, не меняет состав/прогресс. Approved подпись с конкретным viewedListName на EN/NL/RU, без коллекции control скрыт; legacy прежний. Browser4031 entries/20-per-page в VanDale2k, scope checked; screenshot /tmp/407qa/correction11-scope.png. Tests19pass, typecheck/lint/diff pass. Этот screenshot также обнаружил оставшийся внешний Library aside фон пункта5; следующий короткий follow-up исправляет его.
 
 Пункт5 follow-up: реальный Library aside также теперь transparent/radius0. Browser computed rgba0/radius0, framed meanings сохранены; /tmp/407qa/correction5-library-flat.png. Это закрывает пропущенный внешний контейнер, который изолированный fixture не покрывал. CSS-only, diff check pass.
+
+Пункт12: approved Library не показывает блок My dictionary/Add entry в основной панели. Legacy редактор, createUserDictionaryEntry API и данные сохранены; копирование существующей статьи остаётся доступным. Устаревшие modal-trigger тесты заменены отсутствием primary controls и проверками legacy закрытия/защиты от повторного создания. Tests20pass, typecheck/lint pass; browser actual Library screenshot /tmp/407qa/correction12-toolbar.png.
