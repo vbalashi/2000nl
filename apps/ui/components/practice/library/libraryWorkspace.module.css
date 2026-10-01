@@ -42,8 +42,10 @@
   box-shadow: none;
 }
 .input:focus {
-  border-color: var(--practice-control-border);
-  box-shadow: 0 0 0 2px var(--practice-shadow);
+  border-color: var(--practice-focus);
+  outline: 2px solid var(--practice-focus);
+  outline-offset: -2px;
+  box-shadow: none;
 }
 .scope {
   font-size: var(--practice-text-label);
