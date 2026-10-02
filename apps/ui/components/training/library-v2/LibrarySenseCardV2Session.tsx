@@ -110,6 +110,8 @@ function SenseCardV2Session({
   const [lookupError, setLookupError] = React.useState<
     "forbidden" | "timeout" | "contract" | "unavailable" | null
   >(null);
+  const [acceptedRefreshFailed, setAcceptedRefreshFailed] = React.useState(false);
+  const unverifiedActionIdentity = React.useRef<string | null>(null);
   const [lookupRetry, setLookupRetry] = React.useState(0);
   const [loading, setLoading] = React.useState(!compatibleInitialGroup);
   const [membershipsByEntryId, setMembershipsByEntryId] = React.useState<
@@ -151,6 +153,8 @@ function SenseCardV2Session({
     actionGeneration.current += 1;
     membershipGeneration.current += 1;
     setBusyIdentity(null);
+    setAcceptedRefreshFailed(false);
+    unverifiedActionIdentity.current = null;
     setError(null);
     setMembershipsByEntryId({});
     setMembershipState("loading");
@@ -377,7 +381,9 @@ function SenseCardV2Session({
 
   const handleAction = async (capability: LibraryMutationCapability) => {
     const expectedDetailIdentity = detailIdentityRef.current;
-    const pendingKey = `${expectedDetailIdentity}:${librarySenseCardIdentity(capability.target.entryId, capability.target.cardTypeId)}`;
+    const pendingKey = expectedDetailIdentity;
+    if (unverifiedActionIdentity.current === expectedDetailIdentity) return;
+    if (context !== "library" && capability.actionId === "review-card") return;
     if (pendingActions.current.has(pendingKey)) return;
     pendingActions.current.add(pendingKey);
     const expectedActionGeneration = ++actionGeneration.current;
@@ -394,14 +400,36 @@ function SenseCardV2Session({
     try {
       await performPlatformV2LibraryAction(capability);
       if (!isCurrentAction()) return;
-      await load(undefined, undefined, expectedDetailIdentity);
+      unverifiedActionIdentity.current = expectedDetailIdentity;
+      const fresh = await load(undefined, undefined, expectedDetailIdentity);
+      if (!fresh) throw new Error("accepted_action_refresh_failed");
+      if (isCurrentAction()) unverifiedActionIdentity.current = null;
     } catch (cause) {
       if (isCurrentAction()) {
-        setError(cause instanceof Error ? cause.message : "action_failed");
+        if (unverifiedActionIdentity.current === expectedDetailIdentity) {
+          setAcceptedRefreshFailed(true);
+          setLoading(false);
+        } else setError(cause instanceof Error ? cause.message : "action_failed");
       }
     } finally {
       pendingActions.current.delete(pendingKey);
       if (isCurrentAction()) setBusyIdentity(null);
+    }
+  };
+
+  const retryAcceptedRefresh = async () => {
+    const expected = detailIdentityRef.current;
+    try {
+      const fresh = await load(undefined, undefined, expected);
+      if (fresh && expected === detailIdentityRef.current) {
+        unverifiedActionIdentity.current = null;
+        setAcceptedRefreshFailed(false);
+        setLookupError(null);
+      }
+    } catch {
+      // The mutation was accepted. Retry only its read, never the action.
+    } finally {
+      if (expected === detailIdentityRef.current) setLoading(false);
     }
   };
 
@@ -617,17 +645,18 @@ function SenseCardV2Session({
     ? platformV2Message(interfaceLanguage, `senseCard.lookup.${lookupError}`)
     : null;
   const errorNotice =
-    lookupErrorText || error || exclusionError ? (
+    acceptedRefreshFailed || lookupErrorText || error || exclusionError ? (
       <p
         role="alert"
         className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
       >
-        {lookupErrorText ?? error ?? exclusionError}
-        {lookupError ? (
+        {acceptedRefreshFailed ? platformV2Message(interfaceLanguage, "senseCard.learning.savedReloadFailed") : lookupErrorText ?? error ?? exclusionError}
+        {lookupError || acceptedRefreshFailed ? (
           <button
             type="button"
             className="ml-3 rounded-full border border-current px-3 py-1 font-semibold"
-            onClick={() => setLookupRetry((current) => current + 1)}
+            disabled={loading}
+            onClick={() => acceptedRefreshFailed ? void retryAcceptedRefresh() : setLookupRetry((current) => current + 1)}
           >
             {platformV2Message(interfaceLanguage, "common.retry")}
           </button>
@@ -691,6 +720,8 @@ function SenseCardV2Session({
           model={model}
           interfaceLanguage={interfaceLanguage}
           busyIdentity={busyIdentity}
+          actionsDisabled={acceptedRefreshFailed}
+          inlineGrading={context === "library"}
           audioBusy={audioBusy}
           onPlayAudio={
             model.audioCapability ? () => void handlePlayAudio() : undefined

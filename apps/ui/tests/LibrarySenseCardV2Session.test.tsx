@@ -214,6 +214,39 @@ describe("LibrarySenseCardV2Session", () => {
     expect(within(card).queryByRole("button",{name:"Train next"})).not.toBeInTheDocument();
   });
 
+  test("accepted grade with failed refresh blocks stale actions and Retry only reads",async()=>{
+    fetchGroup.mockResolvedValueOnce(multiSenseBankGroup).mockRejectedValueOnce(new Error("offline")).mockResolvedValue(multiSenseBankGroup);
+    render(<LibrarySenseCardV2Session entryId={furnitureEntry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
+    const card=await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`);
+    fireEvent.click(within(card).getByRole("button",{name:"Good"}));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Saved. Could not reload");
+    expect(within(card).getByRole("button",{name:"Good"})).toBeDisabled();
+    expect(performAction).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button",{name:"Retry"}));
+    await waitFor(()=>expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+    expect(within(card).getByRole("button",{name:"Good"})).toBeEnabled();
+    expect(performAction).toHaveBeenCalledOnce();
+  });
+
+  test("pending mutation disables all meanings in the same article",async()=>{
+    const pending=deferred<unknown>();performAction.mockReturnValue(pending.promise);
+    render(<LibrarySenseCardV2Session entryId={furnitureEntry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
+    const first=await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`);
+    const second=screen.getByTestId(`library-sense-card-${financeEntry.entryId}`);
+    fireEvent.click(within(second).getByRole("button",{name:"Expand meaning"}));
+    fireEvent.click(within(first).getByRole("button",{name:"Good"}));
+    expect(within(second).getByRole("button",{name:"Learn"})).toBeDisabled();
+    fireEvent.click(within(second).getByRole("button",{name:"Learn"}));
+    expect(performAction).toHaveBeenCalledOnce();
+    await act(async()=>pending.resolve({accepted:true}));
+  });
+
+  test("Training More never adds non-session review buttons",async()=>{
+    render(<TrainingMoreSenseCardV2Session entryId={furnitureEntry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
+    await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`);
+    for(const name of ["Again","Hard","Good","Easy"])expect(screen.queryByRole("button",{name})).not.toBeInTheDocument();
+  });
+
   test("an accepted collection removal followed by failed read is not reported as saved; retry only reads", async () => {
     const listId = "qa-list";
     fetchMemberships.mockResolvedValueOnce(new Map([[financeEntry.entryId,[membership(listId)]]]))

@@ -46,6 +46,8 @@ type Props = {
   contentLanguage?: string;
   translationLanguage?: string;
   busyIdentity?: string | null;
+  actionsDisabled?: boolean;
+  inlineGrading?: boolean;
   audioBusy?: boolean;
   onPlayAudio?: () => void;
   translationEnabled?: boolean;
@@ -79,6 +81,8 @@ export function LibrarySenseCardGroup({
   contentLanguage,
   translationLanguage,
   busyIdentity = null,
+  actionsDisabled = false,
+  inlineGrading = true,
   audioBusy = false,
   onPlayAudio,
   translationEnabled = false,
@@ -378,7 +382,7 @@ export function LibrarySenseCardGroup({
               return (
                 <MeaningCard
                   key={identity}
-                  meaning={meaning}
+                  meaning={inlineGrading ? meaning : {...meaning, reviewCapabilities: []}}
                   showSenseForms={!commonForms}
                   formPartOfSpeech={model.formPartOfSpeech}
                   headword={model.headword}
@@ -392,7 +396,7 @@ export function LibrarySenseCardGroup({
                     }
                   }
                   interfaceLanguage={interfaceLanguage}
-                  busy={busyIdentity === identity}
+                  busy={actionsDisabled || Boolean(busyIdentity)}
                   translationState={translationStates[identity] ?? null}
                   collectionCount={collectionCounts[meaning.entryId] ?? 0}
                   onToggleExpanded={() =>

@@ -57,6 +57,7 @@
   },
   "senseCard": {
     "learning": {
+      "savedReloadFailed": "Opgeslagen. De bijgewerkte leerstatus kon niet worden geladen. Probeer opnieuw om te vernieuwen.",
       "start": "Leren"
     },
     "known": {

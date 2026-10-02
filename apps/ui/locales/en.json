@@ -57,6 +57,7 @@
   },
   "senseCard": {
     "learning": {
+      "savedReloadFailed": "Saved. Could not reload the updated learning state. Retry to refresh it.",
       "start": "Learn"
     },
     "known": {
