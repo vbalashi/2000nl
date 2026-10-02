@@ -73,6 +73,28 @@ describe("useTrainingActiveList", () => {
     updateActiveTrainingScope.mockResolvedValue({ scope: null, error: null });
   });
 
+  test("navigation refresh retains a ready catalog but still reports refresh failure", async () => {
+    const view = renderHook(({showSettings}) => useTrainingActiveList({userId: "owner", language: "nl", showSettings}), {initialProps: {showSettings: false}});
+    await waitFor(() => expect(view.result.current.listCatalogStatus).toBe("ready"));
+    let reject!: (error: Error) => void;
+    fetchAvailableLists.mockImplementationOnce(() => new Promise((_, fail) => { reject = fail; }));
+    view.rerender({showSettings: true});
+    expect(view.result.current.listCatalogStatus).toBe("ready");
+    expect(view.result.current.availableLists).toEqual([curatedList]);
+    await act(async () => reject(new Error("offline")));
+    expect(view.result.current.listCatalogStatus).toBe("error");
+    expect(view.result.current.availableLists).toEqual([curatedList]);
+  });
+
+  test.each(["owner", "language"])("catalog retention resets for a changed %s", async (change) => {
+    const view = renderHook(({userId, language}) => useTrainingActiveList({userId, language, showSettings: false}), {initialProps: {userId: "owner-a", language: "nl"}});
+    await waitFor(() => expect(view.result.current.listCatalogStatus).toBe("ready"));
+    fetchAvailableLists.mockImplementationOnce(() => new Promise(() => {}));
+    view.rerender({userId: change === "owner" ? "owner-b" : "owner-a", language: change === "language" ? "en" : "nl"});
+    expect(view.result.current.listCatalogStatus).toBe("loading");
+    expect(view.result.current.availableLists).toEqual([]);
+  });
+
   test("hydrates a saved active list", async () => {
     fetchActiveTrainingScope.mockResolvedValue({
       languageCode: "nl",

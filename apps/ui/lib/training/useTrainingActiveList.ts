@@ -81,13 +81,15 @@ export function useTrainingActiveList(params: {
     setHydratedLanguage(null);
     setActiveTrainingScope(null);
     clearList();
-  }, [clearList, language]);
+  }, [clearList, language, userId]);
 
   const refreshAvailableLists = useCallback(async () => {
     if (!userId) return [];
     const requestId = ++listRequestIdRef.current;
     const requestedLanguage = language;
-    setListCatalogStatus("loading");
+    // Navigation revalidates the same catalog; keep usable setup visible meanwhile.
+    // Owner/language changes reset status to loading in the scoping effect above.
+    setListCatalogStatus((current) => current === "ready" ? "ready" : "loading");
     try {
       const lists = await fetchAvailableLists(userId, language);
       if (
