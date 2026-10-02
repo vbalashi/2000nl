@@ -550,14 +550,14 @@ test("preloaded results are reused on first visible entry", async () => {
 
 test("returning after freshness expires refreshes retained results", async () => {
   fetchGroupPage.mockReset().mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
-  const view=render(<Harness open />);
+  const view=render(<Harness open preload />);
   await screen.findByTestId("library-headword-group-group-goed-main");
   const reads=fetchGroupPage.mock.calls.length;
-  view.rerender(<Harness open={false} />);
+  view.rerender(<Harness open={false} preload />);
   const now=Date.now();
   const clock=vi.spyOn(Date,"now").mockReturnValue(now+31000);
   try {
-    view.rerender(<Harness open />);
+    view.rerender(<Harness open preload />);
     await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalledTimes(reads+1));
     expect(screen.getByTestId("library-headword-group-group-goed-main")).toBeVisible();
   } finally { clock.mockRestore(); }

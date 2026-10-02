@@ -276,6 +276,10 @@ export function DictionarySearchTab({
   const runSearch = useCallback(
     async (force = false) => {
       if (!searchEnabled) return;
+      if (!useViewedListFilter && !searchMaterialReady) {
+        searchFreshRef.current = null;
+        searchPendingRef.current = null;
+      }
       if (
         !force &&
         (searchPendingRef.current === searchReadKey ||
@@ -638,7 +642,7 @@ export function DictionarySearchTab({
     }
     const timer = window.setTimeout(run, SEARCH_INPUT_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
-  }, [query, runSearch]);
+  }, [query, runSearch, open]);
 
   useEffect(() => {
     if (!autoFocusQuery) return;
