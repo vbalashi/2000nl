@@ -11,7 +11,7 @@ import {
 } from "./dictionaryContract";
 
 const DICTIONARY_COLUMNS =
-  "id,slug,name,language_code,kind,visibility,owner_user_id,source_provider,source_version,schema_key,schema_version,is_editable,minimum_subscription_tier,description,created_at,updated_at,dictionary_schemas(title,retired_at)";
+  "id,slug,name,language_code,kind,visibility,publication_state,owner_user_id,source_provider,source_version,schema_key,schema_version,is_editable,minimum_subscription_tier,description,created_at,updated_at,dictionary_schemas(title,retired_at)";
 
 function createAdminReadClient() {
   const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -72,5 +72,14 @@ export async function getAdminDictionaryMetadata(
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error("Admin dictionary metadata read failed");
-  return data ? projectDictionaryMetadata(data as unknown as DictionaryRecord) : null;
+  if (!data) return null;
+  const metadata = projectDictionaryMetadata(data as unknown as DictionaryRecord);
+  const audience = await client.from("dictionary_entitlements")
+    .select("subject_type,subject_key").eq("dictionary_id", id).eq("permission", "read");
+  if (audience.error) throw new Error("Admin dictionary audience read failed");
+  return {
+    ...metadata,
+    audienceGroupKeys: (audience.data ?? []).filter((row) => row.subject_type === "group").map((row) => row.subject_key),
+    audienceUserIds: (audience.data ?? []).filter((row) => row.subject_type === "user").map((row) => row.subject_key),
+  };
 }

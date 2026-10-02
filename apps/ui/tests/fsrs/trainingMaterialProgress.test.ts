@@ -6,8 +6,9 @@ import { ensureUserWithSettings, getDbUrl, runMigrations, withTransaction } from
 const dbUrl = getDbUrl();
 
 async function dictionary(client: PoolClient, userId: string, name: string, grant: boolean) {
+  const visibility = grant ? "shared" : "private";
   const { rows: [row] } = await client.query(`insert into dictionaries(language_code,slug,name,kind,visibility,minimum_subscription_tier,schema_key,schema_version)
-    values('nl',$1,$2,'curated','private','free','nl-vandale-v1',1) returning id`, [`${name}-${randomUUID()}`, name]);
+    values('nl',$1,$2,'curated',$3,'free','nl-vandale-v1',1) returning id`, [`${name}-${randomUUID()}`, name, visibility]);
   if (grant) await client.query(`insert into dictionary_entitlements(dictionary_id,subject_type,subject_key,permission) values($1,'user',$2,'read')`, [row.id, userId]);
   return row.id as string;
 }

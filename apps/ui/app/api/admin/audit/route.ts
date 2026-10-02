@@ -15,6 +15,8 @@ const JOURNAL_ACTIONS = [
   "access.denied",
   "dictionary.registry.read",
   "dictionary.metadata.read",
+  "dictionary.publication.updated",
+  "dictionary.audience.updated",
   "audit.journal.read",
 ] as const satisfies readonly AdminAuditAction[];
 const PAGE_SIZES = [25, 50, 100] as const;

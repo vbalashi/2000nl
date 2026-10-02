@@ -549,3 +549,7 @@
 \i db/migrations/199_account_indigo_palette.sql
 
 \i db/migrations/200_account_card_spacing.sql
+
+-- Dictionary publication and restricted-audience access (#470).
+\i db/migrations/196_dictionary_publication_access.sql
+\i db/migrations/197_publication_access_current_rpc_patch.sql
