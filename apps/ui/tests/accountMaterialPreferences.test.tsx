@@ -420,3 +420,24 @@ test("learning picker uses canonical identity, relevant guidance and restores op
   );
   expect(opener).toHaveAttribute("aria-disabled", "false");
 });
+
+
+test("focus refresh keeps an already loaded launch control enabled; failure blocks it", async () => {
+  let finish!: (value: MaterialPreferencesSnapshot) => void;
+  let reject!: (error: Error) => void;
+  const repo = repository();
+  function Launch() { const account = useAccountMaterial(); return <button disabled={account?.status !== "ready"}>Start training</button>; }
+  render(<AccountMaterialProvider userId="account-a" repository={repo}><Launch /></AccountMaterialProvider>);
+  const start = screen.getByRole("button", {name: "Start training"});
+  expect(start).toBeDisabled();
+  await waitFor(() => expect(start).toBeEnabled());
+  vi.mocked(repo.load).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  fireEvent.focus(window);
+  expect(start).toBeEnabled();
+  await act(async () => finish(emptyMaterialPreferences()));
+  expect(start).toBeEnabled();
+  vi.mocked(repo.load).mockImplementationOnce(() => new Promise((_, fail) => { reject = fail; }));
+  fireEvent.focus(window);
+  await act(async () => reject(new Error("offline")));
+  expect(start).toBeDisabled();
+});

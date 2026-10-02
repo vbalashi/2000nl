@@ -169,6 +169,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     advanceLeaseClockOnAction?: number;
     forceOnDemandLookupEveryAction?: boolean;
     schedulerOutcomes?: Array<"statement-timeout" | "card" | "empty">;
+    sessionPlannedTotal?: number;
     sessionOutcomes?: Array<"statement-timeout" | "card" | "empty">;
     /** One valid deterministic state used only for visual QA. */
     visualProfile?: TrainingVisualState;
@@ -204,7 +205,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   const progressActionReconciliationRequests: Record<string, unknown>[] = [];
   const projectionLookupRequests: Record<string, unknown>[] = [];
   const unavailableSessionRequests: Record<string, unknown>[] = [];
-  const sessionMembers = entries.slice(0, 50);
+  const sessionMembers = entries.slice(0, options.sessionPlannedTotal ?? 50);
   const consumedSessionEntryIds = new Set<string>();
   const unavailableSessionEntryIds = new Set<string>();
   const statsRequests: Record<string, unknown>[] = [];
@@ -223,9 +224,12 @@ export async function setupAuthenticatedTrainingAttributionPage(
   let abortFirstAction = options.abortFirstActionAfterMs !== undefined;
   let pendingActionReceipt: Record<string, unknown> | null = null;
   const splitDelayMs = injectedDelayMs > 0 ? Math.ceil(injectedDelayMs * 0.55) : 0;
-  const visualFixture = options.visualProfile
+  const visualBundle = options.visualProfile
     ? buildTrainingVisualFixtureBundle(options.visualProfile, entries, { diagnosticReportReady: options.useUuidEntryIds })
     : null;
+  const visualFixture = visualBundle && options.sessionPlannedTotal !== undefined
+    ? { ...visualBundle, plan: { ...visualBundle.plan, plannedNew: options.sessionPlannedTotal, plannedReview: 0, plannedTotal: options.sessionPlannedTotal } }
+    : visualBundle;
   const schedulerOutcomes = [...(options.schedulerOutcomes ?? [])];
   const sessionOutcomes = [...(options.sessionOutcomes ?? [])];
 

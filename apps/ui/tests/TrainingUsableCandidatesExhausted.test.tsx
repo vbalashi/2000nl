@@ -42,3 +42,23 @@ for (const interfaceLanguage of ["en", "nl", "ru"] as const) {
     expect(onExit).toHaveBeenCalledOnce();
   });
 }
+
+
+test.each(["en", "nl", "ru"] as const)("completed session offers three owned actions in %s", (interfaceLanguage) => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const onExit = vi.fn(), onRestart = vi.fn(), onEdit = vi.fn();
+  const titles = {en: "Session complete", nl: "Sessie voltooid", ru: "Сессия завершена"};
+  render(<TrainingUsableCandidatesExhausted interfaceLanguage={interfaceLanguage} completedCount={10} plannedTotal={10} onExit={onExit} onRestart={onRestart} onEdit={onEdit} />);
+  expect(screen.getByRole("status")).toHaveTextContent(titles[interfaceLanguage]);
+  const buttons = screen.getAllByRole("button");
+  expect(buttons).toHaveLength(3);
+  buttons.forEach(button => fireEvent.click(button));
+  expect(onRestart).toHaveBeenCalledOnce(); expect(onEdit).toHaveBeenCalledOnce(); expect(onExit).toHaveBeenCalledOnce();
+});
+test("early exhaustion does not promise another batch", () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  render(<TrainingUsableCandidatesExhausted interfaceLanguage="en" completedCount={2} plannedTotal={10} onExit={vi.fn()} onRestart={vi.fn()} onEdit={vi.fn()} />);
+  expect(screen.getByRole("status")).toHaveTextContent("No usable training cards");
+  expect(screen.queryByRole("button", {name: "Start next session"})).toBeNull();
+  expect(screen.getByRole("button", {name: "Edit training"})).toBeVisible();
+});

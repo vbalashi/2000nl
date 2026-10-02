@@ -1,6 +1,7 @@
 "use client";
 import { getUiMessages } from "@/lib/uiMessages";
 import { applyResolvedTheme } from "@/lib/preferences/resolvedTheme";
+import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
 import { AccountMaterialProvider } from "@/components/practice/material/AccountMaterialProvider";
 import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/AccountPracticeAppearanceProvider";
 
@@ -288,6 +289,8 @@ function TrainingScreenContent({
   const [sessionResumeError, setSessionResumeError] = useState(false);
   const [sessionReplacementWarning, setSessionReplacementWarning] =
     useState(false);
+  const [sessionAuthorityRefreshing, setSessionAuthorityRefreshing] = useState(false);
+  const [openTrainingEditor, setOpenTrainingEditor] = useState(false);
   const [sessionAuthorityChecking, setSessionAuthorityChecking] =
     useState(false);
   const [platformProgressActionPending, setPlatformProgressActionPending] =
@@ -295,6 +298,7 @@ function TrainingScreenContent({
   const sessionResumeAttemptedRef = useRef(false);
   const sessionResumeGenerationRef = useRef(0);
   const sessionAuthorityValidationRef = useRef(0);
+  const sessionAuthorityBlockedRef = useRef(false);
   const sessionAuthorityGenerationRef = useRef(0);
   const trainingSessionIdRef = useRef<string | null>(null);
   const replaceTrainingSessionId = useCallback((sessionId: string | null) => {
@@ -302,6 +306,8 @@ function TrainingScreenContent({
     sessionAuthorityValidationRef.current += 1;
     trainingSessionIdRef.current = sessionId;
     setSessionAuthorityChecking(false);
+    setSessionAuthorityRefreshing(false);
+    sessionAuthorityBlockedRef.current = false;
     setTrainingSessionId(sessionId);
   }, []);
   const platformProgressActionTokenRef = useRef<object | null>(null);
@@ -2155,6 +2161,7 @@ function TrainingScreenContent({
     // Do not allow a visible card to accept a grade while the server checks
     // whether another device deliberately replaced its queue.
     setSessionAuthorityChecking(true);
+    setSessionAuthorityRefreshing(!sessionAuthorityBlockedRef.current);
     try {
       const snapshot = await fetchTrainingSessionSnapshot(
         user.id,
@@ -2168,10 +2175,12 @@ function TrainingScreenContent({
       ) {
         return false;
       }
+      setSessionAuthorityRefreshing(false);
       if (!snapshot || snapshot.runStatus === "superseded") {
         handleTrainingSessionSuperseded({ sessionId, authorityGeneration });
         return false;
       }
+      sessionAuthorityBlockedRef.current = false;
       setSessionAuthorityChecking(false);
       return true;
     } catch {
@@ -2183,6 +2192,8 @@ function TrainingScreenContent({
         sessionAuthorityGenerationRef.current === authorityGeneration &&
         trainingSessionIdRef.current === sessionId
       ) {
+        sessionAuthorityBlockedRef.current = true;
+        setSessionAuthorityRefreshing(false);
         setSessionAuthorityChecking(true);
       }
       return false;
@@ -2285,6 +2296,8 @@ function TrainingScreenContent({
       // Invalidate any in-flight positive authority result. Answers remain
       // fenced until a later online validation succeeds.
       sessionAuthorityValidationRef.current += 1;
+      sessionAuthorityBlockedRef.current = true;
+      setSessionAuthorityRefreshing(false);
       setSessionAuthorityChecking(true);
     };
     window.addEventListener("offline", onOffline);
@@ -2466,13 +2479,14 @@ function TrainingScreenContent({
       onOpenSettings={openAppSettings}
     >
       <div
+        data-colour-mode={trainingPresentationV1Enabled() ? "app" : undefined}
         data-training-session-layout={v2SessionLayoutVisible ? "v2" : undefined}
         aria-hidden={visibleDestination !== "training"}
         data-training-today-setup={
           trainingTodaySetupEnabled ? "enabled" : "disabled"
         }
         data-training-pilot-surface={trainingPilot.surface}
-        className={`${visibleDestination === "training" ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden bg-transparent text-slate-900 dark:text-slate-100 ${
+        className={`${trainingPresentationV1Enabled() ? practiceTheme.theme : ""} ${visibleDestination === "training" ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden bg-transparent text-slate-900 dark:text-slate-100 ${
           v2SessionLayoutVisible
             ? `font-sense-sans ${sessionStyles.viewport} ${trainingPresentationV1Enabled() ? sessionStyles.viewportApproved : ""}`
             : trainingPresentationV1Enabled()
@@ -2482,6 +2496,7 @@ function TrainingScreenContent({
       >
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
           <TrainingTodaySetup
+            initialView={openTrainingEditor ? "setup" : "today"}
             materialIntent={statisticsMaterialIntent}
             onMaterialIntentConsumed={() => setStatisticsMaterialIntent(null)}
             userId={user.id}
@@ -2539,7 +2554,7 @@ function TrainingScreenContent({
                   : wordListLabel || undefined)
             }
             onContinue={handleContinueTrainingSession}
-            onStart={trainingPilot.startSession}
+            onStart={async (draft, name) => { const started = await trainingPilot.startSession(draft, name); if (started) setOpenTrainingEditor(false); return started; }}
             onRetry={() => void trainingPilot.retry()}
           />
         ) : activeExerciseFamily === "idiom" && idiomSession ? (
@@ -2589,6 +2604,7 @@ function TrainingScreenContent({
             sessionChrome={trainingSessionChrome}
             sessionFooter={trainingSessionFooter}
             sessionNotice={trainingSessionNotice}
+            authorityRefreshing={sessionAuthorityChecking && sessionAuthorityRefreshing && !navigationBlocked && !acceptedTransitionLoadStalled && !returnedToTraining}
             interactionDisabled={
               navigationBlocked ||
               acceptedTransitionLoadStalled ||
@@ -2634,7 +2650,12 @@ function TrainingScreenContent({
             ) : usableCandidatesExhausted ? (
               <TrainingUsableCandidatesExhausted
                 interfaceLanguage={onboardingLang}
-                onExit={trainingPilot.returnToToday}
+                pending={trainingPilot.startPending}
+                completedCount={sessionCompletedActions}
+                plannedTotal={latchedSessionPlan?.plannedTotal ?? sessionPlannedTotal}
+                onRestart={() => { void trainingPilot.startSession(trainingPilot.initialDraft); }}
+                onEdit={() => { setOpenTrainingEditor(true); trainingPilot.returnToToday(); }}
+                onExit={() => { setOpenTrainingEditor(false); trainingPilot.returnToToday(); }}
               />
             ) : trainingPresentationV1Enabled() ? (
               <div className="h-full min-h-0" data-testid="training-v2-loading" data-training-renderer="v2" data-training-v2-state="loading">

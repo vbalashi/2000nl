@@ -10,14 +10,16 @@ export function TrainingSessionState({
   loading = false,
   action,
   secondaryAction,
+  tertiaryAction,
   announcement = "status",
   heading = !loading,
 }: {
   title: string;
   detail?: string;
   loading?: boolean;
-  action?: { label: string; onClick: () => void };
-  secondaryAction?: { label: string; onClick: () => void };
+  action?: { label: string; onClick: () => void; disabled?: boolean };
+  secondaryAction?: { label: string; onClick: () => void; disabled?: boolean };
+  tertiaryAction?: { label: string; onClick: () => void; disabled?: boolean };
   announcement?: "status" | "alert";
   heading?: boolean;
 }) {
@@ -29,9 +31,10 @@ export function TrainingSessionState({
           {detail ? <p>{detail}</p> : null}
         </div>
       </div>
-      {action || secondaryAction ? <footer className={approved.stateActions}>
-        {action ? <button type="button" className={approved.primary} onClick={action.onClick}>{action.label}</button> : null}
-        {secondaryAction ? <button type="button" className={approved.primary} data-kind="secondary" onClick={secondaryAction.onClick}>{secondaryAction.label}</button> : null}
+      {action || secondaryAction || tertiaryAction ? <footer className={approved.stateActions}>
+        {action ? <button type="button" className={approved.primary} disabled={action.disabled} onClick={action.onClick}>{action.label}</button> : null}
+        {secondaryAction ? <button type="button" className={approved.primary} data-kind="secondary" disabled={secondaryAction.disabled} onClick={secondaryAction.onClick}>{secondaryAction.label}</button> : null}
+        {tertiaryAction ? <button type="button" className={approved.primary} data-kind="secondary" disabled={tertiaryAction.disabled} onClick={tertiaryAction.onClick}>{tertiaryAction.label}</button> : null}
       </footer> : null}
     </section>
   );
@@ -39,6 +42,6 @@ export function TrainingSessionState({
   return <div role="status" className="grid h-full min-h-0 place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-center dark:border-slate-700 dark:bg-slate-900/50"><div>
     <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">{title}</h1>
     {detail ? <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{detail}</p> : null}
-    {action ? <button type="button" onClick={action.onClick} className="mt-5 rounded-xl bg-indigo-500 px-4 py-3 font-semibold text-white">{action.label}</button> : null}
+    {action ? <button type="button" disabled={action.disabled} onClick={action.onClick} className="mt-5 rounded-xl bg-indigo-500 px-4 py-3 font-semibold text-white">{action.label}</button> : null}
   </div></div>;
 }

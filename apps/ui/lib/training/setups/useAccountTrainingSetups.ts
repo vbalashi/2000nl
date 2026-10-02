@@ -18,7 +18,8 @@ export function useAccountTrainingSetups(userId?: string) {
   const load = useCallback(async (signal?: AbortSignal) => {
     if (!userId || mutationRef.current) return;
     const generation = invalidateReads();
-    setState(previous => ({ userId, status: "loading", snapshot: previous.userId === userId ? previous.snapshot : emptyTrainingSetups() }));
+    // Background focus reads retain the accepted overview and its launch button.
+    setState(previous => ({ userId, status: previous.userId === userId && previous.status === "ready" ? "ready" : "loading", snapshot: previous.userId === userId ? previous.snapshot : emptyTrainingSetups() }));
     try {
       const snapshot = await fetchAccountTrainingSetups(userId, signal);
       if (!signal?.aborted && ownerRef.current === userId && generation === readGeneration.current) {

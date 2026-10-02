@@ -66,3 +66,17 @@ test("read/save failures remain visible and do not discard accepted account data
   await act(async () => { expect(await result.current.save(training, false)).toBe("error"); });
   expect(result.current.snapshot).toEqual(saved);
 });
+
+
+test("focus refresh retains the ready overview until the accepted replacement arrives", async () => {
+  read.mockResolvedValue(saved);
+  const {result} = renderHook(() => useAccountTrainingSetups("a"));
+  await waitFor(() => expect(result.current.status).toBe("ready"));
+  let finish!: (value: typeof saved) => void;
+  read.mockImplementationOnce(() => new Promise(resolve => {finish = resolve;}));
+  act(() => window.dispatchEvent(new Event("focus")));
+  expect(result.current.status).toBe("ready");
+  expect(result.current.snapshot).toEqual(saved);
+  await act(async () => finish({...saved, revision: 2}));
+  expect(result.current.snapshot.revision).toBe(2);
+});
