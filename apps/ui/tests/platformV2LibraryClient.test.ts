@@ -484,3 +484,70 @@ test("filtered summary accepts matched cross-reference identities without turnin
   expect(result.librarySearch?.matchingEntryIds).toEqual([financeEntry.entryId,furnitureEntry.entryId]);
   expect(result.nextGroupCursor).toBeNull();
  });
+
+describe("Library transient initial read recovery", () => {
+  const input = {
+    query: "", cardTypeId: "word-to-definition" as const,
+    contentLanguageCode: "nl", translationTargetLanguageCode: null,
+    libraryScope: { dictionaryIds: null },
+  };
+  test("recovers a cold 503 without requiring a manual Try again", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response("{}", {status:503}))
+      .mockResolvedValueOnce(new Response(JSON.stringify(payload), {status:200}));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage(input)).resolves.toMatchObject({groups:[multiSenseBankGroup]});
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+  test.each([400,401,403,404,429])("does not retry permanent or rate-limited status %s", async status => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response("{}", {status})));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage(input)).rejects.toMatchObject({status});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+  test("bounds recovery to one retry", async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response("{}", {status:503})));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage(input)).rejects.toMatchObject({status:503});
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+  test("does not retry invalid successful payloads", async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response("{}", {status:200})));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage(input)).rejects.toMatchObject({kind:"contract-mismatch"});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+  test("recovers a browser network failure", async () => {
+    const fetchMock = vi.fn().mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce(new Response(JSON.stringify(payload), {status:200}));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage(input)).resolves.toMatchObject({groups:[multiSenseBankGroup]});
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+  test("abort during retry backoff prevents the second request", async () => {
+    const controller = new AbortController();
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", {status:503}));
+    vi.stubGlobal("fetch", fetchMock);
+    const promise = fetchPlatformV2LibraryGroupPage({...input,signal:controller.signal});
+    setTimeout(() => controller.abort(), 20);
+    await expect(promise).rejects.toMatchObject({name:"AbortError"});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+  test("generic connected-client lookup does not gain automatic retries", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", {status:503}));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage({...input,libraryScope:undefined})).rejects.toMatchObject({status:503});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("a failed continuation retries its cursor without repeating the first page", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({...payload,page:{selectedTierComplete:false,nextGroupCursor:"page-two"}}), {status:200}))
+      .mockResolvedValueOnce(new Response("{}", {status:502}))
+      .mockResolvedValueOnce(new Response(JSON.stringify({...payload,groups:[]}), {status:200}));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage(input)).resolves.toMatchObject({groups:[multiSenseBankGroup]});
+    expect(fetchMock.mock.calls.map(call => JSON.parse(call[1].body).cursor)).toEqual([null,"page-two","page-two"]);
+  });
+
+});
