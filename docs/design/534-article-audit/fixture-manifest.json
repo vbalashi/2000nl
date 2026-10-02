@@ -15,14 +15,25 @@
     "idiom-explanation",
     "nested example",
     "multiple meanings",
-    "wrapped example"
+    "wrapped example",
+    "synonym",
+    "antonym",
+    "usage-pattern",
+    "forms",
+    "LibrarySenseCardGroup",
+    "TrainingSenseCardStage",
+    "current palettes light/dark",
+    "keyboard focus and end-of-scroll",
+    "200% text-only reflow"
   ],
   "missing": [
-    "real synonyms/antonyms fixture",
-    "usage pattern fixture",
-    "Library and Training containers",
-    "headword and forms",
-    "dark/theme sweep",
-    "zoom and keyboard"
-  ]
+    "owner browser zoom",
+    "Indigo (not implemented on audited baseline)",
+    "independent visual reviewer and owner decision"
+  ],
+  "additionalSources": [
+    "apps/ui/app/dev/session-builder-prototype/word-details-fixture.json: details.goed-adjective",
+    "db/data/words_content/000031_a31_aandoen_ww_3.json: meanings[0] (exact source strings normalized only for audit)"
+  ],
+  "aandoenSourceSha256": "8782c3c4717b1ef7c0dccbaebcf353bc9406cc3383db245592f56846681a37e6"
 }

@@ -1,51 +1,101 @@
-# Shared article audit — first measured checkpoint
+# Shared article typography and spacing — review candidates
 
-Status: REVIEW candidates, **not approved and not complete #534 acceptance**. Production styles unchanged. Owning issue #534; parent #533. Baseline source 28e4ea42bad59b1beac03c9cbc89223542f4b0bf.
+Status: **ready for owner choice; not approved for production styling**. Issue #534; coordination #533; draft PR #540. Audited production source: `28e4ea42bad59b1beac03c9cbc89223542f4b0bf`. Product styles and learning state are unchanged.
 
-## Evidence
+Open [the comparison](comparison.html). It switches translations on/off and610/1440px captures, and shows the recommended treatment in real Library/Training card containers, day and night. Recommendation: **Balanced**. Airy uses the same type sizes but requires more scrolling.
 
-[Comparison](comparison.html) shows baseline and two candidate treatments. `measurements.csv` contains 14,616 actual browser element measurements from 216 cases: 390/610/700/701/1024/1440px × account normal/large/largest/extra × off/on/partial translations × baseline/balanced/airy. No document horizontal overflow detected in these cases. JSON preserves case metadata and overflow results. Twelve fixed-size full-page screenshots cover 610/1440 normal off/on.
+## Provenance and scope
 
-This is a real shared-component fixture harness, not a complete production screen. It uses ProductionArticleReading, ArticleContentNode, ArticleMeaningDetails, ArticleSenseRelations and accountTextSizeStyles. Three actual goed adjective meanings provide long nested examples, idioms and explanations. English translations are existing authored demo data; partial removes example translations. No API calls or learning writes. Browser is isolated automated headless Playwright, not the owner's Chrome. Port3111 was temporary because3100 was occupied by another dirty worktree.
+The dev-only harness renders actual `ProductionArticleReading`, `ArticleContentNode`, `ArticleMeaningDetails`, `ArticleSenseRelations`, `ArticleWordForms`, `LibrarySenseCardGroup`, and `TrainingSenseCardStage` components. Account sizes use `accountTextSizeStyles`. No parallel handwritten reading renderer is substituted.
 
-## Confirmed mismatch and current roles
+Three real goed adjective meanings cover definitions, examples, idioms, nested explanation/example, synonyms, antonyms, forms, long/wrapped strings and multiple senses. Sources are existing `goed-source-fixture.json` and `word-details-fixture.json`. A complementary aandoen fixture preserves exact Dutch definition, usage and example text from `000031_a31_aandoen_ww_3.json`. English translations are explicitly authored design fixtures, not provider responses. Partial mode removes examples' translations while retaining idiom/explanation translations. IDs and canonical-source SHA256 are in [the manifest](fixture-manifest.json).
 
-Measured 610 / normal / translations on; all sizes px. Full family, style, weight and bounds in CSV. Typography owner: `articleContent.module.css`; scale owner `textScale.ts`; inherited bridge `productionArticleReading.module.css`.
+The baseline is the production shared-component cascade in a fixture shell. Library uses its actual card group and sheet classes; Training its actual stage. Navigation, live authentication, API loading, mutations and sheet gestures are not simulated. The audit resets the sheet's fixed inset inside its bounded relative-positioned shell. This adaptation does not change production geometry.
 
-| Role | Current size / leading | Candidate | Evidence |
+Browser: isolated headless Playwright; no owner Chrome interaction. All API/cross-origin requests blocked. Port3111 is temporary because3100 belongs to a separate active worktree. Fonts resolved to Newsreader and Inter from the real app.
+
+## Measured typography contract
+
+Normal account scale, all sizes/leading in px. Exact families, weights, styles and bounds at all four scales are in [measurements.csv](measurements.csv). Tokens are owned by `practiceTheme.module.css` and `textScale.ts`; reading rules by `articleContent.module.css`, `wordDetails.module.css`; inherited account aliases by `productionArticleReading.module.css`.
+
+| Semantic role | Current size / leading | Both proposals | Token/rule |
 |---|---|---|---|
-| Definition | 20 / 28 | unchanged | `iets wat goed is…` |
-| Top-level example, idiom | 16 / 22.4, reading serif italic | unchanged | `Ruud is een goede leraar` |
-| Nested example | **14 / 20.3**, reading serif italic | **16 / 22.4** in both | `het voorstel om wat vroeger…` |
-| Original nested explanation | 13 / 19.5, UI sans | unchanged for first comparison | `iets wordt gewaardeerd` |
-| Main translation | 13 / 18.2, UI sans | unchanged for first comparison | source/translation pairing |
-| Nested translation | **12 / 18**, UI sans | unresolved; compare equal-role 13 next | nested example translation |
-| Section label | 11, UI sans | unchanged | separate from reading role |
+| Definition |20 /28, Newsreader normal|unchanged|`--practice-definition-size`|
+| Main example, idiom |16 /22.4, Newsreader italic|unchanged|`--practice-literary-size`|
+| Nested example |**14 /20.3**, Newsreader italic|**16 /22.4**|currently nested `--practice-reading-body`; proposed literary role|
+| Synonym/antonym |16 /22.4, Newsreader italic|unchanged|literary role in `wordDetails.module.css`|
+| Usage pattern |16 /22.4, Newsreader normal|unchanged|literary size, normal style|
+| Nested explanation |13 /19.5, Inter normal|unchanged|`--practice-reading-small`|
+| Main translation |13 /18.2, Inter normal|unchanged|`--practice-reading-small`|
+| Nested translation |**12 /18**, Inter normal|**13 /18.2**|currently caption; proposed shared translation role|
+| Section/role label |11, Inter uppercase|unchanged|`--practice-text-label`|
+| Forms |18 normal, capped at28.8 extra|unchanged|`--practice-reading-forms`|
 
-Thus the owner's smaller nested-example observation is confirmed by the production cascade, not screenshot perception. Nesting explicitly switches to `--practice-reading-body` (14) versus `--practice-literary-size` (16). Nested translations also shrink from13 to12.
+The owner's smaller nested example is confirmed: `het voorstel om wat vroeger naar huis te gaan…` actually resolves14px versus16px for `Ruud is een goede leraar`. The nested translation also shrinks13→12px. Nesting is the cause, not viewport scaling.
 
-## Spacing proposals — not accepted tokens
+Account scale reading multipliers are1 /1.25 /1.5 /2 (normal/large/largest/extra). UI labels and display text use their existing separate multipliers. There is no fifth “compact” account setting in this baseline.
 
-| Relationship | Baseline CSS | Balanced | Airy |
+## Spacing candidates
+
+Values are proposed, not approved tokens. Measurements distinguish declared margins from actual element gaps.
+
+| Relationship | Baseline | Balanced | Airy |
 |---|---|---|---|
 | Original → translation |2|4|5|
-| Sibling top-level content nodes |8|12|16|
-| Section margin-top |12 (first-child override2)|20|26|
+| Top-level siblings |8|12|16|
+| Section margin |12, first-child exception2|20|26|
 | Rail top/bottom padding |0|3 /3|5 /5|
-| Rail inset |10|unchanged|unchanged|
+| Rail left inset |10|10|10|
+| Nested example reading size |14|16|16|
+| Nested translation size |12|13|13|
 
-Margins are declarations, not guaranteed ink-to-ink gaps: collapsed margins, label height and nested wrappers affect actual geometry. CSV includes element bounds to derive those gaps. Both candidates keep text-pair gap below item gap below section gap. Nested explanation wrapper remains current production recipe, including its label and border rules; a final contract must resolve the nested translation role and wrapper spacing too.
+Relation rails receive the same proposed vertical padding. Nested explanation backgrounds/role labels retain their existing hierarchy. Candidates add `overflow-wrap:anywhere` as a last resort for compounds under narrow/enlarged text conditions; normal words do not change size.
 
-## Remaining mandatory audit before style approval
+Library has an additional expanded-detail reveal margin:12px without lead translation,16px with it. Adding a20px shared section margin alone produces a stacked boundary. Audit candidates remove that redundant reveal margin and let the section own its boundary. Library's separately rendered lead translation also receives the proposed pair gap. This must be handled explicitly in implementation; changing one theme token alone is insufficient.
 
-This checkpoint does **not** cover synonym/antonym/usage rails (goed demo lacks those projections), headword/forms, real Library and Training container heights/scrolling, all palettes/night, zoom, keyboard focus, or exact pair/rail ink bounds. Add complementary real normalized fixtures for these and expand capture selectors to wrappers. Account scale names are normal/large/largest/extra, not an assumed compact setting. Candidate variants currently only test nested example equalization and top-level grouping; do not merge broad styling from this checkpoint.
+`context-measurements.json` records original/translation pair gaps, sibling and section gaps, and rail top/bottom bounds. Rail bottom is measured against all visible descendant paragraphs, including nested explanation/example; a whole nested block is not misreported as bottom padding. Hidden translations and collapsed meanings are excluded. A representative390/normal/on Balanced case measures4px paired-text gaps and20px section gaps in all three contexts.
 
-Prior407 audit and2026-09-28 nested-reading proposals are historical evidence, not automatically approved pixel values. Approved visual registry and Pen canvas rules were read. No approved Pen node was edited; no Pen export or owner selection exists for this revision. Publish this checkpoint as review evidence, then update the registry only after supported Pen review/export and explicit owner selection.
+## Evidence matrix and validation
 
-## Indigo historical evidence
+| Sweep | Coverage | Result |
+|---|---|---|
+| Core geometry |216 =6 widths ×4 sizes ×3 translation states ×3 treatments|14,904 visible-element rows; no horizontal overflow|
+| Widths |390,610,700,701,1024,1440|Includes breakpoint neighbours|
+| Context/theme |144 = article/Library/Training ×390/1440 ×normal/extra ×graphite/lavender/blue ×light/dark ×off/on|No horizontal overflow; palette variables and text colours recorded|
+| Extra reflow |6 =320/610 ×off/on/partial, extra account size +200% root text|All six pass after audit-only wrapping safeguard|
+| Keyboard reading |12 = Library/Training ×390/701/1440 ×normal/extra|Named reading region has visible focus; End reaches actual content end|
+| Validation |UI typecheck; diff check|Pass at recorded checkpoint|
 
-Exact existing pre-approved-renderer branch in `apps/ui/components/training/v2/TrainingSenseCardStage.tsx:552` uses `bg-indigo-600`, hover `indigo-700`, with dark fill `#292650`, hover `#332f60`, text `indigo-100`. This branch exists at baseline28e4ea42 (last file change3b8e1908e8232eaffc40df686664772ed4c0ff93). Tailwind installed from committed lockfile resolves indigo600 **#4f46e5**,700 **#4338ca**,500 **#6366f1**,100 **#e0e7ff**. `SenseCardChrome.tsx` additionally uses indigo600 for translation controls. This is an exact code-backed candidate for the old blue, not proof which historical screen the owner meant. Current Blue uses accent#456d9f and should remain distinct. No complete Indigo palette has been invented or applied.
+`measurements.json.gz` is lossless per-case geometry. CSV is its readable projection. `context-measurements.json` includes pair/rail measurements and palette values. `interaction-checks.json` records named reading-region end/focus and subsequent Tab order. Core screenshots are normal-size610/1440 off/on; representative container screenshots are390px normal, graphite, day/night. Reflow screenshots are separate and labelled by width/translation state.
 
-## Reproduction
+The initial small fixture checkpoint and hidden-DOM row counts are superseded by this visible-element dataset. During audit development, an audit-only white dark-mode wrapper, relative sheet inset, candidate specificity collision and generic region locator were corrected before final captures. These were harness defects, not reported production regressions.
 
-Bootstrap worktree dependencies, run fixture-only Next dev on3111 with local placeholder Supabase values, then from apps/ui run `node scripts/capture-article-audit.mjs`. Script blocks all cross-origin and API requests. `npm run typecheck` passes. Baseline has no audit typography overrides. Production route returns notFound. Stop temporary server after capture.
+## Indigo evidence for separate colour work
+
+At baseline28e4ea42, `apps/ui/components/training/v2/TrainingSenseCardStage.tsx:552` legacy renderer uses `bg-indigo-600`, hover `indigo-700`, dark fill `#292650`, dark hover `#332f60`, text `indigo-100`. Its last file change is `3b8e1908e8232eaffc40df686664772ed4c0ff93`. `SenseCardChrome.tsx:175` also uses indigo600 for translation controls.
+
+Installed Tailwind from the committed lockfile resolves600 **#4f46e5**,700 **#4338ca**,500 **#6366f1**,100 **#e0e7ff**. This is an exact historical code-backed source candidate, not proof of which remembered screenshot the owner meant. Current Blue uses accent **#456d9f** and remains distinct. No full Indigo palette is invented here; evidence shared with the colour implementation owner.
+
+## Approval and remaining integration QA
+
+- Owner selects Balanced or Airy before production typography/spacing changes.
+- Independent visual review is required after implementation.
+- Native browser chrome zoom remains a check in the owner's configured Chrome. The measured200% root-text enlargement is text-only reflow, not native browser zoom.
+- Indigo needs palette smoke after it is integrated; it does not exist in this baseline.
+- Full app navigation, sheet gestures, grading and real provider translation responses remain integration tests outside this bounded reading study.
+- Prior407 and2026-09-28 proposals were reviewed as historical input, not approved pixel values. Program registry and Pen rules were read. No approved Pen node was edited, exported or relabelled. No owner selection is implied by these artifacts.
+
+## Reproduce
+
+Bootstrap dependencies in the dedicated worktree. Run fixture-only Next dev on3111 with local placeholder Supabase values and `NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1=true NEXT_PUBLIC_TRAINING_PRESENTATION_V1=true`. From `apps/ui` run:
+
+```
+node scripts/capture-article-audit.mjs
+node scripts/capture-article-context.mjs
+node scripts/check-article-interaction.mjs
+npm run typecheck
+```
+
+The capture scripts block API/external calls. Production route returns404. Stop temporary server after capture. For partial reruns, `AUDIT_VARIANT=airy` refreshes one treatment; `AUDIT_SURFACE=library` refreshes one context; `REFLOW_ONLY=1` refreshes enlarged-text cases. Partial runs require the existing uncompressed measurements JSON generated by the full run.
+
+Additional boundary probe: [library-boundary-check.json](library-boundary-check.json) measures exactly20px from last visible lead paragraph to first section label with translations both off/on, and4px definition→translation gap when on. This confirms the Library-specific reveal-margin correction rather than merely checking its CSS declaration.

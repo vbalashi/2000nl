@@ -1,0 +1,11 @@
+import {goedGroups} from '../session-builder-prototype/GoedLibraryPreview';
+import details from '../session-builder-prototype/word-details-fixture.json';
+import type {LibrarySenseCardGroupModel} from '@/components/training/library-v2/librarySenseCardModel';
+import type {PlatformWordDetailsV2} from '../../../../../packages/shared/types/platformV2';
+const source=details.details['goed-adjective'];
+export const richGroup:LibrarySenseCardGroupModel={...goedGroups.find(g=>g.partOfSpeech==='adjective')!,meanings:goedGroups.find(g=>g.partOfSpeech==='adjective')!.meanings.slice(0,3).map(m=>{
+const relation=source.relations[m.entryId as keyof typeof source.relations];
+const wordDetails:PlatformWordDetailsV2={entryId:m.entryId,lexicalRelations:[...relation.synonyms.map((text,i)=>({relationId:`${m.entryId}-s${i}`,kind:'synonym' as const,text})),...relation.antonyms.map((text,i)=>({relationId:`${m.entryId}-a${i}`,kind:'antonym' as const,text}))],forms:source.forms.map((f,i)=>({formId:`${m.entryId}-f${i}`,kind:{messageKey:'audit.form',termId:'form.'+(['inflectedForm','comparative','superlative'][i]),sourceValue:['inflectedForm','comparative','superlative'][i]},text:f.value,features:[]})),labels:[],grammarNotes:[],usageNotes:[],pronunciationNotes:[],references:[]};return {...m,wordDetails};})};
+// Exact Dutch text copied from local canonical 000031_a31_aandoen_ww_3.json.
+// English translations are authored audit fixtures; no provider/network call.
+export const usageGroup:LibrarySenseCardGroupModel={...richGroup,headword:'aandoen',article:null,partOfSpeech:'verb',senseCount:1,meanings:[{...richGroup.meanings[0],entryId:'000031_a31_aandoen_ww_3',partOfSpeech:'verb',entryTranslation:'visit briefly',wordDetails:undefined,definition:{contentNodeId:'aandoen-definition',parentContentNodeId:null,kind:'definition',text:'kort bezoeken',translation:'visit briefly',children:[]},details:[{contentNodeId:'aandoen-usage',parentContentNodeId:null,kind:'usage-pattern',text:'iemand doet een plaats aan',translation:'someone visits a place',children:[]},{contentNodeId:'aandoen-example',parentContentNodeId:null,kind:'example',text:'het schip deed de haven van Rotterdam aan',translation:'the ship called at the port of Rotterdam',children:[]}]}]};
