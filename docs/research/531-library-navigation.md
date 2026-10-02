@@ -15,10 +15,14 @@ Navigation uses one measured selection element per navigation surface, transitio
 ## Verification
 
 - Red regression: expected one list read, received two before the fix.
-- 38 component tests passed: navigation 9, Library grouping 29, including retention, preload reuse and freshness expiry. Existing cases cover queries, pagination, source scope, catalogue refresh and retry.
+- 108 component tests passed: TrainingScreen 70, navigation 9, Library grouping 29, including retention, preload reuse and freshness expiry. Existing cases cover queries, pagination, source scope, catalogue refresh and retry.
 - Typecheck passed. Lint has only the pre-existing TrainingSenseCardV2Session audio-effect warning.
 - Real local DB (contract 195), approved presentation, headless Chromium desktop 1000×900: warmed Library row visible 175 ms after starting the click; three close/reopen cycles made zero additional list requests.
 - Initial two HTTP reads had different cursors: the second fills the page; it is not an identical repeated search.
 - Mobile 472×954 additionally checks intermediate indicator movement and reduced motion.
 
 The timing is local browser evidence, not a production latency claim. No SQL/RPC change, personal production interaction, or network emulation was used.
+
+## Broader verification correction
+
+First CI run passed 1665 tests and failed two TrainingScreen cases. Forced refresh after a collection mutation also ran an empty, non-browse lookup, clearing the newly created detail. Restrict forced reads to an actual query, collection filter or approved browse. The selected-next-card failure was a consequence of the preceding failed test leaving its one-shot fixture pending; it passed alone. All 108 relevant tests pass together after the correction, without changing either existing integration test.

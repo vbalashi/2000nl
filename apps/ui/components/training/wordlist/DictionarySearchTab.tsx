@@ -433,7 +433,6 @@ export function DictionarySearchTab({
   const handleUserDictionaryEntryCreated = useCallback(
     (entry: DictionaryEntry) => {
       searchFreshRef.current = null;
-      searchFreshRef.current = null;
       onUserDictionaryEntryCreated?.(entry);
       onSearchStateChange((current) => ({
         ...current,
@@ -1396,7 +1395,9 @@ export function DictionarySearchTab({
                   onListsUpdated={async () => {
                     searchFreshRef.current = null;
                     await reloadLists();
-                    void runSearch(true);
+                    if (useViewedListFilter || query.trim() || (approved && materialEnabled)) {
+                      void runSearch(true);
+                    }
                     notifyListsUpdated();
                   }}
                   onOpenListMembership={onOpenListMembership}
@@ -1429,7 +1430,9 @@ export function DictionarySearchTab({
           onListsUpdated={async () => {
             searchFreshRef.current = null;
             await reloadLists();
-            void runSearch(true);
+            if (useViewedListFilter || query.trim() || (approved && materialEnabled)) {
+              void runSearch(true);
+            }
             notifyListsUpdated();
           }}
           onOpenListMembership={onOpenListMembership}
