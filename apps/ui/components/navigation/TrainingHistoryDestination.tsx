@@ -54,7 +54,7 @@ export function TrainingHistoryDestination({
     : text.modes[item.cardTypeId];
   const headingRef = React.useRef<HTMLHeadingElement>(null);
   const [requestVersion, setRequestVersion] = React.useState(0);
-  const load = React.useCallback(() => fetchRecentTrainingHistory(), []);
+  const load = React.useCallback((signal: AbortSignal) => fetchRecentTrainingHistory(signal), []);
   const read = useRetainedAccountRead("recent-history", userId, load, open, requestVersion);
   const visibleLoadState = read.status === "ready"
     ? { ...read, ...read.value }

@@ -58,7 +58,7 @@ test("loads recent authoritative activity only when opened and returns to Traini
   expect(screen.getByText("Goed")).toBeInTheDocument();
   expect(screen.getByText("Woord → betekenis")).toBeInTheDocument();
   expect(screen.getByText("De 50 meest recente trainingsactiviteiten worden getoond.")).toBeInTheDocument();
-  expect(fetchRecentTrainingHistory).toHaveBeenCalledWith();
+  expect(fetchRecentTrainingHistory).toHaveBeenCalledWith(expect.any(AbortSignal));
 
   await userEvent.click(screen.getByRole("button", { name: "Terug naar training" }));
   expect(onReturnToTraining).toHaveBeenCalledOnce();
@@ -202,4 +202,17 @@ test("keeps previous activity visible on return and failed refresh", async () =>
   reject(new Error("offline"));
   await screen.findByRole("alert");
   expect(screen.getByText("retained-word")).toBeInTheDocument();
+});
+
+test("aborts the history transport when leaving the destination", async () => {
+  let transportSignal: AbortSignal | undefined;
+  fetchRecentTrainingHistory.mockImplementation((signal: AbortSignal) => {
+    transportSignal = signal;
+    return new Promise((_, reject) => signal.addEventListener("abort", () => reject(new Error("aborted")), {once:true}));
+  });
+  const props={userId:"a",interfaceLanguage:"en" as const,onReturnToTraining:vi.fn()};
+  const view=render(<TrainingHistoryDestination {...props} open />);
+  expect(transportSignal?.aborted).toBe(false);
+  view.rerender(<TrainingHistoryDestination {...props} open={false} />);
+  expect(transportSignal?.aborted).toBe(true);
 });
