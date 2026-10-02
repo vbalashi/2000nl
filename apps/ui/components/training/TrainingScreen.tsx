@@ -2821,16 +2821,14 @@ function TrainingScreenContent({
         }}
         onHistory={openTrainingHistory}
       />
-      {destination === TRAINING_HISTORY_DESTINATION ? (
-        <TrainingHistoryDestination
-          open
-          userId={user.id}
-          interfaceLanguage={onboardingLang}
-          onReturnToTraining={
-            onReturnFromHistory ?? (() => onRequestDestination("training"))
-          }
-        />
-      ) : null}
+      <TrainingHistoryDestination
+        open={destination === TRAINING_HISTORY_DESTINATION}
+        userId={user.id}
+        interfaceLanguage={onboardingLang}
+        onReturnToTraining={
+          onReturnFromHistory ?? (() => onRequestDestination("training"))
+        }
+      />
       <SettingsDestination
         onExit={() => onRequestDestination("training")}
         open={destination === "settings"}

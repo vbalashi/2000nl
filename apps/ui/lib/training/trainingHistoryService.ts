@@ -116,13 +116,14 @@ const projectHistoryRow = (
   } };
 };
 
-export async function fetchRecentTrainingHistory(): Promise<RecentTrainingHistoryPage> {
-  const { data, error } = await supabase.rpc(
+export async function fetchRecentTrainingHistory(signal?: AbortSignal): Promise<RecentTrainingHistoryPage> {
+  const query = supabase.rpc(
     "get_recent_training_activity_v1",
     {
       p_limit: 50,
     },
   );
+  const { data, error } = await (signal ? query.abortSignal(signal) : query);
 
   if (error || !Array.isArray(data)) {
     throw new Error("training_history_failed");
