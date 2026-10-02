@@ -103,6 +103,10 @@
       "reviewPrompt": "How well do you know this meaning?"
     },
     "state": {
+      "learning": "Learning",
+      "hidden": "Excluded",
+      "frozen": "Paused",
+      "unavailable": "Learning state unavailable",
       "new": "New"
     },
     "translation": {

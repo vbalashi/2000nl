@@ -103,6 +103,10 @@
       "reviewPrompt": "Hoe goed ken je deze betekenis?"
     },
     "state": {
+      "learning": "In studie",
+      "hidden": "Uitgesloten",
+      "frozen": "Gepauzeerd",
+      "unavailable": "Leerstatus niet beschikbaar",
       "new": "Nieuw"
     },
     "translation": {

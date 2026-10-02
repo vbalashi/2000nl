@@ -54,7 +54,7 @@ type Props = {
 type DetailsContext = "library" | "training-more";
 
 export function LibrarySenseCardV2Session(props: Props) {
-  return <SenseCardV2Session {...props} context="library" />;
+  return <SenseCardV2Session {...props} cardTypeId="word-to-definition" context="library" />;
 }
 
 export function TrainingMoreSenseCardV2Session(props: Props) {
@@ -89,8 +89,9 @@ function SenseCardV2Session({
         : entry.crossReferenceId === entryId,
     );
     if (!initialGroup || !selectedEntry) return null;
+    if (selectedEntry.kind === "sense-card" && selectedEntry.card && selectedEntry.card.cardTypeId !== cardTypeId) return null;
     return initialGroup;
-  }, [entryId, initialGroup]);
+  }, [entryId, initialGroup, cardTypeId]);
   const [group, setGroup] = React.useState<PlatformHeadwordGroupV2 | null>(
     compatibleInitialGroup,
   );
@@ -130,6 +131,7 @@ function SenseCardV2Session({
   const translationSession = React.useRef(0);
   const groupRequestSequence = React.useRef(0);
   const actionGeneration = React.useRef(0);
+  const pendingActions = React.useRef(new Set<string>());
   const membershipGeneration = React.useRef(0);
   const detailIdentity = JSON.stringify([
     entryId,
@@ -375,6 +377,9 @@ function SenseCardV2Session({
 
   const handleAction = async (capability: LibraryMutationCapability) => {
     const expectedDetailIdentity = detailIdentityRef.current;
+    const pendingKey = `${expectedDetailIdentity}:${librarySenseCardIdentity(capability.target.entryId, capability.target.cardTypeId)}`;
+    if (pendingActions.current.has(pendingKey)) return;
+    pendingActions.current.add(pendingKey);
     const expectedActionGeneration = ++actionGeneration.current;
     const isCurrentAction = () =>
       expectedDetailIdentity === detailIdentityRef.current &&
@@ -395,6 +400,7 @@ function SenseCardV2Session({
         setError(cause instanceof Error ? cause.message : "action_failed");
       }
     } finally {
+      pendingActions.current.delete(pendingKey);
       if (isCurrentAction()) setBusyIdentity(null);
     }
   };

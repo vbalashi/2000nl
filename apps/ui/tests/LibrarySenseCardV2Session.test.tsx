@@ -186,6 +186,34 @@ describe("LibrarySenseCardV2Session", () => {
     fetchMemberships.mockResolvedValue(new Map());
   });
 
+  test("Learn exposes direct grades inline; a pending double click sends one canonical action", async()=>{
+    const learnedGroup=structuredClone(multiSenseBankGroup);
+    const learned=learnedGroup.entries.find(item=>item.kind==="sense-card"&&item.entryId===financeEntry.entryId)!;
+    if(learned.kind!=="sense-card"||!learned.card)throw new Error("fixture");
+    learned.card.scheduler={phase:"learning",repeatCount:0};
+    learned.capabilities=furnitureEntry.capabilities.filter(cap=>cap.actionId==="review-card").map(cap=>remapCapabilityEntryId(cap,financeEntry.entryId));
+    fetchGroup.mockResolvedValueOnce(multiSenseBankGroup).mockResolvedValue(learnedGroup);
+    render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} headword="bank" cardTypeId="definition-to-word"
+      contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
+    const card=await screen.findByTestId(`library-sense-card-${financeEntry.entryId}`);
+    expect(performAction).not.toHaveBeenCalled();
+    fireEvent.click(within(card).getByRole("button",{name:"Learn"}));
+    await within(card).findByRole("button",{name:"Good"});
+    expect(within(card).getByText("Learning")).toBeInTheDocument();
+    expect(performAction).toHaveBeenCalledWith(expect.objectContaining({actionId:"start-learning",target:expect.objectContaining({entryId:financeEntry.entryId,cardTypeId:"word-to-definition"})}));
+    expect(fetchGroup).toHaveBeenCalledWith(expect.objectContaining({cardTypeId:"word-to-definition"}));
+    performAction.mockClear();
+    const pending=deferred<unknown>();performAction.mockReturnValue(pending.promise);
+    const good=within(card).getByRole("button",{name:"Good"});
+    fireEvent.click(good);fireEvent.click(good);
+    expect(performAction).toHaveBeenCalledOnce();
+    expect(performAction).toHaveBeenCalledWith(expect.objectContaining({actionId:"review-card",reviewResult:"success",target:expect.objectContaining({entryId:financeEntry.entryId,cardTypeId:"word-to-definition"})}));
+    for(const name of ["Again","Hard","Good","Easy"])expect(within(card).getByRole("button",{name})).toBeDisabled();
+    await act(async()=>pending.resolve({accepted:true}));
+    await waitFor(()=>expect(within(card).getByRole("button",{name:"Good"})).toBeEnabled());
+    expect(within(card).queryByRole("button",{name:"Train next"})).not.toBeInTheDocument();
+  });
+
   test("an accepted collection removal followed by failed read is not reported as saved; retry only reads", async () => {
     const listId = "qa-list";
     fetchMemberships.mockResolvedValueOnce(new Map([[financeEntry.entryId,[membership(listId)]]]))
@@ -307,8 +335,8 @@ describe("LibrarySenseCardV2Session", () => {
       screen.getByRole("dialog", { name: "Collections for this meaning" }),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    fireEvent.click(screen.getByRole("button", { name: "Train next" }));
-    expect(trainNext).toHaveBeenCalledWith(financeEntry.entryId);
+    expect(screen.queryByRole("button", { name: "Train next" })).not.toBeInTheDocument();
+    expect(trainNext).not.toHaveBeenCalled();
   });
 
   test("releases a collection toggle once the membership is saved, without waiting for list reloads", async () => {
