@@ -82,6 +82,18 @@
  --practice-accent: #456d9f; --practice-accent-hover: #345987; --practice-focus: #315f9f;
  --practice-example: #7697c3; --practice-activity-1: #6390ca; --practice-activity-2: #3d72b5; --practice-activity-3: #34557e;
 }
+/* Legacy primary: Tailwind indigo-600 / indigo-700 from TrainingSenseCardStage. */
+.theme[data-practice-palette=indigo],
+:global([data-account-palette=indigo]) .theme[data-colour-mode=app] {
+ --practice-canvas: #f5f6ff; --practice-surface-subtle: #eef2ff;
+ --practice-surface-hover: #e0e7ff; --practice-hero: #e0e7ff; --practice-hero-end: #f5f3ff;
+ --practice-text: #252547; --practice-text-secondary: #42426b; --practice-text-muted: #55557a;
+ --practice-border: #c7d2fe; --practice-control-border: #7379e7;
+ --practice-selected: #c7d2fe; --practice-selected-text: #312e81;
+ --practice-accent: #4f46e5; --practice-accent-hover: #4338ca; --practice-focus: #4f46e5;
+ --practice-backdrop: #1e1b4b66; --practice-shadow: #1e1b4b1c;
+ --practice-example: #6366f1; --practice-activity-1: #7379e7; --practice-activity-2: #6366f1; --practice-activity-3: #4f46e5;
+}
 .theme[data-practice-palette=graphite],
 :global([data-account-palette=graphite]) .theme[data-colour-mode=app] {
  --practice-canvas: #f4f4f3; --practice-surface-subtle: #eeedeb;
@@ -119,6 +131,18 @@
  --practice-selected: #304c6f; --practice-selected-text: #e0efff;
  --practice-accent: #9dbfe9; --practice-accent-hover: #b3cef0; --practice-on-accent: #182637; --practice-focus: #91bffc;
  --practice-example: #7ea7da; --practice-activity-1: #4b6790; --practice-activity-2: #6284b1; --practice-activity-3: #86a7d3;
+}
+.theme[data-practice-palette=indigo][data-colour-mode=dark],
+.theme[data-practice-palette=indigo][data-colour-mode=app]:is(:global(.dark) *),
+:global(.dark) :global([data-account-palette=indigo]) .theme[data-colour-mode=app] {
+ --practice-canvas: #17172a; --practice-surface: #22223c; --practice-surface-subtle: #292650;
+ --practice-surface-hover: #332f60; --practice-hero: #292650; --practice-hero-end: #22223c;
+ --practice-text: #eef2ff; --practice-text-secondary: #c7d2fe; --practice-text-muted: #a5b4fc;
+ --practice-border: #41416e; --practice-control-border: #818cf8;
+ --practice-selected: #373078; --practice-selected-text: #eef2ff;
+ --practice-accent: #a5b4fc; --practice-accent-hover: #c7d2fe; --practice-on-accent: #1e1b4b; --practice-focus: #a5b4fc;
+ --practice-backdrop: #08081599; --practice-shadow: #08081540;
+ --practice-example: #a5b4fc; --practice-activity-1: #6366f1; --practice-activity-2: #818cf8; --practice-activity-3: #a5b4fc;
 }
 .theme[data-practice-palette=graphite][data-colour-mode=dark],
 .theme[data-practice-palette=graphite][data-colour-mode=app]:is(:global(.dark) *),
