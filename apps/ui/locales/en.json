@@ -242,7 +242,10 @@
     },
     "trainingBuilder": {
       "contextPrompt": "Example translation",
-      "wordInContext": "Word in context",
+      "wordInContext": "Translation",
+      "contextDirection": "Example translation → word",
+      "pausedSentenceLabel": "Sentence translation (paused)",
+      "sentencePaused": "Sentence translation is paused. Choose another exercise to start a new session.",
       "reviewsOnly": "Reviews only",
       "newOnly": "New only",
       "allDictionaries": "All accessible dictionaries",
@@ -289,7 +292,10 @@
       "history": "History"
     },
     "trainingOverview": {
-      "wordInContext": "Word in context",
+      "wordInContext": "Translation",
+      "contextDirection": "Example translation → word",
+      "pausedSentenceLabel": "Sentence translation (paused)",
+      "sentencePaused": "Sentence translation is paused. Choose another exercise to start a new session.",
       "allDictionaries": "All accessible dictionaries",
       "allDue": "All due",
       "loading": "Loading training…",

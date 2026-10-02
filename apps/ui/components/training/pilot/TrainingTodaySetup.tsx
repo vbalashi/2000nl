@@ -46,7 +46,7 @@ export type {TrainingSetupOption} from "@/lib/training/setups/availability";
 import type {TrainingSetupOption} from "@/lib/training/setups/availability";
 
 export {isTrainingSetupDraftSupported, isTrainingSetupMaterialAvailable} from "@/lib/training/setups/availability";
-import {isTrainingSetupDraftSupported, isTrainingSetupMaterialAvailable} from "@/lib/training/setups/availability";
+import {isTrainingSetupPaused, isTrainingSetupDraftSupported, isTrainingSetupMaterialAvailable} from "@/lib/training/setups/availability";
 
 const defaultModesForScenario = (scenario: TrainingSetupOption) => {
   const modes = scenario.modes ?? [];
@@ -135,7 +135,7 @@ const copy = {
     words: "Words",
     idioms: "Idioms",
     sentences: "Example sentences",
-    wordInContext: "Word in context",
+    wordInContext: "Translation",
     contextLanguageNeeded: "Choose a translation language in Settings to use this exercise.",
     unavailable: "Coming when this training path is ready",
     lexicalUnavailable: "Choose one or more parts of speech. With no selection, all parts of speech are included.",
@@ -236,7 +236,7 @@ const copy = {
     words: "Woorden",
     idioms: "Uitdrukkingen",
     sentences: "Voorbeeldzinnen",
-    wordInContext: "Woord in context",
+    wordInContext: "Vertaling",
     contextLanguageNeeded: "Kies een vertaaltaal in Instellingen voor deze oefening.",
     unavailable: "Beschikbaar zodra deze training klaar is",
     lexicalUnavailable: "Kies een of meer woordsoorten. Zonder selectie worden alle woordsoorten meegenomen.",
@@ -337,7 +337,7 @@ const copy = {
     words: "Слова",
     idioms: "Идиомы",
     sentences: "Примеры предложений",
-    wordInContext: "Слово в контексте",
+    wordInContext: "Перевод",
     contextLanguageNeeded: "Для этого упражнения выберите язык перевода в настройках.",
     unavailable: "Появится, когда сценарий будет готов",
     lexicalUnavailable: "Выберите одну или несколько частей речи. Без выбора включены все части речи.",
@@ -558,7 +558,7 @@ export function TrainingTodaySetup({
   }, [replacementWarning]);
 
   useEffect(() => {
-    if (screen !== "setup" || scenarioLoading || scenarios.length === 0) return;
+    if (screen !== "setup" || scenarioLoading || scenarios.length === 0 || isTrainingSetupPaused(draft)) return;
     const selectedScenario = scenarios.find(
       (option) => option.value === draft.scenarioId,
     );
@@ -668,7 +668,7 @@ export function TrainingTodaySetup({
   };
 
   const requestStart = useCallback(async (nextDraft: TrainingSetupDraft, sessionName?: string) => {
-    if (trainingLanguageLoading || pendingLanguage || startBlocked || !material.currentLanguageAllowed || !isTrainingSetupMaterialAvailable(nextDraft, lists, dictionaries)) return;
+    if (isTrainingSetupPaused(nextDraft) || trainingLanguageLoading || pendingLanguage || startBlocked || !material.currentLanguageAllowed || !isTrainingSetupMaterialAvailable(nextDraft, lists, dictionaries)) return;
     if (nextDraft.family === "word-in-context" && translationTargetLanguageCode === null) return;
     const started = await (sessionName ? onStart(nextDraft, sessionName) : onStart(nextDraft));
     if (started === false) setScreen("today");

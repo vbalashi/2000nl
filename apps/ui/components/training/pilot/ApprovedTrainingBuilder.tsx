@@ -143,11 +143,11 @@ export function ApprovedTrainingBuilder(p: Props) {
     family === "idiom"
       ? o.exerciseType.Idioms
       : family === "sentence"
-        ? o.exerciseType.Translation
+        ? c.pausedSentenceLabel
         : family === "word-in-context"
           ? c.wordInContext
           : o.exerciseType.Words;
-  const direction = p.draft.modes
+  const direction = family === "word-in-context" ? c.contextDirection : p.draft.modes
     .map((mode) =>
       mode === "word-to-definition"
         ? o.direction.Direct
@@ -419,7 +419,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                 <h2>{b.exerciseType}</h2>
                 <div className={s.choices}>
                   {(
-                    ["meaning", "idiom", "sentence", "word-in-context"] as const
+                    ["meaning", "idiom", "word-in-context"] as const
                   ).map((value) => (
                     <BuilderChoice
                       key={value}
@@ -430,9 +430,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                             item.value ===
                             (value === "idiom"
                               ? "idiom"
-                              : value === "sentence"
-                                ? "sentences"
-                                : "understanding"),
+                              : "understanding"),
                         ) ||
                         (value === "word-in-context" &&
                           p.translationLanguage === null)
@@ -441,15 +439,14 @@ export function ApprovedTrainingBuilder(p: Props) {
                     >
                       {value === "idiom"
                         ? o.exerciseType.Idioms
-                        : value === "sentence"
-                          ? o.exerciseType.Translation
-                          : value === "word-in-context"
+                        : value === "word-in-context"
                             ? c.wordInContext
                             : o.exerciseType.Words}
                     </BuilderChoice>
                   ))}
                 </div>
               </div>
+              {family === "sentence" && <p role="status" className={s.help}>{c.sentencePaused}</p>}
               {family === "word-in-context" &&
                 p.translationLanguage === null && (
                   <p className={s.help}>{c.contextLanguageNeeded}</p>
@@ -473,8 +470,8 @@ export function ApprovedTrainingBuilder(p: Props) {
                         : family === "word-in-context" ? c.contextPrompt : family === "sentence" ? p.translationLanguage ? language(p.translationLanguage) : b.chooseTranslation : c.meaning;
                       const answer = example ? example[direct ? 1 : 0] : direct ? c.meaning
                         : family === "sentence" ? language(p.languageCode) : family === "idiom" ? o.exerciseType.Idioms : o.exerciseType.Words;
-                      return <DirectionCard key={mode} label={direct ? o.direction.Direct : o.direction.Reverse}
-                        selected={p.draft.modes.includes(mode)} onClick={() => p.onToggleMode(mode)}
+                      return <DirectionCard key={mode} label={family === "word-in-context" ? c.contextDirection : direct ? o.direction.Direct : o.direction.Reverse}
+                        selected={p.draft.modes.includes(mode)} onClick={family === "word-in-context" ? undefined : () => p.onToggleMode(mode)}
                         prompt={prompt} answer={answer} promptLanguage={example ? !direct && (family === "sentence" || family === "word-in-context") ? p.translationLanguage ?? undefined : p.languageCode : undefined}
                         answerLanguage={example ? direct && (family === "sentence" || family === "word-in-context") ? p.translationLanguage ?? undefined : p.languageCode : undefined}
                         classes={{card:s.direction,heading:s.directionHeading,check:s.directionCheck,prompt:s.prompt,arrow:s.directionArrow,answer:s.answer}}/>;

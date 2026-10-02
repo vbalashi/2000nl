@@ -242,7 +242,10 @@
     },
     "trainingBuilder": {
       "contextPrompt": "Перевод примера",
-      "wordInContext": "Слово в контексте",
+      "wordInContext": "Перевод",
+      "contextDirection": "Перевод примера → слово",
+      "pausedSentenceLabel": "Перевод предложений (на паузе)",
+      "sentencePaused": "Перевод предложений на паузе. Выберите другое упражнение для новой сессии.",
       "reviewsOnly": "Только повторы",
       "newOnly": "Только новые",
       "allDictionaries": "Все доступные словари",
@@ -289,7 +292,10 @@
       "history": "История"
     },
     "trainingOverview": {
-      "wordInContext": "Слово в контексте",
+      "wordInContext": "Перевод",
+      "contextDirection": "Перевод примера → слово",
+      "pausedSentenceLabel": "Перевод предложений (на паузе)",
+      "sentencePaused": "Перевод предложений на паузе. Выберите другое упражнение для новой сессии.",
       "allDictionaries": "Все доступные словари",
       "allDue": "Все к повторению",
       "loading": "Загрузка тренировок…",
