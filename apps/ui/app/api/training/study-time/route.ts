@@ -36,6 +36,15 @@ export async function GET(request: NextRequest) {
   const auth = await accountAuth(request);
   if (auth instanceof Response) return auth;
   const query = request.nextUrl.searchParams;
+  if (query.has("session")) {
+    const sessionId = query.get("session")?.toLowerCase();
+    if (!sessionId || !/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(sessionId) || [...query.keys()].some(k => k !== "session")) return jsonNoStore({error:"invalid_session"},400);
+    try {
+      const {data,error} = await auth.supabase.rpc("get_training_session_active_time_v1",{p_session_id:sessionId});
+      if (data?.error === "session_not_owned") return jsonNoStore({error:"session_not_owned"},404);
+      return !error && data?.sessionId === sessionId && (data.activeMilliseconds === null || (Number.isSafeInteger(data.activeMilliseconds) && data.activeMilliseconds >= 0)) && Number.isSafeInteger(data.measurementCount) && data.measurementCount >= 0 ? jsonNoStore({sessionId:data.sessionId,activeMilliseconds:data.activeMilliseconds,measurementCount:data.measurementCount}) : jsonNoStore({error:"study_time_unavailable"},503);
+    } catch { return jsonNoStore({error:"study_time_unavailable"},503); }
+  }
   if (query.has("period")) {
     const period = query.get("period");
     const languageCode = query.get("language");

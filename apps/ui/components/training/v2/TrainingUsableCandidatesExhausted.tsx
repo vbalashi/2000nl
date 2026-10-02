@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { TrainingCompletion } from "./TrainingCompletion";
 import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { getUiMessages } from "@/lib/uiMessages";
 import { TrainingSessionState } from "./TrainingSessionState";
@@ -9,6 +10,7 @@ import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 
 type Props = {
   interfaceLanguage: OnboardingLanguage;
+  ownerId?: string; sessionId?: string | null;
   onExit: () => void;
   completedCount?: number;
   plannedTotal?: number | null;
@@ -18,7 +20,7 @@ type Props = {
 };
 
 export function TrainingUsableCandidatesExhausted({
-  interfaceLanguage,
+  interfaceLanguage, ownerId, sessionId,
   onExit,
   completedCount = 0,
   plannedTotal = 0,
@@ -32,6 +34,7 @@ export function TrainingUsableCandidatesExhausted({
     nl: { completed: "Sessie voltooid", count: `${completedCount} kaarten voltooid`, next: "Volgende sessie starten", edit: "Training aanpassen" },
     ru: { completed: "Сессия завершена", count: `Пройдено карточек: ${completedCount}`, next: "Начать следующую сессию", edit: "Изменить тренировку" },
   }[interfaceLanguage];
+  if (trainingPresentationV1Enabled() && completed) return <div className="h-full min-h-0" data-testid="training-usable-candidates-exhausted" data-training-v2-state="completed"><TrainingCompletion ownerId={ownerId} sessionId={sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} /></div>;
   if (trainingPresentationV1Enabled()) return (
     <div className="h-full min-h-0" data-testid="training-usable-candidates-exhausted" data-training-renderer="v2" data-training-v2-state={completed ? "completed" : "exhausted"}>
       <TrainingSessionState

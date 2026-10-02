@@ -40,3 +40,16 @@ test("bounds memory to 64 receipts and copies payloads before asynchronous deliv
   await vi.waitFor(()=>expect(send).toHaveBeenCalledTimes(1)); expect(send.mock.calls[0][0].activeMilliseconds).toBe(15000);
   release("accepted"); await vi.waitFor(()=>expect(send).toHaveBeenCalledTimes(64));
 });
+
+test("summary waits for the final accepted receipt and omits incomplete delivery",async () => {
+ let release!: (v:"accepted")=>void;
+ const send=vi.fn().mockReturnValueOnce(new Promise(resolve=>{release=resolve;})).mockResolvedValue("rejected");
+ const queue=new StudyTimeDelivery("a",{principal:async()=>"a",send,schedule:(fn,ms)=>{setTimeout(fn,ms);}});
+ queue.enqueue(measurement);
+ await vi.waitFor(()=>expect(send).toHaveBeenCalledOnce());
+ let settled=false; const result=queue.settle("session-a").then(v=>{settled=true;return v;});
+ await new Promise(resolve=>setTimeout(resolve,30)); expect(settled).toBe(false);
+ release("accepted"); expect(await result).toBe(true);
+ queue.enqueue({...measurement,sessionId:"session-b"});
+ expect(await queue.settle("session-b")).toBe(false);
+});

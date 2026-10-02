@@ -64,3 +64,15 @@ test("period reads use server time and persisted timezone, with no browser day/t
     expect((await GET(get(suffix))).status).toBe(400);
   expect(rpc).not.toHaveBeenCalled();
 });
+
+test("session read is owner-scoped, validated, redacted and no-store",async () => {
+ const sessionId=measurement.sessionId;
+ rpc.mockResolvedValue({data:{sessionId,activeMilliseconds:260000,measurementCount:12,private:"hidden"},error:null});
+ const response=await GET(get(`?session=${sessionId}`));
+ expect(await response.json()).toEqual({sessionId,activeMilliseconds:260000,measurementCount:12});
+ expect(rpc).toHaveBeenCalledWith("get_training_session_active_time_v1",{p_session_id:sessionId});
+ expect(response.headers.get("cache-control")).toBe("no-store");
+ expect((await GET(get(`?session=${sessionId}&userId=victim`))).status).toBe(400);
+ rpc.mockResolvedValue({data:{error:"session_not_owned"},error:null});
+ expect((await GET(get(`?session=${sessionId}`))).status).toBe(404);
+});

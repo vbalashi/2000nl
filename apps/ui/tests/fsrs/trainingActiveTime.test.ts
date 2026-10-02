@@ -48,6 +48,18 @@ async function record(client: PoolClient,f: Awaited<ReturnType<typeof fixture>>,
       expect(read.rows[0].result.days[0].activeMilliseconds).toBe(0);
     });
   });
+  test("completion summary reads only the owner and preserves missing measurement as null",async () => {
+    await withTransaction(pool,async client => {
+      const f=await fixture(client),other=randomUUID(); await ensureUserWithSettings(client,other);
+      await auth(client,f.userId);
+      const read=async () => (await client.query("select get_training_session_active_time_v1($1) result",[f.sessionId])).rows[0].result;
+      expect(await read()).toEqual({sessionId:f.sessionId,activeMilliseconds:null,measurementCount:0});
+      await record(client,f,{ms:15000}); await record(client,f,{ms:7000});
+      expect(await read()).toEqual({sessionId:f.sessionId,activeMilliseconds:22000,measurementCount:2});
+      await client.query("reset role"); await auth(client,other);
+      expect(await read()).toEqual({error:"session_not_owned"});
+    });
+  });
   test("rejects nonmembers, wrong directions/families, oversized and stale durations",async () => {
     await withTransaction(pool,async client => {
       const f = await fixture(client); await auth(client,f.userId);

@@ -678,3 +678,13 @@ Forward/read-only postflight verifies the default, trigger guard and table bound
 ## Library browse and approved presentation release (migration 194)
 
 Migration 194 enables empty-query alphabetical browsing in the two private first-party Library lookup bases. Platform lookup query requirements and private function grants remain unchanged. Contract 194 includes the exact migration checksum and read-only probes for the indexed/personal browse paths, alphabetical ranking, and restricted execution. The release enables both independent presentation flags at build time through Docker arguments; the same flags are present in the runtime image. Rollback can select the previous image while the additive forward database contract remains compatible.
+
+## Completion attention summary (migration 195, #526)
+
+Migration 195 adds `get_training_session_active_time_v1(uuid)`, an authenticated,
+owner-scoped read of immutable attention receipts and a `(user_id, session_id)`
+covering index. Missing receipts return null time; another principal's session
+returns `session_not_owned`. No private-table grants, scheduler or action behavior
+change. The previous image remains compatible. Rollback restores the previous
+app image and leaves this additive RPC/index in place. Postflight pins the exact
+signature, definer search path and grants; production contract is `2000nl-db-195`.

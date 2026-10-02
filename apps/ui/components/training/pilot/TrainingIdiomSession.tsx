@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { getUiMessages, formatUiCount } from "@/lib/uiMessages";
+import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import {
@@ -23,6 +23,7 @@ import {
   measureTrainingTransitionStage,
 } from "@/lib/training/trainingTransitionTiming";
 
+import { TrainingCompletion, type TrainingCompletionActions } from "../v2/TrainingCompletion";
 import { TrainingSessionState } from "../v2/TrainingSessionState";
 import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
 import { TrainingSessionNotice } from "../v2/TrainingSessionSurface";
@@ -37,7 +38,7 @@ import { TrainingIdiomCard } from "./TrainingIdiomCard";
 
 import { useRecordedStudyTime } from "../useRecordedStudyTime";
 
-type Props = {
+type Props = TrainingCompletionActions & {
   sessionName?: string;
   studyTimeEnabled?: boolean;
   userId: string;
@@ -65,6 +66,7 @@ export function TrainingIdiomSession({
   translationTargetLanguageCode,
   interfaceLanguage,
   onExit,
+  onRestart, onEdit, pending,
   onSessionSuperseded,
   onHistory,
   onPlayResolvedAudio,
@@ -148,7 +150,7 @@ export function TrainingIdiomSession({
           continue;
         }
         if (next.status === "completed" || next.status === "exhausted") {
-          setTerminal(completedCountRef.current > 0 ? "complete" : "empty");
+          setTerminal(completedCountRef.current >= session.plannedTotal && session.plannedTotal > 0 ? "complete" : "empty");
           activeTransitionIdRef.current = null;
           finishTrainingUserTransition(transitionId, `terminal-${next.status}`);
           return;
@@ -172,6 +174,7 @@ export function TrainingIdiomSession({
   }, [
     contentLanguageCode,
     session.sessionId,
+    session.plannedTotal,
     translationTargetLanguageCode,
     userId,
   ]);
@@ -301,9 +304,7 @@ export function TrainingIdiomSession({
       {preparationFailed ? <TrainingSessionState title={t.failed} announcement="alert"
         action={{label:t.retry,onClick:()=>void loadNext()}}
         secondaryAction={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
-      {!loading && terminal ? <TrainingSessionState title={terminal === "complete" ? t.complete : t.empty}
-        detail={terminal === "complete" ? formatUiCount(interfaceLanguage, completedCount, getUiMessages(interfaceLanguage).trainingSession, "completed") : undefined}
-        action={{ label: trainingPresentationV1Enabled() ? getUiMessages(interfaceLanguage).trainingSession.back : t.back, onClick: onExit }} /> : null}
+      {!loading && terminal ? terminal === "complete" ? <TrainingCompletion ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} /> : <TrainingSessionState title={t.empty} action={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
       {!loading && !terminal && candidate && content ? (
         <TrainingIdiomCard
           key={`${session.sessionId}:${candidate.targetKey}:${translationTargetLanguageCode ?? "off"}`}

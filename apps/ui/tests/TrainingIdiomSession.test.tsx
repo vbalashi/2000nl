@@ -285,7 +285,7 @@ test("excludes the idiom pair, advances once, and keeps Undo available after com
       name: "Exclude this pair from training in both directions",
     }),
   );
-  expect(await screen.findByText("Idiom session complete")).toBeInTheDocument();
+  expect(await screen.findByText("Session complete")).toBeInTheDocument();
   expect(performTrainingExclusion).toHaveBeenNthCalledWith(
     1,
     expect.objectContaining({
