@@ -122,3 +122,20 @@ workflow stops the incompatible new UI and requires operator recovery.
 Do not deploy from this issue's local worktree, apply a production migration
 manually, modify DNS, or merge until the owner has
 reviewed the concrete PR and authorized that rollout.
+
+## Google sign-in UX follow-up (#554)
+
+The sign-in button starts Google OAuth directly, without an email form or
+preliminary operator lookup. The callback verifies provider identity and active
+operator access before registering an admin session. Unknown/inactive operators
+are denied and audited there. Origin protection and separate admin cookies remain
+required. A learner session alone is not an admin session.
+
+With the existing Supabase Auth project, a previously unknown Google identity
+can be created by the provider flow before callback authorization. It receives
+no operator grant; the existing learner-profile seed behavior is unchanged.
+This does not introduce public operator registration.
+
+The registry shows name/key, language, kind and actual visibility. Owner remains
+in detail; schema/import/update fields are under collapsed technical information.
+Publication remains “Не настроена” pending #470, independently of legacy visibility.

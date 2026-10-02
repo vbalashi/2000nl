@@ -28,3 +28,32 @@ it("reports an incomplete logout instead of claiming success", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось подтвердить завершение сеанса");
   expect(screen.queryByText("Вы вышли из административной системы.")).not.toBeInTheDocument();
 });
+
+it("offers Google directly without an email field", async () => {
+  window.history.replaceState({}, "", "/admin?view=login");
+  fetchMock.mockResolvedValue(Response.json({ error: "admin_auth_unavailable" }, { status: 503 }));
+  render(<AdminConsole />);
+  const button = await screen.findByRole("button", { name: "Продолжить с Google" });
+  expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  fireEvent.click(button);
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/admin/auth/start", { method: "POST" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось выполнить вход");
+});
+it("keeps four registry columns and collapses technical detail", async () => {
+  const dictionary = { id: "dictionary-1", name: "Van Dale", slug: "vandale", languageCode: "nl", kind: "curated", visibility: "system", ownerId: null, updatedAt: null };
+  fetchMock.mockImplementation(async (url: string) => {
+    if (url === "/api/admin/session") return Response.json({ email: "operator@example.test", permissions: ["dictionaries.read"] });
+    if (url.startsWith("/api/admin/dictionaries?")) return Response.json({ items: [dictionary], hasNext: false, page: 1, pageSize: 25 });
+    if (url === "/api/admin/dictionaries/dictionary-1") return Response.json({ ...dictionary, description: null, schemaKey: "vandale-schema", schemaVersion: 1, sourceProvider: "Van Dale", sourceVersion: null, createdAt: null, schemaTitle: null, schemaRetiredAt: null, editable: false, minimumSubscriptionTier: null });
+    throw new Error(`Unexpected request ${url}`);
+  });
+  render(<AdminConsole />);
+  await screen.findAllByRole("link", { name: /Van Dale/ });
+  expect(screen.getAllByRole("columnheader").map((header) => header.textContent)).toEqual(["Словарь", "Язык", "Тип", "Текущая видимость"]);
+  fireEvent.click(screen.getAllByRole("link", { name: /Van Dale/ })[0]);
+  const technical = await screen.findByText("Технические сведения");
+  expect(technical.closest("details")).not.toHaveAttribute("open");
+  expect(screen.getByText("Доступ и состояние")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "К списку словарей" }));
+  await screen.findAllByRole("link", { name: /Van Dale/ });
+});
