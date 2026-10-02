@@ -76,6 +76,7 @@ type Props = {
   status: TrainingPilotStatus;
   startError?: string | null;
   initialDraft: TrainingSetupDraft;
+  onStartupReady?: () => void;
   initialView?: "today" | "setup";
   stats: DetailedStats;
   scenarios: TrainingSetupOption[];
@@ -465,6 +466,7 @@ export function TrainingTodaySetup({
   startError,
   initialDraft,
   initialView = "today",
+  onStartupReady,
   stats,
   scenarios,
   lists: readableLists,
@@ -511,6 +513,10 @@ export function TrainingTodaySetup({
     sessionSize: initialDraft.sessionSize ?? DEFAULT_SESSION_SIZE,
   });
   const account = useAccountTrainingSetups(userId);
+  // Report actionable readiness, including errors; never hide recovery behind startup.
+  const startupSettled = status !== "preparing" && status !== "loading" &&
+    (status !== "ready" || (material.status !== "loading" && account.status !== "loading"));
+  useEffect(() => { if (startupSettled) onStartupReady?.(); }, [startupSettled, onStartupReady]);
   const accountCopy = getUiMessages(interfaceLanguage).accountTrainingSetups;
   const presets = account.snapshot.document.trainings.filter(item => item.languageCode === trainingLanguageCode);
   const canSaveAccount = Boolean(userId && trainingLanguageCode);

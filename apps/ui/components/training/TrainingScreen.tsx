@@ -1,6 +1,7 @@
 "use client";
 import { getUiMessages } from "@/lib/uiMessages";
 import { applyResolvedTheme } from "@/lib/preferences/resolvedTheme";
+import {TrainingStartupGate} from "./pilot/TrainingStartupGate";
 import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
 import { AccountMaterialProvider } from "@/components/practice/material/AccountMaterialProvider";
 import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/AccountPracticeAppearanceProvider";
@@ -290,6 +291,8 @@ function TrainingScreenContent({
   const [sessionReplacementWarning, setSessionReplacementWarning] =
     useState(false);
   const [sessionAuthorityRefreshing, setSessionAuthorityRefreshing] = useState(false);
+  const [homeStartupSettled, setHomeStartupSettled] = useState(false);
+  const handleHomeStartupReady = useCallback(() => setHomeStartupSettled(true), []);
   const [openTrainingEditor, setOpenTrainingEditor] = useState(false);
   const [sessionAuthorityChecking, setSessionAuthorityChecking] =
     useState(false);
@@ -2467,6 +2470,10 @@ function TrainingScreenContent({
         : null;
   const studyTimeEnabled = destination === "training" && !detailsOpen && !showHotkeys && !showLanguageSelection && !navigationBlocked && !loadingWord && !sessionAuthorityChecking;
   return (
+    <TrainingStartupGate
+      pending={trainingPresentationV1Enabled() && trainingTodaySetupEnabled && destination === "training" && trainingPilot.surface !== "session" && !homeStartupSettled}
+      interfaceLanguage={onboardingLang}
+    >
     <AppFrame
       activeDestination={destination}
       interfaceLanguage={onboardingLang}
@@ -2496,6 +2503,7 @@ function TrainingScreenContent({
       >
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
           <TrainingTodaySetup
+            onStartupReady={handleHomeStartupReady}
             initialView={openTrainingEditor ? "setup" : "today"}
             materialIntent={statisticsMaterialIntent}
             onMaterialIntentConsumed={() => setStatisticsMaterialIntent(null)}
@@ -2830,5 +2838,6 @@ function TrainingScreenContent({
         onSignOut={handleSignOut}
       />
     </AppFrame>
+    </TrainingStartupGate>
   );
 }

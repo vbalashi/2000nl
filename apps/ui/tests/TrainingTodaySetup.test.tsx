@@ -832,3 +832,18 @@ test("approved reverse idiom preview names its expression answer", async () => {
  expect(screen.queryByRole("textbox",{name:"Search sources"})).not.toBeInTheDocument();
  expect(screen.getByRole("button",{name:"Dictionary 0"})).toBeInTheDocument();
  });
+
+test.each(["preparing", "loading"] as const)("startup readiness waits through %s before exposing the overview", async status => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const ready = vi.fn();
+  const {rerender} = render(<TrainingTodaySetup {...baseProps} userId="startup-a" status={status} onStartupReady={ready} />);
+  expect(ready).not.toHaveBeenCalled();
+  rerender(<TrainingTodaySetup {...baseProps} userId="startup-a" onStartupReady={ready} />);
+  await waitFor(() => expect(ready).toHaveBeenCalledOnce());
+});
+test("an actionable startup error releases the startup presentation", () => {
+  const ready = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} status="error" onStartupReady={ready} />);
+  expect(ready).toHaveBeenCalledOnce();
+  expect(screen.getByRole("button", {name: "Try again"})).toBeVisible();
+});
