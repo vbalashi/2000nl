@@ -13,12 +13,12 @@ export function directionExample(language: string, family: TrainingExerciseFamil
   if ((family === "sentence" || family === "word-in-context")) {
     const sentences: Record<string, string> = {
       nl: "Ik ga met de fiets naar mijn werk.",
-      en: "I cycle to work.",
+      en: "I go to work by bicycle.",
       ru: "Я езжу на работу на велосипеде.",
     };
     const source = sentences[language];
     const target = translationLanguage ? sentences[translationLanguage] : undefined;
-    if (source && target) return [source, target];
+    if (source && target) return [family === "word-in-context" ? ({ nl: "de fiets", en: "bicycle", ru: "велосипед" }[language] ?? source) : source, target];
   }
   return null;
 }

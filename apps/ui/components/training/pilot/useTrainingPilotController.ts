@@ -1,3 +1,4 @@
+import { isTrainingSetupPaused } from "@/lib/training/setups/availability";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchTrainingScenarios,
@@ -130,6 +131,10 @@ export function useCommitTrainingPilotDraft({
   return useCallback(
     async (draft: TrainingSetupDraft, sessionName?: string) => {
       if (!userId) return false;
+      if (isTrainingSetupPaused(draft)) {
+        reportError("training_sentences_unavailable");
+        return false;
+      }
       const collectionMode = !draft.materialMode || draft.materialMode === "collection";
       const selectedList = collectionMode ? resolveList(draft.listValue) : null;
       if (collectionMode && !selectedList) {

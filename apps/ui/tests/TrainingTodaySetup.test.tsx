@@ -139,8 +139,8 @@ test("word in context uses the ordinary reverse scenario and a finite session", 
   const onStart = vi.fn();
   render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);
   fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
-  fireEvent.click(screen.getByRole("button", { name: "Word in context" }));
-  expect(screen.getByRole("button", { name: "Word in context" })).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(screen.getByRole("button", { name: "Translation" }));
+  expect(screen.getByRole("button", { name: "Translation" })).toHaveAttribute("aria-pressed", "true");
   expect(screen.queryByText("All due")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
   expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ family: "word-in-context", scenarioId: "understanding", modes: ["definition-to-word"], sessionSize: 10 }));
@@ -846,4 +846,39 @@ test("an actionable startup error releases the startup presentation", () => {
   render(<TrainingTodaySetup {...baseProps} status="error" onStartupReady={ready} />);
   expect(ready).toHaveBeenCalledOnce();
   expect(screen.getByRole("button", {name: "Try again"})).toBeVisible();
+});
+
+
+test("approved Translation is a single contextual reverse choice with a keyword answer", async () => {
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+ const onStart = vi.fn();
+ render(<TrainingTodaySetup {...baseProps} onStart={onStart} userId="translation-choice" trainingLanguageCode="nl" translationTargetLanguageCode="ru" hasOwnedSession={false}
+ scenarios={[...baseProps.scenarios,{value:"sentences",label:"Example sentences",modes:["word-to-definition"]}]} />);
+ fireEvent.click(await screen.findByRole("button", {name:"Create training"}));
+ fireEvent.click(screen.getByRole("button", {name:/^Exercises /}));
+ expect(screen.getAllByRole("button", {name:"Translation"})).toHaveLength(1);
+ expect(screen.queryByText("Word in context")).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button", {name:"Translation"}));
+ expect(screen.getByText("Example translation → word")).toBeInTheDocument();
+ expect(screen.getByText("Я езжу на работу на велосипеде.")).toBeInTheDocument();
+ expect(screen.getByText("de fiets")).toBeInTheDocument();
+ expect(screen.queryByRole("button", {name:/^Example translation → word/})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button", {name:"Start training"}));
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(expect.objectContaining({family:"word-in-context",modes:["definition-to-word"]})));
+});
+
+test("paused sentence recipe stays editable and never silently becomes a context session", async () => {
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+ const saved={...initialDraft,family:"sentence" as const,scenarioId:"sentences",sessionSize:10};
+ seedAccount("paused-sentence",[{id:"old-sentence",name:"Old sentence practice",draft:saved}]);
+ const onStart=vi.fn();
+ render(<TrainingTodaySetup {...baseProps} onStart={onStart} userId="paused-sentence" trainingLanguageCode="nl" hasOwnedSession={false}
+ scenarios={[...baseProps.scenarios,{value:"sentences",label:"Example sentences",modes:["word-to-definition"]}]} />);
+ expect(await screen.findByRole("button",{name:"Start Old sentence practice"})).toBeDisabled();
+ fireEvent.click(screen.getByRole("button",{name:"Edit Old sentence practice"}));
+ expect(screen.getByRole("button",{name:"Choose a training goal"})).toBeDisabled();
+ fireEvent.click(screen.getByRole("button",{name:/^Exercises /}));
+ expect(screen.getByText(/Sentence translation is paused/)).toBeInTheDocument();
+ expect(accounts.get("paused-sentence")?.document.trainings[0].draft).toEqual(saved);
+ expect(onStart).not.toHaveBeenCalled();
 });

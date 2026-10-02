@@ -242,7 +242,10 @@
     },
     "trainingBuilder": {
       "contextPrompt": "Vertaling van het voorbeeld",
-      "wordInContext": "Woord in context",
+      "wordInContext": "Vertaling",
+      "contextDirection": "Vertaling van voorbeeld → woord",
+      "pausedSentenceLabel": "Zinnen vertalen (gepauzeerd)",
+      "sentencePaused": "Zinnen vertalen is gepauzeerd. Kies een andere oefening om een nieuwe sessie te starten.",
       "reviewsOnly": "Alleen herhalen",
       "newOnly": "Alleen nieuw",
       "allDictionaries": "Alle toegankelijke woordenboeken",
@@ -289,7 +292,10 @@
       "history": "Geschiedenis"
     },
     "trainingOverview": {
-      "wordInContext": "Woord in context",
+      "wordInContext": "Vertaling",
+      "contextDirection": "Vertaling van voorbeeld → woord",
+      "pausedSentenceLabel": "Zinnen vertalen (gepauzeerd)",
+      "sentencePaused": "Zinnen vertalen is gepauzeerd. Kies een andere oefening om een nieuwe sessie te starten.",
       "allDictionaries": "Alle beschikbare woordenboeken",
       "allDue": "Alles verschuldigd",
       "loading": "Trainingen laden…",
