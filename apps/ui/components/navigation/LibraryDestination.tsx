@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { getUiMessages } from "@/lib/uiMessages";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
@@ -62,6 +62,12 @@ export function LibraryDestination({
   const [searchState, setSearchState] = useState<DictionarySearchTabState>(() =>
     createDictionarySearchTabState(),
   );
+  const [preload, setPreload] = useState(false);
+  useEffect(() => {
+    // Warm one list after the initial screen has painted, never in the foreground path.
+    const timer = window.setTimeout(() => setPreload(true), 750);
+    return () => window.clearTimeout(timer);
+  }, [userId]);
   const viewedList = activeList ?? lists[0] ?? null;
   const userLists = useMemo(
     () => lists.filter((list) => list.type === "user"),
@@ -101,6 +107,7 @@ export function LibraryDestination({
         <div className="min-h-0 flex-1 overflow-hidden">
           <DictionarySearchTab
             open={open}
+            preload={approved && preload}
             userId={userId}
             language={language}
             translationLang={translationLang}
