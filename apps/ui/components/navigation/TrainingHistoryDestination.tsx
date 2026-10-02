@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRetainedAccountRead } from "@/lib/training/activity/useRetainedAccountRead";
 import { getUiMessages } from "@/lib/uiMessages";
 import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { PracticePanel } from "@/components/practice/ui/PracticePanel";
@@ -33,26 +34,6 @@ const formatTime = (language: OnboardingLanguage, value: string) => {
   }).format(date);
 };
 
-type LoadState =
-  | {
-      userId: string | null;
-      status: "idle" | "loading";
-      items: RecentTrainingHistoryItem[];
-      hasMore: boolean;
-    }
-  | {
-      userId: string;
-      status: "ready";
-      items: RecentTrainingHistoryItem[];
-      hasMore: boolean;
-    }
-  | {
-      userId: string;
-      status: "error";
-      items: RecentTrainingHistoryItem[];
-      hasMore: boolean;
-    };
-
 type Props = {
   open: boolean;
   userId: string;
@@ -72,55 +53,17 @@ export function TrainingHistoryDestination({
     ? text.exercises[item.exercise.family === "translation" ? "translation" : item.exercise.direction === "reverse" ? "idiomReverse" : "idiomDirect"]
     : text.modes[item.cardTypeId];
   const headingRef = React.useRef<HTMLHeadingElement>(null);
-  const [loadState, setLoadState] = React.useState<LoadState>({
-    userId: null,
-    status: "idle",
-    items: [],
-    hasMore: false,
-  });
   const [requestVersion, setRequestVersion] = React.useState(0);
+  const load = React.useCallback(() => fetchRecentTrainingHistory(), []);
+  const read = useRetainedAccountRead("recent-history", userId, load, open, requestVersion);
+  const visibleLoadState = read.status === "ready"
+    ? { ...read, ...read.value }
+    : { ...read, items: [] as RecentTrainingHistoryItem[], hasMore: false };
+  const refreshFailed = read.status === "ready" && read.refreshFailed;
 
   React.useEffect(() => {
     if (open) headingRef.current?.focus();
   }, [open]);
-
-  React.useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    setLoadState({
-      userId,
-      status: "loading",
-      items: [],
-      hasMore: false,
-    });
-    void fetchRecentTrainingHistory()
-      .then((page) => {
-        if (!cancelled) setLoadState({ userId, status: "ready", ...page });
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setLoadState({
-            userId,
-            status: "error",
-            items: [],
-            hasMore: false,
-          });
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [open, requestVersion, userId]);
-
-  const visibleLoadState: LoadState =
-    loadState.userId === userId
-      ? loadState
-      : {
-          userId,
-          status: "loading",
-          items: [],
-          hasMore: false,
-        };
   if (approved) {
     if (!open) return null;
     const tones = { learning_started: "Started", review_fail: "Again", review_hard: "Hard", review_success: "Good", review_easy: "Easy" } as const;
@@ -134,9 +77,9 @@ export function TrainingHistoryDestination({
     }));
     return <div className={theme.theme} data-colour-mode="app">
       <PracticePanel title={text.title} language={interfaceLanguage} closeLabel={text.close} onClose={onReturnToTraining}>
-        {visibleLoadState.status === "loading" || visibleLoadState.status === "idle" ?
+        {visibleLoadState.status === "loading" ?
           <div className={activityStyle.state}><p className={stateStyle.notice} role="status">{text.loading}</p></div> : null}
-        {visibleLoadState.status === "error" ? <div className={`${activityStyle.state} ${stateStyle.error}`} role="alert">
+        {(visibleLoadState.status === "error" || refreshFailed) ? <div className={`${activityStyle.state} ${stateStyle.error}`} role="alert">
           <p>{text.error}</p><button type="button" className={stateStyle.button} onClick={() => setRequestVersion(version => version + 1)}>{text.retry}</button>
         </div> : null}
         {visibleLoadState.status === "ready" && <RecentActivityList items={items} locale={interfaceLanguage}
@@ -184,7 +127,7 @@ export function TrainingHistoryDestination({
                 {text.loading}
               </p>
             ) : null}
-            {visibleLoadState.status === "error" ? (
+            {(visibleLoadState.status === "error" || refreshFailed) ? (
               <div role="alert" className="flex flex-col items-start gap-3">
                 <p className="text-sm text-red-700 dark:text-red-300">{text.error}</p>
                 <button

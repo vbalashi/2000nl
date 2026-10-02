@@ -187,3 +187,19 @@ test.each([
   expect(screen.getByText(idiomLabel)).toBeInTheDocument();
   expect(screen.getByText(sentenceLabel)).toBeInTheDocument();
 });
+
+test("keeps previous activity visible on return and failed refresh", async () => {
+  fetchRecentTrainingHistory.mockResolvedValueOnce({items:[{activityId:"retained",entryId:"entry",headword:"retained-word",partOfSpeech:null,reviewResult:"review_success",cardTypeId:"word-to-definition",reviewedAt:"2026-08-21T11:59:00Z"}],hasMore:false});
+  const props={userId:"a",interfaceLanguage:"en" as const,onReturnToTraining:vi.fn()};
+  const view=render(<TrainingHistoryDestination {...props} open />);
+  await screen.findByText("retained-word");
+  view.rerender(<TrainingHistoryDestination {...props} open={false} />);
+  let reject!: (reason: Error) => void;
+  fetchRecentTrainingHistory.mockImplementationOnce(()=>new Promise((_,fail)=>{reject=fail;}));
+  view.rerender(<TrainingHistoryDestination {...props} open />);
+  expect(screen.getByText("retained-word")).toBeInTheDocument();
+  expect(screen.queryByText("Loading history…")).not.toBeInTheDocument();
+  reject(new Error("offline"));
+  await screen.findByRole("alert");
+  expect(screen.getByText("retained-word")).toBeInTheDocument();
+});

@@ -67,6 +67,8 @@ export function AccountStatistics({ userId, languageCode, open, interfaceLanguag
           onPractise={scope.paused ? undefined : () => onPractiseMaterial(scope.code, selected)} />
         <StatisticsCoverage interfaceLanguage={interfaceLanguage} started={selected.started} total={selected.total} scopeLabel={selected.kind === "all" ? languageLabel : name(selected)} />
       </>}
+    {((activity.status === "ready" && activity.refreshFailed) || (progress.status === "ready" && progress.refreshFailed)) &&
+      <div className={s.status} role="status"><button type="button" onClick={retry}>{copy.timeRetry}</button></div>}
     <details className={s.notes}><summary>{copy.about}</summary><p>{copy.accountNotes}</p></details>
   </div>;
 }
