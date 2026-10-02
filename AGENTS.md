@@ -128,6 +128,18 @@ Do not conflate browser tooling failures:
 - When using Playwright fallback, report the exact blocked surface instead of
   saying the whole in-app browser is blocked.
 
+### User browser for joint debugging
+
+For interactive checks with the owner, use the owner's existing Google Chrome
+profile **Nikolai**, connected through the Codex browser extension. Reuse the
+owner-selected tab/window; verify its URL and visible page before acting.
+Do not launch or substitute the separate Chrome instance/profile managed by
+Chrome DevTools MCP. Do not substitute the in-app browser or another profile
+unless the owner explicitly requests it. Browser/tab IDs are session-specific:
+discover them afresh rather than hard-coding them. For production checks, use
+the owner's existing `https://2000.dilum.io/` tab and its visible Network panel;
+do not reload an in-progress training session just to attach monitoring.
+
 ## Change Routing
 
 - UI copy, layout, auth UX, and browser automation helpers: start in `apps/ui` and `docs/`.

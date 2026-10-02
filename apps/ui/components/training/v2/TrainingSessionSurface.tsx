@@ -29,6 +29,7 @@ export type TrainingSessionNoticeInput =
 
 export type TrainingSessionSurfaceProps = {
   phase: TrainingSessionLayoutPhase;
+  authorityRefreshing?: boolean;
   chrome?: TrainingSessionChromeProps | null;
   footer: FooterStatsProps;
   notice?: TrainingSessionNoticeInput | null;
@@ -84,12 +85,14 @@ export function TrainingSessionSurface({
   footer,
   notice,
   readySurface,
+  authorityRefreshing,
   children,
 }: TrainingSessionSurfaceProps) {
   const approvedPresentation = trainingPresentationV1Enabled() && Boolean(chrome);
   return (
     <TrainingSessionV2Layout
       phase={phase}
+      authorityRefreshing={authorityRefreshing}
       chrome={chrome ? (
         <TrainingSessionChrome
           {...chrome}

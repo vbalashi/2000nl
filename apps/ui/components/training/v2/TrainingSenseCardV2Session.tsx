@@ -78,6 +78,7 @@ type Props = {
   sessionFooter: FooterStatsProps;
   sessionNotice?: TrainingSessionNoticeInput | null;
   interactionDisabled?: boolean;
+  authorityRefreshing?: boolean;
   focusOnPresentation?: boolean;
   onPlayResolvedAudio?: (url: string, label: string) => void;
   onOpenDetails?: (
@@ -135,6 +136,7 @@ export function TrainingSenseCardV2Session({
   sessionFooter,
   sessionNotice,
   interactionDisabled = false,
+  authorityRefreshing = false,
   focusOnPresentation = false,
   onPlayResolvedAudio,
   onOpenDetails,
@@ -686,6 +688,7 @@ export function TrainingSenseCardV2Session({
       chrome={sessionChrome}
       footer={sessionFooter}
       notice={sessionNotice}
+      authorityRefreshing={authorityRefreshing && !busy && !exclusion.busy && !exclusion.failed && !acceptedActionRecoveryPending}
       readySurface={swipeSurface}
     >
       {cardAnnouncementRegion}

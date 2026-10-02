@@ -72,7 +72,9 @@ function AccountMaterialSession({
   const load = React.useCallback(async () => {
     if (pending.current) return;
     const attempt = invalidateReads();
-    setStatus("loading");
+    // Keep Start mounted and actionable during a focus refresh.
+    // Initial loading and failed refreshes still block launching.
+    if (!current.current) setStatus("loading");
     try {
       const [document, languages] = await Promise.all([
         repository.load(userId),

@@ -263,3 +263,7 @@
     padding-bottom: 28px;
   }
 }
+
+/* Keep a validated card visually stable during the background ownership read.
+ * Controls remain disabled; errors and actual learner actions retain busy styling. */
+.authorityRefreshing button:disabled { opacity: 1; }

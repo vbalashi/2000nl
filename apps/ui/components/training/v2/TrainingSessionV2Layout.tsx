@@ -31,6 +31,7 @@ export function TrainingSessionV2Layout({
   footer,
   notice,
   readySurface,
+  authorityRefreshing = false,
   approvedPresentation = false,
   children,
 }: {
@@ -39,6 +40,7 @@ export function TrainingSessionV2Layout({
   footer: React.ReactNode;
   notice?: React.ReactNode;
   readySurface?: TrainingSessionReadySurface;
+  authorityRefreshing?: boolean;
   approvedPresentation?: boolean;
   children: React.ReactNode;
 }) {
@@ -49,7 +51,8 @@ export function TrainingSessionV2Layout({
       <div
         data-training-session-main
         data-training-session-phase={phase}
-        className={`${styles.main} ${approvedPresentation ? styles.mainApproved : ""}`}
+        data-authority-refreshing={authorityRefreshing || undefined}
+        className={`${styles.main} ${approvedPresentation ? styles.mainApproved : ""} ${authorityRefreshing ? styles.authorityRefreshing : ""}`}
       >
         <section className={styles.stack}>
           {chrome}

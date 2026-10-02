@@ -76,6 +76,7 @@ type Props = {
   status: TrainingPilotStatus;
   startError?: string | null;
   initialDraft: TrainingSetupDraft;
+  initialView?: "today" | "setup";
   stats: DetailedStats;
   scenarios: TrainingSetupOption[];
   lists: TrainingSetupOption[];
@@ -463,6 +464,7 @@ export function TrainingTodaySetup({
   status,
   startError,
   initialDraft,
+  initialView = "today",
   stats,
   scenarios,
   lists: readableLists,
@@ -503,7 +505,7 @@ export function TrainingTodaySetup({
       {material.status === "error" && <button type="button" onClick={material.reload}>{materialCopy.retry}</button>}
     </p>;
   const t = copy[interfaceLanguage];
-  const [screen, setScreen] = useState<"today" | "setup">("today");
+  const [screen, setScreen] = useState<"today" | "setup">(initialView);
   const [draft, setDraft] = useState({
     ...initialDraft,
     sessionSize: initialDraft.sessionSize ?? DEFAULT_SESSION_SIZE,
