@@ -1,0 +1,9 @@
+/* Audit-only proposals: do not import into production. Baseline has zero overrides. */
+[data-audit] article{background:var(--practice-surface,#fff)}
+[data-audit]:not([data-audit=baseline]) [data-nesting] [data-kind=example]>div>p:not([data-content-translation]){font-size:var(--practice-literary-size);line-height:var(--practice-literary-leading)}
+[data-audit]:not([data-audit=baseline]) [data-nesting] [data-content-node-id]{--practice-space-pair:4px;--practice-space-content:12px}
+[data-audit]:not([data-audit=baseline]) [data-section]{margin-top:20px}
+[data-audit]:not([data-audit=baseline]) [data-section]>[data-content-node-id]{padding-top:3px;padding-bottom:3px}
+[data-audit=airy] [data-section]{margin-top:26px}
+[data-audit=airy] [data-nesting] [data-content-node-id]{--practice-space-pair:5px;--practice-space-content:16px}
+[data-audit=airy] [data-section]>[data-content-node-id]{padding-top:5px;padding-bottom:5px}

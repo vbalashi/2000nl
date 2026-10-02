@@ -1,0 +1,28 @@
+{
+  "baseline": "28e4ea42bad59b1beac03c9cbc89223542f4b0bf",
+  "source": "apps/ui/app/dev/session-builder-prototype/goed-source-fixture.json",
+  "meaningIds": [
+    "004396_a4440_goed_bn_1",
+    "004396_a4440_goed_bn_2",
+    "004396_a4440_goed_bn_3"
+  ],
+  "translations": "Authored English design translations from libraryTranslationFixture.ts; not provider output",
+  "partial": "All example translations suppressed; explanation/idiom translations retained",
+  "coverage": [
+    "definition",
+    "example",
+    "idiom",
+    "idiom-explanation",
+    "nested example",
+    "multiple meanings",
+    "wrapped example"
+  ],
+  "missing": [
+    "real synonyms/antonyms fixture",
+    "usage pattern fixture",
+    "Library and Training containers",
+    "headword and forms",
+    "dark/theme sweep",
+    "zoom and keyboard"
+  ]
+}
