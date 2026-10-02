@@ -50,7 +50,7 @@ export async function fetchPlatformV2IdiomExerciseCandidates(
 
 export type StartPlatformV2IdiomTrainingSessionInput = {
   userId: string;
-  direction: PlatformTrainingExerciseDirectionV2;
+  direction: PlatformIdiomExerciseSessionV2["direction"];
   sessionSize: number;
   requestId: string;
   listId: string | null;
@@ -291,7 +291,7 @@ function parseSession(value: unknown): PlatformIdiomExerciseSessionV2 | null {
     item.contractVersion !== "platform-idiom-exercise-session-v2" ||
     !string(item.sessionId) ||
     item.exerciseFamily !== "idiom" ||
-    (direction !== "direct" && direction !== "reverse") ||
+    (direction !== "direct" && direction !== "reverse" && direction !== "mixed") ||
     !string(item.sessionSize) ||
     !integer(item.requestedTotal) ||
     !integer(item.plannedNew) ||

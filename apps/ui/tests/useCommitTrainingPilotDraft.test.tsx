@@ -211,7 +211,7 @@ test("idiom start failures stay on setup and expose a recoverable error", async 
   expect(startIdiomSession).toHaveBeenCalledOnce();
 });
 
-test("idiom starts forward the exact family filters and plan", async () => {
+test.each(["direct", "reverse", "mixed"] as const)("idiom %s starts forward the exact family filters and plan", async (direction) => {
   startIdiomSession.mockReset();
   updateActiveTrainingScope.mockReset();
   updateActiveTrainingScope.mockResolvedValue({ error: null });
@@ -219,7 +219,7 @@ test("idiom starts forward the exact family filters and plan", async () => {
     contractVersion: "platform-idiom-exercise-session-v2",
     sessionId: "idiom-session-1",
     exerciseFamily: "idiom",
-    direction: "reverse",
+    direction,
     sessionSize: "10",
     requestedTotal: 10,
     plannedNew: 8,
@@ -255,7 +255,7 @@ test("idiom starts forward the exact family filters and plan", async () => {
       ...draft,
       family: "idiom",
       scenarioId: "idiom",
-      modes: ["definition-to-word"],
+      modes: direction === "mixed" ? ["word-to-definition", "definition-to-word"] : [direction === "direct" ? "word-to-definition" : "definition-to-word"],
       listValue: "curated:list-1",
       cardFilter: "review",
       newReviewRatio: 4,
@@ -267,7 +267,7 @@ test("idiom starts forward the exact family filters and plan", async () => {
   });
 
   expect(startIdiomSession).toHaveBeenCalledWith(expect.objectContaining({
-    direction: "reverse",
+    direction,
     listId: "list-1",
     listType: "curated",
     cardFilter: "review",

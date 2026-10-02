@@ -163,6 +163,7 @@ test("idiom presets retain their family and scenario when reopened", async () =>
   );
   fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
   fireEvent.click(screen.getByRole("button", { name: "Idioms" }));
+  fireEvent.click(screen.getByRole("button", { name: "Reverse" }));
   await waitFor(() => expect(screen.getByRole("button", { name: "Save training" })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: "Save training" }));
   expect(await screen.findByText("Saved to your account")).toBeInTheDocument();
@@ -173,6 +174,7 @@ test("idiom presets retain their family and scenario when reopened", async () =>
   expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({
     family: "idiom",
     scenarioId: "idiom",
+    modes: ["word-to-definition", "definition-to-word"],
   }));
   window.localStorage.clear();
 });

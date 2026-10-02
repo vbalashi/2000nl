@@ -688,3 +688,14 @@ returns `session_not_owned`. No private-table grants, scheduler or action behavi
 change. The previous image remains compatible. Rollback restores the previous
 app image and leaves this additive RPC/index in place. Postflight pins the exact
 signature, definer search path and grants; production contract is `2000nl-db-195`.
+
+## Mixed idiom selection (migration 198)
+
+The scoped idiom start accepts `mixed`, stores both canonical direction selectors,
+and interleaves bounded directional candidate pools before the existing new/review
+rhythm. Individual exercise targets and reviews never use `mixed`; their existing
+direct/reverse IDs and independent state remain unchanged. Snapshot and read-only
+statistics cover the saved pair of directions. `mixed-idiom-probe.sql` pins this
+contract plus material resolution, exclusion and privilege guards. Integrate the
+exact migration checksum only after coordinated migrations 196 and 197; the
+isolated #529 branch does not itself advance the rollout manifest.

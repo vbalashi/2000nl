@@ -152,7 +152,7 @@ const copy = {
     typed: "Type the answer",
     selfRateHelp: "Reveal the answer, then rate Again / Hard / Good / Easy.",
     directionHelp: "Select one or both word-card directions.",
-    idiomDirectionHelp: "Choose one direction for idiom exercises.",
+    idiomDirectionHelp: "Choose one or both directions for idiom exercises.",
     activity: "Recent activity",
     activityHelp: "Optional: narrow by event date and source; this does not mean forgotten words only.",
     materialHelp: "Choose a dictionary or one collection.",
@@ -253,7 +253,7 @@ const copy = {
     typed: "Antwoord typen",
     selfRateHelp: "Toon het antwoord en kies Again / Hard / Good / Easy.",
     directionHelp: "Kies één of beide richtingen voor woordkaarten.",
-    idiomDirectionHelp: "Kies één richting voor uitdrukkingen.",
+    idiomDirectionHelp: "Kies één of beide richtingen voor uitdrukkingen.",
     activity: "Recente activiteit",
     activityHelp: "Optioneel: filter op datum en bron; dit selecteert niet alleen vergeten woorden.",
     materialHelp: "Kies een woordenboek of één collectie.",
@@ -354,7 +354,7 @@ const copy = {
     typed: "Ввести ответ",
     selfRateHelp: "Откройте ответ и оцените: Again / Hard / Good / Easy.",
     directionHelp: "Выберите одно или оба направления для карточек со словами.",
-    idiomDirectionHelp: "Для идиом выберите одно направление.",
+    idiomDirectionHelp: "Для идиом выберите одно или оба направления.",
     activity: "Недавняя активность",
     activityHelp: "Можно сузить по дате и источнику; это не выбор только забытых слов.",
     materialHelp: "Выберите словарь или одну коллекцию.",
@@ -981,7 +981,7 @@ export function TrainingTodaySetup({
     setDraft((current) => {
       const active = current.modes.includes(mode);
       if (activeFamily === "word-in-context") return current;
-      if (activeFamily !== "meaning") {
+      if (activeFamily !== "meaning" && activeFamily !== "idiom") {
         return {
           ...current,
           scenarioId: selectedScenario.value,

@@ -971,6 +971,56 @@ describeIfDb("content-bound training exercise database contract", () => {
     });
   });
 
+  test("mixed idioms persist both directions, resume and grade distinct targets exactly once", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async client => {
+      const fixture = await createIdiomFixture(client, userId);
+      const requestId = randomUUID();
+      const start = () => asAuthenticated(client, async () => (await client.query(
+        `select public.start_platform_v2_idiom_training_session($1,'mixed','2',$2,null,'curated','both','{}',2) result`,
+        [userId, requestId])).rows[0].result as PlatformIdiomExerciseSessionV2);
+      const session = await start();
+      expect(session).toMatchObject({direction:'mixed', plannedTotal:2, requestedTotal:2});
+      expect(session.members.map(member => member.direction)).toEqual(['direct','reverse']);
+      expect(new Set(session.members.map(member => member.targetId)).size).toBe(2);
+      expect(session.members.every(member => member.entryId === fixture.entryId)).toBe(true);
+      expect((await start()).sessionId).toBe(session.sessionId);
+      await client.query('savepoint mixed_retry_conflict');
+      await expect(asAuthenticated(client, () => client.query(
+        `select public.start_platform_v2_idiom_training_session($1,'direct','2',$2,null,'curated','both','{}',2)`,
+        [userId,requestId]))).rejects.toThrow('idiom_training_session_start_idempotency_conflict');
+      await client.query('rollback to savepoint mixed_retry_conflict');
+      await client.query('savepoint mixed_owner');
+      await expect(asAuthenticated(client, () => client.query(
+        'select public.read_platform_v2_idiom_training_session_snapshot($1,$2)',
+        [randomUUID(),session.sessionId]))).rejects.toThrow('unauthorized');
+      await client.query('rollback to savepoint mixed_owner');
+
+      expect((await client.query('select card_type_ids from training_sessions where id=$1',[session.sessionId])).rows[0].card_type_ids)
+        .toEqual(['idiom:direct','idiom:reverse']);
+      for (const [index, member] of session.members.entries()) {
+        const next = await asAuthenticated(client, async () => (await client.query(
+          'select public.read_platform_v2_idiom_training_session_next($1,$2) result',[userId,session.sessionId])).rows[0].result);
+        expect(next).toMatchObject({status:'ready',targetId:member.targetId,direction:member.direction});
+        const eventId=randomUUID();
+        expect(await performIdiomAction(client,userId,member.targetId,eventId,{direction:member.direction,sessionId:session.sessionId}))
+          .toMatchObject({status:'accepted'});
+        expect(await performIdiomAction(client,userId,member.targetId,eventId,{direction:member.direction,sessionId:session.sessionId}))
+          .toMatchObject({status:'duplicate'});
+        const snapshot=await asAuthenticated(client, async () => (await client.query(
+          'select public.read_platform_v2_idiom_training_session_snapshot($1,$2) result',[userId,session.sessionId])).rows[0].result);
+        expect(snapshot).toMatchObject({direction:'mixed',completedActions:index+1});
+        expect((await client.query('select count(*)::int n from user_training_exercise_state where user_id=$1',[userId])).rows[0].n).toBe(index+1);
+      }
+      const terminal=await asAuthenticated(client, async () => (await client.query(
+        'select public.read_platform_v2_idiom_training_session_next($1,$2) result',[userId,session.sessionId])).rows[0].result);
+      expect(terminal).toMatchObject({status:'completed',completedActions:2});
+      const stats=await asAuthenticated(client, async () => (await client.query(
+        'select public.read_training_idiom_stats_v1($1) result',[session.sessionId])).rows[0].result);
+      expect(stats).toMatchObject({totalCardsStarted:2,totalCardsInScope:2,newCardsToday:2});
+    }, userId);
+  });
+
   test("starts an ordered idiom session, retries it idempotently, and supersedes it", async () => {
     const userId = randomUUID();
     await withTransaction(
