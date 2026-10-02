@@ -51,3 +51,21 @@ test("accepted actions refresh ready data without a loading flash; late account 
  await act(async()=>resolveOld(response(6)));
  expect(view.result.current).toMatchObject({value:99});
 });
+
+test("bounds a stalled refresh and keeps its previous value", async () => {
+ request.mockResolvedValueOnce(response(7));
+ const view=renderHook(({refresh})=>useAccountRead("/stats","a",parse,true,refresh),{initialProps:{refresh:0}});
+ await waitFor(()=>expect(view.result.current).toMatchObject({value:7}));
+ vi.useFakeTimers();
+ try {
+   let signal!: AbortSignal;
+   request.mockImplementationOnce((_path,_owner,options)=>new Promise((_,reject)=>{
+     signal=options.signal;
+     signal.addEventListener("abort",()=>reject(new Error("aborted")),{once:true});
+   }));
+   view.rerender({refresh:1});
+   await act(async()=>{ await vi.advanceTimersByTimeAsync(10000); });
+   expect(signal.aborted).toBe(true);
+   expect(view.result.current).toMatchObject({status:"ready",value:7,refreshFailed:true});
+ } finally { vi.useRealTimers(); }
+});
