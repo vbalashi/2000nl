@@ -13,7 +13,7 @@ export function useLibraryMaterialSelection(
   const account = useAccountMaterial();
   const inventory = useMaterialDictionaryCatalog(
     account?.userId ?? "",
-    open && account ? [languageCode] : [],
+    account ? [languageCode] : [],
   );
   if (!account) return null;
   const configured = account.snapshot
@@ -29,6 +29,7 @@ export function useLibraryMaterialSelection(
     (item) => item.code === languageCode,
   );
   return {
+    revision: account.snapshot?.revision,
     languages,
     currentLanguageAllowed,
     dictionaries: currentLanguageAllowed

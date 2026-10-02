@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { ChartNoAxesColumn, Library, Play } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -48,12 +48,57 @@ export function AppDestinationNav({
     "library",
     "statistics",
   ];
+  const navRef = useRef<HTMLElement>(null);
+  const [indicator, setIndicator] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const measure = () => {
+      const button = nav.querySelector<HTMLButtonElement>(
+        'button[aria-current="page"]',
+      );
+      if (!button || !button.offsetWidth) {
+        setIndicator(null);
+        return;
+      }
+      setIndicator({
+        x: button.offsetLeft,
+        y: button.offsetTop,
+        width: button.offsetWidth,
+        height: button.offsetHeight,
+      });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(nav);
+    for (const button of nav.querySelectorAll("button"))
+      observer.observe(button);
+    return () => observer.disconnect();
+  }, [active, interfaceLanguage, variant]);
   return (
     <nav
+      ref={navRef}
       lang={interfaceLanguage}
       aria-label={getUiMessages(interfaceLanguage).navigation.primary}
       className={variant === "tabs" ? styles.tabBarNav : styles.primaryNav}
     >
+      {indicator ? (
+        <span
+          aria-hidden="true"
+          data-testid="navigation-selection"
+          className={styles.selection}
+          style={{
+            transform: `translate(${indicator.x}px,${indicator.y}px)`,
+            width: indicator.width,
+            height: indicator.height,
+          }}
+        />
+      ) : null}
       {destinations.map((destination) => (
         <button
           key={destination}

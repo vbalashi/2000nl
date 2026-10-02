@@ -73,6 +73,7 @@
 }
 
 .primaryNav {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -103,9 +104,7 @@
 }
 
 .primaryNav button[aria-current="page"] {
-  background: var(--app-frame-active);
   color: var(--practice-selected-text, var(--app-frame-ink));
-  box-shadow: 0 1px 2px var(--practice-shadow, rgb(15 23 42 / 0.08));
 }
 
 .primaryNav button:disabled {
@@ -231,6 +230,7 @@
 }
 
 .tabBarNav {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
@@ -257,7 +257,6 @@
 }
 
 .tabBarNav button[aria-current="page"] {
-  background: var(--app-frame-active);
   color: var(--app-frame-ink);
 }
 
@@ -343,3 +342,31 @@
 .brandLink:disabled { cursor:default; }
 
 @media(prefers-reduced-motion:reduce){.primaryNav button{transition:none}}
+
+.primaryNav button,
+.tabBarNav button {
+  position: relative;
+  z-index: 1;
+}
+.selection {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background: var(--app-frame-active);
+  border-radius: 100px;
+  box-shadow: 0 1px 2px var(--practice-shadow, rgb(15 23 42 / 0.08));
+  transition:
+    transform 240ms var(--practice-motion, ease),
+    width 240ms var(--practice-motion, ease),
+    height 240ms var(--practice-motion, ease);
+}
+.tabBarNav .selection {
+  border-radius: 8px;
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .selection {
+    transition: none;
+  }
+}

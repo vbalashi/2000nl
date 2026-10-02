@@ -149,7 +149,7 @@ const deferred = <T,>() => {
   return { promise, resolve, reject };
 };
 
-function Harness({initial = {},locale="nl",translationLang="en",collection=false}: {collection?:boolean;initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru";translationLang?:string|null} = {}) {
+function Harness({preload=false,open=true,initial = {},locale="nl",translationLang="en",collection=false}: {preload?:boolean;open?:boolean;collection?:boolean;initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru";translationLang?:string|null} = {}) {
   const [state, setState] = React.useState<DictionarySearchTabState>(() => ({
     ...createDictionarySearchTabState(),
     query: "goed",
@@ -158,7 +158,8 @@ function Harness({initial = {},locale="nl",translationLang="en",collection=false
   }));
   return (
     <DictionarySearchTab
-      open
+      open={open}
+      preload={preload}
       userId="user-1"
       language="nl"
       translationLang={translationLang}
@@ -521,4 +522,43 @@ test("initial browse loading does not show an empty result and failure can retry
   fireEvent.click(screen.getByRole("button",{name:"Try again"}));
   await screen.findByTestId("library-headword-group-group-goed-homograph");
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+test("returning to Library within a second retains results without another list request",async () => {
+ fetchGroupPage.mockReset();
+ fetchGroupPage.mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
+ const view=render(<Harness open />);
+ await screen.findByTestId("library-headword-group-group-goed-main");
+ const firstReads=fetchGroupPage.mock.calls.length;
+ view.rerender(<Harness open={false}/>);
+ view.rerender(<Harness open/>);
+ await act(async()=>{await new Promise(resolve=>setTimeout(resolve,20));});
+ expect(screen.getByTestId("library-headword-group-group-goed-main")).toBeVisible();
+ expect(fetchGroupPage).toHaveBeenCalledTimes(firstReads);
+});
+
+
+test("preloaded results are reused on first visible entry", async () => {
+  fetchGroupPage.mockReset().mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
+  const view=render(<Harness open={false} preload />);
+  await screen.findByTestId("library-headword-group-group-goed-main");
+  const reads=fetchGroupPage.mock.calls.length;
+  view.rerender(<Harness open preload />);
+  await act(async()=>{await new Promise(resolve=>setTimeout(resolve,20));});
+  expect(fetchGroupPage).toHaveBeenCalledTimes(reads);
+});
+
+test("returning after freshness expires refreshes retained results", async () => {
+  fetchGroupPage.mockReset().mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
+  const view=render(<Harness open />);
+  await screen.findByTestId("library-headword-group-group-goed-main");
+  const reads=fetchGroupPage.mock.calls.length;
+  view.rerender(<Harness open={false} />);
+  const now=Date.now();
+  const clock=vi.spyOn(Date,"now").mockReturnValue(now+31000);
+  try {
+    view.rerender(<Harness open />);
+    await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalledTimes(reads+1));
+    expect(screen.getByTestId("library-headword-group-group-goed-main")).toBeVisible();
+  } finally { clock.mockRestore(); }
 });

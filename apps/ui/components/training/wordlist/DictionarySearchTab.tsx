@@ -55,6 +55,7 @@ export {
 
 type Props = {
   open: boolean;
+  preload?: boolean;
   userId: string;
   language: string;
   translationLang: string | null;
@@ -129,6 +130,7 @@ const searchMatchLabel = (entry: DictionaryEntry, fallback: string) =>
 
 export function DictionarySearchTab({
   open,
+  preload = false,
   userId,
   language,
   translationLang,
@@ -199,9 +201,12 @@ export function DictionarySearchTab({
     [onSearchStateChange],
   );
 
+  const searchEnabled = open || preload;
+  const searchFreshRef = useRef<{ key: string; at: number } | null>(null);
+  const searchPendingRef = useRef<string | null>(null);
   const searchLanguage = languageCode ?? language;
   const material = useLibraryMaterialSelection(
-    open,
+    searchEnabled,
     searchLanguage,
     interfaceLanguage,
   );
@@ -255,112 +260,141 @@ export function DictionarySearchTab({
   );
 
   const listPage = useViewedListFilter ? page : 1;
-  const runSearch = useCallback(async () => {
-    if (!open) return;
-    const requestId = beginSearch();
-    if (!useViewedListFilter && !searchMaterialReady) {
-      updateSearchState({
-        wordResults: [],
-        groupResults: [],
-        wordTotal: 0,
-        groupHasMore: false,
-      });
-      setSearchLoading(false);
-      setSearchError(null);
-      return;
-    }
-    const hasQuery = Boolean(query.trim());
-    if (!hasQuery && !useViewedListFilter && !(approved && materialEnabled)) {
-      updateSearchState({
-        wordResults: [],
-        groupResults: [],
-        groupPageCursors: [null],
-        groupHasMore: false,
-        selectedHeadwordGroupId: null,
-        wordTotal: 0,
-        detailSelection: null,
-        mobileDetailOpen: false,
-      });
-      return;
-    }
-    setSearchLoading(true);
-    setSearchError(null);
-    try {
-      const trimmedQuery = query.trim() || undefined;
-      if (!useViewedListFilter) {
-        await runGroupSearch(trimmedQuery ?? "", requestId);
+  const searchReadKey = JSON.stringify([
+    userId,
+    searchLanguage,
+    translationLang,
+    dictionaryId,
+    query.trim(),
+    page,
+    useViewedListFilter,
+    useViewedListFilter ? viewedListId : null,
+    useViewedListFilter ? viewedList?.type : null,
+    searchState.entryFilters,
+    material?.revision,
+  ]);
+  const runSearch = useCallback(
+    async (force = false) => {
+      if (!searchEnabled) return;
+      if (
+        !force &&
+        (searchPendingRef.current === searchReadKey ||
+          (searchFreshRef.current?.key === searchReadKey &&
+            Date.now() - searchFreshRef.current.at < 30000))
+      )
+        return;
+      const requestId = beginSearch();
+      if (!useViewedListFilter && !searchMaterialReady) {
+        updateSearchState({
+          wordResults: [],
+          groupResults: [],
+          wordTotal: 0,
+          groupHasMore: false,
+        });
+        setSearchLoading(false);
+        setSearchError(null);
         return;
       }
+      const hasQuery = Boolean(query.trim());
+      if (!hasQuery && !useViewedListFilter && !(approved && materialEnabled)) {
+        updateSearchState({
+          wordResults: [],
+          groupResults: [],
+          groupPageCursors: [null],
+          groupHasMore: false,
+          selectedHeadwordGroupId: null,
+          wordTotal: 0,
+          detailSelection: null,
+          mobileDetailOpen: false,
+        });
+        return;
+      }
+      searchPendingRef.current = searchReadKey;
+      setSearchLoading(searchFreshRef.current?.key !== searchReadKey);
+      setSearchError(null);
+      try {
+        const trimmedQuery = query.trim() || undefined;
+        if (!useViewedListFilter) {
+          if (await runGroupSearch(trimmedQuery ?? "", requestId))
+            searchFreshRef.current = { key: searchReadKey, at: Date.now() };
+          return;
+        }
 
-      const result = await fetchWordsForList(
-        viewedListId!,
-        viewedList?.type ?? "curated",
-        {
-          query: trimmedQuery,
-          page: listPage,
-          pageSize,
-        },
-      );
-
-      if (!isCurrentSearch(requestId)) return;
-      clearGroupSearch();
-      onSearchStateChange((current) => ({
-        ...current,
-        wordResults: result.items,
-        wordTotal: result.total,
-        detailSelection:
-          current.detailSelection ??
-          (result.items[0]
-            ? {
-                entryId: result.items[0].id,
-                headword: result.items[0].headword,
-                contentLanguageCode:
-                  result.items[0].language_code ?? searchLanguage,
-              }
-            : null),
-      }));
-    } catch (cause) {
-      if (
-        isCurrentSearch(requestId) &&
-        !(
-          cause &&
-          typeof cause === "object" &&
-          "name" in cause &&
-          cause.name === "AbortError"
-        )
-      ) {
-        setSearchError(
-          cause instanceof Error && cause.message === "platform_request_timeout"
-            ? copy.searchTimeout
-            : copy.searchError,
+        const result = await fetchWordsForList(
+          viewedListId!,
+          viewedList?.type ?? "curated",
+          {
+            query: trimmedQuery,
+            page: listPage,
+            pageSize,
+          },
         );
+
+        if (!isCurrentSearch(requestId)) return;
+        searchFreshRef.current = { key: searchReadKey, at: Date.now() };
+        clearGroupSearch();
+        onSearchStateChange((current) => ({
+          ...current,
+          wordResults: result.items,
+          wordTotal: result.total,
+          detailSelection:
+            current.detailSelection ??
+            (result.items[0]
+              ? {
+                  entryId: result.items[0].id,
+                  headword: result.items[0].headword,
+                  contentLanguageCode:
+                    result.items[0].language_code ?? searchLanguage,
+                }
+              : null),
+        }));
+      } catch (cause) {
+        if (
+          isCurrentSearch(requestId) &&
+          !(
+            cause &&
+            typeof cause === "object" &&
+            "name" in cause &&
+            cause.name === "AbortError"
+          )
+        ) {
+          setSearchError(
+            cause instanceof Error &&
+              cause.message === "platform_request_timeout"
+              ? copy.searchTimeout
+              : copy.searchError,
+          );
+        }
+      } finally {
+        if (isCurrentSearch(requestId)) {
+          searchPendingRef.current = null;
+          setSearchLoading(false);
+        }
       }
-    } finally {
-      if (isCurrentSearch(requestId)) {
-        setSearchLoading(false);
-      }
-    }
-  }, [
-    open,
-    approved,
-    materialEnabled,
-    beginSearch,
-    clearGroupSearch,
-    isCurrentSearch,
-    onSearchStateChange,
-    listPage,
-    pageSize,
-    query,
-    updateSearchState,
-    useViewedListFilter,
-    runGroupSearch,
-    searchLanguage,
-    searchMaterialReady,
-    copy.searchTimeout,
-    copy.searchError,
-    viewedList?.type,
-    viewedListId,
-  ]);
+    },
+    [
+      searchEnabled,
+      searchReadKey,
+      approved,
+      materialEnabled,
+      beginSearch,
+      clearGroupSearch,
+      isCurrentSearch,
+      onSearchStateChange,
+      listPage,
+      pageSize,
+      query,
+      updateSearchState,
+      useViewedListFilter,
+      runGroupSearch,
+      searchLanguage,
+      searchMaterialReady,
+      copy.searchTimeout,
+      copy.searchError,
+      viewedList?.type,
+      viewedListId,
+    ],
+  );
 
   const openEntryDetail = useCallback(
     async (entry: DictionaryEntry) => {
@@ -394,6 +428,8 @@ export function DictionarySearchTab({
 
   const handleUserDictionaryEntryCreated = useCallback(
     (entry: DictionaryEntry) => {
+      searchFreshRef.current = null;
+      searchFreshRef.current = null;
       onUserDictionaryEntryCreated?.(entry);
       onSearchStateChange((current) => ({
         ...current,
@@ -449,7 +485,12 @@ export function DictionarySearchTab({
           languageCode: searchLanguage,
           ...(definition ? { definition } : {}),
           ...(translation
-            ? { translation: { languageCode: translationLang!, text: translation } }
+            ? {
+                translation: {
+                  languageCode: translationLang!,
+                  text: translation,
+                },
+              }
             : {}),
           ...(example ? { example: { source: example } } : {}),
           ...(notes ? { notes } : {}),
@@ -491,12 +532,12 @@ export function DictionarySearchTab({
   ]);
 
   useEffect(() => {
-    if (!open || searchState.languageCode) return;
+    if (!searchEnabled || searchState.languageCode) return;
     updateSearchState({ languageCode: language });
-  }, [language, open, searchState.languageCode, updateSearchState]);
+  }, [language, searchEnabled, searchState.languageCode, updateSearchState]);
 
   useEffect(() => {
-    if (!open || materialEnabled) return;
+    if (!searchEnabled || materialEnabled) return;
     let cancelled = false;
     const loadSearchScope = async () => {
       try {
@@ -510,10 +551,10 @@ export function DictionarySearchTab({
     return () => {
       cancelled = true;
     };
-  }, [open, userId, materialEnabled]);
+  }, [searchEnabled, userId, materialEnabled]);
 
   useEffect(() => {
-    if (!open || materialEnabled || !searchLanguage) return;
+    if (!searchEnabled || materialEnabled || !searchLanguage) return;
     let cancelled = false;
     const loadSources = async () => {
       const sources = await fetchAvailableDictionarySources({
@@ -541,7 +582,7 @@ export function DictionarySearchTab({
     };
   }, [
     dictionaryId,
-    open,
+    searchEnabled,
     searchLanguage,
     updateSearchState,
     userId,
@@ -553,7 +594,7 @@ export function DictionarySearchTab({
   const selectedSourceAvailable =
     !dictionaryId || scopeDictionaries.some((item) => item.id === dictionaryId);
   useEffect(() => {
-    if (!open || !materialReady || useViewedListFilter) return;
+    if (!searchEnabled || !materialReady || useViewedListFilter) return;
     if (!material?.currentLanguageAllowed && activeLanguage) {
       updateSearchState({
         languageCode: activeLanguage,
@@ -571,7 +612,7 @@ export function DictionarySearchTab({
       });
     }
   }, [
-    open,
+    searchEnabled,
     materialReady,
     material?.currentLanguageAllowed,
     activeLanguage,
@@ -1086,7 +1127,7 @@ export function DictionarySearchTab({
             <button
               type="button"
               className={approved ? workspace.button : "mt-3 rounded-full border border-current px-3 py-1.5 font-semibold"}
-              onClick={() => void runSearch()}
+              onClick={() => void runSearch(true)}
             >
               {copy.retry}
             </button>
@@ -1349,7 +1390,9 @@ export function DictionarySearchTab({
                   userId={userId}
                   userLists={userLists}
                   onListsUpdated={async () => {
+                    searchFreshRef.current = null;
                     await reloadLists();
+                    void runSearch(true);
                     notifyListsUpdated();
                   }}
                   onOpenListMembership={onOpenListMembership}
@@ -1380,7 +1423,9 @@ export function DictionarySearchTab({
           interfaceLanguage={interfaceLanguage}
           userLists={userLists}
           onListsUpdated={async () => {
+            searchFreshRef.current = null;
             await reloadLists();
+            void runSearch(true);
             notifyListsUpdated();
           }}
           onOpenListMembership={onOpenListMembership}
