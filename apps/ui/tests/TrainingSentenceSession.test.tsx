@@ -86,7 +86,7 @@ test("sentence session reveals the selected translation, grades the same identit
   expect(screen.getByText("Переведённый пример.")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Good" }));
   await waitFor(() => expect(performPlatformV2TranslationExerciseAction).toHaveBeenCalledWith(expect.objectContaining({ trainingSessionId: session.sessionId, candidate: expect.objectContaining({ targetId: candidate.targetId, family: "translation", direction: "recall" }), reviewResult: "success" })));
-  expect(await screen.findByText("Sentence session complete")).toBeVisible();
+  expect(await screen.findByText("Session complete")).toBeVisible();
 });
 
 test("a pending translation stays on the same session member and can be retried", async () => {

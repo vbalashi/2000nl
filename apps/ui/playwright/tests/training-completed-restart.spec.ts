@@ -40,7 +40,9 @@ test("@pilot paused meaning session still continues the same run", async ({ page
 
 
 for (const action of ["restart", "edit"] as const) test(`@pilot finite completion keeps the palette and supports ${action}`, async ({page}) => {
+  await page.setViewportSize({width:429,height:916});
   const fixture = await setupAuthenticatedTrainingAttributionPage(page, 0, { visualProfile: "answer", devTestLogin, sessionPlannedTotal: 3 });
+  await page.route(/\/api\/training\/study-time\?session=/,async route => {const id=new URL(route.request().url()).searchParams.get("session"); await route.fulfill({json:{sessionId:id,activeMilliseconds:260000,measurementCount:12}});});
   await page.getByRole("button", {name: /^(Start training|Начать тренировку|Training starten)$/i}).click();
   for (let index = 0; index < 3; index++) {
     await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
@@ -53,24 +55,30 @@ for (const action of ["restart", "edit"] as const) test(`@pilot finite completio
   const completed = page.getByTestId("training-usable-candidates-exhausted");
   await expect(completed).toHaveAttribute("data-training-v2-state", "completed");
   await expect(completed.getByRole("button")).toHaveCount(3);
+  await expect(completed).toContainText(/4 min 20 sec|4 мин 20 сек/);
+  await page.screenshot({path:`test-results/completion-${action}.png`});
   const colors: string[] = [];
   for (const dark of [false, true]) {
     await page.evaluate(value => document.documentElement.classList.toggle("dark", value), dark);
-    const reading = completed.getByTestId("training-session-state");
+    const reading = completed.getByTestId("training-completion");
     colors.push(await reading.evaluate(el => getComputedStyle(el).backgroundColor));
     expect(colors.at(-1)).not.toBe("rgba(0, 0, 0, 0)");
   }
   expect(colors[0]).not.toBe(colors[1]);
   if (action === "edit") {
-    await page.getByRole("button", {name: /Edit training|Изменить тренировку|Training aanpassen/i}).click();
+    await page.getByRole("button", {name: /Modify training|Изменить тренировку|Training aanpassen/i}).click();
     await expect(page.getByRole("heading", {name: /Session builder|Настройка тренировки|Training samenstellen/i})).toBeVisible();
     await expect(page.getByRole("button", {name: /^(Start training|Начать тренировку|Training starten)$/i})).toBeVisible();
     expect(fixture.requests.sessionStarts).toHaveLength(1);
     return;
   }
-  await page.getByRole("button", {name: /Start next session|Начать следующую сессию|Volgende sessie starten/i}).click();
+  await page.getByRole("button", {name: /Another 10 cards|Ещё 10 карточек|Nog 10 kaarten/i}).click();
   await expect.poll(() => fixture.requests.sessionStarts.length).toBe(2);
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+  expect(fixture.requests.sessionStarts[1].p_session_size).toBe("10");
+  const {p_session_size: firstSize,p_request_id:firstId,...firstRecipe}=fixture.requests.sessionStarts[0];
+  const {p_session_size: nextSize,p_request_id:nextId,...nextRecipe}=fixture.requests.sessionStarts[1];
+  expect(nextRecipe).toEqual(firstRecipe); expect(nextId).not.toBe(firstId);
 });
 
 

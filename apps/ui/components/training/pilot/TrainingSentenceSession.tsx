@@ -8,6 +8,7 @@ import type { SentenceExerciseContent } from "@/lib/training/sentenceExerciseCon
 import { loadSentenceExerciseContent, prepareSentenceExerciseTranslation } from "@/lib/training/sentenceExerciseLoader";
 import { fetchNextPlatformV2TranslationTrainingSessionExercise, markPlatformV2TranslationTrainingSessionMemberUnavailable, performPlatformV2TranslationExerciseAction } from "@/lib/platform/platformV2TranslationExerciseClient";
 import { buildSentenceCardPresentation } from "@/lib/training/sentenceCardPresentation";
+import { TrainingCompletion, type TrainingCompletionActions } from "../v2/TrainingCompletion";
 import { TrainingSessionState } from "../v2/TrainingSessionState";
 import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
 import { TrainingSessionNotice } from "../v2/TrainingSessionSurface";
@@ -24,7 +25,7 @@ import { resolvePlatformV2Audio } from "@/lib/platform/platformV2TrainingMediaCl
 
 import { useRecordedStudyTime } from "../useRecordedStudyTime";
 
-type Props = {
+type Props = TrainingCompletionActions & {
   sessionName?: string;
   studyTimeEnabled?: boolean;
   userId: string;
@@ -80,14 +81,14 @@ export function TrainingSentenceSession(props: Props) {
           await markPlatformV2TranslationTrainingSessionMemberUnavailable(userId, session.sessionId, next.targetId, next.reason);
           continue;
         }
-        if (next.status === "completed" || next.status === "exhausted") { setTerminal(completedRef.current ? "complete" : "empty"); return; }
+        if (next.status === "completed" || next.status === "exhausted") { setTerminal(completedRef.current >= session.plannedTotal && session.plannedTotal > 0 ? "complete" : "empty"); return; }
         if (next.status === "superseded") { supersededCallback.current?.(); return; }
         setFailed(true); return;
       }
       setFailed(true);
     } catch { if (current === generation.current) setFailed(true); }
     finally { if (current === generation.current) setLoading(false); }
-  }, [userId, session.sessionId, contentLanguageCode, translationTargetLanguageCode]);
+  }, [userId, session.sessionId, session.plannedTotal, contentLanguageCode, translationTargetLanguageCode]);
   useEffect(() => {
     const generationRef = generation;
     void loadNext();
@@ -147,8 +148,7 @@ export function TrainingSentenceSession(props: Props) {
       {preparationFailed ? <TrainingSessionState title={t.failed} announcement="alert"
         action={{label:t.retry,onClick:()=>void loadNext()}}
         secondaryAction={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
-      {!loading && terminal ? <TrainingSessionState title={terminal === "complete" ? t.complete : t.empty}
-        action={{ label: trainingPresentationV1Enabled() ? getUiMessages(interfaceLanguage).trainingSession.back : t.back, onClick: onExit }} /> : null}
+      {!loading && terminal ? terminal === "complete" ? <TrainingCompletion ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completed} onExit={onExit} onRestart={props.onRestart} onEdit={props.onEdit} pending={props.pending} startFailed={props.startFailed} /> : <TrainingSessionState title={t.empty} action={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
     {!loading && !terminal && candidate && content && presentation ? <TrainingExerciseCard key={`${session.sessionId}:${candidate.targetKey}`} presentation={presentation} interfaceLanguage={interfaceLanguage} revealed={revealed} onReveal={() => setRevealed(true)} busy={submitting || exclusion.busy || exclusion.failed} onGrade={(result) => void grade(result)} onPlayAudio={content.group.header.audio && onPlayResolvedAudio ? () => { void resolvePlatformV2Audio({ cacheOwnerId: userId, capability: content.group.header.audio!, text: content.sentence.text }).then((url) => onPlayResolvedAudio(url, content.sentence.text)).catch(() => setFailed(true)); } : undefined} onOpenDetails={onOpenDetails ? () => onOpenDetails({ group: content.group, entry: content.entry }) : undefined} secondaryActions={<TrainingCardSecondaryActions>{content.entry.reportContentRevision && content.entry.capabilities?.some((cap) => cap.actionId === "report-content") ? <SenseCardReportAction appearance="training-text" snapshot={freezeSenseCardDiagnosticSnapshot({ route: "training", group: content.group, entry: content.entry, target: { kind: "content-node", entryId: content.entry.entryId, contentNodeId: content.sentence.contentNodeId, nodeKind: "example", sourceTextFingerprint: content.sentence.sourceTextFingerprint } })} interfaceLanguage={interfaceLanguage} disabled={submitting || exclusion.busy} /> : <span />}{candidate ? <TrainingExcludeAction language={interfaceLanguage} disabled={submitting || exclusion.busy} onClick={() => void exclusion.exclude()} /> : null}</TrainingCardSecondaryActions>} /> : null}
   </TrainingSessionV2Layout>;
 }
