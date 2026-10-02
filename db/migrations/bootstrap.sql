@@ -537,3 +537,5 @@
 \i db/migrations/193_directional_known_marks.sql
 
 \i db/migrations/194_library_initial_browse.sql
+
+\i db/migrations/195_training_session_active_time.sql

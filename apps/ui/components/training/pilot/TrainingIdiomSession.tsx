@@ -66,7 +66,7 @@ export function TrainingIdiomSession({
   translationTargetLanguageCode,
   interfaceLanguage,
   onExit,
-  onRestart, onEdit, pending,
+  onRestart, onEdit, pending, startFailed,
   onSessionSuperseded,
   onHistory,
   onPlayResolvedAudio,
@@ -304,7 +304,7 @@ export function TrainingIdiomSession({
       {preparationFailed ? <TrainingSessionState title={t.failed} announcement="alert"
         action={{label:t.retry,onClick:()=>void loadNext()}}
         secondaryAction={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
-      {!loading && terminal ? terminal === "complete" ? <TrainingCompletion ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} /> : <TrainingSessionState title={t.empty} action={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
+      {!loading && terminal ? terminal === "complete" ? <TrainingCompletion ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} startFailed={startFailed} /> : <TrainingSessionState title={t.empty} action={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
       {!loading && !terminal && candidate && content ? (
         <TrainingIdiomCard
           key={`${session.sessionId}:${candidate.targetKey}:${translationTargetLanguageCode ?? "off"}`}
