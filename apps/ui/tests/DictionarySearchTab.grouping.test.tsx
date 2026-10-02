@@ -517,10 +517,12 @@ test("initial browse loading does not show an empty result and failure can retry
   await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalled());
   expect(screen.queryByText("No words found")).not.toBeInTheDocument();
   expect(screen.queryByText("0 matching articles")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("library-group-pagination")).not.toBeInTheDocument();
   expect(screen.queryByTestId("library-headword-group-group-goed-homograph")).not.toBeInTheDocument();
   await act(async()=>{pending.reject(new Error("lookup_http_503"));});
   expect(await screen.findByRole("alert")).toBeInTheDocument();
   expect(screen.queryByText("0 matching articles")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("library-group-pagination")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"Try again"}));
   await screen.findByTestId("library-headword-group-group-goed-homograph");
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();

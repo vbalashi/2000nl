@@ -1272,7 +1272,7 @@ export function DictionarySearchTab({
         )}
       </div>
 
-      <div
+      {hasCurrentResults && <div
         data-testid={
           groupedSearchActive ? "library-group-pagination" : undefined
         }
@@ -1342,7 +1342,7 @@ export function DictionarySearchTab({
             {approved ? <ChevronRight size={18} aria-hidden="true"/> : copy.next}
           </button>
         </div>
-      </div>
+      </div>}
     </div>
   );
 
