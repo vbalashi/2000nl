@@ -1,0 +1,7130 @@
+[
+  {
+    "width": 610,
+    "size": "normal",
+    "translation": "off",
+    "variant": "baseline",
+    "overflow": false,
+    "sectionMargins": [
+      12,
+      12,
+      12,
+      12,
+      12
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 253.390625,
+          "width": 536,
+          "height": 22.390625
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 283.78125,
+          "width": 536,
+          "height": 22.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 342.671875,
+          "width": 536,
+          "height": 130.484375
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 377.0625,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": null,
+        "originalSize": "14px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 435.859375,
+          "width": 504,
+          "height": 29.296875
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 481.15625,
+          "width": 536,
+          "height": 89.1875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 515.546875,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 632.34375,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 755.734375,
+          "width": 536,
+          "height": 22.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 814.625,
+          "width": 536,
+          "height": 89.1875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 849.015625,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 911.8125,
+          "width": 536,
+          "height": 130.484375
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 946.203125,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": null,
+        "originalSize": "14px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1005,
+          "width": 504,
+          "height": 29.296875
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1050.296875,
+          "width": 536,
+          "height": 89.1875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1084.6875,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1201.484375,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1383.765625,
+          "width": 536,
+          "height": 22.390625
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1414.15625,
+          "width": 536,
+          "height": 22.390625
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "normal",
+    "translation": "off",
+    "variant": "balanced",
+    "overflow": false,
+    "sectionMargins": [
+      20,
+      20,
+      20,
+      20,
+      20
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 279.390625,
+          "width": 536,
+          "height": 28.390625
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 319.78125,
+          "width": 536,
+          "height": 28.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 396.671875,
+          "width": 536,
+          "height": 138.578125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 434.0625,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 492.859375,
+          "width": 504,
+          "height": 31.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 547.25,
+          "width": 536,
+          "height": 95.1875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 584.640625,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 704.4375,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 853.828125,
+          "width": 536,
+          "height": 28.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 930.71875,
+          "width": 536,
+          "height": 95.1875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 968.109375,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1037.90625,
+          "width": 536,
+          "height": 138.578125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1075.296875,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1134.09375,
+          "width": 504,
+          "height": 31.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1188.484375,
+          "width": 536,
+          "height": 95.1875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1225.875,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1345.671875,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 1559.953125,
+          "width": 536,
+          "height": 28.390625
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 1600.34375,
+          "width": 536,
+          "height": 28.390625
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "normal",
+    "translation": "off",
+    "variant": "airy",
+    "overflow": false,
+    "sectionMargins": [
+      26,
+      26,
+      26,
+      26,
+      26
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 299.390625,
+          "width": 536,
+          "height": 32.390625
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 347.78125,
+          "width": 536,
+          "height": 32.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 438.671875,
+          "width": 536,
+          "height": 142.578125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 478.0625,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 536.859375,
+          "width": 504,
+          "height": 31.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 597.25,
+          "width": 536,
+          "height": 99.1875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 636.640625,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 758.4375,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 927.828125,
+          "width": 536,
+          "height": 32.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1018.71875,
+          "width": 536,
+          "height": 99.1875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1058.109375,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1133.90625,
+          "width": 536,
+          "height": 142.578125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1173.296875,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1232.09375,
+          "width": 504,
+          "height": 31.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1292.484375,
+          "width": 536,
+          "height": 99.1875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": null,
+        "originalSize": "13px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1331.875,
+          "width": 504,
+          "height": 46.796875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1453.671875,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 1691.953125,
+          "width": 536,
+          "height": 32.390625
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 1740.34375,
+          "width": 536,
+          "height": 32.390625
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "normal",
+    "translation": "on",
+    "variant": "baseline",
+    "overflow": false,
+    "sectionMargins": [
+      12,
+      12,
+      12,
+      12,
+      12
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": "то, что хорошее, отличается высоким качеством",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 48.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": "Рюд — хороший учитель",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 273.578125,
+          "width": 536,
+          "height": 42.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": "ты хорошо провёл отпуск?",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 324.15625,
+          "width": 536,
+          "height": 42.578125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": "что-то встречают с одобрением",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 403.234375,
+          "width": 536,
+          "height": 208.671875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": "это ценят",
+        "originalSize": "13px",
+        "translationSize": "12px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 457.8125,
+          "width": 504,
+          "height": 66.796875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": "Предложение о том, чтобы уйти домой немного раньше, чем обычно, пришлось всем по душе и было встречено с всеобщим одобрением.",
+        "originalSize": "14px",
+        "translationSize": "12px",
+        "translationLines": 2,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 536.609375,
+          "width": 504,
+          "height": 67.296875
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": "всё хорошо?",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 619.90625,
+          "width": 536,
+          "height": 147.375
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": "Это выражение употребляют, когда хотят узнать, как у человека идут дела, всё ли у него в порядке и хорошо ли он себя чувствует.",
+        "originalSize": "13px",
+        "translationSize": "12px",
+        "translationLines": 2,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 674.484375,
+          "width": 504,
+          "height": 84.796875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": "то, что правильное, является верным или соответствует действительности",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 829.28125,
+          "width": 536,
+          "height": 48.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": "она дала правильный ответ",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 972.859375,
+          "width": 536,
+          "height": 42.578125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": "всё хорошо, но …",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1051.9375,
+          "width": 536,
+          "height": 129.375
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": "это может быть так, но …",
+        "originalSize": "13px",
+        "translationSize": "12px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1106.515625,
+          "width": 504,
+          "height": 66.796875
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": "почти как …",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1189.3125,
+          "width": 536,
+          "height": 190.671875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": "практически полностью",
+        "originalSize": "13px",
+        "translationSize": "12px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1243.890625,
+          "width": 504,
+          "height": 66.796875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": "эти туфли почти как новые",
+        "originalSize": "14px",
+        "translationSize": "12px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1322.6875,
+          "width": 504,
+          "height": 49.296875
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": "настолько хорошо, насколько это возможно",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1387.984375,
+          "width": 536,
+          "height": 129.375
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": "настолько хорошо, насколько позволяет ситуация",
+        "originalSize": "13px",
+        "translationSize": "12px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1442.5625,
+          "width": 504,
+          "height": 66.796875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": "то, что хорошее, подходит для своей цели",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1579.359375,
+          "width": 536,
+          "height": 48.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": "полезно есть много фруктов",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1781.828125,
+          "width": 536,
+          "height": 42.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": "мне кажется, сейчас подходящий момент, чтобы поесть",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1832.40625,
+          "width": 536,
+          "height": 42.578125
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "normal",
+    "translation": "on",
+    "variant": "balanced",
+    "overflow": false,
+    "sectionMargins": [
+      24,
+      24,
+      24,
+      24,
+      24
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": "то, что хорошее, отличается высоким качеством",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 50.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": "Рюд — хороший учитель",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 309.578125,
+          "width": 536,
+          "height": 50.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": "ты хорошо провёл отпуск?",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 372.15625,
+          "width": 536,
+          "height": 50.578125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": "что-то встречают с одобрением",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 475.234375,
+          "width": 536,
+          "height": 223.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": "это ценят",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 534.8125,
+          "width": 504,
+          "height": 68.984375
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": "Предложение о том, чтобы уйти домой немного раньше, чем обычно, пришлось всем по душе и было встречено с всеобщим одобрением.",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 2,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 615.796875,
+          "width": 504,
+          "height": 71.765625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": "всё хорошо?",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 710.5625,
+          "width": 536,
+          "height": 157.75
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": "Это выражение употребляют, когда хотят узнать, как у человека идут дела, всё ли у него в порядке и хорошо ли он себя чувствует.",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 2,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 770.140625,
+          "width": 504,
+          "height": 87.171875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": "то, что правильное, является верным или соответствует действительности",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 930.3125,
+          "width": 536,
+          "height": 50.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": "она дала правильный ответ",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 1109.890625,
+          "width": 536,
+          "height": 50.578125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": "всё хорошо, но …",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1212.96875,
+          "width": 536,
+          "height": 139.5625
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": "это может быть так, но …",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1272.546875,
+          "width": 504,
+          "height": 68.984375
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": "почти как …",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1364.53125,
+          "width": 536,
+          "height": 205.140625
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": "практически полностью",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1424.109375,
+          "width": 504,
+          "height": 68.984375
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": "эти туфли почти как новые",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1505.09375,
+          "width": 504,
+          "height": 53.578125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": "настолько хорошо, насколько это возможно",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1581.671875,
+          "width": 536,
+          "height": 139.5625
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": "настолько хорошо, насколько позволяет ситуация",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1641.25,
+          "width": 504,
+          "height": 68.984375
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": "то, что хорошее, подходит для своей цели",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1783.234375,
+          "width": 536,
+          "height": 50.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": "полезно есть много фруктов",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 2027.703125,
+          "width": 536,
+          "height": 50.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": "мне кажется, сейчас подходящий момент, чтобы поесть",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 2090.28125,
+          "width": 536,
+          "height": 50.578125
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "normal",
+    "translation": "on",
+    "variant": "airy",
+    "overflow": false,
+    "sectionMargins": [
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": "то, что хорошее, отличается высоким качеством",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 51.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": "Рюд — хороший учитель",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 334.578125,
+          "width": 536,
+          "height": 55.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": "ты хорошо провёл отпуск?",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 406.15625,
+          "width": 536,
+          "height": 55.578125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": "что-то встречают с одобрением",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 526.234375,
+          "width": 536,
+          "height": 230.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": "это ценят",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 588.8125,
+          "width": 504,
+          "height": 69.984375
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": "Предложение о том, чтобы уйти домой немного раньше, чем обычно, пришлось всем по душе и было встречено с всеобщим одобрением.",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 2,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 670.796875,
+          "width": 504,
+          "height": 72.765625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": "всё хорошо?",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 772.5625,
+          "width": 536,
+          "height": 163.75
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": "Это выражение употребляют, когда хотят узнать, как у человека идут дела, всё ли у него в порядке и хорошо ли он себя чувствует.",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 2,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 835.140625,
+          "width": 504,
+          "height": 88.171875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": "то, что правильное, является верным или соответствует действительности",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 998.3125,
+          "width": 536,
+          "height": 51.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": "она дала правильный ответ",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 1202.890625,
+          "width": 536,
+          "height": 55.578125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": "всё хорошо, но …",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1322.96875,
+          "width": 536,
+          "height": 145.5625
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": "это может быть так, но …",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1385.546875,
+          "width": 504,
+          "height": 69.984375
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": "почти как …",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1484.53125,
+          "width": 536,
+          "height": 212.140625
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": "практически полностью",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1547.109375,
+          "width": 504,
+          "height": 69.984375
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": "эти туфли почти как новые",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1629.09375,
+          "width": 504,
+          "height": 54.578125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": "настолько хорошо, насколько это возможно",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1712.671875,
+          "width": 536,
+          "height": 145.5625
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": "настолько хорошо, насколько позволяет ситуация",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1775.25,
+          "width": 504,
+          "height": 69.984375
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": "то, что хорошее, подходит для своей цели",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1920.234375,
+          "width": 536,
+          "height": 51.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": "полезно есть много фруктов",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 2193.703125,
+          "width": 536,
+          "height": 55.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": "мне кажется, сейчас подходящий момент, чтобы поесть",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 2265.28125,
+          "width": 536,
+          "height": 55.578125
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "normal",
+    "translation": "partial",
+    "variant": "baseline",
+    "overflow": false,
+    "sectionMargins": [
+      12,
+      12,
+      12,
+      12,
+      12
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": "то, что хорошее, отличается высоким качеством",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 48.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 273.578125,
+          "width": 536,
+          "height": 22.390625
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 303.96875,
+          "width": 536,
+          "height": 22.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": "что-то встречают с одобрением",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 362.859375,
+          "width": 536,
+          "height": 170.671875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": "это ценят",
+        "originalSize": "13px",
+        "translationSize": "12px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 417.4375,
+          "width": 504,
+          "height": 66.796875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": null,
+        "originalSize": "14px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 496.234375,
+          "width": 504,
+          "height": 29.296875
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": "всё хорошо?",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 541.53125,
+          "width": 536,
+          "height": 147.375
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": "Это выражение употребляют, когда хотят узнать, как у человека идут дела, всё ли у него в порядке и хорошо ли он себя чувствует.",
+        "originalSize": "13px",
+        "translationSize": "12px",
+        "translationLines": 2,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 596.109375,
+          "width": 504,
+          "height": 84.796875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": "то, что правильное, является верным или соответствует действительности",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 750.90625,
+          "width": 536,
+          "height": 48.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 894.484375,
+          "width": 536,
+          "height": 22.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": "всё хорошо, но …",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 953.375,
+          "width": 536,
+          "height": 129.375
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": "это может быть так, но …",
+        "originalSize": "13px",
+        "translationSize": "12px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1007.953125,
+          "width": 504,
+          "height": 66.796875
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": "почти как …",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1090.75,
+          "width": 536,
+          "height": 170.671875
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": "практически полностью",
+        "originalSize": "13px",
+        "translationSize": "12px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1145.328125,
+          "width": 504,
+          "height": 66.796875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": null,
+        "originalSize": "14px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1224.125,
+          "width": 504,
+          "height": 29.296875
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": "настолько хорошо, насколько это возможно",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1269.421875,
+          "width": 536,
+          "height": 129.375
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": "настолько хорошо, насколько позволяет ситуация",
+        "originalSize": "13px",
+        "translationSize": "12px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1324,
+          "width": 504,
+          "height": 66.796875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": "то, что хорошее, подходит для своей цели",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1460.796875,
+          "width": 536,
+          "height": 48.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1663.265625,
+          "width": 536,
+          "height": 22.390625
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1693.65625,
+          "width": 536,
+          "height": 22.390625
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "normal",
+    "translation": "partial",
+    "variant": "balanced",
+    "overflow": false,
+    "sectionMargins": [
+      24,
+      24,
+      24,
+      24,
+      24
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": "то, что хорошее, отличается высоким качеством",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 50.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 309.578125,
+          "width": 536,
+          "height": 28.390625
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 349.96875,
+          "width": 536,
+          "height": 28.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": "что-то встречают с одобрением",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 430.859375,
+          "width": 536,
+          "height": 182.953125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": "это ценят",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 490.4375,
+          "width": 504,
+          "height": 68.984375
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 571.421875,
+          "width": 504,
+          "height": 31.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": "всё хорошо?",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 625.8125,
+          "width": 536,
+          "height": 157.75
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": "Это выражение употребляют, когда хотят узнать, как у человека идут дела, всё ли у него в порядке и хорошо ли он себя чувствует.",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 2,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 685.390625,
+          "width": 504,
+          "height": 87.171875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": "то, что правильное, является верным или соответствует действительности",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 845.5625,
+          "width": 536,
+          "height": 50.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 1025.140625,
+          "width": 536,
+          "height": 28.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": "всё хорошо, но …",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1106.03125,
+          "width": 536,
+          "height": 139.5625
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": "это может быть так, но …",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1165.609375,
+          "width": 504,
+          "height": 68.984375
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": "почти как …",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1257.59375,
+          "width": 536,
+          "height": 182.953125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": "практически полностью",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1317.171875,
+          "width": 504,
+          "height": 68.984375
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1398.15625,
+          "width": 504,
+          "height": 31.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": "настолько хорошо, насколько это возможно",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1452.546875,
+          "width": 536,
+          "height": 139.5625
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": "настолько хорошо, насколько позволяет ситуация",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1512.125,
+          "width": 504,
+          "height": 68.984375
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": "то, что хорошее, подходит для своей цели",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1654.109375,
+          "width": 536,
+          "height": 50.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 1898.578125,
+          "width": 536,
+          "height": 28.390625
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 1938.96875,
+          "width": 536,
+          "height": 28.390625
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "normal",
+    "translation": "partial",
+    "variant": "airy",
+    "overflow": false,
+    "sectionMargins": [
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": "то, что хорошее, отличается высоким качеством",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 51.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 334.578125,
+          "width": 536,
+          "height": 32.390625
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 382.96875,
+          "width": 536,
+          "height": 32.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": "что-то встречают с одобрением",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 479.859375,
+          "width": 536,
+          "height": 188.953125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": "это ценят",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 542.4375,
+          "width": 504,
+          "height": 69.984375
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 624.421875,
+          "width": 504,
+          "height": 31.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": "всё хорошо?",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 684.8125,
+          "width": 536,
+          "height": 163.75
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": "Это выражение употребляют, когда хотят узнать, как у человека идут дела, всё ли у него в порядке и хорошо ли он себя чувствует.",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 2,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 747.390625,
+          "width": 504,
+          "height": 88.171875
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": "то, что правильное, является верным или соответствует действительности",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 910.5625,
+          "width": 536,
+          "height": 51.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 1115.140625,
+          "width": 536,
+          "height": 32.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": "всё хорошо, но …",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1212.03125,
+          "width": 536,
+          "height": 145.5625
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": "это может быть так, но …",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1274.609375,
+          "width": 504,
+          "height": 69.984375
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": "почти как …",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1373.59375,
+          "width": 536,
+          "height": 188.953125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": "практически полностью",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1436.171875,
+          "width": 504,
+          "height": 69.984375
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1518.15625,
+          "width": 504,
+          "height": 31.390625
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": "настолько хорошо, насколько это возможно",
+        "originalSize": "16px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1578.546875,
+          "width": 536,
+          "height": 145.5625
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": "настолько хорошо, насколько позволяет ситуация",
+        "originalSize": "13px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 27.296875,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1641.125,
+          "width": 504,
+          "height": 69.984375
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": "то, что хорошее, подходит для своей цели",
+        "originalSize": "20px",
+        "translationSize": "13px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1786.109375,
+          "width": 536,
+          "height": 51.1875
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 2059.578125,
+          "width": 536,
+          "height": 32.390625
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": null,
+        "originalSize": "16px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 2107.96875,
+          "width": 536,
+          "height": 32.390625
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "large",
+    "translation": "off",
+    "variant": "baseline",
+    "overflow": false,
+    "sectionMargins": [
+      12,
+      12,
+      12,
+      12,
+      12
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": null,
+        "originalSize": "25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 35
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 270.96875,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 306.96875,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 373.953125,
+          "width": 536,
+          "height": 173.578125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 413.953125,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": null,
+        "originalSize": "17.5px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 479.78125,
+          "width": 504,
+          "height": 59.75
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 555.53125,
+          "width": 536,
+          "height": 101.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 595.53125,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": null,
+        "originalSize": "25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 719.359375,
+          "width": 536,
+          "height": 35
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 860.328125,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 927.3125,
+          "width": 536,
+          "height": 101.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 967.3125,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1037.140625,
+          "width": 536,
+          "height": 148.203125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1077.140625,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": null,
+        "originalSize": "17.5px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1142.96875,
+          "width": 504,
+          "height": 34.375
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1193.34375,
+          "width": 536,
+          "height": 101.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1233.34375,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": null,
+        "originalSize": "25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1357.171875,
+          "width": 536,
+          "height": 35
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1565.125,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1601.125,
+          "width": 536,
+          "height": 28
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "large",
+    "translation": "off",
+    "variant": "balanced",
+    "overflow": false,
+    "sectionMargins": [
+      20,
+      20,
+      20,
+      20,
+      20
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": null,
+        "originalSize": "25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 35
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 296.96875,
+          "width": 536,
+          "height": 34
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 342.96875,
+          "width": 536,
+          "height": 34
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 427.953125,
+          "width": 536,
+          "height": 184.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 470.953125,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 536.78125,
+          "width": 504,
+          "height": 65
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 624.78125,
+          "width": 536,
+          "height": 107.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 667.78125,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": null,
+        "originalSize": "25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 794.609375,
+          "width": 536,
+          "height": 35
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 961.578125,
+          "width": 536,
+          "height": 34
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1046.5625,
+          "width": 536,
+          "height": 107.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1089.5625,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1166.390625,
+          "width": 536,
+          "height": 156.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1209.390625,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1275.21875,
+          "width": 504,
+          "height": 37
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1335.21875,
+          "width": 536,
+          "height": 107.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1378.21875,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": null,
+        "originalSize": "25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1505.046875,
+          "width": 536,
+          "height": 35
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 1745,
+          "width": 536,
+          "height": 34
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 1791,
+          "width": 536,
+          "height": 34
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "large",
+    "translation": "off",
+    "variant": "airy",
+    "overflow": false,
+    "sectionMargins": [
+      26,
+      26,
+      26,
+      26,
+      26
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": null,
+        "originalSize": "25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 35
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 316.96875,
+          "width": 536,
+          "height": 38
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 370.96875,
+          "width": 536,
+          "height": 38
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 469.953125,
+          "width": 536,
+          "height": 188.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 514.953125,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 580.78125,
+          "width": 504,
+          "height": 65
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 674.78125,
+          "width": 536,
+          "height": 111.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 719.78125,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": null,
+        "originalSize": "25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 848.609375,
+          "width": 536,
+          "height": 35
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 1035.578125,
+          "width": 536,
+          "height": 38
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1134.5625,
+          "width": 536,
+          "height": 111.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1179.5625,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1262.390625,
+          "width": 536,
+          "height": 160.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1307.390625,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1373.21875,
+          "width": 504,
+          "height": 37
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1439.21875,
+          "width": 536,
+          "height": 111.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": null,
+        "originalSize": "16.25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1484.21875,
+          "width": 504,
+          "height": 53.828125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": null,
+        "originalSize": "25px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1613.046875,
+          "width": 536,
+          "height": 35
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 1877,
+          "width": 536,
+          "height": 38
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 1931,
+          "width": 536,
+          "height": 38
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "large",
+    "translation": "on",
+    "variant": "baseline",
+    "overflow": false,
+    "sectionMargins": [
+      12,
+      12,
+      12,
+      12,
+      12
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": "то, что хорошее, отличается высоким качеством",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 59.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": "Рюд — хороший учитель",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 295.71875,
+          "width": 536,
+          "height": 52.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": "ты хорошо провёл отпуск?",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 356.46875,
+          "width": 536,
+          "height": 52.75
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": "что-то встречают с одобрением",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 448.203125,
+          "width": 536,
+          "height": 292.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": "это ценят",
+        "originalSize": "16.25px",
+        "translationSize": "15px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 512.953125,
+          "width": 504,
+          "height": 78.328125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": "Предложение о том, чтобы уйти домой немного раньше, чем обычно, пришлось всем по душе и было встречено с всеобщим одобрением.",
+        "originalSize": "17.5px",
+        "translationSize": "15px",
+        "translationLines": 3,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 603.28125,
+          "width": 504,
+          "height": 129.25
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": "всё хорошо?",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 748.53125,
+          "width": 536,
+          "height": 173.578125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": "Это выражение употребляют, когда хотят узнать, как у человека идут дела, всё ли у него в порядке и хорошо ли он себя чувствует.",
+        "originalSize": "16.25px",
+        "translationSize": "15px",
+        "translationLines": 2,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 813.28125,
+          "width": 504,
+          "height": 100.828125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": "то, что правильное, является верным или соответствует действительности",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 2,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 984.109375,
+          "width": 536,
+          "height": 82.5
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": "она дала правильный ответ",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1172.578125,
+          "width": 536,
+          "height": 52.75
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": "всё хорошо, но …",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1264.3125,
+          "width": 536,
+          "height": 151.078125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": "это может быть так, но …",
+        "originalSize": "16.25px",
+        "translationSize": "15px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1329.0625,
+          "width": 504,
+          "height": 78.328125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": "почти как …",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1423.390625,
+          "width": 536,
+          "height": 221.953125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": "практически полностью",
+        "originalSize": "16.25px",
+        "translationSize": "15px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1488.140625,
+          "width": 504,
+          "height": 78.328125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": "эти туфли почти как новые",
+        "originalSize": "17.5px",
+        "translationSize": "15px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1578.46875,
+          "width": 504,
+          "height": 58.875
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": "настолько хорошо, насколько это возможно",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1653.34375,
+          "width": 536,
+          "height": 151.078125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": "настолько хорошо, насколько позволяет ситуация",
+        "originalSize": "16.25px",
+        "translationSize": "15px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1718.09375,
+          "width": 504,
+          "height": 78.328125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": "то, что хорошее, подходит для своей цели",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1866.421875,
+          "width": 536,
+          "height": 59.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": "полезно есть много фруктов",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 2099.125,
+          "width": 536,
+          "height": 52.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": "мне кажется, сейчас подходящий момент, чтобы поесть",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 2159.875,
+          "width": 536,
+          "height": 52.75
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "large",
+    "translation": "on",
+    "variant": "balanced",
+    "overflow": false,
+    "sectionMargins": [
+      24,
+      24,
+      24,
+      24,
+      24
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": "то, что хорошее, отличается высоким качеством",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 61.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": "Рюд — хороший учитель",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 331.71875,
+          "width": 536,
+          "height": 60.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": "ты хорошо провёл отпуск?",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 404.46875,
+          "width": 536,
+          "height": 60.75
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": "что-то встречают с одобрением",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 520.203125,
+          "width": 536,
+          "height": 310.578125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": "это ценят",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 589.953125,
+          "width": 504,
+          "height": 80.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": "Предложение о том, чтобы уйти домой немного раньше, чем обычно, пришлось всем по душе и было встречено с всеобщим одобрением.",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 3,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 682.53125,
+          "width": 504,
+          "height": 137.25
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": "всё хорошо?",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 842.78125,
+          "width": 536,
+          "height": 206.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": "Это выражение употребляют, когда хотят узнать, как у человека идут дела, всё ли у него в порядке и хорошо ли он себя чувствует.",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 3,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 912.53125,
+          "width": 504,
+          "height": 126.078125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": "то, что правильное, является верным или соответствует действительности",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 2,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1111.609375,
+          "width": 536,
+          "height": 84.5
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": "она дала правильный ответ",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 1336.078125,
+          "width": 536,
+          "height": 60.75
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": "всё хорошо, но …",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1451.8125,
+          "width": 536,
+          "height": 161.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": "это может быть так, но …",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1521.5625,
+          "width": 504,
+          "height": 80.578125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": "почти как …",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1625.140625,
+          "width": 536,
+          "height": 237.078125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": "практически полностью",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1694.890625,
+          "width": 504,
+          "height": 80.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": "эти туфли почти как новые",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1787.46875,
+          "width": 504,
+          "height": 63.75
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": "настолько хорошо, насколько это возможно",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1874.21875,
+          "width": 536,
+          "height": 161.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": "настолько хорошо, насколько позволяет ситуация",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1943.96875,
+          "width": 504,
+          "height": 80.578125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": "то, что хорошее, подходит для своей цели",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 2097.546875,
+          "width": 536,
+          "height": 61.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": "полезно есть много фруктов",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 2372.25,
+          "width": 536,
+          "height": 60.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": "мне кажется, сейчас подходящий момент, чтобы поесть",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 2445,
+          "width": 536,
+          "height": 60.75
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "large",
+    "translation": "on",
+    "variant": "airy",
+    "overflow": false,
+    "sectionMargins": [
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": "то, что хорошее, отличается высоким качеством",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 62.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": "Рюд — хороший учитель",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 356.71875,
+          "width": 536,
+          "height": 65.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": "ты хорошо провёл отпуск?",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 438.46875,
+          "width": 536,
+          "height": 65.75
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": "что-то встречают с одобрением",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 571.203125,
+          "width": 536,
+          "height": 317.578125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": "это ценят",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 643.953125,
+          "width": 504,
+          "height": 81.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": "Предложение о том, чтобы уйти домой немного раньше, чем обычно, пришлось всем по душе и было встречено с всеобщим одобрением.",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 3,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 737.53125,
+          "width": 504,
+          "height": 138.25
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": "всё хорошо?",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 904.78125,
+          "width": 536,
+          "height": 212.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": "Это выражение употребляют, когда хотят узнать, как у человека идут дела, всё ли у него в порядке и хорошо ли он себя чувствует.",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 3,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 977.53125,
+          "width": 504,
+          "height": 127.078125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": "то, что правильное, является верным или соответствует действительности",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 2,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1179.609375,
+          "width": 536,
+          "height": 85.5
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": "она дала правильный ответ",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 1429.078125,
+          "width": 536,
+          "height": 65.75
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": "всё хорошо, но …",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1561.8125,
+          "width": 536,
+          "height": 167.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": "это может быть так, но …",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1634.5625,
+          "width": 504,
+          "height": 81.578125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": "почти как …",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1745.140625,
+          "width": 536,
+          "height": 244.078125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": "практически полностью",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1817.890625,
+          "width": 504,
+          "height": 81.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": "эти туфли почти как новые",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1911.46875,
+          "width": 504,
+          "height": 64.75
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": "настолько хорошо, насколько это возможно",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 2005.21875,
+          "width": 536,
+          "height": 167.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": "настолько хорошо, насколько позволяет ситуация",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 2077.96875,
+          "width": 504,
+          "height": 81.578125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": "то, что хорошее, подходит для своей цели",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 2234.546875,
+          "width": 536,
+          "height": 62.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": "полезно есть много фруктов",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 2538.25,
+          "width": 536,
+          "height": 65.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": "мне кажется, сейчас подходящий момент, чтобы поесть",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 2620,
+          "width": 536,
+          "height": 65.75
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "large",
+    "translation": "partial",
+    "variant": "baseline",
+    "overflow": false,
+    "sectionMargins": [
+      12,
+      12,
+      12,
+      12,
+      12
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": "то, что хорошее, отличается высоким качеством",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 59.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 295.71875,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 331.71875,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": "что-то встречают с одобрением",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 398.703125,
+          "width": 536,
+          "height": 222.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": "это ценят",
+        "originalSize": "16.25px",
+        "translationSize": "15px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 463.453125,
+          "width": 504,
+          "height": 78.328125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": null,
+        "originalSize": "17.5px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 553.78125,
+          "width": 504,
+          "height": 59.75
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": "всё хорошо?",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 629.53125,
+          "width": 536,
+          "height": 173.578125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": "Это выражение употребляют, когда хотят узнать, как у человека идут дела, всё ли у него в порядке и хорошо ли он себя чувствует.",
+        "originalSize": "16.25px",
+        "translationSize": "15px",
+        "translationLines": 2,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 694.28125,
+          "width": 504,
+          "height": 100.828125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": "то, что правильное, является верным или соответствует действительности",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 2,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 865.109375,
+          "width": 536,
+          "height": 82.5
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1053.578125,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": "всё хорошо, но …",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1120.5625,
+          "width": 536,
+          "height": 151.078125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": "это может быть так, но …",
+        "originalSize": "16.25px",
+        "translationSize": "15px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1185.3125,
+          "width": 504,
+          "height": 78.328125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": "почти как …",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1279.640625,
+          "width": 536,
+          "height": 197.453125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": "практически полностью",
+        "originalSize": "16.25px",
+        "translationSize": "15px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1344.390625,
+          "width": 504,
+          "height": 78.328125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": null,
+        "originalSize": "17.5px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1434.71875,
+          "width": 504,
+          "height": 34.375
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": "настолько хорошо, насколько это возможно",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 8,
+        "rect": {
+          "x": 37,
+          "y": 1485.09375,
+          "width": 536,
+          "height": 151.078125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": "настолько хорошо, насколько позволяет ситуация",
+        "originalSize": "16.25px",
+        "translationSize": "15px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1549.84375,
+          "width": 504,
+          "height": 78.328125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": "то, что хорошее, подходит для своей цели",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 2,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1698.171875,
+          "width": 536,
+          "height": 59.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1930.875,
+          "width": 536,
+          "height": 28
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1966.875,
+          "width": 536,
+          "height": 28
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "large",
+    "translation": "partial",
+    "variant": "balanced",
+    "overflow": false,
+    "sectionMargins": [
+      24,
+      24,
+      24,
+      24,
+      24
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": "то, что хорошее, отличается высоким качеством",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 61.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 331.71875,
+          "width": 536,
+          "height": 34
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 377.71875,
+          "width": 536,
+          "height": 34
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": "что-то встречают с одобрением",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 466.703125,
+          "width": 536,
+          "height": 238.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": "это ценят",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 536.453125,
+          "width": 504,
+          "height": 80.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 629.03125,
+          "width": 504,
+          "height": 65
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": "всё хорошо?",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 717.03125,
+          "width": 536,
+          "height": 206.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": "Это выражение употребляют, когда хотят узнать, как у человека идут дела, всё ли у него в порядке и хорошо ли он себя чувствует.",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 3,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 786.78125,
+          "width": 504,
+          "height": 126.078125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": "то, что правильное, является верным или соответствует действительности",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 2,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 985.859375,
+          "width": 536,
+          "height": 84.5
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 1210.328125,
+          "width": 536,
+          "height": 34
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": "всё хорошо, но …",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1299.3125,
+          "width": 536,
+          "height": 161.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": "это может быть так, но …",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1369.0625,
+          "width": 504,
+          "height": 80.578125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": "почти как …",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1472.640625,
+          "width": 536,
+          "height": 210.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": "практически полностью",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1542.390625,
+          "width": 504,
+          "height": 80.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1634.96875,
+          "width": 504,
+          "height": 37
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": "настолько хорошо, насколько это возможно",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 11,
+        "rect": {
+          "x": 37,
+          "y": 1694.96875,
+          "width": 536,
+          "height": 161.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": "настолько хорошо, насколько позволяет ситуация",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1764.71875,
+          "width": 504,
+          "height": 80.578125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": "то, что хорошее, подходит для своей цели",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 4,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1918.296875,
+          "width": 536,
+          "height": 61.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 2193,
+          "width": 536,
+          "height": 34
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 3,
+        "railBottom": 3,
+        "rect": {
+          "x": 37,
+          "y": 2239,
+          "width": 536,
+          "height": 34
+        }
+      }
+    ]
+  },
+  {
+    "width": 610,
+    "size": "large",
+    "translation": "partial",
+    "variant": "airy",
+    "overflow": false,
+    "sectionMargins": [
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "source": "iets wat goed is, heeft een hoge kwaliteit",
+        "translation": "то, что хорошее, отличается высоким качеством",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 130,
+          "width": 536,
+          "height": 62.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "source": "Ruud is een goede leraar",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 356.71875,
+          "width": 536,
+          "height": 38
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "source": "heb je een goede vakantie gehad?",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 410.71875,
+          "width": 536,
+          "height": 38
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "source": "iets valt in goede aarde",
+        "translation": "что-то встречают с одобрением",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 515.703125,
+          "width": 536,
+          "height": 244.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "source": "iets wordt gewaardeerd",
+        "translation": "это ценят",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 588.453125,
+          "width": 504,
+          "height": 81.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "source": "het voorstel om wat vroeger naar huis te gaan, viel bij iedereen in goede aarde",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 682.03125,
+          "width": 504,
+          "height": 65
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "source": "alles goed?",
+        "translation": "всё хорошо?",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 776.03125,
+          "width": 536,
+          "height": 212.828125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "source": "dit zeg je als je wilt weten hoe het met iemand gaat",
+        "translation": "Это выражение употребляют, когда хотят узнать, как у человека идут дела, всё ли у него в порядке и хорошо ли он себя чувствует.",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 3,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 848.78125,
+          "width": 504,
+          "height": 127.078125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "source": "iets wat goed is, is juist of klopt",
+        "translation": "то, что правильное, является верным или соответствует действительности",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 2,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 1050.859375,
+          "width": 536,
+          "height": 85.5
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "source": "ze gaf het goede antwoord",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 1300.328125,
+          "width": 536,
+          "height": 38
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "source": "alles goed en wel, maar …",
+        "translation": "всё хорошо, но …",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1405.3125,
+          "width": 536,
+          "height": 167.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "source": "dat kan wel zo zijn, maar …",
+        "translation": "это может быть так, но …",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1478.0625,
+          "width": 504,
+          "height": 81.578125
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "source": "zo goed als …",
+        "translation": "почти как …",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1588.640625,
+          "width": 536,
+          "height": 216.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "source": "vrijwel helemaal",
+        "translation": "практически полностью",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1661.390625,
+          "width": 504,
+          "height": 81.578125
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "source": "die schoenen zijn nog zo goed als nieuw",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "0px",
+        "railTop": 9,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1754.96875,
+          "width": 504,
+          "height": 37
+        }
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "source": "zo goed en zo kwaad als het gaat",
+        "translation": "настолько хорошо, насколько это возможно",
+        "originalSize": "20px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 13,
+        "rect": {
+          "x": 37,
+          "y": 1820.96875,
+          "width": 536,
+          "height": 167.328125
+        }
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "source": "zo goed als in de situatie mogelijk is",
+        "translation": "настолько хорошо, насколько позволяет ситуация",
+        "originalSize": "16.25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 29.453125,
+        "railBottom": 0,
+        "rect": {
+          "x": 59,
+          "y": 1893.71875,
+          "width": 504,
+          "height": 81.578125
+        }
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "source": "iets wat goed is, is geschikt voor het doel",
+        "translation": "то, что хорошее, подходит для своей цели",
+        "originalSize": "25px",
+        "translationSize": "16.25px",
+        "translationLines": 1,
+        "pairGap": 5,
+        "railBorder": "0px",
+        "railTop": 0,
+        "railBottom": 0,
+        "rect": {
+          "x": 37,
+          "y": 2050.296875,
+          "width": 536,
+          "height": 62.75
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "source": "het is goed om veel fruit te eten",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 2354,
+          "width": 536,
+          "height": 38
+        }
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "source": "dit lijkt me een goed moment om iets te eten",
+        "translation": null,
+        "originalSize": "20px",
+        "translationSize": null,
+        "translationLines": 0,
+        "pairGap": null,
+        "railBorder": "2px",
+        "railTop": 5,
+        "railBottom": 5,
+        "rect": {
+          "x": 37,
+          "y": 2408,
+          "width": 536,
+          "height": 38
+        }
+      }
+    ]
+  }
+]

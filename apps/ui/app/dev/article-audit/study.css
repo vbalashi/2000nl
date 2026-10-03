@@ -18,3 +18,13 @@
 [data-audit]:not([data-audit=baseline]) [data-entry-id]>div>[aria-hidden=false]:has([data-section]){margin-top:0}
 [data-audit]:not([data-audit=baseline]) [data-meaning-lead] [data-nesting]>p+[aria-hidden] [data-content-translation]{margin-top:4px}
 [data-audit=airy][data-audit] [data-meaning-lead] [data-nesting]>p+[aria-hidden] [data-content-translation]{margin-top:5px}
+
+/* Audit-only: stronger section separation when translations are enabled. */
+[data-audit=balanced][data-audit-translations=on] [data-section],
+[data-audit=balanced][data-audit-translations=on] section:has(>[class*="relations"]),
+[data-audit=balanced][data-audit-translations=partial] [data-section],
+[data-audit=balanced][data-audit-translations=partial] section:has(>[class*="relations"]){margin-top:24px}
+[data-audit=airy][data-audit-translations=on] [data-section],
+[data-audit=airy][data-audit-translations=on] section:has(>[class*="relations"]),
+[data-audit=airy][data-audit-translations=partial] [data-section],
+[data-audit=airy][data-audit-translations=partial] section:has(>[class*="relations"]){margin-top:32px}

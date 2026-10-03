@@ -35,5 +35,12 @@
     "apps/ui/app/dev/session-builder-prototype/word-details-fixture.json: details.goed-adjective",
     "db/data/words_content/000031_a31_aandoen_ww_3.json: meanings[0] (exact source strings normalized only for audit)"
   ],
-  "aandoenSourceSha256": "8782c3c4717b1ef7c0dccbaebcf353bc9406cc3383db245592f56846681a37e6"
+  "aandoenSourceSha256": "8782c3c4717b1ef7c0dccbaebcf353bc9406cc3383db245592f56846681a37e6",
+  "russianAudit": {
+    "source": "apps/ui/app/dev/article-audit/russianTranslations.ts",
+    "provenance": "Author-written audit translations; meaning2 wording follows owner screenshot where available. Long nested example/explanation are explicitly expanded layout-stress prose, not approved dictionary translations.",
+    "cases": 18,
+    "matrix": "610px x normal/large x off/on/partial x baseline/balanced/airy",
+    "maxMeasuredLines": 3
+  }
 }
