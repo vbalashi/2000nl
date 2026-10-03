@@ -727,6 +727,7 @@
       "emptyCollection": "No words in this collection.",
       "emptyQuery": "Search the dictionary",
       "emptyCollectionHint": "No matches in {name}. Clear the search or search the dictionary.",
+      "unavailableCollectionSource": "Some words in this collection are temporarily unavailable because their source cannot currently be accessed. The collection will show them again if access is restored.",
       "emptyQueryHint": "Find definitions, examples and collections.",
       "noResultsHint": "No matches in {source}.",
       "previous": "Previous",

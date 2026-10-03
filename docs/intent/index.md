@@ -25,6 +25,7 @@
 ## Canonical Navigation
 
 - Current decisions: [current-decisions.md](./current-decisions.md)
+- Dictionary publication and access contract: [dictionary-publication-access.md](./dictionary-publication-access.md)
 - Discussion archive and recording rules: [../discussions/README.md](../discussions/README.md)
 
 - Root repo map: [AGENTS.md](../../AGENTS.md)

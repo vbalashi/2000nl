@@ -455,7 +455,7 @@ describeDb("authoritative training session plan RPC", () => {
            language_code, slug, name, kind, visibility, owner_user_id,
            minimum_subscription_tier, schema_key, schema_version
          ) values (
-           'nl', $1, 'Sequential meaning fixture', 'curated', 'private', null,
+           'nl', $1, 'Sequential meaning fixture', 'curated', 'shared', null,
            'free', 'nl-vandale-v1', 1
          ) returning id`,
         [`sequential-meanings-${userId}`],
@@ -1240,7 +1240,7 @@ describeDb("authoritative training session plan RPC", () => {
            language_code, slug, name, kind, visibility, owner_user_id,
              minimum_subscription_tier, schema_key, schema_version
            ) values (
-             'nl', $1, 'Unavailable member fixture', 'curated', 'private', null,
+           'nl', $1, 'Unavailable member fixture', 'curated', 'shared', null,
              'free', 'nl-vandale-v1', 1
            )
            returning id`,
@@ -1445,7 +1445,7 @@ describeDb("authoritative training session plan RPC", () => {
            language_code, slug, name, kind, visibility, owner_user_id,
            minimum_subscription_tier, schema_key, schema_version
          ) values (
-           'nl', $1, 'Projection precedence fixture', 'curated', 'private', null,
+           'nl', $1, 'Projection precedence fixture', 'curated', 'shared', null,
            'free', 'nl-vandale-v1', 1
          ) returning id`,
         [`projection-precedence-${userId}`],
@@ -1514,7 +1514,7 @@ describeDb("authoritative training session plan RPC", () => {
            language_code, slug, name, kind, visibility, owner_user_id,
            minimum_subscription_tier, schema_key, schema_version
          ) values (
-           'nl', $1, 'Replacement failure fixture', 'curated', 'private', null,
+           'nl', $1, 'Replacement failure fixture', 'curated', 'shared', null,
            'free', 'nl-vandale-v1', 1
          ) returning id`,
         [`replacement-invalid-${userId}`],
@@ -1745,7 +1745,7 @@ describeDb("authoritative training session plan RPC", () => {
            ('nl', $1, 'System fixture', 'curated', 'system', null, 'free'),
            ('nl', $2, 'Owned fixture', 'user', 'private', $6, 'free'),
            ('nl', $3, 'Public fixture', 'curated', 'public', null, 'free'),
-           ('nl', $4, 'Entitled fixture', 'curated', 'private', null, 'free'),
+           ('nl', $4, 'Entitled fixture', 'curated', 'shared', null, 'free'),
            ('nl', $5, 'Denied fixture', 'user', 'private', $7, 'free')
          returning id, slug`,
         [
@@ -2488,7 +2488,7 @@ describeDb("authoritative training session plan RPC", () => {
           `insert into dictionaries (
              language_code, slug, name, kind, visibility, minimum_subscription_tier,
              schema_key, schema_version
-           ) values ('nl', $1, 'Training material fixture', 'curated', 'private',
+           ) values ('nl', $1, 'Training material fixture', 'curated', 'shared',
              'free', 'nl-vandale-v1', 1) returning id`,
           [`training-material-${userId}-${index}`],
         );

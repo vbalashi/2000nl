@@ -121,6 +121,19 @@ describe("admin server authorization", () => {
     await expect(requireAdmin(request(), "dictionaries.read")).rejects.toMatchObject({ status: 403, code: "forbidden" });
   });
 
+  it("allows content inspection only through its separately granted capability", async () => {
+    serviceClient.from.mockImplementation((table: string) => {
+      if (table === "admin_operators") return query({ data: { email: user.email, user_id: user.id, is_active: true, permissions: ["dictionaries.read", "dictionary.content.read"] }, error: null });
+      if (table === "admin_operator_sessions") return query({ data: { auth_session_id: sessionId }, error: null });
+      if (table === "user_settings") return query({ data: null, error: null });
+      if (table === "admin_audit_events") return query(null);
+      throw new Error(`Unexpected table ${table}`);
+    });
+    await expect(requireAdmin(request(), "dictionary.content.read")).resolves.toMatchObject({
+      permissions: ["dictionaries.read", "dictionary.content.read"],
+    });
+  });
+
   it("fails closed when the audit store is unavailable", async () => {
     serviceClient.from.mockImplementation((table: string) => {
       if (table === "admin_operators") return query({ data: { email: user.email, user_id: user.id, is_active: false, permissions: [] }, error: null });

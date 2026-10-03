@@ -806,6 +806,15 @@ export function DictionarySearchTab({
           </label>}
         </div>
 
+        {useViewedListFilter && (viewedList?.unavailable_source_count ?? 0) > 0 ? (
+          <p
+            className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100"
+            role="status"
+          >
+            {copy.unavailableCollectionSource}
+          </p>
+        ) : null}
+
         {material && material.status !== "ready" && (
           <p role={material.status === "error" ? "alert" : "status"}>
             {material.status === "error"

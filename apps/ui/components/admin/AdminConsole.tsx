@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import type { DictionaryMetadata, DictionaryRegistryPage, DictionaryRegistryRow } from "@/lib/admin/dictionaryContract";
 import type { AdminAuditAction, AdminAuditEvent } from "@/lib/admin/auditContract";
+import { PublicationAudienceControls } from "./PublicationAudienceControls";
+import { DictionaryContentPreview } from "./DictionaryContentPreview";
 
 type View = "login" | "dictionaries" | "detail" | "journal";
 type LocationState = {
@@ -50,6 +52,7 @@ const actionOptions: Array<{ value: AdminAuditAction | ""; label: string }> = [
   { value: "access.denied", label: "Доступ отклонён" },
   { value: "dictionary.registry.read", label: "Реестр словарей" },
   { value: "dictionary.metadata.read", label: "Метаданные словаря" },
+  { value: "dictionary.content.read", label: "Содержимое словаря" },
   { value: "audit.journal.read", label: "Журнал" },
 ];
 
@@ -126,6 +129,7 @@ export default function AdminConsole() {
   const [copiedEvent, setCopiedEvent] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [publicationBusy, setPublicationBusy] = useState(false);
 
   const clearProtectedData = useCallback(() => {
     setRegistry(blankPage);
@@ -316,9 +320,11 @@ export default function AdminConsole() {
           <button className="mb-5 inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm text-slate-600 hover:bg-white" onClick={returnToRegistry}><ArrowLeft size={17} />К списку словарей</button>
           <div className="mb-7"><div className="mb-2 text-xs text-slate-500">{permissions.includes("dictionaries.read") && <button onClick={() => go("dictionaries")} className="hover:text-primary">Словари</button>}<span className="mx-2">›</span>Метаданные</div><h1 className="break-words text-2xl font-semibold tracking-tight sm:text-[28px]">{detail.name}</h1><p className="mt-2 text-sm text-slate-600">{kindLabel(detail.kind)} · Язык: {detail.languageCode.toUpperCase()}</p></div>
           <div className="max-w-4xl space-y-4 pb-8">
+            {permissions.includes("publication.manage") && <PublicationAudienceControls key={detail.id} dictionaryId={detail.id} groupKeys={detail.audienceGroupKeys ?? []} userIds={detail.audienceUserIds ?? []} onSaved={(groupKeys, userIds) => setDetail({ ...detail, audienceGroupKeys: groupKeys, audienceUserIds: userIds })} />}
             <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6"><h2 className="mb-3 text-base font-semibold">Основное</h2><dl><CopyField label="ID" value={detail.id} /><CopyField label="Стабильный ключ" value={detail.slug} /><CopyField label="Название" value={detail.name} /><CopyField label="Описание" value={detail.description} /><CopyField label="Язык" value={detail.languageCode.toUpperCase()} /><CopyField label="Тип" value={kindLabel(detail.kind)} /><CopyField label="Владелец" value={detail.ownerId} /><CopyField label="Схема" value={detail.schemaKey} /><CopyField label="Версия схемы" value={detail.schemaVersion === null ? null : String(detail.schemaVersion)} /></dl></section>
             <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6"><h2 className="mb-3 text-base font-semibold">Источник</h2><dl><CopyField label="Провайдер" value={detail.sourceProvider} /><CopyField label="Версия источника" value={detail.sourceVersion} /><CopyField label="Загружено" value={date(detail.createdAt)} /><CopyField label="Обновлено" value={date(detail.updatedAt)} /><CopyField label="Схема: название" value={detail.schemaTitle} /><CopyField label="Схема: архивирована" value={date(detail.schemaRetiredAt)} /></dl></section>
-            <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6"><h2 className="mb-3 text-base font-semibold">Доступ и состояние</h2><dl><CopyField label="Видимость" value={detail.visibility} /><CopyField label="Публикация" value="Не настроена" /><CopyField label="Редактирование" value={detail.editable === null ? null : detail.editable ? "Разрешено" : "Запрещено"} /><CopyField label="Минимальный тариф" value={detail.minimumSubscriptionTier} /><CopyField label="Записей" value="Нет данных" /></dl></section>
+            <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6"><h2 className="mb-3 text-base font-semibold">Доступ и состояние</h2><dl><CopyField label="Видимость" value={detail.visibility} /><CopyField label="Публикация" value={detail.publicationState ?? null} /><CopyField label="Редактирование" value={detail.editable === null ? null : detail.editable ? "Разрешено" : "Запрещено"} /><CopyField label="Минимальный тариф" value={detail.minimumSubscriptionTier} /><CopyField label="Записей" value="Нет данных" /></dl>{permissions.includes("publication.manage") && <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4"><span className="w-full text-xs text-slate-500">Изменить публикацию</span>{(["unpublished", "restricted", "general"] as const).map((state) => <button key={state} disabled={publicationBusy || detail.publicationState === state} onClick={() => { setPublicationBusy(true); void fetch(`/api/admin/dictionaries/${encodeURIComponent(detail.id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ publicationState: state, groupKeys: detail.audienceGroupKeys ?? [], userIds: detail.audienceUserIds ?? [] }) }).then(async (response) => { if (!response.ok) throw new Error(); const next = await fetch(`/api/admin/dictionaries/${encodeURIComponent(detail.id)}`, { cache: "no-store" }); if (!next.ok) throw new Error(); setDetail(await next.json() as DictionaryMetadata); }).catch(() => setLoadError(true)).finally(() => setPublicationBusy(false)); }} className="min-h-9 rounded-lg border border-slate-300 px-3 text-sm hover:bg-slate-50 disabled:opacity-50">{state === "unpublished" ? "Снять" : state === "restricted" ? "Для выбранных" : "Для всех"}</button>)}</div>}</section>
+            {permissions.includes("dictionary.content.read") && <DictionaryContentPreview key={detail.id} dictionaryId={detail.id} />}
           </div>
         </> : <StateBlock title="Словарь не найден" description="Проверьте реестр и попробуйте открыть словарь ещё раз." action="Вернуться к списку" onAction={returnToRegistry} />
         : location.view === "journal" ? <>

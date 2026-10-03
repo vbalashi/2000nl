@@ -224,7 +224,7 @@ describeIfDb('headword exclusion availability',()=>{
    await ensureUserWithSettings(client,userId);await ensureUserWithSettings(client,otherUser);
    const entry=await insertWord(client,`private-exclusion-${randomUUID()}`);
    const dictionary=(await client.query(`insert into dictionaries(language_code,slug,name,kind,visibility,owner_user_id,
-    minimum_subscription_tier,schema_key,schema_version) values('nl',$1,'Exclusion access fixture','curated','private',null,'free','nl-vandale-v1',1) returning id`,[randomUUID()])).rows[0].id;
+    minimum_subscription_tier,schema_key,schema_version) values('nl',$1,'Exclusion access fixture','curated','shared',null,'free','nl-vandale-v1',1) returning id`,[randomUUID()])).rows[0].id;
    await client.query('update word_entries set dictionary_id=$2 where id=$1',[entry,dictionary]);await bindSourceEntries(client,[entry]);
    await client.query('savepoint denied');
    await expect(action(client,userId,entry,randomUUID())).rejects.toThrow('exclusion_target_unavailable');

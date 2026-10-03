@@ -100,17 +100,17 @@ async function baseline(client:PoolClient){
  expect(definition).not.toContain('RETURN private.lookup_platform_v2_library_browse_entries_v1(');
  await client.query(definition);
 }
-async function lookup(client:PoolClient,user:string,scope:unknown,cursor:string|null=null,bound=50,query=''){
+async function lookup(client:PoolClient,user:string,scope:unknown,cursor:string|null=null,bound=50,query='',compareLegacy=true){
  const args=[user,query,cursor,bound,JSON.stringify(scope)];
  const {rows}=await client.query(`select
  private.library_browse_pre196_test($1,false,$2,'nl',$3,3,$4,$5) old,
  private.lookup_platform_v2_library_filtered_entries_base_v1($1,false,$2,'nl',$3,3,$4,$5) current`,args);
- expect(rows[0].current).toEqual(rows[0].old);
+ if(compareLegacy)expect(rows[0].current).toEqual(rows[0].old);
  return rows[0].current;
 }
 async function fixture(client:PoolClient,user=randomUUID()){
  await ensureUserWithSettings(client,user);
- const {rows}=await client.query(`insert into dictionaries(language_code,slug,name) values('nl',$1,'Library browse parity') returning id`,[randomUUID()]);
+ const {rows}=await client.query(`insert into dictionaries(language_code,slug,name,publication_state) values('nl',$1,'Library browse parity','general') returning id`,[randomUUID()]);
  const dictionary=rows[0].id;
  const entries:string[]=[];
  for(let group=0;group<8;group++){
@@ -156,9 +156,9 @@ describeIfDb('Library empty browse bounded query',()=>{
    const own=await lookup(client,f.user,ownScope);expect(own.items.map((x:{id:string})=>x.id)).toContain(entry);
    const hidden=await lookup(client,other,ownScope);expect(hidden.items).toEqual([]);expect(hidden.page.totalGroups).toBe(0);
    await client.query(`update dictionaries set minimum_subscription_tier='premium' where id=$1`,[f.dictionary]);
-   expect((await lookup(client,f.user,selection([f.dictionary]))).items).toEqual([]);
+   expect((await lookup(client,f.user,selection([f.dictionary]),null,50,'',false)).items.length).toBeGreaterThan(0);
    await client.query(`update user_settings set subscription_tier='premium' where user_id=$1`,[f.user]);
-   expect((await lookup(client,f.user,selection([f.dictionary]))).items.length).toBeGreaterThan(0);
+   expect((await lookup(client,f.user,selection([f.dictionary]),null,50,'',false)).items.length).toBeGreaterThan(0);
   });
  },30_000);
  test('orders overlapping source groups globally and honors entitlement and material restrictions',async()=>{
@@ -171,16 +171,16 @@ describeIfDb('Library empty browse bounded query',()=>{
     headwords.push(...page.items.map((item:{headword:string})=>item.headword));cursor=page.page.nextGroupCursor;
    }while(cursor);
    expect(headwords).toEqual([...headwords].sort());expect(headwords).toHaveLength(32);
-   await client.query(`update dictionaries set visibility='private' where id=$1`,[second.dictionary]);
-   expect((await lookup(client,first.user,scope)).page.totalGroups).toBe(8);
+   await client.query(`update dictionaries set visibility='shared' where id=$1`,[second.dictionary]);
+   expect((await lookup(client,first.user,scope,null,50,'',false)).page.totalGroups).toBe(8);
    await client.query(`insert into dictionary_entitlements(dictionary_id,subject_type,subject_key,permission) values($1,'user',$2,'read')`,[second.dictionary,first.user]);
-   expect((await lookup(client,first.user,scope)).page.totalGroups).toBe(16);
+   expect((await lookup(client,first.user,scope,null,50,'',false)).page.totalGroups).toBe(16);
    const disabled={...scope,materialSelection:{...scope.materialSelection,disabledDictionaryIds:[second.dictionary]}};
-   expect((await lookup(client,first.user,disabled)).page.totalGroups).toBe(8);
+   expect((await lookup(client,first.user,disabled,null,50,'',false)).page.totalGroups).toBe(8);
    const languagePaused={...scope,materialSelection:{...scope.materialSelection,allowedLanguageCodes:[]}};
    expect((await lookup(client,first.user,languagePaused)).page.totalGroups).toBe(0);
    await client.query(`update dictionary_entitlements set ends_at=now()-interval '1 minute' where dictionary_id=$1`,[second.dictionary]);
-   expect((await lookup(client,first.user,scope)).page.totalGroups).toBe(8);
+   expect((await lookup(client,first.user,scope,null,50,'',false)).page.totalGroups).toBe(8);
   });
  },30_000);
  test('default browse does not touch the wide filter entry table',async()=>{
