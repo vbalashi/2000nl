@@ -1,0 +1,127 @@
+{
+  "capturedAt": "2026-10-03T19:51:19.054639+00:00",
+  "deployedVersion": "0.18.1142",
+  "deployedCommit": "9ecfeec404cf767b4c1cbb51124cc4d274a5186c",
+  "dbContract": 208,
+  "facts": {
+    "entries": 18224,
+    "rpcAvailable": true,
+    "activeBindings": 18203,
+    "ordinaryStates": 1648,
+    "postgresVersion": "17.6",
+    "activeContentNodes": 40746,
+    "ordinaryAnsweredStates": 435,
+    "ordinaryAnsweredReverseStates": 114,
+    "idiomUsesSamePrincipal": true,
+    "selectedIdiomAnsweredStates": 3
+  },
+  "results": [
+    {
+      "name": "meaning-all-direct",
+      "error": "statement_timeout_3s",
+      "warmSamples": 0
+    },
+    {
+      "name": "meaning-all-both",
+      "error": "statement_timeout_3s",
+      "warmSamples": 0
+    },
+    {
+      "name": "meaning-nouns-both",
+      "warmSamples": 10,
+      "firstExecutionMs": 1489.604,
+      "medianExecutionMs": 1444.1455,
+      "p95ExecutionMs": 1788.988,
+      "medianPlanningMs": 0.027,
+      "counters": {
+        "dueToday": 90,
+        "totalReviews": 179,
+        "newCards": 7300,
+        "studyDay": "2026-10-03",
+        "timezone": "Europe/Amsterdam",
+        "asOf": "2026-10-03T19:50:31.93981+00:00"
+      },
+      "rawExecutionMs": [
+        1489.604,
+        1458.461,
+        1730.727,
+        1788.988,
+        1442.198,
+        1446.093,
+        1385.576,
+        1386.639,
+        1438.037,
+        1487.488,
+        1419.748
+      ]
+    },
+    {
+      "name": "meaning-verbs-both",
+      "warmSamples": 10,
+      "firstExecutionMs": 1119.0,
+      "medianExecutionMs": 1102.2785,
+      "p95ExecutionMs": 1184.319,
+      "medianPlanningMs": 0.026,
+      "counters": {
+        "dueToday": 73,
+        "totalReviews": 117,
+        "newCards": 2852,
+        "studyDay": "2026-10-03",
+        "timezone": "Europe/Amsterdam",
+        "asOf": "2026-10-03T19:50:48.458276+00:00"
+      },
+      "rawExecutionMs": [
+        1119.0,
+        1113.125,
+        1103.41,
+        1115.422,
+        1093.404,
+        1184.319,
+        1093.417,
+        1086.497,
+        1087.573,
+        1134.429,
+        1101.147
+      ]
+    },
+    {
+      "name": "context-reverse",
+      "error": "statement_timeout_3s",
+      "warmSamples": 0
+    },
+    {
+      "name": "idiom-direct",
+      "error": "statement_timeout_3s",
+      "warmSamples": 0
+    },
+    {
+      "name": "idiom-both",
+      "warmSamples": 10,
+      "firstExecutionMs": 1615.538,
+      "medianExecutionMs": 1438.9270000000001,
+      "p95ExecutionMs": 1446.661,
+      "medianPlanningMs": 0.025500000000000002,
+      "counters": {
+        "dueToday": 3,
+        "totalReviews": 3,
+        "newCards": 651,
+        "studyDay": "2026-10-03",
+        "timezone": "Europe/Amsterdam",
+        "asOf": "2026-10-03T19:51:17.097684+00:00"
+      },
+      "rawExecutionMs": [
+        1615.538,
+        1439.268,
+        1444.732,
+        1441.152,
+        1433.952,
+        1446.661,
+        1435.964,
+        1438.093,
+        1438.586,
+        1441.993,
+        1438.078
+      ]
+    }
+  ]
+}
