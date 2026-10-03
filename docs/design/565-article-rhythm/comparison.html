@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ru">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>gestalte · ритм текста</title
+  ><style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font: 16px/1.45 system-ui;
+      background: #f5f5f8;
+      color: #29293d;
+      margin: 0;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      background: #f5f5f8;
+      padding: 18px 24px;
+      z-index: 1;
+      border-bottom: 1px solid #ddd;
+    }
+    h1 {
+      font-size: 23px;
+      margin: 0;
+    }
+    p {
+      margin: 8px 0;
+    }
+    label {
+      margin-right: 18px;
+    }
+    select {
+      font: inherit;
+      padding: 4px;
+    }
+    section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      padding: 20px;
+    }
+    figure {
+      margin: 0;
+      min-width: 0;
+    }
+    .frame {
+      height: 78vh;
+      overflow: auto;
+      border: 1px solid #ccd;
+      border-radius: 12px;
+    }
+    img {
+      width: 100%;
+      display: block;
+    }
+    aside {
+      padding: 16px 24px;
+    }
+    @media (max-width: 700px) {
+      section {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <header>
+    <h1>gestalte: те же блоки, более ясные связи</h1>
+    <p>
+      Локальные варианты для обсуждения. Оформление приложения не изменено;
+      утверждение варианта не подразумевается.
+    </p>
+    <label
+      >Профиль
+      <select id="profile">
+        <option value="balanced">Сбалансированный</option>
+        <option value="airy">Свободнее</option>
+      </select></label
+    ><label
+      >Переводы
+      <select id="translation">
+        <option value="on">Включены</option>
+        <option value="off">Выключены</option>
+        <option value="partial">Частично</option>
+      </select></label
+    ><label
+      >Контекст
+      <select id="context">
+        <option value="training-695-normal">Тренировка ·695px ·обычный</option>
+        <option value="training-695-largest">Тренировка ·695px ·A++</option>
+        <option value="article-390-large">Статья ·390px ·крупный</option>
+      </select></label
+    >
+  </header>
+  <section>
+    <figure>
+      <h2>Сейчас</h2>
+      <p>
+        Действующие общие компоненты и выбранный профиль. Без старых
+        экспериментальных CSS-переопределений.
+      </p>
+      <div class="frame"><img id="current" alt="Текущий ритм статьи" /></div>
+    </figure>
+    <figure>
+      <h2>Предложение</h2>
+      <p>
+        Подписи остаются в том же порядке, но занимают своё место в потоке.
+        Межстрочные связи плотнее, а границы групп яснее.
+      </p>
+      <div class="frame">
+        <img id="proposed" alt="Предложенный ритм статьи" />
+      </div>
+    </figure>
+  </section>
+  <aside>
+    <p>
+      <a href="matrix.md">Таблица интервалов и ограничения измерений</a> ·
+      <a href="matrix.json">Все измерения</a>
+    </p>
+    <p>
+      Прямоугольники текста браузера показывают раскладку строк, а не точную
+      границу нарисованных букв. Снимки — основное доказательство визуального
+      эффекта.
+    </p>
+  </aside>
+  <script>
+    function update() {
+      const profile = document.querySelector("#profile").value,
+        t = document.querySelector("#translation").value,
+        c = document.querySelector("#context").value;
+      for (const v of ["current", "proposed"])
+        document.querySelector("#" + v).src = `${c}-${profile}-${v}-${t}.png`;
+    }
+    document.querySelectorAll("select").forEach((s) => (s.onchange = update));
+    update();
+  </script>
+</html>

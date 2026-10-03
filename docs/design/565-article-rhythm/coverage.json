@@ -1,0 +1,6602 @@
+[
+  {
+    "fixture": "goed",
+    "width": 390,
+    "size": "normal",
+    "profile": "balanced",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 390,
+    "size": "normal",
+    "profile": "balanced",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 390,
+    "size": "normal",
+    "profile": "balanced",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 390,
+    "size": "normal",
+    "profile": "airy",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 390,
+    "size": "normal",
+    "profile": "airy",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 390,
+    "size": "normal",
+    "profile": "airy",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 390,
+    "size": "extra",
+    "profile": "balanced",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 390,
+    "size": "extra",
+    "profile": "balanced",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 390,
+    "size": "extra",
+    "profile": "balanced",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 390,
+    "size": "extra",
+    "profile": "airy",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 390,
+    "size": "extra",
+    "profile": "airy",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 390,
+    "size": "extra",
+    "profile": "airy",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 695,
+    "size": "normal",
+    "profile": "balanced",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 695,
+    "size": "normal",
+    "profile": "balanced",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 695,
+    "size": "normal",
+    "profile": "balanced",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 695,
+    "size": "normal",
+    "profile": "airy",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 695,
+    "size": "normal",
+    "profile": "airy",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 695,
+    "size": "normal",
+    "profile": "airy",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "16.25px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "20px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "20px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 695,
+    "size": "extra",
+    "profile": "balanced",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 695,
+    "size": "extra",
+    "profile": "balanced",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 695,
+    "size": "extra",
+    "profile": "balanced",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 695,
+    "size": "extra",
+    "profile": "airy",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 695,
+    "size": "extra",
+    "profile": "airy",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "goed",
+    "width": 695,
+    "size": "extra",
+    "profile": "airy",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_1-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_1-i0-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_1-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_1-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_2-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix0",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix1",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_2-i1-example0",
+        "nested": true,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom",
+        "id": "004396_a4440_goed_bn_2-i2",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "idiom-explanation",
+        "id": "004396_a4440_goed_bn_2-ix2",
+        "nested": false,
+        "sourceLeft": 71,
+        "headerLeft": 63,
+        "inset": 8,
+        "translationAlignment": 0,
+        "leading": "32.5px"
+      },
+      {
+        "kind": "definition",
+        "id": "004396_a4440_goed_bn_3-d",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e0",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "example",
+        "id": "004396_a4440_goed_bn_3-e1",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      }
+    ],
+    "relations": [
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "synonyms",
+        "inset": 12,
+        "leading": "40px"
+      },
+      {
+        "kind": "antonyms",
+        "inset": 12,
+        "leading": "40px"
+      }
+    ],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 390,
+    "size": "normal",
+    "profile": "balanced",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 390,
+    "size": "normal",
+    "profile": "balanced",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 390,
+    "size": "normal",
+    "profile": "balanced",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 390,
+    "size": "normal",
+    "profile": "airy",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 390,
+    "size": "normal",
+    "profile": "airy",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 390,
+    "size": "normal",
+    "profile": "airy",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 390,
+    "size": "extra",
+    "profile": "balanced",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 390,
+    "size": "extra",
+    "profile": "balanced",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 390,
+    "size": "extra",
+    "profile": "balanced",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 390,
+    "size": "extra",
+    "profile": "airy",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 390,
+    "size": "extra",
+    "profile": "airy",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 390,
+    "size": "extra",
+    "profile": "airy",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 695,
+    "size": "normal",
+    "profile": "balanced",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 695,
+    "size": "normal",
+    "profile": "balanced",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 695,
+    "size": "normal",
+    "profile": "balanced",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 695,
+    "size": "normal",
+    "profile": "airy",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 695,
+    "size": "normal",
+    "profile": "airy",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 695,
+    "size": "normal",
+    "profile": "airy",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "25px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "20px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "20px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 695,
+    "size": "extra",
+    "profile": "balanced",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 695,
+    "size": "extra",
+    "profile": "balanced",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 695,
+    "size": "extra",
+    "profile": "balanced",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 695,
+    "size": "extra",
+    "profile": "airy",
+    "translation": "off",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 695,
+    "size": "extra",
+    "profile": "airy",
+    "translation": "on",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  },
+  {
+    "fixture": "usage",
+    "width": 695,
+    "size": "extra",
+    "profile": "airy",
+    "translation": "partial",
+    "nodes": [
+      {
+        "kind": "definition",
+        "id": "aandoen-definition",
+        "nested": false,
+        "sourceLeft": 41,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "50px"
+      },
+      {
+        "kind": "example",
+        "id": "aandoen-example",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": null,
+        "leading": "40px"
+      },
+      {
+        "kind": "usage-pattern",
+        "id": "aandoen-usage",
+        "nested": false,
+        "sourceLeft": 53,
+        "headerLeft": null,
+        "inset": null,
+        "translationAlignment": 0,
+        "leading": "40px"
+      }
+    ],
+    "relations": [],
+    "clipped": 0,
+    "overflow": false
+  }
+]

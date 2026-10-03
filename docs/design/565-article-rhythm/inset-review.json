@@ -1,0 +1,6130 @@
+[
+  {
+    "fixture": "gestalte",
+    "width": 390,
+    "size": "large",
+    "surface": "article",
+    "profile": "balanced",
+    "treatment": "current",
+    "translation": "off",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-definition",
+        "kind": "definition",
+        "original": {
+          "size": "25px",
+          "leading": "35px",
+          "inkHeightEstimate": 24.36250114440918,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 122.59375,
+            "bottom": 147.59375,
+            "left": 41,
+            "right": 330.875,
+            "text": "een lichaam zoals je het ziet"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "20px",
+          "leading": "28px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 219.328125,
+            "bottom": 239.328125,
+            "left": 53,
+            "right": 192.390625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "16.25px",
+          "leading": "24.375px",
+          "inkHeightEstimate": 15.7183837890625,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 9.475147247314453,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 286.78125,
+            "bottom": 306.78125,
+            "left": 71,
+            "right": 318.53125,
+            "text": "iets uitvoeren; zorgen dat iets er "
+          },
+          {
+            "top": 311.15625,
+            "bottom": 331.15625,
+            "left": 71,
+            "right": 108.859375,
+            "text": "komt"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 264.328125,
+            "bottom": 279.328125,
+            "left": 63,
+            "right": 159.90625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [
+          4.375
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 7.453125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": 7.375
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "20px",
+          "leading": "28px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 11.785255432128906,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 358.53125,
+            "bottom": 378.53125,
+            "left": 71,
+            "right": 324.046875,
+            "text": "de commissie gaf gestalte aan de "
+          },
+          {
+            "top": 386.53125,
+            "bottom": 406.53125,
+            "left": 71,
+            "right": 310.796875,
+            "text": "plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 338.53125,
+            "bottom": 353.53125,
+            "left": 63,
+            "right": 122.34375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          8
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 5,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 390,
+    "size": "large",
+    "surface": "article",
+    "profile": "balanced",
+    "treatment": "current",
+    "translation": "on",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-definition",
+        "kind": "definition",
+        "original": {
+          "size": "25px",
+          "leading": "35px",
+          "inkHeightEstimate": 24.36250114440918,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 122.59375,
+            "bottom": 147.59375,
+            "left": 41,
+            "right": 330.875,
+            "text": "een lichaam zoals je het ziet"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "20px",
+          "leading": "28px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "22.75px",
+          "inkHeightEstimate": 12.012939453125,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 224.328125,
+            "bottom": 244.328125,
+            "left": 53,
+            "right": 192.390625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 254.328125,
+            "bottom": 274.328125,
+            "left": 53,
+            "right": 211.734375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 10,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "16.25px",
+          "leading": "24.375px",
+          "inkHeightEstimate": 15.7183837890625,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "22.75px",
+          "inkHeightEstimate": 15.20263671875,
+          "position": "static"
+        },
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 9.475147247314453,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 319.53125,
+            "bottom": 339.53125,
+            "left": 71,
+            "right": 318.53125,
+            "text": "iets uitvoeren; zorgen dat iets er "
+          },
+          {
+            "top": 343.90625,
+            "bottom": 363.90625,
+            "left": 71,
+            "right": 108.859375,
+            "text": "komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 372.28125,
+            "bottom": 392.28125,
+            "left": 71,
+            "right": 324.640625,
+            "text": "осуществить что-либо; сделать "
+          },
+          {
+            "top": 395.03125,
+            "bottom": 415.03125,
+            "left": 71,
+            "right": 298.4375,
+            "text": "так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 297.078125,
+            "bottom": 312.078125,
+            "left": 63,
+            "right": 159.90625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [
+          4.375
+        ],
+        "pairRangeGap": 8.375,
+        "labelOwnRangeGap": 7.453125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 6.75
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "20px",
+          "leading": "28px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "22.75px",
+          "inkHeightEstimate": 12.568359375,
+          "position": "static"
+        },
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 11.785255432128906,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 441.78125,
+            "bottom": 461.78125,
+            "left": 71,
+            "right": 324.046875,
+            "text": "de commissie gaf gestalte aan de "
+          },
+          {
+            "top": 469.78125,
+            "bottom": 489.78125,
+            "left": 71,
+            "right": 310.796875,
+            "text": "plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 499.78125,
+            "bottom": 519.78125,
+            "left": 71,
+            "right": 314.53125,
+            "text": "комиссия воплотила планы по "
+          },
+          {
+            "top": 522.53125,
+            "bottom": 542.53125,
+            "left": 71,
+            "right": 197.015625,
+            "text": "новой политике"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 421.78125,
+            "bottom": 436.78125,
+            "left": 63,
+            "right": 122.34375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          8
+        ],
+        "pairRangeGap": 10,
+        "labelOwnRangeGap": 5,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 390,
+    "size": "large",
+    "surface": "article",
+    "profile": "balanced",
+    "treatment": "current",
+    "translation": "partial",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-definition",
+        "kind": "definition",
+        "original": {
+          "size": "25px",
+          "leading": "35px",
+          "inkHeightEstimate": 24.36250114440918,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 122.59375,
+            "bottom": 147.59375,
+            "left": 41,
+            "right": 330.875,
+            "text": "een lichaam zoals je het ziet"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "20px",
+          "leading": "28px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "22.75px",
+          "inkHeightEstimate": 12.012939453125,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 224.328125,
+            "bottom": 244.328125,
+            "left": 53,
+            "right": 192.390625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 254.328125,
+            "bottom": 274.328125,
+            "left": 53,
+            "right": 211.734375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 10,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "16.25px",
+          "leading": "24.375px",
+          "inkHeightEstimate": 15.7183837890625,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "22.75px",
+          "inkHeightEstimate": 15.20263671875,
+          "position": "static"
+        },
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 9.475147247314453,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 319.53125,
+            "bottom": 339.53125,
+            "left": 71,
+            "right": 318.53125,
+            "text": "iets uitvoeren; zorgen dat iets er "
+          },
+          {
+            "top": 343.90625,
+            "bottom": 363.90625,
+            "left": 71,
+            "right": 108.859375,
+            "text": "komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 372.28125,
+            "bottom": 392.28125,
+            "left": 71,
+            "right": 324.640625,
+            "text": "осуществить что-либо; сделать "
+          },
+          {
+            "top": 395.03125,
+            "bottom": 415.03125,
+            "left": 71,
+            "right": 298.4375,
+            "text": "так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 297.078125,
+            "bottom": 312.078125,
+            "left": 63,
+            "right": 159.90625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [
+          4.375
+        ],
+        "pairRangeGap": 8.375,
+        "labelOwnRangeGap": 7.453125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 6.75
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "20px",
+          "leading": "28px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 11.785255432128906,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 441.78125,
+            "bottom": 461.78125,
+            "left": 71,
+            "right": 324.046875,
+            "text": "de commissie gaf gestalte aan de "
+          },
+          {
+            "top": 469.78125,
+            "bottom": 489.78125,
+            "left": 71,
+            "right": 310.796875,
+            "text": "plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 421.78125,
+            "bottom": 436.78125,
+            "left": 63,
+            "right": 122.34375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          8
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 5,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 390,
+    "size": "large",
+    "surface": "article",
+    "profile": "balanced",
+    "treatment": "proposed",
+    "translation": "off",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-definition",
+        "kind": "definition",
+        "original": {
+          "size": "25px",
+          "leading": "31.25px",
+          "inkHeightEstimate": 24.36250114440918,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 120.59375,
+            "bottom": 145.59375,
+            "left": 41,
+            "right": 330.875,
+            "text": "een lichaam zoals je het ziet"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "20px",
+          "leading": "25px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 213.578125,
+            "bottom": 233.578125,
+            "left": 53,
+            "right": 192.390625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "16.25px",
+          "leading": "20.3125px",
+          "inkHeightEstimate": 15.7183837890625,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 9.475147247314453,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 273.03125,
+            "bottom": 293.03125,
+            "left": 71,
+            "right": 318.53125,
+            "text": "iets uitvoeren; zorgen dat iets er "
+          },
+          {
+            "top": 293.34375,
+            "bottom": 313.34375,
+            "left": 71,
+            "right": 108.859375,
+            "text": "komt"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 251.578125,
+            "bottom": 266.578125,
+            "left": 63,
+            "right": 159.90625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [
+          0.3125
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 6.453125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": 15.3125
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "20px",
+          "leading": "25px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 11.785255432128906,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 352.109375,
+            "bottom": 372.109375,
+            "left": 71,
+            "right": 324.046875,
+            "text": "de commissie gaf gestalte aan de "
+          },
+          {
+            "top": 377.109375,
+            "bottom": 397.109375,
+            "left": 71,
+            "right": 310.796875,
+            "text": "plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 328.65625,
+            "bottom": 343.65625,
+            "left": 63,
+            "right": 122.34375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          5
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 8.453125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 390,
+    "size": "large",
+    "surface": "article",
+    "profile": "balanced",
+    "treatment": "proposed",
+    "translation": "on",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-definition",
+        "kind": "definition",
+        "original": {
+          "size": "25px",
+          "leading": "31.25px",
+          "inkHeightEstimate": 24.36250114440918,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 120.59375,
+            "bottom": 145.59375,
+            "left": 41,
+            "right": 330.875,
+            "text": "een lichaam zoals je het ziet"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "20px",
+          "leading": "25px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "21.125px",
+          "inkHeightEstimate": 12.012939453125,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 218.578125,
+            "bottom": 238.578125,
+            "left": 53,
+            "right": 192.390625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 244.078125,
+            "bottom": 264.078125,
+            "left": 53,
+            "right": 211.734375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 5.5,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "16.25px",
+          "leading": "20.3125px",
+          "inkHeightEstimate": 15.7183837890625,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "21.125px",
+          "inkHeightEstimate": 15.20263671875,
+          "position": "static"
+        },
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 9.475147247314453,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 301.65625,
+            "bottom": 321.65625,
+            "left": 71,
+            "right": 318.53125,
+            "text": "iets uitvoeren; zorgen dat iets er "
+          },
+          {
+            "top": 321.96875,
+            "bottom": 341.96875,
+            "left": 71,
+            "right": 108.859375,
+            "text": "komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 344.78125,
+            "bottom": 364.78125,
+            "left": 71,
+            "right": 324.640625,
+            "text": "осуществить что-либо; сделать "
+          },
+          {
+            "top": 365.90625,
+            "bottom": 385.90625,
+            "left": 71,
+            "right": 298.4375,
+            "text": "так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 280.203125,
+            "bottom": 295.203125,
+            "left": 63,
+            "right": 159.90625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [
+          0.3125
+        ],
+        "pairRangeGap": 2.8125,
+        "labelOwnRangeGap": 6.453125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 16.125
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "20px",
+          "leading": "25px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "21.125px",
+          "inkHeightEstimate": 12.568359375,
+          "position": "static"
+        },
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 11.785255432128906,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 425.484375,
+            "bottom": 445.484375,
+            "left": 71,
+            "right": 324.046875,
+            "text": "de commissie gaf gestalte aan de "
+          },
+          {
+            "top": 450.484375,
+            "bottom": 470.484375,
+            "left": 71,
+            "right": 310.796875,
+            "text": "plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 475.984375,
+            "bottom": 495.984375,
+            "left": 71,
+            "right": 314.53125,
+            "text": "комиссия воплотила планы по "
+          },
+          {
+            "top": 497.109375,
+            "bottom": 517.109375,
+            "left": 71,
+            "right": 197.015625,
+            "text": "новой политике"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 402.03125,
+            "bottom": 417.03125,
+            "left": 63,
+            "right": 122.34375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          5
+        ],
+        "pairRangeGap": 5.5,
+        "labelOwnRangeGap": 8.453125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 390,
+    "size": "large",
+    "surface": "article",
+    "profile": "balanced",
+    "treatment": "proposed",
+    "translation": "partial",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-definition",
+        "kind": "definition",
+        "original": {
+          "size": "25px",
+          "leading": "31.25px",
+          "inkHeightEstimate": 24.36250114440918,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 120.59375,
+            "bottom": 145.59375,
+            "left": 41,
+            "right": 330.875,
+            "text": "een lichaam zoals je het ziet"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "20px",
+          "leading": "25px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "21.125px",
+          "inkHeightEstimate": 12.012939453125,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 218.578125,
+            "bottom": 238.578125,
+            "left": 53,
+            "right": 192.390625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 244.078125,
+            "bottom": 264.078125,
+            "left": 53,
+            "right": 211.734375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 5.5,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "16.25px",
+          "leading": "20.3125px",
+          "inkHeightEstimate": 15.7183837890625,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "21.125px",
+          "inkHeightEstimate": 15.20263671875,
+          "position": "static"
+        },
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 9.475147247314453,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 301.65625,
+            "bottom": 321.65625,
+            "left": 71,
+            "right": 318.53125,
+            "text": "iets uitvoeren; zorgen dat iets er "
+          },
+          {
+            "top": 321.96875,
+            "bottom": 341.96875,
+            "left": 71,
+            "right": 108.859375,
+            "text": "komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 344.78125,
+            "bottom": 364.78125,
+            "left": 71,
+            "right": 324.640625,
+            "text": "осуществить что-либо; сделать "
+          },
+          {
+            "top": 365.90625,
+            "bottom": 385.90625,
+            "left": 71,
+            "right": 298.4375,
+            "text": "так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 280.203125,
+            "bottom": 295.203125,
+            "left": 63,
+            "right": 159.90625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [
+          0.3125
+        ],
+        "pairRangeGap": 2.8125,
+        "labelOwnRangeGap": 6.453125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 16.125
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "20px",
+          "leading": "25px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 11.785255432128906,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 425.484375,
+            "bottom": 445.484375,
+            "left": 71,
+            "right": 324.046875,
+            "text": "de commissie gaf gestalte aan de "
+          },
+          {
+            "top": 450.484375,
+            "bottom": 470.484375,
+            "left": 71,
+            "right": 310.796875,
+            "text": "plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 402.03125,
+            "bottom": 417.03125,
+            "left": 63,
+            "right": 122.34375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          5
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 8.453125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 390,
+    "size": "large",
+    "surface": "article",
+    "profile": "airy",
+    "treatment": "current",
+    "translation": "off",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-definition",
+        "kind": "definition",
+        "original": {
+          "size": "25px",
+          "leading": "35px",
+          "inkHeightEstimate": 24.36250114440918,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 127.59375,
+            "bottom": 152.59375,
+            "left": 41,
+            "right": 330.875,
+            "text": "een lichaam zoals je het ziet"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "20px",
+          "leading": "28px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 239.328125,
+            "bottom": 259.328125,
+            "left": 53,
+            "right": 192.390625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "16.25px",
+          "leading": "24.375px",
+          "inkHeightEstimate": 15.7183837890625,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 9.475147247314453,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 306.78125,
+            "bottom": 326.78125,
+            "left": 71,
+            "right": 318.53125,
+            "text": "iets uitvoeren; zorgen dat iets er "
+          },
+          {
+            "top": 331.15625,
+            "bottom": 351.15625,
+            "left": 71,
+            "right": 108.859375,
+            "text": "komt"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 284.328125,
+            "bottom": 299.328125,
+            "left": 63,
+            "right": 159.90625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [
+          4.375
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 7.453125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": 7.375
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "20px",
+          "leading": "28px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 11.785255432128906,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 378.53125,
+            "bottom": 398.53125,
+            "left": 71,
+            "right": 324.046875,
+            "text": "de commissie gaf gestalte aan de "
+          },
+          {
+            "top": 406.53125,
+            "bottom": 426.53125,
+            "left": 71,
+            "right": 310.796875,
+            "text": "plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 358.53125,
+            "bottom": 373.53125,
+            "left": 63,
+            "right": 122.34375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          8
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 5,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 390,
+    "size": "large",
+    "surface": "article",
+    "profile": "airy",
+    "treatment": "current",
+    "translation": "on",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-definition",
+        "kind": "definition",
+        "original": {
+          "size": "25px",
+          "leading": "35px",
+          "inkHeightEstimate": 24.36250114440918,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 127.59375,
+            "bottom": 152.59375,
+            "left": 41,
+            "right": 330.875,
+            "text": "een lichaam zoals je het ziet"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "20px",
+          "leading": "28px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "22.75px",
+          "inkHeightEstimate": 12.012939453125,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 246.828125,
+            "bottom": 266.828125,
+            "left": 53,
+            "right": 192.390625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 278.078125,
+            "bottom": 298.078125,
+            "left": 53,
+            "right": 211.734375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 11.25,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "16.25px",
+          "leading": "24.375px",
+          "inkHeightEstimate": 15.7183837890625,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "22.75px",
+          "inkHeightEstimate": 15.20263671875,
+          "position": "static"
+        },
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 9.475147247314453,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 343.28125,
+            "bottom": 363.28125,
+            "left": 71,
+            "right": 318.53125,
+            "text": "iets uitvoeren; zorgen dat iets er "
+          },
+          {
+            "top": 367.65625,
+            "bottom": 387.65625,
+            "left": 71,
+            "right": 108.859375,
+            "text": "komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 397.28125,
+            "bottom": 417.28125,
+            "left": 71,
+            "right": 324.640625,
+            "text": "осуществить что-либо; сделать "
+          },
+          {
+            "top": 420.03125,
+            "bottom": 440.03125,
+            "left": 71,
+            "right": 298.4375,
+            "text": "так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 320.828125,
+            "bottom": 335.828125,
+            "left": 63,
+            "right": 159.90625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [
+          4.375
+        ],
+        "pairRangeGap": 9.625,
+        "labelOwnRangeGap": 7.453125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 6.75
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "20px",
+          "leading": "28px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "22.75px",
+          "inkHeightEstimate": 12.568359375,
+          "position": "static"
+        },
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 11.785255432128906,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 466.78125,
+            "bottom": 486.78125,
+            "left": 71,
+            "right": 324.046875,
+            "text": "de commissie gaf gestalte aan de "
+          },
+          {
+            "top": 494.78125,
+            "bottom": 514.78125,
+            "left": 71,
+            "right": 310.796875,
+            "text": "plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 526.03125,
+            "bottom": 546.03125,
+            "left": 71,
+            "right": 314.53125,
+            "text": "комиссия воплотила планы по "
+          },
+          {
+            "top": 548.78125,
+            "bottom": 568.78125,
+            "left": 71,
+            "right": 197.015625,
+            "text": "новой политике"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 446.78125,
+            "bottom": 461.78125,
+            "left": 63,
+            "right": 122.34375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          8
+        ],
+        "pairRangeGap": 11.25,
+        "labelOwnRangeGap": 5,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 390,
+    "size": "large",
+    "surface": "article",
+    "profile": "airy",
+    "treatment": "current",
+    "translation": "partial",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-definition",
+        "kind": "definition",
+        "original": {
+          "size": "25px",
+          "leading": "35px",
+          "inkHeightEstimate": 24.36250114440918,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 127.59375,
+            "bottom": 152.59375,
+            "left": 41,
+            "right": 330.875,
+            "text": "een lichaam zoals je het ziet"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "20px",
+          "leading": "28px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "22.75px",
+          "inkHeightEstimate": 12.012939453125,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 246.828125,
+            "bottom": 266.828125,
+            "left": 53,
+            "right": 192.390625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 278.078125,
+            "bottom": 298.078125,
+            "left": 53,
+            "right": 211.734375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 11.25,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "16.25px",
+          "leading": "24.375px",
+          "inkHeightEstimate": 15.7183837890625,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "22.75px",
+          "inkHeightEstimate": 15.20263671875,
+          "position": "static"
+        },
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 9.475147247314453,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 343.28125,
+            "bottom": 363.28125,
+            "left": 71,
+            "right": 318.53125,
+            "text": "iets uitvoeren; zorgen dat iets er "
+          },
+          {
+            "top": 367.65625,
+            "bottom": 387.65625,
+            "left": 71,
+            "right": 108.859375,
+            "text": "komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 397.28125,
+            "bottom": 417.28125,
+            "left": 71,
+            "right": 324.640625,
+            "text": "осуществить что-либо; сделать "
+          },
+          {
+            "top": 420.03125,
+            "bottom": 440.03125,
+            "left": 71,
+            "right": 298.4375,
+            "text": "так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 320.828125,
+            "bottom": 335.828125,
+            "left": 63,
+            "right": 159.90625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [
+          4.375
+        ],
+        "pairRangeGap": 9.625,
+        "labelOwnRangeGap": 7.453125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 6.75
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "20px",
+          "leading": "28px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 11.785255432128906,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 466.78125,
+            "bottom": 486.78125,
+            "left": 71,
+            "right": 324.046875,
+            "text": "de commissie gaf gestalte aan de "
+          },
+          {
+            "top": 494.78125,
+            "bottom": 514.78125,
+            "left": 71,
+            "right": 310.796875,
+            "text": "plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 446.78125,
+            "bottom": 461.78125,
+            "left": 63,
+            "right": 122.34375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          8
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 5,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 390,
+    "size": "large",
+    "surface": "article",
+    "profile": "airy",
+    "treatment": "proposed",
+    "translation": "off",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-definition",
+        "kind": "definition",
+        "original": {
+          "size": "25px",
+          "leading": "31.25px",
+          "inkHeightEstimate": 24.36250114440918,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 125.59375,
+            "bottom": 150.59375,
+            "left": 41,
+            "right": 330.875,
+            "text": "een lichaam zoals je het ziet"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "20px",
+          "leading": "25px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 233.578125,
+            "bottom": 253.578125,
+            "left": 53,
+            "right": 192.390625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "16.25px",
+          "leading": "20.3125px",
+          "inkHeightEstimate": 15.7183837890625,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 9.475147247314453,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 299.28125,
+            "bottom": 319.28125,
+            "left": 71,
+            "right": 318.53125,
+            "text": "iets uitvoeren; zorgen dat iets er "
+          },
+          {
+            "top": 319.59375,
+            "bottom": 339.59375,
+            "left": 71,
+            "right": 108.859375,
+            "text": "komt"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 276.578125,
+            "bottom": 291.578125,
+            "left": 63,
+            "right": 159.90625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [
+          0.3125
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 7.703125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": 20.3125
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "20px",
+          "leading": "25px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 11.785255432128906,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 384.609375,
+            "bottom": 404.609375,
+            "left": 71,
+            "right": 324.046875,
+            "text": "de commissie gaf gestalte aan de "
+          },
+          {
+            "top": 409.609375,
+            "bottom": 429.609375,
+            "left": 71,
+            "right": 310.796875,
+            "text": "plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 359.90625,
+            "bottom": 374.90625,
+            "left": 63,
+            "right": 122.34375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          5
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 9.703125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 390,
+    "size": "large",
+    "surface": "article",
+    "profile": "airy",
+    "treatment": "proposed",
+    "translation": "on",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-definition",
+        "kind": "definition",
+        "original": {
+          "size": "25px",
+          "leading": "31.25px",
+          "inkHeightEstimate": 24.36250114440918,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 125.59375,
+            "bottom": 150.59375,
+            "left": 41,
+            "right": 330.875,
+            "text": "een lichaam zoals je het ziet"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "20px",
+          "leading": "25px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "21.125px",
+          "inkHeightEstimate": 12.012939453125,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 241.078125,
+            "bottom": 261.078125,
+            "left": 53,
+            "right": 192.390625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 267.828125,
+            "bottom": 287.828125,
+            "left": 53,
+            "right": 211.734375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 6.75,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "16.25px",
+          "leading": "20.3125px",
+          "inkHeightEstimate": 15.7183837890625,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "21.125px",
+          "inkHeightEstimate": 15.20263671875,
+          "position": "static"
+        },
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 9.475147247314453,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 331.65625,
+            "bottom": 351.65625,
+            "left": 71,
+            "right": 318.53125,
+            "text": "iets uitvoeren; zorgen dat iets er "
+          },
+          {
+            "top": 351.96875,
+            "bottom": 371.96875,
+            "left": 71,
+            "right": 108.859375,
+            "text": "komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 376.03125,
+            "bottom": 396.03125,
+            "left": 71,
+            "right": 324.640625,
+            "text": "осуществить что-либо; сделать "
+          },
+          {
+            "top": 397.15625,
+            "bottom": 417.15625,
+            "left": 71,
+            "right": 298.4375,
+            "text": "так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 308.953125,
+            "bottom": 323.953125,
+            "left": 63,
+            "right": 159.90625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [
+          0.3125
+        ],
+        "pairRangeGap": 4.0625,
+        "labelOwnRangeGap": 7.703125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 21.125
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "20px",
+          "leading": "25px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "21.125px",
+          "inkHeightEstimate": 12.568359375,
+          "position": "static"
+        },
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 11.785255432128906,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 462.984375,
+            "bottom": 482.984375,
+            "left": 71,
+            "right": 324.046875,
+            "text": "de commissie gaf gestalte aan de "
+          },
+          {
+            "top": 487.984375,
+            "bottom": 507.984375,
+            "left": 71,
+            "right": 310.796875,
+            "text": "plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 514.734375,
+            "bottom": 534.734375,
+            "left": 71,
+            "right": 314.53125,
+            "text": "комиссия воплотила планы по "
+          },
+          {
+            "top": 535.859375,
+            "bottom": 555.859375,
+            "left": 71,
+            "right": 197.015625,
+            "text": "новой политике"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 438.28125,
+            "bottom": 453.28125,
+            "left": 63,
+            "right": 122.34375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          5
+        ],
+        "pairRangeGap": 6.75,
+        "labelOwnRangeGap": 9.703125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 390,
+    "size": "large",
+    "surface": "article",
+    "profile": "airy",
+    "treatment": "proposed",
+    "translation": "partial",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-definition",
+        "kind": "definition",
+        "original": {
+          "size": "25px",
+          "leading": "31.25px",
+          "inkHeightEstimate": 24.36250114440918,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 125.59375,
+            "bottom": 150.59375,
+            "left": 41,
+            "right": 330.875,
+            "text": "een lichaam zoals je het ziet"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "20px",
+          "leading": "25px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "21.125px",
+          "inkHeightEstimate": 12.012939453125,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 241.078125,
+            "bottom": 261.078125,
+            "left": 53,
+            "right": 192.390625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 267.828125,
+            "bottom": 287.828125,
+            "left": 53,
+            "right": 211.734375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 6.75,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "16.25px",
+          "leading": "20.3125px",
+          "inkHeightEstimate": 15.7183837890625,
+          "position": "static"
+        },
+        "translation": {
+          "size": "16.25px",
+          "leading": "21.125px",
+          "inkHeightEstimate": 15.20263671875,
+          "position": "static"
+        },
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 9.475147247314453,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 331.65625,
+            "bottom": 351.65625,
+            "left": 71,
+            "right": 318.53125,
+            "text": "iets uitvoeren; zorgen dat iets er "
+          },
+          {
+            "top": 351.96875,
+            "bottom": 371.96875,
+            "left": 71,
+            "right": 108.859375,
+            "text": "komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 376.03125,
+            "bottom": 396.03125,
+            "left": 71,
+            "right": 324.640625,
+            "text": "осуществить что-либо; сделать "
+          },
+          {
+            "top": 397.15625,
+            "bottom": 417.15625,
+            "left": 71,
+            "right": 298.4375,
+            "text": "так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 308.953125,
+            "bottom": 323.953125,
+            "left": 63,
+            "right": 159.90625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [
+          0.3125
+        ],
+        "pairRangeGap": 4.0625,
+        "labelOwnRangeGap": 7.703125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 21.125
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "20px",
+          "leading": "25px",
+          "inkHeightEstimate": 19.490001678466797,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "12.65px",
+          "leading": "16.445px",
+          "inkHeightEstimate": 11.785255432128906,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 462.984375,
+            "bottom": 482.984375,
+            "left": 71,
+            "right": 324.046875,
+            "text": "de commissie gaf gestalte aan de "
+          },
+          {
+            "top": 487.984375,
+            "bottom": 507.984375,
+            "left": 71,
+            "right": 310.796875,
+            "text": "plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 438.28125,
+            "bottom": 453.28125,
+            "left": 63,
+            "right": 122.34375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          5
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 9.703125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "normal",
+    "surface": "training",
+    "profile": "balanced",
+    "treatment": "current",
+    "translation": "off",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "16px",
+          "leading": "22.4px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 230.09375,
+            "bottom": 246.09375,
+            "left": 50,
+            "right": 161.515625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "13px",
+          "leading": "19.5px",
+          "inkHeightEstimate": 12.57470703125,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 8.2392578125,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 289.78125,
+            "bottom": 305.78125,
+            "left": 68,
+            "right": 299.96875,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 270.484375,
+            "bottom": 284.484375,
+            "left": 60,
+            "right": 144.265625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 5.296875,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": 7.5
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "16px",
+          "leading": "22.4px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 10.248046875,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 332.28125,
+            "bottom": 348.28125,
+            "left": 68,
+            "right": 466,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 313.28125,
+            "bottom": 327.28125,
+            "left": 60,
+            "right": 111.609375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 5,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "normal",
+    "surface": "training",
+    "profile": "balanced",
+    "treatment": "current",
+    "translation": "on",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "16px",
+          "leading": "22.4px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "18.2px",
+          "inkHeightEstimate": 9.6103515625,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 234.09375,
+            "bottom": 250.09375,
+            "left": 50,
+            "right": 161.515625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 258.484375,
+            "bottom": 274.484375,
+            "left": 50,
+            "right": 176.984375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 8.390625,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "13px",
+          "leading": "19.5px",
+          "inkHeightEstimate": 12.57470703125,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "18.2px",
+          "inkHeightEstimate": 12.162109375,
+          "position": "static"
+        },
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 8.2392578125,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 315.96875,
+            "bottom": 331.96875,
+            "left": 68,
+            "right": 299.96875,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 339.46875,
+            "bottom": 355.46875,
+            "left": 68,
+            "right": 456.515625,
+            "text": "осуществить что-либо; сделать так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 296.671875,
+            "bottom": 310.671875,
+            "left": 60,
+            "right": 144.265625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 7.5,
+        "labelOwnRangeGap": 5.296875,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 6.1875
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "16px",
+          "leading": "22.4px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "18.2px",
+          "inkHeightEstimate": 10.0546875,
+          "position": "static"
+        },
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 10.248046875,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 380.65625,
+            "bottom": 396.65625,
+            "left": 68,
+            "right": 466,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 405.046875,
+            "bottom": 421.046875,
+            "left": 68,
+            "right": 367.28125,
+            "text": "комиссия воплотила планы по новой политике"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 361.65625,
+            "bottom": 375.65625,
+            "left": 60,
+            "right": 111.609375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 8.390625,
+        "labelOwnRangeGap": 5,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "normal",
+    "surface": "training",
+    "profile": "balanced",
+    "treatment": "current",
+    "translation": "partial",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "16px",
+          "leading": "22.4px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "18.2px",
+          "inkHeightEstimate": 9.6103515625,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 234.09375,
+            "bottom": 250.09375,
+            "left": 50,
+            "right": 161.515625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 258.484375,
+            "bottom": 274.484375,
+            "left": 50,
+            "right": 176.984375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 8.390625,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "13px",
+          "leading": "19.5px",
+          "inkHeightEstimate": 12.57470703125,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "18.2px",
+          "inkHeightEstimate": 12.162109375,
+          "position": "static"
+        },
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 8.2392578125,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 315.96875,
+            "bottom": 331.96875,
+            "left": 68,
+            "right": 299.96875,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 339.46875,
+            "bottom": 355.46875,
+            "left": 68,
+            "right": 456.515625,
+            "text": "осуществить что-либо; сделать так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 296.671875,
+            "bottom": 310.671875,
+            "left": 60,
+            "right": 144.265625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 7.5,
+        "labelOwnRangeGap": 5.296875,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 6.1875
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "16px",
+          "leading": "22.4px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 10.248046875,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 380.65625,
+            "bottom": 396.65625,
+            "left": 68,
+            "right": 466,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 361.65625,
+            "bottom": 375.65625,
+            "left": 60,
+            "right": 111.609375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 5,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "normal",
+    "surface": "training",
+    "profile": "balanced",
+    "treatment": "proposed",
+    "translation": "off",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "16px",
+          "leading": "20px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 229.09375,
+            "bottom": 245.09375,
+            "left": 50,
+            "right": 161.515625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "13px",
+          "leading": "16.25px",
+          "inkHeightEstimate": 12.57470703125,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 8.2392578125,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 277.390625,
+            "bottom": 293.390625,
+            "left": 68,
+            "right": 299.96875,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 259.09375,
+            "bottom": 273.09375,
+            "left": 60,
+            "right": 144.265625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 4.296875,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": 12.25
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "16px",
+          "leading": "20px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 10.248046875,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 325.9375,
+            "bottom": 341.9375,
+            "left": 68,
+            "right": 466,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 305.640625,
+            "bottom": 319.640625,
+            "left": 60,
+            "right": 111.609375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 6.296875,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "normal",
+    "surface": "training",
+    "profile": "balanced",
+    "treatment": "proposed",
+    "translation": "on",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "16px",
+          "leading": "20px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "16.9px",
+          "inkHeightEstimate": 9.6103515625,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 233.09375,
+            "bottom": 249.09375,
+            "left": 50,
+            "right": 161.515625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 253.09375,
+            "bottom": 269.09375,
+            "left": 50,
+            "right": 176.984375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 4,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "13px",
+          "leading": "16.25px",
+          "inkHeightEstimate": 12.57470703125,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "16.9px",
+          "inkHeightEstimate": 12.162109375,
+          "position": "static"
+        },
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 8.2392578125,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 300.28125,
+            "bottom": 316.28125,
+            "left": 68,
+            "right": 299.96875,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 318.53125,
+            "bottom": 334.53125,
+            "left": 68,
+            "right": 456.515625,
+            "text": "осуществить что-либо; сделать так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 281.984375,
+            "bottom": 295.984375,
+            "left": 60,
+            "right": 144.265625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 2.25,
+        "labelOwnRangeGap": 4.296875,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 12.890625
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "16px",
+          "leading": "20px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "16.9px",
+          "inkHeightEstimate": 10.0546875,
+          "position": "static"
+        },
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 10.248046875,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 367.71875,
+            "bottom": 383.71875,
+            "left": 68,
+            "right": 466,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 387.71875,
+            "bottom": 403.71875,
+            "left": 68,
+            "right": 367.28125,
+            "text": "комиссия воплотила планы по новой политике"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 347.421875,
+            "bottom": 361.421875,
+            "left": 60,
+            "right": 111.609375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 4,
+        "labelOwnRangeGap": 6.296875,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "normal",
+    "surface": "training",
+    "profile": "balanced",
+    "treatment": "proposed",
+    "translation": "partial",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "16px",
+          "leading": "20px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "16.9px",
+          "inkHeightEstimate": 9.6103515625,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 233.09375,
+            "bottom": 249.09375,
+            "left": 50,
+            "right": 161.515625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 253.09375,
+            "bottom": 269.09375,
+            "left": 50,
+            "right": 176.984375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 4,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "13px",
+          "leading": "16.25px",
+          "inkHeightEstimate": 12.57470703125,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "16.9px",
+          "inkHeightEstimate": 12.162109375,
+          "position": "static"
+        },
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 8.2392578125,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 300.28125,
+            "bottom": 316.28125,
+            "left": 68,
+            "right": 299.96875,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 318.53125,
+            "bottom": 334.53125,
+            "left": 68,
+            "right": 456.515625,
+            "text": "осуществить что-либо; сделать так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 281.984375,
+            "bottom": 295.984375,
+            "left": 60,
+            "right": 144.265625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 2.25,
+        "labelOwnRangeGap": 4.296875,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 12.890625
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "16px",
+          "leading": "20px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 10.248046875,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 367.71875,
+            "bottom": 383.71875,
+            "left": 68,
+            "right": 466,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 347.421875,
+            "bottom": 361.421875,
+            "left": 60,
+            "right": 111.609375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 6.296875,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "normal",
+    "surface": "training",
+    "profile": "airy",
+    "treatment": "current",
+    "translation": "off",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "16px",
+          "leading": "22.4px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 242.09375,
+            "bottom": 258.09375,
+            "left": 50,
+            "right": 161.515625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "13px",
+          "leading": "19.5px",
+          "inkHeightEstimate": 12.57470703125,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 8.2392578125,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 301.78125,
+            "bottom": 317.78125,
+            "left": 68,
+            "right": 299.96875,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 282.484375,
+            "bottom": 296.484375,
+            "left": 60,
+            "right": 144.265625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 5.296875,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": 7.5
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "16px",
+          "leading": "22.4px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 10.248046875,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 344.28125,
+            "bottom": 360.28125,
+            "left": 68,
+            "right": 466,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 325.28125,
+            "bottom": 339.28125,
+            "left": 60,
+            "right": 111.609375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 5,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "normal",
+    "surface": "training",
+    "profile": "airy",
+    "treatment": "current",
+    "translation": "on",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "16px",
+          "leading": "22.4px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "18.2px",
+          "inkHeightEstimate": 9.6103515625,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 248.09375,
+            "bottom": 264.09375,
+            "left": 50,
+            "right": 161.515625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 273.484375,
+            "bottom": 289.484375,
+            "left": 50,
+            "right": 176.984375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 9.390625,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "13px",
+          "leading": "19.5px",
+          "inkHeightEstimate": 12.57470703125,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "18.2px",
+          "inkHeightEstimate": 12.162109375,
+          "position": "static"
+        },
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 8.2392578125,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 330.96875,
+            "bottom": 346.96875,
+            "left": 68,
+            "right": 299.96875,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 355.46875,
+            "bottom": 371.46875,
+            "left": 68,
+            "right": 456.515625,
+            "text": "осуществить что-либо; сделать так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 311.671875,
+            "bottom": 325.671875,
+            "left": 60,
+            "right": 144.265625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 8.5,
+        "labelOwnRangeGap": 5.296875,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 6.1875
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "16px",
+          "leading": "22.4px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "18.2px",
+          "inkHeightEstimate": 10.0546875,
+          "position": "static"
+        },
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 10.248046875,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 396.65625,
+            "bottom": 412.65625,
+            "left": 68,
+            "right": 466,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 422.046875,
+            "bottom": 438.046875,
+            "left": 68,
+            "right": 367.28125,
+            "text": "комиссия воплотила планы по новой политике"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 377.65625,
+            "bottom": 391.65625,
+            "left": 60,
+            "right": 111.609375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 9.390625,
+        "labelOwnRangeGap": 5,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "normal",
+    "surface": "training",
+    "profile": "airy",
+    "treatment": "current",
+    "translation": "partial",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "16px",
+          "leading": "22.4px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "18.2px",
+          "inkHeightEstimate": 9.6103515625,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 248.09375,
+            "bottom": 264.09375,
+            "left": 50,
+            "right": 161.515625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 273.484375,
+            "bottom": 289.484375,
+            "left": 50,
+            "right": 176.984375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 9.390625,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "13px",
+          "leading": "19.5px",
+          "inkHeightEstimate": 12.57470703125,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "18.2px",
+          "inkHeightEstimate": 12.162109375,
+          "position": "static"
+        },
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 8.2392578125,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 330.96875,
+            "bottom": 346.96875,
+            "left": 68,
+            "right": 299.96875,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 355.46875,
+            "bottom": 371.46875,
+            "left": 68,
+            "right": 456.515625,
+            "text": "осуществить что-либо; сделать так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 311.671875,
+            "bottom": 325.671875,
+            "left": 60,
+            "right": 144.265625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 8.5,
+        "labelOwnRangeGap": 5.296875,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 6.1875
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "16px",
+          "leading": "22.4px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 10.248046875,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 396.65625,
+            "bottom": 412.65625,
+            "left": 68,
+            "right": 466,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 377.65625,
+            "bottom": 391.65625,
+            "left": 60,
+            "right": 111.609375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 5,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "normal",
+    "surface": "training",
+    "profile": "airy",
+    "treatment": "proposed",
+    "translation": "off",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "16px",
+          "leading": "20px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 241.09375,
+            "bottom": 257.09375,
+            "left": 50,
+            "right": 161.515625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "13px",
+          "leading": "16.25px",
+          "inkHeightEstimate": 12.57470703125,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 8.2392578125,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 294.390625,
+            "bottom": 310.390625,
+            "left": 68,
+            "right": 299.96875,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 275.09375,
+            "bottom": 289.09375,
+            "left": 60,
+            "right": 144.265625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 5.296875,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": 16.25
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "16px",
+          "leading": "20px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 10.248046875,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 347.9375,
+            "bottom": 363.9375,
+            "left": 68,
+            "right": 466,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 326.640625,
+            "bottom": 340.640625,
+            "left": 60,
+            "right": 111.609375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 7.296875,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "normal",
+    "surface": "training",
+    "profile": "airy",
+    "treatment": "proposed",
+    "translation": "on",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "16px",
+          "leading": "20px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "16.9px",
+          "inkHeightEstimate": 9.6103515625,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 247.09375,
+            "bottom": 263.09375,
+            "left": 50,
+            "right": 161.515625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 268.09375,
+            "bottom": 284.09375,
+            "left": 50,
+            "right": 176.984375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 5,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "13px",
+          "leading": "16.25px",
+          "inkHeightEstimate": 12.57470703125,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "16.9px",
+          "inkHeightEstimate": 12.162109375,
+          "position": "static"
+        },
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 8.2392578125,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 320.28125,
+            "bottom": 336.28125,
+            "left": 68,
+            "right": 299.96875,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 339.53125,
+            "bottom": 355.53125,
+            "left": 68,
+            "right": 456.515625,
+            "text": "осуществить что-либо; сделать так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 300.984375,
+            "bottom": 314.984375,
+            "left": 60,
+            "right": 144.265625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 3.25,
+        "labelOwnRangeGap": 5.296875,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 16.890625
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "16px",
+          "leading": "20px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "16.9px",
+          "inkHeightEstimate": 10.0546875,
+          "position": "static"
+        },
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 10.248046875,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 393.71875,
+            "bottom": 409.71875,
+            "left": 68,
+            "right": 466,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 414.71875,
+            "bottom": 430.71875,
+            "left": 68,
+            "right": 367.28125,
+            "text": "комиссия воплотила планы по новой политике"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 372.421875,
+            "bottom": 386.421875,
+            "left": 60,
+            "right": 111.609375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 5,
+        "labelOwnRangeGap": 7.296875,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "normal",
+    "surface": "training",
+    "profile": "airy",
+    "treatment": "proposed",
+    "translation": "partial",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "16px",
+          "leading": "20px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "16.9px",
+          "inkHeightEstimate": 9.6103515625,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 247.09375,
+            "bottom": 263.09375,
+            "left": 50,
+            "right": 161.515625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 268.09375,
+            "bottom": 284.09375,
+            "left": 50,
+            "right": 176.984375,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 5,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "13px",
+          "leading": "16.25px",
+          "inkHeightEstimate": 12.57470703125,
+          "position": "static"
+        },
+        "translation": {
+          "size": "13px",
+          "leading": "16.9px",
+          "inkHeightEstimate": 12.162109375,
+          "position": "static"
+        },
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 8.2392578125,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 320.28125,
+            "bottom": 336.28125,
+            "left": 68,
+            "right": 299.96875,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 339.53125,
+            "bottom": 355.53125,
+            "left": 68,
+            "right": 456.515625,
+            "text": "осуществить что-либо; сделать так, чтобы что-то появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 300.984375,
+            "bottom": 314.984375,
+            "left": 60,
+            "right": 144.265625,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 3.25,
+        "labelOwnRangeGap": 5.296875,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 16.890625
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "16px",
+          "leading": "20px",
+          "inkHeightEstimate": 15.592000961303711,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "11px",
+          "leading": "14.3px",
+          "inkHeightEstimate": 10.248046875,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 393.71875,
+            "bottom": 409.71875,
+            "left": 68,
+            "right": 466,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 372.421875,
+            "bottom": 386.421875,
+            "left": 60,
+            "right": 111.609375,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 7.296875,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "largest",
+    "surface": "training",
+    "profile": "balanced",
+    "treatment": "current",
+    "translation": "off",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "24px",
+          "leading": "33.6px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 261.453125,
+            "bottom": 285.453125,
+            "left": 50,
+            "right": 217.265625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "19.5px",
+          "leading": "29.25px",
+          "inkHeightEstimate": 18.862060546875,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 10.71103572845459,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 336.625,
+            "bottom": 360.625,
+            "left": 68,
+            "right": 415.9375,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 312.046875,
+            "bottom": 329.046875,
+            "left": 60,
+            "right": 169.546875,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 7.578125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": 8.25
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "24px",
+          "leading": "33.6px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 13.32246208190918,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 388.875,
+            "bottom": 412.875,
+            "left": 68,
+            "right": 604.078125,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw "
+          },
+          {
+            "top": 422.46875,
+            "bottom": 446.46875,
+            "left": 68,
+            "right": 123.34375,
+            "text": "beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 368.875,
+            "bottom": 385.875,
+            "left": 60,
+            "right": 127.078125,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          9.59375
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 3,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "largest",
+    "surface": "training",
+    "profile": "balanced",
+    "treatment": "current",
+    "translation": "on",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "24px",
+          "leading": "33.6px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "27.3px",
+          "inkHeightEstimate": 14.41552734375,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 267.453125,
+            "bottom": 291.453125,
+            "left": 50,
+            "right": 217.265625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 304.046875,
+            "bottom": 328.046875,
+            "left": 50,
+            "right": 240.46875,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 12.59375,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "19.5px",
+          "leading": "29.25px",
+          "inkHeightEstimate": 18.862060546875,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "27.3px",
+          "inkHeightEstimate": 18.2431640625,
+          "position": "static"
+        },
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 10.71103572845459,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 375.921875,
+            "bottom": 399.921875,
+            "left": 68,
+            "right": 415.9375,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 410.171875,
+            "bottom": 434.171875,
+            "left": 68,
+            "right": 543.828125,
+            "text": "осуществить что-либо; сделать так, чтобы что-то "
+          },
+          {
+            "top": 437.46875,
+            "bottom": 461.46875,
+            "left": 68,
+            "right": 169.453125,
+            "text": "появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 351.34375,
+            "bottom": 368.34375,
+            "left": 60,
+            "right": 169.546875,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 10.25,
+        "labelOwnRangeGap": 7.578125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 7.296875
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "24px",
+          "leading": "33.6px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "27.3px",
+          "inkHeightEstimate": 15.08203125,
+          "position": "static"
+        },
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 13.32246208190918,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 488.765625,
+            "bottom": 512.765625,
+            "left": 68,
+            "right": 604.078125,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw "
+          },
+          {
+            "top": 522.359375,
+            "bottom": 546.359375,
+            "left": 68,
+            "right": 123.34375,
+            "text": "beleid"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 558.953125,
+            "bottom": 582.953125,
+            "left": 68,
+            "right": 516.921875,
+            "text": "комиссия воплотила планы по новой политике"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 468.765625,
+            "bottom": 485.765625,
+            "left": 60,
+            "right": 127.078125,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          9.59375
+        ],
+        "pairRangeGap": 12.59375,
+        "labelOwnRangeGap": 3,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "largest",
+    "surface": "training",
+    "profile": "balanced",
+    "treatment": "current",
+    "translation": "partial",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "24px",
+          "leading": "33.6px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "27.3px",
+          "inkHeightEstimate": 14.41552734375,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 267.453125,
+            "bottom": 291.453125,
+            "left": 50,
+            "right": 217.265625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 304.046875,
+            "bottom": 328.046875,
+            "left": 50,
+            "right": 240.46875,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 12.59375,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "19.5px",
+          "leading": "29.25px",
+          "inkHeightEstimate": 18.862060546875,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "27.3px",
+          "inkHeightEstimate": 18.2431640625,
+          "position": "static"
+        },
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 10.71103572845459,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 375.921875,
+            "bottom": 399.921875,
+            "left": 68,
+            "right": 415.9375,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 410.171875,
+            "bottom": 434.171875,
+            "left": 68,
+            "right": 543.828125,
+            "text": "осуществить что-либо; сделать так, чтобы что-то "
+          },
+          {
+            "top": 437.46875,
+            "bottom": 461.46875,
+            "left": 68,
+            "right": 169.453125,
+            "text": "появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 351.34375,
+            "bottom": 368.34375,
+            "left": 60,
+            "right": 169.546875,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 10.25,
+        "labelOwnRangeGap": 7.578125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 7.296875
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "24px",
+          "leading": "33.6px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 13.32246208190918,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 488.765625,
+            "bottom": 512.765625,
+            "left": 68,
+            "right": 604.078125,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw "
+          },
+          {
+            "top": 522.359375,
+            "bottom": 546.359375,
+            "left": 68,
+            "right": 123.34375,
+            "text": "beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 468.765625,
+            "bottom": 485.765625,
+            "left": 60,
+            "right": 127.078125,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          9.59375
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 3,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "largest",
+    "surface": "training",
+    "profile": "balanced",
+    "treatment": "proposed",
+    "translation": "off",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "24px",
+          "leading": "30px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 260.453125,
+            "bottom": 284.453125,
+            "left": 50,
+            "right": 217.265625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "19.5px",
+          "leading": "24.375px",
+          "inkHeightEstimate": 18.862060546875,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 10.71103572845459,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 330.03125,
+            "bottom": 354.03125,
+            "left": 68,
+            "right": 415.9375,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 305.453125,
+            "bottom": 322.453125,
+            "left": 60,
+            "right": 169.546875,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 7.578125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": 18.375
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "24px",
+          "leading": "30px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 13.32246208190918,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 399.984375,
+            "bottom": 423.984375,
+            "left": 68,
+            "right": 604.078125,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw "
+          },
+          {
+            "top": 429.984375,
+            "bottom": 453.984375,
+            "left": 68,
+            "right": 123.34375,
+            "text": "beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 372.40625,
+            "bottom": 389.40625,
+            "left": 60,
+            "right": 127.078125,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          6
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 10.578125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "largest",
+    "surface": "training",
+    "profile": "balanced",
+    "treatment": "proposed",
+    "translation": "on",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "24px",
+          "leading": "30px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "25.35px",
+          "inkHeightEstimate": 14.41552734375,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 266.453125,
+            "bottom": 290.453125,
+            "left": 50,
+            "right": 217.265625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 296.453125,
+            "bottom": 320.453125,
+            "left": 50,
+            "right": 240.46875,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 6,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "19.5px",
+          "leading": "24.375px",
+          "inkHeightEstimate": 18.862060546875,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "25.35px",
+          "inkHeightEstimate": 18.2431640625,
+          "position": "static"
+        },
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 10.71103572845459,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 364.375,
+            "bottom": 388.375,
+            "left": 68,
+            "right": 415.9375,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 391.75,
+            "bottom": 415.75,
+            "left": 68,
+            "right": 543.828125,
+            "text": "осуществить что-либо; сделать так, чтобы что-то "
+          },
+          {
+            "top": 417.09375,
+            "bottom": 441.09375,
+            "left": 68,
+            "right": 169.453125,
+            "text": "появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 339.796875,
+            "bottom": 356.796875,
+            "left": 60,
+            "right": 169.546875,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 3.375,
+        "labelOwnRangeGap": 7.578125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 19.34375
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "24px",
+          "leading": "30px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "25.35px",
+          "inkHeightEstimate": 15.08203125,
+          "position": "static"
+        },
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 13.32246208190918,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 488.015625,
+            "bottom": 512.015625,
+            "left": 68,
+            "right": 604.078125,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw "
+          },
+          {
+            "top": 518.015625,
+            "bottom": 542.015625,
+            "left": 68,
+            "right": 123.34375,
+            "text": "beleid"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 548.015625,
+            "bottom": 572.015625,
+            "left": 68,
+            "right": 516.921875,
+            "text": "комиссия воплотила планы по новой политике"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 460.4375,
+            "bottom": 477.4375,
+            "left": 60,
+            "right": 127.078125,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          6
+        ],
+        "pairRangeGap": 6,
+        "labelOwnRangeGap": 10.578125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "largest",
+    "surface": "training",
+    "profile": "balanced",
+    "treatment": "proposed",
+    "translation": "partial",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "24px",
+          "leading": "30px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "25.35px",
+          "inkHeightEstimate": 14.41552734375,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 266.453125,
+            "bottom": 290.453125,
+            "left": 50,
+            "right": 217.265625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 296.453125,
+            "bottom": 320.453125,
+            "left": 50,
+            "right": 240.46875,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 6,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "19.5px",
+          "leading": "24.375px",
+          "inkHeightEstimate": 18.862060546875,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "25.35px",
+          "inkHeightEstimate": 18.2431640625,
+          "position": "static"
+        },
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 10.71103572845459,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 364.375,
+            "bottom": 388.375,
+            "left": 68,
+            "right": 415.9375,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 391.75,
+            "bottom": 415.75,
+            "left": 68,
+            "right": 543.828125,
+            "text": "осуществить что-либо; сделать так, чтобы что-то "
+          },
+          {
+            "top": 417.09375,
+            "bottom": 441.09375,
+            "left": 68,
+            "right": 169.453125,
+            "text": "появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 339.796875,
+            "bottom": 356.796875,
+            "left": 60,
+            "right": 169.546875,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 3.375,
+        "labelOwnRangeGap": 7.578125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 19.34375
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "24px",
+          "leading": "30px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 13.32246208190918,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 488.015625,
+            "bottom": 512.015625,
+            "left": 68,
+            "right": 604.078125,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw "
+          },
+          {
+            "top": 518.015625,
+            "bottom": 542.015625,
+            "left": 68,
+            "right": 123.34375,
+            "text": "beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 460.4375,
+            "bottom": 477.4375,
+            "left": 60,
+            "right": 127.078125,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          6
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 10.578125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "largest",
+    "surface": "training",
+    "profile": "airy",
+    "treatment": "current",
+    "translation": "off",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "24px",
+          "leading": "33.6px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 279.453125,
+            "bottom": 303.453125,
+            "left": 50,
+            "right": 217.265625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "19.5px",
+          "leading": "29.25px",
+          "inkHeightEstimate": 18.862060546875,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 10.71103572845459,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 354.625,
+            "bottom": 378.625,
+            "left": 68,
+            "right": 415.9375,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 330.046875,
+            "bottom": 347.046875,
+            "left": 60,
+            "right": 169.546875,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 7.578125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": 8.25
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "24px",
+          "leading": "33.6px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 13.32246208190918,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 406.875,
+            "bottom": 430.875,
+            "left": 68,
+            "right": 604.078125,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw "
+          },
+          {
+            "top": 440.46875,
+            "bottom": 464.46875,
+            "left": 68,
+            "right": 123.34375,
+            "text": "beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 386.875,
+            "bottom": 403.875,
+            "left": 60,
+            "right": 127.078125,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          9.59375
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 3,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "largest",
+    "surface": "training",
+    "profile": "airy",
+    "treatment": "current",
+    "translation": "on",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "24px",
+          "leading": "33.6px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "27.3px",
+          "inkHeightEstimate": 14.41552734375,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 288.453125,
+            "bottom": 312.453125,
+            "left": 50,
+            "right": 217.265625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 326.546875,
+            "bottom": 350.546875,
+            "left": 50,
+            "right": 240.46875,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 14.09375,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "19.5px",
+          "leading": "29.25px",
+          "inkHeightEstimate": 18.862060546875,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "27.3px",
+          "inkHeightEstimate": 18.2431640625,
+          "position": "static"
+        },
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 10.71103572845459,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 398.421875,
+            "bottom": 422.421875,
+            "left": 68,
+            "right": 415.9375,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 434.171875,
+            "bottom": 458.171875,
+            "left": 68,
+            "right": 543.828125,
+            "text": "осуществить что-либо; сделать так, чтобы что-то "
+          },
+          {
+            "top": 461.46875,
+            "bottom": 485.46875,
+            "left": 68,
+            "right": 169.453125,
+            "text": "появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 373.84375,
+            "bottom": 390.84375,
+            "left": 60,
+            "right": 169.546875,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 11.75,
+        "labelOwnRangeGap": 7.578125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 7.296875
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "24px",
+          "leading": "33.6px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "27.3px",
+          "inkHeightEstimate": 15.08203125,
+          "position": "static"
+        },
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 13.32246208190918,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 512.765625,
+            "bottom": 536.765625,
+            "left": 68,
+            "right": 604.078125,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw "
+          },
+          {
+            "top": 546.359375,
+            "bottom": 570.359375,
+            "left": 68,
+            "right": 123.34375,
+            "text": "beleid"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 584.453125,
+            "bottom": 608.453125,
+            "left": 68,
+            "right": 516.921875,
+            "text": "комиссия воплотила планы по новой политике"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 492.765625,
+            "bottom": 509.765625,
+            "left": 60,
+            "right": 127.078125,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          9.59375
+        ],
+        "pairRangeGap": 14.09375,
+        "labelOwnRangeGap": 3,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "largest",
+    "surface": "training",
+    "profile": "airy",
+    "treatment": "current",
+    "translation": "partial",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "24px",
+          "leading": "33.6px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "27.3px",
+          "inkHeightEstimate": 14.41552734375,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 288.453125,
+            "bottom": 312.453125,
+            "left": 50,
+            "right": 217.265625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 326.546875,
+            "bottom": 350.546875,
+            "left": 50,
+            "right": 240.46875,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 14.09375,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "19.5px",
+          "leading": "29.25px",
+          "inkHeightEstimate": 18.862060546875,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "27.3px",
+          "inkHeightEstimate": 18.2431640625,
+          "position": "static"
+        },
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 10.71103572845459,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 398.421875,
+            "bottom": 422.421875,
+            "left": 68,
+            "right": 415.9375,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 434.171875,
+            "bottom": 458.171875,
+            "left": 68,
+            "right": 543.828125,
+            "text": "осуществить что-либо; сделать так, чтобы что-то "
+          },
+          {
+            "top": 461.46875,
+            "bottom": 485.46875,
+            "left": 68,
+            "right": 169.453125,
+            "text": "появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 373.84375,
+            "bottom": 390.84375,
+            "left": 60,
+            "right": 169.546875,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 11.75,
+        "labelOwnRangeGap": 7.578125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 7.296875
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "24px",
+          "leading": "33.6px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 13.32246208190918,
+          "position": "absolute"
+        },
+        "originalLines": [
+          {
+            "top": 512.765625,
+            "bottom": 536.765625,
+            "left": 68,
+            "right": 604.078125,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw "
+          },
+          {
+            "top": 546.359375,
+            "bottom": 570.359375,
+            "left": 68,
+            "right": 123.34375,
+            "text": "beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 492.765625,
+            "bottom": 509.765625,
+            "left": 60,
+            "right": 127.078125,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          9.59375
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 3,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "largest",
+    "surface": "training",
+    "profile": "airy",
+    "treatment": "proposed",
+    "translation": "off",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "24px",
+          "leading": "30px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": null,
+        "label": null,
+        "originalLines": [
+          {
+            "top": 278.453125,
+            "bottom": 302.453125,
+            "left": 50,
+            "right": 217.265625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "19.5px",
+          "leading": "24.375px",
+          "inkHeightEstimate": 18.862060546875,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 10.71103572845459,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 355.53125,
+            "bottom": 379.53125,
+            "left": 68,
+            "right": 415.9375,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 329.453125,
+            "bottom": 346.453125,
+            "left": 60,
+            "right": 169.546875,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 9.078125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": 24.375
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "24px",
+          "leading": "30px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 13.32246208190918,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 432.984375,
+            "bottom": 456.984375,
+            "left": 68,
+            "right": 604.078125,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw "
+          },
+          {
+            "top": 462.984375,
+            "bottom": 486.984375,
+            "left": 68,
+            "right": 123.34375,
+            "text": "beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 403.90625,
+            "bottom": 420.90625,
+            "left": 60,
+            "right": 127.078125,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          6
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 12.078125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "largest",
+    "surface": "training",
+    "profile": "airy",
+    "treatment": "proposed",
+    "translation": "on",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "24px",
+          "leading": "30px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "25.35px",
+          "inkHeightEstimate": 14.41552734375,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 287.453125,
+            "bottom": 311.453125,
+            "left": 50,
+            "right": 217.265625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 318.953125,
+            "bottom": 342.953125,
+            "left": 50,
+            "right": 240.46875,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 7.5,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "19.5px",
+          "leading": "24.375px",
+          "inkHeightEstimate": 18.862060546875,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "25.35px",
+          "inkHeightEstimate": 18.2431640625,
+          "position": "static"
+        },
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 10.71103572845459,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 394.375,
+            "bottom": 418.375,
+            "left": 68,
+            "right": 415.9375,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 423.25,
+            "bottom": 447.25,
+            "left": 68,
+            "right": 543.828125,
+            "text": "осуществить что-либо; сделать так, чтобы что-то "
+          },
+          {
+            "top": 448.59375,
+            "bottom": 472.59375,
+            "left": 68,
+            "right": 169.453125,
+            "text": "появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 368.296875,
+            "bottom": 385.296875,
+            "left": 60,
+            "right": 169.546875,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 4.875,
+        "labelOwnRangeGap": 9.078125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 25.34375
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "24px",
+          "leading": "30px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "25.35px",
+          "inkHeightEstimate": 15.08203125,
+          "position": "static"
+        },
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 13.32246208190918,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 527.015625,
+            "bottom": 551.015625,
+            "left": 68,
+            "right": 604.078125,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw "
+          },
+          {
+            "top": 557.015625,
+            "bottom": 581.015625,
+            "left": 68,
+            "right": 123.34375,
+            "text": "beleid"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 588.515625,
+            "bottom": 612.515625,
+            "left": 68,
+            "right": 516.921875,
+            "text": "комиссия воплотила планы по новой политике"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 497.9375,
+            "bottom": 514.9375,
+            "left": 60,
+            "right": 127.078125,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          6
+        ],
+        "pairRangeGap": 7.5,
+        "labelOwnRangeGap": 12.078125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  },
+  {
+    "fixture": "gestalte",
+    "width": 695,
+    "size": "largest",
+    "surface": "training",
+    "profile": "airy",
+    "treatment": "proposed",
+    "translation": "partial",
+    "overflow": false,
+    "nodes": [
+      {
+        "id": "gestalte-expression",
+        "kind": "idiom",
+        "original": {
+          "size": "24px",
+          "leading": "30px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "25.35px",
+          "inkHeightEstimate": 14.41552734375,
+          "position": "static"
+        },
+        "label": null,
+        "originalLines": [
+          {
+            "top": 287.453125,
+            "bottom": 311.453125,
+            "left": 50,
+            "right": 217.265625,
+            "text": "iets gestalte geven"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 318.953125,
+            "bottom": 342.953125,
+            "left": 50,
+            "right": 240.46875,
+            "text": "воплотить что-либо"
+          }
+        ],
+        "labelLines": [],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 7.5,
+        "labelOwnRangeGap": null,
+        "labelContentInset": null,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      },
+      {
+        "id": "gestalte-explanation",
+        "kind": "idiom-explanation",
+        "original": {
+          "size": "19.5px",
+          "leading": "24.375px",
+          "inkHeightEstimate": 18.862060546875,
+          "position": "static"
+        },
+        "translation": {
+          "size": "19.5px",
+          "leading": "25.35px",
+          "inkHeightEstimate": 18.2431640625,
+          "position": "static"
+        },
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 10.71103572845459,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 394.375,
+            "bottom": 418.375,
+            "left": 68,
+            "right": 415.9375,
+            "text": "iets uitvoeren; zorgen dat iets er komt"
+          }
+        ],
+        "translationLines": [
+          {
+            "top": 423.25,
+            "bottom": 447.25,
+            "left": 68,
+            "right": 543.828125,
+            "text": "осуществить что-либо; сделать так, чтобы что-то "
+          },
+          {
+            "top": 448.59375,
+            "bottom": 472.59375,
+            "left": 68,
+            "right": 169.453125,
+            "text": "появилось"
+          }
+        ],
+        "labelLines": [
+          {
+            "top": 368.296875,
+            "bottom": 385.296875,
+            "left": 60,
+            "right": 169.546875,
+            "text": "Объяснение"
+          }
+        ],
+        "wrappedLineGaps": [],
+        "pairRangeGap": 4.875,
+        "labelOwnRangeGap": 9.078125,
+        "labelContentInset": 8,
+        "translationContentInset": 8,
+        "previousGroupToNextLabelRangeGap": 25.34375
+      },
+      {
+        "id": "gestalte-example",
+        "kind": "example",
+        "original": {
+          "size": "24px",
+          "leading": "30px",
+          "inkHeightEstimate": 23.388002395629883,
+          "position": "static"
+        },
+        "translation": null,
+        "label": {
+          "size": "14.3px",
+          "leading": "18.59px",
+          "inkHeightEstimate": 13.32246208190918,
+          "position": "static"
+        },
+        "originalLines": [
+          {
+            "top": 527.015625,
+            "bottom": 551.015625,
+            "left": 68,
+            "right": 604.078125,
+            "text": "de commissie gaf gestalte aan de plannen voor een nieuw "
+          },
+          {
+            "top": 557.015625,
+            "bottom": 581.015625,
+            "left": 68,
+            "right": 123.34375,
+            "text": "beleid"
+          }
+        ],
+        "translationLines": [],
+        "labelLines": [
+          {
+            "top": 497.9375,
+            "bottom": 514.9375,
+            "left": 60,
+            "right": 127.078125,
+            "text": "Пример"
+          }
+        ],
+        "wrappedLineGaps": [
+          6
+        ],
+        "pairRangeGap": null,
+        "labelOwnRangeGap": 12.078125,
+        "labelContentInset": 8,
+        "translationContentInset": null,
+        "previousGroupToNextLabelRangeGap": null
+      }
+    ],
+    "clippedTranslations": []
+  }
+]

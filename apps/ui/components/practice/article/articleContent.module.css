@@ -23,7 +23,7 @@
   padding-left: 12px;
   margin-top: 5px;
 }
-.translation{margin:var(--practice-space-pair) 0 0;font-family:var(--practice-font-ui);font-size:var(--practice-reading-small);font-style:normal;font-weight:400;line-height:1.4;color:var(--practice-text-muted)}
+.translation{margin:var(--practice-space-article-pair) 0 0;font-family:var(--practice-font-ui);font-size:var(--practice-reading-small);font-style:normal;font-weight:400;line-height:1.4;color:var(--practice-text-muted)}
 .translationEmphasis{margin:0 0 5px;font-size:var(--practice-reading-body);line-height:1.35;font-style:normal;font-weight:500;color:var(--practice-warning)}
 .contentPair{min-width:0}
 .nodeRole{display:none}
@@ -103,61 +103,51 @@
 .detail[data-nesting=hybrid] .contentSection>.contentNode>.children{margin-left:0}
 .detail[data-translation-ink=neutral] .translationEmphasis{color:var(--practice-text-muted)}
 .detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .nodeRole{display:block;font-family:var(--practice-font-ui);font-size:var(--practice-text-label);font-weight:500;font-style:normal;letter-spacing:.065em;text-transform:uppercase;line-height:1.3;color:var(--practice-text-muted);margin-bottom:4px}
-.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .contentPair>p{font-family:var(--practice-font-ui);font-size:var(--practice-reading-small);font-weight:400;font-style:normal;line-height:1.5;color:var(--practice-text-secondary)}
-.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .translation{font-family:var(--practice-font-ui);font-size:var(--practice-reading-caption);line-height:1.5;color:var(--practice-text-muted);margin-top:var(--practice-space-pair)}
+.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .contentPair>p{font-family:var(--practice-font-ui);font-size:var(--practice-reading-small);font-weight:400;font-style:normal;line-height:var(--practice-source-leading);color:var(--practice-text-secondary)}
+.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children .translation{font-family:var(--practice-font-ui);font-size:var(--practice-reading-caption);line-height:1.5;color:var(--practice-text-muted);margin-top:var(--practice-space-article-pair)}
 .detail:is([data-nested-reading=paired],[data-nested-reading=literary]) .children .contentNode+.contentNode{margin-top:14px;padding-top:12px;border-top:1px solid var(--practice-border)}
 .detail[data-nested-reading=literary] .children [data-kind=example]>.contentPair>p{font-family:var(--practice-font-reading);font-size:var(--practice-reading-body);font-style:italic;line-height:1.45}
 .detail[data-nested-reading=tiles] .contentSection>.contentNode>.children{background:transparent;padding:0;margin-top:9px}
 .detail[data-nested-reading=tiles] .children .contentPair{padding:9px 10px;border-radius:7px;background:var(--practice-canvas)}
 .detail[data-nested-reading=tiles] .children .contentNode+.contentNode{margin-top:8px}
 .detail[data-nested-reading=tiles] .children [data-kind=example]>.contentPair{background:var(--practice-canvas)}
+/* Nested headings occupy normal flow. One inset keeps each heading on the
+   parent axis and its source/translation together on the content axis. */
 .detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) {
   & .contentSection>.contentNode>.children {
     border:0;
     padding:0 10px 8px;
-    margin-top:12px;
+    margin-top:var(--practice-space-content);
     overflow:visible;
   }
-  & .contentSection>.contentNode>.children>.contentNode {
-    position:relative;
-    padding-top:9px;
-  }
-  & .contentSection>.contentNode>.children>.contentNode+.contentNode {
-    margin-top:12px;
-    padding-top:9px;
+  & .children>.contentNode {
+    padding-top:0;
     border-top:0;
   }
-  & .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole {
-    position:absolute;
-    top:-7px;
-    left:0;
-    right:0;
-    display:flex;
-    align-items:center;
-    gap:4px;
-    margin:0;
+  & .children>.contentNode+.contentNode {
+    margin-top:var(--practice-space-content);
+    padding-top:0;
+    border-top:0;
+  }
+  & .children>.contentNode>.contentPair>.nodeRole {
+    position:static;
+    display:block;
+    margin:0 0 var(--practice-space-label);
     padding:0;
     background:transparent;
     line-height:1.3;
-    pointer-events:none;
   }
-  & .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole::after {
-    content:"";
-    height:1px;
-    background:var(--practice-surface-subtle);
-    flex:1;
+  & .children>.contentNode>.contentPair>.nodeRole::after {
+    display:none;
   }
-  & .contentSection>.contentNode>.children>.contentNode:first-child>.contentPair>.nodeRole {
-    right:-10px;
+  &[data-nested-text-inset=inset] .children>.contentNode>.contentPair {
+    padding-left:var(--practice-nested-content-inset);
   }
-  &[data-nested-text-inset=inset] .contentSection>.contentNode>.children>.contentNode>.contentPair {
-    padding-left:8px;
+  &[data-nested-text-inset=inset] .children>.contentNode>.contentPair>.nodeRole {
+    margin-left:calc(-1 * var(--practice-nested-content-inset));
   }
 }
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=explanation]{position:static;display:block;margin:0 0 4px;line-height:1.3}
-.detail[data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=explanation]::after{display:none}
-.detail[data-nested-text-inset=inset][data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=explanation]{margin-left:-8px}
-.detail[data-example-line=none][data-role-labels=border][data-nesting=hybrid]:is([data-nested-reading=paired],[data-nested-reading=literary]) .contentSection>.contentNode>.children>.contentNode>.contentPair>.nodeRole[data-role=example]::after{display:none}
+.detail[data-nesting=hybrid] .contentNode>.children{margin-top:var(--practice-space-content)}
 .detail[data-nesting=hybrid] .contentSection>.contentNode{padding-left:var(--practice-content-inset)}
 
 .usagePattern{font-family:var(--practice-font-reading);font-size:var(--practice-literary-size);font-style:normal;line-height:var(--practice-literary-leading);color:var(--practice-text-secondary);margin:0}
@@ -167,7 +157,11 @@
 .detail:has([data-content-translation]:not([aria-hidden=true] *)){--practice-space-section:var(--practice-space-section-translated)}
 .detail .contentSection>.contentNode{padding-block:var(--practice-space-rail)}
 .detail [data-kind=example]>.contentPair>p:not([data-content-translation]){font-family:var(--practice-font-reading);font-size:var(--practice-literary-size);font-style:italic;line-height:var(--practice-literary-leading)}
-.detail[data-nested-reading] .children .translation{font-size:var(--practice-reading-small);line-height:1.4}
+.detail[data-nested-reading] .children .translation{font-size:var(--practice-reading-small);line-height:var(--practice-translation-leading)}
 .detail p{overflow-wrap:anywhere}
 
 .detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children [data-kind=example]>.contentPair>p:not([data-content-translation]){font-size:var(--practice-literary-size);line-height:var(--practice-literary-leading)}
+
+/* The article owns source/translation rhythm across examples, usage and nested explanations. */
+.detail .contentNode>.contentPair>p:not([data-content-translation]){line-height:var(--practice-source-leading)}
+.detail .translation{line-height:var(--practice-translation-leading)}

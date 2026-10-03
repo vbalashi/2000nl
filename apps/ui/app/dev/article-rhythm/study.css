@@ -1,0 +1,12 @@
+/* Local preview only: no imports from production routes. Keep the same content hierarchy. */
+[data-rhythm] .rhythm-article {
+  padding: 20px;
+  background: var(--practice-surface);
+  border: 1px solid var(--practice-border);
+  border-radius: 16px;
+}
+.audit-heading {
+  font: 14px/1.4 system-ui;
+  margin: 0 0 18px;
+}
+/* The approved rhythm now comes entirely from shared production styles. */

@@ -166,6 +166,9 @@ afterAll(() => {
   else Reflect.deleteProperty(dialogPrototype, "close");
 });
 test("searching another translation language emits its canonical code and restores picker focus", async () => {
+  // This interaction contract uses the real lazy picker. Finish its cold
+  // catalog module initialization before the role query's 1s polling window.
+  await import("@/components/practice/settings/LanguagePicker");
   vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const p = props();
   render(<SettingsDestination {...p} />);
