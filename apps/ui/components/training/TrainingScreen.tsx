@@ -2613,6 +2613,7 @@ function TrainingScreenContent({
             key={idiomSession.sessionId}
             userId={user.id}
             session={idiomSession}
+            cardFilter={cardFilter}
             contentLanguageCode={currentTrainingLanguage}
             translationTargetLanguageCode={
               translationLang === "off" ? null : translationLang

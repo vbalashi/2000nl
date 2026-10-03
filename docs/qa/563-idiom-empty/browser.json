@@ -1,0 +1,52 @@
+[
+  {
+    "empty": 0,
+    "dark": 0,
+    "background": "rgb(255, 255, 255)",
+    "color": "rgb(37, 37, 71)",
+    "title": "36px",
+    "buttons": [
+      "Another 10 cards",
+      "Modify training",
+      "Back to home"
+    ],
+    "overflow": false
+  },
+  {
+    "empty": 0,
+    "dark": 1,
+    "background": "rgb(34, 34, 60)",
+    "color": "rgb(238, 242, 255)",
+    "title": "36px",
+    "buttons": [
+      "Another 10 cards",
+      "Modify training",
+      "Back to home"
+    ],
+    "overflow": false
+  },
+  {
+    "empty": 1,
+    "dark": 0,
+    "background": "rgb(255, 255, 255)",
+    "color": "rgb(37, 37, 71)",
+    "title": "36px",
+    "buttons": [
+      "Modify training",
+      "Back to home"
+    ],
+    "overflow": false
+  },
+  {
+    "empty": 1,
+    "dark": 1,
+    "background": "rgb(34, 34, 60)",
+    "color": "rgb(238, 242, 255)",
+    "title": "36px",
+    "buttons": [
+      "Modify training",
+      "Back to home"
+    ],
+    "overflow": false
+  }
+]
