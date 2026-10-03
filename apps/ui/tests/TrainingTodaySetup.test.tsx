@@ -6,6 +6,7 @@ import {
   type TrainingSetupDraft,
 } from "@/components/training/pilot/TrainingTodaySetup";
 import type { TrainingSetupsDocument, TrainingSetupsSnapshot } from "@/lib/training/setups/model";
+vi.mock("@/lib/training/availability/useTrainingAvailability",()=>({useTrainingAvailability:()=>({status:"ready",value:{dueToday:8,totalReviews:120,newCards:20,studyDay:"2026-10-03",timezone:"Europe/Amsterdam",asOf:"2026-10-03T10:00:00Z"},refreshing:false,refreshFailed:false,reload:vi.fn()})}));
 const { accounts } = vi.hoisted(() => ({ accounts: new Map<string, TrainingSetupsSnapshot>() }));
 vi.mock("@/lib/training/setups/client", () => ({
   fetchAccountTrainingSetups: async (userId: string) => accounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } },
@@ -876,7 +877,8 @@ test("paused sentence recipe stays editable and never silently becomes a context
  const onStart=vi.fn();
  render(<TrainingTodaySetup {...baseProps} onStart={onStart} userId="paused-sentence" trainingLanguageCode="nl" hasOwnedSession={false}
  scenarios={[...baseProps.scenarios,{value:"sentences",label:"Example sentences",modes:["word-to-definition"]}]} />);
- expect(await screen.findByRole("button",{name:"Start Old sentence practice"})).toBeDisabled();
+ expect(await screen.findByRole("button",{name:"Load Old sentence practice"})).toBeEnabled();
+ expect(screen.getByRole("button",{name:"Start training"})).toBeDisabled();
  fireEvent.click(screen.getAllByRole("button",{name:"Edit Old sentence practice"})[0]);
  expect(screen.getByRole("button",{name:"Choose a training goal"})).toBeDisabled();
  fireEvent.click(screen.getByRole("button",{name:/^Exercises /}));
@@ -906,5 +908,42 @@ test("contextual Translation saves and restores its exact reverse recipe after r
  expect(screen.getByText("Example translation → word")).toBeInTheDocument();
  expect(accounts.get(props.userId)!.document.trainings[0]).toEqual(saved);
  fireEvent.click(screen.getByRole("button",{name:"Start training"}));
- await waitFor(()=>expect(onStart).toHaveBeenCalledWith(saved.draft, "Context practice"));
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(saved.draft, "Context practice", {trainingId:saved.id}));
+});
+
+
+test("saved recipe Load selects without launching, then hero Start launches the chosen recipe", async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const a={id:"load-a",name:"First",draft:{...initialDraft,sessionSize:5 as const}},b={id:"load-b",name:"Second",draft:{...initialDraft,sessionSize:10 as const}};
+ seedAccount("load-owner",[a,b]);
+ const onStart=vi.fn(),onLoadTraining=vi.fn();
+ render(<TrainingTodaySetup {...baseProps} userId="load-owner" trainingLanguageCode="nl" hasOwnedSession={false} onStart={onStart} onLoadTraining={onLoadTraining}/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Load Second"}));
+ await waitFor(()=>expect(onLoadTraining).toHaveBeenCalledWith(expect.objectContaining({id:b.id})));
+ expect(onStart).not.toHaveBeenCalled();
+ expect(screen.getByRole("heading",{name:"Second",level:2})).toBeInTheDocument();
+ expect(screen.getByRole("heading",{name:"First",level:3})).toBeInTheDocument();
+ expect(screen.getByRole("heading",{name:"Second",level:3})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(b.draft,b.name,{trainingId:b.id}));
+});
+
+test("Update renames the same saved identity while Save as creates a separate recipe", async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ seedAccount("rename-owner",[{id:"original-id",name:"Original",draft:initialDraft}]);
+ render(<TrainingTodaySetup {...baseProps} userId="rename-owner" trainingLanguageCode="nl" hasOwnedSession={false}/>);
+ fireEvent.click((await screen.findAllByRole("button",{name:"Edit Original"}))[0]);
+ fireEvent.change(screen.getByLabelText("Training name"),{target:{value:"Renamed"}});
+ fireEvent.click(screen.getByRole("button",{name:"Update training"}));
+ await waitFor(()=>expect(accounts.get("rename-owner")?.document.trainings).toMatchObject([{id:"original-id",name:"Renamed"}]));
+ expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+ fireEvent.click(screen.getByLabelText("Save as…"));
+ fireEvent.click(screen.getByRole("button",{name:"Save as…"}));
+ const dialog=screen.getByRole("dialog");
+ fireEvent.change(within(dialog).getByLabelText("Training name"),{target:{value:"Copy"}});
+ fireEvent.click(within(dialog).getByRole("button",{name:"Save as…"}));
+ await waitFor(()=>expect(accounts.get("rename-owner")?.document.trainings).toHaveLength(2));
+ const recipes=accounts.get("rename-owner")!.document.trainings;
+ expect(recipes.find(item=>item.id==="original-id")?.name).toBe("Renamed");
+ expect(recipes.find(item=>item.name==="Copy")?.id).not.toBe("original-id");
 });

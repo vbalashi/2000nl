@@ -9,14 +9,17 @@ for(const profile of [{name:'desktop',width:1280,height:900,language:'en'},{name
  await page.route('**/rpc/get_training_scenarios',route=>route.fulfill({json:[{id:'understanding',name_en:'Understanding',name_nl:'Begrip',card_modes:['word-to-definition','definition-to-word'],graduation_threshold:21,enabled:true,sort_order:1}]}));
  const recipes=['Idioms','Translation','Risk Training','Long Words Training'].map((name,index)=>({id:`saved-${index}`,name,languageCode:'nl',draft:{...draft,family:index===0?'idiom':index===1?'word-in-context':'meaning',scenarioId:index===0?'idiom':'understanding',modes:index===1?['definition-to-word']:draft.modes}}));
  await page.route('**/api/training/setups',route=>route.fulfill({json:{revision:1,document:{schemaVersion:1,mainTrainingId:'saved-0',trainings:recipes}}}));
+ await page.route('**/api/training/availability',route=>route.fulfill({json:{dueToday:1,totalReviews:5,newCards:0,studyDay:'2026-10-03',timezone:'UTC',asOf:new Date().toISOString()}}));
  const starts:Record<string,unknown>[]=[];
  await page.route('**/rpc/start_training_session',async route=>{const body=route.request().postDataJSON();starts.push(body);const early=body.p_training_filter?.reviewTiming==='early';await route.fulfill({json:{sessionId:'training-session-fixture',plannedNew:0,plannedReview:early?1:0,plannedPractice:0,plannedTotal:early?1:0,plannedAt:new Date().toISOString()}});});
  await page.reload();
- const named=profile.language==='ru'?'Начать «Translation»':'Start Translation';
+ const named=profile.language==='ru'?'Загрузить «Translation»':'Load Translation';
  await expect(page.getByRole('button',{name:named})).toBeEnabled();
  await expect(page.getByRole('heading',{name:'Idioms',exact:true})).toHaveCount(2);
  await page.getByRole('button',{name:named}).click();
- await expect(page.getByText(profile.language==='ru'?'Сейчас нет карточек для повторения.':'No cards are due for review now.')).toBeVisible();
+ expect(starts).toHaveLength(0);
+ await page.getByRole('button',{name:profile.language==='ru'?'Начать тренировку':'Start training',exact:true}).click();
+ await expect(page.getByRole('button',{name:profile.language==='ru'?'Повторить раньше срока':'Review ahead'})).toBeEnabled();
  await expect(page.getByRole('button',{name:profile.language==='ru'?'Продолжить тренировку':'Continue training'})).toHaveCount(0);
  await expect(page.getByRole('heading',{name:'Translation',exact:true})).toHaveCount(2);
  await page.getByRole('heading',{name:'Translation',exact:true}).first().scrollIntoViewIfNeeded();
@@ -24,8 +27,11 @@ for(const profile of [{name:'desktop',width:1280,height:900,language:'en'},{name
  await page.reload();
  await expect(page.getByRole('heading',{name:'Translation',exact:true})).toHaveCount(2);
  await page.getByRole('button',{name:named}).click();
+ await page.getByRole('button',{name:profile.language==='ru'?'Начать тренировку':'Start training',exact:true}).click();
  await expect(page.getByRole('button',{name:profile.language==='ru'?'Повторить раньше срока':'Review ahead'})).toBeEnabled();
- await page.getByRole('button',{name:profile.language==='ru'?'Начать «Risk Training»':'Start Risk Training'}).click();
+ await page.getByRole('button',{name:profile.language==='ru'?'Загрузить «Risk Training»':'Load Risk Training'}).click();
+ await expect.poll(()=>starts.length).toBe(2);
+ await page.getByRole('button',{name:profile.language==='ru'?'Начать тренировку':'Start training',exact:true}).click();
  await expect.poll(()=>starts.length).toBe(3);
  await page.getByRole('button',{name:profile.language==='ru'?'Повторить раньше срока':'Review ahead'}).click();
  await expect.poll(()=>starts.length).toBe(4);
@@ -33,4 +39,20 @@ for(const profile of [{name:'desktop',width:1280,height:900,language:'en'},{name
  await expect(page.getByRole('heading',{name:'Translation',exact:true})).toHaveCount(0);
  await expect(page.locator('article').first()).toBeVisible();
  await page.screenshot({path:testInfo.outputPath('early-session.png'),fullPage:true});
+});
+
+test('training failure uses the current theme and preserves retry',async({page},testInfo)=>{
+ test.skip(!approved,'Approved training overview only');
+ await page.setViewportSize({width:390,height:844});
+ await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:'en'}}});
+ await page.route('**/rpc/get_available_learning_languages',route=>route.fulfill({status:503,json:{message:'Fixture unavailable'}}));
+ await page.route('**/rpc/get_detailed_training_stats',route=>route.fulfill({status:503,json:{message:'Fixture unavailable'}}));
+ await page.route('**/rpc/start_training_session',route=>route.fulfill({status:503,json:{message:'Fixture unavailable'}}));
+ await page.reload();
+
+ await expect(page.getByRole('heading',{name:'Training could not be loaded'})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Try again'})).toBeEnabled();
+ const panel=page.getByRole('alert').filter({has:page.getByRole('heading',{name:'Training could not be loaded'})});
+ expect(await panel.getAttribute('class')).not.toMatch(/bg-white|slate|indigo/);
+ await page.screenshot({path:testInfo.outputPath('training-error.png'),fullPage:true});
 });

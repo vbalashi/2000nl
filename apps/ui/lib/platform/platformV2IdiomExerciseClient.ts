@@ -1,3 +1,4 @@
+import { invalidateTrainingAvailability } from "../training/availability/cache";
 import { supabase } from "@/lib/supabaseClient";
 import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
 import { platformFetchWithTimeout } from "./platformFetchWithTimeout";
@@ -220,6 +221,7 @@ export async function performPlatformV2IdiomExerciseAction(input: {
   if (!response.ok) throw platformError(payload, "idiom_exercise_action_failed");
   const result = parseActionResponse(payload, request.clientEventId);
   if (!result) throw new Error("invalid_platform_v2_idiom_action_response");
+  invalidateTrainingAvailability();
   return result;
 }
 

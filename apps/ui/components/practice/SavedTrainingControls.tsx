@@ -5,8 +5,8 @@ import { DialogSurface } from "./ui/DialogSurface";
 import { formatUiMessage, getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import s from "./savedTrainingControls.module.css";
-export function SavedTrainingControls({ name, main, hasOthers, language, pending = false, onMain, onDelete }: {
-  name: string; main: boolean; hasOthers: boolean; language: OnboardingLanguage; pending?: boolean;
+export function SavedTrainingControls({ name, main, hasOthers, language, pending = false, hideDelete = false, onMain, onDelete }: {
+  name: string; main: boolean; hasOthers: boolean; language: OnboardingLanguage; pending?: boolean; hideDelete?: boolean;
   onMain: () => void | Promise<unknown>;
   onDelete: () => void | boolean | Promise<void | boolean>;
 }) {
@@ -18,7 +18,7 @@ export function SavedTrainingControls({ name, main, hasOthers, language, pending
       <button className={s.makeMain} aria-pressed={main} disabled={main || pending} onClick={() => void onMain()}>
         {main && <Check size={15} aria-hidden="true" />} {main ? copy.mainTraining : copy.makeMain}
       </button>
-      <button className={s.delete} disabled={pending} onClick={() => setDeleting(true)}><Trash2 size={15} aria-hidden="true" /> {copy.delete}</button>
+      {!hideDelete && <button className={s.delete} disabled={pending} onClick={() => setDeleting(true)}><Trash2 size={15} aria-hidden="true" /> {copy.delete}</button>}
     </div>
     {deleting && <DialogSurface className={s.modal} lang={language} aria-labelledby={titleId} onDismiss={() => { if (!pending) setDeleting(false); }}>
       <div className={s.content}>

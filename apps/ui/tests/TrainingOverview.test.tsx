@@ -4,13 +4,13 @@ import {afterEach,expect,test,vi} from 'vitest';
 import {TrainingOverview,type TrainingOverviewItem,type TrainingOverviewState} from '@/components/practice/TrainingOverview';
 afterEach(cleanup);
 const items:TrainingOverviewItem[]=[{id:'a',name:'Words',language:'Dutch',description:'Words · Direct',summary:'Dutch · 20 exercises',completedToday:12,meaningCount:36,sessionSize:20,canLaunch:true},{id:'b',name:'Idioms',language:'Dutch',description:'Idioms · Direct',summary:'Dutch · 10 exercises',completedToday:null,meaningCount:null,sessionSize:10,canLaunch:true}];
-function setup(state:TrainingOverviewState={status:'ready',trainings:items,mainId:'a'},interfaceLanguage:'en'|'nl'|'ru'='en'){const callbacks={onLaunch:vi.fn(),onResume:vi.fn(),onEdit:vi.fn(),onCreate:vi.fn(),onRetry:vi.fn()};render(<TrainingOverview state={state} interfaceLanguage={interfaceLanguage} {...callbacks}/>);return callbacks;}
+function setup(state:TrainingOverviewState={status:'ready',trainings:items,mainId:'a'},interfaceLanguage:'en'|'nl'|'ru'='en'){const callbacks={onSelect:vi.fn(),onLaunch:vi.fn(),onResume:vi.fn(),onEdit:vi.fn(),onCreate:vi.fn(),onRetry:vi.fn()};render(<TrainingOverview state={state} interfaceLanguage={interfaceLanguage} {...callbacks}/>);return callbacks;}
 test('edit and launch take the stable training identity directly',()=>{const c=setup();fireEvent.click(screen.getAllByRole('button',{name:'Edit Idioms'})[0]);expect(c.onEdit).toHaveBeenCalledWith('b');fireEvent.click(screen.getByRole('button',{name:'Start training'}));expect(c.onLaunch).toHaveBeenCalledWith('a');expect(screen.queryByRole('dialog')).toBeNull();});
 test('an unfinished session overrides the main routine and resumes its identity',()=>{const c=setup({status:'ready',trainings:items,mainId:'a',resume:{sessionId:'session-b',trainingId:'b',completed:3,total:10}});fireEvent.click(screen.getByRole('button',{name:'Continue training'}));expect(c.onResume).toHaveBeenCalledWith('session-b');expect(c.onLaunch).not.toHaveBeenCalled();expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow','3');});
-test('unknown activity is omitted rather than presented as zero',()=>{setup({status:'ready',trainings:items,mainId:'b'});expect(screen.queryByText('done today')).toBeNull();expect(screen.queryByText('meanings')).toBeNull();expect(screen.getByText('per session').nextElementSibling).toHaveTextContent('10');});
-test('loading, failure and empty are distinct actionable states',()=>{setup({status:'loading'});expect(screen.getByRole('status')).toHaveTextContent('Loading');expect(screen.queryByRole('button')).toBeNull();cleanup();let c=setup({status:'error',message:'Could not load training.'});fireEvent.click(screen.getByRole('button',{name:'Try again'}));expect(c.onRetry).toHaveBeenCalled();cleanup();c=setup({status:'ready',trainings:[],mainId:null});fireEvent.click(screen.getByRole('button',{name:'Create training'}));expect(c.onCreate).toHaveBeenCalled();});
+test('unknown activity is omitted rather than presented as zero',()=>{setup({status:'ready',trainings:items,mainId:'b'});expect(screen.queryByText('done today')).toBeNull();expect(screen.queryByText('meanings')).toBeNull();expect(screen.getByText('Still new').nextElementSibling).toHaveTextContent('—');});
+test('loading, failure and empty are distinct actionable states',()=>{setup({status:'loading'});expect(screen.getByRole('status')).toHaveTextContent('Loading');expect(screen.queryByRole('button')).toBeNull();cleanup();let c=setup({status:'error',message:'Could not load training.'});fireEvent.click(screen.getByRole('button',{name:'Try again'}));expect(c.onRetry).toHaveBeenCalled();cleanup();c=setup({status:'ready',trainings:[],mainId:null});fireEvent.click(screen.getAllByRole('button',{name:'Create training'})[0]);expect(c.onCreate).toHaveBeenCalled();});
 test('unavailable training cannot start and explains why',()=>{setup({status:'ready',mainId:'a',trainings:[{...items[0],canLaunch:false,unavailableReason:'Source unavailable.'}]});expect(screen.getByRole('button',{name:'Start training'})).toBeDisabled();expect(screen.getByRole('status')).toHaveTextContent('Source unavailable.');});
-test('a deleted main identity does not hide other saved training',()=>{setup({status:'ready',mainId:'deleted',trainings:[items[1]]});expect(screen.getByRole('button',{name:'Start Idioms'})).toBeEnabled();});
+test('a deleted main identity does not hide other saved training',()=>{setup({status:'ready',mainId:'deleted',trainings:[items[1]]});expect(screen.getByRole('button',{name:'Load Idioms'})).toBeEnabled();});
 
 test('resumed session shows its own completed count, not total activity today',()=>{
  setup({status:'ready',trainings:items,mainId:'a',resume:{sessionId:'second-session',trainingId:'a',completed:4,total:20}});
@@ -31,11 +31,42 @@ test('the shared overview localizes visible and accessible actions in Dutch',()=
 test('Russian overview copy preserves the training name and localizes the action',()=>{
  setup(undefined,'ru');
  expect(screen.getByRole('button',{name:'Изменить «Idioms»'})).toBeInTheDocument();
- expect(screen.getByRole('button',{name:'Начать «Idioms»'})).toBeInTheDocument();
+ expect(screen.getByRole('button',{name:'Загрузить «Idioms»'})).toBeInTheDocument();
  expect(screen.getByText('Сохранённые тренировки')).toBeInTheDocument();
 });
 
  test('unknown resumed total does not manufacture remaining cards or a progress bar',()=>{setup({status:'ready',trainings:items,mainId:'a',resume:{sessionId:'unknown-total',trainingId:'a',completed:3,total:null}});expect(screen.getByText('remaining').nextElementSibling).toHaveTextContent('—');expect(screen.queryByRole('progressbar')).toBeNull();});
 
-test('highlighted training remains in the complete saved list',()=>{setup();expect(screen.getByRole('button',{name:'Start Words'})).toBeEnabled();expect(screen.getByRole('button',{name:'Start Idioms'})).toBeEnabled();});
+test('highlighted training remains in the complete saved list',()=>{setup();expect(screen.getByRole('button',{name:'Load Words'})).toBeEnabled();expect(screen.getByRole('button',{name:'Load Idioms'})).toBeEnabled();});
 test('zero-card plans are not resumable or in progress',()=>{setup({status:'ready',trainings:items,mainId:'a',resume:{sessionId:'empty',trainingId:'a',completed:0,total:0}});expect(screen.queryByRole('button',{name:'Continue training'})).toBeNull();expect(screen.queryByText('IN PROGRESS')).toBeNull();expect(screen.getByRole('button',{name:'Start training'})).toBeEnabled();});
+
+test('empty due-only hero replaces Start with early review before Adjust',()=>{
+ const onEarlyReview=vi.fn();const onLaunch=vi.fn();
+ render(<TrainingOverview state={{status:'ready',trainings:items,mainId:'a',emptyTraining:{trainingId:'a',message:'No cards are due for review now.',canReviewAhead:true}}} onEarlyReview={onEarlyReview} onLaunch={onLaunch} onResume={vi.fn()} onEdit={vi.fn()} onCreate={vi.fn()} onRetry={vi.fn()}/>);
+ expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();
+ const action=screen.getByRole('button',{name:'Review ahead'});
+ expect(screen.getByRole('status').compareDocumentPosition(action)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ fireEvent.click(action);expect(onEarlyReview).toHaveBeenCalledWith('a');expect(onLaunch).not.toHaveBeenCalled();
+ expect(screen.getByRole('button',{name:'Load Words'})).toBeEnabled();
+});
+test('exhausted early-review hero offers adjustment without another empty Start',()=>{
+ setup({status:'ready',trainings:items,mainId:'a',emptyTraining:{trainingId:'a',message:'No eligible review cards.',canReviewAhead:false}});
+ expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();
+ expect(screen.queryByRole('button',{name:'Review ahead'})).toBeNull();
+ expect(screen.getAllByRole('button',{name:'Edit Words'})[0]).toBeEnabled();
+});
+
+test('saved Load selects identity without launching',()=>{const c=setup();fireEvent.click(screen.getByRole('button',{name:'Load Idioms'}));expect(c.onSelect).toHaveBeenCalledWith('b');expect(c.onLaunch).not.toHaveBeenCalled();});
+test('ready availability renders three distinct counters and zero stays zero',()=>{setup({status:'ready',trainings:items,mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:45,stillNew:7}});expect(screen.getByText('Due today').nextElementSibling).toHaveTextContent('0');expect(screen.getByText('Total reviews').nextElementSibling).toHaveTextContent('45');expect(screen.getByText('Still new').nextElementSibling).toHaveTextContent('7');});
+test('pending availability pulses without manufacturing zero counts',()=>{setup({status:'ready',trainings:items,mainId:'a',availability:{trainingId:'a',status:'loading',dueToday:null,totalReviews:null,stillNew:null}});expect(document.querySelector('dl')).toHaveAttribute('aria-busy','true');expect(screen.queryByText('0')).toBeNull();});
+test('stale availability from another selection is never shown',()=>{setup({status:'ready',trainings:items,mainId:'b',availability:{trainingId:'a',status:'ready',dueToday:999,totalReviews:999,stillNew:999}});expect(screen.queryByText('999')).toBeNull();});
+test('all100recipes remain selectable in an independent list',()=>{const all=Array.from({length:100},(_,i)=>({...items[0],id:`saved-${i}`,name:`Saved ${i}`}));setup({status:'ready',trainings:all,mainId:'saved-0'});expect(screen.getAllByRole('button',{name:/^Load Saved /})).toHaveLength(100);expect(screen.getByRole('region',{name:'Saved Trainings'})).toBeVisible();});
+test('no saved recipes shows short create guidance, not fake rows',()=>{setup({status:'ready',trainings:[{...items[0],saved:false}],mainId:'a'});expect(screen.getByText(/No saved trainings yet/)).toBeVisible();expect(screen.queryByRole('button',{name:/^Load /})).toBeNull();});
+
+test('ready zero-due reviews offer early review without an expanding empty paragraph',()=>{const early=vi.fn();render(<TrainingOverview state={{status:'ready',trainings:[{...items[0],cardFilter:'review'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:12,stillNew:3}}} onEarlyReview={early} onLaunch={vi.fn()} onResume={vi.fn()} onEdit={vi.fn()} onCreate={vi.fn()} onRetry={vi.fn()}/>);fireEvent.click(screen.getByRole('button',{name:'Review ahead'}));expect(early).toHaveBeenCalledWith('a');expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();expect(screen.queryByRole('status')).toBeNull();});
+test('no eligible reviews offer editing rather than an empty start',()=>{setup({status:'ready',trainings:[{...items[0],cardFilter:'review'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:0,stillNew:3}});expect(screen.getByRole('button',{name:'Edit training'})).toBeEnabled();expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();});
+test('new-only selection ignores review availability when deciding whether to start',()=>{setup({status:'ready',trainings:[{...items[0],cardFilter:'new'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:12,stillNew:3}});expect(screen.getByRole('button',{name:'Start training'})).toBeEnabled();expect(screen.queryByRole('button',{name:'Review ahead'})).toBeNull();});
+
+test('authoritative empty plan overrides positive day-end availability without expanding hero',()=>{render(<TrainingOverview state={{status:'ready',trainings:[{...items[0],cardFilter:'review'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:4,totalReviews:12,stillNew:3},emptyTraining:{trainingId:'a',message:'No cards due now.',canReviewAhead:true}}} onEarlyReview={vi.fn()} onLaunch={vi.fn()} onResume={vi.fn()} onEdit={vi.fn()} onCreate={vi.fn()} onRetry={vi.fn()}/>);expect(screen.getByRole('button',{name:'Review ahead'})).toBeEnabled();expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();expect(screen.queryByText('No cards due now.')).toBeNull();});
+
+test('resumed hero retains accepted session metadata while Saved shows edited recipe',()=>{setup({status:'ready',trainings:[{...items[0],name:'Edited recipe',description:'Words · Reverse'}],mainId:'a',resume:{sessionId:'accepted',trainingId:'a',completed:1,total:5,training:{...items[0],name:'Accepted session',description:'Words · Direct'}}});expect(screen.getByRole('heading',{name:'Accepted session',level:2})).toBeVisible();expect(screen.getByRole('heading',{name:'Edited recipe',level:3})).toBeVisible();expect(screen.getByText('Words · Direct')).toBeVisible();});

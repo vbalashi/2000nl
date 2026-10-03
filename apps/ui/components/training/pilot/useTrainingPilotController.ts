@@ -47,6 +47,7 @@ type TrainingScope = {
 };
 
 export type TrainingSessionStartContext = {
+  trainingId?: string;
   sessionName?: string;
   languageCode: string;
   scope: TrainingScope;
@@ -241,6 +242,7 @@ export function useCommitTrainingPilotDraft({
         startRequestRef.current = null;
         if(idiomSession.plannedTotal===0){reportError(null);onEmptyPlan?.(draft,options);return false;}
         onSessionReady?.(idiomSession, {
+          trainingId: options?.trainingId,
           sessionName,
           languageCode,
           scope,
@@ -286,7 +288,7 @@ export function useCommitTrainingPilotDraft({
         }
         startRequestRef.current = null;
         if(translationSession.plannedTotal===0){reportError(null);onEmptyPlan?.(draft,options);return false;}
-        onSessionReady?.(translationSession, { sessionName, languageCode, scope, draft, focusFilter });
+        onSessionReady?.(translationSession, { trainingId: options?.trainingId, sessionName, languageCode, scope, draft, focusFilter });
         onPlanReady?.({ requestedTotal: translationSession.requestedTotal, plannedNew: translationSession.plannedNew, plannedReview: translationSession.plannedReview, plannedPractice: 0, plannedTotal: translationSession.plannedTotal, plannedAt: translationSession.plannedAt });
         reportError(null);
         if (selectedList) applyListLocally(selectedList);
@@ -327,6 +329,7 @@ export function useCommitTrainingPilotDraft({
       startRequestRef.current = null;
       if(session.plannedTotal===0){reportError(null);onEmptyPlan?.(draft,options);return false;}
       onSessionReady?.(session, {
+        trainingId: options?.trainingId,
         sessionName,
         languageCode,
         scope,

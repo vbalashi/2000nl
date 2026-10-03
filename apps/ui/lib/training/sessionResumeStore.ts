@@ -8,6 +8,8 @@ import type {
 } from "../types";
 
 export type TrainingSessionResumeRecord = {
+  /** Stable saved recipe identity, distinct from the server session. */
+  trainingId?: string;
   /** Display snapshot only; never a scheduling or preset identity. */
   sessionName?: string;
   sessionId: string;
@@ -272,6 +274,7 @@ const parseResumeRecord = (
   return {
     ...(typeof value.sessionName === "string" && value.sessionName.trim()
       ? { sessionName: value.sessionName.trim().slice(0, 160) } : {}),
+    ...(typeof value.trainingId === "string" && value.trainingId.length <= 160 ? {trainingId:value.trainingId} : {}),
     sessionId: value.sessionId,
     userId: value.userId,
     ownerId: value.ownerId,

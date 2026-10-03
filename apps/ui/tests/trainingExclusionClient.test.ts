@@ -17,3 +17,18 @@ test.each([{...receipt,headwordGroupId:undefined},{...receipt,headwordGroupId:"s
  vi.mocked(platformFetchWithTimeout).mockResolvedValue(Response.json(value));
  await expect(performTrainingExclusion(request)).rejects.toThrow("invalid_training_exclusion_response");
 });
+
+test("accepted exclusion/restore receipts invalidate retained availability without a mounted hook", async()=>{
+ const {writeTrainingAvailabilityCache,readTrainingAvailabilityCache,onTrainingAvailabilityInvalidated}=await import("@/lib/training/availability/cache");
+ const {currentAvailabilityStudyDay}=await import("@/lib/training/availability/model");
+ const key='"owner":recipe';const counts={dueToday:1,totalReviews:2,newCards:3,studyDay:currentAvailabilityStudyDay("UTC"),timezone:"UTC",asOf:new Date().toISOString()};
+ const notified=vi.fn();const unsubscribe=onTrainingAvailabilityInvalidated(notified);
+ writeTrainingAvailabilityCache(key,counts);vi.mocked(platformFetchWithTimeout).mockResolvedValue(Response.json(receipt));await performTrainingExclusion(request);expect(readTrainingAvailabilityCache(key)).toBeUndefined();expect(notified).toHaveBeenCalledTimes(1);
+ const restore={actionId:"restore-headword" as const,clientEventId:id,exclusionId:id,target:request.target};writeTrainingAvailabilityCache(key,counts);vi.mocked(platformFetchWithTimeout).mockResolvedValue(Response.json({...receipt,actionId:"restore-headword",excluded:false}));await performTrainingExclusion(restore);expect(readTrainingAvailabilityCache(key)).toBeUndefined();expect(notified).toHaveBeenCalledTimes(2);unsubscribe();
+});
+test("failed exclusion does not invalidate usable availability",async()=>{
+ const {writeTrainingAvailabilityCache,readTrainingAvailabilityCache}=await import("@/lib/training/availability/cache");const {currentAvailabilityStudyDay}=await import("@/lib/training/availability/model");
+ const key='"owner":recipe';writeTrainingAvailabilityCache(key,{dueToday:1,totalReviews:2,newCards:3,studyDay:currentAvailabilityStudyDay("UTC"),timezone:"UTC",asOf:new Date().toISOString()});
+ vi.mocked(platformFetchWithTimeout).mockResolvedValue(Response.json({error:"denied"},{status:403}));await expect(performTrainingExclusion(request)).rejects.toThrow("denied");expect(readTrainingAvailabilityCache(key)).toBeDefined();
+ vi.mocked(platformFetchWithTimeout).mockResolvedValue(Response.json({...receipt,excluded:false}));await expect(performTrainingExclusion(request)).rejects.toThrow();expect(readTrainingAvailabilityCache(key)).toBeDefined();
+});
