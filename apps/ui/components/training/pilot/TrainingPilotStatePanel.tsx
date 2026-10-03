@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import styles from "./trainingStatePanel.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 
 type SharedProps = {
@@ -80,7 +81,7 @@ const copy = {
 } satisfies Record<OnboardingLanguage, Record<string, string>>;
 
 const actionClass =
-  "min-h-11 rounded-xl border px-4 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400";
+  styles.action;
 
 export function TrainingPilotStatePanel(props: Props) {
   const t = copy[props.interfaceLanguage];
@@ -146,31 +147,29 @@ export function TrainingPilotStatePanel(props: Props) {
         aria-busy={busy}
         aria-label={copyVisible ? undefined : stateCopy.heading}
         aria-live="polite"
-        className={props.plain ? "text-center" : "w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/60 md:p-12"}
+        className={props.plain ? "text-center" : styles.panel}
       >
         {props.plain ? null : busy ? (
           <div
             data-testid="training-loading-indicator"
             aria-hidden="true"
-            className="mx-auto mb-6 h-1.5 w-28 overflow-hidden rounded-full bg-indigo-500/15"
+            className={styles.loading}
           >
-            <div className="h-full w-1/2 rounded-full bg-indigo-500/70 motion-safe:animate-pulse motion-reduce:opacity-70" />
+            <div className={styles.loadingBar} />
           </div>
         ) : (
           <div
             aria-hidden="true"
-            className={`mx-auto mb-5 h-3 w-3 rounded-full ${
-              props.status === "error" ? "bg-red-500/70" : "bg-indigo-500/70"
-            }`}
+            className={styles.marker}
           />
         )}
         {copyVisible ? (
-          <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">
+          <h1 className={styles.heading}>
             {stateCopy.heading}
           </h1>
         ) : null}
         {copyVisible && stateCopy.body ? (
-          <p className="mx-auto mt-2 max-w-xl text-sm text-slate-500 dark:text-slate-400">
+          <p className={styles.body}>
             {stateCopy.body}
           </p>
         ) : null}
@@ -178,7 +177,7 @@ export function TrainingPilotStatePanel(props: Props) {
           <button
             type="button"
             onClick={onAction}
-            className={`${actionClass} mt-8 w-full border-indigo-500 bg-indigo-500/20 text-indigo-900 dark:text-indigo-100`}
+            className={actionClass}
           >
             {stateCopy.action}
           </button>

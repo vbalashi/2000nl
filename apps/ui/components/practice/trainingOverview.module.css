@@ -30,3 +30,5 @@
 .start:hover{background:var(--practice-accent-hover)}
 
 .row:last-child { border-bottom: 0; }
+
+.emptyMessage{margin:0 0 22px;font-size:var(--practice-text-body);line-height:1.5;color:var(--practice-text-secondary)}

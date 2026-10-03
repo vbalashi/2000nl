@@ -34,3 +34,19 @@ for(const profile of [{name:'desktop',width:1280,height:900,language:'en'},{name
  await expect(page.locator('article').first()).toBeVisible();
  await page.screenshot({path:testInfo.outputPath('early-session.png'),fullPage:true});
 });
+
+test('training failure uses the current theme and preserves retry',async({page},testInfo)=>{
+ test.skip(!approved,'Approved training overview only');
+ await page.setViewportSize({width:390,height:844});
+ await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:'en'}}});
+ await page.route('**/rpc/get_available_learning_languages',route=>route.fulfill({status:503,json:{message:'Fixture unavailable'}}));
+ await page.route('**/rpc/get_detailed_training_stats',route=>route.fulfill({status:503,json:{message:'Fixture unavailable'}}));
+ await page.route('**/rpc/start_training_session',route=>route.fulfill({status:503,json:{message:'Fixture unavailable'}}));
+ await page.reload();
+
+ await expect(page.getByRole('heading',{name:'Training could not be loaded'})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Try again'})).toBeEnabled();
+ const panel=page.getByRole('alert').filter({has:page.getByRole('heading',{name:'Training could not be loaded'})});
+ expect(await panel.getAttribute('class')).not.toMatch(/bg-white|slate|indigo/);
+ await page.screenshot({path:testInfo.outputPath('training-error.png'),fullPage:true});
+});

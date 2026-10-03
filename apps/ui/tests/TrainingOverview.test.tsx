@@ -39,3 +39,19 @@ test('Russian overview copy preserves the training name and localizes the action
 
 test('highlighted training remains in the complete saved list',()=>{setup();expect(screen.getByRole('button',{name:'Start Words'})).toBeEnabled();expect(screen.getByRole('button',{name:'Start Idioms'})).toBeEnabled();});
 test('zero-card plans are not resumable or in progress',()=>{setup({status:'ready',trainings:items,mainId:'a',resume:{sessionId:'empty',trainingId:'a',completed:0,total:0}});expect(screen.queryByRole('button',{name:'Continue training'})).toBeNull();expect(screen.queryByText('IN PROGRESS')).toBeNull();expect(screen.getByRole('button',{name:'Start training'})).toBeEnabled();});
+
+test('empty due-only hero replaces Start with early review before Adjust',()=>{
+ const onEarlyReview=vi.fn();const onLaunch=vi.fn();
+ render(<TrainingOverview state={{status:'ready',trainings:items,mainId:'a',emptyTraining:{trainingId:'a',message:'No cards are due for review now.',canReviewAhead:true}}} onEarlyReview={onEarlyReview} onLaunch={onLaunch} onResume={vi.fn()} onEdit={vi.fn()} onCreate={vi.fn()} onRetry={vi.fn()}/>);
+ expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();
+ const action=screen.getByRole('button',{name:'Review ahead'});
+ expect(screen.getByRole('status').compareDocumentPosition(action)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ fireEvent.click(action);expect(onEarlyReview).toHaveBeenCalledWith('a');expect(onLaunch).not.toHaveBeenCalled();
+ expect(screen.getByRole('button',{name:'Start Words'})).toBeEnabled();
+});
+test('exhausted early-review hero offers adjustment without another empty Start',()=>{
+ setup({status:'ready',trainings:items,mainId:'a',emptyTraining:{trainingId:'a',message:'No eligible review cards.',canReviewAhead:false}});
+ expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();
+ expect(screen.queryByRole('button',{name:'Review ahead'})).toBeNull();
+ expect(screen.getByRole('button',{name:'Adjust'})).toBeEnabled();
+});
