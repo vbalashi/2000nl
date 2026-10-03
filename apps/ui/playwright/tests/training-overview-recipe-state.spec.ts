@@ -9,7 +9,10 @@ for(const profile of [{name:'desktop',width:1280,height:900,language:'en'},{name
  await page.route('**/rpc/get_training_scenarios',route=>route.fulfill({json:[{id:'understanding',name_en:'Understanding',name_nl:'Begrip',card_modes:['word-to-definition','definition-to-word'],graduation_threshold:21,enabled:true,sort_order:1}]}));
  const recipes=['Idioms','Translation','Risk Training','Long Words Training'].map((name,index)=>({id:`saved-${index}`,name,languageCode:'nl',draft:{...draft,family:index===0?'idiom':index===1?'word-in-context':'meaning',scenarioId:index===0?'idiom':'understanding',modes:index===1?['definition-to-word']:draft.modes}}));
  await page.route('**/api/training/setups',route=>route.fulfill({json:{revision:1,document:{schemaVersion:1,mainTrainingId:'saved-0',trainings:recipes}}}));
- await page.route('**/api/training/availability',route=>route.fulfill({json:{dueToday:1,totalReviews:5,newCards:0,studyDay:'2026-10-03',timezone:'UTC',asOf:new Date().toISOString()}}));
+ await page.route('**/api/training/availability',async route=>{
+  expect(Object.keys(route.request().postDataJSON()).sort()).toEqual(['draft','languageCode']);
+  await route.fulfill({json:{dueToday:1,totalReviews:5,newCards:0,studyDay:'2026-10-03',timezone:'UTC',asOf:new Date().toISOString()}});
+ });
  const starts:Record<string,unknown>[]=[];
  await page.route('**/rpc/start_training_session',async route=>{const body=route.request().postDataJSON();starts.push(body);const early=body.p_training_filter?.reviewTiming==='early';await route.fulfill({json:{sessionId:'training-session-fixture',plannedNew:0,plannedReview:early?1:0,plannedPractice:0,plannedTotal:early?1:0,plannedAt:new Date().toISOString()}});});
  await page.reload();
