@@ -547,3 +547,5 @@
 \i db/migrations/198_mixed_idiom_sessions.sql
 
 \i db/migrations/199_account_indigo_palette.sql
+
+\i db/migrations/200_account_card_spacing.sql
