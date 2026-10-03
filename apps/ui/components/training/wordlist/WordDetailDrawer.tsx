@@ -1,4 +1,5 @@
 import React from "react";
+import { useLibrarySheetResize } from "./useLibrarySheetResize";
 import type {
   EntryLearningListMembership,
   WordListSummary,
@@ -49,8 +50,9 @@ export function WordDetailDrawer({
 }: Props) {
   const approved = sharedArticlePresentationV1Enabled();
   const [entered, setEntered] = React.useState(false);
-  const [expanded, setExpanded] = React.useState(false);
-  React.useEffect(() => { setExpanded(false); setEntered(open); }, [open, selection?.entryId]);
+  const resize = useLibrarySheetResize(open ? selection?.entryId ?? null : null);
+  const { expanded } = resize;
+  React.useEffect(() => { setEntered(open); }, [open, selection?.entryId]);
   React.useEffect(() => { if (!open) setEntered(false); }, [open]);
   React.useEffect(() => {
     if (!open || approved) return;
@@ -82,11 +84,13 @@ export function WordDetailDrawer({
     viewport="mobile"
   />;
 
-  if (approved) return <section className={sheet.librarySheet} data-expanded={expanded}
+  if (approved) return <section ref={resize.ref} className={sheet.librarySheet} data-expanded={expanded}
+    data-dragging={resize.dragging} style={resize.height === undefined ? undefined : { height: resize.height }}
     aria-label={platformV2Message(interfaceLanguage,"senseCard.wordDetails.open")}>
     <button type="button" className={sheet.handle} aria-expanded={expanded}
+      aria-keyshortcuts="ArrowUp ArrowDown Home End"
       aria-label={getUiMessages(interfaceLanguage).library[expanded ? "collapseCard" : "expandCard"]}
-      onClick={() => setExpanded(value => !value)}><span aria-hidden="true"/></button>
+      {...resize.handleProps}><span aria-hidden="true"/></button>
     <WordDetailsCloseProvider onClose={onClose} interfaceLanguage={interfaceLanguage}>
       <div className="min-h-0 flex-1">{detail(entered)}</div>
     </WordDetailsCloseProvider>

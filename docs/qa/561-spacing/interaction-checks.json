@@ -1,0 +1,946 @@
+[
+  {
+    "variant": "balanced",
+    "surface": "library",
+    "width": 390,
+    "size": "normal",
+    "scroll": {
+      "height": 553,
+      "total": 890,
+      "top": 337,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "rgb(86, 86, 95) 0px 0px 0px 2px inset",
+      "outline": "none"
+    },
+    "focus": [
+      {
+        "tag": "BUTTON",
+        "label": "Collapse meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — balanced · normal · offadjective2",
+        "visible": false
+      },
+      {
+        "tag": "HEADER",
+        "label": "goed",
+        "text": "adjective2Kgoedcomparativebetersuperlati",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "balanced",
+    "surface": "library",
+    "width": 390,
+    "size": "extra",
+    "scroll": {
+      "height": 487,
+      "total": 1985,
+      "top": 1498,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "rgb(86, 86, 95) 0px 0px 0px 2px inset",
+      "outline": "none"
+    },
+    "focus": [
+      {
+        "tag": "BUTTON",
+        "label": "Collapse meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — balanced · extra · offadjective2K",
+        "visible": false
+      },
+      {
+        "tag": "HEADER",
+        "label": "goed",
+        "text": "adjective2Kgoedcomparativebetersuperlati",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "balanced",
+    "surface": "library",
+    "width": 610,
+    "size": "normal",
+    "scroll": {
+      "height": 553,
+      "total": 787,
+      "top": 233,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "rgb(86, 86, 95) 0px 0px 0px 2px inset",
+      "outline": "none"
+    },
+    "focus": [
+      {
+        "tag": "BUTTON",
+        "label": "Collapse meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — balanced · normal · offadjective2",
+        "visible": false
+      },
+      {
+        "tag": "HEADER",
+        "label": "goed",
+        "text": "adjective2Kgoedcomparativebetersuperlati",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "balanced",
+    "surface": "library",
+    "width": 610,
+    "size": "extra",
+    "scroll": {
+      "height": 533,
+      "total": 1516,
+      "top": 982,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "rgb(86, 86, 95) 0px 0px 0px 2px inset",
+      "outline": "none"
+    },
+    "focus": [
+      {
+        "tag": "BUTTON",
+        "label": "Collapse meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — balanced · extra · offadjective2K",
+        "visible": false
+      },
+      {
+        "tag": "HEADER",
+        "label": "goed",
+        "text": "adjective2Kgoedcomparativebetersuperlati",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "balanced",
+    "surface": "training",
+    "width": 390,
+    "size": "normal",
+    "scroll": {
+      "height": 506,
+      "total": 610,
+      "top": 104,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "none",
+      "outline": "solid"
+    },
+    "focus": [
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — balanced · normal · offadjective1",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "DIV",
+        "label": "Card content",
+        "text": "iets wat goed is, heeft een hoge kwalite",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — balanced · normal · offadjective1",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "balanced",
+    "surface": "training",
+    "width": 390,
+    "size": "extra",
+    "scroll": {
+      "height": 493,
+      "total": 1327,
+      "top": 834,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "none",
+      "outline": "solid"
+    },
+    "focus": [
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — balanced · extra · offadjective1×",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "DIV",
+        "label": "Card content",
+        "text": "iets wat goed is, heeft een hoge kwalite",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — balanced · extra · offadjective1×",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "balanced",
+    "surface": "training",
+    "width": 610,
+    "size": "normal",
+    "scroll": {
+      "height": 506,
+      "total": 540,
+      "top": 34,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "none",
+      "outline": "solid"
+    },
+    "focus": [
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — balanced · normal · offadjective1",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "DIV",
+        "label": "Card content",
+        "text": "iets wat goed is, heeft een hoge kwalite",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — balanced · normal · offadjective1",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "balanced",
+    "surface": "training",
+    "width": 610,
+    "size": "extra",
+    "scroll": {
+      "height": 493,
+      "total": 1059,
+      "top": 566,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "none",
+      "outline": "solid"
+    },
+    "focus": [
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — balanced · extra · offadjective1×",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "DIV",
+        "label": "Card content",
+        "text": "iets wat goed is, heeft een hoge kwalite",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — balanced · extra · offadjective1×",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "airy",
+    "surface": "library",
+    "width": 390,
+    "size": "normal",
+    "scroll": {
+      "height": 553,
+      "total": 950,
+      "top": 397,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "rgb(86, 86, 95) 0px 0px 0px 2px inset",
+      "outline": "none"
+    },
+    "focus": [
+      {
+        "tag": "BUTTON",
+        "label": "Collapse meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — airy · normal · offadjective2Kgoe",
+        "visible": false
+      },
+      {
+        "tag": "HEADER",
+        "label": "goed",
+        "text": "adjective2Kgoedcomparativebetersuperlati",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "airy",
+    "surface": "library",
+    "width": 390,
+    "size": "extra",
+    "scroll": {
+      "height": 487,
+      "total": 2105,
+      "top": 1618,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "rgb(86, 86, 95) 0px 0px 0px 2px inset",
+      "outline": "none"
+    },
+    "focus": [
+      {
+        "tag": "BUTTON",
+        "label": "Collapse meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — airy · extra · offadjective2Kgoed",
+        "visible": false
+      },
+      {
+        "tag": "HEADER",
+        "label": "goed",
+        "text": "adjective2Kgoedcomparativebetersuperlati",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "airy",
+    "surface": "library",
+    "width": 610,
+    "size": "normal",
+    "scroll": {
+      "height": 553,
+      "total": 847,
+      "top": 293,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "rgb(86, 86, 95) 0px 0px 0px 2px inset",
+      "outline": "none"
+    },
+    "focus": [
+      {
+        "tag": "BUTTON",
+        "label": "Collapse meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — airy · normal · offadjective2Kgoe",
+        "visible": false
+      },
+      {
+        "tag": "HEADER",
+        "label": "goed",
+        "text": "adjective2Kgoedcomparativebetersuperlati",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "airy",
+    "surface": "library",
+    "width": 610,
+    "size": "extra",
+    "scroll": {
+      "height": 533,
+      "total": 1636,
+      "top": 1102,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "rgb(86, 86, 95) 0px 0px 0px 2px inset",
+      "outline": "none"
+    },
+    "focus": [
+      {
+        "tag": "BUTTON",
+        "label": "Collapse meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Expand meaning",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — airy · extra · offadjective2Kgoed",
+        "visible": false
+      },
+      {
+        "tag": "HEADER",
+        "label": "goed",
+        "text": "adjective2Kgoedcomparativebetersuperlati",
+        "visible": true
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "airy",
+    "surface": "training",
+    "width": 390,
+    "size": "normal",
+    "scroll": {
+      "height": 506,
+      "total": 664,
+      "top": 158,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "none",
+      "outline": "solid"
+    },
+    "focus": [
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — airy · normal · offadjective1×goe",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "DIV",
+        "label": "Card content",
+        "text": "iets wat goed is, heeft een hoge kwalite",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — airy · normal · offadjective1×goe",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "airy",
+    "surface": "training",
+    "width": 390,
+    "size": "extra",
+    "scroll": {
+      "height": 493,
+      "total": 1435,
+      "top": 942,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "none",
+      "outline": "solid"
+    },
+    "focus": [
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — airy · extra · offadjective1×goed",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "DIV",
+        "label": "Card content",
+        "text": "iets wat goed is, heeft een hoge kwalite",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — airy · extra · offadjective1×goed",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "airy",
+    "surface": "training",
+    "width": 610,
+    "size": "normal",
+    "scroll": {
+      "height": 506,
+      "total": 594,
+      "top": 88,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "none",
+      "outline": "solid"
+    },
+    "focus": [
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — airy · normal · offadjective1×goe",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "DIV",
+        "label": "Card content",
+        "text": "iets wat goed is, heeft een hoge kwalite",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — airy · normal · offadjective1×goe",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "variant": "airy",
+    "surface": "training",
+    "width": 610,
+    "size": "extra",
+    "scroll": {
+      "height": 493,
+      "total": 1167,
+      "top": 674,
+      "atEnd": true,
+      "focusVisible": true,
+      "focusBoxShadow": "none",
+      "outline": "solid"
+    },
+    "focus": [
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — airy · extra · offadjective1×goed",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      },
+      {
+        "tag": "DIV",
+        "label": "Card content",
+        "text": "iets wat goed is, heeft een hoge kwalite",
+        "visible": true
+      },
+      {
+        "tag": "NEXTJS-PORTAL",
+        "label": null,
+        "text": "",
+        "visible": false
+      },
+      {
+        "tag": "BODY",
+        "label": null,
+        "text": "goed — airy · extra · offadjective1×goed",
+        "visible": false
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Translate",
+        "text": "",
+        "visible": true
+      }
+    ]
+  }
+]

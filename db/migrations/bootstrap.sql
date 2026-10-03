@@ -539,3 +539,18 @@
 \i db/migrations/194_library_initial_browse.sql
 
 \i db/migrations/195_training_session_active_time.sql
+
+\i db/migrations/196_library_browse_query_bound.sql
+
+\i db/migrations/197_external_learning_session_replan.sql
+
+\i db/migrations/198_mixed_idiom_sessions.sql
+
+\i db/migrations/199_account_indigo_palette.sql
+
+\i db/migrations/200_account_card_spacing.sql
+
+-- Dictionary publication and restricted-audience access (#470).
+\i db/migrations/201_dictionary_publication_access.sql
+\i db/migrations/202_publication_access_current_rpc_patch.sql
+\i db/migrations/203_collection_source_availability.sql

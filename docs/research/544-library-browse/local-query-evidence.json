@@ -1,0 +1,265 @@
+{
+  "fixture": "local-public-dictionary-copy; no user learning state",
+  "evidence": [
+    {
+      "filters": {
+        "parts": [],
+        "article": null
+      },
+      "parity": true,
+      "totalGroups": 14449,
+      "runs": [
+        {
+          "version": "baseline",
+          "round": 0,
+          "executionMs": 388.077,
+          "sharedHits": 132877,
+          "sharedReads": 0
+        },
+        {
+          "version": "optimized",
+          "round": 0,
+          "executionMs": 103.422,
+          "sharedHits": 3635,
+          "sharedReads": 0
+        },
+        {
+          "version": "baseline",
+          "round": 1,
+          "executionMs": 395.808,
+          "sharedHits": 132877,
+          "sharedReads": 0
+        },
+        {
+          "version": "optimized",
+          "round": 1,
+          "executionMs": 120.962,
+          "sharedHits": 3635,
+          "sharedReads": 0
+        },
+        {
+          "version": "baseline",
+          "round": 2,
+          "executionMs": 387.657,
+          "sharedHits": 132877,
+          "sharedReads": 0
+        },
+        {
+          "version": "optimized",
+          "round": 2,
+          "executionMs": 96.055,
+          "sharedHits": 3635,
+          "sharedReads": 0
+        }
+      ]
+    },
+    {
+      "filters": {
+        "parts": [
+          "noun"
+        ],
+        "article": "de"
+      },
+      "parity": true,
+      "totalGroups": 5619,
+      "runs": [
+        {
+          "version": "baseline",
+          "round": 0,
+          "executionMs": 293.597,
+          "sharedHits": 53872,
+          "sharedReads": 0
+        },
+        {
+          "version": "optimized",
+          "round": 0,
+          "executionMs": 248.413,
+          "sharedHits": 7934,
+          "sharedReads": 0
+        },
+        {
+          "version": "baseline",
+          "round": 1,
+          "executionMs": 271.331,
+          "sharedHits": 53872,
+          "sharedReads": 0
+        },
+        {
+          "version": "optimized",
+          "round": 1,
+          "executionMs": 239.763,
+          "sharedHits": 7934,
+          "sharedReads": 0
+        },
+        {
+          "version": "baseline",
+          "round": 2,
+          "executionMs": 271.916,
+          "sharedHits": 53872,
+          "sharedReads": 0
+        },
+        {
+          "version": "optimized",
+          "round": 2,
+          "executionMs": 221.505,
+          "sharedHits": 7934,
+          "sharedReads": 0
+        }
+      ]
+    },
+    {
+      "filters": {
+        "parts": [
+          "verb"
+        ],
+        "article": null
+      },
+      "parity": true,
+      "totalGroups": 3127,
+      "runs": [
+        {
+          "version": "baseline",
+          "round": 0,
+          "executionMs": 207.284,
+          "sharedHits": 35902,
+          "sharedReads": 0
+        },
+        {
+          "version": "optimized",
+          "round": 0,
+          "executionMs": 208.948,
+          "sharedHits": 7982,
+          "sharedReads": 0
+        },
+        {
+          "version": "baseline",
+          "round": 1,
+          "executionMs": 217.905,
+          "sharedHits": 35902,
+          "sharedReads": 0
+        },
+        {
+          "version": "optimized",
+          "round": 1,
+          "executionMs": 203.197,
+          "sharedHits": 7982,
+          "sharedReads": 0
+        },
+        {
+          "version": "baseline",
+          "round": 2,
+          "executionMs": 208.093,
+          "sharedHits": 35902,
+          "sharedReads": 0
+        },
+        {
+          "version": "optimized",
+          "round": 2,
+          "executionMs": 205.419,
+          "sharedHits": 7982,
+          "sharedReads": 0
+        }
+      ]
+    }
+  ],
+  "rpcRuns": [
+    {
+      "mode": "force_custom_plan",
+      "round": 0,
+      "executionMs": 103.867,
+      "sharedHits": 4351,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_custom_plan",
+      "round": 1,
+      "executionMs": 112.896,
+      "sharedHits": 4351,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_custom_plan",
+      "round": 2,
+      "executionMs": 386.947,
+      "sharedHits": 4351,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_custom_plan",
+      "round": 3,
+      "executionMs": 116.789,
+      "sharedHits": 4351,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_custom_plan",
+      "round": 4,
+      "executionMs": 124.703,
+      "sharedHits": 4351,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_custom_plan",
+      "round": 5,
+      "executionMs": 134.397,
+      "sharedHits": 4351,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_custom_plan",
+      "round": 6,
+      "executionMs": 115.841,
+      "sharedHits": 4351,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_generic_plan",
+      "round": 0,
+      "executionMs": 93.874,
+      "sharedHits": 4313,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_generic_plan",
+      "round": 1,
+      "executionMs": 95.164,
+      "sharedHits": 4313,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_generic_plan",
+      "round": 2,
+      "executionMs": 123.417,
+      "sharedHits": 4313,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_generic_plan",
+      "round": 3,
+      "executionMs": 189.364,
+      "sharedHits": 4313,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_generic_plan",
+      "round": 4,
+      "executionMs": 130.502,
+      "sharedHits": 4313,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_generic_plan",
+      "round": 5,
+      "executionMs": 119.498,
+      "sharedHits": 4313,
+      "sharedReads": 0
+    },
+    {
+      "mode": "force_generic_plan",
+      "round": 6,
+      "executionMs": 153.541,
+      "sharedHits": 4313,
+      "sharedReads": 0
+    }
+  ]
+}

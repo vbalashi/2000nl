@@ -4,6 +4,8 @@ import { applyResolvedTheme } from "@/lib/preferences/resolvedTheme";
 import {TrainingStartupGate} from "./pilot/TrainingStartupGate";
 import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
 import { AccountMaterialProvider } from "@/components/practice/material/AccountMaterialProvider";
+import { AccountPresentationReady } from "@/components/practice/ui/AccountPresentationReady";
+import { AccountCardSpacingProvider } from "@/components/practice/ui/AccountCardSpacingProvider";
 import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/AccountPracticeAppearanceProvider";
 
 import React from "react";
@@ -197,10 +199,10 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
 export function TrainingScreen(props: Props) {
   return (
     <ReadingPreferencesProvider userId={props.user.id}>
-      <AccountPracticeAppearanceProvider userId={props.user.id} requireReady interfaceLanguage={props.startupSnapshot?.interfaceLanguage}>
-        <AccountMaterialProvider userId={props.user.id}>
+      <AccountPracticeAppearanceProvider userId={props.user.id}>
+        <AccountCardSpacingProvider userId={props.user.id}><AccountPresentationReady language={props.startupSnapshot?.interfaceLanguage}><AccountMaterialProvider userId={props.user.id}>
           <TrainingScreenContent {...props} />
-        </AccountMaterialProvider>
+        </AccountMaterialProvider></AccountPresentationReady></AccountCardSpacingProvider>
       </AccountPracticeAppearanceProvider>
     </ReadingPreferencesProvider>
   );
@@ -265,6 +267,8 @@ function TrainingScreenContent({
   const [sessionPlannedTotal, setSessionPlannedTotal] = useState<number | null>(
     null,
   );
+  const sessionReplanLoadRef = useRef<{ sessionId: string; revision: number; authorityGeneration: number; promise: Promise<boolean> } | null>(null);
+  const reconciledSessionPlanRef = useRef<{ sessionId: string; revision: number } | null>(null);
   const [latchedSessionPlan, setLatchedSessionPlan] =
     useState<TrainingSessionPlan | null>(null);
   const [sessionConsumedCardKeys, setSessionConsumedCardKeys] = useState<
@@ -2010,6 +2014,7 @@ function TrainingScreenContent({
       replaceTrainingSessionId(snapshot.sessionId);
       setActiveExerciseFamily(record.family === "word-in-context" ? "word-in-context" : "meaning");
       setExerciseFamilyForResume(record.family === "word-in-context" ? "word-in-context" : "meaning");
+      reconciledSessionPlanRef.current = { sessionId: snapshot.sessionId, revision: snapshot.planRevision ?? 0 };
       setLatchedSessionPlan(snapshot);
       setSessionPlannedTotal(snapshot.requestedTotal ?? snapshot.plannedTotal);
       setSessionConsumedCardKeys(
@@ -2186,6 +2191,37 @@ function TrainingScreenContent({
         handleTrainingSessionSuperseded({ sessionId, authorityGeneration });
         return false;
       }
+      const previousRevision = reconciledSessionPlanRef.current?.sessionId === sessionId
+        ? reconciledSessionPlanRef.current.revision : 0;
+      const revision = snapshot.planRevision ?? 0;
+      if (revision !== previousRevision) {
+        // The server replaced only the unconsumed plan. Keep accepted progress,
+        // discard prefetched selections, and ask the same owned run for its next member.
+        let pending = sessionReplanLoadRef.current;
+        if (!pending || pending.sessionId !== sessionId || pending.revision !== revision ||
+          pending.authorityGeneration !== authorityGeneration) {
+          resetFocusQueueState();
+          setLatchedSessionPlan(snapshot);
+          setSessionPlannedTotal(snapshot.plannedTotal);
+          setSessionConsumedCardKeys(snapshot.members.filter((member) => member.consumedAt)
+            .map((member) => `${member.entryId}:${member.cardTypeId}`));
+          setSessionCompletedActions(snapshot.completedActions ?? 0);
+          setCurrentWord(null);
+          pending = { sessionId, revision, authorityGeneration,
+            promise: loadNextWord({ trainingSessionId: sessionId })
+              .then((result) => result === "loaded" || result === "session-complete") };
+          sessionReplanLoadRef.current = pending;
+        }
+        let loaded: boolean;
+        try { loaded = await pending.promise; }
+        finally {
+          if (sessionReplanLoadRef.current === pending) sessionReplanLoadRef.current = null;
+        }
+        if (!loaded || !componentMountedRef.current || sessionAuthorityValidationRef.current !== validation ||
+          sessionAuthorityGenerationRef.current !== authorityGeneration ||
+          trainingSessionIdRef.current !== sessionId) return false;
+        reconciledSessionPlanRef.current = { sessionId, revision };
+      }
       sessionAuthorityBlockedRef.current = false;
       setSessionAuthorityChecking(false);
       return true;
@@ -2207,6 +2243,8 @@ function TrainingScreenContent({
   }, [
     componentMountedRef,
     handleTrainingSessionSuperseded,
+    loadNextWord,
+    resetFocusQueueState,
     user?.id,
   ]);
   const handleContinueTrainingSession = useCallback(() => {
@@ -2575,6 +2613,7 @@ function TrainingScreenContent({
             key={idiomSession.sessionId}
             userId={user.id}
             session={idiomSession}
+            cardFilter={cardFilter}
             contentLanguageCode={currentTrainingLanguage}
             translationTargetLanguageCode={
               translationLang === "off" ? null : translationLang
@@ -2821,16 +2860,14 @@ function TrainingScreenContent({
         }}
         onHistory={openTrainingHistory}
       />
-      {destination === TRAINING_HISTORY_DESTINATION ? (
-        <TrainingHistoryDestination
-          open
-          userId={user.id}
-          interfaceLanguage={onboardingLang}
-          onReturnToTraining={
-            onReturnFromHistory ?? (() => onRequestDestination("training"))
-          }
-        />
-      ) : null}
+      <TrainingHistoryDestination
+        open={destination === TRAINING_HISTORY_DESTINATION}
+        userId={user.id}
+        interfaceLanguage={onboardingLang}
+        onReturnToTraining={
+          onReturnFromHistory ?? (() => onRequestDestination("training"))
+        }
+      />
       <SettingsDestination
         onExit={() => onRequestDestination("training")}
         open={destination === "settings"}

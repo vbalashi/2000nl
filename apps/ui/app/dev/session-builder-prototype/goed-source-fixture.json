@@ -35,6 +35,8 @@
             "children": []
           }
         ],
+        "schedulerPhase": null,
+        "reviewCapabilities": [],
         "repeatCount": 0,
         "startLearning": null,
         "markKnown": null,
@@ -87,6 +89,8 @@
             ]
           }
         ],
+        "schedulerPhase": null,
+        "reviewCapabilities": [],
         "repeatCount": 0,
         "startLearning": null,
         "markKnown": null,
@@ -117,6 +121,8 @@
             "children": []
           }
         ],
+        "schedulerPhase": null,
+        "reviewCapabilities": [],
         "repeatCount": 0,
         "startLearning": null,
         "markKnown": null,
@@ -152,6 +158,8 @@
               "children": []
             }
           ],
+          "schedulerPhase": null,
+          "reviewCapabilities": [],
           "repeatCount": 0,
           "startLearning": null,
           "markKnown": null,
@@ -207,6 +215,8 @@
               ]
             }
           ],
+          "schedulerPhase": null,
+          "reviewCapabilities": [],
           "repeatCount": 0,
           "startLearning": null,
           "markKnown": null,
@@ -240,6 +250,8 @@
               "children": []
             }
           ],
+          "schedulerPhase": null,
+          "reviewCapabilities": [],
           "repeatCount": 0,
           "startLearning": null,
           "markKnown": null,
@@ -285,6 +297,8 @@
             "children": []
           }
         ],
+        "schedulerPhase": null,
+        "reviewCapabilities": [],
         "repeatCount": 0,
         "startLearning": null,
         "markKnown": null,
@@ -320,6 +334,8 @@
               "children": []
             }
           ],
+          "schedulerPhase": null,
+          "reviewCapabilities": [],
           "repeatCount": 0,
           "startLearning": null,
           "markKnown": null,
@@ -409,6 +425,8 @@
             ]
           }
         ],
+        "schedulerPhase": null,
+        "reviewCapabilities": [],
         "repeatCount": 0,
         "startLearning": null,
         "markKnown": null,
@@ -491,6 +509,8 @@
             ]
           }
         ],
+        "schedulerPhase": null,
+        "reviewCapabilities": [],
         "repeatCount": 0,
         "startLearning": null,
         "markKnown": null,
@@ -528,6 +548,8 @@
             "children": []
           }
         ],
+        "schedulerPhase": null,
+        "reviewCapabilities": [],
         "repeatCount": 0,
         "startLearning": null,
         "markKnown": null,
@@ -607,6 +629,8 @@
               ]
             }
           ],
+          "schedulerPhase": null,
+          "reviewCapabilities": [],
           "repeatCount": 0,
           "startLearning": null,
           "markKnown": null,
@@ -692,6 +716,8 @@
               ]
             }
           ],
+          "schedulerPhase": null,
+          "reviewCapabilities": [],
           "repeatCount": 0,
           "startLearning": null,
           "markKnown": null,
@@ -732,6 +758,8 @@
               "children": []
             }
           ],
+          "schedulerPhase": null,
+          "reviewCapabilities": [],
           "repeatCount": 0,
           "startLearning": null,
           "markKnown": null,

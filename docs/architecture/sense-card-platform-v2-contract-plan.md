@@ -901,3 +901,21 @@ search hit as a learning card.
 3. the implementation slices and rollback boundary remain narrower than the
    product UI work;
 4. the product owner accepts any newly exposed product tradeoff.
+
+## Additive directional learning summary (issue #542, 2026-10-03)
+
+`scheduler` may include `reviewCount` (current FSRS reps), `lastGrade` (1–4 or
+null), `lastReviewedAt`, `nextReviewAt`, and `learningDueAt`. These fields come
+from the authenticated, exact `(entryId, cardTypeId)` state RPC. They do not
+change scheduling or combine sibling meanings/directions. Existing
+`repeatCount` remains the exposure/click count; it is not renamed to reviews.
+Older action receipts may omit the new fields; adapters preserve them when
+present, and Library reloads the authoritative lookup after accepted actions.
+
+Library uses `learningDueAt` while phase is learning and `nextReviewAt` while
+reviewing. A missing learning date does not fall back to a future review date.
+Hidden/frozen cards show their scheduling condition rather than implying that
+the stored date schedules an active review. Unknown telemetry is unavailable;
+zero reviews with no grade means enrolled but not rated. Dates display in the
+interface language and browser timezone, with the original timestamp on `time`.
+This read-only projection requires no database migration.

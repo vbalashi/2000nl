@@ -198,7 +198,7 @@ describeDb("per-session ordinary Training rhythm", () => {
            language_code, slug, name, kind, visibility, owner_user_id,
            minimum_subscription_tier, schema_key, schema_version
          ) values (
-           'nl', $1, 'Ratio unavailable fixture', 'curated', 'private', null,
+           'nl', $1, 'Ratio unavailable fixture', 'curated', 'shared', null,
            'free', 'nl-vandale-v1', 1
          ) returning id`,
         [`ratio-unavailable-${userId}`],

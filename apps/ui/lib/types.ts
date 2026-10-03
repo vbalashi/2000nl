@@ -260,6 +260,8 @@ export type WordListSummary = {
   card_policy?: ListCardPolicy;
   card_type_ids?: string[] | null;
   item_count?: number;
+  available_item_count?: number;
+  unavailable_source_count?: number;
   is_primary?: boolean;
   created_at?: string;
 };

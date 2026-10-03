@@ -104,10 +104,15 @@ function wordDetails(value: unknown, entryId: string): value is PlatformWordDeta
 }
 
 function card(value: unknown) {
-  return record(value) && CARD_TYPES.has(String(value.cardTypeId)) && record(value.scheduler) &&
-    CARD_PHASES.has(String(value.scheduler.phase)) && optionalFiniteNumber(value.scheduler.repeatCount) &&
-    (value.scheduler.lastSeenAt === undefined || nullableString(value.scheduler.lastSeenAt)) &&
-    (value.scheduler.frozenUntil === undefined || nullableString(value.scheduler.frozenUntil)) &&
+  if (!record(value) || !record(value.scheduler)) return false;
+  const scheduler = value.scheduler;
+  return CARD_TYPES.has(String(value.cardTypeId)) &&
+    CARD_PHASES.has(String(scheduler.phase)) && optionalFiniteNumber(scheduler.repeatCount) &&
+    (scheduler.reviewCount === undefined || (Number.isInteger(scheduler.reviewCount) && Number(scheduler.reviewCount) >= 0)) &&
+    (scheduler.lastGrade === undefined || scheduler.lastGrade === null || [1,2,3,4].includes(Number(scheduler.lastGrade)) && typeof scheduler.lastGrade === "number") &&
+    ["lastReviewedAt", "nextReviewAt", "learningDueAt"].every(key => scheduler[key] === undefined || nullableString(scheduler[key])) &&
+    (scheduler.lastSeenAt === undefined || nullableString(scheduler.lastSeenAt)) &&
+    (scheduler.frozenUntil === undefined || nullableString(scheduler.frozenUntil)) &&
     (value.knownMark === null || (record(value.knownMark) && string(value.knownMark.markId) &&
       string(value.knownMark.revision) && string(value.knownMark.markedAt))) && string(value.stateRevision);
 }

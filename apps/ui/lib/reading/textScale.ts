@@ -115,6 +115,7 @@ export function accountTextSizeStyles(
   };
   return {
     ...legacy,
+    "--account-spacing-scale": String(scale.reading),
     ...Object.fromEntries(
       Object.entries(styles).flatMap(([key, value]) => [
         [key, value],

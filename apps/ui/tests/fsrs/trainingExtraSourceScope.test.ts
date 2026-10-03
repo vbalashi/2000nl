@@ -48,7 +48,7 @@ async function sourceEntries(
            language_code, slug, name, kind, visibility,
            minimum_subscription_tier, schema_key, schema_version
          ) values
-           ('nl', $1, 'Accessible', 'curated', 'private', 'free', 'nl-vandale-v1', 1),
+           ('nl', $1, 'Accessible', 'curated', 'shared', 'free', 'nl-vandale-v1', 1),
            ('nl', $2, 'Unavailable', 'curated', 'private', 'free', 'nl-vandale-v1', 1)
          returning id`,
         [`extra-accessible-${userId}`, `extra-unavailable-${userId}`],

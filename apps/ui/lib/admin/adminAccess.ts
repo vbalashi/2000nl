@@ -8,7 +8,7 @@ import {
   writeAdminAuditEvent,
 } from "./adminAuditRepository";
 
-export type AdminPermission = "dictionaries.read" | "audit.read";
+export type AdminPermission = "dictionaries.read" | "audit.read" | "publication.manage" | "dictionary.content.read";
 
 export class AdminAccessError extends Error {
   constructor(
@@ -114,7 +114,7 @@ export async function requireAdmin(request: Request, permission?: AdminPermissio
       throw new AdminAccessError(403, "forbidden");
     }
     const permissions = Array.isArray(operator.permissions)
-      ? operator.permissions.filter((value): value is AdminPermission => value === "dictionaries.read" || value === "audit.read")
+      ? operator.permissions.filter((value): value is AdminPermission => value === "dictionaries.read" || value === "audit.read" || value === "publication.manage" || value === "dictionary.content.read")
       : [];
     if (permissions.length === 0 || (permission && !permissions.includes(permission))) {
       await writeAdminAuditEvent({

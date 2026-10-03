@@ -298,3 +298,18 @@ describe("Library multi-sense model", () => {
     ]);
   });
 });
+
+
+test("Library review capabilities belong to exact direct state and preserve canonical order",()=>{
+ const model=buildLibrarySenseCardGroupModel(multiSenseBankGroup,"en");
+ expect(model.meanings[0].schedulerPhase).toBe("reviewing");
+ expect(model.meanings[0].reviewCapabilities.map(cap=>cap.reviewResult)).toEqual(["fail","hard","success","easy"]);
+ const group=structuredClone(multiSenseBankGroup);
+ const entry=group.entries.find(item=>item.kind==="sense-card"&&item.entryId===furnitureEntry.entryId)!;
+ if(entry.kind!=="sense-card")throw new Error("fixture");
+ entry.capabilities=entry.capabilities.map(cap=>cap.actionId!=="review-card"?cap:{...cap,target:{...cap.target,cardTypeId:"definition-to-word"}});
+ expect(buildLibrarySenseCardGroupModel(group,"en").meanings[0].reviewCapabilities).toEqual([]);
+ entry.card=null;
+ expect(buildLibrarySenseCardGroupModel(group,"en").meanings[0].schedulerPhase).toBeNull();
+ expect(buildLibrarySenseCardGroupModel(group,"en").meanings[0].reviewCapabilities).toEqual([]);
+});

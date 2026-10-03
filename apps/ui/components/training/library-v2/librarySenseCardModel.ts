@@ -33,10 +33,12 @@ export type LibraryReportCapability = Extract<
   PlatformSenseCardCapabilityV2,
   { actionId: "report-content" }
 >;
+export type LibraryReviewCapability = Extract<PlatformSenseCardCapabilityV2, { actionId: "review-card" }>;
 export type LibraryMutationCapability =
   | LibraryStartLearningCapability
   | LibraryMarkKnownCapability
-  | LibraryUndoKnownCapability;
+  | LibraryUndoKnownCapability
+  | LibraryReviewCapability;
 
 export type LibrarySenseContent = PlatformV2SenseContentNode;
 
@@ -54,6 +56,11 @@ export type LibrarySenseCardModel = {
     : never;
   details: LibrarySenseContent[];
   repeatCount: number;
+  reviewCount?: number | null;
+  lastGrade?: 1 | 2 | 3 | 4 | null;
+  nextDueAt?: string | null;
+  schedulerPhase: NonNullable<PlatformSenseCardEntryV2["card"]>["scheduler"]["phase"] | null;
+  reviewCapabilities: LibraryReviewCapability[];
   startLearning: LibraryStartLearningCapability | null;
   markKnown: LibraryMarkKnownCapability | null;
   undoKnown: LibraryUndoKnownCapability | null;
@@ -244,6 +251,21 @@ function buildMeaning(
       (node) => node.contentNodeId !== definition?.contentNodeId,
     ),
     repeatCount: entry.card?.scheduler.repeatCount ?? 0,
+    reviewCount: entry.card?.scheduler.reviewCount ?? null,
+    lastGrade: entry.card?.scheduler.lastGrade ?? null,
+    nextDueAt: entry.card?.scheduler.phase === "learning"
+      ? entry.card.scheduler.learningDueAt ?? null
+      : entry.card?.scheduler.nextReviewAt ?? null,
+    schedulerPhase: entry.card?.scheduler.phase ?? null,
+    reviewCapabilities: entry.card?.cardTypeId === "word-to-definition" &&
+      ["learning", "reviewing"].includes(entry.card.scheduler.phase)
+      ? (["fail", "hard", "success", "easy"] as const).flatMap((reviewResult) => {
+        const match = entry.capabilities.find((candidate): candidate is LibraryReviewCapability =>
+          candidate.actionId === "review-card" && candidate.reviewResult === reviewResult &&
+          candidate.target.entryId === entry.entryId && candidate.target.cardTypeId === "word-to-definition" &&
+          candidate.target.stateRevision === entry.card?.stateRevision);
+        return match ? [match] : [];
+      }) : [],
     startLearning: capability(entry, "start-learning"),
     markKnown: capability(entry, "mark-known"),
     undoKnown: capability(entry, "undo-known"),

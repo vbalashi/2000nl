@@ -668,6 +668,7 @@ export function DictionarySearchTab({
     ? approved ? viewedListName : formatUiMessage(copy.collectionScope, { name: viewedListName })
     : approved ? sourceLabel : formatUiMessage(copy.sourceScope, { source: sourceLabel });
   const groupedSearchActive = !useViewedListFilter;
+  const hasCurrentResults = searchFreshRef.current?.key === searchReadKey;
   const resultCountLabel =
     query.trim() || useViewedListFilter || (approved && materialEnabled)
       ? formatUiMessage(copy.pageScope, {
@@ -783,7 +784,7 @@ export function DictionarySearchTab({
                 {part === "noun" && searchState.entryFilters?.article ? ` (${searchState.entryFilters.article})` : ""}
               </React.Fragment>)}
           </div>
-          {approved && <span className={workspace.scope}>{formatUiCount(interfaceLanguage,
+          {approved && hasCurrentResults && <span className={workspace.scope}>{formatUiCount(interfaceLanguage,
             useViewedListFilter ? wordTotal : (groupTotal ?? groupResults.length),copy,"matchingGroup")}</span>}
           {!approved && <label className={approved ? workspace.onlyCollection : "hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300"}>
             {approved ? formatUiMessage(copy.onlyNamedCollection, { name: viewedListName }) : copy.onlyCollection}
@@ -804,6 +805,15 @@ export function DictionarySearchTab({
             />
           </label>}
         </div>
+
+        {useViewedListFilter && (viewedList?.unavailable_source_count ?? 0) > 0 ? (
+          <p
+            className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100"
+            role="status"
+          >
+            {copy.unavailableCollectionSource}
+          </p>
+        ) : null}
 
         {material && material.status !== "ready" && (
           <p role={material.status === "error" ? "alert" : "status"}>
@@ -1135,7 +1145,8 @@ export function DictionarySearchTab({
               {copy.retry}
             </button>
           </div>
-        ) : searchLoading ? (
+        ) : null}
+        {searchError && !hasCurrentResults ? null : searchLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 6 }).map((_, index) => (
               <div
@@ -1270,7 +1281,7 @@ export function DictionarySearchTab({
         )}
       </div>
 
-      <div
+      {hasCurrentResults && <div
         data-testid={
           groupedSearchActive ? "library-group-pagination" : undefined
         }
@@ -1340,7 +1351,7 @@ export function DictionarySearchTab({
             {approved ? <ChevronRight size={18} aria-hidden="true"/> : copy.next}
           </button>
         </div>
-      </div>
+      </div>}
     </div>
   );
 

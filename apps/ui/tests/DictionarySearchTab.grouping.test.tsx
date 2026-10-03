@@ -149,7 +149,7 @@ const deferred = <T,>() => {
   return { promise, resolve, reject };
 };
 
-function Harness({preload=false,open=true,initial = {},locale="nl",translationLang="en",collection=false}: {preload?:boolean;open?:boolean;collection?:boolean;initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru";translationLang?:string|null} = {}) {
+function Harness({preload=false,open=true,initial = {},locale="nl",translationLang="en",collection=false,unavailableSourceCount=0}: {preload?:boolean;open?:boolean;collection?:boolean;unavailableSourceCount?:number;initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru";translationLang?:string|null} = {}) {
   const [state, setState] = React.useState<DictionarySearchTabState>(() => ({
     ...createDictionarySearchTabState(),
     query: "goed",
@@ -166,7 +166,7 @@ function Harness({preload=false,open=true,initial = {},locale="nl",translationLa
       interfaceLanguage={locale}
       userLists={[]}
       viewedListId={collection ? "owned-list" : null}
-      viewedList={collection ? {id:"owned-list",name:"My collection",type:"user",language_code:"nl"} : null}
+      viewedList={collection ? {id:"owned-list",name:"My collection",type:"user",language_code:"nl",unavailable_source_count:unavailableSourceCount} : null}
       viewedListName="Van Dale"
       reloadLists={async () => {}}
       notifyListsUpdated={() => {}}
@@ -433,6 +433,15 @@ test("owned collection entries use shared Library rows while retaining entry sel
   expect(service.fetchWordsForList).toHaveBeenCalledWith("owned-list","user",expect.objectContaining({query:"goed",page:1}));
 });
 
+test("shows a generic availability notice for a collection with inaccessible source links", async () => {
+  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+  render(<Harness locale="en" collection unavailableSourceCount={1} initial={{applyListFilter:true}} />);
+
+  const notice = await screen.findByText(/Some words in this collection are temporarily unavailable/);
+  expect(notice).toHaveAttribute("role", "status");
+  expect(notice).not.toHaveTextContent("dictionary-");
+});
+
 test("changing translation target never retags an old draft with a different language", async () => {
   const service = await import("@/lib/trainingService");
   vi.mocked(service.createUserDictionaryEntry).mockResolvedValue("created-entry");
@@ -516,9 +525,13 @@ test("initial browse loading does not show an empty result and failure can retry
   render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider>);
   await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalled());
   expect(screen.queryByText("No words found")).not.toBeInTheDocument();
+  expect(screen.queryByText("0 matching articles")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("library-group-pagination")).not.toBeInTheDocument();
   expect(screen.queryByTestId("library-headword-group-group-goed-homograph")).not.toBeInTheDocument();
   await act(async()=>{pending.reject(new Error("lookup_http_503"));});
   expect(await screen.findByRole("alert")).toBeInTheDocument();
+  expect(screen.queryByText("0 matching articles")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("library-group-pagination")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"Try again"}));
   await screen.findByTestId("library-headword-group-group-goed-homograph");
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -559,6 +572,20 @@ test("returning after freshness expires refreshes retained results", async () =>
   try {
     view.rerender(<Harness open preload />);
     await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalledTimes(reads+1));
+    expect(screen.getByTestId("library-headword-group-group-goed-main")).toBeVisible();
+  } finally { clock.mockRestore(); }
+});
+
+test("background refresh failure retains the usable Library list", async () => {
+  fetchGroupPage.mockReset().mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
+  const view=render(<Harness open preload />);
+  await screen.findByTestId("library-headword-group-group-goed-main");
+  view.rerender(<Harness open={false} preload />);
+  fetchGroupPage.mockRejectedValueOnce(new Error("lookup_http_503"));
+  const clock=vi.spyOn(Date,"now").mockReturnValue(Date.now()+31000);
+  try {
+    view.rerender(<Harness open preload />);
+    await screen.findByRole("alert");
     expect(screen.getByTestId("library-headword-group-group-goed-main")).toBeVisible();
   } finally { clock.mockRestore(); }
 });

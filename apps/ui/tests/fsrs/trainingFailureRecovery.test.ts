@@ -69,7 +69,7 @@ describeDb("training failure recovery", () => {
              language_code, slug, name, kind, visibility, owner_user_id,
              minimum_subscription_tier, schema_key, schema_version
            ) values (
-             'nl', $1, 'Recovery fixture', 'curated', 'private', null,
+             'nl', $1, 'Recovery fixture', 'curated', 'shared', null,
              'free', 'nl-vandale-v1', 1
            ) returning id`,
           [`recovery-${userId}`],

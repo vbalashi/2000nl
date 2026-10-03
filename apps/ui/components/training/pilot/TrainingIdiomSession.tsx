@@ -38,7 +38,9 @@ import { TrainingIdiomCard } from "./TrainingIdiomCard";
 
 import { useRecordedStudyTime } from "../useRecordedStudyTime";
 
+import type {CardFilter} from "@/lib/types";
 type Props = TrainingCompletionActions & {
+  cardFilter?: CardFilter;
   sessionName?: string;
   studyTimeEnabled?: boolean;
   userId: string;
@@ -59,6 +61,7 @@ type Props = TrainingCompletionActions & {
 
 export function TrainingIdiomSession({
   sessionName,
+  cardFilter = "both",
   studyTimeEnabled = false,
   userId,
   session,
@@ -82,7 +85,7 @@ export function TrainingIdiomSession({
   const footerStats = useIdiomTrainingStats(session.sessionId, completedCount);
   const completedCountRef = useRef(session.completedActions);
   const [terminal, setTerminal] = useState<"complete" | "empty" | null>(
-    session.plannedTotal === 0 ? "empty" : null,
+    session.plannedTotal === 0 ? session.completedActions > 0 ? "complete" : "empty" : null,
   );
   const [revealed, setRevealed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -150,7 +153,7 @@ export function TrainingIdiomSession({
           continue;
         }
         if (next.status === "completed" || next.status === "exhausted") {
-          setTerminal(completedCountRef.current >= session.plannedTotal && session.plannedTotal > 0 ? "complete" : "empty");
+          setTerminal(completedCountRef.current > 0 ? "complete" : "empty");
           activeTransitionIdRef.current = null;
           finishTrainingUserTransition(transitionId, `terminal-${next.status}`);
           return;
@@ -174,7 +177,6 @@ export function TrainingIdiomSession({
   }, [
     contentLanguageCode,
     session.sessionId,
-    session.plannedTotal,
     translationTargetLanguageCode,
     userId,
   ]);
@@ -257,11 +259,11 @@ export function TrainingIdiomSession({
           interfaceLanguage={interfaceLanguage}
           scenario="idiom"
           mode={
-            session.direction === "direct"
+            (candidate?.direction ?? session.direction) !== "reverse"
               ? "word-to-definition"
               : "definition-to-word"
           }
-          cardFilter="both"
+          cardFilter={cardFilter}
           sessionName={sessionName || t.title}
           presentation={{
             kind: "planned",
@@ -304,7 +306,7 @@ export function TrainingIdiomSession({
       {preparationFailed ? <TrainingSessionState title={t.failed} announcement="alert"
         action={{label:t.retry,onClick:()=>void loadNext()}}
         secondaryAction={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
-      {!loading && terminal ? terminal === "complete" ? <TrainingCompletion ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} startFailed={startFailed} /> : <TrainingSessionState title={t.empty} action={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
+      {!loading && terminal ? <TrainingCompletion empty={terminal==="empty"} emptyDetail={cardFilter==="review" && session.plannedTotal===0?{en:"No idioms are due now. Include new cards in training settings to start learning more.",nl:"Er hoeven nu geen uitdrukkingen herhaald te worden. Voeg nieuwe kaarten toe in de trainingsinstellingen om verder te leren.",ru:"Сейчас нет идиом для повторения. Включите новые карточки в настройках тренировки, чтобы продолжить изучение."}[interfaceLanguage]:undefined} ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} startFailed={startFailed} /> : null}
       {!loading && !terminal && candidate && content ? (
         <TrainingIdiomCard
           key={`${session.sessionId}:${candidate.targetKey}:${translationTargetLanguageCode ?? "off"}`}

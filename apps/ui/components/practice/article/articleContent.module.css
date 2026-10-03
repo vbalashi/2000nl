@@ -161,3 +161,13 @@
 .detail[data-nesting=hybrid] .contentSection>.contentNode{padding-left:var(--practice-content-inset)}
 
 .usagePattern{font-family:var(--practice-font-reading);font-size:var(--practice-literary-size);font-style:normal;line-height:var(--practice-literary-leading);color:var(--practice-text-secondary);margin:0}
+
+/* Shared spacing profiles: original and translation remain one reading group. */
+.detail .contentSection:first-child{margin-top:var(--practice-space-section)}
+.detail:has([data-content-translation]:not([aria-hidden=true] *)){--practice-space-section:var(--practice-space-section-translated)}
+.detail .contentSection>.contentNode{padding-block:var(--practice-space-rail)}
+.detail [data-kind=example]>.contentPair>p:not([data-content-translation]){font-family:var(--practice-font-reading);font-size:var(--practice-literary-size);font-style:italic;line-height:var(--practice-literary-leading)}
+.detail[data-nested-reading] .children .translation{font-size:var(--practice-reading-small);line-height:1.4}
+.detail p{overflow-wrap:anywhere}
+
+.detail:is([data-nested-reading=paired],[data-nested-reading=literary],[data-nested-reading=tiles]) .children [data-kind=example]>.contentPair>p:not([data-content-translation]){font-size:var(--practice-literary-size);line-height:var(--practice-literary-leading)}

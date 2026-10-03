@@ -7,6 +7,7 @@ export const ADMIN_DICTIONARY_VISIBILITIES = [
   "shared",
   "public",
 ] as const;
+export const ADMIN_PUBLICATION_STATES = ["unpublished", "restricted", "general"] as const;
 export type AdminDictionaryVisibility =
   (typeof ADMIN_DICTIONARY_VISIBILITIES)[number];
 
@@ -29,6 +30,7 @@ export type DictionaryRegistryRow = {
   languageCode: string;
   kind: AdminDictionaryKind | null;
   visibility: AdminDictionaryVisibility | null;
+  publicationState?: (typeof ADMIN_PUBLICATION_STATES)[number] | null;
   ownerId: string | null;
   sourceProvider: string | null;
   schemaKey: string | null;
@@ -54,6 +56,8 @@ export type DictionaryMetadata = DictionaryRegistryRow & {
   createdAt: string | null;
   schemaTitle: string | null;
   schemaRetiredAt: string | null;
+  audienceGroupKeys?: string[];
+  audienceUserIds?: string[];
 };
 
 export type DictionaryRecord = {
@@ -63,6 +67,7 @@ export type DictionaryRecord = {
   language_code: unknown;
   kind: unknown;
   visibility: unknown;
+  publication_state: unknown;
   owner_user_id: unknown;
   source_provider: unknown;
   source_version: unknown;
@@ -119,6 +124,7 @@ export function projectDictionaryRow(record: DictionaryRecord): DictionaryRegist
     languageCode: typeof record.language_code === "string" ? record.language_code : "",
     kind: enumOrNull(record.kind, ADMIN_DICTIONARY_KINDS),
     visibility: enumOrNull(record.visibility, ADMIN_DICTIONARY_VISIBILITIES),
+    publicationState: enumOrNull(record.publication_state, ADMIN_PUBLICATION_STATES),
     ownerId: stringOrNull(record.owner_user_id),
     sourceProvider: stringOrNull(record.source_provider),
     schemaKey: stringOrNull(record.schema_key),

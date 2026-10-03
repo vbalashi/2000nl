@@ -971,6 +971,112 @@ describeIfDb("content-bound training exercise database contract", () => {
     });
   });
 
+  test("mixed idioms persist both directions, resume and grade distinct targets exactly once", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async client => {
+      const fixture = await createIdiomFixture(client, userId);
+      const requestId = randomUUID();
+      const start = () => asAuthenticated(client, async () => (await client.query(
+        `select public.start_platform_v2_idiom_training_session($1,'mixed','2',$2,null,'curated','both','{}',2) result`,
+        [userId, requestId])).rows[0].result as PlatformIdiomExerciseSessionV2);
+      const session = await start();
+      expect(session).toMatchObject({direction:'mixed', plannedTotal:2, requestedTotal:2});
+      expect(session.members.map(member => member.direction)).toEqual(['direct','reverse']);
+      expect(new Set(session.members.map(member => member.targetId)).size).toBe(2);
+      expect(session.members.every(member => member.entryId === fixture.entryId)).toBe(true);
+      expect((await start()).sessionId).toBe(session.sessionId);
+      await client.query('savepoint mixed_retry_conflict');
+      await expect(asAuthenticated(client, () => client.query(
+        `select public.start_platform_v2_idiom_training_session($1,'direct','2',$2,null,'curated','both','{}',2)`,
+        [userId,requestId]))).rejects.toThrow('idiom_training_session_start_idempotency_conflict');
+      await client.query('rollback to savepoint mixed_retry_conflict');
+      await client.query('savepoint mixed_owner');
+      await expect(asAuthenticated(client, () => client.query(
+        'select public.read_platform_v2_idiom_training_session_snapshot($1,$2)',
+        [randomUUID(),session.sessionId]))).rejects.toThrow('unauthorized');
+      await client.query('rollback to savepoint mixed_owner');
+
+      expect((await client.query('select card_type_ids from training_sessions where id=$1',[session.sessionId])).rows[0].card_type_ids)
+        .toEqual(['idiom:direct','idiom:reverse']);
+      for (const [index, member] of session.members.entries()) {
+        const next = await asAuthenticated(client, async () => (await client.query(
+          'select public.read_platform_v2_idiom_training_session_next($1,$2) result',[userId,session.sessionId])).rows[0].result);
+        expect(next).toMatchObject({status:'ready',targetId:member.targetId,direction:member.direction});
+        const eventId=randomUUID();
+        expect(await performIdiomAction(client,userId,member.targetId,eventId,{direction:member.direction,sessionId:session.sessionId}))
+          .toMatchObject({status:'accepted'});
+        expect(await performIdiomAction(client,userId,member.targetId,eventId,{direction:member.direction,sessionId:session.sessionId}))
+          .toMatchObject({status:'duplicate'});
+        const snapshot=await asAuthenticated(client, async () => (await client.query(
+          'select public.read_platform_v2_idiom_training_session_snapshot($1,$2) result',[userId,session.sessionId])).rows[0].result);
+        expect(snapshot).toMatchObject({direction:'mixed',completedActions:index+1});
+        expect((await client.query('select count(*)::int n from user_training_exercise_state where user_id=$1',[userId])).rows[0].n).toBe(index+1);
+      }
+      const terminal=await asAuthenticated(client, async () => (await client.query(
+        'select public.read_platform_v2_idiom_training_session_next($1,$2) result',[userId,session.sessionId])).rows[0].result);
+      expect(terminal).toMatchObject({status:'completed',completedActions:2});
+      const stats=await asAuthenticated(client, async () => (await client.query(
+        'select public.read_training_idiom_stats_v1($1) result',[session.sessionId])).rows[0].result);
+      expect(stats).toMatchObject({totalCardsStarted:2,totalCardsInScope:2,newCardsToday:2});
+    }, userId);
+  });
+
+  test('mixed selection fills an odd-sized run from the remaining eligible direction', async () => {
+    const userId=randomUUID();
+    await withTransaction(pool,async client=>{
+      for(let index=0;index<3;index++) {
+        const fixture=await createIdiomFixture(client,userId);
+        await performIdiomAction(client,userId,fixture.targetId,randomUUID());
+      }
+      // Reviewed direct targets are not due; all three reverse targets are new.
+      await client.query(`update user_training_exercise_state set next_review_at=now()+interval '10 days' where user_id=$1`,[userId]);
+      const session=await asAuthenticated(client,async()=> (await client.query(
+        `select public.start_platform_v2_idiom_training_session($1,'mixed','3',$2,null,'curated','both','{}',2) result`,
+        [userId,randomUUID()])).rows[0].result as PlatformIdiomExerciseSessionV2);
+      expect(session).toMatchObject({direction:'mixed',plannedTotal:3,plannedNew:3,plannedReview:0});
+      expect(session.members.map(member=>member.direction)).toEqual(['reverse','reverse','reverse']);
+      expect(new Set(session.members.map(member=>member.targetId)).size).toBe(3);
+    },userId);
+  });
+
+  test('mixed directional pools retain the new/review rhythm and requested total',async()=>{
+    const userId=randomUUID();
+    await withTransaction(pool,async client=>{
+      const reviewed=await createIdiomFixture(client,userId);
+      await createIdiomFixture(client,userId);
+      await performIdiomAction(client,userId,reviewed.targetId,randomUUID());
+      await client.query(`update user_training_exercise_state set next_review_at=now()-interval '1 hour',fsrs_last_interval=2 where user_id=$1`,[userId]);
+      const session=await asAuthenticated(client,async()=> (await client.query(
+        `select public.start_platform_v2_idiom_training_session($1,'mixed','3',$2,null,'curated','both','{}',2) result`,
+        [userId,randomUUID()])).rows[0].result as PlatformIdiomExerciseSessionV2);
+      expect(session).toMatchObject({plannedTotal:3,plannedNew:2,plannedReview:1});
+      expect(session.members.map(member=>member.queueSource)).toEqual(['new','review','new']);
+      expect(session.members[1]).toMatchObject({targetId:reviewed.targetId,direction:'direct'});
+      expect(new Set(session.members.map(member=>member.direction))).toEqual(new Set(['direct','reverse']));
+    },userId);
+  });
+
+  test('mixed runs honor pair exclusion and reject revoked dictionary access after planning',async()=>{
+    const userId=randomUUID();
+    await withTransaction(pool,async client=>{
+      const excluded=await createIdiomFixture(client,userId);
+      const remaining=await createIdiomFixture(client,userId);
+      await pairAction(client,userId,'exclude-pair',randomUUID(),{targetId:excluded.targetId});
+      const session=await asAuthenticated(client,async()=> (await client.query(
+        `select public.start_platform_v2_idiom_training_session($1,'mixed','4',$2,null,'curated','both','{}',2) result`,
+        [userId,randomUUID()])).rows[0].result as PlatformIdiomExerciseSessionV2);
+      expect(session.plannedTotal).toBe(2);
+      expect(session.members.every(member=>member.entryId===remaining.entryId)).toBe(true);
+      expect(session.members.map(member=>member.direction)).toEqual(['direct','reverse']);
+      const otherOwner=randomUUID();
+      await ensureUserWithSettings(client,otherOwner);
+      await client.query(`update dictionaries set visibility='private',owner_user_id=$2 where id=(select dictionary_id from word_entries where id=$1)`,[remaining.entryId,otherOwner]);
+      expect(await readIdiomSessionNext(client,userId,session.sessionId)).toMatchObject({status:'unavailable',reason:'dictionary-access-revoked'});
+      const stats=await asAuthenticated(client,async()=> (await client.query('select public.read_training_idiom_stats_v1($1) result',[session.sessionId])).rows[0].result);
+      expect(stats.totalCardsInScope).toBe(0);
+    },userId);
+  });
+
   test("starts an ordered idiom session, retries it idempotently, and supersedes it", async () => {
     const userId = randomUUID();
     await withTransaction(

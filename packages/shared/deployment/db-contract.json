@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-195",
+  "contractId": "2000nl-db-203",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 195,
+    "requiredMigrationId": 203,
     "coordinationIssue": 407,
     "compatibilityPhase": "legacy-first-party-compatible",
     "strictEnforcementIssue": 399
@@ -381,9 +381,49 @@
       "migrationId": 195,
       "file": "db/migrations/195_training_session_active_time.sql",
       "sha256": "3c8a26250f2b2a9c781b4df4f78106b4a1de7ac8470284a05ca2ea6514047dd2"
+    },
+    {
+      "migrationId": 196,
+      "file": "db/migrations/196_library_browse_query_bound.sql",
+      "sha256": "65cf87f2871437ce8681ada5304fd378f96781d44c5732fa79274eb3e66df27a"
+    },
+    {
+      "migrationId": 197,
+      "file": "db/migrations/197_external_learning_session_replan.sql",
+      "sha256": "3b95fcad2e83d7c63ea165a175737d5cf468bbc6836f38598036f42cbe8edec0"
+    },
+    {
+      "migrationId": 198,
+      "file": "db/migrations/198_mixed_idiom_sessions.sql",
+      "sha256": "7bf38cd34eadc22a43252469537b712f878cc3c090aeac4601f36aaff01e65c2"
+    },
+    {
+      "migrationId": 199,
+      "file": "db/migrations/199_account_indigo_palette.sql",
+      "sha256": "dd4cf42b5ba287c26172f26fa3042b4e44de277f0b2315edb4916ec95be83355"
+    },
+    {
+      "migrationId": 200,
+      "file": "db/migrations/200_account_card_spacing.sql",
+      "sha256": "3b6cacf927132b0485feca104ebda09ddc1ba9df56866105757ac134584301d3"
+    },
+    {
+      "migrationId": 201,
+      "file": "db/migrations/201_dictionary_publication_access.sql",
+      "sha256": "ffd927e5d5a6b5afb9472846935755aff6d64d552332ddceb5e52abbb8892f89"
+    },
+    {
+      "migrationId": 202,
+      "file": "db/migrations/202_publication_access_current_rpc_patch.sql",
+      "sha256": "da4d3bc0077ac21c1c5a8f98aba237d00bdac515a29b1cb519e39245d960d122"
+    },
+    {
+      "migrationId": 203,
+      "file": "db/migrations/203_collection_source_availability.sql",
+      "sha256": "182039a465db0f68313b381b07650f3f1dc11b7cc91ead9b68b1c21cd535f4a3"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-195.sql",
+  "postflightProbe": "db/deploy-contract/postflight-203.sql",
   "preSwitchReadProbe": {
     "file": "db/deploy-contract/pre-switch-read-probe-164.sql",
     "sha256": "e4ea2002e4d65225d28ac4d7313426d4ca2ae91e2a6c514d223783e174d74a88",
@@ -392,7 +432,7 @@
     "overBudgetAction": "warn"
   },
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-195.sql",
-    "sha256": "6cd5604187005b720496763d8a92114c2ca8ef9ffd0f1ed3f792ea09f5bbfff4"
+    "file": "db/deploy-contract/read-only-postflight-203.sql",
+    "sha256": "2f43c30813ddbbf068a4d3f931f3fdf57b1fd88d4749bdc519cdb2569762a79c"
   }
 }

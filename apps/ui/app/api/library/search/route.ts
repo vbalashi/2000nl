@@ -54,5 +54,7 @@ export async function POST(request: NextRequest) {
     parsed.request,
     scope,
   );
-  return jsonNoStore(result.payload, result.status);
+  const response = jsonNoStore(result.payload, result.status);
+  if (result.serverTiming) response.headers.set("Server-Timing", result.serverTiming);
+  return response;
 }

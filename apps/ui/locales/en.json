@@ -57,6 +57,7 @@
   },
   "senseCard": {
     "learning": {
+      "savedReloadFailed": "Saved. Could not reload the updated learning state. Retry to refresh it.",
       "start": "Learn"
     },
     "known": {
@@ -103,7 +104,15 @@
       "reviewPrompt": "How well do you know this meaning?"
     },
     "state": {
-      "new": "New"
+      "learning": "Learning",
+      "hidden": "Excluded",
+      "frozen": "Paused",
+      "unavailable": "Learning state unavailable",
+      "new": "New",
+      "lastGrade": "Last rating",
+      "reviewCount": "Reviews",
+      "nextReview": "Next review",
+      "ungraded": "Not rated yet"
     },
     "translation": {
       "request": "Translate",
@@ -242,7 +251,10 @@
     },
     "trainingBuilder": {
       "contextPrompt": "Example translation",
-      "wordInContext": "Word in context",
+      "wordInContext": "Translation",
+      "contextDirection": "Example translation → word",
+      "pausedSentenceLabel": "Sentence translation (paused)",
+      "sentencePaused": "Sentence translation is paused. Choose another exercise to start a new session.",
       "reviewsOnly": "Reviews only",
       "newOnly": "New only",
       "allDictionaries": "All accessible dictionaries",
@@ -289,7 +301,10 @@
       "history": "History"
     },
     "trainingOverview": {
-      "wordInContext": "Word in context",
+      "wordInContext": "Translation",
+      "contextDirection": "Example translation → word",
+      "pausedSentenceLabel": "Sentence translation (paused)",
+      "sentencePaused": "Sentence translation is paused. Choose another exercise to start a new session.",
       "allDictionaries": "All accessible dictionaries",
       "allDue": "All due",
       "loading": "Loading training…",
@@ -414,6 +429,8 @@
       }
     },
     "settings": {
+      "cardSpacing": "Card spacing",
+      "cardSpacings": {"balanced": "Balanced", "airy": "Airy"},
       "title": "Settings",
       "languages": "Languages",
       "dictionaries": "Dictionaries",
@@ -487,6 +504,7 @@
       "themes": {
         "lavender": "Lavender",
         "blue": "Blue",
+        "indigo": "Indigo",
         "graphite": "Graphite"
       },
       "sizes": {
@@ -709,6 +727,7 @@
       "emptyCollection": "No words in this collection.",
       "emptyQuery": "Search the dictionary",
       "emptyCollectionHint": "No matches in {name}. Clear the search or search the dictionary.",
+      "unavailableCollectionSource": "Some words in this collection are temporarily unavailable because their source cannot currently be accessed. The collection will show them again if access is restored.",
       "emptyQueryHint": "Find definitions, examples and collections.",
       "noResultsHint": "No matches in {source}.",
       "previous": "Previous",

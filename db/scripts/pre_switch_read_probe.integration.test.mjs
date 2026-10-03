@@ -1,10 +1,15 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import test from "node:test";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 const runner = path.join(repoRoot, "db/scripts/deploy_db_contract.mjs");
+const contract = JSON.parse(
+  readFileSync(path.join(repoRoot, "packages/shared/deployment/db-contract.json"), "utf8"),
+);
+const latestMigrationId = contract.migrations.at(-1).migrationId;
 const baseDatabaseUrl = process.env.PRE_SWITCH_PROBE_INTEGRATION_DATABASE_URL;
 const containerImage = process.env.DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_IMAGE;
 const containerNetwork = process.env.DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_NETWORK ?? "bridge";
@@ -131,14 +136,14 @@ test(
     assert.equal(first.status, 0, first.stderr);
     assert.match(first.stdout, /pre-switch-read-probe passed/);
     assert.match(first.stdout, /readiness elapsed_ms=\d+ budget_ms=2000 over_budget=[tf]/);
-    assert.match(first.stdout, /compatible 2000nl-db-195/);
+    assert.match(first.stdout, new RegExp(`compatible ${contract.contractId}`));
 
     const replay = apply(containerTarget.toString());
     assert.equal(replay.status, 0, replay.stderr);
-    assert.match(replay.stdout, /no-op 166/);
+    assert.match(replay.stdout, new RegExp(`no-op ${latestMigrationId}`));
     assert.match(replay.stdout, /pre-switch-read-probe passed/);
     assert.match(replay.stdout, /readiness elapsed_ms=\d+ budget_ms=2000 over_budget=[tf]/);
-    assert.match(replay.stdout, /compatible 2000nl-db-195/);
+    assert.match(replay.stdout, new RegExp(`compatible ${contract.contractId}`));
 
     assert.equal(learnerSnapshot(baseDatabaseUrl), before);
   },
