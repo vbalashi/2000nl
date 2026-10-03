@@ -12,4 +12,6 @@ Native browser chrome zoom remains unverified. Isolated headless Playwright has 
 
 Reproduce dedicated3111 dev runtime with placeholder local Supabase credentials and both presentation flags; run scripts/capture-card-spacing-proof.mjs and scripts/check-spacing-interaction.mjs from apps/ui. Unit/typecheck/lint and disposable DB cardSpacingSettings.test.ts are separate checks. Stop temporary server/drop only dedicated DB after checks.
 
-Validation completed:73TrainingScreen tests;7new focused unit/component tests;8existing appearance tests;1realDB persistence/RLS test;typecheck/focusedlint;new read-onlyprobe;288geometry cases and16keyboardchecks. Migration200 SHA256 b3baf70a1809907023db0cc88616bb4d0207ce657d6079ee920a7e327da3ff59. Manifest/bootstrap integration remains coordinator-owned.
+Validation completed:73TrainingScreen tests;7new focused unit/component tests;8existing appearance tests;1realDB persistence/RLS test;typecheck/focusedlint;new read-onlyprobe;288geometry cases and16keyboardchecks. Migration200 SHA256 3b6cacf927132b0485feca104ebda09ddc1ba9df56866105757ac134584301d3. Manifest/bootstrap integration remains coordinator-owned.
+
+Migration200 replay is idempotent; fresh disposable DB persistence test, replay and read-only probe pass on final SQL.
