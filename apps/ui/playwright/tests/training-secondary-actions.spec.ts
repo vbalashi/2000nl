@@ -13,7 +13,12 @@ for (const width of [390, 834, 1440]) {
           ? route.continue() : route.abort();
       });
       await page.goto("/dev/sense-card-gate");
-      await page.evaluate((dark) => document.documentElement.classList.toggle("dark", dark), theme === "dark");
+      // Observe the application theme effect instead of racing root hydration.
+      if (theme === "dark") {
+        await expect(page.locator("html")).toHaveClass(/(?:^|\s)dark(?:\s|$)/, { timeout: 15_000 });
+      } else {
+        await expect(page.locator("html")).not.toHaveClass(/(?:^|\s)dark(?:\s|$)/, { timeout: 15_000 });
+      }
       await page.evaluate(() => document.fonts.ready);
       const stage = page.locator('[data-gate-fixture="SC-01/02"]').getByTestId("training-sense-card-stage");
       for (const side of ["face", "answer"]) {

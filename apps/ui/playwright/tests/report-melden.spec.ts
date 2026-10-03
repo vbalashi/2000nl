@@ -69,8 +69,11 @@ const profiles = [
 for (const profile of profiles) {
   test(`${profile.name} keeps one report action and one accessible sheet`, async ({ page }, testInfo) => {
     await page.setViewportSize(profile.viewport);
+    // Let SystemThemeEffect apply the theme after hydration; mutating the SSR
+    // root here races hydration and creates a dev issue badge over mobile actions.
+    await page.emulateMedia({ colorScheme: "dark" });
     await page.goto("/dev/sense-card-gate");
-    await page.evaluate(() => document.documentElement.classList.add("dark"));
+    await expect(page.locator("html")).toHaveClass(/(?:^|\s)dark(?:\s|$)/, { timeout: 15_000 });
     const fixture = page.locator('[data-gate-fixture="SC-01/02"]').first();
     await expect(fixture.getByRole("button", { name: "Melden" })).toHaveCount(1);
     await expect(fixture.getByRole("button", { name: /Melden:/ })).toHaveCount(0);
@@ -131,7 +134,7 @@ test("desktop light mode preserves the compact surface", async ({ page }, testIn
   await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("/dev/sense-card-gate");
-  await page.evaluate(() => document.documentElement.classList.remove("dark"));
+  await expect(page.locator("html")).not.toHaveClass(/(?:^|\s)dark(?:\s|$)/, { timeout: 15_000 });
   const fixture = page.locator('[data-gate-fixture="SC-01/02"]').first();
   await fixture.getByRole("button", { name: "Melden" }).click();
   await expect(page.getByRole("dialog", { name: "Wat klopt er niet?" })).toBeVisible();
@@ -344,8 +347,11 @@ test("startup purges an expired real IndexedDB record without sending", async ({
 for (const profile of [profiles[0], profiles[2]]) {
   test(`${profile.name} Library keeps one global action without inline flags or overlap`, async ({ page }, testInfo) => {
     await page.setViewportSize(profile.viewport);
+    // Let SystemThemeEffect apply the theme after hydration; mutating the SSR
+    // root here races hydration and creates a dev issue badge over mobile actions.
+    await page.emulateMedia({ colorScheme: "dark" });
     await page.goto("/dev/sense-card-gate");
-    await page.evaluate(() => document.documentElement.classList.add("dark"));
+    await expect(page.locator("html")).toHaveClass(/(?:^|\s)dark(?:\s|$)/, { timeout: 15_000 });
     const fixture = page.locator('[data-gate-title="SC-01/02 · Library · single sense · full"]');
     await expect(fixture.getByRole("button", { name: "Melden" })).toHaveCount(1);
     await expect(fixture.getByRole("button", { name: /Melden:/ })).toHaveCount(0);

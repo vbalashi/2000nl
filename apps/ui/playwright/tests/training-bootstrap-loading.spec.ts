@@ -66,6 +66,15 @@ async function holdSessionRefresh(
   page: Page,
   language: keyof typeof bootstrapHeading,
 ) {
+  // This scenario mocks the database/auth boundary. Keep its health response
+  // deterministic too: the real dev health warning otherwise mounts between
+  // frame/header measurements and shifts the header by the banner height.
+  await page.route("**/api/health?deep=1", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ status: "ok", checks: {} }),
+  }));
+
   const validSession = buildFakeSupabaseSession({
     id: "loading-qa-user",
     email: "loading-qa@2000nl.test",

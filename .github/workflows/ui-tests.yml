@@ -17,6 +17,7 @@ on:
       - "scripts/lib/run-sanitized-agent-browser.sh"
       - "scripts/lib/wait-for-prod-qa-surface.mjs"
       - ".github/workflows/ui-tests.yml"
+      - ".github/workflows/mobile-e2e-diagnostics.yml"
   push:
     branches: [main, master]
     paths:
@@ -34,6 +35,7 @@ on:
       - "scripts/lib/run-sanitized-agent-browser.sh"
       - "scripts/lib/wait-for-prod-qa-surface.mjs"
       - ".github/workflows/ui-tests.yml"
+      - ".github/workflows/mobile-e2e-diagnostics.yml"
   workflow_dispatch:
 
 jobs:
@@ -54,7 +56,7 @@ jobs:
         working-directory: apps/ui
 
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium chromium
+        run: npx playwright install --with-deps chromium
         working-directory: apps/ui
 
       - name: Lint UI
@@ -98,3 +100,46 @@ jobs:
       - name: Verify completed and paused training sessions
         run: npm run test:e2e:training-reliability
         working-directory: apps/ui
+
+  reproduce-mobile-e2e:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install UI dependencies
+        run: npm ci
+        working-directory: apps/ui
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/ui
+
+      - name: Repeat affected mobile e2e cases without retries
+        run: >-
+          npx playwright test
+          playwright/tests/report-melden.spec.ts
+          playwright/tests/training-bootstrap-loading.spec.ts
+          playwright/tests/training-secondary-actions.spec.ts
+          --grep "mobile-(402x874|390x844) keeps one report action and one accessible sheet|auth bootstrap keeps one Training shell on mobile-(390x844|412x915)-dark|secondary actions align at 390px in dark"
+          --repeat-each=20
+          --retries=0
+          --workers=2
+          --trace=retain-on-failure
+        working-directory: apps/ui
+
+      - name: Upload mobile e2e failure diagnostics
+        if: failure() && hashFiles('apps/ui/test-results/**') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-e2e-failure-diagnostics
+          path: apps/ui/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
