@@ -3,7 +3,7 @@ import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAt
 
 test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true", "Approved presentation is opt-in.");
 
-for (const palette of ["lavender", "blue", "graphite"]) {
+for (const palette of ["lavender", "blue", "indigo", "graphite"]) {
   for (const mode of ["light", "dark"] as const) {
     for (const size of ["normal", "extra"]) {
       test(`${palette} ${mode} ${size}: Russian compact session retains controls`, async ({ page }, testInfo) => {
@@ -51,3 +51,32 @@ for (const palette of ["lavender", "blue", "graphite"]) {
     }
   }
 }
+
+test("Indigo follows System appearance and remains restored after reload", async ({page},testInfo)=>{
+  await page.setViewportSize({width:1024,height:768});
+  await page.emulateMedia({colorScheme:"dark",reducedMotion:"reduce"});
+  await setupAuthenticatedTrainingAttributionPage(page,0,{visualProfile:"answer",settingsOverrides:{practice_palette:"indigo",theme_preference:"system"}});
+  const appearance=page.locator('[data-account-palette]');
+  await expect(appearance).toHaveAttribute('data-account-palette','indigo');
+  const canvas=page.getByTestId('app-header');
+  await expect.poll(()=>canvas.evaluate(el=>getComputedStyle(el).getPropertyValue('--practice-accent').trim())).toBe('#a5b4fc');
+  await page.screenshot({path:testInfo.outputPath('indigo-system-dark.png')});
+  await page.emulateMedia({colorScheme:"light"});
+  await expect.poll(()=>canvas.evaluate(el=>getComputedStyle(el).getPropertyValue('--practice-accent').trim())).toBe('#4f46e5');
+  await page.screenshot({path:testInfo.outputPath('indigo-system-light.png')});
+  await page.reload();
+  await expect(appearance).toHaveAttribute('data-account-palette','indigo');
+  await expect.poll(()=>canvas.evaluate(el=>getComputedStyle(el).getPropertyValue('--practice-accent').trim())).toBe('#4f46e5');
+  await page.getByRole('button',{name:'Instellingen',exact:true}).click();
+  await page.getByRole('button',{name:'Weergave',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Indigo',exact:true})).toHaveAttribute('aria-pressed','true');
+  await expect(page.getByRole('button',{name:'Blauw',exact:true})).toHaveAttribute('aria-pressed','false');
+  await page.screenshot({path:testInfo.outputPath('indigo-settings-desktop-light.png')});
+  await page.setViewportSize({width:390,height:844});
+  await page.getByRole('button',{name:'Weergave',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Indigo',exact:true})).toBeVisible();
+  await page.screenshot({path:testInfo.outputPath('indigo-settings-mobile-light.png')});
+  await page.emulateMedia({colorScheme:'dark'});
+  await expect.poll(()=>canvas.evaluate(el=>getComputedStyle(el).getPropertyValue('--practice-accent').trim())).toBe('#a5b4fc');
+  await page.screenshot({path:testInfo.outputPath('indigo-settings-mobile-dark.png')});
+});
