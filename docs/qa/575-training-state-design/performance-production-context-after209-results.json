@@ -1,0 +1,28 @@
+{
+  "deployedCommit": "73e8f4651dea4436281322511f20f75fd1372c87",
+  "dbContract": 209,
+  "samples": [
+    6000.616,
+    299.652,
+    291.425,
+    286.49,
+    281.839,
+    283.639
+  ],
+  "historyFacts": {
+    "answeredReverseStates": 114,
+    "answeredOrdinaryStates": 435
+  },
+  "warmSamples": 5,
+  "medianSqlMs": 286.49,
+  "minSqlMs": 281.839,
+  "maxSqlMs": 299.652,
+  "counters": {
+    "asOf": "2026-10-03T20:54:47.049808+00:00",
+    "dueToday": 71,
+    "newCards": 1,
+    "studyDay": "2026-10-03",
+    "timezone": "Europe/Amsterdam",
+    "totalReviews": 94
+  }
+}
