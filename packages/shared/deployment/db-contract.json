@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-196",
+  "contractId": "2000nl-db-199",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 196,
+    "requiredMigrationId": 199,
     "coordinationIssue": 407,
     "compatibilityPhase": "legacy-first-party-compatible",
     "strictEnforcementIssue": 399
@@ -386,9 +386,24 @@
       "migrationId": 196,
       "file": "db/migrations/196_library_browse_query_bound.sql",
       "sha256": "65cf87f2871437ce8681ada5304fd378f96781d44c5732fa79274eb3e66df27a"
+    },
+    {
+      "migrationId": 197,
+      "file": "db/migrations/197_external_learning_session_replan.sql",
+      "sha256": "3b95fcad2e83d7c63ea165a175737d5cf468bbc6836f38598036f42cbe8edec0"
+    },
+    {
+      "migrationId": 198,
+      "file": "db/migrations/198_mixed_idiom_sessions.sql",
+      "sha256": "7bf38cd34eadc22a43252469537b712f878cc3c090aeac4601f36aaff01e65c2"
+    },
+    {
+      "migrationId": 199,
+      "file": "db/migrations/199_account_indigo_palette.sql",
+      "sha256": "dd4cf42b5ba287c26172f26fa3042b4e44de277f0b2315edb4916ec95be83355"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-196.sql",
+  "postflightProbe": "db/deploy-contract/postflight-199.sql",
   "preSwitchReadProbe": {
     "file": "db/deploy-contract/pre-switch-read-probe-164.sql",
     "sha256": "e4ea2002e4d65225d28ac4d7313426d4ca2ae91e2a6c514d223783e174d74a88",
@@ -397,7 +412,7 @@
     "overBudgetAction": "warn"
   },
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-196.sql",
-    "sha256": "e68bc93201035ebe6d0c5e1c8f9f9786209c0b88ef288682c4d3daac9febd03e"
+    "file": "db/deploy-contract/read-only-postflight-199.sql",
+    "sha256": "5621a6546a2bdaa3a8a7e02aa184ef2bf66d86d5fb70be2546d327a036a12345"
   }
 }

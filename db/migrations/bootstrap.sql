@@ -541,3 +541,9 @@
 \i db/migrations/195_training_session_active_time.sql
 
 \i db/migrations/196_library_browse_query_bound.sql
+
+\i db/migrations/197_external_learning_session_replan.sql
+
+\i db/migrations/198_mixed_idiom_sessions.sql
+
+\i db/migrations/199_account_indigo_palette.sql
