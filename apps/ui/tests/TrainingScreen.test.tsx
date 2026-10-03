@@ -30,6 +30,18 @@ import {
   writeTrainingSessionResume,
 } from "@/lib/training/sessionResumeStore";
 
+const legacyTranslationSnapshot = vi.fn();
+const legacyTranslationStart = vi.fn();
+vi.mock("@/lib/platform/platformV2TranslationExerciseClient", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/platform/platformV2TranslationExerciseClient")>(),
+  fetchPlatformV2TranslationTrainingSessionSnapshot: (...args: unknown[]) => legacyTranslationSnapshot(...args),
+  startPlatformV2TranslationTrainingSession: (...args: unknown[]) => legacyTranslationStart(...args),
+}));
+vi.mock("@/components/training/pilot/TrainingSentenceSession", () => ({
+  TrainingSentenceSession: ({session, contentLanguageCode}: {session:{sessionId:string;completedActions:number};contentLanguageCode:string}) =>
+    <div data-testid="legacy-sentence-session" data-session-id={session.sessionId} data-language={contentLanguageCode} data-completed={session.completedActions}/>,
+}));
+
 // Screen integration tests exercise the real V2 transition owner. The card
 // stub models asynchronous acceptance; actual capabilities, keys, swipe and
 // content are covered by TrainingSenseCardV2Session/Stage tests.
@@ -4634,4 +4646,27 @@ test("replan coalesces overlapping checks, retries failed reads, and fences late
     screen.queryByTestId("mock-training-sense-card-v2"),
   ).not.toBeInTheDocument();
   expect(mockV2ProgressAction).not.toHaveBeenCalled();
+});
+
+for (const languageCode of ["nl", "en"]) test(`owned legacy sentence session resumes in its saved ${languageCode} language without a new start`, async()=>{
+ const sessionId=`legacy-sentence-${languageCode}`;
+ const snapshot={contractVersion:"platform-translation-exercise-session-v1",sessionId,exerciseFamily:"translation",direction:"recall",sessionSize:"5",requestedTotal:5,plannedNew:3,plannedReview:2,plannedPractice:0,plannedTotal:5,plannedAt:"2026-10-03T09:00:00Z",runStatus:"active",runGeneration:4,completedActions:1,completionReason:null,members:[{ordinal:1,consumedAt:"2026-10-03T09:01:00Z",unavailableAt:null},{ordinal:2,consumedAt:null,unavailableAt:null}]};
+ legacyTranslationSnapshot.mockResolvedValue(snapshot);
+ await writeTrainingSessionResume({sessionId,userId:user.id,family:"sentence",languageCode,listId:"list-1",listType:"curated",scenarioId:"sentences",modes:["word-to-definition"],cardFilter:"both",newReviewRatio:2,focusFilter:{dateWindow:"all"},sessionSize:5});
+ render(<TrainingScreen user={user} trainingTodaySetupEnabled/>);
+ const session=await screen.findByTestId("legacy-sentence-session");
+ expect(session).toHaveAttribute("data-session-id",sessionId);
+ expect(session).toHaveAttribute("data-language",languageCode);
+ expect(session).toHaveAttribute("data-completed","1");
+ expect(legacyTranslationSnapshot).toHaveBeenCalledWith(user.id,sessionId);
+ expect(legacyTranslationStart).not.toHaveBeenCalled();expect(startTrainingSession).not.toHaveBeenCalled();
+ expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
+ expect((await readTrainingSessionResume(user.id))?.family).toBe("sentence");
+});
+test("another account cannot resume the owned legacy sentence record",async()=>{
+ await writeTrainingSessionResume({sessionId:"foreign-legacy",userId:"another-owner",family:"sentence",languageCode:"nl",listId:"list-1",listType:"curated",scenarioId:"sentences",modes:["word-to-definition"],cardFilter:"both",newReviewRatio:2,focusFilter:{dateWindow:"all"},sessionSize:5});
+ render(<TrainingScreen user={user} trainingTodaySetupEnabled/>);
+ await screen.findByRole("heading",{name:/Good morning|Goedemorgen/});
+ expect(screen.queryByTestId("legacy-sentence-session")).toBeNull();
+ expect(legacyTranslationSnapshot).not.toHaveBeenCalled();expect(legacyTranslationStart).not.toHaveBeenCalled();
 });

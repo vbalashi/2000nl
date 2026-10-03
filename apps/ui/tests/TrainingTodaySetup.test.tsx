@@ -884,3 +884,27 @@ test("paused sentence recipe stays editable and never silently becomes a context
  expect(accounts.get("paused-sentence")?.document.trainings[0].draft).toEqual(saved);
  expect(onStart).not.toHaveBeenCalled();
 });
+
+test("contextual Translation saves and restores its exact reverse recipe after remount", async()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const onStart=vi.fn();
+ const props={...baseProps,onStart,userId:"context-save-restore",trainingLanguageCode:"nl",translationTargetLanguageCode:"ru",hasOwnedSession:false};
+ const view=render(<TrainingTodaySetup {...props}/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Create training"}));
+ fireEvent.click(screen.getByRole("button",{name:/^Exercises /}));
+ fireEvent.click(screen.getByRole("button",{name:"Translation"}));
+ fireEvent.click(screen.getByRole("button",{name:"Save training"}));
+ fireEvent.change(screen.getByLabelText("Training name"),{target:{value:"Context practice"}});
+ fireEvent.click(within(screen.getByRole("dialog")).getByRole("button",{name:"Save training"}));
+ await waitFor(()=>expect(accounts.get(props.userId)?.document.trainings).toHaveLength(1));
+ const saved=structuredClone(accounts.get(props.userId)!.document.trainings[0]);
+ expect(saved.draft).toMatchObject({family:"word-in-context",scenarioId:"understanding",modes:["definition-to-word"]});
+ view.unmount();render(<TrainingTodaySetup {...props}/>);
+ fireEvent.click(await screen.findByRole("button",{name:`Edit ${saved.name}`}));
+ fireEvent.click(screen.getByRole("button",{name:/^Exercises /}));
+ expect(screen.getByRole("button",{name:"Translation"})).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByText("Example translation → word")).toBeInTheDocument();
+ expect(accounts.get(props.userId)!.document.trainings[0]).toEqual(saved);
+ fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(saved.draft, "Context practice"));
+});
