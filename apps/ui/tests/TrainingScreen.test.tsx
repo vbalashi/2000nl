@@ -4513,3 +4513,239 @@ test("learner logout preserves the same user's separate admin session", async ()
   expect(document.cookie).toContain("2000nl-admin-auth=admin-session");
   document.cookie = "2000nl-admin-auth=; max-age=0; path=/";
 });
+
+test.each(["focus", "return"] as const)(
+  "%s reconciles an externally revised remainder without grading",
+  async (trigger) => {
+    await writeTrainingSessionResume({
+      sessionId: "session-replan",
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "list-1",
+      listType: "curated",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 5,
+    });
+    const member = {
+      ordinal: 1,
+      entryId: "word-1",
+      cardTypeId: "word-to-definition",
+      queueSource: "new",
+      consumedAt: null,
+      unavailableAt: null,
+    };
+    const original = {
+      sessionId: "session-replan",
+      runStatus: "active",
+      runGeneration: 1,
+      sessionSize: 5,
+      plannedNew: 1,
+      plannedReview: 0,
+      plannedPractice: 0,
+      plannedTotal: 1,
+      requestedTotal: 5,
+      plannedAt: "2026-09-10T12:00:00Z",
+      planRevision: 0,
+      completedActions: 0,
+      members: [member],
+    };
+    fetchTrainingSessionSnapshot.mockResolvedValue(original);
+    const view = render(
+      <TrainingScreen
+        user={user}
+        trainingTodaySetupEnabled
+        onRequestDestination={vi.fn()}
+      />,
+    );
+    await screen.findByTestId("mock-training-sense-card-v2");
+    const initialReads = fetchNextTrainingWordByScenario.mock.calls.length;
+    fetchTrainingSessionSnapshot.mockResolvedValue({
+      ...original,
+      planRevision: 1,
+      members: [{ ...member, entryId: overrideWord.id }],
+    });
+    fetchNextTrainingWordByScenario.mockResolvedValue(overrideWord);
+    if (trigger === "focus")
+      act(() => window.dispatchEvent(new Event("focus")));
+    else {
+      view.rerender(
+        <TrainingScreen
+          user={user}
+          trainingTodaySetupEnabled
+          onRequestDestination={vi.fn()}
+          destination="library"
+        />,
+      );
+      await act(async () => {
+        await Promise.resolve();
+      });
+      view.rerender(
+        <TrainingScreen
+          user={user}
+          trainingTodaySetupEnabled
+          onRequestDestination={vi.fn()}
+          destination="training"
+        />,
+      );
+    }
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(
+        initialReads,
+      ),
+    );
+    expect(fetchNextTrainingWordByScenario.mock.calls.at(-1)?.[11]).toBe(
+      "session-replan",
+    );
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
+    const revisedReads = fetchNextTrainingWordByScenario.mock.calls.length;
+    act(() => window.dispatchEvent(new Event("focus")));
+    await waitFor(() =>
+      expect(
+        fetchTrainingSessionSnapshot.mock.calls.length,
+      ).toBeGreaterThanOrEqual(3),
+    );
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+      revisedReads,
+    );
+  },
+);
+
+test("replan coalesces overlapping checks, retries failed reads, and fences late takeover", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-replan",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  const member = {
+    ordinal: 1,
+    entryId: "word-1",
+    cardTypeId: "word-to-definition",
+    queueSource: "new",
+    consumedAt: null,
+    unavailableAt: null,
+  };
+  const original = {
+    sessionId: "session-replan",
+    runStatus: "active",
+    runGeneration: 1,
+    sessionSize: 5,
+    plannedNew: 1,
+    plannedReview: 0,
+    plannedPractice: 0,
+    plannedTotal: 1,
+    requestedTotal: 5,
+    plannedAt: "2026-09-10T12:00:00Z",
+    planRevision: 0,
+    completedActions: 0,
+    members: [member],
+  };
+  fetchTrainingSessionSnapshot.mockResolvedValue(original);
+  const view = render(
+    <TrainingScreen
+      user={user}
+      trainingTodaySetupEnabled
+      onRequestDestination={vi.fn()}
+    />,
+  );
+  await screen.findByTestId("mock-training-sense-card-v2");
+  const initialReads = fetchNextTrainingWordByScenario.mock.calls.length;
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...original,
+    planRevision: 1,
+    members: [{ ...member, entryId: overrideWord.id }],
+  });
+  fetchNextTrainingWordByScenario.mockResolvedValue(overrideWord);
+
+  let deliver: (value: typeof overrideWord) => void = () => undefined;
+  fetchNextTrainingWordByScenario.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        deliver = resolve;
+      }),
+  );
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+      initialReads + 1,
+    ),
+  );
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot.mock.calls.length).toBe(3),
+  );
+  expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+    initialReads + 1,
+  );
+  await act(async () => {
+    deliver(overrideWord);
+  });
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...original,
+    planRevision: 2,
+    members: [{ ...member, entryId: overrideWord.id }],
+  });
+  fetchNextTrainingWordByScenario.mockRejectedValueOnce(
+    new Error("network lost"),
+  );
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+      initialReads + 2,
+    ),
+  );
+  await act(async () => {
+    await Promise.resolve();
+  });
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+      initialReads + 3,
+    ),
+  );
+  await act(async () => {
+    await Promise.resolve();
+  });
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...original,
+    planRevision: 3,
+    members: [{ ...member, entryId: overrideWord.id }],
+  });
+  fetchNextTrainingWordByScenario.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        deliver = resolve;
+      }),
+  );
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.length,
+    ).toBeGreaterThanOrEqual(initialReads + 4),
+  );
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...original,
+    runStatus: "superseded",
+    runGeneration: null,
+  });
+  act(() => window.dispatchEvent(new Event("focus")));
+  await screen.findByRole("button", { name: "Start training here" });
+  await act(async () => {
+    deliver(overrideWord);
+  });
+  expect(
+    screen.queryByTestId("mock-training-sense-card-v2"),
+  ).not.toBeInTheDocument();
+  expect(mockV2ProgressAction).not.toHaveBeenCalled();
+});
