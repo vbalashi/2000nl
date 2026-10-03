@@ -1,0 +1,13 @@
+{
+  "jit": "off",
+  "enableNestloop": "off",
+  "sampleMs": 287.559041,
+  "value": {
+    "asOf": "2026-10-03T19:13:13.291269+00:00",
+    "dueToday": 0,
+    "newCards": 13867,
+    "studyDay": "2026-10-03",
+    "timezone": "UTC",
+    "totalReviews": 0
+  }
+}

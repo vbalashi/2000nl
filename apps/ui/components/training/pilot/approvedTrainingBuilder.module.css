@@ -377,3 +377,9 @@
 .saveMenuPanel button { width:100%; border:0; border-radius:8px; padding:9px 12px; text-align:left; font:inherit; font-size:var(--practice-text-small); background:transparent; color:var(--practice-text); cursor:pointer; }
 .saveMenuPanel button:hover { background:var(--practice-surface-subtle); }
 .delete:focus-visible, .saveMenu summary:focus-visible, .saveMenuPanel button:focus-visible { outline:2px solid var(--practice-focus); outline-offset:2px; }
+
+/* Editing adds trash and a split menu: give that group a full mobile row. */
+@media (max-width:430px) {
+  .footer > div:has(.saveMenu) { grid-template-columns:1fr; }
+  .footer .saveActions:has(.saveMenu) .secondary { white-space:nowrap; }
+}

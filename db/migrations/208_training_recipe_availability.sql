@@ -15,7 +15,12 @@ BEGIN
  p_queue_turn text,p_exclude_entry_ids uuid[],p_exclude_card_keys text[],p_training_filter jsonb,
  p_filtered boolean,p_enforce_daily_limits boolean)
  RETURNS TABLE(entry_id uuid,card_type_id text,fsrs_enabled boolean,introduced boolean,next_review_at timestamptz,intrinsic_source text)
- LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path=public,private,pg_temp AS $body$
+ -- The materialized first-meaning relation has no column statistics. With a
+ -- large provenance corpus its one-row estimate causes quadratic nested-loop
+ -- joins (285M comparisons measured at18k meanings). Prefer hash/merge joins
+ -- only inside this read projection; normal scheduler settings are unchanged.
+ LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path=public,private,pg_temp
+ SET enable_nestloop=off SET jit=off AS $body$
  %s)
  SELECT entry_id,card_type_id,fsrs_enabled,introduced,next_review_at,intrinsic_source FROM eligible;
  $body$;

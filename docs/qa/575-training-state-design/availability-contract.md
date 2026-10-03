@@ -35,12 +35,25 @@ user's list is rejected; explicitly selected dictionaries must remain accessible
 Only authenticated receives the public RPC execute grant; the unordered helper
 remains private. The endpoint succeeds inside `BEGIN READ ONLY`.
 
-Validation: **345 tests passed in37 files** in a disposable database, including
-10 new availability tests. Both full and read-only postflight208 chains passed
-in a separate disposable database. Deployment contract unit tests:19 passed.
-No production writes or deployment performed by this subtask. Actual aggregate
-cost is measured separately; earlier prototype timings are not this endpoint's
-performance evidence.
+Validation: **346 tests passed in 37 files** in a disposable database, including
+11 new availability tests. Both full and read-only postflight208 chains passed
+in a separate disposable database. Deployment contract unit tests: 19 passed.
+No production writes or deployment performed by this subtask. Canonical local data contains 18,163 source bindings and 40,403 active content
+nodes. The original projection took a warm median of 5,946 ms. Its underestimated
+introduction relation caused a nested loop with 285,314,064 rejected comparisons.
+Only the private count helper now scopes `enable_nestloop=off` and `jit=off`; the
+caller settings and ordinary scheduler stay unchanged. A regression test and
+postflight probe verify the scope. Exact eligibility predicates are preserved.
+
+After this change, actual RPC warm medians on the same real provenance data are
+265.50 ms for direct, 371.88 ms for both directions, 494.99 ms for nouns and
+382.81 ms for verbs. Direct counts remain exactly 0 due / 0 reviews / 13,867 new.
+Contextual Translation measured 319.03 ms and idioms 239.21 ms, but the empty
+history principal had zero eligible cards in these cases, so these measurements
+do not establish nonempty-family performance. These are database timings, not
+end-to-end UI latency. Raw evidence is in
+`performance-real-provenance-analyze.json` and
+`performance-real-provenance-optimized-results.json` alongside this document.
 
 Migration SHA-256:
-`195aa14d2cf1050d557591c9d9ea12c25e58292b0caf3178add2121213ec4ea5`.
+`22bba96158e55b4f6c2948bf0bd245bd86813e7bf84f9e31aaa5f8aa14518f38`.

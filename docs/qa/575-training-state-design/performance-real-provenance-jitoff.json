@@ -1,0 +1,12 @@
+{
+  "jit": "off",
+  "sampleMs": 5936.423958,
+  "value": {
+    "asOf": "2026-10-03T19:11:50.859641+00:00",
+    "dueToday": 0,
+    "newCards": 13867,
+    "studyDay": "2026-10-03",
+    "timezone": "UTC",
+    "totalReviews": 0
+  }
+}

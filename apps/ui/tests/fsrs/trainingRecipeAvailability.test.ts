@@ -299,4 +299,23 @@ async function availability(
         }),
       ).rejects.toThrow("training_material_unavailable");
     }));
+  test("provenance count join strategy is function-scoped and does not change caller settings", () =>
+    withTransaction(pool, async (c) => {
+      const u = await owner(c);
+      await insertWord(c, `setting-restore-${randomUUID()}`);
+      await c.query("set local enable_nestloop=on");
+      await c.query("set local jit=on");
+      expect(await availability(c, u)).toMatchObject({ newCards: 1 });
+      expect(
+        (await c.query("show enable_nestloop")).rows[0].enable_nestloop,
+      ).toBe("on");
+      expect((await c.query("show jit")).rows[0].jit).toBe("on");
+      const config = (
+        await c.query(
+          "select proconfig from pg_proc where oid='private.training_recipe_eligible_cards_v1(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean,boolean)'::regprocedure",
+        )
+      ).rows[0].proconfig;
+      expect(config).toContain("enable_nestloop=off");
+      expect(config).toContain("jit=off");
+    }));
 });

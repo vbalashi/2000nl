@@ -1,5 +1,5 @@
 DO $availability$
-DECLARE scheduler text; projection text; rpc text;
+DECLARE scheduler text; projection text; rpc text; config text[];
 BEGIN
  SELECT prosrc INTO scheduler FROM pg_proc WHERE oid='private.training_scheduler_candidates_v2(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean,boolean)'::regprocedure;
  SELECT prosrc INTO projection FROM pg_proc WHERE oid='private.training_recipe_eligible_cards_v1(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean,boolean)'::regprocedure;
@@ -12,6 +12,10 @@ BEGIN
   OR strpos(rpc,'private.training_idiom_source_nodes_v1')=0
   OR strpos(rpc,'next_review_at<v_day_end')=0
   OR strpos(rpc,'introduced')=0 THEN RAISE EXCEPTION 'availability auth or aggregate guards missing'; END IF;
+ SELECT proconfig INTO config FROM pg_proc WHERE oid='private.training_recipe_eligible_cards_v1(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean,boolean)'::regprocedure;
+ IF NOT config @> ARRAY['enable_nestloop=off','jit=off'] THEN
+  RAISE EXCEPTION 'availability bounded provenance join strategy missing';
+ END IF;
  IF has_function_privilege('anon','public.read_training_recipe_availability_v1(uuid,text[],uuid,text,jsonb,text)','execute')
   OR NOT has_function_privilege('authenticated','public.read_training_recipe_availability_v1(uuid,text[],uuid,text,jsonb,text)','execute')
   OR has_function_privilege('authenticated','private.training_recipe_eligible_cards_v1(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean,boolean)','execute') THEN
