@@ -325,6 +325,7 @@ describe("trainingService next-word selection", () => {
         plannedPractice: 0,
         plannedTotal: 5,
         completedActions: 1,
+      planRevision: 2,
         completionReason: null,
         plannedAt: "2026-09-10T12:00:00.000Z",
         members: [
@@ -359,6 +360,7 @@ describe("trainingService next-word selection", () => {
       plannedPractice: 0,
       plannedTotal: 5,
       completedActions: 1,
+      planRevision: 2,
       completionReason: null,
       plannedAt: "2026-09-10T12:00:00.000Z",
       members: [
