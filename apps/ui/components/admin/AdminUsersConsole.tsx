@@ -139,7 +139,7 @@ function UserCard({ row }: { row: AdminUserRegistryRow }) {
 function UserProfile({ row }: { row: AdminUserRegistryRow }) {
   return <>
     <div className="mb-5 text-xs text-slate-500"><Link href="/admin/users" className="hover:text-primary">Пользователи</Link><span className="mx-2">›</span>Профиль</div>
-    <div className="mb-6 flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-indigo-50 font-semibold text-primary">{(row.email?.[0] ?? "?").toUpperCase()}</span><div><h1 className="break-all text-2xl font-semibold tracking-tight sm:text-[28px]">{row.email ?? "Пользователь"}</h1><p className="mt-1 font-mono text-xs text-slate-500">{row.userId} · Только просмотр</p></div></div>
+    <div className="mb-6 flex items-center gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-indigo-50 font-semibold text-primary">{(row.email?.[0] ?? "?").toUpperCase()}</span><div className="min-w-0"><h1 className="break-all text-2xl font-semibold tracking-tight sm:text-[28px]">{row.email ?? "Пользователь"}</h1><p className="mt-1 font-mono text-xs text-slate-500">{row.userId} · Только просмотр</p></div></div>
     <div className="mb-5 flex gap-5 overflow-x-auto border-b border-slate-200 text-sm" role="tablist" aria-label="Разделы профиля">
       <ProfileTab label="Профиль" selected />
       <ProfileTab label="Активность" />
