@@ -19,6 +19,8 @@ const JOURNAL_ACTIONS = [
   "dictionary.publication.updated",
   "dictionary.audience.updated",
   "audit.journal.read",
+  "user.registry.read",
+  "user.profile.read",
 ] as const satisfies readonly AdminAuditAction[];
 const PAGE_SIZES = [25, 50, 100] as const;
 const PERIOD_DAYS = [7, 30, 90, 365] as const;

@@ -9,6 +9,8 @@ export const ADMIN_AUDIT_ACTIONS = [
   "dictionary.publication.updated",
   "dictionary.audience.updated",
   "audit.journal.read",
+  "user.registry.read",
+  "user.profile.read",
 ] as const;
 
 export type AdminAuditAction = (typeof ADMIN_AUDIT_ACTIONS)[number];
