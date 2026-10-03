@@ -87,6 +87,7 @@ export async function ensureAuthSchema(pool: Pool) {
 
   if (hasSupabaseAuth && hasSupabaseAuth > 0) {
     await pool.query(supabaseCompatSql);
+    await pool.query(`alter table auth.users add column if not exists last_sign_in_at timestamptz`);
     await ensureCronTestApi(pool);
     return;
   }
@@ -122,7 +123,8 @@ export async function ensureAuthSchema(pool: Pool) {
     create table if not exists auth.users (
       id uuid primary key,
       email text,
-      created_at timestamptz default now()
+      created_at timestamptz default now(),
+      last_sign_in_at timestamptz
     );
 
     -- Create private schema

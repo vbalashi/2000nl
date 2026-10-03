@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Activity,
   ArrowLeft,
@@ -15,6 +16,7 @@ import {
   Menu,
   Search,
   ShieldAlert,
+  Users,
   X,
 } from "lucide-react";
 import type { DictionaryMetadata, DictionaryRegistryPage, DictionaryRegistryRow } from "@/lib/admin/dictionaryContract";
@@ -53,6 +55,8 @@ const actionOptions: Array<{ value: AdminAuditAction | ""; label: string }> = [
   { value: "dictionary.registry.read", label: "Реестр словарей" },
   { value: "dictionary.metadata.read", label: "Метаданные словаря" },
   { value: "dictionary.content.read", label: "Содержимое словаря" },
+  { value: "user.registry.read", label: "Реестр пользователей" },
+  { value: "user.profile.read", label: "Профиль пользователя" },
   { value: "audit.journal.read", label: "Журнал" },
 ];
 
@@ -307,7 +311,7 @@ export default function AdminConsole() {
   return <div className="min-h-screen bg-[#F8FAFF] text-slate-900"><div className="flex min-h-screen">
     <aside className="hidden w-56 shrink-0 flex-col border-r border-slate-200 bg-white px-4 py-5 lg:flex">
       <div className="mb-8 flex items-center gap-2 px-2 text-sm font-semibold"><span className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-50 text-primary"><Database size={17} /></span>2000NL Admin</div>
-      <nav className="space-y-1" aria-label="Основная навигация">{permissions.includes("dictionaries.read") && <button onClick={() => go("dictionaries")} className={`flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm ${location.view !== "journal" ? "bg-indigo-50 font-medium text-primary" : "text-slate-600 hover:bg-slate-50"}`}><Database size={17} />Словари</button>}{permissions.includes("audit.read") && <button onClick={() => go("journal")} className={`flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm ${location.view === "journal" ? "bg-indigo-50 font-medium text-primary" : "text-slate-600 hover:bg-slate-50"}`}><FileClock size={17} />Журнал</button>}</nav>
+      <nav className="space-y-1" aria-label="Основная навигация">{permissions.includes("dictionaries.read") && <button onClick={() => go("dictionaries")} className={`flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm ${location.view !== "journal" ? "bg-indigo-50 font-medium text-primary" : "text-slate-600 hover:bg-slate-50"}`}><Database size={17} />Словари</button>}{permissions.includes("users.read") && <Link href="/admin/users" className="flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-sm text-slate-600 hover:bg-slate-50"><Users size={17} />Пользователи</Link>}{permissions.includes("audit.read") && <button onClick={() => go("journal")} className={`flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm ${location.view === "journal" ? "bg-indigo-50 font-medium text-primary" : "text-slate-600 hover:bg-slate-50"}`}><FileClock size={17} />Журнал</button>}</nav>
       <div className="mt-auto border-t border-slate-100 pt-4"><div className="mb-3 flex items-center gap-2 px-2 text-xs text-slate-600"><span className="h-2 w-2 rounded-full bg-emerald-500" />Защищённая сессия</div><div className="flex items-center justify-between gap-2 px-2 text-xs"><span className="truncate text-slate-600" title={operatorEmail}>{operatorEmail || "Оператор"}</span><button aria-label="Выйти" onClick={() => void signOut()} className="rounded p-2 text-slate-500 hover:bg-slate-100"><LogOut size={16} /></button></div></div>
     </aside>
     <div className="min-w-0 flex-1">
@@ -345,7 +349,7 @@ export default function AdminConsole() {
       </main>
     </div>
   </div>
-    {menuOpen && <div className="fixed inset-0 z-40 bg-slate-900/30 lg:hidden" onClick={() => setMenuOpen(false)}><aside onClick={(event) => event.stopPropagation()} className="flex h-full w-[min(300px,85vw)] flex-col bg-white p-4 shadow-xl"><div className="mb-8 flex items-center justify-between"><span className="font-semibold">2000NL Admin</span><button onClick={() => setMenuOpen(false)} aria-label="Закрыть меню" className="grid h-10 w-10 place-items-center rounded-lg"><X size={19} /></button></div>{permissions.includes("dictionaries.read") && <button onClick={() => go("dictionaries")} className="flex min-h-11 items-center gap-3 rounded-lg bg-indigo-50 px-3 text-left text-sm font-medium text-primary"><Database size={17} />Словари</button>}{permissions.includes("audit.read") && <button onClick={() => go("journal")} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-left text-sm text-slate-600"><FileClock size={17} />Журнал</button>}<div className="mt-auto border-t border-slate-100 pt-4"><p className="mb-3 break-all text-xs text-slate-500">{operatorEmail}</p><button onClick={() => void signOut()} className="flex min-h-11 items-center gap-3 text-sm text-slate-600"><LogOut size={17} />Выйти</button></div></aside></div>}
+    {menuOpen && <div className="fixed inset-0 z-40 bg-slate-900/30 lg:hidden" onClick={() => setMenuOpen(false)}><aside onClick={(event) => event.stopPropagation()} className="flex h-full w-[min(300px,85vw)] flex-col bg-white p-4 shadow-xl"><div className="mb-8 flex items-center justify-between"><span className="font-semibold">2000NL Admin</span><button onClick={() => setMenuOpen(false)} aria-label="Закрыть меню" className="grid h-10 w-10 place-items-center rounded-lg"><X size={19} /></button></div>{permissions.includes("dictionaries.read") && <button onClick={() => go("dictionaries")} className="flex min-h-11 items-center gap-3 rounded-lg bg-indigo-50 px-3 text-left text-sm font-medium text-primary"><Database size={17} />Словари</button>}{permissions.includes("users.read") && <Link href="/admin/users" className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-left text-sm text-slate-600"><Users size={17} />Пользователи</Link>}{permissions.includes("audit.read") && <button onClick={() => go("journal")} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-left text-sm text-slate-600"><FileClock size={17} />Журнал</button>}<div className="mt-auto border-t border-slate-100 pt-4"><p className="mb-3 break-all text-xs text-slate-500">{operatorEmail}</p><button onClick={() => void signOut()} className="flex min-h-11 items-center gap-3 text-sm text-slate-600"><LogOut size={17} />Выйти</button></div></aside></div>}
   </div>;
 }
 

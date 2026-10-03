@@ -32,12 +32,13 @@ deployment; PR review must treat merge as the rollout boundary.
 The workflow validates the checked-in DB manifest, checks rollout status,
 builds the new UI while the existing container is running, applies only the
 manifest-pinned forward contract, switches the UI image, and verifies deep
-health for the exact commit. The base repository contract is DB 164 under #485.
-This change appends migration 165 and updates the contract to
-`2000nl-db-165`; the issue-specific postflight checks access controls, trigger
-behavior and audit-retention scheduling. Recheck the manifest and hold state
-from the reviewed PR head before any future deployment; do not rely on this
-note as live-server state.
+health for the exact commit. The checked-in contract has baseline DB 122 and
+migrations 123–203 already enabled by prior reviewed work. The user-registry
+slice adds migration 204 and updates the contract to `2000nl-db-204`; its
+postflight checks the bounded registry function, operator exclusion, and
+service-role-only grants. Recheck the manifest and hold state from the reviewed
+PR head before any future deployment; do not rely on this note as live-server
+state.
 
 Compose supplies `ADMIN_SITE_URL=https://2000.dilum.io` by default (an explicit
 host environment override is supported). Ensure
@@ -72,7 +73,10 @@ INSERT INTO public.admin_operators (email, is_active, permissions)
 VALUES ('operator@example.com', true, ARRAY['dictionaries.read', 'audit.read']);
 ```
 
-Use only `dictionaries.read` or `audit.read` as needed. On first successful
+Use `dictionaries.read`, `audit.read`, and `users.read` only when the operator
+needs the corresponding section. `users.read` exposes learner account facts
+and aggregate personal-list counts; it does not expose list contents or
+subscription/payment status. On first successful
 Google callback, the application binds the Supabase Auth user ID to the row;
 the Auth trigger does not create learner settings for an active allowlisted
 operator. Existing learner settings and progress remain intact. Verify that a
@@ -86,6 +90,12 @@ each requested page is recorded as `dictionary.content.read` in the admin
 journal. Grant it only to operators who need to inspect source content, and
 remove it when that need ends. Metadata access alone never loads dictionary
 entries.
+
+The learner registry requires the separate `users.read` permission. It excludes
+Auth identities already registered as administrative operators and records
+registry/profile reads in the admin journal. It does not infer Premium access
+from `user_settings.subscription_tier` and does not expose personal-list
+contents. Grant it only to operators who need account lookup.
 
 For urgent access removal, set `is_active = false` and revoke remaining rows
 in `admin_operator_sessions` for that Auth user ID. Protected requests enforce

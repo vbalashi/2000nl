@@ -134,6 +134,18 @@ describe("admin server authorization", () => {
     });
   });
 
+  it("recognizes the separate users.read capability", async () => {
+    serviceClient.from.mockImplementation((table: string) => {
+      if (table === "admin_operators") return query({ data: { email: user.email, user_id: user.id, is_active: true, permissions: ["users.read"] }, error: null });
+      if (table === "admin_operator_sessions") return query({ data: { auth_session_id: sessionId }, error: null });
+      if (table === "admin_audit_events") return query(null);
+      throw new Error(`Unexpected table ${table}`);
+    });
+    await expect(requireAdmin(request(), "users.read")).resolves.toMatchObject({
+      permissions: ["users.read"],
+    });
+  });
+
   it("fails closed when the audit store is unavailable", async () => {
     serviceClient.from.mockImplementation((table: string) => {
       if (table === "admin_operators") return query({ data: { email: user.email, user_id: user.id, is_active: false, permissions: [] }, error: null });
