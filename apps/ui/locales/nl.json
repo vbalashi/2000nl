@@ -57,6 +57,7 @@
   },
   "senseCard": {
     "learning": {
+      "savedReloadFailed": "Opgeslagen. De bijgewerkte leerstatus kon niet worden geladen. Probeer opnieuw om te vernieuwen.",
       "start": "Leren"
     },
     "known": {
@@ -103,7 +104,15 @@
       "reviewPrompt": "Hoe goed ken je deze betekenis?"
     },
     "state": {
-      "new": "Nieuw"
+      "learning": "In studie",
+      "hidden": "Uitgesloten",
+      "frozen": "Gepauzeerd",
+      "unavailable": "Leerstatus niet beschikbaar",
+      "new": "Nieuw",
+      "lastGrade": "Laatste beoordeling",
+      "reviewCount": "Herhalingen",
+      "nextReview": "Volgende herhaling",
+      "ungraded": "Nog niet beoordeeld"
     },
     "translation": {
       "request": "Vertalen",
@@ -242,7 +251,10 @@
     },
     "trainingBuilder": {
       "contextPrompt": "Vertaling van het voorbeeld",
-      "wordInContext": "Woord in context",
+      "wordInContext": "Vertaling",
+      "contextDirection": "Vertaling van voorbeeld → woord",
+      "pausedSentenceLabel": "Zinnen vertalen (gepauzeerd)",
+      "sentencePaused": "Zinnen vertalen is gepauzeerd. Kies een andere oefening om een nieuwe sessie te starten.",
       "reviewsOnly": "Alleen herhalen",
       "newOnly": "Alleen nieuw",
       "allDictionaries": "Alle toegankelijke woordenboeken",
@@ -289,7 +301,10 @@
       "history": "Geschiedenis"
     },
     "trainingOverview": {
-      "wordInContext": "Woord in context",
+      "wordInContext": "Vertaling",
+      "contextDirection": "Vertaling van voorbeeld → woord",
+      "pausedSentenceLabel": "Zinnen vertalen (gepauzeerd)",
+      "sentencePaused": "Zinnen vertalen is gepauzeerd. Kies een andere oefening om een nieuwe sessie te starten.",
       "allDictionaries": "Alle beschikbare woordenboeken",
       "allDue": "Alles verschuldigd",
       "loading": "Trainingen laden…",
@@ -487,6 +502,7 @@
       "themes": {
         "lavender": "Lavendel",
         "blue": "Blauw",
+        "indigo": "Indigo",
         "graphite": "Grafiet"
       },
       "sizes": {

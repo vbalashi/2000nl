@@ -795,4 +795,91 @@ describeDb("active Training run authority", () => {
       await cleanupRunFixture(pool, userId, entryIds);
     }
   });
+  test.each(["session-action", "takeover"] as const)(
+    "serializes Library grade before concurrent %s",
+    async (operation) => {
+      const { userId, entryIds } = await createRunFixture(pool);
+      let library: PoolClient | null = null,
+        other: PoolClient | null = null;
+      try {
+        await committed(pool, userId, (c) =>
+          c.query(
+            "insert into user_card_status(user_id,entry_id,card_type_id,in_learning,fsrs_enabled,fsrs_reps,fsrs_stability,fsrs_difficulty,fsrs_last_interval,last_reviewed_at,next_review_at) select $1,id,'word-to-definition',true,true,1,5,5,1,statement_timestamp()-interval '1 day',statement_timestamp()-interval '1 hour' from unnest($2::uuid[]) id",
+            [userId, entryIds],
+          ),
+        );
+        const launch = (c: PoolClient) =>
+          c.query(
+            "select start_training_session($1::uuid,array['word-to-definition'],null,'curated','both','{}','4',$2::uuid) s",
+            [userId, randomUUID()],
+          );
+        const run = (await committed(pool, userId, launch)).rows[0].s;
+        const before = await committed(pool, userId, (c) =>
+          c.query("select get_training_session_snapshot($1,$2) s", [
+            userId,
+            run.sessionId,
+          ]),
+        );
+        const [first, second] = before.rows[0].s.members;
+        const state = await committed(
+          pool,
+          userId,
+          (c) =>
+            c.query(
+              "select private.platform_v2_card_state_json($1,$2,'word-to-definition') s",
+              [userId, first.entryId],
+            ),
+          "service_role",
+        );
+        library = (await beginAs(pool, userId, "service_role")).client;
+        const grade = await library.query(
+          "select perform_platform_v2_card_action_as_principal($1::uuid,'review-card',$2::uuid,'word-to-definition',$3::text,null,null,'success',$4::uuid,null,'first_party',null,null::uuid) r",
+          [userId, first.entryId, state.rows[0].s.stateRevision, randomUUID()],
+        );
+        expect(grade.rows[0].r.status).toBe("accepted");
+        const waiting = await beginAs(
+          pool,
+          userId,
+          operation === "takeover" ? "authenticated" : "service_role",
+        );
+        other = waiting.client;
+        const pending =
+          operation === "takeover"
+            ? launch(other)
+            : other.query(
+                "select perform_platform_v2_card_action_as_principal($1::uuid,'review-card',$2::uuid,'word-to-definition',(select private.platform_v2_card_state_json($1,$2,'word-to-definition')->>'stateRevision'),null,null,'success',$3::uuid,null,'first_party',null,$4::uuid) r",
+                [userId, second.entryId, randomUUID(), run.sessionId],
+              );
+        await waitUntilBlocked(pool, waiting.pid);
+        await library.query("commit");
+        library.release();
+        library = null;
+        const result = await pending;
+        await other.query("commit");
+        other.release();
+        other = null;
+        if (operation === "session-action") {
+          expect(result.rows[0].r.status).toBe("accepted");
+          const after = (
+            await committed(pool, userId, (c) =>
+              c.query("select get_training_session_snapshot($1,$2) s", [
+                userId,
+                run.sessionId,
+              ]),
+            )
+          ).rows[0].s;
+          expect(after.planRevision).toBe(1);
+          expect(after.completedActions).toBe(1);
+          expect(after.requestedTotal).toBe(4);
+        } else expect(result.rows[0].s.runStatus).toBe("active");
+      } finally {
+        for (const c of [library, other])
+          if (c) {
+            await c.query("rollback").catch(() => undefined);
+            c.release();
+          }
+        await cleanupRunFixture(pool, userId, entryIds);
+      }
+    },
+  );
 });

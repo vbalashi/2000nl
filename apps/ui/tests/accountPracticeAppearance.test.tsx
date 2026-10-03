@@ -165,3 +165,17 @@ test("startup palette failure remains visible and retry mounts the selected appe
   expect(repository.load).toHaveBeenCalledTimes(2);
   expect(repository.save).not.toHaveBeenCalled();
 });
+test('Indigo appears beside Blue and persists through account reload', async () => {
+  vi.stubEnv('NEXT_PUBLIC_TRAINING_PRESENTATION_V1','true');
+  let saved = 'blue';
+  const repository = {load:vi.fn(async()=>saved as 'blue'|'indigo'),save:vi.fn(async(_id:string,palette:string)=>{saved=palette;})};
+  const rendered=render(view(repository));
+  const choice=await screen.findByRole('button',{name:'Indigo'});
+  await waitFor(()=>expect(choice).not.toBeDisabled());
+  fireEvent.click(choice);
+  await waitFor(()=>expect(repository.save).toHaveBeenCalledWith('a','indigo'));
+  rendered.unmount();
+  render(view(repository));
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Indigo'})).toHaveAttribute('aria-pressed','true'));
+  expect(screen.getByRole('button',{name:'Blue'})).toHaveAttribute('aria-pressed','false');
+});

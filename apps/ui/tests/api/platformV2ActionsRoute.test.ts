@@ -90,7 +90,7 @@ describe("/api/platform/v2/actions", () => {
         clientEventId: "00000000-0000-4000-8000-000000000002",
         card: {
           cardTypeId: "word-to-definition",
-          scheduler: { phase: "learning" },
+          scheduler: { phase: "learning", reviewCount: 2, lastGrade: 1, lastReviewedAt: "2026-10-03T09:00:00Z", learningDueAt: "2026-10-03T10:00:00Z", nextReviewAt: null },
           knownMark: null,
           stateRevision: "00000000-0000-4000-8000-000000000006",
         },
@@ -113,6 +113,7 @@ describe("/api/platform/v2/actions", () => {
     );
 
     expect(response.status).toBe(200);
+    expect((await response.clone().json()).card.scheduler).toMatchObject({reviewCount:2,lastGrade:1,learningDueAt:"2026-10-03T10:00:00Z",lastReviewedAt:"2026-10-03T09:00:00Z",nextReviewAt:null});
     expect(rpc).toHaveBeenCalledWith(
       "perform_platform_v2_card_action_as_principal",
       expect.not.objectContaining({ p_training_session_id: expect.anything() }),

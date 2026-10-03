@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { RatingControls, type Rating } from "@/components/practice/RatingControls";
 import { Check, EyeOff, Flag, List, MoreHorizontal } from "lucide-react";
 import { ActionMenu, type ActionMenuItem } from "@/components/practice/ui/ActionMenu";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -10,7 +11,7 @@ import type { LibraryMutationCapability, LibrarySenseCardModel } from "./library
 import s from "@/components/practice/article/articleActions.module.css";
 
 /** Presentation adapter; authoritative capabilities and callbacks stay with the owner. */
-export function LibraryMeaningActions({ meaning, language, busy, collectionCount, onAction, onCollections, onTrainNext, onReport, onExclude, exclusionDisabled }: {
+export function LibraryMeaningActions({ meaning, language, busy, collectionCount, onAction, onCollections, onReport, onExclude, exclusionDisabled }: {
   meaning: LibrarySenseCardModel;
   language: OnboardingLanguage;
   busy: boolean;
@@ -37,7 +38,8 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
     onSelect:()=>{close();onReport();}});
   return <div data-testid="library-primary-actions" className={s.group}>
     {primary ? <button type="button" className={s.primary} disabled={busy} onClick={()=>onAction(primary)}>{t(primary.messageKey)}</button>
-      : onTrainNext ? <button type="button" className={s.primary} disabled={busy} onClick={onTrainNext}>{t("senseCard.training.next")}</button> : null}
+      : null}
+    {!primary ? <LibraryMeaningRatings meaning={meaning} language={language} busy={busy} onAction={onAction}/> : null}
     <div data-testid="library-service-actions" className={s.row}>
       {onCollections ? <button type="button" className={s.quiet} aria-haspopup="dialog" onClick={onCollections}>
         <List size={14} aria-hidden="true"/>{t("senseCard.collections.label")}{collectionCount > 0 ? ` · ${new Intl.NumberFormat(language).format(collectionCount)}` : ""}
@@ -49,4 +51,15 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
     </div>
     {anchor ? <ActionMenu anchor={anchor} title={getUiMessages(language).cardActions.title} language={language} items={items} onClose={close}/> : null}
   </div>;
+}
+
+
+const reviewRating = { fail: "Again", hard: "Hard", success: "Good", easy: "Easy" } as const;
+/** Only authoritative direct capabilities are projected by the Library model. */
+export function LibraryMeaningRatings({meaning,language,busy,onAction}:{meaning:LibrarySenseCardModel;language:OnboardingLanguage;busy:boolean;onAction:(capability:LibraryMutationCapability)=>void}) {
+ if (!meaning.reviewCapabilities.length) return null;
+ return <RatingControls language={language} height="adaptive" disabled={busy}
+   label={platformV2Message(language,"senseCard.sections.reviewPrompt")}
+   options={meaning.reviewCapabilities.map(capability=>({rating:reviewRating[capability.reviewResult],label:platformV2Message(language,capability.messageKey)}))}
+   onRate={(rating:Rating)=>{const capability=meaning.reviewCapabilities.find(item=>reviewRating[item.reviewResult]===rating);if(capability)onAction(capability);}}/>;
 }

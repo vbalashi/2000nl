@@ -1,3 +1,4 @@
+import {isPlatformLookupV2Response} from "../../../packages/shared/types/platformV2Runtime";
 import { describe, expect, test } from "vitest";
 import { projectPlatformLookupV2 } from "@/lib/platform/projections/senseCardV2";
 import { projectPlatformV2SenseContent } from "@/lib/platform/projections/platformV2SenseContent";
@@ -452,6 +453,11 @@ describe("Platform V2 SenseCard projection", () => {
                 scheduler: {
                   phase: "learning",
                   repeatCount: 2,
+                  reviewCount: 0,
+                  lastGrade: null,
+                  lastReviewedAt: null,
+                  nextReviewAt: null,
+                  learningDueAt: "2026-07-20T11:00:00.000Z",
                   lastSeenAt: "2026-07-20T10:00:00.000Z",
                 },
                 knownMark: null,
@@ -774,3 +780,26 @@ function projectionInput(
     ],
   };
 }
+
+ test("projects scheduling details without conflating exposures and reviews", () => {
+  const input = projectionInput({stateRevision:"graded",knownMark:null});
+  const state = input.entries[0].cardState!;
+  state.clickCount=9; state.fsrs.reps=3; state.fsrs.lastGrade=2;
+  state.inLearning=true; state.learningDueAt="2026-10-03T10:00:00Z";
+  state.nextReviewAt="2026-10-10T10:00:00Z";
+  const response=projectPlatformLookupV2(input);
+  expect(isPlatformLookupV2Response(response)).toBe(true);
+  const entry=response.groups[0].entries[0];
+  if(entry.kind!=="sense-card")throw new Error("Expected sense card");
+  expect(entry.card?.scheduler).toMatchObject({repeatCount:9,reviewCount:3,lastGrade:2,phase:"learning",learningDueAt:state.learningDueAt,nextReviewAt:state.nextReviewAt});
+ });
+
+test("runtime rejects malformed additive scheduling telemetry",()=>{
+ const response=projectPlatformLookupV2(projectionInput({stateRevision:"graded",knownMark:null}));
+ const entry=response.groups[0].entries[0];if(entry.kind!=="sense-card"||!entry.card)throw new Error("fixture");
+ expect(isPlatformLookupV2Response(response)).toBe(true);
+ (entry.card.scheduler as unknown as Record<string,unknown>).lastGrade=5;
+ expect(isPlatformLookupV2Response(response)).toBe(false);
+ entry.card.scheduler.lastGrade=null;entry.card.scheduler.reviewCount=-1;
+ expect(isPlatformLookupV2Response(response)).toBe(false);
+});

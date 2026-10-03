@@ -516,9 +516,13 @@ test("initial browse loading does not show an empty result and failure can retry
   render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider>);
   await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalled());
   expect(screen.queryByText("No words found")).not.toBeInTheDocument();
+  expect(screen.queryByText("0 matching articles")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("library-group-pagination")).not.toBeInTheDocument();
   expect(screen.queryByTestId("library-headword-group-group-goed-homograph")).not.toBeInTheDocument();
   await act(async()=>{pending.reject(new Error("lookup_http_503"));});
   expect(await screen.findByRole("alert")).toBeInTheDocument();
+  expect(screen.queryByText("0 matching articles")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("library-group-pagination")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"Try again"}));
   await screen.findByTestId("library-headword-group-group-goed-homograph");
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -559,6 +563,20 @@ test("returning after freshness expires refreshes retained results", async () =>
   try {
     view.rerender(<Harness open preload />);
     await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalledTimes(reads+1));
+    expect(screen.getByTestId("library-headword-group-group-goed-main")).toBeVisible();
+  } finally { clock.mockRestore(); }
+});
+
+test("background refresh failure retains the usable Library list", async () => {
+  fetchGroupPage.mockReset().mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
+  const view=render(<Harness open preload />);
+  await screen.findByTestId("library-headword-group-group-goed-main");
+  view.rerender(<Harness open={false} preload />);
+  fetchGroupPage.mockRejectedValueOnce(new Error("lookup_http_503"));
+  const clock=vi.spyOn(Date,"now").mockReturnValue(Date.now()+31000);
+  try {
+    view.rerender(<Harness open preload />);
+    await screen.findByRole("alert");
     expect(screen.getByTestId("library-headword-group-group-goed-main")).toBeVisible();
   } finally { clock.mockRestore(); }
 });

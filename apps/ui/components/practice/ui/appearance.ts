@@ -1,6 +1,7 @@
 export const practicePalettes = [
   {id: "lavender", label: "Lavender"},
   {id: "blue", label: "Blue"},
+  {id: "indigo", label: "Indigo"},
   {id: "graphite", label: "Graphite"},
 ] as const;
 export type PracticePalette = typeof practicePalettes[number]["id"];

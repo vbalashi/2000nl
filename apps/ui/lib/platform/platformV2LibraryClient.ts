@@ -26,7 +26,7 @@ type PlatformV2LibraryLookupInput = {
   | { entryId: string; query?: never; cursor?: never }
 );
 
-async function fetchPlatformV2LibraryLookup(
+async function fetchPlatformV2LibraryLookupOnce(
   input: PlatformV2LibraryLookupInput,
 ): Promise<PlatformLookupV2Response & { librarySearch?: LibrarySearchSummary }> {
   const result = await requestPlatformV2Lookup({
@@ -56,6 +56,38 @@ async function fetchPlatformV2LibraryLookup(
     throw new PlatformV2LibraryLookupError("contract-mismatch");
   }
   return result.payload;
+}
+
+// Only first-party read-only Library calls recover automatically. Authentication,
+// validation and schema errors require their owning boundary, not blind retries.
+async function fetchPlatformV2LibraryLookup(input: PlatformV2LibraryLookupInput) {
+  try {
+    return await fetchPlatformV2LibraryLookupOnce(input);
+  } catch (error) {
+    const transient = error instanceof PlatformV2LibraryLookupError
+      ? error.kind === "http-error" && [408, 502, 503, 504].includes(error.status ?? 0)
+      : error instanceof TypeError ||
+        (error instanceof Error && error.message === "platform_request_timeout");
+    if (!input.libraryScope || !transient || input.signal?.aborted) throw error;
+    await waitForLibraryRetry(input.signal);
+    return fetchPlatformV2LibraryLookupOnce(input);
+  }
+}
+
+function waitForLibraryRetry(signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const abort = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", abort);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", abort);
+      resolve();
+    }, 250);
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) abort();
+  });
 }
 
 export class PlatformV2LibraryLookupError extends Error {

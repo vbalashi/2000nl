@@ -351,6 +351,12 @@ function projectCardState(
     scheduler: {
       phase: schedulerPhase(state),
       repeatCount: state.clickCount,
+      reviewCount: state.fsrs.reps,
+      lastGrade: [1, 2, 3, 4].includes(state.fsrs.lastGrade ?? 0)
+        ? state.fsrs.lastGrade as 1 | 2 | 3 | 4 : null,
+      lastReviewedAt: state.lastReviewedAt,
+      nextReviewAt: state.nextReviewAt,
+      learningDueAt: state.learningDueAt,
       lastSeenAt: state.lastSeenAt,
       ...(state.frozenUntil ? { frozenUntil: state.frozenUntil } : {}),
     },

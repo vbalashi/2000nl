@@ -210,7 +210,9 @@ for (const profile of profiles) {
     const destinationShell = page.locator("[data-training-pilot-surface]");
     await expect(destinationShell).toBeVisible();
     await expect(shell).toHaveCount(0);
-    await expect(page.getByText("Laden…")).toHaveCount(0);
+    // History stays mounted to retain its data; its hidden loading copy is not
+    // a bootstrap screen. A visible legacy loader must still fail this check.
+    await expect(page.getByText("Laden…").and(page.locator(":visible"))).toHaveCount(0);
     const destinationFrame = page.locator('[data-app-frame="true"]');
     const destinationBox = await destinationFrame.boundingBox();
     const destinationHeaderBox = await page.getByTestId("app-header").boundingBox();

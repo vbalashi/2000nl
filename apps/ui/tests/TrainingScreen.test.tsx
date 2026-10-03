@@ -1,4 +1,5 @@
 import React from "react";
+import { financeEntry, furnitureEntry } from "./platformV2LibraryFixture";
 import { supabase } from "@/lib/supabaseClient";
 import {
   act,
@@ -254,6 +255,21 @@ const searchDictionaryGroups = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
 });
+// Server projection fixture: enrollment changes only after the explicit Library action.
+const libraryLearning = new Map<string, "new" | "learning">();
+const performLibraryAction = vi.fn();
+function libraryState(entryId: string) {
+  const state = libraryLearning.get(entryId);
+  if (!state) return { card: null, capabilities: [] };
+  const fixture = structuredClone(state === "new" ? financeEntry : furnitureEntry);
+  return {
+    card: { ...fixture.card!, scheduler: { phase: state === "new" ? "not-started" as const : "learning" as const, repeatCount: 0 } },
+    capabilities: fixture.capabilities.map(capability => ({ ...capability, target: { ...capability.target, entryId } })),
+  };
+}
+vi.mock("@/lib/platform/platformV2TrainingActionClient", () => ({
+  performPlatformV2LibraryAction: (...args: unknown[]) => performLibraryAction(...args),
+}));
 const fetchPlatformV2LibraryGroupPage = vi.fn(
   async ({
     query,
@@ -301,7 +317,6 @@ const fetchPlatformV2LibraryGroupPage = vi.fn(
                   sourceValue: entry.part_of_speech,
                 }
               : undefined,
-            card: null,
             contentRevision: `revision-${entry.id}`,
             summaryContentNodeId: `definition-${entry.id}`,
             contentNodes: [
@@ -318,7 +333,7 @@ const fetchPlatformV2LibraryGroupPage = vi.fn(
               },
             ],
             translation: null,
-            capabilities: [],
+            ...libraryState(entry.id),
           },
         ],
       })),
@@ -779,6 +794,11 @@ class DeterministicBrowserLocks {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  libraryLearning.clear();
+  performLibraryAction.mockReset().mockImplementation(async capability => {
+    if (capability.actionId === "start-learning") libraryLearning.set(capability.target.entryId, "learning");
+    return { accepted: true };
+  });
   releaseTrainingSessionOwner();
   window.localStorage.clear();
   window.sessionStorage.clear();
@@ -2954,11 +2974,6 @@ test("dictionary search can create a private user dictionary entry", async () =>
   fetchTrainingWordByLookup.mockClear();
   fetchDictionaryEntryById.mockClear();
   fetchDictionaryEntryById.mockResolvedValueOnce(userDictionaryGedoe);
-  fetchTrainingWordByLookup.mockResolvedValueOnce({
-    ...userDictionaryGedoe,
-    mode: "word-to-definition",
-    isFirstEncounter: false,
-  });
 
   try {
     render(<TrainingScreen user={user} />);
@@ -3016,17 +3031,9 @@ test("dictionary search can create a private user dictionary entry", async () =>
       ]),
     );
 
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: /Hierna trainen|Train next/i,
-      }),
-    );
-    await waitFor(() =>
-      expect(fetchTrainingWordByLookup).toHaveBeenCalledWith(
-        "user-entry-1",
-        "user-1",
-      ),
-    );
+    expect(screen.queryByRole("button", { name: /Hierna trainen|Train next/i })).not.toBeInTheDocument();
+    expect(fetchTrainingWordByLookup).not.toHaveBeenCalled();
+    expect(performLibraryAction).not.toHaveBeenCalled();
     expect(updateActiveTrainingScope).not.toHaveBeenCalledWith(
       expect.objectContaining({ listId: "list-user" }),
     );
@@ -3361,129 +3368,39 @@ test("initial load waits for an unsaved list default scenario", async () => {
   }
 });
 
-test("search detail trains a selected entry as the next card without changing active scope", async () => {
+test.each([false, true])("Library inline grade preserves scope and selection (failed=%s)", async failed => {
   useTwoListScope();
-  searchDictionaryGroups.mockResolvedValue({
-    items: [dictionaryBoom],
-    total: 1,
-  });
-  fetchTrainingWordByLookup.mockClear();
-  fetchTrainingWordByLookup.mockResolvedValueOnce(overrideWord);
-  fetchNextTrainingWordByScenario.mockClear();
-  updateActiveTrainingScope.mockClear();
-
+  libraryLearning.set(dictionaryBoom.id, failed ? "learning" : "new");
+  searchDictionaryGroups.mockResolvedValue({ items: [dictionaryBoom], total: 1 });
+  if (failed) performLibraryAction.mockRejectedValueOnce(new Error("library_grade_failed"));
   try {
     render(<TrainingScreen user={user} />);
-
     await waitForInitialTrainingFetches();
-    fetchNextTrainingWordByScenario.mockClear();
     updateActiveTrainingScope.mockClear();
-
+    fetchTrainingWordByLookup.mockClear();
     fireEvent.keyDown(window, { key: "s" });
-    fireEvent.change(
-      await screen.findByRole("textbox",{name:"Search words"}),
-      {
-        target: { value: "boom" },
-      },
-    );
-    await screen.findAllByText("boom");
-
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: /Hierna trainen|Train next/i,
-      }),
-    );
-
-    await screen.findByRole("heading", { name: "boom" });
-    expect(
-      await screen.findByText(
-        "boom is nu de volgende kaart. Daarna gaat normale training verder.",
-      ),
-    ).toBeInTheDocument();
-    expect(fetchTrainingWordByLookup).toHaveBeenCalledWith("word-2", "user-1");
+    fireEvent.change(await screen.findByRole("textbox", { name: "Search words" }), { target: { value: "boom" } });
+    const card = await screen.findByTestId(`library-sense-card-${dictionaryBoom.id}`);
+    expect(performLibraryAction).not.toHaveBeenCalled();
+    if (!failed) {
+      fireEvent.click(within(card).getByRole("button", { name: "Learn" }));
+      await within(card).findByRole("button", { name: "Good" });
+      expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
+        actionId: "start-learning", target: expect.objectContaining({ entryId: dictionaryBoom.id, cardTypeId: "word-to-definition" }),
+      }));
+      expect(within(card).getByText("Learning")).toBeInTheDocument();
+    }
+    fireEvent.click(within(card).getByRole("button", { name: "Good" }));
+    await waitFor(() => expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
+      actionId: "review-card", reviewResult: "success", target: expect.objectContaining({ entryId: dictionaryBoom.id, cardTypeId: "word-to-definition" }),
+    })));
+    if (failed) expect(await screen.findByText("library_grade_failed")).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "Search words" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: /Train next/i })).not.toBeInTheDocument();
+    expect(fetchTrainingWordByLookup).not.toHaveBeenCalled();
     expect(updateActiveTrainingScope).not.toHaveBeenCalled();
-    expect(
-      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
-        const scope = call[3] as { listId?: string; listType?: string };
-        return scope?.listId === "list-secondary";
-      }),
-    ).toBe(false);
-  } finally {
-    restoreDefaultSearchResults();
-    restoreDefaultListScope();
-    fetchTrainingWordByLookup.mockResolvedValue(overrideWord);
-  }
-});
-
-test("keeps the current V2 card when a selected-word warm fails", async () => {
-  let resolveOverrideLookup!: (value: unknown) => void;
-  const readyLookup = (entryId: string, text: string) => ({
-    state: "ready",
-    group: { header: { audio: null, text } },
-    entry: { entryId },
-  });
-
-  useTwoListScope();
-  searchDictionaryGroups.mockResolvedValue({
-    items: [dictionaryBoom],
-    total: 1,
-  });
-  fetchTrainingWordByLookup.mockClear();
-  fetchTrainingWordByLookup.mockResolvedValueOnce(overrideWord);
-  prefetchPlatformV2TrainingEntry.mockReset();
-  prefetchPlatformV2TrainingEntry.mockImplementation(
-    (input: { entryId: string }) =>
-      input.entryId === overrideWord.id
-        ? new Promise((resolve) => {
-            resolveOverrideLookup = resolve;
-          })
-        : Promise.resolve(readyLookup(input.entryId, "huis")),
-  );
-
-  try {
-    render(<TrainingScreen user={user} />);
-    await screen.findByRole("heading", { name: "huis" });
-
-    fireEvent.keyDown(window, { key: "s" });
-    fireEvent.change(
-      await screen.findByRole("textbox",{name:"Search words"}),
-      { target: { value: "boom" } },
-    );
-    await screen.findAllByText("boom");
-
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: /Hierna trainen|Train next/i,
-      }),
-    );
-
-    await waitFor(() =>
-      expect(fetchTrainingWordByLookup).toHaveBeenCalledWith(
-        overrideWord.id,
-        user.id,
-      ),
-    );
-    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "boom" }),
-    ).not.toBeInTheDocument();
-
-    await act(async () => {
-      resolveOverrideLookup({ state: "lookup-http-error", status: 503 });
-    });
-    expect(
-      await screen.findByText("Kon dit woord niet laden; probeer het opnieuw."),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "boom" }),
-    ).not.toBeInTheDocument();
-  } finally {
-    prefetchPlatformV2TrainingEntry.mockReset();
-    restoreDefaultSearchResults();
-    restoreDefaultListScope();
-    fetchTrainingWordByLookup.mockResolvedValue(overrideWord);
-  }
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
+  } finally { restoreDefaultSearchResults(); restoreDefaultListScope(); }
 });
 
 test("search detail copies a trusted entry into the user dictionary", async () => {
@@ -3549,57 +3466,26 @@ test("search detail copies a trusted entry into the user dictionary", async () =
   }
 });
 
-test("next-card override is one-shot and normal training resumes after review", async () => {
-  searchDictionaryGroups.mockResolvedValue({
-    items: [dictionaryBoom],
-    total: 1,
-  });
-  fetchTrainingWordByLookup.mockClear();
-  fetchTrainingWordByLookup.mockResolvedValueOnce(overrideWord);
-  fetchNextTrainingWordByScenario.mockReset();
-  fetchNextTrainingWordByScenario
-    .mockResolvedValueOnce(mockWord)
-    .mockResolvedValue(normalNextWord);
-
+test("returning from an inline Library grade preserves the current training card", async () => {
+  libraryLearning.set(dictionaryBoom.id, "learning");
+  searchDictionaryGroups.mockResolvedValue({ items: [dictionaryBoom], total: 1 });
   try {
     render(<TrainingScreen user={user} />);
-
     await screen.findByRole("heading", { name: "huis" });
-
+    fetchTrainingWordByLookup.mockClear();
     fireEvent.keyDown(window, { key: "s" });
-    fireEvent.change(
-      await screen.findByRole("textbox",{name:"Search words"}),
-      {
-        target: { value: "boom" },
-      },
-    );
-    await screen.findAllByText("boom");
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: /Hierna trainen|Train next/i,
-      }),
-    );
-
-    await screen.findByRole("heading", { name: "boom" });
-    await waitFor(() =>
-      expect(fetchTrainingWordByLookup).toHaveBeenCalledTimes(1),
-    );
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
-    });
-    expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
-    await screen.findByRole("heading", { name: "fiets" });
-    expect(fetchTrainingWordByLookup).toHaveBeenCalledTimes(1);
-    expect(
-      screen.queryByText(/Daarna gaat normale training verder/i),
-    ).not.toBeInTheDocument();
-  } finally {
-    restoreDefaultSearchResults();
-    fetchNextTrainingWordByScenario.mockReset();
-    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
-    fetchTrainingWordByLookup.mockResolvedValue(overrideWord);
-  }
+    fireEvent.change(await screen.findByRole("textbox", { name: "Search words" }), { target: { value: "boom" } });
+    const card = await screen.findByTestId(`library-sense-card-${dictionaryBoom.id}`);
+    fireEvent.click(within(card).getByRole("button", { name: "Easy" }));
+    await waitFor(() => expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
+      actionId: "review-card", reviewResult: "easy", target: expect.objectContaining({ entryId: dictionaryBoom.id, cardTypeId: "word-to-definition" }),
+    })));
+    fireEvent.click(within(getPrimaryNavigation()).getByRole("button", { name: /Training/ }));
+    expect(await screen.findByRole("heading", { name: "huis" })).toBeVisible();
+    expect(fetchTrainingWordByLookup).not.toHaveBeenCalled();
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
+    expect(screen.queryByText(/Daarna gaat normale training verder/i)).not.toBeInTheDocument();
+  } finally { restoreDefaultSearchResults(); }
 });
 
 test("V2 layout keeps its theme owner when Today setup is disabled", async () => {
@@ -4512,4 +4398,240 @@ test("learner logout preserves the same user's separate admin session", async ()
   expect(window.localStorage.getItem("unrelated-setting")).toBe("keep");
   expect(document.cookie).toContain("2000nl-admin-auth=admin-session");
   document.cookie = "2000nl-admin-auth=; max-age=0; path=/";
+});
+
+test.each(["focus", "return"] as const)(
+  "%s reconciles an externally revised remainder without grading",
+  async (trigger) => {
+    await writeTrainingSessionResume({
+      sessionId: "session-replan",
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "list-1",
+      listType: "curated",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 5,
+    });
+    const member = {
+      ordinal: 1,
+      entryId: "word-1",
+      cardTypeId: "word-to-definition",
+      queueSource: "new",
+      consumedAt: null,
+      unavailableAt: null,
+    };
+    const original = {
+      sessionId: "session-replan",
+      runStatus: "active",
+      runGeneration: 1,
+      sessionSize: 5,
+      plannedNew: 1,
+      plannedReview: 0,
+      plannedPractice: 0,
+      plannedTotal: 1,
+      requestedTotal: 5,
+      plannedAt: "2026-09-10T12:00:00Z",
+      planRevision: 0,
+      completedActions: 0,
+      members: [member],
+    };
+    fetchTrainingSessionSnapshot.mockResolvedValue(original);
+    const view = render(
+      <TrainingScreen
+        user={user}
+        trainingTodaySetupEnabled
+        onRequestDestination={vi.fn()}
+      />,
+    );
+    await screen.findByTestId("mock-training-sense-card-v2");
+    const initialReads = fetchNextTrainingWordByScenario.mock.calls.length;
+    fetchTrainingSessionSnapshot.mockResolvedValue({
+      ...original,
+      planRevision: 1,
+      members: [{ ...member, entryId: overrideWord.id }],
+    });
+    fetchNextTrainingWordByScenario.mockResolvedValue(overrideWord);
+    if (trigger === "focus")
+      act(() => window.dispatchEvent(new Event("focus")));
+    else {
+      view.rerender(
+        <TrainingScreen
+          user={user}
+          trainingTodaySetupEnabled
+          onRequestDestination={vi.fn()}
+          destination="library"
+        />,
+      );
+      await act(async () => {
+        await Promise.resolve();
+      });
+      view.rerender(
+        <TrainingScreen
+          user={user}
+          trainingTodaySetupEnabled
+          onRequestDestination={vi.fn()}
+          destination="training"
+        />,
+      );
+    }
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(
+        initialReads,
+      ),
+    );
+    expect(fetchNextTrainingWordByScenario.mock.calls.at(-1)?.[11]).toBe(
+      "session-replan",
+    );
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
+    const revisedReads = fetchNextTrainingWordByScenario.mock.calls.length;
+    act(() => window.dispatchEvent(new Event("focus")));
+    await waitFor(() =>
+      expect(
+        fetchTrainingSessionSnapshot.mock.calls.length,
+      ).toBeGreaterThanOrEqual(3),
+    );
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+      revisedReads,
+    );
+  },
+);
+
+test("replan coalesces overlapping checks, retries failed reads, and fences late takeover", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-replan",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  const member = {
+    ordinal: 1,
+    entryId: "word-1",
+    cardTypeId: "word-to-definition",
+    queueSource: "new",
+    consumedAt: null,
+    unavailableAt: null,
+  };
+  const original = {
+    sessionId: "session-replan",
+    runStatus: "active",
+    runGeneration: 1,
+    sessionSize: 5,
+    plannedNew: 1,
+    plannedReview: 0,
+    plannedPractice: 0,
+    plannedTotal: 1,
+    requestedTotal: 5,
+    plannedAt: "2026-09-10T12:00:00Z",
+    planRevision: 0,
+    completedActions: 0,
+    members: [member],
+  };
+  fetchTrainingSessionSnapshot.mockResolvedValue(original);
+  const view = render(
+    <TrainingScreen
+      user={user}
+      trainingTodaySetupEnabled
+      onRequestDestination={vi.fn()}
+    />,
+  );
+  await screen.findByTestId("mock-training-sense-card-v2");
+  const initialReads = fetchNextTrainingWordByScenario.mock.calls.length;
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...original,
+    planRevision: 1,
+    members: [{ ...member, entryId: overrideWord.id }],
+  });
+  fetchNextTrainingWordByScenario.mockResolvedValue(overrideWord);
+
+  let deliver: (value: typeof overrideWord) => void = () => undefined;
+  fetchNextTrainingWordByScenario.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        deliver = resolve;
+      }),
+  );
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+      initialReads + 1,
+    ),
+  );
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot.mock.calls.length).toBe(3),
+  );
+  expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+    initialReads + 1,
+  );
+  await act(async () => {
+    deliver(overrideWord);
+  });
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...original,
+    planRevision: 2,
+    members: [{ ...member, entryId: overrideWord.id }],
+  });
+  fetchNextTrainingWordByScenario.mockRejectedValueOnce(
+    new Error("network lost"),
+  );
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+      initialReads + 2,
+    ),
+  );
+  await act(async () => {
+    await Promise.resolve();
+  });
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+      initialReads + 3,
+    ),
+  );
+  await act(async () => {
+    await Promise.resolve();
+  });
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...original,
+    planRevision: 3,
+    members: [{ ...member, entryId: overrideWord.id }],
+  });
+  fetchNextTrainingWordByScenario.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        deliver = resolve;
+      }),
+  );
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.length,
+    ).toBeGreaterThanOrEqual(initialReads + 4),
+  );
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...original,
+    runStatus: "superseded",
+    runGeneration: null,
+  });
+  act(() => window.dispatchEvent(new Event("focus")));
+  await screen.findByRole("button", { name: "Start training here" });
+  await act(async () => {
+    deliver(overrideWord);
+  });
+  expect(
+    screen.queryByTestId("mock-training-sense-card-v2"),
+  ).not.toBeInTheDocument();
+  expect(mockV2ProgressAction).not.toHaveBeenCalled();
 });

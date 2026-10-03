@@ -139,6 +139,8 @@ export type TrainingSessionSnapshot = TrainingSession & {
   sessionSize: TrainingSessionSize;
   /** Authoritative server count of accepted session actions. */
   completedActions?: number;
+  /** Server-owned remainder revision after accepted external actions. */
+  planRevision?: number;
   completionReason?: "completed" | "exhausted" | null;
   members: TrainingSessionSnapshotMember[];
 };
@@ -251,6 +253,8 @@ const mapTrainingSessionSnapshot = (
     !session ||
     sessionSize === null ||
     !Array.isArray(candidate.members) ||
+    (candidate.planRevision !== undefined &&
+      !isNonNegativeInteger(candidate.planRevision)) ||
     (candidate.completedActions !== undefined &&
       !isNonNegativeInteger(candidate.completedActions)) ||
     (candidate.completionReason !== undefined &&
@@ -302,6 +306,9 @@ const mapTrainingSessionSnapshot = (
       : {}),
     ...(candidate.completionReason !== undefined
       ? { completionReason: candidate.completionReason as "completed" | "exhausted" | null }
+      : {}),
+    ...(candidate.planRevision !== undefined
+      ? { planRevision: candidate.planRevision as number }
       : {}),
     members,
   };

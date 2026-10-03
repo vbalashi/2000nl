@@ -10,3 +10,10 @@ test('stalled palette loads release the loading state within ten seconds',async(
 test('invalid palette is rejected before reaching storage',async()=>{
  const fetch=vi.fn();vi.stubGlobal('fetch',fetch);await expect(practicePaletteRepository.save('reader','invalid' as 'blue')).rejects.toThrow('invalid_practice_palette');expect(fetch).not.toHaveBeenCalled();
 });
+test('Indigo round trips through the account preference repository',async()=>{
+ const fetch=vi.fn().mockResolvedValueOnce(new Response(null,{status:201})).mockResolvedValueOnce(new Response(JSON.stringify({practice_palette:'indigo'}),{status:200}));
+ vi.stubGlobal('fetch',fetch);
+ await practicePaletteRepository.save('reader','indigo');
+ expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({user_id:'reader',practice_palette:'indigo'});
+ await expect(practicePaletteRepository.load('reader')).resolves.toBe('indigo');
+});
