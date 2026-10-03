@@ -5,6 +5,7 @@ import {
   Check,
   ChevronDown,
   Search,
+  Trash2,
   X,
 } from "lucide-react";
 import { singleNounArticle, toggleNounArticle } from "@/lib/training/nounArticles";
@@ -16,6 +17,7 @@ import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import {
   formatExerciseCount,
+  formatUiMessage,
   getPartOfSpeechLabel,
   getUiMessages,
   formatUiCount,
@@ -60,6 +62,13 @@ type Props = {
   onMixChange: (index: number) => void;
   onBack: () => void;
   onSave: () => Promise<boolean>;
+  editing?: boolean;
+  onSaveAs?: (newName: string) => Promise<boolean>;
+  onDelete?: () => boolean | Promise<boolean>;
+  deletionChangesMain?: boolean;
+  deleteDisabled?: boolean;
+  saveAsLabel?: string;
+  deleteLabel?: string;
   onBeginSave: () => void;
   onStart: () => void;
   saveDisabled: boolean;
@@ -118,6 +127,8 @@ export function ApprovedTrainingBuilder(p: Props) {
     c = messages.trainingBuilder;
   const ratioLabel = (n: number) =>
     formatUiCount(p.interfaceLanguage, n, b, "ratio");
+  const saveAsLabel = p.saveAsLabel ?? ({en:"Save as…",nl:"Opslaan als…",ru:"Сохранить как…"})[p.interfaceLanguage];
+  const deleteLabel = p.deleteLabel ?? ({en:"Delete training",nl:"Training verwijderen",ru:"Удалить тренировку"})[p.interfaceLanguage];
   const uid = useId();
   const [open, setOpen] = useState<string[]>([]),
     [languageQuery, setLanguageQuery] = useState(""),
@@ -125,6 +136,9 @@ export function ApprovedTrainingBuilder(p: Props) {
   const [nounAnchor, setNounAnchor] = useState<React.CSSProperties>({});
   const [nounOpen, setNounOpen] = useState(false),
     [saveOpen, setSaveOpen] = useState(false),
+    [copyOpen, setCopyOpen] = useState(false),
+    [deleteOpen, setDeleteOpen] = useState(false),
+    [copyName, setCopyName] = useState(""),
     [saving, setSaving] = useState(false);
   const toggle = (key: string) => {
     setOpen((current) =>
@@ -260,7 +274,10 @@ export function ApprovedTrainingBuilder(p: Props) {
   const save = async () => {
     setSaving(true);
     try {
-      if (await p.onSave()) setSaveOpen(false);
+      if (copyOpen ? await p.onSaveAs?.(copyName.trim()) : await p.onSave()) {
+        setSaveOpen(false);
+        setCopyOpen(false);
+      }
     } finally {
       setSaving(false);
     }
@@ -279,6 +296,11 @@ export function ApprovedTrainingBuilder(p: Props) {
             </button>
             <h1>{b.title}</h1>
           </header>
+          {p.editing && <label className={`${s.field} ${s.nameField}`}>
+            {b.trainingName}
+            <input className={s.input} aria-label={b.trainingName} maxLength={160}
+              value={p.name} disabled={saving} onChange={event => p.onNameChange(event.target.value)} />
+          </label>}
           {section(
             "language",
             b.language,
@@ -667,19 +689,31 @@ export function ApprovedTrainingBuilder(p: Props) {
       </div>
       <footer className={s.footer}>
         <div>
-          {p.canSave && (
-            <button
-              type="button"
-              className={s.secondary}
-              disabled={p.saveDisabled}
-              onClick={() => {
-                p.onBeginSave();
-                setSaveOpen(true);
-              }}
-            >
-              {p.saveLabel}
-            </button>
-          )}
+          {p.canSave && <div className={s.saveActions}>
+            {p.editing && p.onDelete && <button type="button" className={s.delete}
+              aria-label={deleteLabel} title={deleteLabel} disabled={saving || p.deleteDisabled}
+              onClick={() => setDeleteOpen(true)}><Trash2 size={16} /></button>}
+            <div className={s.updateGroup}>
+              <button type="button" className={s.secondary} disabled={saving || p.saveDisabled}
+                onClick={() => {
+                  p.onBeginSave();
+                  if (p.editing) void save(); else setSaveOpen(true);
+                }}>{p.saveLabel}</button>
+              {p.editing && p.onSaveAs && <details className={s.saveMenu}
+                onKeyDown={event => { if(event.key === "Escape") event.currentTarget.removeAttribute("open"); }}
+                onBlur={event => { if(!event.currentTarget.contains(event.relatedTarget as Node | null)) event.currentTarget.removeAttribute("open"); }}>
+                <summary aria-label={saveAsLabel} aria-disabled={saving || p.saveDisabled}
+                  onClick={event => { if(saving || p.saveDisabled) event.preventDefault(); }}><ChevronDown size={16} /></summary>
+                <div className={s.saveMenuPanel}><button type="button" disabled={saving || p.saveDisabled}
+                  onClick={event => {
+                    const menu = event.currentTarget.closest("details");
+                    menu?.removeAttribute("open");
+                    menu?.querySelector("summary")?.focus();
+                    p.onBeginSave(); setCopyName(p.name); setCopyOpen(true);
+                  }}>{saveAsLabel}</button></div>
+              </details>}
+            </div>
+          </div>}
           <button
             type="button"
             className={s.primary}
@@ -730,15 +764,31 @@ export function ApprovedTrainingBuilder(p: Props) {
           </div>
         </DialogSurface>
       )}
-      {saveOpen && (
+      {deleteOpen && <DialogSurface className={s.dialog} lang={p.interfaceLanguage}
+        aria-labelledby={`${uid}-delete-title`} onDismiss={() => { if(!saving) setDeleteOpen(false); }}>
+        <h2 id={`${uid}-delete-title`}>{b.deleteTitle}</h2>
+        <p className={s.help}>{formatUiMessage(b.deleteNotice, {name:p.name})}</p>
+        {p.deletionChangesMain && <p className={s.help}>{b.nextMain}</p>}
+        <div className={s.dialogActions}>
+          <button type="button" className={s.secondary} autoFocus disabled={saving}
+            onClick={() => setDeleteOpen(false)}>{b.cancel}</button>
+          <button type="button" className={s.primary} disabled={saving || p.deleteDisabled}
+            onClick={async () => {
+              setSaving(true);
+              try { if(await p.onDelete?.()) setDeleteOpen(false); }
+              finally {setSaving(false);}
+            }}>{deleteLabel}</button>
+        </div>
+      </DialogSurface>}
+      {(saveOpen || copyOpen) && (
         <DialogSurface
           className={s.dialog}
           aria-labelledby={`${uid}-save-title`}
           onDismiss={() => {
-            if (!saving) setSaveOpen(false);
+            if (!saving) { setSaveOpen(false); setCopyOpen(false); }
           }}
         >
-          <h2 id={`${uid}-save-title`}>{p.saveLabel}</h2>
+          <h2 id={`${uid}-save-title`}>{copyOpen ? saveAsLabel : p.saveLabel}</h2>
           <label className={s.field}>
             {b.trainingName}
             <input
@@ -747,8 +797,8 @@ export function ApprovedTrainingBuilder(p: Props) {
               className={s.input}
               aria-label={b.trainingName}
               maxLength={160}
-              value={p.name}
-              onChange={(event) => p.onNameChange(event.target.value)}
+              value={copyOpen ? copyName : p.name}
+              onChange={(event) => copyOpen ? setCopyName(event.target.value) : p.onNameChange(event.target.value)}
               placeholder={b.namePlaceholder}
             />
           </label>
@@ -762,17 +812,17 @@ export function ApprovedTrainingBuilder(p: Props) {
               type="button"
               className={s.secondary}
               disabled={saving}
-              onClick={() => setSaveOpen(false)}
+              onClick={() => {setSaveOpen(false); setCopyOpen(false);}}
             >
               {b.cancel}
             </button>
             <button
               type="button"
               className={s.primary}
-              disabled={saving || p.saveDisabled}
+              disabled={saving || p.saveDisabled || (copyOpen && !copyName.trim())}
               onClick={() => void save()}
             >
-              {p.saveLabel}
+              {copyOpen ? saveAsLabel : p.saveLabel}
             </button>
           </div>
         </DialogSurface>

@@ -1,4 +1,6 @@
 "use client";
+import {useAccountMaterial} from "@/components/practice/material/AccountMaterialProvider";
+import {useTrainingAvailability} from "@/lib/training/availability/useTrainingAvailability";
 import { useNewTrainingMaterial } from "@/components/practice/material/useNewTrainingMaterial";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -19,6 +21,7 @@ import { TrainingPilotStatePanel } from "./TrainingPilotStatePanel";
 import { TrainingMixPicker, mixStepSelection } from "./TrainingMixPicker";
 import { TrainingSessionSizePicker } from "./TrainingSessionSizePicker";
 import { useAccountTrainingSetups } from "@/lib/training/setups/useAccountTrainingSetups";
+import {readLastSelectedTraining, resolveHighlightedTraining, writeLastSelectedTraining} from "@/lib/training/setups/lastSelected";
 import type { SavedTraining } from "@/lib/training/setups/model";
 import { getUiMessages } from "@/lib/uiMessages";
 import { SavedTrainingControls } from "@/components/practice/SavedTrainingControls";
@@ -101,6 +104,7 @@ type Props = {
   activeSessionLabel?: string;
   ownedSession?: OwnedTrainingOverviewSession;
   onContinue: () => void;
+  onLoadTraining?: (training: SavedTraining) => void;
   materialIntent?: TrainingMaterialIntent | null;
   onMaterialIntentConsumed?: () => void;
   onStart: (
@@ -491,6 +495,7 @@ export function TrainingTodaySetup({
   activeSessionLabel,
   ownedSession,
   onContinue,
+  onLoadTraining,
   materialIntent = null,
   onMaterialIntentConsumed,
   onStart,
@@ -523,12 +528,27 @@ export function TrainingTodaySetup({
   const accountCopy = getUiMessages(interfaceLanguage).accountTrainingSetups;
   const presets = account.snapshot.document.trainings.filter(item => item.languageCode === trainingLanguageCode);
   const canSaveAccount = Boolean(userId && trainingLanguageCode);
+  const [highlighted, setHighlighted] = useState<{ownerId:string|undefined;id:string|null}>(()=>({ownerId:userId,id:readLastSelectedTraining(userId)}));
+  const selectedTrainingId = resolveHighlightedTraining(account.snapshot.document.trainings,
+    highlighted.ownerId === userId ? highlighted.id : readLastSelectedTraining(userId), account.snapshot.document.mainTrainingId);
+  const selectedTraining = account.snapshot.document.trainings.find(training=>training.id===selectedTrainingId);
+  const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
+  const accountMaterial = useAccountMaterial();
+  const availabilityRecipe = selectedTraining ?? (!account.snapshot.document.trainings.length ? {languageCode:trainingLanguageCode??"nl",draft:initialDraft} : null);
+  const availabilityResult = useTrainingAvailability({ownerId:userId??null,recipe:availabilityRecipe,
+    enabled:trainingPresentationV1Enabled() && screen === "today" && account.status === "ready" && material.status === "ready" &&
+      Boolean(availabilityRecipe && availabilityRecipe.languageCode === trainingLanguageCode && !pendingLanguage && !isTrainingSetupPaused(availabilityRecipe.draft)),
+    refresh:JSON.stringify([account.snapshot.revision,accountMaterial?.snapshot?.revision,ownedSession?.id,ownedSession?.completed,stats.reviewCardsDone,stats.newCardsToday,translationTargetLanguageCode])});
+  const availability = availabilityRecipe ? {trainingId:selectedTrainingId??"current-setup",status:availabilityResult.status === "ready"?"ready" as const:availabilityResult.status === "error"?"error" as const:"loading" as const,
+    dueToday:availabilityResult.status === "ready"?availabilityResult.value.dueToday:null,
+    totalReviews:availabilityResult.status === "ready"?availabilityResult.value.totalReviews:null,
+    stillNew:availabilityResult.status === "ready"?availabilityResult.value.newCards:null} : undefined;
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const editingTraining = presets.find(item => item.id === editingPresetId);
   const [trainingName, setTrainingName] = useState<string|null>(null);
   const [presetMessage, setPresetMessage] = useState("");
-  const [selectedIntent, setSelectedIntent] = useState<{id:string;userId:string|undefined;language:string;action:"edit"|"launch"}|null>(null);
-  const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
+  const [selectedIntent, setSelectedIntent] = useState<{id:string;userId:string|undefined;language:string;action:"edit"|"load"|"launch"}|null>(null);
+
 
   const editorOwner=useRef(userId);
   useEffect(() => {
@@ -635,7 +655,7 @@ export function TrainingTodaySetup({
     setScreen("setup");
   };
 
-  const savePreset = async () => {
+  const savePreset = async (copyName?: string) => {
     if (!canSaveAccount || !trainingLanguageCode || account.status !== "ready" || account.pending || !draftScenarioSupported || !draftMaterialAvailable || trainingLanguageLoading || pendingLanguage) return false;
     const sizeLabel = draft.sessionSize === "all-due-today"
       ? t.allDueToday
@@ -647,15 +667,16 @@ export function TrainingTodaySetup({
         : t.reviewsOnly;
     const presetName = `${selectedList ?? t.list} · ${activeFamily === "idiom" ? t.idioms : activeFamily === "sentence" ? t.sentences : activeFamily === "word-in-context" ? t.wordInContext : t.words} · ${mixLabel} · ${sizeLabel}`;
     const preset: SavedTraining = {
-      id: editingPresetId ?? crypto.randomUUID(),
-      name: (trainingPresentationV1Enabled() ? trainingName?.trim() || selectedList || getUiMessages(interfaceLanguage).builder.customTraining : presetName).slice(0, 160),
+      id: copyName !== undefined ? crypto.randomUUID() : editingPresetId ?? crypto.randomUUID(),
+      name: (copyName?.trim() || (trainingPresentationV1Enabled() ? trainingName?.trim() || selectedList || getUiMessages(interfaceLanguage).builder.customTraining : presetName)).slice(0, 160),
       languageCode: trainingLanguageCode,
       draft,
     };
-    const result = await account.save(preset, editingPresetId === null);
+    const result = await account.save(preset, copyName !== undefined || editingPresetId === null);
     if (result === "unavailable") return false;
     if (result === "saved") {
       setEditingPresetId(preset.id);
+      if(copyName !== undefined) setTrainingName(preset.name);
       setPresetMessage(accountCopy.saved);
     } else {
       setPresetMessage(result === "conflict" ? accountCopy.conflict : accountCopy.saveFailed);
@@ -686,12 +707,14 @@ export function TrainingTodaySetup({
       setDraft({...selected.draft,sessionSize:selected.draft.sessionSize??DEFAULT_SESSION_SIZE});
       setTrainingName(selected.name);
       setEditingPresetId(selected.id); setPresetMessage(""); setScreen("setup");
+    } else if (selectedIntent.action === "load") {
+      onLoadTraining?.(selected);
     } else if (!isTrainingSetupMaterialAvailable(selected.draft,lists,dictionaries)) {
       setPresetMessage(t.materialUnavailable);
     } else if (isTrainingSetupDraftSupported(selected.draft,scenarios)) {
       void requestStart(selected.draft, selected.name,{trainingId:selected.id});
     } else setPresetMessage(t.chooseGoal);
-  }, [selectedIntent, userId, trainingLanguageCode, trainingLanguageLoading, scenarioLoading, pendingLanguage, account.status, account.snapshot.document.trainings, startBlocked, accountCopy.conflict, scenarios, lists, dictionaries, requestStart, t.chooseGoal, t.materialUnavailable]);
+  }, [selectedIntent, userId, trainingLanguageCode, trainingLanguageLoading, scenarioLoading, pendingLanguage, account.status, account.snapshot.document.trainings, startBlocked, accountCopy.conflict, scenarios, lists, dictionaries, requestStart, onLoadTraining, t.chooseGoal, t.materialUnavailable]);
 
   const handledMaterialIntent = useRef<number | null>(null);
   useEffect(() => {
@@ -741,7 +764,7 @@ export function TrainingTodaySetup({
   }
 
   if (screen === "today" && trainingPresentationV1Enabled()) {
-    return <AccountTrainingOverview ownerId={userId} emptyTraining={emptyTraining} onEarlyReview={training=>void requestStart({...training.draft,cardFilter:"review"},training.name,{trainingId:training.id,reviewTiming:"early"})} interfaceLanguage={interfaceLanguage} languageCode={trainingLanguageCode??"nl"}
+    return <AccountTrainingOverview availability={availability} onAvailabilityRetry={availabilityResult.reload} selectedTrainingId={selectedTrainingId} ownerId={userId} emptyTraining={emptyTraining} onEarlyReview={training=>void requestStart({...training.draft,cardFilter:"review"},training.name,{trainingId:training.id,reviewTiming:"early"})} interfaceLanguage={interfaceLanguage} languageCode={trainingLanguageCode??"nl"}
       languageOptions={trainingLanguageOptions} lists={lists} dictionaries={dictionaries} scenarios={scenarios}
       snapshot={account.snapshot} accountStatus={account.status} initialDraft={initialDraft}
       ownedSession={hasOwnedSession?ownedSession:undefined} activeSessionLabel={activeSessionLabel}
@@ -750,7 +773,11 @@ export function TrainingTodaySetup({
       translationUnavailable={t.contextLanguageNeeded} translationLanguage={translationTargetLanguageCode}
       onCreate={openSetup} onDefaultLaunch={()=>void requestStart(initialDraft)} onContinue={onContinue}
       onRetry={()=>void account.reload()} onSelect={(training,action)=>{
-        if (!(action === "edit" ? readableLanguageOptions : trainingLanguageOptions).some(option=>option.value===training.languageCode)) { setPresetMessage(t.materialUnavailable); return; }
+        if (!(action === "launch" ? trainingLanguageOptions : readableLanguageOptions).some(option=>option.value===training.languageCode)) { setPresetMessage(t.materialUnavailable); return; }
+        if(action==="load" || action==="launch") {
+          setHighlighted({ownerId:userId,id:training.id});
+          writeLastSelectedTraining(userId,training.id);
+        }
         setSelectedIntent({id:training.id,userId,language:training.languageCode,action});
         if(training.languageCode!==trainingLanguageCode)onTrainingLanguageChange?.(training.languageCode);
       }}>
@@ -1020,7 +1047,10 @@ export function TrainingTodaySetup({
     languagePending={trainingLanguageLoading||Boolean(pendingLanguage)||startPending} dictionariesLoading={dictionariesLoading} translationLanguage={translationTargetLanguageCode}
     name={trainingName??selectedList??""} onNameChange={setTrainingName} onLanguageChange={language=>{if(language!==trainingLanguageCode){setPendingLanguage(language);onTrainingLanguageChange?.(language);}}}
     onDraftChange={setDraft} onSelectFamily={selectFamily} onToggleMode={toggleMode} onMixChange={changeMix} onBack={()=>setScreen("today")}
-    onSave={savePreset} onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft, trainingName?.trim() || undefined)} canSave={canSaveAccount}
+    editing={Boolean(editingPresetId)} onSave={()=>savePreset()} onSaveAs={name=>savePreset(name)}
+    onDelete={editingTraining?async()=>{const removed=await accountAction(()=>account.remove(editingTraining.id));if(removed){setEditingPresetId(null);setScreen("today");}return removed;}:undefined}
+    deletionChangesMain={Boolean(editingTraining && account.snapshot.document.mainTrainingId===editingTraining.id && account.snapshot.document.trainings.length>1)} deleteDisabled={account.pending||account.status!=="ready"} deleteLabel={getUiMessages(interfaceLanguage).builder.delete}
+    onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft, trainingName?.trim() || undefined, editingPresetId?{trainingId:editingPresetId}:undefined)} canSave={canSaveAccount}
     saveDisabled={account.status!=="ready"||account.pending||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
     startDisabled={startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
     saveLabel={editingPresetId?accountCopy.update:accountCopy.save} startLabel={startPending?t.starting:scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable?t.materialUnavailable:replacementWarning?t.startHere:t.start}
@@ -1032,7 +1062,7 @@ export function TrainingTodaySetup({
       {cardPreparationStatus==="error"&&<p role="alert">{t.cardError}<button onClick={onRetryCard}>{t.retryCard}</button></p>}
     </>}
     accountControls={editingTraining&&<SavedTrainingControls name={editingTraining.name} language={interfaceLanguage}
-      main={account.snapshot.document.mainTrainingId===editingTraining.id} hasOthers={account.snapshot.document.trainings.length>1} pending={account.pending||account.status!=="ready"}
+      hideDelete main={account.snapshot.document.mainTrainingId===editingTraining.id} hasOthers={account.snapshot.document.trainings.length>1} pending={account.pending||account.status!=="ready"}
       onMain={()=>accountAction(()=>account.makeMain(editingTraining.id))} onDelete={async()=>{const removed=await accountAction(()=>account.remove(editingTraining.id));if(removed){setEditingPresetId(null);setScreen("today");}return removed;}}/>}/>
   ;
 

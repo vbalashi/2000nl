@@ -559,3 +559,5 @@
 \i db/migrations/206_admin_user_registry_dual_identity.sql
 
 \i db/migrations/207_repeat_early_training_sessions.sql
+
+\i db/migrations/208_training_recipe_availability.sql

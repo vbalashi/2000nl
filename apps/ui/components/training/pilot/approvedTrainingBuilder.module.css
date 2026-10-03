@@ -359,3 +359,21 @@
 
 .activity summary::-webkit-details-marker { display: none; }
 .activity[open] summary svg { transform: rotate(180deg); }
+
+/* Saved-recipe actions share one footer group; the editor remains full screen. */
+.nameField { margin-bottom: 24px; }
+.saveActions, .updateGroup { display:flex; align-items:center; min-width:0; }
+.saveActions { gap:8px; }
+.updateGroup { flex:1; position:relative; align-items:stretch; }
+.updateGroup > .secondary { flex:1; }
+.updateGroup:has(.saveMenu) > .secondary { border-radius:100px 0 0 100px; border-right:0; }
+.delete { display:grid; place-items:center; flex:none; width:36px; height:36px; padding:0; border:0; background:transparent; color:var(--practice-text-muted); cursor:pointer; }
+.delete:disabled { opacity:.45; cursor:default; }
+.saveMenu { flex:none; position:relative; }
+.saveMenu summary { display:grid; place-items:center; list-style:none; min-height:34px; height:100%; box-sizing:border-box; width:34px; border:1px solid var(--practice-border); border-radius:0 100px 100px 0; background:var(--practice-surface); color:var(--practice-text-secondary); cursor:pointer; }
+.saveMenu summary::-webkit-details-marker { display:none; }
+.saveMenu summary[aria-disabled="true"] { opacity:.45; cursor:default; }
+.saveMenuPanel { position:absolute; bottom:calc(100% + 8px); right:0; z-index:5; min-width:160px; padding:5px; border:1px solid var(--practice-border); border-radius:12px; background:var(--practice-surface); box-shadow:0 6px 24px var(--practice-shadow); }
+.saveMenuPanel button { width:100%; border:0; border-radius:8px; padding:9px 12px; text-align:left; font:inherit; font-size:var(--practice-text-small); background:transparent; color:var(--practice-text); cursor:pointer; }
+.saveMenuPanel button:hover { background:var(--practice-surface-subtle); }
+.delete:focus-visible, .saveMenu summary:focus-visible, .saveMenuPanel button:focus-visible { outline:2px solid var(--practice-focus); outline-offset:2px; }

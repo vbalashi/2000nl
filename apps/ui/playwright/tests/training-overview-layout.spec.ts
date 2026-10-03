@@ -1,0 +1,45 @@
+import {expect,test} from '@playwright/test';
+import {setupAuthenticatedTrainingAttributionPage} from '../support/trainingAttributionHarness';
+const approved=process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1==='true';
+for(const profile of [{name:'desktop',width:1280,height:900,language:'en',dark:false},{name:'mobile',width:390,height:844,language:'ru',dark:true}])test(`selected hero remains fixed while100Saved scroll and Load ${profile.name}`,async({page},info)=>{
+ test.skip(!approved,'Approved overview');
+ await page.setViewportSize({width:profile.width,height:profile.height});
+ await page.emulateMedia({colorScheme:profile.dark?'dark':'light'});
+ await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:profile.language},theme_preference:profile.dark?'dark':'light'}});
+ const draft={family:'meaning',scenarioId:'understanding',modes:['word-to-definition'],cardFilter:'review',listValue:'curated:list-attribution',materialMode:'collection',newReviewRatio:2,dateWindow:'all',sourceValue:'all',sessionSize:5};
+ const recipes=Array.from({length:100},(_,i)=>({id:`saved-${i}`,name:`Practice ${i+1}`,languageCode:'nl',draft:{...draft,sourceValue:`source:57500000-0000-4000-8000-${String(i).padStart(12,'0')}`}}));
+ await page.route('**/api/training/setups',route=>route.fulfill({json:{revision:1,document:{schemaVersion:1,mainTrainingId:'saved-0',trainings:recipes}}}));
+ let reads=0;
+ await page.route('**/api/training/availability',async route=>{reads++;if(reads>1)await new Promise(r=>setTimeout(r,600));await route.fulfill({json:{dueToday:0,totalReviews:142,newCards:286,studyDay:new Date().toISOString().slice(0,10),timezone:'Europe/Amsterdam',asOf:new Date().toISOString()}});});
+ await page.reload();
+ const hero=page.getByRole('region',{name:profile.language==='ru'?'Основная тренировка':'Main training'});
+ await expect(hero.getByText('142')).toBeVisible();
+ const list=page.getByRole('region',{name:profile.language==='ru'?'Сохранённые тренировки':'Saved Trainings'}).locator('[tabindex="0"]');
+ const before=await hero.boundingBox();expect(before!.height).toBeLessThanOrEqual(profile.height*.5);
+ await expect(list.getByRole('button',{name:/Load Practice|Загрузить «Practice/})).toHaveCount(100);
+ await list.evaluate(el=>{el.scrollTop=2000;});
+ await expect(page.getByRole('button',{name:profile.language==='ru'?'Ещё сохранённые тренировки':'More saved trainings'})).toBeVisible();
+ const load=list.getByRole('button',{name:profile.language==='ru'?'Загрузить «Practice 34»':'Load Practice 34',exact:true});
+ await load.scrollIntoViewIfNeeded();const scrollBefore=await list.evaluate(el=>el.scrollTop);
+ await load.click();
+ await expect(hero.getByRole('heading',{name:'Practice 34'})).toBeVisible();
+ await expect(hero.locator('dl')).toHaveAttribute('aria-busy','true');
+ await page.screenshot({path:info.outputPath('loading.png'),fullPage:true});
+ await expect(hero.getByText('142')).toBeVisible();
+ expect(await list.evaluate(el=>el.scrollTop)).toBe(scrollBefore);
+ const after=await hero.boundingBox();expect(after!.y).toBe(before!.y);expect(after!.height).toBe(before!.height);
+ await expect(hero.getByRole('button',{name:profile.language==='ru'?'Повторить раньше срока':'Review ahead'})).toBeEnabled();
+ await page.screenshot({path:info.outputPath('selected34.png'),fullPage:true});
+ if(profile.width<500){
+  await page.setViewportSize({width:320,height:568});await page.emulateMedia({reducedMotion:'reduce'});
+  const small=await hero.boundingBox();expect(small!.height).toBeLessThanOrEqual(284);
+  const action=await hero.getByRole('button',{name:'Повторить раньше срока'}).boundingBox();expect(action!.y+action!.height).toBeLessThanOrEqual(small!.y+small!.height);
+  expect(await hero.locator('dd span').first().evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
+  await page.screenshot({path:info.outputPath('small-reduced-motion.png'),fullPage:true});
+ }
+ expect(await list.evaluate(el=>getComputedStyle(el).scrollbarWidth)).toBe('none');
+ expect(await page.locator('main').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+ await page.route('**/api/training/setups',route=>route.fulfill({json:{revision:2,document:{schemaVersion:1,mainTrainingId:null,trainings:[]}}}));
+ await page.reload();await expect(page.getByText(profile.language==='ru'?'Пока нет сохранённых тренировок. Создайте тренировку, чтобы сохранить её настройки.':'No saved trainings yet. Create a training to keep its settings here.')).toBeVisible();
+ await page.screenshot({path:info.outputPath('no-saved.png'),fullPage:true});
+});

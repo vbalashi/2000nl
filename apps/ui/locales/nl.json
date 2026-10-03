@@ -301,6 +301,15 @@
       "history": "Geschiedenis"
     },
     "trainingOverview": {
+      "editTraining": "Training aanpassen",
+      "dueToday": "Vandaag klaar",
+      "totalReviews": "In herhaling",
+      "stillNew": "Nog nieuw",
+      "loadNamed": "{name} laden",
+      "moreSaved": "Meer opgeslagen trainingen",
+      "noSaved": "Nog geen opgeslagen trainingen. Maak een training om de instellingen te bewaren.",
+      "availabilityFailed": "Kaartaantallen konden niet worden geladen.",
+      "sessionLimit": "Tot {count} kaarten",
       "allCards": "Alle kaarten",
       "earlyReview": "Eerder herhalen",
       "wordInContext": "Vertaling",

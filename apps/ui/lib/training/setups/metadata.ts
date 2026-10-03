@@ -1,5 +1,5 @@
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
-import {formatExerciseCount,getUiMessages} from '@/lib/uiMessages';
+import {formatUiMessage,getUiMessages} from '@/lib/uiMessages';
 import type {TrainingSetupDraft} from './types';
 
 /** Presentation capabilities, separate from scheduler filters and saved data. */
@@ -21,7 +21,7 @@ export function trainingMetadata(draft:TrainingSetupDraft,language:OnboardingLan
  const direction=capability.direction?draft.modes.map(mode=>mode==='word-to-definition'?copy.direction.Direct:mode==='definition-to-word'?copy.direction.Reverse:null).filter(Boolean).join(' + '):null;
  const selection=selectionLabels[language][draft.cardFilter];
  const size=draft.sessionSize??10;
- const count=size==='all-due-today'?copy.allDue:formatExerciseCount(language,size);
- const description=[exercise,direction,selection].filter(Boolean).join(' · ');
- return {description,summary:[languageLabel,description,count].join(' · ')};
+ const count=size==='all-due-today'?copy.allDue:formatUiMessage(copy.sessionLimit,{count:size});
+ const description=[exercise,direction,selection,count].filter(Boolean).join(' · ');
+ return {description,summary:[languageLabel,description].join(' · ')};
 }

@@ -1,3 +1,4 @@
+import { invalidateTrainingAvailability } from "../training/availability/cache";
 import type {
   TrainingExclusionRequest,
   TrainingExclusionResponse,
@@ -39,5 +40,6 @@ export async function performTrainingExclusion(
   ) {
     throw new Error("invalid_training_exclusion_response");
   }
+  invalidateTrainingAvailability();
   return data;
 }

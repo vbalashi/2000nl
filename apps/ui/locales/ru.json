@@ -301,6 +301,15 @@
       "history": "История"
     },
     "trainingOverview": {
+      "editTraining": "Изменить тренировку",
+      "dueToday": "На сегодня",
+      "totalReviews": "На повторении",
+      "stillNew": "Ещё новые",
+      "loadNamed": "Загрузить «{name}»",
+      "moreSaved": "Ещё сохранённые тренировки",
+      "noSaved": "Пока нет сохранённых тренировок. Создайте тренировку, чтобы сохранить её настройки.",
+      "availabilityFailed": "Не удалось загрузить количество карточек.",
+      "sessionLimit": "До {count} карточек",
       "allCards": "Все карточки",
       "earlyReview": "Повторить раньше срока",
       "wordInContext": "Перевод",

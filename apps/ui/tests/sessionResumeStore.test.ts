@@ -65,6 +65,10 @@ afterEach(() => {
 });
 
 describe("training session resume store", () => {
+  test("saved recipe identity survives resume without relying on its display name", async()=>{
+    await writeTrainingSessionResume({...record,trainingId:"saved-recipe",sessionName:"A renamed recipe"});
+    expect(await readTrainingSessionResume(record.userId)).toMatchObject({trainingId:"saved-recipe",sessionName:"A renamed recipe",sessionId:record.sessionId});
+  });
   test("cloned tab ownership rotates while same-tab reload retains its owner", async () => {
     const locks = new DeterministicOwnerLocks();
     const firstPageStorage = new MemorySessionStorage();
