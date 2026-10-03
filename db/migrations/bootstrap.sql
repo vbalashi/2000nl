@@ -561,3 +561,5 @@
 \i db/migrations/207_repeat_early_training_sessions.sql
 
 \i db/migrations/208_training_recipe_availability.sql
+
+\i db/migrations/209_index_contextual_example_candidates.sql

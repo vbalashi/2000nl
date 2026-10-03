@@ -454,7 +454,7 @@ test("the repository contract enables the reviewed selected-recipe availability 
   assert.equal(result.status, 0, result.stderr);
   assert.equal(
     result.stdout.trim(),
-    "enabled 208 407",
+    "enabled 209 407",
   );
 });
 

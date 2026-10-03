@@ -318,4 +318,60 @@ async function availability(
       expect(config).toContain("enable_nestloop=off");
       expect(config).toContain("jit=off");
     }));
+  test("contextual example index preserves exact authoritative locator eligibility", () =>
+    withTransaction(pool, async (c) => {
+      const u = await owner(c);
+      const cases = [
+        ["raw.meanings[0].examples[0]", "active", true],
+        ["raw.meanings[12].examples[43]", "active", true],
+        ["raw.meanings[0].examples[0]", "retired", false],
+        ["raw.meanings[0].idioms[0].examples[0]", "active", false],
+        ["raw.meanings[0].examples[0].text", "active", false],
+        ["raw.meanings[x].examples[0]", "active", false],
+        ["", "active", false],
+      ] as const;
+      const index = (
+        await c.query(
+          "select pg_get_expr(indpred,indrelid) predicate,indisvalid,indisready,pg_get_indexdef(indexrelid,1,true) column_name from pg_index where indexrelid='private.platform_v2_content_nodes_active_raw_example_entry_idx'::regclass",
+        )
+      ).rows[0];
+      expect(index).toMatchObject({
+        indisvalid: true,
+        indisready: true,
+        column_name: "entry_id",
+      });
+      const source = (
+        await c.query(
+          "select prosrc from pg_proc where oid='private.training_word_context_candidate_v1(uuid,uuid,text)'::regprocedure",
+        )
+      ).rows[0].prosrc;
+      const regex = String.raw`^raw\.meanings\[[0-9]+\]\.examples\[[0-9]+\]$`;
+      expect(source).toContain(regex);
+      expect(index.predicate).toContain(regex);
+      for (const [locator, state, expected] of cases) {
+        const e = await card(c, u, now),
+          node = randomUUID();
+        await c.query(
+          "insert into private.platform_v2_content_nodes(id,entry_id,kind,binding_state,first_source_revision,last_source_revision,source_text_fingerprint,diagnostic_locator) values($1,$2,'example',$3,'v1','v1',$4,$5)",
+          [node, e, state, `index-fixture-${node}`, locator],
+        );
+        expect(
+          (
+            await c.query(
+              "select private.training_word_context_candidate_v1($1,$2,'definition-to-word') eligible",
+              [u, e],
+            )
+          ).rows[0].eligible,
+        ).toBe(expected);
+        // The predicate comes exclusively from the installed index catalog.
+        expect(
+          (
+            await c.query(
+              `select exists(select 1 from private.platform_v2_content_nodes where entry_id=$1 and (${index.predicate})) eligible`,
+              [e],
+            )
+          ).rows[0].eligible,
+        ).toBe(expected);
+      }
+    }));
 });
