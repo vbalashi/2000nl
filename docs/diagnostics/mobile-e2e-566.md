@@ -43,3 +43,11 @@ header-position assertions remain unchanged. Both fixes require the full
 An unrelated `DictionarySearchTab.grouping` unit-test failure occurred in PR
 run 37118880352; the full UI job in run 37118885251 passed on the same commit.
 It needs its own reproduction if it recurs.
+
+## Combined-fix validation
+
+Local focused run on `ac80baf190fd3a46d97d0e6df24e7198fc52f2b4`: **100 passed
+in 1.7 minutes**, two workers, twenty repetitions of five scenarios, zero
+retries. Typecheck and lint on all three modified specs passed. GitHub focused
+run [37121974046](https://github.com/vbalashi/2000nl/actions/runs/37121974046)
+and ordinary PR CI were dispatched to confirm the same fixes on Linux.
