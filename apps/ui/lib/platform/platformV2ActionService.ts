@@ -465,6 +465,16 @@ function platformCardState(
     cardTypeId: expectedCardTypeId as PlatformSenseCardStateV2["cardTypeId"],
     scheduler: {
       phase,
+      ...(Number.isInteger(scheduler.reviewCount) && Number(scheduler.reviewCount) >= 0
+        ? {reviewCount: scheduler.reviewCount as number} : {}),
+      ...(scheduler.lastGrade === null ||
+        (typeof scheduler.lastGrade === "number" && [1, 2, 3, 4].includes(scheduler.lastGrade))
+        ? {lastGrade: scheduler.lastGrade as 1 | 2 | 3 | 4 | null} : {}),
+      ...Object.fromEntries(
+        ["lastReviewedAt", "nextReviewAt", "learningDueAt"]
+          .filter(key => scheduler[key] === null || typeof scheduler[key] === "string")
+          .map(key => [key, scheduler[key]]),
+      ),
       ...(typeof scheduler.repeatCount === "number"
         ? { repeatCount: scheduler.repeatCount }
         : {}),

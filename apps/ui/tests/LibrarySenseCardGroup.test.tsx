@@ -272,7 +272,8 @@ describe("LibrarySenseCardGroup", () => {
       expect(quietRow).not.toContainElement(trainNext);
       expect(within(quietRow).getByRole("button", { name: "Collections · 2" })).toBeInTheDocument();
       fireEvent.click(trainNext);
-      expect(onTrainNext).toHaveBeenCalledWith(expect.objectContaining({ entryId: "entry-bank-furniture" }));
+      expect(onTrainNext).not.toHaveBeenCalled();
+      expect(onAction).toHaveBeenCalledWith(expect.objectContaining({actionId:"review-card",reviewResult:"fail",target:expect.objectContaining({entryId:"entry-bank-furniture"})}));
       fireEvent.click(within(quietRow).getByRole("button", { name: "More card actions" }));
       fireEvent.click(screen.getByRole("menuitem", { name: /Mark as known/ }));
       expect(onAction).toHaveBeenCalledWith(markKnown);
@@ -282,7 +283,7 @@ describe("LibrarySenseCardGroup", () => {
     }
   });
 
-  test("keeps Library actions and never renders Training grading controls", () => {
+  test("keeps Library services alongside inline grading controls", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
     const markKnown = model.meanings[1].markKnown;
     const onOpenCollections = vi.fn();
@@ -301,16 +302,16 @@ describe("LibrarySenseCardGroup", () => {
 
     expect(
       screen.queryByRole("button", { name: "Again" }),
-    ).not.toBeInTheDocument();
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Hard" }),
-    ).not.toBeInTheDocument();
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Good" }),
-    ).not.toBeInTheDocument();
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Easy" }),
-    ).not.toBeInTheDocument();
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Mark as known/ }),
     ).toBeInTheDocument();
@@ -500,4 +501,15 @@ describe("LibrarySenseCardGroup", () => {
     expect(badge).toHaveClass("border");
     expect(badge?.querySelector("svg")).toBeInTheDocument();
   });
+});
+
+
+test("Library displays enrolled but ungraded state and never labels a missing state New", () => {
+ const model=buildLibrarySenseCardGroupModel(multiSenseBankGroup,"en");
+ model.meanings[0].schedulerPhase="learning";model.meanings[0].repeatCount=0;
+ model.meanings[1].schedulerPhase=null;
+ render(<LibrarySenseCardGroup model={model} interfaceLanguage="en" onAction={vi.fn()}/>);
+ expect(screen.getByText("Learning")).toBeInTheDocument();
+ expect(screen.getAllByText("Learning state unavailable").length).toBeGreaterThan(0);
+ expect(screen.queryByText("New")).not.toBeInTheDocument();
 });

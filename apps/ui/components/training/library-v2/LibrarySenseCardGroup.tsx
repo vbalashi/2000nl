@@ -1,9 +1,10 @@
 "use client";
+import { LibraryLearningSummary } from "./LibraryLearningSummary";
 import { useWordDetailsClose } from "../WordDetailsHeader";
 
 import React from "react";
 import { X } from "lucide-react";
-import { LibraryMeaningActions } from "./LibraryMeaningActions";
+import { LibraryMeaningActions, LibraryMeaningRatings } from "./LibraryMeaningActions";
 import {sharedArticlePresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
 import {ArticleTranslation,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
 import {ProductionArticleReading} from "@/components/practice/article/ProductionArticleReading";
@@ -46,6 +47,8 @@ type Props = {
   contentLanguage?: string;
   translationLanguage?: string;
   busyIdentity?: string | null;
+  actionsDisabled?: boolean;
+  inlineGrading?: boolean;
   audioBusy?: boolean;
   onPlayAudio?: () => void;
   translationEnabled?: boolean;
@@ -79,6 +82,8 @@ export function LibrarySenseCardGroup({
   contentLanguage,
   translationLanguage,
   busyIdentity = null,
+  actionsDisabled = false,
+  inlineGrading = true,
   audioBusy = false,
   onPlayAudio,
   translationEnabled = false,
@@ -378,7 +383,7 @@ export function LibrarySenseCardGroup({
               return (
                 <MeaningCard
                   key={identity}
-                  meaning={meaning}
+                  meaning={inlineGrading ? meaning : {...meaning, reviewCapabilities: []}}
                   showSenseForms={!commonForms}
                   formPartOfSpeech={model.formPartOfSpeech}
                   headword={model.headword}
@@ -392,7 +397,7 @@ export function LibrarySenseCardGroup({
                     }
                   }
                   interfaceLanguage={interfaceLanguage}
-                  busy={busyIdentity === identity}
+                  busy={actionsDisabled || Boolean(busyIdentity)}
                   translationState={translationStates[identity] ?? null}
                   collectionCount={collectionCounts[meaning.entryId] ?? 0}
                   onToggleExpanded={() =>
@@ -488,6 +493,12 @@ function MeaningCard({
     <span className={approvedArticle ? surfaces.known : "shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300"}>
       {t("senseCard.known.marked")}
     </span>
+  ) : meaning.schedulerPhase === "learning" || meaning.schedulerPhase === "reviewing" ? (
+    <span>{t("senseCard.state.learning")}{meaning.repeatCount > 0 ? <ExposureBadge count={meaning.repeatCount} tone="light" /> : null}</span>
+  ) : meaning.schedulerPhase === "hidden" || meaning.schedulerPhase === "frozen" ? (
+    <span>{t(`senseCard.state.${meaning.schedulerPhase}`)}</span>
+  ) : meaning.schedulerPhase === null ? (
+    <span>{t("senseCard.state.unavailable")}</span>
   ) : meaning.repeatCount > 0 ? (
     <ExposureBadge count={meaning.repeatCount} tone="light" />
   ) : (
@@ -654,6 +665,7 @@ function MeaningCard({
             ) : null}</>}
 
 
+            <LibraryLearningSummary meaning={meaning} language={interfaceLanguage} />
             {approvedArticle ? (
               <LibraryMeaningActions meaning={meaning} language={interfaceLanguage} busy={busy} collectionCount={collectionCount}
                 onAction={onAction}
@@ -682,20 +694,10 @@ function MeaningCard({
               ) : (
                 <span />
               )}
-              {onTrainNext ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onActiveMeaningChange?.(meaning.entryId);
-                    onTrainNext(meaning);
-                  }}
-                  className="min-h-10 rounded-xl border border-indigo-400 bg-indigo-500/10 px-3 font-semibold text-indigo-700 transition hover:bg-indigo-500/15 dark:text-indigo-200"
-                >
-                  {t("senseCard.training.next")}
-                </button>
-              ) : null}
+
             </div>
 
+            <LibraryMeaningRatings meaning={meaning} language={interfaceLanguage} busy={busy} onAction={onAction}/>
             <div
               data-testid="library-service-actions"
               className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11.5px]"

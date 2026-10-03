@@ -57,6 +57,7 @@
   },
   "senseCard": {
     "learning": {
+      "savedReloadFailed": "Saved. Could not reload the updated learning state. Retry to refresh it.",
       "start": "Learn"
     },
     "known": {
@@ -103,7 +104,15 @@
       "reviewPrompt": "How well do you know this meaning?"
     },
     "state": {
-      "new": "New"
+      "learning": "Learning",
+      "hidden": "Excluded",
+      "frozen": "Paused",
+      "unavailable": "Learning state unavailable",
+      "new": "New",
+      "lastGrade": "Last rating",
+      "reviewCount": "Reviews",
+      "nextReview": "Next review",
+      "ungraded": "Not rated yet"
     },
     "translation": {
       "request": "Translate",
