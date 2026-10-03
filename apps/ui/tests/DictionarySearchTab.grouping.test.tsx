@@ -317,9 +317,15 @@ test("approved search choices exclude disabled material and changed source start
  fetchGroupPage.mockReset().mockResolvedValue({groups:[group],selectedTierComplete:true,nextGroupCursor:"next-scoped"});
  render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness/></AccountMaterialProvider>);
  await screen.findByTestId("library-headword-group-enabled-b");
+ expect(await screen.findByRole("option",{name:"Enabled B"})).toBeInTheDocument();
  expect(screen.queryByRole("option",{name:"Disabled A"})).not.toBeInTheDocument();
  expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:null},cursor:null}));
- fireEvent.click(within(screen.getByTestId("library-group-pagination")).getByRole("button",{name:"Volgende"}));
+ // Group rows can render before the completed search marks pagination ready.
+ // Await the control under test rather than assuming the first row implies it.
+ const pagination=await screen.findByTestId("library-group-pagination");
+ const next=within(pagination).getByRole("button",{name:"Volgende"});
+ await waitFor(()=>expect(next).toBeEnabled());
+ fireEvent.click(next);
  await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor:"next-scoped"})));
  fireEvent.change(screen.getByLabelText("Woordenboekbron"),{target:{value:scopeB}});
  await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:[scopeB]},cursor:null})));

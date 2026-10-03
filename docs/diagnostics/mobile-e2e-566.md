@@ -51,3 +51,11 @@ in 1.7 minutes**, two workers, twenty repetitions of five scenarios, zero
 retries. Typecheck and lint on all three modified specs passed. GitHub focused
 run [37121974046](https://github.com/vbalashi/2000nl/actions/runs/37121974046)
 and ordinary PR CI were dispatched to confirm the same fixes on Linux.
+
+GitHub focused job `111199718601` in run 37121974046 confirmed **100 passed in
+3.4 minutes**, without retries. Its parallel full-suite job reproduced the
+separate search-pagination unit flake again. That test waited for a result row
+but synchronously queried pagination, although the UI renders pagination only
+after marking the search result current. It now awaits both the enabled source
+option and the enabled pagination control before clicking; cursor/scope
+assertions are preserved. The entire 31-test grouping suite passes locally.
