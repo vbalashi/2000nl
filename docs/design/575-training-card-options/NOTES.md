@@ -1,0 +1,11 @@
+# THROWAWAY Training layout exploration
+
+Question: fixed selected recipe hero no taller than halfviewport (preferthird),100 independent scrolling saved recipes,3 availabilitymetrics, Load preservinglistposition, no visible scrollbar, themed gradientchevron, animated pendingcounts, noSaved case.
+
+A retains spacious stackedhierarchy; B desktop putsactionbeside title/metrics, mobilecompactstack; C compresses desktopmetrics intoinlineband, mobileminimalstack. All use existing app theme. Screenshots captured in fullapplication with authenticated deterministic fixture; numbers illustrative, no livecountsclaim. Height390×844 A244px/B229px/C198px. Desktop1280×900 A269px/B194px/C140px. Hero position/size unchanged afterscrollto34 andLoad; independent listscroll verified. Reducedmotion wave disabled.
+
+Open comparison.html or prototype.html. Standalone interactiveexport uses matching layoutCSS but systemArial/Georgia instead of bundledappfonts; appcaptures are typographyreference. Click Load34: listscroll preserved, counters wave for1.1s, titleupdates, no backend/persistence.100mock saved, emptytoggle, darkpreviewtoggle, A/B/C URLvariant switch. Footer switcher is prototypecontrols, not productiondesign.
+
+Runtime demo source retained under source/; temporary mount in AccountTrainingOverview was removed aftercaptures, no prototype ships in production. Open with: `open docs/design/575-training-card-options/comparison.html`. Or serve thisfolder on a freepreviewport. Delete losing variants/source afterdecision; incorporate chosen design properly into productioncomponents.
+
+Verdict pending owner. Recommend B: clear metriclabels and morelistspace; C economizes most but inline numbers become lessreadable. NoSaved state retains heroand shows shortcreateprompt, no blank fake rows.
