@@ -18,7 +18,10 @@
  --practice-definition-size: var(--account-practice-definition-size, var(--practice-text-title-sm));
  --practice-definition-leading: 1.4;
  --practice-literary-size: var(--account-practice-literary-size, var(--practice-text-body-lg));
- --practice-literary-leading: 1.4;
+ --practice-source-leading: 1.25;
+ --practice-translation-leading: 1.3;
+ --practice-literary-leading: var(--practice-source-leading);
+ --practice-nested-content-inset: 8px;
  --practice-reading-definition: var(--account-practice-reading-definition, var(--practice-text-title-sm));
  --practice-reading-literary: var(--account-practice-reading-literary, var(--practice-text-body-lg));
  --practice-reading-caption: var(--account-practice-reading-caption, var(--practice-text-caption));
@@ -27,6 +30,8 @@
  --practice-reading-forms: var(--account-practice-reading-forms, var(--practice-text-lead));
  --practice-reading-prompt: var(--account-practice-reading-prompt, var(--practice-text-page));
  --practice-space-pair: calc(var(--account-spacing-pair, 4) * var(--account-spacing-scale, 1) * 1rem / 16);
+ --practice-space-article-pair: calc(var(--account-spacing-article-pair, 2) * var(--account-spacing-scale, 1) * 1rem / 16);
+ --practice-space-label: calc(var(--account-spacing-label, 4) * var(--account-spacing-scale, 1) * 1rem / 16);
  --practice-space-content: calc(var(--account-spacing-item, 12) * var(--account-spacing-scale, 1) * 1rem / 16);
  --practice-space-section: calc(var(--account-spacing-section, 20) * var(--account-spacing-scale, 1) * 1rem / 16);
  --practice-space-section-translated: calc(var(--account-spacing-translated, 24) * var(--account-spacing-scale, 1) * 1rem / 16);

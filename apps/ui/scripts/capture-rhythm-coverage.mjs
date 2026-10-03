@@ -1,7 +1,8 @@
 // Isolated visual fixtures; no auth, API calls, or progress writes.
 import { chromium } from "playwright";
 import fs from "node:fs";
-const out = "../../docs/design/565-article-rhythm";
+const out = process.env.RHYTHM_OUTPUT || "../../docs/design/565-article-rhythm";
+fs.mkdirSync(out, { recursive: true });
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const results = [];

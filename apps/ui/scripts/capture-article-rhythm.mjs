@@ -1,6 +1,7 @@
 import { chromium } from "playwright";
 import fs from "node:fs";
-const out = "../../docs/design/565-article-rhythm";
+const out = process.env.RHYTHM_OUTPUT || "../../docs/design/565-article-rhythm";
+fs.mkdirSync(out, { recursive: true });
 const b = await chromium.launch(),
   p = await b.newPage();
 const extra = process.env.RHYTHM_EXTRA === "1";
