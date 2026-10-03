@@ -17,3 +17,5 @@ Added prototypecontrols for3loadingstyles: shimmer/softpulse/movingline, allfade
 Owner selected softpulse+fade; set as default, with splitUpdate default. Added four relatedpanelicons: original, separatorless/thinner/muted, open top, separatorless withoutbuttonborder. Allretain36px hitarea andfullopacityfocus/hover. Compare in prototypecontrols inline, clickswaps listiconwithoutlosingscroll.
 
 More icon exploration: edit restored3horizontal lines+2verticalticks (previous mock accidentallyonly2lines). Selection choices now10:4panelvariations plusfolder/cards/enter/eye/lift/listselect. Inlinegrid5×2, dropdownsemanticlabels, controls scroll onsmallviewport. Browserverifiedall6newSVGchoices. No productionchanges.
+
+Owner refinement: all edit/selection glyphs16px (from18px), no buttonbackground/border includinghover/selected, mutedthemeforeground82%opacity.36pxhitareas preserved, hover fullopacity andkeyboardfocusoutline. Samples use samequietglyphstyle.
