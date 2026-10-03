@@ -214,7 +214,9 @@ export function useCommitTrainingPilotDraft({
         try {
           idiomSession = await startIdiomSession({
             userId,
-            direction: draft.modes.includes("definition-to-word") ? "reverse" : "direct",
+            direction: draft.modes.includes("definition-to-word")
+              ? draft.modes.includes("word-to-definition") ? "mixed" : "reverse"
+              : "direct",
             sessionSize: typeof draft.sessionSize === "number" ? draft.sessionSize : 10,
             requestId: startRequestRef.current.requestId,
             listId: scope.listId,
