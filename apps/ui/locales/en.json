@@ -301,6 +301,8 @@
       "history": "History"
     },
     "trainingOverview": {
+      "allCards": "All cards",
+      "earlyReview": "Review ahead",
       "wordInContext": "Translation",
       "contextDirection": "Example translation → word",
       "pausedSentenceLabel": "Sentence translation (paused)",

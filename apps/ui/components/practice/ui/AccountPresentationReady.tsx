@@ -2,6 +2,7 @@
 import React from "react";
 import { useAccountPracticeAppearance } from "./AccountPracticeAppearanceProvider";
 import { useAccountCardSpacing } from "./AccountCardSpacingProvider";
+import { StartupStatus } from "@/components/training/pilot/StartupStatus";
 import { StartupLogoScreen } from "@/components/training/pilot/StartupLogoScreen";
 import startup from "@/components/training/pilot/startupLogo.module.css";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -22,6 +23,7 @@ export function AccountPresentationReady({
   if (waiting.length) {
     const copy = getUiMessages(language).appearancePreferences;
     const failed = waiting.some((p) => p.loadStatus === "error");
+    if (!failed) return <StartupStatus language={language} />;
     return (
       <StartupLogoScreen>
         <div role={failed ? "alert" : "status"}>

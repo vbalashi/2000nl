@@ -66,6 +66,7 @@ const familyForDraft = (draft: Pick<TrainingSetupDraft, "family">): TrainingExer
   draft.family ?? "meaning";
 
 type Props = {
+  emptyTraining?:{trainingId:string;message:string;canReviewAhead?:boolean};
   userId?: string;
   trainingLanguageCode?: string;
   trainingLanguageOptions?: TrainingSetupOption[];
@@ -105,6 +106,7 @@ type Props = {
   onStart: (
     draft: TrainingSetupDraft,
     sessionName?: string,
+    options?:import("./useTrainingPilotController").TrainingStartOptions,
   ) => boolean | void | Promise<boolean | void>;
   onRetry: () => void;
 };
@@ -456,6 +458,7 @@ function ChoiceButton({
 
 export function TrainingTodaySetup({
   userId,
+  emptyTraining,
   trainingLanguageCode,
   trainingLanguageOptions: readableLanguageOptions = [{ value: "nl", label: "Nederlands" }],
   trainingLanguageLoading = false,
@@ -667,10 +670,10 @@ export function TrainingTodaySetup({
     return result === "saved";
   };
 
-  const requestStart = useCallback(async (nextDraft: TrainingSetupDraft, sessionName?: string) => {
+  const requestStart = useCallback(async (nextDraft: TrainingSetupDraft, sessionName?: string, options?:import("./useTrainingPilotController").TrainingStartOptions) => {
     if (isTrainingSetupPaused(nextDraft) || trainingLanguageLoading || pendingLanguage || startBlocked || !material.currentLanguageAllowed || !isTrainingSetupMaterialAvailable(nextDraft, lists, dictionaries)) return;
     if (nextDraft.family === "word-in-context" && translationTargetLanguageCode === null) return;
-    const started = await (sessionName ? onStart(nextDraft, sessionName) : onStart(nextDraft));
+    const started = await (options?onStart(nextDraft,sessionName,options):sessionName?onStart(nextDraft,sessionName):onStart(nextDraft));
     if (started === false) setScreen("today");
   }, [trainingLanguageLoading, pendingLanguage, startBlocked, material.currentLanguageAllowed, lists, dictionaries, translationTargetLanguageCode, onStart]);
 
@@ -686,7 +689,7 @@ export function TrainingTodaySetup({
     } else if (!isTrainingSetupMaterialAvailable(selected.draft,lists,dictionaries)) {
       setPresetMessage(t.materialUnavailable);
     } else if (isTrainingSetupDraftSupported(selected.draft,scenarios)) {
-      void requestStart(selected.draft, selected.name);
+      void requestStart(selected.draft, selected.name,{trainingId:selected.id});
     } else setPresetMessage(t.chooseGoal);
   }, [selectedIntent, userId, trainingLanguageCode, trainingLanguageLoading, scenarioLoading, pendingLanguage, account.status, account.snapshot.document.trainings, startBlocked, accountCopy.conflict, scenarios, lists, dictionaries, requestStart, t.chooseGoal, t.materialUnavailable]);
 
@@ -738,7 +741,7 @@ export function TrainingTodaySetup({
   }
 
   if (screen === "today" && trainingPresentationV1Enabled()) {
-    return <AccountTrainingOverview interfaceLanguage={interfaceLanguage} languageCode={trainingLanguageCode??"nl"}
+    return <AccountTrainingOverview ownerId={userId} emptyTraining={emptyTraining} onEarlyReview={training=>void requestStart({...training.draft,cardFilter:"review"},training.name,{trainingId:training.id,reviewTiming:"early"})} interfaceLanguage={interfaceLanguage} languageCode={trainingLanguageCode??"nl"}
       languageOptions={trainingLanguageOptions} lists={lists} dictionaries={dictionaries} scenarios={scenarios}
       snapshot={account.snapshot} accountStatus={account.status} initialDraft={initialDraft}
       ownedSession={hasOwnedSession?ownedSession:undefined} activeSessionLabel={activeSessionLabel}

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import { StartupStatus } from "./StartupStatus";
 import { StartupLogoScreen } from "./StartupLogoScreen";
 import { AppFrame } from "@/components/navigation/AppFrame";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -26,10 +27,9 @@ export function TrainingBootstrapShell(props: Props) {
   const inertNavigate = () => undefined;
 
   if (trainingPresentationV1Enabled()) return <div data-testid="training-bootstrap-shell">
-    <StartupLogoScreen>{props.status === "error"
-      ? <TrainingPilotStatePanel plain interfaceLanguage={interfaceLanguage} context="bootstrap" status="error" onRetry={props.onRetry} />
-      : <TrainingPilotStatePanel plain interfaceLanguage={interfaceLanguage} context="bootstrap" status={props.status ?? "loading"} copyVisible={interfaceLanguageReady} />}
-    </StartupLogoScreen>
+    {props.status === "error"
+      ? <StartupLogoScreen><TrainingPilotStatePanel plain interfaceLanguage={interfaceLanguage} context="bootstrap" status="error" onRetry={props.onRetry} /></StartupLogoScreen>
+      : <StartupStatus language={interfaceLanguage} copyVisible={interfaceLanguageReady} />}
   </div>;
 
   return (

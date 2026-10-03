@@ -587,10 +587,10 @@ test("approved overview launches the account main training rather than the curre
  accounts.set("overview-main",{revision:1,document:{schemaVersion:1,mainTrainingId:"main",trainings:[{id:"main",name:"My five words",languageCode:"nl",draft:savedDraft}]}});
  const onStart=vi.fn();
  render(<TrainingTodaySetup {...baseProps} userId="overview-main" trainingLanguageCode="nl" hasOwnedSession={false} onStart={onStart}/>);
- await screen.findByRole("heading",{name:"My five words"});
+ await screen.findByRole("heading",{name:"My five words",level:2});
  expect(screen.queryByText("Good morning")).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:"Start training"}));
- await waitFor(()=>expect(onStart).toHaveBeenCalledWith(savedDraft, "My five words"));
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(savedDraft, "My five words",{trainingId:"main"}));
 });
 
 test("approved overview waits for the saved language catalog before launching", async()=>{
@@ -600,13 +600,13 @@ test("approved overview waits for the saved language catalog before launching", 
  const onStart=vi.fn(),onTrainingLanguageChange=vi.fn();
  const props={...baseProps,userId:"multilingual",trainingLanguageCode:"nl",hasOwnedSession:false,onStart,onTrainingLanguageChange,trainingLanguageOptions:[{value:"nl",label:"Dutch"},{value:"en",label:"English"}]};
  const view=render(<TrainingTodaySetup {...props}/>);
- await screen.findByRole("heading",{name:"English words"});
+ await screen.findByRole("heading",{name:"English words",level:2});
  fireEvent.click(screen.getByRole("button",{name:"Start training"}));
  expect(onTrainingLanguageChange).toHaveBeenCalledWith("en");expect(onStart).not.toHaveBeenCalled();
  view.rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" trainingLanguageLoading lists={[]}/>);
  expect(onStart).not.toHaveBeenCalled();
  view.rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" lists={[{value:"english-list",label:"English source"}]}/>);
- await waitFor(()=>expect(onStart).toHaveBeenCalledWith(savedDraft, "English words"));
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(savedDraft, "English words",{trainingId:"english"}));
 });
 
 test("approved overview resumes an owned session independently of edited presets",async()=>{
@@ -633,8 +633,8 @@ test("approved builder stores a chosen name without repeating the configuration"
  await screen.findByText("Saved to your account");
  expect(accounts.get("named-overview")?.document.trainings[0].name).toBe("Five useful words");
  fireEvent.click(screen.getByRole("button",{name:"Back to Training"}));
- await screen.findByRole("heading",{name:"Five useful words"});
- fireEvent.click(screen.getByRole("button",{name:"Edit Five useful words"}));
+ await screen.findByRole("heading",{name:"Five useful words",level:2});
+ fireEvent.click(screen.getAllByRole("button",{name:"Edit Five useful words"})[0]);
  await screen.findByRole("button",{name:"Update training"});
  fireEvent.click(screen.getByRole("button",{name:"Update training"}));
  await waitFor(()=>expect(screen.getByLabelText("Training name")).toHaveValue("Five useful words"));
@@ -645,7 +645,7 @@ test("approved overview discloses unavailable dictionaries without losing saved 
  const savedDraft={...initialDraft,sessionSize:10,materialMode:"selected-dictionaries" as const,dictionaryIds:[dictionaryA,dictionaryLost]};
  accounts.set("partial-overview",{revision:1,document:{schemaVersion:1,mainTrainingId:"partial",trainings:[{id:"partial",name:"Partial source",languageCode:"nl",draft:savedDraft}]}});
  render(<TrainingTodaySetup {...baseProps} userId="partial-overview" trainingLanguageCode="nl" hasOwnedSession={false} dictionaries={[{value:dictionaryA,label:"Available source"}]}/>);
- await screen.findByRole("heading",{name:"Partial source"});
+ await screen.findByRole("heading",{name:"Partial source",level:2});
  expect(screen.getByRole("status")).toHaveTextContent("Some selected dictionaries are unavailable");
  expect(screen.getByRole("button",{name:"Start training"})).toBeEnabled();
  expect(accounts.get("partial-overview")?.document.trainings[0].draft.dictionaryIds).toEqual([dictionaryA,dictionaryLost]);
@@ -658,7 +658,7 @@ test("a queued language switch cannot launch a previous account's training",asyn
  const onStart=vi.fn(),onTrainingLanguageChange=vi.fn();
  const props={...baseProps,userId:"old-owner",trainingLanguageCode:"nl",hasOwnedSession:false,onStart,onTrainingLanguageChange,trainingLanguageOptions:[{value:"nl",label:"Dutch"},{value:"en",label:"English"}]};
  const view=render(<TrainingTodaySetup {...props}/>);
- await screen.findByRole("heading",{name:"Old owner's training"});
+ await screen.findByRole("heading",{name:"Old owner's training",level:2});
  fireEvent.click(screen.getByRole("button",{name:"Start training"}));
  view.rerender(<TrainingTodaySetup {...props} userId="new-owner" trainingLanguageCode="en" lists={[{value:"english-list",label:"English source"}]}/>);
  await screen.findByRole("button",{name:"Create training"});
@@ -782,7 +782,7 @@ test("a disabled dictionary is omitted from source choices without modifying the
   render(<AccountMaterialProvider userId="disabled-source" repository={repository}>
     <TrainingTodaySetup {...baseProps} userId="disabled-source" trainingLanguageCode="nl" hasOwnedSession={false} dictionaries={[{value:dictionaryA,label:"Dictionary A"},{value:dictionaryB,label:"Dictionary B"}]} onStart={onStart}/>
   </AccountMaterialProvider>);
-  await screen.findByText("Saved disabled source");
+  await screen.findByRole("heading",{name:"Saved disabled source",level:2});
   expect(screen.getByRole("button",{name:"Start training"})).toBeDisabled();
   fireEvent.click(screen.getByRole("button",{name:"Create training"}));
   fireEvent.click(screen.getByRole("button",{name:/^Source /}));
@@ -877,7 +877,7 @@ test("paused sentence recipe stays editable and never silently becomes a context
  render(<TrainingTodaySetup {...baseProps} onStart={onStart} userId="paused-sentence" trainingLanguageCode="nl" hasOwnedSession={false}
  scenarios={[...baseProps.scenarios,{value:"sentences",label:"Example sentences",modes:["word-to-definition"]}]} />);
  expect(await screen.findByRole("button",{name:"Start Old sentence practice"})).toBeDisabled();
- fireEvent.click(screen.getByRole("button",{name:"Edit Old sentence practice"}));
+ fireEvent.click(screen.getAllByRole("button",{name:"Edit Old sentence practice"})[0]);
  expect(screen.getByRole("button",{name:"Choose a training goal"})).toBeDisabled();
  fireEvent.click(screen.getByRole("button",{name:/^Exercises /}));
  expect(screen.getByText(/Sentence translation is paused/)).toBeInTheDocument();
@@ -900,7 +900,7 @@ test("contextual Translation saves and restores its exact reverse recipe after r
  const saved=structuredClone(accounts.get(props.userId)!.document.trainings[0]);
  expect(saved.draft).toMatchObject({family:"word-in-context",scenarioId:"understanding",modes:["definition-to-word"]});
  view.unmount();render(<TrainingTodaySetup {...props}/>);
- fireEvent.click(await screen.findByRole("button",{name:`Edit ${saved.name}`}));
+ fireEvent.click((await screen.findAllByRole("button",{name:`Edit ${saved.name}`}))[0]);
  fireEvent.click(screen.getByRole("button",{name:/^Exercises /}));
  expect(screen.getByRole("button",{name:"Translation"})).toHaveAttribute("aria-pressed","true");
  expect(screen.getByText("Example translation → word")).toBeInTheDocument();

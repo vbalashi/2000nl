@@ -51,7 +51,7 @@ export async function fetchPlatformV2IdiomExerciseCandidates(
 export type StartPlatformV2IdiomTrainingSessionInput = {
   userId: string;
   direction: PlatformIdiomExerciseSessionV2["direction"];
-  sessionSize: number;
+  sessionSize: number | "all-due-today";
   requestId: string;
   listId: string | null;
   listType: "curated" | "user";
