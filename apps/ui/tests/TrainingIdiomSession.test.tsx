@@ -583,3 +583,32 @@ for (const language of ["en", "nl", "ru"] as const) {
     expect(markPlatformV2IdiomTrainingSessionMemberUnavailable).not.toHaveBeenCalled();
   });
 }
+
+test('empty idiom plan uses shared terminal actions without suggesting another empty batch',async()=>{
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({status:'exhausted',completedActions:0,requestedTotal:5} as never);
+ const edit=vi.fn(),home=vi.fn(),restart=vi.fn();
+ render(<TrainingIdiomSession userId="user-1" session={{...session,requestedTotal:5,plannedNew:0,plannedReview:0,plannedTotal:0}} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={home} onEdit={edit} onRestart={restart}/>);
+ expect(await screen.findByText('No cards available for this training right now')).toBeVisible();
+ expect(screen.getByTestId('training-completion')).toBeInTheDocument();
+ expect(screen.queryByText('Session complete')).toBeNull();expect(screen.queryByRole('button',{name:'Another 10 cards'})).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Modify training'}));fireEvent.click(screen.getByRole('button',{name:'Back to home'}));expect(edit).toHaveBeenCalledOnce();expect(home).toHaveBeenCalledOnce();expect(restart).not.toHaveBeenCalled();
+});
+test('partially consumed idiom plan exhausted by unavailable remaining members shows honest completion count',async()=>{
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({status:'exhausted',completedActions:2,requestedTotal:5} as never);
+ render(<TrainingIdiomSession userId="user-1" session={{...session,requestedTotal:5,plannedTotal:3,completedActions:2}} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} onEdit={vi.fn()} onRestart={vi.fn()}/>);
+ expect(await screen.findByText('Session complete')).toBeVisible();expect(screen.getByText('2 cards')).toBeVisible();expect(screen.queryByText('No cards available for this training right now')).toBeNull();
+});
+test('review-only three completed then zero plan explains due availability without silently including new idioms',async()=>{
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({status:'exhausted',completedActions:3,requestedTotal:5} as never);
+ const view=(id:string,planned:number,completed:number)=><TrainingIdiomSession key={id} userId="user-1" session={{...session,sessionId:id,requestedTotal:5,plannedTotal:planned,plannedNew:0,plannedReview:planned,completedActions:completed}} cardFilter="review" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} onEdit={vi.fn()} onRestart={vi.fn()}/>;
+ const {rerender}=render(view('review-three',3,3));expect(await screen.findByText('3 cards')).toBeVisible();
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({status:'exhausted',completedActions:0,requestedTotal:5} as never);
+ rerender(view('review-zero',0,0));expect(await screen.findByText('No idioms are due now. Include new cards in training settings to start learning more.')).toBeVisible();
+ expect(screen.queryByRole('button',{name:'Another 10 cards'})).toBeNull();expect(screen.queryByText('0 cards')).toBeNull();expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
+});
+
+test('unavailable planned review members use generic empty copy rather than falsely asserting no idioms due',async()=>{
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({status:'exhausted',completedActions:0,requestedTotal:5} as never);
+ render(<TrainingIdiomSession userId="user-1" session={{...session,plannedTotal:3,plannedReview:3,plannedNew:0}} cardFilter="review" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} onEdit={vi.fn()}/>);
+ expect(await screen.findByText('No cards available for this training right now')).toBeVisible();expect(screen.queryByText(/No idioms are due now/)).toBeNull();
+});
