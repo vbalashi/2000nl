@@ -97,3 +97,17 @@ test("invalid filtered counts fail closed; DB filter errors remain 400",async()=
  vi.mocked(c.service.supabase.rpc).mockResolvedValue({data:{error:"invalid_library_filters"},error:null} as never);
  expect(await performPlatformV2Lookup(c,request,{dictionaryIds:null,filters:{parts:[],article:null}})).toMatchObject({status:400,payload:{error:"invalid_library_filters"}});
 });
+
+
+test("only classified Library database cancellations become retryable without leaking SQL", async () => {
+  const c = context();
+  for (const [code, status] of [["57014",503],["42501",500],["XX000",500]] as const) {
+    vi.mocked(c.service.supabase.rpc).mockResolvedValue({data:null,error:{code,message:"private SQL and principal details"}} as never);
+    const result=await performPlatformV2Lookup(c,request,{dictionaryIds:null,filters:{parts:[],article:null}});
+    expect(result.status).toBe(status);
+    expect(result.payload).toEqual({error:code==="57014"?"library_search_timeout":"lookup_failed"});
+    expect(result.serverTiming).toMatch(/lookup.db;dur=/);
+  }
+  vi.mocked(c.service.supabase.rpc).mockResolvedValue({data:null,error:{code:"57014"}} as never);
+  expect((await performPlatformV2Lookup(c,request)).status).toBe(500);
+});
