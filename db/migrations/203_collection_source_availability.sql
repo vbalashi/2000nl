@@ -50,6 +50,54 @@ BEGIN
         END IF;
     END LOOP;
 
+    -- The newer bounded Library browse RPC has its own eligibility CTE and
+    -- predates can_access_dictionary(). Preserve its scope/ranking filters,
+    -- but route its authenticated branch through the same browse policy.
+    signature := 'private.lookup_platform_v2_library_browse_entries_v1(uuid,boolean,text,text,text,integer,integer,jsonb)';
+    IF to_regprocedure(signature) IS NULL THEN
+        RAISE EXCEPTION 'expected Library browse RPC missing: %', signature;
+    END IF;
+    definition := pg_get_functiondef(to_regprocedure(signature));
+    IF strpos(definition, 'eligible_dictionaries AS MATERIALIZED (') = 0
+       OR strpos(definition, '-- Empty browse has one headword tier.') = 0 THEN
+        RAISE EXCEPTION 'Library browse eligibility anchor missing';
+    END IF;
+    IF strpos(definition, 'public.can_browse_dictionary(p_user_id, dictionary.id)') = 0 THEN
+        definition := overlay(
+            definition placing
+            $$eligible_dictionaries AS MATERIALIZED (
+        SELECT
+            dictionary.*,
+            CASE
+                WHEN NOT p_catalog
+                     AND dictionary.kind = 'user'
+                     AND dictionary.owner_user_id = p_user_id THEN 0
+                WHEN dictionary.kind = 'curated' THEN 1
+                ELSE 2
+            END AS dictionary_rank
+        FROM public.dictionaries AS dictionary
+        WHERE private.training_material_entry_selected_v1(
+            dictionary.language_code,
+            CASE WHEN dictionary.kind = 'user' THEN NULL ELSE dictionary.id END,
+            p_library_selection)
+          AND (p_library_selection->'dictionaryIds' = 'null'::jsonb
+               OR (p_library_selection->'dictionaryIds') ? dictionary.id::text)
+          AND (
+            (p_catalog AND dictionary.publication_state = 'general'
+             AND dictionary.kind <> 'user')
+            OR (NOT p_catalog
+                AND public.can_browse_dictionary(p_user_id, dictionary.id))
+          )
+    ),
+    -- Empty browse has one headword tier.$$
+            from strpos(definition, 'eligible_dictionaries AS MATERIALIZED (')
+            for strpos(definition, '-- Empty browse has one headword tier.')
+                + length('-- Empty browse has one headword tier.')
+                - strpos(definition, 'eligible_dictionaries AS MATERIALIZED (')
+        );
+        EXECUTE definition;
+    END IF;
+
     signature := 'private.resolve_dictionary_lookup_candidates_v2(uuid,text,text,uuid[],integer)';
     IF to_regprocedure(signature) IS NOT NULL THEN
         definition := pg_get_functiondef(to_regprocedure(signature));

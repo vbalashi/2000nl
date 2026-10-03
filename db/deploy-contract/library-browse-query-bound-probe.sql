@@ -8,7 +8,8 @@ BEGIN
   RAISE EXCEPTION 'Bounded Library helper exposed'; END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid=fn AND prosecdef AND provolatile='s') THEN
   RAISE EXCEPTION 'Bounded Library helper security/read contract'; END IF;
- IF strpos(definition,'source_identities AS MATERIALIZED')=0 OR strpos(definition,'dictionary_entitlements')=0
+ IF strpos(definition,'source_identities AS MATERIALIZED')=0
+  OR strpos(definition,'public.can_browse_dictionary(p_user_id, dictionary.id)')=0
   OR strpos(definition,'SELECT count(*)::integer FROM candidate_groups')=0 OR strpos(definition,'presentation_identity_incomplete')=0
   OR strpos(definition,'JOIN public.word_entries filter_entry')=0 OR strpos(definition,'browse_query_required')=0 THEN
   RAISE EXCEPTION 'Bounded Library query contract'; END IF;
