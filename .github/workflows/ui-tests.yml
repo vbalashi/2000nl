@@ -86,6 +86,15 @@ jobs:
         run: npm run test:e2e
         working-directory: apps/ui
 
+      - name: Upload Playwright failure diagnostics
+        if: failure() && hashFiles('apps/ui/test-results/**') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure-diagnostics
+          path: apps/ui/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Verify completed and paused training sessions
         run: npm run test:e2e:training-reliability
         working-directory: apps/ui

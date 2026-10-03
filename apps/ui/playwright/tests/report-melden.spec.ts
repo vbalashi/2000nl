@@ -4,6 +4,40 @@ import {
   installSupabaseSession,
 } from "../utils/supabaseTestSession";
 
+// Record interception evidence without changing the click or its assertions.
+const pageErrors = new WeakMap<Page, string[]>();
+test.beforeEach(async ({ page }) => {
+  const errors: string[] = [];
+  pageErrors.set(page, errors);
+  page.on("pageerror", (error) => errors.push(error.stack ?? error.message));
+});
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status === testInfo.expectedStatus) return;
+  const overlay = await page.evaluate(() => {
+    const portals = Array.from(document.querySelectorAll("nextjs-portal")).map((portal) => {
+      const root = portal.shadowRoot;
+      const content = root?.cloneNode(true) as DocumentFragment | undefined;
+      content?.querySelectorAll("style, script").forEach((node) => node.remove());
+      return {
+        text: content?.textContent?.trim().slice(0, 12000),
+        buttons: Array.from(root?.querySelectorAll("button") ?? []).map((button) => ({
+          text: button.textContent,
+          label: button.getAttribute("aria-label"),
+          rect: button.getBoundingClientRect().toJSON(),
+        })),
+      };
+    });
+    const back = Array.from(document.querySelectorAll("button")).find((button) => button.textContent?.trim() === "Terug");
+    const rect = back?.getBoundingClientRect();
+    const hit = rect ? document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) : null;
+    return { portals, backRect: rect?.toJSON(), hit: hit?.outerHTML.slice(0, 2000) };
+  }).catch((error: unknown) => ({ diagnosticError: String(error) }));
+  await testInfo.attach("report-overlay-diagnostics", {
+    body: JSON.stringify({ pageErrors: pageErrors.get(page) ?? [], overlay }, null, 2),
+    contentType: "application/json",
+  });
+});
+
 const testUser = {
   id: "99999999-9999-4999-8999-999999999999",
   email: "report-qa@2000nl.test",
