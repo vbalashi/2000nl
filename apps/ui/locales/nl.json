@@ -301,6 +301,8 @@
       "history": "Geschiedenis"
     },
     "trainingOverview": {
+      "allCards": "Alle kaarten",
+      "earlyReview": "Eerder herhalen",
       "wordInContext": "Vertaling",
       "contextDirection": "Vertaling van voorbeeld → woord",
       "pausedSentenceLabel": "Zinnen vertalen (gepauzeerd)",

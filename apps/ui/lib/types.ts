@@ -17,6 +17,8 @@ export type TrainingDateWindow = "all" | "today" | "yesterday" | "daysAgo";
 
 export type TrainingFocusFilter = {
   dateWindow: TrainingDateWindow;
+  /** Explicit session-only review selection; never a saved recipe preference. */
+  reviewTiming?: "early";
   /** Ordinary reverse queue, presented through a translated source example. */
   presentationMode?: "word-in-context";
   daysAgo?: number;

@@ -4,7 +4,10 @@ BEGIN
   SELECT pg_get_functiondef('private.start_platform_v2_idiom_training_session_v2(uuid,text,text,uuid,uuid,text,text,jsonb,integer)'::regprocedure) INTO body;
   IF strpos(body, '''direct'', ''reverse'', ''mixed''') = 0
      OR strpos(body, 'ARRAY[''idiom:direct'',''idiom:reverse'']') = 0
-     OR strpos(body, 'ORDER BY candidate.position, selected.direction_order') = 0
+     OR (strpos(body, 'ORDER BY candidate.position, selected.direction_order') = 0
+         AND NOT (strpos(body, 'ORDER BY CASE WHEN private.training_review_early_v1(v_filter,p_card_filter)') > 0
+           AND strpos(body, 'candidate.position, selected.direction_order') > 0
+           AND strpos(body, '{state,nextReviewAt}') > 0))
      OR strpos(body, 'resolve_training_material_selection_v1') = 0
      OR strpos(body, 'idiom_training_session_start_idempotency_conflict') = 0
      OR strpos(body, 'auth.uid()') = 0 THEN

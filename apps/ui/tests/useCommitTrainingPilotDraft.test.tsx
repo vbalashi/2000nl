@@ -299,3 +299,21 @@ test("paused sentence start rejects before changing scope or creating a session"
   expect(startTranslationSession).not.toHaveBeenCalled();
   expect(updateActiveTrainingScope).not.toHaveBeenCalled();
 });
+
+test('zero-card plan reports empty availability without accepting a session or loading a card',async()=>{
+ updateActiveTrainingScope.mockResolvedValue({error:null});
+ startTrainingSession.mockResolvedValue({sessionId:'empty',runStatus:'active',plannedTotal:0});
+ const onEmptyPlan=vi.fn(),onSessionReady=vi.fn(),onPlanReady=vi.fn(),loadWord=vi.fn();
+ const {result}=renderHook(()=>useCommitTrainingPilotDraft({userId:'u',languageCode:'nl',resolveList:()=>null,applyListLocally:vi.fn(),applyPreferences:vi.fn(),applyFocusFilter:vi.fn(),resetQueue:vi.fn(),loadStats:vi.fn(),loadWord,reportError:vi.fn(),onEmptyPlan,onSessionReady,onPlanReady}));
+ const selected={...draft,materialMode:'all-dictionaries' as const,cardFilter:'review' as const};
+ await act(async()=>{expect(await result.current(selected,'Translation',{trainingId:'saved'})).toBe(false);});
+ expect(onEmptyPlan).toHaveBeenCalledWith(selected,{trainingId:'saved'});expect(onSessionReady).not.toHaveBeenCalled();expect(onPlanReady).not.toHaveBeenCalled();expect(loadWord).not.toHaveBeenCalled();
+});
+test('early review passes explicit timing through the planner without changing saved settings',async()=>{
+ updateActiveTrainingScope.mockResolvedValue({error:null});startTrainingSession.mockResolvedValue({sessionId:'early',runStatus:'active',plannedTotal:1});
+ const {result}=renderHook(()=>useCommitTrainingPilotDraft({userId:'u',languageCode:'nl',resolveList:()=>null,applyListLocally:vi.fn(),applyPreferences:vi.fn(),applyFocusFilter:vi.fn(),resetQueue:vi.fn(),loadStats:vi.fn(),loadWord:vi.fn().mockResolvedValue('loaded'),reportError:vi.fn()}));
+ const selected={...draft,materialMode:'all-dictionaries' as const,cardFilter:'review' as const};
+ await act(async()=>{await result.current(selected,'Words',{reviewTiming:'early'});});
+ expect(startTrainingSession).toHaveBeenLastCalledWith('u',selected.modes,expect.objectContaining({cardFilter:'review',trainingFilter:expect.objectContaining({reviewTiming:'early'})}),expect.any(String));
+ expect(selected).not.toHaveProperty('reviewTiming');
+});

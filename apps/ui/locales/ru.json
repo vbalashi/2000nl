@@ -301,6 +301,8 @@
       "history": "История"
     },
     "trainingOverview": {
+      "allCards": "Все карточки",
+      "earlyReview": "Повторить раньше срока",
       "wordInContext": "Перевод",
       "contextDirection": "Перевод примера → слово",
       "pausedSentenceLabel": "Перевод предложений (на паузе)",

@@ -937,6 +937,7 @@ function normalizeTrainingFocusFilter(
   const article = singleNounArticle(filter.nounArticles ?? []);
   return {
     dateWindow: filter.dateWindow,
+    ...(filter.reviewTiming === "early" ? { reviewTiming: "early" as const } : {}),
     ...(filter.presentationMode === "word-in-context"
       ? { presentationMode: "word-in-context" as const }
       : {}),

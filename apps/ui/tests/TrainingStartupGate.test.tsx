@@ -15,11 +15,13 @@ test("startup readers stay mounted while the neutral surface covers intermediate
   expect(screen.queryByTestId("startup-logo-screen")).toBeNull();
   expect(mounted).toHaveBeenCalledOnce(); expect(unmounted).not.toHaveBeenCalled();
 });
-test("long-running startup remains announced without concealing a settled error", () => {
+test("long-running startup keeps stable copy without concealing a settled error", () => {
   vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true"); vi.useFakeTimers();
   const {rerender} = render(<TrainingStartupGate pending interfaceLanguage="en"><div role="alert">Could not load</div></TrainingStartupGate>);
+  const before = screen.getByRole("status").innerHTML;
   act(() => vi.advanceTimersByTime(8000));
-  expect(screen.getByRole("status")).toHaveTextContent("Still preparing your training");
+  expect(screen.getByRole("status").innerHTML).toBe(before);
+  expect(screen.getByRole("status")).toHaveTextContent("Preparing training");
   rerender(<TrainingStartupGate pending={false} interfaceLanguage="en"><div role="alert">Could not load</div></TrainingStartupGate>);
   expect(screen.getByRole("alert")).toBeVisible();
 });

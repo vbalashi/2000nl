@@ -39,6 +39,8 @@ import {
   type LoadNextTrainingTurnResult,
 } from "@/lib/training/trainingSelectionOutcome";
 
+export type TrainingStartOptions = {trainingId?:string;reviewTiming?:"early"};
+
 type TrainingScope = {
   listId: string | null;
   listType: WordListType | null;
@@ -77,6 +79,7 @@ type CommitPilotDraftParams = {
   startTranslationSession?: typeof startPlatformV2TranslationTrainingSession;
   reportError: (error: string | null) => void;
   onPlanReady?: (plan: TrainingSessionPlan) => void;
+  onEmptyPlan?: (draft:TrainingSetupDraft,options?:TrainingStartOptions)=>void;
   onSessionReady?: (
     session: TrainingPilotSession,
     context: TrainingSessionStartContext,
@@ -98,7 +101,7 @@ type PilotControllerParams = {
   listOptions: TrainingSetupOption[];
   dictionaryOptions: TrainingSetupOption[];
   sourceOptions: TrainingSetupOption[];
-  onCommitDraft: (draft: TrainingSetupDraft, sessionName?: string) => Promise<boolean>;
+  onCommitDraft: (draft: TrainingSetupDraft, sessionName?: string, options?:TrainingStartOptions) => Promise<boolean>;
   onRetry: () => Promise<unknown> | void;
   initialTransitionId?: string;
   loadTrainingScenarios?: () => Promise<TrainingScenario[]>;
@@ -124,12 +127,13 @@ export function useCommitTrainingPilotDraft({
   reportError,
   onPlanReady,
   onSessionReady,
+  onEmptyPlan,
 }: CommitPilotDraftParams) {
   const startRequestRef = useRef<{ key: string; requestId: string } | null>(
     null,
   );
   return useCallback(
-    async (draft: TrainingSetupDraft, sessionName?: string) => {
+    async (draft: TrainingSetupDraft, sessionName?: string, options?:TrainingStartOptions) => {
       if (!userId) return false;
       if (isTrainingSetupPaused(draft)) {
         reportError("training_sentences_unavailable");
@@ -155,6 +159,7 @@ export function useCommitTrainingPilotDraft({
             ? { mode: "selected", languageCode, dictionaryIds: draft.dictionaryIds ?? [] }
             : undefined;
       const focusFilter: TrainingFocusFilter = {
+        ...(options?.reviewTiming ? {reviewTiming:options.reviewTiming} : {}),
         dateWindow: draft.dateWindow,
         ...(draft.dateWindow === "daysAgo"
           ? { daysAgo: draft.daysAgo ?? 7 }
@@ -217,7 +222,7 @@ export function useCommitTrainingPilotDraft({
             direction: draft.modes.includes("definition-to-word")
               ? draft.modes.includes("word-to-definition") ? "mixed" : "reverse"
               : "direct",
-            sessionSize: typeof draft.sessionSize === "number" ? draft.sessionSize : 10,
+            sessionSize: typeof draft.sessionSize === "number" ? draft.sessionSize : options?.reviewTiming === "early" && draft.sessionSize === "all-due-today" ? "all-due-today" : 10,
             requestId: startRequestRef.current.requestId,
             listId: scope.listId,
             listType: scope.listType ?? "curated",
@@ -234,6 +239,7 @@ export function useCommitTrainingPilotDraft({
           return false;
         }
         startRequestRef.current = null;
+        if(idiomSession.plannedTotal===0){reportError(null);onEmptyPlan?.(draft,options);return false;}
         onSessionReady?.(idiomSession, {
           sessionName,
           languageCode,
@@ -279,6 +285,7 @@ export function useCommitTrainingPilotDraft({
           return false;
         }
         startRequestRef.current = null;
+        if(translationSession.plannedTotal===0){reportError(null);onEmptyPlan?.(draft,options);return false;}
         onSessionReady?.(translationSession, { sessionName, languageCode, scope, draft, focusFilter });
         onPlanReady?.({ requestedTotal: translationSession.requestedTotal, plannedNew: translationSession.plannedNew, plannedReview: translationSession.plannedReview, plannedPractice: 0, plannedTotal: translationSession.plannedTotal, plannedAt: translationSession.plannedAt });
         reportError(null);
@@ -318,6 +325,7 @@ export function useCommitTrainingPilotDraft({
         return false;
       }
       startRequestRef.current = null;
+      if(session.plannedTotal===0){reportError(null);onEmptyPlan?.(draft,options);return false;}
       onSessionReady?.(session, {
         sessionName,
         languageCode,
@@ -353,6 +361,7 @@ export function useCommitTrainingPilotDraft({
       loadWord,
       onPlanReady,
       onSessionReady,
+      onEmptyPlan,
       reportError,
       resetQueue,
       resolveList,
@@ -484,7 +493,7 @@ export function useTrainingPilotController({
   }, [interfaceLanguage, scenarios, scenariosResolved, translationTargetLanguageCode]);
 
   const startSession = useCallback(
-    async (draft: TrainingSetupDraft, sessionName?: string) => {
+    async (draft: TrainingSetupDraft, sessionName?: string, options?:TrainingStartOptions) => {
       const scenarioSupported = isTrainingSetupDraftSupported(
         draft,
         scenarioOptions,
@@ -495,7 +504,7 @@ export function useTrainingPilotController({
       startPendingRef.current = true;
       setStartPending(true);
       try {
-        const committed = await onCommitDraft(draft, sessionName);
+        const committed = await onCommitDraft(draft, sessionName, options);
         if (committed) {
           setExerciseFamily(draft.family ?? "meaning");
           setSessionGeneration((generation) => generation + 1);

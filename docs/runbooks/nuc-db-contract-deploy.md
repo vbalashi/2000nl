@@ -712,3 +712,15 @@ statistics cover the saved pair of directions. `mixed-idiom-probe.sql` pins this
 contract plus material resolution, exclusion and privilege guards. Integrate the
 exact migration checksum only after coordinated migrations 196 and 197; the
 isolated #529 branch does not itself advance the rollout manifest.
+
+## Explicit early reviews (migration207)
+
+The transient session filter `reviewTiming: early` requires review-only policy.
+It expands only the due-date boundary of already answered FSRS-enabled targets,
+preserving access, material, direction, source and exclusion checks. Ordinary
+Review remains unchanged; existing FSRS actions use actual answer time. Shared
+mixed-idiom probes accept the original direction interleaving or the explicit
+early nearest-due branch, and postflight207 pins that branch and private grants.
+Both complete probe chains must pass before deployment. Saved recipes do not
+persist this transient flag. This does not add external Library remainder replan
+to idiom sessions; the existing ordinary-only replan boundary remains.

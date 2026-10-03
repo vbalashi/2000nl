@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { StartupStatus } from "@/components/training/pilot/StartupStatus";
 import { StartupLogoScreen } from "@/components/training/pilot/StartupLogoScreen";
 import startup from "@/components/training/pilot/startupLogo.module.css";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -92,6 +93,7 @@ function AccountAppearanceSession({
     }
   };
   if (requireReady && loadStatus !== "ready") {
+    if (loadStatus !== "error") return <StartupStatus language={interfaceLanguage} />;
     const copy = getUiMessages(interfaceLanguage).appearancePreferences;
     return <StartupLogoScreen><div role={loadStatus === "error" ? "alert" : "status"}>
       <p>{loadStatus === "error" ? copy.loadError : copy.loading}</p>

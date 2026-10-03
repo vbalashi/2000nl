@@ -141,6 +141,23 @@ async function holdSessionRefresh(
       });
     },
   );
+  if (approved) await page.addInitScript(() => {
+    const samples: {text:string; logoTop:number; statusTop:number; background:string}[] = [];
+    Object.assign(window, {startupRhythmSamples:samples});
+    const sample = () => {
+      for (const surface of document.querySelectorAll('[data-testid="startup-logo-screen"]')) {
+        if (getComputedStyle(surface).visibility === "hidden") continue;
+        const logo = surface.querySelector('[aria-label="2000nl"]');
+        const heading = surface.querySelector('h1');
+        if (logo && heading && getComputedStyle(heading).visibility !== "hidden") {
+          samples.push({text:heading.textContent ?? "", logoTop:logo.getBoundingClientRect().top,
+            statusTop:heading.getBoundingClientRect().top, background:getComputedStyle(surface).backgroundColor});
+        }
+      }
+      if (samples.length < 2000) requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  });
   await installSupabaseSession(page, expiredSession);
   await page.addInitScript((savedLanguage) => {
     window.localStorage.setItem("onboarding_language", savedLanguage);
@@ -232,6 +249,14 @@ for (const profile of profiles) {
     expect(destinationHeaderBox).not.toBeNull();
     expect(destinationBox!.width).toBe(shellBox!.width);
     expect(destinationBox!.height).toBe(shellBox!.height);
+    if (approved) {
+      const samples = await page.evaluate(() => (window as unknown as {startupRhythmSamples:{text:string;logoTop:number;statusTop:number;background:string}[]}).startupRhythmSamples);
+      expect(samples.length).toBeGreaterThan(0);
+      expect(new Set(samples.map(s=>s.text))).toEqual(new Set([bootstrapHeading[profile.language]]));
+      expect(Math.max(...samples.map(s=>s.logoTop))-Math.min(...samples.map(s=>s.logoTop))).toBeLessThanOrEqual(1);
+      expect(Math.max(...samples.map(s=>s.statusTop))-Math.min(...samples.map(s=>s.statusTop))).toBeLessThanOrEqual(1);
+      expect(new Set(samples.map(s=>s.background)).size).toBe(1);
+    }
     // Approved startup deliberately shows a logo without navigation chrome.
     if (!approved) {
       expect(destinationHeaderBox!.width).toBe(bootstrapHeaderBox!.width);
