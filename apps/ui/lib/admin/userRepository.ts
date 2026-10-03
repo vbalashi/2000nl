@@ -33,7 +33,7 @@ export async function listAdminUsers(query: AdminUserRegistryQuery): Promise<Adm
     query: query.query,
     userId: null,
     page: query.page,
-    pageSize: query.pageSize + 1,
+    pageSize: query.pageSize,
   });
   const items = rows.slice(0, query.pageSize);
   return {

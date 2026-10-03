@@ -25,8 +25,8 @@ normalized email.
 | Personal lists | `user_word_lists` rows for the account | `0` when none exist |
 | Entry links in those lists | `user_word_list_items` rows joined through the account's lists | `0` when none exist; counts links, so the same word in two lists counts twice |
 
-Search does not filter by plan or payment. Pagination requests one extra row to
-determine `hasNext`; it does not calculate a total account count. Search text
+Search does not filter by plan or payment. The RPC takes the visible page size and returns one extra row to
+determine `hasNext`; OFFSET uses only the visible page size. It does not calculate a total account count. Search text
 is never placed in admin audit events.
 
 ## Access and audit

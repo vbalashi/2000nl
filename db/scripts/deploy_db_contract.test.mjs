@@ -454,7 +454,7 @@ test("the repository contract enables the reviewed admin registry rollout", () =
   assert.equal(result.status, 0, result.stderr);
   assert.equal(
     result.stdout.trim(),
-    "enabled 204 407",
+    "enabled 205 407",
   );
 });
 

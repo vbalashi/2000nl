@@ -65,7 +65,7 @@ describeIfDb("admin user registry database projection", () => {
       const { rows } = await client.query(
         `select user_id, email, created_at, last_sign_in_at,
                 personal_list_count, personal_entry_link_count
-           from public.admin_user_registry_page($1, null, 1, 26)`,
+           from public.admin_user_registry_page($1, null, 1, 25)`,
         ["needle-"],
       );
       expect(rows).toHaveLength(1);
@@ -88,6 +88,40 @@ describeIfDb("admin user registry database projection", () => {
       );
       expect(excludedOperator).toEqual([]);
       expect(excludedAllowlist).toEqual([]);
+    });
+  });
+
+  test("returns every learner exactly once across pages, with one lookahead row", async () => {
+    await withTransaction(pool, async (client) => {
+      const prefix = `pagination-${randomUUID()}`;
+      const ids = Array.from({ length: 57 }, () => randomUUID()).sort();
+      for (const id of ids) {
+        await ensureUserWithSettings(client, id);
+        await client.query(
+          `update auth.users set email = $2, created_at = '2026-10-01T00:00:00Z' where id = $1`,
+          [id, `${prefix}-${id}@example.test`],
+        );
+      }
+      const visible: string[] = [];
+      for (let page = 1; page <= 3; page++) {
+        const { rows } = await client.query(
+          `select user_id from public.admin_user_registry_page($1, null, $2, 25)`,
+          [prefix, page],
+        );
+        expect(rows.length).toBe(page < 3 ? 26 : 7);
+        expect(rows.map(row => row.user_id)).toEqual(ids.slice((page - 1) * 25, (page - 1) * 25 + 26));
+        visible.push(...rows.slice(0, 25).map(row => row.user_id));
+      }
+      expect(visible).toEqual(ids);
+      const { rows: empty } = await client.query(
+        `select user_id from public.admin_user_registry_page($1, null, 4, 25)`, [prefix],
+      );
+      expect(empty).toEqual([]);
+      // An exact full page must not advertise a next page.
+      const { rows: exact } = await client.query(
+        `select user_id from public.admin_user_registry_page($1, null, 1, 57)`, [prefix],
+      );
+      expect(exact).toHaveLength(57);
     });
   });
 

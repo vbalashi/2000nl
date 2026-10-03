@@ -555,3 +555,4 @@
 \i db/migrations/202_publication_access_current_rpc_patch.sql
 \i db/migrations/203_collection_source_availability.sql
 \i db/migrations/204_admin_user_registry.sql
+\i db/migrations/205_admin_user_registry_pagination.sql

@@ -6,5 +6,5 @@ export const metadata = { title: "Профиль пользователя · 200
 
 export default async function AdminUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <><style>{"nextjs-portal { display: none !important; }"}</style><AdminUsersConsole userId={id} /></>;
+  return <AdminUsersConsole userId={id} />;
 }
