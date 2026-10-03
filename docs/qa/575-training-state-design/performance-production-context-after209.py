@@ -44,7 +44,7 @@ try:
  # If no answered idiom state exists, safely fall back to ordinary principal.
  idiom_owner = "select coalesce((select s.user_id from user_training_exercise_state s join private.platform_v2_training_exercise_targets t on t.id=s.target_id where t.family='idiom' and (s.fsrs_reps>0 or s.last_reviewed_at is not null) group by s.user_id order by count(*) desc limit 1),(select user_id from user_card_status where fsrs_reps>0 or last_reviewed_at is not null group by user_id order by count(*) desc limit 1)) as owner \\gset\n"
  auth = "select set_config('request.jwt.claim.sub',:'owner',true) as ignored \\gset\n"
- results={'deployedCommit':health['commit'],'dbContract':209,'samples':[]}
+ results={'capturedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'deployedCommit':health['commit'],'dbContract':209,'samples':[]}
  selector=ordinary_owner+auth
  results['historyFacts']=json.loads(run(header+selector+"select jsonb_build_object('answeredOrdinaryStates',(select count(*) from user_card_status where user_id=:'owner' and (fsrs_reps>0 or last_reviewed_at is not null)),'answeredReverseStates',(select count(*) from user_card_status where user_id=:'owner' and card_type_id='definition-to-word' and (fsrs_reps>0 or last_reviewed_at is not null)));rollback;"))
  scope="'{\"dateWindow\":\"all\",\"presentationMode\":\"word-in-context\"}'::jsonb"
