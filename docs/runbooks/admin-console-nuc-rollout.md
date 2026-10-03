@@ -79,6 +79,14 @@ operator. Existing learner settings and progress remain intact. Verify that a
 learner-only session cannot access the admin API, even for the same Auth user,
 and that sign-out in either surface preserves the other surface’s session.
 
+Dictionary content inspection is a separate, opt-in permission:
+`dictionary.content.read`. Do not add it to routine operator grants. It enables
+an explicit, paginated read of entries—including personal dictionaries—and
+each requested page is recorded as `dictionary.content.read` in the admin
+journal. Grant it only to operators who need to inspect source content, and
+remove it when that need ends. Metadata access alone never loads dictionary
+entries.
+
 For urgent access removal, set `is_active = false` and revoke remaining rows
 in `admin_operator_sessions` for that Auth user ID. Protected requests enforce
 this immediately. To restore access, confirm the identity and minimum

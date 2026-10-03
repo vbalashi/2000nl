@@ -5,6 +5,7 @@ export const ADMIN_AUDIT_ACTIONS = [
   "access.denied",
   "dictionary.registry.read",
   "dictionary.metadata.read",
+  "dictionary.content.read",
   "dictionary.publication.updated",
   "dictionary.audience.updated",
   "audit.journal.read",

@@ -55,6 +55,12 @@ describeIfDb("dictionary publication access boundary", () => {
       await client.query(`select replace_dictionary_audience($1, $2::text[], $3::uuid[])`, [dictionaryId, ["trusted"], []]);
       await client.query(`update dictionaries set publication_state = 'restricted' where id = $1`, [dictionaryId]);
       expect((await client.query(`select can_access_dictionary($1, $2, 'read') as allowed`, [ordinaryId, dictionaryId])).rows[0].allowed).toBe(false);
+      await client.query(
+        `insert into dictionary_entitlements (dictionary_id, subject_type, subject_key, permission)
+         values ($1, 'tier', 'premium', 'read')`,
+        [dictionaryId],
+      );
+      expect((await client.query(`select can_access_dictionary($1, $2, 'read') as allowed`, [premiumId, dictionaryId])).rows[0].allowed).toBe(false);
       expect((await client.query(`select can_browse_dictionary($1, $2) as allowed`, [premiumId, dictionaryId])).rows[0].allowed).toBe(false);
 
       await client.query(`select replace_dictionary_audience($1, $2::text[], $3::uuid[])`, [dictionaryId, [], [trustedId]]);
@@ -83,6 +89,41 @@ describeIfDb("dictionary publication access boundary", () => {
         [`publication-legacy-${randomUUID()}`],
       );
       expect(legacyRows[0]).toEqual({ publication_state: "general", visibility: "public" });
+    });
+  });
+
+  test("accepts a separately scoped content-inspection permission and audit event", async () => {
+    await withTransaction(pool, async (client) => {
+      const operatorId = randomUUID();
+      await ensureUserWithSettings(client, operatorId);
+      await client.query(
+        `insert into admin_operators (email, user_id, is_active, permissions)
+         values ($1, $2, true, ARRAY['dictionaries.read', 'dictionary.content.read']::text[])`,
+        [`content-inspector-${operatorId}@example.test`, operatorId],
+      );
+      const dictionaryId = (await client.query(
+        `insert into dictionaries (language_code, slug, name, kind)
+         values ('nl', $1, 'Audited content fixture', 'curated') returning id`,
+        [`publication-content-${randomUUID()}`],
+      )).rows[0].id as string;
+      const requestId = randomUUID();
+      await client.query(
+        `insert into admin_audit_events (
+           operator_user_id, action, outcome, target_type, target_id, request_id
+         ) values ($1, 'dictionary.content.read', 'success', 'dictionary_content', $2, $3)`,
+        [operatorId, `${dictionaryId}:page:1`, requestId],
+      );
+      const { rows } = await client.query(
+        `select action, outcome, target_type, target_id
+           from admin_audit_events where request_id = $1`,
+        [requestId],
+      );
+      expect(rows).toEqual([{
+        action: "dictionary.content.read",
+        outcome: "success",
+        target_type: "dictionary_content",
+        target_id: `${dictionaryId}:page:1`,
+      }]);
     });
   });
 
@@ -121,6 +162,73 @@ describeIfDb("dictionary publication access boundary", () => {
 
       await client.query(`select set_dictionary_publication($1, 'unpublished', $2::text[], $3::uuid[])`, [dictionaryId, ["trusted"], [userId]]);
       expect((await client.query(`select can_access_dictionary($1, $2, 'read') as allowed`, [userId, dictionaryId])).rows[0].allowed).toBe(false);
+    });
+  });
+
+  test("commits publication, group membership, and their audit records atomically", async () => {
+    await withTransaction(pool, async (client) => {
+      const operatorId = randomUUID();
+      const memberId = randomUUID();
+      await ensureUserWithSettings(client, operatorId);
+      await ensureUserWithSettings(client, memberId);
+      await client.query(
+        `insert into admin_operators (email, user_id, is_active, permissions)
+         values ($1, $2, true, ARRAY['publication.manage']::text[])`,
+        [`publication-operator-${operatorId}@example.test`, operatorId],
+      );
+      const firstDictionaryId = (await client.query(
+        `insert into dictionaries (language_code, slug, name, kind)
+         values ('nl', $1, 'Atomic audit fixture', 'curated') returning id`,
+        [`publication-audit-${randomUUID()}`],
+      )).rows[0].id as string;
+      const requestId = randomUUID();
+
+      await client.query(
+        `select admin_set_dictionary_publication(
+           $1, 'restricted', $2::text[], $3::uuid[], $4, $5, $6::inet, $7
+         )`,
+        [firstDictionaryId, ["inspectors"], [], operatorId, requestId, "198.51.100.7", "Admin test"],
+      );
+      const groupRequestId = randomUUID();
+      await client.query(
+        `select admin_replace_dictionary_access_group(
+           $1, $2, $3::uuid[], $4, $5, $6::inet, $7
+         )`,
+        ["inspectors", "Inspectors", [memberId], operatorId, groupRequestId, null, "Admin test"],
+      );
+      expect((await client.query(
+        `select can_browse_dictionary($1, $2) as allowed`, [memberId, firstDictionaryId],
+      )).rows[0].allowed).toBe(true);
+      expect((await client.query(
+        `select action, outcome from admin_audit_events where request_id = $1 order by action`, [requestId],
+      )).rows).toEqual([
+        { action: "dictionary.audience.updated", outcome: "success" },
+        { action: "dictionary.publication.updated", outcome: "success" },
+      ]);
+      expect((await client.query(
+        `select action, target_type, target_id from admin_audit_events where request_id = $1`, [groupRequestId],
+      )).rows).toEqual([{
+        action: "dictionary.audience.updated",
+        target_type: "dictionary_access_group",
+        target_id: "inspectors",
+      }]);
+
+      const secondDictionaryId = (await client.query(
+        `insert into dictionaries (language_code, slug, name, kind)
+         values ('nl', $1, 'Rollback audit fixture', 'curated') returning id`,
+        [`publication-audit-rollback-${randomUUID()}`],
+      )).rows[0].id as string;
+      await client.query(`savepoint audit_failure`);
+      await expect(client.query(
+        `select admin_set_dictionary_publication(
+           $1, 'general', NULL, NULL, $2, NULL, NULL, NULL
+         )`,
+        [secondDictionaryId, operatorId],
+      )).rejects.toThrow();
+      await client.query(`rollback to savepoint audit_failure`);
+      expect((await client.query(
+        `select publication_state from dictionaries where id = $1`, [secondDictionaryId],
+      )).rows[0].publication_state).toBe("unpublished");
     });
   });
 

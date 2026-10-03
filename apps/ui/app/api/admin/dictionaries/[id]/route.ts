@@ -45,16 +45,21 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       const hasGroupKeys = body.groupKeys !== undefined;
       const hasUserIds = body.userIds !== undefined;
       if (hasGroupKeys !== hasUserIds || (hasGroupKeys && (!Array.isArray(body.groupKeys) || !Array.isArray(body.userIds) || !body.groupKeys.every((v) => typeof v === "string") || !body.userIds.every((v) => typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v))))) return NextResponse.json({ error: "invalid_audience" }, { status: 400 });
-      result = await updateDictionaryPublication(id, body.publicationState as PublicationState, hasGroupKeys ? body.groupKeys as string[] : undefined, hasUserIds ? body.userIds as string[] : undefined);
+      result = await updateDictionaryPublication(id, body.publicationState as PublicationState, hasGroupKeys ? body.groupKeys as string[] : undefined, hasUserIds ? body.userIds as string[] : undefined, {
+        operatorUserId: principal.userId,
+        requestId: principal.requestId,
+        clientIp: principal.clientContext.clientIp,
+        userAgent: principal.clientContext.userAgent,
+      });
       if (!result) return NextResponse.json({ error: "not_found" }, { status: 404 });
-      await writeAdminAuditEvent({ operatorUserId: principal.userId, action: "dictionary.publication.updated", outcome: "success", targetType: "dictionary", targetId: id, requestId: principal.requestId, context: principal.clientContext });
-      if (hasGroupKeys) {
-        await writeAdminAuditEvent({ operatorUserId: principal.userId, action: "dictionary.audience.updated", outcome: "success", targetType: "dictionary", targetId: id, requestId: principal.requestId, context: principal.clientContext });
-      }
     } else {
       if (!Array.isArray(body.groupKeys) || !Array.isArray(body.userIds) || !body.groupKeys.every((v) => typeof v === "string") || !body.userIds.every((v) => typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v))) return NextResponse.json({ error: "invalid_audience" }, { status: 400 });
-      result = await replaceDictionaryAudience(id, body.groupKeys, body.userIds);
-      await writeAdminAuditEvent({ operatorUserId: principal.userId, action: "dictionary.audience.updated", outcome: "success", targetType: "dictionary", targetId: id, requestId: principal.requestId, context: principal.clientContext });
+      result = await replaceDictionaryAudience(id, body.groupKeys, body.userIds, {
+        operatorUserId: principal.userId,
+        requestId: principal.requestId,
+        clientIp: principal.clientContext.clientIp,
+        userAgent: principal.clientContext.userAgent,
+      });
     }
     return NextResponse.json(result, { headers: { "Cache-Control": "private, no-store, max-age=0", Vary: "Cookie" } });
   } catch (error) {

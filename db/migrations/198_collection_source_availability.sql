@@ -76,6 +76,138 @@ BEGIN
 END;
 $patch$;
 
+-- Couple each successful publication/audience mutation with its audit record
+-- in the same transaction, so a failed audit insert rolls back the mutation.
+CREATE OR REPLACE FUNCTION public.admin_set_dictionary_publication(
+    p_dictionary_id uuid,
+    p_publication_state text,
+    p_group_keys text[],
+    p_user_ids uuid[],
+    p_operator_user_id uuid,
+    p_request_id uuid,
+    p_client_ip inet,
+    p_user_agent text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+    v_result jsonb;
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM public.admin_operators
+        WHERE user_id = p_operator_user_id
+          AND is_active
+          AND permissions @> ARRAY['publication.manage']::text[]
+    ) THEN
+        RAISE EXCEPTION 'admin_operator_not_authorized';
+    END IF;
+
+    v_result := public.set_dictionary_publication(
+        p_dictionary_id, p_publication_state, p_group_keys, p_user_ids
+    );
+    IF v_result IS NULL THEN RETURN NULL; END IF;
+
+    INSERT INTO public.admin_audit_events (
+        operator_user_id, action, outcome, target_type, target_id, request_id, client_ip, user_agent
+    ) VALUES (
+        p_operator_user_id, 'dictionary.publication.updated', 'success', 'dictionary',
+        p_dictionary_id::text, p_request_id, p_client_ip, left(p_user_agent, 1024)
+    );
+    IF p_group_keys IS NOT NULL THEN
+        INSERT INTO public.admin_audit_events (
+            operator_user_id, action, outcome, target_type, target_id, request_id, client_ip, user_agent
+        ) VALUES (
+            p_operator_user_id, 'dictionary.audience.updated', 'success', 'dictionary',
+            p_dictionary_id::text, p_request_id, p_client_ip, left(p_user_agent, 1024)
+        );
+    END IF;
+    RETURN v_result;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.admin_set_dictionary_publication(uuid, text, text[], uuid[], uuid, uuid, inet, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_set_dictionary_publication(uuid, text, text[], uuid[], uuid, uuid, inet, text) TO service_role;
+
+CREATE OR REPLACE FUNCTION public.admin_replace_dictionary_audience(
+    p_dictionary_id uuid,
+    p_group_keys text[],
+    p_user_ids uuid[],
+    p_operator_user_id uuid,
+    p_request_id uuid,
+    p_client_ip inet,
+    p_user_agent text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+    v_result jsonb;
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM public.admin_operators
+        WHERE user_id = p_operator_user_id
+          AND is_active
+          AND permissions @> ARRAY['publication.manage']::text[]
+    ) THEN
+        RAISE EXCEPTION 'admin_operator_not_authorized';
+    END IF;
+
+    v_result := public.replace_dictionary_audience(p_dictionary_id, p_group_keys, p_user_ids);
+    INSERT INTO public.admin_audit_events (
+        operator_user_id, action, outcome, target_type, target_id, request_id, client_ip, user_agent
+    ) VALUES (
+        p_operator_user_id, 'dictionary.audience.updated', 'success', 'dictionary',
+        p_dictionary_id::text, p_request_id, p_client_ip, left(p_user_agent, 1024)
+    );
+    RETURN v_result;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.admin_replace_dictionary_audience(uuid, text[], uuid[], uuid, uuid, inet, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_replace_dictionary_audience(uuid, text[], uuid[], uuid, uuid, inet, text) TO service_role;
+
+CREATE OR REPLACE FUNCTION public.admin_replace_dictionary_access_group(
+    p_key text,
+    p_name text,
+    p_member_ids uuid[],
+    p_operator_user_id uuid,
+    p_request_id uuid,
+    p_client_ip inet,
+    p_user_agent text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+    v_result jsonb;
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM public.admin_operators
+        WHERE user_id = p_operator_user_id
+          AND is_active
+          AND permissions @> ARRAY['publication.manage']::text[]
+    ) THEN
+        RAISE EXCEPTION 'admin_operator_not_authorized';
+    END IF;
+
+    v_result := public.replace_dictionary_access_group(p_key, p_name, p_member_ids);
+    INSERT INTO public.admin_audit_events (
+        operator_user_id, action, outcome, target_type, target_id, request_id, client_ip, user_agent
+    ) VALUES (
+        p_operator_user_id, 'dictionary.audience.updated', 'success', 'dictionary_access_group',
+        v_result->>'key', p_request_id, p_client_ip, left(p_user_agent, 1024)
+    );
+    RETURN v_result;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.admin_replace_dictionary_access_group(text, text, uuid[], uuid, uuid, inet, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_replace_dictionary_access_group(text, text, uuid[], uuid, uuid, inet, text) TO service_role;
+
 CREATE OR REPLACE FUNCTION get_available_word_lists(
     p_user_id uuid,
     p_language_code text DEFAULT NULL,

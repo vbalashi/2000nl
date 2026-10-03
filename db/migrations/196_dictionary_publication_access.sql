@@ -8,14 +8,14 @@ ALTER TABLE public.admin_operators
   DROP CONSTRAINT IF EXISTS admin_operators_permissions_allowed;
 ALTER TABLE public.admin_operators
   ADD CONSTRAINT admin_operators_permissions_allowed
-  CHECK (permissions <@ ARRAY['dictionaries.read', 'audit.read', 'publication.manage']::text[]);
+  CHECK (permissions <@ ARRAY['dictionaries.read', 'audit.read', 'publication.manage', 'dictionary.content.read']::text[]);
 
 ALTER TABLE public.admin_audit_events
   DROP CONSTRAINT IF EXISTS admin_audit_events_action_allowed;
 ALTER TABLE public.admin_audit_events
   ADD CONSTRAINT admin_audit_events_action_allowed CHECK (action IN (
     'auth.sign_in', 'auth.sign_in_denied', 'auth.sign_out', 'access.denied',
-    'dictionary.registry.read', 'dictionary.metadata.read',
+    'dictionary.registry.read', 'dictionary.metadata.read', 'dictionary.content.read',
     'dictionary.publication.updated', 'dictionary.audience.updated', 'audit.journal.read'
   ));
 
@@ -163,6 +163,7 @@ BEGIN
         )))
       AND (e.permission = p_permission OR e.permission = 'admin'
         OR (p_permission = 'read' AND e.permission = 'write'))
+      AND (v_dictionary.publication_state <> 'restricted' OR e.subject_type <> 'tier')
       AND (e.starts_at IS NULL OR e.starts_at <= now())
       AND (e.ends_at IS NULL OR e.ends_at > now())
   );
