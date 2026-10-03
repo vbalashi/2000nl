@@ -6,34 +6,43 @@ DO $patch$
 DECLARE
   signature text := 'private.lookup_platform_v2_entries_base_v1(uuid,boolean,text,text,text,integer,integer)';
   definition text;
-  old_text text := $$dictionary.visibility IN (
-                                    'system',
-                                    'public',
-                                    'shared'
-                                )$$;
-  audience_gate text := $$NOT p_catalog
-                AND ($$;
-  audience_gate_with_publication text := $$NOT p_catalog
-                AND (dictionary.publication_state <> 'unpublished'
-                     OR dictionary.owner_user_id = p_user_id)
-                AND ($$;
+  eligible_start text := 'eligible_dictionaries AS MATERIALIZED (';
+  next_cte text := 'indexed_headword_matches AS MATERIALIZED (';
 BEGIN
   IF to_regprocedure(signature) IS NULL THEN
     RAISE NOTICE 'Platform V2 base function not installed; skipping publication patch';
     RETURN;
   END IF;
   definition := pg_get_functiondef(signature::regprocedure);
-  IF strpos(definition, old_text) = 0 THEN
-    RAISE NOTICE 'Platform V2 visibility anchor already changed; skipping';
+  IF strpos(definition, eligible_start) = 0 OR strpos(definition, next_cte) = 0 THEN
+    RAISE EXCEPTION 'Platform V2 eligible-dictionary CTE anchors missing';
+  END IF;
+  IF strpos(definition, 'can_browse_dictionary(p_user_id, dictionary.id)') > 0 THEN
+    RAISE NOTICE 'Platform V2 browse policy already installed; skipping';
     RETURN;
   END IF;
-  definition := replace(definition, old_text,
-    $$can_access_dictionary(p_user_id, dictionary.id, 'read')$$);
-  IF strpos(definition, audience_gate) > 0 THEN
-    definition := replace(definition, audience_gate, audience_gate_with_publication);
-  ELSIF strpos(definition, audience_gate_with_publication) = 0 THEN
-    RAISE EXCEPTION 'Platform V2 audience publication gate anchor missing';
-  END IF;
+  definition := overlay(
+    definition placing
+    $$eligible_dictionaries AS MATERIALIZED (
+        SELECT
+            dictionary.*,
+            CASE
+                WHEN NOT p_catalog AND dictionary.kind = 'user'
+                     AND dictionary.owner_user_id = p_user_id THEN 0
+                WHEN dictionary.kind = 'curated' THEN 1
+                ELSE 2
+            END AS dictionary_rank
+        FROM public.dictionaries AS dictionary
+        WHERE (p_catalog
+               AND dictionary.visibility IN ('system', 'public')
+               AND dictionary.kind <> 'user')
+           OR (NOT p_catalog
+               AND public.can_browse_dictionary(p_user_id, dictionary.id))
+    ),
+    indexed_headword_matches AS MATERIALIZED ($$
+    from strpos(definition, eligible_start)
+    for strpos(definition, next_cte) + length(next_cte) - strpos(definition, eligible_start)
+  );
   EXECUTE definition;
 END;
 $patch$;

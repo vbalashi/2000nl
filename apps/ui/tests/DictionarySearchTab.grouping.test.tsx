@@ -149,7 +149,7 @@ const deferred = <T,>() => {
   return { promise, resolve, reject };
 };
 
-function Harness({preload=false,open=true,initial = {},locale="nl",translationLang="en",collection=false}: {preload?:boolean;open?:boolean;collection?:boolean;initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru";translationLang?:string|null} = {}) {
+function Harness({preload=false,open=true,initial = {},locale="nl",translationLang="en",collection=false,unavailableSourceCount=0}: {preload?:boolean;open?:boolean;collection?:boolean;unavailableSourceCount?:number;initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru";translationLang?:string|null} = {}) {
   const [state, setState] = React.useState<DictionarySearchTabState>(() => ({
     ...createDictionarySearchTabState(),
     query: "goed",
@@ -166,7 +166,7 @@ function Harness({preload=false,open=true,initial = {},locale="nl",translationLa
       interfaceLanguage={locale}
       userLists={[]}
       viewedListId={collection ? "owned-list" : null}
-      viewedList={collection ? {id:"owned-list",name:"My collection",type:"user",language_code:"nl"} : null}
+      viewedList={collection ? {id:"owned-list",name:"My collection",type:"user",language_code:"nl",unavailable_source_count:unavailableSourceCount} : null}
       viewedListName="Van Dale"
       reloadLists={async () => {}}
       notifyListsUpdated={() => {}}
@@ -431,6 +431,15 @@ test("owned collection entries use shared Library rows while retaining entry sel
   fireEvent.click(row);
   await waitFor(() => expect(service.fetchDictionaryEntryById).toHaveBeenCalledWith("owned-entry","user-1"));
   expect(service.fetchWordsForList).toHaveBeenCalledWith("owned-list","user",expect.objectContaining({query:"goed",page:1}));
+});
+
+test("shows a generic availability notice for a collection with inaccessible source links", async () => {
+  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
+  render(<Harness locale="en" collection unavailableSourceCount={1} initial={{applyListFilter:true}} />);
+
+  const notice = await screen.findByText(/Some words in this collection are temporarily unavailable/);
+  expect(notice).toHaveAttribute("role", "status");
+  expect(notice).not.toHaveTextContent("dictionary-");
 });
 
 test("changing translation target never retags an old draft with a different language", async () => {

@@ -170,6 +170,62 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.can_access_dictionary(uuid, uuid, text) TO anon, authenticated;
+
+-- Browse access is intentionally separate from training eligibility. General
+-- publication permits dictionary lookup for every signed-in reader; premium
+-- does not implicitly grant access to restricted sources.
+CREATE OR REPLACE FUNCTION public.can_browse_dictionary(
+  p_user_id uuid,
+  p_dictionary_id uuid
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+STABLE
+AS $$
+DECLARE
+  v_dictionary public.dictionaries%rowtype;
+BEGIN
+  SELECT * INTO v_dictionary FROM public.dictionaries WHERE id = p_dictionary_id;
+  IF NOT FOUND THEN RETURN false; END IF;
+  IF p_user_id IS NOT NULL AND v_dictionary.owner_user_id = p_user_id THEN RETURN true; END IF;
+  IF v_dictionary.kind = 'user' THEN RETURN false; END IF;
+  IF v_dictionary.publication_state = 'general' THEN RETURN true; END IF;
+  IF v_dictionary.publication_state <> 'restricted' OR p_user_id IS NULL THEN RETURN false; END IF;
+
+  RETURN EXISTS (
+    SELECT 1 FROM public.dictionary_entitlements e
+    WHERE e.dictionary_id = p_dictionary_id
+      AND e.subject_type IN ('user', 'group')
+      AND ((e.subject_type = 'user' AND e.subject_key = p_user_id::text)
+        OR (e.subject_type = 'group' AND EXISTS (
+          SELECT 1 FROM public.dictionary_access_group_members gm
+          JOIN public.dictionary_access_groups g ON g.id = gm.group_id
+          WHERE gm.user_id = p_user_id AND g.key = e.subject_key
+        )))
+      AND e.permission IN ('read', 'write', 'admin')
+      AND (e.starts_at IS NULL OR e.starts_at <= now())
+      AND (e.ends_at IS NULL OR e.ends_at > now())
+  );
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.can_browse_dictionary(uuid, uuid) TO anon, authenticated;
+-- Preserve the established helper-call shape in existing reader RPC bodies.
+CREATE OR REPLACE FUNCTION public.can_browse_dictionary(
+  p_user_id uuid,
+  p_dictionary_id uuid,
+  p_permission text
+)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+STABLE
+AS $$
+  SELECT p_permission = 'read' AND public.can_browse_dictionary(p_user_id, p_dictionary_id)
+$$;
+GRANT EXECUTE ON FUNCTION public.can_browse_dictionary(uuid, uuid, text) TO anon, authenticated;
 GRANT SELECT ON public.dictionary_access_groups, public.dictionary_access_group_members TO authenticated;
 REVOKE INSERT, UPDATE, DELETE ON public.dictionary_access_groups, public.dictionary_access_group_members FROM anon, authenticated;
 

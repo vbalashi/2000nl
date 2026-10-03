@@ -727,6 +727,7 @@
       "emptyCollection": "Geen woorden in deze lijst.",
       "emptyQuery": "Zoek een woord in het woordenboek.",
       "emptyCollectionHint": "Geen resultaten in {name}. Wis de zoekopdracht of zoek in het woordenboek.",
+      "unavailableCollectionSource": "Sommige woorden in deze collectie zijn tijdelijk niet beschikbaar omdat de bron momenteel niet toegankelijk is. Ze verschijnen weer als de toegang wordt hersteld.",
       "emptyQueryHint": "Bekijk definities, voorbeelden en leerlijsten.",
       "noResultsHint": "De zoekopdracht in {source} vond niets.",
       "previous": "Vorige",

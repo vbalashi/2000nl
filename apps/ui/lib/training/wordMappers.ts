@@ -78,6 +78,8 @@ export const mapCuratedListSummary = (row: any): WordListSummary => ({
   card_type_ids: row.card_type_ids ?? null,
   type: "curated",
   item_count: row.word_list_items?.[0]?.count ?? undefined,
+  available_item_count: row.word_list_items?.[0]?.available_count ?? undefined,
+  unavailable_source_count: row.word_list_items?.[0]?.unavailable_source_count ?? undefined,
   is_primary: row.is_primary ?? undefined,
 });
 
@@ -93,6 +95,8 @@ export const mapUserListSummary = (row: any): WordListSummary => ({
   card_type_ids: row.card_type_ids ?? null,
   type: "user",
   item_count: row.user_word_list_items?.[0]?.count ?? undefined,
+  available_item_count: row.user_word_list_items?.[0]?.available_count ?? undefined,
+  unavailable_source_count: row.user_word_list_items?.[0]?.unavailable_source_count ?? undefined,
   created_at: row.created_at,
 });
 
