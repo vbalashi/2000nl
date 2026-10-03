@@ -300,6 +300,16 @@ export async function setupAuthenticatedTrainingAttributionPage(
     }
     await fulfillJson(route, setupSnapshot, "setups");
   });
+  await page.route("**/api/training/availability", async (route) => {
+    await fulfillJson(route, {
+      dueToday: 3,
+      totalReviews: 8,
+      newCards: 4,
+      studyDay: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      timezone: "UTC",
+      asOf: new Date().toISOString(),
+    }, "recipe-availability");
+  });
   await page.route("**/api/settings/material", async (route) => {
     if (route.request().method() === "PUT") {
       const { document } = route.request().postDataJSON();
