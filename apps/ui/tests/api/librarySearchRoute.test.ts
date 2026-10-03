@@ -137,3 +137,13 @@ test("browse requires an explicit string query and does not widen Platform parsi
   }
   expect(operation).not.toHaveBeenCalled();
 });
+
+
+test("Library forwards bounded server timings on retryable failures",async()=>{
+ operation.mockResolvedValue({status:503,payload:{error:"library_search_timeout"},serverTiming:"lookup.db;dur=8000.1"});
+ const response=await POST(request(base));
+ expect(response.status).toBe(503);
+ expect(response.headers.get("server-timing")).toBe("lookup.db;dur=8000.1");
+ expect(response.headers.get("cache-control")).toBe("no-store");
+ expect(await response.json()).toEqual({error:"library_search_timeout"});
+});

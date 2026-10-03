@@ -1,0 +1,30 @@
+/* Audit-only proposals: do not import into production. Baseline has zero overrides. */
+[data-audit] article{background:var(--practice-surface,#fff)}
+[data-audit]:not([data-audit=baseline]) [data-nesting] [data-kind=example]>div>p:not([data-content-translation]){font-size:var(--practice-literary-size);line-height:var(--practice-literary-leading)}
+[data-audit]:not([data-audit=baseline]) [data-nesting] [data-content-node-id]{--practice-space-pair:4px;--practice-space-content:12px}
+[data-audit]:not([data-audit=baseline]) [data-section]{margin-top:20px}
+[data-audit]:not([data-audit=baseline]) [data-section]>[data-content-node-id]{padding-top:3px;padding-bottom:3px}
+[data-audit=airy][data-audit] [data-section]{margin-top:26px}
+[data-audit=airy][data-audit] [data-nesting] [data-content-node-id]{--practice-space-pair:5px;--practice-space-content:16px}
+[data-audit=airy][data-audit] [data-section]>[data-content-node-id]{padding-top:5px;padding-bottom:5px}
+[data-audit]:not([data-audit=baseline]) [data-nesting][data-nested-reading] [data-content-node-id] [data-content-translation]{font-size:var(--practice-reading-small);line-height:1.4}
+[data-audit]:not([data-audit=baseline]) section:has(>[class*='relations']){margin-top:20px;padding:0}
+[data-audit]:not([data-audit=baseline]) [data-kind=synonyms]>p,[data-audit]:not([data-audit=baseline]) [data-kind=antonyms]>p{padding-top:3px;padding-bottom:3px}
+[data-audit=airy][data-audit] section:has(>[class*='relations']){margin-top:26px}
+[data-audit=airy][data-audit] [data-kind=synonyms]>p,[data-audit=airy][data-audit] [data-kind=antonyms]>p{padding-top:5px;padding-bottom:5px}
+/* Last-resort reflow for compound words at narrow widths and enlarged text. */
+[data-audit]:not([data-audit=baseline]) [data-nesting] p{overflow-wrap:anywhere}
+/* Library owns an extra reveal margin; let one section gap own the boundary. */
+[data-audit]:not([data-audit=baseline]) [data-entry-id]>div>[aria-hidden=false]:has([data-section]){margin-top:0}
+[data-audit]:not([data-audit=baseline]) [data-meaning-lead] [data-nesting]>p+[aria-hidden] [data-content-translation]{margin-top:4px}
+[data-audit=airy][data-audit] [data-meaning-lead] [data-nesting]>p+[aria-hidden] [data-content-translation]{margin-top:5px}
+
+/* Audit-only: stronger section separation when translations are enabled. */
+[data-audit=balanced][data-audit-translations=on] [data-section],
+[data-audit=balanced][data-audit-translations=on] section:has(>[class*="relations"]),
+[data-audit=balanced][data-audit-translations=partial] [data-section],
+[data-audit=balanced][data-audit-translations=partial] section:has(>[class*="relations"]){margin-top:24px}
+[data-audit=airy][data-audit-translations=on] [data-section],
+[data-audit=airy][data-audit-translations=on] section:has(>[class*="relations"]),
+[data-audit=airy][data-audit-translations=partial] [data-section],
+[data-audit=airy][data-audit-translations=partial] section:has(>[class*="relations"]){margin-top:32px}

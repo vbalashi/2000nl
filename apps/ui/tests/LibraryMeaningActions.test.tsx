@@ -29,3 +29,14 @@ test("busy blocks primary and menu mutations",()=>{
  for(const button of screen.getAllByRole("button")) { expect(button).toBeDisabled();fireEvent.click(button); }
  expect(action).not.toHaveBeenCalled();expect(screen.queryByRole("menu")).toBeNull();
 });
+
+
+test.each([ ["Again","fail"], ["Hard","hard"], ["Good","success"], ["Easy","easy"] ])("inline %s submits the exact authoritative capability",(label,result)=>{
+ const meaning=buildLibrarySenseCardGroupModel(multiSenseBankGroup,"en").meanings[0];
+ const action=vi.fn();
+ render(<LibraryMeaningActions meaning={meaning} language="en" busy={false} collectionCount={0} onAction={action}/>);
+ fireEvent.click(screen.getByRole("button",{name:label}));
+ expect(action).toHaveBeenCalledOnce();
+ expect(action).toHaveBeenCalledWith(meaning.reviewCapabilities.find(cap=>cap.reviewResult===result));
+ expect(screen.queryByRole("button",{name:"Train next"})).not.toBeInTheDocument();
+});

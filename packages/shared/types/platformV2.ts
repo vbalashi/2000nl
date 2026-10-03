@@ -193,11 +193,14 @@ export type PlatformIdiomExerciseSessionMemberV2 = {
   direction: PlatformTrainingExerciseDirectionV2;
 };
 
+/** Session selection; individual targets always retain direct or reverse identity. */
+export type PlatformIdiomSessionDirectionV2 = PlatformTrainingExerciseDirectionV2 | "mixed";
+
 export type PlatformIdiomExerciseSessionV2 = {
   contractVersion: "platform-idiom-exercise-session-v2";
   sessionId: string;
   exerciseFamily: "idiom";
-  direction: PlatformTrainingExerciseDirectionV2;
+  direction: PlatformIdiomSessionDirectionV2;
   sessionSize: string;
   requestedTotal: number;
   plannedNew: number;
@@ -374,6 +377,12 @@ export type PlatformSenseCardStateV2 = {
       | "hidden"
       | "frozen";
     repeatCount?: number;
+    /** Accepted FSRS reviews, distinct from exposure/click count. */
+    reviewCount?: number;
+    lastGrade?: 1 | 2 | 3 | 4 | null;
+    lastReviewedAt?: string | null;
+    nextReviewAt?: string | null;
+    learningDueAt?: string | null;
     lastSeenAt?: string | null;
     frozenUntil?: string | null;
   };

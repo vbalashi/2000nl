@@ -80,13 +80,13 @@ describe("idiom action transport", () => {
     expect(await fetchNextPlatformV2IdiomTrainingSessionExercise('user-1','session-1')).toEqual(data);
   });
 
-  test("starts with the exact selected source scope and per-session mix", async () => {
+  test.each(["direct", "reverse", "mixed"] as const)("starts %s with the exact selected source scope and per-session mix", async (direction) => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: {
         contractVersion: "platform-idiom-exercise-session-v2",
         sessionId: "session-1",
         exerciseFamily: "idiom",
-        direction: "reverse",
+        direction,
         sessionSize: "5",
         requestedTotal: 5,
         plannedNew: 0,
@@ -114,7 +114,7 @@ describe("idiom action transport", () => {
 
     const session = await startPlatformV2IdiomTrainingSession({
       userId: "user-1",
-      direction: "reverse",
+      direction,
       sessionSize: 5,
       requestId: "request-1",
       listId: null,
@@ -129,7 +129,7 @@ describe("idiom action transport", () => {
       "start_platform_v2_idiom_training_session",
       {
         p_user_id: "user-1",
-        p_direction: "reverse",
+        p_direction: direction,
         p_session_size: "5",
         p_request_id: "request-1",
         p_list_id: null,

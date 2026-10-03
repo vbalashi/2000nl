@@ -257,7 +257,7 @@ export function TrainingIdiomSession({
           interfaceLanguage={interfaceLanguage}
           scenario="idiom"
           mode={
-            session.direction === "direct"
+            (candidate?.direction ?? session.direction) !== "reverse"
               ? "word-to-definition"
               : "definition-to-word"
           }

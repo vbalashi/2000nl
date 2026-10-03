@@ -193,3 +193,11 @@ test.each([
   await expect(fetchRecentTrainingHistory()).rejects.toThrow("training_history_contract_mismatch");
   diagnostic.mockRestore();
 });
+
+test("forwards a history read cancellation signal to the RPC", async () => {
+  const abortSignal = vi.fn().mockResolvedValue({data:[],error:null});
+  rpc.mockReturnValueOnce({abortSignal});
+  const controller = new AbortController();
+  await fetchRecentTrainingHistory(controller.signal);
+  expect(abortSignal).toHaveBeenCalledWith(controller.signal);
+});

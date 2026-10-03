@@ -153,6 +153,6 @@ export function SettingsRow({
   );
 }
 
-export function SettingsOptions<Key extends string>({label,items,value,onChange}:{label:string;items:{id:Key;label:string}[];value:Key;onChange:(value:Key)=>void}){
- return <SegmentedControl label={label}>{items.map(item=><button key={item.id} type="button" aria-pressed={value===item.id} onClick={()=>onChange(item.id)}>{item.label}</button>)}</SegmentedControl>;
+export function SettingsOptions<Key extends string>({label,items,value,onChange,disabled=false}:{disabled?:boolean;label:string;items:{id:Key;label:string}[];value:Key;onChange:(value:Key)=>void}){
+ return <SegmentedControl label={label}>{items.map(item=><button disabled={disabled} key={item.id} type="button" aria-pressed={value===item.id} onClick={()=>onChange(item.id)}>{item.label}</button>)}</SegmentedControl>;
 }

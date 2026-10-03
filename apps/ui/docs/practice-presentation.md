@@ -23,7 +23,7 @@ Choose roles by purpose. Card size preferences may scale these roles. Avoid new 
 
 ## Color roles
 
-Six configurations share one semantic interface: Lavender, Blue and Graphite, each Light and Dark. Screens use surface/canvas/hover, text/secondary/muted, selected/selected-text, accent/on-accent, border/control-border/focus, status pairs and dictionary annotation rails. Statistics intensity has its own activity scale. A new theme changes values in one file rather than adding screen-specific dark overrides.
+Eight configurations share one semantic interface: Lavender, Blue, Indigo and Graphite, each Light and Dark. Screens use surface/canvas/hover, text/secondary/muted, selected/selected-text, accent/on-accent, border/control-border/focus, status pairs and dictionary annotation rails. Statistics intensity has its own activity scale. A new theme changes values in one file rather than adding screen-specific dark overrides.
 
 Text contrast is checked against all supported canvas, surface and hero endpoints (4.5:1); focus against primary surfaces (3:1); accent, selected and status combinations are also checked. These tests do not certify the entire rendered app, opacity/disabled text, all borders, or assistive technology behavior. Preserve non-color cues: labels, checks, selected states and icons.
 
@@ -108,3 +108,17 @@ Session footer places quiet Report and Exclude actions on opposite edges. Exclud
 Prototype marks distinguish known/excluded per sense and exercise family, allow Undo before Next card, suppress grading while marked, and record a distinct demo activity result when proceeding. They survive pause within the current in-memory run. They are not production exclusion/known APIs or a production queue filter: adapters must preserve actual target scope and durable undo/idempotency semantics.
 
 Validation: 22 focused tests passed; typecheck, targeted lint and theme guard passed. Browser: 1024×920 single-row visual height 46; 320×740 two rows with 28 px visuals / 44 px hit targets; anchored two-item menu, known/undo and separate Report dialog. Screenshots: `/Users/khrustal/.codex/visualizations/2026/09/29/session-actions/`.
+
+
+### Indigo provenance
+
+Indigo is a separate palette; Blue retains its existing values. The light primary
+`#4f46e5` and hover `#4338ca` are the legacy Tailwind `indigo-600` / `indigo-700`
+used by `TrainingSenseCardStage.tsx` and `SenseCardChrome.tsx` at baseline
+`28e4ea42bad59b1beac03c9cbc89223542f4b0bf` (stage history:
+`3b8e1908e8232eaffc40df686664772ed4c0ff93`). Legacy dark fills `#292650` /
+`#332f60` become Indigo subtle/hover surfaces. The remaining semantic colors
+are adapted to the current shared component contract and tested for contrast;
+this does not restore the former layout. System appearance follows the existing
+resolved-theme controller. Account persistence requires migration 199's additive
+palette constraint; default palette and existing saved values stay unchanged.

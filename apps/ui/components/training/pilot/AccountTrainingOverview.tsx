@@ -30,8 +30,8 @@ export function AccountTrainingOverview(p:Props){
  const trainings=p.snapshot.document.trainings;
  const language=(code:string)=>new Intl.DisplayNames([p.interfaceLanguage],{type:"language"}).of(code)??p.languageOptions.find(item=>item.value===code)?.label??code.toUpperCase();
  const description=(draft:TrainingSetupDraft)=>[
-  draft.family==="idiom"?copy.exerciseType.Idioms:draft.family==="sentence"?copy.exerciseType.Translation:draft.family==="word-in-context"?copy.wordInContext:copy.exerciseType.Words,
-  draft.modes.map(mode=>mode==="word-to-definition"?copy.direction.Direct:mode==="definition-to-word"?copy.direction.Reverse:p.scenarios.find(scenario=>scenario.value===draft.scenarioId)?.label).filter(Boolean).join(" + "),
+  draft.family==="idiom"?copy.exerciseType.Idioms:draft.family==="sentence"?copy.pausedSentenceLabel:draft.family==="word-in-context"?copy.wordInContext:copy.exerciseType.Words,
+  draft.family==="word-in-context"?copy.contextDirection:draft.modes.map(mode=>mode==="word-to-definition"?copy.direction.Direct:mode==="definition-to-word"?copy.direction.Reverse:p.scenarios.find(scenario=>scenario.value===draft.scenarioId)?.label).filter(Boolean).join(" + "),
  ].filter(Boolean).join(" · ");
  const material=(draft:TrainingSetupDraft)=>draft.materialMode==="all-dictionaries"?copy.allDictionaries:draft.materialMode==="selected-dictionaries"?(draft.dictionaryIds??[]).map(id=>p.dictionaries.find(item=>item.value===id)?.label).filter(Boolean).join(", "):p.lists.find(item=>item.value===draft.listValue)?.label;
  const item=(training:SavedTraining):TrainingOverviewItem=>{
@@ -40,13 +40,14 @@ export function AccountTrainingOverview(p:Props){
   const materialAvailable=!local||isTrainingSetupMaterialAvailable(training.draft,p.lists,p.dictionaries);
   const partial=local&&materialAvailable&&training.draft.materialMode==="selected-dictionaries"&&training.draft.dictionaryIds?.some(id=>!p.dictionaries.some(source=>source.value===id));
   const supported=!local||isTrainingSetupDraftSupported(training.draft,p.scenarios);
+  const sentencePaused=training.draft.family==="sentence"||training.draft.scenarioId==="sentences";
   const translationAvailable=training.draft.family!=="word-in-context"||p.translationLanguage!==null;
   const size=training.draft.sessionSize??10;
   return {id:training.id,name:training.name,language:language(training.languageCode),description:description(training.draft),
    summary:[language(training.languageCode),description(training.draft),size==="all-due-today"?copy.allDue:formatExerciseCount(p.interfaceLanguage,size)].join(" · "),
    completedToday:null,meaningCount:null,notice:partial?p.partialMaterialNotice:undefined,sessionSize:size==="all-due-today"?copy.allDue:size,
-   canLaunch:p.ready&&!p.pending&&languageAvailable&&materialAvailable&&supported&&translationAvailable,
-   unavailableReason:!languageAvailable?p.materialUnavailable:!materialAvailable?p.materialUnavailable:!supported?p.setupUnavailable:!translationAvailable?p.translationUnavailable:undefined};
+   canLaunch:!sentencePaused&&p.ready&&!p.pending&&languageAvailable&&materialAvailable&&supported&&translationAvailable,
+   unavailableReason:sentencePaused?copy.sentencePaused:!languageAvailable?p.materialUnavailable:!materialAvailable?p.materialUnavailable:!supported?p.setupUnavailable:!translationAvailable?p.translationUnavailable:undefined};
  };
  const defaultTraining:SavedTraining={id:"current-setup",name:material(p.initialDraft)||copy.mainTraining,languageCode:p.languageCode,draft:p.initialDraft};
  const sessionTraining:SavedTraining={...defaultTraining,id:"owned-session",name:p.activeSessionLabel||material(p.initialDraft)||copy.currentTraining};

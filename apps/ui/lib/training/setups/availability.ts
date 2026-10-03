@@ -2,10 +2,15 @@ import type {TrainingMode} from "@/lib/types";
 import type {TrainingSetupDraft} from "./types";
 export type TrainingSetupOption = {value:string;label:string;modes?:TrainingMode[]};
 
+/** Retain historical recipes without allowing new independent sentence runs. */
+export const isTrainingSetupPaused = (draft: Pick<TrainingSetupDraft, "family" | "scenarioId">) =>
+  draft.family === "sentence" || draft.scenarioId === "sentences";
+
 export const isTrainingSetupDraftSupported = (
-  draft: Pick<TrainingSetupDraft, "scenarioId" | "modes">,
+  draft: Pick<TrainingSetupDraft, "scenarioId" | "modes" | "family">,
   scenarios: TrainingSetupOption[],
 ) => {
+  if (isTrainingSetupPaused(draft)) return false;
   const scenario = scenarios.find(
     (option) => option.value === draft.scenarioId,
   );

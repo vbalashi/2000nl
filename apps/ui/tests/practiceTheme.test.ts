@@ -17,9 +17,9 @@ function palette(name:string,dark:boolean){const tokens:Record<string,string>={}
 function luminance(hex:string){const values=hex.slice(1).match(/../g)!.slice(0,3).map(x=>parseInt(x,16)/255).map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4);return values[0]*.2126+values[1]*.7152+values[2]*.0722;}
 function contrast(a:string,b:string){const values=[luminance(a),luminance(b)].sort((x,y)=>y-x);return (values[0]+.05)/(values[1]+.05);}
 test('dark palettes include the shared semantic inks from grouped selectors',()=>{
- for(const name of ['lavender','blue','graphite'])expect(palette(name,true).danger).toBe('#f0adba');
+ for(const name of ['lavender','blue','indigo','graphite'])expect(palette(name,true).danger).toBe('#f0adba');
 });
-for(const name of ['lavender','blue','graphite'])for(const dark of [false,true]){
+for(const name of ['lavender','blue','indigo','graphite'])for(const dark of [false,true]){
  test(`${name} ${dark?'dark':'light'}: text roles meet AA on their supported surfaces`,()=>{
   const p=palette(name,dark);
   for(const ink of ['text','text-secondary','text-muted'])for(const surface of ['canvas','surface','surface-subtle','surface-hover','hero','hero-end'])expect(contrast(p[ink],p[surface]),`${ink} on ${surface}`).toBeGreaterThanOrEqual(4.5);
@@ -34,3 +34,9 @@ for(const name of ['lavender','blue','graphite'])for(const dark of [false,true])
  });
  test(`${name} ${dark?'dark':'light'}: focus visible on canvas and panels`,()=>{const p=palette(name,dark);for(const surface of ['canvas','surface','hero'])expect(contrast(p.focus,p[surface])).toBeGreaterThanOrEqual(3);});
 }
+
+test('Indigo retains its historical primary and visible control boundaries',()=>{
+ expect(palette('indigo',false).accent).toBe('#4f46e5');
+ expect(palette('indigo',false)['accent-hover']).toBe('#4338ca');
+ for(const dark of [false,true]) {const p=palette('indigo',dark);for(const bg of ['canvas','surface','surface-subtle'])expect(contrast(p['control-border'],p[bg])).toBeGreaterThanOrEqual(3);}
+});

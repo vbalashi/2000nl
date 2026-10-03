@@ -28,3 +28,12 @@ test("maps server conflicts separately from failed or malformed responses", asyn
   expect(await saveAccountTrainingSetups("a", 0, snapshot.document)).toEqual({ kind: "error" });
   await expect(fetchAccountTrainingSetups("a")).rejects.toThrow();
 });
+
+test("contextual Translation survives save and authenticated fetch without sentence conversion",async()=>{
+ const document={schemaVersion:1 as const,mainTrainingId:"context",trainings:[{id:"context",name:"Translation",languageCode:"nl",draft:{family:"word-in-context" as const,scenarioId:"understanding",modes:["definition-to-word" as const],cardFilter:"both" as const,listValue:"curated:nt2",sourceValue:"all",newReviewRatio:2,dateWindow:"all" as const,sessionSize:10}}]};
+ const snapshot={revision:4,document};
+ fetchMock.mockResolvedValueOnce(Response.json(snapshot)).mockResolvedValueOnce(Response.json(snapshot));
+ expect(await saveAccountTrainingSetups("a",3,document)).toEqual({kind:"saved",snapshot});
+ expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({expectedRevision:3,document});
+ expect(await fetchAccountTrainingSetups("a")).toEqual(snapshot);
+});
