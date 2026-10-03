@@ -1,0 +1,12 @@
+[
+  {
+    "translation": "off",
+    "leadToFirstSection": 20,
+    "leadPairGap": null
+  },
+  {
+    "translation": "on",
+    "leadToFirstSection": 20,
+    "leadPairGap": 4
+  }
+]
