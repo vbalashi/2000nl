@@ -5,7 +5,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/admin/adminServerClient", () => ({
   createAdminServiceClient: () => ({ rpc }),
 }));
-import { listAdminUsers } from "@/lib/admin/userRepository";
+import { listAdminUsers, getAdminUser } from "@/lib/admin/userRepository";
 
 const rows = (count: number) => Array.from({ length: count }, (_, index) => ({
   user_id: `account-${index}`,
@@ -36,4 +36,10 @@ describe("admin registry pagination boundary", () => {
     expect(result.items).toHaveLength(count);
     expect(result.hasNext).toBe(false);
   });
+});
+
+it.each([null, {}, [null], [...rows(1), { user_id: "broken" }]])("rejects incompatible data without returning partial rows: %j", async data => {
+  rpc.mockResolvedValue({ data, error: null });
+  await expect(listAdminUsers({ query: null, page: 1, pageSize: 25 })).rejects.toThrow("Admin user registry read failed");
+  await expect(getAdminUser("account-0")).rejects.toThrow("Admin user registry read failed");
 });

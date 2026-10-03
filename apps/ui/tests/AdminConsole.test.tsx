@@ -2,8 +2,12 @@ import React from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import AdminConsole from "@/components/admin/AdminConsole";
+const router = vi.hoisted(() => ({ replace: vi.fn() }));
+const replace = router.replace;
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 let fetchMock: ReturnType<typeof vi.fn<[string], Promise<Response>>>;
 beforeEach(() => {
+  replace.mockReset();
   window.history.replaceState({}, "", "/admin");
   fetchMock = vi.fn(async (url: string) => {
     if (url === "/api/admin/session") return Response.json({ email: "operator@example.test", permissions: ["audit.read"] });
@@ -27,4 +31,18 @@ it("reports an incomplete logout instead of claiming success", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Выйти" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось подтвердить завершение сеанса");
   expect(screen.queryByText("Вы вышли из административной системы.")).not.toBeInTheDocument();
+});
+
+it("lands a users-only operator in the permitted registry", async () => {
+  fetchMock.mockResolvedValue(Response.json({ email: "operator@example.test", permissions: ["users.read"] }));
+  render(<AdminConsole />);
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/users"));
+  expect(fetchMock.mock.calls.every(([url]) => url === "/api/admin/session")).toBe(true);
+});
+it("shows denial instead of redirecting a permissionless operator repeatedly", async () => {
+  fetchMock.mockResolvedValue(Response.json({ email: "operator@example.test", permissions: [] }));
+  render(<AdminConsole />);
+  expect(await screen.findByRole("alert")).toHaveTextContent("нет разрешения");
+  expect(replace).not.toHaveBeenCalled();
+  expect(fetchMock).toHaveBeenCalledTimes(1);
 });

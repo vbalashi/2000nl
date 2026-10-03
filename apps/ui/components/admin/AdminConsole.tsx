@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Activity,
   ArrowLeft,
@@ -115,6 +116,7 @@ function CopyField({ label, value }: { label: string; value: string | null }) {
 }
 
 export default function AdminConsole() {
+  const router = useRouter();
   const [location, setLocation] = useState<LocationState | null>(null);
   const [searchDraft, setSearchDraft] = useState("");
   const [registry, setRegistry] = useState<DictionaryRegistryPage>(blankPage);
@@ -203,7 +205,13 @@ export default function AdminConsole() {
       setPermissions(session.permissions);
       const needed = location.view === "journal" ? "audit.read" : "dictionaries.read";
       if (!session.permissions.includes(needed)) {
-        navigate(adminUrl({ view: session.permissions.includes("dictionaries.read") ? "dictionaries" : "journal", id: "", page: 1, before: "" }), true);
+        if (session.permissions.includes("dictionaries.read") || session.permissions.includes("audit.read")) {
+          navigate(adminUrl({ view: session.permissions.includes("dictionaries.read") ? "dictionaries" : "journal", id: "", page: 1, before: "" }), true);
+        } else if (session.permissions.includes("users.read")) {
+          router.replace("/admin/users");
+        } else {
+          setForbidden(true);
+        }
         return;
       }
 
@@ -242,7 +250,7 @@ export default function AdminConsole() {
       .catch(() => { if (!cancelled) setLoadError(true); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [location, navigate]);
+  }, [location, navigate, router]);
 
   const go = (view: View) => navigate(adminUrl(view === "dictionaries"
     ? { view, id: "", state: "" }

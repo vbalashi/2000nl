@@ -23,9 +23,15 @@ async function readAdminUserRows(input: {
   });
   if (error) throw new Error("Admin user registry read failed");
 
-  return ((data ?? []) as unknown as Record<string, unknown>[])
-    .map(projectAdminUserRegistryRow)
-    .filter((row): row is AdminUserRegistryRow => row !== null);
+  if (!Array.isArray(data)) throw new Error("Admin user registry read failed");
+  return data.map((value: unknown) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      throw new Error("Admin user registry read failed");
+    }
+    const row = projectAdminUserRegistryRow(value as Record<string, unknown>);
+    if (!row) throw new Error("Admin user registry read failed");
+    return row;
+  });
 }
 
 export async function listAdminUsers(query: AdminUserRegistryQuery): Promise<AdminUserRegistryPage> {
