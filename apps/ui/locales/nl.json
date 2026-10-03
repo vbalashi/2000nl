@@ -429,6 +429,8 @@
       }
     },
     "settings": {
+      "cardSpacing": "Kaartafstand",
+      "cardSpacings": {"balanced": "Gebalanceerd", "airy": "Ruimer"},
       "title": "Instellingen",
       "languages": "Talen",
       "dictionaries": "Woordenboeken",

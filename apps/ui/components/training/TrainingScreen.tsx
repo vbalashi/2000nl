@@ -4,6 +4,8 @@ import { applyResolvedTheme } from "@/lib/preferences/resolvedTheme";
 import {TrainingStartupGate} from "./pilot/TrainingStartupGate";
 import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
 import { AccountMaterialProvider } from "@/components/practice/material/AccountMaterialProvider";
+import { AccountPresentationReady } from "@/components/practice/ui/AccountPresentationReady";
+import { AccountCardSpacingProvider } from "@/components/practice/ui/AccountCardSpacingProvider";
 import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/AccountPracticeAppearanceProvider";
 
 import React from "react";
@@ -197,10 +199,10 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
 export function TrainingScreen(props: Props) {
   return (
     <ReadingPreferencesProvider userId={props.user.id}>
-      <AccountPracticeAppearanceProvider userId={props.user.id} requireReady interfaceLanguage={props.startupSnapshot?.interfaceLanguage}>
-        <AccountMaterialProvider userId={props.user.id}>
+      <AccountPracticeAppearanceProvider userId={props.user.id}>
+        <AccountCardSpacingProvider userId={props.user.id}><AccountPresentationReady language={props.startupSnapshot?.interfaceLanguage}><AccountMaterialProvider userId={props.user.id}>
           <TrainingScreenContent {...props} />
-        </AccountMaterialProvider>
+        </AccountMaterialProvider></AccountPresentationReady></AccountCardSpacingProvider>
       </AccountPracticeAppearanceProvider>
     </ReadingPreferencesProvider>
   );

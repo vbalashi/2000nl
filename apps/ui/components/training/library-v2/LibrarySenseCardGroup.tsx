@@ -606,7 +606,7 @@ function MeaningCard({
 
         <SenseCardReveal
           open={state.expanded}
-          expandedClassName={hasVisibleLeadTranslation ? "mt-4" : "mt-3"}
+          expandedClassName={approvedArticle ? "mt-0" : hasVisibleLeadTranslation ? "mt-4" : "mt-3"}
         >
           <div onClick={(event) => event.stopPropagation()}>
             {approvedArticle ? <ProductionArticleReading><ArticleSenseRelations relation={lexicalRelationDetail(meaning.wordDetails)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage}/>{showSenseForms&&senseForms&&<><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="summary" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="body" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></>}<ArticleMeaningDetails definition={meaning.definition} details={meaning.details} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible}/></ProductionArticleReading> : <>            {meaning.details.length ? (

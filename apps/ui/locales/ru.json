@@ -429,6 +429,8 @@
       }
     },
     "settings": {
+      "cardSpacing": "Интервалы карточки",
+      "cardSpacings": {"balanced": "Сбалансированные", "airy": "Свободнее"},
       "title": "Настройки",
       "languages": "Языки",
       "dictionaries": "Словари",

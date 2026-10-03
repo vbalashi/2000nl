@@ -429,6 +429,8 @@
       }
     },
     "settings": {
+      "cardSpacing": "Card spacing",
+      "cardSpacings": {"balanced": "Balanced", "airy": "Airy"},
       "title": "Settings",
       "languages": "Languages",
       "dictionaries": "Dictionaries",
