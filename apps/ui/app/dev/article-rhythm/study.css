@@ -10,6 +10,7 @@
   margin: 0 0 18px;
 }
 [data-rhythm="proposed"] {
+  --rhythm-source-leading: 1.25;
   --rhythm-pair: calc(2px * var(--account-spacing-scale, 1)) !important;
   --rhythm-group: calc(12px * var(--account-spacing-scale, 1)) !important;
   --rhythm-label: calc(4px * var(--account-spacing-scale, 1)) !important;
@@ -24,7 +25,11 @@
   [data-nesting][data-role-labels][data-nested-reading][data-nested-text-inset]
   [data-content-node-id]
   p {
-  line-height: 1.25 !important;
+  line-height: var(--rhythm-source-leading) !important;
+}
+[data-rhythm="proposed"] [data-kind="synonyms"] > p,
+[data-rhythm="proposed"] [data-kind="antonyms"] > p {
+  line-height: var(--rhythm-source-leading) !important;
 }
 [data-rhythm="proposed"]
   [data-nesting][data-role-labels][data-nested-reading][data-nested-text-inset]

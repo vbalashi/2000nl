@@ -16,7 +16,7 @@ import theme from "@/components/practice/ui/practiceTheme.module.css";
 import type { PlatformV2SenseContentNode } from "@/lib/platform/projections/platformV2SenseContent";
 import type { IdiomExerciseContent } from "@/lib/training/idiomExerciseContent";
 import type { PlatformIdiomExerciseCandidateV2 } from "../../../../../packages/shared/types/platformV2";
-import { richGroup } from "../card-spacing-proof/fixtures";
+import { richGroup, usageGroup } from "../card-spacing-proof/fixtures";
 import { russianAuditTranslations } from "../card-spacing-proof/russianTranslations";
 import { ArticleSenseRelations } from "@/components/practice/article/ArticleWordDetails";
 import { lexicalRelationDetail } from "@/components/practice/article/wordDetailsPresentation";
@@ -92,7 +92,7 @@ export function RhythmStudy() {
     ...n,
     translation:
       visible && !(translation === "partial" && n.kind === "example")
-        ? russianAuditTranslations[n.text]
+        ? (russianAuditTranslations[n.text] ?? n.translation)
         : undefined,
     children: n.children.map(trim),
   });
@@ -137,11 +137,11 @@ export function RhythmStudy() {
       }}
     >
       <h1 className="audit-heading">
-        gestalte · {q.get("treatment") || "current"} · {profile} · {size} ·{" "}
+        {q.get("fixture") || "gestalte"} · {q.get("treatment") || "current"} · {profile} · {size} ·{" "}
         {translation}
       </h1>
-      {q.get("fixture") === "goed" ? (
-        richGroup.meanings.map((m) => (
+      {["goed", "usage"].includes(q.get("fixture") || "") ? (
+        (q.get("fixture") === "usage" ? usageGroup : richGroup).meanings.map((m) => (
           <article className="rhythm-article" key={m.entryId}>
             <ProductionArticleReading>
               {m.definition && (
