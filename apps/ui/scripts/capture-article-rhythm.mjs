@@ -4,6 +4,7 @@ const out = "../../docs/design/565-article-rhythm";
 const b = await chromium.launch(),
   p = await b.newPage();
 const extra = process.env.RHYTHM_EXTRA === "1";
+const insetReview = process.env.RHYTHM_INSET_REVIEW === "1";
 const rows = extra
   ? JSON.parse(fs.readFileSync(`${out}/matrix.json`, "utf8")).map((r) => ({
       ...r,
@@ -23,6 +24,9 @@ for (const fixture of ["gestalte", "goed"])
         for (const profile of ["balanced", "airy"])
           for (const treatment of ["current", "proposed"])
             for (const translation of ["off", "on", "partial"]) {
+              if (insetReview && !(fixture === "gestalte" &&
+                ((width === 695 && ["normal", "largest"].includes(size) && surface === "training") ||
+                 (width === 390 && size === "large" && surface === "article")))) continue;
               if (
                 (fixture === "goed" && surface === "training") ||
                 (extra &&
@@ -135,6 +139,8 @@ for (const fixture of ["gestalte", "goed"])
                       labelOwnRangeGap: ll.length
                         ? ol[0].top - ll.at(-1).bottom
                         : null,
+                      labelContentInset: ll.length ? ol[0].left - ll[0].left : null,
+                      translationContentInset: ll.length && tl.length ? tl[0].left - ll[0].left : null,
                       previousGroupToNextLabelRangeGap:
                         visible(next) && end ? lines(next)[0].top - end : null,
                     };
@@ -164,6 +170,12 @@ for (const fixture of ["gestalte", "goed"])
                 )
               )
                 throw new Error("Candidate label override lost");
+              if (insetReview && treatment === "proposed" && metrics.nodes.some(
+                n => n.label && (Math.abs(n.labelContentInset - 8) > 0.5 ||
+                  (n.translationContentInset !== null && Math.abs(n.translationContentInset - 8) > 0.5))
+              )) throw new Error("Nested heading/content hierarchy lost");
+              if (insetReview && metrics.nodes.filter(n => n.label).length !== 2)
+                throw new Error("Expected shared article renderer with both nested headings");
               rows.push({
                 fixture,
                 width,
@@ -199,7 +211,7 @@ for (const fixture of ["gestalte", "goed"])
                   fullPage: true,
                 });
             }
-fs.writeFileSync(`${out}/matrix.json`, JSON.stringify(rows, null, 2));
+fs.writeFileSync(`${out}/${insetReview ? "inset-review" : "matrix"}.json`, JSON.stringify(rows, null, 2));
 console.log(
   JSON.stringify({
     cases: rows.length,

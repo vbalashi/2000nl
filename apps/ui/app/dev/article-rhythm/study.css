@@ -13,6 +13,7 @@
   --rhythm-pair: calc(2px * var(--account-spacing-scale, 1)) !important;
   --rhythm-group: calc(12px * var(--account-spacing-scale, 1)) !important;
   --rhythm-label: calc(4px * var(--account-spacing-scale, 1)) !important;
+  --rhythm-content-inset: 8px;
 }
 [data-rhythm="proposed"][data-profile="airy"] {
   --rhythm-pair: calc(3px * var(--account-spacing-scale, 1)) !important;
@@ -61,6 +62,22 @@
   > div
   > [data-role]::after {
   display: none !important;
+}
+
+/* Keep the heading on the parent axis and its source/translation indented.
+   Both labels use this rule; normal flow must not flatten their hierarchy. */
+[data-rhythm="proposed"]
+  [data-nesting][data-role-labels][data-nested-reading][data-nested-text-inset="inset"]
+  [data-parent-content-node-id]
+  > [class*="contentPair"] {
+  padding-left: var(--rhythm-content-inset) !important;
+}
+[data-rhythm="proposed"]
+  [data-nesting][data-role-labels][data-nested-reading][data-nested-text-inset="inset"]
+  [data-parent-content-node-id]
+  > [class*="contentPair"]
+  > [data-role] {
+  margin-left: calc(-1 * var(--rhythm-content-inset)) !important;
 }
 
 [data-rhythm="proposed"]
