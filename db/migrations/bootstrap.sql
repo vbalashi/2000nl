@@ -539,3 +539,5 @@
 \i db/migrations/194_library_initial_browse.sql
 
 \i db/migrations/195_training_session_active_time.sql
+
+\i db/migrations/196_library_browse_query_bound.sql

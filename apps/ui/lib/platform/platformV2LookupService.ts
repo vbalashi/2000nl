@@ -124,6 +124,10 @@ export async function performPlatformV2Lookup(
   const responseQuery = lookupResolution.query;
 
   if (lookupResult.error) {
+    // Only a classified read cancellation is retryable; never mask contract or auth errors.
+    if (libraryScope && asRecord(lookupResult.error).code === "57014") {
+      return { payload: { error: "library_search_timeout" }, status: 503, serverTiming: serverTiming() };
+    }
     return {
       payload: {
         error:

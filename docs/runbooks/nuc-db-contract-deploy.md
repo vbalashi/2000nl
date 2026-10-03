@@ -689,6 +689,19 @@ change. The previous image remains compatible. Rollback restores the previous
 app image and leaves this additive RPC/index in place. Postflight pins the exact
 signature, definer search path and grants; production contract is `2000nl-db-195`.
 
+## Bounded Library browse (migration 196, #544)
+
+Migration 196 dispatches only empty first-party Library queries to a private
+bounded projection helper. Live dictionary ACLs/material filters, group totals,
+cursor shape and all-sense payloads remain compatible; nonempty lookup and
+learning state are unchanged. The helper is inaccessible to client/service
+roles directly. The manifest pins its exact checksum and both postflight chains.
+Deploy through retaining apply, never a populated database reset. Rollback of
+the application image remains compatible with this additive read optimization.
+Local warm timings are not production acceptance; repeat first-page production
+reads after exact-SHA/contract health confirmation. See
+`docs/research/544-library-browse/README.md` for evidence and limits.
+
 ## Mixed idiom selection (migration 198)
 
 The scoped idiom start accepts `mixed`, stores both canonical direction selectors,
