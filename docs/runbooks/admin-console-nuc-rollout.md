@@ -34,8 +34,9 @@ builds the new UI while the existing container is running, applies only the
 manifest-pinned forward contract, switches the UI image, and verifies deep
 health for the exact commit. The checked-in contract has baseline DB 122 and
 migrations 123–203 already enabled by prior reviewed work. The user-registry
-slice adds migrations 204–205 and updates the contract to `2000nl-db-205`; its
-postflight checks the bounded registry function, operator exclusion, and
+slice adds migrations 204–206 and updates the contract to `2000nl-db-206`; its
+postflight checks the bounded registry function, operator-only exclusion,
+retention of dual learner/operator accounts with `user_settings`, and
 service-role-only grants. Recheck the manifest and hold state from the reviewed
 PR head before any future deployment; do not rely on this note as live-server
 state.
@@ -76,7 +77,10 @@ VALUES ('operator@example.com', true, ARRAY['dictionaries.read', 'audit.read']);
 Use `dictionaries.read`, `audit.read`, and `users.read` only when the operator
 needs the corresponding section. `users.read` exposes learner account facts
 and aggregate personal-list counts; it does not expose list contents or
-subscription/payment status. On first successful
+subscription/payment status. Grant `publication.manage` explicitly when the
+operator must change dictionary publication; `dictionaries.read` alone is
+read-only. Google entry no longer requires a manually entered email: the
+verified callback enforces the allowlist. On first successful
 Google callback, the application binds the Supabase Auth user ID to the row;
 the Auth trigger does not create learner settings for an active allowlisted
 operator. Existing learner settings and progress remain intact. Verify that a

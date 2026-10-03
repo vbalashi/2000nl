@@ -45,9 +45,12 @@ frontend state for authorization. Normal sign-out in either surface revokes
 only that surface’s Supabase session; the learner logout no longer requests global sign-out. Existing
 learner profiles, subscriptions and progress are never modified by admin login.
 The absolute admin session lifetime is eight hours; deactivation and session
-revocation deny the next request. Google
-sign-up is initiated only by a server-checked allowlisted email. Learner OTP
-flows and settings are unchanged.
+revocation deny the next request. Google entry opens the account picker without requiring an email beforehand.
+The callback checks the verified identity against the operator allowlist before
+creating an admin session. Google OAuth may create a regular Auth identity for
+a previously unseen account; that does not grant administrative access. New
+active allowlisted operator identities still skip learner-profile creation.
+Learner OTP flows and existing settings are unchanged.
 
 Bootstrap an operator by inserting their normalized email into
 `public.admin_operators` with `is_active = true` and the minimum required
