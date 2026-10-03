@@ -49,8 +49,10 @@ describe("Google admin login for an existing learner identity", () => {
   });
   it("rejects an identity without an active operator grant", async () => {
     operator.maybeSingle.mockResolvedValue({ data: null, error: null });
-    expect((await start(post("start"))).status).toBe(403);
-    expect(auth.signInWithOAuth).not.toHaveBeenCalled();
+    const response = await callback(new Request(`${origin}/api/admin/auth/callback?code=verified-code`));
+    expect(response.headers.get("location")).toContain("state=signin-error");
+    expect(sessions.insert).not.toHaveBeenCalled();
+    expect(auth.signOut).toHaveBeenCalledWith({ scope: "local" });
   });
   it("accepts linked Google on the existing email identity and registers an admin session", async () => {
     const response = await callback(new Request(`${origin}/api/admin/auth/callback?code=verified-code`));
@@ -88,4 +90,21 @@ describe("Google admin login for an existing learner identity", () => {
     expect(auth.signOut).toHaveBeenCalledTimes(1);
     expect(auth.signOut).toHaveBeenCalledWith({ scope: "local" });
   });
+});
+
+it("starts Google without a manually entered email", async () => {
+  const request = new Request(`${origin}/api/admin/auth/start`, {
+    method: "POST", headers: { origin, "content-type": "application/json" }, body: "{}",
+  });
+  expect((await start(request)).status).toBe(200);
+  expect(auth.signInWithOAuth).toHaveBeenCalledWith({ provider: "google", options: {
+    redirectTo: `${origin}/api/admin/auth/callback`, queryParams: { prompt: "select_account" },
+  }});
+  expect(from).not.toHaveBeenCalled();
+});
+
+it.each([null, { email: 123 }, { email: "invalid" }])("rejects malformed optional sign-in input %j", async (payload) => {
+  const request = new Request(`${origin}/api/admin/auth/start`, { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify(payload) });
+  expect((await start(request)).status).toBe(400);
+  expect(auth.signInWithOAuth).not.toHaveBeenCalled();
 });

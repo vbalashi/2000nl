@@ -11,9 +11,11 @@ lists and list-entry links. It does not edit learner state or expose payment
 records, subscription grants, or list contents. Published dictionaries and
 curated/public collections are not included in these personal-list counts.
 
-Dedicated operator identities are not learner records. Exclude an Auth account
-if it matches an active or inactive `admin_operators` row by bound user ID or
-normalized email.
+Dedicated operator identities without `user_settings` are not learner records.
+Exclude those accounts when they match an active or inactive `admin_operators`
+row by bound user ID or normalized email. An account with a persisted learner
+profile remains visible even when it also has operator permissions (#571).
+Administrative login does not create a learner profile to make an operator visible.
 
 ## Sources and projections
 

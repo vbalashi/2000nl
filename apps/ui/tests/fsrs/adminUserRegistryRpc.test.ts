@@ -12,7 +12,7 @@ describeIfDb("admin user registry database projection", () => {
   beforeAll(async () => { await runMigrations(pool); });
   afterAll(async () => { await pool.end(); });
 
-  test("returns bounded learner facts and counts while excluding operator identities", async () => {
+  test("returns bounded learner facts and counts while excluding operator-only identities", async () => {
     await withTransaction(pool, async (client) => {
       const learnerId = randomUUID();
       const operatorId = randomUUID();
@@ -24,6 +24,7 @@ describeIfDb("admin user registry database projection", () => {
       await ensureUserWithSettings(client, learnerId);
       await ensureUserWithSettings(client, operatorId);
       await ensureUserWithSettings(client, allowlistedId);
+      await client.query("delete from user_settings where user_id = any($1::uuid[])", [[operatorId, allowlistedId]]);
       await ensureLanguage(client, "nl");
       await client.query(
         `update auth.users
@@ -88,6 +89,22 @@ describeIfDb("admin user registry database projection", () => {
       );
       expect(excludedOperator).toEqual([]);
       expect(excludedAllowlist).toEqual([]);
+    });
+  });
+
+  test.each([true, false])("retains an operator with a learner profile (active=%s)", async active => {
+    await withTransaction(pool, async client => {
+      const userId = randomUUID();
+      const email = `dual-${randomUUID()}@example.test`;
+      await ensureUserWithSettings(client, userId);
+      await client.query("update auth.users set email=$2 where id=$1", [userId, email]);
+      await client.query("insert into admin_operators(email,user_id,is_active,permissions) values($1,$2,$3,ARRAY['users.read']::text[])", [email,userId,active]);
+      const result = await client.query("select user_id from public.admin_user_registry_page(null,$1,1,25)", [userId]);
+      expect(result.rows).toEqual([{user_id:userId}]);
+      const search = await client.query("select user_id from public.admin_user_registry_page($1,null,1,25)", [email]);
+      expect(search.rows).toEqual([{user_id:userId}]);
+      const profile = await client.query("select user_id from user_settings where user_id=$1", [userId]);
+      expect(profile.rows).toEqual([{user_id:userId}]);
     });
   });
 

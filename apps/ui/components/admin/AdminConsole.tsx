@@ -125,7 +125,6 @@ export default function AdminConsole() {
   const [hasNext, setHasNext] = useState(false);
   const [operatorEmail, setOperatorEmail] = useState("");
   const [permissions, setPermissions] = useState<string[]>([]);
-  const [email, setEmail] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
   const [loginError, setLoginError] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -274,7 +273,7 @@ export default function AdminConsole() {
       const response = await fetch("/api/admin/auth/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({}),
       });
       if (!response.ok) throw new Error("Sign in unavailable");
       const result = await response.json() as { url: string };
@@ -306,7 +305,6 @@ export default function AdminConsole() {
     <div className="mx-auto max-w-[420px] rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
       <div className="mb-6 flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-lg bg-indigo-50 text-primary"><ShieldAlert size={20} /></div><div><h1 className="text-xl font-semibold">2000NL Admin</h1><p className="mt-1 text-sm text-slate-500">Вход для оператора</p></div></div>
       <form className="space-y-4" onSubmit={(event) => void signIn(event)}>
-        <label className="block space-y-1.5 text-sm font-medium">Электронная почта<input required type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} className="h-11 w-full rounded-lg border border-slate-300 px-3 font-normal outline-none focus:border-primary focus:ring-2 focus:ring-indigo-100" placeholder="name@example.com" /></label>
         {(loginError || location.state === "signin-error" || location.state === "expired") && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{location.state === "expired" ? "Срок действия сеанса истёк. Войдите снова." : "Не удалось выполнить вход. Проверьте доступ и попробуйте ещё раз."}</p>}
         {location.state === "signout-error" && <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">Не удалось подтвердить завершение сеанса. <button type="button" className="underline" onClick={() => void signOut()}>Повторить выход</button></div>}
         {location.state === "signed-out" && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">Вы вышли из административной системы.</p>}

@@ -1,8 +1,7 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
-import { createAdminAuthClient, createAdminServiceClient } from "@/lib/admin/adminServerClient";
-import { readAdminAuditContext, writeAdminAuditEvent } from "@/lib/admin/adminAuditRepository";
+import { createAdminAuthClient } from "@/lib/admin/adminServerClient";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -23,40 +22,24 @@ export async function POST(request: Request) {
   let email = "";
   try {
     const payload = await request.json() as { email?: unknown };
+    if (!payload || typeof payload !== "object" || (payload.email !== undefined && typeof payload.email !== "string")) throw new Error("Invalid payload");
     if (typeof payload.email === "string") email = payload.email.trim().toLowerCase();
   } catch {
     return NextResponse.json({ error: "invalid_request" }, { status: 400, headers: { "Cache-Control": "no-store" } });
   }
-  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (email && (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400, headers: { "Cache-Control": "no-store" } });
   }
 
-  const context = readAdminAuditContext(request.headers);
+  // Authorize the verified Google identity in the callback, never a supplied email.
   try {
-    const service = createAdminServiceClient();
-    const { data: operator, error } = await service
-      .from("admin_operators")
-      .select("email,user_id,is_active")
-      .eq("email", email)
-      .maybeSingle();
-    if (error) throw error;
-    if (!operator?.is_active) {
-      await writeAdminAuditEvent({
-        action: "auth.sign_in_denied",
-        outcome: "denied",
-        targetType: "operator",
-        targetId: "google",
-        context,
-      });
-      return NextResponse.json({ error: "operator_access_not_available" }, { status: 403, headers: { "Cache-Control": "no-store" } });
-    }
     const auth = await createAdminAuthClient();
     const redirectTo = new URL("/api/admin/auth/callback", expectedOrigin).toString();
     const { data, error: oauthError } = await auth.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo,
-        queryParams: { login_hint: email, prompt: "select_account" },
+        queryParams: { prompt: "select_account", ...(email ? { login_hint: email } : {}) },
       },
     });
     if (oauthError || !data.url) throw oauthError ?? new Error("Google sign-in could not start");

@@ -46,3 +46,13 @@ it("shows denial instead of redirecting a permissionless operator repeatedly", a
   expect(replace).not.toHaveBeenCalled();
   expect(fetchMock).toHaveBeenCalledTimes(1);
 });
+
+it("offers Google entry without a mandatory email control", async () => {
+  window.history.replaceState({}, "", "/admin?view=login");
+  fetchMock.mockResolvedValue(Response.json({ error: "unavailable" }, { status: 503 }));
+  render(<AdminConsole />);
+  const google = await screen.findByRole("button", { name: "Продолжить с Google" });
+  expect(screen.queryByRole("textbox", { name: "Электронная почта" })).not.toBeInTheDocument();
+  fireEvent.click(google);
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/admin/auth/start", expect.objectContaining({ body: "{}" })));
+});

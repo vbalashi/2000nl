@@ -76,7 +76,10 @@ VALUES ('operator@example.com', true, ARRAY['dictionaries.read', 'audit.read']);
 Use `dictionaries.read`, `audit.read`, and `users.read` only when the operator
 needs the corresponding section. `users.read` exposes learner account facts
 and aggregate personal-list counts; it does not expose list contents or
-subscription/payment status. On first successful
+subscription/payment status. Grant `publication.manage` explicitly when the
+operator must change dictionary publication; `dictionaries.read` alone is
+read-only. Google entry no longer requires a manually entered email: the
+verified callback enforces the allowlist. On first successful
 Google callback, the application binds the Supabase Auth user ID to the row;
 the Auth trigger does not create learner settings for an active allowlisted
 operator. Existing learner settings and progress remain intact. Verify that a
