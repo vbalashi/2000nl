@@ -13,3 +13,5 @@ Verdict pending owner. Recommend B: clear metriclabels and morelistspace; C econ
 ## Owner iteration: A selected, animations and editing explored
 
 Added prototypecontrols for3loadingstyles: shimmer/softpulse/movingline, allfadein230ms andreducedmotion. Pendingduration350/1100/1800ms.3editoractionlayouts: headeroverflow Saveas/Delete; splitUpdate+copydropdown; secondarySaveas besideUpdate withDeleteiconheader.3selectionicons, directeditingfromSavedlist. Update name keepssameid/100rows; explicitSaveas generatesnewid/101rows. Browserverified3animations/3layouts, rename/copy andLoad33scrollpreservation. This remainsinmemorymock; no backendwrites.
+
+Owner selected softpulse+fade; set as default, with splitUpdate default. Added four relatedpanelicons: original, separatorless/thinner/muted, open top, separatorless withoutbuttonborder. Allretain36px hitarea andfullopacityfocus/hover. Compare in prototypecontrols inline, clickswaps listiconwithoutlosingscroll.
