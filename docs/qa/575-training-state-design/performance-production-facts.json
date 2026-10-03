@@ -1,0 +1,12 @@
+{
+  "capturedAt": "2026-10-03T18:20:06.723339+00:00",
+  "facts": {
+    "entries": 18224,
+    "coreEntries": 4031,
+    "nounEntries": 9547,
+    "verbEntries": 4311,
+    "postgresVersion": "17.6",
+    "selectedLearnerStates": 1648
+  },
+  "results": []
+}

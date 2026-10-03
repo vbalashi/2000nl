@@ -9,3 +9,7 @@ Open comparison.html or prototype.html. Standalone interactiveexport uses matchi
 Runtime demo source retained under source/; temporary mount in AccountTrainingOverview was removed aftercaptures, no prototype ships in production. Open with: `open docs/design/575-training-card-options/comparison.html`. Or serve thisfolder on a freepreviewport. Delete losing variants/source afterdecision; incorporate chosen design properly into productioncomponents.
 
 Verdict pending owner. Recommend B: clear metriclabels and morelistspace; C economizes most but inline numbers become lessreadable. NoSaved state retains heroand shows shortcreateprompt, no blank fake rows.
+
+## Owner iteration: A selected, animations and editing explored
+
+Added prototypecontrols for3loadingstyles: shimmer/softpulse/movingline, allfadein230ms andreducedmotion. Pendingduration350/1100/1800ms.3editoractionlayouts: headeroverflow Saveas/Delete; splitUpdate+copydropdown; secondarySaveas besideUpdate withDeleteiconheader.3selectionicons, directeditingfromSavedlist. Update name keepssameid/100rows; explicitSaveas generatesnewid/101rows. Browserverified3animations/3layouts, rename/copy andLoad33scrollpreservation. This remainsinmemorymock; no backendwrites.
