@@ -439,7 +439,7 @@ test("container client requires a digest and forwards DB settings by name, never
   assert.doesNotMatch(args, /topsecret|postgresql:\/\/|db\.example/);
 });
 
-test("the repository contract enables the reviewed admin registry rollout", () => {
+test("the repository contract enables the reviewed early-review rollout", () => {
   const result = spawnSync(
     process.execPath,
     [
@@ -454,7 +454,7 @@ test("the repository contract enables the reviewed admin registry rollout", () =
   assert.equal(result.status, 0, result.stderr);
   assert.equal(
     result.stdout.trim(),
-    "enabled 206 407",
+    "enabled 207 407",
   );
 });
 
