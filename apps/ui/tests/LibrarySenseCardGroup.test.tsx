@@ -510,6 +510,6 @@ test("Library displays enrolled but ungraded state and never labels a missing st
  model.meanings[1].schedulerPhase=null;
  render(<LibrarySenseCardGroup model={model} interfaceLanguage="en" onAction={vi.fn()}/>);
  expect(screen.getByText("Learning")).toBeInTheDocument();
- expect(screen.getByText("Learning state unavailable")).toBeInTheDocument();
+ expect(screen.getAllByText("Learning state unavailable").length).toBeGreaterThan(0);
  expect(screen.queryByText("New")).not.toBeInTheDocument();
 });

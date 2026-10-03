@@ -108,7 +108,11 @@
       "hidden": "Excluded",
       "frozen": "Paused",
       "unavailable": "Learning state unavailable",
-      "new": "New"
+      "new": "New",
+      "lastGrade": "Last rating",
+      "reviewCount": "Reviews",
+      "nextReview": "Next review",
+      "ungraded": "Not rated yet"
     },
     "translation": {
       "request": "Translate",

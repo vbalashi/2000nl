@@ -108,7 +108,11 @@
       "hidden": "Uitgesloten",
       "frozen": "Gepauzeerd",
       "unavailable": "Leerstatus niet beschikbaar",
-      "new": "Nieuw"
+      "new": "Nieuw",
+      "lastGrade": "Laatste beoordeling",
+      "reviewCount": "Herhalingen",
+      "nextReview": "Volgende herhaling",
+      "ungraded": "Nog niet beoordeeld"
     },
     "translation": {
       "request": "Vertalen",

@@ -374,6 +374,12 @@ export type PlatformSenseCardStateV2 = {
       | "hidden"
       | "frozen";
     repeatCount?: number;
+    /** Accepted FSRS reviews, distinct from exposure/click count. */
+    reviewCount?: number;
+    lastGrade?: 1 | 2 | 3 | 4 | null;
+    lastReviewedAt?: string | null;
+    nextReviewAt?: string | null;
+    learningDueAt?: string | null;
     lastSeenAt?: string | null;
     frozenUntil?: string | null;
   };

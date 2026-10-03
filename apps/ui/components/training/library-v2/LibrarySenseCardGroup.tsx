@@ -1,4 +1,5 @@
 "use client";
+import { LibraryLearningSummary } from "./LibraryLearningSummary";
 import { useWordDetailsClose } from "../WordDetailsHeader";
 
 import React from "react";
@@ -664,6 +665,7 @@ function MeaningCard({
             ) : null}</>}
 
 
+            <LibraryLearningSummary meaning={meaning} language={interfaceLanguage} />
             {approvedArticle ? (
               <LibraryMeaningActions meaning={meaning} language={interfaceLanguage} busy={busy} collectionCount={collectionCount}
                 onAction={onAction}
