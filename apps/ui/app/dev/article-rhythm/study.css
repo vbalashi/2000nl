@@ -1,0 +1,71 @@
+/* Local preview only: no imports from production routes. Keep the same content hierarchy. */
+[data-rhythm] .rhythm-article {
+  padding: 20px;
+  background: var(--practice-surface);
+  border: 1px solid var(--practice-border);
+  border-radius: 16px;
+}
+.audit-heading {
+  font: 14px/1.4 system-ui;
+  margin: 0 0 18px;
+}
+[data-rhythm="proposed"] {
+  --rhythm-pair: calc(2px * var(--account-spacing-scale, 1)) !important;
+  --rhythm-group: calc(12px * var(--account-spacing-scale, 1)) !important;
+  --rhythm-label: calc(4px * var(--account-spacing-scale, 1)) !important;
+}
+[data-rhythm="proposed"][data-profile="airy"] {
+  --rhythm-pair: calc(3px * var(--account-spacing-scale, 1)) !important;
+  --rhythm-group: calc(16px * var(--account-spacing-scale, 1)) !important;
+  --rhythm-label: calc(5px * var(--account-spacing-scale, 1)) !important;
+}
+[data-rhythm="proposed"]
+  [data-nesting][data-role-labels][data-nested-reading][data-nested-text-inset]
+  [data-content-node-id]
+  p {
+  line-height: 1.25 !important;
+}
+[data-rhythm="proposed"]
+  [data-nesting][data-role-labels][data-nested-reading][data-nested-text-inset]
+  [data-content-node-id]
+  [data-content-translation] {
+  margin-top: var(--rhythm-pair) !important;
+  line-height: 1.3 !important;
+}
+[data-rhythm="proposed"]
+  [data-nesting][data-role-labels][data-nested-reading][data-nested-text-inset]
+  [data-parent-content-node-id] {
+  padding-top: 0 !important;
+  border-top: 0 !important;
+}
+[data-rhythm="proposed"]
+  [data-nesting][data-role-labels][data-nested-reading][data-nested-text-inset]
+  [data-parent-content-node-id]
+  + [data-parent-content-node-id] {
+  margin-top: var(--rhythm-group) !important;
+  padding-top: 0 !important;
+}
+[data-rhythm="proposed"]
+  [data-nesting][data-role-labels][data-nested-reading][data-nested-text-inset]
+  [data-parent-content-node-id]
+  > div
+  > [data-role] {
+  position: static !important;
+  display: block !important;
+  margin: 0 0 var(--rhythm-label) !important;
+  line-height: 1.3 !important;
+}
+[data-rhythm="proposed"]
+  [data-nesting][data-role-labels][data-nested-reading][data-nested-text-inset]
+  [data-parent-content-node-id]
+  > div
+  > [data-role]::after {
+  display: none !important;
+}
+
+[data-rhythm="proposed"]
+  [data-nesting][data-role-labels][data-nested-reading][data-nested-text-inset]
+  [data-content-node-id]
+  > [class*="children"] {
+  margin-top: var(--rhythm-group) !important;
+}
