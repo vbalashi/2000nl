@@ -9,6 +9,8 @@ import {
   setupAuthenticatedTrainingAttributionPage,
 } from "../support/trainingAttributionHarness";
 
+const approved = process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 === "true";
+
 const profiles = [
   {
     name: "desktop-1280x900-light",
@@ -164,7 +166,8 @@ for (const profile of profiles) {
         name: bootstrapHeading[profile.language],
       }),
     ).toBeVisible();
-    await expect(shell.getByTestId("training-loading-indicator")).toBeVisible();
+    if (approved) await expect(shell.getByRole("status")).toHaveAttribute("aria-busy", "true");
+    else await expect(shell.getByTestId("training-loading-indicator")).toBeVisible();
     for (const misleadingCopy of [
       "Your navigation stays available",
       "De navigatie blijft beschikbaar",
@@ -180,9 +183,9 @@ for (const profile of profiles) {
       ),
     ).toBe(0);
     const shellBox = await shell.boundingBox();
-    const bootstrapHeaderBox = await shell.locator("header").boundingBox();
+    const bootstrapHeaderBox = approved ? null : await shell.locator("header").boundingBox();
     expect(shellBox).not.toBeNull();
-    expect(bootstrapHeaderBox).not.toBeNull();
+    if (!approved) expect(bootstrapHeaderBox).not.toBeNull();
     expect(shellBox!.x).toBe(0);
     expect(shellBox!.y).toBe(0);
     expect(shellBox!.width).toBe(profile.viewport.width);
@@ -220,14 +223,17 @@ for (const profile of profiles) {
     expect(destinationHeaderBox).not.toBeNull();
     expect(destinationBox!.width).toBe(shellBox!.width);
     expect(destinationBox!.height).toBe(shellBox!.height);
-    expect(destinationHeaderBox!.width).toBe(bootstrapHeaderBox!.width);
-    expect(destinationHeaderBox!.height).toBe(bootstrapHeaderBox!.height);
-    expect(destinationHeaderBox!.x - destinationBox!.x).toBe(
-      bootstrapHeaderBox!.x - shellBox!.x,
-    );
-    expect(destinationHeaderBox!.y - destinationBox!.y).toBe(
-      bootstrapHeaderBox!.y - shellBox!.y,
-    );
+    // Approved startup deliberately shows a logo without navigation chrome.
+    if (!approved) {
+      expect(destinationHeaderBox!.width).toBe(bootstrapHeaderBox!.width);
+      expect(destinationHeaderBox!.height).toBe(bootstrapHeaderBox!.height);
+      expect(destinationHeaderBox!.x - destinationBox!.x).toBe(
+        bootstrapHeaderBox!.x - shellBox!.x,
+      );
+      expect(destinationHeaderBox!.y - destinationBox!.y).toBe(
+        bootstrapHeaderBox!.y - shellBox!.y,
+      );
+    }
   });
 }
 
@@ -244,9 +250,9 @@ test("delayed list hydration and post-Start card selection are attributed separa
     sessionSelectionDelayMs: 1_200,
   });
 
-  const authenticatedStatus = page.locator(
-    '[role="status"][data-context="training"]',
-  );
+  const authenticatedStatus = approved
+    ? page.getByTestId("training-startup-gate").getByRole("status")
+    : page.locator('[role="status"][data-context="training"]');
   await expect(authenticatedStatus).toBeVisible();
   await expect(authenticatedStatus).toHaveAttribute("aria-busy", "true");
   await expect(
@@ -257,14 +263,14 @@ test("delayed list hydration and post-Start card selection are attributed separa
   await expect(page.getByText(/Loading Training/i)).toHaveCount(0);
 
   const todayHeading = page.getByRole("heading", {
-    name: /Good morning|Goedemorgen|Доброе утро/i,
+    name: approved ? /^(Training|Тренировка)$/i : /Good morning|Goedemorgen|Доброе утро/i,
   });
   await expect(todayHeading).toBeVisible();
   const continueSession = page.getByRole("button", {
     name: /Continue session|Sessie doorgaan|Продолжить сессию/i,
   });
   const startCurrentSetup = page.getByRole("button", {
-    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/i,
+    name: approved ? /Start training|Training starten|Начать тренировку/i : /Start current setup|Huidige selectie starten|Начать с текущими настройками/i,
   });
   await expect(continueSession).toHaveCount(0);
   await expect(startCurrentSetup).toBeEnabled();
@@ -277,7 +283,10 @@ test("delayed list hydration and post-Start card selection are attributed separa
   await startCurrentSetup.click();
 
   await expect.poll(() => harness.requests.session.length).toBeGreaterThanOrEqual(1);
-  await expect(
+  // Session selection must not reintroduce the startup screen. Its latency
+  // remains checked below through the real request attribution collector.
+  if (approved) await expect(page.getByTestId("training-bootstrap-shell")).toHaveCount(0);
+  else await expect(
     page.getByText(
       /Preparing your next card|Je volgende kaart wordt voorbereid|Подготавливаем следующую карточку/i,
     ),
