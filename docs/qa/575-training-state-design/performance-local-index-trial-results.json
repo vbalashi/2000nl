@@ -1,0 +1,243 @@
+{
+  "volume": {
+    "entries": "18163",
+    "nodes": "40403",
+    "synthetic_states": "1000"
+  },
+  "stages": [
+    {
+      "stage": "before",
+      "results": [
+        {
+          "name": "context-curated",
+          "warmSamples": 5,
+          "medianMs": 120.6533750000001,
+          "minMs": 117.8163340000001,
+          "maxMs": 138.85787500000015,
+          "counters": {
+            "asOf": "2026-10-03T20:31:09.102592+00:00",
+            "dueToday": 211,
+            "newCards": 0,
+            "studyDay": "2026-10-03",
+            "timezone": "UTC",
+            "totalReviews": 416
+          },
+          "rawMs": [
+            136.86520799999994,
+            130.41120899999987,
+            138.85787500000015,
+            120.6533750000001,
+            117.8163340000001,
+            119.43166600000018
+          ]
+        },
+        {
+          "name": "ordinary-curated",
+          "warmSamples": 5,
+          "medianMs": 119.1112079999998,
+          "minMs": 116.55670800000007,
+          "maxMs": 127.89791699999978,
+          "counters": {
+            "asOf": "2026-10-03T20:31:09.81989+00:00",
+            "dueToday": 492,
+            "newCards": 2030,
+            "studyDay": "2026-10-03",
+            "timezone": "UTC",
+            "totalReviews": 979
+          },
+          "rawMs": [
+            114.72874999999999,
+            117.97112500000003,
+            116.55670800000007,
+            120.66312500000004,
+            127.89791699999978,
+            119.1112079999998
+          ]
+        },
+        {
+          "name": "ordinary-all",
+          "warmSamples": 5,
+          "medianMs": 373.18895799999973,
+          "minMs": 371.0997910000001,
+          "maxMs": 386.16854200000034,
+          "counters": {
+            "asOf": "2026-10-03T20:31:11.840113+00:00",
+            "dueToday": 492,
+            "newCards": 13564,
+            "studyDay": "2026-10-03",
+            "timezone": "UTC",
+            "totalReviews": 979
+          },
+          "rawMs": [
+            387.53020800000013,
+            386.16854200000034,
+            371.0997910000001,
+            384.04670799999985,
+            372.2227090000001,
+            373.18895799999973
+          ]
+        }
+      ],
+      "predicatePlan": {
+        "Plan": {
+          "Node Type": "Seq Scan",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Relation Name": "platform_v2_content_nodes",
+          "Alias": "platform_v2_content_nodes",
+          "Startup Cost": 0,
+          "Total Cost": 3597.07,
+          "Plan Rows": 4873,
+          "Plan Width": 16,
+          "Actual Rows": 13332,
+          "Actual Loops": 1,
+          "Filter": "((diagnostic_locator ~ '^raw\\.meanings\\[[0-9]+\\]\\.examples\\[[0-9]+\\]$'::text) AND (kind = 'example'::text) AND (binding_state = 'active'::text) AND (NULLIF(btrim(diagnostic_locator), ''::text) IS NOT NULL))",
+          "Rows Removed by Filter": 27071,
+          "Shared Hit Blocks": 2688,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning": {
+          "Shared Hit Blocks": 1,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.156,
+        "Triggers": [],
+        "Execution Time": 48.679
+      }
+    },
+    {
+      "stage": "after",
+      "results": [
+        {
+          "name": "context-curated",
+          "warmSamples": 5,
+          "medianMs": 105.61824999999953,
+          "minMs": 101.5967499999997,
+          "maxMs": 107.33899999999994,
+          "counters": {
+            "asOf": "2026-10-03T20:31:13.036867+00:00",
+            "dueToday": 211,
+            "newCards": 0,
+            "studyDay": "2026-10-03",
+            "timezone": "UTC",
+            "totalReviews": 416
+          },
+          "rawMs": [
+            106.2524999999996,
+            103.67516700000033,
+            107.33899999999994,
+            101.5967499999997,
+            105.61824999999953,
+            106.47020799999973
+          ]
+        },
+        {
+          "name": "ordinary-curated",
+          "warmSamples": 5,
+          "medianMs": 118.31045799999993,
+          "minMs": 117.44862499999999,
+          "maxMs": 120.08495800000037,
+          "counters": {
+            "asOf": "2026-10-03T20:31:13.735093+00:00",
+            "dueToday": 492,
+            "newCards": 2030,
+            "studyDay": "2026-10-03",
+            "timezone": "UTC",
+            "totalReviews": 979
+          },
+          "rawMs": [
+            116.43266700000004,
+            119.56745800000044,
+            117.44862499999999,
+            120.08495800000037,
+            118.24824999999964,
+            118.31045799999993
+          ]
+        },
+        {
+          "name": "ordinary-all",
+          "warmSamples": 5,
+          "medianMs": 385.05091600000014,
+          "minMs": 375.58816599999955,
+          "maxMs": 392.04320800000005,
+          "counters": {
+            "asOf": "2026-10-03T20:31:15.76534+00:00",
+            "dueToday": 492,
+            "newCards": 13564,
+            "studyDay": "2026-10-03",
+            "timezone": "UTC",
+            "totalReviews": 979
+          },
+          "rawMs": [
+            370.990417,
+            387.95404099999996,
+            375.7692499999994,
+            385.05091600000014,
+            392.04320800000005,
+            375.58816599999955
+          ]
+        }
+      ],
+      "predicatePlan": {
+        "Plan": {
+          "Node Type": "Index Only Scan",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Scan Direction": "Forward",
+          "Index Name": "platform_v2_content_nodes_active_raw_example_entry_idx",
+          "Relation Name": "platform_v2_content_nodes",
+          "Alias": "platform_v2_content_nodes",
+          "Startup Cost": 0.29,
+          "Total Cost": 224.37,
+          "Plan Rows": 4850,
+          "Plan Width": 16,
+          "Actual Rows": 13332,
+          "Actual Loops": 1,
+          "Heap Fetches": 0,
+          "Shared Hit Blocks": 52,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning": {
+          "Shared Hit Blocks": 1,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.452,
+        "Triggers": [],
+        "Execution Time": 0.682
+      }
+    }
+  ],
+  "indexBuildMs": 21.97925000000032
+}
