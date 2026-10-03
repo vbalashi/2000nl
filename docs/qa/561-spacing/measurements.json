@@ -1,0 +1,8834 @@
+[
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "26px",
+      "26px",
+      "26px",
+      "26px",
+      "26px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "26px",
+      "26px",
+      "26px",
+      "26px",
+      "26px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px",
+      "40px",
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px",
+      "40px",
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "52px",
+      "52px",
+      "52px",
+      "52px",
+      "52px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "52px",
+      "52px",
+      "52px",
+      "52px",
+      "52px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px",
+      "64px",
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px",
+      "64px",
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px",
+      "64px",
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px",
+      "64px",
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "20px",
+      "20px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "20px",
+      "20px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      4,
+      4,
+      4,
+      4,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      4,
+      4,
+      4,
+      4,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "26px",
+      "26px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "26px",
+      "26px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      8,
+      8,
+      8,
+      8,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      8,
+      8,
+      8,
+      8,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "52px",
+      "52px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "52px",
+      "52px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      10,
+      10,
+      10,
+      10,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      10,
+      10,
+      10,
+      10,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "20px",
+      "20px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "20px",
+      "20px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "26px",
+      "26px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "26px",
+      "26px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "52px",
+      "52px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "52px",
+      "52px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "26px",
+      "26px",
+      "26px",
+      "26px",
+      "26px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "26px",
+      "26px",
+      "26px",
+      "26px",
+      "26px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px",
+      "40px",
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px",
+      "40px",
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "52px",
+      "52px",
+      "52px",
+      "52px",
+      "52px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "52px",
+      "52px",
+      "52px",
+      "52px",
+      "52px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px",
+      "64px",
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px",
+      "64px",
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px",
+      "64px",
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px",
+      "64px",
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "20px",
+      "20px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "20px",
+      "20px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      4,
+      4,
+      4,
+      4,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      4,
+      4,
+      4,
+      4,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "26px",
+      "26px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "26px",
+      "26px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      8,
+      8,
+      8,
+      8,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      8,
+      8,
+      8,
+      8,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "52px",
+      "52px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "52px",
+      "52px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      10,
+      10,
+      10,
+      10,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      10,
+      10,
+      10,
+      10,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "20px",
+      "20px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "20px",
+      "20px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "normal",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "24px",
+      "24px"
+    ],
+    "examples": 0,
+    "pairs": [
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "26px",
+      "26px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "26px",
+      "26px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "normal",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32px",
+      "32px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "16px",
+      "16px",
+      "16px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "extra",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "52px",
+      "52px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "52px",
+      "52px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "extra",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "64px",
+      "64px"
+    ],
+    "examples": 0,
+    "pairs": [
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "nested": [
+      "32px",
+      "32px",
+      "32px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "25px",
+      "25px",
+      "25px",
+      "25px",
+      "25px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "25px",
+      "25px",
+      "25px",
+      "25px",
+      "25px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px",
+      "30px",
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px",
+      "30px",
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px",
+      "30px",
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px",
+      "30px",
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "large",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32.5px",
+      "32.5px",
+      "32.5px",
+      "32.5px",
+      "32.5px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "large",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32.5px",
+      "32.5px",
+      "32.5px",
+      "32.5px",
+      "32.5px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "large",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px",
+      "40px",
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "large",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px",
+      "40px",
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "large",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px",
+      "40px",
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "large",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px",
+      "40px",
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px",
+      "30px",
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px",
+      "30px",
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px",
+      "36px",
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px",
+      "36px",
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px",
+      "36px",
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px",
+      "36px",
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "39px",
+      "39px",
+      "39px",
+      "39px",
+      "39px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "39px",
+      "39px",
+      "39px",
+      "39px",
+      "39px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "article",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "25px",
+      "25px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "25px",
+      "25px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "large",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32.5px",
+      "32.5px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "large",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32.5px",
+      "32.5px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "large",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "large",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "large",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "large",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6,
+      6,
+      6,
+      6,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6,
+      6,
+      6,
+      6,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "39px",
+      "39px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "39px",
+      "39px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "library",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "25px",
+      "25px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "25px",
+      "25px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "large",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32.5px",
+      "32.5px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "large",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32.5px",
+      "32.5px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "large",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "large",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "large",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "large",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "39px",
+      "39px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "39px",
+      "39px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "training",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "25px",
+      "25px",
+      "25px",
+      "25px",
+      "25px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "25px",
+      "25px",
+      "25px",
+      "25px",
+      "25px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px",
+      "30px",
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px",
+      "30px",
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px",
+      "30px",
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px",
+      "30px",
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "large",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32.5px",
+      "32.5px",
+      "32.5px",
+      "32.5px",
+      "32.5px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "large",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32.5px",
+      "32.5px",
+      "32.5px",
+      "32.5px",
+      "32.5px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "large",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px",
+      "40px",
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "large",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px",
+      "40px",
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "large",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px",
+      "40px",
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "large",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px",
+      "40px",
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px",
+      "30px",
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px",
+      "30px",
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px",
+      "36px",
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px",
+      "36px",
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px",
+      "36px",
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px",
+      "36px",
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "39px",
+      "39px",
+      "39px",
+      "39px",
+      "39px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "39px",
+      "39px",
+      "39px",
+      "39px",
+      "39px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "article",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px",
+      "48px",
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "25px",
+      "25px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "25px",
+      "25px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      5,
+      5,
+      5,
+      5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "large",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32.5px",
+      "32.5px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "large",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32.5px",
+      "32.5px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "large",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "large",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "large",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "large",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6,
+      6,
+      6,
+      6,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      6,
+      6,
+      6,
+      6,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "39px",
+      "39px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "39px",
+      "39px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "library",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      null,
+      null,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "25px",
+      "25px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "25px",
+      "25px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "large",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "large",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "32.5px",
+      "32.5px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "large",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "32.5px",
+      "32.5px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "large",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "large",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "large",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "large",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "40px",
+      "40px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ],
+    "nested": [
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "30px",
+      "30px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "largest",
+    "variant": "balanced",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "36px",
+      "36px"
+    ],
+    "examples": 0,
+    "pairs": [
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "39px",
+      "39px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "off",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "39px",
+      "39px"
+    ],
+    "examples": 0,
+    "pairs": [],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "on",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 0,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  },
+  {
+    "width": 610,
+    "surface": "training",
+    "size": "largest",
+    "variant": "airy",
+    "translation": "partial",
+    "dark": 1,
+    "overflow": false,
+    "sections": [
+      "48px",
+      "48px"
+    ],
+    "examples": 0,
+    "pairs": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5
+    ],
+    "nested": [
+      "24px",
+      "24px",
+      "24px"
+    ]
+  }
+]

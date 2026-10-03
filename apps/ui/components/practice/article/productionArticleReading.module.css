@@ -7,3 +7,10 @@
  --practice-reading-caption: var(--account-practice-reading-caption, var(--reading-translation-size, 13px));
  --practice-reading-body: var(--account-practice-reading-body, var(--reading-literary-size, 16px));
 }
+
+.bridge:has([data-content-translation]:not([aria-hidden=true] *)),
+:global([data-entry-id]):has([data-content-translation]:not([aria-hidden=true] *)) .bridge{--practice-space-section:var(--practice-space-section-translated)}
+.bridge section:has(>[class*="relations"]){margin-top:var(--practice-space-section);padding:0}
+.bridge [data-kind=synonyms]>p,.bridge [data-kind=antonyms]>p{padding-block:var(--practice-space-rail)}
+
+.bridge [data-meaning-lead] [data-nesting]>p+[aria-hidden] [data-content-translation]{margin-top:var(--practice-space-pair)}

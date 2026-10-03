@@ -26,9 +26,11 @@
  --practice-reading-body: var(--account-practice-reading-body, var(--practice-text-body));
  --practice-reading-forms: var(--account-practice-reading-forms, var(--practice-text-lead));
  --practice-reading-prompt: var(--account-practice-reading-prompt, var(--practice-text-page));
- --practice-space-pair: 2px;
- --practice-space-content: 8px;
- --practice-space-section: 12px;
+ --practice-space-pair: calc(var(--account-spacing-pair, 4) * var(--account-spacing-scale, 1) * 1rem / 16);
+ --practice-space-content: calc(var(--account-spacing-item, 12) * var(--account-spacing-scale, 1) * 1rem / 16);
+ --practice-space-section: calc(var(--account-spacing-section, 20) * var(--account-spacing-scale, 1) * 1rem / 16);
+ --practice-space-section-translated: calc(var(--account-spacing-translated, 24) * var(--account-spacing-scale, 1) * 1rem / 16);
+ --practice-space-rail: calc(var(--account-spacing-rail, 3) * var(--account-spacing-scale, 1) * 1rem / 16);
  --practice-content-inset: 10px;
  --practice-radius-control: 10px;
  --practice-radius-panel: 16px;

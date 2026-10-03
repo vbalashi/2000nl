@@ -1,11 +1,16 @@
 "use client";
 import React from "react";
-import {SettingsRow,SettingsOptions} from "@/components/practice/settings/SettingsLayout";
+import {
+  SettingsRow,
+  SettingsOptions,
+} from "@/components/practice/settings/SettingsLayout";
 import layout from "@/components/practice/settings/settings.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import { getUiMessages } from "@/lib/uiMessages";
 import { PaletteChoices } from "@/components/practice/settings/PaletteChoices";
+import { useAccountCardSpacing } from "./AccountCardSpacingProvider";
+import { cardSpacings } from "./cardSpacing";
 import { useAccountPracticeAppearance } from "./AccountPracticeAppearanceProvider";
 import theme from "./practiceTheme.module.css";
 import s from "@/components/reading/textPreferences.module.css";
@@ -20,6 +25,7 @@ export function ApprovedAppearanceSection({
   mode: ThemePreference;
   onModeChange: (mode: ThemePreference) => void;
 }) {
+  const spacing = useAccountCardSpacing();
   const appearance = useAccountPracticeAppearance(),
     copy = getUiMessages(language),
     status = copy.appearancePreferences;
@@ -34,20 +40,71 @@ export function ApprovedAppearanceSection({
       data-colour-mode="app"
     >
       <h2>{copy.settings.appearance}</h2>
-      <SettingsRow className={s.preferenceRow} title={copy.settings.colourMode}><SettingsOptions label={copy.settings.colourMode} items={modes.map(([id,key])=>({id,label:copy.builder.colourModes[key]}))} value={mode} onChange={onModeChange}/></SettingsRow>
+      <SettingsRow className={s.preferenceRow} title={copy.settings.colourMode}>
+        <SettingsOptions
+          label={copy.settings.colourMode}
+          items={modes.map(([id, key]) => ({
+            id,
+            label: copy.builder.colourModes[key],
+          }))}
+          value={mode}
+          onChange={onModeChange}
+        />
+      </SettingsRow>
+      {spacing && (
+        <>
+          <SettingsRow
+            className={s.preferenceRow}
+            title={copy.settings.cardSpacing}
+          >
+            <SettingsOptions
+              label={copy.settings.cardSpacing}
+              items={cardSpacings.map((id) => ({
+                id,
+                label: copy.settings.cardSpacings[id],
+              }))}
+              value={spacing.spacing}
+              onChange={(value) => void spacing.save(value)}
+              disabled={
+                spacing.loadStatus !== "ready" ||
+                spacing.saveStatus === "saving"
+              }
+            />
+          </SettingsRow>
+          {spacing.saveStatus === "error" && (
+            <div role="alert">
+              <p>{status.saveError}</p>
+              <button
+                type="button"
+                onClick={() => void spacing.save(spacing.spacing)}
+              >
+                {status.retry}
+              </button>
+            </div>
+          )}
+          {spacing.saveStatus === "saving" && (
+            <p role="status">{status.saving}</p>
+          )}
+          {spacing.saveStatus === "saved" && (
+            <p role="status">{status.saved}</p>
+          )}
+        </>
+      )}
       {appearance && (
         <>
-          <div className={`${s.preferenceRow} ${s.paletteRow}`}><h3>{copy.settings.theme}</h3>
-          <PaletteChoices
-            mode={mode}
-            language={language}
-            palette={appearance.palette}
-            disabled={
-              appearance.loadStatus !== "ready" ||
-              appearance.saveStatus === "saving"
-            }
-            onChange={(value) => void appearance.save(value)}
-          /></div>
+          <div className={`${s.preferenceRow} ${s.paletteRow}`}>
+            <h3>{copy.settings.theme}</h3>
+            <PaletteChoices
+              mode={mode}
+              language={language}
+              palette={appearance.palette}
+              disabled={
+                appearance.loadStatus !== "ready" ||
+                appearance.saveStatus === "saving"
+              }
+              onChange={(value) => void appearance.save(value)}
+            />
+          </div>
           {appearance.loadStatus === "loading" && (
             <p role="status">{status.loading}</p>
           )}
