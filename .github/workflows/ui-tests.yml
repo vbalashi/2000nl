@@ -56,7 +56,7 @@ jobs:
         working-directory: apps/ui
 
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium chromium
+        run: npx playwright install --with-deps chromium
         working-directory: apps/ui
 
       - name: Lint UI
@@ -129,7 +129,7 @@ jobs:
           playwright/tests/training-bootstrap-loading.spec.ts
           playwright/tests/training-secondary-actions.spec.ts
           --grep "mobile-(402x874|390x844) keeps one report action and one accessible sheet|auth bootstrap keeps one Training shell on mobile-(390x844|412x915)-dark|secondary actions align at 390px in dark"
-          --repeat-each=4
+          --repeat-each=20
           --retries=0
           --workers=2
           --trace=retain-on-failure
