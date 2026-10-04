@@ -2361,8 +2361,8 @@ describeDb("authoritative training session plan RPC", () => {
       expect(practicePlanRows[0].plan).toEqual(
         expect.objectContaining({
           plannedNew: 0,
-          plannedReview: 0,
-          plannedPractice: 3,
+          plannedReview: 1,
+          plannedPractice: 2,
           plannedTotal: 3,
         }),
       );
@@ -2377,7 +2377,7 @@ describeDb("authoritative training session plan RPC", () => {
         );
         const item = selectedRows[0]?.item;
         if (!item) break;
-        expect(item.stats.source).toBe("practice");
+        expect(item.stats.source).toBe(item.id === learning ? "learning" : "practice");
         practiceKeys.push(`${item.id}:${item.mode}`);
       }
       expect(practiceKeys).toHaveLength(practicePlanRows[0].plan.plannedTotal);

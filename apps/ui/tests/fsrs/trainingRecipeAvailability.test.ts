@@ -56,6 +56,18 @@ async function availability(
   const pool = new Pool({ connectionString: dbUrl });
   beforeAll(() => runMigrations(pool));
   afterAll(() => pool.end());
+  test("due-now learning count agrees with Reviews-only launch", () =>
+    withTransaction(pool, async (c) => {
+      const u = await owner(c), e = await card(c, u, now, "definition-to-word");
+      await c.query("update user_card_status set fsrs_last_interval=0.5 where user_id=$1 and entry_id=$2", [u,e]);
+      const count = await availability(c,u,["definition-to-word"]);
+      const plan = (await c.query(
+        "select start_training_session($1::uuid,ARRAY['definition-to-word'],null::uuid,'curated','review','{}'::jsonb,'5',$2::uuid,2) s",
+        [u, randomUUID()],
+      )).rows[0].s;
+      expect(count.dueToday).toBe(1);
+      expect(plan.plannedTotal).toBe(1);
+    }));
   test("reviews scheduled later today do not advertise a due launch", () =>
     withTransaction(pool, async (c) => {
       const u = await owner(c);
@@ -156,6 +168,7 @@ async function availability(
       await card(c, u, now, "definition-to-word", e);
       const other = await card(c, u, now);
       await card(c, u, now, "definition-to-word", other);
+      await c.query("update user_card_status set fsrs_last_interval=0.5 where user_id=$1 and entry_id=$2 and card_type_id='definition-to-word'",[u,e]);
       const node = randomUUID();
       await c.query(
         "insert into private.platform_v2_content_nodes(id,entry_id,kind,binding_state,first_source_revision,last_source_revision,source_text_fingerprint,diagnostic_locator) values($1,$2,'example','active','v1','v1',$3,'raw.meanings[0].examples[0]')",
@@ -166,6 +179,11 @@ async function availability(
           presentationMode: "word-in-context",
         }),
       ).toMatchObject({ dueToday: 1, totalReviews: 1, newCards: 0 });
+      const plan = (await c.query(
+        `select start_training_session($1::uuid,ARRAY['definition-to-word'],null::uuid,'curated','review','{"presentationMode":"word-in-context"}'::jsonb,'5',$2::uuid,2) s`,
+        [u,randomUUID()],
+      )).rows[0].s;
+      expect(plan.plannedTotal).toBe(1);
     }));
   test("rejects foreign principal and paused sentence family", () =>
     withTransaction(pool, async (c) => {

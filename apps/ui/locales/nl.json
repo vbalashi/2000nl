@@ -302,7 +302,7 @@
     },
     "trainingOverview": {
       "editTraining": "Training aanpassen",
-      "dueToday": "Vandaag klaar",
+      "dueToday": "Nu te herhalen",
       "totalReviews": "In herhaling",
       "stillNew": "Nog nieuw",
       "loadNamed": "{name} laden",

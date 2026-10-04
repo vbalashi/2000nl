@@ -302,7 +302,7 @@
     },
     "trainingOverview": {
       "editTraining": "Изменить тренировку",
-      "dueToday": "На сегодня",
+      "dueToday": "К повторению сейчас",
       "totalReviews": "На повторении",
       "stillNew": "Ещё новые",
       "loadNamed": "Загрузить «{name}»",

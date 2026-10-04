@@ -2,7 +2,7 @@
 
 import React,{useEffect,useRef,useState} from "react";
 import {AddAction} from "./ui/AddAction";
-import {ArrowRight,ChevronDown,Play,Plus} from "lucide-react";
+import {ChevronDown,Play,Plus} from "lucide-react";
 import {IconAction} from "./ui/IconAction";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import {formatUiMessage,getUiMessages} from "@/lib/uiMessages";
@@ -64,7 +64,7 @@ export function TrainingOverview({state,interfaceLanguage="en",onSelect,onLaunch
    {resume&&total!==null&&total>0&&<div className={s.progress} role="progressbar" aria-label={copy.sessionProgress} aria-valuemin={0} aria-valuemax={total} aria-valuenow={completed}><span style={{width:`${completed/total*100}%`}}/></div>}
    {empty&&!known&&<p className={s.emptyMessage} role="status">{empty.message}</p>}
    {!resume&&availability?.status==="error"&&<p className={s.emptyMessage} role="status">{availability.message??copy.availabilityFailed}{onAvailabilityRetry&&<button className={s.retry} onClick={onAvailabilityRetry}>{copy.retry}</button>}</p>}
-   <div className={s.heroActions}>{readyEarly?<button type="button" className={s.start} disabled={!main.canLaunch} onClick={()=>onEarlyReview?.(main.id)}><Play size={16} fill="currentColor"/>{copy.earlyReview}</button>:readyEdit?<button type="button" className={s.start} onClick={()=>onEdit(main.id)}>{copy.editTraining}</button>:empty&&!known?onEarlyReview&&empty.canReviewAhead&&<button type="button" className={s.start} disabled={!main.canLaunch} onClick={()=>onEarlyReview(main.id)}><Play size={16} fill="currentColor"/>{copy.earlyReview}</button>:<button type="button" className={s.start} disabled={!main.canLaunch} onClick={()=>resume?onResume(resume.sessionId):onLaunch(main.id)}><Play size={16} fill="currentColor"/>{resume?copy.continue:copy.start}<ArrowRight size={16}/></button>}</div>
+   <div className={s.heroActions}>{readyEarly?<button type="button" className={s.start} disabled={!main.canLaunch} onClick={()=>onEarlyReview?.(main.id)}><Play size={16} fill="currentColor"/>{copy.earlyReview}</button>:readyEdit?<button type="button" className={s.start} onClick={()=>onEdit(main.id)}>{copy.editTraining}</button>:empty&&!known?onEarlyReview&&empty.canReviewAhead&&<button type="button" className={s.start} disabled={!main.canLaunch} onClick={()=>onEarlyReview(main.id)}><Play size={16} fill="currentColor"/>{copy.earlyReview}</button>:<button type="button" className={s.start} disabled={!main.canLaunch} onClick={()=>resume?onResume(resume.sessionId):onLaunch(main.id)}><Play size={16} fill="currentColor"/>{resume?copy.continue:copy.start}</button>}</div>
    {main.notice&&<p className={s.description} role="status">{main.notice}</p>}
    {!main.canLaunch&&main.unavailableReason&&<p className={s.description} role="status">{main.unavailableReason}</p>}
   </section>:!state.trainings.length?<section className={s.hero}><h2>{copy.firstTraining}</h2><button type="button" className={s.start} onClick={onCreate}><Plus size={16}/>{copy.create}</button></section>:null}
