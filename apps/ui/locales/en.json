@@ -302,7 +302,7 @@
     },
     "trainingOverview": {
       "editTraining": "Edit training",
-      "dueToday": "Due today",
+      "dueToday": "Due now",
       "totalReviews": "Total reviews",
       "stillNew": "Still new",
       "loadNamed": "Load {name}",

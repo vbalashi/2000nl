@@ -57,7 +57,7 @@ test('exhausted early-review hero offers adjustment without another empty Start'
 });
 
 test('saved Load selects identity without launching',()=>{const c=setup();fireEvent.click(screen.getByRole('button',{name:'Load Idioms'}));expect(c.onSelect).toHaveBeenCalledWith('b');expect(c.onLaunch).not.toHaveBeenCalled();});
-test('ready availability renders three distinct counters and zero stays zero',()=>{setup({status:'ready',trainings:items,mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:45,stillNew:7}});expect(screen.getByText('Due today').nextElementSibling).toHaveTextContent('0');expect(screen.getByText('Total reviews').nextElementSibling).toHaveTextContent('45');expect(screen.getByText('Still new').nextElementSibling).toHaveTextContent('7');});
+test('ready availability renders three distinct counters and zero stays zero',()=>{setup({status:'ready',trainings:items,mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:45,stillNew:7}});expect(screen.getByText('Due now').nextElementSibling).toHaveTextContent('0');expect(screen.getByText('Total reviews').nextElementSibling).toHaveTextContent('45');expect(screen.getByText('Still new').nextElementSibling).toHaveTextContent('7');});
 test('pending availability pulses without manufacturing zero counts',()=>{setup({status:'ready',trainings:items,mainId:'a',availability:{trainingId:'a',status:'loading',dueToday:null,totalReviews:null,stillNew:null}});expect(document.querySelector('dl')).toHaveAttribute('aria-busy','true');expect(screen.queryByText('0')).toBeNull();});
 test('stale availability from another selection is never shown',()=>{setup({status:'ready',trainings:items,mainId:'b',availability:{trainingId:'a',status:'ready',dueToday:999,totalReviews:999,stillNew:999}});expect(screen.queryByText('999')).toBeNull();});
 test('all100recipes remain selectable in an independent list',()=>{const all=Array.from({length:100},(_,i)=>({...items[0],id:`saved-${i}`,name:`Saved ${i}`}));setup({status:'ready',trainings:all,mainId:'saved-0'});expect(screen.getAllByRole('button',{name:/^Load Saved /})).toHaveLength(100);expect(screen.getByRole('region',{name:'Saved Trainings'})).toBeVisible();});
@@ -75,7 +75,7 @@ test('resumed hero retains accepted session metadata while Saved shows edited re
  const callbacks={onLaunch:vi.fn(),onResume:vi.fn(),onEdit:vi.fn(),onCreate:vi.fn(),onRetry:vi.fn(),onEarlyReview:vi.fn()};
  const state={status:'ready' as const,trainings:[{...items[0],cardFilter:'review' as const}],mainId:'a',availability:{trainingId:'a',status:'ready' as const,dueToday:73,totalReviews:97,stillNew:1}};
  const view=render(<TrainingOverview state={state} {...callbacks}/>);
- fireEvent.click(screen.getByRole('button',{name:'Start training'}));expect(callbacks.onLaunch).toHaveBeenCalledWith('a');
+ expect(screen.getByRole('button',{name:'Start training'}).querySelectorAll('svg')).toHaveLength(1);fireEvent.click(screen.getByRole('button',{name:'Start training'}));expect(callbacks.onLaunch).toHaveBeenCalledWith('a');
  view.rerender(<TrainingOverview state={{...state,availability:{...state.availability,dueToday:0}}} {...callbacks}/>);
  const button=screen.getByRole('button',{name:'Review ahead'});expect(button.querySelectorAll('svg')).toHaveLength(1);
  fireEvent.click(button);expect(callbacks.onEarlyReview).toHaveBeenCalledWith('a');
