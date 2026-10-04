@@ -56,7 +56,29 @@ async function availability(
   const pool = new Pool({ connectionString: dbUrl });
   beforeAll(() => runMigrations(pool));
   afterAll(() => pool.end());
-  test("single uncapped aggregate includes overdue and later today, excludes next study day, with separate introduced/new counts", () =>
+  test("reviews scheduled later today do not advertise a due launch", () =>
+    withTransaction(pool, async (c) => {
+      const u = await owner(c);
+      await card(c, u, "2026-10-03T21:00Z");
+      expect(await availability(c, u)).toMatchObject({ dueToday: 0, totalReviews: 1 });
+      const plan = (await c.query(
+        "select start_training_session($1::uuid,ARRAY['word-to-definition'],null::uuid,'curated','review','{}'::jsonb,'5',$2::uuid,2) s",
+        [u, randomUUID()],
+      )).rows[0].s;
+      expect(plan.plannedTotal).toBe(0);
+    }));
+  test("a due-now count agrees with the ordinary review plan", () =>
+    withTransaction(pool, async (c) => {
+      const u = await owner(c);
+      await card(c, u, now);
+      expect(await availability(c, u)).toMatchObject({ dueToday: 1, totalReviews: 1 });
+      const plan = (await c.query(
+        "select start_training_session($1::uuid,ARRAY['word-to-definition'],null::uuid,'curated','review','{}'::jsonb,'5',$2::uuid,2) s",
+        [u, randomUUID()],
+      )).rows[0].s;
+      expect(plan.plannedTotal).toBe(1);
+    }));
+  test("single uncapped aggregate counts overdue now, excludes future reviews, with separate introduced/new counts", () =>
     withTransaction(pool, async (c) => {
       const u = await owner(c);
       await card(c, u, "2026-10-02T12:00Z");
@@ -66,7 +88,7 @@ async function availability(
       await card(c, u, "2026-10-03T13:00Z", "word-to-definition", undefined, 0);
       await insertWord(c, `new-${randomUUID()}`);
       expect(await availability(c, u)).toMatchObject({
-        dueToday: 2,
+        dueToday: 1,
         totalReviews: 4,
         newCards: 1,
         studyDay: "2026-10-03",
@@ -76,12 +98,12 @@ async function availability(
         await availability(c, u, ["word-to-definition"], {
           reviewTiming: "early",
         }),
-      ).toMatchObject({ dueToday: 2, totalReviews: 4, newCards: 1 });
+      ).toMatchObject({ dueToday: 1, totalReviews: 4, newCards: 1 });
     }));
   test("directions and current first-exposure rule are exact", () =>
     withTransaction(pool, async (c) => {
       const u = await owner(c),
-        e = await card(c, u, "2026-10-03T13:00Z");
+        e = await card(c, u, now);
       await card(c, u, "2026-10-05T13:00Z", "definition-to-word", e);
       await insertWord(c, `unintroduced-${randomUUID()}`);
       expect(

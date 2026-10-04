@@ -563,3 +563,5 @@
 \i db/migrations/208_training_recipe_availability.sql
 
 \i db/migrations/209_index_contextual_example_candidates.sql
+
+\i db/migrations/210_training_availability_due_now.sql
