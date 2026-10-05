@@ -34,6 +34,8 @@ const loadContextPrompt = vi.fn();
 
 vi.mock("@/lib/training/wordContextPrompt", () => ({
   loadWordContextPrompt: (...args: unknown[]) => loadContextPrompt(...args),
+  prepareNextWordContextTranslation: vi.fn().mockResolvedValue(undefined),
+  markWordContextHintOpened: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
@@ -2745,4 +2747,22 @@ describe("TrainingSenseCardV2Session", () => {
     expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
   });
 
+});
+
+
+test("a context translation finishing in another request resumes the card without a manual retry", async () => {
+  vi.clearAllMocks();
+  fetchSingleSense.mockResolvedValue({state:"ready",group:singleSenseGroup,entry:singleSenseEntry});
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  vi.useFakeTimers();
+  try {
+    loadContextPrompt.mockResolvedValueOnce({state:"translation-pending"}).mockResolvedValue({state:"ready",prompt:{text:"Позвонить маме",sourceText:"de moeder bellen",contentNodeId:"context-example",sourceTextFingerprint:"context-fingerprint"}});
+    render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext trainingSessionId="session-context" contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onProgressActionAccepted={vi.fn()} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(screen.getByText(getUiMessages("en").trainingSession.contextPreparation.pending)).toBeVisible();
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    expect(loadContextPrompt).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText(getUiMessages("en").trainingSession.contextPreparation.pending)).toBeNull();
+    expect(performAction).not.toHaveBeenCalled();
+  } finally {vi.useRealTimers();vi.unstubAllEnvs();}
 });

@@ -63,7 +63,7 @@ export async function prepareSentenceExerciseTranslation(input: {
       entryId: input.entryId,
       targetLanguageCode: input.translationTargetLanguageCode,
     });
-    return { state: result === "ready" ? "ready" : "translation-pending" };
+    return { state: result === "ready" ? "ready" : result === "failed" ? "translation-unavailable" : "translation-pending" };
   } catch (error) {
     if (error instanceof PlatformV2LibraryLookupError) {
       if (error.status === 403) return { state: "dictionary-access-revoked" };
@@ -98,7 +98,7 @@ export async function loadSentenceExerciseContent(input: {
       );
       if (!capability || capability.actionId !== "request-translation") return { state: "translation-unavailable" };
       const result = await requestPlatformV2LibraryTranslation({ entryId: input.candidate.entryId, targetLanguageCode: input.translationTargetLanguageCode });
-      if (result !== "ready") return { state: "translation-pending" };
+      if (result !== "ready") return { state: result === "failed" ? "translation-unavailable" : "translation-pending" };
       group = await fetchPlatformV2LibraryGroup({
         entryId: input.candidate.entryId,
         cardTypeId: "word-to-definition",

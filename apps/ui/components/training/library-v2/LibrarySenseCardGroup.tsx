@@ -22,6 +22,7 @@ import {
   ExposureBadge,
   IdiomIcon,
   NewExposureBadge,
+  LearningStateBadge,
   SenseCardHeaderAction,
   SenseCardReveal,
   SenseCardHeadwordLockup,
@@ -494,7 +495,7 @@ function MeaningCard({
       {t("senseCard.known.marked")}
     </span>
   ) : meaning.schedulerPhase === "learning" || meaning.schedulerPhase === "reviewing" ? (
-    <span>{t("senseCard.state.learning")}{meaning.repeatCount > 0 ? <ExposureBadge count={meaning.repeatCount} tone="light" /> : null}</span>
+    <span className="inline-flex items-center gap-1"><LearningStateBadge label={t("senseCard.state.learning")} tone="light" />{meaning.repeatCount > 0 ? <ExposureBadge count={meaning.repeatCount} tone="light" /> : null}</span>
   ) : meaning.schedulerPhase === "hidden" || meaning.schedulerPhase === "frozen" ? (
     <span>{t(`senseCard.state.${meaning.schedulerPhase}`)}</span>
   ) : meaning.schedulerPhase === null ? (

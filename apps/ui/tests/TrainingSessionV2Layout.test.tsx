@@ -1,4 +1,7 @@
 import React from "react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import postcss from "postcss";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import {
@@ -139,4 +142,12 @@ describe("TrainingSessionV2Layout", () => {
       expect(screen.queryByTestId("swipe-feedback")).not.toBeInTheDocument();
     }
   });
+});
+
+
+test("approved session canvas resolves the account palette even without the viewport wrapper", () => {
+  const css = postcss.parse(readFileSync(resolve("components/training/v2/TrainingSessionLayout.module.css"),"utf8"));
+  let canvas: string | undefined;
+  css.walkRules(".mainApproved", rule => rule.walkDecls("background", declaration => {canvas=declaration.value;}));
+  expect(canvas).toBe("var(--practice-canvas)");
 });

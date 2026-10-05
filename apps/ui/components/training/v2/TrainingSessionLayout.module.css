@@ -42,6 +42,8 @@
   background: var(--session-surface, #f1f5f9);
 }
 .mainApproved {
+  /* Terminal states may outlive the card viewport; inherit the account canvas directly. */
+  background: var(--practice-canvas);
   padding-top: 14px;
   padding-bottom: 14px;
 }
