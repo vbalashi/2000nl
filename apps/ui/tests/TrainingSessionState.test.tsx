@@ -43,3 +43,14 @@ test("failure keeps both retry and exit with their separate owners", () => {
   expect(retry).toHaveBeenCalledOnce(); expect(exit).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button",{name:"Back"})); expect(exit).toHaveBeenCalledOnce();
 });
+
+
+test("pending preparation has shared loading motion and preserves manual retry", () => {
+  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
+  const retry=vi.fn();
+  render(<TrainingSessionState loading title="Preparing translation" action={{label:"Try again",onClick:retry}} />);
+  expect(screen.getByTestId("training-session-state")).toHaveAttribute("aria-busy","true");
+  expect(screen.getByTestId("loading-indicator")).toHaveAttribute("aria-hidden","true");
+  fireEvent.click(screen.getByRole("button",{name:"Try again"}));
+  expect(retry).toHaveBeenCalledOnce();
+});

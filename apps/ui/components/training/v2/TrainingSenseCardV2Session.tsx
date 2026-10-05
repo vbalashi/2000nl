@@ -686,7 +686,7 @@ export function TrainingSenseCardV2Session({
       : contextResult?.state === "translation-pending" ? contextCopy.pending : contextCopy.unavailable;
     if (trainingPresentationV1Enabled()) return renderLayout(
       <div className="h-full min-h-0" data-testid="training-word-context-preparation">
-        <TrainingSessionState heading={false} title={contextMessage} action={translationTargetLanguageCode
+        <TrainingSessionState loading={contextResult?.state === "translation-pending"} heading={false} title={contextMessage} action={translationTargetLanguageCode
           ? { label: platformV2Message(interfaceLanguage, "senseCard.training.retry"), onClick: () => setContextRetry(value => value + 1) }
           : undefined} />
       </div>,

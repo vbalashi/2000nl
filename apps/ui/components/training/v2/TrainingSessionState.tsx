@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { LoadingIndicator } from "@/components/system/LoadingIndicator";
 import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import approved from "../approvedTrainingCard.module.css";
 
@@ -24,9 +25,10 @@ export function TrainingSessionState({
   heading?: boolean;
 }) {
   if (trainingPresentationV1Enabled()) return (
-    <section className={approved.state} data-testid="training-session-state" data-state={loading ? "loading" : "terminal"}>
+    <section className={approved.state} data-testid="training-session-state" data-state={loading ? "loading" : "terminal"} aria-busy={loading || undefined}>
       <div className={approved.stateReading} role="region" aria-label={title} tabIndex={0}>
         <div className={approved.stateContent} role={announcement}>
+          {loading ? <LoadingIndicator /> : null}
           {heading ? <h1>{title}</h1> : <p>{title}</p>}
           {detail ? <p>{detail}</p> : null}
         </div>
