@@ -1364,7 +1364,8 @@ export function DictionarySearchTab({
       }
       data-colour-mode={approved ? "app" : undefined}
     >
-      <div className={approved ? workspace.columns : "flex min-h-0 flex-1"}>
+      <div className={approved ? workspace.columns : "flex min-h-0 flex-1"}
+        data-detail-open={detailSelection ? "true" : "false"}>
         {results}
         <aside
           className={
