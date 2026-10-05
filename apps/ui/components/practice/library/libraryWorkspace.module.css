@@ -258,3 +258,13 @@
 
 .listPane .pagination > div { display:contents; }
 .listPane .pagination > div > button:first-child { order:-1; }
+
+/* Reserve the article column only while a word is selected. */
+@media (min-width: 701px) {
+  .columns[data-detail-open="false"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .columns[data-detail-open="false"] > .detail {
+    display: none;
+  }
+}
