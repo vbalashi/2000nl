@@ -5,12 +5,17 @@ import { SenseCardReveal } from "@/components/training/SenseCardChrome";
 import {getUiMessages,formatUiMessage} from "@/lib/uiMessages";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import s from "./wordDetails.module.css";
+import {orderedConjugationPersons,orderedConjugationValues,conjugationPersonLabel} from "@/lib/dictionary/conjugationPresentation";
 
 export type WordFormDetail = {forms:{label:string;value:string}[];conjugation:Record<string,Record<string,string>>;pos:string};
 type Detail=WordFormDetail;
 function unique(values:string[]){return [...new Set(values.map(v=>v.trim()).filter(Boolean))];}
-function formValues(detail:Detail){return Object.fromEntries(detail.forms.map(f=>[f.label,f.value]));}
-function headline(detail:Detail, variant:"primary"|"complete"):{values:string[];label?:string}{
+function formValues(detail:Detail){
+ const groups=new Map<string,string[]>();
+ for(const form of detail.forms)groups.set(form.label,[...(groups.get(form.label)||[]),form.value]);
+ return Object.fromEntries([...groups].map(([label,values])=>[label,unique(values).join(", ")]));
+}
+function headline(detail:Detail, variant:"primary"|"complete",contentLanguage?:string):{values:string[];label?:string}{
  const f=formValues(detail);let keys:string[];let fallback:string[]=[];
  switch(detail.pos){
   case "zn": keys=variant==="primary"?["Plural","Diminutive"]:["Plural","Diminutive","Alternate headword","Derivation"];fallback=["Diminutive"];break;
@@ -24,11 +29,11 @@ function headline(detail:Detail, variant:"primary"|"complete"):{values:string[];
  if(!values.length&&fallback.length)values=unique(fallback.flatMap(key=>f[key]?[f[key]]:[]));
  if(detail.pos==="ww"&&!values.length){
   // Defensive fallback when a future verb has only conjugation data.
-  const past=unique(Object.values(detail.conjugation.past||{}));
+  const past=unique(orderedConjugationValues(detail.conjugation.past||{},contentLanguage));
   const perfect=detail.conjugation.perfect;
   values.push(...past.slice(0,1));
   if(perfect){const phrase=[perfect.auxiliary,perfect.participle].filter(Boolean).join(" ");if(phrase)values.push(phrase);}
-  if(!values.length)values.push(...unique(Object.values(detail.conjugation.present||{})).slice(0,2));
+  if(!values.length)values.push(...unique(orderedConjugationValues(detail.conjugation.present||{},contentLanguage)).slice(0,2));
  }
  let label:string|undefined;
  if(!values.length&&["zn","ww","bn"].includes(detail.pos)){
@@ -44,18 +49,18 @@ export function ArticleWordForms({detail,headword,interfaceLanguage,contentLangu
  const copy=getUiMessages(interfaceLanguage).wordDetails;
  const labelOf=(label:string)=>copy.forms[label as keyof typeof copy.forms]??label;
  if(!detail)return null;
- const lead=headline(detail,variant);const shown=lead.values;if(!shown.length)return null;
+ const lead=headline(detail,variant,contentLanguage);const shown=lead.values;if(!shown.length)return null;
  const f=formValues(detail);const covered=new Set(shown.flatMap(v=>v.split(/[,·]/).map(x=>x.trim())));
  const extra=detail.forms.filter(form=>!form.value.split(/[,·]/).every(v=>covered.has(v.trim())));
  const table=detail.conjugation||{};
  const perfect=table.perfect?[table.perfect.auxiliary,table.perfect.participle].filter(Boolean).join(" "):"";
  const perfectIsAlreadyShown=perfect&&[...covered].some(v=>v.toLocaleLowerCase()===perfect.toLocaleLowerCase());
  const showPerfect=Boolean(perfect&&!perfectIsAlreadyShown);
- const persons=unique([...Object.keys(table.present||{}),...Object.keys(table.past||{})]);
+ const persons=orderedConjugationPersons([...Object.keys(table.present||{}),...Object.keys(table.past||{})],contentLanguage);
  // Aggregate perfect is already in the verb's one-line preview; avoid repeating it below.
  const hasDetails=extra.length>0||persons.length>0||showPerfect;
  const named=shown.flatMap(value=>{
-  const form=detail.forms.find(item=>item.value===value);
+  const form=detail.forms.find(item=>item.value===value||f[item.label]===value);
   if(form?.label==="Principal forms"){
    const parts=value.split(/,\s*/).filter(Boolean);
    if(parts.length===2)return [{label:"Past",value:parts[0]},{label:"Perfect",value:parts[1]}];
@@ -74,8 +79,8 @@ export function ArticleWordForms({detail,headword,interfaceLanguage,contentLangu
  </div>;
  if(!hasDetails)return null;
  return <SenseCardReveal open={open}><div id={id} inert={!open} aria-hidden={!open} className={s.expandedForms}>
-   {(extra.length>0||showPerfect)&&<dl className={s.facts}>{extra.map(f=><div key={f.label}><dt>{labelOf(f.label)}</dt><dd lang={contentLanguage}>{f.value}</dd></div>)}{showPerfect&&<div><dt>{copy.forms.Perfect}</dt><dd lang={contentLanguage}>{perfect}</dd></div>}</dl>}
-   {persons.length>0&&<table className={s.table} aria-label={formatUiMessage(copy.verbForms,{word:headword})}><thead><tr><th scope="col">{copy.person}</th><th scope="col">{copy.forms.Present}</th><th scope="col">{copy.forms.Past}</th></tr></thead><tbody>{persons.map(person=><tr key={person}><th scope="row" lang={contentLanguage}>{person.replaceAll("_"," / ")}</th><td lang={contentLanguage}>{table.present?.[person]||"—"}</td><td lang={contentLanguage}>{table.past?.[person]||"—"}</td></tr>)}</tbody></table>}
+   {(extra.length>0||showPerfect)&&<dl className={s.facts}>{extra.map((f,index)=><div key={`${f.label}-${index}`}><dt>{labelOf(f.label)}</dt><dd lang={contentLanguage}>{f.value}</dd></div>)}{showPerfect&&<div><dt>{copy.forms.Perfect}</dt><dd lang={contentLanguage}>{perfect}</dd></div>}</dl>}
+   {persons.length>0&&<table className={s.table} aria-label={formatUiMessage(copy.verbForms,{word:headword})}><thead><tr><th scope="col">{copy.person}</th><th scope="col">{copy.forms.Present}</th><th scope="col">{copy.forms.Past}</th></tr></thead><tbody>{persons.map(person=><tr key={person}><th scope="row" lang={contentLanguage}>{conjugationPersonLabel(person)}</th><td lang={contentLanguage}>{table.present?.[person]||"—"}</td><td lang={contentLanguage}>{table.past?.[person]||"—"}</td></tr>)}</tbody></table>}
   </div></SenseCardReveal>;
 }
 

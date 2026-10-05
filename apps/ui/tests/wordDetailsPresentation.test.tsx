@@ -58,3 +58,62 @@ test('relations remain attached to their meaning even with no forms and are neve
  expect(screen.getByText('de zetel').closest('[data-content-translation]')).toBeNull();
  expect(screen.queryByRole('button',{name:/forms of/})).not.toBeInTheDocument();
 });
+
+test('JSONB-ordered rows render in grammatical order with cells still attached',()=>{
+ const detail=wordFormDetail(details({verb_forms:'ontmoette, heeft ontmoet',conjugation_table:{past:{u:'ontmoette',ik:'ontmoette',jij:'ontmoette',wij:'ontmoetten',zij:'ontmoetten',jullie:'ontmoetten',hij_zij_het:'ontmoette'},present:{u:'ontmoet',ik:'ontmoet',jij:'ontmoet',wij:'ontmoeten',zij:'ontmoeten',jullie:'ontmoeten',hij_zij_het:'ontmoet'}}}),'ww');
+ render(<ArticleWordForms detail={detail} headword="ontmoeten" interfaceLanguage="en" contentLanguage="nl" part="body" open onToggle={()=>{}} id="ordered"/>);
+ const rows=within(screen.getByRole('table')).getAllByRole('row').slice(1);
+ expect(rows.map(row=>within(row).getByRole('rowheader').textContent)).toEqual(['ik','jij','u','hij / zij / het','wij','jullie','zij']);
+ expect(rows.map(row=>within(row).getAllByRole('cell').map(cell=>cell.textContent))).toEqual([['ontmoet','ontmoette'],['ontmoet','ontmoette'],['ontmoet','ontmoette'],['ontmoet','ontmoette'],['ontmoeten','ontmoetten'],['ontmoeten','ontmoetten'],['ontmoeten','ontmoetten']]);
+});
+
+test('separable verbs keep dat rows next to their person and readable',()=>{
+ const detail=wordFormDetail(details({conjugation_table:{present:{dat_wij:'bellen',wij:'bellen op',dat_ik:'opbel',ik:'bel op',dat_hij_zij_het:'opbelt',hij_zij_het:'belt op'}}}),'ww');
+ render(<ArticleWordForms detail={detail} headword="opbellen" interfaceLanguage="en" contentLanguage="nl" part="body" open onToggle={()=>{}} id="separable"/>);
+ const rows=within(screen.getByRole('table')).getAllByRole('row').slice(1);
+ expect(rows.map(row=>within(row).getByRole('rowheader').textContent)).toEqual(['ik','dat ik','hij / zij / het','dat hij / zij / het','wij','dat wij']);
+ expect(within(rows[1]).getAllByRole('cell').map(cell=>cell.textContent)).toEqual(['opbel','—']);
+});
+
+test('conjugation-only summary prefers singular past regardless of key order',()=>{
+ const detail=wordFormDetail(details({conjugation_table:{past:{wij:'gingen',zij:'gingen',ik:'ging'},present:{wij:'gaan',ik:'ga'}}}),'ww');
+ render(<ArticleWordForms detail={detail} headword="gaan" interfaceLanguage="en" contentLanguage="nl" part="summary" open={false} onToggle={()=>{}} id="singular"/>);
+ expect(screen.getByRole('button')).toHaveTextContent('ging');
+ expect(screen.queryByText('gingen')).not.toBeInTheDocument();
+});
+
+test('multiple alternate headwords are retained in the collapsed fallback',()=>{
+ const detail=wordFormDetail(details({alternate_headwords:[{headword:'rectrix'},{headword:'rectrice'}]}),'zn');
+ render(<ArticleWordForms detail={detail} headword="rector" interfaceLanguage="en" contentLanguage="nl" part="summary" open={false} onToggle={()=>{}} id="alternatives"/>);
+ expect(screen.getByText('rectrix, rectrice')).toBeInTheDocument();
+});
+
+test('noun and adjective form roles keep semantic order and retain multiple values',()=>{
+ const noun=wordFormDetail(details({diminutive:'huisje',plural:['huizen','huizes']}),'zn');
+ const view=render(<ArticleWordForms detail={noun} headword="huis" interfaceLanguage="en" contentLanguage="nl" part="summary" open={false} onToggle={()=>{}} id="noun"/>);
+ expect(view.container.textContent).toBe('pluralhuizen, huizesdiminutivehuisje');
+ view.unmount();
+ const adjective=wordFormDetail(details({superlative:'grootst',comparative:'groter',inflected_form:'grote'}),'bn');
+ const adjectiveView=render(<ArticleWordForms detail={adjective} headword="groot" interfaceLanguage="en" contentLanguage="nl" part="summary" open={false} onToggle={()=>{}} id="adjective"/>);
+ expect(adjectiveView.container.textContent).toBe('comparativegrotersuperlativegrootst');
+});
+
+test('past-only and unknown persons retain their forms and missing-cell placeholders',()=>{
+ const detail=wordFormDetail(details({verb_forms:'ging',conjugation_table:{present:{ik:'ga',custom:'custom present'},past:{jullie:'gingen',ik:'ging',other:'other past'}}}),'ww');
+ render(<ArticleWordForms detail={detail} headword="gaan" interfaceLanguage="en" contentLanguage="nl" part="body" open onToggle={()=>{}} id="partial"/>);
+ const rows=within(screen.getByRole('table')).getAllByRole('row').slice(1);
+ expect(rows.map(row=>within(row).getByRole('rowheader').textContent)).toEqual(['ik','jullie','custom','other']);
+ expect(within(rows[1]).getAllByRole('cell').map(cell=>cell.textContent)).toEqual(['—','gingen']);
+ expect(within(rows[3]).getAllByRole('cell').map(cell=>cell.textContent)).toEqual(['—','other past']);
+});
+
+test('perfect field order and missing perfect do not affect table columns',()=>{
+ const detail=wordFormDetail(details({verb_forms:'zou',conjugation_table:{perfect:{},past:{ik:'zou'},present:{ik:'zal'}}}),'ww');
+ const view=render(<ArticleWordForms detail={detail} headword="zullen" interfaceLanguage="en" contentLanguage="nl" part="body" open onToggle={()=>{}} id="no-perfect"/>);
+ expect(within(screen.getByRole('table')).getAllByRole('cell').map(cell=>cell.textContent)).toEqual(['zal','zou']);
+ expect(screen.queryByText('perfect')).not.toBeInTheDocument();
+ view.unmount();
+ const complete=wordFormDetail(details({conjugation_table:{perfect:{participle:'gegaan',auxiliary:'is'},past:{ik:'ging'},present:{ik:'ga'}}}),'ww');
+ render(<ArticleWordForms detail={complete} headword="gaan" interfaceLanguage="en" contentLanguage="nl" part="summary" open={false} onToggle={()=>{}} id="perfect"/>);
+ expect(screen.getByText('is gegaan')).toBeInTheDocument();
+});
