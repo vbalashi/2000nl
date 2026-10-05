@@ -246,10 +246,10 @@ export function SenseCardReveal({
 export function ExposureBadge({ count, tone }: { count: number; tone: Tone }) {
   return (
     <span
-      className={approvedChrome() ? chrome.exposure : `inline-flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 font-mono text-[10px] ${
+      className={approvedChrome() ? chrome.exposure : `inline-flex min-h-[18px] shrink-0 items-center gap-1 rounded-[5px] px-[5px] font-sense-sans text-[10px] font-medium leading-[18px] ${
         tone === "dark"
-          ? "border-slate-700 text-slate-400"
-          : "border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400"
+          ? "bg-indigo-400/10 text-indigo-200"
+          : "bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-200"
       }`}
       aria-label={`${count}×`}
     >

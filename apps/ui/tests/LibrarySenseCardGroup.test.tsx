@@ -181,7 +181,8 @@ describe("LibrarySenseCardGroup", () => {
     expect(screen.queryByText("Meanings")).not.toBeInTheDocument();
     const exposureBadge = screen.getByLabelText("3×");
     expect(exposureBadge).toBeInTheDocument();
-    expect(exposureBadge).toHaveClass("h-6");
+    expect(exposureBadge).toHaveClass("min-h-[18px]");
+    expect(exposureBadge).not.toHaveClass("border");
     expect(
       screen
         .getByText("Bij welke bank hebt u een rekening?")
