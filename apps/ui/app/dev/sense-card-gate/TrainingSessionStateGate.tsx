@@ -13,7 +13,7 @@ import theme from "@/components/practice/ui/practiceTheme.module.css";
 /** Direct rendering of production states, without session or learning-state writes. */
 export function TrainingSessionStateGate({ language, family, state, dark }: {
   language: OnboardingLanguage; family: "idiom" | "sentence";
-  state: "complete" | "empty" | "loading" | "error" | "unsupported" | "exhausted" | "failure"; dark: boolean;
+  state: "complete" | "empty" | "loading" | "context-pending" | "error" | "unsupported" | "exhausted" | "failure"; dark: boolean;
 }) {
   const text = getUiMessages(language), t = text.trainingExercises[family];
   const [returned, setReturned] = React.useState(false), [retried, setRetried] = React.useState(false);
@@ -25,6 +25,8 @@ export function TrainingSessionStateGate({ language, family, state, dark }: {
       : state === "failure" ? <TrainingSessionState announcement="alert" title={platformV2Message(language,"senseCard.training.loadFailed")}
           action={{label:platformV2Message(language,"senseCard.training.retry"),onClick:()=>setRetried(true)}}
           secondaryAction={{label:text.trainingSession.back,onClick:()=>setReturned(true)}} />
+      : state === "context-pending" ? <TrainingSessionState loading heading={false} title={text.trainingSession.contextPreparation.pending}
+          action={{label:platformV2Message(language,"senseCard.training.retry"),onClick:()=>setRetried(true)}} />
       : state === "error" ? <TrainingSessionNotice notice={{kind:"error",message:t.failed,retryLabel:t.retry,onRetry:()=>setRetried(true)}} /> :
       <TrainingSessionState title={state === "loading" ? t.loading : state === "empty" ? t.empty : t.complete}
         loading={state === "loading"} detail={state === "complete" ? formatUiCount(language,21,text.trainingSession,"completed") : undefined}

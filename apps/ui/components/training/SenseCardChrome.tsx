@@ -259,7 +259,7 @@ export function ExposureBadge({ count, tone }: { count: number; tone: Tone }) {
   );
 }
 
-export function NewExposureBadge({
+export function LearningStateBadge({
   label,
   tone,
 }: {
@@ -356,3 +356,6 @@ export function ChevronIcon({
     </SmallIcon>
   );
 }
+
+// Keep existing New callers on the same state-badge component.
+export { LearningStateBadge as NewExposureBadge };

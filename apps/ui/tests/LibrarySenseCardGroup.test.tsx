@@ -513,3 +513,17 @@ test("Library displays enrolled but ungraded state and never labels a missing st
  expect(screen.getAllByText("Learning state unavailable").length).toBeGreaterThan(0);
  expect(screen.queryByText("New")).not.toBeInTheDocument();
 });
+
+
+test.each(["false", "true"])("Library Learning uses the same badge styling and icon as New (approved=%s)", approved => {
+  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", approved);
+  try {
+    const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
+    model.meanings = model.meanings.slice(0,2).map((meaning,index) => ({...meaning, undoKnown: null, schedulerPhase: index ? "learning" : "not-started", repeatCount: 0}));
+    render(<LibrarySenseCardGroup model={model} interfaceLanguage="en" onAction={vi.fn()} />);
+    const fresh = screen.getByText("New");
+    const learning = screen.getByText("Learning");
+    expect(learning.className).toBe(fresh.className);
+    expect(learning.querySelector("svg")).not.toBeNull();
+  } finally {vi.unstubAllEnvs();}
+});

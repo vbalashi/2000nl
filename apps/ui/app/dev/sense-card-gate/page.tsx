@@ -31,7 +31,7 @@ export default async function SenseCardGatePage({
   if (searchParams?.prototype === "session-states") return <TrainingSessionStateGate
     language={searchParams.language === "ru" || searchParams.language === "nl" ? searchParams.language : "en"}
     family={searchParams.family === "sentence" ? "sentence" : "idiom"}
-    state={searchParams.state === "empty" || searchParams.state === "loading" || searchParams.state === "error" || searchParams.state === "unsupported" || searchParams.state === "exhausted" || searchParams.state === "failure" ? searchParams.state : "complete"}
+    state={searchParams.state === "context-pending" || searchParams.state === "empty" || searchParams.state === "loading" || searchParams.state === "error" || searchParams.state === "unsupported" || searchParams.state === "exhausted" || searchParams.state === "failure" ? searchParams.state : "complete"}
     dark={searchParams.mode === "dark"} />;
   if (searchParams?.prototype === "exercise") return <ExerciseCardGate />;
   if (searchParams?.prototype === "reading") {

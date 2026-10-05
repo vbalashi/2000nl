@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from "vitest";
-import { prepareSentenceExerciseTranslation } from "@/lib/training/sentenceExerciseLoader";
+import { loadSentenceExerciseContent, prepareSentenceExerciseTranslation } from "@/lib/training/sentenceExerciseLoader";
 import {
   fetchPlatformV2LibraryGroup,
   requestPlatformV2LibraryTranslation,
@@ -80,4 +80,20 @@ test("sentence lookahead requests a missing translation for only that member ent
     entryId,
     targetLanguageCode: "ru",
   });
+});
+
+
+test.each(["failed", "pending"] as const)("sentence preparation preserves %s instead of pretending a failure is pending", async (result) => {
+  const group = structuredClone(goedGroup);
+  const entry = group.entries.find(item => item.kind === "sense-card" && item.entryId === entryId)!;
+  if (entry.kind !== "sense-card") throw new Error("fixture sense missing");
+  const sentence = entry.contentNodes.find(node => node.contentNodeId === contentNodeId)!;
+  sentence.translations = [];
+  entry.capabilities = [{ actionId: "request-translation", elementId: "translate", messageKey: "senseCard.translation.request", target: {kind: "entry", entryId, contentRevision: entry.contentRevision}, targetLanguageCode: "ru" }];
+  vi.mocked(fetchPlatformV2LibraryGroup).mockResolvedValue(group);
+  vi.mocked(requestPlatformV2LibraryTranslation).mockResolvedValue(result);
+  const input = {entryId, contentNodeId, contentLanguageCode: "nl", translationTargetLanguageCode: "ru"};
+  const expected = {state: result === "failed" ? "translation-unavailable" : "translation-pending"};
+  await expect(prepareSentenceExerciseTranslation(input)).resolves.toEqual(expected);
+  await expect(loadSentenceExerciseContent({...input, candidate: {entryId, contentNodeId, sourceTextFingerprint: sentence.sourceTextFingerprint}})).resolves.toEqual(expected);
 });

@@ -1,4 +1,5 @@
 "use client";
+import { useWordContextPrompt } from "./useWordContextPrompt";
 import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { TrainingSessionState } from "./TrainingSessionState";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -45,7 +46,7 @@ import { TransientNotice } from "@/components/system/TransientNotice";
 import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
 import { evaluateTrainingCardRenderability } from "@/lib/training/trainingCardRenderability";
 import { selectTrainingReversePrompt } from "@/lib/training/trainingReversePrompt";
-import { loadWordContextPrompt, markWordContextHintOpened, prepareNextWordContextTranslation, type WordContextLoadResult } from "@/lib/training/wordContextPrompt";
+import { markWordContextHintOpened, prepareNextWordContextTranslation } from "@/lib/training/wordContextPrompt";
 import {
   rememberPendingKnownUndo,
   type UndoKnownCapability,
@@ -162,29 +163,11 @@ export function TrainingSenseCardV2Session({
     () =>
       peekPrefetchedPlatformV2TrainingEntry(lookupInput),
   );
-  const [contextResult, setContextResult] = React.useState<WordContextLoadResult | null>(null);
   const [contextRetry, setContextRetry] = React.useState(0);
+  const contextResult = useWordContextPrompt({ cacheOwnerId, trainingSessionId, entryId: word.id, contentLanguageCode, translationTargetLanguageCode, wordInContext, retry: contextRetry });
   const contextHintWriteRef = React.useRef<Promise<void> | null>(null);
   const preparedNextRef = React.useRef<string | null>(null);
-  React.useEffect(() => {
-    if (!wordInContext || !trainingSessionId || !translationTargetLanguageCode) return;
-    const controller = new AbortController();
-    setContextResult(null);
-    void loadWordContextPrompt({
-      userId: cacheOwnerId,
-      sessionId: trainingSessionId,
-      entryId: word.id,
-      contentLanguageCode,
-      translationTargetLanguageCode,
-      signal: controller.signal,
-    }).then((result) => {
-      if (!controller.signal.aborted) setContextResult(result);
-    }).catch(() => {
-      if (!controller.signal.aborted) setContextResult({ state: "translation-unavailable" });
-    });
-    return () => controller.abort();
-  }, [cacheOwnerId, contentLanguageCode, contextRetry, trainingSessionId,
-    translationTargetLanguageCode, word.id, wordInContext]);
+
   React.useEffect(() => {
     if (!wordInContext || contextResult?.state !== "ready" || !trainingSessionId ||
         !translationTargetLanguageCode) return;
@@ -703,7 +686,7 @@ export function TrainingSenseCardV2Session({
       : contextResult?.state === "translation-pending" ? contextCopy.pending : contextCopy.unavailable;
     if (trainingPresentationV1Enabled()) return renderLayout(
       <div className="h-full min-h-0" data-testid="training-word-context-preparation">
-        <TrainingSessionState heading={false} title={contextMessage} action={translationTargetLanguageCode
+        <TrainingSessionState loading={contextResult?.state === "translation-pending"} heading={false} title={contextMessage} action={translationTargetLanguageCode
           ? { label: platformV2Message(interfaceLanguage, "senseCard.training.retry"), onClick: () => setContextRetry(value => value + 1) }
           : undefined} />
       </div>,

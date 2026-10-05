@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useState } from "react";
+import { LoadingIndicator } from "@/components/system/LoadingIndicator";
 import { History, ChevronRight } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { formatUiCount, formatUiMessage, getUiMessages } from "@/lib/uiMessages";
@@ -45,7 +46,7 @@ export function AccountStatistics({ userId, languageCode, open, interfaceLanguag
   const recentActivity = onHistory ? <button type="button" className={s.recentActivity} onClick={onHistory}>
     <History size={17} aria-hidden="true" />{copy.recentActivity}<ChevronRight size={15} aria-hidden="true" /></button> : null;
   const status = (message: string, failed: boolean) => <div className={s.status} aria-live="polite">
-    {failed ? <><p role="alert">{message}</p><button type="button" onClick={retry}>{copy.timeRetry}</button></> : <p role="status">{message}</p>}
+    {failed ? <><p role="alert">{message}</p><button type="button" onClick={retry}>{copy.timeRetry}</button></> : <div role="status" aria-busy="true"><LoadingIndicator /><p>{message}</p></div>}
   </div>;
   return <div className={`${s.statistics} ${s.page}`} lang={interfaceLanguage}>
     <h1 className={s.srOnly}>{ui.navigation.statistics}</h1>
