@@ -485,7 +485,7 @@ describe("LibrarySenseCardGroup", () => {
     expect(within(firstCard).queryByText("New")).not.toBeInTheDocument();
   });
 
-  test("renders the new state with the same bordered exposure chrome", () => {
+  test("renders the new state as a quiet unframed label", () => {
     render(
       <LibrarySenseCardGroup
         model={buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en")}
@@ -498,7 +498,7 @@ describe("LibrarySenseCardGroup", () => {
       "library-sense-card-entry-bank-finance",
     );
     const badge = within(financeCard).getByText("New").closest("span");
-    expect(badge).toHaveClass("border");
+    expect(badge).not.toHaveClass("border");
     expect(badge?.querySelector("svg")).toBeInTheDocument();
   });
 });

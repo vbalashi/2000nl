@@ -268,10 +268,10 @@ export function LearningStateBadge({
 }) {
   return (
     <span
-      className={approvedChrome() ? chrome.exposure : `inline-flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 font-mono text-[9px] font-semibold uppercase tracking-[0.06em] ${
+      className={approvedChrome() ? `${chrome.exposure} ${chrome.learningState}` : `inline-flex h-6 shrink-0 items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.06em] ${
         tone === "dark"
-          ? "border-slate-700 text-slate-400"
-          : "border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400"
+          ? "text-slate-400"
+          : "text-slate-500 dark:text-slate-400"
       }`}
     >
       <RepeatIcon className="h-3 w-3" />
