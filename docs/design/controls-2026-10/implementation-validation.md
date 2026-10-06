@@ -11,3 +11,14 @@ Browser: owner's Chrome Nikolai profile, local `/dev/controls-standard` route us
 Remaining page controls inventory: navigation AppDestinationNav, StatisticsActivity periods and StatisticsScope languages/material, SettingsLayout/appearance/text and LanguagePicker/learning statuses, Library material scopes and service actions. Preserve independent material-type filtering and active/paused semantics. Other dialogs/auth/admin controls remain explicit exceptions pending their own review.
 
 Owner screenshot exposed a missed multi-select filter style. Restored scoped 28px/11.2px/no-border choice rules for Part of speech and noun dialog; browser verifies border0, height28, radius11.2. Narrow tests10 and typecheck pass.
+
+### Selected footer B and unsaved state
+
+Start first at 44 px; lower row has trash and compact outlined Save/menu at28 px.
+Unsaved state compares canonical saved recipe values, name and language, with
+array order ignored. Saved-account state establishes the successful-save baseline;
+failed saving cannot clear it. Fixture callbacks mirror the successful-save reset.
+58 targeted tests passed; typecheck and lint passed (existing audio dependency
+warning remains). Chrome checked indicator appearance and save reset; Russian
+320 px layout has no horizontal overflow. This follow-up is local code, not yet
+part of the published0.18.1152 release.

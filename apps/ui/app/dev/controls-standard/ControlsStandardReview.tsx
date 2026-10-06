@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 
+import {hasUnsavedTrainingChanges} from "@/lib/training/setups/unsavedChanges";
 import { AppDestinationNav } from "@/components/navigation/AppDestinationNav";
 import { ApprovedTrainingBuilder } from "@/components/training/pilot/ApprovedTrainingBuilder";
 import { mixStepSelection } from "@/components/training/pilot/TrainingMixPicker";
@@ -60,6 +61,7 @@ const initialDraft: TrainingSetupDraft & { sessionSize: TrainingSessionSize } =
     sourceValue: "all",
   };
 export function ControlsStandardReview() {
+  const [savedRecipe,setSavedRecipe] = useState({id:"preview",name:"Translation",languageCode:"nl",draft:initialDraft});
   const [draft, setDraft] = useState(initialDraft),
     [name, setName] = useState("Translation"),
     [language, setLanguage] = useState("nl"),
@@ -184,6 +186,7 @@ export function ControlsStandardReview() {
         style={{
           padding: 8,
           maxWidth: width === "mobile" ? 390 : 1000,
+          paddingBottom: 90,
           margin: "auto",
         }}
         className={`${theme.theme}`}
@@ -213,6 +216,7 @@ export function ControlsStandardReview() {
           languagePending={false}
           dictionariesLoading={false}
           translationLanguage={translation}
+          hasUnsavedChanges={hasUnsavedTrainingChanges(savedRecipe,{name,languageCode:language,draft})}
           name={name}
           onNameChange={setName}
           onLanguageChange={(value) => {
@@ -225,10 +229,13 @@ export function ControlsStandardReview() {
           onMixChange={changeMix}
           onBack={() => setMessage("Preview: Back to Training")}
           onSave={async () => {
+            setSavedRecipe({id:"preview",name:name.trim(),languageCode:language,draft});
             setMessage("Preview: saved changes");
             return true;
           }}
           onSaveAs={async (newName) => {
+            setName(newName);
+            setSavedRecipe({id:"preview",name:newName,languageCode:language,draft});
             setMessage("Preview: saved as " + newName);
             return true;
           }}

@@ -60,3 +60,11 @@ test('failed deletion keeps confirmation visible and original recipe intact',asy
  await waitFor(()=>expect(within(dialog).getByRole('button',{name:'Delete training'})).toBeEnabled());
  expect(dialog).toBeInTheDocument();expect(p.onNameChange).not.toHaveBeenCalled();
 });
+
+test('unsaved indicator is accessible and clears when parent reports the saved baseline',()=>{
+ const p=props();const view=render(<ApprovedTrainingBuilder {...p} hasUnsavedChanges/>);
+ expect(screen.getByRole('status',{name:'Unsaved changes'})).toBeInTheDocument();
+ expect(screen.getByRole('button',{name:p.saveLabel})).toBeInTheDocument();
+ view.rerender(<ApprovedTrainingBuilder {...p} hasUnsavedChanges={false}/>);
+ expect(screen.queryByRole('status',{name:'Unsaved changes'})).not.toBeInTheDocument();
+});

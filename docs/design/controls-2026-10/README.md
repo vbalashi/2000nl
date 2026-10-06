@@ -16,3 +16,12 @@ The active-language count selector is a scenario control, not product UI. It exe
 Validated: menu selection and returning to a remembered language, translation Off/on, settings language overflow selection, 1–4 visible languages without overflow on desktop, responsive overflow, Library action height28, copying settings with manual fallback, Session Builder name edit and save menu, light/dark and 320 px layout. Production palette coverage and full application behavior remain for implementation.
 
 The schematic checkbox-based Session Builder has been replaced. See [source/README.md](source/README.md) for the source map, rebuild commands, fixture boundaries and repeatable validation.
+
+## Selected footer B (2026-10-06)
+
+The owner chose B: Start first, then trash left and compact outlined Save/menu right, 28 px.
+The development route `/dev/controls-standard` now uses this production component
+and demonstrates the unsaved-change dot using an in-memory saved baseline.
+The dot clears after successful save or when changes are reversed.
+The earlier A/B/C screenshots and prototype commit 762727c0 preserve the comparison.
+`footer-b-unsaved.png` shows the chosen variant with an edit pending.
