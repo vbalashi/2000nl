@@ -29,3 +29,5 @@ The specimen has single exercise-family choice: Words, Idioms, Translation. Tran
 validate.cjs opens the standalone file in a clean headless browser and checks exercise exclusivity, both directions and last-direction retention, translation examples, Off translation, disabled typing, dictionary access gating, multi-part filters, noun subfilter dialog, activity date input, actual size/mix steps and dependent resets, name editing, direct Save changes vs save-as dialog, delete confirmation, visible save chevron, light/dark and 320px layouts in en/ru/nl. It records expanded screenshots; no production browser/session is reloaded or changed.
 
 Direction cards retain their existing structure and styling; compact chip overrides must not turn these cards or rating controls into capsule buttons. Future live implementation needs actual account catalogs, loading/error recovery and all appearance profiles checked separately.
+
+The build preserves readable CSS module names before compression and rejects selectors that collide when matched without case. This also supports opening the raw fragment directly in quirks mode.

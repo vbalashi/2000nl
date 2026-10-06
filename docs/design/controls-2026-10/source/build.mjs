@@ -21,8 +21,18 @@ if(!callbacks.includes('const changeMix'))throw Error('Controller boundaries cha
 fs.writeFileSync(path.join(here,'controller.generated.txt'),defaults+'\n'+callbacks);
 const entry=fs.readFileSync(path.join(here,'Review.tsx'),'utf8').replace('/* SOURCE_DEFAULT_MODES */',defaults).replace('/* SOURCE_CONTROLLER */',callbacks);
 fs.writeFileSync(path.join(here,'Review.generated.tsx'),entry);
-const result=await esbuild.build({entryPoints:[path.join(here,'Review.generated.tsx')],absWorkingDir:ui,tsconfig:path.join(ui,'tsconfig.json'),bundle:true,minify:true,write:false,outdir:path.join(here,'bundle'),nodePaths:[path.join(ui,'node_modules')],loader:{'.css':'local-css'},define:{'process.env.NODE_ENV':'"production"'},target:'es2022'});
-const js=result.outputFiles.find(f=>f.path.endsWith('.js')).text,css=result.outputFiles.find(f=>f.path.endsWith('.css')).text;
+const result=await esbuild.build({entryPoints:[path.join(here,'Review.generated.tsx')],absWorkingDir:ui,tsconfig:path.join(ui,'tsconfig.json'),bundle:true,minify:false,write:false,outdir:path.join(here,'bundle'),nodePaths:[path.join(ui,'node_modules')],loader:{'.css':'local-css'},define:{'process.env.NODE_ENV':'"production"'},target:'es2022'});
+// Assign stable CSS module names before compacting the finished outputs.
+const js=(await esbuild.transform(result.outputFiles.find(f=>f.path.endsWith('.js')).text,{minify:true,target:'es2022'})).code;
+const css=(await esbuild.transform(result.outputFiles.find(f=>f.path.endsWith('.css')).text,{loader:'css',minify:true})).code;
+// Raw fragments may be opened in quirks mode, where class names match without case.
+// Keep readable module names and fail rather than ship conflicting selectors.
+const classes=new Map();
+for(const match of css.matchAll(/\.([A-Za-z_][A-Za-z0-9_-]*)(?=[\s:{>.,\[])/g)){
+  const name=match[1],key=name.toLowerCase(),previous=classes.get(key);
+  if(previous&&previous!==name)throw Error(`Case-insensitive CSS collision: ${previous} / ${name}`);
+  classes.set(key,name);
+}
 const fragment='<div id="nl-builder-real-review"></div>\n<style>\n'+css+'\n</style>\n<script>\n'+js.replaceAll('</script','<\\/script')+'\n</script>\n';
 if(Buffer.byteLength(fragment)>1000000)throw Error('Preview too large');
 fs.writeFileSync(path.join(here,'../session-builder.fragment.html'),fragment);
