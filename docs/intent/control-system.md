@@ -70,3 +70,5 @@ See [controls-2026-10](../design/controls-2026-10/README.md). Keep approved defa
 ## Source fidelity gate
 
 Session Builder prototypes must use the existing ApprovedTrainingBuilder section bodies and TrainingTodaySetup selection callbacks. Do not invent checkbox exercises or new type/direction options. Exercise family is single choice; directions (Words/Idioms), selected dictionaries and part-of-speech filters have their existing multi-selection rules. Session size/mix stay sliders. Direction examples, disabled typing, noun/article/activity filters and save-as/delete dialogs come from their current components and locale catalogs. Visual controls must preserve these semantics. See the source-backed review adapter for exact scope and fixture limitations.
+
+Owner selection: Session Builder uses one shared frame with inset section dividers. On mobile, the transparent trash icon shares a row with Save changes; Start training fills the next row. The icon retains its localized accessible Delete training label and confirmation. The alternative gap layout remains available in the prototype for comparison.

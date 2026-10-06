@@ -71,6 +71,19 @@ const reviewCss=`
 .review-source-toolbar{display:flex;gap:8px;flex-wrap:wrap}.review-source-toolbar button{border:0;background:transparent;color:var(--practice-text-muted)}.review-source-toolbar input,.review-source-toolbar select{font:400 12px var(--practice-font-ui);background:var(--practice-surface);color:var(--practice-text);border:1px solid var(--practice-border);border-radius:8px;padding:6px;min-width:0;max-width:100%}
 .review-source-list{max-height:260px;overflow-y:auto}.review-source-list button{display:flex;align-items:center;gap:9px;width:100%;border:0;border-radius:8px;background:transparent;color:var(--practice-text-secondary);font:400 12px var(--practice-font-ui);text-align:left;padding:9px}.review-source-list button[aria-pressed=true]{background:var(--practice-surface-hover)}.review-source-list small{margin-left:auto;color:var(--practice-text-muted);font-size:11px}.review-source-list svg{flex:none}
 @media(max-width:700px){.review-inline-language{padding:12px;gap:12px}.review-inline-language h2{width:90px}}
+/* Compact footer: icon and Save share a row; Start remains full width. */
+#nl-builder-real-review [data-preview-width=mobile] .${s.footer}>div:has(.${s.saveMenu}){display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px}
+#nl-builder-real-review [data-preview-width=mobile] .${s.delete}{grid-column:1;grid-row:1;width:34px;height:44px;margin:0;justify-content:center}
+#nl-builder-real-review [data-preview-width=mobile] .${s.delete}>span{display:none}
+#nl-builder-real-review [data-preview-width=mobile] .${s.updateGroup}{grid-column:2;grid-row:1;width:100%}
+#nl-builder-real-review [data-preview-width=mobile] .${s.footer}>div>.${s.primary}{grid-column:1/-1;grid-row:2;width:100%}
+@media(max-width:650px){
+#nl-builder-real-review .${s.footer}>div:has(.${s.saveMenu}){display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px}
+#nl-builder-real-review .${s.delete}{grid-column:1;grid-row:1;width:34px;height:44px;margin:0;justify-content:center}
+#nl-builder-real-review .${s.delete}>span{display:none}
+#nl-builder-real-review .${s.updateGroup}{grid-column:2;grid-row:1;width:100%}
+#nl-builder-real-review .${s.footer}>div>.${s.primary}{grid-column:1/-1;grid-row:2;width:100%}
+}
 @media(prefers-reduced-motion:reduce){.review-selection{transition:none!important}}
 `;
 createRoot(document.getElementById('nl-builder-real-review')!).render(<Review/>);
