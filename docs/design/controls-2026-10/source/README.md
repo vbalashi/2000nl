@@ -31,3 +31,5 @@ validate.cjs opens the standalone file in a clean headless browser and checks ex
 Direction cards retain their existing structure and styling; compact chip overrides must not turn these cards or rating controls into capsule buttons. Future live implementation needs actual account catalogs, loading/error recovery and all appearance profiles checked separately.
 
 The build preserves readable CSS module names before compression and rejects selectors that collide when matched without case. This also supports opening the raw fragment directly in quirks mode.
+
+The latest exploration intentionally adapts Language, Source and section grouping in `adapt.mjs`; these differ from production at the owner's request. `SourcePicker.tsx` uses the supplied catalog; it preserves multiple dictionaries or one collection and does not implement mixed selection. `summary.ts` declares which exercise family includes direction in the collapsed summary. Preview toolbar compares both grouping styles and desktop/mobile widths.

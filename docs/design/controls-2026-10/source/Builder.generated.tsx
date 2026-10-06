@@ -8,6 +8,7 @@ import {
   Trash2,
   X,
   Pencil,
+  Info,
 } from "lucide-react";
 import { singleNounArticle, toggleNounArticle } from "@/lib/training/nounArticles";
 import { DirectionCard } from "@/components/practice/builder/DirectionCard";
@@ -33,6 +34,8 @@ import type {
   TrainingMode,
   TrainingSessionSize,
 } from "@/lib/types";
+import { exerciseSummary } from "./summary";
+import { SourcePicker } from "./SourcePicker";
 import { TrainingMixPicker } from "@/components/training/pilot/TrainingMixPicker";
 import { TrainingSessionSizePicker } from "@/components/training/pilot/TrainingSessionSizePicker";
 import s from "@/components/training/pilot/approvedTrainingBuilder.module.css";
@@ -298,141 +301,13 @@ export function ApprovedTrainingBuilder(p: Props) {
             <h1>{b.title}</h1>
           </header>
           {p.editing && <ReviewName name={p.name} onChange={p.onNameChange} disabled={saving}/> }
-          {section(
-            "language",
-            b.language,
-            language(p.languageCode),
-            <>
-              {p.languageOptions.length > 5 && search(
-                languageQuery,
-                setLanguageQuery,
-                getUiMessages(p.interfaceLanguage).builderScope.searchLanguages,
-              )}
-              <div className={s.options}>
-                {p.languageOptions
-                  .map((option) => ({
-                    ...option,
-                    label: language(option.value),
-                  }))
-                  .filter((option) => matches(option, p.languageOptions.length > 5 ? languageQuery : ""))
-                  .map((option) =>
-                    row(option, option.value === p.languageCode, () =>
-                      p.onLanguageChange(option.value),
-                    ),
-                  )}
-              </div>
-              {!p.languageOptions.some((option) =>
-                matches(
-                  { ...option, label: language(option.value) },
-                  p.languageOptions.length > 5 ? languageQuery : "",
-                ),
-              ) && (
-                <p className={s.help}>
-                  {
-                    getUiMessages(p.interfaceLanguage).builderScope.noMatches
-                      .language
-                  }
-                </p>
-              )}
-            </>,
-          )}
-          {section(
-            "source",
-            b.source,
-            material,
-            <>
-              <div className={s.choices}>
-                {(
-                  [
-                    "collection",
-                    "all-dictionaries",
-                    "selected-dictionaries",
-                  ] as const
-                ).map((mode) => (
-                  <BuilderChoice
-                    key={mode}
-                    disabled={p.languagePending}
-                    active={materialMode === mode}
-                    onClick={() => {
-                      setSourceQuery("");
-                      p.onDraftChange((current) => ({
-                        ...current,
-                        materialMode: mode,
-                      }));
-                    }}
-                  >
-                    {mode === "collection"
-                      ? c.collectionMode
-                      : mode === "all-dictionaries"
-                        ? c.allDictionaries
-                        : c.chosenDictionaries}
-                  </BuilderChoice>
-                ))}
-              </div>
-              {materialMode !== "all-dictionaries" &&
-                (materialMode === "collection" ? p.lists.length : p.dictionaries.length) > 5 &&
-                search(
-                  sourceQuery,
-                  setSourceQuery,
-                  getUiMessages(p.interfaceLanguage).builderScope.searchSources,
-                )}
-              {p.dictionariesLoading && materialMode !== "collection" && (
-                <p role="status" className={s.help}>
-                  {c.loadingDictionaries}
-                </p>
-              )}
-              <div className={s.options}>
-                {(materialMode === "collection"
-                  ? p.lists
-                  : materialMode === "selected-dictionaries"
-                    ? p.dictionaries
-                    : []
-                )
-                  .filter((option) => matches(option, (materialMode === "collection" ? p.lists.length : p.dictionaries.length) > 5 ? sourceQuery : ""))
-                  .map((option) =>
-                    row(
-                      option,
-                      materialMode === "collection"
-                        ? p.draft.listValue === option.value
-                        : Boolean(
-                            p.draft.dictionaryIds?.includes(option.value),
-                          ),
-                      () =>
-                        p.onDraftChange((current) =>
-                          materialMode === "collection"
-                            ? { ...current, listValue: option.value }
-                            : {
-                                ...current,
-                                dictionaryIds: current.dictionaryIds?.includes(
-                                  option.value,
-                                )
-                                  ? current.dictionaryIds.filter(
-                                      (id) => id !== option.value,
-                                    )
-                                  : [
-                                      ...(current.dictionaryIds ?? []),
-                                      option.value,
-                                    ],
-                              },
-                        ),
-                    ),
-                  )}
-              </div>
-              {materialMode === "selected-dictionaries" &&
-                (p.draft.dictionaryIds ?? []).some(
-                  (id) => !p.dictionaries.some((option) => option.value === id),
-                ) &&
-                !p.dictionariesLoading && (
-                  <p role="status" className={s.help}>
-                    {c.partialDictionaryAccess}
-                  </p>
-                )}
-            </>,
-          )}
+          <div className="review-section-group">
+          <section className="review-inline-language"><h2>{b.language}</h2><div className={s.choices}>{p.languageOptions.map(option=><BuilderChoice key={option.value} active={option.value===p.languageCode} disabled={p.languagePending} onClick={()=>p.onLanguageChange(option.value)}>{language(option.value)}</BuilderChoice>)}</div></section>
+          {section("source",b.source,material,<SourcePicker locale={p.interfaceLanguage} lists={p.lists} dictionaries={p.dictionaries} draft={p.draft} onChange={p.onDraftChange}/>)}
           {section(
             "exercises",
             b.exercises,
-            `${familyName} · ${direction}`,
+            exerciseSummary(family, familyName, direction),
             <>
               <div className={s.field}>
                 <h2>{b.exerciseType}</h2>
@@ -676,10 +551,12 @@ export function ApprovedTrainingBuilder(p: Props) {
                 reviewsOnly={c.reviewsOnly}
                 newOnly={c.newOnly}
                 ratioLabel={ratioLabel}
-                help={c.mixHelp}
+                help=""
               />
+              <p className="review-session-note"><Info size={13} aria-hidden="true"/><span>{p.interfaceLanguage==="ru"?"Фактический размер сессии и баланс новых карточек и повторений зависят от доступных карточек.":p.interfaceLanguage==="nl"?"De werkelijke sessiegrootte en verhouding tussen nieuwe kaarten en herhalingen hangen af van de beschikbare kaarten.":"Actual session size and new/review balance depend on available cards."}</span></p>
             </div>,
           )}
+          </div>
           {p.accountControls}
           {p.notice && <div className={s.notice}>{p.notice}</div>}
         </div>
