@@ -96,7 +96,7 @@ const reviewCss=`
 #nl-builder-real-review .review-single{position:relative;isolation:isolate}#nl-builder-real-review .review-single>button[aria-pressed=true]{background:transparent}#nl-builder-real-review .review-selection{position:absolute;left:0;top:0;border-radius:11.2px;background:var(--practice-surface-hover);z-index:-1;pointer-events:none;transition:transform 230ms cubic-bezier(.22,1,.36,1),width 230ms cubic-bezier(.22,1,.36,1),height 230ms cubic-bezier(.22,1,.36,1)}
 #nl-builder-real-review .${s.nounChoice}{border:0;background:transparent;overflow:visible}#nl-builder-real-review .${s.nounChoice}>button:first-child{border-radius:11.2px}#nl-builder-real-review .${s.nounChoice}>button:last-child{height:28px;padding:0 6px}
 /* Owner review: transparent section frames and settings typography. */
-#nl-builder-real-review .${section.section},#nl-builder-real-review .${section.section}:has(>.${section.heading}:hover){background:transparent;border:1px solid color-mix(in srgb,var(--practice-text) 18%,transparent);padding:0;box-sizing:border-box}
+#nl-builder-real-review .${section.section}{background:transparent;border:1px solid color-mix(in srgb,var(--practice-text) 18%,transparent);padding:0;box-sizing:border-box}
 #nl-builder-real-review .${section.reveal}>div{background:transparent}
 #nl-builder-real-review .${controls.choice},#nl-builder-real-review .${s.option}{font-family:var(--practice-font-ui);font-size:var(--practice-text-label);font-weight:400;color:var(--practice-text-secondary)}
 #nl-builder-real-review .${controls.choice}[aria-pressed=true],#nl-builder-real-review .${s.option}[aria-pressed=true]{color:var(--practice-text-secondary)}
@@ -149,6 +149,11 @@ const reviewCss=`
 #nl-builder-real-review [data-preview-width=mobile]{--review-name-size:29px}
 @media(max-width:650px){#nl-builder-real-review .review-surface{--review-name-size:29px}}
 @media(max-height:650px){#nl-builder-real-review .review-surface{--review-name-size:26px}}
+/* Hover never changes section geometry or adds a per-section frame. */
+#nl-builder-real-review .review-section-group>.${section.section}:has(>.${section.heading}:hover){border:0;border-radius:0;background:transparent}
+#nl-builder-real-review [data-layout=gaps] .review-section-group>section+section:has(>.${section.heading}:hover){border-top:4px solid var(--practice-canvas)}
+#nl-builder-real-review .${section.heading}:hover,#nl-builder-real-review .${section.heading}:active{background:transparent;border:0;box-shadow:none;transform:none;outline:none}
+#nl-builder-real-review .${section.heading}{transition:none}
 @media(prefers-reduced-motion:reduce){.review-selection{transition:none!important}}
 `;
 createRoot(document.getElementById('nl-builder-real-review')!).render(<Review/>);
