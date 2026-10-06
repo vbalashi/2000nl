@@ -27,3 +27,5 @@ Two layout choices (single frame with inset dividers / filled group with 4px can
 Owner selected the common frame. Mobile footer now uses a 34px trash-icon column plus flexible Save column, with Start spanning both on the second row. Visible Delete text is hidden only at mobile widths; localized aria-label, tooltip and confirmation remain intact. Build/CSS collision guard and diff check pass; updated visual review pending.
 
 Hover regression: stale section :has(heading:hover) selector was more specific than the grouped-section rule and restored a 1px border, changing geometry. Removed it and explicitly kept both grouping variants geometry-stable on hover. Heading hover/active has no frame, shadow or transform; keyboard focus rules remain. Build guard/diff pass; visual verification pending.
+
+Owner hover exploration: disclosure headers receive a 42% theme-derived hover fill with a 150ms background-only transition on hover-capable devices. No borders, transforms or layout dimensions change. Reduced-motion disables the fade; inline language row stays unaffected. Build/CSS collision guard and diff checks pass; visual approval pending.

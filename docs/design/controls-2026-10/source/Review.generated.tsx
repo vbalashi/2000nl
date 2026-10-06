@@ -153,7 +153,8 @@ const reviewCss=`
 #nl-builder-real-review .review-section-group>.${section.section}:has(>.${section.heading}:hover){border:0;border-radius:0;background:transparent}
 #nl-builder-real-review [data-layout=gaps] .review-section-group>section+section:has(>.${section.heading}:hover){border-top:4px solid var(--practice-canvas)}
 #nl-builder-real-review .${section.heading}:hover,#nl-builder-real-review .${section.heading}:active{background:transparent;border:0;box-shadow:none;transform:none;outline:none}
-#nl-builder-real-review .${section.heading}{transition:none}
-@media(prefers-reduced-motion:reduce){.review-selection{transition:none!important}}
+#nl-builder-real-review .${section.heading}{transition:background-color 150ms ease}
+@media(hover:hover){#nl-builder-real-review .review-section-group .${section.heading}:hover{background:color-mix(in srgb,var(--practice-surface-hover) 42%,transparent)}}
+@media(prefers-reduced-motion:reduce){.review-selection{transition:none!important}#nl-builder-real-review .${section.heading}{transition:none!important}}
 `;
 createRoot(document.getElementById('nl-builder-real-review')!).render(<Review/>);
