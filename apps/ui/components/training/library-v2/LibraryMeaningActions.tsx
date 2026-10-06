@@ -58,7 +58,7 @@ const reviewRating = { fail: "Again", hard: "Hard", success: "Good", easy: "Easy
 /** Only authoritative direct capabilities are projected by the Library model. */
 export function LibraryMeaningRatings({meaning,language,busy,onAction}:{meaning:LibrarySenseCardModel;language:OnboardingLanguage;busy:boolean;onAction:(capability:LibraryMutationCapability)=>void}) {
  if (!meaning.reviewCapabilities.length) return null;
- return <RatingControls language={language} height="adaptive" disabled={busy}
+ return <RatingControls language={language} height={28} compact disabled={busy}
    label={platformV2Message(language,"senseCard.sections.reviewPrompt")}
    options={meaning.reviewCapabilities.map(capability=>({rating:reviewRating[capability.reviewResult],label:platformV2Message(language,capability.messageKey)}))}
    onRate={(rating:Rating)=>{const capability=meaning.reviewCapabilities.find(item=>reviewRating[item.reviewResult]===rating);if(capability)onAction(capability);}}/>;

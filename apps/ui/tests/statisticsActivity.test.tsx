@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { parseActivityCalendar, shiftDate, type ActivityCalendar } from "@/lib/training/activity/model";
 import { activityHighlights, periodSummary } from "@/lib/training/activity/summary";
+import {getUiMessages} from "@/lib/uiMessages";
 import { StatisticsActivity } from "@/components/practice/statistics/StatisticsActivity";
 
 const today = "2026-09-30";
@@ -69,3 +70,31 @@ describe("StatisticsActivity presentation", () => {
     expect(screen.getByText("Time was not measured during this period.")).toBeInTheDocument();
   });
 });
+
+ test("calendar details appear only in an anchored tooltip and dismiss on leave or Escape",()=>{
+  render(<StatisticsActivity interfaceLanguage="en" calendar={calendar({0:[2,3,60000]})}/>);
+  expect(screen.queryByRole("tooltip")).toBeNull();
+  const year=screen.getByRole("group",{name:getUiMessages("en").statistics.yearHeatmap});
+  const day=within(year).getAllByRole("button").at(-1)!;
+  fireEvent.mouseEnter(day);
+  expect(screen.getByRole("tooltip")).toHaveTextContent("September 30, 2026");
+  expect(day).toHaveAttribute("aria-describedby",screen.getByRole("tooltip").id);
+  expect(day).not.toHaveAttribute("title");
+  fireEvent.mouseLeave(day);expect(screen.queryByRole("tooltip")).toBeNull();
+  fireEvent.focus(day);expect(screen.getByRole("tooltip")).toBeVisible();
+  fireEvent.keyDown(day,{key:"Escape"});expect(screen.queryByRole("tooltip")).toBeNull();
+  fireEvent.click(day);expect(screen.getByRole("tooltip")).toHaveTextContent("reviews: 3");
+ });
+
+ test("weekly columns sum actual days and preserve the daily view",()=>{
+ render(<StatisticsActivity interfaceLanguage="en" calendar={calendar({0:[2,3,60000],1:[4,1,120000]})}/>);
+ expect(screen.queryByText("Study activity")).toBeNull();
+ expect(screen.queryByText("More activity")).toBeNull();
+ fireEvent.click(screen.getByRole("button",{name:"Weekly"}));
+ const grid=screen.getAllByRole("group",{name:`${getUiMessages("en").statistics.studyActivity} · Weekly`})[0];
+ expect(within(grid).getAllByRole("button").length).toBeLessThan(55);
+ fireEvent.click(within(grid).getAllByRole("button").at(-1)!);
+ expect(screen.getByRole("tooltip")).toHaveTextContent("New exercises: 6 · reviews: 4 · 3 min");
+ fireEvent.click(screen.getByRole("button",{name:"Daily"}));
+ expect(within(grid).getAllByRole("button")).toHaveLength(366);
+ });

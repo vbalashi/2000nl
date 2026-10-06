@@ -107,5 +107,5 @@
 }
 
 /* Library card actions are a separate 28px family; rating controls have their own styles. */
-.group[data-testid="library-primary-actions"] .primary{border:0;border-radius:8.4px;background:transparent}
+.group[data-testid="library-primary-actions"] .primary{border:0;border-radius:8.4px;background:var(--practice-surface-hover)}
 .group[data-testid="library-primary-actions"] .quiet{border-radius:8.4px}

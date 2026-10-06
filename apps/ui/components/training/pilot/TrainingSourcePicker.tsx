@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useLayoutEffect } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingSetupOption } from "@/lib/training/setups/availability";
 import type { TrainingSetupDraft } from "@/lib/training/setups/types";
 import type { TrainingSessionSize } from "@/lib/types";
 import s from "./trainingSourcePicker.module.css";
-import { Search, BookOpen, Layers, Check } from "lucide-react";
+import { Search, BookOpen, Layers, Check, ChevronUp, ChevronDown } from "lucide-react";
 export function TrainingSourcePicker({
   locale,
   lists,
@@ -49,6 +49,9 @@ export function TrainingSourcePicker({
     ...dictionaries.map((x) => ({ ...x, kind: "dictionary" })),
     ...lists.map((x) => ({ ...x, kind: "collection" })),
   ];
+  const listRef=useRef<HTMLDivElement>(null);
+  const [edges,setEdges]=useState({top:false,bottom:false});
+  const updateEdges=()=>{const el=listRef.current;if(el)setEdges({top:el.scrollTop>1,bottom:el.scrollTop+el.clientHeight<el.scrollHeight-1});};
   const large = entries.length > 10;
   const searching = search && large;
   const visible = entries.filter(
@@ -57,6 +60,9 @@ export function TrainingSourcePicker({
       (!searching ||
         x.label.toLocaleLowerCase().includes(query.toLocaleLowerCase())),
   );
+  const entryKey=entries.map(x=>`${x.value}:${x.label}`).join("|");
+  useLayoutEffect(()=>{const el=listRef.current;if(!el)return;const observer=new ResizeObserver(updateEdges);observer.observe(el);updateEdges();return()=>observer.disconnect();},[query,kind,search,entryKey]);
+  const scrollLabel=locale==="ru"?["Предыдущие источники","Следующие источники"]:locale==="nl"?["Vorige bronnen","Meer bronnen"]:["Previous sources","More sources"];
   return (
     <div className={s.source}>
       <div className={s.source_toolbar}>
@@ -95,7 +101,9 @@ export function TrainingSourcePicker({
           </>
         )}
       </div>
-      <div className={s.source_list}>
+      <div className={s.source_window}>
+      {edges.top&&<button type="button" className={`${s.edge} ${s.edgeTop}`} aria-label={scrollLabel[0]} onClick={()=>listRef.current?.scrollBy({top:-180,behavior:"smooth"})}><ChevronUp size={14}/></button>}
+      <div ref={listRef} className={s.source_list} onScroll={updateEdges}>
         {visible.map((x) => {
           const active =
             x.kind === "dictionary"
@@ -144,6 +152,8 @@ export function TrainingSourcePicker({
           );
         })}
         {!visible.length && <p>{labels[4]}</p>}
+      </div>
+      {edges.bottom&&<button type="button" className={`${s.edge} ${s.edgeBottom}`} aria-label={scrollLabel[1]} onClick={()=>listRef.current?.scrollBy({top:180,behavior:"smooth"})}><ChevronDown size={14}/></button>}
       </div>
     </div>
   );

@@ -1,0 +1,4 @@
+.summary{display:flex;align-items:baseline;gap:7px;margin-top:12px;color:var(--practice-text-muted);font-family:var(--practice-font-ui);font-size:var(--practice-text-label);line-height:1.5}
+.summary>svg{flex-shrink:0;align-self:flex-start;margin-top:2px;opacity:.7}
+.details{display:flex;flex-wrap:wrap;gap:2px 12px;margin:0}
+.details>div:last-child{flex-basis:100%}

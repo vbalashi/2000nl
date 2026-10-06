@@ -1,5 +1,5 @@
 "use client";
-import React, { useId, useState, type ReactNode } from "react";
+import React, { useEffect, useId, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { formatUiCount, formatUiMessage, getUiMessages } from "@/lib/uiMessages";
@@ -20,7 +20,13 @@ export function StatisticsActivity({ interfaceLanguage: locale, calendar, recent
   const copy = getUiMessages(locale).statistics;
   const [period, setPeriod] = useState<StudyTimePeriod>("Week");
   const [selected, setSelected] = useState<string | null>(null);
+  const [view,setView]=useState<"daily"|"weekly">("daily");
+  const viewLabels=locale==="ru"?["По дням","По неделям"]:locale==="nl"?["Dagelijks","Wekelijks"]:["Daily","Weekly"];
   const [page, setPage] = useState(0);
+  const [tip, setTip] = useState<{date:string;x:number;y:number}|null>(null);
+  const tipId = useId();
+  useEffect(()=>{const dismiss=()=>setTip(null);window.addEventListener("scroll",dismiss,true);window.addEventListener("resize",dismiss);return()=>{window.removeEventListener("scroll",dismiss,true);window.removeEventListener("resize",dismiss);};},[]);
+  const showTip = (day:ActivityDay, target:HTMLButtonElement) => {const rect=target.getBoundingClientRect();setTip({date:day.date,x:Math.max(120,Math.min(window.innerWidth-120,rect.left+rect.width/2)),y:Math.min(window.innerHeight-90,rect.bottom+8)});};
   const ids = { activity: useId(), history: useId(), highlights: useId() };
   const number = (value: number) => new Intl.NumberFormat(locale).format(value);
   const dateFormat = new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
@@ -35,7 +41,7 @@ export function StatisticsActivity({ interfaceLanguage: locale, calendar, recent
   });
   const cell = (day: ActivityDay) => {
     const label = formatUiMessage(copy.dayAccessible, { date: dateFormat.format(utcDate(day.date)), summary: daySummary(day) });
-    return <button key={day.date} type="button" data-level={activityLevel(dayTotal(day))} aria-pressed={selected === day.date} aria-label={label} title={label} onClick={() => setSelected(day.date)} />;
+    return <button key={day.date} type="button" data-level={activityLevel(dayTotal(day))} aria-pressed={selected === day.date} aria-label={label} aria-describedby={tip?.date===day.date?tipId:undefined} onMouseEnter={e=>showTip(day,e.currentTarget)} onMouseLeave={()=>setTip(null)} onFocus={e=>showTip(day,e.currentTarget)} onBlur={()=>setTip(null)} onKeyDown={e=>{if(e.key==="Escape")setTip(null);}} onClick={e=>{setSelected(day.date);showTip(day,e.currentTarget);}} />;
   };
   const first = calendar.days[0].date;
   const lead = weekdayOffset(first);
@@ -48,7 +54,12 @@ export function StatisticsActivity({ interfaceLanguage: locale, calendar, recent
   const mobileDays = calendar.days.filter(day => day.date >= windowStart && day.date < windowEnd);
   const hasEarlier = first < windowStart;
   const monthName = (date: string) => utcDate(date).toLocaleDateString(locale, { month: "short", year: "numeric", timeZone: "UTC" });
-  const chosen = selected ? calendar.days.find(day => day.date === selected) ?? null : null;
+  const weeks=Array.from({length:columns},(_,index)=>calendar.days.slice(Math.max(0,index*7-lead),(index+1)*7-lead)).filter(days=>days.length);
+  const maxWeek=Math.max(1,...weeks.map(days=>days.reduce((total,day)=>total+dayTotal(day),0)));
+  const weekCell=(days:ActivityDay[])=>{const firstDay=days[0],lastDay=days[days.length-1];const total=days.reduce((n,day)=>n+dayTotal(day),0);const bars=total?Math.max(1,Math.ceil(total/maxWeek*7)):0;const label=`${dateRange(firstDay.date,lastDay.date)}: ${number(total)}`;
+    return <button key={firstDay.date} className={s.weekColumn} type="button" aria-label={label} aria-describedby={tip?.date===firstDay.date?tipId:undefined} onMouseEnter={e=>showTip(firstDay,e.currentTarget)} onMouseLeave={()=>setTip(null)} onFocus={e=>showTip(firstDay,e.currentTarget)} onBlur={()=>setTip(null)} onKeyDown={e=>{if(e.key==="Escape")setTip(null);}} onClick={e=>showTip(firstDay,e.currentTarget)}>{Array.from({length:7},(_,i)=><i key={i} data-filled={i>=7-bars}/>)}</button>;};
+  const chosenWeek= view==="weekly"&&tip?weeks.find(days=>days[0].date===tip.date):null;
+  const chosen = tip ? calendar.days.find(day => day.date === tip.date) ?? null : null;
   const timeValue = summary.timeCoverage === "unavailable" ? "—" : minutes(summary.activeMilliseconds);
   return <div className={s.statistics} lang={locale}>
     <section className={s.section} aria-labelledby={ids.activity}>
@@ -66,25 +77,25 @@ export function StatisticsActivity({ interfaceLanguage: locale, calendar, recent
       {summary.timeCoverage === "unavailable" && <p className={s.note}>{copy.timeUnmeasured}</p>}
     </section>
     {recentActivity}
-    <section className={`${s.section} ${s.history}`} aria-labelledby={ids.history}>
-      <div className={s.sectionHeading}><h2 id={ids.history}>{copy.studyActivity}</h2><span>{dateRange(first, calendar.today)}</span></div>
+    <section className={`${s.section} ${s.history}`} aria-label={copy.studyActivity}>
+      <div className={s.calendarToolbar}><SegmentedControl standard label={copy.studyActivity}>{(["daily","weekly"] as const).map((value,index)=><button type="button" key={value} aria-pressed={view===value} onClick={()=>{setView(value);setTip(null);}}>{viewLabels[index]}</button>)}</SegmentedControl></div>
       <div className={s.desktopHeat}><div className={s.heatScroll}>
-        <div className={s.heatGrid} role="group" aria-label={copy.yearHeatmap}>{Array.from({ length: lead }, (_, i) => <span key={`lead-${i}`} />)}{calendar.days.map(cell)}</div>
+        <div className={view==="weekly"?s.weekGrid:s.heatGrid} role="group" aria-label={view==="weekly"?`${copy.studyActivity} · ${viewLabels[1]}`:copy.yearHeatmap}>{view==="weekly"?weeks.map(weekCell):<>{Array.from({ length: lead }, (_, i) => <span key={`lead-${i}`} />)}{calendar.days.map(cell)}</>}</div>
         <div className={s.monthLabels} style={{ "--heat-columns": columns } as React.CSSProperties}>{monthLabels.map(item => <span key={item.id} style={{ gridColumn: item.column }}>{item.label}</span>)}</div>
       </div></div>
       <div className={s.mobileHeat}>
         <div className={s.mobileHistoryNav}>
-          <button type="button" aria-label={copy.earlierMonths} disabled={!hasEarlier} onClick={() => { setPage(p => p + 1); setSelected(null); }}><ChevronLeft size={16} /></button>
+          <button type="button" aria-label={copy.earlierMonths} disabled={!hasEarlier} onClick={() => { setPage(p => p + 1); setSelected(null); setTip(null); }}><ChevronLeft size={16} /></button>
           <span>{`${monthName(windowStart)} – ${monthName(monthStart(page * MOBILE_MONTHS))}`}</span>
-          <button type="button" aria-label={copy.laterMonths} disabled={page === 0} onClick={() => { setPage(p => p - 1); setSelected(null); }}><ChevronRight size={16} /></button>
+          <button type="button" aria-label={copy.laterMonths} disabled={page === 0} onClick={() => { setPage(p => p - 1); setSelected(null); setTip(null); }}><ChevronRight size={16} /></button>
         </div>
-        <div className={s.mobileHeatGrid} role="group" aria-label={copy.monthHeatmap}>
-          {Array.from({ length: mobileDays.length ? weekdayOffset(mobileDays[0].date) : 0 }, (_, i) => <span key={`blank-${i}`} />)}{mobileDays.map(cell)}
+        <div className={view==="weekly"?`${s.mobileWeekGrid} ${s.weekGrid}`:s.mobileHeatGrid} role="group" aria-label={view==="weekly"?`${copy.studyActivity} · ${viewLabels[1]}`:copy.monthHeatmap}>
+          {view==="weekly"?weeks.filter(days=>days.some(day=>day.date>=windowStart&&day.date<windowEnd)).map(weekCell):<>{Array.from({ length: mobileDays.length ? weekdayOffset(mobileDays[0].date) : 0 }, (_, i) => <span key={`blank-${i}`} />)}{mobileDays.map(cell)}</>}
         </div>
       </div>
-      <div className={s.heatLegend} aria-hidden="true"><span>{copy.less}</span>{[0, 1, 2, 3].map(level => <i key={level} data-level={level} />)}<span>{copy.moreActivity}</span></div>
-      <div className={s.dayDetail} aria-live="polite">{chosen ? <><strong>{dateFormat.format(utcDate(chosen.date))}</strong>
-        <span>{daySummary(chosen)}{dayTotal(chosen) === 0 ? ` · ${copy.noActivity}` : ""}</span></> : <span>{copy.selectDay}</span>}</div>
+
+      {chosen && tip && <div id={tipId} role="tooltip" className={s.dayTooltip} style={{left:tip.x,top:tip.y}}><strong>{chosenWeek?dateRange(chosenWeek[0].date,chosenWeek[chosenWeek.length-1].date):dateFormat.format(utcDate(chosen.date))}</strong>
+        <span>{daySummary(chosenWeek?{date:chosenWeek[0].date,newCount:chosenWeek.reduce((n,d)=>n+d.newCount,0),reviewCount:chosenWeek.reduce((n,d)=>n+d.reviewCount,0),activeMilliseconds:chosenWeek.reduce((n,d)=>n+d.activeMilliseconds,0)}:chosen)}{!chosenWeek && dayTotal(chosen) === 0 ? ` · ${copy.noActivity}` : ""}</span></div>}
     </section>
     <section className={s.section} aria-labelledby={ids.highlights}>
       <h2 id={ids.highlights} className={s.highlightsTitle}>{copy.highlights}</h2>

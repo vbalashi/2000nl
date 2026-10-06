@@ -12,3 +12,7 @@
 .ratings button[data-rating=Easy]{--rating-color:var(--practice-info)}
 .ratings button:hover>span{background:var(--practice-surface-hover)}
 .ratings button:focus-visible{outline:none}.ratings button:focus-visible>span{outline:2px solid var(--practice-focus);outline-offset:2px}
+
+/* Library actions use a compact visible and layout height; Training retains its larger hit area. */
+.ratings[data-compact=true] button{min-height:28px;padding:0;font-size:var(--practice-text-small);font-weight:400}
+.ratings[data-compact=true] button>span{box-sizing:border-box;min-height:28px;padding:3px 10px;border-radius:8.4px}
