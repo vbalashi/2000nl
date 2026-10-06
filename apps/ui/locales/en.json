@@ -306,6 +306,7 @@
       "totalReviews": "Total reviews",
       "stillNew": "Still new",
       "loadNamed": "Load {name}",
+      "previousSaved": "Previous saved trainings",
       "moreSaved": "More saved trainings",
       "noSaved": "No saved trainings yet. Create a training to keep its settings here.",
       "availabilityFailed": "Could not load card counts.",

@@ -175,7 +175,8 @@ test("failed saves leave the accepted document intact and a second explicit clic
   await screen.findByText(getUiMessages("en").materialPreferences.saveError);
   expect(english).toHaveAttribute("aria-checked", "true");
   fireEvent.click(english);
-  await screen.findByText("Saved");
+  await waitFor(()=>expect(screen.queryByText(getUiMessages("en").materialPreferences.saving)).toBeNull());
+  expect(screen.queryByText("Saved")).toBeNull();
   expect(repo.save).toHaveBeenCalledTimes(2);
 });
 test("conflict replaces stale selection with the server winner and does not silently reapply", async () => {
@@ -332,7 +333,8 @@ test("dictionary switches use real inventory/IDs; personal entries remain enable
     }),
   ).toBeDisabled();
   fireEvent.click(toggle);
-  await screen.findByText("Saved");
+  await waitFor(()=>expect(screen.queryByText(getUiMessages("en").materialPreferences.saving)).toBeNull());
+  expect(screen.queryByText("Saved")).toBeNull();
   expect(repo.save).toHaveBeenCalledWith("account-a", 0, {
     ...emptyMaterialPreferences().document,
     disabledDictionaryIds: [id],

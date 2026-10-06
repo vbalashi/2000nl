@@ -1,7 +1,7 @@
 # Controls standard
 
 Owner decisions: 2026-10-06. Tracking: [#596](https://github.com/vbalashi/2000nl/issues/596).
-Status: Session Builder approved and implemented in application code. Local component QA completed; account smoke limited by local DB contract mismatch (208 vs 211). Remaining controls migrate in a separate slice.
+Status: Session Builder approved and implemented in application code. Local component QA completed; account smoke limited by local DB contract mismatch (208 vs 211). Shared choice controls now cover Appearance, spacing, text size, translation, Statistics period/languages/material, and Library filter chips. Saved-training lists have symmetric scroll indicators; Builder confines scrolling to its viewport.
 
 ## Geometry and selection
 
@@ -12,7 +12,7 @@ Status: Session Builder approved and implemented in application code. Local comp
 | Learning languages selector | 28 px | 40% = 11.2 px | No | No |
 | Primary Start training / wide Start learning | 44 px | 30% = 13.2 px | Action fill | No |
 | Session Builder Save changes + menu | 28 px, compact right aligned | 40% = 11.2 px | Transparent | Neutral outline |
-| Delete training in Session Builder | 34 px | 30% = 10.2 px | Transparent; trash icon + label | No |
+| Delete training in Session Builder | 34 px | 30% = 10.2 px | Transparent; trash icon with accessible label | No |
 | Library dictionary-card service actions | 28 px, fixed | 30% = 8.4 px | No group fill | No |
 
 The percentages are relative to control height, not width. Retain 44 / 34 / 28 as explicit size variants. Do not replace intentionally wide launch actions with content-width controls everywhere.
@@ -29,7 +29,7 @@ Translation: Off / remembered language / separate chevron. Selecting Off disable
 
 Learning languages: render active, unpaused languages only, in settings order. Show as many labels as fit, at most four. If all fit, no chevron. If more remain, reserve the last visible slot for the remembered selection and show a separate unfilled chevron. Picking an overflow language places it in that final slot and selects it; the earlier slots retain settings order. Resizing must keep the selected language visible. A single active language is shown alone, even if other languages are paused. Zero active languages needs the existing empty-state/add-language flow, not an invented active selection. This selector must not implicitly resume paused languages or overwrite language statuses.
 
-Your material: All means all material languages, Current language follows the application's current training language, and a remembered explicit language is selectable through a separate chevron. Only one mode is selected. Where one available language makes all modes equivalent, omit redundant choice controls. Language scope is independent of material type (Vocab / Dictionary); do not silently remove existing type filtering while applying this language selector.
+Your material (final owner clarification): All means all enabled readable dictionaries/material in the language selected above. A second, remembered specific dictionary or collection is selectable directly; its separate unfilled chevron opens the full material list. Omit the redundant Current language option. Keep statistics requests scoped to one language; do not aggregate across languages. Only one material scope is selected. Existing material identities, access and counts stay server-owned.
 
 ## Session Builder review
 
@@ -47,7 +47,7 @@ Again / Hard / Good / Easy are approved and excluded from this migration, includ
 
 Dictionary-card actions use a separate 28 px family; do not inherit 44 px Start learning just because their label matches. Preserve primary learning action vs quiet collections/overflow hierarchy.
 
-Do not use global button, role=button, or shared CSS selectors as a migration mechanism. Map each component to a named family, migrate Session Builder first after visual approval, then review each remaining page. Existing SegmentedControl is only a wrapper; it does not yet implement this standard or capsule animation.
+Do not use global button, role=button, or shared CSS selectors as a migration mechanism. Map each component to a named family, migrate Session Builder first after visual approval, then review each remaining page. SegmentedControl implements the standard through its explicit `standard` variant and useSelectionMarker.
 
 ## Inventory gate before application
 
@@ -74,3 +74,21 @@ Session Builder prototypes must use the existing ApprovedTrainingBuilder section
 Owner selection: Session Builder uses one shared frame with inset section dividers. On all widths, Start training fills the first row; the transparent trash icon and compact outlined Save changes share the second row (selected footer B). The icon retains its localized accessible Delete training label and confirmation. The alternative gap layout remains available in the prototype for comparison.
 
 Builder name typography matches Training overview hero: reading font, weight 500, 36px desktop / 29px mobile / 26px short viewport, line-height 1.1, letter-spacing -1px. Implemented overview ↔ builder transition: same 720px content width, stable top navigation, outgoing content opacity 1→0 and y 0→-8px over 100ms, incoming opacity 0→1 and y 8→0 over 180ms, cubic-bezier(.22,1,.36,1); reverse direction on Back. No scale or width animation. Preserve overview scroll position and selected saved training on return; restore focus to the initiating Edit/Builder control. Reduced-motion disables motion. Same behavior for hero and saved-row entry points.
+
+
+## Rollout inventory, 2026-10-06
+
+| Control | Implementation / boundary |
+| --- | --- |
+| App top navigation | 34px group, unframed, 230ms selection marker; mobile bottom icon/text navigation keeps its existing touch geometry |
+| Appearance / spacing / text size | Shared 28px standard SegmentedControl |
+| Translation | Off + remembered language + transparent disclosure; language label re-enables translation |
+| Statistics period / active languages | Shared 28px selection; ordered active languages fit available width, up to four, with remembered overflow slot |
+| Statistics Your material | All for selected language + remembered dictionary/collection; transparent menu trigger, original single-language reads |
+| Library filters / noun article choices | Transparent 28px chips, soft selected fill, integrated noun disclosure without divider |
+| Library meaning-card service actions | Isolated 28px family, 8.4px radius; rating controls unchanged |
+| Learning-language management | Active/Paused mutations and reorder remain management actions, 28px without frames; paused rows must remain available here to resume them |
+| Add / icon actions, native switches | Existing quiet/touch geometry preserved; not single-selection tabs |
+| Reveal / audio / report / confirmations / auth / premium / account / admin | Distinct interaction families; retained, not globally converted to capsules |
+
+Success-only account-save messages are omitted, including legacy reading settings; loading, errors, retry and conflict feedback remain. Mobile Builder content has a bounded flex chain and contains overscroll. Saved-list indicators overlay only the list, leaving its heading visible. Keyboard focus and reduced-motion behavior remain supported.

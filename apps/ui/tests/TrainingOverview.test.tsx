@@ -80,3 +80,22 @@ test('resumed hero retains accepted session metadata while Saved shows edited re
  const button=screen.getByRole('button',{name:'Review ahead'});expect(button.querySelectorAll('svg')).toHaveLength(1);
  fireEvent.click(button);expect(callbacks.onEarlyReview).toHaveBeenCalledWith('a');
  });
+
+
+test('saved list indicates hidden edges and scrolls upwards independently',()=>{
+ setup();
+ const list=screen.getByRole('region',{name:'Saved Trainings'}).querySelector('[tabindex="0"]') as HTMLDivElement;
+ Object.defineProperties(list,{clientHeight:{value:200},scrollHeight:{value:800},scrollTop:{value:0,writable:true}});
+ Object.defineProperty(list,"scrollBy",{value:vi.fn()});fireEvent.scroll(list);
+ expect(screen.queryByRole('button',{name:'Previous saved trainings'})).toBeNull();
+ expect(screen.getByRole('button',{name:'More saved trainings'})).toBeVisible();
+ list.scrollTop=250;fireEvent.scroll(list);
+ fireEvent.click(screen.getByRole('button',{name:'Previous saved trainings'}));
+ expect(list.scrollBy).toHaveBeenCalledWith(expect.objectContaining({top:-140}));
+ expect(screen.getByRole('button',{name:'More saved trainings'})).toBeVisible();
+ list.scrollTop=600;fireEvent.scroll(list);
+ expect(screen.getByRole('button',{name:'Previous saved trainings'})).toBeVisible();
+ expect(screen.queryByRole('button',{name:'More saved trainings'})).toBeNull();
+ list.scrollTop=0;fireEvent.scroll(list);
+ expect(screen.queryByRole('button',{name:'Previous saved trainings'})).toBeNull();
+});

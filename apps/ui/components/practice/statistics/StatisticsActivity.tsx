@@ -7,6 +7,7 @@ import type { StudyTimePeriod } from "@/lib/training/studyTime/period";
 import type { ActivityCalendar, ActivityDay } from "@/lib/training/activity/model";
 import { activityHighlights, activityLevel, coverageDate, dayTotal, periodSummary } from "@/lib/training/activity/summary";
 import s from "./statistics.module.css";
+import {SegmentedControl} from "../ui/SegmentedControl";
 
 const utcDate = (date: string) => new Date(`${date}T00:00:00Z`);
 const weekdayOffset = (date: string) => (utcDate(date).getUTCDay() + 6) % 7;
@@ -52,8 +53,8 @@ export function StatisticsActivity({ interfaceLanguage: locale, calendar, recent
   return <div className={s.statistics} lang={locale}>
     <section className={s.section} aria-labelledby={ids.activity}>
       <div className={s.sectionHeading}><h2 id={ids.activity}>{copy.activity}</h2>
-        <div className={s.tabs} role="group" aria-label={copy.activityPeriod}>{(["Today", "Week", "Month"] as const).map(value =>
-          <button key={value} type="button" aria-pressed={period === value} onClick={() => setPeriod(value)}>{copy.periods[value]}</button>)}</div>
+        <SegmentedControl standard label={copy.activityPeriod}>{(["Today", "Week", "Month"] as const).map(value =>
+          <button key={value} type="button" aria-pressed={period === value} onClick={() => setPeriod(value)}>{copy.periods[value]}</button>)}</SegmentedControl>
       </div>
       <p className={s.range}>{summary.startDate === summary.endDate ? dateFormat.format(utcDate(summary.endDate)) : dateRange(summary.startDate, summary.endDate)}</p>
       <div className={s.activityNumbers}>

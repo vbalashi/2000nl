@@ -118,3 +118,5 @@
 .singleLanguage{font-size:var(--practice-text-small);color:var(--practice-text-muted)}
 
 .scopeGroup{margin:14px 0 2px;font-size:var(--practice-text-small);font-weight:500;color:var(--practice-text-muted)}
+
+.materialChoice{max-width:min(220px,50vw);overflow:hidden;text-overflow:ellipsis}

@@ -423,3 +423,6 @@
 :global(.session-builder-standard) .saveMenu summary{height:100%;min-height:0;width:28px;border:0;border-radius:0 11.2px 11.2px 0}
 :global(.session-builder-standard) .updateGroup:hover{background:var(--practice-surface-subtle)}
 .unsavedDot{flex:none;width:5px;height:5px;border-radius:50%;background:var(--practice-accent)}
+
+:global(.session-builder-standard).builder{overflow:hidden}
+:global(.session-builder-standard) .viewport{overscroll-behavior-y:contain}

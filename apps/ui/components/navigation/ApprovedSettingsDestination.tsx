@@ -17,6 +17,7 @@ import { ApprovedAppearanceSection } from "@/components/practice/ui/ApprovedAppe
 import { ApprovedTextSizeSection } from "@/components/reading/ApprovedTextSizeSection";
 import type { SettingsDestinationProps } from "./SettingsDestination";
 import { ActionMenu } from "@/components/practice/ui/ActionMenu";
+import {SegmentedControl} from "@/components/practice/ui/SegmentedControl";
 import s from "@/components/practice/settings/settings.module.css";
 const interfaceLanguages = [
   { code: "en", name: "English" },
@@ -47,6 +48,8 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
   React.useEffect(() => {
     if (!props.open) setPickerOpen(false);
   }, [props.open]);
+  const [rememberedTranslation,setRememberedTranslation]=React.useState<string | null>(props.translationLanguage && props.translationLanguage!=="off" ? props.translationLanguage : null);
+  React.useEffect(()=>{if(props.translationLanguage && props.translationLanguage!=="off")setRememberedTranslation(props.translationLanguage);},[props.translationLanguage]);
   const translationOff =
     !props.translationLanguage || props.translationLanguage === "off";
   return (
@@ -78,29 +81,13 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
                 <SettingsRow
                   title={copy.translationLanguage}
                 >
-                  <div className={s.options}>
-                    <button
-                      type="button"
-                      aria-pressed={translationOff}
-                      onClick={() => props.onTranslationLanguageChange(null)}
-                    >
-                      {copy.off}
+                  <SegmentedControl standard label={copy.translationLanguage}>
+                    <button type="button" aria-pressed={translationOff} onClick={()=>props.onTranslationLanguageChange(null)}>{copy.off}</button>
+                    <button type="button" aria-pressed={!translationOff} onClick={()=>rememberedTranslation ? props.onTranslationLanguageChange(rememberedTranslation) : setPickerOpen(true)}>
+                      {rememberedTranslation ? languageDisplayName(props.interfaceLanguage,rememberedTranslation) : copy.chooseLanguage}
                     </button>
-                    <button
-                      type="button"
-                      aria-label={copy.translationLanguage}
-                      aria-haspopup="dialog"
-                      aria-expanded={pickerOpen}
-                      onClick={() => setPickerOpen(true)}
-                    >
-                      {translationOff
-                        ? copy.chooseLanguage
-                        : languageDisplayName(
-                            props.interfaceLanguage,
-                            props.translationLanguage!,
-                          )}{" "}
-                    </button>
-                  </div>
+                    <button type="button" aria-label={copy.translationLanguage} aria-haspopup="dialog" aria-expanded={pickerOpen} onClick={()=>setPickerOpen(true)}><ChevronDown size={14} aria-hidden="true"/></button>
+                  </SegmentedControl>
                 </SettingsRow>
               </SettingsPanel>
               <LearningMaterialSettings language={props.interfaceLanguage} />
@@ -122,7 +109,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
                       translationOff ? null : props.translationLanguage
                     }
                     onChoose={(item) =>
-                      props.onTranslationLanguageChange(item.code)
+                      {setRememberedTranslation(item.code);props.onTranslationLanguageChange(item.code);}
                     }
                     onClose={() => setPickerOpen(false)}
                   />

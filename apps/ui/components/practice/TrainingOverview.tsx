@@ -2,7 +2,7 @@
 
 import React,{useEffect,useRef,useState} from "react";
 import {AddAction} from "./ui/AddAction";
-import {ChevronDown,Play,Plus} from "lucide-react";
+import {ChevronDown,ChevronUp,Play,Plus} from "lucide-react";
 import {IconAction} from "./ui/IconAction";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import {formatUiMessage,getUiMessages} from "@/lib/uiMessages";
@@ -32,8 +32,9 @@ export function TrainingOverview({state,interfaceLanguage="en",onSelect,onLaunch
  const navigation=getUiMessages(interfaceLanguage).navigation;
  const list=useRef<HTMLDivElement>(null);
  const [more,setMore]=useState(false);
+ const [above,setAbove]=useState(false);
  const trainingCount=state.status==="ready"?state.trainings.length:0;
- const updateMore=()=>{const el=list.current;setMore(Boolean(el&&el.scrollTop+el.clientHeight<el.scrollHeight-3));};
+ const updateMore=()=>{const el=list.current;setMore(Boolean(el&&el.scrollTop+el.clientHeight<el.scrollHeight-3));setAbove(Boolean(el&&el.scrollTop>3));};
  useEffect(()=>{
   const el=list.current;if(!el)return;
   const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(updateMore):null;
@@ -70,11 +71,11 @@ export function TrainingOverview({state,interfaceLanguage="en",onSelect,onLaunch
   </section>:!state.trainings.length?<section className={s.hero}><h2>{copy.firstTraining}</h2><button type="button" className={s.start} onClick={onCreate}><Plus size={16}/>{copy.create}</button></section>:null}
   <section className={s.saved} aria-label={copy.saved}>
    <div className={s.savedHeading}><h2>{copy.saved}</h2><AddAction onClick={onCreate}>{copy.create}</AddAction></div>
-   {saved.length?<><div ref={list} className={s.list} onScroll={updateMore} tabIndex={0}>{saved.map(item=><div className={`${s.row} ${item.id===state.mainId?s.selected:""}`} key={item.id}>
+   {saved.length?<div className={s.listViewport}><div ref={list} className={s.list} onScroll={updateMore} tabIndex={0}>{saved.map(item=><div className={`${s.row} ${item.id===state.mainId?s.selected:""}`} key={item.id}>
     <div className={s.rowText}><h3>{item.name}</h3><p>{item.summary}</p>{item.notice&&<p>{item.notice}</p>}{!item.canLaunch&&item.unavailableReason&&<p>{item.unavailableReason}</p>}</div>
     <IconAction className={s.icon} label={formatUiMessage(copy.edit,{name:item.name})} onClick={()=>onEdit(item.id)}><EditGlyph/></IconAction>
     <IconAction className={s.icon} label={formatUiMessage(copy.loadNamed,{name:item.name})} aria-pressed={item.id===state.mainId} onClick={()=>onSelect?.(item.id)}>{item.id===state.mainId?<SelectedGlyph/>:<LoadGlyph/>}</IconAction>
-   </div>)}</div>{more&&<div className={s.fade}><button type="button" aria-label={copy.moreSaved} onClick={()=>list.current?.scrollBy({top:Math.max(100,list.current.clientHeight*.7),behavior:window.matchMedia?.("(prefers-reduced-motion: reduce)").matches?"instant":"smooth"})}><ChevronDown size={16}/></button></div>}</>:<p className={s.emptySaved}>{copy.noSaved}</p>}
+   </div>)}</div>{above&&<div className={`${s.fade} ${s.fadeTop}`}><button type="button" aria-label={copy.previousSaved} onClick={()=>list.current?.scrollBy({top:-Math.max(100,list.current.clientHeight*.7),behavior:window.matchMedia?.("(prefers-reduced-motion: reduce)").matches?"instant":"smooth"})}><ChevronUp size={16}/></button></div>}{more&&<div className={s.fade}><button type="button" aria-label={copy.moreSaved} onClick={()=>list.current?.scrollBy({top:Math.max(100,list.current.clientHeight*.7),behavior:window.matchMedia?.("(prefers-reduced-motion: reduce)").matches?"instant":"smooth"})}><ChevronDown size={16}/></button></div>}</div>:<p className={s.emptySaved}>{copy.noSaved}</p>}
   </section>
  </div>;
 }

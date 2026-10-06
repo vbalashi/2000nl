@@ -48,3 +48,7 @@
 @media(prefers-reduced-motion:reduce){.menu{animation:none}}
 
 .creation{padding:0 0 12px}.production .creation>button{border:0;background:transparent;padding-inline:0}
+
+.menu{border-color:color-mix(in srgb,var(--practice-text) 12%,transparent)}
+.menu button:hover{border-color:transparent}
+.menu button:active{transform:none}
