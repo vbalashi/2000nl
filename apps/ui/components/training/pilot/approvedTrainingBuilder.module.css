@@ -383,3 +383,32 @@
   .footer > div:has(.saveMenu) { grid-template-columns:1fr; }
   .footer .saveActions:has(.saveMenu) .secondary { white-space:nowrap; }
 }
+
+/* Approved Session Builder controls */
+:global(.session-builder-standard) .viewport{padding:0;overflow:visible}:global(.session-builder-standard) .main,:global(.session-builder-standard) .footer>div{max-width:720px}
+:global(.session-builder-standard) .header{position:relative;margin-bottom:20px;gap:0}:global(.session-builder-standard) .header h1{font-size:20px;line-height:28px}:global(.session-builder-standard) .header>button{position:absolute;right:calc(100% + 12px)}
+:global(.session-builder-standard) .option{height:28px;box-sizing:border-box;min-height:28px;padding:0 10px;border:0;border-radius:11.2px;display:inline-flex;width:fit-content;font-size:13px;line-height:18px;justify-content:center}:global(.session-builder-standard) .option span:last-child{display:none}:global(.session-builder-standard) .options{display:flex;flex-direction:row;flex-wrap:wrap;gap:7px;position:relative}
+:global(.session-builder-standard) .nounChoice{border:0;background:transparent;overflow:visible}:global(.session-builder-standard) .nounChoice>button:first-child{border-radius:11.2px}:global(.session-builder-standard) .nounChoice>button:last-child{height:28px;padding:0 6px}
+:global(.session-builder-standard) .choices:has(>.nounChoice){padding-left:8px}
+:global(.session-builder-standard) .nounChoice{border-radius:11.2px;overflow:hidden;gap:0}
+:global(.session-builder-standard) .nounChoice:has(>button[aria-pressed=true]){background:var(--practice-surface-hover)}
+:global(.session-builder-standard) .nounChoice>button:first-child,:global(.session-builder-standard) .nounChoice>button:first-child:hover{border-radius:0;background:transparent;padding-right:4px}
+:global(.session-builder-standard) .nounChoice>button:last-child{background:transparent;padding-left:3px;padding-right:7px}
+:global(.session-builder-standard) .footer{padding:20px 0 0}:global(.session-builder-standard) .footer>div{align-items:center;gap:12px}:global(.session-builder-standard) .saveActions{display:contents}:global(.session-builder-standard) .delete{display:flex;align-items:center;gap:7px;width:auto;height:34px;margin-right:auto;padding:0;background:transparent;color:var(--practice-danger);font:inherit;font-size:14px}
+:global(.session-builder-standard) .updateGroup{flex:none;width:var(--builder-action-width,168px);height:44px;border-radius:13.2px;background:var(--practice-surface-hover)}:global(.session-builder-standard) .updateGroup>.secondary{min-width:0;height:44px;min-height:44px;padding:0 10px;border:0;background:transparent;border-radius:13.2px 0 0 13.2px;white-space:nowrap}:global(.session-builder-standard) .saveMenu summary{height:44px;min-height:44px;width:32px;padding:0;border:0;border-radius:0 13.2px 13.2px 0;background:transparent}:global(.session-builder-standard) .footer>div>.primary{box-sizing:border-box;height:44px;width:var(--builder-action-width,168px);padding:0 12px;border:0;border-radius:13.2px;background:var(--practice-accent);color:var(--practice-on-accent)}
+:global(.session-builder-standard) .saveMenuPanel{border-color:color-mix(in srgb,var(--practice-text) 12%,var(--practice-surface))}:global(.session-builder-standard) .saveMenu{background:transparent}:global(.session-builder-standard) .saveMenu summary svg{width:16px;height:16px}
+
+.name{display:flex;align-items:center;gap:10px;min-height:44px;margin-bottom:24px}.name h2,.name input{font:var(--practice-training-name-weight) var(--practice-training-name-size)/var(--practice-training-name-line) var(--practice-font-reading);letter-spacing:var(--practice-training-name-spacing);margin:0}.name h2{overflow-wrap:anywhere}.name button{border:0;background:transparent;color:var(--practice-text-muted);width:28px;height:28px}.name input{max-width:100%;width:100%;box-sizing:border-box;border:0;border-bottom:1px solid var(--practice-border);background:transparent;color:var(--practice-text)}
+.section_group{border:1px solid color-mix(in srgb,var(--practice-text) 18%,transparent);border-radius:12px;overflow:hidden}.inline_language{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 18px;min-height:28px}.inline_language h2{width:140px;margin:0;font:500 var(--practice-text-body) var(--practice-font-ui)}
+.session_note{grid-column:1/-1;display:flex;align-items:flex-start;gap:7px;margin:0;font:400 var(--practice-text-label)/1.5 var(--practice-font-ui);color:color-mix(in srgb,var(--practice-text) 58%,var(--practice-canvas))}.session_note svg{flex:none;margin-top:2px}
+@media(max-width:650px){.header>button{position:static;margin-right:8px}.name h2,.name input{font-size:var(--practice-training-name-size)}.inline_language{padding:12px;gap:12px}.inline_language h2{width:90px}.footer>div:has(.saveMenu){display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px}.delete{grid-column:1;grid-row:1;width:34px;height:44px;margin:0;justify-content:center}.delete>span{display:none}.updateGroup{grid-column:2;grid-row:1;width:100%;min-width:0}.footer>div>.primary{grid-column:1/-1;grid-row:2;width:100%;min-width:0}}
+@media(max-height:650px){.name h2,.name input{font-size:var(--practice-training-name-size)}}
+
+:global(.session-builder-standard) .viewport{padding:24px 16px 16px;overflow-y:auto;overflow-x:hidden}
+:global(.session-builder-standard) .header>button{position:static;margin-right:8px}
+:global(.session-builder-standard) .footer{padding:20px 16px 16px}
+@media(min-width:768px){:global(.session-builder-standard) .viewport{padding:40px 32px 24px}:global(.session-builder-standard) .footer{padding-left:32px;padding-right:32px}}
+@media(min-width:850px){:global(.session-builder-standard) .header>button{position:absolute;right:calc(100% + 12px);margin:0}}
+@media(max-width:650px){:global(.session-builder-standard) .footer>div:has(.saveMenu){display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px}:global(.session-builder-standard) .delete{grid-column:1;grid-row:1;width:34px;height:44px;margin:0;justify-content:center}:global(.session-builder-standard) .delete>span{display:none}:global(.session-builder-standard) .updateGroup{grid-column:2;grid-row:1;width:100%;min-width:0}:global(.session-builder-standard) .footer>div>.primary{grid-column:1/-1;grid-row:2;width:100%;min-width:0}}
+
+@media(max-width:430px){:global(.session-builder-standard) .updateGroup>.secondary{font-size:12px;padding:0 6px}}

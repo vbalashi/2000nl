@@ -33,3 +33,5 @@ Direction cards retain their existing structure and styling; compact chip overri
 The build preserves readable CSS module names before compression and rejects selectors that collide when matched without case. This also supports opening the raw fragment directly in quirks mode.
 
 The latest exploration intentionally adapts Language, Source and section grouping in `adapt.mjs`; these differ from production at the owner's request. `SourcePicker.tsx` uses the supplied catalog; it preserves multiple dictionaries or one collection and does not implement mixed selection. `summary.ts` declares which exercise family includes direction in the collapsed summary. Preview toolbar compares both grouping styles and desktop/mobile widths.
+
+Implementation checkpoint: build.mjs now snapshots the production ApprovedTrainingBuilder directly, including its production source picker and summary helper. Exploratory adapt.mjs and SourcePicker.tsx remain archived design evidence. The production-component lab is `/dev/controls-standard` (development only); prototype-only callbacks do not write account data.

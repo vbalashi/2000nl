@@ -68,3 +68,7 @@
   line-height: 1.5;
   margin: 8px 0 0;
 }
+
+/* Approved Session Builder controls */
+:global(.session-builder-standard) .help{font-family:var(--practice-font-ui);font-size:var(--practice-text-label);font-weight:400;line-height:1.5;color:color-mix(in srgb,var(--practice-text) 58%,var(--practice-canvas))}
+:global(.session-builder-standard) .help:empty{display:none}

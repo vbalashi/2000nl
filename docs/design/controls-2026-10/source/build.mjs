@@ -7,19 +7,15 @@ const here=path.dirname(fileURLToPath(import.meta.url)),repo=path.resolve(here,'
 const require=createRequire(path.join(ui,'package.json'));
 const esbuild=require('esbuild');
 const original=fs.readFileSync(path.join(ui,'components/training/pilot/ApprovedTrainingBuilder.tsx'),'utf8');
-let source=original.replace('  X,','  X,\n  Pencil,');
+let source=original;
 source=source.replace('"./TrainingMixPicker"','"@/components/training/pilot/TrainingMixPicker"').replace('"./TrainingSessionSizePicker"','"@/components/training/pilot/TrainingSessionSizePicker"').replace('"./approvedTrainingBuilder.module.css"','"@/components/training/pilot/approvedTrainingBuilder.module.css"');
-const oldName=source.slice(source.indexOf('          {p.editing && <label'),source.indexOf('          {section(\n            "language"'));
-if(!oldName.includes('maxLength={160}'))throw Error('Name presentation changed; inspect adapter');
-source=source.replace(oldName,'          {p.editing && <ReviewName name={p.name} onChange={p.onNameChange} disabled={saving}/> }\n');
-source=source.replace('<Trash2 size={16} /></button>','<Trash2 size={16} /><span>{deleteLabel}</span></button>');
-source=source.replace('`${familyName} · ${direction} · ${b.answerModes["Reveal & self-rate"]}`','`${familyName} · ${direction}`');
-source+=`\nfunction ReviewName({name,onChange,disabled}:{name:string;onChange:(name:string)=>void;disabled:boolean}){const [editing,setEditing]=useState(false);return <div className="review-name">{editing?<input aria-label="Training name" value={name} maxLength={160} disabled={disabled} autoFocus onChange={e=>onChange(e.target.value)} onBlur={()=>setEditing(false)} onKeyDown={e=>{if(e.key==="Enter"||e.key==="Escape")setEditing(false)}}/>:<><h2>{name}</h2><button type="button" aria-label="Edit training name" disabled={disabled} onClick={()=>setEditing(true)}><Pencil size={16}/></button></>}</div>}\n`;
-source=adapt(source,here);
+// The reviewed presentation now lives in the production component.
+// Archive adapters remain for the earlier exploratory checkpoint.
+source=source.replace('"./TrainingSourcePicker"','"@/components/training/pilot/TrainingSourcePicker"');
 fs.writeFileSync(path.join(here,'Builder.generated.tsx'),source);
 const controller=fs.readFileSync(path.join(ui,'components/training/pilot/TrainingTodaySetup.tsx'),'utf8');
 const defaults=controller.slice(controller.indexOf('const defaultModesForScenario ='),controller.indexOf('const familyForDraft ='));
-const callbacks=controller.slice(controller.indexOf('  const selectFamily ='),controller.indexOf('  if (trainingPresentationV1Enabled()) return <ApprovedTrainingBuilder'));
+const callbacks=controller.slice(controller.indexOf('  const selectFamily ='),controller.indexOf('  if (trainingPresentationV1Enabled()) return <TrainingScreenTransition'));
 if(!callbacks.includes('const changeMix'))throw Error('Controller boundaries changed; inspect adapter');
 fs.writeFileSync(path.join(here,'controller.generated.txt'),defaults+'\n'+callbacks);
 const entry=fs.readFileSync(path.join(here,'Review.tsx'),'utf8').replace('/* SOURCE_DEFAULT_MODES */',defaults).replace('/* SOURCE_CONTROLLER */',callbacks);

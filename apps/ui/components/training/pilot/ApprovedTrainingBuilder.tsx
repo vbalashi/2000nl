@@ -1,14 +1,19 @@
 "use client";
-import React, { useId, useState } from "react";
+import { SegmentedControl } from "@/components/practice/ui/SegmentedControl";
+import React, { useId, useState, useRef, useLayoutEffect } from "react";
 import {
   ArrowLeft,
   Check,
   ChevronDown,
-  Search,
   Trash2,
   X,
+  Pencil,
+  Info,
 } from "lucide-react";
-import { singleNounArticle, toggleNounArticle } from "@/lib/training/nounArticles";
+import {
+  singleNounArticle,
+  toggleNounArticle,
+} from "@/lib/training/nounArticles";
 import { DirectionCard } from "@/components/practice/builder/DirectionCard";
 import { directionExample } from "@/lib/training/directionExamples";
 import { BuilderSection } from "@/components/practice/builder/BuilderSection";
@@ -32,10 +37,11 @@ import type {
   TrainingMode,
   TrainingSessionSize,
 } from "@/lib/types";
-import { TrainingMixPicker } from "./TrainingMixPicker";
-import { TrainingSessionSizePicker } from "./TrainingSessionSizePicker";
-import s from "./approvedTrainingBuilder.module.css";
-import filters from "@/components/practice/library/libraryFilters.module.css";
+import { exerciseSummary } from "@/lib/training/exerciseSummary";
+import { TrainingSourcePicker } from "./TrainingSourcePicker";
+import { TrainingMixPicker } from "@/components/training/pilot/TrainingMixPicker";
+import { TrainingSessionSizePicker } from "@/components/training/pilot/TrainingSessionSizePicker";
+import s from "@/components/training/pilot/approvedTrainingBuilder.module.css";
 
 type Props = {
   interfaceLanguage: OnboardingLanguage;
@@ -127,12 +133,55 @@ export function ApprovedTrainingBuilder(p: Props) {
     c = messages.trainingBuilder;
   const ratioLabel = (n: number) =>
     formatUiCount(p.interfaceLanguage, n, b, "ratio");
-  const saveAsLabel = p.saveAsLabel ?? ({en:"Save as…",nl:"Opslaan als…",ru:"Сохранить как…"})[p.interfaceLanguage];
-  const deleteLabel = p.deleteLabel ?? ({en:"Delete training",nl:"Training verwijderen",ru:"Удалить тренировку"})[p.interfaceLanguage];
+  const saveAsLabel =
+    p.saveAsLabel ??
+    { en: "Save as…", nl: "Opslaan als…", ru: "Сохранить как…" }[
+      p.interfaceLanguage
+    ];
+  const deleteLabel =
+    p.deleteLabel ??
+    {
+      en: "Delete training",
+      nl: "Training verwijderen",
+      ru: "Удалить тренировку",
+    }[p.interfaceLanguage];
   const uid = useId();
-  const [open, setOpen] = useState<string[]>([]),
-    [languageQuery, setLanguageQuery] = useState(""),
-    [sourceQuery, setSourceQuery] = useState("");
+  const builderRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const node = builderRef.current;
+    if (!node) return;
+    let cancelled = false;
+    const measure = () => {
+      if (cancelled) return;
+      const save = node.querySelector<HTMLButtonElement>(
+        `.${s.updateGroup}>button`,
+      );
+      if (!save) return;
+      const span = document.createElement("span");
+      Object.assign(span.style, {
+        position: "absolute",
+        visibility: "hidden",
+        whiteSpace: "nowrap",
+        font: getComputedStyle(save).font,
+      });
+      node.append(span);
+      span.textContent = p.saveLabel;
+      const saveWidth = span.getBoundingClientRect().width + 52;
+      span.textContent = p.startLabel;
+      const startWidth = span.getBoundingClientRect().width + 24;
+      span.remove();
+      node.style.setProperty(
+        "--builder-action-width",
+        Math.ceil(Math.max(168, saveWidth, startWidth)) + "px",
+      );
+    };
+    measure();
+    document.fonts?.ready.then(measure);
+    return () => {
+      cancelled = true;
+    };
+  }, [p.saveLabel, p.startLabel]);
+  const [open, setOpen] = useState<string[]>([]);
   const [nounAnchor, setNounAnchor] = useState<React.CSSProperties>({});
   const [nounOpen, setNounOpen] = useState(false),
     [saveOpen, setSaveOpen] = useState(false),
@@ -161,17 +210,20 @@ export function ApprovedTrainingBuilder(p: Props) {
         : family === "word-in-context"
           ? c.wordInContext
           : o.exerciseType.Words;
-  const direction = family === "word-in-context" ? c.contextDirection : p.draft.modes
-    .map((mode) =>
-      mode === "word-to-definition"
-        ? o.direction.Direct
-        : mode === "definition-to-word"
-          ? o.direction.Reverse
-          : p.scenarios.find((item) => item.value === p.draft.scenarioId)
-              ?.label,
-    )
-    .filter(Boolean)
-    .join(" + ");
+  const direction =
+    family === "word-in-context"
+      ? c.contextDirection
+      : p.draft.modes
+          .map((mode) =>
+            mode === "word-to-definition"
+              ? o.direction.Direct
+              : mode === "definition-to-word"
+                ? o.direction.Reverse
+                : p.scenarios.find((item) => item.value === p.draft.scenarioId)
+                    ?.label,
+          )
+          .filter(Boolean)
+          .join(" + ");
   const balance =
     p.draft.cardFilter === "review"
       ? c.reviewsOnly
@@ -220,25 +272,6 @@ export function ApprovedTrainingBuilder(p: Props) {
       {children}
     </BuilderSection>
   );
-  const search = (
-    value: string,
-    setValue: (query: string) => void,
-    label: string,
-  ) => (
-    <label className={`${filters.search} ${s.search}`}>
-      <Search size={17} aria-hidden="true" />
-      <input
-        aria-label={label}
-        placeholder={label}
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-      />
-    </label>
-  );
-  const matches = (option: TrainingSetupOption, query: string) =>
-    `${option.label} ${option.value}`
-      .toLocaleLowerCase(p.interfaceLanguage)
-      .includes(query.trim().toLocaleLowerCase(p.interfaceLanguage));
   const togglePart = (part: DutchTrainingPartOfSpeech) =>
     p.onDraftChange((current) => {
       const selected = current.partOfSpeech ?? [];
@@ -254,23 +287,6 @@ export function ApprovedTrainingBuilder(p: Props) {
   const scenario = p.scenarios.find(
     (item) => item.value === p.draft.scenarioId,
   );
-  const row = (
-    option: TrainingSetupOption,
-    active: boolean,
-    onClick: () => void,
-  ) => (
-    <button
-      key={option.value}
-      type="button"
-      className={s.option}
-      aria-pressed={active}
-      disabled={p.languagePending}
-      onClick={onClick}
-    >
-      <span>{option.label}</span>
-      <span aria-hidden="true">{active && <Check size={14} />}</span>
-    </button>
-  );
   const save = async () => {
     setSaving(true);
     try {
@@ -284,7 +300,8 @@ export function ApprovedTrainingBuilder(p: Props) {
   };
   return (
     <div
-      className={`${theme.theme} ${s.builder}`}
+      ref={builderRef}
+      className={`${theme.theme} ${s.builder} session-builder-standard`}
       data-colour-mode="app"
       lang={p.interfaceLanguage}
     >
@@ -296,424 +313,473 @@ export function ApprovedTrainingBuilder(p: Props) {
             </button>
             <h1>{b.title}</h1>
           </header>
-          {p.editing && <label className={`${s.field} ${s.nameField}`}>
-            {b.trainingName}
-            <input className={s.input} aria-label={b.trainingName} maxLength={160}
-              value={p.name} disabled={saving} onChange={event => p.onNameChange(event.target.value)} />
-          </label>}
-          {section(
-            "language",
-            b.language,
-            language(p.languageCode),
-            <>
-              {p.languageOptions.length > 5 && search(
-                languageQuery,
-                setLanguageQuery,
-                getUiMessages(p.interfaceLanguage).builderScope.searchLanguages,
-              )}
-              <div className={s.options}>
-                {p.languageOptions
-                  .map((option) => ({
-                    ...option,
-                    label: language(option.value),
-                  }))
-                  .filter((option) => matches(option, p.languageOptions.length > 5 ? languageQuery : ""))
-                  .map((option) =>
-                    row(option, option.value === p.languageCode, () =>
-                      p.onLanguageChange(option.value),
-                    ),
-                  )}
-              </div>
-              {!p.languageOptions.some((option) =>
-                matches(
-                  { ...option, label: language(option.value) },
-                  p.languageOptions.length > 5 ? languageQuery : "",
-                ),
-              ) && (
-                <p className={s.help}>
-                  {
-                    getUiMessages(p.interfaceLanguage).builderScope.noMatches
-                      .language
-                  }
-                </p>
-              )}
-            </>,
-          )}
-          {section(
-            "source",
-            b.source,
-            material,
-            <>
-              <div className={s.choices}>
-                {(
-                  [
-                    "collection",
-                    "all-dictionaries",
-                    "selected-dictionaries",
-                  ] as const
-                ).map((mode) => (
+          {
+            <TrainingName
+              label={b.trainingName}
+              name={p.name}
+              onChange={p.onNameChange}
+              disabled={saving}
+            />
+          }
+          <div className={`${s.section_group} builder-section-group`}>
+            <section className={s.inline_language}>
+              <h2>{b.language}</h2>
+              <SegmentedControl standard label={b.language}>
+                {p.languageOptions.map((option) => (
                   <BuilderChoice
-                    key={mode}
+                    key={option.value}
+                    active={option.value === p.languageCode}
                     disabled={p.languagePending}
-                    active={materialMode === mode}
-                    onClick={() => {
-                      setSourceQuery("");
-                      p.onDraftChange((current) => ({
-                        ...current,
-                        materialMode: mode,
-                      }));
-                    }}
+                    onClick={() => p.onLanguageChange(option.value)}
                   >
-                    {mode === "collection"
-                      ? c.collectionMode
-                      : mode === "all-dictionaries"
-                        ? c.allDictionaries
-                        : c.chosenDictionaries}
+                    {language(option.value)}
                   </BuilderChoice>
                 ))}
-              </div>
-              {materialMode !== "all-dictionaries" &&
-                (materialMode === "collection" ? p.lists.length : p.dictionaries.length) > 5 &&
-                search(
-                  sourceQuery,
-                  setSourceQuery,
-                  getUiMessages(p.interfaceLanguage).builderScope.searchSources,
-                )}
-              {p.dictionariesLoading && materialMode !== "collection" && (
-                <p role="status" className={s.help}>
-                  {c.loadingDictionaries}
-                </p>
-              )}
-              <div className={s.options}>
-                {(materialMode === "collection"
-                  ? p.lists
-                  : materialMode === "selected-dictionaries"
-                    ? p.dictionaries
-                    : []
-                )
-                  .filter((option) => matches(option, (materialMode === "collection" ? p.lists.length : p.dictionaries.length) > 5 ? sourceQuery : ""))
-                  .map((option) =>
-                    row(
-                      option,
-                      materialMode === "collection"
-                        ? p.draft.listValue === option.value
-                        : Boolean(
-                            p.draft.dictionaryIds?.includes(option.value),
-                          ),
-                      () =>
-                        p.onDraftChange((current) =>
-                          materialMode === "collection"
-                            ? { ...current, listValue: option.value }
-                            : {
-                                ...current,
-                                dictionaryIds: current.dictionaryIds?.includes(
-                                  option.value,
-                                )
-                                  ? current.dictionaryIds.filter(
-                                      (id) => id !== option.value,
-                                    )
-                                  : [
-                                      ...(current.dictionaryIds ?? []),
-                                      option.value,
-                                    ],
-                              },
-                        ),
-                    ),
-                  )}
-              </div>
-              {materialMode === "selected-dictionaries" &&
-                (p.draft.dictionaryIds ?? []).some(
-                  (id) => !p.dictionaries.some((option) => option.value === id),
-                ) &&
-                !p.dictionariesLoading && (
+              </SegmentedControl>
+            </section>
+            {section(
+              "source",
+              b.source,
+              material,
+              <>
+                {p.dictionariesLoading && (
                   <p role="status" className={s.help}>
-                    {c.partialDictionaryAccess}
+                    {c.loadingDictionaries}
                   </p>
                 )}
-            </>,
-          )}
-          {section(
-            "exercises",
-            b.exercises,
-            `${familyName} · ${direction} · ${b.answerModes["Reveal & self-rate"]}`,
-            <>
-              <div className={s.field}>
-                <h2>{b.exerciseType}</h2>
-                <div className={s.choices}>
-                  {(
-                    ["meaning", "idiom", "word-in-context"] as const
-                  ).map((value) => (
-                    <BuilderChoice
-                      key={value}
-                      active={family === value}
-                      disabled={
-                        !p.scenarios.some(
-                          (item) =>
-                            item.value ===
-                            (value === "idiom"
-                              ? "idiom"
-                              : "understanding"),
-                        ) ||
-                        (value === "word-in-context" &&
-                          p.translationLanguage === null)
-                      }
-                      onClick={() => p.onSelectFamily(value)}
-                    >
-                      {value === "idiom"
-                        ? o.exerciseType.Idioms
-                        : value === "word-in-context"
-                            ? c.wordInContext
-                            : o.exerciseType.Words}
-                    </BuilderChoice>
-                  ))}
+                <TrainingSourcePicker
+                  locale={p.interfaceLanguage}
+                  lists={p.lists}
+                  dictionaries={p.dictionaries}
+                  draft={p.draft}
+                  onChange={p.onDraftChange}
+                  disabled={p.languagePending || p.dictionariesLoading}
+                />
+                {materialMode === "selected-dictionaries" &&
+                  (p.draft.dictionaryIds ?? []).some(
+                    (id) =>
+                      !p.dictionaries.some((option) => option.value === id),
+                  ) &&
+                  !p.dictionariesLoading && (
+                    <p role="status" className={s.help}>
+                      {c.partialDictionaryAccess}
+                    </p>
+                  )}
+              </>,
+            )}
+            {section(
+              "exercises",
+              b.exercises,
+              exerciseSummary(family, familyName, direction),
+              <>
+                <div className={s.field}>
+                  <h2>{b.exerciseType}</h2>
+                  <SegmentedControl standard label={b.exerciseType}>
+                    {(["meaning", "idiom", "word-in-context"] as const).map(
+                      (value) => (
+                        <BuilderChoice
+                          key={value}
+                          active={family === value}
+                          disabled={
+                            !p.scenarios.some(
+                              (item) =>
+                                item.value ===
+                                (value === "idiom" ? "idiom" : "understanding"),
+                            ) ||
+                            (value === "word-in-context" &&
+                              p.translationLanguage === null)
+                          }
+                          onClick={() => p.onSelectFamily(value)}
+                        >
+                          {value === "idiom"
+                            ? o.exerciseType.Idioms
+                            : value === "word-in-context"
+                              ? c.wordInContext
+                              : o.exerciseType.Words}
+                        </BuilderChoice>
+                      ),
+                    )}
+                  </SegmentedControl>
                 </div>
-              </div>
-              {family === "sentence" && <p role="status" className={s.help}>{c.sentencePaused}</p>}
-              {family === "word-in-context" &&
-                p.translationLanguage === null && (
-                  <p className={s.help}>{c.contextLanguageNeeded}</p>
+                {family === "sentence" && (
+                  <p role="status" className={s.help}>
+                    {c.sentencePaused}
+                  </p>
                 )}
-              <div className={s.field}>
-                <h2>{b.direction}</h2>
-                <div className={s.directions}>
-                  {(["word-to-definition", "definition-to-word"] as const)
-                    .filter(
-                      (mode) =>
-                        ((family !== "sentence" &&
-                          family !== "word-in-context") ||
-                          mode === "definition-to-word") &&
-                        scenario?.modes?.includes(mode),
-                    )
-                    .map((mode) => {
-                      const example = directionExample(p.languageCode, family, p.translationLanguage);
-                      const direct = mode === "word-to-definition";
-                      const prompt = example ? example[direct ? 0 : 1] : direct
-                        ? family === "idiom" ? o.exerciseType.Idioms : o.exerciseType.Words
-                        : family === "word-in-context" ? c.contextPrompt : family === "sentence" ? p.translationLanguage ? language(p.translationLanguage) : b.chooseTranslation : c.meaning;
-                      const answer = example ? example[direct ? 1 : 0] : direct ? c.meaning
-                        : family === "sentence" ? language(p.languageCode) : family === "idiom" ? o.exerciseType.Idioms : o.exerciseType.Words;
-                      return <DirectionCard key={mode} label={family === "word-in-context" ? c.contextDirection : direct ? o.direction.Direct : o.direction.Reverse}
-                        selected={p.draft.modes.includes(mode)} onClick={family === "word-in-context" ? undefined : () => p.onToggleMode(mode)}
-                        prompt={prompt} answer={answer} promptLanguage={example ? !direct && (family === "sentence" || family === "word-in-context") ? p.translationLanguage ?? undefined : p.languageCode : undefined}
-                        answerLanguage={example ? direct && (family === "sentence" || family === "word-in-context") ? p.translationLanguage ?? undefined : p.languageCode : undefined}
-                        classes={{card:s.direction,heading:s.directionHeading,check:s.directionCheck,prompt:s.prompt,arrow:s.directionArrow,answer:s.answer}}/>;
-                    })}
+                {family === "word-in-context" &&
+                  p.translationLanguage === null && (
+                    <p className={s.help}>{c.contextLanguageNeeded}</p>
+                  )}
+                <div className={s.field}>
+                  <h2>{b.direction}</h2>
+                  <div className={s.directions}>
+                    {(["word-to-definition", "definition-to-word"] as const)
+                      .filter(
+                        (mode) =>
+                          ((family !== "sentence" &&
+                            family !== "word-in-context") ||
+                            mode === "definition-to-word") &&
+                          scenario?.modes?.includes(mode),
+                      )
+                      .map((mode) => {
+                        const example = directionExample(
+                          p.languageCode,
+                          family,
+                          p.translationLanguage,
+                        );
+                        const direct = mode === "word-to-definition";
+                        const prompt = example
+                          ? example[direct ? 0 : 1]
+                          : direct
+                            ? family === "idiom"
+                              ? o.exerciseType.Idioms
+                              : o.exerciseType.Words
+                            : family === "word-in-context"
+                              ? c.contextPrompt
+                              : family === "sentence"
+                                ? p.translationLanguage
+                                  ? language(p.translationLanguage)
+                                  : b.chooseTranslation
+                                : c.meaning;
+                        const answer = example
+                          ? example[direct ? 1 : 0]
+                          : direct
+                            ? c.meaning
+                            : family === "sentence"
+                              ? language(p.languageCode)
+                              : family === "idiom"
+                                ? o.exerciseType.Idioms
+                                : o.exerciseType.Words;
+                        return (
+                          <DirectionCard
+                            key={mode}
+                            label={
+                              family === "word-in-context"
+                                ? c.contextDirection
+                                : direct
+                                  ? o.direction.Direct
+                                  : o.direction.Reverse
+                            }
+                            selected={p.draft.modes.includes(mode)}
+                            onClick={
+                              family === "word-in-context"
+                                ? undefined
+                                : () => p.onToggleMode(mode)
+                            }
+                            prompt={prompt}
+                            answer={answer}
+                            promptLanguage={
+                              example
+                                ? !direct &&
+                                  (family === "sentence" ||
+                                    family === "word-in-context")
+                                  ? (p.translationLanguage ?? undefined)
+                                  : p.languageCode
+                                : undefined
+                            }
+                            answerLanguage={
+                              example
+                                ? direct &&
+                                  (family === "sentence" ||
+                                    family === "word-in-context")
+                                  ? (p.translationLanguage ?? undefined)
+                                  : p.languageCode
+                                : undefined
+                            }
+                            classes={{
+                              card: s.direction,
+                              heading: s.directionHeading,
+                              check: s.directionCheck,
+                              prompt: s.prompt,
+                              arrow: s.directionArrow,
+                              answer: s.answer,
+                            }}
+                          />
+                        );
+                      })}
+                  </div>
                 </div>
-              </div>
-              <div className={s.field}>
-                <h2>{b.answerMode}</h2>
-                <div className={s.choices}>
-                  <BuilderChoice active onClick={() => undefined}>
-                    {b.answerModes["Reveal & self-rate"]}
-                  </BuilderChoice>
-                  <BuilderChoice active={false} disabled>
-                    {b.answerModes["Type the answer"]}
-                  </BuilderChoice>
+                <div className={s.field}>
+                  <h2>{b.answerMode}</h2>
+                  <SegmentedControl standard label={b.answerMode}>
+                    <BuilderChoice active onClick={() => undefined}>
+                      {b.answerModes["Reveal & self-rate"]}
+                    </BuilderChoice>
+                    <BuilderChoice active={false} disabled>
+                      {b.answerModes["Type the answer"]}
+                    </BuilderChoice>
+                  </SegmentedControl>
                 </div>
-              </div>
-            </>,
-          )}
-          {section(
-            "filters",
-            b.filters,
-            partSummary,
-            <>
-              <div className={s.field}>
-                <h2>{b.partOfSpeech}</h2>
-                {p.languageCode !== "nl" ? (
-                  <p className={s.help}>{b.lexicalUnavailable}</p>
-                ) : (
-                  <div className={s.choices}>
-                    {parts.map((part) =>
-                      part === "zn" ? (
-                        <div className={s.nounChoice} key={part}>
+              </>,
+            )}
+            {section(
+              "filters",
+              b.filters,
+              partSummary,
+              <>
+                <div className={s.field}>
+                  <h2>{b.partOfSpeech}</h2>
+                  {p.languageCode !== "nl" ? (
+                    <p className={s.help}>{b.lexicalUnavailable}</p>
+                  ) : (
+                    <div className={s.choices}>
+                      {parts.map((part) =>
+                        part === "zn" ? (
+                          <div className={s.nounChoice} key={part}>
+                            <BuilderChoice
+                              active={Boolean(
+                                p.draft.partOfSpeech?.includes(part),
+                              )}
+                              onClick={() => togglePart(part)}
+                            >
+                              {partName(part)}
+                              {Boolean(
+                                singleNounArticle(p.draft.nounArticles ?? []),
+                              ) && (
+                                <span
+                                  className={s.dot}
+                                  aria-hidden="true"
+                                  title={b.subfiltersActive}
+                                />
+                              )}
+                            </BuilderChoice>
+                            <button
+                              type="button"
+                              aria-label={b.nounSubfilters}
+                              aria-expanded={nounOpen}
+                              onClick={(event) => {
+                                const rect =
+                                  event.currentTarget.getBoundingClientRect();
+                                setNounAnchor({
+                                  "--noun-left": `${rect.left}px`,
+                                  "--noun-top": `${rect.bottom + 8}px`,
+                                } as React.CSSProperties);
+                                setNounOpen(true);
+                              }}
+                            >
+                              <ChevronDown size={12} />
+                            </button>
+                          </div>
+                        ) : (
                           <BuilderChoice
+                            key={part}
                             active={Boolean(
                               p.draft.partOfSpeech?.includes(part),
                             )}
                             onClick={() => togglePart(part)}
                           >
                             {partName(part)}
-                            {Boolean(singleNounArticle(p.draft.nounArticles ?? [])) && (
-                              <span
-                                className={s.dot}
-                                aria-hidden="true"
-                                title={b.subfiltersActive}
-                              />
-                            )}
                           </BuilderChoice>
-                          <button
-                            type="button"
-                            aria-label={b.nounSubfilters}
-                            aria-expanded={nounOpen}
-                            onClick={(event) => {
-                              const rect =
-                                event.currentTarget.getBoundingClientRect();
-                              setNounAnchor({
-                                "--noun-left": `${rect.left}px`,
-                                "--noun-top": `${rect.bottom + 8}px`,
-                              } as React.CSSProperties);
-                              setNounOpen(true);
-                            }}
-                          >
-                            <ChevronDown size={12} />
-                          </button>
-                        </div>
-                      ) : (
-                        <BuilderChoice
-                          key={part}
-                          active={Boolean(p.draft.partOfSpeech?.includes(part))}
-                          onClick={() => togglePart(part)}
-                        >
-                          {partName(part)}
-                        </BuilderChoice>
-                      ),
-                    )}
-                  </div>
-                )}
-              </div>
-              <details className={s.activity}>
-                <summary><span>{c.activity}</span><ChevronDown size={15} aria-hidden="true" /></summary>
-                <p className={s.help}>{c.activityHelp}</p>
-                <label className={s.field}>
-                  {c.source}
-                  <select
-                    aria-label={c.source}
-                    value={p.draft.sourceValue}
-                    onChange={(event) =>
-                      p.onDraftChange((current) => ({
-                        ...current,
-                        sourceValue: event.target.value,
-                      }))
-                    }
-                  >
-                    <option value="all">{c.allSources}</option>
-                    <option value="kind:youtube">{c.youtube}</option>
-                    {p.sources.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className={s.field}>
-                  {c.date}
-                  <select
-                    aria-label={c.date}
-                    value={p.draft.dateWindow}
-                    onChange={(event) =>
-                      p.onDraftChange((current) => ({
-                        ...current,
-                        dateWindow: event.target.value as TrainingDateWindow,
-                      }))
-                    }
-                  >
-                    {(["all", "today", "yesterday", "daysAgo"] as const).map(
-                      (value) => (
-                        <option key={value} value={value}>
-                          {value === "all"
-                            ? c.allDates
-                            : value === "today"
-                              ? c.today
-                              : value === "yesterday"
-                                ? c.yesterday
-                                : c.daysAgo}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </label>
-                {p.draft.dateWindow === "daysAgo" && (
-                  <input
-                    className={s.input}
-                    aria-label={c.daysAgo}
-                    type="number"
-                    min={1}
-                    max={365}
-                    value={p.draft.daysAgo ?? 7}
-                    onChange={(event) =>
-                      p.onDraftChange((current) => ({
-                        ...current,
-                        daysAgo: Math.max(
-                          1,
-                          Math.min(365, Number(event.target.value) || 1),
                         ),
-                      }))
-                    }
-                  />
-                )}
-              </details>
-            </>,
-          )}
-          {section(
-            "session",
-            b.session,
-            `${size === "all-due-today" ? c.allDueToday : formatExerciseCount(p.interfaceLanguage, size)} · ${balance}`,
-            <div className={s.sessionFields}>
-              <TrainingSessionSizePicker
-                approved
-                value={size}
-                onChange={(sessionSize) =>
-                  p.onDraftChange((current) => ({
-                    ...current,
-                    sessionSize,
-                    ...(sessionSize === "all-due-today"
-                      ? { cardFilter: "review" as const }
-                      : {}),
-                  }))
-                }
-                label={b.sessionSize}
-                exercisesLabel={(count) =>
-                  formatExerciseCount(p.interfaceLanguage, count)
-                }
-                allDueLabel={c.allDueToday}
-                allDueHelp={c.allDueHelp}
-                allowAllDueToday={family === "meaning"}
-              />
-              <TrainingMixPicker
-                approved
-                cardFilter={p.draft.cardFilter}
-                ratio={p.draft.newReviewRatio}
-                onChange={p.onMixChange}
-                label={b.balanceLabel}
-                reviewsOnly={c.reviewsOnly}
-                newOnly={c.newOnly}
-                ratioLabel={ratioLabel}
-                help={c.mixHelp}
-              />
-            </div>,
-          )}
+                      )}
+                    </div>
+                  )}
+                </div>
+                <details className={s.activity}>
+                  <summary>
+                    <span>{c.activity}</span>
+                    <ChevronDown size={15} aria-hidden="true" />
+                  </summary>
+                  <p className={s.help}>{c.activityHelp}</p>
+                  <label className={s.field}>
+                    {c.source}
+                    <select
+                      aria-label={c.source}
+                      value={p.draft.sourceValue}
+                      onChange={(event) =>
+                        p.onDraftChange((current) => ({
+                          ...current,
+                          sourceValue: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="all">{c.allSources}</option>
+                      <option value="kind:youtube">{c.youtube}</option>
+                      {p.sources.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className={s.field}>
+                    {c.date}
+                    <select
+                      aria-label={c.date}
+                      value={p.draft.dateWindow}
+                      onChange={(event) =>
+                        p.onDraftChange((current) => ({
+                          ...current,
+                          dateWindow: event.target.value as TrainingDateWindow,
+                        }))
+                      }
+                    >
+                      {(["all", "today", "yesterday", "daysAgo"] as const).map(
+                        (value) => (
+                          <option key={value} value={value}>
+                            {value === "all"
+                              ? c.allDates
+                              : value === "today"
+                                ? c.today
+                                : value === "yesterday"
+                                  ? c.yesterday
+                                  : c.daysAgo}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </label>
+                  {p.draft.dateWindow === "daysAgo" && (
+                    <input
+                      className={s.input}
+                      aria-label={c.daysAgo}
+                      type="number"
+                      min={1}
+                      max={365}
+                      value={p.draft.daysAgo ?? 7}
+                      onChange={(event) =>
+                        p.onDraftChange((current) => ({
+                          ...current,
+                          daysAgo: Math.max(
+                            1,
+                            Math.min(365, Number(event.target.value) || 1),
+                          ),
+                        }))
+                      }
+                    />
+                  )}
+                </details>
+              </>,
+            )}
+            {section(
+              "session",
+              b.session,
+              `${size === "all-due-today" ? c.allDueToday : formatExerciseCount(p.interfaceLanguage, size)} · ${balance}`,
+              <div className={s.sessionFields}>
+                <TrainingSessionSizePicker
+                  approved
+                  value={size}
+                  onChange={(sessionSize) =>
+                    p.onDraftChange((current) => ({
+                      ...current,
+                      sessionSize,
+                      ...(sessionSize === "all-due-today"
+                        ? { cardFilter: "review" as const }
+                        : {}),
+                    }))
+                  }
+                  label={b.sessionSize}
+                  exercisesLabel={(count) =>
+                    formatExerciseCount(p.interfaceLanguage, count)
+                  }
+                  allDueLabel={c.allDueToday}
+                  allDueHelp={c.allDueHelp}
+                  allowAllDueToday={family === "meaning"}
+                />
+                <TrainingMixPicker
+                  approved
+                  cardFilter={p.draft.cardFilter}
+                  ratio={p.draft.newReviewRatio}
+                  onChange={p.onMixChange}
+                  label={b.balanceLabel}
+                  reviewsOnly={c.reviewsOnly}
+                  newOnly={c.newOnly}
+                  ratioLabel={ratioLabel}
+                  help=""
+                />
+                <p className={s.session_note}>
+                  <Info size={13} aria-hidden="true" />
+                  <span>
+                    {p.interfaceLanguage === "ru"
+                      ? "Фактический размер сессии и баланс новых карточек и повторений зависят от доступных карточек."
+                      : p.interfaceLanguage === "nl"
+                        ? "De werkelijke sessiegrootte en verhouding tussen nieuwe kaarten en herhalingen hangen af van de beschikbare kaarten."
+                        : "Actual session size and new/review balance depend on available cards."}
+                  </span>
+                </p>
+              </div>,
+            )}
+          </div>
           {p.accountControls}
           {p.notice && <div className={s.notice}>{p.notice}</div>}
         </div>
       </div>
       <footer className={s.footer}>
         <div>
-          {p.canSave && <div className={s.saveActions}>
-            {p.editing && p.onDelete && <button type="button" className={s.delete}
-              aria-label={deleteLabel} title={deleteLabel} disabled={saving || p.deleteDisabled}
-              onClick={() => setDeleteOpen(true)}><Trash2 size={16} /></button>}
-            <div className={s.updateGroup}>
-              <button type="button" className={s.secondary} disabled={saving || p.saveDisabled}
-                onClick={() => {
-                  p.onBeginSave();
-                  if (p.editing) void save(); else setSaveOpen(true);
-                }}>{p.saveLabel}</button>
-              {p.editing && p.onSaveAs && <details className={s.saveMenu}
-                onKeyDown={event => { if(event.key === "Escape") event.currentTarget.removeAttribute("open"); }}
-                onBlur={event => { if(!event.currentTarget.contains(event.relatedTarget as Node | null)) event.currentTarget.removeAttribute("open"); }}>
-                <summary aria-label={saveAsLabel} aria-disabled={saving || p.saveDisabled}
-                  onClick={event => { if(saving || p.saveDisabled) event.preventDefault(); }}><ChevronDown size={16} /></summary>
-                <div className={s.saveMenuPanel}><button type="button" disabled={saving || p.saveDisabled}
-                  onClick={event => {
-                    const menu = event.currentTarget.closest("details");
-                    menu?.removeAttribute("open");
-                    menu?.querySelector("summary")?.focus();
-                    p.onBeginSave(); setCopyName(p.name); setCopyOpen(true);
-                  }}>{saveAsLabel}</button></div>
-              </details>}
+          {p.canSave && (
+            <div className={s.saveActions}>
+              {p.editing && p.onDelete && (
+                <button
+                  type="button"
+                  className={s.delete}
+                  aria-label={deleteLabel}
+                  title={deleteLabel}
+                  disabled={saving || p.deleteDisabled}
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  <Trash2 size={16} />
+                  <span>{deleteLabel}</span>
+                </button>
+              )}
+              <div className={s.updateGroup}>
+                <button
+                  type="button"
+                  className={s.secondary}
+                  disabled={saving || p.saveDisabled}
+                  onClick={() => {
+                    p.onBeginSave();
+                    if (p.editing) void save();
+                    else setSaveOpen(true);
+                  }}
+                >
+                  {p.saveLabel}
+                </button>
+                {p.editing && p.onSaveAs && (
+                  <details
+                    className={s.saveMenu}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape")
+                        event.currentTarget.removeAttribute("open");
+                    }}
+                    onBlur={(event) => {
+                      if (
+                        !event.currentTarget.contains(
+                          event.relatedTarget as Node | null,
+                        )
+                      )
+                        event.currentTarget.removeAttribute("open");
+                    }}
+                  >
+                    <summary
+                      aria-label={saveAsLabel}
+                      aria-disabled={saving || p.saveDisabled}
+                      onClick={(event) => {
+                        if (saving || p.saveDisabled) event.preventDefault();
+                      }}
+                    >
+                      <ChevronDown size={16} />
+                    </summary>
+                    <div className={s.saveMenuPanel}>
+                      <button
+                        type="button"
+                        disabled={saving || p.saveDisabled}
+                        onClick={(event) => {
+                          const menu = event.currentTarget.closest("details");
+                          menu?.removeAttribute("open");
+                          menu?.querySelector("summary")?.focus();
+                          p.onBeginSave();
+                          setCopyName(p.name);
+                          setCopyOpen(true);
+                        }}
+                      >
+                        {saveAsLabel}
+                      </button>
+                    </div>
+                  </details>
+                )}
+              </div>
             </div>
-          </div>}
+          )}
           <button
             type="button"
             className={s.primary}
@@ -754,7 +820,10 @@ export function ApprovedTrainingBuilder(p: Props) {
                           new Set([...current.partOfSpeech, "zn" as const]),
                         )
                       : current.partOfSpeech,
-                    nounArticles: toggleNounArticle(current.nounArticles ?? [], article),
+                    nounArticles: toggleNounArticle(
+                      current.nounArticles ?? [],
+                      article,
+                    ),
                   }))
                 }
               >
@@ -764,31 +833,62 @@ export function ApprovedTrainingBuilder(p: Props) {
           </div>
         </DialogSurface>
       )}
-      {deleteOpen && <DialogSurface className={s.dialog} lang={p.interfaceLanguage}
-        aria-labelledby={`${uid}-delete-title`} onDismiss={() => { if(!saving) setDeleteOpen(false); }}>
-        <h2 id={`${uid}-delete-title`}>{b.deleteTitle}</h2>
-        <p className={s.help}>{formatUiMessage(b.deleteNotice, {name:p.name})}</p>
-        {p.deletionChangesMain && <p className={s.help}>{b.nextMain}</p>}
-        <div className={s.dialogActions}>
-          <button type="button" className={s.secondary} autoFocus disabled={saving}
-            onClick={() => setDeleteOpen(false)}>{b.cancel}</button>
-          <button type="button" className={s.primary} disabled={saving || p.deleteDisabled}
-            onClick={async () => {
-              setSaving(true);
-              try { if(await p.onDelete?.()) setDeleteOpen(false); }
-              finally {setSaving(false);}
-            }}>{deleteLabel}</button>
-        </div>
-      </DialogSurface>}
+      {deleteOpen && (
+        <DialogSurface
+          className={s.dialog}
+          lang={p.interfaceLanguage}
+          aria-labelledby={`${uid}-delete-title`}
+          onDismiss={() => {
+            if (!saving) setDeleteOpen(false);
+          }}
+        >
+          <h2 id={`${uid}-delete-title`}>{b.deleteTitle}</h2>
+          <p className={s.help}>
+            {formatUiMessage(b.deleteNotice, { name: p.name })}
+          </p>
+          {p.deletionChangesMain && <p className={s.help}>{b.nextMain}</p>}
+          <div className={s.dialogActions}>
+            <button
+              type="button"
+              className={s.secondary}
+              autoFocus
+              disabled={saving}
+              onClick={() => setDeleteOpen(false)}
+            >
+              {b.cancel}
+            </button>
+            <button
+              type="button"
+              className={s.primary}
+              disabled={saving || p.deleteDisabled}
+              onClick={async () => {
+                setSaving(true);
+                try {
+                  if (await p.onDelete?.()) setDeleteOpen(false);
+                } finally {
+                  setSaving(false);
+                }
+              }}
+            >
+              {deleteLabel}
+            </button>
+          </div>
+        </DialogSurface>
+      )}
       {(saveOpen || copyOpen) && (
         <DialogSurface
           className={s.dialog}
           aria-labelledby={`${uid}-save-title`}
           onDismiss={() => {
-            if (!saving) { setSaveOpen(false); setCopyOpen(false); }
+            if (!saving) {
+              setSaveOpen(false);
+              setCopyOpen(false);
+            }
           }}
         >
-          <h2 id={`${uid}-save-title`}>{copyOpen ? saveAsLabel : p.saveLabel}</h2>
+          <h2 id={`${uid}-save-title`}>
+            {copyOpen ? saveAsLabel : p.saveLabel}
+          </h2>
           <label className={s.field}>
             {b.trainingName}
             <input
@@ -798,7 +898,11 @@ export function ApprovedTrainingBuilder(p: Props) {
               aria-label={b.trainingName}
               maxLength={160}
               value={copyOpen ? copyName : p.name}
-              onChange={(event) => copyOpen ? setCopyName(event.target.value) : p.onNameChange(event.target.value)}
+              onChange={(event) =>
+                copyOpen
+                  ? setCopyName(event.target.value)
+                  : p.onNameChange(event.target.value)
+              }
               placeholder={b.namePlaceholder}
             />
           </label>
@@ -812,20 +916,69 @@ export function ApprovedTrainingBuilder(p: Props) {
               type="button"
               className={s.secondary}
               disabled={saving}
-              onClick={() => {setSaveOpen(false); setCopyOpen(false);}}
+              onClick={() => {
+                setSaveOpen(false);
+                setCopyOpen(false);
+              }}
             >
               {b.cancel}
             </button>
             <button
               type="button"
               className={s.primary}
-              disabled={saving || p.saveDisabled || (copyOpen && !copyName.trim())}
+              disabled={
+                saving || p.saveDisabled || (copyOpen && !copyName.trim())
+              }
               onClick={() => void save()}
             >
               {copyOpen ? saveAsLabel : p.saveLabel}
             </button>
           </div>
         </DialogSurface>
+      )}
+    </div>
+  );
+}
+
+function TrainingName({
+  name,
+  onChange,
+  disabled,
+  label,
+}: {
+  label: string;
+  name: string;
+  onChange: (name: string) => void;
+  disabled: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  return (
+    <div className={s.name}>
+      {editing ? (
+        <input
+          aria-label={label}
+          value={name}
+          maxLength={160}
+          disabled={disabled}
+          autoFocus
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={() => setEditing(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === "Escape") setEditing(false);
+          }}
+        />
+      ) : (
+        <>
+          <h2>{name}</h2>
+          <button
+            type="button"
+            aria-label={label}
+            disabled={disabled}
+            onClick={() => setEditing(true)}
+          >
+            <Pencil size={16} />
+          </button>
+        </>
       )}
     </div>
   );

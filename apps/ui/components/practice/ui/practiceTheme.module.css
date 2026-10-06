@@ -173,3 +173,8 @@
 @media(prefers-reduced-motion:reduce) {
  .theme *, .theme *::before, .theme *::after {scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important;}
 }
+
+/* Training overview and Builder share name geometry. */
+.theme{--practice-training-name-size:36px;--practice-training-name-line:1.1;--practice-training-name-spacing:-1px;--practice-training-name-weight:500}
+@media(max-width:650px){.theme{--practice-training-name-size:29px}}
+@media(max-height:650px){.theme{--practice-training-name-size:26px}}

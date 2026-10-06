@@ -13,6 +13,7 @@ function props(){return {
 };}
 test('existing name is inline; Update saves directly and Delete is one footer action',async()=>{
  const p=props();render(<ApprovedTrainingBuilder {...p}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Training name'}));
  fireEvent.change(screen.getByRole('textbox',{name:'Training name'}),{target:{value:'Renamed'}});
  expect(p.onNameChange).toHaveBeenCalledWith('Renamed');
  fireEvent.click(screen.getByRole('button',{name:'Update training'}));

@@ -1,7 +1,7 @@
 # Controls standard
 
 Owner decisions: 2026-10-06. Tracking: [#596](https://github.com/vbalashi/2000nl/issues/596).
-Status: control defaults selected; Session Builder visual review pending. No production migration in this checkpoint.
+Status: Session Builder approved and implemented in application code. Local component QA completed; account smoke limited by local DB contract mismatch (208 vs 211). Remaining controls migrate in a separate slice.
 
 ## Geometry and selection
 
@@ -39,7 +39,7 @@ Delete training is an unfilled muted destructive action with a trash icon and la
 
 Remove Set as main training: an explicit start makes it current. Remove unrelated Checking your saved session and reset-on-another-device prose from this builder. Necessary loading and failure states should attach to their actual action, not display unexplained status text. The mockup has local preview actions, not actual data mutations.
 
-The existing section surfaces remain: “no background” applies to control groups, not to the Language / Source / Exercises / Filters / Session blocks.
+Session Builder uses the approved shared transparent frame and inset section dividers. Hover fills only the disclosure header, without changing geometry.
 
 ## Protected controls and rollout boundary
 
@@ -73,4 +73,4 @@ Session Builder prototypes must use the existing ApprovedTrainingBuilder section
 
 Owner selection: Session Builder uses one shared frame with inset section dividers. On mobile, the transparent trash icon shares a row with Save changes; Start training fills the next row. The icon retains its localized accessible Delete training label and confirmation. The alternative gap layout remains available in the prototype for comparison.
 
-Builder name typography matches Training overview hero: reading font, weight 500, 36px desktop / 29px mobile / 26px short viewport, line-height 1.1, letter-spacing -1px. Proposed overview ↔ builder transition (not implemented): same 720px content width, stable top navigation, outgoing content opacity 1→0 and y 0→-8px over 100ms, incoming opacity 0→1 and y 8→0 over 180ms, cubic-bezier(.22,1,.36,1); reverse direction on Back. No scale or width animation. Preserve overview scroll position and selected saved training on return; restore focus to the initiating Edit/Builder control. Reduced-motion disables motion. Same behavior for hero and saved-row entry points.
+Builder name typography matches Training overview hero: reading font, weight 500, 36px desktop / 29px mobile / 26px short viewport, line-height 1.1, letter-spacing -1px. Implemented overview ↔ builder transition: same 720px content width, stable top navigation, outgoing content opacity 1→0 and y 0→-8px over 100ms, incoming opacity 0→1 and y 8→0 over 180ms, cubic-bezier(.22,1,.36,1); reverse direction on Back. No scale or width animation. Preserve overview scroll position and selected saved training on return; restore focus to the initiating Edit/Builder control. Reduced-motion disables motion. Same behavior for hero and saved-row entry points.
