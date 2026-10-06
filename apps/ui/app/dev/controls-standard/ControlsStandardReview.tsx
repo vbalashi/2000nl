@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 
+import { useRouter } from "next/navigation";
 import { AppDestinationNav } from "@/components/navigation/AppDestinationNav";
 import { ApprovedTrainingBuilder } from "@/components/training/pilot/ApprovedTrainingBuilder";
 import { mixStepSelection } from "@/components/training/pilot/TrainingMixPicker";
@@ -16,6 +17,8 @@ import s from "@/components/training/pilot/approvedTrainingBuilder.module.css";
 import section from "@/components/practice/builder/builderSection.module.css";
 import controls from "@/components/practice/builder/builderControls.module.css";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
+// Prototype: Start-first footer variants; production Builder remains unchanged.
+const footerVariants = [{key:"current",label:"Текущий · 44 px"},{key:"quiet",label:"A · Без фона · 28 px"},{key:"outline",label:"B · Компактная рамка · 28 px"},{key:"wide",label:"C · Широкая рамка · 34 px"}];
 const DEFAULT_SESSION_SIZE = 10;
 const defaultModesForScenario = (scenario: TrainingSetupOption) => {
   const modes = scenario.modes ?? [];
@@ -60,6 +63,17 @@ const initialDraft: TrainingSetupDraft & { sessionSize: TrainingSessionSize } =
     sourceValue: "all",
   };
 export function ControlsStandardReview() {
+  const router = useRouter();
+  const [footerVariant,setFooterVariant] = useState("quiet");
+  const changeFooter = (value:string) => {
+    setFooterVariant(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set("variant",value);
+    router.replace(url.pathname+url.search,{scroll:false});
+  };
+  const cycleFooter = (step:number) => changeFooter(footerVariants[(footerVariants.findIndex(v=>v.key===footerVariant)+step+footerVariants.length)%footerVariants.length].key);
+  useEffect(()=>{const value=new URL(window.location.href).searchParams.get("variant");if(footerVariants.some(v=>v.key===value))setFooterVariant(value!);},[]);
+  useEffect(()=>{const listener=(event:KeyboardEvent)=>{if((event.target as HTMLElement)?.closest("input,textarea,select,[contenteditable]"))return;if(event.key!=="ArrowLeft"&&event.key!=="ArrowRight")return;event.preventDefault();cycleFooter(event.key==="ArrowRight"?1:-1);};window.addEventListener("keydown",listener);return()=>window.removeEventListener("keydown",listener);});
   const [draft, setDraft] = useState(initialDraft),
     [name, setName] = useState("Translation"),
     [language, setLanguage] = useState("nl"),
@@ -136,7 +150,7 @@ export function ControlsStandardReview() {
   const b = getUiMessages(interfaceLanguage).builder;
   return (
     <>
-      <div className="review-toolbar">
+      <div className="review-toolbar"><label>Действия <select aria-label="Вариант действий" value={footerVariant} onChange={e=>changeFooter(e.target.value)}>{footerVariants.map(v=><option key={v.key} value={v.key}>{v.label}</option>)}</select></label>
         <label>
           Размер{" "}
           <select value={width} onChange={(e) => setWidth(e.target.value)}>
@@ -184,11 +198,13 @@ export function ControlsStandardReview() {
         style={{
           padding: 8,
           maxWidth: width === "mobile" ? 390 : 1000,
+          paddingBottom: 90,
           margin: "auto",
         }}
         className={`${theme.theme}`}
         data-colour-mode={dark ? "dark" : "light"}
         data-layout={layout}
+        data-footer-variant={footerVariant}
         data-preview-width={width}
         data-account-palette="indigo"
         data-practice-palette="indigo"
@@ -271,6 +287,22 @@ export function ControlsStandardReview() {
           {message}
         </output>
       </div>
+      <div className="footer-prototype-switcher" aria-label="Сравнение вариантов действий"><button aria-label="Предыдущий вариант" onClick={()=>cycleFooter(-1)}>←</button><span>{footerVariants.find(v=>v.key===footerVariant)?.label}</span><button aria-label="Следующий вариант" onClick={()=>cycleFooter(1)}>→</button></div>
+      <style>{`
+.footer-prototype-switcher{position:fixed;z-index:30;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;border-radius:20px;padding:6px 10px;max-width:calc(100vw - 24px);background:#272541;color:white;box-shadow:0 3px 18px #0002;font:13px/20px sans-serif;white-space:nowrap}
+.footer-prototype-switcher button{border:0;background:transparent;color:inherit;padding:3px 8px;cursor:pointer}
+[data-footer-variant]:not([data-footer-variant=current]) .${s.footer}>div{display:grid!important;grid-template-columns:34px minmax(0,1fr)!important;gap:12px!important;align-items:center!important}
+[data-footer-variant]:not([data-footer-variant=current]) .${s.footer}>div>.${s.primary}{grid-column:1/-1!important;grid-row:1!important;width:100%!important}
+[data-footer-variant]:not([data-footer-variant=current]) .${s.delete}{grid-column:1!important;grid-row:2!important;width:34px!important;height:28px!important;margin:0!important;justify-content:center!important}
+[data-footer-variant]:not([data-footer-variant=current]) .${s.delete}>span{display:none!important}
+[data-footer-variant]:not([data-footer-variant=current]) .${s.updateGroup}{grid-column:2!important;grid-row:2!important;justify-self:end!important;flex:none!important;width:var(--builder-action-width,168px)!important;height:28px!important;background:transparent!important;border-radius:11.2px!important;box-sizing:border-box}
+[data-footer-variant]:not([data-footer-variant=current]) .${s.updateGroup}>.${s.secondary}{height:100%!important;min-height:0!important;border:0!important;padding:0 10px!important;border-radius:11.2px 0 0 11.2px!important;font-weight:400}
+[data-footer-variant]:not([data-footer-variant=current]) .${s.saveMenu} summary{height:100%!important;min-height:0!important;width:28px!important;border:0!important;border-radius:0 11.2px 11.2px 0!important}
+[data-footer-variant=outline] .${s.updateGroup},[data-footer-variant=wide] .${s.updateGroup}{border:1px solid var(--practice-border)!important}
+[data-footer-variant=wide] .${s.updateGroup}{width:100%!important;height:34px!important;border-radius:13.6px!important}
+[data-footer-variant=wide] .${s.delete}{height:34px!important}
+[data-footer-variant]:not([data-footer-variant=current]) .${s.updateGroup}:hover{background:var(--practice-surface-subtle)!important}
+      `}</style>
     </>
   );
 }
