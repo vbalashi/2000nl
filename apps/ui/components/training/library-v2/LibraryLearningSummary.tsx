@@ -1,4 +1,6 @@
 import React from "react";
+import {Clock3} from "lucide-react";
+import s from "./libraryLearningSummary.module.css";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import {platformV2Message} from "@/lib/platform/platformV2ClientI18n";
 import type {LibrarySenseCardModel} from "./librarySenseCardModel";
@@ -12,11 +14,11 @@ export function LibraryLearningSummary({meaning, language}: {meaning: LibrarySen
     : meaning.reviewCount === 0 ? t("ungraded") : t("unavailable");
   const timestamp = meaning.nextDueAt ? Date.parse(meaning.nextDueAt) : NaN;
   const scheduled = meaning.schedulerPhase === "learning" || meaning.schedulerPhase === "reviewing";
-  return <dl data-testid="library-learning-summary" className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[length:var(--practice-text-small)] text-[color:var(--practice-text-secondary)]">
+  return <div className={s.summary}><Clock3 size={13} aria-hidden="true"/><dl data-testid="library-learning-summary" className={s.details}>
     <div><dt className="inline">{t("lastGrade")}: </dt><dd className="inline">{grade}</dd></div>
     <div><dt className="inline">{t("reviewCount")}: </dt><dd className="inline">{meaning.reviewCount ?? "—"}</dd></div>
     <div><dt className="inline">{t("nextReview")}: </dt><dd className="inline">{!scheduled ? t(meaning.schedulerPhase!) : Number.isFinite(timestamp)
       ? <time dateTime={meaning.nextDueAt!}>{new Intl.DateTimeFormat(language, {dateStyle:"medium", timeStyle:"short"}).format(timestamp)}</time>
       : t("unavailable")}</dd></div>
-  </dl>;
+  </dl></div>;
 }

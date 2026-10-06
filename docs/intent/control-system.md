@@ -43,7 +43,7 @@ Session Builder uses the approved shared transparent frame and inset section div
 
 ## Protected controls and rollout boundary
 
-Again / Hard / Good / Easy are approved and excluded from this migration, including their colors, left markers, radii, widths and adaptive layout. This exclusion applies inside Library as well as Training.
+Again / Hard / Good / Easy are approved and excluded from this migration, including their colors and left markers; Training also retains its radii, widths and adaptive layout. Training keeps this geometry. The owner-approved Library exception (2026-10-06) uses 28px compact ratings with the same colors and left markers.
 
 Dictionary-card actions use a separate 28 px family; do not inherit 44 px Start learning just because their label matches. Preserve primary learning action vs quiet collections/overflow hierarchy.
 
@@ -56,7 +56,7 @@ Known locations to review in apps/ui:
 - practice/ui/SegmentedControl and per-page consumers: shell navigation, Statistics period/languages, settings appearance/text/spacing, Library material types/languages, builder chips.
 - practice/builder/* and SavedTrainingControls: save/update/start/delete/overflow, saved row status and accordion chevrons.
 - practice/settings/LanguagePicker and settings language status rows: translation selectors, learning selector, active/paused actions and language management. Do not restyle a status mutation as a single-selection tab.
-- practice/article/articleActions.module.css and training/library-v2/LibraryMeaningActions: compact learning/undo, collections and overflow; ratings excluded.
+- practice/article/articleActions.module.css and training/library-v2/LibraryMeaningActions: compact learning/undo, collections and overflow; Library ratings use the separately approved compact size.
 - practice/ui/ActionMenu, IconAction, AddAction, library/LibraryFilters, AccountLibraryFilters, NounFilterPopover: popovers, icon-only triggers, add actions and filter chips require explicit variants.
 - Dialogs, sheets, confirmations, card reveal/audio/report/known/exclude controls, pagination, auth, premium/account and admin actions: not yet individually approved; inventory before widening scope.
 - Native checkboxes, switches, input fields, selects and links are not automatically replaced by capsule buttons.
@@ -86,7 +86,7 @@ Builder name typography matches Training overview hero: reading font, weight 500
 | Statistics period / active languages | Shared 28px selection; ordered active languages fit available width, up to four, with remembered overflow slot |
 | Statistics Your material | All for selected language + remembered dictionary/collection; transparent menu trigger, original single-language reads |
 | Library filters / noun article choices | Transparent 28px chips, soft selected fill, integrated noun disclosure without divider |
-| Library meaning-card service actions | Isolated 28px family, 8.4px radius; rating controls unchanged |
+| Library meaning-card service actions | Isolated 28px family, 8.4px radius; Library ratings compact at 28px; Training unchanged |
 | Learning-language management | Active/Paused mutations and reorder remain management actions, 28px without frames; paused rows must remain available here to resume them |
 | Add / icon actions, native switches | Existing quiet/touch geometry preserved; not single-selection tabs |
 | Reveal / audio / report / confirmations / auth / premium / account / admin | Distinct interaction families; retained, not globally converted to capsules |
@@ -100,3 +100,11 @@ Library filter dialog uses the same shared BuilderSection disclosure and one out
 Selection capabilities are distinct from presentation: Library currently stores one dictionary ID or one collection ID (or all readable dictionaries of the selected language). Builder stores an array of dictionary IDs or one collection. Dictionary pools are supported end to end by training dictionaryScope and the authoritative SQL planner. Combining multiple collections or dictionaries with collections is not supported. Reusing the same Source appearance must not imply support for these mixed scopes.
 
 Account Sign out is a quiet 28px action with a muted destructive text color. Text-entry fields keep their existing field boundary and caret without an additional focus outline or shadow; keyboard focus on buttons and other non-text controls is retained.
+
+### Library action audit — 2026-10-06
+
+Learn retains a soft filled surface at 28px; the no-background rule applies to service actions and control groups, not this primary action. Library ratings use 28px compact controls while retaining the existing rating colors and left markers. Training ratings retain their existing geometry. The scheduling summary remains beside the exact card, rendered as muted secondary information with a clock icon; its values and directional scope are unchanged.
+
+The activity calendar renders the full available year when its content container is at least 560px wide, using compact 10px cells. Narrow containers retain three-month paging. Day details appear at the cell through hover, keyboard focus or tap, rather than in a separate permanent row. Escape, blur, pointer leave, scrolling and resizing dismiss the tooltip.
+
+Audited families: navigation 34px; selectors and filter chips 28px without group fill; launch actions 44px; Builder secondary Save 28px outlined; Library primary Learn 28px filled; Library service actions and ratings 28px; account Sign out 28px quiet. Dialog confirmation controls and the mobile navigation preserve their separate sizes.

@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { parseActivityCalendar, shiftDate, type ActivityCalendar } from "@/lib/training/activity/model";
 import { activityHighlights, periodSummary } from "@/lib/training/activity/summary";
+import {getUiMessages} from "@/lib/uiMessages";
 import { StatisticsActivity } from "@/components/practice/statistics/StatisticsActivity";
 
 const today = "2026-09-30";
@@ -69,3 +70,18 @@ describe("StatisticsActivity presentation", () => {
     expect(screen.getByText("Time was not measured during this period.")).toBeInTheDocument();
   });
 });
+
+ test("calendar details appear only in an anchored tooltip and dismiss on leave or Escape",()=>{
+  render(<StatisticsActivity interfaceLanguage="en" calendar={calendar({0:[2,3,60000]})}/>);
+  expect(screen.queryByRole("tooltip")).toBeNull();
+  const year=screen.getByRole("group",{name:getUiMessages("en").statistics.yearHeatmap});
+  const day=within(year).getAllByRole("button").at(-1)!;
+  fireEvent.mouseEnter(day);
+  expect(screen.getByRole("tooltip")).toHaveTextContent("September 30, 2026");
+  expect(day).toHaveAttribute("aria-describedby",screen.getByRole("tooltip").id);
+  expect(day).not.toHaveAttribute("title");
+  fireEvent.mouseLeave(day);expect(screen.queryByRole("tooltip")).toBeNull();
+  fireEvent.focus(day);expect(screen.getByRole("tooltip")).toBeVisible();
+  fireEvent.keyDown(day,{key:"Escape"});expect(screen.queryByRole("tooltip")).toBeNull();
+  fireEvent.click(day);expect(screen.getByRole("tooltip")).toHaveTextContent("reviews: 3");
+ });

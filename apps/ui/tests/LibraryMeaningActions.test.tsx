@@ -35,6 +35,9 @@ test.each([ ["Again","fail"], ["Hard","hard"], ["Good","success"], ["Easy","easy
  const meaning=buildLibrarySenseCardGroupModel(multiSenseBankGroup,"en").meanings[0];
  const action=vi.fn();
  render(<LibraryMeaningActions meaning={meaning} language="en" busy={false} collectionCount={0} onAction={action}/>);
+ const ratingGroup=screen.getByRole("button",{name:label}).closest("[role=group]")!;
+ expect(ratingGroup).toHaveAttribute("data-compact","true");
+ expect(ratingGroup).toHaveStyle({"--rating-height":"28px"});
  fireEvent.click(screen.getByRole("button",{name:label}));
  expect(action).toHaveBeenCalledOnce();
  expect(action).toHaveBeenCalledWith(meaning.reviewCapabilities.find(cap=>cap.reviewResult===result));

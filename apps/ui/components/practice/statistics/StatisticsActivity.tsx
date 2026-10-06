@@ -1,5 +1,5 @@
 "use client";
-import React, { useId, useState, type ReactNode } from "react";
+import React, { useEffect, useId, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { formatUiCount, formatUiMessage, getUiMessages } from "@/lib/uiMessages";
@@ -21,6 +21,10 @@ export function StatisticsActivity({ interfaceLanguage: locale, calendar, recent
   const [period, setPeriod] = useState<StudyTimePeriod>("Week");
   const [selected, setSelected] = useState<string | null>(null);
   const [page, setPage] = useState(0);
+  const [tip, setTip] = useState<{date:string;x:number;y:number}|null>(null);
+  const tipId = useId();
+  useEffect(()=>{const dismiss=()=>setTip(null);window.addEventListener("scroll",dismiss,true);window.addEventListener("resize",dismiss);return()=>{window.removeEventListener("scroll",dismiss,true);window.removeEventListener("resize",dismiss);};},[]);
+  const showTip = (day:ActivityDay, target:HTMLButtonElement) => {const rect=target.getBoundingClientRect();setTip({date:day.date,x:Math.max(120,Math.min(window.innerWidth-120,rect.left+rect.width/2)),y:Math.min(window.innerHeight-90,rect.bottom+8)});};
   const ids = { activity: useId(), history: useId(), highlights: useId() };
   const number = (value: number) => new Intl.NumberFormat(locale).format(value);
   const dateFormat = new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
@@ -35,7 +39,7 @@ export function StatisticsActivity({ interfaceLanguage: locale, calendar, recent
   });
   const cell = (day: ActivityDay) => {
     const label = formatUiMessage(copy.dayAccessible, { date: dateFormat.format(utcDate(day.date)), summary: daySummary(day) });
-    return <button key={day.date} type="button" data-level={activityLevel(dayTotal(day))} aria-pressed={selected === day.date} aria-label={label} title={label} onClick={() => setSelected(day.date)} />;
+    return <button key={day.date} type="button" data-level={activityLevel(dayTotal(day))} aria-pressed={selected === day.date} aria-label={label} aria-describedby={tip?.date===day.date?tipId:undefined} onMouseEnter={e=>showTip(day,e.currentTarget)} onMouseLeave={()=>setTip(null)} onFocus={e=>showTip(day,e.currentTarget)} onBlur={()=>setTip(null)} onKeyDown={e=>{if(e.key==="Escape")setTip(null);}} onClick={e=>{setSelected(day.date);showTip(day,e.currentTarget);}} />;
   };
   const first = calendar.days[0].date;
   const lead = weekdayOffset(first);
@@ -48,7 +52,7 @@ export function StatisticsActivity({ interfaceLanguage: locale, calendar, recent
   const mobileDays = calendar.days.filter(day => day.date >= windowStart && day.date < windowEnd);
   const hasEarlier = first < windowStart;
   const monthName = (date: string) => utcDate(date).toLocaleDateString(locale, { month: "short", year: "numeric", timeZone: "UTC" });
-  const chosen = selected ? calendar.days.find(day => day.date === selected) ?? null : null;
+  const chosen = tip ? calendar.days.find(day => day.date === tip.date) ?? null : null;
   const timeValue = summary.timeCoverage === "unavailable" ? "—" : minutes(summary.activeMilliseconds);
   return <div className={s.statistics} lang={locale}>
     <section className={s.section} aria-labelledby={ids.activity}>
@@ -74,17 +78,17 @@ export function StatisticsActivity({ interfaceLanguage: locale, calendar, recent
       </div></div>
       <div className={s.mobileHeat}>
         <div className={s.mobileHistoryNav}>
-          <button type="button" aria-label={copy.earlierMonths} disabled={!hasEarlier} onClick={() => { setPage(p => p + 1); setSelected(null); }}><ChevronLeft size={16} /></button>
+          <button type="button" aria-label={copy.earlierMonths} disabled={!hasEarlier} onClick={() => { setPage(p => p + 1); setSelected(null); setTip(null); }}><ChevronLeft size={16} /></button>
           <span>{`${monthName(windowStart)} – ${monthName(monthStart(page * MOBILE_MONTHS))}`}</span>
-          <button type="button" aria-label={copy.laterMonths} disabled={page === 0} onClick={() => { setPage(p => p - 1); setSelected(null); }}><ChevronRight size={16} /></button>
+          <button type="button" aria-label={copy.laterMonths} disabled={page === 0} onClick={() => { setPage(p => p - 1); setSelected(null); setTip(null); }}><ChevronRight size={16} /></button>
         </div>
         <div className={s.mobileHeatGrid} role="group" aria-label={copy.monthHeatmap}>
           {Array.from({ length: mobileDays.length ? weekdayOffset(mobileDays[0].date) : 0 }, (_, i) => <span key={`blank-${i}`} />)}{mobileDays.map(cell)}
         </div>
       </div>
       <div className={s.heatLegend} aria-hidden="true"><span>{copy.less}</span>{[0, 1, 2, 3].map(level => <i key={level} data-level={level} />)}<span>{copy.moreActivity}</span></div>
-      <div className={s.dayDetail} aria-live="polite">{chosen ? <><strong>{dateFormat.format(utcDate(chosen.date))}</strong>
-        <span>{daySummary(chosen)}{dayTotal(chosen) === 0 ? ` · ${copy.noActivity}` : ""}</span></> : <span>{copy.selectDay}</span>}</div>
+      {chosen && tip && <div id={tipId} role="tooltip" className={s.dayTooltip} style={{left:tip.x,top:tip.y}}><strong>{dateFormat.format(utcDate(chosen.date))}</strong>
+        <span>{daySummary(chosen)}{dayTotal(chosen) === 0 ? ` · ${copy.noActivity}` : ""}</span></div>}
     </section>
     <section className={s.section} aria-labelledby={ids.highlights}>
       <h2 id={ids.highlights} className={s.highlightsTitle}>{copy.highlights}</h2>
