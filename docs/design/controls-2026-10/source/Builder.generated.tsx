@@ -432,7 +432,7 @@ export function ApprovedTrainingBuilder(p: Props) {
           {section(
             "exercises",
             b.exercises,
-            `${familyName} · ${direction} · ${b.answerModes["Reveal & self-rate"]}`,
+            `${familyName} · ${direction}`,
             <>
               <div className={s.field}>
                 <h2>{b.exerciseType}</h2>

@@ -12,6 +12,7 @@ const oldName=source.slice(source.indexOf('          {p.editing && <label'),sour
 if(!oldName.includes('maxLength={160}'))throw Error('Name presentation changed; inspect adapter');
 source=source.replace(oldName,'          {p.editing && <ReviewName name={p.name} onChange={p.onNameChange} disabled={saving}/> }\n');
 source=source.replace('<Trash2 size={16} /></button>','<Trash2 size={16} /><span>{deleteLabel}</span></button>');
+source=source.replace('`${familyName} · ${direction} · ${b.answerModes["Reveal & self-rate"]}`','`${familyName} · ${direction}`');
 source+=`\nfunction ReviewName({name,onChange,disabled}:{name:string;onChange:(name:string)=>void;disabled:boolean}){const [editing,setEditing]=useState(false);return <div className="review-name">{editing?<input aria-label="Training name" value={name} maxLength={160} disabled={disabled} autoFocus onChange={e=>onChange(e.target.value)} onBlur={()=>setEditing(false)} onKeyDown={e=>{if(e.key==="Enter"||e.key==="Escape")setEditing(false)}}/>:<><h2>{name}</h2><button type="button" aria-label="Edit training name" disabled={disabled} onClick={()=>setEditing(true)}><Pencil size={16}/></button></>}</div>}\n`;
 fs.writeFileSync(path.join(here,'Builder.generated.tsx'),source);
 const controller=fs.readFileSync(path.join(ui,'components/training/pilot/TrainingTodaySetup.tsx'),'utf8');
