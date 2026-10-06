@@ -14,14 +14,14 @@ test("chips keep draft edits private; noun chevron opens a single nearby article
 });
 test("language/source navigation uses real IDs and Cancel never applies changes",()=>{
  const apply=vi.fn(),close=vi.fn();render(<LibraryFilters {...props} onClose={close} onApply={apply}/>);
- fireEvent.click(screen.getByRole("button",{name:/^Source/}));fireEvent.click(screen.getByRole("button",{name:"Real source"}));fireEvent.click(screen.getByRole("button",{name:"OK"}));
+ fireEvent.click(screen.getByRole("button",{name:/^Source/}));fireEvent.click(screen.getByRole("button",{name:"Real source"}));
  expect(screen.getByRole("button",{name:/^Source/})).toHaveTextContent("Real source");
  fireEvent.click(screen.getByRole("button",{name:"Cancel"}));expect(close).toHaveBeenCalledOnce();expect(apply).not.toHaveBeenCalled();
 });
 test("unavailable materials disable Apply while reset and language selection remain reachable",()=>{
  const apply=vi.fn();render(<LibraryFilters {...props} canApply={false} onClose={()=>{}} onApply={apply}/>);
- expect(screen.getByRole("button",{name:"Show results"})).toBeDisabled();fireEvent.click(screen.getByRole("button",{name:/^Language/}));
- fireEvent.click(screen.getByRole("button",{name:"English"}));fireEvent.click(screen.getByRole("button",{name:"OK"}));
+ expect(screen.getByRole("button",{name:"Show results"})).toBeDisabled();
+ fireEvent.click(screen.getByRole("button",{name:"English"}));
  expect(screen.queryByRole("button",{name:"Noun subfilters"})).not.toBeInTheDocument();expect(apply).not.toHaveBeenCalled();
 });
 
@@ -35,7 +35,7 @@ test("collection choice stays in draft, clears incompatible filters, and applies
  fireEvent.click(screen.getByRole("button",{name:/^Source/}));
  fireEvent.click(screen.getByRole("button",{name:"My B"}));
  expect(apply).not.toHaveBeenCalled();
- fireEvent.click(screen.getByRole("button",{name:"OK"}));
+
  expect(screen.queryByRole("button",{name:"Nouns"})).not.toBeInTheDocument();
  fireEvent.click(screen.getByRole("button",{name:"Show results"}));
  expect(apply).toHaveBeenCalledWith({...value,applyListFilter:true,collectionId:"b"});
@@ -47,7 +47,21 @@ test("collection choice stays in draft, clears incompatible filters, and applies
  fireEvent.click(screen.getByRole("button",{name:/^Source/}));
  expect(screen.getByRole("button",{name:"Real collection"})).toHaveAttribute("aria-pressed","true");
  fireEvent.click(screen.getByRole("button",{name:"Real source"}));
- fireEvent.click(screen.getByRole("button",{name:"OK"}));
+
  fireEvent.click(screen.getByRole("button",{name:"Show results"}));
  expect(apply).toHaveBeenCalledWith({...value,dictionaryId:"source",applyListFilter:false,collectionId:null});
  });
+
+test("inline source search preserves single selection and language change clears source scope",()=>{
+ const apply=vi.fn();render(<LibraryFilters {...props} onClose={()=>{}} onApply={apply}/>);
+ fireEvent.click(screen.getByRole("button",{name:/^Source/}));
+ fireEvent.click(screen.getByRole("button",{name:"Search sources"}));
+ fireEvent.change(screen.getByRole("textbox",{name:"Search sources"}),{target:{value:"real"}});
+ expect(screen.queryByRole("button",{name:"All dictionaries"})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Real source"}));
+ expect(screen.getByRole("button",{name:"Real source"})).toHaveAttribute("aria-pressed","true");
+ fireEvent.click(screen.getByRole("button",{name:"English"}));
+ expect(screen.getByRole("textbox",{name:"Search sources"})).toHaveValue("");
+ fireEvent.click(screen.getByRole("button",{name:"Show results"}));
+ expect(apply).toHaveBeenCalledWith({...value,languageCode:"en",dictionaryId:null,collectionId:null,applyListFilter:false});
+});
