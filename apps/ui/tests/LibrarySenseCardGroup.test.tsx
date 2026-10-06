@@ -146,7 +146,7 @@ describe("LibrarySenseCardGroup", () => {
 
     expect(within(headerRow).getByTestId("sense-card-metadata")).toBeVisible();
     expect(translate).toHaveAttribute("aria-pressed", "false");
-    expect(translate.compareDocumentPosition(audio) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(audio.compareDocumentPosition(translate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(headerRow.compareDocumentPosition(headword) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.queryByRole("button", { name: /meer|more/i })).not.toBeInTheDocument();
   });

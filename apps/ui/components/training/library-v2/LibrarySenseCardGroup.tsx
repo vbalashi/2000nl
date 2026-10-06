@@ -285,6 +285,18 @@ export function LibrarySenseCardGroup({
           headerActions={
             closeDetails || approvedArticle || translationEnabled || (onPlayAudio && model.audioCapability) ? (
               <>
+                {onPlayAudio && model.audioCapability ? (
+                  <SenseCardHeaderAction
+                    label={platformV2Message(
+                      interfaceLanguage,
+                      "senseCard.audio.play",
+                    )}
+                    disabled={audioBusy}
+                    onClick={onPlayAudio}
+                  >
+                    <AudioIcon />
+                  </SenseCardHeaderAction>
+                ) : null}
                 {translationEnabled || approvedArticle ? (
                   <SenseCardHeaderAction
                     label={platformV2Message(
@@ -297,18 +309,6 @@ export function LibrarySenseCardGroup({
                     onClick={toggleGroupTranslation}
                   >
                     <TranslateIcon />
-                  </SenseCardHeaderAction>
-                ) : null}
-                {onPlayAudio && model.audioCapability ? (
-                  <SenseCardHeaderAction
-                    label={platformV2Message(
-                      interfaceLanguage,
-                      "senseCard.audio.play",
-                    )}
-                    disabled={audioBusy}
-                    onClick={onPlayAudio}
-                  >
-                    <AudioIcon />
                   </SenseCardHeaderAction>
                 ) : null}
                 {closeDetails && <span className={surfaces.closeAction}><SenseCardHeaderAction
