@@ -23,9 +23,11 @@ test("saved device profiles affect the real card independently and preserve its 
   await expect(headword).toHaveCSS("font-size", "44px");
   await page.getByRole("button", { name: /Instellingen|Settings/ }).click();
   await page.getByRole("combobox", { name: "Phone text size", exact: true }).selectOption("largest");
-  await expect(page.getByText("Saved", { exact: true })).toHaveCount(1);
+  await expect.poll(() => stored.reading_size_phone).toBe("largest");
+  await expect(page.getByText("Saved", { exact: true })).toHaveCount(0);
   await page.getByRole("combobox", { name: "Computer / tablet text size", exact: true }).selectOption("large");
-  await expect(page.getByText("Saved", { exact: true })).toHaveCount(2);
+  await expect.poll(() => stored.reading_size_desktop).toBe("large");
+  await expect(page.getByText("Saved", { exact: true })).toHaveCount(0);
   await page.screenshot({ path: testInfo.outputPath("desktop-reading-settings.png") });
   await page.getByRole("button", { name: "Back to card" }).click();
   await expect(stage).toHaveAttribute("data-side", "answer");
