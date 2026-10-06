@@ -85,3 +85,16 @@ describe("StatisticsActivity presentation", () => {
   fireEvent.keyDown(day,{key:"Escape"});expect(screen.queryByRole("tooltip")).toBeNull();
   fireEvent.click(day);expect(screen.getByRole("tooltip")).toHaveTextContent("reviews: 3");
  });
+
+ test("weekly columns sum actual days and preserve the daily view",()=>{
+ render(<StatisticsActivity interfaceLanguage="en" calendar={calendar({0:[2,3,60000],1:[4,1,120000]})}/>);
+ expect(screen.queryByText("Study activity")).toBeNull();
+ expect(screen.queryByText("More activity")).toBeNull();
+ fireEvent.click(screen.getByRole("button",{name:"Weekly"}));
+ const grid=screen.getAllByRole("group",{name:`${getUiMessages("en").statistics.studyActivity} · Weekly`})[0];
+ expect(within(grid).getAllByRole("button").length).toBeLessThan(55);
+ fireEvent.click(within(grid).getAllByRole("button").at(-1)!);
+ expect(screen.getByRole("tooltip")).toHaveTextContent("New exercises: 6 · reviews: 4 · 3 min");
+ fireEvent.click(screen.getByRole("button",{name:"Daily"}));
+ expect(within(grid).getAllByRole("button")).toHaveLength(366);
+ });

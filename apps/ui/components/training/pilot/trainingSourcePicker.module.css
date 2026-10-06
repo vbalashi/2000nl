@@ -1,2 +1,9 @@
 .source_toolbar{display:flex;gap:8px;flex-wrap:wrap}.source_toolbar button{border:0;background:transparent;color:var(--practice-text-muted)}.source_toolbar input,.source_toolbar select{font:400 12px var(--practice-font-ui);background:var(--practice-surface);color:var(--practice-text);border:1px solid var(--practice-border);border-radius:8px;padding:6px;min-width:0;max-width:100%}
 .source_list{max-height:260px;overflow-y:auto}.source_list button{display:flex;align-items:center;gap:9px;width:100%;border:0;border-radius:8px;background:transparent;color:var(--practice-text-secondary);font:400 12px var(--practice-font-ui);text-align:left;padding:9px}.source_list button[aria-pressed=true]{background:var(--practice-surface-hover)}.source_list small{margin-left:auto;color:var(--practice-text-muted);font-size:11px}.source_list svg{flex:none}
+.source_window{position:relative}
+.source_list{scrollbar-width:none;overscroll-behavior:contain}
+.source_list::-webkit-scrollbar{display:none}
+.edge{position:absolute;z-index:1;left:0;right:0;display:flex;align-items:center;justify-content:center;height:24px;border:0;color:var(--practice-text-muted);cursor:pointer}
+.edgeTop{top:0;background:linear-gradient(var(--practice-canvas) 25%,transparent)}
+.edgeBottom{bottom:0;background:linear-gradient(transparent,var(--practice-canvas) 75%)}
+.edge svg{background:var(--practice-canvas);border-radius:50%}
