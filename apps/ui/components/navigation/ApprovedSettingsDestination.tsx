@@ -163,7 +163,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
             <SettingsRow title={copy.signOut}>
               <button
                 type="button"
-                className={`${s.action} ${s.danger}`}
+                className={s.signOut}
                 onClick={() => void props.onSignOut()}
               >
                 {copy.signOut}

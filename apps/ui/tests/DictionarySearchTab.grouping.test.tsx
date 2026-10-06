@@ -386,7 +386,7 @@ test("approved chips panel excludes disabled sources, cancels drafts and applies
  fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));
  fireEvent.click(screen.getByRole("button",{name:new RegExp(`^${copy.builder.source}`)}));
  await screen.findByRole("button",{name:"Enabled B"});expect(screen.queryByRole("button",{name:"Disabled A"})).not.toBeInTheDocument();
- fireEvent.click(screen.getByRole("button",{name:"Enabled B"}));fireEvent.click(screen.getByRole("button",{name:copy.library.ok}));
+ fireEvent.click(screen.getByRole("button",{name:"Enabled B"}));
  fireEvent.click(screen.getByRole("button",{name:copy.builder.cancel}));
  expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).at(-1)?.[0].libraryScope.dictionaryIds).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));fireEvent.click(screen.getByRole("button",{name:copy.builder.parts.Nouns}));

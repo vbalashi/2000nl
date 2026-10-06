@@ -178,3 +178,9 @@
 .theme{--practice-training-name-size:36px;--practice-training-name-line:1.1;--practice-training-name-spacing:-1px;--practice-training-name-weight:500}
 @media(max-width:650px){.theme{--practice-training-name-size:29px}}
 @media(max-height:650px){.theme{--practice-training-name-size:26px}}
+
+/* Text entry already has a caret and a field boundary; do not add a second ring. */
+.theme.theme :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea):focus {
+  outline: none;
+  box-shadow: none;
+}

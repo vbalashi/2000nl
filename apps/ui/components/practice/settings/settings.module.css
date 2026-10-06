@@ -297,3 +297,11 @@ button.select { display:flex;align-items:center;justify-content:space-between;ga
 .materialActions button{border:0;border-radius:11.2px;background:transparent;font-weight:400}
 .materialActions button[aria-checked=true]{background:var(--practice-surface-hover)}
 button.select{min-height:28px;border:0;border-radius:11.2px;background:transparent}
+
+.signOut {
+  display:inline-flex;align-items:center;justify-content:center;
+  height:28px;min-height:28px;box-sizing:border-box;padding:4px 10px;border:0;border-radius:11.2px;
+  background:transparent;color:var(--practice-danger);
+  font:400 var(--practice-text-label)/1.35 var(--practice-font-ui);cursor:pointer;
+}
+.signOut:hover{background:var(--practice-surface-hover)}

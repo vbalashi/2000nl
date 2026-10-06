@@ -92,3 +92,11 @@ Builder name typography matches Training overview hero: reading font, weight 500
 | Reveal / audio / report / confirmations / auth / premium / account / admin | Distinct interaction families; retained, not globally converted to capsules |
 
 Success-only account-save messages are omitted, including legacy reading settings; loading, errors, retry and conflict feedback remain. Mobile Builder content has a bounded flex chain and contains overscroll. Saved-list indicators overlay only the list, leaving its heading visible. Keyboard focus and reduced-motion behavior remain supported.
+
+## Library filter follow-up
+
+Library filter dialog uses the same shared BuilderSection disclosure and one outlined frame with inset dividers. Language is selected in place using the measured LanguageScopeControl. Source opens a bounded list in place; search is visible for more than ten options and is explicitly enabled by the search icon for shorter lists. Part of speech retains the existing chips and noun article popover. Draft preview, Cancel and Apply boundaries remain unchanged.
+
+Selection capabilities are distinct from presentation: Library currently stores one dictionary ID or one collection ID (or all readable dictionaries of the selected language). Builder stores an array of dictionary IDs or one collection. Dictionary pools are supported end to end by training dictionaryScope and the authoritative SQL planner. Combining multiple collections or dictionaries with collections is not supported. Reusing the same Source appearance must not imply support for these mixed scopes.
+
+Account Sign out is a quiet 28px action with a muted destructive text color. Text-entry fields keep their existing field boundary and caret without an additional focus outline or shadow; keyboard focus on buttons and other non-text controls is retained.

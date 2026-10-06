@@ -21,20 +21,21 @@ test('filter query, page and selections survive locale changes; apply emits stab
  const view=render(<InterfaceLanguageContext.Provider value="en"><LibraryFilters {...props} layout="chips"/></InterfaceLanguageContext.Provider>);
  fireEvent.click(screen.getByRole('button',{name:'Nouns'}));
  fireEvent.click(screen.getByRole('button',{name:/^Source/}));
+ fireEvent.click(screen.getByRole('button',{name:'Search sources'}));
  fireEvent.change(screen.getByRole('textbox'),{target:{value:'Van'}});
  view.rerender(<InterfaceLanguageContext.Provider value="ru"><LibraryFilters {...props} layout="chips"/></InterfaceLanguageContext.Provider>);
  expect(screen.getByRole('textbox',{name:'Поиск источников'})).toHaveValue('Van');
- fireEvent.click(screen.getByRole('button',{name:'VanDale'}));fireEvent.click(screen.getByRole('button',{name:'ОК'}));
+ fireEvent.click(screen.getByRole('button',{name:'VanDale'}));
  expect(screen.getByRole('button',{name:'Существительные'})).toHaveAttribute('aria-pressed','true');
  fireEvent.click(screen.getByRole('button',{name:'Показать результаты'}));
  expect(apply).toHaveBeenCalledWith({...defaultLibraryFilter,parts:['Nouns'],source:'VanDale'});
  expect(libraryFilterSummary({...defaultLibraryFilter,parts:['Nouns'],article:'het'},'ru')).toBe('нидерландский · Все словари · Существительные (het)');
 });
 
-test('localized language search emits canonical language and clears language-specific source/article',()=>{
+test('localized inline language choice emits canonical language and clears language-specific source/article',()=>{
  const apply=vi.fn();render(<InterfaceLanguageContext.Provider value="nl"><LibraryFilters value={{...defaultLibraryFilter,source:'VanDale',article:'de'}} sources={['VanDale']} count={()=>0} onClose={()=>{}} onApply={apply}/></InterfaceLanguageContext.Provider>);
- fireEvent.click(screen.getByRole('button',{name:/^Taal/}));fireEvent.change(screen.getByRole('textbox'),{target:{value:'Duits'}});
- fireEvent.click(screen.getByRole('button',{name:'Duits'}));fireEvent.click(screen.getByRole('button',{name:'OK'}));fireEvent.click(screen.getByRole('button',{name:'Resultaten tonen'}));
+
+ fireEvent.click(screen.getByRole('button',{name:'Duits'}));fireEvent.click(screen.getByRole('button',{name:'Resultaten tonen'}));
  expect(apply).toHaveBeenCalledWith({...defaultLibraryFilter,language:'German'});
 });
 
