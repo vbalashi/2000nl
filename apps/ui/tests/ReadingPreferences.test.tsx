@@ -30,7 +30,8 @@ test("Settings saves phone size independently and never selects phone because a 
   const phone = await screen.findByLabelText("Phone text size");
   await waitFor(() => expect(screen.getByLabelText("Computer / tablet text size")).toHaveValue("large"));
   fireEvent.change(phone, { target: { value: "largest" } });
-  await screen.findByText("Saved");
+  await waitFor(()=>expect(screen.getByLabelText("Phone text size")).toBeEnabled());
+  expect(screen.queryByText("Saved")).toBeNull();
   expect(repository.save).toHaveBeenCalledWith("reader", "phone", "largest");
   expect(screen.getByLabelText("Computer / tablet text size")).toHaveValue("large");
   Object.defineProperty(window, "innerWidth", { configurable: true, value: 320 });
@@ -65,7 +66,8 @@ test("a failed save stays visibly unsaved and retry saves only that profile", as
   fireEvent.change(screen.getByLabelText("Phone text size"), { target: { value: "largest" } });
   expect(await screen.findByRole("alert")).toHaveTextContent("Not saved");
   fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-  await screen.findByText("Saved");
+  await waitFor(()=>expect(screen.getByLabelText("Phone text size")).toBeEnabled());
+  expect(screen.queryByText("Saved")).toBeNull();
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   expect(repository.save).toHaveBeenNthCalledWith(1, "reader", "phone", "largest");
   expect(repository.save).toHaveBeenNthCalledWith(2, "reader", "phone", "largest");

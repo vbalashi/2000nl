@@ -15,7 +15,8 @@ test('locale changes preserve period, language, scope, selected day and canonica
  const view=render(<InterfaceLanguageContext.Provider value="en"><StatisticsPrototype onTrain={train} onHistory={history}/></InterfaceLanguageContext.Provider>);
  fireEvent.click(screen.getByRole('button',{name:'German'}));
  fireEvent.click(screen.getByRole('button',{name:'Month'}));
- fireEvent.click(screen.getByRole('button',{name:'Idioms'}));
+ fireEvent.click(screen.getByRole('button',{name:'Choose training material'}));
+ fireEvent.click(within(screen.getByRole('dialog')).getByRole('button',{name:/Idioms/}));
  const day=screen.getAllByRole('button',{name:/September 28, 2026:/})[0];fireEvent.click(day);
  const value=screen.getByRole('progressbar').getAttribute('aria-valuenow');
  view.rerender(<InterfaceLanguageContext.Provider value="ru"><StatisticsPrototype onTrain={train} onHistory={history}/></InterfaceLanguageContext.Provider>);
@@ -30,10 +31,10 @@ test('locale changes preserve period, language, scope, selected day and canonica
 
 test('open material selection and other-language value survive locale changes',()=>{
  const train=vi.fn();const view=render(<InterfaceLanguageContext.Provider value="en"><StatisticsPrototype onTrain={train}/></InterfaceLanguageContext.Provider>);
- fireEvent.change(screen.getByRole('combobox'),{target:{value:'French'}});
+ fireEvent.click(screen.getByRole('button',{name:'French'}));
  fireEvent.click(screen.getByRole('button',{name:'Choose training material'}));
  view.rerender(<InterfaceLanguageContext.Provider value="nl"><StatisticsPrototype onTrain={train}/></InterfaceLanguageContext.Provider>);
- expect(screen.getByRole('combobox')).toHaveValue('French');
+ expect(screen.getByRole('button',{name:'Frans'})).toHaveAttribute('aria-pressed','true');
  const dialog=screen.getByRole('dialog',{name:'Kies materiaal'});
  fireEvent.click(within(dialog).getByRole('button',{name:/Uitdrukkingen en vaste verbindingen/}));
  fireEvent.click(screen.getByRole('button',{name:'Uitdrukkingen oefenen'}));expect(train).toHaveBeenCalledWith('French · Idioms');

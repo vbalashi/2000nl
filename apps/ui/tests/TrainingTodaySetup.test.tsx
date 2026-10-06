@@ -167,7 +167,8 @@ test("idiom presets retain their family and scenario when reopened", async () =>
   fireEvent.click(screen.getByRole("button", { name: "Reverse" }));
   await waitFor(() => expect(screen.getByRole("button", { name: "Save training" })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: "Save training" }));
-  expect(await screen.findByText("Saved to your account")).toBeInTheDocument();
+  await waitFor(()=>expect(screen.getByRole("button",{name:"Update training"})).toBeEnabled());
+  expect(screen.queryByText("Saved to your account")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Back to Today" }));
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
   expect(screen.getByRole("button", { name: "Idioms" })).toHaveAttribute("aria-pressed", "true");
@@ -435,7 +436,8 @@ test("a saved preset can be reopened and modified in the account", async () => {
   fireEvent.click(screen.getByRole("button", { name: "de" }));
   await waitFor(() => expect(screen.getByRole("button", { name: "Save training" })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: "Save training" }));
-  expect(await screen.findByText("Saved to your account")).toBeInTheDocument();
+  await waitFor(()=>expect(screen.getByRole("button",{name:"Update training"})).toBeEnabled());
+  expect(screen.queryByText("Saved to your account")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Back to Today" }));
   expect(screen.getByText("NT2 2000 · Words · 1 new : 2 reviews · 30 exercises")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
@@ -448,7 +450,7 @@ test("a saved preset can be reopened and modified in the account", async () => {
   });
   fireEvent.click(screen.getByRole("button", { name: "Update training" }));
   await waitFor(() => expect(accounts.get("preset-test-user")?.revision).toBe(2));
-  expect(screen.getByText("Saved to your account")).toBeInTheDocument();
+  expect(screen.queryByText("Saved to your account")).toBeNull();
   window.localStorage.clear();
 });
 
@@ -494,7 +496,8 @@ test("dictionary material modes launch only the chosen source and persist in a p
   fireEvent.click(screen.getByLabelText("My Dutch"));
   await waitFor(() => expect(screen.getByRole("button", { name: "Save training" })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: "Save training" }));
-  expect(await screen.findByText("Saved to your account")).toBeInTheDocument();
+  await waitFor(()=>expect(screen.getByRole("button",{name:"Update training"})).toBeEnabled());
+  expect(screen.queryByText("Saved to your account")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Back to Today" }));
   fireEvent.click(screen.getByRole("button", { name: "Start" }));
   expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({
@@ -631,7 +634,8 @@ test("approved builder stores a chosen name without repeating the configuration"
  fireEvent.change(screen.getByRole("textbox",{name:"Training name"}),{target:{value:"Five useful words"}});
  fireEvent.click(within(screen.getByRole("dialog")).getByRole("button",{name:"Save training"}));
  await waitFor(()=>expect(screen.queryByRole("dialog")).toBeNull());
- await screen.findByText("Saved to your account");
+ await waitFor(()=>expect(accounts.get("named-overview")?.document.trainings[0].name).toBe("Five useful words"));
+ expect(screen.queryByText("Saved to your account")).toBeNull();
  expect(accounts.get("named-overview")?.document.trainings[0].name).toBe("Five useful words");
  fireEvent.click(screen.getByRole("button",{name:"Back to Training"}));
  await screen.findByRole("heading",{name:"Five useful words",level:2});

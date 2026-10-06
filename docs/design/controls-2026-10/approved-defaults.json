@@ -34,11 +34,14 @@
       "radiusPercent": 40,
       "border": false,
       "background": false,
-      "rememberedLanguage": "German",
       "chevronBackground": false,
-      "currentLanguage": "Dutch",
-      "singleLanguage": false,
-      "selected": "All"
+      "selected": "All",
+      "scope": "selected-learning-language",
+      "choices": [
+        "All",
+        "remembered-material"
+      ],
+      "rememberedMaterial": "VanDale 2k"
     },
     "learning-languages": {
       "height": 28,

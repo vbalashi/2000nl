@@ -62,3 +62,9 @@
 .dialog[open]{animation:filterEnter 220ms cubic-bezier(.22,1,.36,1)}
 @keyframes filterEnter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.dialog[open]{animation:none}}
+
+.part{border:0;border-radius:11.2px;background:transparent;box-shadow:none}
+.part>button{min-height:28px;font:400 var(--practice-text-label)/1.35 var(--practice-font-ui)}
+.part.selected,.chip[data-selected=true]{background:var(--practice-surface-hover);border-color:transparent;color:var(--practice-text-secondary)}
+.part .chipDisclosure{border-left:0;width:28px}
+.chip{border:0;border-radius:11.2px;min-height:28px;padding:4px 10px;background:transparent;font:400 var(--practice-text-label)/1.35 var(--practice-font-ui)}

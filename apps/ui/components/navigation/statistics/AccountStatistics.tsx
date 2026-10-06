@@ -26,9 +26,10 @@ export function AccountStatistics({ userId, languageCode, open, interfaceLanguag
   const copy = ui.statistics;
   const account = useAccountMaterial();
   const configured = account?.snapshot ? materialLearningLanguages(account.snapshot.document, account.catalog) : [];
-  const languages = configured.some(item => item.code === languageCode) ? configured : [{ code: languageCode, paused: false }, ...configured];
+  const activeConfigured=configured.filter(item=>!item.paused);
+  const languages=activeConfigured.length?activeConfigured:[{code:languageCode,paused:false}];
   const [chosenLanguage, setChosenLanguage] = useState<string | null>(null);
-  const scope = languages.find(item => item.code === chosenLanguage) ?? languages.find(item => item.code === languageCode)!;
+  const scope = languages.find(item => item.code === chosenLanguage) ?? languages.find(item => item.code === languageCode) ?? languages[0];
   const [refresh, setRefresh] = useState(0);
   const retry = () => setRefresh(n => n + 1);
   const query = new URLSearchParams({ language: scope.code }).toString();
@@ -59,8 +60,8 @@ export function AccountStatistics({ userId, languageCode, open, interfaceLanguag
     {progress.status !== "ready" || !selected
       ? status(progress.status === "loading" ? copy.materialLoading : copy.materialUnavailable, progress.status === "error")
       : <>
-        <StatisticsMaterialPicker interfaceLanguage={interfaceLanguage} languageLabel={languageLabel} value={materialKey(selected)} onChange={setChosenMaterial}
-          options={[...materials].sort((a,b)=>Number(a.personal)-Number(b.personal)).map(item => ({ group: item.personal ? copy.materialOwnCollection : undefined, id: materialKey(item), label: name(item), short: item.kind === "all" ? copy.all : undefined,
+        <StatisticsMaterialPicker interfaceLanguage={interfaceLanguage} languageLabel={languageLabel} value={materialKey(selected)} onChange={setChosenMaterial} compact
+          options={[...materials].sort((a,b)=>Number(a.personal)-Number(b.personal)).map(item => ({ group: item.personal ? copy.materialOwnCollection : undefined, id: materialKey(item), label: name(item), short: item.kind === "all" ? copy.all : item.name ?? undefined,
             description: `${item.kind === "all" ? copy.allEnabledDescription : item.kind === "dictionary" ? copy.materialDictionary : item.personal ? copy.materialOwnCollection : copy.materialCollection} · ${formatUiCount(interfaceLanguage, item.total, copy, "card")}` }))} />
         <StatisticsQueue interfaceLanguage={interfaceLanguage} due={selected.due}
           description={selected.kind === "all" ? formatUiMessage(copy.allMaterial, { language: languageLabel }) : `${languageLabel} · ${name(selected)}`}

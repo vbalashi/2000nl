@@ -38,7 +38,7 @@ export function ApprovedTextSizeSection({
     >
       <div className={s.preferenceRow}>
       <h2>{text.textSize}</h2>
-      <SegmentedControl label={text.textSize}>
+      <SegmentedControl standard label={text.textSize}>
         {readingSizes.map((size) => {
           const display = textSizes.find(
             (item) => item.id === accountTextSize[size],

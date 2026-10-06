@@ -43,9 +43,7 @@ function MaterialFeedback({ language }: { language: OnboardingLanguage }) {
             ? copy.saveError
             : account.saveStatus === "conflict"
               ? copy.conflict
-              : account.saveStatus === "saved"
-                ? copy.saved
-                : null;
+              : null;
   return message ? (
     <div
       className={s.materialFeedback}

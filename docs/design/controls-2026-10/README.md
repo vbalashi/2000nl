@@ -25,3 +25,5 @@ and demonstrates the unsaved-change dot using an in-memory saved baseline.
 The dot clears after successful save or when changes are reversed.
 The earlier A/B/C screenshots and prototype commit 762727c0 preserve the comparison.
 `footer-b-unsaved.png` shows the chosen variant with an edit pending.
+
+Final Statistics material scope: All uses all enabled readable material of the language selected above; a remembered dictionary/collection plus chevron replaces separate Current language and cross-language choices. The shared Statistics development view follows this production control. The initial standalone generator remains saved as exploratory design evidence.

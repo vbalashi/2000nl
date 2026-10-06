@@ -65,7 +65,8 @@ test("loads account palette, saves only the selected palette, blocks duplicate s
   expect(repository.save).toHaveBeenCalledOnce();
   expect(repository.save).toHaveBeenCalledWith("a", "graphite");
   await act(async () => complete());
-  expect(await screen.findByText("Saved to your account.")).toBeTruthy();
+  expect(screen.queryByText("Saved to your account.")).toBeNull();
+  expect(screen.getByRole("button",{name:"Graphite"})).toHaveAttribute("aria-pressed","true");
 });
 test("load and save failures allow explicit retry without replacing account ownership", async () => {
   vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
@@ -91,7 +92,8 @@ test("load and save failures allow explicit retry without replacing account owne
   fireEvent.click(screen.getByRole("button", { name: "Blue" }));
   await screen.findByText("Appearance could not be saved.");
   fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-  await screen.findByText("Saved to your account.");
+  await waitFor(()=>expect(screen.queryByText("Appearance could not be saved.")).toBeNull());
+  expect(screen.queryByText("Saved to your account.")).toBeNull();
   expect(repository.save.mock.calls).toEqual([
     ["a", "blue"],
     ["a", "blue"],

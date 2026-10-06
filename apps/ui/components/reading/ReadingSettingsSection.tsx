@@ -34,7 +34,6 @@ export function ReadingSettingsSection({ language }: { language: OnboardingLangu
         </label>
         <div role={settings.saveStatus[device] === "error" ? "alert" : "status"} className="mt-2 text-xs text-slate-500 dark:text-slate-400">
           {settings.saveStatus[device] === "saving" && text.saving}
-          {settings.saveStatus[device] === "saved" && text.saved}
           {settings.saveStatus[device] === "error" && <><p>{text.saveError}</p><button type="button" className={retryClass} onClick={() => void settings.save(device, settings.preferences[device])}>{text.retry}</button></>}
         </div>
       </div>)}

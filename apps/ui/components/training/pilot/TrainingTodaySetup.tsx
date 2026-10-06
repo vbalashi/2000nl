@@ -679,7 +679,7 @@ export function TrainingTodaySetup({
     if (result === "saved") {
       setEditingPresetId(preset.id);
       setTrainingName(preset.name);
-      setPresetMessage(accountCopy.saved);
+      setPresetMessage("");
     } else {
       setPresetMessage(result === "conflict" ? accountCopy.conflict : accountCopy.saveFailed);
     }
@@ -689,7 +689,7 @@ export function TrainingTodaySetup({
   const accountAction = async (action: () => Promise<string>) => {
     const result = await action();
     if (result === "unavailable") return false;
-    setPresetMessage(result === "saved" ? accountCopy.saved : result === "conflict" ? accountCopy.conflict : accountCopy.saveFailed);
+    setPresetMessage(result === "saved" ? "" : result === "conflict" ? accountCopy.conflict : accountCopy.saveFailed);
     return result === "saved";
   };
 

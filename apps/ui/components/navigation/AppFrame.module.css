@@ -77,8 +77,10 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  border: 1px solid var(--app-frame-line);
-  border-radius: 100px;
+  height:34px;
+  box-sizing:border-box;
+  border:0;
+  border-radius:13.6px;
   background: var(--app-frame-control-surface);
   padding: 3px;
   font-size: var(--practice-text-caption, 0.75rem);
@@ -86,17 +88,17 @@
 
 .primaryNav button {
   display: flex;
-  min-height: 32px;
+  min-height: 28px;
   align-items: center;
   gap: 7px;
   border: 0;
-  border-radius: 100px;
+  border-radius: 11.2px;
   background: transparent;
   color: var(--app-frame-muted);
   padding: 0 10px;
   transition:background .2s var(--practice-motion),color .2s var(--practice-motion),box-shadow .2s var(--practice-motion);
   font-size: inherit;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .primaryNav button:hover {
@@ -214,6 +216,7 @@
 }
 
 .content {
+  overflow: hidden;
   display: flex;
   min-height: 0;
   flex: 1;
@@ -357,9 +360,9 @@
   border-radius: 100px;
   box-shadow: 0 1px 2px var(--practice-shadow, rgb(15 23 42 / 0.08));
   transition:
-    transform 240ms var(--practice-motion, ease),
-    width 240ms var(--practice-motion, ease),
-    height 240ms var(--practice-motion, ease);
+    transform 230ms var(--practice-motion, ease),
+    width 230ms var(--practice-motion, ease),
+    height 230ms var(--practice-motion, ease);
 }
 .tabBarNav .selection {
   border-radius: 8px;
@@ -370,3 +373,8 @@
     transition: none;
   }
 }
+
+.desktopNav .primaryNav{height:34px;box-sizing:border-box;border:0;border-radius:13.6px;padding:3px}
+.desktopNav .primaryNav button{min-height:28px;border-radius:11.2px;font-weight:400}
+
+.primaryNav .selection{border-radius:11.2px;box-shadow:none}

@@ -41,9 +41,7 @@ test("approved settings keep production callback ownership and an existing extra
   vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const p = props();
   render(<SettingsDestination {...p} />);
-  expect(screen.getByLabelText("Translation language")).toHaveTextContent(
-    "German",
-  );
+  expect(screen.getByRole("button",{name:"German"})).toHaveAttribute("aria-pressed","true");
   fireEvent.click(screen.getByRole("button", { name: "Off" }));
   expect(p.onTranslationLanguageChange).toHaveBeenCalledWith(null);
   fireEvent.click(screen.getByLabelText("Interface language"));
@@ -172,7 +170,7 @@ test("searching another translation language emits its canonical code and restor
   vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const p = props();
   render(<SettingsDestination {...p} />);
-  const opener = screen.getByLabelText("Translation language");
+  const opener = screen.getByRole("button",{name:"Translation language"});
   opener.focus();
   fireEvent.click(opener);
   const search = await screen.findByRole("textbox");
@@ -184,4 +182,16 @@ test("searching another translation language emits its canonical code and restor
   expect(p.onTranslationLanguageChange).toHaveBeenCalledWith("pl");
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect(opener).toHaveFocus();
+});
+
+
+test("translation Off remembers the previous language and its label re-enables it",()=>{
+ vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+ const p=props();const view=render(<SettingsDestination {...p}/>);
+ fireEvent.click(screen.getByRole("button",{name:"Off"}));
+ view.rerender(<SettingsDestination {...p} translationLanguage={null}/>);
+ expect(screen.getByRole("button",{name:"Off"})).toHaveAttribute("aria-pressed","true");
+ fireEvent.click(screen.getByRole("button",{name:"German"}));
+ expect(p.onTranslationLanguageChange).toHaveBeenLastCalledWith("de");
+ expect(screen.getByRole("button",{name:"Translation language"})).toHaveAttribute("aria-haspopup","dialog");
 });
