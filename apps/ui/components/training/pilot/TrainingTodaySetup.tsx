@@ -22,6 +22,7 @@ import { TrainingMixPicker, mixStepSelection } from "./TrainingMixPicker";
 import { TrainingSessionSizePicker } from "./TrainingSessionSizePicker";
 import { useAccountTrainingSetups } from "@/lib/training/setups/useAccountTrainingSetups";
 import {readLastSelectedTraining, resolveHighlightedTraining, writeLastSelectedTraining} from "@/lib/training/setups/lastSelected";
+import {hasUnsavedTrainingChanges} from "@/lib/training/setups/unsavedChanges";
 import type { SavedTraining } from "@/lib/training/setups/model";
 import { getUiMessages } from "@/lib/uiMessages";
 import { SavedTrainingControls } from "@/components/practice/SavedTrainingControls";
@@ -677,7 +678,7 @@ export function TrainingTodaySetup({
     if (result === "unavailable") return false;
     if (result === "saved") {
       setEditingPresetId(preset.id);
-      if(copyName !== undefined) setTrainingName(preset.name);
+      setTrainingName(preset.name);
       setPresetMessage(accountCopy.saved);
     } else {
       setPresetMessage(result === "conflict" ? accountCopy.conflict : accountCopy.saveFailed);
@@ -1048,6 +1049,7 @@ export function TrainingTodaySetup({
     languagePending={trainingLanguageLoading||Boolean(pendingLanguage)||startPending} dictionariesLoading={dictionariesLoading} translationLanguage={translationTargetLanguageCode}
     name={trainingName??selectedList??""} onNameChange={setTrainingName} onLanguageChange={language=>{if(language!==trainingLanguageCode){setPendingLanguage(language);onTrainingLanguageChange?.(language);}}}
     onDraftChange={setDraft} onSelectFamily={selectFamily} onToggleMode={toggleMode} onMixChange={changeMix} onBack={()=>setScreen("today")}
+    hasUnsavedChanges={hasUnsavedTrainingChanges(editingTraining,{name:trainingName??selectedList??"",languageCode:pendingLanguage??trainingLanguageCode??"nl",draft})}
     editing={Boolean(editingPresetId)} onSave={()=>savePreset()} onSaveAs={name=>savePreset(name)}
     onDelete={editingTraining?async()=>{const removed=await accountAction(()=>account.remove(editingTraining.id));if(removed){setEditingPresetId(null);setScreen("today");}return removed;}:undefined}
     deletionChangesMain={Boolean(editingTraining && account.snapshot.document.mainTrainingId===editingTraining.id && account.snapshot.document.trainings.length>1)} deleteDisabled={account.pending||account.status!=="ready"}

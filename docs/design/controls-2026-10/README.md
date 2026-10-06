@@ -17,20 +17,11 @@ Validated: menu selection and returning to a remembered language, translation Of
 
 The schematic checkbox-based Session Builder has been replaced. See [source/README.md](source/README.md) for the source map, rebuild commands, fixture boundaries and repeatable validation.
 
-## Start-first footer comparison (pending owner choice)
+## Selected footer B (2026-10-06)
 
-Run the local UI and open `/dev/controls-standard?variant=outline`.
-The prototype uses the real Builder with in-memory callbacks; changes to this
-comparison do not alter the production footer. Use the Actions selector or the
-bottom arrows (keyboard left/right) to compare:
-
-- `current`: published layout, Save and Start at 44 px.
-- `quiet`: Start first; trash left and transparent Save/menu right, 28 px.
-- `outline`: same ordering, compact Save/menu with one neutral outline, 28 px.
-- `wide`: same ordering, wide outlined Save/menu, 34 px.
-
-Screenshots: `footer-a-quiet.png`, `footer-b-outline.png`, `footer-c-wide.png`,
-`footer-b-desktop.png`, `footer-b-mobile-ru.png`. Outline was checked at 320 px
-in Russian with the Save-as menu open: no page/footer overflow. Desktop at
-1280 px was inspected. Decision remains open; production rollout requires a
-separate selected-variant change.
+The owner chose B: Start first, then trash left and compact outlined Save/menu right, 28 px.
+The development route `/dev/controls-standard` now uses this production component
+and demonstrates the unsaved-change dot using an in-memory saved baseline.
+The dot clears after successful save or when changes are reversed.
+The earlier A/B/C screenshots and prototype commit 762727c0 preserve the comparison.
+`footer-b-unsaved.png` shows the chosen variant with an edit pending.

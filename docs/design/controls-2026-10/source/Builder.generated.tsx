@@ -69,6 +69,7 @@ type Props = {
   onBack: () => void;
   onSave: () => Promise<boolean>;
   editing?: boolean;
+  hasUnsavedChanges?: boolean;
   onSaveAs?: (newName: string) => Promise<boolean>;
   onDelete?: () => boolean | Promise<boolean>;
   deletionChangesMain?: boolean;
@@ -166,7 +167,7 @@ export function ApprovedTrainingBuilder(p: Props) {
       });
       node.append(span);
       span.textContent = p.saveLabel;
-      const saveWidth = span.getBoundingClientRect().width + 52;
+      const saveWidth = span.getBoundingClientRect().width + 63;
       span.textContent = p.startLabel;
       const startWidth = span.getBoundingClientRect().width + 24;
       span.remove();
@@ -706,6 +707,14 @@ export function ApprovedTrainingBuilder(p: Props) {
       </div>
       <footer className={s.footer}>
         <div>
+          <button
+            type="button"
+            className={s.primary}
+            disabled={p.startDisabled}
+            onClick={p.onStart}
+          >
+            {p.startLabel}
+          </button>
           {p.canSave && (
             <div className={s.saveActions}>
               {p.editing && p.onDelete && (
@@ -725,6 +734,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                 <button
                   type="button"
                   className={s.secondary}
+                  aria-label={p.saveLabel}
                   disabled={saving || p.saveDisabled}
                   onClick={() => {
                     p.onBeginSave();
@@ -732,6 +742,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                     else setSaveOpen(true);
                   }}
                 >
+                  {p.hasUnsavedChanges && <span className={s.unsavedDot} role="status" aria-label={({en:"Unsaved changes",ru:"Несохранённые изменения",nl:"Niet-opgeslagen wijzigingen"})[p.interfaceLanguage]} title={({en:"Unsaved changes",ru:"Несохранённые изменения",nl:"Niet-opgeslagen wijzigingen"})[p.interfaceLanguage]} />}
                   {p.saveLabel}
                 </button>
                 {p.editing && p.onSaveAs && (
@@ -780,14 +791,7 @@ export function ApprovedTrainingBuilder(p: Props) {
               </div>
             </div>
           )}
-          <button
-            type="button"
-            className={s.primary}
-            disabled={p.startDisabled}
-            onClick={p.onStart}
-          >
-            {p.startLabel}
-          </button>
+
         </div>
       </footer>
       {nounOpen && (
