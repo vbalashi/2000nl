@@ -9,3 +9,7 @@ For Reviews only, a zero due-now count and a positive review total offer Review 
 Migration 210 replaces only the read aggregate cutoff. It does not reschedule cards or broaden normal session selection. Its versioned postflight replaces the historical day-end aggregate probe while retaining auth, eligibility, grants and contextual-index guards.
 
 Reviews only includes both mature due reviews and due short-interval learning cards. It excludes new introductions and future repetitions. Migration 211 corrects the unfiltered scheduler branch that previously classified due learning as practice in Reviews only. Translation uses ordinary reverse identity with contextual example eligibility, so its regression must compare overview counts against an actual contextual start plan at a short learning interval.
+
+## Transient read recovery
+
+Selected recipe availability retries transient read failures without exposing an intermediate error: at most three attempts, 15 seconds per attempt, with 500ms and 1500ms delays. The outer UI deadline is 50 seconds. Network failures, per-attempt timeouts, HTTP408/429/5xx are retryable; authorization, invalid recipe, and invalid successful payloads are terminal. Existing loading or cached-value refreshing state remains visible until success or exhaustion. Scope change, account change and unmount cancel the request and backoff; responses from an old scope cannot update the new recipe. Manual Retry remains available after exhaustion. No background polling or retrying training mutations is introduced.

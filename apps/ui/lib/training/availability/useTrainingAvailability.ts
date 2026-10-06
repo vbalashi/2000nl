@@ -63,7 +63,7 @@ export function useTrainingAvailability({ ownerId, recipe, enabled = true, refre
       controller.abort();
       publish(item ? ready(item.value, false, true) : { status: "error" });
       current = false;
-    }, 10000);
+    }, 50000);
     void fetchTrainingAvailability(ownerId, recipeRef.current, controller.signal).then(value => {
       if (!current || generation !== trainingAvailabilityCacheGeneration(ownerId)) return;
       writeTrainingAvailabilityCache(key, value);
