@@ -11,7 +11,8 @@ Status: control defaults selected; Session Builder visual review pending. No pro
 | Period, statistics languages, material language, builder languages, appearance, spacing, text size, translation | 28 px | 40% = 11.2 px | No | No |
 | Learning languages selector | 28 px | 40% = 11.2 px | No | No |
 | Primary Start training / wide Start learning | 44 px | 30% = 13.2 px | Action fill | No |
-| Secondary actions in Session Builder | 34 px | 30% = 10.2 px | Contextual action fill | No |
+| Save changes + menu / Start training in Session Builder | 44 px, equal width | 30% = 13.2 px | Secondary / primary action fill | No |
+| Delete training in Session Builder | 34 px | 30% = 10.2 px | Transparent; trash icon + label | No |
 | Library dictionary-card service actions | 28 px, fixed | 30% = 8.4 px | No group fill | No |
 
 The percentages are relative to control height, not width. Retain 44 / 34 / 28 as explicit size variants. Do not replace intentionally wide launch actions with content-width controls everywhere.
@@ -34,7 +35,7 @@ Your material: All means all material languages, Current language follows the ap
 
 Use the Training overview's 720 px content width, including sections and footer. The back arrow may sit outside this alignment on desktop, inside the header on small screens. Keep the overview's Newsreader training title (36 px) and a modest Inter Session builder heading (20 px). Training name appears as text with a pencil; editing is explicit.
 
-Delete training is a muted destructive action on the left, available only for a saved training. Save changes updates that saved recipe; Save as new training is a separate menu action. Start training launches the edited parameters. Preserve the authoritative session lifecycle; this visual decision does not authorize changing persistence or DB behavior. For a new recipe use Save training, not Save changes. Retain discard/unsaved-change and deletion confirmation behavior where required.
+Delete training is an unfilled muted destructive action with a trash icon and label on the left, available only for a saved training. Save changes and Start training have the same height (44 px) and equal visual widths (168 px on desktop, equal responsive columns on narrow screens). Save changes and its chevron share one continuous secondary fill and outline shape, with no divider. The label saves directly; the chevron opens the Save as new training menu. Keep these as distinct accessible actions within one visual control. Save changes updates that saved recipe; Save as new training is a separate menu action. Start training launches the edited parameters. Preserve the authoritative session lifecycle; this visual decision does not authorize changing persistence or DB behavior. For a new recipe use Save training, not Save changes. Retain discard/unsaved-change and deletion confirmation behavior where required.
 
 Remove Set as main training: an explicit start makes it current. Remove unrelated Checking your saved session and reset-on-another-device prose from this builder. Necessary loading and failure states should attach to their actual action, not display unexplained status text. The mockup has local preview actions, not actual data mutations.
 
