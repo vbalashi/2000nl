@@ -17,8 +17,8 @@ for(const profile of [{name:'desktop-en',width:1280,height:900,language:'en'},{n
  const name=page.getByRole('textbox',{name:ru?'Название тренировки':'Training name'});await expect(name).toHaveValue('Original 575');await name.fill('Renamed 575');await expect(dirty).toBeVisible();
  const footer=page.locator('footer').filter({has:page.getByRole('button',{name:ru?'Сохранить изменения':'Save changes',exact:true})});
  const update=footer.getByRole('button',{name:ru?'Сохранить изменения':'Save changes',exact:true}),remove=footer.getByRole('button',{name:ru?'Удалить тренировку':'Delete training',exact:true}),dropdown=footer.locator('summary');
- const geometry={update:await update.boundingBox(),remove:await remove.boundingBox(),dropdown:await dropdown.boundingBox(),footer:await footer.boundingBox()};
- expect(geometry.update!.height).toBe(28);expect(geometry.remove!.width).toBeGreaterThanOrEqual(32);expect(geometry.dropdown!.width).toBeGreaterThanOrEqual(28);
+ const geometry={saveControl:await update.locator("..").boundingBox(),update:await update.boundingBox(),remove:await remove.boundingBox(),dropdown:await dropdown.boundingBox(),footer:await footer.boundingBox()};
+ expect(geometry.saveControl!.height).toBe(28);expect(geometry.update!.height).toBe(26);expect(geometry.remove!.width).toBeGreaterThanOrEqual(32);expect(geometry.dropdown!.width).toBeGreaterThanOrEqual(28);
  expect(geometry.remove!.x+geometry.remove!.width).toBeLessThanOrEqual(geometry.update!.x);expect(geometry.dropdown!.x).toBeGreaterThanOrEqual(geometry.update!.x+geometry.update!.width-1);
  expect(await footer.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);expect(await page.locator('main').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
  await page.screenshot({path:info.outputPath('builder-footer.png'),fullPage:true});await update.click();await expect.poll(()=>mutations.length).toBe(1);expect(mutations[0].trainings[0]).toMatchObject({id:'saved-575',name:'Renamed 575'});await expect(page.getByRole('dialog')).toHaveCount(0);await expect(dirty).toHaveCount(0);
