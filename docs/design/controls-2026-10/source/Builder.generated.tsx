@@ -38,7 +38,7 @@ import type {
   TrainingSessionSize,
 } from "@/lib/types";
 import { exerciseSummary } from "@/lib/training/exerciseSummary";
-import { TrainingSourcePicker } from "./TrainingSourcePicker";
+import { TrainingSourcePicker } from "@/components/training/pilot/TrainingSourcePicker";
 import { TrainingMixPicker } from "@/components/training/pilot/TrainingMixPicker";
 import { TrainingSessionSizePicker } from "@/components/training/pilot/TrainingSessionSizePicker";
 import s from "@/components/training/pilot/approvedTrainingBuilder.module.css";

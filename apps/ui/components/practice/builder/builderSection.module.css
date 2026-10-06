@@ -112,3 +112,18 @@
   grid-column: 2;
   grid-row: 1;
 }
+
+/* Approved Session Builder controls */
+:global(.session-builder-standard) .section{background:transparent;border:1px solid color-mix(in srgb,var(--practice-text) 18%,transparent);padding:0;box-sizing:border-box}
+:global(.session-builder-standard) .reveal>div{background:transparent}
+:global(.session-builder-standard) :global(.builder-section-group)>.section{border:0;border-radius:0;margin:0;position:relative}
+:global(.session-builder-standard) .body{padding-top:8px;padding-bottom:18px}
+:global(.session-builder-standard) .chevron,:global(.session-builder-standard) .rotated{color:color-mix(in srgb,var(--practice-text) 18%,transparent)}
+:global(.session-builder-standard) :global(.builder-section-group)>.section:has(>.heading:hover){border:0;border-radius:0;background:transparent}
+:global(.session-builder-standard) .heading:hover,:global(.session-builder-standard) .heading:active{background:transparent;border:0;box-shadow:none;transform:none;outline:none}
+:global(.session-builder-standard) .heading{transition:background-color 150ms ease}
+
+:global(.session-builder-standard) :global(.builder-section-group)>.section:before{content:"";position:absolute;left:16px;right:16px;top:0;border-top:1px solid color-mix(in srgb,var(--practice-text) 12%,transparent)}
+@media(hover:hover){:global(.session-builder-standard) .heading:hover{background:color-mix(in srgb,var(--practice-surface-hover) 42%,transparent)}}
+
+@media(prefers-reduced-motion:reduce){:global(.session-builder-standard) .heading{transition:none}}

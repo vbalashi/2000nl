@@ -1,0 +1,63 @@
+const defaultModesForScenario = (scenario: TrainingSetupOption) => {
+  const modes = scenario.modes ?? [];
+  if (scenario.value === "idiom" && modes.includes("word-to-definition")) {
+    return ["word-to-definition"] satisfies TrainingMode[];
+  }
+  if (
+    scenario.value === "understanding" &&
+    modes.includes("word-to-definition")
+  ) {
+    return ["word-to-definition"] satisfies TrainingMode[];
+  }
+  return modes;
+};
+
+
+  const selectFamily = (family: TrainingExerciseFamily) => {
+  const scenario = family === "idiom" ? idiomScenario : family === "sentence" ? scenarios.find((option) => option.value === "sentences") : understandingScenario;
+    if (!scenario) return;
+    setDraft((current) => ({
+      ...current,
+      family,
+      scenarioId: scenario.value,
+      modes: family === "word-in-context" ? ["definition-to-word"] : defaultModesForScenario(scenario),
+      ...(family !== "meaning" && current.sessionSize === "all-due-today"
+        ? { sessionSize: DEFAULT_SESSION_SIZE }
+        : {}),
+    }));
+  };
+  const toggleMode = (mode: TrainingMode) => {
+    if (!selectedScenario?.modes?.includes(mode)) return;
+    setDraft((current) => {
+      const active = current.modes.includes(mode);
+      if (activeFamily === "word-in-context") return current;
+      if (activeFamily !== "meaning" && activeFamily !== "idiom") {
+        return {
+          ...current,
+          scenarioId: selectedScenario.value,
+          modes: [mode],
+        };
+      }
+      if (active && current.modes.length === 1) return current;
+      return {
+        ...current,
+        scenarioId: selectedScenario.value,
+        modes: active
+          ? current.modes.filter((candidate) => candidate !== mode)
+          : [...current.modes, mode],
+      };
+    });
+  };
+  const changeMix = (index: number) =>
+    setDraft((current) => {
+      const selection = mixStepSelection(index, current.newReviewRatio);
+      return {
+        ...current,
+        ...selection,
+        sessionSize:
+          selection.cardFilter !== "review" && current.sessionSize === "all-due-today"
+            ? DEFAULT_SESSION_SIZE
+            : current.sessionSize,
+      };
+    });
+

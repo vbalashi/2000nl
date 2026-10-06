@@ -22,7 +22,7 @@ const dialogPrototype=HTMLDialogElement.prototype;
 const showModalDescriptor=Object.getOwnPropertyDescriptor(dialogPrototype,"showModal"),closeDescriptor=Object.getOwnPropertyDescriptor(dialogPrototype,"close");
 beforeAll(()=>{Object.defineProperties(dialogPrototype,{showModal:{configurable:true,value(){this.setAttribute("open","");}},close:{configurable:true,value(){this.removeAttribute("open");}}});});
 afterAll(()=>{if(showModalDescriptor)Object.defineProperty(dialogPrototype,"showModal",showModalDescriptor);else Reflect.deleteProperty(dialogPrototype,"showModal");if(closeDescriptor)Object.defineProperty(dialogPrototype,"close",closeDescriptor);else Reflect.deleteProperty(dialogPrototype,"close");});
-beforeEach(() => accounts.clear());
+beforeEach(() => {accounts.clear();vi.stubGlobal("matchMedia",vi.fn(()=>({matches:true,addEventListener:vi.fn(),removeEventListener:vi.fn()})));});
 afterEach(()=>{vi.unstubAllEnvs();});
 const seedAccount = (userId: string, trainings: unknown[]) => accounts.set(userId, { revision: 0, document: { schemaVersion: 1, trainings: trainings.map((item: any) => ({ ...item, languageCode: "nl" })), mainTrainingId: null } });
 
@@ -628,7 +628,7 @@ test("approved builder stores a chosen name without repeating the configuration"
  await screen.findByRole("button",{name:"Create training"});
  fireEvent.click(screen.getByRole("button",{name:"Create training"}));
  fireEvent.click(screen.getByRole("button",{name:"Save training"}));
- fireEvent.change(screen.getByLabelText("Training name"),{target:{value:"Five useful words"}});
+ fireEvent.change(screen.getByRole("textbox",{name:"Training name"}),{target:{value:"Five useful words"}});
  fireEvent.click(within(screen.getByRole("dialog")).getByRole("button",{name:"Save training"}));
  await waitFor(()=>expect(screen.queryByRole("dialog")).toBeNull());
  await screen.findByText("Saved to your account");
@@ -636,9 +636,9 @@ test("approved builder stores a chosen name without repeating the configuration"
  fireEvent.click(screen.getByRole("button",{name:"Back to Training"}));
  await screen.findByRole("heading",{name:"Five useful words",level:2});
  fireEvent.click(screen.getAllByRole("button",{name:"Edit Five useful words"})[0]);
- await screen.findByRole("button",{name:"Update training"});
- fireEvent.click(screen.getByRole("button",{name:"Update training"}));
- await waitFor(()=>expect(screen.getByLabelText("Training name")).toHaveValue("Five useful words"));
+ await screen.findByRole("button",{name:"Save changes"});
+ fireEvent.click(screen.getByRole("button",{name:"Save changes"}));
+ expect(screen.getByRole("heading",{name:"Five useful words",level:2})).toBeInTheDocument();
 });
 
 test("approved overview discloses unavailable dictionaries without losing saved references", async()=>{
@@ -672,7 +672,7 @@ test("approved builder opens every section collapsed and resets when creating ag
  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
  render(<TrainingTodaySetup {...baseProps} userId="builder-sections" trainingLanguageCode="nl" hasOwnedSession={false}/>);
  await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));
- for(const name of ["Language","Source","Exercises","Filters","Session"])expect(screen.getByRole("button",{name:new RegExp(`^${name} `)})).toHaveAttribute("aria-expanded","false");
+ for(const name of ["Source","Exercises","Filters","Session"])expect(screen.getByRole("button",{name:new RegExp(`^${name} `)})).toHaveAttribute("aria-expanded","false");
  expect(screen.queryByRole("button",{name:"Nouns"})).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
  expect(screen.getByRole("button",{name:"Nouns"})).toBeInTheDocument();
@@ -694,7 +694,7 @@ test("approved source picker selects dictionaries on the same screen",async()=>{
  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");const onStart=vi.fn();
  render(<TrainingTodaySetup {...baseProps} userId="builder-source" trainingLanguageCode="nl" hasOwnedSession={false} dictionaries={[{value:dictionaryA,label:"Dictionary A"}]} onStart={onStart}/>);
  await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));fireEvent.click(screen.getByRole("button",{name:/^Source /}));
- fireEvent.click(screen.getByRole("button",{name:"Selected dictionaries"}));fireEvent.click(screen.getByRole("button",{name:"Dictionary A"}));fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ fireEvent.click(screen.getByRole("button",{name:"Dictionary A"}));fireEvent.click(screen.getByRole("button",{name:"Start training"}));
  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({materialMode:"selected-dictionaries",dictionaryIds:[dictionaryA]}));
 });
 
@@ -762,7 +762,6 @@ test("paused material blocks fresh runs while an owned session still resumes", a
   fireEvent.click(continueButton);
   expect(onContinue).toHaveBeenCalledOnce();
   fireEvent.click(screen.getByRole("button",{name:"Create training"}));
-  fireEvent.click(screen.getByRole("button",{name:/^Language /}));
   expect(screen.queryByRole("button",{name:"Dutch"})).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"English"}));
   expect(onTrainingLanguageChange).toHaveBeenCalledWith("en");
@@ -787,7 +786,6 @@ test("a disabled dictionary is omitted from source choices without modifying the
   expect(screen.getByRole("button",{name:"Start training"})).toBeDisabled();
   fireEvent.click(screen.getByRole("button",{name:"Create training"}));
   fireEvent.click(screen.getByRole("button",{name:/^Source /}));
-  fireEvent.click(screen.getByRole("button",{name:"Selected dictionaries"}));
   expect(screen.queryByRole("button",{name:"Dictionary A"})).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"Dictionary B"}));
   fireEvent.click(screen.getByRole("button",{name:"Start training"}));
@@ -824,11 +822,11 @@ test("approved reverse idiom preview names its expression answer", async () => {
 
  test("approved source search appears above five choices and hidden queries cannot hide short lists",async()=>{
  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
- const dictionaries=Array.from({length:6},(_,index)=>({value:`dictionary-${index}`,label:`Dictionary ${index}`}));
+ const dictionaries=Array.from({length:12},(_,index)=>({value:`dictionary-${index}`,label:`Dictionary ${index}`}));
  const props={...baseProps,userId:"source-search-boundary",trainingLanguageCode:"nl",hasOwnedSession:false};
  const view=render(<TrainingTodaySetup {...props} dictionaries={dictionaries}/>);
  await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));fireEvent.click(screen.getByRole("button",{name:/^Source /}));
- fireEvent.click(screen.getByRole("button",{name:"Selected dictionaries"}));
+ fireEvent.click(screen.getByRole("button",{name:"Search sources"}));
  fireEvent.change(screen.getByRole("textbox",{name:"Search sources"}),{target:{value:"Dictionary 5"}});
  expect(screen.queryByRole("button",{name:"Dictionary 0"})).not.toBeInTheDocument();
  view.rerender(<TrainingTodaySetup {...props} dictionaries={dictionaries.slice(0,5)}/>);
@@ -896,7 +894,7 @@ test("contextual Translation saves and restores its exact reverse recipe after r
  fireEvent.click(screen.getByRole("button",{name:/^Exercises /}));
  fireEvent.click(screen.getByRole("button",{name:"Translation"}));
  fireEvent.click(screen.getByRole("button",{name:"Save training"}));
- fireEvent.change(screen.getByLabelText("Training name"),{target:{value:"Context practice"}});
+ fireEvent.change(screen.getByRole("textbox",{name:"Training name"}),{target:{value:"Context practice"}});
  fireEvent.click(within(screen.getByRole("dialog")).getByRole("button",{name:"Save training"}));
  await waitFor(()=>expect(accounts.get(props.userId)?.document.trainings).toHaveLength(1));
  const saved=structuredClone(accounts.get(props.userId)!.document.trainings[0]);
@@ -933,8 +931,9 @@ test("Update renames the same saved identity while Save as creates a separate re
  seedAccount("rename-owner",[{id:"original-id",name:"Original",draft:initialDraft}]);
  render(<TrainingTodaySetup {...baseProps} userId="rename-owner" trainingLanguageCode="nl" hasOwnedSession={false}/>);
  fireEvent.click((await screen.findAllByRole("button",{name:"Edit Original"}))[0]);
- fireEvent.change(screen.getByLabelText("Training name"),{target:{value:"Renamed"}});
- fireEvent.click(screen.getByRole("button",{name:"Update training"}));
+ fireEvent.click(screen.getByRole("button",{name:"Training name"}));
+ fireEvent.change(screen.getByRole("textbox",{name:"Training name"}),{target:{value:"Renamed"}});
+ fireEvent.click(screen.getByRole("button",{name:"Save changes"}));
  await waitFor(()=>expect(accounts.get("rename-owner")?.document.trainings).toMatchObject([{id:"original-id",name:"Renamed"}]));
  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
  fireEvent.click(screen.getByLabelText("Save as…"));

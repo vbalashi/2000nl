@@ -26,6 +26,7 @@ import type { SavedTraining } from "@/lib/training/setups/model";
 import { getUiMessages } from "@/lib/uiMessages";
 import { SavedTrainingControls } from "@/components/practice/SavedTrainingControls";
 import {trainingPresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
+import {TrainingScreenTransition} from "./TrainingScreenTransition";
 import {ApprovedTrainingBuilder} from "./ApprovedTrainingBuilder";
 import {AccountTrainingOverview, type OwnedTrainingOverviewSession} from "./AccountTrainingOverview";
 import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
@@ -764,7 +765,7 @@ export function TrainingTodaySetup({
   }
 
   if (screen === "today" && trainingPresentationV1Enabled()) {
-    return <AccountTrainingOverview availability={availability} onAvailabilityRetry={availabilityResult.reload} selectedTrainingId={selectedTrainingId} ownerId={userId} emptyTraining={emptyTraining} onEarlyReview={training=>void requestStart({...training.draft,cardFilter:"review"},training.name,{trainingId:training.id,reviewTiming:"early"})} interfaceLanguage={interfaceLanguage} languageCode={trainingLanguageCode??"nl"}
+    return <TrainingScreenTransition screen="today"><AccountTrainingOverview availability={availability} onAvailabilityRetry={availabilityResult.reload} selectedTrainingId={selectedTrainingId} ownerId={userId} emptyTraining={emptyTraining} onEarlyReview={training=>void requestStart({...training.draft,cardFilter:"review"},training.name,{trainingId:training.id,reviewTiming:"early"})} interfaceLanguage={interfaceLanguage} languageCode={trainingLanguageCode??"nl"}
       languageOptions={trainingLanguageOptions} lists={lists} dictionaries={dictionaries} scenarios={scenarios}
       snapshot={account.snapshot} accountStatus={account.status} initialDraft={initialDraft}
       ownedSession={hasOwnedSession?ownedSession:undefined} activeSessionLabel={activeSessionLabel}
@@ -785,7 +786,7 @@ export function TrainingTodaySetup({
       {presetMessage&&<p role="status">{presetMessage}</p>}
       {sessionResumeStatus!=="ready"&&<p role={sessionResumeStatus==="error"?"alert":"status"}>{sessionResumeStatus==="pending"?t.resumePending:t.resumeError}{sessionResumeStatus==="error"&&<button onClick={onRetryResume}>{t.retryResume}</button>}</p>}
       {cardPreparationStatus==="error"&&<p role="alert">{t.cardError}<button onClick={onRetryCard}>{t.retryCard}</button></p>}
-    </AccountTrainingOverview>;
+    </AccountTrainingOverview></TrainingScreenTransition>;
   }
 
   if (screen === "today") {
@@ -1041,7 +1042,7 @@ export function TrainingTodaySetup({
       };
     });
 
-  if (trainingPresentationV1Enabled()) return <ApprovedTrainingBuilder
+  if (trainingPresentationV1Enabled()) return <TrainingScreenTransition screen="setup"><ApprovedTrainingBuilder
     interfaceLanguage={interfaceLanguage} draft={draft} languageCode={trainingLanguageCode??"nl"} languageOptions={trainingLanguageOptions}
     lists={lists} dictionaries={dictionaries} sources={sources} scenarios={scenarios}
     languagePending={trainingLanguageLoading||Boolean(pendingLanguage)||startPending} dictionariesLoading={dictionariesLoading} translationLanguage={translationTargetLanguageCode}
@@ -1049,21 +1050,17 @@ export function TrainingTodaySetup({
     onDraftChange={setDraft} onSelectFamily={selectFamily} onToggleMode={toggleMode} onMixChange={changeMix} onBack={()=>setScreen("today")}
     editing={Boolean(editingPresetId)} onSave={()=>savePreset()} onSaveAs={name=>savePreset(name)}
     onDelete={editingTraining?async()=>{const removed=await accountAction(()=>account.remove(editingTraining.id));if(removed){setEditingPresetId(null);setScreen("today");}return removed;}:undefined}
-    deletionChangesMain={Boolean(editingTraining && account.snapshot.document.mainTrainingId===editingTraining.id && account.snapshot.document.trainings.length>1)} deleteDisabled={account.pending||account.status!=="ready"} deleteLabel={getUiMessages(interfaceLanguage).builder.delete}
+    deletionChangesMain={Boolean(editingTraining && account.snapshot.document.mainTrainingId===editingTraining.id && account.snapshot.document.trainings.length>1)} deleteDisabled={account.pending||account.status!=="ready"}
     onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft, trainingName?.trim() || undefined, editingPresetId?{trainingId:editingPresetId}:undefined)} canSave={canSaveAccount}
     saveDisabled={account.status!=="ready"||account.pending||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
     startDisabled={startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
-    saveLabel={editingPresetId?accountCopy.update:accountCopy.save} startLabel={startPending?t.starting:scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable?t.materialUnavailable:replacementWarning?t.startHere:t.start}
+    saveLabel={editingPresetId?({en:"Save changes",nl:"Wijzigingen opslaan",ru:"Сохранить изменения"})[interfaceLanguage]:accountCopy.save} startLabel={startPending?t.starting:scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable?t.materialUnavailable:t.start}
     saveNotice={presetMessage} notice={<>
       {materialNotice}
       {presetMessage&&<p role="status">{presetMessage}</p>}
-      {replacementWarning&&<p role="status">{t.replacementWarning}</p>}
-      {sessionResumeStatus!=="ready"&&<p role={sessionResumeStatus==="error"?"alert":"status"}>{sessionResumeStatus==="pending"?t.resumePending:t.resumeError}{sessionResumeStatus==="error"&&<button onClick={onRetryResume}>{t.retryResume}</button>}</p>}
+      {sessionResumeStatus==="error"&&<p role="alert">{t.resumeError}<button onClick={onRetryResume}>{t.retryResume}</button></p>}
       {cardPreparationStatus==="error"&&<p role="alert">{t.cardError}<button onClick={onRetryCard}>{t.retryCard}</button></p>}
-    </>}
-    accountControls={editingTraining&&<SavedTrainingControls name={editingTraining.name} language={interfaceLanguage}
-      hideDelete main={account.snapshot.document.mainTrainingId===editingTraining.id} hasOthers={account.snapshot.document.trainings.length>1} pending={account.pending||account.status!=="ready"}
-      onMain={()=>accountAction(()=>account.makeMain(editingTraining.id))} onDelete={async()=>{const removed=await accountAction(()=>account.remove(editingTraining.id));if(removed){setEditingPresetId(null);setScreen("today");}return removed;}}/>}/>
+    </>}/></TrainingScreenTransition>
   ;
 
   return (
