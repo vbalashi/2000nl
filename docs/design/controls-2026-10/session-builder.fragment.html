@@ -1,0 +1,71 @@
+<div id="nl-builder-review">
+  <div class="review-tools"><label>Тема <select id="builder-theme"><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label></div>
+  <div class="builder-app" data-theme="light">
+    <nav aria-label="Main navigation" class="builder-nav"><span class="nav-ink"></span><button type="button" aria-pressed="true">Training</button><button type="button" aria-pressed="false">Library</button><button type="button" aria-pressed="false">Statistics</button></nav>
+    <main class="builder-content">
+      <header class="builder-heading"><button type="button" class="back" aria-label="Back to training"><i data-lucide="arrow-left" aria-hidden="true"></i></button><h1>Session builder</h1></header>
+      <div class="training-title"><h2 id="training-title">Translation</h2><button class="rename" type="button" aria-label="Edit training name"><i data-lucide="pencil" aria-hidden="true"></i></button><input id="training-name" aria-label="Training name" value="Translation" hidden></div>
+      <div class="builder-sections">
+        <details><summary><span>Language</span><i data-lucide="chevron-down" aria-hidden="true"></i><small id="language-summary">Dutch</small></summary><div class="section-options"><div class="builder-segment" role="group" aria-label="Training language"><span class="choice-ink"></span><button type="button" aria-pressed="true">Dutch</button><button type="button" aria-pressed="false">German</button><button type="button" aria-pressed="false">English</button><button type="button" aria-pressed="false">Russian</button></div></div></details>
+        <details><summary><span>Source</span><i data-lucide="chevron-down" aria-hidden="true"></i><small>VanDale 2k</small></summary><div class="section-options"><div class="builder-segment" role="group" aria-label="Training source"><span class="choice-ink"></span><button type="button" aria-pressed="true">VanDale 2k</button><button type="button" aria-pressed="false">My words</button></div></div></details>
+        <details><summary><span>Exercises</span><i data-lucide="chevron-down" aria-hidden="true"></i><small>Translation · Example translation → word · Reveal &amp; self-rate</small></summary><div class="section-options"><label><input type="checkbox" checked> Translation</label><label><input type="checkbox" checked> Example translation → word</label><label><input type="checkbox" checked> Reveal &amp; self-rate</label></div></details>
+        <details><summary><span>Filters</span><i data-lucide="chevron-down" aria-hidden="true"></i><small>All parts of speech</small></summary><div class="section-options"><div class="builder-segment" role="group" aria-label="Parts of speech"><span class="choice-ink"></span><button type="button" aria-pressed="true">All</button><button type="button" aria-pressed="false">Nouns</button><button type="button" aria-pressed="false">Verbs</button><button type="button" aria-pressed="false">Adjectives</button></div></div></details>
+        <details><summary><span>Session</span><i data-lucide="chevron-down" aria-hidden="true"></i><small>5 exercises · Reviews only</small></summary><div class="section-options"><div class="builder-segment" role="group" aria-label="Session mode"><span class="choice-ink"></span><button type="button" aria-pressed="true">Reviews only</button><button type="button" aria-pressed="false">New + reviews</button></div><label>Exercises <select aria-label="Number of exercises"><option>5</option><option>10</option><option>20</option></select></label></div></details>
+      </div>
+      <footer class="builder-actions"><button type="button" class="delete-training">Delete training</button><div class="save-actions"><button type="button" class="save-training">Save changes</button><button type="button" class="save-menu-trigger" aria-label="More saving options" aria-haspopup="true" aria-expanded="false"><i data-lucide="chevron-down" aria-hidden="true"></i></button><div class="save-menu" hidden><button type="button">Save as new training</button></div></div><button type="button" class="start-training">Start training</button></footer>
+      <output id="builder-feedback" aria-live="polite"></output>
+    </main>
+  </div>
+</div>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap');
+#nl-builder-review{font-family:Inter,system-ui,sans-serif;color:var(--foreground)}
+#nl-builder-review .review-tools{display:flex;padding:0 90px 16px 0}
+#nl-builder-review .review-tools label{display:flex;gap:8px;align-items:center}
+#nl-builder-review .builder-app{--b-bg:#f7f7ff;--b-section:#eff0fe;--b-text:#29283f;--b-muted:#57586c;--b-selected:#e3e4f8;--b-nav:#edeefb;--b-pill:#fff;--b-primary:#4f40d8;--b-on-primary:#fff;--b-danger:#a14c57;--b-danger-bg:#f8e9ed;--b-menu:#fff;--b-border:#e0e0e7;background:var(--b-bg);color:var(--b-text);padding:24px 48px 36px;color-scheme:light}
+#nl-builder-review .builder-app[data-theme=dark]{--b-bg:#18172c;--b-section:#292644;--b-text:#eef0fa;--b-muted:#b1b6d5;--b-selected:#3e395f;--b-nav:#292644;--b-pill:#423969;--b-primary:#8e81f4;--b-on-primary:#18172c;--b-danger:#e5a5ae;--b-danger-bg:#342534;--b-menu:#262438;--b-border:#393648;color-scheme:dark}
+#nl-builder-review button,#nl-builder-review select,#nl-builder-review input{font:inherit}
+#nl-builder-review button{border:0;display:inline-flex;align-items:center;justify-content:center;color:inherit;background:transparent;font-size:14px;white-space:nowrap}
+#nl-builder-review button[hidden],#nl-builder-review input[hidden],#nl-builder-review .save-menu[hidden]{display:none}
+#nl-builder-review .builder-nav{position:relative;display:flex;width:fit-content;max-width:100%;margin:0 auto 38px;padding:3px;gap:3px;height:34px;box-sizing:border-box;border-radius:13.6px;background:var(--b-nav);isolation:isolate}
+#nl-builder-review .builder-nav button{padding:0 12px;font-size:13px;border-radius:10px;color:var(--b-muted)}
+#nl-builder-review .builder-nav button[aria-pressed=true]{color:var(--b-text)}
+#nl-builder-review .nav-ink,#nl-builder-review .choice-ink{position:absolute;top:0;left:0;border-radius:10px;background:var(--b-pill);pointer-events:none;z-index:-1;transition:transform 230ms cubic-bezier(.22,1,.36,1),width 230ms cubic-bezier(.22,1,.36,1)}
+#nl-builder-review .builder-content{max-width:720px;margin:auto}
+#nl-builder-review .builder-heading{position:relative;margin-bottom:20px}
+#nl-builder-review h1{font-size:20px;font-weight:500;line-height:28px;margin:0}
+#nl-builder-review .back{position:absolute;right:calc(100% + 12px);top:-3px;width:34px;height:34px;color:var(--b-muted)}
+#nl-builder-review .training-title{display:flex;align-items:center;gap:10px;min-height:44px;margin-bottom:24px}
+#nl-builder-review h2{font-family:Newsreader,Georgia,serif;font-size:36px;line-height:44px;font-weight:500;margin:0;overflow-wrap:anywhere}
+#nl-builder-review .rename{width:28px;height:28px;color:var(--b-muted);flex-shrink:0}
+#nl-builder-review #training-name{max-width:100%;box-sizing:border-box;width:100%;font-family:Newsreader,Georgia,serif;font-size:36px;padding:0;border:0;border-bottom:1px solid var(--b-border);background:transparent;color:var(--b-text)}
+#nl-builder-review .builder-sections{display:grid;gap:8px}
+#nl-builder-review details{background:var(--b-section);border-radius:12px}
+#nl-builder-review summary{display:grid;grid-template-columns:1fr auto;gap:14px 12px;padding:18px 22px;list-style:none;font-size:18px;font-weight:500}
+#nl-builder-review summary::-webkit-details-marker{display:none}
+#nl-builder-review summary small{grid-column:1/-1;font-size:14px;line-height:21px;font-weight:400;color:var(--b-muted)}
+#nl-builder-review summary>svg{width:16px;height:16px;color:var(--b-muted);margin-top:4px;transition:transform 180ms}
+#nl-builder-review details[open] summary>svg{transform:rotate(180deg)}
+#nl-builder-review .section-options{padding:0 22px 18px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:14px}
+#nl-builder-review .section-options label{display:flex;gap:6px;align-items:center}
+#nl-builder-review .builder-segment{position:relative;display:flex;max-width:100%;height:28px;padding:0;gap:3px;isolation:isolate}
+#nl-builder-review .builder-segment button{height:28px;padding:0 10px;border-radius:11.2px;font-size:13px;color:var(--b-muted)}
+#nl-builder-review .builder-segment button[aria-pressed=true]{color:var(--b-text)}
+#nl-builder-review .choice-ink{background:var(--b-selected);border-radius:11.2px}
+#nl-builder-review .builder-actions{display:flex;gap:12px;align-items:center;margin-top:28px}
+#nl-builder-review .builder-actions button{height:34px;padding:0 14px;border-radius:10.2px}
+#nl-builder-review .delete-training{margin-right:auto;color:var(--b-danger);background:var(--b-danger-bg)}
+#nl-builder-review .save-actions{display:flex;align-items:center;position:relative;gap:2px}
+#nl-builder-review .save-training{background:var(--b-selected);padding:0 18px!important}
+#nl-builder-review .builder-actions .save-menu-trigger{padding:0;width:28px;background:transparent;color:var(--b-muted)}
+#nl-builder-review .builder-actions .start-training{height:44px;border-radius:13.2px;background:var(--b-primary);color:var(--b-on-primary);padding:0 20px}
+#nl-builder-review .save-menu{position:absolute;right:0;bottom:calc(100% + 7px);background:var(--b-menu);border:1px solid var(--b-border);border-radius:12px;padding:5px;box-shadow:0 5px 18px color-mix(in srgb,var(--b-text) 10%,transparent);z-index:5}
+#nl-builder-review .save-menu button:hover{background:var(--b-selected)}
+#nl-builder-review output{display:block;min-height:20px;margin-top:14px;font-size:13px;color:var(--b-muted)}
+#nl-builder-review select{background:var(--b-menu,var(--background));color:inherit;border:1px solid var(--b-border,var(--border));border-radius:8px;padding:4px}
+@media(max-width:600px){#nl-builder-review .builder-app{padding:20px 20px 24px}#nl-builder-review .back{position:static;float:left;margin-left:-8px;margin-right:4px}#nl-builder-review .builder-actions{flex-wrap:wrap;gap:10px}#nl-builder-review .delete-training{margin-right:0}#nl-builder-review .save-actions{margin-left:auto}#nl-builder-review .start-training{width:100%}#nl-builder-review summary{padding:16px}#nl-builder-review .section-options{padding:0 12px 16px}#nl-builder-review .builder-segment{gap:0}#nl-builder-review .builder-segment button{padding:0 7px;font-size:12px}#nl-builder-review .builder-nav button{padding:0 10px}}
+@media(prefers-reduced-motion:reduce){#nl-builder-review .nav-ink,#nl-builder-review .choice-ink{transition:none}}
+</style>
+<script>
+(()=>{const root=document.getElementById('nl-builder-review'),app=root.querySelector('.builder-app'),feedback=root.querySelector('output');function move(group,animate=true){const active=group.querySelector('[aria-pressed=true]'),marker=group.querySelector('span');if(!active||!marker)return;const a=active.getBoundingClientRect(),p=group.getBoundingClientRect();if(!animate)marker.style.transition='none';marker.style.width=a.width+'px';marker.style.height=a.height+'px';marker.style.transform=`translate(${a.left-p.left}px,${a.top-p.top}px)`;if(!animate)requestAnimationFrame(()=>marker.style.removeProperty('transition'));}const groups=[...root.querySelectorAll('.builder-nav,.builder-segment')];groups.forEach(g=>{g.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));move(g);if(g.getAttribute('aria-label')==='Training language')root.querySelector('#language-summary').textContent=b.textContent;}));});root.querySelectorAll('details').forEach(d=>d.addEventListener('toggle',()=>groups.forEach(g=>move(g,false))));new ResizeObserver(()=>groups.forEach(g=>move(g,false))).observe(app);requestAnimationFrame(()=>groups.forEach(g=>move(g,false)));root.querySelector('#builder-theme').addEventListener('change',e=>app.dataset.theme=e.target.value);const title=root.querySelector('#training-title'),input=root.querySelector('#training-name');root.querySelector('.rename').addEventListener('click',()=>{title.hidden=true;input.hidden=false;input.focus();input.select();});const finish=()=>{title.textContent=input.value.trim()||'Untitled training';title.hidden=false;input.hidden=true;};input.addEventListener('blur',finish);input.addEventListener('keydown',e=>{if(e.key==='Enter')finish();if(e.key==='Escape'){input.value=title.textContent;finish();}});const menu=root.querySelector('.save-menu'),trigger=root.querySelector('.save-menu-trigger');const close=()=>{menu.hidden=true;trigger.setAttribute('aria-expanded','false');};trigger.addEventListener('click',()=>{menu.hidden=!menu.hidden;trigger.setAttribute('aria-expanded',String(!menu.hidden));if(!menu.hidden)menu.querySelector('button').focus();});root.addEventListener('keydown',e=>{if(e.key==='Escape'){close();trigger.focus();}});document.addEventListener('pointerdown',e=>{if(!root.querySelector('.save-actions').contains(e.target))close();});root.querySelector('.save-training').addEventListener('click',()=>feedback.textContent='Preview: changes saved to this training.');menu.querySelector('button').addEventListener('click',()=>{close();feedback.textContent='Preview: saved as a new training.';});root.querySelector('.start-training').addEventListener('click',()=>feedback.textContent='Preview: start with the selected parameters.');root.querySelector('.delete-training').addEventListener('click',()=>feedback.textContent='Preview: deletion would require confirmation.');root.querySelector('.back').addEventListener('click',()=>feedback.textContent='Preview: back to Training.');})();
+</script>

@@ -24,6 +24,7 @@
 
 ## Canonical Navigation
 
+- Controls and button standard: [control-system.md](./control-system.md)
 - Current decisions: [current-decisions.md](./current-decisions.md)
 - Dictionary publication and access contract: [dictionary-publication-access.md](./dictionary-publication-access.md)
 - Discussion archive and recording rules: [../discussions/README.md](../discussions/README.md)

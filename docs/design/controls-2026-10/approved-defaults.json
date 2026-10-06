@@ -1,0 +1,115 @@
+{
+  "theme": "light",
+  "controls": {
+    "navigation": {
+      "height": 34,
+      "radiusPercent": 40,
+      "border": false,
+      "background": true,
+      "selected": "Training"
+    },
+    "period": {
+      "height": 28,
+      "radiusPercent": 40,
+      "border": false,
+      "background": false,
+      "selected": "Today"
+    },
+    "languages": {
+      "height": 28,
+      "radiusPercent": 40,
+      "border": false,
+      "background": false,
+      "selected": "Dutch"
+    },
+    "builder-language": {
+      "height": 28,
+      "radiusPercent": 40,
+      "border": false,
+      "background": false,
+      "selected": "Dutch"
+    },
+    "material": {
+      "height": 28,
+      "radiusPercent": 40,
+      "border": false,
+      "background": false,
+      "rememberedLanguage": "German",
+      "chevronBackground": false,
+      "currentLanguage": "Dutch",
+      "singleLanguage": false,
+      "selected": "All"
+    },
+    "learning-languages": {
+      "height": 28,
+      "radiusPercent": 40,
+      "border": false,
+      "background": false,
+      "activeCount": 4,
+      "pausedLanguagesExcluded": true,
+      "order": "settings-order",
+      "maxVisible": 4,
+      "fit": "available-width",
+      "rememberedLanguage": "Russian",
+      "selected": "Dutch",
+      "chevronBackground": false
+    },
+    "mode": {
+      "height": 28,
+      "radiusPercent": 40,
+      "border": false,
+      "background": false,
+      "selected": "System"
+    },
+    "spacing": {
+      "height": 28,
+      "radiusPercent": 40,
+      "border": false,
+      "background": false,
+      "selected": "Balanced"
+    },
+    "text": {
+      "height": 28,
+      "radiusPercent": 40,
+      "border": false,
+      "background": false,
+      "selected": "A"
+    },
+    "translation": {
+      "height": 28,
+      "radiusPercent": 40,
+      "border": false,
+      "background": false,
+      "rememberedLanguage": "Russian",
+      "chevronBackground": false,
+      "selected": "Off"
+    },
+    "start": {
+      "height": 44,
+      "radiusPercent": 30,
+      "border": false
+    },
+    "learning": {
+      "height": 44,
+      "radiusPercent": 30,
+      "border": false
+    },
+    "library-actions": {
+      "height": 28,
+      "radiusPercent": 30,
+      "border": false,
+      "background": false,
+      "scope": "library-card-only",
+      "heightLocked": true
+    }
+  },
+  "dropdown": {
+    "border": "neutral-12-percent",
+    "radius": 12
+  },
+  "ratingButtons": "Again / Hard / Good / Easy: keep unchanged",
+  "selectionAnimation": {
+    "durationMs": 230,
+    "dividers": false
+  }
+}
