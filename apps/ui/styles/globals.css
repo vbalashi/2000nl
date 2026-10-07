@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --practice-font-ui: var(--font-sense-sans), Inter, system-ui, sans-serif;
+  --practice-text-body: 14px;
+  --practice-startup-surface: #f4f4f3;
+  --practice-startup-text: #36383c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --practice-startup-surface: #202124;
+    --practice-startup-text: #e6e6e5;
+  }
+}
+
 body {
   @apply bg-background-light text-slate-900 font-display antialiased;
 }

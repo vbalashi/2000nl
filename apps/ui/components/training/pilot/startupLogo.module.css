@@ -6,15 +6,14 @@
   align-items:center;
   justify-content:center;
   gap:24px;
-  background:#f4f4f3;
-  color:#36383c;
-  font-family:var(--font-sense-sans),sans-serif;
+  background:var(--practice-startup-surface);
+  color:var(--practice-startup-text);
+  font-family:var(--practice-font-ui);
 }
 .logo { margin:0; font-size:32px; font-weight:400; letter-spacing:-.04em; line-height:1; }
 .ink { color:inherit; }
 .status { text-align:center; max-width:min(480px,calc(100vw - 48px)); }
-.status h1,.status p { margin:0; color:inherit; font-size:14px; line-height:20px; font-weight:400; }
+.status h1,.status p { margin:0; color:inherit; font-size:var(--practice-text-body); line-height:20px; font-weight:400; }
 .status button { margin-top:16px; border:1px solid currentColor; border-radius:8px; padding:8px 16px; background:transparent; color:inherit; }
 /* Do not fade each readiness gate separately: that produces repeated flashes. */
 .ready { min-height:0; }
-@media(prefers-color-scheme:dark) { .startup { background:#202124; color:#e6e6e5; } }

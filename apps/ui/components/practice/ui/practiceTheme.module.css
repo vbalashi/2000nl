@@ -14,6 +14,12 @@
  --practice-text-number: var(--account-practice-text-number, 32px);
  --practice-text-headword: var(--account-practice-text-headword, 36px);
  --practice-text-display: var(--account-practice-text-display, 44px);
+ --practice-overview-eyebrow-size: 11px;
+ --practice-overview-count-size: 29px;
+ --practice-overview-count-size-compact: 27px;
+ --practice-overview-count-size-short: 24px;
+ --practice-overview-caption-size: 10px;
+ --practice-overview-description-size: 12px;
  --practice-font-definition: var(--practice-font-reading);
  --practice-definition-size: var(--account-practice-definition-size, var(--practice-text-title-sm));
  --practice-definition-leading: 1.4;
