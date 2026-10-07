@@ -4,12 +4,13 @@ import { expect, test } from "@playwright/test";
 // Exercise the real Report trigger, not a substitute button in the gallery.
 for (const width of [390, 834, 1440]) {
   for (const theme of ["light", "dark"]) {
-    test(`secondary actions align at ${width}px in ${theme}`, async ({ page }, testInfo) => {
+    test(`secondary actions align at ${width}px in ${theme}`, async ({ page, baseURL }, testInfo) => {
       await page.setViewportSize({ width, height: 960 });
       await page.emulateMedia({ colorScheme: theme as "light" | "dark", reducedMotion: "reduce" });
+      const applicationOrigin = new URL(baseURL ?? "http://127.0.0.1:3100").origin;
       await page.route("**/*", (route) => {
         const url = new URL(route.request().url());
-        return url.origin === "http://127.0.0.1:3100" && !url.pathname.startsWith("/api/")
+        return url.origin === applicationOrigin && !url.pathname.startsWith("/api/")
           ? route.continue() : route.abort();
       });
       await page.goto("/dev/sense-card-gate");
