@@ -733,3 +733,7 @@ controlled by migration 212. The last display choice applies across words,
 card sides, sessions and devices; disabling double-tap renders plain words
 regardless of the stored choice. No learning state is changed.
 Postflight 213 verifies the additive column, false default and retained RLS.
+
+## Audio swipe preference (migration 214)
+
+Migration 214 adds the account-wide opt-in `training_audio_swipe_enabled` boolean, default false, to existing `user_settings`. RLS remains unchanged. The UI uses the existing word audio callback for a short upward stroke; normal text scrolling takes precedence. The contract appends its immutable checksum and exact structural/RLS postflight.

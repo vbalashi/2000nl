@@ -21,7 +21,19 @@ for (const width of [320,390,768]) {
     expect(results[index].fit).toBe(results[index+1].fit);
     expect(results[index].size).toBeCloseTo(results[index+1].size,1);
    }
+   if(width>=390){expect(results[6].fit).toBe('single-line');expect(results[6].stacked).toBe('false');}
    if(width===390){expect(results[0].fit).toBe('single-line');expect(results[0].stacked).toBe('true');}
   }
  });
 }
+
+test('touch audio button returns to its resting background after tapping',async({browser})=>{
+ const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true,colorScheme:'light'});
+ const page=await context.newPage();await page.goto('/dev/headword-fit');
+ const button=page.getByRole('button',{name:'Play word',exact:true}).first();
+ const before=await button.evaluate(el=>getComputedStyle(el).backgroundColor);
+ await button.tap();await expect(page.getByTestId('audio-plays').first()).toHaveText('1');
+ await expect(button).toHaveCSS('background-color',before);
+ expect(await page.evaluate(()=>matchMedia('(hover: hover) and (pointer: fine)').matches)).toBe(false);
+ await context.close();
+});

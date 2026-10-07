@@ -3,7 +3,7 @@ import {act,cleanup,fireEvent,render,screen,waitFor} from '@testing-library/reac
 import {afterEach,expect,test,vi} from 'vitest';
 import {TrainingInteractionPreferencesProvider,useTrainingInteractions,defaultTrainingInteractions} from '@/components/practice/ui/TrainingInteractionPreferences';
 import {HeadwordWithPronunciationBreaks} from '@/components/training/HeadwordWithPronunciationBreaks';
-import {useTranslationSwipe} from '@/components/practice/ui/useTranslationSwipe';
+import {useTranslationSwipe,useCardVerticalSwipe} from '@/components/practice/ui/useTranslationSwipe';
 import {trainingInteractionRepository} from '@/lib/preferences/trainingInteractionRepository';
 afterEach(()=>{cleanup();vi.unstubAllGlobals();});
 function State(){const {preferences,save,saveStatus,loadStatus}=useTrainingInteractions();return <><output>{JSON.stringify(preferences)}</output><span>{loadStatus}/{saveStatus}</span><button onClick={()=>void save({...preferences,animation:!preferences.animation})}>Toggle</button></>;}
@@ -12,7 +12,7 @@ test('loads account preferences and saves only interaction columns',async()=>{
  const fetch=vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({training_animation_enabled:false,training_grade_swipe_enabled:true}),{status:200})).mockResolvedValueOnce(new Response(null,{status:201}));vi.stubGlobal('fetch',fetch);
  const loaded=await trainingInteractionRepository.load('owner');expect(loaded).toEqual({...defaultTrainingInteractions,animation:false,gradeSwipe:true});
  await trainingInteractionRepository.save('owner',loaded);
- expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({user_id:'owner',training_animation_enabled:false,training_grade_swipe_enabled:true,training_translation_swipe_enabled:false,training_syllable_double_tap_enabled:false,training_show_syllables:false});
+ expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({user_id:'owner',training_animation_enabled:false,training_grade_swipe_enabled:true,training_translation_swipe_enabled:false,training_syllable_double_tap_enabled:false,training_show_syllables:false,training_audio_swipe_enabled:false});
 });
 test('failed saving keeps the confirmed account choice; returning to the app reloads account preferences',async()=>{
  const repository={load:vi.fn().mockResolvedValue(defaultTrainingInteractions),save:vi.fn().mockRejectedValue(new Error())};
@@ -94,4 +94,16 @@ test('plain canonical headword keeps invisible pronunciation-based wrap points',
  expect(document.body).toHaveTextContent('arbeidsongeschiktheidsverzekering');
  expect(document.body).not.toHaveTextContent('·');
  expect(document.querySelectorAll('wbr')).toHaveLength(9);
+});
+
+test('audio swipe is an opt-in upward stroke and preserves scrolling and controls',()=>{
+ const onPlayAudio=vi.fn(), onToggle=vi.fn();
+ function AudioSwipe(){const root=React.useRef<HTMLDivElement>(null);useCardVerticalSwipe({root,enabled:true,audioEnabled:true,onToggle,onPlayAudio});return <div ref={root}><article data-testid="training-sense-card-shell"><div data-testid="lower">Lower card</div><div data-testid="scroll" style={{overflowY:'auto'}}>Long answer</div><button>Audio</button></article></div>;}
+ const view=(enabled:boolean)=><TrainingInteractionPreferencesProvider userId="owner" initial={{...defaultTrainingInteractions,audioSwipe:enabled,translationSwipe:true}}><AudioSwipe/></TrainingInteractionPreferencesProvider>;
+ const {unmount}=render(view(false));stroke(screen.getByTestId('lower'),0,-60);expect(onPlayAudio).not.toHaveBeenCalled();
+ unmount();render(view(true));stroke(screen.getByTestId('lower'),0,-60);expect(onPlayAudio).toHaveBeenCalledOnce();expect(onToggle).not.toHaveBeenCalled();
+ stroke(screen.getByTestId('lower'));expect(onToggle).toHaveBeenCalledOnce();
+ const scroll=screen.getByTestId('scroll');Object.defineProperties(scroll,{scrollHeight:{value:800},clientHeight:{value:300}});
+ stroke(scroll,0,-60);stroke(screen.getByRole('button',{name:'Audio'}),0,-60);stroke(screen.getByTestId('lower'),60,-15);stroke(screen.getByTestId('lower'),0,-200);
+ expect(onPlayAudio).toHaveBeenCalledOnce();
 });

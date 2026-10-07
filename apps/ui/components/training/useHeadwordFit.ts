@@ -2,7 +2,7 @@
 import React from "react";
 
 /** Keep a whole headword together before using its optional syllable wrap points. */
-export function useHeadwordFit(key: string, enabled = true) {
+export function useHeadwordFit(key: string, enabled = true, centered = false) {
   const row = React.useRef<HTMLDivElement>(null);
   const word = React.useRef<HTMLHeadingElement>(null);
   const article = React.useRef<HTMLSpanElement>(null);
@@ -13,6 +13,8 @@ export function useHeadwordFit(key: string, enabled = true) {
       heading.style.fontSize = "";
       heading.style.whiteSpace = "";
       container.style.flexDirection = "";
+      container.style.alignItems = "";
+      container.style.justifyContent = "";
       if (article.current) article.current.style.fontSize = "";
       delete heading.dataset.headwordFit;
       delete container.dataset.articleStacked;
@@ -45,7 +47,8 @@ export function useHeadwordFit(key: string, enabled = true) {
       // Give the word the entire line before reducing its size.
       const stacked = articleWidth > 0 && naturalWidth + articleWidth + gap > width;
       container.style.flexDirection = stacked ? "column" : "row";
-      container.style.alignItems = "baseline";
+      container.style.alignItems = centered && stacked ? "center" : "baseline";
+      container.style.justifyContent = centered && !stacked ? "center" : "";
       container.dataset.articleStacked = String(stacked);
       const available = width - (stacked ? 0 : articleWidth + (articleWidth ? gap : 0));
       const minimum = Math.min(baseSize, Math.max(20, baseSize * 0.6));
@@ -68,6 +71,6 @@ export function useHeadwordFit(key: string, enabled = true) {
       preferences.observe(parent, { attributes: true, attributeFilter: ["style", "class", "data-reading-size", "data-text-size"] });
     }
     return () => { disposed = true; observer.disconnect(); preferences.disconnect(); };
-  }, [key, enabled]);
+  }, [key, enabled, centered]);
   return { row, word, article };
 }
