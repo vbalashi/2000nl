@@ -243,3 +243,30 @@
   color: var(--practice-text-secondary);
 }
 .primary[data-kind=secondary]:hover { background: var(--practice-surface-hover); }
+
+.faceInstruction {
+  margin: 0;
+  max-width: 34rem;
+  font-family: var(--practice-font-ui, sans-serif);
+  font-size: var(--practice-text-body, 14px);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--practice-text-muted, #777586);
+}
+.recallTarget, .faceContext {
+  margin: 0;
+  max-width: 34rem;
+  overflow-wrap: anywhere;
+  font-family: var(--practice-font-reading, Georgia, serif);
+  font-weight: 400;
+}
+.recallTarget {
+  font-size: calc(var(--practice-text-title, 24px) * 1.5);
+  line-height: 1.2;
+  color: var(--practice-text, #343348);
+}
+.faceContext {
+  font-size: calc(var(--practice-text-title, 24px) * 1.2);
+  line-height: 1.4;
+  color: var(--practice-text-secondary, #555366);
+}

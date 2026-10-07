@@ -38,6 +38,8 @@ function Exercise({ direction }: { direction: "direct" | "reverse" }) {
 
 describe("exercise card field bindings", () => {
   test("direct and reverse share the exact full answer; direction changes only the face", () => {
+    expect(build("direct").label).toBe("Recall the meaning of this idiom");
+    expect(build("reverse").label).toBe("Recall the Dutch idiom");
     expect(build("direct").answer).toEqual(build("reverse").answer);
     expect(build("direct").promptTarget).toEqual({ contentNodeId: content.expression.contentNodeId, kind: "text" });
     expect(build("reverse").promptTarget).toEqual({ contentNodeId: content.explanation.contentNodeId, kind: "text" });

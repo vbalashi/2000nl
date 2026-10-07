@@ -99,3 +99,19 @@ test('saved list indicates hidden edges and scrolls upwards independently',()=>{
  list.scrollTop=0;fireEvent.scroll(list);
  expect(screen.queryByRole('button',{name:'Previous saved trainings'})).toBeNull();
 });
+
+
+test('launch holds the start hero; returning shows accepted progress',()=>{
+ const initial:TrainingOverviewState={status:'ready',trainings:items,mainId:'a'};
+ const callbacks={onLaunch:vi.fn(),onResume:vi.fn(),onEdit:vi.fn(),onCreate:vi.fn(),onRetry:vi.fn()};
+ const view=render(<TrainingOverview state={initial} {...callbacks}/>);
+ view.rerender(<TrainingOverview state={initial} launchPending {...callbacks}/>);
+ const accepted:TrainingOverviewState={...initial,resume:{sessionId:'new-run',trainingId:'a',completed:0,total:5}};
+ view.rerender(<TrainingOverview state={accepted} launchPending {...callbacks}/>);
+ expect(screen.getByRole('button',{name:'Start training'})).toBeDisabled();
+ expect(screen.queryByRole('progressbar')).toBeNull();
+ expect(screen.queryByText(/IN PROGRESS/i)).toBeNull();
+ view.rerender(<TrainingOverview state={{...accepted,resume:{...accepted.resume!,completed:2}}} {...callbacks}/>);
+ expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow','2');
+ expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();
+});

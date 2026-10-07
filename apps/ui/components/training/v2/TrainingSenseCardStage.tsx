@@ -109,6 +109,7 @@ export function TrainingSenseCardStage({
   const translationActionAvailable = Boolean(
     model.requestTranslationCapability,
   );
+  const contextTarget = contextPrompt ? model.entryTranslation?.trim() : undefined;
   const listeningMode = mode === "listen-recognize";
   const approvedPresentation = trainingPresentationV1Enabled();
   const revealContentId = contextPrompt?.contentNodeId ?? reversePrompt?.contentNodeId;
@@ -296,12 +297,16 @@ export function TrainingSenseCardStage({
             }
             hint={hint}
             hintVisible={hintVisible}
-            label={contextPrompt ? {
-              en: "Recall the Dutch word",
-              nl: "Herinner je het Nederlandse woord",
-              ru: "Вспомните нидерландское слово",
+            label={contextPrompt ? (contextTarget ? {
+              en: "Recall the Dutch word for", nl: "Herinner je het Nederlandse woord voor", ru: "Вспомните нидерландское слово для",
+            } : {
+              en: "Recall the Dutch word in this sentence", nl: "Herinner je het Nederlandse woord in deze zin", ru: "Вспомните нидерландское слово в этом предложении",
+            })[interfaceLanguage] : mode === "definition-to-word" ? {
+              en: "Recall the Dutch word from its meaning", nl: "Herinner je het Nederlandse woord bij deze betekenis", ru: "Вспомните нидерландское слово по значению",
             }[interfaceLanguage] : undefined}
-            partOfSpeechChip={contextPrompt ? model.partOfSpeech : undefined}
+            partOfSpeech={mode === "definition-to-word" ? model.partOfSpeech : undefined}
+            recallTarget={contextTarget}
+            contextLabel={contextPrompt ? { en: "In this sentence", nl: "In deze zin", ru: "В этом предложении" }[interfaceLanguage] : undefined}
             hintLabel={contextPrompt ? t("senseCard.sections.definition") : t("senseCard.hint.example")}
             contentLabel={t("senseCard.training.content")}
           />
