@@ -201,3 +201,5 @@
 .scrollCue:hover {
   background: var(--practice-surface-hover);
 }
+
+.wordFit[data-headword-fit="single-line"] wbr { display: none; }

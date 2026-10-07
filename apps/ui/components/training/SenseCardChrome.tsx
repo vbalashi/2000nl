@@ -1,5 +1,6 @@
 import {useTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
 import React from "react";
+import {useHeadwordFit} from "./useHeadwordFit";
 import { Repeat2 } from "lucide-react";
 import { HeadwordWithPronunciationBreaks } from "./HeadwordWithPronunciationBreaks";
 import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
@@ -44,6 +45,8 @@ export function SenseCardHeadwordLockup({
   showMetadata?: boolean;
   variant?: "default" | "training-face" | "training-answer" | "article";
 }) {
+  const {preferences} = useTrainingInteractions();
+  const fit = useHeadwordFit(`${headword}:${plainHeadword}:${article}:${variant}:${preferences.syllableDoubleTap}:${preferences.showSyllables}`, !/\s/.test(headword.trim()));
   const longHeadword = headword.replaceAll("·", "").length > 18;
   const training = variant !== "default";
   const answer = variant === "training-answer";
@@ -114,12 +117,14 @@ export function SenseCardHeadwordLockup({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center font-sense-serif">
             <div
-              className={`flex min-w-0 items-baseline ${training ? `${trainingWordSize} ${variant === "article" ? "gap-[0.22em]" : "gap-[0.22rem]"}` : "gap-[0.22em]"} ${
+              ref={fit.row}
+              className={`flex w-full min-w-0 items-baseline ${training ? `${trainingWordSize} ${variant === "article" ? "gap-[0.22em]" : "gap-[0.22rem]"}` : "gap-[0.22em]"} ${
                 longHeadword ? "flex-1" : ""
               }`}
             >
               {article ? (
                 <span
+                  ref={fit.article}
                   className={`shrink-0 leading-none ${mutedText} ${
                     training
                       ? "pb-[0.16em] text-[0.5em]"
@@ -130,9 +135,10 @@ export function SenseCardHeadwordLockup({
                 </span>
               ) : null}
               <h2
-                aria-label={headword}
+                ref={fit.word}
+                aria-label={plainHeadword ?? headword.replace(/[·ˈˌ]/g, "")}
                 data-long-headword={longHeadword ? "true" : "false"}
-                className={`min-w-0 break-words tracking-[-0.035em] ${primaryText} ${
+                className={`${chrome.wordFit} min-w-0 break-words tracking-[-0.035em] ${primaryText} ${
                   training
                     ? variant === "article" ? "text-[length:var(--practice-text-headword,36px)] font-medium leading-[1.1]" : "text-[1em] font-medium leading-[1]"
                     : longHeadword

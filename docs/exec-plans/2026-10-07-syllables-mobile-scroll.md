@@ -35,3 +35,22 @@ Owner: issue #606. Scope: existing account interaction preferences and AppFrame.
 
 Actual phone browser elastic scrolling still needs owner confirmation on the
 reported device after publication; emulation verifies layout and scroll ownership.
+
+## Long headword fitting
+
+Measured rendered headword markup (including syllable separators) is fitted
+against available row width after fonts load and viewport changes. If the
+article prevents a whole word fitting, it gets a separate preceding line.
+Then the headword scales down to a floor of 20px / 60% of its preset size.
+Larger compounds retain invisible wrap opportunities below that floor.
+Single-line fits suppress wbr elements so inline syllable fragments do not
+wrap unexpectedly. Phrases retain their regular layout.
+
+Manual browser measurements cover arbeidsongeschiktheidsverzekering,
+verantwoordelijkheid and ziekenhuis at 320 / 390 / 768px, both sides, with
+and without syllable dots. At 390px all three remain one line; the longest
+compound uses the same size on Face and Answer. At 320px the longest
+compound falls back to two lines. A dev-only comparison is at /dev/headword-fit.
+Three browser regression scenarios plus the existing 8 scroll/reflow scenarios
+pass. The relevant component suite passes (53 tests); typecheck and lint pass
+with the previously recorded handlePlayAudio warning.
