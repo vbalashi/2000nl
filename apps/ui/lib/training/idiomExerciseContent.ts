@@ -13,6 +13,7 @@ type IdiomTarget = Pick<
 export type IdiomExerciseContent = {
   group: PlatformHeadwordGroupV2;
   headword: string;
+  headwordPronunciation?: string;
   article?: string;
   partOfSpeech?: PlatformHeadwordGroupV2["header"]["partOfSpeech"];
   coreVocabularyLabel?: "2K";
@@ -62,6 +63,7 @@ export function resolveIdiomExerciseContent(
   return {
     group,
     headword: group.header.text,
+    headwordPronunciation: group.header.displayPronunciation ?? undefined,
     article: group.header.article ?? undefined,
     partOfSpeech: entry.partOfSpeech ?? group.header.partOfSpeech,
     coreVocabularyLabel: group.indicators.some(

@@ -18,6 +18,7 @@ export type TrainingSenseCardModel = {
   entryId: string;
   wordDetails?:PlatformWordDetailsV2;
   headword: string;
+  plainHeadword?: string;
   article?: string;
   partOfSpeech?: string;
   coreVocabularyLabel?: "2K";
@@ -98,6 +99,7 @@ export function buildTrainingSenseCardModel({
     entryId: entry.entryId,
     ...(entry.wordDetails?{wordDetails:entry.wordDetails}:{}),
     headword: group.header.displayPronunciation ?? group.header.text,
+    plainHeadword: group.header.text,
     ...(group.header.article ? { article: group.header.article } : {}),
     ...(partOfSpeech ? { partOfSpeech } : {}),
     ...(has2k ? { coreVocabularyLabel: "2K" as const } : {}),

@@ -724,3 +724,12 @@ early nearest-due branch, and postflight207 pins that branch and private grants.
 Both complete probe chains must pass before deployment. Saved recipes do not
 persist this transient flag. This does not add external Library remainder replan
 to idiom sessions; the existing ordinary-only replan boundary remains.
+
+## Persistent headword syllable display (migration 213)
+
+Migration 213 adds `user_settings.training_show_syllables`, default false,
+under existing account settings RLS. Double-tap availability remains
+controlled by migration 212. The last display choice applies across words,
+card sides, sessions and devices; disabling double-tap renders plain words
+regardless of the stored choice. No learning state is changed.
+Postflight 213 verifies the additive column, false default and retained RLS.

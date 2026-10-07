@@ -26,6 +26,7 @@ export function senseCardQuietAction() {
 export function SenseCardHeadwordLockup({
   article,
   headword,
+  plainHeadword,
   partOfSpeech,
   coreVocabularyLabel,
   tone,
@@ -35,6 +36,7 @@ export function SenseCardHeadwordLockup({
 }: {
   article?: string | null;
   headword: string;
+  plainHeadword?: string;
   partOfSpeech?: string | null;
   coreVocabularyLabel?: string | null;
   tone: Tone;
@@ -138,7 +140,7 @@ export function SenseCardHeadwordLockup({
                       : "text-[2.65rem] font-normal leading-[0.92] sm:text-[3rem]"
                 }`}
               >
-                <HeadwordWithPronunciationBreaks text={headword} />
+                <HeadwordWithPronunciationBreaks text={headword} plainText={plainHeadword} />
               </h2>
             </div>
           </div>

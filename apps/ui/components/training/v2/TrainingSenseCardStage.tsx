@@ -278,6 +278,7 @@ export function TrainingSenseCardStage({
                 : {
                     kind: "expression",
                     text: model.headword,
+                    plainText: model.plainHeadword,
                     article: model.article,
                   }
             }

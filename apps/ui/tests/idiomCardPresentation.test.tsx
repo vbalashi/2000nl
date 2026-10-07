@@ -224,3 +224,8 @@ test("approved exercises reuse adaptive ratings and preserve the grade callback"
     expect(onGrade).toHaveBeenCalledWith("hard");
   } finally { vi.unstubAllEnvs(); }
 });
+
+test("idiom answers retain available headword syllables for the shared gesture",()=>{
+ const presentation=buildIdiomCardPresentation({content:{...content,headwordPronunciation:"ge·noeg"},direction:"direct",interfaceLanguage:"en",translationTargetLanguageCode:null});
+ expect(presentation.answer.headword).toBe("ge·noeg");
+});
