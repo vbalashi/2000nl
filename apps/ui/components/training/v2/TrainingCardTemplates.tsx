@@ -149,6 +149,7 @@ export function TrainingCardAnswerHeader({
       <SenseCardHeadwordLockup
         article={model.article}
         headword={model.headword}
+        plainHeadword={model.plainHeadword}
         tone="light"
         showMetadata={false}
         variant="training-answer"
@@ -244,6 +245,7 @@ export function TrainingCardFace({
             <SenseCardHeadwordLockup
               article={prompt.article}
               headword={prompt.text}
+              plainHeadword={prompt.plainText}
               tone="light"
               showMetadata={false}
               variant="training-face"

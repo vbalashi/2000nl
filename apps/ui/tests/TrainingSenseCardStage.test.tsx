@@ -1,4 +1,5 @@
 import React from "react";
+import {TrainingInteractionPreferencesProvider,defaultTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
 import {TrainingCardAnswerHeader} from "@/components/training/v2/TrainingCardTemplates";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
@@ -883,4 +884,22 @@ test("approved answer keeps the unavailable translation button visible without d
  const button=screen.getByRole("button",{name:"Translation is off. Choose a translation language in Settings."});
  expect(button).toBeDisabled();fireEvent.click(button);expect(toggle).not.toHaveBeenCalled();
  } finally {vi.unstubAllEnvs();}
+});
+
+test("direct and reverse sides share the account syllable display",async()=>{
+ const model=buildTrainingSenseCardModel({group:{...singleSenseGroup,header:{...singleSenseGroup.header,text:"maken",displayPronunciation:"má·ken"}},entry:singleSenseEntry,interfaceLanguage:"en"});
+ const repository={load:vi.fn(),save:vi.fn().mockResolvedValue(undefined)};
+ const initial={...defaultTrainingInteractions,animation:false,syllableDoubleTap:true};
+ const view=(mode:"word-to-definition"|"definition-to-word")=><TrainingInteractionPreferencesProvider userId="owner" initial={initial} repository={repository}><TrainingSenseCardStage key={mode} model={model} mode={mode} interfaceLanguage="en" onAction={vi.fn()}/></TrainingInteractionPreferencesProvider>;
+ const {rerender}=render(view("word-to-definition"));
+ expect(screen.getByRole('button',{name:'maken'})).toHaveTextContent('maken');
+ fireEvent.doubleClick(screen.getByRole('button',{name:'maken'}));
+ fireEvent.click(screen.getByRole('button',{name:'Show answer'}));
+ expect(screen.getByRole('button',{name:'maken'})).toHaveTextContent('má·ken');
+ await waitFor(()=>expect(repository.save).toHaveBeenCalledOnce());
+ rerender(view("definition-to-word"));fireEvent.click(screen.getByRole('button',{name:'Show answer'}));
+ expect(screen.getByRole('button',{name:'maken'})).toHaveTextContent('má·ken');
+ fireEvent.doubleClick(screen.getByRole('button',{name:'maken'}));
+ expect(screen.getByRole('button',{name:'maken'})).toHaveTextContent('maken');
+ await waitFor(()=>expect(repository.save).toHaveBeenCalledTimes(2));
 });

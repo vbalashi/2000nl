@@ -3,6 +3,7 @@ export const defaultTrainingInteractions = {
   gradeSwipe: false,
   translationSwipe: false,
   syllableDoubleTap: false,
+  showSyllables: false,
 };
 export type TrainingInteractions = typeof defaultTrainingInteractions;
 export function parseTrainingInteractions(value: unknown): TrainingInteractions {

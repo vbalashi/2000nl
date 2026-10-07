@@ -25,7 +25,9 @@ function InteractionSession({userId,children,initial,repository}: {
  const [loadStatus,setLoadStatus]=React.useState<Status>(initial?"ready":"loading");
  const [saveStatus,setSaveStatus]=React.useState<"idle"|"saving"|"error">("idle");
  const [attempt,setAttempt]=React.useState(0);
- const alive=React.useRef(false),pending=React.useRef(false),revision=React.useRef(0);
+ const alive=React.useRef(false),pending=React.useRef(0),revision=React.useRef(0);
+ const confirmed=React.useRef(preferences);
+ const queue=React.useRef(Promise.resolve());
  React.useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
  React.useEffect(()=>{
   let cancelled=false;
@@ -34,7 +36,7 @@ function InteractionSession({userId,children,initial,repository}: {
    const version=revision.current;
    try {
     const value=await repository.load(userId);
-    if(!cancelled&&version===revision.current){setPreferences(value);setLoadStatus("ready");}
+    if(!cancelled&&version===revision.current){confirmed.current=value;setPreferences(value);setLoadStatus("ready");}
    }catch{if(!cancelled&&version===revision.current)setLoadStatus("error");}
   };
   if(!initial)void load();
@@ -43,11 +45,20 @@ function InteractionSession({userId,children,initial,repository}: {
   return()=>{cancelled=true;window.removeEventListener("focus",focus);document.removeEventListener("visibilitychange",focus);};
  },[userId,repository,initial,attempt]);
  const save=async(value:TrainingInteractions)=>{
-  if(loadStatus!=="ready"||pending.current)return;
-  pending.current=true;revision.current++;setSaveStatus("saving");
-  try {await repository.save(userId,value);if(alive.current){setPreferences(value);setSaveStatus("idle");}}
-  catch {if(alive.current)setSaveStatus("error");}
-  finally{pending.current=false;}
+  if(loadStatus!=="ready")return;
+  pending.current++;const version=++revision.current;
+  setPreferences(value);setSaveStatus("saving");
+  const operation=queue.current.then(async()=>{
+   try {
+    await repository.save(userId,value);
+    confirmed.current=value;
+    if(alive.current&&version===revision.current)setSaveStatus("idle");
+   } catch {
+    if(alive.current&&version===revision.current){setPreferences(confirmed.current);setSaveStatus("error");}
+   } finally {pending.current--;}
+  });
+  queue.current=operation;
+  await operation;
  };
  return <Context.Provider value={{preferences,save,loadStatus,saveStatus,reload:()=>{setLoadStatus("loading");setAttempt(v=>v+1);}}}>{children}</Context.Provider>;
 }

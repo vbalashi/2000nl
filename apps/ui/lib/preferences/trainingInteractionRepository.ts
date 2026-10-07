@@ -8,6 +8,7 @@ export interface TrainingInteractionRepository {
 const columns = {
  animation:"training_animation_enabled", gradeSwipe:"training_grade_swipe_enabled",
  translationSwipe:"training_translation_swipe_enabled", syllableDoubleTap:"training_syllable_double_tap_enabled",
+ showSyllables:"training_show_syllables",
 } as const;
 export const trainingInteractionRepository:TrainingInteractionRepository = {
  async load(userId){

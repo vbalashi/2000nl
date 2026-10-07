@@ -102,7 +102,7 @@ describe("LibrarySenseCardGroup", () => {
     );
 
     const headword = screen.getByRole("heading", {
-      name: "ar·beids·on·ge·schikt·heids·ver·ze·ke·ring",
+      name: "arbeidsongeschiktheidsverzekering",
     });
     expect(headword).toBeInTheDocument();
     expect(headword.querySelectorAll("wbr")).toHaveLength(9);

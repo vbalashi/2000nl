@@ -32,7 +32,8 @@ export function buildSentenceCardPresentation({
     prompt: { kind: "explanation", text: prompt.text },
     answerTranslationInitiallyVisible: true,
     answer: {
-      headword: content.group.header.text,
+      headword: content.group.header.displayPronunciation ?? content.group.header.text,
+      plainHeadword: content.group.header.text,
       article: content.group.header.article ?? undefined,
       partOfSpeech: localizePlatformSemanticTerm(content.entry.partOfSpeech ?? content.group.header.partOfSpeech, interfaceLanguage) ?? undefined,
       repeatCount,

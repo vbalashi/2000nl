@@ -1,7 +1,7 @@
 import type { PlatformV2SenseContentNode } from "@/lib/platform/projections/platformV2SenseContent";
 
 export type TrainingCardPrompt =
-  | { kind: "expression"; text: string; article?: string }
+  | { kind: "expression"; text: string; plainText?: string; article?: string }
   | { kind: "explanation"; text: string };
 
 import type {PlatformWordDetailsV2} from "../../../../packages/shared/types/platformV2";
@@ -9,6 +9,7 @@ import type {PlatformWordDetailsV2} from "../../../../packages/shared/types/plat
 export type TrainingCardAnswer = {
   wordDetails?:PlatformWordDetailsV2;
   headword: string;
+  plainHeadword?: string;
   article?: string;
   partOfSpeech?: string;
   coreVocabularyLabel?: "2K";

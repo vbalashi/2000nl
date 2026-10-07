@@ -2,21 +2,33 @@
 import React, {Fragment} from "react";
 import {useTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
 const PRONUNCIATION_SEPARATOR = "·";
-export function HeadwordWithPronunciationBreaks({text}: {text:string}) {
- const {preferences} = useTrainingInteractions();
- const [hiddenFor,setHiddenFor] = React.useState<string|null>(null);
+export function HeadwordWithPronunciationBreaks({text,plainText}: {text:string;plainText?:string}) {
+ const {preferences,save,loadStatus} = useTrainingInteractions();
  const lastTouch = React.useRef(0);
  const touchStart = React.useRef<{x:number;y:number;time:number}|null>(null);
  const suppressDoubleClick = React.useRef(0);
- const hidden = hiddenFor === text;
- const toggle = () => setHiddenFor(hidden ? null : text);
+ const hidden = !preferences.syllableDoubleTap || !preferences.showSyllables;
+ const toggle = () => {if(loadStatus === "ready")void save({...preferences,showSyllables:!preferences.showSyllables});};
+ const plain = plainText ?? text.replace(/[·ˈˌ]/g,"");
  const segments = text.split(PRONUNCIATION_SEPARATOR);
- if(segments.length===1) return <>{text}</>;
- const content = hidden ? text.replaceAll(PRONUNCIATION_SEPARATOR,"") : segments.map((segment,index) =>
+ if(segments.length===1) return <>{plain}</>;
+ const content = hidden ? (()=>{
+  let sourceOffset=0;
+  const sourceLength=Math.max(1,text.replace(/[·ˈˌ]/g,"").length);
+  const boundaries=segments.slice(0,-1).map(segment=>{
+   sourceOffset+=segment.replace(/[ˈˌ]/g,"").length;
+   return Math.round(sourceOffset/sourceLength*plain.length);
+  });
+  let offset=0;
+  return boundaries.map((boundary,index)=>{
+   const end=Math.max(offset+1,boundary);
+   const chunk=plain.slice(offset,end);offset=end;
+   return <Fragment key={`${chunk}-${index}`}><span className="whitespace-nowrap">{chunk}</span><wbr/></Fragment>;
+  }).concat([<span key="last" className="whitespace-nowrap">{plain.slice(offset)}</span>]);
+ })() : segments.map((segment,index) =>
   <Fragment key={`${segment}-${index}`}><span className="whitespace-nowrap">{segment}{index<segments.length-1?PRONUNCIATION_SEPARATOR:null}</span>{index<segments.length-1?<wbr/>:null}</Fragment>);
- if(!preferences.syllableDoubleTap) return <>{segments.map((segment,index) =>
-  <Fragment key={`${segment}-${index}`}><span className="whitespace-nowrap">{segment}{index<segments.length-1?PRONUNCIATION_SEPARATOR:null}</span>{index<segments.length-1?<wbr/>:null}</Fragment>)}</>;
- return <span role="button" tabIndex={0} aria-label={text.replaceAll(PRONUNCIATION_SEPARATOR,"")} aria-pressed={!hidden}
+ if(!preferences.syllableDoubleTap) return <>{content}</>;
+ return <span role="button" tabIndex={0} aria-label={plain} aria-pressed={!hidden}
    data-headword-syllables={hidden?"hidden":"visible"} style={{touchAction:"manipulation"}}
    onDoubleClick={() => {if(Date.now()>suppressDoubleClick.current)toggle();}}
    onPointerDown={event => {if(event.pointerType==="touch"&&event.isPrimary)touchStart.current={x:event.clientX,y:event.clientY,time:Date.now()};}}

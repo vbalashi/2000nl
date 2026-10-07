@@ -51,7 +51,8 @@ export function buildIdiomCardPresentation({
         }
       : undefined,
     answer: {
-      headword: content.headword,
+      headword: content.headwordPronunciation ?? content.headword,
+      plainHeadword: content.headword,
       article: content.article,
       coreVocabularyLabel: content.coreVocabularyLabel,
       partOfSpeech:

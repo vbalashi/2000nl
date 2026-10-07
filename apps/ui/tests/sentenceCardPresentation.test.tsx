@@ -39,3 +39,9 @@ test("a missing target-language translation cannot expose the original sentence 
   const { content } = model();
   expect(buildSentenceCardPresentation({ content, interfaceLanguage: "en", translationTargetLanguageCode: "de" })).toBeNull();
 });
+
+test("context answers retain available headword syllables for the shared gesture",()=>{
+ const {content}=model();content.group.header.displayPronunciation="ge·noeg";
+ const presentation=buildSentenceCardPresentation({content,interfaceLanguage:"en",translationTargetLanguageCode:"ru"})!;
+ expect(presentation.answer.headword).toBe("ge·noeg");
+});
