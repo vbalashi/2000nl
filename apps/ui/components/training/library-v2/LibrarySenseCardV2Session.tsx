@@ -45,7 +45,6 @@ type Props = {
   userLists?: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (entryId: string) => void;
-  onCopyToUserDictionary?: (entryId: string) => Promise<void> | void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
 };
 
@@ -73,7 +72,6 @@ function SenseCardV2Session({
   userLists = [],
   onListsUpdated,
   onTrainWord,
-  onCopyToUserDictionary,
   onOpenListMembership,
 }: Props & { context: DetailsContext }) {
   const translationLanguage =

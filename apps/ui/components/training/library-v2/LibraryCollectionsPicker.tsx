@@ -61,15 +61,6 @@ export function LibraryCollectionsPicker({
     setNewListName("");
   }, [open]);
 
-  React.useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
-
   if (!open) return null;
 
   const membershipIds = new Set(

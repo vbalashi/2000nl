@@ -11,7 +11,6 @@ import React from "react";
 import { LIBRARY_PAGE_SIZE } from "@/lib/platform/libraryPagination";
 import { SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { LibraryResultList, LibraryResultRow } from "@/components/practice/library/LibraryResultList";
-import { LibraryEntryEditor } from "@/components/practice/library/LibraryEntryEditor";
 import { AccountLibraryFilters } from "@/components/practice/library/AccountLibraryFilters";
 import { EMPTY_LIBRARY_ENTRY_FILTERS } from "@/lib/platform/librarySearchScope";
 import { LIBRARY_PART_LABELS } from "@/components/practice/library/LibraryFilters";
@@ -19,8 +18,6 @@ import theme from "@/components/practice/ui/practiceTheme.module.css";
 import workspace from "@/components/practice/library/libraryWorkspace.module.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  copyEntryToUserDictionary,
-  createUserDictionaryEntry,
   fetchAvailableDictionarySources,
   fetchAvailableLearningLanguages,
   fetchDictionaryEntryById,
@@ -67,7 +64,6 @@ type Props = {
   reloadLists: () => Promise<void>;
   notifyListsUpdated: () => void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
-  onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   onTrainWord?: (wordId: string) => void;
   autoFocusQuery?: boolean;
   searchState: DictionarySearchTabState;
@@ -142,7 +138,6 @@ export function DictionarySearchTab({
   reloadLists,
   notifyListsUpdated,
   onOpenListMembership,
-  onUserDictionaryEntryCreated,
   onTrainWord,
   autoFocusQuery,
   searchState,
@@ -178,18 +173,6 @@ export function DictionarySearchTab({
   const [dictionarySources, setDictionarySources] = useState<
     AvailableDictionarySource[]
   >([]);
-  const [customEntryOpen, setCustomEntryOpen] = useState(false);
-  const [customHeadword, setCustomHeadword] = useState("");
-  const [customDefinition, setCustomDefinition] = useState("");
-  const [customTranslation, setCustomTranslation] = useState("");
-  const [customTranslationLanguage, setCustomTranslationLanguage] =
-    useState(translationLang);
-  const [customExample, setCustomExample] = useState("");
-  const [customNotes, setCustomNotes] = useState("");
-  const [customEntrySaving, setCustomEntrySaving] = useState(false);
-  const [customEntryMessage, setCustomEntryMessage] = useState<string | null>(
-    null,
-  );
   const queryRef = useRef<HTMLInputElement | null>(null);
   const latestDetailRequestRef = useRef(0);
   const pageSize = LIBRARY_PAGE_SIZE;
@@ -427,110 +410,6 @@ export function DictionarySearchTab({
     },
     [onSearchStateChange, searchLanguage, updateSearchState, userId],
   );
-
-  const handleUserDictionaryEntryCreated = useCallback(
-    (entry: DictionaryEntry) => {
-      searchFreshRef.current = null;
-      onUserDictionaryEntryCreated?.(entry);
-      onSearchStateChange((current) => ({
-        ...current,
-        detailSelection: {
-          entryId: entry.id,
-          headword: entry.headword,
-          contentLanguageCode: entry.language_code ?? searchLanguage,
-        },
-        wordResults: [
-          entry,
-          ...current.wordResults.filter((item) => item.id !== entry.id),
-        ],
-        wordTotal: Math.max(current.wordTotal, current.wordResults.length + 1),
-      }));
-    },
-    [onSearchStateChange, onUserDictionaryEntryCreated, searchLanguage],
-  );
-
-  const handleCopyToUserDictionary = useCallback(
-    async (entryId: string) => {
-      const copiedEntryId = await copyEntryToUserDictionary({ entryId });
-      const copiedEntry = await fetchDictionaryEntryById(copiedEntryId, userId);
-      if (copiedEntry) handleUserDictionaryEntryCreated(copiedEntry);
-    },
-    [handleUserDictionaryEntryCreated, userId],
-  );
-
-  const createCustomEntry = useCallback(async () => {
-    const headword = (customHeadword || query).trim();
-    const definition = customDefinition.trim();
-    const translation =
-      translationLang && customTranslationLanguage === translationLang
-        ? customTranslation.trim()
-        : "";
-    const example = customExample.trim();
-    const notes = customNotes.trim();
-
-    if (!headword) {
-      setCustomEntryMessage(copy.entryRequired);
-      return;
-    }
-    if (!definition && !translation && !example && !notes) {
-      setCustomEntryMessage(copy.entryContentRequired);
-      return;
-    }
-
-    setCustomEntrySaving(true);
-    setCustomEntryMessage(null);
-    try {
-      const entryId = await createUserDictionaryEntry({
-        entry: {
-          headword,
-          languageCode: searchLanguage,
-          ...(definition ? { definition } : {}),
-          ...(translation
-            ? {
-                translation: {
-                  languageCode: translationLang!,
-                  text: translation,
-                },
-              }
-            : {}),
-          ...(example ? { example: { source: example } } : {}),
-          ...(notes ? { notes } : {}),
-        },
-      });
-      const createdEntry = await fetchDictionaryEntryById(entryId, userId);
-      if (createdEntry) {
-        handleUserDictionaryEntryCreated(createdEntry);
-      }
-      setCustomHeadword("");
-      setCustomDefinition("");
-      setCustomTranslation("");
-      setCustomExample("");
-      setCustomNotes("");
-      setCustomEntryOpen(false);
-      setCustomEntryMessage(copy.entryCreated);
-    } catch (error) {
-      console.error("Error creating user dictionary entry", error);
-      setCustomEntryMessage(copy.entrySaveError);
-    } finally {
-      setCustomEntrySaving(false);
-    }
-  }, [
-    copy.entryRequired,
-    copy.entryContentRequired,
-    copy.entryCreated,
-    copy.entrySaveError,
-    customDefinition,
-    customExample,
-    customHeadword,
-    customNotes,
-    customTranslation,
-    customTranslationLanguage,
-    translationLang,
-    handleUserDictionaryEntryCreated,
-    query,
-    searchLanguage,
-    userId,
-  ]);
 
   useEffect(() => {
     if (!searchEnabled || searchState.languageCode) return;
@@ -1062,7 +941,6 @@ export function DictionarySearchTab({
                   }}
                   onOpenListMembership={onOpenListMembership}
                   onTrainWord={onTrainWord}
-                  onCopyToUserDictionary={handleCopyToUserDictionary}
                   viewport="desktop"
                 />
                 </WordDetailsCloseProvider>
@@ -1097,7 +975,6 @@ export function DictionarySearchTab({
           }}
           onOpenListMembership={onOpenListMembership}
           onTrainWord={onTrainWord}
-          onCopyToUserDictionary={handleCopyToUserDictionary}
         />
       </div>
     </div>

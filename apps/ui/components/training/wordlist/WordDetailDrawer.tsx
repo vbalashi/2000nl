@@ -28,7 +28,6 @@ type Props = {
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (wordId: string) => void;
-  onCopyToUserDictionary?: (entryId: string) => Promise<void> | void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
 };
 
@@ -44,7 +43,6 @@ export function WordDetailDrawer({
   userLists,
   onListsUpdated,
   onTrainWord,
-  onCopyToUserDictionary,
   onOpenListMembership,
 }: Props) {
   const [entered, setEntered] = React.useState(false);
@@ -52,17 +50,6 @@ export function WordDetailDrawer({
   const { expanded } = resize;
   React.useEffect(() => { setEntered(open); }, [open, selection?.entryId]);
   React.useEffect(() => { if (!open) setEntered(false); }, [open]);
-  React.useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
   if (!open || !selection) return null;
 
   const detail = (revealActiveMeaning: boolean) => <LibraryWordDetail
@@ -77,7 +64,6 @@ export function WordDetailDrawer({
     userLists={userLists}
     onListsUpdated={onListsUpdated}
     onTrainWord={onTrainWord}
-    onCopyToUserDictionary={onCopyToUserDictionary}
     onOpenListMembership={onOpenListMembership}
     viewport="mobile"
   />;

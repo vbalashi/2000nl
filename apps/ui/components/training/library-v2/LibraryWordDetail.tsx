@@ -18,7 +18,6 @@ type Props = {
   userLists?: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (entryId: string) => void;
-  onCopyToUserDictionary?: (entryId: string) => Promise<void> | void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
   viewport?: "all" | "desktop" | "mobile";
 };
@@ -35,7 +34,6 @@ export function LibraryWordDetail({
   userLists,
   onListsUpdated,
   onTrainWord,
-  onCopyToUserDictionary,
   onOpenListMembership,
   viewport = "all",
 }: Props) {
@@ -75,7 +73,6 @@ export function LibraryWordDetail({
       userLists={userLists}
       onListsUpdated={onListsUpdated}
       onTrainWord={onTrainWord}
-      onCopyToUserDictionary={onCopyToUserDictionary}
       onOpenListMembership={onOpenListMembership}
     />
   );
