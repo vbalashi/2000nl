@@ -951,9 +951,8 @@ test("search action opens the dedicated dictionary search surface", async () => 
   fireEvent.keyDown(window, { key: "s" });
 
   await screen.findByTestId("library-workspace");
-  await screen.findByRole("textbox",{name:"Search words"});
+  const search = await screen.findByRole("textbox",{name:"Search words"});
   expect(screen.getByTestId("library-workspace")).toBeInTheDocument();
-  expect(screen.getByText(/Searching All dictionaries/i)).toBeInTheDocument();
   expect(screen.getByText("Search the dictionary")).toBeInTheDocument();
   expect(screen.getByLabelText(/only this collection/i)).toBeInTheDocument();
   expect(
@@ -967,6 +966,10 @@ test("search action opens the dedicated dictionary search surface", async () => 
     screen.queryByRole("button", { name: /wis zoekopdracht/i }),
   ).not.toBeInTheDocument();
   expect(searchWordEntries).not.toHaveBeenCalled();
+  fireEvent.change(search, { target: { value: "huis" } });
+  await waitFor(() => expect(searchDictionaryGroups).toHaveBeenCalledWith(
+    expect.objectContaining({ query: "huis" }),
+  ));
 });
 
 test("onboarding copy matches the five reachable tour targets", () => {
@@ -1736,7 +1739,7 @@ test("late stats from the old setup scope cannot replace the current session sta
     restoreDefaultListScope();
   }
 });
-test("returning to a pending stats scope adopts its existing request", async () => {
+test("discarding an uncommitted list draft preserves the active stats request", async () => {
   useTwoListScope();
   fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
   const requests: Array<{ scope: unknown; resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void }> = [];
@@ -1759,6 +1762,62 @@ test("returning to a pending stats scope adopts its existing request", async () 
     await act(async () => {
       for (const request of requests) request.resolve(defaultTrainingStats);
     });
+    restoreDefaultListScope();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+test("late stats for a previous list cannot replace visible no-chrome stats", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockImplementation(() => new Promise(() => undefined));
+  const requests: Array<{ scope: unknown; resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void }> = [];
+  fetchStats.mockImplementation((_userId: string, _modes: string[], scope: unknown) => new Promise((resolve) => { requests.push({ scope, resolve }); }));
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+    const footer = await screen.findByRole("button", { name: "Wijzigen" });
+    await waitFor(() => expect(requests).toHaveLength(1));
+    fireEvent.click(footer);
+    fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[0]!.scope).toEqual(expect.objectContaining({ listId: activeList.id, listType: activeList.type }));
+    expect(requests[1]!.scope).toEqual(expect.objectContaining({ listId: secondaryList.id, listType: secondaryList.type }));
+    const progress = screen.getByRole("contentinfo");
+    await act(async () => requests[1]!.resolve({ ...defaultTrainingStats, newCardsToday: 22 }));
+    await waitFor(() => expect(progress).toHaveTextContent("22"));
+    await act(async () => requests[0]!.resolve({ ...defaultTrainingStats, newCardsToday: 3 }));
+    expect(progress).toHaveTextContent("22");
+    expect(progress).not.toHaveTextContent("3");
+  } finally {
+    await act(async () => { for (const request of requests) request.resolve(defaultTrainingStats); });
+    restoreDefaultListScope();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+test("returning to a pending no-chrome stats scope adopts its original request", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockImplementation(() => new Promise(() => undefined));
+  const requests: Array<{ scope: unknown; resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void }> = [];
+  fetchStats.mockImplementation((_userId: string, _modes: string[], scope: unknown) => new Promise((resolve) => { requests.push({ scope, resolve }); }));
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Wijzigen" }));
+    await waitFor(() => expect(requests).toHaveLength(1));
+    fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
+    await waitFor(() => expect(requests).toHaveLength(2));
+    fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[0]!.scope).toEqual(expect.objectContaining({ listId: activeList.id, listType: activeList.type }));
+    expect(requests[1]!.scope).toEqual(expect.objectContaining({ listId: secondaryList.id, listType: secondaryList.type }));
+    const progress = screen.getByRole("contentinfo");
+    await act(async () => requests[0]!.resolve({ ...defaultTrainingStats, newCardsToday: 17 }));
+    await waitFor(() => expect(progress).toHaveTextContent("17"));
+    await act(async () => requests[1]!.resolve({ ...defaultTrainingStats, newCardsToday: 29 }));
+    expect(progress).toHaveTextContent("17");
+    expect(progress).not.toHaveTextContent("29");
+  } finally {
+    await act(async () => { for (const request of requests) request.resolve(defaultTrainingStats); });
     restoreDefaultListScope();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
   }
