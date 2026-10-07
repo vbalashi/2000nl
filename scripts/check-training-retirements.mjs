@@ -11,7 +11,9 @@ if (finalTraining) {
     "FirstTimeButtonGroup", "AudioModeToggle", "InteractiveText",
     "trainingPresentationV1Enabled", "sharedArticlePresentationV1Enabled",
     "NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1",
-    "trainingPresentationV1", "sharedArticlePresentationV1");
+    "trainingPresentationV1", "sharedArticlePresentationV1",
+    "TrainingLexicalPreview", "LibraryDetailsActions",
+    "trainingCardStageClassName", "senseCardQuietActionClassName");
 }
 const failures = [];
 
