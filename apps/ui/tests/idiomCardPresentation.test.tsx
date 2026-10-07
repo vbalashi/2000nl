@@ -212,7 +212,6 @@ test("keyboard grading works after reveal transfers focus to Again", () => {
 });
 
 test("approved exercises reuse adaptive ratings and preserve the grade callback", () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   try {
     const onGrade = vi.fn();
     render(<TrainingExerciseCard presentation={build("direct")} interfaceLanguage="en"

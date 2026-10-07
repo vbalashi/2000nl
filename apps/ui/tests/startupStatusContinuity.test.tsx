@@ -6,7 +6,6 @@ import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/Acco
 import { AccountPresentationReady } from "@/components/practice/ui/AccountPresentationReady";
 afterEach(() => { cleanup(); vi.unstubAllEnvs(); });
 test.each(["en", "ru", "nl"] as const)("auth, palette and hydration waits share identical markup in %s", language => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const pending = { load: vi.fn(() => new Promise<"graphite">(() => {})), save: vi.fn() };
   const view = render(<TrainingBootstrapShell interfaceLanguage={language} />);
   const initial = view.getByTestId("startup-logo-screen").innerHTML;
@@ -18,7 +17,6 @@ test.each(["en", "ru", "nl"] as const)("auth, palette and hydration waits share 
   expect(view.getByTestId("startup-logo-screen").innerHTML).toBe(initial);
 });
 test("unknown interface language reserves the same heading instead of moving the logo", () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const view = render(<TrainingBootstrapShell interfaceLanguage="ru" interfaceLanguageReady={false} />);
   const status = view.getByRole("status");
   expect(status.querySelector("h1")).toHaveStyle({visibility:"hidden"});

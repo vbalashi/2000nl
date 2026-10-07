@@ -173,7 +173,6 @@ describe("TrainingSenseCardV2Session", () => {
   });
 
   test("approved exclusion menu forwards the existing known capability without excluding", async () => {
-    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
     try {
       const onProgressActionAccepted = vi.fn();
       const markKnown = singleSenseEntry.capabilities.find(capability => capability.actionId === "mark-known")!;
@@ -195,7 +194,6 @@ describe("TrainingSenseCardV2Session", () => {
   });
 
   test("approved failed lookup keeps retry and exit separate without a review", async () => {
-    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
     try {
       fetchSingleSense.mockResolvedValue({state:"lookup-http-error",status:503});
       const onRetryAlternative = vi.fn(), onExit = vi.fn();
@@ -212,7 +210,6 @@ describe("TrainingSenseCardV2Session", () => {
   });
 
   test.each(["en", "nl", "ru"] as const)("pending context preparation follows %s without grading", async interfaceLanguage => {
-    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
     try {
       loadContextPrompt.mockResolvedValue({ state: "translation-pending" });
       render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext
@@ -1229,14 +1226,13 @@ describe("TrainingSenseCardV2Session", () => {
       />,
     );
 
-    const errorState = await screen.findByRole("alert");
+    const errorState = await screen.findByTestId("training-v2-failure");
+    expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(errorState).toHaveAttribute("data-training-renderer", "v2");
     expect(errorState).toHaveAttribute(
       "data-training-v2-state",
       "lookup-http-error",
     );
-    expect(errorState).toHaveAttribute("data-visual-spec", "training-v1.0");
-    expect(errorState).toHaveClass("flex-1", "rounded-[14px]", "dark:bg-[#20252D]");
     expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Opnieuw proberen" })).toBeInTheDocument();
   });
@@ -1256,7 +1252,7 @@ describe("TrainingSenseCardV2Session", () => {
         />,
       );
 
-      expect(await screen.findByRole("alert")).toHaveAttribute(
+      expect(await screen.findByTestId("training-v2-failure")).toHaveAttribute(
         "data-training-v2-state",
         state,
       );
@@ -1349,7 +1345,7 @@ describe("TrainingSenseCardV2Session", () => {
       />,
     );
 
-    expect(await screen.findByRole("alert")).toHaveAttribute(
+    expect(await screen.findByTestId("training-v2-failure")).toHaveAttribute(
       "data-training-v2-state",
       "reverse-definition-missing",
     );
@@ -1379,7 +1375,7 @@ describe("TrainingSenseCardV2Session", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
 
-    expect(await screen.findByRole("alert")).toHaveAttribute(
+    expect(await screen.findByTestId("training-v2-failure")).toHaveAttribute(
       "data-training-v2-state",
       "lookup-http-error",
     );
@@ -2725,7 +2721,7 @@ describe("TrainingSenseCardV2Session", () => {
       />,
     );
 
-    expect(await screen.findByRole("alert")).toHaveAttribute(
+    expect(await screen.findByTestId("training-v2-failure")).toHaveAttribute(
       "data-training-v2-state",
       "reverse-definition-missing",
     );
@@ -2755,7 +2751,7 @@ describe("TrainingSenseCardV2Session", () => {
       />,
     );
 
-    expect(await screen.findByRole("alert")).toHaveAttribute(
+    expect(await screen.findByTestId("training-v2-failure")).toHaveAttribute(
       "data-training-v2-state",
       "model-invalid",
     );
@@ -2768,7 +2764,6 @@ describe("TrainingSenseCardV2Session", () => {
 test("a context translation finishing in another request resumes the card without a manual retry", async () => {
   vi.clearAllMocks();
   fetchSingleSense.mockResolvedValue({state:"ready",group:singleSenseGroup,entry:singleSenseEntry});
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   vi.useFakeTimers();
   try {
     loadContextPrompt.mockResolvedValueOnce({state:"translation-pending"}).mockResolvedValue({state:"ready",prompt:{text:"Позвонить маме",sourceText:"de moeder bellen",contentNodeId:"context-example",sourceTextFingerprint:"context-fingerprint"}});

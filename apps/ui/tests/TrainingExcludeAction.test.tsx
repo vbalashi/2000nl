@@ -8,7 +8,6 @@ afterEach(() => { cleanup(); vi.unstubAllEnvs(); });
 
 for (const language of ["en", "nl", "ru"] as const) {
   test(`approved exclusion menu separates exclusion and known in ${language}`, () => {
-    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
     const exclude = vi.fn(), known = vi.fn();
     const t = getUiMessages(language).trainingSession.exclusion;
     render(<TrainingExcludeAction language={language} disabled={false} onClick={exclude}
@@ -29,8 +28,7 @@ for (const language of ["en", "nl", "ru"] as const) {
   });
 }
 
-test.each([true, false])("without a known capability exclusion remains explicit, approved=%s", approved => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", String(approved));
+test("without a known capability exclusion remains explicit", () => {
   const exclude = vi.fn();
   render(<TrainingExcludeAction language="en" disabled={false} onClick={exclude} />);
   fireEvent.click(screen.getByRole("button"));
@@ -38,18 +36,12 @@ test.each([true, false])("without a known capability exclusion remains explicit,
   expect(screen.queryByRole("menu")).not.toBeInTheDocument();
 });
 
-test("flag-off and disabled controls preserve their owner", () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "false");
+test("disabled controls preserve their owner", () => {
   const exclude = vi.fn(), known = vi.fn();
-  const { rerender } = render(<TrainingExcludeAction language="en" disabled={false}
-    onClick={exclude} knownAction={{label:"Known", onClick:known}} />);
-  fireEvent.click(screen.getByRole("button"));
-  expect(exclude).toHaveBeenCalledOnce();
-  expect(known).not.toHaveBeenCalled();
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
-  rerender(<TrainingExcludeAction language="en" disabled onClick={exclude}
+  render(<TrainingExcludeAction language="en" disabled onClick={exclude}
     knownAction={{label:"Known", onClick:known}} />);
   fireEvent.click(screen.getByRole("button"));
   expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-  expect(exclude).toHaveBeenCalledOnce();
+  expect(exclude).not.toHaveBeenCalled();
+  expect(known).not.toHaveBeenCalled();
 });

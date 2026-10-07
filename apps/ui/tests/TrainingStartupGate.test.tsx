@@ -4,7 +4,6 @@ import {afterEach, expect, test, vi} from "vitest";
 import {TrainingStartupGate} from "@/components/training/pilot/TrainingStartupGate";
 afterEach(() => {cleanup(); vi.useRealTimers(); vi.unstubAllEnvs();});
 test("startup readers stay mounted while the neutral surface covers intermediate UI", () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const mounted = vi.fn(), unmounted = vi.fn();
   function Reader() {useEffect(() => {mounted(); return unmounted;}, []); return <button>Start training</button>;}
   const {rerender} = render(<TrainingStartupGate pending interfaceLanguage="en"><Reader /></TrainingStartupGate>);
@@ -16,7 +15,7 @@ test("startup readers stay mounted while the neutral surface covers intermediate
   expect(mounted).toHaveBeenCalledOnce(); expect(unmounted).not.toHaveBeenCalled();
 });
 test("long-running startup keeps stable copy without concealing a settled error", () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true"); vi.useFakeTimers();
+  vi.useFakeTimers();
   const {rerender} = render(<TrainingStartupGate pending interfaceLanguage="en"><div role="alert">Could not load</div></TrainingStartupGate>);
   const before = screen.getByRole("status").innerHTML;
   act(() => vi.advanceTimersByTime(8000));
