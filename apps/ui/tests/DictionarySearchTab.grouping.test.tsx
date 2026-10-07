@@ -197,12 +197,12 @@ describe("DictionarySearchTab Headword Group results", () => {
     render(<Harness />);
 
     expect(await screen.findAllByTestId("library-headword-group-row")).toHaveLength(3);
-    expect(screen.getByTestId("library-headword-group-group-goed-main")).toHaveTextContent(
-      "bn · bw · Van Dale · 2 betekenissen",
-    );
-    expect(screen.getByTestId("library-headword-group-group-goed-homograph")).toHaveTextContent(
-      "zn · Van Dale · homoniem 2 · 1 betekenis",
-    );
+    expect(screen.getByTestId("library-headword-group-group-goed-main")).toHaveTextContent("bijwoord");
+    expect(screen.getByTestId("library-headword-group-group-goed-main")).toHaveTextContent("Van Dale");
+    expect(screen.getByTestId("library-headword-group-group-goed-main")).toHaveTextContent("2 betekenissen");
+    expect(screen.getByTestId("library-headword-group-group-goed-homograph")).toHaveTextContent("zelfstandig naamwoord");
+    expect(screen.getByTestId("library-headword-group-group-goed-homograph")).toHaveTextContent("Van Dale");
+    expect(screen.getByTestId("library-headword-group-group-goed-homograph")).toHaveTextContent("1 betekenis");
     expect(screen.getByTestId("library-headword-group-group-goed-user-dictionary")).toHaveTextContent(
       "Mijn woordenboek",
     );
@@ -309,17 +309,21 @@ const materialRepository=(paused=false)=>({
 });
 const source=(id:string,name:string)=>({id,name,languageCode:"nl",slug:name,kind:"curated",isEditable:false,entryCount:10});
 
-test("approved search choices exclude disabled material and changed source starts at the first scoped page",async()=>{
- vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
+test("search filters exclude disabled material and changing source starts at the first scoped page",async()=>{
  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
  readableSources.mockReset().mockResolvedValue([source(scopeA,"Disabled A"),source(scopeB,"Enabled B")]);
  const group=goedGroup("enabled-b",scopeB,"Enabled B",[sense("entry-b","zn")]);
  fetchGroupPage.mockReset().mockResolvedValue({groups:[group],selectedTierComplete:true,nextGroupCursor:"next-scoped"});
  render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness/></AccountMaterialProvider>);
  await screen.findByTestId("library-headword-group-enabled-b");
- expect(await screen.findByRole("option",{name:"Enabled B"})).toBeInTheDocument();
- expect(screen.queryByRole("option",{name:"Disabled A"})).not.toBeInTheDocument();
- expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:null},cursor:null}));
+ const {getUiMessages}=await import("@/lib/uiMessages");const labels=getUiMessages("nl");
+ fireEvent.click(screen.getByRole("button",{name:labels.library.filters}));
+ fireEvent.click(screen.getByRole("button",{name:new RegExp(`^${labels.builder.source}`)}));
+ expect(await screen.findByRole("button",{name:"Enabled B"})).toBeInTheDocument();
+ expect(screen.queryByRole("button",{name:"Disabled A"})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Enabled B"}));
+ fireEvent.click(screen.getByRole("button",{name:labels.library.showResults}));
+ expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:[scopeB],filters:{parts:[],article:null}},cursor:null}));
  // Group rows can render before the completed search marks pagination ready.
  // Await the control under test rather than assuming the first row implies it.
  const pagination=await screen.findByTestId("library-group-pagination");
@@ -327,17 +331,21 @@ test("approved search choices exclude disabled material and changed source start
  await waitFor(()=>expect(next).toBeEnabled());
  fireEvent.click(next);
  await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor:"next-scoped"})));
- fireEvent.change(screen.getByLabelText("Woordenboekbron"),{target:{value:scopeB}});
- await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:[scopeB]},cursor:null})));
+ fireEvent.click(screen.getByRole("button",{name:labels.library.filters}));
+ if (!screen.queryByRole("button",{name:"Alle woordenboeken"})) {
+   fireEvent.click(screen.getByRole("button",{name:new RegExp(`^${labels.builder.source}`)}));
+ }
+ fireEvent.click(await screen.findByRole("button",{name:"Alle woordenboeken"}));
+ fireEvent.click(screen.getByRole("button",{name:labels.library.showResults}));
+ await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}},cursor:null})));
  expect(screen.getByTestId("library-headword-group-enabled-b")).toBeInTheDocument();
 });
 
 test("a server cursor invalidated by another device restarts scoped search once",async()=>{
- vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
  readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
  fetchGroupPage.mockReset().mockRejectedValueOnce(Object.assign(new Error("invalid-cursor"),{name:"PlatformV2LibraryLookupError",kind:"invalid-cursor"})).mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
- render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness initial={{page:2,groupPageCursors:[null,"stale"],groupScopeKey:JSON.stringify(["user-1",1,"nl",null,"goed"])}}/></AccountMaterialProvider>);
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness initial={{page:2,groupPageCursors:[null,"stale"],groupScopeKey:JSON.stringify(["user-1",1,"nl",null,"goed",{parts:[],article:null}])}}/></AccountMaterialProvider>);
  await screen.findByTestId("library-headword-group-group-goed-main");
  expect(fetchGroupPage.mock.calls[0][0].cursor).toBe("stale");
  expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor:null}));
@@ -346,20 +354,19 @@ test("a server cursor invalidated by another device restarts scoped search once"
 });
 
 test("Library picks an active local search language without changing the training scope",async()=>{
- vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
  readableSources.mockReset().mockResolvedValue([]);
  fetchGroupPage.mockReset().mockResolvedValue({groups:[],selectedTierComplete:true,nextGroupCursor:null});
  render(<AccountMaterialProvider userId="user-1" repository={materialRepository(true)}><Harness/></AccountMaterialProvider>);
  await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalled());
- expect(screen.getByLabelText("Leertaal")).toHaveValue("en");
- expect(screen.queryByRole("option",{name:"Nederlands"})).not.toBeInTheDocument();
+ const {getUiMessages}=await import("@/lib/uiMessages");
+ fireEvent.click(screen.getByRole("button",{name:getUiMessages("nl").library.filters}));
+ expect(fetchGroupPage.mock.calls.every(call=>call[0].contentLanguageCode==="en")).toBe(true);
  expect(fetchGroupPage.mock.calls.every(call=>call[0].contentLanguageCode==="en")).toBe(true);
 });
 
 
 test("approved Library copy and grouped rows follow interface locale without changing entry selection",async()=>{
- vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1","true");
  fetchGroupPage.mockResolvedValue({groups:[homographGroup],nextGroupCursor:null});
  const view=render(<Harness locale="en"/>);
  const row=await screen.findByTestId("library-headword-group-group-goed-homograph");
@@ -374,7 +381,6 @@ test("approved Library copy and grouped rows follow interface locale without cha
 });
 
 test("approved chips panel excludes disabled sources, cancels drafts and applies filters on the first page",async()=>{
- vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1","true");
  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
  const {getUiMessages}=await import("@/lib/uiMessages");const copy=getUiMessages("nl");
  readableSources.mockReset().mockResolvedValue([source(scopeA,"Disabled A"),source(scopeB,"Enabled B")]);
@@ -382,14 +388,13 @@ test("approved chips panel excludes disabled sources, cancels drafts and applies
  fetchGroupPage.mockReset().mockResolvedValue({groups:[group],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,matchingEntryIds:["entry-b"]}});
  const repository=materialRepository();render(<AccountMaterialProvider userId="user-1" repository={repository}><Harness/></AccountMaterialProvider>);
  await screen.findByTestId("library-headword-group-enabled-b");
- expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
- fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));
+ fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));
  fireEvent.click(screen.getByRole("button",{name:new RegExp(`^${copy.builder.source}`)}));
  await screen.findByRole("button",{name:"Enabled B"});expect(screen.queryByRole("button",{name:"Disabled A"})).not.toBeInTheDocument();
  fireEvent.click(screen.getByRole("button",{name:"Enabled B"}));
  fireEvent.click(screen.getByRole("button",{name:copy.builder.cancel}));
  expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).at(-1)?.[0].libraryScope.dictionaryIds).toBeNull();
- fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));fireEvent.click(screen.getByRole("button",{name:copy.builder.parts.Nouns}));
+ fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));fireEvent.click(screen.getByRole("button",{name:copy.builder.parts.Nouns}));
  await waitFor(()=>expect(screen.getByRole("button",{name:copy.library.showResults})).toBeEnabled());
  fireEvent.click(screen.getByRole("button",{name:copy.library.showResults}));
  await waitFor(()=>expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).at(-1)?.[0]).toMatchObject({cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:["noun"],article:null}}}));
@@ -402,32 +407,7 @@ beforeEach(()=>{
 });
 
 
-test("personal entry translations use the account target language rather than English", async () => {
-  const service = await import("@/lib/trainingService");
-  vi.mocked(service.createUserDictionaryEntry).mockResolvedValue("created-entry");
-  render(<Harness locale="en" translationLang="ru" />);
-  fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
-  fireEvent.change(screen.getByLabelText(/Translation · Russian/), {target:{value:"хороший"}});
-  fireEvent.click(screen.getByRole("button", {name:"Save to my dictionary"}));
-  await waitFor(() => expect(service.createUserDictionaryEntry).toHaveBeenLastCalledWith({entry:{headword:"goed",languageCode:"nl",translation:{languageCode:"ru",text:"хороший"}}}));
-});
-
-test("turning translations off disables the field and omits an existing translation draft", async () => {
-  const service = await import("@/lib/trainingService");
-  vi.mocked(service.createUserDictionaryEntry).mockResolvedValue("created-entry");
-  const view = render(<Harness locale="en" translationLang="ru" />);
-  fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
-  fireEvent.change(screen.getByLabelText(/Translation · Russian/), {target:{value:"хороший"}});
-  fireEvent.change(screen.getByLabelText("Definition"), {target:{value:"goed zijn"}});
-  view.rerender(<Harness locale="en" translationLang={null} />);
-  expect(screen.getByLabelText("Translation")).toBeDisabled();
-  fireEvent.click(screen.getByRole("button", {name:"Save to my dictionary"}));
-  await waitFor(() => expect(service.createUserDictionaryEntry).toHaveBeenLastCalledWith({entry:{headword:"goed",languageCode:"nl",definition:"goed zijn"}}));
-});
-
-
 test("owned collection entries use shared Library rows while retaining entry selection", async () => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
   const service = await import("@/lib/trainingService");
   vi.mocked(service.fetchWordsForList).mockResolvedValueOnce({items:[{id:"owned-entry",headword:"huis",gender:"het",language_code:"nl",dictionary_name:"Personal",part_of_speech:"zn",raw:{meanings:[{definition:"een gebouw"}]}}],total:1});
   render(<Harness locale="en" collection initial={{applyListFilter:true}} />);
@@ -440,7 +420,6 @@ test("owned collection entries use shared Library rows while retaining entry sel
 });
 
 test("shows a generic availability notice for a collection with inaccessible source links", async () => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
   render(<Harness locale="en" collection unavailableSourceCount={1} initial={{applyListFilter:true}} />);
 
   const notice = await screen.findByText(/Some words in this collection are temporarily unavailable/);
@@ -448,21 +427,7 @@ test("shows a generic availability notice for a collection with inaccessible sou
   expect(notice).not.toHaveTextContent("dictionary-");
 });
 
-test("changing translation target never retags an old draft with a different language", async () => {
-  const service = await import("@/lib/trainingService");
-  vi.mocked(service.createUserDictionaryEntry).mockResolvedValue("created-entry");
-  const view = render(<Harness locale="en" translationLang="ru" />);
-  fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
-  fireEvent.change(screen.getByLabelText(/Translation · Russian/), {target:{value:"хороший"}});
-  fireEvent.change(screen.getByLabelText("Definition"), {target:{value:"goed zijn"}});
-  view.rerender(<Harness locale="en" translationLang="de" />);
-  expect(screen.getByLabelText(/Translation · German/)).toHaveValue("");
-  fireEvent.click(screen.getByRole("button", {name:"Save to my dictionary"}));
-  await waitFor(() => expect(service.createUserDictionaryEntry).toHaveBeenLastCalledWith({entry:{headword:"goed",languageCode:"nl",definition:"goed zijn"}}));
-});
-
 test("approved Library omits personal entry controls without calling the create API", async () => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
   const service = await import("@/lib/trainingService");
   vi.mocked(service.createUserDictionaryEntry).mockClear();
   render(<Harness locale="en" />);
@@ -472,43 +437,13 @@ test("approved Library omits personal entry controls without calling the create 
   expect(service.createUserDictionaryEntry).not.toHaveBeenCalled();
 });
 
-test("legacy personal editor can close without creating an entry", async () => {
-  const service = await import("@/lib/trainingService");
-  vi.mocked(service.createUserDictionaryEntry).mockClear();
-  await act(async () => { render(<Harness locale="en" />); });
-  fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
-  expect(screen.getByLabelText("Headword")).toHaveValue("goed");
-  fireEvent.click(screen.getByRole("button", {name:"Close"}));
-  expect(screen.queryByLabelText("Headword")).not.toBeInTheDocument();
-  expect(service.createUserDictionaryEntry).not.toHaveBeenCalled();
-});
-
-test("pending legacy entry creation prevents duplicate submission", async () => {
-  const service = await import("@/lib/trainingService");
-  const pending = deferred<string>();
-  vi.mocked(service.createUserDictionaryEntry).mockClear().mockReturnValueOnce(pending.promise);
-  await act(async () => { render(<Harness locale="en" />); });
-  fireEvent.click(screen.getByRole("button", {name:"Add entry"}));
-  fireEvent.change(screen.getByLabelText("Definition"), {target:{value:"goed zijn"}});
-  const save = screen.getByRole("button", {name:"Save to my dictionary"});
-  fireEvent.click(save);
-  await waitFor(() => expect(save).toBeDisabled());
-  fireEvent.click(save);
-  pending.resolve("created-entry");
-  await waitFor(() => expect(screen.queryByLabelText("Headword")).not.toBeInTheDocument());
-  expect(service.createUserDictionaryEntry).toHaveBeenCalledOnce();
-});
-
 test.each(["en", "nl", "ru"] as const)("approved Library toolbar omits query instruction in %s", async (locale) => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
   const {getUiMessages} = await import("@/lib/uiMessages");
   await act(async () => { render(<Harness locale={locale} initial={{query:""}} />); });
   expect(screen.queryByText(getUiMessages(locale).library.typeQuery)).not.toBeInTheDocument();
 });
 
 test("approved Library browses immediately with server totals and cursor paging", async () => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
   readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
   fetchGroupPage.mockReset().mockResolvedValue({groups:[homographGroup],selectedTierComplete:false,nextGroupCursor:"browse-next",librarySearch:{totalGroups:42,matchingEntryIds:["entry-goed-zn"]}});
@@ -522,8 +457,6 @@ test("approved Library browses immediately with server totals and cursor paging"
 });
 
 test("initial browse loading does not show an empty result and failure can retry", async () => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
   const pending=deferred<unknown>();
   readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);

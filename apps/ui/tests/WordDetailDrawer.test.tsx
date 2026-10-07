@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from "vitest";
 import { WordDetailDrawer } from "@/components/training/wordlist/WordDetailDrawer";
 
 describe("WordDetailDrawer", () => {
-  test("offers a localized pointer close target on mobile", () => {
+  test("renders the resizable mobile sheet without owning nested dialog Escape", () => {
     const onClose = vi.fn();
     render(
       <WordDetailDrawer
@@ -19,7 +19,8 @@ describe("WordDetailDrawer", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Закрыть" }));
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("region", { name: "Сведения о слове" })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

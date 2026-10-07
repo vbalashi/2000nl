@@ -1,7 +1,12 @@
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, test, vi } from "vitest";
+import { beforeEach, describe, expect, it, test, vi } from "vitest";
 import { LibraryCollectionsPicker } from "@/components/training/library-v2/LibraryCollectionsPicker";
+
+beforeEach(() => {
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value() { this.setAttribute("open", ""); } });
+  Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value() { this.removeAttribute("open"); } });
+});
 
 describe("LibraryCollectionsPicker", () => {
   it("edits list membership for the selected meaning", () => {
@@ -53,6 +58,7 @@ describe("LibraryCollectionsPicker", () => {
       false,
     );
 
+    fireEvent.click(screen.getByRole("button", { name: /Nieuwe collectie/i }));
     fireEvent.change(screen.getByPlaceholderText("Naam van nieuwe collectie"), {
       target: { value: "Werkwoorden" },
     });
@@ -74,9 +80,7 @@ describe("membership read recovery", () => {
       userLists={[]} memberships={[]} busyListId={null} status={null} membershipState={state}
       onRetryMemberships={retry} onClose={vi.fn()} onToggleList={toggle} onCreateList={create} />);
     expect(screen.queryByText("No collections found")).not.toBeInTheDocument();
-    fireEvent.change(screen.getByPlaceholderText("New collection name"),{target:{value:"New"}});
-    expect(screen.getByRole("button",{name:"Create"})).toBeDisabled();
-    fireEvent.submit(screen.getByPlaceholderText("New collection name").closest("form")!);
+    expect(screen.getByRole("button",{name:/New collection/i})).toBeDisabled();
     if(state==="failed") {
       expect(screen.getByRole("alert")).toHaveTextContent("Collection membership could not be loaded");
       fireEvent.click(screen.getByRole("button",{name:"Reload membership"}));expect(retry).toHaveBeenCalledOnce();
@@ -86,7 +90,6 @@ describe("membership read recovery", () => {
 });
 
 test("approved picker opens creation on demand and keeps its existing callback", () => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value() { this.open = true; } });
   Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value() { this.open = false; } });
   const create = vi.fn();
