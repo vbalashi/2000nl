@@ -11,7 +11,7 @@ intended faces without network access.
 
 The files are licensed under the SIL Open Font License 1.1. The upstream
 license texts are preserved beside the files as `Inter-OFL.txt` and
-`Newsreader-OFL.txt`.
+`Newsreader-OFL.txt` (trailing whitespace normalized).
 
 | Family / style | Google Fonts CSS request | Upstream WOFF2 | SHA-256 |
 | --- | --- | --- | --- |
