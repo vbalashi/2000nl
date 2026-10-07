@@ -1032,7 +1032,7 @@ test("V2 answer-card overflow opens the retained details surface", async () => {
       screen.queryByTestId("library-details-actions"),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /^(Close|Sluiten)$/ }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^(Close|Sluiten)$/ })[0]);
     const stageAfter = await screen.findByTestId("mock-training-sense-card-v2");
     expect(stageAfter).toHaveAttribute(
       "data-presentation-identity",
@@ -1063,7 +1063,7 @@ test("global Details and shortcut help preserve the V2 turn and omit retired act
   expect(
     screen.queryByTestId("library-details-actions"),
   ).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: /^(Close|Sluiten)$/ }));
+  fireEvent.click(screen.getAllByRole("button", { name: /^(Close|Sluiten)$/ })[0]);
 
   fireEvent.keyDown(window, { key: "?", shiftKey: true });
   expect(
@@ -1355,7 +1355,7 @@ test("Statistics and Settings destinations preserve the current Training turn", 
   );
   expect(screen.getByTestId("mock-training-sense-card-v2")).toBe(stageBefore);
 
-  fireEvent.click(screen.getByLabelText("Settings"));
+  fireEvent.click(screen.getAllByLabelText("Settings")[0]);
   expect(
     await screen.findByRole("heading", { name: /Instellingen|Settings/ }),
   ).toBeInTheDocument();
@@ -1415,7 +1415,7 @@ test("first-pilot Training opens on Today and Start reveals the mounted card", a
   expect(fetchTrainingSessionPlan).toHaveBeenCalledTimes(1);
   expect(getPrimaryNavigation()).toBeInTheDocument();
   expect(
-    screen.queryByRole("button", { name: "Training aanpassen" }),
+    screen.queryByRole("button", { name: /^Edit / }),
   ).not.toBeInTheDocument();
 
   fireEvent.click(
@@ -1428,7 +1428,7 @@ test("first-pilot Training opens on Today and Start reveals the mounted card", a
   ).toBeInTheDocument();
 
   fireEvent.click(
-    screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ }),
+    await screen.findByRole("button", { name: /Start training|Training starten|Начать тренировку/ }),
   );
   await waitFor(() =>
     expect(startTrainingSession).toHaveBeenCalledTimes(2),
@@ -1561,7 +1561,7 @@ test("first pilot selection starts only after Start and belongs to its run", asy
     expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+      await screen.findByRole("button", { name: /^Edit / }),
     );
     expect(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ })).toBeEnabled();
     expect(startTrainingSession).not.toHaveBeenCalled();
@@ -1571,7 +1571,7 @@ test("first pilot selection starts only after Start and belongs to its run", asy
       screen.queryByRole("heading", { name: "huis" }),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /Back to Today|Terug naar Vandaag/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Back to Training|Terug naar Training/ }));
     fireEvent.click(
       screen.getByRole("button", {
         name: /Start training|Training starten|Начать тренировку/,
@@ -1677,7 +1677,7 @@ test("starting while stats are pending reuses the request and keeps unknown foot
     await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ }),
   ).toBeInTheDocument();
   await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
-  fireEvent.click(screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /^Edit / }));
   const startButton = await screen.findByRole("button", { name: /Start training|Training starten/ });
   await waitFor(() => expect(startButton).toBeEnabled());
   fireEvent.click(startButton);
@@ -1706,7 +1706,7 @@ test("late stats from the old setup scope cannot replace the current session sta
     await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
     await waitFor(() => expect(requests).toHaveLength(1));
 
-    fireEvent.click(screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Edit / }));
     fireEvent.change(screen.getByLabelText("Collection"), {
       target: { value: `curated:${secondaryList.id}` },
     });
@@ -1751,10 +1751,10 @@ test("returning to a pending stats scope adopts its existing request", async () 
 
   try {
     render(<TrainingScreen user={user} />);
-    await screen.findByRole("button", { name: "Training aanpassen" });
+    await screen.findByRole("button", { name: /^Edit / });
     await waitFor(() => expect(requests).toHaveLength(1));
 
-    fireEvent.click(screen.getByRole("button", { name: "Training aanpassen" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Edit / }));
     fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
     fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
     await waitFor(() => expect(requests).toHaveLength(2));
@@ -2657,7 +2657,7 @@ test("pilot Start persists the complete selection in one scope update", async ()
   await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
   updateActiveTrainingScope.mockClear();
   fireEvent.click(
-    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+    await screen.findByRole("button", { name: /^Edit / }),
   );
   fireEvent.click(screen.getByRole("button", { name: /Reverse|Omgekeerd/ }));
   fireEvent.change(
@@ -2690,7 +2690,7 @@ test("pilot Setup applies source and date filters only when Start commits the dr
     expect(fetchTrainingFilterSources).toHaveBeenCalledWith(user.id),
   );
   fireEvent.click(
-    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+    await screen.findByRole("button", { name: /^Edit / }),
   );
   fireEvent.change(screen.getByLabelText("Time window"), {
     target: { value: "today" },
@@ -2724,7 +2724,7 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
 
   await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
   fireEvent.click(
-    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+    await screen.findByRole("button", { name: /^Edit / }),
   );
   fetchNextTrainingWordByScenario.mockRejectedValueOnce(
     Object.assign(new Error("canceling statement due to statement timeout"), {
@@ -2801,7 +2801,7 @@ test("pilot Start shows empty recovery when the replacement queue has no cards",
 
   await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
   fireEvent.click(
-    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+    await screen.findByRole("button", { name: /^Edit / }),
   );
   const startButton = screen.getByRole("button", {
     name: /Start training|Training starten/,
@@ -2850,7 +2850,7 @@ test("pilot Setup shows Listening as unavailable without enabling it", async () 
 
   await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
   fireEvent.click(
-    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+    await screen.findByRole("button", { name: /^Edit / }),
   );
   expect(
     await screen.findByRole("button", { name: /Listening|Luisteren/ }),
@@ -2872,7 +2872,7 @@ test("pilot cannot start a scenario before backend capabilities resolve", async 
 
   await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
   fireEvent.click(
-    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+    await screen.findByRole("button", { name: /^Edit / }),
   );
   expect(
     screen.getByRole("button", { name: /Loading Training|Training laden/ }),
@@ -2909,7 +2909,7 @@ test("pilot cannot start when no authoritative scenario is available", async () 
 
   await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
   fireEvent.click(
-    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+    await screen.findByRole("button", { name: /^Edit / }),
   );
   const unavailableStart = await screen.findByRole("button", {
     name: /Choose a training goal|Kies een trainingsdoel/,
@@ -2951,7 +2951,7 @@ test("pilot does not start a card mode omitted by the authoritative scenario", a
   expect(updateActiveTrainingScope).not.toHaveBeenCalled();
 
   fireEvent.click(
-    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+    await screen.findByRole("button", { name: /^Edit / }),
   );
   expect(
     screen.queryByRole("button", { name: /Reverse|Omgekeerd/ }),
@@ -3285,7 +3285,7 @@ test("footer list selector still changes active training scope", async () => {
     expect(
       screen.queryByRole("button", { name: /active list/i }),
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Training aanpassen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
     fireEvent.click(
       await screen.findByRole("button", { name: /active list/i }),
     );
@@ -3346,10 +3346,10 @@ test("footer card-filter change reloads without the previous finite session", as
     .mockResolvedValue(mockWord);
 
   render(<TrainingScreen user={user} />);
-  await screen.findByRole("button", { name: "Training aanpassen" });
+  await screen.findByRole("button", { name: "Wijzigen" });
 
   fetchNextTrainingWordByScenario.mockClear();
-  fireEvent.click(screen.getByRole("button", { name: "Training aanpassen" }));
+  fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
   fireEvent.click(
     screen.getByRole("button", { name: /Nieuw \+ Herhaling/ }),
   );

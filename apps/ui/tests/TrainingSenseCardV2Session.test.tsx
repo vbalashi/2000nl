@@ -782,7 +782,7 @@ describe("TrainingSenseCardV2Session", () => {
     expect(await screen.findByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "Vertaling" })).not.toBeChecked();
     expect(screen.getByPlaceholderText("Optionele opmerking (niet verplicht)")).toHaveValue("");
-    fireEvent.keyDown(document, { key: "Escape" });
+    fireEvent.click(screen.getByRole("button", { name: "Terug" }));
     expect(screen.queryByRole("dialog", { name: "Wat klopt er niet?" })).not.toBeInTheDocument();
     await waitFor(() => expect(reportAction).toHaveFocus());
 
