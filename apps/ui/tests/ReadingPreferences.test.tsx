@@ -1,15 +1,14 @@
 import React from "react";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ReadingPreferencesProvider } from "@/components/reading/ReadingPreferencesProvider";
 import { ReadingSettingsSection } from "@/components/reading/ReadingSettingsSection";
 import type { ReadingPreferencesRepository } from "@/lib/reading/readingPreferencesRepository";
 
-const originalWidth = window.innerWidth;
 beforeEach(() => window.localStorage.clear());
 afterEach(() => {
   vi.restoreAllMocks();
-  Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth });
+  Object.defineProperty(window, "innerWidth", { configurable: true, value: 1024 });
 });
 
 function settings(repository: ReadingPreferencesRepository, userId = "reader") {
@@ -18,75 +17,20 @@ function settings(repository: ReadingPreferencesRepository, userId = "reader") {
   </ReadingPreferencesProvider>;
 }
 
-test("Settings saves phone size independently and never selects phone because a desktop window narrows", async () => {
-  const values = { phone: "normal", desktop: "large" } as const;
-  const repository: ReadingPreferencesRepository = {
-    load: vi.fn().mockResolvedValue(values),
-    save: vi.fn().mockResolvedValue(undefined),
-  };
-  render(<ReadingPreferencesProvider userId="reader" repository={repository}>
-    <ReadingSettingsSection language="en" />
-  </ReadingPreferencesProvider>);
-  const phone = await screen.findByLabelText("Phone text size");
-  await waitFor(() => expect(screen.getByLabelText("Computer / tablet text size")).toHaveValue("large"));
-  fireEvent.change(phone, { target: { value: "largest" } });
-  await waitFor(()=>expect(screen.getByLabelText("Phone text size")).toBeEnabled());
-  expect(screen.queryByText("Saved")).toBeNull();
-  expect(repository.save).toHaveBeenCalledWith("reader", "phone", "largest");
-  expect(screen.getByLabelText("Computer / tablet text size")).toHaveValue("large");
-  Object.defineProperty(window, "innerWidth", { configurable: true, value: 320 });
-  fireEvent(window, new Event("resize"));
-  expect(screen.getByLabelText("Profile for this browser")).toHaveValue("desktop");
-});
-
-test("phone detection is independent of viewport and an explicit device choice survives reload", async () => {
+test("phone text profile follows the device and ignores the retired local override", async () => {
   vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)");
-  const repository: ReadingPreferencesRepository = {
-    load: vi.fn().mockResolvedValue({ phone: "largest", desktop: "normal" }),
-    save: vi.fn().mockResolvedValue(undefined),
-  };
-  const first = render(settings(repository));
-  await waitFor(() => expect(screen.getByLabelText("Phone text size")).toHaveValue("largest"));
-  expect(screen.getByLabelText("Profile for this browser")).toHaveValue("phone");
-  fireEvent.change(screen.getByLabelText("Profile for this browser"), { target: { value: "desktop" } });
-  first.unmount();
-  render(settings(repository));
-  await waitFor(() => expect(screen.getByLabelText("Phone text size")).toBeEnabled());
-  expect(screen.getByLabelText("Profile for this browser")).toHaveValue("desktop");
-  expect(repository.save).not.toHaveBeenCalled();
-});
-
-test("a failed save stays visibly unsaved and retry saves only that profile", async () => {
+  window.localStorage.setItem("2000nl.reading-device.v1", "desktop");
   const repository: ReadingPreferencesRepository = {
     load: vi.fn().mockResolvedValue({ phone: "normal", desktop: "large" }),
-    save: vi.fn().mockRejectedValueOnce(new Error("offline")).mockResolvedValue(undefined),
+    save: vi.fn().mockResolvedValue(undefined),
   };
   render(settings(repository));
-  await waitFor(() => expect(screen.getByLabelText("Phone text size")).toBeEnabled());
-  fireEvent.change(screen.getByLabelText("Phone text size"), { target: { value: "largest" } });
-  expect(await screen.findByRole("alert")).toHaveTextContent("Not saved");
-  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-  await waitFor(()=>expect(screen.getByLabelText("Phone text size")).toBeEnabled());
-  expect(screen.queryByText("Saved")).toBeNull();
-  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  expect(repository.save).toHaveBeenNthCalledWith(1, "reader", "phone", "largest");
-  expect(repository.save).toHaveBeenNthCalledWith(2, "reader", "phone", "largest");
-  expect(screen.getByLabelText("Computer / tablet text size")).toHaveValue("large");
-});
-
-test("load failure does not permit overwriting unknown settings and offers retry", async () => {
-  const repository: ReadingPreferencesRepository = {
-    load: vi.fn().mockRejectedValueOnce(new Error("offline")).mockResolvedValue({ phone: "large", desktop: "largest" }),
-    save: vi.fn(),
-  };
-  render(settings(repository));
-  await screen.findByRole("alert");
-  expect(screen.getByLabelText("Phone text size")).toBeDisabled();
-  expect(screen.getByLabelText("Computer / tablet text size")).toBeDisabled();
-  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-  await waitFor(() => expect(screen.getByLabelText("Phone text size")).toHaveValue("large"));
-  expect(screen.getByLabelText("Computer / tablet text size")).toHaveValue("largest");
-  expect(repository.save).not.toHaveBeenCalled();
+  const larger = await screen.findByRole("button", { name: "Larger" });
+  await waitFor(() => expect(larger).toBeEnabled());
+  expect(larger).toHaveAttribute("aria-pressed", "false");
+  fireEvent.click(larger);
+  await waitFor(() => expect(repository.save).toHaveBeenCalledWith("reader", "phone", "large"));
+  expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
 });
 
 test("switching accounts drops a previous account's pending load", async () => {
@@ -98,22 +42,8 @@ test("switching accounts drops a previous account's pending load", async () => {
   };
   const view = render(settings(repository, "first"));
   view.rerender(settings(repository, "second"));
-  await waitFor(() => expect(screen.getByLabelText("Computer / tablet text size")).toHaveValue("large"));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Extra large" })).toBeEnabled());
   await act(async () => finishFirst({ phone: "largest", desktop: "largest" }));
-  expect(screen.getByLabelText("Phone text size")).toHaveValue("normal");
-  expect(screen.getByLabelText("Computer / tablet text size")).toHaveValue("large");
-});
-
-test("approved settings detect phone despite a legacy override and save only its account profile",async()=>{
- vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
- try {
- vi.spyOn(navigator,"userAgent","get").mockReturnValue("iPhone");
- window.localStorage.setItem("2000nl.reading-device.v1","desktop");
- const repository:ReadingPreferencesRepository={load:vi.fn().mockResolvedValue({phone:"normal",desktop:"large"}),save:vi.fn().mockResolvedValue(undefined)};
- render(settings(repository));
- const normal=await screen.findByRole("button",{name:"Standard"});await waitFor(()=>expect(normal).toBeEnabled());
- expect(normal).toHaveAttribute("aria-pressed","true");expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
- fireEvent.click(screen.getByRole("button",{name:"Larger"}));
- await waitFor(()=>expect(repository.save).toHaveBeenCalledWith("reader","phone","large"));
- } finally {vi.unstubAllEnvs();}
+  expect(screen.getByRole("button", { name: "Larger" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "Extra large" })).toHaveAttribute("aria-pressed", "false");
 });

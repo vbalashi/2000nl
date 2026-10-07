@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { getUiMessages } from "@/lib/uiMessages";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import workspace from "@/components/practice/library/libraryWorkspace.module.css";
@@ -16,21 +15,6 @@ import type {
   EntryLearningListMembership,
   WordListSummary,
 } from "@/lib/types";
-
-const copy: Record<OnboardingLanguage, { title: string; eyebrow: string }> = {
-  nl: {
-    title: "Bibliotheek",
-    eyebrow: "Woorden, bronnen en collecties",
-  },
-  en: {
-    title: "Library",
-    eyebrow: "Words, sources and collections",
-  },
-  ru: {
-    title: "Библиотека",
-    eyebrow: "Слова, источники и коллекции",
-  },
-};
 
 type Props = {
   open: boolean;
@@ -73,9 +57,6 @@ export function LibraryDestination({
     () => lists.filter((list) => list.type === "user"),
     [lists],
   );
-  const text = copy[interfaceLanguage];
-  const approved = sharedArticlePresentationV1Enabled();
-
   return (
     <section
       aria-hidden={!open}
@@ -83,31 +64,16 @@ export function LibraryDestination({
     >
       <div
         data-testid="library-workspace"
-        className={
-          approved
-            ? `${theme.theme} ${workspace.workspace}`
-            : "mx-auto flex min-h-0 w-full max-w-[1200px] flex-1 flex-col px-4 pb-4 pt-5 sm:px-6 md:px-8"
-        }
-        data-colour-mode={approved ? "app" : undefined}
+        className={`${theme.theme} ${workspace.workspace}`}
+        data-colour-mode="app"
       >
-        {approved ? (
-          <h1 className="sr-only">
-            {getUiMessages(interfaceLanguage).library.title}
-          </h1>
-        ) : (
-          <div className="mb-4 flex-none">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
-              {text.eyebrow}
-            </p>
-            <h1 className="mt-1 text-2xl font-bold text-slate-950 dark:text-white">
-              {text.title}
-            </h1>
-          </div>
-        )}
+        <h1 className="sr-only">
+          {getUiMessages(interfaceLanguage).library.title}
+        </h1>
         <div className="min-h-0 flex-1 overflow-hidden">
           <DictionarySearchTab
             open={open}
-            preload={approved && preload}
+            preload={preload}
             userId={userId}
             language={language}
             translationLang={translationLang}

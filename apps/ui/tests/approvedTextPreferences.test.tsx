@@ -7,7 +7,6 @@ import type { ReadingPreferencesRepository } from "@/lib/reading/readingPreferen
 import { accountTextSizeStyles } from "@/lib/reading/textScale";
 
 beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   window.localStorage.clear();
 });
 afterEach(() => { vi.unstubAllEnvs(); });

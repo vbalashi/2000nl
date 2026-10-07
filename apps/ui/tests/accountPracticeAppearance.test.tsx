@@ -35,15 +35,13 @@ function view(repository: PracticePaletteRepository, userId = "a") {
     </AccountPracticeAppearanceProvider>
   );
 }
-test("gate off does not query account settings", () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "false");
-  const repository = { load: vi.fn(), save: vi.fn() };
+test("account palette loads without a presentation rollout gate", async () => {
+  const repository = { load: vi.fn().mockResolvedValue("blue"), save: vi.fn() };
   render(view(repository));
-  expect(repository.load).not.toHaveBeenCalled();
-  expect(screen.getByRole("status").textContent).toBe("off");
+  await waitFor(() => expect(repository.load).toHaveBeenCalledOnce());
+  expect(screen.getByText("blue")).toBeInTheDocument();
 });
 test("loads account palette, saves only the selected palette, blocks duplicate submissions", async () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   let complete!: () => void;
   const repository = {
     load: vi.fn().mockResolvedValue("blue"),
@@ -69,7 +67,6 @@ test("loads account palette, saves only the selected palette, blocks duplicate s
   expect(screen.getByRole("button",{name:"Graphite"})).toHaveAttribute("aria-pressed","true");
 });
 test("load and save failures allow explicit retry without replacing account ownership", async () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const repository = {
     load: vi
       .fn()
@@ -100,7 +97,6 @@ test("load and save failures allow explicit retry without replacing account owne
   ]);
 });
 test("late load from the previous account cannot change the new account palette", async () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   let finish!: (value: "blue") => void;
   const repository = {
     load: vi
@@ -143,7 +139,6 @@ test("system changes respect explicit account theme until the controller release
 });
 
 test("startup waits for the account palette before mounting coloured controls", async () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   let finish!: (palette: "graphite") => void;
   const repository = { load: vi.fn(() => new Promise<"graphite">(resolve => { finish = resolve; })), save: vi.fn() };
   render(<AccountPracticeAppearanceProvider userId="a" repository={repository} requireReady>
@@ -157,7 +152,6 @@ test("startup waits for the account palette before mounting coloured controls", 
 });
 
 test("startup palette failure remains visible and retry mounts the selected appearance", async () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const repository = { load: vi.fn().mockRejectedValueOnce(new Error()).mockResolvedValue("blue"), save: vi.fn() };
   render(<AccountPracticeAppearanceProvider userId="a" repository={repository} requireReady><State /></AccountPracticeAppearanceProvider>);
   await screen.findByText("Appearance could not be loaded.");
@@ -168,7 +162,6 @@ test("startup palette failure remains visible and retry mounts the selected appe
   expect(repository.save).not.toHaveBeenCalled();
 });
 test('Indigo appears beside Blue and persists through account reload', async () => {
-  vi.stubEnv('NEXT_PUBLIC_TRAINING_PRESENTATION_V1','true');
   let saved = 'blue';
   const repository = {load:vi.fn(async()=>saved as 'blue'|'indigo'),save:vi.fn(async(_id:string,palette:string)=>{saved=palette;})};
   const rendered=render(view(repository));

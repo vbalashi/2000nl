@@ -23,8 +23,6 @@ export function AccountCardSpacingProvider(props: {
   repository?: CardSpacingRepository;
   children: React.ReactNode;
 }) {
-  if (process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true")
-    return <>{props.children}</>;
   return <AccountSpacingSession key={props.userId} {...props} />;
 }
 function AccountSpacingSession({

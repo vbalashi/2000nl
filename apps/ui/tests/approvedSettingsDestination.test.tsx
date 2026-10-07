@@ -38,7 +38,6 @@ function desktop(label: string) {
   ).getByRole("button", { name: label });
 }
 test("approved settings keep production callback ownership and an existing extra translation language", async () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const p = props();
   render(<SettingsDestination {...p} />);
   expect(screen.getByRole("button",{name:"German"})).toHaveAttribute("aria-pressed","true");
@@ -61,7 +60,6 @@ test("approved settings keep production callback ownership and an existing extra
   expect(screen.queryByText("Free")).toBeNull();
 });
 test("phone navigation supports return focus, app exit and a fresh menu on reopening", async () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const p = props();
   const view = render(<SettingsDestination {...p} />);
   const appearance = within(
@@ -87,7 +85,6 @@ test("phone navigation supports return focus, app exit and a fresh menu on reope
 test.each(["en", "nl", "ru"] as const)(
   "approved sections and accessible controls follow the %s catalog",
   (language) => {
-    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
     const p = { ...props(), interfaceLanguage: language };
     render(<SettingsDestination {...p} />);
     const copy = getUiMessages(language).settings;
@@ -107,7 +104,6 @@ test.each(["en", "nl", "ru"] as const)(
   },
 );
 test("appearance keeps the account text profile owner when its panel is reopened", async () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const repository = {
     load: vi.fn().mockResolvedValue({ phone: "normal", desktop: "extra" }),
     save: vi.fn().mockResolvedValue(undefined),
@@ -167,7 +163,6 @@ test("searching another translation language emits its canonical code and restor
   // This interaction contract uses the real lazy picker. Finish its cold
   // catalog module initialization before the role query's 1s polling window.
   await import("@/components/practice/settings/LanguagePicker");
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const p = props();
   render(<SettingsDestination {...p} />);
   const opener = screen.getByRole("button",{name:"Translation language"});
@@ -186,7 +181,6 @@ test("searching another translation language emits its canonical code and restor
 
 
 test("translation Off remembers the previous language and its label re-enables it",()=>{
- vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1","true");
  const p=props();const view=render(<SettingsDestination {...p}/>);
  fireEvent.click(screen.getByRole("button",{name:"Off"}));
  view.rerender(<SettingsDestination {...p} translationLanguage={null}/>);

@@ -1,6 +1,5 @@
 "use client";
 
-import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { TrainingScreen } from "@/components/training/TrainingScreen";
@@ -73,7 +72,7 @@ export function TrainingLibraryShell({ user, startupSnapshot }: Props) {
 
   const returnFromHistory = useCallback(() => {
     if (destination !== TRAINING_HISTORY_DESTINATION) return;
-    const target = sharedArticlePresentationV1Enabled() ? historyOriginRef.current : "training";
+    const target = historyOriginRef.current;
     const nextUrl = appDestinationUrl(window.location.href, target);
     window.history.replaceState(
       stateAtPosition(historyPositionRef.current),
