@@ -12,6 +12,41 @@ def _clean_text(value: str) -> str:
     return re.sub(r"\s+([,.;:])", r"\1", value).strip()
 
 
+def _has_source_conjugation_forms(headword_block) -> bool:
+    """Recognize an unlabeled (past, auxiliary + participle) source group.
+
+    f3v also contains syllabified pronunciation, audio and labeled notes.
+    Only f1k grammar spans may supply forms; f1v starts a different field.
+    """
+    if headword_block is None:
+        return False
+
+    parts = []
+    for span in headword_block.find_all("span", class_=["f1k", "f1v"]):
+        # Nested markup must not duplicate text or insert word boundaries.
+        if any(
+            {"f1k", "f1v"}.intersection(parent.get("class", []))
+            for parent in span.parents if parent is not headword_block
+        ):
+            continue
+        if "f1v" in span.get("class", []):
+            parts.append("\0")
+        else:
+            parts.append(_clean_text(span.get_text("")))
+
+    for group in re.findall(r"\(([^()]*)\)", " ".join(parts)):
+        # A label/semicolon ends the forms even when another field shares ().
+        forms = re.split(r"[\0;:]", group, maxsplit=1)[0].strip()
+        if re.fullmatch(
+            r"[^,]+,\s*(?:heeft|hebben|is|zijn)"
+            r"(?:\s+(?:of|en)\s+(?:heeft|hebben|is|zijn))?\s+\w[^,]*",
+            forms,
+            re.IGNORECASE,
+        ):
+            return True
+    return False
+
+
 def is_vandale_meaning_example_block(block) -> bool:
     """Identify Van Dale example blocks that reuse the idiom container class."""
     section_link = block.find_previous_sibling("a", class_="f0h")
@@ -745,16 +780,7 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
     # conjugation group such as "(accepteerde, heeft geaccepteerd)".
     if not pos_text:
         source_headword_block = soup.find("span", class_="f3v")
-        source_headword_text = (
-            source_headword_block.get_text(" ", strip=True)
-            if source_headword_block
-            else ""
-        )
-        if re.search(
-            r"\b(heeft|hebben|is|zijn)\b",
-            source_headword_text,
-            re.IGNORECASE,
-        ):
+        if _has_source_conjugation_forms(source_headword_block):
             pos_text = "ww"
             pos_evidence_source = "conjugation_heuristic"
             pos_evidence_raw = "ww"

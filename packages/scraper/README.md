@@ -7,6 +7,19 @@ Contract:
 - Preserve the structured JSON shape consumed by `packages/ingestion/scripts/process_raw_words.py` and the downstream importer.
 - If a future scraper writes a new raw-artifact layout, document the source directory and update ingestion docs/scripts at the same time.
 
+## Conjugation-based part of speech
+
+Without an explicit POS label or `werkwoordrijtje` link, infer a verb only from
+an unlabeled parenthesized `f1k` grammar group containing past and perfect forms
+(for example `accepteerde, heeft geaccepteerd`). `f1v` labels, semicolons and
+colons end the candidate forms. Never search the whole `f3v` header or clean
+headword for auxiliaries: pronunciation such as `is·lam` and `wel·zijn` contains
+false word boundaries. Existing evidence statuses are provenance categories,
+not measured classification accuracy.
+
+Regression and complete-source comparison evidence:
+[`vandale-pos-inference-2026-09-26`](../../docs/research/vandale-pos-inference-2026-09-26/README.md).
+
 ## Van Dale `f0c` classification
 
 Van Dale uses `span.f0c` both for explained expressions and, in one observed
