@@ -54,7 +54,7 @@ test("authenticated Training transition attribution harness", async ({
       })
       .click();
     const continueSession = page.getByRole("button", {
-      name: /Продолжить сессию|Continue session|Sessie voortzetten/i,
+      name: /^(?:Continue training|Training hervatten|Продолжить тренировку)$/i,
     });
     await expect(continueSession).toBeVisible();
     await continueSession.click();

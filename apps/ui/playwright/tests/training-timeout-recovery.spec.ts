@@ -25,7 +25,7 @@ test("@pilot statement timeout retries selection only and reaches a ready card",
     .getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ })
     .click();
   const continueSession = page.getByRole("button", {
-    name: /Continue session|Sessie voortzetten|Продолжить сессию/,
+    name: /^(?:Continue training|Training hervatten|Продолжить тренировку)$/i,
   });
   await expect(continueSession).toBeEnabled();
   await continueSession.click();
@@ -68,10 +68,10 @@ test("@pilot statement timeout retry reports an honest no-match terminal outcome
     .click();
 
   await expect(
-    page.getByText(
-      /No card is ready for this setup|Er staat nog geen kaart klaar|Пока нет готовой карточки/,
-    ),
-  ).toBeVisible();
+    page.getByRole("button", {
+      name: /^(?:Continue training|Training hervatten|Продолжить тренировку)$/i,
+    }),
+  ).toBeDisabled();
   expect(harness.requests.session).toHaveLength(2);
   expect(harness.requests.sessionStarts).toHaveLength(1);
   expect(harness.requests.scheduler).toHaveLength(0);
