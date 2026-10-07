@@ -114,11 +114,24 @@ test("the selected translation at the end of a long Answer remains reachable", a
   await expect.poll(() => scroll.evaluate(element => element.scrollHeight - element.clientHeight - element.scrollTop)).toBeLessThanOrEqual(1);
   const translationBounds = await lastTranslation.evaluate(element => {
     const region = element.closest<HTMLElement>('[data-testid="training-answer-scroll"]')!;
-    const text = element.getBoundingClientRect();
+    // A long paragraph may exceed the pane. The scroll contract guarantees
+    // access to its final rendered line, rather than fitting all text at once.
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    let lastText: Text | null = null;
+    while (walker.nextNode()) {
+      if (walker.currentNode.textContent?.trim()) lastText = walker.currentNode as Text;
+    }
+    if (!lastText) throw new Error("Selected translation has no readable text");
+    const range = document.createRange();
+    range.selectNodeContents(lastText);
+    const text = Array.from(range.getClientRects()).at(-1)!;
     const contentTop = region.getBoundingClientRect().top + region.clientTop;
     const contentBottom = contentTop + region.clientHeight;
     return {
-      fullyVisible: text.top >= contentTop && text.bottom <= contentBottom,
+      fullyVisible: text.top >= Math.max(0, contentTop) &&
+        text.bottom <= Math.min(window.innerHeight, contentBottom) &&
+        text.left >= Math.max(0, region.getBoundingClientRect().left) &&
+        text.right <= Math.min(window.innerWidth, region.getBoundingClientRect().right),
       textTop: text.top,
       textBottom: text.bottom,
       contentTop,
