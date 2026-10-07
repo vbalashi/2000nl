@@ -1,5 +1,4 @@
 "use client";
-import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 
 import React from "react";
 import { useTrainingExclusion } from "../v2/useTrainingExclusion";
@@ -25,8 +24,7 @@ import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 import { LibrarySenseCardGroup } from "./LibrarySenseCardGroup";
 import { LibraryCollectionsPicker } from "./LibraryCollectionsPicker";
-import { LibraryDetailsActions } from "./LibraryDetailsActions";
-import { SenseCardReportAction, SenseCardReportSheet } from "@/components/feedback/SenseCardReportSheet";
+import { SenseCardReportSheet } from "@/components/feedback/SenseCardReportSheet";
 import { freezeSenseCardDiagnosticSnapshot } from "@/lib/feedback/diagnosticReportClient";
 import {
   buildLibrarySenseCardGroupModel,
@@ -690,23 +688,7 @@ function SenseCardV2Session({
     );
   }
 
-  const selectedActiveEntry = group?.entries.find(
-    (candidate) =>
-      candidate.kind === "sense-card" && candidate.entryId === activeMeaningId,
-  );
-  const activeSenseEntry =
-    selectedActiveEntry?.kind === "sense-card" ? selectedActiveEntry : null;
-  const canReport = Boolean(
-    group &&
-    activeSenseEntry?.reportContentRevision &&
-    activeSenseEntry.capabilities.some(
-      (capability) =>
-        capability.actionId === "report-content" &&
-        capability.target.kind === "entry",
-    ),
-  );
   const showGlobalDetailsActions = context === "library";
-  const approved = sharedArticlePresentationV1Enabled();
   const reportableEntryIds = new Set((group?.entries ?? []).flatMap(entry => entry.kind === "sense-card" && entry.reportContentRevision &&
     entry.capabilities.some(capability => capability.actionId === "report-content" && capability.target.kind === "entry") ? [entry.entryId] : []));
 
@@ -763,42 +745,17 @@ function SenseCardV2Session({
             setActiveReferenceTarget(target);
           }}
           onAction={(capability) => void handleAction(capability)}
-          onExclude={approved && userId && group?.headwordGroupId && model.meanings.length ? () => void headwordExclusion.exclude() : undefined}
+          onExclude={userId && group?.headwordGroupId && model.meanings.length ? () => void headwordExclusion.exclude() : undefined}
           exclusionDisabled={headwordExclusion.busy || Boolean(busyIdentity)}
-          onReport={approved && showGlobalDetailsActions ? meaning => {
+          onReport={showGlobalDetailsActions ? meaning => {
             if (!group) return;
             const entry = group.entries.find(candidate => candidate.kind === "sense-card" && candidate.entryId === meaning.entryId);
             if (entry?.kind !== "sense-card" || !reportableEntryIds.has(entry.entryId)) return;
             setReportSnapshot(freezeSenseCardDiagnosticSnapshot({route:"library",group,entry}));
           } : undefined}
           reportableEntryIds={reportableEntryIds}
-          bottomOverlayReserve={!approved && showGlobalDetailsActions && canReport}
         />
       </div>
-      {showGlobalDetailsActions &&
-      activeSenseEntry &&
-      (!approved && (onCopyToUserDictionary || canReport)) ? (
-        <LibraryDetailsActions
-          entryId={activeMeaningId}
-          interfaceLanguage={interfaceLanguage}
-          onCopyToUserDictionary={
-            activeSenseEntry ? onCopyToUserDictionary : undefined
-          }
-          leadingAction={
-            !approved && canReport && group && selectedActiveEntry?.kind === "sense-card" ? (
-              <SenseCardReportAction
-                snapshot={freezeSenseCardDiagnosticSnapshot({
-                  route: "library",
-                  group,
-                  entry: selectedActiveEntry,
-                })}
-                interfaceLanguage={interfaceLanguage}
-                disabled={Boolean(busyIdentity)}
-              />
-            ) : null
-          }
-        />
-      ) : null}
       {reportSnapshot ? <SenseCardReportSheet snapshot={reportSnapshot} interfaceLanguage={interfaceLanguage} onClose={() => setReportSnapshot(null)} /> : null}
       <LibraryCollectionsPicker
         open={Boolean(collectionsMeaning)}

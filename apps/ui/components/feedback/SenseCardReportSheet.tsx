@@ -1,10 +1,8 @@
 "use client";
 
 import React from "react";
-import { createPortal } from "react-dom";
 import { Check, Flag, RotateCcw, X } from "lucide-react";
 import { senseCardQuietAction } from "@/components/training/SenseCardChrome";
-import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import actionStyles from "@/components/practice/article/articleActions.module.css";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import overlays from "@/components/practice/library/libraryOverlays.module.css";
@@ -57,24 +55,16 @@ export function SenseCardReportAction({
           setFrozenSnapshot(snapshot);
           setOpen(true);
         }}
-        className={appearance === "training-text" ? senseCardQuietAction() : sharedArticlePresentationV1Enabled() ? actionStyles.quiet : "inline-flex h-8 min-h-8 items-center gap-1.5 rounded-lg border border-transparent px-2 text-xs font-medium text-slate-500 outline-none transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-50 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"}
+        className={appearance === "training-text" ? senseCardQuietAction() : actionStyles.quiet}
       >
         <Flag aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={1.8} />
         {t("senseCard.report")}
       </button>
-      {open ? (sharedArticlePresentationV1Enabled() ? <SenseCardReportSheet
+      {open ? <SenseCardReportSheet
               snapshot={frozenSnapshot}
               interfaceLanguage={interfaceLanguage}
               onClose={dismissReport}
-            /> : createPortal(
-            <SenseCardReportSheet
-              snapshot={frozenSnapshot}
-              interfaceLanguage={interfaceLanguage}
-              onClose={dismissReport}
-            />,
-            document.body,
-          ))
-        : null}
+            /> : null}
     </>
   );
 }
@@ -88,7 +78,6 @@ export function SenseCardReportSheet({
   interfaceLanguage: OnboardingLanguage;
   onClose: () => void;
 }) {
-  const approved = sharedArticlePresentationV1Enabled();
   const [kind, setKind] = React.useState<FeedbackKind | null>(null);
   const [comment, setComment] = React.useState("");
   const [delivery, setDelivery] = React.useState<SenseCardReportDeliveryState>("editing");
@@ -112,7 +101,6 @@ export function SenseCardReportSheet({
   React.useEffect(() => {
     if (terminal) closeButtonRef.current?.focus();
     else firstRadioRef.current?.focus();
-    if (approved) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") dismiss();
       if (event.key !== "Tab" || !dialogRef.current) return;
@@ -137,7 +125,7 @@ export function SenseCardReportSheet({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [dismiss, terminal, approved]);
+  }, [dismiss, terminal]);
 
   const submit = async () => {
     if (!kind || delivery === "sending") return;
@@ -158,12 +146,10 @@ export function SenseCardReportSheet({
   const content = (
       <div
         ref={dialogRef}
-        role={approved ? undefined : "dialog"}
-        aria-modal={approved ? undefined : true}
         aria-busy={delivery === "sending"}
         aria-labelledby="sense-card-report-title"
         aria-describedby={terminal ? "sense-card-report-delivery-description" : "sense-card-report-context"}
-        className={approved ? `${overlays.sheet} ${overlays.production}` : "w-full max-w-[430px] overflow-hidden rounded-t-[28px] border border-slate-300 bg-slate-50 text-slate-900 shadow-2xl motion-safe:animate-[report-sheet-in_180ms_ease-out] dark:border-slate-600 dark:bg-[#202938] dark:text-slate-50 sm:rounded-[28px]"}
+        className={`${overlays.sheet} ${overlays.production}`}
       >
         <p
           role="status"
@@ -181,9 +167,9 @@ export function SenseCardReportSheet({
           </h2>
         </div>
 
-        <div data-dialog-part="body" role={approved ? "region" : undefined}
-          aria-label={approved ? t("senseCard.reportSheet.title") : undefined}
-          tabIndex={approved ? 0 : undefined}
+        <div data-dialog-part="body" role="region"
+          aria-label={t("senseCard.reportSheet.title")}
+          tabIndex={0}
           className="max-h-[calc(100dvh-8rem)] overflow-y-auto px-5 pb-3">
           {terminal ? (
             <ReportStatus state={delivery} t={t} />
@@ -263,14 +249,10 @@ export function SenseCardReportSheet({
         </div>
       </div>
   );
-  return approved ? <DialogSurface className={overlays.dialog} lang={interfaceLanguage}
+  return <DialogSurface className={overlays.dialog} lang={interfaceLanguage}
     data-training-hotkeys-suspended="true" aria-labelledby="sense-card-report-title"
     aria-describedby={terminal ? "sense-card-report-delivery-description" : "sense-card-report-context"}
-    aria-busy={delivery === "sending"} onDismiss={dismiss}>{content}</DialogSurface> : (
-    <div data-training-hotkeys-suspended="true"
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/70 pt-8 backdrop-blur-[2px] sm:items-center sm:p-6"
-      onClick={event => { if (event.target === event.currentTarget) dismiss(); }}>{content}</div>
-  );
+    aria-busy={delivery === "sending"} onDismiss={dismiss}>{content}</DialogSurface>;
 }
 
 function ReportStatus({
