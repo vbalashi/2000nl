@@ -2244,7 +2244,8 @@ test("a deferred authority result for session A cannot reset newly started sessi
     }),
   );
   await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
-  const startCurrentSetup = screen.getByRole("button", {
+  fireEvent.click(screen.getByRole("button", { name: "Create training" }));
+  const startCurrentSetup = await screen.findByRole("button", {
     name: /Start training|Training starten/,
   });
   await waitFor(() => expect(startCurrentSetup).toBeEnabled());
@@ -2624,6 +2625,7 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
   fireEvent.click(
     await screen.findByRole("button", { name: /^Edit / }),
   );
+  await screen.findByRole("heading", { name: /Session builder|Training samenstellen/ });
   fetchNextTrainingWordByScenario.mockRejectedValueOnce(
     Object.assign(new Error("canceling statement due to statement timeout"), {
       code: "57014",
@@ -2635,12 +2637,13 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
   await waitFor(() => expect(startButton).toBeEnabled());
   fireEvent.click(startButton);
 
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
   expect(
     await screen.findByText(
       /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
     ),
   ).toHaveAttribute("role", "alert");
-  expect(screen.getByRole("heading", { name: /^(Training|Тренировка)$/ })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /Session builder|Training samenstellen/ })).toBeInTheDocument();
   expect(
     screen.queryByRole("heading", { name: "huis" }),
   ).not.toBeInTheDocument();
@@ -2653,16 +2656,14 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
   fireEvent.click(
     screen.getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ }),
   );
-  await waitFor(() =>
-    expect(
-      screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
-    ).toBeEnabled(),
-  );
+  await waitFor(() => expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(1));
+  expect(await screen.findByRole("button", { name: /Continue training|Sessie doorgaan/ })).toBeInTheDocument();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   expect(startTrainingSession).toHaveBeenCalledOnce();
   expect(mockV2ProgressAction).not.toHaveBeenCalled();
 });
 
-test("stats errors preserve setup and retry the read without creating a session", async () => {
+test("stats errors leave the approved training overview usable without creating a session", async () => {
   fetchStats.mockImplementation(async () => {
     throw new Error("stats unavailable");
   });
@@ -2672,35 +2673,21 @@ test("stats errors preserve setup and retry the read without creating a session"
     await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ }),
   ).toBeInTheDocument();
   await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
-  expect(
-    screen.getAllByText(/Progress could not be loaded\.|Voortgang kon niet worden geladen\.|Не удалось загрузить статистику\./),
-  ).toHaveLength(2);
+  expect(await screen.findByRole("button", { name: /^Edit / })).toBeEnabled();
   expect(startTrainingSession).not.toHaveBeenCalled();
-  const callsBeforeRetry = fetchStats.mock.calls.length;
-  fetchStats.mockImplementation(async () => defaultTrainingStats);
-  fireEvent.click(
-    screen.getByRole("button", {
-      name: /Retry progress|Voortgang opnieuw laden|Повторить загрузку статистики/,
-    }),
-  );
-  await waitFor(() =>
-    expect(fetchStats).toHaveBeenCalledTimes(callsBeforeRetry + 1),
-  );
-  expect(
-    await screen.findByText(
-      /0 reviews due · 0 new this study day|0 herhalingen klaar · 0 nieuw deze studiedag|Повторений к выполнению: 0 · новых за учебный день: 0/,
-    ),
-  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /^Edit / }));
+  expect(await screen.findByRole("heading", { name: /Session builder|Training samenstellen/ })).toBeInTheDocument();
   expect(startTrainingSession).not.toHaveBeenCalled();
 });
 
-test("pilot Start shows empty recovery when the replacement queue has no cards", async () => {
+test("pilot Start returns to the overview when the replacement queue has no cards", async () => {
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
 
   await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
   fireEvent.click(
     await screen.findByRole("button", { name: /^Edit / }),
   );
+  await screen.findByRole("heading", { name: /Session builder|Training samenstellen/ });
   const startButton = screen.getByRole("button", {
     name: /Start training|Training starten/,
   });
@@ -2708,11 +2695,9 @@ test("pilot Start shows empty recovery when the replacement queue has no cards",
   fetchNextTrainingWordByScenario.mockResolvedValueOnce(null);
   fireEvent.click(startButton);
 
-  expect(
-    await screen.findByText(
-      /No card is ready for this setup|Er staat nog geen kaart klaar/,
-    ),
-  ).toHaveAttribute("role", "status");
+  expect(await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ })).toBeInTheDocument();
+  expect(screen.queryByTestId("mock-training-sense-card-v2")).not.toBeInTheDocument();
+  expect(startTrainingSession).toHaveBeenCalledOnce();
   expect(
     screen.queryByRole("heading", {
       name: /Training could not be loaded|Training kon niet worden geladen/,
@@ -2808,81 +2793,16 @@ test("dictionary search scope changes lookup language without changing training"
   expect(updateActiveTrainingScope).not.toHaveBeenCalled();
 });
 
-test("dictionary search can create a private user dictionary entry", async () => {
-  fetchAvailableLists.mockResolvedValue([defaultAvailableList, userOwnedList]);
+test("dictionary search omits the retired private entry editor", async () => {
   createUserDictionaryEntry.mockClear();
-  addWordsToUserList.mockClear();
-  fetchTrainingWordByLookup.mockClear();
-  fetchDictionaryEntryById.mockClear();
-  fetchDictionaryEntryById.mockResolvedValueOnce(userDictionaryGedoe);
+  render(<TrainingScreen user={user} />);
 
-  try {
-    render(<TrainingScreen user={user} />);
-
-    await waitForInitialTrainingFetches();
-    updateActiveTrainingScope.mockClear();
-    fireEvent.keyDown(window, { key: "s" });
-
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Add entry" }),
-    );
-    fireEvent.change(screen.getByLabelText("Headword"), {
-      target: { value: "gedoe" },
-    });
-    fireEvent.change(screen.getByLabelText("Definition"), {
-      target: { value: "lastige situatie" },
-    });
-    fireEvent.change(screen.getByLabelText("Translation · Russian"), {
-      target: { value: "суета" },
-    });
-    fireEvent.click(
-      screen.getByRole("button", { name: "Save to my dictionary" }),
-    );
-
-    await waitFor(() =>
-      expect(createUserDictionaryEntry).toHaveBeenCalledWith({
-        entry: {
-          headword: "gedoe",
-          languageCode: "nl",
-          definition: "lastige situatie",
-          translation: { languageCode: "ru", text: "суета" },
-        },
-      }),
-    );
-    expect(fetchDictionaryEntryById).toHaveBeenCalledWith(
-      "user-entry-1",
-      "user-1",
-    );
-    expect(
-      await screen.findByText("Entry added to my dictionary."),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText("gedoe").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/My dictionary/i).length).toBeGreaterThan(0);
-
-    fireEvent.click(
-      screen.getByRole("button", { name: /Collecties|Collections/i }),
-    );
-    const collectionsDialog = await screen.findByRole("dialog", {
-      name: /Collecties voor deze betekenis|Collections for this meaning/i,
-    });
-    fireEvent.click(within(collectionsDialog).getByRole("checkbox"));
-    await waitFor(() =>
-      expect(addWordsToUserList).toHaveBeenCalledWith("list-user", [
-        "user-entry-1",
-      ]),
-    );
-
-    expect(screen.queryByRole("button", { name: /Hierna trainen|Train next/i })).not.toBeInTheDocument();
-    expect(fetchTrainingWordByLookup).not.toHaveBeenCalled();
-    expect(performLibraryAction).not.toHaveBeenCalled();
-    expect(updateActiveTrainingScope).not.toHaveBeenCalledWith(
-      expect.objectContaining({ listId: "list-user" }),
-    );
-  } finally {
-    restoreDefaultListScope();
-    fetchDictionaryEntryById.mockResolvedValue(null);
-    fetchTrainingWordByLookup.mockResolvedValue(overrideWord);
-  }
+  await waitForInitialTrainingFetches();
+  fireEvent.keyDown(window, { key: "s" });
+  expect(await screen.findByTestId("library-workspace")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Add entry" })).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Headword")).not.toBeInTheDocument();
+  expect(createUserDictionaryEntry).not.toHaveBeenCalled();
 });
 
 test("dictionary lookup preserves an open entry with an explicit stale-detail label", async () => {
