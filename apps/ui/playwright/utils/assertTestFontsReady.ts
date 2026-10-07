@@ -37,15 +37,19 @@ export async function assertTestFontsReady(page: Page): Promise<void> {
     );
     await document.fonts.ready;
 
-    return requestedFaces.map(({ family, style }, index) => {
-      const face = loadedFaceSets[index].find(
-        (candidate) => candidate.family.replaceAll('"', "") === family,
+    return requestedFaces.map(({ family, style, sample }, index) => {
+      const matchingFaces = loadedFaceSets[index].filter(
+        (candidate) =>
+          candidate.family.replaceAll('"', "") === family &&
+          candidate.style === style,
       );
       return {
         family,
         style,
-        loaded: Boolean(face && face.status === "loaded"),
-        status: face?.status ?? "missing",
+        sample,
+        loaded: matchingFaces.some((face) => face.status === "loaded"),
+        status:
+          matchingFaces.map((face) => face.status).join(", ") || "missing",
       };
     });
   });
@@ -54,7 +58,7 @@ export async function assertTestFontsReady(page: Page): Promise<void> {
   if (failedFaces.length > 0) {
     throw new Error(
       `Playwright font fixtures did not load: ${failedFaces
-        .map(({ family, style, status }) => `${family} ${style} (${status})`)
+        .map(({ family, style, sample, status }) => `${family} ${style} for ${sample} (${status})`)
         .join(", ")}`,
     );
   }
