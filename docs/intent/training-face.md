@@ -29,3 +29,13 @@ The optional read-only `check` command exposed an existing probe-chain defect: r
 ### Appearance controls refinement — 2026-10-07
 
 Owner selected only the compact help icons from the third visual option. Keep all existing Appearance controls, typography and spacing; reuse SettingsRow and the existing materialToggle theme switch. Animation is a single switch. Gestures have a same-style heading and child rows indented 16px. Four muted 14px help icons disclose localized explanations. Remove the account/devices paragraph and On/Off segmented controls. Labels and narrow 390px layouts checked in Russian, English and Dutch; 18 related UI tests and typecheck pass. No account storage or gesture behavior changes in this refinement.
+
+### Coordinated publication requirement — 2026-10-07
+
+Owner requires the same publication to include PR #604:
+https://github.com/vbalashi/2000nl/pull/604 — Align Library card audio and translation order
+(head b04c8f07dff4938ed7b45130dd1c5145483b75d5 at this checkpoint).
+This PR is a separate open branch, not included in codex/528-training-face.
+Before publishing, integrate #604 together with the training-face and account
+animation/gesture changes, then validate the combined release. Do not leave
+#604 for a later release. No merge or production deployment performed here.
