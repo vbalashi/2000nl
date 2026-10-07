@@ -4,32 +4,42 @@ import type { Page } from "@playwright/test";
 export async function assertTestFontsReady(page: Page): Promise<void> {
   const readiness = await page.evaluate(async () => {
     const requestedFaces = [
-      { descriptor: '400 16px "Inter"', family: "Inter", style: "normal" },
+      {
+        descriptor: '400 16px "Inter"',
+        family: "Inter",
+        style: "normal",
+        sample: "A",
+      },
+      {
+        descriptor: '400 16px "Inter"',
+        family: "Inter",
+        style: "normal",
+        sample: "Ж",
+      },
       {
         descriptor: '400 32px "Newsreader"',
         family: "Newsreader",
         style: "normal",
+        sample: "A",
       },
       {
         descriptor: 'italic 400 32px "Newsreader"',
         family: "Newsreader",
         style: "italic",
+        sample: "A",
       },
     ];
 
-    await Promise.all(
-      requestedFaces.map(({ descriptor }) =>
-        document.fonts.load(descriptor, "2000nl font check"),
+    const loadedFaceSets = await Promise.all(
+      requestedFaces.map(({ descriptor, sample }) =>
+        document.fonts.load(descriptor, sample),
       ),
     );
     await document.fonts.ready;
 
-    const faces = [...document.fonts];
-    return requestedFaces.map(({ family, style }) => {
-      const face = faces.find(
-        (candidate) =>
-          candidate.family.replaceAll('"', "") === family &&
-          candidate.style === style,
+    return requestedFaces.map(({ family, style }, index) => {
+      const face = loadedFaceSets[index].find(
+        (candidate) => candidate.family.replaceAll('"', "") === family,
       );
       return {
         family,
