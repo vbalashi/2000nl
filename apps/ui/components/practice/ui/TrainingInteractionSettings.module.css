@@ -1,0 +1,5 @@
+.gestures { padding-inline-start: 16px; }
+.label { display: inline-flex; align-items: center; gap: 4px; }
+.help { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 28px; height: 28px; padding: 0; border: 0; background: transparent; color: var(--practice-text-muted); cursor: pointer; }
+.help:focus-visible { outline: 2px solid var(--practice-focus); outline-offset: 2px; border-radius: 8px; }
+.popup { position: fixed; inset: auto; margin: 0; width: min(280px, calc(100vw - 24px)); padding: 12px; border: 1px solid var(--practice-border); border-radius: 12px; background: var(--practice-surface); color: var(--practice-text-secondary); box-shadow: 0 12px 40px var(--practice-shadow); font-family: var(--practice-font-ui); font-size: var(--practice-text-caption); line-height: 1.5; }

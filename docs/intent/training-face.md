@@ -25,3 +25,7 @@ Double-click or double-tap toggles pronunciation separators only on a visible he
 Validation: the obsolete local database was discarded and rebuilt through the harness. Contract 212 and the search index pass health, local dev-login reaches the training overview, and the account preference migration passed its managed gate. UI component and DB isolation checks cover the new interactions. No production deployment.
 
 The optional read-only `check` command exposed an existing probe-chain defect: read-only-postflight-201/202 include general postflights which reach the writing characterization in postflight-177. Managed apply, health, and the new RLS/default/persistence test pass. The read-only harness defect is recorded separately; no version markers or receipts were inserted manually.
+
+### Appearance controls refinement — 2026-10-07
+
+Owner selected only the compact help icons from the third visual option. Keep all existing Appearance controls, typography and spacing; reuse SettingsRow and the existing materialToggle theme switch. Animation is a single switch. Gestures have a same-style heading and child rows indented 16px. Four muted 14px help icons disclose localized explanations. Remove the account/devices paragraph and On/Off segmented controls. Labels and narrow 390px layouts checked in Russian, English and Dutch; 18 related UI tests and typecheck pass. No account storage or gesture behavior changes in this refinement.
