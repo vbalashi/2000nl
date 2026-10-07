@@ -189,6 +189,8 @@ for (const viewport of viewports) {
       // Closing the session uses its real owner callback and leaves the card stage.
       await session.getByRole("button", { name: "Sessie sluiten" }).click();
       await expect(stage).toBeHidden();
+      await expect(page.getByRole("heading", { name: "Training", level: 1 })).toBeVisible();
+      await expect(page.getByRole("button", { name: /^Training (starten|hervatten)$/ })).toBeEnabled();
     });
   }
 }
