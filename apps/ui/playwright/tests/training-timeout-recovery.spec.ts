@@ -47,6 +47,13 @@ test("@pilot statement timeout retries selection only and reaches a ready card",
 test("@pilot statement timeout retry reports an honest no-match terminal outcome", async ({
   page,
 }) => {
+  let sessionSelectionResponses = 0;
+  page.on("response", (response) => {
+    const path = new URL(response.url()).pathname;
+    if (path.endsWith("/rpc/get_next_training_session_card")) {
+      sessionSelectionResponses += 1;
+    }
+  });
   const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
     sessionOutcomes: ["statement-timeout", "empty"],
   });
@@ -67,6 +74,12 @@ test("@pilot statement timeout retry reports an honest no-match terminal outcome
     .getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ })
     .click();
 
+  await expect.poll(() => harness.requests.session.length).toBe(2);
+  await expect.poll(() => sessionSelectionResponses).toBe(2);
+  const currentSession = page.getByRole("region", {
+    name: /Current training|Huidige training|Текущая тренировка/i,
+  });
+  await expect(currentSession).toBeVisible();
   await expect(
     page.getByRole("button", {
       name: /^(?:Continue training|Training hervatten|Продолжить тренировку)$/i,
