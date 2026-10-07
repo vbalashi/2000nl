@@ -1,7 +1,6 @@
 import {expect,test} from '@playwright/test';
 import {setupAuthenticatedTrainingAttributionPage} from '../support/trainingAttributionHarness';
 test('Pixel-sized builder keeps app chrome fixed; saved list shows both scroll edges',async({page},info)=>{
- test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1!=='true','Approved presentation');
  await page.setViewportSize({width:412,height:750});
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:'en'}}});
  const draft={family:'meaning',scenarioId:'understanding',modes:['word-to-definition'],cardFilter:'both',listValue:'curated:list-attribution',materialMode:'collection',newReviewRatio:2,dateWindow:'all',sourceValue:'all',sessionSize:5};

@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 import { multiSenseBankGroup } from "../../tests/platformV2LibraryFixture";
-test.skip(process.env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1 !== "true", "Approved UI required");
 for (const width of [390,610]) test(`@pilot Library sheet edge gestures at ${width}px`, async ({page}) => {
   await page.setViewportSize({width,height:900});
   await page.emulateMedia({reducedMotion:"reduce"});

@@ -1,8 +1,6 @@
 import { expect,test } from "@playwright/test";
 import { platformV2Message } from "../../lib/platform/platformV2ClientI18n";
 import { getUiMessages } from "../../lib/uiMessages";
-
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true","Approved presentation is opt-in.");
 for (const language of ["en","nl","ru"] as const) for (const family of ["idiom","sentence"] as const) {
  test(`${language} ${family}: Extra state text scrolls independently of the return action`,async({page},testInfo)=>{
   const text=getUiMessages(language),t=text.trainingExercises[family];

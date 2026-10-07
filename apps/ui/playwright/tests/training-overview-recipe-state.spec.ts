@@ -1,9 +1,7 @@
 import {expect,test} from '@playwright/test';
 import {setupAuthenticatedTrainingAttributionPage} from '../support/trainingAttributionHarness';
-const approved=process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1==='true';
 const draft={family:'meaning',scenarioId:'understanding',modes:['word-to-definition','definition-to-word'],cardFilter:'review',listValue:'curated:list-attribution',materialMode:'collection',newReviewRatio:2,dateWindow:'all',sourceValue:'all',sessionSize:5};
 for(const profile of [{name:'desktop',width:1280,height:900,language:'en'},{name:'ru320',width:320,height:740,language:'ru'}])test(`saved overview reload, empty and early start ${profile.name}`,async({page},testInfo)=>{
- test.skip(!approved,'Approved training overview only');
  await page.setViewportSize({width:profile.width,height:profile.height});
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:profile.language}}});
  await page.route('**/rpc/get_training_scenarios',route=>route.fulfill({json:[{id:'understanding',name_en:'Understanding',name_nl:'Begrip',card_modes:['word-to-definition','definition-to-word'],graduation_threshold:21,enabled:true,sort_order:1}]}));
@@ -45,7 +43,6 @@ for(const profile of [{name:'desktop',width:1280,height:900,language:'en'},{name
 });
 
 test('training failure uses the current theme and preserves retry',async({page},testInfo)=>{
- test.skip(!approved,'Approved training overview only');
  await page.setViewportSize({width:390,height:844});
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:'en'}}});
  await page.route('**/rpc/get_available_learning_languages',route=>route.fulfill({status:503,json:{message:'Fixture unavailable'}}));

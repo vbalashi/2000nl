@@ -1,8 +1,5 @@
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
-
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true", "Approved presentation is opt-in.");
-
 for (const locale of ["en", "nl", "ru"]) {
   for (const viewport of [{ width: 844, height: 390 }, { width: 640, height: 400 }]) {
     test(`${locale} Extra retains a readable answer and ratings at ${viewport.width}×${viewport.height}`, async ({ page }, testInfo) => {

@@ -1,8 +1,5 @@
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
-
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true", "Approved presentation is opt-in.");
-
 for (const palette of ["lavender", "blue", "indigo", "graphite"]) {
   for (const mode of ["light", "dark"] as const) {
     for (const size of ["normal", "extra"]) {

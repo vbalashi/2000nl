@@ -1,9 +1,8 @@
 import {writeFile} from 'node:fs/promises';
 import {expect,test} from '@playwright/test';
 import {setupAuthenticatedTrainingAttributionPage} from '../support/trainingAttributionHarness';
-const approved=process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1==='true';
 for(const profile of [{name:'desktop-en',width:1280,height:900,language:'en'},{name:'mobile-ru390',width:390,height:844,language:'ru'},{name:'mobile-ru320',width:320,height:740,language:'ru'}])test(`saved builder identity and footer ${profile.name}`,async({page},info)=>{
- test.skip(!approved,'Approved builder');await page.setViewportSize({width:profile.width,height:profile.height});
+ await page.setViewportSize({width:profile.width,height:profile.height});
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:profile.language}}});
  const draft={family:'meaning',scenarioId:'understanding',modes:['word-to-definition'],cardFilter:'both',listValue:'curated:list-attribution',materialMode:'collection',newReviewRatio:2,dateWindow:'all',sourceValue:'all',sessionSize:5};
  let snapshot={revision:1,document:{schemaVersion:1,mainTrainingId:'saved-575',trainings:[{id:'saved-575',name:'Original 575',languageCode:'nl',draft}]}};

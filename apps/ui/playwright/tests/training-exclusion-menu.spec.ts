@@ -2,8 +2,6 @@ import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 import { getUiMessages } from "../../lib/uiMessages";
 import { platformV2Message } from "../../lib/platform/platformV2ClientI18n";
-
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true", "Approved presentation is opt-in.");
 for (const language of ["en", "nl", "ru"] as const) {
   test(`${language}: exclusion choices stay bounded and dismiss without mutation`, async ({page}, testInfo) => {
     await page.setViewportSize({width:320, height:568});

@@ -1,11 +1,5 @@
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
-
-test.skip(
-  process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true",
-  "This visual rollout is opt-in.",
-);
-
 for (const width of [402, 1024]) {
   test(`keeps the approved session controls visible at ${width}px`, async ({ browser }, testInfo) => {
     const page = await browser.newPage({ viewport: { width, height: 768 } });

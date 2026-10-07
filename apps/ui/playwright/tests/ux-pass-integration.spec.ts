@@ -2,9 +2,6 @@ import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 import { multiSenseBankGroup } from "../../tests/platformV2LibraryFixture";
 import { shiftDate } from "../../lib/training/activity/model";
-
-test.skip(process.env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1 !== "true", "Approved UI required");
-
 test("@pilot Library sheet preserves mouse and touch heights in the real navigation", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 610, height: 900 });
   await setupAuthenticatedTrainingAttributionPage(page, 0, { visualProfile: "answer", devTestLogin: process.env.TRAINING_RELIABILITY_DEV_LOGIN === "true" });

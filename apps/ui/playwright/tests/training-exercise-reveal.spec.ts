@@ -1,6 +1,4 @@
 import { expect, test } from "@playwright/test";
-
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true", "Approved presentation is opt-in.");
 for (const family of ["Direct", "Reverse", "Sentence"]) {
   test(`${family}: selected question moves into the owned answer and grading waits`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });

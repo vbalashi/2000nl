@@ -1,9 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 import { multiSenseBankGroup } from "../../tests/platformV2LibraryFixture";
-
-test.skip(process.env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1 !== "true", "Approved Library required");
-
 for (let sample = 0; sample < 10; sample += 1) {
   test(`isolated initial Library read ${sample + 1} recovers and retains 50 rows`, async ({page}, testInfo) => {
     let reads = 0;

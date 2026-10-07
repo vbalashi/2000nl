@@ -1,11 +1,5 @@
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
-
-test.skip(
-  process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true",
-  "This visual rollout is opt-in.",
-);
-
 const startButton =
   /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten|Training starten|Start training|Начать тренировку/i;
 

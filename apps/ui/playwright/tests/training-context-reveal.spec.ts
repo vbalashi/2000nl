@@ -1,6 +1,4 @@
 import { expect, test } from "@playwright/test";
-
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true", "Approved presentation is opt-in.");
 test("context question arrives at its selected translation without losing the first frame", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "no-preference" });

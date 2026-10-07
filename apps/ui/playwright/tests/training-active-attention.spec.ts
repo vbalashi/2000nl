@@ -2,9 +2,6 @@ import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 import { platformV2Message } from "../../lib/platform/platformV2ClientI18n";
 import { parseStudyTimeMeasurement, type StudyTimeMeasurement } from "../../lib/training/studyTime/model";
-
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true", "Approved presentation is opt-in.");
-
 test("native Report modal pauses card attention delivery and preserves resume identity", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await setupAuthenticatedTrainingAttributionPage(page, 0, { visualProfile: "answer", useUuidEntryIds: true, useUuidSessionId: true,

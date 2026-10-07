@@ -1,10 +1,6 @@
 import { platformV2Message } from "../../lib/platform/platformV2ClientI18n";
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
-
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true" ||
-  process.env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1 !== "true", "Approved presentation is opt-in.");
-
 for (const width of [320, 390, 1024]) {
   test(`word panel enters before the selected meaning expands, and restores focus at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });

@@ -1,7 +1,5 @@
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
-
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true", "Requires the approved training presentation.");
 const devTestLogin = process.env.TRAINING_RELIABILITY_DEV_LOGIN === "true";
 
 test("@pilot completed meaning session starts a new run directly from home", async ({ page }) => {
@@ -25,8 +23,16 @@ test("@pilot completed meaning session starts a new run directly from home", asy
 });
 
 test("@pilot paused meaning session still continues the same run", async ({ page }) => {
+  const lookupTargets: Array<string | null> = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/api/platform/v2/lookup") && request.method() === "POST") {
+      const body = request.postDataJSON();
+      lookupTargets.push(body.translationTargetLanguageCode ?? null);
+    }
+  });
   const fixture = await setupAuthenticatedTrainingAttributionPage(page, 0, {
     visualProfile: "answer", devTestLogin,
+    settingsOverrides: { translation_lang: "off" },
   });
   await page.getByRole("button", { name: /^(Start training|Начать тренировку|Training starten)$/i }).click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
@@ -36,6 +42,8 @@ test("@pilot paused meaning session still continues the same run", async ({ page
   await resume.click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
   expect(fixture.requests.sessionStarts).toHaveLength(1);
+  expect(lookupTargets.length).toBeGreaterThan(0);
+  expect(lookupTargets).toContain(null);
 });
 
 
