@@ -1,5 +1,9 @@
 "use client";
 import React from "react";
+import {TrainingInteractionPreferencesProvider, useTrainingInteractions, defaultTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
+const fixtureRepository = {load:async()=>defaultTrainingInteractions,save:async()=>{}};
+function InteractionControls(){const {preferences,save}=useTrainingInteractions();return <>{(["animation","translationSwipe","syllableDoubleTap"] as const).map(key=><label key={key}><input type="checkbox" checked={preferences[key]} onChange={event=>void save({...preferences,[key]:event.target.checked})}/>{key}</label>)}</>;}
+
 import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
 import { TrainingSenseCardStage } from "@/components/training/v2/TrainingSenseCardStage";
 import { buildTrainingSenseCardModel } from "@/components/training/v2/trainingSenseCardModel";
@@ -65,10 +69,10 @@ export function ExerciseCardGate() {
     };
   }, [dark]);
   return (
-    <main data-colour-mode={dark ? "dark" : "light"} className={`${practiceTheme.theme} ${dark ? "dark" : ""} h-dvh`}>
+    <TrainingInteractionPreferencesProvider userId="fixture" initial={defaultTrainingInteractions} repository={fixtureRepository}><main data-colour-mode={dark ? "dark" : "light"} className={`${practiceTheme.theme} ${dark ? "dark" : ""} h-dvh`}>
       <div className="flex h-full flex-col gap-3 bg-[var(--practice-canvas)] p-4 text-[var(--practice-text)]">
         <nav className="flex shrink-0 flex-wrap gap-3 text-sm dark:text-white">
-          <span>Presentation fixture</span>
+          <span>Presentation fixture</span><InteractionControls/>
           <button onClick={() => { setContext(false); setSentence(true); setRevealed(false); }}>Sentence</button>
           <button
             onClick={() => {
@@ -95,7 +99,7 @@ export function ExerciseCardGate() {
         </nav>
         {context ? <TrainingSenseCardStage
           model={{...buildTrainingSenseCardModel({ group: gateSingleSenseGroup, entry: gateFurnitureEntry, interfaceLanguage: "en" }),
-            headword: "wedstrijd", partOfSpeech: "noun", entryTranslation: "матч",
+            headword: "wed·strijd", partOfSpeech: "noun", entryTranslation: "матч",
             definitions: [{ contentNodeId: "gate-match-meaning", parentContentNodeId: null, kind: "definition", text: "een sportieve ontmoeting tussen twee teams", children: [] }], examples: []}}
           mode="definition-to-word" interfaceLanguage="en" side={revealed ? "answer" : "face"}
           onSideChange={side => setRevealed(side === "answer")} onAction={() => setRevealed(false)}
@@ -123,6 +127,6 @@ export function ExerciseCardGate() {
           onGrade={() => setRevealed(false)}
         />}
       </div>
-    </main>
+    </main></TrainingInteractionPreferencesProvider>
   );
 }

@@ -567,3 +567,5 @@
 \i db/migrations/210_training_availability_due_now.sql
 
 \i db/migrations/211_reviews_include_due_learning.sql
+
+\i db/migrations/212_training_interaction_preferences.sql

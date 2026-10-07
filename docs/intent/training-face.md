@@ -12,4 +12,16 @@ Owner-approved visual direction: first (Soft hierarchy) refinement, 2026-10-07.
 
 Implementation remains in the UI presentation layer. Card identity, scheduling, latched examples, hint semantics and review mutations stay with their existing owners.
 
-Validation: 107 targeted tests, UI typecheck and lint passed (existing unrelated hook-dependency warning). Desktop and 390×844 browser checks used the fixed `/dev/sense-card-gate?prototype=exercise` presentation fixture. Full local backend smoke was not performed: local DB contract 208 is older than app contract 211. No production deployment.
+## Motion and gestures
+
+Owner selected instant replacement when animation is disabled, and a short whole-card vertical shift when enabled. The outgoing card fades/moves up 8px over 90ms; the incoming card fades/moves from 8px below over 130ms. Never interpolate headword typography or move a prompt into a different text role. Reduced-motion preferences reveal instantly.
+
+Appearance owns four account-wide booleans in `user_settings`: card animation (default on), existing left/right grading swipe (default off), short downward translation swipe (default off), and headword double-tap syllable toggle (default off). The UI reloads these preferences on account change and when returning to the app. Failed saves retain the confirmed account settings. There is no browser-local preference copy.
+
+A downward translation swipe uses the existing translation action after answer reveal. It can start in the lower non-scrolling card area; it is not restricted to the header. Scrollable answer content, controls, pinch gestures, upward motion and horizontal grading strokes retain their existing behavior. A short stroke is 40–130px within 700ms, with under 25px horizontal movement. The native touch listener is non-passive only on the card and only while this gesture is enabled. Actual iOS/Android scrolling and pull-to-refresh behavior still needs physical-device acceptance.
+
+Double-click or double-tap toggles pronunciation separators only on a visible headword containing canonical `·` breaks; keyboard Enter/Space also toggles. It never reveals a hidden answer or infers syllables.
+
+Validation: the obsolete local database was discarded and rebuilt through the harness. Contract 212 and the search index pass health, local dev-login reaches the training overview, and the account preference migration passed its managed gate. UI component and DB isolation checks cover the new interactions. No production deployment.
+
+The optional read-only `check` command exposed an existing probe-chain defect: read-only-postflight-201/202 include general postflights which reach the writing characterization in postflight-177. Managed apply, health, and the new RLS/default/persistence test pass. The read-only harness defect is recorded separately; no version markers or receipts were inserted manually.

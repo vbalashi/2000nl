@@ -7,6 +7,7 @@ import { AccountMaterialProvider } from "@/components/practice/material/AccountM
 import { AccountPresentationReady } from "@/components/practice/ui/AccountPresentationReady";
 import { AccountCardSpacingProvider } from "@/components/practice/ui/AccountCardSpacingProvider";
 import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/AccountPracticeAppearanceProvider";
+import { TrainingInteractionPreferencesProvider } from "@/components/practice/ui/TrainingInteractionPreferences";
 
 import React from "react";
 import { TrainingExclusionUndoNotice } from "./v2/TrainingExclusionUndoNotice";
@@ -184,11 +185,11 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
 export function TrainingScreen(props: Props) {
   return (
     <ReadingPreferencesProvider userId={props.user.id}>
-      <AccountPracticeAppearanceProvider userId={props.user.id}>
+      <TrainingInteractionPreferencesProvider userId={props.user.id}><AccountPracticeAppearanceProvider userId={props.user.id}>
         <AccountCardSpacingProvider userId={props.user.id}><AccountPresentationReady language={props.startupSnapshot?.interfaceLanguage}><AccountMaterialProvider userId={props.user.id}>
           <TrainingScreenContent {...props} />
         </AccountMaterialProvider></AccountPresentationReady></AccountCardSpacingProvider>
-      </AccountPracticeAppearanceProvider>
+      </AccountPracticeAppearanceProvider></TrainingInteractionPreferencesProvider>
     </ReadingPreferencesProvider>
   );
 }

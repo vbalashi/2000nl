@@ -8,6 +8,7 @@ import {
 } from "@/lib/training/exerciseCardPresentation";
 import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
 import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
+import { useTranslationSwipe } from "@/components/practice/ui/useTranslationSwipe";
 import { useTrainingPromptReveal } from "@/components/practice/ui/useTrainingPromptReveal";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
 import {
@@ -59,18 +60,8 @@ export function TrainingExerciseCard({
   const stageRef = React.useRef<HTMLElement>(null);
   const revealRef = React.useRef<HTMLButtonElement>(null);
   const firstGradeRef = React.useRef<HTMLButtonElement>(null);
-  const source = React.useCallback((root: HTMLElement) => presentation.prompt.kind === "explanation"
-    ? root.querySelector<HTMLElement>('[data-testid="reverse-prompt"]')
-    : root.querySelector<HTMLElement>('[data-testid="sense-card-headword-lockup"] h2')?.parentElement ?? null,
-  [presentation.prompt.kind]);
-  const target = React.useCallback((root: HTMLElement) => {
-    const content = Array.from(root.querySelectorAll<HTMLElement>("[data-content-node-id]"))
-      .find(node => node.dataset.contentNodeId === presentation.promptTarget.contentNodeId);
-    return content?.querySelector<HTMLElement>(presentation.promptTarget.kind === "translation"
-      ? '[data-content-translation="true"]' : ":scope > div > p") ?? null;
-  }, [presentation.promptTarget.contentNodeId, presentation.promptTarget.kind]);
   const { capture, moving } = useTrainingPromptReveal({ root: stageRef, revealed,
-    enabled: trainingPresentationV1Enabled(), identity: presentation.promptTarget.contentNodeId, source, target });
+    enabled: trainingPresentationV1Enabled(), identity: presentation.promptTarget.contentNodeId });
   const reveal = () => { capture(); onReveal(); };
   const actionBusy = busy || moving;
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
@@ -89,6 +80,8 @@ export function TrainingExerciseCard({
     }
     setTranslationVisible((v) => !v);
   };
+
+  useTranslationSwipe({root: stageRef, enabled: revealed && !actionBusy && translationAvailable, onToggle: () => void toggleTranslation()});
 
   React.useEffect(() => {
     stageRef.current?.focus();

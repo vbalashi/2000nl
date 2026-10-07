@@ -12,6 +12,7 @@ import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout"
 import { senseCardQuietAction } from "../SenseCardChrome";
 import approvedCard from "../approvedTrainingCard.module.css";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
+import { useTranslationSwipe } from "@/components/practice/ui/useTranslationSwipe";
 import { useTrainingPromptReveal } from "@/components/practice/ui/useTrainingPromptReveal";
 import {
   TrainingCardAnswerHeader as EntityHeader,
@@ -112,23 +113,18 @@ export function TrainingSenseCardStage({
   const contextTarget = contextPrompt ? model.entryTranslation?.trim() : undefined;
   const listeningMode = mode === "listen-recognize";
   const approvedPresentation = trainingPresentationV1Enabled();
-  const revealContentId = contextPrompt?.contentNodeId ?? reversePrompt?.contentNodeId;
-  const revealTranslation = Boolean(contextPrompt);
-  const revealSource = React.useCallback((root: HTMLElement) =>
-    mode === "definition-to-word"
-      ? root.querySelector<HTMLElement>('[data-testid="reverse-prompt"]')
-      : root.querySelector<HTMLElement>('[data-testid="sense-card-headword-lockup"] h2')?.parentElement ?? null,
-  [mode]);
-  const revealTarget = React.useCallback((root: HTMLElement) => {
-    if (mode !== "definition-to-word") return root.querySelector<HTMLElement>('[data-testid="sense-card-headword-lockup"] h2')?.parentElement ?? null;
-    const content = Array.from(root.querySelectorAll<HTMLElement>("[data-content-node-id]"))
-      .find(node => node.dataset.contentNodeId === revealContentId);
-    return content?.querySelector<HTMLElement>(revealTranslation ? '[data-content-translation="true"]' : ":scope > div > p") ?? null;
-  }, [mode, revealContentId, revealTranslation]);
   const { capture, moving } = useTrainingPromptReveal({ root: stageRef, revealed: answerVisible,
-    enabled: approvedPresentation && !listeningMode, identity: model.entryId,
-    source: revealSource, target: revealTarget });
+    enabled: approvedPresentation && !listeningMode, identity: model.entryId });
   const revealAnswer = React.useCallback(() => { capture(); onSideChange("answer"); }, [capture, onSideChange]);
+  const toggleTranslation = React.useCallback(() => {
+    if (busy || moving) return;
+    if (!hasTranslation(model) && model.requestTranslationCapability) {
+      setTranslationVisible(true); onAction(model.requestTranslationCapability); return;
+    }
+    setTranslationVisible(visible => !visible);
+  }, [busy, moving, model, onAction]);
+  useTranslationSwipe({ root: stageRef, enabled: answerVisible && !busy && !moving && (hasTranslation(model) || translationActionAvailable), onToggle: toggleTranslation });
+
 
   React.useEffect(() => {
     if (!focusOnMount) return;
@@ -254,17 +250,7 @@ export function TrainingSenseCardStage({
               busy={busy || moving}
               moreLabel={t("senseCard.wordDetails.open")}
               onPlayAudio={onPlayAudio}
-              onToggleTranslation={() => {
-                if (
-                  !hasTranslation(model) &&
-                  model.requestTranslationCapability
-                ) {
-                  setTranslationVisible(true);
-                  onAction(model.requestTranslationCapability);
-                  return;
-                }
-                setTranslationVisible((visible) => !visible);
-              }}
+              onToggleTranslation={toggleTranslation}
               onOpenDetails={onOpenDetails}
             />
             <AnswerBody

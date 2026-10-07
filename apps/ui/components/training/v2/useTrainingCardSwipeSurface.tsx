@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import {useTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
 import type { TrainingSessionReadySurface } from "./TrainingSessionV2Layout";
 
 type SwipeChoice<T> = {
@@ -38,6 +39,7 @@ export function useTrainingCardSwipeSurface<T>({
   right?: SwipeChoice<T>;
   onCommit: (value: T) => Promise<TrainingCardSwipeCommitOutcome>;
 }): TrainingSessionReadySurface {
+  const {preferences} = useTrainingInteractions();
   const cardRef = React.useRef<HTMLDivElement | null>(null);
   const startRef = React.useRef<{ x: number; y: number } | null>(null);
   const trackingRef = React.useRef(false);
@@ -153,12 +155,12 @@ export function useTrainingCardSwipeSurface<T>({
 
   return {
     ref: cardRef,
-    className: animating
+    className: animating && preferences.animation
       ? "transition-transform duration-200 ease-out motion-reduce:transition-none"
       : "transition-none motion-reduce:transition-none",
     style: {
       transform: `translateX(${offset}px) rotate(${offset / 40}deg)`,
-      touchAction: "pan-y",
+      touchAction: enabled ? "pan-y pinch-zoom" : "manipulation",
     },
     onTouchStart,
     onTouchMove,

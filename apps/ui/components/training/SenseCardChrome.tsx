@@ -1,3 +1,4 @@
+import {useTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
 import React from "react";
 import { Repeat2 } from "lucide-react";
 import { HeadwordWithPronunciationBreaks } from "./HeadwordWithPronunciationBreaks";
@@ -223,6 +224,7 @@ export function SenseCardReveal({
   expandedClassName?: string;
   children: React.ReactNode;
 }) {
+  const {preferences} = useTrainingInteractions();
   const contentRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     if (contentRef.current) contentRef.current.inert = !open;
@@ -230,7 +232,7 @@ export function SenseCardReveal({
   return (
     <div
       aria-hidden={!open}
-      className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ease-out motion-reduce:transition-none ${
+      className={`grid ${preferences.animation?"transition-[grid-template-rows,opacity,margin] duration-300 ease-out":"transition-none"} motion-reduce:transition-none ${
         open
           ? `grid-rows-[1fr] opacity-100 ${expandedClassName}`
           : "mt-0 grid-rows-[0fr] opacity-0"
