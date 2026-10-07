@@ -88,3 +88,10 @@ test('plain display uses the canonical headword rather than guessing from pronun
  render(<HeadwordWithPronunciationBreaks text="má·ken" plainText="maken"/>);
  expect(document.body).toHaveTextContent('maken');expect(document.body).not.toHaveTextContent('máken');
 });
+
+test('plain canonical headword keeps invisible pronunciation-based wrap points',()=>{
+ render(<HeadwordWithPronunciationBreaks text="ar·beids·on·ge·schikt·heids·ver·ze·ke·ring" plainText="arbeidsongeschiktheidsverzekering"/>);
+ expect(document.body).toHaveTextContent('arbeidsongeschiktheidsverzekering');
+ expect(document.body).not.toHaveTextContent('·');
+ expect(document.querySelectorAll('wbr')).toHaveLength(9);
+});

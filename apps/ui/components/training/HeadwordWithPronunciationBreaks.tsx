@@ -12,7 +12,20 @@ export function HeadwordWithPronunciationBreaks({text,plainText}: {text:string;p
  const plain = plainText ?? text.replace(/[·ˈˌ]/g,"");
  const segments = text.split(PRONUNCIATION_SEPARATOR);
  if(segments.length===1) return <>{plain}</>;
- const content = hidden ? plain : segments.map((segment,index) =>
+ const content = hidden ? (()=>{
+  let sourceOffset=0;
+  const sourceLength=Math.max(1,text.replace(/[·ˈˌ]/g,"").length);
+  const boundaries=segments.slice(0,-1).map(segment=>{
+   sourceOffset+=segment.replace(/[ˈˌ]/g,"").length;
+   return Math.round(sourceOffset/sourceLength*plain.length);
+  });
+  let offset=0;
+  return boundaries.map((boundary,index)=>{
+   const end=Math.max(offset+1,boundary);
+   const chunk=plain.slice(offset,end);offset=end;
+   return <Fragment key={`${chunk}-${index}`}><span className="whitespace-nowrap">{chunk}</span><wbr/></Fragment>;
+  }).concat([<span key="last" className="whitespace-nowrap">{plain.slice(offset)}</span>]);
+ })() : segments.map((segment,index) =>
   <Fragment key={`${segment}-${index}`}><span className="whitespace-nowrap">{segment}{index<segments.length-1?PRONUNCIATION_SEPARATOR:null}</span>{index<segments.length-1?<wbr/>:null}</Fragment>);
  if(!preferences.syllableDoubleTap) return <>{content}</>;
  return <span role="button" tabIndex={0} aria-label={plain} aria-pressed={!hidden}

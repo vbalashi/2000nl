@@ -25,7 +25,8 @@ Owner: issue #606. Scope: existing account interaction preferences and AppFrame.
 - Focused component tests cover defaults, new sessions, simultaneous words,
   rapid saves, disabled gesture, touch double-tap/drag discrimination, keyboard,
   and idiom/context pronunciation projection.
-- Focused UI suite: 8 files / 129 tests pass. Browser suite: 10 scenarios
+- Focused UI suite: 9 files / 149 tests pass, including preservation of
+  invisible wrap points when the canonical word differs from pronunciation. Browser suite: 10 scenarios
   pass (2 phone scroll, 2 navigation, 6 EN/NL/RU reflow).
 - Typecheck passes; lint retains the existing handlePlayAudio dependency warning.
 - Chromium phone smoke via local dev-login checks compact and long answers,
