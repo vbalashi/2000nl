@@ -7,6 +7,7 @@
 
 ## Ingest
 - Validate and normalize source artifacts into `word_entries.raw`, `word_forms`, and curated `word_lists` / `word_list_items`.
+- For new or converted sources, apply the [morphology mapping and acceptance checks](contributing.md#morphology-normalization-and-display-order) before import; object key order must not become grammatical display order.
 - Apply migrations from `db/migrations` before loading data.
 - Scripts live in `packages/ingestion/scripts`; see `packages/ingestion/SCRIPTS.md` for the current script inventory.
 
