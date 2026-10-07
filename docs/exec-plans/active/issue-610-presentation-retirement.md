@@ -34,6 +34,20 @@ With identical mocked-font settings and both baseline presentation switches enab
 
 Do not use the initial port-3102 run as approved-baseline evidence: its presentation flags were initially false. It was stopped and restarted with both explicitly true, verified through health. The prior owner-run port-3100 baseline became unavailable mid-run; connection failures are infrastructure failures, not app regressions. Browser assertions for retired Start/Back labels were migrated without changing their session recovery contracts.
 
+### Review checkpoint
+
+Runtime/browser checkpoint: `c2f1d69937aad1809276de891ee2c853f50957df` against baseline `9aa380ea6fcaccd2ce7c0c478fa4465911c91158`. The baseline checkout contains test-only follow-up commits; its application source is unchanged, with both presentation flags explicitly enabled.
+
+- Full Vitest: **235 files passed; 2,055 tests passed, 339 skipped**. Optional DB suites were skipped, not validated. The integrated TrainingScreen suite includes 78 cases and numeric stale-stat/request-adoption characterizations on the supported no-chrome path.
+- Production Next build passed using deterministic font mocks and a local placeholder public Supabase configuration. Existing route-config re-export warnings and the existing `handlePlayAudio` dependency warning remain.
+- Final focused Playwright: **116 passed**, 27 specs, two workers, local DB contract 214. Includes navigation, palette/size combinations, Library reads/details, modal dismissal, session start/resume/completion, idle/focus continuity, owned-request recovery, pending stats, bootstrap and mobile containment. API fixtures make this UI contract coverage, not a live backend mutation or FSRS validation.
+- The final server health reported the exact checkpoint above, local database and retained capability flags; the two retired presentation diagnostics were absent. Final 402px/1024px screenshots are byte-identical to the matched baseline.
+- Retirement guard passed, including the negative probe described above. `git diff --check` passed. The style audit still reports the pre-existing debt documented below.
+
+The historical browser suite is **not wholly green**. Exploratory broad runs were stopped after repeated obsolete-entry timeouts (current: 118 passed/53 failed; approved baseline: 125 passed/47 failed; each had 74 not run). Subsequent scoped migrations preserve and pass the relevant start/recovery scenarios. Do not present those interrupted runs as full-suite completion. Baseline reproduction also confirms outstanding headword/type measurements, reveal timing, report-success focus and short-viewport reflow failures; the 640×400 Large-spacing case measures the same 28px body before/after. The attribution benchmark reaches live training but exceeds its 120-second budget. The final focused run deliberately excludes the known report-success and two reveal-animation failures; no assertions or tests were disabled in the repository to obtain a green result.
+
+Local retained evidence (logs, health, screenshot pairs and SHA-256 manifest): `/Users/khrustal/adhoc/2000nl-610-retirement-evidence/`. Temporary servers 3101/3102 were stopped. Worker checkouts and their committed branches are retained for review; no merge or deployment is part of this checkpoint.
+
 ## Follow-on architecture seams
 
 - Setup: saved-training intent resolution and start-draft validation belong next to `lib/training/setups`, not a catch-all hook. Existing account setup/material hooks remain sole owners of persistence and availability.
@@ -49,5 +63,7 @@ The initial source retirement reduces `TrainingTodaySetup.tsx` from 1,473 to 530
 The next useful Library boundary is the non-grouped/list-filter search request owner: request identity, debounce, abort/stale fencing, freshness reuse, pagination resets and retry. Grouped search stays in its existing hook; selected details and public entry APIs stay outside this extraction. Characterize language isolation, scope changes, stale queries and retained details first.
 
 The later Training boundary is a narrow snapshot/reconciliation decision projection. Preserve one owner for generation refs, accepted mutations, queue loading/reset and invalidation subscriptions. Its acceptance must include takeover, offline recovery, session A/B late responses, resume and coalesced/retried replans. Do not replace the screen with a catch-all hook.
+
+Before further structural extraction, reconcile the remaining browser contracts with the approved UI. Separate speculative reading-size prototype measurements from accepted Training measurement/action contracts; preserve the latter. Migrate unified-details geometry to its article role and current account size model without weakening selection, lookup, focus or overflow checks. Treat reproduced focus/reflow issues as separate behavioral fixes, not changes hidden in retirement.
 
 Style audit comparison also found pre-existing untokenized styles in `trainingOverview.module.css` and excess literals in `approvedTrainingCard.module.css` and `startupLogo.module.css`. The baseline also reported excess literals in `DictionarySearchTab.tsx`, eliminated by this retirement. Existing debt allowances were lowered after deletion; no new allowance was added to hide unrelated failures.
