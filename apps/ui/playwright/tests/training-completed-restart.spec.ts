@@ -23,11 +23,14 @@ test("@pilot completed meaning session starts a new run directly from home", asy
 });
 
 test("@pilot paused meaning session still continues the same run", async ({ page }) => {
-  const lookupTargets: Array<string | null> = [];
+  const lookupRequests: Array<{ hasTarget: boolean; target: unknown }> = [];
   page.on("request", (request) => {
     if (request.url().includes("/api/platform/v2/lookup") && request.method() === "POST") {
       const body = request.postDataJSON();
-      lookupTargets.push(body.translationTargetLanguageCode ?? null);
+      lookupRequests.push({
+        hasTarget: Object.hasOwn(body, "translationTargetLanguageCode"),
+        target: body.translationTargetLanguageCode,
+      });
     }
   });
   const fixture = await setupAuthenticatedTrainingAttributionPage(page, 0, {
@@ -42,8 +45,8 @@ test("@pilot paused meaning session still continues the same run", async ({ page
   await resume.click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
   expect(fixture.requests.sessionStarts).toHaveLength(1);
-  expect(lookupTargets.length).toBeGreaterThan(0);
-  expect(lookupTargets).toContain(null);
+  expect(lookupRequests.length).toBeGreaterThan(0);
+  expect(lookupRequests.every((request) => request.hasTarget && request.target === null)).toBe(true);
 });
 
 
