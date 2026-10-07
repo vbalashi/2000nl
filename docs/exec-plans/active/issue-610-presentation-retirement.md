@@ -67,3 +67,9 @@ The later Training boundary is a narrow snapshot/reconciliation decision project
 Before further structural extraction, reconcile the remaining browser contracts with the approved UI. Separate speculative reading-size prototype measurements from accepted Training measurement/action contracts; preserve the latter. Migrate unified-details geometry to its article role and current account size model without weakening selection, lookup, focus or overflow checks. Treat reproduced focus/reflow issues as separate behavioral fixes, not changes hidden in retirement.
 
 Style audit comparison also found pre-existing untokenized styles in `trainingOverview.module.css` and excess literals in `approvedTrainingCard.module.css` and `startupLogo.module.css`. The baseline also reported excess literals in `DictionarySearchTab.tsx`, eliminated by this retirement. Existing debt allowances were lowered after deletion; no new allowance was added to hide unrelated failures.
+
+## Bounded release-readiness follow-up (2026-10-08)
+
+Owner authorized [the finite follow-up](../../discussions/2026-10-08-01-retirement-release-readiness.md). Complete browser-contract classification, three existing style-audit violations, and relevant confirmed focus/reveal/viewport behavior. Final acceptance: integrated reviewable changes, necessary checks, independent review, and explicit release verdict with remaining blockers. No Library/TrainingScreen decomposition, merge or deployment in this goal.
+
+Workers start from d120b18e on new local branches, preserving prior worker commits. Root owns the single shared validation runtime and final integration. Large unrelated defects become separately scoped blockers rather than indefinite expansion.
