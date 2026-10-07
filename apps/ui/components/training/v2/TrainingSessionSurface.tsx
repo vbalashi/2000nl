@@ -2,7 +2,7 @@
 
 import React from "react";
 import approved from "../approvedTrainingCard.module.css";
-import { type FooterStatsProps } from "../FooterStats";
+import { FooterStats, type FooterStatsProps } from "../FooterStats";
 import {
   TrainingSessionChrome,
   type TrainingSessionChromeProps,
@@ -54,6 +54,7 @@ export function TrainingSessionNotice({
 export function TrainingSessionSurface({
   phase,
   chrome,
+  footer,
   notice,
   readySurface,
   authorityRefreshing,
@@ -70,7 +71,7 @@ export function TrainingSessionSurface({
           approvedPresentation={approvedPresentation}
         />
       ) : null}
-      footer={null}
+      footer={approvedPresentation ? null : <FooterStats {...footer} />}
       approvedPresentation={approvedPresentation}
       notice={notice ? <TrainingSessionNotice notice={notice} /> : null}
       readySurface={readySurface}
