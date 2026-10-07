@@ -106,6 +106,13 @@ Docker Supabase URL. For local DB/RPC checks, prefer
   platform boundary, not in a second card renderer. The source-scope,
   family-content, exercise-identity and queue stages are documented in
   [the Training selection pipeline](docs/architecture/training-selection-pipeline.md).
+- The approved Training and shared article presentation is the only supported UI.
+  Do not reintroduce presentation rollout branches or duplicate renderers. Keep
+  capability gates (for example translation exercises) separate from appearance.
+  Account material, reading, palette and spacing providers mount unconditionally;
+  their authenticated persistence and session semantics are not optional styling.
+  `scripts/check-training-retirements.mjs --final-training` enforces retired
+  presentation symbols across active code, tests and deployment configuration.
 - UI-only changes: validate with `npm run lint` and relevant UI tests in `apps/ui`.
 - FSRS or DB changes: validate migrations plus `apps/ui/tests/fsrs/*.test.ts`; prefer the local Supabase Docker harness in `docs/runbooks/local-supabase-test-env.md`, and avoid production DBs for migration-driven tests.
 - Auth/provider changes: confirm required env vars, callback URLs, and service-role boundaries remain server-side.
