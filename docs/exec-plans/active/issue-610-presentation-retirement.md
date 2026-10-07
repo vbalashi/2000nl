@@ -28,6 +28,12 @@ Baseline full Vitest on unchanged runtime/unit source at 9aa380ea: 235 files pas
 
 Initial config/health change: 14 tests passed. Browser spec discovery after migration: 248 tests in 44 files. Integrated runtime execution is recorded below when completed.
 
+Independent review and browser comparison caught and corrected four retirement mistakes: the no-chrome session still needs `FooterStats`; native Library/report dialogs must retain their own Escape handling rather than gain old document listeners; caller-requested Library overlay padding remains supported; opening collection creation must focus its name input. These are retained approved behaviors, not new UI features.
+
+With identical mocked-font settings and both baseline presentation switches enabled, the 402px and 1024px approved session screenshots are byte-identical before/after retirement. This compares the deterministic test rendering, not production font delivery. The retirement guard also rejected a temporary retired-flag reference in active source and passed after the probe was removed.
+
+Do not use the initial port-3102 run as approved-baseline evidence: its presentation flags were initially false. It was stopped and restarted with both explicitly true, verified through health. The prior owner-run port-3100 baseline became unavailable mid-run; connection failures are infrastructure failures, not app regressions. Browser assertions for retired Start/Back labels were migrated without changing their session recovery contracts.
+
 ## Follow-on architecture seams
 
 - Setup: saved-training intent resolution and start-draft validation belong next to `lib/training/setups`, not a catch-all hook. Existing account setup/material hooks remain sole owners of persistence and availability.
