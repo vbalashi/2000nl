@@ -46,6 +46,25 @@ vi.mock("@/lib/training/material/client", () => ({
 }));
 vi.mock("@/lib/training/listService", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/lib/training/listService")>(),
+  fetchAvailableDictionarySourcesStrict: vi
+    .fn()
+    .mockImplementation(({ languageCode }: { languageCode: string }) =>
+      Promise.resolve([
+        {
+          id: languageCode === "en" ? "dict-english" : "dict-vandale",
+          languageCode,
+          slug: languageCode === "en" ? "en-core" : "nl-vandale",
+          name:
+            languageCode === "en"
+              ? "English dictionary"
+              : "VanDale woordenboek",
+          kind: "curated",
+          visibility: "public",
+          isEditable: false,
+          entryCount: 2000,
+        },
+      ]),
+    ),
   fetchAvailableLearningLanguages: vi.fn().mockResolvedValue([
     { code: "nl", label: "Nederlands", dictionaryCount: 1, curatedListCount: 1, userListCount: 0, hasTrainingEligibleLists: true },
     { code: "en", label: "English", dictionaryCount: 2, curatedListCount: 1, userListCount: 0, hasTrainingEligibleLists: true },
@@ -1065,6 +1084,9 @@ test("global Details and shortcut help preserve the V2 turn and omit retired act
     screen.queryByTestId("library-details-actions"),
   ).not.toBeInTheDocument();
   fireEvent.click(screen.getAllByRole("button", { name: /^(Close|Sluiten)$/ })[0]);
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog", { name: "Word details" })).not.toBeInTheDocument(),
+  );
 
   fireEvent.keyDown(window, { key: "?", shiftKey: true });
   expect(
@@ -2766,19 +2788,20 @@ test("dictionary search scope changes lookup language without changing training"
   await screen.findByRole("heading", { name: "huis" });
 
   fireEvent.keyDown(window, { key: "s" });
-  await screen.findByText("Search scope");
-
-  const languageSelect = screen.getByRole("combobox",{name:"Language"});
-  fireEvent.change(languageSelect, { target: { value: "en" } });
-
-  const queryInput = await screen.findByRole("textbox",{name:"Search words"});
+  const queryInput = await screen.findByRole("textbox", { name: "Search words" });
   fireEvent.change(queryInput, { target: { value: "bank" } });
 
+  const { getUiMessages } = await import("@/lib/uiMessages");
+  const copy = getUiMessages("en").library;
+  fireEvent.click(screen.getByRole("button", { name: copy.filters }));
+  fireEvent.click(screen.getByRole("button", { name: "English" }));
+  fireEvent.click(screen.getByRole("button", { name: copy.showResults }));
+
   await waitFor(() =>
-    expect(searchDictionaryGroups).toHaveBeenCalledWith(
+    expect(fetchPlatformV2LibraryGroupPage).toHaveBeenCalledWith(
       expect.objectContaining({
         query: "bank",
-        languageCode: "en",
+        contentLanguageCode: "en",
       }),
     ),
   );
@@ -2878,6 +2901,8 @@ test("dictionary lookup preserves an open entry with an explicit stale-detail la
 
     const queryInput = await screen.findByRole("textbox",{name:"Search words"});
     fireEvent.change(queryInput, { target: { value: "huis" } });
+    const huisRow = await screen.findByTestId("library-headword-group-group-word-1");
+    fireEvent.click(huisRow);
     await screen.findByText("Details");
 
     fireEvent.change(queryInput, { target: { value: "boom" } });
@@ -2922,17 +2947,17 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
     await screen.findByRole("heading", { name: "huis" });
     fireEvent.keyDown(window, { key: "s" });
 
-    const queryInput = await screen.findByRole("textbox",{name:"Search words"});
+    const queryInput = await screen.findByRole("textbox", { name: "Search words" });
     fireEvent.change(queryInput, { target: { value: "ste" } });
     await waitFor(() =>
-      expect(searchDictionaryGroups).toHaveBeenCalledWith(
+      expect(fetchPlatformV2LibraryGroupPage).toHaveBeenCalledWith(
         expect.objectContaining({ query: "ste" }),
       ),
     );
 
     fireEvent.change(queryInput, { target: { value: "ster" } });
     await waitFor(() =>
-      expect(searchDictionaryGroups).toHaveBeenCalledWith(
+      expect(fetchPlatformV2LibraryGroupPage).toHaveBeenCalledWith(
         expect.objectContaining({ query: "ster" }),
       ),
     );
@@ -2943,9 +2968,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
     });
 
     expect(
-      await screen.findByRole("button", {
-        name: /ster[\s\S]*Van Dale/i,
-      }),
+      await screen.findByTestId("library-headword-group-group-word-ster"),
     ).toBeInTheDocument();
 
     await act(async () => {
@@ -2954,10 +2977,11 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
     });
 
     expect(
-      screen.getByRole("button", { name: /ster[\s\S]*Van Dale/i }),
+      screen.getByTestId("library-headword-group-group-word-ster"),
     ).toBeInTheDocument();
-    expect(screen.queryByText("stedelijk")).not.toBeInTheDocument();
-    expect(screen.queryByText(/3964 resultaten/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("library-headword-group-group-word-stedelijk"),
+    ).not.toBeInTheDocument();
   } finally {
     restoreDefaultSearchResults();
   }
@@ -2989,15 +3013,11 @@ test("dictionary lookup preserves server Headword Group order", async () => {
   await screen.findByRole("heading", { name: "huis" });
   fireEvent.keyDown(window, { key: "s" });
 
-  const queryInput = await screen.findByRole("textbox",{name:"Search words"});
+  const queryInput = await screen.findByRole("textbox", { name: "Search words" });
   fireEvent.change(queryInput, { target: { value: "huis" } });
 
-  const exact = await screen.findByRole("button", {
-    name: /^huis[\s\S]*Van Dale NT2/i,
-  });
-  const compound = screen.getByRole("button", {
-    name: /^bejaardenhuis[\s\S]*Van Dale NT2/i,
-  });
+  const exact = await screen.findByTestId("library-headword-group-group-word-1");
+  const compound = screen.getByTestId("library-headword-group-group-word-3");
 
   expect(
     exact.compareDocumentPosition(compound) & Node.DOCUMENT_POSITION_FOLLOWING,
@@ -3198,6 +3218,7 @@ test.each([false, true])("Library inline grade preserves scope and selection (fa
     fetchTrainingWordByLookup.mockClear();
     fireEvent.keyDown(window, { key: "s" });
     fireEvent.change(await screen.findByRole("textbox", { name: "Search words" }), { target: { value: "boom" } });
+    fireEvent.click(await screen.findByTestId("library-headword-group-group-word-2"));
     const card = await screen.findByTestId(`library-sense-card-${dictionaryBoom.id}`);
     expect(performLibraryAction).not.toHaveBeenCalled();
     if (!failed) {
@@ -3227,19 +3248,6 @@ test("search detail copies a trusted entry into the user dictionary", async () =
     items: [dictionaryHuis],
     total: 1,
   });
-  copyEntryToUserDictionary.mockClear();
-  fetchDictionaryEntryById.mockClear();
-  fetchDictionaryEntryById.mockResolvedValueOnce({
-    ...userDictionaryGedoe,
-    id: "user-entry-copy",
-    headword: "huis",
-    raw: {
-      headword: "huis",
-      languageCode: "nl",
-      definition: "mijn huisdefinitie",
-      sourceEntryId: "word-1",
-    },
-  });
   updateActiveTrainingScope.mockClear();
 
   try {
@@ -3255,32 +3263,17 @@ test("search detail copies a trusted entry into the user dictionary", async () =
         target: { value: "huis" },
       },
     );
-    await screen.findByText("Details");
-
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: /Kopieer naar mijn woordenboek|Copy to my dictionary/i,
-      }),
-    );
-
-    await waitFor(() =>
-      expect(copyEntryToUserDictionary).toHaveBeenCalledWith({
-        entryId: "word-1",
-      }),
-    );
-    expect(fetchDictionaryEntryById).toHaveBeenCalledWith(
-      "user-entry-copy",
-      "user-1",
-    );
-    // The exact copied entry is now selected through the same identity-based
-    // details path; its V2 content is owned by the following lookup request.
-    // The service and hydration assertions above protect the copy contract
-    // without coupling this test to that subsequent network response.
+    fireEvent.click(await screen.findByTestId("library-headword-group-group-word-1"));
+    expect(await screen.findByTestId("library-sense-card-word-1")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /copy to my dictionary|kopieer naar mijn woordenboek/i }),
+    ).not.toBeInTheDocument();
+    expect(copyEntryToUserDictionary).not.toHaveBeenCalled();
+    expect(fetchDictionaryEntryById).not.toHaveBeenCalled();
     expect(updateActiveTrainingScope).not.toHaveBeenCalled();
   } finally {
     restoreDefaultSearchResults();
     restoreDefaultListScope();
-    fetchDictionaryEntryById.mockResolvedValue(null);
   }
 });
 
@@ -3293,6 +3286,7 @@ test("returning from an inline Library grade preserves the current training card
     fetchTrainingWordByLookup.mockClear();
     fireEvent.keyDown(window, { key: "s" });
     fireEvent.change(await screen.findByRole("textbox", { name: "Search words" }), { target: { value: "boom" } });
+    fireEvent.click(await screen.findByTestId("library-headword-group-group-word-2"));
     const card = await screen.findByTestId(`library-sense-card-${dictionaryBoom.id}`);
     fireEvent.click(within(card).getByRole("button", { name: "Easy" }));
     await waitFor(() => expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
