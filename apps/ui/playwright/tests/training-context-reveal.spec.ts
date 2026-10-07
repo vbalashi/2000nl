@@ -1,14 +1,15 @@
 import { expect, test } from "@playwright/test";
-test("context question arrives at its selected translation without losing the first frame", async ({ page }) => {
+test("context question stays in the outgoing card until the answer is ready", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/dev/sense-card-gate?prototype=reading&fixture=long&context=1&clean=1");
   const stage = page.getByTestId("training-sense-card-stage");
   const question = await page.getByTestId("reverse-prompt").textContent();
-  const origin = await page.getByTestId("reverse-prompt").boundingBox();
+  const origin = await stage.getByTestId("training-sense-card-shell").boundingBox();
   await page.getByRole("button", { name: "Antwoord tonen", exact: true }).click();
   const overlay = page.locator("[data-training-reveal-overlay]");
-  await expect(overlay).toHaveText(question!);
+  await expect(overlay).toContainText(question!);
+  await expect(overlay).toHaveAttribute("aria-hidden", "true");
   expect(await overlay.evaluate(node => parseFloat((node as HTMLElement).style.top))).toBeCloseTo(origin!.y, 1);
   const again = stage.getByRole("button", { name: "Opnieuw", exact: true });
   await expect(again).toBeDisabled();

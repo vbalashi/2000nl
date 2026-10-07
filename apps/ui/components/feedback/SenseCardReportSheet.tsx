@@ -122,6 +122,12 @@ export function SenseCardReportSheet({
   const content = (
       <div
         ref={dialogRef}
+        onKeyDown={(event) => {
+          if (terminal && event.key === "Tab") {
+            event.preventDefault();
+            closeButtonRef.current?.focus();
+          }
+        }}
         aria-busy={delivery === "sending"}
         aria-labelledby="sense-card-report-title"
         aria-describedby={terminal ? "sense-card-report-delivery-description" : "sense-card-report-context"}
@@ -145,7 +151,7 @@ export function SenseCardReportSheet({
 
         <div data-dialog-part="body" role="region"
           aria-label={t("senseCard.reportSheet.title")}
-          tabIndex={0}
+          tabIndex={terminal ? -1 : 0}
           className="max-h-[calc(100dvh-8rem)] overflow-y-auto px-5 pb-3">
           {terminal ? (
             <ReportStatus state={delivery} t={t} />
