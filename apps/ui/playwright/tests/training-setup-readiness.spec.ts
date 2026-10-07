@@ -16,7 +16,7 @@ const copy = {
   adjust: /Adjust training|Training aanpassen|Настроить тренировку/i,
   setupHeading: /Build your session|Stel je sessie samen|Соберите сессию/i,
   rhythm: /Review ↔ new rhythm|Ritme herhaling|Ритм повторений/i,
-  backToToday: /Back to Today|Terug naar Vandaag|Назад к экрану Сегодня/i,
+  backToTraining: /^(?:Back to training|Terug naar training|Вернуться к тренировкам)$/i,
 };
 
 function summarizeRequestIdentities(requests: Record<string, unknown>[]) {
@@ -126,7 +126,7 @@ test("setup remains usable without card selection while scoped stats are held fo
     testInfo,
     "mobile-editable-setup-with-stats-pending.png",
   );
-  await page.getByRole("button", { name: copy.backToToday }).click();
+  await page.getByRole("button", { name: copy.backToTraining }).click();
   await page.setViewportSize({ width: 1280, height: 900 });
   await expect(startCurrentSetup).toBeEnabled();
   expect(harness.requests.scheduler).toHaveLength(0);
@@ -215,7 +215,7 @@ test("a delayed ordinary scheduler is never invoked before or after pilot Start"
     "setup-with-no-card-request.png",
   );
 
-  await page.getByRole("button", { name: copy.backToToday }).click();
+  await page.getByRole("button", { name: copy.backToTraining }).click();
   await expect(startCurrentSetup).toBeEnabled();
   expect(harness.requests.scheduler).toHaveLength(0);
   const startClickedAt = Date.now();
@@ -375,7 +375,7 @@ test("projection starts after Start and keeps the setup visible until the card i
       name: /Start training|Training starten|Начать тренировку/i,
     }),
   ).toBeEnabled();
-  await page.getByRole("button", { name: copy.backToToday }).click();
+  await page.getByRole("button", { name: copy.backToTraining }).click();
 
   const startClickedAt = Date.now();
   await startCurrentSetup.click();
