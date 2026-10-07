@@ -73,3 +73,37 @@ Style audit comparison also found pre-existing untokenized styles in `trainingOv
 Owner authorized [the finite follow-up](../../discussions/2026-10-08-01-retirement-release-readiness.md). Complete browser-contract classification, three existing style-audit violations, and relevant confirmed focus/reveal/viewport behavior. Final acceptance: integrated reviewable changes, necessary checks, independent review, and explicit release verdict with remaining blockers. No Library/TrainingScreen decomposition, merge or deployment in this goal.
 
 Workers start from d120b18e on new local branches, preserving prior worker commits. Root owns the single shared validation runtime and final integration. Large unrelated defects become separately scoped blockers rather than indefinite expansion.
+
+### Follow-up changes and evidence interpretation
+
+Three style violations are resolved with the existing theme ownership, without increasing debt allowances: overview sizes now use matching tokens; approved-card literals use established theme values; startup keeps its own 14px/unscaled font and neutral light/dark colors. `check:practice-styles` passes (shared-theme guard and legacy literal ratchet, 389 remaining). This is not a claim that all remaining style debt is removed.
+
+Report's terminal success body now retains its sole Close action under Tab/Shift+Tab, with Escape dismissal and opener focus characterized. Reveal tests assert the approved whole-card shell, exact text and origin geometry, inert/aria-hidden overlay, grading lock and reduced motion, rather than the superseded isolated-prompt animation.
+
+The prior Google-font response mock returned URL text as font bytes, so browser measurements used fallback faces. Deterministic fixtures now contain valid, unmodified upstream Inter Latin/Cyrillic and Newsreader normal/italic WOFF2 with OFL texts, retrieval provenance and SHA-256. The font-readiness helper verifies the exact loaded subset/style. Earlier fallback-font screenshots remain historical evidence; do not reuse them as proof of intended font geometry. New generated screenshots are retained locally and do not replace tracked historical design artifacts.
+
+Approved browser measurements follow the accepted shared display/literary roles, scalable action sizes and current article geometry. The unapproved reading-size prototype matrix was removed. Its supported overflow coverage is preserved in real-component reflow tests: reverse prompt/hint and long selected translation; the latter checks the final rendered line, not impossible containment of a paragraph taller than its scroll pane. Header padding and example/idiom/usage typography parity remain checked.
+
+The short-screen scroll race was test-side: stress layout changed during Space's smooth scroll. Tests now await native `scrollend` before the next action, retaining end-position, overflow, viewport and pinned-action assertions. The failing case passed three repetitions; all eight Extra reflow cases passed. Mocked transport tests no longer require a live dev-login backend; current localized labels and saved-training entry points replace retired selectors.
+
+The opt-in attribution benchmark remains separate debt. Bounded diagnostics show an accepted action and advancement to word 2, but the finite-session fixture supplies no matching `transition.start`/total telemetry event (scheduler 0, session requests 4, projections 6). This is not evidence of a hung card or a green performance budget. The test's original one-second budget and 120-second deadline were not relaxed; diagnostics now fail with a bounded per-transition capture. No scheduler/controller redesign is included here.
+
+The old PR-head browser CI run 37691004580 was cancelled after 35 minutes while repeating obsolete fixtures/invalid-font failures. Its partial logs are preserved, but it is neither a completed browser-suite result nor evidence for the follow-up head. Fresh CI must be judged on the final submitted head.
+
+The first completed follow-up normal run was 181 passed / 5 failed / 1 optional benchmark skipped, and the first pilot run was 23 passed / 1 failed. These were completed diagnostic runs, not green acceptance evidence. Remaining old selectors/measurements were migrated without runtime changes: actual phone/desktop settings profiles and accepted scaling, whole-card reveal, and current saved-training builder entry. The attention test waited for its first receipt instead of all already accrued time; delivered-total polling retains the original lower/upper bounds and 17-second modal pause. Details geometry sampled different frames during the native 460ms panel slide; waiting for the actual animation retains strict right-edge/spacing checks. Six parallel repetitions of the long-headword case passed.
+
+Independent Sol review through `074fc88bfd7231b3779b8e13584e4049571723f9` found no code or coverage blocker. All worker worktrees are clean, committed and retained; root owns final documentation/evidence. The follow-up runtime source is unchanged after `e4f42dbde22813423681b7045ff107f98238caf0`; later commits only strengthen/migrate tests, fixtures/licenses and documentation. Build/unit results at that runtime checkpoint remain applicable, with a verified empty diff for app/components/lib/styles.
+
+### Final local acceptance
+
+Code/test checkpoint: `074fc88bfd7231b3779b8e13584e4049571723f9`; final documentation commits do not change application or test source.
+
+- Complete normal Playwright phase: **186 passed, 1 existing opt-in attribution benchmark skipped**, 187 discovered; 2 workers, 0 retries, 3.7 minutes.
+- Complete pilot phase: **24 passed**, 1 worker, 0 retries. Both phases of the normal `test:e2e` split are covered on the canonical 3100 local QA server; fixture transport is mocked. No FSRS/backend mutation validation is inferred from these browser runs.
+- Full Vitest: **235 files passed, 2,055 tests passed, 339 optional tests skipped**. No runtime changes followed this run.
+- Production build, final typecheck/lint, style audit, retirement guard, guidance drift and whitespace checks pass. Existing `handlePlayAudio` dependency and route-config re-export warnings remain.
+- Independent review accepted the final code and retained behavior coverage. Targeted repeats additionally cover the former scroll, attention-delivery and panel-animation races.
+
+Local acceptance is green. Final publication readiness also requires fresh CI on the submitted PR head and the owner's release decision; #611 remains draft and #610 remains in progress. Exact-head CI outcome and the final checkpoint are recorded on issue #610 and in the local evidence manifest rather than inferred from old cancelled runs. No merge/deployment was performed. The finite follow-up stops here after that verdict; Library list-search extraction, Training snapshot/reconciliation extraction and optional attribution alignment remain separate work.
+
+Evidence: `/Users/khrustal/adhoc/2000nl-610-retirement-evidence/readiness-2026-10-08/` contains passed/failing diagnostic logs, final logs, synthetic screenshots, health, worktree review, bounded attribution capture and SHA-256 manifest. Generated screenshots do not overwrite tracked design history. Worker branches/checkouts are preserved for review.
