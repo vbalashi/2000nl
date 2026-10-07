@@ -9,12 +9,21 @@ export function useHeadwordFit(key: string, enabled = true) {
   React.useLayoutEffect(() => {
     const container = row.current, heading = word.current;
     if (!container || !heading) return;
-    if (!enabled) {heading.style.fontSize="";heading.style.whiteSpace="";container.style.flexDirection="";return;}
+    if (!enabled) {
+      heading.style.fontSize = "";
+      heading.style.whiteSpace = "";
+      container.style.flexDirection = "";
+      if (article.current) article.current.style.fontSize = "";
+      delete heading.dataset.headwordFit;
+      delete container.dataset.articleStacked;
+      return;
+    }
     let disposed = false;
     const measure = () => {
       const width = container.clientWidth;
       if (disposed || !width) return;
       heading.style.fontSize = "";
+      if (article.current) article.current.style.fontSize = "";
       heading.style.maxWidth = "100%";
       const style = getComputedStyle(heading);
       const baseSize = parseFloat(style.fontSize);
@@ -30,6 +39,7 @@ export function useHeadwordFit(key: string, enabled = true) {
       const naturalWidth = probe.getBoundingClientRect().width;
       probe.remove();
       if (!naturalWidth || !baseSize) return;
+      const articleSize = article.current ? parseFloat(getComputedStyle(article.current).fontSize) : 0;
       const articleWidth = article.current?.getBoundingClientRect().width ?? 0;
       const gap = parseFloat(getComputedStyle(container).columnGap) || 0;
       // Give the word the entire line before reducing its size.
@@ -41,6 +51,7 @@ export function useHeadwordFit(key: string, enabled = true) {
       const minimum = Math.min(baseSize, Math.max(20, baseSize * 0.6));
       const size = Math.max(minimum, Math.min(baseSize, baseSize * available / naturalWidth));
       heading.style.fontSize = `${size}px`;
+      if (article.current) article.current.style.fontSize = `${articleSize * size / baseSize}px`;
       heading.style.whiteSpace = naturalWidth * size / baseSize <= available + 0.5 ? "nowrap" : "normal";
       heading.dataset.headwordFit = heading.style.whiteSpace === "nowrap" ? "single-line" : "wrap";
     };
@@ -50,7 +61,13 @@ export function useHeadwordFit(key: string, enabled = true) {
     observer.observe(container);
     observer.observe(heading);
     void document.fonts?.ready.then(measure);
-    return () => { disposed = true; observer.disconnect(); };
+    // Reading preferences change inherited CSS variables even when the fixed
+    // heading dimensions remain unchanged, so ResizeObserver alone misses them.
+    const preferences = new MutationObserver(measure);
+    for (let parent = container.parentElement; parent; parent = parent.parentElement) {
+      preferences.observe(parent, { attributes: true, attributeFilter: ["style", "class", "data-reading-size", "data-text-size"] });
+    }
+    return () => { disposed = true; observer.disconnect(); preferences.disconnect(); };
   }, [key, enabled]);
   return { row, word, article };
 }

@@ -54,3 +54,10 @@ compound falls back to two lines. A dev-only comparison is at /dev/headword-fit.
 Three browser regression scenarios plus the existing 8 scroll/reflow scenarios
 pass. The relevant component suite passes (53 tests); typecheck and lint pass
 with the previously recorded handlePlayAudio warning.
+
+
+## Post-publication headword-fit verification
+
+PR #607 was deployed as a5a0cf0cb33650c4440fce7d46295e3e855e4d21, production 0.18.1186, contract 213. Production deep health passed. The delayed GitHub browser suite found stale expectations for dotted accessible names, root overflow and the article-above layout, plus two fitting defects: inherited reading-size changes did not remeasure an inline-sized heading; the article did not scale with the fitted word. The follow-up observes inherited preference attributes and preserves the original article/word size ratio. It updates browser assertions to canonical accessible names, the fixed root viewport and headword-lockup geometry including a stacked article. Reading settings mocks accept either local loopback hostname.
+
+Local verification: 61 classic-runtime browser scenarios passed, followed by all 18 revised long Word Details cases (320/390/1440px, three sizes, two themes). Approved-runtime headword-fit cases pass at 320/390/768px. Typecheck and lint pass with the existing TrainingSenseCardV2Session warning.

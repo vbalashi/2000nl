@@ -64,7 +64,9 @@ async function expectReviewedHeaderGeometry(page: import("@playwright/test").Pag
   await expect(audio.locator("svg")).toHaveCSS("width", "20px");
   await expect(audio.locator("svg")).toHaveCSS("height", "20px");
   expect(translateBox!.x - (audioBox!.x + audioBox!.width)).toBe(8);
-  const rowToHeadwordGap = headwordBox!.y - (rowBox!.y + rowBox!.height);
+  // A stacked article is the first line of the headword lockup.
+  const wordRow = await headword.evaluate(el => el.parentElement!.getBoundingClientRect().top);
+  const rowToHeadwordGap = wordRow - (rowBox!.y + rowBox!.height);
   expect(rowToHeadwordGap).toBeGreaterThanOrEqual(11.5);
   expect(rowToHeadwordGap).toBeLessThanOrEqual(12.5);
 }
@@ -190,12 +192,11 @@ for (const viewport of viewports) {
     });
     await page.goto(`/dev/sense-card-gate?prototype=details&fixture=long&size=${size}${viewport.width < 1024 ? "&wrapper=drawer" : ""}`);
     if (colorScheme === "dark") await page.evaluate(() => document.documentElement.classList.add("dark"));
-    const headword = page.getByRole("heading", { name: gateLongHeadwordGroup.header.displayPronunciation! });
+    const headword = page.getByRole("heading", { name: gateLongHeadwordGroup.header.text });
     await expect(headword).toBeVisible();
-    await expect(headword).toHaveCSS(
-      "font-size",
-      viewport.width >= 640 ? longHeadwordSize.desktop[size] : longHeadwordSize.mobile[size],
-    );
+    const fittedSize = await headword.evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+    expect(fittedSize).toBeGreaterThanOrEqual(20);
+    expect(fittedSize).toBeLessThanOrEqual(parseFloat(viewport.width >= 640 ? longHeadwordSize.desktop[size] : longHeadwordSize.mobile[size]));
     await expectReviewedHeaderGeometry(page);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath(`details-long-${viewport.width}-${size}-${colorScheme}.png`) });
