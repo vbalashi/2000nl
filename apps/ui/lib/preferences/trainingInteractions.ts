@@ -2,6 +2,7 @@ export const defaultTrainingInteractions = {
   animation: true,
   gradeSwipe: false,
   translationSwipe: false,
+  audioSwipe: false,
   syllableDoubleTap: false,
   showSyllables: false,
 };

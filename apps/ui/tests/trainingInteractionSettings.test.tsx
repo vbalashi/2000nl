@@ -9,8 +9,8 @@ afterEach(()=>{cleanup();vi.clearAllMocks();});
 test.each(['en','ru','nl'] as const)('accessible switches and grouped gestures in %s',language=>{
  render(<TrainingInteractionSettings language={language}/>);
  const switches=screen.getAllByRole('switch');
- expect(switches).toHaveLength(4);
- expect(screen.getByRole('group').querySelectorAll('[role=switch]')).toHaveLength(3);
+ expect(switches).toHaveLength(5);
+ expect(screen.getByRole('group').querySelectorAll('[role=switch]')).toHaveLength(4);
  expect(switches[0]).toHaveAttribute('aria-checked','true');
  expect(switches[1]).toHaveAttribute('aria-checked','false');
  fireEvent.click(switches[1]);

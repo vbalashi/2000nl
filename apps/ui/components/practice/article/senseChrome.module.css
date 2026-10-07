@@ -151,8 +151,10 @@
   position: absolute;
   inset: -5px;
 }
-.iconAction:hover {
-  background: var(--practice-surface-hover);
+@media (hover: hover) and (pointer: fine) {
+  .iconAction:hover {
+    background: var(--practice-surface-hover);
+  }
 }
 .iconAction[aria-pressed="true"] {
   border-color: var(--practice-control-border);

@@ -46,7 +46,7 @@ export function SenseCardHeadwordLockup({
   variant?: "default" | "training-face" | "training-answer" | "article";
 }) {
   const {preferences} = useTrainingInteractions();
-  const fit = useHeadwordFit(`${headword}:${plainHeadword}:${article}:${variant}:${preferences.syllableDoubleTap}:${preferences.showSyllables}`, !/\s/.test(headword.trim()));
+  const fit = useHeadwordFit(`${headword}:${plainHeadword}:${article}:${variant}:${preferences.syllableDoubleTap}:${preferences.showSyllables}`, !/\s/.test(headword.trim()), variant === "training-face");
   const longHeadword = headword.replaceAll("·", "").length > 18;
   const training = variant !== "default";
   const answer = variant === "training-answer";
@@ -66,7 +66,7 @@ export function SenseCardHeadwordLockup({
     showMetadata && Boolean(partOfSpeech || coreVocabularyLabel);
 
   return (
-    <div className="relative min-w-0" data-testid="sense-card-headword-lockup">
+    <div className={`relative min-w-0 ${variant === "training-face" ? "w-full" : ""}`} data-testid="sense-card-headword-lockup">
       {metadataVisible || headerActions ? (
         <div
           className="flex min-h-8 min-w-0 items-center justify-between gap-3"

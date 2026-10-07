@@ -12,7 +12,7 @@ import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout"
 import { senseCardQuietAction } from "../SenseCardChrome";
 import approvedCard from "../approvedTrainingCard.module.css";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
-import { useTranslationSwipe } from "@/components/practice/ui/useTranslationSwipe";
+import { useCardVerticalSwipe } from "@/components/practice/ui/useTranslationSwipe";
 import { useTrainingPromptReveal } from "@/components/practice/ui/useTrainingPromptReveal";
 import {
   TrainingCardAnswerHeader as EntityHeader,
@@ -123,7 +123,7 @@ export function TrainingSenseCardStage({
     }
     setTranslationVisible(visible => !visible);
   }, [busy, moving, model, onAction]);
-  useTranslationSwipe({ root: stageRef, enabled: answerVisible && !busy && !moving && (hasTranslation(model) || translationActionAvailable), onToggle: toggleTranslation });
+  useCardVerticalSwipe({ root: stageRef, audioEnabled: !busy && !moving && Boolean(model.audioCapability && onPlayAudio), onPlayAudio, enabled: answerVisible && !busy && !moving && (hasTranslation(model) || translationActionAvailable), onToggle: toggleTranslation });
 
 
   React.useEffect(() => {

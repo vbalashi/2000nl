@@ -903,3 +903,12 @@ test("direct and reverse sides share the account syllable display",async()=>{
  expect(screen.getByRole('button',{name:'maken'})).toHaveTextContent('maken');
  await waitFor(()=>expect(repository.save).toHaveBeenCalledTimes(2));
 });
+
+test('upward audio gesture uses the word player on Face and Answer',()=>{
+ const onPlayAudio=vi.fn();
+ const model=buildTrainingSenseCardModel({group:singleSenseGroup,entry:singleSenseEntry,interfaceLanguage:'en'});
+ render(<TrainingInteractionPreferencesProvider userId="owner" initial={{...defaultTrainingInteractions,audioSwipe:true}}><TrainingSenseCardStage model={model} mode="word-to-definition" interfaceLanguage="en" onAction={vi.fn()} onPlayAudio={onPlayAudio}/></TrainingInteractionPreferencesProvider>);
+ const swipe=()=>{const shell=screen.getByTestId('training-sense-card-shell');fireEvent.touchStart(shell,{touches:[{clientX:100,clientY:200}]});fireEvent.touchMove(shell,{touches:[{clientX:100,clientY:140}]});fireEvent.touchEnd(shell,{touches:[],changedTouches:[{clientX:100,clientY:140}]});};
+ swipe();expect(onPlayAudio).toHaveBeenCalledOnce();
+ fireEvent.click(screen.getByRole('button',{name:'Show answer'}));swipe();expect(onPlayAudio).toHaveBeenCalledTimes(2);
+});

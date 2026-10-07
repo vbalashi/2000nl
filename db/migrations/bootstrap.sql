@@ -571,3 +571,4 @@
 \i db/migrations/212_training_interaction_preferences.sql
 
 \i db/migrations/213_training_syllable_display.sql
+\i db/migrations/214_training_audio_swipe.sql

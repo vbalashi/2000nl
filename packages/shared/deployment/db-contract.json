@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-213",
+  "contractId": "2000nl-db-214",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 213,
+    "requiredMigrationId": 214,
     "coordinationIssue": 407,
     "compatibilityPhase": "legacy-first-party-compatible",
     "strictEnforcementIssue": 399
@@ -471,9 +471,14 @@
       "migrationId": 213,
       "file": "db/migrations/213_training_syllable_display.sql",
       "sha256": "74e638a436b439e97eadb10b8bc407ea9aad4d4fc6437e63ed0291389dddebb3"
+    },
+    {
+      "migrationId": 214,
+      "file": "db/migrations/214_training_audio_swipe.sql",
+      "sha256": "b5ef784366ebb0619d59ae2e8d85a91eb8054abc84a0621cb2f9d492ab08e7a0"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-213.sql",
+  "postflightProbe": "db/deploy-contract/postflight-214.sql",
   "preSwitchReadProbe": {
     "file": "db/deploy-contract/pre-switch-read-probe-164.sql",
     "sha256": "e4ea2002e4d65225d28ac4d7313426d4ca2ae91e2a6c514d223783e174d74a88",
@@ -482,7 +487,7 @@
     "overBudgetAction": "warn"
   },
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-213.sql",
-    "sha256": "cd9c9d358e35e36c6879b19ba8a23736105db77dccffe17d9d9ac62802f810d1"
+    "file": "db/deploy-contract/read-only-postflight-214.sql",
+    "sha256": "ded36b6783b9803910227cabc25d7b97f7edfbce0c58c2c79bfe0991b82222b9"
   }
 }
