@@ -40,7 +40,6 @@ import {
 } from "./librarySenseCardModel";
 
 type Props = {
-  /** Kept for the development gate harness; the retired footer no longer reserves space. */
   revealActiveMeaning?: boolean;
   model: LibrarySenseCardGroupModel;
   interfaceLanguage: OnboardingLanguage;
@@ -70,6 +69,8 @@ type Props = {
     targetEntryId: string | null;
   }) => void;
   onAction: (capability: LibraryMutationCapability) => void;
+  /** Reserve reading space when a caller overlays a global action. */
+  bottomOverlayReserve?: boolean;
 };
 
 const DETAILS_SCROLL_FADE_HEIGHT = 44;
@@ -99,6 +100,7 @@ export function LibrarySenseCardGroup({
   reportableEntryIds,
   onFollowCrossReference,
   onAction,
+  bottomOverlayReserve = false,
 }: Props) {
   const [viewState, setViewState] = React.useState<LibrarySenseCardViewState>(
     () => initialViewState(model, activeMeaningId, revealActiveMeaning),
@@ -326,7 +328,7 @@ export function LibrarySenseCardGroup({
           role="region"
           aria-label={platformV2Message(interfaceLanguage, "senseCard.wordDetails.open")}
           tabIndex={0}
-          className={`${surfaces.readingRegion} h-full overflow-y-auto overscroll-contain px-3 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden pb-4`}
+          className={`${surfaces.readingRegion} h-full overflow-y-auto overscroll-contain px-3 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden ${bottomOverlayReserve ? "pb-16" : "pb-4"}`}
         >
           {commonForms&&<ProductionArticleReading><ArticleWordForms detail={commonForms} headword={model.headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="body" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></ProductionArticleReading>}
           <div className="space-y-3">
