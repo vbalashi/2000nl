@@ -87,6 +87,7 @@ export function LibraryCollectionsPicker({
             }}
           >
             <input
+              autoFocus
               value={newListName}
               aria-label={t("senseCard.collections.createPlaceholder")}
               onChange={(event) => setNewListName(event.target.value)}

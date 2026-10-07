@@ -98,6 +98,7 @@ test("approved picker opens creation on demand and keeps its existing callback",
     onClose={vi.fn()} onToggleList={vi.fn()} onCreateList={create} />);
   expect(screen.queryByPlaceholderText("New collection name")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: /New collection/i }));
+  expect(screen.getByPlaceholderText("New collection name")).toHaveFocus();
   fireEvent.change(screen.getByPlaceholderText("New collection name"), { target: { value: "  Verbs  " } });
   fireEvent.submit(screen.getByPlaceholderText("New collection name").closest("form")!);
   expect(create).toHaveBeenCalledWith("Verbs");
