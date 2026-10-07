@@ -22,5 +22,7 @@ describe("WordDetailDrawer", () => {
     expect(screen.getByRole("region", { name: "Сведения о слове" })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: "Escape" });
     expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Закрыть" }));
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });

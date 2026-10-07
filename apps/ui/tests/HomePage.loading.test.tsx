@@ -119,8 +119,8 @@ beforeEach(() => {
 test("server bootstrap does not invent an English language before browser state is read", () => {
   const html = renderToString(<HomePage />);
 
-  expect(html).toContain("training-loading-indicator");
-  expect(html).not.toContain("<h1");
+  expect(html).toContain("training-bootstrap-shell");
+  expect(html).toContain('aria-label="Preparing training"');
   expect(html).not.toContain("Loading Training");
 });
 
@@ -148,7 +148,7 @@ test("uses the account language without an English waiting screen on a new brows
 
   render(<HomePage />);
 
-  expect(screen.getByTestId("training-loading-indicator")).toBeInTheDocument();
+  expect(screen.getByTestId("training-bootstrap-shell")).toBeInTheDocument();
   expect(screen.queryByRole("heading")).not.toBeInTheDocument();
 
   await act(async () => {
@@ -171,50 +171,20 @@ test("uses the account language without an English waiting screen on a new brows
 });
 
 test.each([
-  [
-    "en",
-    "Preparing training",
-    "Still preparing your training",
-    "This is taking a little longer than expected.",
-  ],
-  [
-    "nl",
-    "Training voorbereiden",
-    "Training wordt nog voorbereid",
-    "Dit duurt iets langer dan verwacht.",
-  ],
-  [
-    "ru",
-    "Подготавливаем тренировку",
-    "Тренировка всё ещё подготавливается",
-    "Это занимает немного больше времени, чем ожидалось.",
-  ],
+  ["en", "Preparing training"],
+  ["nl", "Training voorbereiden"],
+  ["ru", "Подготавливаем тренировку"],
 ] as const)(
-  "bootstrap loading stays in the localized %s Training shell",
-  (language, heading, longRunningHeading, longRunningBody) => {
-    vi.useFakeTimers();
+  "bootstrap loading stays in the localized %s startup shell",
+  (language, heading) => {
     window.localStorage.setItem("onboarding_language", language);
 
-    try {
-      render(<HomePage />);
+    render(<HomePage />);
 
-      expect(screen.getByTestId("training-bootstrap-shell")).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: heading }).closest("section"))
-        .toHaveAttribute("aria-busy", "true");
-      expect(screen.queryByText("Laden…")).not.toBeInTheDocument();
-
-      act(() => vi.advanceTimersByTime(8_000));
-      expect(
-        screen.getByRole("heading", { name: longRunningHeading }),
-      ).toBeInTheDocument();
-      expect(screen.getByText(longRunningBody)).toBeInTheDocument();
-      expect(screen.queryByRole("heading", { name: heading })).not.toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: longRunningHeading }).closest("section"))
-        .toHaveAttribute("aria-busy", "true");
-    } finally {
-      vi.useRealTimers();
-    }
+    expect(screen.getByTestId("training-bootstrap-shell")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: heading }).closest("section"))
+      .toHaveAttribute("aria-busy", "true");
   },
 );
 

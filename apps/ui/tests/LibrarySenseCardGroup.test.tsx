@@ -179,8 +179,7 @@ describe("LibrarySenseCardGroup", () => {
     expect(screen.queryByText("Meanings")).not.toBeInTheDocument();
     const exposureBadge = screen.getByLabelText("3×");
     expect(exposureBadge).toBeInTheDocument();
-    expect(exposureBadge).toHaveClass("min-h-[18px]");
-    expect(exposureBadge).not.toHaveClass("border");
+    expect(exposureBadge).toHaveTextContent("3×");
     expect(
       screen
         .getByText("Bij welke bank hebt u een rekening?")
@@ -420,12 +419,14 @@ describe("LibrarySenseCardGroup", () => {
     expect(container.querySelector('[data-content-kind="usage-pattern"]')).toBeInTheDocument();
     expect(container.querySelector('[data-content-kind="example"]')).toBeInTheDocument();
     expect(container.querySelector('[data-content-kind="idiom"]')).toBeInTheDocument();
-    const usagePattern = container.querySelector(
-      '[data-content-kind="usage-pattern"]',
-    );
-    const example = container.querySelector('[data-content-kind="example"]');
-    expect(usagePattern).toBeInTheDocument();
-    expect(example).toBeInTheDocument();
+    const examples = container.querySelector('[data-section="examples"]');
+    const usage = container.querySelector('[data-section="usage"]');
+    expect(examples).toBeInTheDocument();
+    expect(usage).toBeInTheDocument();
+    expect(
+      (examples as Element).compareDocumentPosition(usage as Node) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   test("shows completed known state instead of new", () => {

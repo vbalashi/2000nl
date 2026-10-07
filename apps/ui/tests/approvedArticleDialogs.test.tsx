@@ -53,5 +53,7 @@ test("Library uses a resizable non-modal bottom sheet without a global Escape li
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   fireEvent.keyDown(window, { key: "Escape" });
   expect(onClose).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Закрыть" }));
+  expect(onClose).toHaveBeenCalledOnce();
   view.unmount();
 });
