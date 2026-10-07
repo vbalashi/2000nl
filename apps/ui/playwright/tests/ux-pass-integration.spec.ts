@@ -83,7 +83,7 @@ test("@pilot builder offers one Translation with a nonempty contextual direction
     card_modes: ['word-to-definition', 'definition-to-word'], graduation_threshold: 21, enabled: true, sort_order: 1,
   }] }));
   await page.reload();
-  await page.locator('button[class*="configure"]').click();
+  await page.getByRole('button', { name: /^(?:Create training|Training maken|Training aanmaken|Создать тренировку)$/i }).click();
   await expect(page.getByRole('heading', { name: /Session builder|Настройка тренировки|Training samenstellen/i })).toBeVisible();
   await page.getByRole('button', { name: /^(Exercises|Упражнения|Oefeningen) /i }).click();
   const translation = page.getByRole('button', { name: /^(Translation|Перевод|Vertaling)$/i });
