@@ -56,6 +56,8 @@ async function expectReviewedHeaderGeometry(
   const expectedHorizontalPadding = page.viewportSize()!.width >= 640 ? 28 : 16;
   expect(rowBox!.x - headerBox!.x).toBeCloseTo(expectedHorizontalPadding, 0);
   expect(headerBox!.x + headerBox!.width - (rowBox!.x + rowBox!.width)).toBeCloseTo(expectedHorizontalPadding, 0);
+  await expect(header).toHaveCSS("padding-top", "16px");
+  await expect(header).toHaveCSS("padding-bottom", "20px");
   await expect(headword).toBeVisible();
   const { headerScrollTop, headerIsScrollable } = await header.evaluate(element => ({
     headerScrollTop: element.scrollTop,

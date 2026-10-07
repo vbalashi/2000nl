@@ -102,7 +102,23 @@ test("the selected translation at the end of a long Answer remains reachable", a
   await expect.poll(() => scroll.evaluate(element => element.scrollHeight - element.clientHeight)).toBeGreaterThan(0);
   await scroll.press("End");
   await expect.poll(() => scroll.evaluate(element => element.scrollHeight - element.clientHeight - element.scrollTop)).toBeLessThanOrEqual(1);
-  await expect(lastTranslation).toBeVisible();
+  const translationBounds = await lastTranslation.evaluate(element => {
+    const region = element.closest<HTMLElement>('[data-testid="training-answer-scroll"]')!;
+    const text = element.getBoundingClientRect();
+    const contentTop = region.getBoundingClientRect().top + region.clientTop;
+    const contentBottom = contentTop + region.clientHeight;
+    return {
+      fullyVisible: text.top >= contentTop && text.bottom <= contentBottom,
+      textTop: text.top,
+      textBottom: text.bottom,
+      contentTop,
+      contentBottom,
+      scrollTop: region.scrollTop,
+      scrollHeight: region.scrollHeight,
+      clientHeight: region.clientHeight,
+    };
+  });
+  expect(translationBounds.fullyVisible, JSON.stringify(translationBounds)).toBe(true);
   expect(await headword.boundingBox()).toEqual(headwordBefore);
   expect(await dock.boundingBox()).toEqual(dockBefore);
 });

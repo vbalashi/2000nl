@@ -31,7 +31,13 @@ for (const colorScheme of ["light", "dark"] as const) {
     });
     expect(gap).toBeCloseTo(8, 1);
     const examples = stage.locator('[data-section="examples"]');
-    const example = examples.locator('[data-content-kind="example"] > div > p').first();
+    const literarySamples = [
+      examples.locator('[data-content-kind="example"] > div > p:not([data-content-translation])').first(),
+      stage.locator('[data-section="usage"] [data-content-kind="usage-pattern"] > div > p:not([data-content-translation])').first(),
+      stage.locator('[data-section="expressions"] [data-content-kind="idiom"] > div > p:not([data-content-translation])').first(),
+    ];
+    for (const sample of literarySamples) await expect(sample).toBeVisible();
+    const example = literarySamples[0];
     const literaryRole = await example.evaluate((element) => {
       const probe = document.createElement("p");
       probe.style.fontSize = "var(--practice-literary-size, var(--practice-text-body-lg, 16px))";
@@ -44,6 +50,17 @@ for (const colorScheme of ["light", "dark"] as const) {
     });
     await expect(example).toHaveCSS("font-size", literaryRole.fontSize);
     await expect(example).toHaveCSS("line-height", literaryRole.lineHeight);
+    const literaryStyles = await Promise.all(literarySamples.map(sample => sample.evaluate(element => {
+      const style = getComputedStyle(element);
+      return { fontSize: style.fontSize, lineHeight: style.lineHeight, fontFamily: style.fontFamily, fontStyle: style.fontStyle };
+    })));
+    for (const style of literaryStyles.slice(1)) {
+      expect(style.fontSize).toBe(literaryStyles[0].fontSize);
+      expect(style.lineHeight).toBe(literaryStyles[0].lineHeight);
+      expect(style.fontFamily).toBe(literaryStyles[0].fontFamily);
+    }
+    expect(literaryStyles[0].fontFamily).toContain("Newsreader");
+    expect(literaryStyles.map(style => style.fontStyle)).toEqual(["italic", "normal", "italic"]);
     // The current shared reader rail is 2px (the retired article-only rail was 3px).
     await expect(examples.locator('[data-content-kind="example"]').first()).toHaveCSS("border-left-width", "2px");
     await expect(stage.getByTestId("training-sense-card-dock")).toBeVisible();
