@@ -1,5 +1,12 @@
 "use client";
 import React from "react";
+import {TrainingInteractionPreferencesProvider, useTrainingInteractions, defaultTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
+const fixtureRepository = {load:async()=>defaultTrainingInteractions,save:async()=>{}};
+function InteractionControls(){const {preferences,save}=useTrainingInteractions();return <>{(["animation","translationSwipe","syllableDoubleTap"] as const).map(key=><label key={key}><input type="checkbox" checked={preferences[key]} onChange={event=>void save({...preferences,[key]:event.target.checked})}/>{key}</label>)}</>;}
+
+import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
+import { TrainingSenseCardStage } from "@/components/training/v2/TrainingSenseCardStage";
+import { buildTrainingSenseCardModel } from "@/components/training/v2/trainingSenseCardModel";
 import { TrainingExerciseCard } from "@/components/training/v2/TrainingExerciseCard";
 import { buildIdiomCardPresentation } from "@/lib/training/idiomCardPresentation";
 import { buildSentenceCardPresentation } from "@/lib/training/sentenceCardPresentation";
@@ -47,6 +54,7 @@ const content: IdiomExerciseContent = {
 
 /** Fixed presentation fixture; no session, auth, or learning-state writes. */
 export function ExerciseCardGate() {
+  const [context, setContext] = React.useState(false);
   const [sentence, setSentence] = React.useState(false);
   const [direction, setDirection] = React.useState<"direct" | "reverse">(
     "direct",
@@ -61,13 +69,14 @@ export function ExerciseCardGate() {
     };
   }, [dark]);
   return (
-    <main className={`${dark ? "dark" : ""} h-dvh`}>
-      <div className="flex h-full flex-col gap-3 bg-slate-100 p-4 dark:bg-[#11141A]">
+    <TrainingInteractionPreferencesProvider userId="fixture" initial={defaultTrainingInteractions} repository={fixtureRepository}><main data-colour-mode={dark ? "dark" : "light"} className={`${practiceTheme.theme} ${dark ? "dark" : ""} h-dvh`}>
+      <div className="flex h-full flex-col gap-3 bg-[var(--practice-canvas)] p-4 text-[var(--practice-text)]">
         <nav className="flex shrink-0 flex-wrap gap-3 text-sm dark:text-white">
-          <span>Presentation fixture</span>
-          <button onClick={() => { setSentence(true); setRevealed(false); }}>Sentence</button>
+          <span>Presentation fixture</span><InteractionControls/>
+          <button onClick={() => { setContext(false); setSentence(true); setRevealed(false); }}>Sentence</button>
           <button
             onClick={() => {
+              setContext(false);
               setDirection("direct");
               setSentence(false);
               setRevealed(false);
@@ -77,6 +86,7 @@ export function ExerciseCardGate() {
           </button>
           <button
             onClick={() => {
+              setContext(false);
               setDirection("reverse");
               setSentence(false);
               setRevealed(false);
@@ -84,9 +94,17 @@ export function ExerciseCardGate() {
           >
             Reverse
           </button>
+          <button onClick={() => { setContext(true); setRevealed(false); }}>Word in context</button>
           <button onClick={() => setDark((v) => !v)}>Light / dark</button>
         </nav>
-        <TrainingExerciseCard
+        {context ? <TrainingSenseCardStage
+          model={{...buildTrainingSenseCardModel({ group: gateSingleSenseGroup, entry: gateFurnitureEntry, interfaceLanguage: "en" }),
+            headword: "wed·strijd", partOfSpeech: "noun", entryTranslation: "матч",
+            definitions: [{ contentNodeId: "gate-match-meaning", parentContentNodeId: null, kind: "definition", text: "een sportieve ontmoeting tussen twee teams", children: [] }], examples: []}}
+          mode="definition-to-word" interfaceLanguage="en" side={revealed ? "answer" : "face"}
+          onSideChange={side => setRevealed(side === "answer")} onAction={() => setRevealed(false)}
+          contextPrompt={{ text: "ФК Гронинген выиграл матч", sourceText: "FC Groningen heeft de wedstrijd gewonnen", contentNodeId: "gate-match-example", sourceTextFingerprint: "gate-match" }}
+        /> : <TrainingExerciseCard
           key={sentence ? "sentence" : direction}
           presentation={sentence ? buildSentenceCardPresentation({
             content: { group: content.group, entry: content.entry, sentence: {
@@ -107,8 +125,8 @@ export function ExerciseCardGate() {
           onReveal={() => setRevealed(true)}
           busy={false}
           onGrade={() => setRevealed(false)}
-        />
+        />}
       </div>
-    </main>
+    </main></TrainingInteractionPreferencesProvider>
   );
 }

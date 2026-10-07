@@ -3,7 +3,7 @@ vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyT
 import React from "react";
 import { getUiMessages } from "@/lib/uiMessages";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render as testingRender, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   TrainingKnownUndoNotice,
@@ -20,6 +20,9 @@ import {
   singleSenseEntry,
   singleSenseGroup,
 } from "./platformV2TrainingFixture";
+
+import {TrainingInteractionPreferencesProvider,defaultTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
+const render = (ui:React.ReactElement, options?:Parameters<typeof testingRender>[1]) => testingRender(ui,{...options,wrapper:({children})=><TrainingInteractionPreferencesProvider userId="swipe-tests" initial={{...defaultTrainingInteractions,gradeSwipe:true}}>{children}</TrainingInteractionPreferencesProvider>});
 
 const fetchSingleSense = vi.fn();
 const performAction = vi.fn();
@@ -295,6 +298,18 @@ describe("TrainingSenseCardV2Session", () => {
     expect(screen.queryByRole("button", { name: "Goed" })).not.toBeInTheDocument();
     expect(performAction).not.toHaveBeenCalled();
     expect(onProgressActionAccepted).not.toHaveBeenCalled();
+  });
+
+  test("grading swipes are disabled until the account enables them", async () => {
+    testingRender(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="nl" onProgressActionAccepted={vi.fn()} />);
+    await screen.findByRole("heading",{name:"hand"});
+    fireEvent.click(screen.getByRole("button",{name:"Antwoord tonen"}));
+    const wrapper=screen.getByTestId("training-card-swipe-wrapper");
+    fireEvent.touchStart(wrapper,{touches:[{clientX:0,clientY:0}]});
+    fireEvent.touchMove(wrapper,{touches:[{clientX:500,clientY:0}]});
+    fireEvent.touchEnd(wrapper);
+    expect(performAction).not.toHaveBeenCalled();
+    expect(wrapper.style.transform).toContain("translateX(0px)");
   });
 
   test("reviews an answer past the swipe threshold and resets a cancelled swipe", async () => {

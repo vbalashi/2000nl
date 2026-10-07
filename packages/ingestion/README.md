@@ -64,6 +64,15 @@ Run `import_word_forms.py` after the entry import. For a versioned corpus it
 resolves each entry through the source-binding ledger and fails closed if the
 manifest and active bindings do not have exact coverage.
 
+## Adding or converting a dictionary
+
+Follow [dictionary and language onboarding](../docs/contributing.md), including
+[morphology normalization and display order](../docs/contributing.md#morphology-normalization-and-display-order),
+before importing a new source. Normalize provider labels in the source adapter
+and ingestion layer; keep grammatical display order independent of JSON/JSONB
+key order, preserve alternate forms, and verify the public projection and
+rendered output against source examples.
+
 ## Complete local multilingual fixtures
 
 The synthetic complete fixtures live under:

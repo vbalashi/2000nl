@@ -181,7 +181,9 @@ function trainingPartOfSpeechLabel(value: string) {
 export function TrainingCardFace({
   prompt,
   label,
-  partOfSpeechChip,
+  partOfSpeech,
+  recallTarget,
+  contextLabel,
   hint,
   hintVisible,
   hintLabel,
@@ -189,7 +191,9 @@ export function TrainingCardFace({
 }: {
   prompt: TrainingCardPrompt;
   label?: string;
-  partOfSpeechChip?: string;
+  partOfSpeech?: string;
+  recallTarget?: string;
+  contextLabel?: string;
   hint?: { text: string };
   hintVisible: boolean;
   hintLabel: string;
@@ -208,25 +212,30 @@ export function TrainingCardFace({
       className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:thin] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--practice-focus,#818cf8)]"
     >
       <div className="flex min-h-full flex-col p-[18px]">
-        {partOfSpeechChip ? (
+        {partOfSpeech ? (
           <span
             data-testid="training-face-part-of-speech"
-            className={trainingPresentationV1Enabled() ? `${chrome.chip} self-start` : "inline-flex max-w-full self-start rounded-md bg-indigo-500/10 px-2 py-1 text-xs font-medium text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]"}
+            className={trainingPresentationV1Enabled() ? `${chrome.metadata} self-start` : "self-start text-[13px] text-slate-500 dark:text-slate-400"}
           >
-            {partOfSpeechChip}
+            <span className={chrome.pos}>
+              <span aria-hidden="true" className={trainingPresentationV1Enabled() ? chrome.dot : "h-2 w-2 rounded-full bg-emerald-500"} />
+              {trainingPartOfSpeechLabel(partOfSpeech)}
+            </span>
           </span>
         ) : null}
-        <div className="my-auto flex shrink-0 flex-col items-center gap-4 px-10 py-3 text-center">
+        <div className="my-auto flex shrink-0 flex-col items-center gap-4 px-2 py-6 text-center sm:px-10">
           {label ? (
-            <span className={trainingPresentationV1Enabled() ? chrome.chip : "rounded-md bg-indigo-500/10 px-2 py-1 font-sense-sans text-xs font-semibold text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]"}>
+            <span className={approved.faceInstruction}>
               {label}
             </span>
           ) : null}
+          {recallTarget ? <p data-testid="training-face-recall-target" className={approved.recallTarget}>{recallTarget}</p> : null}
+          {contextLabel ? <p className={approved.faceInstruction}>{contextLabel}</p> : null}
           {prompt.kind === "explanation" ? (
             <>
               <p
                 data-testid="reverse-prompt"
-                className="max-w-[34rem] text-center font-sense-serif text-[length:var(--reading-body-prompt-size,clamp(1.55rem,5cqi,2.4rem))] leading-[1.22] text-slate-900 dark:text-slate-50"
+                className={contextLabel ? approved.faceContext : "max-w-[34rem] text-center font-sense-serif text-[length:var(--reading-body-prompt-size,clamp(1.55rem,5cqi,2.4rem))] leading-[1.22] text-slate-900 dark:text-slate-50"}
               >
                 {prompt.text}
               </p>

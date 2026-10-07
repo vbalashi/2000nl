@@ -1,0 +1,1119 @@
+{
+  "captured": "2026-09-06",
+  "source": "/Users/khrustal/dev/pens/2000nl-audiofilms.pen",
+  "node": "lkphz",
+  "units": "Pen logical pixels; parent-relative bounds. Selected container/text rows; disabled instance descendants may retain bounds but do not contribute to layout. Compare actual source screenshot.",
+  "rows": [
+    {
+      "id": "lkphz",
+      "name": "30.95.09 · Long Idiom Runtime Reference · Screen",
+      "type": "frame",
+      "b": {
+        "x": 16,
+        "y": 16,
+        "width": 402,
+        "height": 874
+      },
+      "gap": 10,
+      "padding": 10
+    },
+    {
+      "id": "m2OzI",
+      "name": "30.95.09 · INSTANCE · Mobile App Header",
+      "type": "frame",
+      "b": {
+        "x": 10,
+        "y": 10,
+        "width": 382,
+        "height": 58
+      },
+      "parent": "lkphz",
+      "padding": [
+        0,
+        18
+      ]
+    },
+    {
+      "id": "m2OzI/T1ZTDl",
+      "name": "30.10.02 · Mobile Brand",
+      "type": "frame",
+      "b": {
+        "x": 18,
+        "y": 13.5,
+        "width": 90,
+        "height": 31
+      },
+      "parent": "m2OzI",
+      "gap": 2
+    },
+    {
+      "id": "m2OzI/vuP7H",
+      "name": "30.10.02 · Mobile Brand Main",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 66,
+        "height": 31
+      },
+      "parent": "m2OzI/T1ZTDl",
+      "size": 26,
+      "family": "Inter",
+      "weight": "750"
+    },
+    {
+      "id": "m2OzI/gVsIR",
+      "name": "30.10.02 · Mobile Brand Accent",
+      "type": "text",
+      "b": {
+        "x": 68,
+        "y": 0,
+        "width": 22,
+        "height": 31
+      },
+      "parent": "m2OzI/T1ZTDl",
+      "size": 26,
+      "family": "Inter",
+      "weight": "750"
+    },
+    {
+      "id": "m2OzI/OB9Sd",
+      "name": "30.10.02 · Mobile Header Actions",
+      "type": "frame",
+      "b": {
+        "x": 293,
+        "y": 13,
+        "width": 71,
+        "height": 32
+      },
+      "parent": "m2OzI",
+      "gap": 7
+    },
+    {
+      "id": "m2OzI/Fgj6X",
+      "name": "30.10.02 · History",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 32,
+        "height": 32
+      },
+      "parent": "m2OzI/OB9Sd"
+    },
+    {
+      "id": "m2OzI/GDNKw",
+      "name": "30.10.02 · History Icon",
+      "type": "icon",
+      "b": {
+        "x": 8.5,
+        "y": 8.5,
+        "width": 15,
+        "height": 15
+      },
+      "parent": "m2OzI/Fgj6X"
+    },
+    {
+      "id": "m2OzI/HXNbA",
+      "name": "30.10.02 · Close Session",
+      "type": "frame",
+      "b": {
+        "x": 39,
+        "y": 0,
+        "width": 32,
+        "height": 32
+      },
+      "parent": "m2OzI/OB9Sd"
+    },
+    {
+      "id": "m2OzI/GkauG",
+      "name": "30.10.02 · Close Session Icon",
+      "type": "icon",
+      "b": {
+        "x": 8.5,
+        "y": 8.5,
+        "width": 15,
+        "height": 15
+      },
+      "parent": "m2OzI/HXNbA"
+    },
+    {
+      "id": "PriEV",
+      "name": "30.95.09 · INSTANCE · Training Session",
+      "type": "frame",
+      "b": {
+        "x": 10,
+        "y": 78,
+        "width": 382,
+        "height": 732
+      },
+      "parent": "lkphz",
+      "gap": 10
+    },
+    {
+      "id": "PriEV/CHqFm",
+      "name": "30.95.09 · INSTANCE · Mobile Session Header",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 382,
+        "height": 52
+      },
+      "parent": "PriEV",
+      "gap": 14
+    },
+    {
+      "id": "PriEV/CHqFm/i7urp",
+      "name": "30.10.02 · Mobile Session Meta",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 382,
+        "height": 34
+      },
+      "parent": "PriEV/CHqFm"
+    },
+    {
+      "id": "PriEV/CHqFm/gagsI",
+      "name": "30.10.02 · Mobile Session Identity",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 143,
+        "height": 34
+      },
+      "parent": "PriEV/CHqFm/i7urp",
+      "gap": 3
+    },
+    {
+      "id": "PriEV/CHqFm/I6VqH8",
+      "name": "30.10.02 · Mobile Session Eyebrow",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 55,
+        "height": 12
+      },
+      "parent": "PriEV/CHqFm/gagsI",
+      "size": 9,
+      "family": "Geist Mono",
+      "weight": "650"
+    },
+    {
+      "id": "PriEV/CHqFm/L0LsFJ",
+      "name": "30.10.02 · Mobile Session Name",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 15,
+        "width": 143,
+        "height": 19
+      },
+      "parent": "PriEV/CHqFm/gagsI",
+      "size": 16,
+      "family": "Inter",
+      "weight": "700"
+    },
+    {
+      "id": "PriEV/CHqFm/Fe5AJ",
+      "name": "30.10.02 · Mobile Progress Count",
+      "type": "frame",
+      "b": {
+        "x": 321,
+        "y": 8,
+        "width": 61,
+        "height": 26
+      },
+      "parent": "PriEV/CHqFm/i7urp",
+      "gap": 4,
+      "padding": [
+        6,
+        9
+      ]
+    },
+    {
+      "id": "PriEV/CHqFm/W3kC2",
+      "name": "30.10.02 · Mobile Current Count",
+      "type": "text",
+      "b": {
+        "x": 9,
+        "y": 6,
+        "width": 14,
+        "height": 14
+      },
+      "parent": "PriEV/CHqFm/Fe5AJ",
+      "size": 11,
+      "family": "Geist Mono",
+      "weight": "650"
+    },
+    {
+      "id": "PriEV/CHqFm/Dlh9c",
+      "name": "30.10.02 · Mobile Count Separator",
+      "type": "text",
+      "b": {
+        "x": 27,
+        "y": 6,
+        "width": 7,
+        "height": 14
+      },
+      "parent": "PriEV/CHqFm/Fe5AJ",
+      "size": 11,
+      "family": "Geist Mono",
+      "weight": "normal"
+    },
+    {
+      "id": "PriEV/CHqFm/um0TK",
+      "name": "30.10.02 · Mobile Total Count",
+      "type": "text",
+      "b": {
+        "x": 38,
+        "y": 6,
+        "width": 14,
+        "height": 14
+      },
+      "parent": "PriEV/CHqFm/Fe5AJ",
+      "size": 11,
+      "family": "Geist Mono",
+      "weight": "normal"
+    },
+    {
+      "id": "PriEV/CHqFm/JDjFG",
+      "name": "30.10.02 · Mobile Progress Track",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 48,
+        "width": 382,
+        "height": 4
+      },
+      "parent": "PriEV/CHqFm"
+    },
+    {
+      "id": "PriEV/CHqFm/zERBE",
+      "name": "30.10.02 · Mobile Progress Fill",
+      "type": "rectangle",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 156,
+        "height": 4
+      },
+      "parent": "PriEV/CHqFm/JDjFG"
+    },
+    {
+      "id": "PriEV/TxkED",
+      "name": "30.95.09 · Long Content Card",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 62,
+        "width": 382,
+        "height": 540
+      },
+      "parent": "PriEV",
+      "gap": 18,
+      "padding": 18
+    },
+    {
+      "id": "PriEV/hZKjW",
+      "name": "30.95.09 · INSTANCE · Training Mobile Answer Header",
+      "type": "frame",
+      "b": {
+        "x": 18,
+        "y": 18,
+        "width": 346,
+        "height": 82
+      },
+      "parent": "PriEV/TxkED",
+      "gap": 8
+    },
+    {
+      "id": "PriEV/hZKjW/wUn8R",
+      "name": "Metadata Row",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 346,
+        "height": 30
+      },
+      "parent": "PriEV/hZKjW"
+    },
+    {
+      "id": "PriEV/hZKjW/X9UbiN",
+      "name": "POS Label",
+      "type": "text",
+      "b": {
+        "x": 14,
+        "y": 2.5,
+        "width": 19,
+        "height": 15
+      },
+      "parent": "PriEV/hZKjW/YQFJB",
+      "size": 12,
+      "family": "Inter",
+      "weight": "600"
+    },
+    {
+      "id": "PriEV/hZKjW/bURYh",
+      "name": "Core Vocabulary Chip · Label",
+      "type": "text",
+      "b": {
+        "x": 6,
+        "y": 4,
+        "width": 11,
+        "height": 12
+      },
+      "parent": "PriEV/hZKjW/dJZ98",
+      "size": 9,
+      "family": "Geist Mono",
+      "weight": "700"
+    },
+    {
+      "id": "PriEV/hZKjW/BXinF",
+      "name": "Exposure Badge · Label",
+      "type": "text",
+      "b": {
+        "x": 20,
+        "y": 4,
+        "width": 11,
+        "height": 12
+      },
+      "parent": "PriEV/hZKjW/OhsFK",
+      "size": 9,
+      "family": "Geist Mono",
+      "weight": "700"
+    },
+    {
+      "id": "PriEV/hZKjW/h5iuu8",
+      "name": "Headword And Translation",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 38,
+        "width": 346,
+        "height": 44
+      },
+      "parent": "PriEV/hZKjW",
+      "gap": 2
+    },
+    {
+      "id": "PriEV/hZKjW/Y8gk7Y",
+      "name": "Article",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 17.64,
+        "width": 20,
+        "height": 20
+      },
+      "parent": "PriEV/hZKjW/SEaCF",
+      "size": 20,
+      "family": "Newsreader",
+      "weight": "500",
+      "line": 1
+    },
+    {
+      "id": "PriEV/hZKjW/s2hap4",
+      "name": "Headword",
+      "type": "text",
+      "b": {
+        "x": 30,
+        "y": 0,
+        "width": 105,
+        "height": 44
+      },
+      "parent": "PriEV/hZKjW/BuMqy",
+      "size": 44,
+      "family": "Newsreader",
+      "weight": "500",
+      "line": 1
+    },
+    {
+      "id": "PriEV/hZKjW/bvHxP",
+      "name": "Translation",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 46,
+        "width": 90,
+        "height": 18
+      },
+      "parent": "PriEV/hZKjW/h5iuu8",
+      "size": 15,
+      "family": "Inter",
+      "weight": "700"
+    },
+    {
+      "id": "PriEV/Xus1Y",
+      "name": "30.95.09 · INSTANCE · Headword And Meaning",
+      "type": "frame",
+      "b": {
+        "x": 18,
+        "y": 118,
+        "width": 346,
+        "height": 32
+      },
+      "parent": "PriEV/TxkED",
+      "gap": 10,
+      "padding": [
+        14,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "PriEV/Xus1Y/dlaTs",
+      "name": "Meaning Group",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 14,
+        "width": 346,
+        "height": 18
+      },
+      "parent": "PriEV/Xus1Y",
+      "gap": 3
+    },
+    {
+      "id": "PriEV/Xus1Y/I8bum",
+      "name": "Definition",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 346,
+        "height": 18
+      },
+      "parent": "PriEV/Xus1Y/dlaTs",
+      "size": 16,
+      "family": "Newsreader",
+      "weight": "normal",
+      "line": 1.15
+    },
+    {
+      "id": "PriEV/Xus1Y/dvCTv",
+      "name": "Definition Translation",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 39,
+        "width": 340,
+        "height": 18
+      },
+      "parent": "PriEV/Xus1Y/dlaTs",
+      "size": 13,
+      "family": "Inter",
+      "weight": "normal",
+      "line": 1.35
+    },
+    {
+      "id": "PriEV/nkyRm",
+      "name": "30.95.09 · Idioms Header",
+      "type": "frame",
+      "b": {
+        "x": 18,
+        "y": 168,
+        "width": 346,
+        "height": 13
+      },
+      "parent": "PriEV/TxkED",
+      "gap": 8
+    },
+    {
+      "id": "PriEV/UFme9",
+      "name": "30.95.09 · Idioms Header · Label",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 78,
+        "height": 13
+      },
+      "parent": "PriEV/nkyRm",
+      "size": 10,
+      "family": "Geist Mono",
+      "weight": "700"
+    },
+    {
+      "id": "PriEV/Uomd5",
+      "name": "30.95.09 · Idioms Header · Rule",
+      "type": "rectangle",
+      "b": {
+        "x": 86,
+        "y": 6,
+        "width": 246,
+        "height": 1
+      },
+      "parent": "PriEV/nkyRm"
+    },
+    {
+      "id": "PriEV/YNNxu",
+      "name": "30.95.09 · Idioms Header · Count",
+      "type": "text",
+      "b": {
+        "x": 340,
+        "y": 0,
+        "width": 6,
+        "height": 13
+      },
+      "parent": "PriEV/nkyRm",
+      "size": 10,
+      "family": "Geist Mono",
+      "weight": "normal"
+    },
+    {
+      "id": "PriEV/cOMhO",
+      "name": "30.95.09 · Idiom Group 1",
+      "type": "frame",
+      "b": {
+        "x": 18,
+        "y": 199,
+        "width": 346,
+        "height": 50
+      },
+      "parent": "PriEV/TxkED",
+      "gap": 3,
+      "padding": [
+        0,
+        0,
+        0,
+        12
+      ]
+    },
+    {
+      "id": "PriEV/VFPzK",
+      "name": "30.95.09 · Idiom 1 Expression",
+      "type": "text",
+      "b": {
+        "x": 12,
+        "y": 0,
+        "width": 102,
+        "height": 16
+      },
+      "parent": "PriEV/cOMhO",
+      "size": 16,
+      "family": "Newsreader",
+      "weight": "normal"
+    },
+    {
+      "id": "PriEV/D9y0ls",
+      "name": "30.95.09 · Idiom 1 Explanation",
+      "type": "text",
+      "b": {
+        "x": 12,
+        "y": 19,
+        "width": 334,
+        "height": 15
+      },
+      "parent": "PriEV/cOMhO",
+      "size": 12,
+      "family": "Inter",
+      "weight": "normal"
+    },
+    {
+      "id": "PriEV/gCved",
+      "name": "30.95.09 · Idiom 1 Example",
+      "type": "text",
+      "b": {
+        "x": 12,
+        "y": 37,
+        "width": 334,
+        "height": 13
+      },
+      "parent": "PriEV/cOMhO",
+      "size": 13,
+      "family": "Newsreader",
+      "weight": "normal"
+    },
+    {
+      "id": "PriEV/UJrxB",
+      "name": "30.95.09 · Idiom Group 2",
+      "type": "frame",
+      "b": {
+        "x": 18,
+        "y": 267,
+        "width": 346,
+        "height": 50
+      },
+      "parent": "PriEV/TxkED",
+      "gap": 3,
+      "padding": [
+        0,
+        0,
+        0,
+        12
+      ]
+    },
+    {
+      "id": "PriEV/y3uv09",
+      "name": "30.95.09 · Idiom 2 Expression",
+      "type": "text",
+      "b": {
+        "x": 12,
+        "y": 0,
+        "width": 50,
+        "height": 16
+      },
+      "parent": "PriEV/UJrxB",
+      "size": 16,
+      "family": "Newsreader",
+      "weight": "normal"
+    },
+    {
+      "id": "PriEV/iq038",
+      "name": "30.95.09 · Idiom 2 Explanation",
+      "type": "text",
+      "b": {
+        "x": 12,
+        "y": 19,
+        "width": 334,
+        "height": 15
+      },
+      "parent": "PriEV/UJrxB",
+      "size": 12,
+      "family": "Inter",
+      "weight": "normal"
+    },
+    {
+      "id": "PriEV/P2cjEi",
+      "name": "30.95.09 · Idiom 2 Example",
+      "type": "text",
+      "b": {
+        "x": 12,
+        "y": 37,
+        "width": 334,
+        "height": 13
+      },
+      "parent": "PriEV/UJrxB",
+      "size": 13,
+      "family": "Newsreader",
+      "weight": "normal"
+    },
+    {
+      "id": "PriEV/FdhOq",
+      "name": "30.95.09 · INSTANCE · Training Mobile Review Dock",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 612,
+        "width": 382,
+        "height": 120
+      },
+      "parent": "PriEV",
+      "gap": 6
+    },
+    {
+      "id": "PriEV/FdhOq/M0E9hA",
+      "name": "30.95.08 · Review Row 1",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 382,
+        "height": 42
+      },
+      "parent": "PriEV/FdhOq",
+      "gap": 6
+    },
+    {
+      "id": "PriEV/FdhOq/LlXt8",
+      "name": "30.95.08 · Again",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 188,
+        "height": 42
+      },
+      "parent": "PriEV/FdhOq/M0E9hA"
+    },
+    {
+      "id": "PriEV/FdhOq/fNg6j",
+      "name": "30.95.08 · Again · Label",
+      "type": "text",
+      "b": {
+        "x": 77,
+        "y": 13.5,
+        "width": 34,
+        "height": 15
+      },
+      "parent": "PriEV/FdhOq/LlXt8",
+      "size": 12,
+      "family": "Inter",
+      "weight": "700"
+    },
+    {
+      "id": "PriEV/FdhOq/DFCgC",
+      "name": "30.95.08 · Hard",
+      "type": "frame",
+      "b": {
+        "x": 194,
+        "y": 0,
+        "width": 188,
+        "height": 42
+      },
+      "parent": "PriEV/FdhOq/M0E9hA"
+    },
+    {
+      "id": "PriEV/FdhOq/N3WaJH",
+      "name": "30.95.08 · Hard · Label",
+      "type": "text",
+      "b": {
+        "x": 79.5,
+        "y": 13.5,
+        "width": 29,
+        "height": 15
+      },
+      "parent": "PriEV/FdhOq/DFCgC",
+      "size": 12,
+      "family": "Inter",
+      "weight": "700"
+    },
+    {
+      "id": "PriEV/FdhOq/tGLfY",
+      "name": "30.95.08 · Review Row 2",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 48,
+        "width": 382,
+        "height": 42
+      },
+      "parent": "PriEV/FdhOq",
+      "gap": 6
+    },
+    {
+      "id": "PriEV/FdhOq/XakHG",
+      "name": "30.95.08 · Good",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 188,
+        "height": 42
+      },
+      "parent": "PriEV/FdhOq/tGLfY"
+    },
+    {
+      "id": "PriEV/FdhOq/TRju2",
+      "name": "30.95.08 · Good · Label",
+      "type": "text",
+      "b": {
+        "x": 78,
+        "y": 13.5,
+        "width": 32,
+        "height": 15
+      },
+      "parent": "PriEV/FdhOq/XakHG",
+      "size": 12,
+      "family": "Inter",
+      "weight": "700"
+    },
+    {
+      "id": "PriEV/FdhOq/T8IGF",
+      "name": "30.95.08 · Easy",
+      "type": "frame",
+      "b": {
+        "x": 194,
+        "y": 0,
+        "width": 188,
+        "height": 42
+      },
+      "parent": "PriEV/FdhOq/tGLfY"
+    },
+    {
+      "id": "PriEV/FdhOq/NIETo",
+      "name": "30.95.08 · Easy · Label",
+      "type": "text",
+      "b": {
+        "x": 79.5,
+        "y": 13.5,
+        "width": 29,
+        "height": 15
+      },
+      "parent": "PriEV/FdhOq/T8IGF",
+      "size": 12,
+      "family": "Inter",
+      "weight": "700"
+    },
+    {
+      "id": "PriEV/FdhOq/m5LQl",
+      "name": "Secondary Actions",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 96,
+        "width": 382,
+        "height": 24
+      },
+      "parent": "PriEV/FdhOq",
+      "padding": [
+        10,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "PriEV/FdhOq/m5LQl/jg5Np",
+      "name": "Report Current Meaning · action.report",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 10,
+        "width": 59,
+        "height": 14
+      },
+      "parent": "PriEV/FdhOq/m5LQl",
+      "gap": 6
+    },
+    {
+      "id": "PriEV/FdhOq/m5LQl/VI434",
+      "name": "Report Label · action.report",
+      "type": "text",
+      "b": {
+        "x": 18,
+        "y": 0,
+        "width": 41,
+        "height": 14
+      },
+      "parent": "PriEV/FdhOq/m5LQl/jg5Np",
+      "size": 11.5,
+      "family": "Inter",
+      "weight": "500"
+    },
+    {
+      "id": "PriEV/FdhOq/m5LQl/mnEcA",
+      "name": "Mark Current Meaning Known · action.markKnown",
+      "type": "frame",
+      "b": {
+        "x": 255,
+        "y": 10,
+        "width": 127,
+        "height": 14
+      },
+      "parent": "PriEV/FdhOq/m5LQl",
+      "gap": 6
+    },
+    {
+      "id": "PriEV/FdhOq/m5LQl/h2y7k",
+      "name": "Known Label · action.markKnown",
+      "type": "text",
+      "b": {
+        "x": 18,
+        "y": 0,
+        "width": 109,
+        "height": 14
+      },
+      "parent": "PriEV/FdhOq/m5LQl/mnEcA",
+      "size": 11.5,
+      "family": "Inter",
+      "weight": "500"
+    },
+    {
+      "id": "fDXiV",
+      "name": "30.95.09 · INSTANCE · Session Footer",
+      "type": "frame",
+      "b": {
+        "x": 10,
+        "y": 820,
+        "width": 382,
+        "height": 44
+      },
+      "parent": "lkphz",
+      "padding": [
+        0,
+        16,
+        4,
+        16
+      ]
+    },
+    {
+      "id": "fDXiV/W1iuF5",
+      "name": "Progress Stats",
+      "type": "frame",
+      "b": {
+        "x": 28,
+        "y": 7,
+        "width": 326,
+        "height": 33
+      },
+      "parent": "fDXiV",
+      "gap": 7
+    },
+    {
+      "id": "fDXiV/X2kSo",
+      "name": "NIEUW",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 104,
+        "height": 33
+      },
+      "parent": "fDXiV/W1iuF5",
+      "gap": 3
+    },
+    {
+      "id": "fDXiV/H03Ok",
+      "name": "Label",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 10
+      },
+      "parent": "fDXiV/X2kSo",
+      "size": 8,
+      "family": "Geist Mono",
+      "weight": "700"
+    },
+    {
+      "id": "fDXiV/oGQLj",
+      "name": "Progress Row",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 13,
+        "width": 104,
+        "height": 14
+      },
+      "parent": "fDXiV/X2kSo",
+      "gap": 6
+    },
+    {
+      "id": "fDXiV/uz1Fr",
+      "name": "Value",
+      "type": "text",
+      "b": {
+        "x": 58,
+        "y": 0.5,
+        "width": 36,
+        "height": 13
+      },
+      "parent": "fDXiV/oGQLj",
+      "size": 10,
+      "family": "Geist Mono",
+      "weight": "600"
+    },
+    {
+      "id": "fDXiV/morMy",
+      "name": "HERHALING",
+      "type": "frame",
+      "b": {
+        "x": 111,
+        "y": 0,
+        "width": 104,
+        "height": 33
+      },
+      "parent": "fDXiV/W1iuF5",
+      "gap": 3
+    },
+    {
+      "id": "fDXiV/FwGbE",
+      "name": "Label",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 44,
+        "height": 10
+      },
+      "parent": "fDXiV/morMy",
+      "size": 8,
+      "family": "Geist Mono",
+      "weight": "700"
+    },
+    {
+      "id": "fDXiV/cVafm",
+      "name": "Progress Row",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 13,
+        "width": 104,
+        "height": 14
+      },
+      "parent": "fDXiV/morMy",
+      "gap": 6
+    },
+    {
+      "id": "fDXiV/kaDgZ",
+      "name": "Value",
+      "type": "text",
+      "b": {
+        "x": 58,
+        "y": 0.5,
+        "width": 36,
+        "height": 13
+      },
+      "parent": "fDXiV/cVafm",
+      "size": 10,
+      "family": "Geist Mono",
+      "weight": "600"
+    },
+    {
+      "id": "fDXiV/j0l71K",
+      "name": "TOTAAL",
+      "type": "frame",
+      "b": {
+        "x": 222,
+        "y": 0,
+        "width": 104,
+        "height": 33
+      },
+      "parent": "fDXiV/W1iuF5",
+      "gap": 3
+    },
+    {
+      "id": "fDXiV/xC03m",
+      "name": "Label",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 29,
+        "height": 10
+      },
+      "parent": "fDXiV/j0l71K",
+      "size": 8,
+      "family": "Geist Mono",
+      "weight": "700"
+    },
+    {
+      "id": "fDXiV/ees8C",
+      "name": "Progress Row",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 13,
+        "width": 104,
+        "height": 14
+      },
+      "parent": "fDXiV/j0l71K",
+      "gap": 6
+    },
+    {
+      "id": "fDXiV/JCqNU",
+      "name": "Value",
+      "type": "text",
+      "b": {
+        "x": 58,
+        "y": 0.5,
+        "width": 36,
+        "height": 13
+      },
+      "parent": "fDXiV/ees8C",
+      "size": 10,
+      "family": "Geist Mono",
+      "weight": "600"
+    }
+  ]
+}

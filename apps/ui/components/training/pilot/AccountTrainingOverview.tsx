@@ -18,7 +18,7 @@ type Props={
  languageOptions:TrainingSetupOption[]; lists:TrainingSetupOption[]; dictionaries:TrainingSetupOption[]; scenarios:TrainingSetupOption[];
  snapshot:TrainingSetupsSnapshot; accountStatus:"idle"|"loading"|"ready"|"error";
  initialDraft:TrainingSetupDraft; ownedSession?:OwnedTrainingOverviewSession; activeSessionLabel?:string;
- pending:boolean; ready:boolean; continueDisabled:boolean;
+ launchPending?:boolean; pending:boolean; ready:boolean; continueDisabled:boolean;
  materialUnavailable:string; partialMaterialNotice:string; setupUnavailable:string; translationUnavailable:string; translationLanguage:string|null|undefined;
  onSelect:(training:SavedTraining,action:"edit"|"load"|"launch")=>void;
  onCreate:()=>void; onDefaultLaunch:()=>void; onContinue:()=>void; onRetry:()=>void;
@@ -64,7 +64,7 @@ export function AccountTrainingOverview(p:Props){
   else if(action==="edit")p.onCreate();else p.onDefaultLaunch();
  };
  return <div className={s.viewport}><div className={s.reading}><ProductionArticleReading>
-  <TrainingOverview interfaceLanguage={p.interfaceLanguage}
+  <TrainingOverview launchPending={p.launchPending} interfaceLanguage={p.interfaceLanguage}
    state={p.accountStatus==="error"?{status:"error",message:accountCopy.loadFailed}:p.accountStatus!=="ready"?{status:"loading"}:{status:"ready",trainings:items,availability:p.availability,mainId:resolveHighlightedTraining(trainings,selectedId,p.snapshot.document.mainTrainingId)??defaultTraining.id,emptyTraining:p.emptyTraining,
     resume:p.ownedSession?{sessionId:p.ownedSession.id,trainingId:savedSessionTraining?.id??sessionTraining.id,completed:p.ownedSession.completed,total:p.ownedSession.total,training:{...item(sessionTraining),id:savedSessionTraining?.id??sessionTraining.id,canLaunch:!p.continueDisabled}}:undefined}}
    onAvailabilityRetry={p.onAvailabilityRetry} onSelect={id=>select(id,"load")} onEarlyReview={p.onEarlyReview?id=>{const saved=trainings.find(training=>training.id===id);if(saved)p.onEarlyReview?.(saved);}:undefined} onLaunch={id=>select(id,"launch")} onEdit={id=>select(id,"edit")} onCreate={p.onCreate} onRetry={p.onRetry} onResume={p.onContinue}/>

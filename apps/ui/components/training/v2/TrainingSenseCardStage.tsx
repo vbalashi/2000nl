@@ -12,6 +12,7 @@ import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout"
 import { senseCardQuietAction } from "../SenseCardChrome";
 import approvedCard from "../approvedTrainingCard.module.css";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
+import { useTranslationSwipe } from "@/components/practice/ui/useTranslationSwipe";
 import { useTrainingPromptReveal } from "@/components/practice/ui/useTrainingPromptReveal";
 import {
   TrainingCardAnswerHeader as EntityHeader,
@@ -109,25 +110,21 @@ export function TrainingSenseCardStage({
   const translationActionAvailable = Boolean(
     model.requestTranslationCapability,
   );
+  const contextTarget = contextPrompt ? model.entryTranslation?.trim() : undefined;
   const listeningMode = mode === "listen-recognize";
   const approvedPresentation = trainingPresentationV1Enabled();
-  const revealContentId = contextPrompt?.contentNodeId ?? reversePrompt?.contentNodeId;
-  const revealTranslation = Boolean(contextPrompt);
-  const revealSource = React.useCallback((root: HTMLElement) =>
-    mode === "definition-to-word"
-      ? root.querySelector<HTMLElement>('[data-testid="reverse-prompt"]')
-      : root.querySelector<HTMLElement>('[data-testid="sense-card-headword-lockup"] h2')?.parentElement ?? null,
-  [mode]);
-  const revealTarget = React.useCallback((root: HTMLElement) => {
-    if (mode !== "definition-to-word") return root.querySelector<HTMLElement>('[data-testid="sense-card-headword-lockup"] h2')?.parentElement ?? null;
-    const content = Array.from(root.querySelectorAll<HTMLElement>("[data-content-node-id]"))
-      .find(node => node.dataset.contentNodeId === revealContentId);
-    return content?.querySelector<HTMLElement>(revealTranslation ? '[data-content-translation="true"]' : ":scope > div > p") ?? null;
-  }, [mode, revealContentId, revealTranslation]);
   const { capture, moving } = useTrainingPromptReveal({ root: stageRef, revealed: answerVisible,
-    enabled: approvedPresentation && !listeningMode, identity: model.entryId,
-    source: revealSource, target: revealTarget });
+    enabled: approvedPresentation && !listeningMode, identity: model.entryId });
   const revealAnswer = React.useCallback(() => { capture(); onSideChange("answer"); }, [capture, onSideChange]);
+  const toggleTranslation = React.useCallback(() => {
+    if (busy || moving) return;
+    if (!hasTranslation(model) && model.requestTranslationCapability) {
+      setTranslationVisible(true); onAction(model.requestTranslationCapability); return;
+    }
+    setTranslationVisible(visible => !visible);
+  }, [busy, moving, model, onAction]);
+  useTranslationSwipe({ root: stageRef, enabled: answerVisible && !busy && !moving && (hasTranslation(model) || translationActionAvailable), onToggle: toggleTranslation });
+
 
   React.useEffect(() => {
     if (!focusOnMount) return;
@@ -253,17 +250,7 @@ export function TrainingSenseCardStage({
               busy={busy || moving}
               moreLabel={t("senseCard.wordDetails.open")}
               onPlayAudio={onPlayAudio}
-              onToggleTranslation={() => {
-                if (
-                  !hasTranslation(model) &&
-                  model.requestTranslationCapability
-                ) {
-                  setTranslationVisible(true);
-                  onAction(model.requestTranslationCapability);
-                  return;
-                }
-                setTranslationVisible((visible) => !visible);
-              }}
+              onToggleTranslation={toggleTranslation}
               onOpenDetails={onOpenDetails}
             />
             <AnswerBody
@@ -296,12 +283,16 @@ export function TrainingSenseCardStage({
             }
             hint={hint}
             hintVisible={hintVisible}
-            label={contextPrompt ? {
-              en: "Recall the Dutch word",
-              nl: "Herinner je het Nederlandse woord",
-              ru: "Вспомните нидерландское слово",
+            label={contextPrompt ? (contextTarget ? {
+              en: "Recall the Dutch word for", nl: "Herinner je het Nederlandse woord voor", ru: "Вспомните нидерландское слово для",
+            } : {
+              en: "Recall the Dutch word in this sentence", nl: "Herinner je het Nederlandse woord in deze zin", ru: "Вспомните нидерландское слово в этом предложении",
+            })[interfaceLanguage] : mode === "definition-to-word" ? {
+              en: "Recall the Dutch word from its meaning", nl: "Herinner je het Nederlandse woord bij deze betekenis", ru: "Вспомните нидерландское слово по значению",
             }[interfaceLanguage] : undefined}
-            partOfSpeechChip={contextPrompt ? model.partOfSpeech : undefined}
+            partOfSpeech={mode === "definition-to-word" ? model.partOfSpeech : undefined}
+            recallTarget={contextTarget}
+            contextLabel={contextPrompt ? { en: "In this sentence", nl: "In deze zin", ru: "В этом предложении" }[interfaceLanguage] : undefined}
             hintLabel={contextPrompt ? t("senseCard.sections.definition") : t("senseCard.hint.example")}
             contentLabel={t("senseCard.training.content")}
           />

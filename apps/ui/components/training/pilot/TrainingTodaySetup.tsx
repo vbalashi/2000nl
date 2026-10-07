@@ -770,7 +770,7 @@ export function TrainingTodaySetup({
       languageOptions={trainingLanguageOptions} lists={lists} dictionaries={dictionaries} scenarios={scenarios}
       snapshot={account.snapshot} accountStatus={account.status} initialDraft={initialDraft}
       ownedSession={hasOwnedSession?ownedSession:undefined} activeSessionLabel={activeSessionLabel}
-      pending={startPending||scenarioLoading||Boolean(selectedIntent)} ready={!startBlocked&&!trainingLanguageLoading}
+      launchPending={startPending} pending={startPending||scenarioLoading||Boolean(selectedIntent)} ready={!startBlocked&&!trainingLanguageLoading}
       continueDisabled={continueDisabled} materialUnavailable={t.materialUnavailable} partialMaterialNotice={t.partialDictionaryAccess} setupUnavailable={t.chooseGoal}
       translationUnavailable={t.contextLanguageNeeded} translationLanguage={translationTargetLanguageCode}
       onCreate={openSetup} onDefaultLaunch={()=>void requestStart(initialDraft)} onContinue={onContinue}

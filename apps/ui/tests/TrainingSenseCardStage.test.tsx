@@ -87,6 +87,7 @@ describe("TrainingSenseCardStage", () => {
     });
     const model = {
       ...base,
+      entryTranslation: "слово",
       examples: [
         { contentNodeId: "selected", parentContentNodeId: null, kind: "example" as const,
           text: "Ik ken dit woord.", translation: "Я знаю это слово.", children: [] },
@@ -100,8 +101,11 @@ describe("TrainingSenseCardStage", () => {
       onHintOpened={onHintOpened}
       contextPrompt={{ text: "Я знаю это слово.", sourceText: "Ik ken dit woord.", contentNodeId: "selected", sourceTextFingerprint: "selected-fingerprint" }} />);
     expect(screen.getByTestId("reverse-prompt")).toHaveTextContent("Я знаю это слово.");
-    expect(screen.getByText("Recall the Dutch word")).toBeInTheDocument();
+    expect(screen.getByText("Recall the Dutch word for")).toBeInTheDocument();
     expect(screen.getByTestId("training-face-part-of-speech")).toHaveTextContent("noun");
+    expect(screen.getByTestId("training-face-recall-target")).toHaveTextContent("слово");
+    expect(screen.getByTestId("reverse-prompt").children).toHaveLength(0);
+    expect(screen.queryByText(model.headword)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Show hint" }));
     expect(screen.getByText("het einde van je arm, waar je vingers aan zitten")).toBeInTheDocument();
     expect(onHintOpened).toHaveBeenCalledOnce();

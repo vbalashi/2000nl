@@ -58,6 +58,7 @@ import {
 } from "./TrainingSessionSurface";
 import type { FooterStatsProps } from "../FooterStats";
 import type { TrainingSessionChromeProps } from "./TrainingSessionChrome";
+import { useTrainingInteractions } from "@/components/practice/ui/TrainingInteractionPreferences";
 import { useTrainingCardSwipeSurface } from "./useTrainingCardSwipeSurface";
 import type { TrainingCardSwipeCommitOutcome } from "./useTrainingCardSwipeSurface";
 
@@ -635,8 +636,9 @@ export function TrainingSenseCardV2Session({
   useRecordedStudyTime({ ownerId: cacheOwnerId, sessionId: trainingSessionId, family: "meaning", entryId: word.id, cardTypeId: mode,
     enabled: studyTimeEnabled && sessionState === "ready" && !busy && !interactionDisabled && !acceptedActionRecoveryPending && !exclusion.busy && !exclusion.failed });
 
+  const {preferences: interactionPreferences} = useTrainingInteractions();
   const swipeSurface = useTrainingCardSwipeSurface({
-    enabled: sessionState === "ready" && cardSide === "answer",
+    enabled: interactionPreferences.gradeSwipe && sessionState === "ready" && cardSide === "answer",
     busy: busy || exclusion.busy || exclusion.failed || interactionDisabled || acceptedActionRecoveryPending,
     identity: cardIdentity,
     left: swipeLeftCapability

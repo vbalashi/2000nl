@@ -1,0 +1,46 @@
+import React from 'react';
+import {act,cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
+import {afterEach,expect,test,vi} from 'vitest';
+import {TrainingInteractionPreferencesProvider,useTrainingInteractions,defaultTrainingInteractions} from '@/components/practice/ui/TrainingInteractionPreferences';
+import {HeadwordWithPronunciationBreaks} from '@/components/training/HeadwordWithPronunciationBreaks';
+import {useTranslationSwipe} from '@/components/practice/ui/useTranslationSwipe';
+import {trainingInteractionRepository} from '@/lib/preferences/trainingInteractionRepository';
+afterEach(()=>{cleanup();vi.unstubAllGlobals();});
+function State(){const {preferences,save,saveStatus,loadStatus}=useTrainingInteractions();return <><output>{JSON.stringify(preferences)}</output><span>{loadStatus}/{saveStatus}</span><button onClick={()=>void save({...preferences,animation:!preferences.animation})}>Toggle</button></>;}
+test('defaults keep every optional gesture off',()=>{render(<State/>);expect(screen.getByRole('status')).toHaveTextContent(JSON.stringify(defaultTrainingInteractions));});
+test('loads account preferences and saves only interaction columns',async()=>{
+ const fetch=vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({training_animation_enabled:false,training_grade_swipe_enabled:true}),{status:200})).mockResolvedValueOnce(new Response(null,{status:201}));vi.stubGlobal('fetch',fetch);
+ const loaded=await trainingInteractionRepository.load('owner');expect(loaded).toEqual({...defaultTrainingInteractions,animation:false,gradeSwipe:true});
+ await trainingInteractionRepository.save('owner',loaded);
+ expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({user_id:'owner',training_animation_enabled:false,training_grade_swipe_enabled:true,training_translation_swipe_enabled:false,training_syllable_double_tap_enabled:false});
+});
+test('failed saving keeps the confirmed account choice; returning to the app reloads account preferences',async()=>{
+ const repository={load:vi.fn().mockResolvedValue(defaultTrainingInteractions),save:vi.fn().mockRejectedValue(new Error())};
+ render(<TrainingInteractionPreferencesProvider userId="owner" repository={repository}><State/></TrainingInteractionPreferencesProvider>);
+ await screen.findByText('ready/idle');fireEvent.click(screen.getByText('Toggle'));await screen.findByText('ready/error');
+ expect(screen.getByRole('status')).toHaveTextContent('"animation":true');
+ repository.load.mockResolvedValue({...defaultTrainingInteractions,animation:false});fireEvent(window,new Event('focus'));
+ await waitFor(()=>expect(screen.getByRole('status')).toHaveTextContent('"animation":false'));
+});
+test('a late previous-account response cannot replace the next account settings',async()=>{
+ let resolve!:(v:typeof defaultTrainingInteractions)=>void;
+ const repository={load:vi.fn().mockImplementationOnce(()=>new Promise(r=>{resolve=r;})).mockResolvedValue({...defaultTrainingInteractions,animation:false}),save:vi.fn()};
+ const view=(id:string)=><TrainingInteractionPreferencesProvider userId={id} repository={repository}><State/></TrainingInteractionPreferencesProvider>;
+ const {rerender}=render(view('first'));rerender(view('second'));await screen.findByText('ready/idle');
+ await act(async()=>resolve(defaultTrainingInteractions));expect(screen.getByRole('status')).toHaveTextContent('"animation":false');
+});
+test('headword double-click toggles syllables only when enabled, keyboard also works',()=>{
+ const {rerender}=render(<HeadwordWithPronunciationBreaks text="wed·strijd"/>);expect(screen.queryByRole('button',{name:'wedstrijd'})).toBeNull();
+ rerender(<TrainingInteractionPreferencesProvider userId="test" initial={{...defaultTrainingInteractions,syllableDoubleTap:true}}><HeadwordWithPronunciationBreaks text="wed·strijd"/></TrainingInteractionPreferencesProvider>);
+ const headword=screen.getByRole('button',{name:'wedstrijd'});expect(headword).toHaveTextContent('wed·strijd');fireEvent.doubleClick(headword);expect(headword).toHaveTextContent('wedstrijd');fireEvent.keyDown(headword,{key:'Enter'});expect(headword).toHaveTextContent('wed·strijd');
+});
+function Swipe({onToggle,enabled=true}:{onToggle:()=>void;enabled?:boolean}){const root=React.useRef<HTMLDivElement>(null);useTranslationSwipe({root,enabled,onToggle});return <div ref={root}><article data-testid="training-sense-card-shell"><div data-testid="lower">Lower card</div><div data-testid="scroll" style={{overflowY:'auto'}}>Long answer</div><button>Translation</button></article></div>;}
+function stroke(node:HTMLElement,dx=0,dy=60){fireEvent.touchStart(node,{touches:[{clientX:100,clientY:200}]});fireEvent.touchMove(node,{touches:[{clientX:100+dx,clientY:200+dy}]});fireEvent.touchEnd(node,{touches:[],changedTouches:[{clientX:100+dx,clientY:200+dy}]});}
+test('downward strokes work in the lower non-scrolling card, ignore scroll, sideways and interactive controls',()=>{
+ const onToggle=vi.fn();render(<TrainingInteractionPreferencesProvider userId="test" initial={{...defaultTrainingInteractions,translationSwipe:true}}><Swipe onToggle={onToggle}/></TrainingInteractionPreferencesProvider>);
+ stroke(screen.getByTestId('lower'));expect(onToggle).toHaveBeenCalledOnce();
+ const scroll=screen.getByTestId('scroll');Object.defineProperties(scroll,{scrollHeight:{value:800},clientHeight:{value:300}});
+ stroke(scroll);stroke(screen.getByTestId('lower'),80,20);stroke(screen.getByTestId('lower'),0,200);stroke(screen.getByRole('button',{name:'Translation'}));
+ expect(onToggle).toHaveBeenCalledOnce();
+});
+test('disabled translation gesture never intercepts or toggles',()=>{const onToggle=vi.fn();render(<Swipe onToggle={onToggle}/>);stroke(screen.getByTestId('lower'));expect(onToggle).not.toHaveBeenCalled();});

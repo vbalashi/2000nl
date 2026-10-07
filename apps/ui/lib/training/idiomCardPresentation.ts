@@ -35,7 +35,9 @@ export function buildIdiomCardPresentation({
   });
   return {
     promptTarget: { contentNodeId: direction === "direct" ? content.expression.contentNodeId : content.explanation.contentNodeId, kind: "text" },
-    label: { en: "Idiom", nl: "Uitdrukking", ru: "Идиома" }[interfaceLanguage],
+    label: direction === "direct"
+      ? { en: "Recall the meaning of this idiom", nl: "Herinner je de betekenis van deze uitdrukking", ru: "Вспомните значение этой идиомы" }[interfaceLanguage]
+      : { en: "Recall the Dutch idiom", nl: "Herinner je de Nederlandse uitdrukking", ru: "Вспомните нидерландскую идиому" }[interfaceLanguage],
     prompt:
       direction === "direct"
         ? { kind: "expression", text: content.expression.text }

@@ -38,8 +38,8 @@ async function expectReviewedHeaderGeometry(page: import("@playwright/test").Pag
 
   await expect(row).toHaveCount(1);
   await expect(actions.getByRole("button")).toHaveCount(2);
-  await expect(actions.getByRole("button").nth(0)).toHaveAttribute("aria-label", "Vertalen");
-  await expect(actions.getByRole("button").nth(1)).toHaveAttribute("aria-label", "Afspelen");
+  await expect(actions.getByRole("button").nth(0)).toHaveAttribute("aria-label", "Afspelen");
+  await expect(actions.getByRole("button").nth(1)).toHaveAttribute("aria-label", "Vertalen");
   await expect(page.getByTestId("library-sense-card-group").getByRole("button", { name: /Meer|More/, exact: true })).toHaveCount(0);
 
   const [headerBox, lockupBox, rowBox, metadataBox, actionsBox, translateBox, audioBox, headwordBox] = await Promise.all([
@@ -63,7 +63,7 @@ async function expectReviewedHeaderGeometry(page: import("@playwright/test").Pag
   await expect(translate.locator("svg")).toHaveCSS("height", "20px");
   await expect(audio.locator("svg")).toHaveCSS("width", "20px");
   await expect(audio.locator("svg")).toHaveCSS("height", "20px");
-  expect(audioBox!.x - (translateBox!.x + translateBox!.width)).toBe(8);
+  expect(translateBox!.x - (audioBox!.x + audioBox!.width)).toBe(8);
   const rowToHeadwordGap = headwordBox!.y - (rowBox!.y + rowBox!.height);
   expect(rowToHeadwordGap).toBeGreaterThanOrEqual(11.5);
   expect(rowToHeadwordGap).toBeLessThanOrEqual(12.5);

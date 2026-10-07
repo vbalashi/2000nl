@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { TrainingInteractionSettings } from "./TrainingInteractionSettings";
 import {
   SettingsRow,
   SettingsOptions,
@@ -129,6 +130,7 @@ export function ApprovedAppearanceSection({
           )}
         </>
       )}
+      <TrainingInteractionSettings language={language} />
     </section>
   );
 }

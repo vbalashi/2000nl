@@ -138,7 +138,7 @@ export function SettingsRow({
   className = "",
 }: {
   className?: string;
-  title: string;
+  title: React.ReactNode;
   hint?: string;
   children: React.ReactNode;
 }) {

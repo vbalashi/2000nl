@@ -1,0 +1,115 @@
+{
+  "baseline_commit": "1bb8e3ca1fb763f15ea342546539f666ac4e7059",
+  "source_sha256": "1d9236554fd35f49ca9fa274045d84a5ee3ea04035a85f89a21391878b685173",
+  "candidate_parser_sha256": "637256f852368c1021b2677da922ab729c1b64977e30dbb25511214572be0217",
+  "articles_compared": 14449,
+  "changed_articles": 4,
+  "changed_fields": {
+    "part_of_speech": 4,
+    "part_of_speech_evidence": 4,
+    "verb_forms": 1
+  },
+  "changes": [
+    {
+      "source_index": 1500,
+      "source_headword": "bewustzijn",
+      "nt2": false,
+      "meaning_count": 2,
+      "changes": {
+        "part_of_speech": {
+          "before": "ww",
+          "after": "zn"
+        },
+        "part_of_speech_evidence": {
+          "before": {
+            "normalized_pos_status": "unresolved",
+            "source": "conjugation_heuristic",
+            "raw_value": "ww"
+          },
+          "after": {
+            "normalized_pos_status": "unresolved",
+            "source": "gender_heuristic",
+            "raw_value": "het"
+          }
+        }
+      }
+    },
+    {
+      "source_index": 1598,
+      "source_headword": "bijzijn",
+      "nt2": false,
+      "meaning_count": 1,
+      "changes": {
+        "part_of_speech": {
+          "before": "ww",
+          "after": "zn"
+        },
+        "part_of_speech_evidence": {
+          "before": {
+            "normalized_pos_status": "unresolved",
+            "source": "conjugation_heuristic",
+            "raw_value": "ww"
+          },
+          "after": {
+            "normalized_pos_status": "unresolved",
+            "source": "gender_heuristic",
+            "raw_value": "het"
+          }
+        }
+      }
+    },
+    {
+      "source_index": 5538,
+      "source_headword": "islam",
+      "nt2": false,
+      "meaning_count": 1,
+      "changes": {
+        "part_of_speech": {
+          "before": "ww",
+          "after": "zn"
+        },
+        "part_of_speech_evidence": {
+          "before": {
+            "normalized_pos_status": "unresolved",
+            "source": "conjugation_heuristic",
+            "raw_value": "ww"
+          },
+          "after": {
+            "normalized_pos_status": "unresolved",
+            "source": "gender_heuristic",
+            "raw_value": "de"
+          }
+        },
+        "verb_forms": {
+          "before": "de islamiet, ;, islamitisch",
+          "after": ""
+        }
+      }
+    },
+    {
+      "source_index": 13855,
+      "source_headword": "welzijn",
+      "nt2": false,
+      "meaning_count": 1,
+      "changes": {
+        "part_of_speech": {
+          "before": "ww",
+          "after": "zn"
+        },
+        "part_of_speech_evidence": {
+          "before": {
+            "normalized_pos_status": "unresolved",
+            "source": "conjugation_heuristic",
+            "raw_value": "ww"
+          },
+          "after": {
+            "normalized_pos_status": "unresolved",
+            "source": "gender_heuristic",
+            "raw_value": "het"
+          }
+        }
+      }
+    }
+  ],
+  "duration_seconds": 49.18
+}
