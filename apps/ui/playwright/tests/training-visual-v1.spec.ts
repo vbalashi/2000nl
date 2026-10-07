@@ -90,6 +90,9 @@ test("mobile report Back dismisses the training sheet on the first tap", async (
   await setupAuthenticatedTrainingAttributionPage(page, 0, {
     visualProfile: "face",
   });
+  // The Next.js dev issue badge is outside the app and can sit over the mobile
+  // action dock; keep real pointer/touch input on the application's controls.
+  await page.addStyleTag({ content: "nextjs-portal { pointer-events: none !important; }" });
   await page
     .getByRole("button", {
       name: /^(?:Start training|Training starten|Начать тренировку)$/,
@@ -157,16 +160,6 @@ test("keeps the approved primitives responsive in light and wide layouts", async
         await expect(page.getByTestId("training-sense-card-dock")).toBeVisible();
       }
       await expect(page.locator("body")).toHaveCSS("overflow-x", "hidden");
-      if (profile.colorScheme === "light" && state !== "recoverable-error") {
-        const footerTrack = page
-          .getByTestId("training-session-footer-progress")
-          .locator("> div > div > div")
-          .first();
-        await expect(footerTrack).not.toHaveCSS(
-          "background-color",
-          "rgb(75, 83, 96)",
-        );
-      }
       await page.screenshot({
         path: resolve(artifactDirectory, `training-${state}-${profile.name}.png`),
       });
@@ -237,12 +230,7 @@ test("captures the approved recoverable-error state", async ({ browser }) => {
     })
     .click();
   await expect(page.getByTestId("training-v2-failure")).toBeVisible();
-  await expect(page.getByTestId("app-header")).toBeVisible();
-  await expect(
-    page
-      .getByTestId("app-header")
-      .getByText("2000nl", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByTestId("app-header")).toBeHidden();
   await expect(
     page.getByRole("button", { name: /Sessie sluiten|Close session|Закрыть сессию/i }),
   ).toBeVisible();

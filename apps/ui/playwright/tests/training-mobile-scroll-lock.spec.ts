@@ -5,7 +5,6 @@ test.use({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
 for (const profile of ["compact","long-idiom"] as const) {
  test(`${profile}: mobile chrome and footer stay fixed while the answer scrolls`,async({page})=>{
   await setupAuthenticatedTrainingAttributionPage(page,0,{
-   devTestLogin:true,
    visualProfile:profile === "compact" ? "face" : profile,
    settingsOverrides:{reading_size_phone:"extra"},
   });

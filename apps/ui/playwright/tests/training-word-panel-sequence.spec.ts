@@ -44,13 +44,12 @@ for (const width of [320, 390, 1024]) {
     expect(await picker.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
     await expect(picker.getByRole("alert")).toContainText(t("senseCard.collections.membershipFailed"));
     await expect(picker.getByText(t("senseCard.collections.empty"), { exact: true })).toHaveCount(0);
-    await picker.getByPlaceholder(t("senseCard.collections.createPlaceholder")).fill("QA, not submitted");
-    const create = picker.getByRole("button", { name: t("senseCard.collections.create"), exact: true });
-    await expect(create).toBeDisabled();
+    const createCollection = picker.getByRole("button", { name: /New collection|Nieuwe collectie|Новая коллекция/i });
+    await expect(createCollection).toBeDisabled();
     membershipUnavailable = false;
     await picker.getByRole("button", { name: t("senseCard.collections.retryMembership"), exact: true }).click();
     await expect(picker.getByRole("alert")).toHaveCount(0);
-    await expect(create).toBeEnabled();
+    await expect(createCollection).toBeEnabled();
     await expect(picker.getByRole("button", { name: /^(Done|Gereed|Готово)$/ })).toBeInViewport({ ratio: 1 });
     await page.keyboard.press("Escape");
     await expect(picker).toHaveCount(0);
