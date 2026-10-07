@@ -12,7 +12,7 @@ if (finalTraining) {
     "trainingPresentationV1Enabled", "sharedArticlePresentationV1Enabled",
     "NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1",
     "trainingPresentationV1", "sharedArticlePresentationV1",
-    "TrainingLexicalPreview", "LibraryDetailsActions",
+    "TrainingLexicalPreview", "LibraryDetailsActions", "ModeCheckboxGroup", "BulkActionBar",
     "trainingCardStageClassName", "senseCardQuietActionClassName");
 }
 const failures = [];

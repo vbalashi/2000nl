@@ -10,7 +10,6 @@
  "components/training/FooterStats.tsx": 57,
  "components/training/HotkeyDialog.tsx": 20,
  "components/training/LanguageSelectionModal.tsx": 17,
- "components/training/ModeCheckboxGroup.tsx": 32,
  "components/training/SenseCardChrome.tsx": 51,
  "components/training/TrainingDetailsDrawer.tsx": 3,
  "components/training/TrainingScreen.tsx": 30,
@@ -36,7 +35,6 @@
  "components/training/v2/TrainingSessionSurface.tsx": 14,
  "components/training/v2/TrainingUnsupportedMode.tsx": 13,
  "components/training/v2/TrainingUsableCandidatesExhausted.tsx": 14,
- "components/training/wordlist/BulkActionBar.tsx": 24,
  "components/training/wordlist/DictionarySearchTab.tsx": 174,
  "components/training/wordlist/LibraryHeadwordGroupResultsList.tsx": 14,
  "components/training/wordlist/WordDetailDrawer.tsx": 3
