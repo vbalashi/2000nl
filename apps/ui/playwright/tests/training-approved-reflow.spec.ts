@@ -1,6 +1,16 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import { assertTestFontsReady } from "../utils/assertTestFontsReady";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
+
+async function pressAndWaitForScrollEnd(scroll: Locator, key: string) {
+  await scroll.evaluate(node => {
+    node.setAttribute("data-qa-scroll-ended", "false");
+    node.addEventListener("scrollend", () => node.setAttribute("data-qa-scroll-ended", "true"), { once: true });
+  });
+  await scroll.press(key);
+  await expect(scroll).toHaveAttribute("data-qa-scroll-ended", "true");
+}
+
 for (const locale of ["en", "nl", "ru"]) {
   for (const viewport of [{ width: 844, height: 390 }, { width: 640, height: 400 }]) {
     test(`${locale} Extra retains a readable answer and ratings at ${viewport.width}×${viewport.height}`, async ({ page }, testInfo) => {
@@ -22,11 +32,11 @@ for (const locale of ["en", "nl", "ru"]) {
       const scroll = page.getByTestId("training-answer-scroll");
       const body = await scroll.boundingBox();
       expect(body!.height).toBeGreaterThan(80);
-      await scroll.press("End");
+      await pressAndWaitForScrollEnd(scroll, "End");
       await expect.poll(() => scroll.evaluate(node => node.scrollHeight - node.clientHeight - node.scrollTop)).toBeLessThanOrEqual(1);
-      await scroll.press("Home");
+      await pressAndWaitForScrollEnd(scroll, "Home");
       await expect.poll(() => scroll.evaluate(node => node.scrollTop)).toBe(0);
-      await scroll.press("Space");
+      await pressAndWaitForScrollEnd(scroll, "Space");
       await expect.poll(() => scroll.evaluate(node => node.scrollTop)).toBeGreaterThan(0);
       await expect(page.getByTestId("training-sense-card-stage")).toHaveAttribute("data-side", "answer");
       await expect(ratings).toBeInViewport({ ratio: 1 });
@@ -44,7 +54,7 @@ for (const locale of ["en", "nl", "ru"]) {
       const spacedBody = await scroll.boundingBox();
       expect(spacedBody!.height).toBeGreaterThan(48);
       expect(await page.locator("html").evaluate(node => node.scrollWidth)).toBe(viewport.width);
-      await scroll.press("End");
+      await pressAndWaitForScrollEnd(scroll, "End");
       await expect.poll(() => scroll.evaluate(node => node.scrollHeight - node.clientHeight - node.scrollTop)).toBeLessThanOrEqual(1);
       await page.screenshot({ path: testInfo.outputPath("short-answer.png") });
     });
