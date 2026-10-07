@@ -107,3 +107,11 @@ Code/test checkpoint: `074fc88bfd7231b3779b8e13584e4049571723f9`; final document
 Local acceptance is green. Final publication readiness also requires fresh CI on the submitted PR head and the owner's release decision; #611 remains draft and #610 remains in progress. Exact-head CI outcome and the final checkpoint are recorded on issue #610 and in the local evidence manifest rather than inferred from old cancelled runs. No merge/deployment was performed. The finite follow-up stops here after that verdict; Library list-search extraction, Training snapshot/reconciliation extraction and optional attribution alignment remain separate work.
 
 Evidence: `/Users/khrustal/adhoc/2000nl-610-retirement-evidence/readiness-2026-10-08/` contains passed/failing diagnostic logs, final logs, synthetic screenshots, health, worktree review, bounded attribution capture and SHA-256 manifest. Generated screenshots do not overwrite tracked design history. Worker branches/checkouts are preserved for review.
+
+### Final-head CI readiness correction
+
+CI run 37698227186 on `64ff6b6d0bbca881002872445764eb4d54d1135a` completed with 234 unit files / 2,052 tests passed and three TrainingScreen cases failed; browser smoke was not reached. Other checks, including FSRS parity/RPC, passed. Do not call that CI green.
+
+The two foreign-owner cases queried Start before the startup gate exposed accessible content; the discard-draft case queried Start synchronously during the asynchronous return transition. `5574df81` adds positive accessible-ready waits in only those tests. Claim failure, no-actionable-card, session identity, one stats request and active scope assertions are retained. No deadlines, production runtime or browser-source changes. Focused CI-mode cases (3/3), the whole TrainingScreen file (78/78), and independent review pass. Browser acceptance at `074fc88b` and live runtime/health smoke at `64ff6b6d` remain applicable because their source has an empty diff after this correction. Fresh submitted-head CI remains the final gate.
+
+Full root `CI=true` Vitest at `5574df81`: **235 files passed, 2,055 tests passed, 339 optional tests skipped**, 126.3 seconds; all 78 TrainingScreen cases pass. This supersedes the earlier unit acceptance for the corrected test source. The change was independently reviewed without findings.
