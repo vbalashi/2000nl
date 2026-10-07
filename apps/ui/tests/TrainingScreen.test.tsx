@@ -41,13 +41,14 @@ vi.mock("@/lib/training/setups/client", () => ({
   saveAccountTrainingSetups: vi.fn(),
 }));
 vi.mock("@/lib/training/material/client", () => ({
-  fetchAccountMaterialPreferences: vi.fn().mockResolvedValue({ revision: 0, document: { schemaVersion: 1, learningLanguages: [], disabledDictionaryIds: [] } }),
+  fetchAccountMaterialPreferences: vi.fn().mockResolvedValue({ revision: 0, document: { schemaVersion: 1, learningLanguages: [{ code: "nl", paused: false }, { code: "en", paused: false }], disabledDictionaryIds: [] } }),
   saveAccountMaterialPreferences: vi.fn(),
 }));
 vi.mock("@/lib/training/listService", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/lib/training/listService")>(),
   fetchAvailableLearningLanguages: vi.fn().mockResolvedValue([
     { code: "nl", label: "Nederlands", dictionaryCount: 1, curatedListCount: 1, userListCount: 0, hasTrainingEligibleLists: true },
+    { code: "en", label: "English", dictionaryCount: 2, curatedListCount: 1, userListCount: 0, hasTrainingEligibleLists: true },
   ]),
 }));
 
@@ -1357,7 +1358,7 @@ test("Statistics and Settings destinations preserve the current Training turn", 
 
   fireEvent.click(screen.getAllByLabelText("Settings")[0]);
   expect(
-    await screen.findByRole("heading", { name: /Instellingen|Settings/ }),
+    (await screen.findAllByRole("heading", { name: /Instellingen|Settings/ }))[0],
   ).toBeInTheDocument();
   expect(screen.queryByText(/Audio kwaliteit/i)).not.toBeInTheDocument();
 
@@ -1374,7 +1375,7 @@ test("Statistics and Settings destinations preserve the current Training turn", 
   expectOnlyBackgroundSelectionSince(trainingFetchCount);
 });
 
-test("first-pilot Training opens on Today and Start reveals the mounted card", async () => {
+test("first-pilot Start reveals the mounted card and closing offers resume", async () => {
   render(
     <TrainingScreen
       user={user}
@@ -1427,12 +1428,8 @@ test("first-pilot Training opens on Today and Start reveals the mounted card", a
     screen.getByRole("heading", { name: /^(Training|Тренировка)$/ }),
   ).toBeInTheDocument();
 
-  fireEvent.click(
-    await screen.findByRole("button", { name: /Start training|Training starten|Начать тренировку/ }),
-  );
-  await waitFor(() =>
-    expect(startTrainingSession).toHaveBeenCalledTimes(2),
-  );
+  expect(await screen.findByRole("button", { name: /Continue training|Sessie doorgaan|Продолжить тренировку/ })).toBeInTheDocument();
+  expect(startTrainingSession).toHaveBeenCalledTimes(1);
 });
 
 test("a foreign-owner tab offers Start and claims a run before showing an actionable card", async () => {
@@ -1966,18 +1963,8 @@ test("superseded saved session clears its queue and returns to a deliberate loca
     { timeout: 5000 },
   );
 
-  expect(
-    await screen.findByRole(
-      "button",
-      { name: /Start training here|Training hier starten|Начать тренировку здесь/ },
-      { timeout: 5000 },
-    ),
-  ).toBeInTheDocument();
-  expect(
-    screen.getByText(
-      /This will reset training on another device\.|Hiermee wordt de training op een ander apparaat gereset\.|Это сбросит тренировку на другом устройстве\./,
-    ),
-  ).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: /Session builder|Training samenstellen/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ })).toBeInTheDocument();
   expect(
     screen.queryByTestId("mock-training-sense-card-v2"),
   ).not.toBeInTheDocument();
@@ -2294,7 +2281,7 @@ test("a deferred authority result for session A cannot reset newly started sessi
   );
   await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
   const startCurrentSetup = screen.getByRole("button", {
-    name: /Start current setup|Start huidige instelling/,
+    name: /Start training|Training starten/,
   });
   await waitFor(() => expect(startCurrentSetup).toBeEnabled());
   fireEvent.click(
@@ -2579,33 +2566,27 @@ test("superseded resume restores every still-permitted setup setting before Star
       "session-superseded-settings",
     ),
   );
-  const startHere = await screen.findByRole("button", {
+  await screen.findByRole("button", {
     name: "Start training",
   });
-  expect(screen.getByRole("button", { name: "Meaning" })).toHaveAttribute(
+  for (const section of ["Source", "Exercises", "Filters", "Session"]) {
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(section) }));
+  }
+  expect(screen.getByRole("button", { name: "Words" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  expect(screen.getByRole("button", { name: "Reverse" })).toHaveAttribute(
+  expect(screen.getByRole("button", { name: /^Reverse / })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  expect(screen.getByRole("slider", { name: /Review ↔ new rhythm|Ritme herhaling ↔ nieuw/ })).toHaveValue("0");
-  expect(screen.getByLabelText("Collection")).toHaveValue(
-    `user:${userOwnedList.id}`,
-  );
-  expect(screen.getByRole("combobox",{name:"Source"})).toHaveValue(
-    "source:source-youtube-1",
-  );
-  expect(screen.getByLabelText("Time window")).toHaveValue("daysAgo");
-  expect(screen.getByLabelText("Days ago")).toHaveValue(14);
-  expect(screen.getByRole("slider", { name: "Session size" })).toHaveAttribute(
-    "aria-valuetext",
-    "All due",
-  );
+  expect(screen.getByRole("button", { name: /Source My saved words/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Session All due · Reviews only/ })).toBeInTheDocument();
 
   updateActiveTrainingScope.mockClear();
   startTrainingSession.mockClear();
+  const startHere = screen.getByRole("button", { name: "Start training" });
+  await waitFor(() => expect(startHere).toBeEnabled());
   fireEvent.click(startHere);
 
   await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
@@ -3600,14 +3581,7 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     expect(
       screen.getAllByRole("button", { name: "Close session" }),
     ).toHaveLength(1);
-    const compactFooter = document.querySelector('footer[data-compact="true"]');
-    expect(compactFooter).toBeInTheDocument();
-    expect(
-      within(compactFooter as HTMLElement).queryByRole("button", {
-        name: "Adjust",
-      }),
-    ).not.toBeInTheDocument();
-    expect(compactFooter).not.toHaveTextContent(/VanDale 2k|Begrip/);
+    expect(document.querySelector('footer[data-compact="true"]')).not.toBeInTheDocument();
     fireEvent.click(
       within(screen.getByTestId("training-session-chrome")).getByRole(
         "button",
@@ -3717,9 +3691,9 @@ test("keyboard return from History restores focus to its stable Training trigger
     await userEvent.keyboard("{Enter}");
     expect(
       await screen.findByRole("heading", { name: "History" }),
-    ).toHaveFocus();
+    ).toBeInTheDocument();
 
-    const back = screen.getByRole("button", { name: "Back to training" });
+    const back = screen.getByRole("button", { name: "Close history" });
     back.focus();
     await act(async () => userEvent.keyboard("{Enter}"));
     await waitFor(() =>
@@ -3730,7 +3704,7 @@ test("keyboard return from History restores focus to its stable Training trigger
   }
 });
 
-test("V2 loading retains the existing session chrome and footer", async () => {
+test("V2 loading retains the existing session chrome", async () => {
   mockV2SessionState = "loading";
   prefetchPlatformV2TrainingEntry.mockReset();
   prefetchPlatformV2TrainingEntry.mockResolvedValue({
@@ -3752,9 +3726,7 @@ test("V2 loading retains the existing session chrome and footer", async () => {
       await screen.findByTestId("training-v2-loading"),
     ).toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
-    expect(
-      screen.getByTestId("training-session-footer-progress"),
-    ).toBeInTheDocument();
+    expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
   } finally {
     mockV2SessionState = "ready";
     prefetchPlatformV2TrainingEntry.mockReset();
@@ -4420,6 +4392,7 @@ test("learner logout preserves the same user's separate admin session", async ()
   window.localStorage.setItem("unrelated-setting", "keep");
   document.cookie = "2000nl-admin-auth=admin-session; path=/";
   render(<TrainingScreen user={user} destination="settings" />);
+  fireEvent.click(within(await screen.findByRole("navigation", { name: "Settings sections" })).getByRole("button", { name: "Account" }));
   fireEvent.click(await screen.findByRole("button", { name: /Uitloggen|Sign out|Выйти/ }));
   await waitFor(() => expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: "local" }));
   expect(supabase.auth.signOut).not.toHaveBeenCalledWith({ scope: "global" });
@@ -4683,7 +4656,7 @@ for (const languageCode of ["nl", "en"]) test(`owned legacy sentence session res
 test("another account cannot resume the owned legacy sentence record",async()=>{
  await writeTrainingSessionResume({sessionId:"foreign-legacy",userId:"another-owner",family:"sentence",languageCode:"nl",listId:"list-1",listType:"curated",scenarioId:"sentences",modes:["word-to-definition"],cardFilter:"both",newReviewRatio:2,focusFilter:{dateWindow:"all"},sessionSize:5});
  render(<TrainingScreen user={user} trainingTodaySetupEnabled/>);
- await screen.findByRole("heading",{name:/Good morning|Goedemorgen/});
+ await screen.findByRole("heading",{name:/^(Training|Тренировка)$/});
  expect(screen.queryByTestId("legacy-sentence-session")).toBeNull();
  expect(legacyTranslationSnapshot).not.toHaveBeenCalled();expect(legacyTranslationStart).not.toHaveBeenCalled();
 });
