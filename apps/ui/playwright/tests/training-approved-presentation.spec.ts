@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 for (const width of [402, 1024]) {
   test(`keeps the approved session controls visible at ${width}px`, async ({ browser }, testInfo) => {
-    const page = await browser.newPage({ viewport: { width, height: 768 } });
+    const page = await browser.newPage({ viewport: { width, height: 768 }, reducedMotion: "reduce" });
     await setupAuthenticatedTrainingAttributionPage(page, 0, {
       visualProfile: "answer",
     });
