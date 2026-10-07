@@ -11,7 +11,6 @@ import {
 } from "@/components/training/wordlist/DictionarySearchTab";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type {
-  DictionaryEntry,
   EntryLearningListMembership,
   WordListSummary,
 } from "@/lib/types";
@@ -26,7 +25,6 @@ type Props = {
   activeList: WordListSummary | null;
   onReloadLists: () => Promise<void>;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
-  onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   onTrainWord?: (wordId: string) => void;
 };
 
@@ -40,7 +38,6 @@ export function LibraryDestination({
   activeList,
   onReloadLists,
   onOpenListMembership,
-  onUserDictionaryEntryCreated,
   onTrainWord,
 }: Props) {
   const [searchState, setSearchState] = useState<DictionarySearchTabState>(() =>
@@ -86,7 +83,6 @@ export function LibraryDestination({
             reloadLists={onReloadLists}
             notifyListsUpdated={() => {}}
             onOpenListMembership={onOpenListMembership}
-            onUserDictionaryEntryCreated={onUserDictionaryEntryCreated}
             onTrainWord={onTrainWord}
             autoFocusQuery={open}
             searchState={searchState}

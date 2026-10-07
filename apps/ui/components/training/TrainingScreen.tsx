@@ -1305,17 +1305,6 @@ function TrainingScreenContent({
     }
   }, [navigationBlocked, onRequestDestination]);
 
-  const handleUserDictionaryEntryCreated = useCallback(
-    (entry: DictionaryEntry) => {
-      setDetailSelection({
-        entryId: entry.id,
-        headword: entry.headword,
-        contentLanguageCode: entry.language_code ?? currentTrainingLanguage,
-      });
-    },
-    [currentTrainingLanguage],
-  );
-
   const cycleThemePreference = useCallback(() => {
     const next =
       themePreference === "light"
@@ -2826,7 +2815,6 @@ function TrainingScreenContent({
         lists={availableLists}
         activeList={activeList ?? null}
         onReloadLists={handleListsUpdated}
-        onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
         onTrainWord={(wordId) => {
           handleTrainWord(wordId);
           onRequestDestination("training");
