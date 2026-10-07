@@ -121,25 +121,12 @@ for (const viewport of viewports) {
         expect(overlap).toBe(false);
       }
     }
-    const copy = page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true });
-    const report = page.getByRole("button", { name: /Melden|Report/, exact: true });
-    await expect(copy).toBeInViewport({ ratio: 1 });
-    await expect(report).toBeInViewport({ ratio: 1 });
-    const copyBox = await copy.boundingBox();
-    const reportBox = await report.boundingBox();
-    expect(copyBox && reportBox).toBeTruthy();
-    if (copyBox && reportBox) {
-      const overlap = Math.min(copyBox.x + copyBox.width, reportBox.x + reportBox.width) > Math.max(copyBox.x, reportBox.x)
-        && Math.min(copyBox.y + copyBox.height, reportBox.y + reportBox.height) > Math.max(copyBox.y, reportBox.y);
-      expect(overlap).toBe(false);
-    }
-    await copy.click();
-    await expect(page.getByTestId("copied-entry")).toHaveText(gateFurnitureEntry.entryId);
+    await expect(page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Multi group", exact: true }).click();
     await expect(page.locator("[data-entry-id]")).toHaveCount(selectedGroup.entryCount);
     await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByRole("button", { name: /betekenis inklappen/i })).toBeVisible();
-    await copy.click();
-    await expect(page.getByTestId("copied-entry")).toHaveText(gateFinanceEntry.entryId);
+    await expect(page.getByRole("button", { name: "Meer kaartacties", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Toggle Training Details", exact: true }).click();
     await expect(page.getByRole("button", { name: "Sluiten", exact: true })).toBeVisible();
     await expect(page.getByTestId("library-details-actions")).toHaveCount(0);

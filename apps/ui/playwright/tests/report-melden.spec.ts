@@ -122,9 +122,9 @@ for (const profile of profiles) {
     await fixture.getByRole("button", { name: "Melden" }).click();
     await expect(dialog).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`${profile.name}-answer-dark.png`) });
-    await page.locator('[data-training-hotkeys-suspended="true"]').click({
-      position: { x: 8, y: 8 },
-    });
+    // The approved surface uses a native dialog; click the viewport backdrop
+    // rather than an offset inside the dialog element itself.
+    await page.mouse.click(8, 8);
     await expect(dialog).toBeHidden();
     await expect(fixture.getByRole("button", { name: "Melden" })).toBeFocused();
   });
