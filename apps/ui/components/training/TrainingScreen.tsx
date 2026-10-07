@@ -94,10 +94,6 @@ import { AppFrame } from "@/components/navigation/AppFrame";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
 import { SettingsDestination } from "@/components/navigation/SettingsDestination";
 import { ReadingPreferencesProvider } from "@/components/reading/ReadingPreferencesProvider";
-import {
-  sharedArticlePresentationV1Enabled,
-  trainingPresentationV1Enabled,
-} from "@/lib/platform/platformV2Rollout";
 import { TrainingHistoryDestination } from "@/components/navigation/TrainingHistoryDestination";
 import { StatisticsDestination } from "@/components/navigation/StatisticsDestination";
 import {
@@ -212,7 +208,7 @@ function TrainingScreenContent({
   const historyButtonRef = useRef<HTMLButtonElement>(null);
   const historyBackgroundRef = useRef<AppDestination>(destination === "history" ? "training" : destination);
   if (destination !== "history") historyBackgroundRef.current = destination;
-  const visibleDestination = destination === "history" && sharedArticlePresentationV1Enabled()
+  const visibleDestination = destination === "history"
     ? historyBackgroundRef.current : destination;
 
   const previousDestinationRef = useRef(destination);
@@ -2513,7 +2509,7 @@ function TrainingScreenContent({
   const studyTimeEnabled = destination === "training" && !detailsOpen && !showHotkeys && !showLanguageSelection && !navigationBlocked && !loadingWord && !sessionAuthorityChecking;
   return (
     <TrainingStartupGate
-      pending={trainingPresentationV1Enabled() && trainingTodaySetupEnabled && destination === "training" && trainingPilot.surface !== "session" && !homeStartupSettled}
+      pending={trainingTodaySetupEnabled && destination === "training" && trainingPilot.surface !== "session" && !homeStartupSettled}
       interfaceLanguage={onboardingLang}
     >
     <AppFrame
@@ -2528,19 +2524,17 @@ function TrainingScreenContent({
       onOpenSettings={openAppSettings}
     >
       <div
-        data-colour-mode={trainingPresentationV1Enabled() ? "app" : undefined}
+        data-colour-mode={"app"}
         data-training-session-layout={v2SessionLayoutVisible ? "v2" : undefined}
         aria-hidden={visibleDestination !== "training"}
         data-training-today-setup={
           trainingTodaySetupEnabled ? "enabled" : "disabled"
         }
         data-training-pilot-surface={trainingPilot.surface}
-        className={`${trainingPresentationV1Enabled() ? practiceTheme.theme : ""} ${visibleDestination === "training" ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden bg-transparent text-slate-900 dark:text-slate-100 ${
+        className={`${practiceTheme.theme} ${visibleDestination === "training" ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden bg-transparent text-slate-900 dark:text-slate-100 ${
           v2SessionLayoutVisible
-            ? `font-sense-sans ${sessionStyles.viewport} ${trainingPresentationV1Enabled() ? sessionStyles.viewportApproved : ""}`
-            : trainingPresentationV1Enabled()
-              ? ""
-              : "dark:bg-background-dark"
+            ? `font-sense-sans ${sessionStyles.viewport} ${sessionStyles.viewportApproved}`
+            : ""
         }`}
       >
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
@@ -2719,22 +2713,9 @@ function TrainingScreenContent({
                 onEdit={() => { setOpenTrainingEditor(true); trainingPilot.returnToToday(); }}
                 onExit={() => { setOpenTrainingEditor(false); trainingPilot.returnToToday(); }}
               />
-            ) : trainingPresentationV1Enabled() ? (
+            ) : (
               <div className="h-full min-h-0" data-testid="training-v2-loading" data-training-renderer="v2" data-training-v2-state="loading">
                 <TrainingSessionState loading title={platformV2Message(onboardingLang, "senseCard.training.loading")} />
-              </div>
-            ) : (
-              <div
-                role="status"
-                data-testid="training-v2-loading"
-                data-training-renderer="v2"
-                data-training-v2-state="loading"
-                className="mx-auto grid h-full min-h-0 w-full max-w-[760px] flex-1 place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-sm font-medium text-slate-600 dark:border-slate-600 dark:bg-[#1d222b] dark:text-slate-300"
-              >
-                {platformV2Message(
-                  onboardingLang,
-                  "senseCard.training.loading",
-                )}
               </div>
             )}
           </TrainingSessionSurface>

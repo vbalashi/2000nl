@@ -7,7 +7,6 @@ import {
   type TrainingExercisePresentation,
 } from "@/lib/training/exerciseCardPresentation";
 import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
-import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { useTranslationSwipe } from "@/components/practice/ui/useTranslationSwipe";
 import { useTrainingPromptReveal } from "@/components/practice/ui/useTrainingPromptReveal";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
@@ -17,13 +16,10 @@ import {
   TrainingCardAnswerHeader,
   TrainingCardAnswerBody,
   TrainingCardFaceControls,
-  TrainingCardReviewButton,
   trainingStageClassName,
-  trainingReviewGridClassName,
 } from "./TrainingCardTemplates";
 
 type Grade = "fail" | "hard" | "success" | "easy";
-const grades = ["fail", "hard", "success", "easy"] as const;
 const gradeKeys = { h: "fail", j: "hard", k: "success", l: "easy" } as const;
 const ratingGrades: Record<Rating, Grade> = { Again: "fail", Hard: "hard", Good: "success", Easy: "easy" };
 
@@ -61,7 +57,7 @@ export function TrainingExerciseCard({
   const revealRef = React.useRef<HTMLButtonElement>(null);
   const firstGradeRef = React.useRef<HTMLButtonElement>(null);
   const { capture, moving } = useTrainingPromptReveal({ root: stageRef, revealed,
-    enabled: trainingPresentationV1Enabled(), identity: presentation.promptTarget.contentNodeId });
+    enabled: true, identity: presentation.promptTarget.contentNodeId });
   const reveal = () => { capture(); onReveal(); };
   const actionBusy = busy || moving;
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
@@ -180,28 +176,11 @@ export function TrainingExerciseCard({
         )}
       </TrainingCardShell>
       <footer className="shrink-0 flex flex-col gap-2">
-        {revealed && trainingPresentationV1Enabled() ? (
+        {revealed ? (
           <RatingControls language={interfaceLanguage} height="adaptive" disabled={actionBusy}
             label={t("senseCard.sections.reviewPrompt")} firstRef={firstGradeRef}
             options={(Object.keys(ratingGrades) as Rating[]).map(rating => ({ rating, label: t(`senseCard.review.${ratingGrades[rating]}`) }))}
             onRate={rating => onGrade(ratingGrades[rating])} />
-        ) : revealed ? (
-          <div
-            role="group"
-            aria-label={t("senseCard.sections.reviewPrompt")}
-            className={trainingReviewGridClassName}
-          >
-            {grades.map((grade, index) => (
-              <TrainingCardReviewButton
-                key={grade}
-                result={grade}
-                label={t(`senseCard.review.${grade}`)}
-                busy={actionBusy}
-                onClick={() => onGrade(grade)}
-                buttonRef={index === 0 ? firstGradeRef : undefined}
-              />
-            ))}
-          </div>
         ) : (
           <TrainingCardFaceControls
             busy={actionBusy}

@@ -8,7 +8,6 @@ import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
-import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { senseCardQuietAction } from "../SenseCardChrome";
 import approvedCard from "../approvedTrainingCard.module.css";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
@@ -21,10 +20,8 @@ import {
   TrainingCardShell,
   TrainingCardSecondaryActions as SecondaryActionRow,
   TrainingCardFaceControls,
-  TrainingCardReviewButton,
   TrainingCardIconButton as IconButton,
   trainingStageClassName,
-  trainingReviewGridClassName,
 } from "./TrainingCardTemplates";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import type { TrainingSenseCardModel } from "./trainingSenseCardModel";
@@ -112,9 +109,8 @@ export function TrainingSenseCardStage({
   );
   const contextTarget = contextPrompt ? model.entryTranslation?.trim() : undefined;
   const listeningMode = mode === "listen-recognize";
-  const approvedPresentation = trainingPresentationV1Enabled();
   const { capture, moving } = useTrainingPromptReveal({ root: stageRef, revealed: answerVisible,
-    enabled: approvedPresentation && !listeningMode, identity: model.entryId });
+    enabled: !listeningMode, identity: model.entryId });
   const revealAnswer = React.useCallback(() => { capture(); onSideChange("answer"); }, [capture, onSideChange]);
   const toggleTranslation = React.useCallback(() => {
     if (busy || moving) return;
@@ -213,7 +209,7 @@ export function TrainingSenseCardStage({
       data-testid="training-sense-card-stage"
       data-side={answerVisible ? "answer" : "face"}
       data-reveal-moving={moving ? "true" : undefined}
-      data-visual-spec={approvedPresentation ? "training-approved-v1" : "training-v1.0"}
+      data-visual-spec={"training-approved-v1"}
       className={trainingStageClassName()}
     >
       <span className="sr-only" aria-live="polite" aria-atomic="true">
@@ -305,9 +301,7 @@ export function TrainingSenseCardStage({
         className={`shrink-0 ${
           answerVisible
             ? model.reviewCapabilities.length
-              ? approvedPresentation
-                ? "min-h-[78px]"
-                : "h-[120px] min-h-[120px] sm:h-[76px] sm:min-h-[76px]"
+              ? "min-h-[78px]"
               : "h-[76px] min-h-[76px]"
             : reportAction || exclusionAction || model.markKnownCapability
               ? "h-[76px] min-h-[76px]"
@@ -324,7 +318,6 @@ export function TrainingSenseCardStage({
             onAction={onAction}
             reportAction={reportAction}
             exclusionAction={exclusionAction}
-            approvedPresentation={approvedPresentation}
           />
         ) : (
           <FaceDock
@@ -476,7 +469,6 @@ function AnswerDock({
   onAction,
   reportAction,
   exclusionAction,
-  approvedPresentation,
 }: {
   model: TrainingSenseCardModel;
   mode: TrainingMode;
@@ -486,7 +478,6 @@ function AnswerDock({
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
   reportAction?: React.ReactNode;
   exclusionAction?: React.ReactNode;
-  approvedPresentation: boolean;
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
   const reviewCapabilities =
@@ -499,29 +490,12 @@ function AnswerDock({
       : model.reviewCapabilities;
 
   if (model.isKnown && model.undoKnownCapability) {
-    if (approvedPresentation) return (
+    return (
       <div className={approvedCard.known}>
         <span className="inline-flex items-center gap-2">
           <Check aria-hidden="true" className="h-4 w-4" /> {t("senseCard.known.marked")}
         </span>
         <button ref={primaryActionRef} type="button" disabled={busy} onClick={() => onAction(model.undoKnownCapability!)}>
-          {t(model.undoKnownCapability.messageKey)}
-        </button>
-      </div>
-    );
-    return (
-      <div className="flex min-h-12 flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-400/60 bg-emerald-50 px-4 py-2 text-sm dark:bg-[#18352b]">
-        <span className="inline-flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-200">
-          <Check aria-hidden="true" className="h-4 w-4" />{" "}
-          {t("senseCard.known.marked")}
-        </span>
-        <button
-          ref={primaryActionRef}
-          type="button"
-          disabled={busy}
-          onClick={() => onAction(model.undoKnownCapability!)}
-          className="text-indigo-700 hover:text-indigo-900 disabled:opacity-50 dark:text-indigo-200 dark:hover:text-white"
-        >
           {t(model.undoKnownCapability.messageKey)}
         </button>
       </div>
@@ -534,20 +508,20 @@ function AnswerDock({
       : t(capability.messageKey);
 
   return (
-    <div className={approvedPresentation ? approvedCard.dock : "flex h-full flex-col gap-2"}>
+    <div className={approvedCard.dock}>
       {model.learnCapability ? (
         <button
           ref={primaryActionRef}
           type="button"
           disabled={busy}
           onClick={() => onAction(model.learnCapability!)}
-          className={approvedPresentation ? approvedCard.primary : "mx-auto block h-11 shrink-0 w-[94%] rounded-xl border border-indigo-400/60 bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-[#292650] dark:text-indigo-100 dark:hover:bg-[#332f60]"}
+          className={approvedCard.primary}
         >
           {t(model.learnCapability.messageKey)}
         </button>
       ) : null}
 
-      {reviewCapabilities.length && approvedPresentation ? (
+      {reviewCapabilities.length ? (
         <div data-testid="training-review-grid" className="shrink-0">
           <RatingControls
             language={interfaceLanguage}
@@ -564,28 +538,6 @@ function AnswerDock({
               if (capability) onAction(capability);
             }}
           />
-        </div>
-      ) : reviewCapabilities.length ? (
-        <div
-          role="group"
-          aria-label={t("senseCard.sections.reviewPrompt")}
-          className="flex shrink-0 flex-col"
-        >
-          <div
-            data-testid="training-review-grid"
-            className={trainingReviewGridClassName}
-          >
-            {reviewCapabilities.map((capability, index) => (
-              <TrainingCardReviewButton
-                key={capability.reviewResult}
-                result={capability.reviewResult}
-                buttonRef={index === 0 ? primaryActionRef : undefined}
-                busy={busy}
-                onClick={() => onAction(capability)}
-                label={reviewLabel(capability)}
-              />
-            ))}
-          </div>
         </div>
       ) : null}
 
