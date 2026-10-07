@@ -41,7 +41,7 @@ vi.mock("@/lib/training/setups/client", () => ({
   saveAccountTrainingSetups: vi.fn(),
 }));
 vi.mock("@/lib/training/material/client", () => ({
-  fetchAccountMaterialPreferences: vi.fn().mockResolvedValue({ revision: 0, document: { schemaVersion: 1, learningLanguages: [{ code: "nl", paused: false }, { code: "en", paused: false }], disabledDictionaryIds: [] } }),
+  fetchAccountMaterialPreferences: vi.fn().mockResolvedValue({ revision: 0, document: { schemaVersion: 1, learningLanguages: [], disabledDictionaryIds: [] } }),
   saveAccountMaterialPreferences: vi.fn(),
 }));
 vi.mock("@/lib/training/listService", async (importOriginal) => ({
