@@ -1480,6 +1480,7 @@ test("a foreign-owner tab offers Start and claims a run before showing an action
   );
 
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
   const startButton = await screen.findByRole("button", {
     name: /Start training|Training starten|Начать тренировку/,
   });
@@ -1523,6 +1524,7 @@ test("a failed run claim leaves the foreign-owner tab on Today without an action
   startTrainingSession.mockResolvedValueOnce(null);
 
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
   const startButton = await screen.findByRole("button", {
     name: /Start training|Training starten|Начать тренировку/,
   });
@@ -1753,7 +1755,7 @@ test("discarding an uncommitted list draft preserves the active stats request", 
     expect(requests).toHaveLength(1); // Draft edits do not commit a new stats scope.
     fireEvent.click(screen.getByRole("button", { name: "Back to Training" }));
     await screen.findByRole("button", { name: "Create training" });
-    fireEvent.click(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Start training|Training starten|Начать тренировку/ }));
     expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
     await waitFor(() => expect(requests).toHaveLength(1));
     expect(requests[0]!.scope).toEqual(expect.objectContaining({ listId: activeList.id, listType: activeList.type }));
