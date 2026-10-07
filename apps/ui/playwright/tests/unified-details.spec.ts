@@ -32,6 +32,15 @@ async function practiceHeadwordRoleSize(element: import("@playwright/test").Loca
   });
 }
 
+async function waitForDetailsPanelEntry(page: import("@playwright/test").Page) {
+  const panel = page.locator("dialog[open]");
+  await expect(panel).toBeVisible();
+  await panel.evaluate(async element => {
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    await Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => undefined)));
+  });
+}
+
 async function expectReviewedHeaderGeometry(
   page: import("@playwright/test").Page,
   options: { checkVerticalSpacing?: boolean } = {},
@@ -150,6 +159,7 @@ for (const viewport of viewports) {
     await expect(page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Toggle Training Details", exact: true }).click();
     await expect(page.getByRole("button", { name: "Sluiten", exact: true })).toBeVisible();
+    await waitForDetailsPanelEntry(page);
     await expect(page.getByTestId("library-details-actions")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Melden", exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Later oefenen (F)", exact: true })).toHaveCount(0);
@@ -223,6 +233,7 @@ for (const viewport of viewports) {
     await page.screenshot({ path: testInfo.outputPath(`details-long-${viewport.width}-${size}-${colorScheme}.png`) });
     await page.getByRole("button", { name: "Toggle Training Details", exact: true }).click();
     await expect(page.getByRole("button", { name: "Sluiten", exact: true })).toBeVisible();
+    await waitForDetailsPanelEntry(page);
     await expectReviewedHeaderGeometry(page, { checkVerticalSpacing: false });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath(`details-long-training-more-${viewport.width}-${size}-${colorScheme}.png`) });
