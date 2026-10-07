@@ -478,6 +478,6 @@
   },
   "readOnlyPostflightProbe": {
     "file": "db/deploy-contract/read-only-postflight-212.sql",
-    "sha256": "cf102f9d96e45d17ab5e3b25c2f606b8734b77801846922474a0de9d327d5f43"
+    "sha256": "98c1bf70c5b7df2c9c2e4fbf5d60e0b50f6d014d215bcc8b79631ca949dc2464"
   }
 }
