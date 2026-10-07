@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
+import { assertTestFontsReady } from "../utils/assertTestFontsReady";
 for (const palette of ["lavender", "blue", "indigo", "graphite"]) {
   for (const mode of ["light", "dark"] as const) {
     for (const size of ["normal", "extra"]) {
@@ -16,6 +17,7 @@ for (const palette of ["lavender", "blue", "indigo", "graphite"]) {
             preferences: { onboardingCompleted: true, onboardingLanguage: "ru" },
           },
         });
+        await assertTestFontsReady(page);
         await page.getByRole("button", { name: "Начать тренировку", exact: true }).click();
         await expect(page.locator("[data-account-palette]")).toHaveAttribute("data-account-palette", palette);
         await expect(page.locator("[data-reading-size]")).toHaveAttribute("data-reading-size", size);
