@@ -23,7 +23,7 @@ test("native Report modal pauses card attention delivery and preserves resume id
   await report.focus(); await page.keyboard.press("Enter");
   const dialog = page.getByRole("dialog", { name: platformV2Message("en", "senseCard.reportSheet.title"), exact: true });
   await expect(dialog).toBeVisible();
-  await expect.poll(() => receipts.length).toBeGreaterThan(0);
+  await expect.poll(() => receipts.reduce((sum,item)=>sum+item.activeMilliseconds,0)).toBeGreaterThanOrEqual(1000);
   const modalCount = receipts.length;
   const resumed = receipts.reduce((sum,item)=>sum+item.activeMilliseconds,0);
   expect(resumed).toBeGreaterThanOrEqual(1000);
@@ -38,7 +38,7 @@ test("native Report modal pauses card attention delivery and preserves resume id
   await page.waitForTimeout(1200);
   await report.focus(); await page.keyboard.press("Enter");
   await expect(dialog).toBeVisible();
-  await expect.poll(() => receipts.length).toBeGreaterThan(modalCount);
+  await expect.poll(() => receipts.slice(modalCount).reduce((sum,item)=>sum+item.activeMilliseconds,0)).toBeGreaterThanOrEqual(1200);
   const afterResume = receipts.slice(modalCount).reduce((sum,item)=>sum+item.activeMilliseconds,0);
   expect(afterResume).toBeGreaterThanOrEqual(1200);
   expect(afterResume).toBeLessThan(5000);

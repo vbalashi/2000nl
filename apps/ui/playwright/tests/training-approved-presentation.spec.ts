@@ -42,21 +42,33 @@ for (const width of [402, 1024]) {
   });
 }
 
-test("moving question starts at the face origin and unlocks ratings only after arrival", async ({ page }) => {
+test("the whole outgoing card starts at its face origin and unlocks ratings after the shift", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await setupAuthenticatedTrainingAttributionPage(page, 0, { visualProfile: "answer" });
   await page.getByRole("button", { name: /Training starten|Start training|Начать тренировку/i }).click();
   const stage = page.getByTestId("training-sense-card-stage");
   const heading = stage.getByRole("heading", { level: 2 });
-  const origin = await heading.evaluate(node => node.parentElement!.getBoundingClientRect().toJSON());
+  const shell = stage.getByTestId("training-sense-card-shell");
+  const outgoingText = await shell.textContent();
+  const origin = await shell.boundingBox();
   await page.getByRole("button", { name: /Show answer|Antwoord tonen|Показать ответ/i }).click();
   const overlay = page.locator("[data-training-reveal-overlay]");
   await expect(overlay).toHaveCount(1);
-  const initial = await overlay.evaluate(node => ({ left: parseFloat((node as HTMLElement).style.left), top: parseFloat((node as HTMLElement).style.top), opacity: getComputedStyle(node).opacity }));
-  expect(initial.left).toBeCloseTo(origin.left, 1);
-  expect(initial.top).toBeCloseTo(origin.top, 1);
-  expect(initial.opacity).toBe("1");
+  const initial = await overlay.evaluate(node => {
+    const style = (node as HTMLElement).style;
+    return { text: node.textContent, ariaHidden: node.getAttribute("aria-hidden"), inert: (node as HTMLElement).inert,
+      position: style.position, left: parseFloat(style.left), top: parseFloat(style.top),
+      width: parseFloat(style.width), height: parseFloat(style.height) };
+  });
+  expect(initial.text).toBe(outgoingText);
+  expect(initial.ariaHidden).toBe("true");
+  expect(initial.inert).toBe(true);
+  expect(initial.position).toBe("fixed");
+  expect(initial.left).toBeCloseTo(origin!.x, 1);
+  expect(initial.top).toBeCloseTo(origin!.y, 1);
+  expect(initial.width).toBeCloseTo(origin!.width, 1);
+  expect(initial.height).toBeCloseTo(origin!.height, 1);
   const again = page.getByRole("button", { name: /Again|Opnieuw|Снова/i });
   await expect(again).toBeDisabled();
   await expect(overlay).toHaveCount(0);
@@ -65,14 +77,18 @@ test("moving question starts at the face origin and unlocks ratings only after a
   await expect(again).toBeFocused();
 });
 
-test("reverse definition moves as the same question, with reduced-motion bypass", async ({ page }) => {
+test("reverse definition remains in the outgoing card, with reduced-motion bypass", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/dev/sense-card-gate?prototype=reading&mode=reverse&clean=1");
   const question = await page.getByTestId("reverse-prompt").textContent();
+  const shell = page.getByTestId("training-sense-card-shell");
+  const outgoingText = await shell.textContent();
   await page.getByRole("button", { name: "Antwoord tonen", exact: true }).click();
   const overlay = page.locator("[data-training-reveal-overlay]");
-  await expect(overlay).toHaveText(question!);
+  const firstFrameText = await overlay.textContent();
+  expect(firstFrameText).toBe(outgoingText);
+  expect(firstFrameText).toContain(question!);
   await expect(overlay).toHaveCount(0);
   await expect(page.getByTestId("training-sense-card-stage")).toHaveAttribute("data-side", "answer");
   await page.emulateMedia({ reducedMotion: "reduce" });
