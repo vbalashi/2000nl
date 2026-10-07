@@ -569,3 +569,5 @@
 \i db/migrations/211_reviews_include_due_learning.sql
 
 \i db/migrations/212_training_interaction_preferences.sql
+
+\i db/migrations/213_training_syllable_display.sql
