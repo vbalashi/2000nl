@@ -8,7 +8,10 @@ const retired = ["onTrainingAction", "trainingActionEntryId"];
 if (finalTraining) {
   retired.push("useLegacyTrainingReviewPort", "submitLegacyReview", "reviewLegacy",
     "projectTrainingCardPresentation", "TrainingCard", "TrainingCardPresentation",
-    "FirstTimeButtonGroup", "AudioModeToggle", "InteractiveText");
+    "FirstTimeButtonGroup", "AudioModeToggle", "InteractiveText",
+    "trainingPresentationV1Enabled", "sharedArticlePresentationV1Enabled",
+    "NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1",
+    "trainingPresentationV1", "sharedArticlePresentationV1");
 }
 const failures = [];
 
@@ -16,7 +19,7 @@ function scan(directory) {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     const path = resolve(directory, entry.name);
     if (entry.isDirectory()) scan(path);
-    else if (/\.(?:[cm]?[jt]sx?)$/.test(entry.name)) {
+    else if (/\.(?:[cm]?[jt]sx?|json)$/.test(entry.name)) {
       const source = readFileSync(path, "utf8");
       for (const symbol of retired) {
         if (new RegExp(`\\b${symbol}\\b`).test(source)) {
@@ -29,6 +32,22 @@ function scan(directory) {
 
 for (const directory of ["app", "components", "lib", "tests"]) {
   scan(resolve(root, "apps/ui", directory));
+}
+if (finalTraining) {
+  // Only active sources/configuration are checked; historical docs and migrations
+  // remain evidence and are intentionally outside this retirement contract.
+  for (const directory of ["playwright", "config"]) {
+    scan(resolve(root, "apps/ui", directory));
+  }
+  for (const path of [
+    "apps/ui/next.config.js", "apps/ui/package.json", "apps/ui/Dockerfile",
+    "apps/ui/.env.example", "docker-compose.yml", ".github/workflows/deploy-nuc.yml",
+  ]) {
+    const source = readFileSync(resolve(root, path), "utf8");
+    for (const symbol of retired) {
+      if (new RegExp(`\\b${symbol}\\b`).test(source)) failures.push(`${path}: retired symbol ${symbol}`);
+    }
+  }
 }
 if (finalTraining) {
   for (const path of [

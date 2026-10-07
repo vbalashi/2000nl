@@ -29,14 +29,6 @@ export function platformV2TrainingUiEnabled() {
   return value === "1" || value === "true";
 }
 
-export function trainingPresentationV1Enabled() {
-  return envFlagEnabled(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1);
-}
-
-export function sharedArticlePresentationV1Enabled() {
-  return envFlagEnabled(process.env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1);
-}
-
 function envFlagEnabled(value: string | undefined) {
   const normalized = value?.trim().toLowerCase();
   return normalized === "1" || normalized === "true";
@@ -53,8 +45,6 @@ export function rolloutProfileDiagnostics() {
     trainingTodaySetupV1: envFlagEnabled(
       process.env.NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1,
     ),
-    trainingPresentationV1: trainingPresentationV1Enabled(),
-    sharedArticlePresentationV1: sharedArticlePresentationV1Enabled(),
   };
 
   return {

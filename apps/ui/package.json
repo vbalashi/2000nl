@@ -17,11 +17,11 @@
     "test:platform": "vitest run tests/api/platform*.test.ts",
     "test:watch": "vitest --watch",
     "eval:translation": "vite-node scripts/eval-translation-prompt.ts",
-    "test:e2e": "playwright test --grep-invert @pilot && APP_ROLLOUT_PROFILE=pilot playwright test --grep @pilot && APP_ROLLOUT_PROFILE=pilot NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1=true playwright test playwright/tests/word-details-presentation.spec.ts",
+    "test:e2e": "playwright test --grep-invert @pilot && APP_ROLLOUT_PROFILE=pilot playwright test --grep @pilot",
     "test:e2e:training-attribution": "APP_ROLLOUT_PROFILE=pilot playwright test playwright/tests/training-attribution.spec.ts",
     "test-account": "node scripts/test-account.js",
     "dev:builder-prototype": "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=prototype-placeholder next dev --hostname 0.0.0.0 --port 3100",
-    "test:e2e:training-reliability": "APP_ROLLOUT_PROFILE=pilot NEXT_PUBLIC_TRAINING_PRESENTATION_V1=true NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1=true playwright test playwright/tests/training-completed-restart.spec.ts playwright/tests/training-idle-continuity.spec.ts playwright/tests/training-startup-continuity.spec.ts playwright/tests/training-overview-layout.spec.ts playwright/tests/training-overview-recipe-state.spec.ts playwright/tests/training-builder-actions-575.spec.ts --workers=1"
+    "test:e2e:training-reliability": "APP_ROLLOUT_PROFILE=pilot playwright test playwright/tests/training-completed-restart.spec.ts playwright/tests/training-idle-continuity.spec.ts playwright/tests/training-startup-continuity.spec.ts playwright/tests/training-overview-layout.spec.ts playwright/tests/training-overview-recipe-state.spec.ts playwright/tests/training-builder-actions-575.spec.ts --workers=1"
   },
   "dependencies": {
     "@google-cloud/text-to-speech": "^6.4.0",

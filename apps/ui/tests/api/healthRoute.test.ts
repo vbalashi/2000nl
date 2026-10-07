@@ -161,7 +161,6 @@ describe("/api/health", () => {
     vi.stubEnv("PLATFORM_V2_IDIOM_EXERCISES_ENABLED", "true");
     vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
     vi.stubEnv("NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1", "true");
-    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "false");
 
     const { GET } = await import("@/app/api/health/route");
     const response = await GET(request());
@@ -177,8 +176,6 @@ describe("/api/health", () => {
         platformV2TranslationExercises: false,
         platformV2TrainingUi: true,
         trainingTodaySetupV1: true,
-        trainingPresentationV1: false,
-        sharedArticlePresentationV1: false,
       },
     });
   });
