@@ -76,3 +76,18 @@ if (typeof window !== "undefined" && typeof (window as any).matchMedia !== "func
     }),
   });
 }
+
+// jsdom has the dialog element but no native top-layer methods. Browser tests
+// cover actual focus, backdrop and scroll behavior; unit tests need open state.
+if (typeof HTMLDialogElement !== "undefined") {
+  if (!HTMLDialogElement.prototype.showModal) {
+    HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+  }
+  if (!HTMLDialogElement.prototype.close) {
+    HTMLDialogElement.prototype.close = function (returnValue?: string) {
+      if (returnValue !== undefined) this.returnValue = returnValue;
+      this.open = false;
+      this.dispatchEvent(new Event("close"));
+    };
+  }
+}
