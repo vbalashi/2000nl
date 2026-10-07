@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 test("saved device profiles affect the real card independently and preserve its side", async ({ page }, testInfo) => {
   const stored = { reading_size_phone: "normal", reading_size_desktop: "normal" };
   const writes: unknown[] = [];
-  await page.route("http://localhost:54321/**", async (route) => {
+  await page.route(/^http:\/\/(localhost|127\.0\.0\.1):54321\//, async (route) => {
     if (!new URL(route.request().url()).pathname.endsWith("/rest/v1/user_settings")) return route.abort();
     if (route.request().method() === "POST") {
       const payload = route.request().postDataJSON();

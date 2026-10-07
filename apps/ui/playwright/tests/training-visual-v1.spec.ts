@@ -156,7 +156,7 @@ test("keeps the approved primitives responsive in light and wide layouts", async
         expect(cardBox!.x + cardBox!.width).toBeLessThanOrEqual(profile.width);
         await expect(page.getByTestId("training-sense-card-dock")).toBeVisible();
       }
-      await expect(page.locator("body")).toHaveCSS("overflow-x", "visible");
+      await expect(page.locator("body")).toHaveCSS("overflow-x", "hidden");
       if (profile.colorScheme === "light" && state !== "recoverable-error") {
         const footerTrack = page
           .getByTestId("training-session-footer-progress")
