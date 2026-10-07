@@ -22,7 +22,6 @@
  "components/training/library-v2/LibrarySenseCardV2Session.tsx": 15,
  "components/training/library-v2/LibraryWordDetail.tsx": 2,
  "components/training/pilot/TrainingIdiomCard.tsx": 2,
- "components/training/pilot/TrainingLexicalPreview.tsx": 34,
  "components/training/pilot/TrainingMixPicker.tsx": 11,
  "components/training/pilot/TrainingPilotStatePanel.tsx": 17,
  "components/training/pilot/TrainingSessionSizePicker.tsx": 8,

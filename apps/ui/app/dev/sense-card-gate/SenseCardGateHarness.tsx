@@ -230,7 +230,6 @@ export function SenseCardGateHarness() {
                 onOpenCollections={() => undefined}
                 onTrainNext={() => undefined}
                 onAction={() => undefined}
-                bottomOverlayReserve
               />
               <div className="absolute bottom-2 left-3 z-20 sm:left-5">
                 <SenseCardReportAction
@@ -255,7 +254,6 @@ export function SenseCardGateHarness() {
                 onOpenCollections={() => undefined}
                 onTrainNext={() => undefined}
                 onAction={() => undefined}
-                bottomOverlayReserve
               />
               <div className="absolute bottom-2 left-3 z-20 sm:left-5">
                 <SenseCardReportAction

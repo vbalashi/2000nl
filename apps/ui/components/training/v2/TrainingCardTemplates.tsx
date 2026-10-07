@@ -26,9 +26,6 @@ import type {
   TrainingCardPrompt,
 } from "@/lib/training/exerciseCardPresentation";
 
-export const trainingCardStageClassName =
-  "mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-[10px] font-sense-sans text-slate-900 dark:text-[#F4F6FA] [container-type:inline-size]";
-
 export const approvedTrainingCardStageClassName =
   `mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-[10px] font-sense-sans [container-type:inline-size] ${approved.stage}`;
 

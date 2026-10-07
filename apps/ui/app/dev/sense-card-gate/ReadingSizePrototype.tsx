@@ -11,7 +11,7 @@ import { AppFrame } from "@/components/navigation/AppFrame";
 import { TrainingSessionChrome } from "@/components/training/v2/TrainingSessionChrome";
 import { TrainingSessionV2Layout } from "@/components/training/v2/TrainingSessionV2Layout";
 import type { TrainingSessionPresentationSnapshot } from "@/components/training/v2/useTrainingSessionPresentation";
-import { FlagIcon, senseCardQuietActionClassName } from "@/components/training/SenseCardChrome";
+import { FlagIcon, senseCardQuietAction } from "@/components/training/SenseCardChrome";
 import sessionStyles from "@/components/training/v2/TrainingSessionLayout.module.css";
 import { TrainingSenseCardStage } from "@/components/training/v2/TrainingSenseCardStage";
 import { buildTrainingSenseCardModel } from "@/components/training/v2/trainingSenseCardModel";
@@ -272,7 +272,7 @@ function PreviewReportAction() {
     <button
       type="button"
       data-testid="reading-size-prototype-report"
-      className={senseCardQuietActionClassName}
+      className={senseCardQuietAction()}
       onClick={() => undefined}
       title="Preview only — no report is sent"
     >

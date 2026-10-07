@@ -41,7 +41,6 @@ import {
 
 type Props = {
   /** Kept for the development gate harness; the retired footer no longer reserves space. */
-  bottomOverlayReserve?: boolean;
   revealActiveMeaning?: boolean;
   model: LibrarySenseCardGroupModel;
   interfaceLanguage: OnboardingLanguage;
