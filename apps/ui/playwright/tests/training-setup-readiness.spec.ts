@@ -9,7 +9,7 @@ const copy = {
   cardPending:
     /Preparing your next card|Je volgende kaart wordt voorbereid|Подготавливаем следующую карточку/i,
   continue: /Continue session|Sessie doorgaan|Продолжить сессию/i,
-  start: /Start current setup|Huidige selectie starten|Начать с текущими настройками/i,
+  start: /^(?:Start training|Training starten|Начать тренировку)$/,
   closeSession: /Close session|Sessie sluiten|Закрыть сессию/i,
   statsReady:
     /\d+ reviews due · \d+ new this study day|\d+ herhalingen klaar · \d+ nieuw deze studiedag|Повторений к выполнению: \d+ · новых за учебный день: \d+/i,

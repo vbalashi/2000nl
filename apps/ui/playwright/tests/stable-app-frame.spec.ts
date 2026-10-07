@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 
 const startButton =
-  /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten|Training starten|Start training|Начать тренировку/i;
+  /^(?:Start training|Training starten|Начать тренировку)$/;
 const answerButton = /Antwoord tonen|Показать ответ|Show answer/i;
 
 async function preparePilotPage(

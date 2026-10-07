@@ -19,7 +19,7 @@ async function startFixture(
   });
   await page
     .getByRole("button", {
-      name: /Huidige selectie starten|Start met huidige instellingen/i,
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
     })
     .click();
 }
@@ -206,7 +206,7 @@ for (const viewport of viewports) {
       await session.getByRole("button", { name: "Sessie sluiten" }).click();
       await expect(stage).toBeHidden();
       await expect(
-        page.getByRole("button", { name: /Huidige selectie starten/i }),
+        page.getByRole("button", { name: /^(?:Start training|Training starten|Начать тренировку)$/ }),
       ).toBeVisible();
     });
   }

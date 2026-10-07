@@ -610,7 +610,7 @@ async function setupAuthenticatedTrainingPage(page: Page) {
 
 async function startPreparedTrainingSession(page: Page) {
   const startButton = page.getByRole("button", {
-    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/i,
+    name: /^(?:Start training|Training starten|Начать тренировку)$/,
   });
   const cardHeading = page.getByRole("heading", { name: /huis/i });
   await expect

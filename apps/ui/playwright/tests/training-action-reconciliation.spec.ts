@@ -15,7 +15,7 @@ test("a disconnected Learn response reconciles without repeating the mutation", 
 
   await page
     .getByRole("button", {
-      name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen/i,
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
     })
     .click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();

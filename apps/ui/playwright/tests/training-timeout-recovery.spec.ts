@@ -9,7 +9,7 @@ test("@pilot statement timeout retries selection only and reaches a ready card",
   });
 
   const startCurrentSetup = page.getByRole("button", {
-    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+    name: /^(?:Start training|Training starten|Начать тренировку)$/,
   });
   await expect(startCurrentSetup).toBeEnabled();
   expect(harness.requests.scheduler).toHaveLength(0);
@@ -52,7 +52,7 @@ test("@pilot statement timeout retry reports an honest no-match terminal outcome
   });
 
   const startCurrentSetup = page.getByRole("button", {
-    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+    name: /^(?:Start training|Training starten|Начать тренировку)$/,
   });
   await expect(startCurrentSetup).toBeEnabled();
   expect(harness.requests.session).toHaveLength(0);

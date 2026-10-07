@@ -43,7 +43,7 @@ test("authenticated Training transition attribution harness", async ({
       { bootstrapReadDelayMs: 80 },
     );
     const startCurrentSettings = page.getByRole("button", {
-      name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen/i,
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
     });
     await expect(startCurrentSettings).toBeVisible();
     await startCurrentSettings.click();

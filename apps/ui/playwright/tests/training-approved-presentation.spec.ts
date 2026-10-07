@@ -7,7 +7,7 @@ for (const width of [402, 1024]) {
       visualProfile: "answer",
     });
     await page.getByRole("button", {
-      name: /Start with current settings|Start met huidige instellingen|Начать с текущими настройками|Huidige selectie starten|Training starten|Start training|Начать тренировку/i,
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
     }).click();
 
     const stage = page.getByTestId("training-sense-card-stage");

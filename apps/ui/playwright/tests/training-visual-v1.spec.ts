@@ -40,7 +40,7 @@ test("captures the approved Training face and answer at the authoritative viewpo
   });
   await page
     .getByRole("button", {
-      name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten/i,
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
     })
     .click();
 
@@ -92,7 +92,7 @@ test("mobile report Back dismisses the training sheet on the first tap", async (
   });
   await page
     .getByRole("button", {
-      name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten/i,
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
     })
     .click();
 
@@ -135,7 +135,7 @@ test("keeps the approved primitives responsive in light and wide layouts", async
       });
       await page
         .getByRole("button", {
-          name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten/i,
+          name: /^(?:Start training|Training starten|Начать тренировку)$/,
         })
         .click();
       if (state === "recoverable-error") {
@@ -187,7 +187,7 @@ test("captures the approved long-idiom answer", async ({ browser }) => {
   });
   await page
     .getByRole("button", {
-      name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten/i,
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
     })
     .click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
@@ -233,7 +233,7 @@ test("captures the approved recoverable-error state", async ({ browser }) => {
   });
   await page
     .getByRole("button", {
-      name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten/i,
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
     })
     .click();
   await expect(page.getByTestId("training-v2-failure")).toBeVisible();

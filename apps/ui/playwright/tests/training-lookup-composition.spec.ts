@@ -42,7 +42,7 @@ test("models serialized versus overlapped exact lookup composition without optim
       });
       await page
         .getByRole("button", {
-          name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen/i,
+          name: /^(?:Start training|Training starten|Начать тренировку)$/,
         })
         .click();
       const card = page.getByTestId("training-sense-card-v2");

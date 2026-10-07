@@ -24,7 +24,7 @@ test("a failed prepared card recovers after closing and continuing on desktop an
 
     await page
       .getByRole("button", {
-        name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen/i,
+        name: /^(?:Start training|Training starten|Начать тренировку)$/,
       })
       .click();
     await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
@@ -122,7 +122,7 @@ test("a missing Platform presentation identity is retired before the next sessio
 
   await page
     .getByRole("button", {
-      name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen/i,
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
     })
     .click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
