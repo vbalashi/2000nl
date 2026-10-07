@@ -35,3 +35,13 @@ Initial config/health change: 14 tests passed. Browser spec discovery after migr
 - Training: snapshot/replan decisions may be extracted behind characterization, but generation refs, session identity and queue effects must remain under one coordinator. Do not split by file length alone.
 
 These are design directions pending post-deletion assessment, not implemented behavior or duplicate live task status.
+
+## Post-deletion assessment
+
+The initial source retirement reduces `TrainingTodaySetup.tsx` from 1,473 to 530 lines. It already delegates account recipes and availability to domain hooks; another extraction is not justified by its size alone. `DictionarySearchTab.tsx` remains 982 lines and `TrainingScreen.tsx` 2,864. Keep their further decomposition outside this retirement change so behavior changes are attributable.
+
+The next useful Library boundary is the non-grouped/list-filter search request owner: request identity, debounce, abort/stale fencing, freshness reuse, pagination resets and retry. Grouped search stays in its existing hook; selected details and public entry APIs stay outside this extraction. Characterize language isolation, scope changes, stale queries and retained details first.
+
+The later Training boundary is a narrow snapshot/reconciliation decision projection. Preserve one owner for generation refs, accepted mutations, queue loading/reset and invalidation subscriptions. Its acceptance must include takeover, offline recovery, session A/B late responses, resume and coalesced/retried replans. Do not replace the screen with a catch-all hook.
+
+Style audit comparison also found pre-existing untokenized styles in `trainingOverview.module.css` and excess literals in `approvedTrainingCard.module.css` and `startupLogo.module.css`. The baseline also reported excess literals in `DictionarySearchTab.tsx`, eliminated by this retirement. Existing debt allowances were lowered after deletion; no new allowance was added to hide unrelated failures.
