@@ -953,8 +953,7 @@ test("search action opens the dedicated dictionary search surface", async () => 
   await screen.findByTestId("library-workspace");
   const search = await screen.findByRole("textbox",{name:"Search words"});
   expect(screen.getByTestId("library-workspace")).toBeInTheDocument();
-  expect(screen.getByText("Search the dictionary")).toBeInTheDocument();
-  expect(screen.getByLabelText(/only this collection/i)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Search filters" })).toBeEnabled();
   expect(
     screen.queryByRole("button", { name: "Zoeken" }),
   ).not.toBeInTheDocument();

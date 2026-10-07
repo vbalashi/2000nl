@@ -788,11 +788,12 @@ describe("TrainingSenseCardV2Session", () => {
 
     fireEvent.click(reportAction);
     const reopenedDialog = await screen.findByRole("dialog", { name: "Wat klopt er niet?" });
-    const backdrop = reopenedDialog.parentElement!;
+    const backdrop = reopenedDialog;
     fireEvent.pointerDown(backdrop, { button: 0, isPrimary: true });
     fireEvent.pointerCancel(backdrop, { button: 0, isPrimary: true });
     expect(screen.getByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
-    fireEvent.click(backdrop);
+    // Native dialog backdrops target the dialog outside its bounding rectangle.
+    fireEvent.click(backdrop, { clientX: -1, clientY: -1 });
     expect(screen.queryByRole("dialog", { name: "Wat klopt er niet?" })).not.toBeInTheDocument();
     await waitFor(() => expect(reportAction).toHaveFocus());
 
