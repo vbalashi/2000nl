@@ -23,10 +23,23 @@ test("profile theme owner replaces cached mode", () => {
   document.documentElement.dataset.accountThemeMode = "light";
   cacheStartupAppearance("blue");
   expect(readStartupAppearance(document.cookie)).toEqual({palette:"blue",mode:"light"});
+  new Function(startupAppearanceBootstrap)();
   expect(document.documentElement.dataset.startupMode).toBe("light");
 });
 test("unavailable cookie storage cannot break confirmed profile settings", () => {
   const spy = vi.spyOn(document, "cookie", "set").mockImplementation(() => { throw new Error("blocked"); });
   expect(() => cacheStartupAppearance("indigo")).not.toThrow();
   spy.mockRestore();
+});
+
+test("confirmed profile writes the next-launch hint without recoloring the current wait", () => {
+  document.documentElement.dataset.startupPalette = "blue";
+  document.documentElement.dataset.startupMode = "dark";
+  cacheStartupAppearance("lavender", "light");
+  expect(document.documentElement.dataset.startupPalette).toBe("blue");
+  expect(document.documentElement.dataset.startupMode).toBe("dark");
+  expect(readStartupAppearance(document.cookie)).toEqual({palette:"lavender",mode:"light"});
+  new Function(startupAppearanceBootstrap)();
+  expect(document.documentElement.dataset.startupPalette).toBe("lavender");
+  expect(document.documentElement.dataset.startupMode).toBe("light");
 });

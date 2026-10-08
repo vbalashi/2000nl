@@ -18,9 +18,7 @@ export function cacheStartupAppearance(palette: PracticePalette, mode?: StartupT
     const accountMode = root.dataset.accountThemeMode;
     const resolvedMode = mode ?? (isMode(accountMode) ? accountMode : readStartupAppearance(document.cookie)?.mode ?? "system");
     document.cookie = `${STARTUP_COOKIE}=v1:${palette}:${resolvedMode}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
-    root.dataset.startupPalette = palette;
-    root.dataset.startupThemeMode = resolvedMode;
-    root.dataset.startupMode = resolvedMode === "dark" || (resolvedMode === "system" && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+    // Keep this launch visually stable. The next document reads the hint before paint.
   } catch { /* Storage restrictions must not block startup or a profile save. */ }
 }
 

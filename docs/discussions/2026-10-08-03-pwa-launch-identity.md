@@ -14,3 +14,6 @@ Status: design accepted, implementation in issue checkout; not released. Profile
 
 ## Final sizing and release approval
 Owner selected 132 source pixels, Inter Medium 500 for launcher icons and authorized push, PR merge and reference synchronization. Export matches the unclamped prototype. This fits the displayed circular/iPhone masks but exceeds Android's conservative guaranteed safe circle; unusual launcher masks may trim edges. Startup stays 52px / 400.
+
+## Continuity verification
+Browser checks caught recoloring between readiness gates when a confirmed profile arrived. Confirmed settings now update the cookie only; the current document keeps its initial launch color and the next document bootstrap reads the updated hint. This preserves startup continuity while synchronizing each profile load/save.
