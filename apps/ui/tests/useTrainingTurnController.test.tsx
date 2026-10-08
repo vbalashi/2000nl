@@ -30,6 +30,7 @@ const transitionTiming = vi.hoisted(() => ({
   record: vi.fn(),
   finish: vi.fn(),
   failEntry: vi.fn(),
+  register: vi.fn(),
 }));
 
 vi.mock("@/components/training/v2/usePreparedNextTrainingTurn", () => ({
@@ -59,6 +60,8 @@ vi.mock("@/lib/training/trainingTransitionTiming", () => ({
   beginTrainingUserTransition: (...args: unknown[]) =>
     transitionTiming.begin(...args),
   markTrainingEntryPresentationStarted: vi.fn(),
+  claimTrainingEntryPresentation: (...args: unknown[]) =>
+    transitionTiming.register(...args),
   createTrainingTransitionId: vi.fn(() => "generated-transition"),
   finishTrainingUserTransition: (...args: unknown[]) =>
     transitionTiming.finish(...args),
@@ -193,6 +196,7 @@ describe("useTrainingTurnController transition matrix", () => {
     transitionTiming.record.mockReset();
     transitionTiming.finish.mockReset();
     transitionTiming.failEntry.mockReset();
+    transitionTiming.register.mockReset();
   });
 
   test("refreshes only the exact prepared card before a Platform progress action", () => {
@@ -226,7 +230,7 @@ describe("useTrainingTurnController transition matrix", () => {
     const controller = renderController({ sessionPlannedTotal: 1 });
 
     await act(async () => {
-      await controller.result.current.acceptPlatformProgressAction({} as any);
+      await controller.result.current.acceptPlatformProgressAction({} as any, "action-terminal");
     });
 
     expect(controller.setCurrentWord).toHaveBeenCalledWith(null);
@@ -235,6 +239,19 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.refreshAfterAccepted).toHaveBeenCalledWith(
       expect.objectContaining({ sessionComplete: true }),
     );
+    expect(transitionTiming.finish).toHaveBeenCalledWith("action-terminal", "session-complete");
+    expect(transitionTiming.register).not.toHaveBeenCalled();
+  });
+
+  test("a fallback selection keeps the action transition id through presentation", async () => {
+    prepared.consume.mockReturnValue(null);
+    const controller = renderController();
+    await act(async () => {
+      await controller.result.current.acceptPlatformProgressAction({} as any, "action-fallback");
+    });
+    expect(transitionTiming.measure).toHaveBeenCalledWith("action-fallback", "next-card.selection");
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
+    expect(transitionTiming.register).toHaveBeenCalledWith(word2.id, "action-fallback");
   });
 
   test("prepared V2 candidate stays owned until its DTO is ready", async () => {
@@ -264,6 +281,23 @@ describe("useTrainingTurnController transition matrix", () => {
     await accepted;
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
     expect(controller.selectNext).not.toHaveBeenCalled();
+  });
+
+  test("a warm prepared card is claimed by the accepted action, not its speculative id", async () => {
+    prepared.candidate = {
+      forWordId: word1.id,
+      forCardKey: "word-1:word-to-definition",
+      queueTurn: "review",
+      word: word2,
+      v2Ready: Promise.resolve(true),
+      transitionId: "speculative-warm",
+    };
+    const controller = renderController();
+    await act(async () => {
+      await controller.result.current.acceptPlatformProgressAction({} as any, "action-warm");
+    });
+    expect(transitionTiming.register).toHaveBeenCalledWith(word2.id, "action-warm");
+    expect(transitionTiming.register).not.toHaveBeenCalledWith(word2.id, "speculative-warm");
   });
 
   test("revalidates the prepared card against the accepted entry before presenting it", async () => {

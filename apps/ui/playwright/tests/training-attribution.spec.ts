@@ -40,7 +40,7 @@ test("authenticated Training transition attribution harness", async ({
     const fixture = await setupAuthenticatedTrainingAttributionPage(
       page,
       injectedDelayMs,
-      { bootstrapReadDelayMs: 80 },
+      { bootstrapReadDelayMs: 80, sessionPlannedTotal: TRAINING_ATTRIBUTION_TRANSITIONS + 1 },
     );
     const startCurrentSettings = page.getByRole("button", {
       name: /^(?:Start training|Training starten|Начать тренировку)$/,
@@ -60,24 +60,9 @@ test("authenticated Training transition attribution harness", async ({
     await continueSession.click();
     await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
     if (!stableEvidence) fixture.beginMeasuredTransitions();
-    // The first card can become visible before the speculative next-card
-    // preparation has published its transition id. Wait for that preparation
-    // so the action loop measures the same user transition in both the hit and
-    // fallback paths instead of racing the background prefetch.
-    await page.waitForFunction(() => {
-      const capture = (
-        window as typeof window & {
-          __trainingAttributionCapture: {
-            timings: Array<{ stage: string; outcome: string }>;
-          };
-        }
-      ).__trainingAttributionCapture;
-      return capture.timings.some(
-        (event) => event.stage === "next-card.selection" && event.outcome === "ready",
-      );
-    });
-
     for (let index = 0; index < TRAINING_ATTRIBUTION_TRANSITIONS; index += 1) {
+      const priorCard = await page.getByTestId("training-sense-card-v2")
+        .getByTestId("sense-card-headword-lockup").first().innerText();
       const reveal = page.getByRole("button", {
         name: /Antwoord Tonen|Показать ответ|Show answer/i,
       });
@@ -136,7 +121,38 @@ test("authenticated Training transition attribution harness", async ({
         });
         throw error;
       });
+      await expect.poll(async () => page.getByTestId("training-sense-card-v2")
+        .getByTestId("sense-card-headword-lockup").first().innerText(),
+      ).not.toBe(priorCard);
+      const currentCapture = await readTrainingAttributionCapture(page);
+      const total = currentCapture.timings.filter((event) =>
+        event.stage === "transition.total" &&
+        (event.outcome === "learn-ready" || event.outcome === "review-ready")
+      )[index];
+      expect(total).toBeDefined();
+      expect(currentCapture.timings).toContainEqual(expect.objectContaining({
+        transitionId: total.transitionId, stage: "transition.start",
+      }));
+      expect(currentCapture.timings).toContainEqual(expect.objectContaining({
+        transitionId: total.transitionId, stage: "card.render", outcome: "ready",
+      }));
     }
+
+    await page.getByRole("button", {
+      name: /Antwoord Tonen|Показать ответ|Show answer/i,
+    }).click();
+    const finalLearn = page.getByRole("button", {
+      name: /Begin met leren|Учить|Start learning/i,
+    });
+    if (await finalLearn.isVisible().catch(() => false)) await finalLearn.click();
+    else await page.getByRole("button", { name: /Goed|Хорошо|Good/i }).click();
+    await page.waitForFunction(() => {
+      const capture = (window as typeof window & {
+        __trainingAttributionCapture: { timings: Array<{ stage: string; outcome: string }> };
+      }).__trainingAttributionCapture;
+      return capture.timings.some((event) => event.stage === "transition.total" &&
+        (event.outcome === "learn-session-complete" || event.outcome === "review-session-complete"));
+    });
 
     const capture = await readTrainingAttributionCapture(page);
     reports.push(
@@ -162,9 +178,12 @@ test("authenticated Training transition attribution harness", async ({
   }).trim();
   const relevantPaths = [
     "apps/ui/components/training/TrainingScreen.tsx",
+    "apps/ui/components/training/useTrainingTurnController.ts",
+    "apps/ui/components/training/v2/TrainingSenseCardV2Session.tsx",
     "apps/ui/components/training/useTrainingTurnSelectionPort.ts",
     "apps/ui/components/training/pilot/useTrainingPilotController.ts",
     "apps/ui/lib/training/selectionService.ts",
+    "apps/ui/lib/training/trainingTransitionTiming.ts",
     "apps/ui/lib/platform/platformV2ActionService.ts",
     "apps/ui/lib/platform/platformV2TrainingActionClient.ts",
     "apps/ui/playwright/support/trainingAttributionHarness.ts",
@@ -225,6 +244,7 @@ test("authenticated Training transition attribution harness", async ({
 
   for (const profile of reports) {
     expect(profile.acceptedTransitions).toBe(TRAINING_ATTRIBUTION_TRANSITIONS);
+    expect(profile.completedSessions).toBe(1);
     expect(profile.actionPaths.learn).toBeGreaterThan(0);
     expect(profile.actionPaths.review).toBeGreaterThan(0);
     expect(profile.acceptedTransitionSummary.count).toBe(

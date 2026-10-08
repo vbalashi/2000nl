@@ -124,6 +124,29 @@ const word: TrainingWord = {
 };
 
 describe("TrainingSenseCardV2Session", () => {
+  test("starts an immediate review transition even before next-card preparation publishes an id", async () => {
+    const dispatch = vi.spyOn(window, "dispatchEvent");
+    const accepted = vi.fn().mockResolvedValue("accepted-next-unavailable");
+    render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition"
+      contentLanguageCode="nl" translationTargetLanguageCode="en"
+      interfaceLanguage="en" onProgressActionAccepted={accepted} />);
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+    await waitFor(() => expect(accepted).toHaveBeenCalledOnce());
+    const timings = dispatch.mock.calls.flatMap(([event]) =>
+      event instanceof CustomEvent && event.type === "2000nl:training-transition-timing"
+        ? [event.detail] : []);
+    const start = timings.find(event => event.stage === "transition.start");
+    expect(start).toMatchObject({ outcome: "review", transitionId: expect.any(String) });
+    expect(timings).toContainEqual(expect.objectContaining({
+      stage: "review.mutation", transitionId: start.transitionId,
+    }));
+    expect(performAction.mock.calls[0]?.[1]).toMatchObject({ transitionId: start.transitionId });
+    expect(accepted).toHaveBeenCalledWith(expect.any(Object), start.transitionId);
+    dispatch.mockRestore();
+  });
+
   beforeEach(() => {
     rememberPendingKnownUndo(null);
     window.sessionStorage.clear();
@@ -378,7 +401,7 @@ describe("TrainingSenseCardV2Session", () => {
           expect.objectContaining({ onRequestFrozen: expect.any(Function) }),
         ),
       );
-      expect(onProgressActionAccepted).toHaveBeenCalledWith(success);
+      expect(onProgressActionAccepted).toHaveBeenCalledWith(success, expect.any(String));
     } finally {
       if (original) {
         Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
@@ -989,7 +1012,7 @@ describe("TrainingSenseCardV2Session", () => {
       false,
       pendingToken,
     );
-    expect(onProgressActionAccepted).toHaveBeenCalledWith(capability);
+    expect(onProgressActionAccepted).toHaveBeenCalledWith(capability, expect.any(String));
   });
 
   test("offers the server-provided Mark Known capability on the card face", async () => {
@@ -2317,6 +2340,7 @@ describe("TrainingSenseCardV2Session", () => {
   });
 
   test("ignores a late accepted action after the card generation changes", async () => {
+    const dispatch = vi.spyOn(window, "dispatchEvent");
     let resolveAction!: (value: unknown) => void;
     performAction.mockImplementationOnce(
       () => new Promise((resolve) => { resolveAction = resolve; }),
@@ -2361,6 +2385,18 @@ describe("TrainingSenseCardV2Session", () => {
 
     expect(onProgressActionAccepted).not.toHaveBeenCalled();
     expect(onTrainingSessionSuperseded).not.toHaveBeenCalled();
+    const events = dispatch.mock.calls.flatMap(([event]) =>
+      event instanceof CustomEvent && event.type === "2000nl:training-transition-timing"
+        ? [event.detail] : []);
+    const start = events.find((event) => event.stage === "transition.start" && event.outcome === "review");
+    expect(start).toBeDefined();
+    expect(events).toContainEqual(expect.objectContaining({
+      transitionId: start.transitionId, stage: "transition.total", outcome: "review-cancelled",
+    }));
+    expect(events).not.toContainEqual(expect.objectContaining({
+      transitionId: start.transitionId, stage: "transition.total", outcome: "review-ready",
+    }));
+    dispatch.mockRestore();
   });
 
   test("ignores a late superseded error after the card generation changes", async () => {

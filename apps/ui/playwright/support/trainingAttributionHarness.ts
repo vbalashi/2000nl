@@ -55,6 +55,7 @@ export type TrainingAttributionCategory =
 export type TrainingAttributionProfileReport = {
   profile: { name: string; width: number; height: number };
   acceptedTransitions: number;
+  completedSessions: number;
   actionPaths: { learn: number; review: number };
   acceptedTransitionSummary: DurationSummary;
   initialContinue: {
@@ -206,6 +207,13 @@ export async function setupAuthenticatedTrainingAttributionPage(
   const projectionLookupRequests: Record<string, unknown>[] = [];
   const unavailableSessionRequests: Record<string, unknown>[] = [];
   const sessionMembers = entries.slice(0, options.sessionPlannedTotal ?? 50);
+  const defaultPlan = {
+    plannedNew: Math.ceil((options.sessionPlannedTotal ?? 50) * 0.6),
+    plannedReview: Math.floor((options.sessionPlannedTotal ?? 50) * 0.4),
+    plannedPractice: 0,
+    plannedTotal: options.sessionPlannedTotal ?? 50,
+    plannedAt: new Date(0).toISOString(),
+  };
   const consumedSessionEntryIds = new Set<string>();
   const unavailableSessionEntryIds = new Set<string>();
   const statsRequests: Record<string, unknown>[] = [];
@@ -491,14 +499,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
         route,
         visualFixture
           ? { sessionId: fixtureSessionId, ...visualFixture.plan }
-          : {
-              sessionId: fixtureSessionId,
-              plannedNew: 30,
-              plannedReview: 20,
-              plannedPractice: 0,
-              plannedTotal: 50,
-              plannedAt: new Date(0).toISOString(),
-            },
+          : { sessionId: fixtureSessionId, ...defaultPlan },
         "start-session",
       );
       return;
@@ -510,13 +511,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
         route,
         visualFixture
           ? visualFixture.plan
-          : {
-              plannedNew: 30,
-              plannedReview: 20,
-              plannedPractice: 0,
-              plannedTotal: 50,
-              plannedAt: new Date(0).toISOString(),
-            },
+          : defaultPlan,
         "session-plan",
       );
       return;
@@ -525,13 +520,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     if (pathname.endsWith("/rpc/get_training_session_snapshot")) {
       const plan = visualFixture
         ? visualFixture.plan
-        : {
-            plannedNew: 30,
-            plannedReview: 20,
-            plannedPractice: 0,
-            plannedTotal: 50,
-            plannedAt: new Date(0).toISOString(),
-          };
+        : defaultPlan;
       await fulfillJson(
         route,
         {
@@ -1230,6 +1219,10 @@ export function buildTrainingAttributionProfileReport(
   return {
     profile,
     acceptedTransitions: completedIds.length,
+    completedSessions: capture.timings.filter((event) =>
+      event.stage === "transition.total" &&
+      (event.outcome === "learn-session-complete" || event.outcome === "review-session-complete")
+    ).length,
     actionPaths: {
       learn: acceptedCompleted.filter((event) => event.outcome === "learn-ready").length,
       review: acceptedCompleted.filter((event) => event.outcome === "review-ready").length,
