@@ -1,5 +1,5 @@
 import { isTrainingSetupPaused } from "@/lib/training/setups/availability";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   fetchTrainingScenarios,
   startTrainingSession,
@@ -32,7 +32,12 @@ import type {
   TrainingSetupOption,
 } from "./TrainingTodaySetup";
 import { isTrainingSetupDraftSupported, isTrainingSetupMaterialAvailable } from "./TrainingTodaySetup";
-import { measureTrainingTransitionStage } from "@/lib/training/trainingTransitionTiming";
+import {
+  beginTrainingUserTransition,
+  createTrainingTransitionId,
+  finishTrainingUserTransition,
+  measureTrainingTransitionStage,
+} from "@/lib/training/trainingTransitionTiming";
 import { deriveTrainingPilotSetupStatus } from "@/lib/training/trainingReadiness";
 import {
   isTrainingLoadFailure,
@@ -73,6 +78,7 @@ type CommitPilotDraftParams = {
     cardFilter: CardFilter;
     focusFilter: TrainingFocusFilter;
     trainingSessionId?: string;
+    transitionId?: string;
   }) => Promise<LoadNextTrainingTurnResult>;
   startIdiomSession?: (
     input: StartPlatformV2IdiomTrainingSessionInput,
@@ -89,6 +95,7 @@ type CommitPilotDraftParams = {
 
 type PilotControllerParams = {
   enabled: boolean;
+  presentationActive?: boolean;
   translationTargetLanguageCode?: string | null;
   interfaceLanguage: OnboardingLanguage;
   setupPrerequisites: "pending" | "ready" | "error";
@@ -102,7 +109,7 @@ type PilotControllerParams = {
   listOptions: TrainingSetupOption[];
   dictionaryOptions: TrainingSetupOption[];
   sourceOptions: TrainingSetupOption[];
-  onCommitDraft: (draft: TrainingSetupDraft, sessionName?: string, options?:TrainingStartOptions) => Promise<boolean>;
+  onCommitDraft: (draft: TrainingSetupDraft, sessionName?: string, options?:TrainingStartOptions, transitionId?: string) => Promise<boolean>;
   onRetry: () => Promise<unknown> | void;
   initialTransitionId?: string;
   loadTrainingScenarios?: () => Promise<TrainingScenario[]>;
@@ -134,8 +141,13 @@ export function useCommitTrainingPilotDraft({
     null,
   );
   return useCallback(
-    async (draft: TrainingSetupDraft, sessionName?: string, options?:TrainingStartOptions) => {
+    async (draft: TrainingSetupDraft, sessionName?: string, options?:TrainingStartOptions, diagnosticTransitionId?: string) => {
       if (!userId) return false;
+      const transitionId = draft.family === "idiom" || draft.family === "sentence"
+        ? undefined : diagnosticTransitionId;
+      const finishStart = (outcome: string) => {
+        if (transitionId) finishTrainingUserTransition(transitionId, outcome);
+      };
       if (isTrainingSetupPaused(draft)) {
         reportError("training_sentences_unavailable");
         return false;
@@ -179,7 +191,7 @@ export function useCommitTrainingPilotDraft({
         ...(dictionaryScope ? { dictionaryScope } : {}),
       };
 
-      const result = await updateActiveTrainingScope({
+      const commitScope = () => updateActiveTrainingScope({
         userId,
         languageCode,
         listId: scope.listId,
@@ -191,8 +203,21 @@ export function useCommitTrainingPilotDraft({
         modesEnabled: draft.modes,
         newReviewRatio: draft.newReviewRatio,
       });
+      let result: Awaited<ReturnType<typeof updateActiveTrainingScope>>;
+      try {
+        result = transitionId
+          ? await measureTrainingTransitionStage(
+              transitionId, "training.scope-commit", commitScope,
+              (response) => response.error ? "error" : "ready",
+            )
+          : await commitScope();
+      } catch (error) {
+        finishStart("scope-error");
+        throw error;
+      }
       if (result.error) {
         reportError("training_scope_update_failed");
+        finishStart("scope-error");
         return false;
       }
 
@@ -300,7 +325,7 @@ export function useCommitTrainingPilotDraft({
       }
       let session: TrainingSession | null;
       try {
-        session = await startTrainingSession(userId, draft.family === "word-in-context" ? ["definition-to-word"] : draft.modes, {
+        const startOrdinarySession = () => startTrainingSession(userId, draft.family === "word-in-context" ? ["definition-to-word"] : draft.modes, {
           listId: scope.listId,
           listType: scope.listType ?? undefined,
           cardFilter: draft.cardFilter,
@@ -309,8 +334,15 @@ export function useCommitTrainingPilotDraft({
             ? { ...focusFilter, presentationMode: "word-in-context" }
             : focusFilter,
           sessionSize: draft.sessionSize,
-        }, startRequestRef.current.requestId);
+        }, startRequestRef.current!.requestId);
+        session = transitionId
+          ? await measureTrainingTransitionStage(
+              transitionId, "training.session-start", startOrdinarySession,
+              (started) => !started ? "unavailable" : started.runStatus === "superseded" ? "superseded" : started.plannedTotal === 0 ? "empty" : "ready",
+            )
+          : await startOrdinarySession();
       } catch (error) {
+        finishStart("session-error");
         if (error instanceof Error && error.message === "training_material_unavailable") {
           reportError("training_material_unavailable");
           return false;
@@ -319,15 +351,17 @@ export function useCommitTrainingPilotDraft({
       }
       if (!session) {
         reportError("training_plan_unavailable");
+        finishStart("session-unavailable");
         return false;
       }
       if (session.runStatus === "superseded") {
         startRequestRef.current = null;
         reportError("training_session_superseded");
+        finishStart("session-superseded");
         return false;
       }
       startRequestRef.current = null;
-      if(session.plannedTotal===0){reportError(null);onEmptyPlan?.(draft,options);return false;}
+      if(session.plannedTotal===0){reportError(null);finishStart("empty-plan");onEmptyPlan?.(draft,options);return false;}
       onSessionReady?.(session, {
         trainingId: options?.trainingId,
         sessionName,
@@ -352,11 +386,16 @@ export function useCommitTrainingPilotDraft({
           cardFilter: draft.cardFilter,
           focusFilter,
           trainingSessionId: session.sessionId,
+          ...(transitionId ? { transitionId } : {}),
         });
+      } catch (error) {
+        finishStart("selection-error");
+        throw error;
       } finally {
         loadStats(scope);
       }
       if (isTrainingLoadFailure(loadResult)) reportError("training_load_failed");
+      if (loadResult !== "loaded") finishStart(loadResult);
       return loadResult === "loaded";
     },
     [
@@ -381,6 +420,7 @@ export function useCommitTrainingPilotDraft({
 
 export function useTrainingPilotController({
   enabled,
+  presentationActive = true,
   translationTargetLanguageCode,
   interfaceLanguage,
   setupPrerequisites,
@@ -410,7 +450,21 @@ export function useTrainingPilotController({
   const [startPending, setStartPending] = useState(false);
   const [exerciseFamily, setExerciseFamily] = useState<TrainingExerciseFamily>("meaning");
   const startPendingRef = useRef(false);
+  const activeStartTransitionIdRef = useRef<string | null>(null);
   const initialScenarioTransitionIdRef = useRef(initialTransitionId);
+
+  useEffect(() => () => {
+    if (activeStartTransitionIdRef.current) {
+      finishTrainingUserTransition(activeStartTransitionIdRef.current, "cancelled");
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!presentationActive && activeStartTransitionIdRef.current) {
+      finishTrainingUserTransition(activeStartTransitionIdRef.current, "cancelled");
+      activeStartTransitionIdRef.current = null;
+    }
+  }, [presentationActive]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -510,20 +564,37 @@ export function useTrainingPilotController({
       }
       startPendingRef.current = true;
       setStartPending(true);
+      if (activeStartTransitionIdRef.current) {
+        finishTrainingUserTransition(activeStartTransitionIdRef.current, "cancelled");
+        activeStartTransitionIdRef.current = null;
+      }
+      const ordinary = draft.family !== "idiom" && draft.family !== "sentence";
+      const transitionId = ordinary && presentationActive ? createTrainingTransitionId() : undefined;
+      if (transitionId) {
+        activeStartTransitionIdRef.current = transitionId;
+        beginTrainingUserTransition(transitionId, "start");
+      }
       try {
-        const committed = await onCommitDraft(draft, sessionName, options);
+        const committed = transitionId
+          ? await onCommitDraft(draft, sessionName, options, transitionId)
+          : await onCommitDraft(draft, sessionName, options);
         if (committed) {
           setExerciseFamily(draft.family ?? "meaning");
           setSessionGeneration((generation) => generation + 1);
           setSurface("session");
+        } else if (transitionId) {
+          finishTrainingUserTransition(transitionId, "not-ready");
         }
         return committed;
+      } catch (error) {
+        if (transitionId) finishTrainingUserTransition(transitionId, "error");
+        throw error;
       } finally {
         startPendingRef.current = false;
         setStartPending(false);
       }
     },
-    [dictionaryOptions, listOptions, onCommitDraft, scenarioOptions, scenariosResolved],
+    [dictionaryOptions, listOptions, onCommitDraft, presentationActive, scenarioOptions, scenariosResolved],
   );
 
   const continueSession = useCallback(() => {
