@@ -1,0 +1,235 @@
+{
+  "workflow": "https://github.com/vbalashi/2000nl/actions/runs/37776918628",
+  "diagnosticRef": "f2f15a84bfd125528f13eb4fbbeb48dc3a6df420",
+  "firstComponent": "ui-public",
+  "samples": [
+    {
+      "component": "ui-public",
+      "sample": 1,
+      "backend": {
+        "jit": "off",
+        "workMem": "2184kB",
+        "backendPid": 3541172,
+        "backendStart": "2026-10-08T12:27:04.336473+00:00",
+        "serverVersion": "17.6"
+      },
+      "execution_ms": 5382.67,
+      "outer_elapsed_ms": 6930.762,
+      "outer_overhead_ms": 1548.092,
+      "planning_ms": 0.109,
+      "shared_hit": 23656.0,
+      "shared_read": 0.0,
+      "temp_read": 632.0,
+      "temp_written": 316.0
+    },
+    {
+      "component": "ui-public",
+      "sample": 2,
+      "backend": {
+        "jit": "off",
+        "workMem": "2184kB",
+        "backendPid": 3541172,
+        "backendStart": "2026-10-08T12:27:04.336473+00:00",
+        "serverVersion": "17.6"
+      },
+      "execution_ms": 820.71,
+      "outer_elapsed_ms": 2211.282,
+      "outer_overhead_ms": 1390.572,
+      "planning_ms": 0.14,
+      "shared_hit": 20172.0,
+      "shared_read": 0.0,
+      "temp_read": 632.0,
+      "temp_written": 316.0
+    },
+    {
+      "component": "public",
+      "sample": 1,
+      "backend": {
+        "jit": "off",
+        "workMem": "2184kB",
+        "backendPid": 3541172,
+        "backendStart": "2026-10-08T12:27:04.336473+00:00",
+        "serverVersion": "17.6"
+      },
+      "execution_ms": 332.09,
+      "outer_elapsed_ms": 1607.151,
+      "outer_overhead_ms": 1275.061,
+      "planning_ms": 0.13,
+      "shared_hit": 20182.0,
+      "shared_read": 0.0,
+      "temp_read": 632.0,
+      "temp_written": 316.0
+    },
+    {
+      "component": "public",
+      "sample": 2,
+      "backend": {
+        "jit": "off",
+        "workMem": "2184kB",
+        "backendPid": 3541172,
+        "backendStart": "2026-10-08T12:27:04.336473+00:00",
+        "serverVersion": "17.6"
+      },
+      "execution_ms": 326.503,
+      "outer_elapsed_ms": 1580.898,
+      "outer_overhead_ms": 1254.395,
+      "planning_ms": 0.111,
+      "shared_hit": 20170.0,
+      "shared_read": 0.0,
+      "temp_read": 632.0,
+      "temp_written": 316.0
+    },
+    {
+      "component": "next",
+      "sample": 1,
+      "backend": {
+        "jit": "off",
+        "workMem": "2184kB",
+        "backendPid": 3541172,
+        "backendStart": "2026-10-08T12:27:04.336473+00:00",
+        "serverVersion": "17.6"
+      },
+      "execution_ms": 307.978,
+      "outer_elapsed_ms": 1558.616,
+      "outer_overhead_ms": 1250.638,
+      "planning_ms": 0.117,
+      "shared_hit": 20206.0,
+      "shared_read": 0.0,
+      "temp_read": 632.0,
+      "temp_written": 316.0
+    },
+    {
+      "component": "next",
+      "sample": 2,
+      "backend": {
+        "jit": "off",
+        "workMem": "2184kB",
+        "backendPid": 3541172,
+        "backendStart": "2026-10-08T12:27:04.336473+00:00",
+        "serverVersion": "17.6"
+      },
+      "execution_ms": 301.035,
+      "outer_elapsed_ms": 1552.226,
+      "outer_overhead_ms": 1251.191,
+      "planning_ms": 0.115,
+      "shared_hit": 20180.0,
+      "shared_read": 0.0,
+      "temp_read": 632.0,
+      "temp_written": 316.0
+    },
+    {
+      "component": "filtered",
+      "sample": 1,
+      "backend": {
+        "jit": "off",
+        "workMem": "2184kB",
+        "backendPid": 3541172,
+        "backendStart": "2026-10-08T12:27:04.336473+00:00",
+        "serverVersion": "17.6"
+      },
+      "execution_ms": 284.809,
+      "outer_elapsed_ms": 1670.182,
+      "outer_overhead_ms": 1385.373,
+      "planning_ms": 0.111,
+      "shared_hit": 20185.0,
+      "shared_read": 0.0,
+      "temp_read": 632.0,
+      "temp_written": 316.0
+    },
+    {
+      "component": "filtered",
+      "sample": 2,
+      "backend": {
+        "jit": "off",
+        "workMem": "2184kB",
+        "backendPid": 3541172,
+        "backendStart": "2026-10-08T12:27:04.336473+00:00",
+        "serverVersion": "17.6"
+      },
+      "execution_ms": 288.935,
+      "outer_elapsed_ms": 1573.792,
+      "outer_overhead_ms": 1284.857,
+      "planning_ms": 0.113,
+      "shared_hit": 20182.0,
+      "shared_read": 0.0,
+      "temp_read": 632.0,
+      "temp_written": 316.0
+    },
+    {
+      "component": "aggregate",
+      "sample": 1,
+      "backend": {
+        "jit": "off",
+        "workMem": "2184kB",
+        "backendPid": 3541172,
+        "backendStart": "2026-10-08T12:27:04.336473+00:00",
+        "serverVersion": "17.6"
+      },
+      "execution_ms": 296.966,
+      "outer_elapsed_ms": 1565.822,
+      "outer_overhead_ms": 1268.856,
+      "planning_ms": 0.17,
+      "shared_hit": 20168.0,
+      "shared_read": 0.0,
+      "temp_read": 632.0,
+      "temp_written": 316.0
+    },
+    {
+      "component": "aggregate",
+      "sample": 2,
+      "backend": {
+        "jit": "off",
+        "workMem": "2184kB",
+        "backendPid": 3541172,
+        "backendStart": "2026-10-08T12:27:04.336473+00:00",
+        "serverVersion": "17.6"
+      },
+      "execution_ms": 298.243,
+      "outer_elapsed_ms": 1621.974,
+      "outer_overhead_ms": 1323.731,
+      "planning_ms": 0.149,
+      "shared_hit": 20168.0,
+      "shared_read": 0.0,
+      "temp_read": 632.0,
+      "temp_written": 316.0
+    },
+    {
+      "component": "candidate",
+      "sample": 1,
+      "backend": {
+        "jit": "off",
+        "workMem": "2184kB",
+        "backendPid": 3541172,
+        "backendStart": "2026-10-08T12:27:04.336473+00:00",
+        "serverVersion": "17.6"
+      },
+      "execution_ms": 295.66,
+      "outer_elapsed_ms": 1580.617,
+      "outer_overhead_ms": 1284.957,
+      "planning_ms": 0.13,
+      "shared_hit": 20168.0,
+      "shared_read": 0.0,
+      "temp_read": 632.0,
+      "temp_written": 316.0
+    },
+    {
+      "component": "candidate",
+      "sample": 2,
+      "backend": {
+        "jit": "off",
+        "workMem": "2184kB",
+        "backendPid": 3541172,
+        "backendStart": "2026-10-08T12:27:04.336473+00:00",
+        "serverVersion": "17.6"
+      },
+      "execution_ms": 295.347,
+      "outer_elapsed_ms": 1573.294,
+      "outer_overhead_ms": 1277.947,
+      "planning_ms": 0.141,
+      "shared_hit": 20168.0,
+      "shared_read": 0.0,
+      "temp_read": 632.0,
+      "temp_written": 316.0
+    }
+  ]
+}
