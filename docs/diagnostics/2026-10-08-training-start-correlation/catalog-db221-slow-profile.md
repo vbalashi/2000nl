@@ -24,14 +24,18 @@ PID, not proof of a physically cold shared cache or newly started backend.
 | Shared reads / temp read / temp write |0/0/0|0/0/0|
 | Reported shared/local/temp IO time |0|0|
 
-About95% of the slow RPC wall interval is inside the one wide-entry scan.
+The capture enabled auto_explain ANALYZE, buffers and per-node timing,
+function tracking and IO timing. Its absolute durations include instrumentation
+overhead; there is no matched uninstrumented first-call sample on this backend.
+
+About95% of the profiled slow RPC wall interval is inside the one wide-entry scan.
 The repeated scan cost is ordinary. Materialized projections and membership
 joins are active as planned; the same21449membership rows appear. Ancestor
 node times include descendants; do not sum them or multiply total outer
 timings by count of loops. The95.381ms metadata/function-stat plan happened
 after the slow RPC and is not included in its3229.945ms.
 
-This confirms the remaining tail is inside executor wall time on DB221,
+This localizes the delay in the profiled invocation to executor wall time on DB221,
 not merely browser/auth/network or a missed migration. It does not identify
 CPU consumption, CPU throttling, OS scheduling, or unreported short waits.
 There are no exact server start/end timestamp markers or correlated managed
@@ -92,8 +96,8 @@ counts and index size still need production verification after any rollout.
 ## Assessment and next bounded work
 
 Confirmed good: cleanup/contract tests and DB221 are actually deployed and
-ordinary SQL work is reduced. Confirmed unresolved: a3.23s call remains on
-the same one-pass plan, so #413 stays open.
+ordinary SQL work is reduced. Confirmed unresolved: a3.23s instrumented call remains on
+the same one-pass plan; prior uninstrumented tail samples also remain, so #413 stays open.
 
 The covering index is a new evidence-backed candidate for further reducing
 the scan work and exposure to a wide heap. It has not demonstrated elimination
