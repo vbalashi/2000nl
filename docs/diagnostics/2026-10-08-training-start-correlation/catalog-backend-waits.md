@@ -88,3 +88,5 @@ They are copied to project-local recovery archive
 `622-release-measurement/catalog-backend-waits/`, with SHA256SUMS refreshed.
 The added observer itself has cost and may influence scheduling; no claim of
 zero monitoring overhead or request-level CPU attribution is made.
+
+Next stage: [CPU capability boundary and empty-scope control](./catalog-cpu-boundary-scope-control.md).
