@@ -71,7 +71,7 @@ confirm Index Only Scan; profiling times are not compared to unprofiled times.
 Initial stage calls17.146/21.909/16.191ms include per-client first-use effects;
 index-present first calls read111/112blocks. Index size917504bytes; fixture
 heap37150720bytes. Repeated work is about87% fewer shared hits. Median repeats
-are9.714ms with index (six values) versus11.552ms without (three values),
+are9.678ms with index (six values) versus11.552ms without (three values),
 roughly16% lower, with sparse local samples. This is not production speedup.
 Current exact JSON/ownership/auth/access cases and30additional index-parity
 comparisons passed. The index affects physical access, not the RPC contract.
