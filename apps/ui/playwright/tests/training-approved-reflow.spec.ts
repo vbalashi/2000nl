@@ -51,8 +51,20 @@ for (const locale of ["en", "nl", "ru"]) {
         [data-testid="training-sense-card-stage"] p { margin-bottom: 2em !important; }
       ` });
       await expect(ratings).toBeInViewport({ ratio: 1 });
+      if (locale === "nl" && viewport.width === 640) {
+        await expect(ratings.locator("[data-columns]")).toHaveAttribute("data-columns", "2");
+      }
+      await expect.poll(() => page.getByTestId("training-card-frame").evaluate(node =>
+        node.getAnimations().filter(animation => animation.playState === "running").length
+      )).toBe(0);
       const spacedBody = await scroll.boundingBox();
       expect(spacedBody!.height).toBeGreaterThan(48);
+      if (locale === "nl" && viewport.width === 640) {
+        const ratingHeights = await ratings.getByRole("button").evaluateAll(buttons =>
+          buttons.map(button => button.getBoundingClientRect().height)
+        );
+        expect(Math.min(...ratingHeights)).toBeGreaterThanOrEqual(44);
+      }
       expect(await page.locator("html").evaluate(node => node.scrollWidth)).toBe(viewport.width);
       await pressAndWaitForScrollEnd(scroll, "End");
       await expect.poll(() => scroll.evaluate(node => node.scrollHeight - node.clientHeight - node.scrollTop)).toBeLessThanOrEqual(1);
