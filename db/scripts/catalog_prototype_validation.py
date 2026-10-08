@@ -187,6 +187,10 @@ try:
         sql("BEGIN READ ONLY;\n" + "\\i db/deploy-contract/read-only-postflight-221.sql\nROLLBACK;")
         migrated = sql("SELECT pg_get_functiondef('public.get_available_word_lists(uuid,text,text)'::regprocedure);")
         migrated = migrated.replace("FUNCTION public.get_available_word_lists(", "FUNCTION public.catalog_prototype_candidate(", 1)
+        if os.environ.get("CATALOG_PROTOTYPE_TEST_FAULT") == "deny-null-source":
+            migrated, changed = re.subn(r"entry\.dictionary_id IS NULL\s+OR public\.can_browse_dictionary", "public.can_browse_dictionary", migrated, count=1)
+            if changed != 1: raise RuntimeError("Null-source fault anchor changed")
+
         sql(migrated.rstrip().rstrip(';') + ';\n' + baseline.rstrip().rstrip(';') + ';\n'
             + "REVOKE ALL ON FUNCTION public.catalog_prototype_candidate(uuid,text,text) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.catalog_prototype_candidate(uuid,text,text) TO authenticated;")
     else:
@@ -273,6 +277,50 @@ VACUUM (ANALYZE) public.word_entries; ANALYZE public.word_list_items;""")
     print(json.dumps({'stage':'timing with reversed order, first/repeat per client','samples':samples}),flush=True)
     for order in [('get_available_word_lists','catalog_prototype_candidate'),('catalog_prototype_candidate','get_available_word_lists')]:
         print(json.dumps({'stage':'isolated backend CPU/wall',**cpu_pair(order)}),flush=True)
+    # Access-boundary cases deliberately run after the fixed wide timing fixture.
+    # Current management triggers reject new null-source entries. Simulate a
+    # legacy nullable row only in this disposable fixture, preserving read parity.
+    sql(f"""ALTER TABLE public.word_entries DISABLE TRIGGER USER;
+INSERT INTO public.word_entries(dictionary_id,language_code,headword,meaning_id,part_of_speech,raw,management_kind)
+VALUES(NULL,'en','catalog-null-source',20001,'noun','{{}}','user');
+ALTER TABLE public.word_entries ENABLE TRIGGER USER;
+INSERT INTO public.word_list_items(list_id,word_id)
+SELECT l.id,e.id FROM public.word_lists l CROSS JOIN public.word_entries e
+WHERE l.slug='catalog-small' AND e.headword='catalog-null-source';
+INSERT INTO public.user_word_list_items(list_id,word_id)
+SELECT l.id,e.id FROM public.user_word_lists l CROSS JOIN public.word_entries e
+WHERE l.user_id='{QA}' AND l.name='Fixture mixed' AND e.headword='catalog-null-source';
+UPDATE public.dictionaries SET publication_state='restricted' WHERE id='{HIDDEN}';""")
+    assert sql("SELECT dictionary_id IS NULL FROM public.word_entries WHERE headword='catalog-null-source';").strip() == 't', 'Null-source fixture was backfilled by a trigger'
+
+    cases = [
+        ('null source and restricted without entitlement', '', 44),
+        ('expired user entitlement', f"INSERT INTO public.dictionary_entitlements(dictionary_id,subject_type,subject_key,permission,starts_at,ends_at) VALUES('{HIDDEN}','user','{QA}','read',now()-interval '2 days',now()-interval '1 day');", 44),
+        ('future user entitlement', f"UPDATE public.dictionary_entitlements SET starts_at=now()+interval '1 day',ends_at=now()+interval '2 days' WHERE dictionary_id='{HIDDEN}';", 44),
+        ('active user entitlement', f"UPDATE public.dictionary_entitlements SET starts_at=now()-interval '1 day',ends_at=now()+interval '1 day' WHERE dictionary_id='{HIDDEN}';", 51),
+        ('tier grant cannot browse restricted source', f"DELETE FROM public.dictionary_entitlements WHERE dictionary_id='{HIDDEN}'; INSERT INTO public.dictionary_entitlements(dictionary_id,subject_type,subject_key,permission) VALUES('{HIDDEN}','tier','free','read');", 44),
+        ('active group entitlement', f"INSERT INTO public.dictionary_access_groups(key,name) VALUES('catalog-fixture-group','Fixture group'); INSERT INTO public.dictionary_access_group_members(group_id,user_id) SELECT id,'{QA}' FROM public.dictionary_access_groups WHERE key='catalog-fixture-group'; INSERT INTO public.dictionary_entitlements(dictionary_id,subject_type,subject_key,permission) VALUES('{HIDDEN}','group','catalog-fixture-group','read');", 51),
+        ('revoked group membership', f"DELETE FROM public.dictionary_access_group_members WHERE user_id='{QA}';", 44),
+    ]
+    for label, setup, available in cases:
+        if setup: sql(setup)
+        parity(label)
+        sql(f"""BEGIN READ ONLY; {claims()}
+DO $$ DECLARE fn text; kind text; v jsonb; row jsonb; expected_name text;
+BEGIN
+ FOREACH fn IN ARRAY ARRAY['get_available_word_lists','catalog_prototype_candidate'] LOOP
+  FOREACH kind IN ARRAY ARRAY['curated','user'] LOOP
+   EXECUTE format('SELECT public.%I($1,$2,$3)',fn) INTO v USING '{QA}'::uuid,'nl',kind;
+   expected_name:=CASE kind WHEN 'curated' THEN 'Fixture small' ELSE 'Fixture mixed' END;
+   SELECT x INTO STRICT row FROM jsonb_array_elements(v) x WHERE x->>'name'=expected_name;
+   IF (row#>>ARRAY[CASE kind WHEN 'curated' THEN 'word_list_items' ELSE 'user_word_list_items' END,'0','count'])::int <> 51
+   OR (row#>>ARRAY[CASE kind WHEN 'curated' THEN 'word_list_items' ELSE 'user_word_list_items' END,'0','available_count'])::int <> {available}
+   OR (row#>>ARRAY[CASE kind WHEN 'curated' THEN 'word_list_items' ELSE 'user_word_list_items' END,'0','unavailable_source_count'])::int <> {0 if available==51 else 1}
+   THEN RAISE EXCEPTION 'access boundary counts changed'; END IF;
+  END LOOP;
+ END LOOP;
+END $$; ROLLBACK;""")
+        print(json.dumps({'stage':label,'explicit_response_checks':4,'expected_total':51,'expected_available':available}),flush=True)
 finally:
     if created:
         sql(f'DROP DATABASE IF EXISTS "{NAME}"',target=BASE)
