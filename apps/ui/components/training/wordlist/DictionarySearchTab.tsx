@@ -21,7 +21,6 @@ import {
   fetchAvailableDictionarySources,
   fetchAvailableLearningLanguages,
   fetchDictionaryEntryById,
-  fetchWordsForList,
 } from "@/lib/trainingService";
 import type {
   AvailableDictionarySource,
@@ -38,7 +37,8 @@ import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { LibraryHeadwordGroupResultsList } from "./LibraryHeadwordGroupResultsList";
-import { useLibraryHeadwordGroupSearch } from "./useLibraryHeadwordGroupSearch";
+import { useLibrarySearchLifecycle } from "./useLibrarySearchLifecycle";
+import type { LibraryHeadwordGroupResult } from "./libraryHeadwordGroupResults";
 import {
   createDictionarySearchTabState,
   type DictionarySearchTabState,
@@ -71,8 +71,6 @@ type Props = {
     React.SetStateAction<DictionarySearchTabState>
   >;
 };
-
-const SEARCH_INPUT_DEBOUNCE_MS = 250;
 
 const languageLabel = (code: string) => {
   if (code === "nl") return "Nederlands";
@@ -165,12 +163,9 @@ export function DictionarySearchTab({
   const viewedListId = searchState.collectionId ? viewedList?.id ?? null : defaultViewedListId;
   const viewedListName = viewedList?.name ?? defaultViewedListName;
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
   const [availableLanguages, setAvailableLanguages] = useState<
     AvailableLearningLanguage[]
   >([]);
-  const [searchRefreshRevision, setSearchRefreshRevision] = useState(0);
   const [dictionarySources, setDictionarySources] = useState<
     AvailableDictionarySource[]
   >([]);
@@ -185,8 +180,6 @@ export function DictionarySearchTab({
   );
 
   const searchEnabled = open || preload;
-  const searchFreshRef = useRef<{ key: string; at: number } | null>(null);
-  const searchPendingRef = useRef<string | null>(null);
   const searchLanguage = languageCode ?? language;
   const material = useLibraryMaterialSelection(
     searchEnabled,
@@ -214,21 +207,86 @@ export function DictionarySearchTab({
   );
   const sourceLabel = selectedDictionary?.name ?? copy.allSources;
   const useViewedListFilter = applyListFilter && Boolean(viewedListId);
+  const selectedGroupResult = useMemo(
+    () =>
+      groupResults.find(
+        (result) => result.headwordGroupId === selectedHeadwordGroupId,
+      ) ?? null,
+    [groupResults, selectedHeadwordGroupId],
+  );
+  const projectGroupSelection = useCallback(
+    (
+      current: DictionarySearchTabState,
+      nextGroups: LibraryHeadwordGroupResult[],
+    ) => {
+      const selectedStillVisible = nextGroups.find(
+        (group) => group.headwordGroupId === current.selectedHeadwordGroupId,
+      );
+      const selected = selectedStillVisible ?? nextGroups[0] ?? null;
+      return {
+        selectedHeadwordGroupId:
+          current.detailSelection && !selectedStillVisible
+            ? current.selectedHeadwordGroupId
+            : (selected?.headwordGroupId ?? null),
+        detailSelection:
+          current.detailSelection ??
+          (selected
+            ? {
+                entryId: selected.selectedEntryId,
+                headword: selected.headword,
+                contentLanguageCode:
+                  selected.group.dictionary.sourceLanguageCode,
+              }
+            : null),
+      };
+    },
+    [],
+  );
   const {
-    beginSearch,
-    clearGroupSearch,
-    isCurrentSearch,
-    openGroupDetail,
-    runGroupSearch,
-    selectedGroupResult,
-  } = useLibraryHeadwordGroupSearch({
+    loading: searchLoading,
+    error: searchError,
+    hasCurrentResults,
+    runSearch,
+    refresh: refreshSearch,
+    invalidateFreshness,
+  } = useLibrarySearchLifecycle({
     state: searchState,
     setState: onSearchStateChange,
-    contentLanguageCode: searchLanguage,
-    translationLanguageCode: translationLang,
-    dictionaryId,
-    defaultFilters: materialEnabled ? EMPTY_LIBRARY_ENTRY_FILTERS : undefined,
+    open,
+    readiness: {
+      active: searchEnabled,
+      ready: searchMaterialReady,
+      materialEnabled,
+      defaultFilters: materialEnabled ? EMPTY_LIBRARY_ENTRY_FILTERS : undefined,
+    },
+    scope: {
+      userId,
+      contentLanguageCode: searchLanguage,
+      translationLanguageCode: translationLang,
+      dictionaryId,
+      query,
+      page,
+      collectionId: useViewedListFilter ? viewedListId : null,
+      collectionType: useViewedListFilter ? viewedList?.type ?? "curated" : null,
+      materialRevision: material?.revision,
+    },
+    copy,
+    projectGroupSelection,
   });
+  const openGroupDetail = useCallback(
+    (result: LibraryHeadwordGroupResult) => {
+      updateSearchState({
+        selectedHeadwordGroupId: result.headwordGroupId,
+        detailSelection: {
+          entryId: result.selectedEntryId,
+          headword: result.headword,
+          contentLanguageCode: result.group.dictionary.sourceLanguageCode,
+        },
+        mobileDetailOpen: true,
+      });
+    },
+    [updateSearchState],
+  );
   const detailEntryInCurrentResults = useMemo(
     () =>
       Boolean(
@@ -240,147 +298,6 @@ export function DictionarySearchTab({
           : selectedGroupResult),
       ),
     [detailSelection, selectedGroupResult, useViewedListFilter, wordResults],
-  );
-
-  const listPage = useViewedListFilter ? page : 1;
-  const searchReadKey = JSON.stringify([
-    userId,
-    searchLanguage,
-    translationLang,
-    dictionaryId,
-    query.trim(),
-    page,
-    useViewedListFilter,
-    useViewedListFilter ? viewedListId : null,
-    useViewedListFilter ? viewedList?.type : null,
-    searchState.entryFilters,
-    material?.revision,
-    searchRefreshRevision,
-  ]);
-  const runSearch = useCallback(
-    async (force = false) => {
-      if (!searchEnabled) return;
-      if (!useViewedListFilter && !searchMaterialReady) {
-        searchFreshRef.current = null;
-        searchPendingRef.current = null;
-      }
-      if (
-        !force &&
-        (searchPendingRef.current === searchReadKey ||
-          (searchFreshRef.current?.key === searchReadKey &&
-            Date.now() - searchFreshRef.current.at < 30000))
-      )
-        return;
-      const requestId = beginSearch();
-      if (!useViewedListFilter && !searchMaterialReady) {
-        updateSearchState({
-          wordResults: [],
-          groupResults: [],
-          wordTotal: 0,
-          groupHasMore: false,
-        });
-        setSearchLoading(false);
-        setSearchError(null);
-        return;
-      }
-      const hasQuery = Boolean(query.trim());
-      if (!hasQuery && !useViewedListFilter && !(materialEnabled)) {
-        updateSearchState({
-          wordResults: [],
-          groupResults: [],
-          groupPageCursors: [null],
-          groupHasMore: false,
-          selectedHeadwordGroupId: null,
-          wordTotal: 0,
-          detailSelection: null,
-          mobileDetailOpen: false,
-        });
-        return;
-      }
-      searchPendingRef.current = searchReadKey;
-      setSearchLoading(searchFreshRef.current?.key !== searchReadKey);
-      setSearchError(null);
-      try {
-        const trimmedQuery = query.trim() || undefined;
-        if (!useViewedListFilter) {
-          if (await runGroupSearch(trimmedQuery ?? "", requestId))
-            searchFreshRef.current = { key: searchReadKey, at: Date.now() };
-          return;
-        }
-
-        const result = await fetchWordsForList(
-          viewedListId!,
-          viewedList?.type ?? "curated",
-          {
-            query: trimmedQuery,
-            page: listPage,
-            pageSize,
-          },
-        );
-
-        if (!isCurrentSearch(requestId)) return;
-        searchFreshRef.current = { key: searchReadKey, at: Date.now() };
-        clearGroupSearch();
-        onSearchStateChange((current) => ({
-          ...current,
-          wordResults: result.items,
-          wordTotal: result.total,
-          detailSelection:
-            current.detailSelection ??
-            (result.items[0]
-              ? {
-                  entryId: result.items[0].id,
-                  headword: result.items[0].headword,
-                  contentLanguageCode:
-                    result.items[0].language_code ?? searchLanguage,
-                }
-              : null),
-        }));
-      } catch (cause) {
-        if (
-          isCurrentSearch(requestId) &&
-          !(
-            cause &&
-            typeof cause === "object" &&
-            "name" in cause &&
-            cause.name === "AbortError"
-          )
-        ) {
-          setSearchError(
-            cause instanceof Error &&
-              cause.message === "platform_request_timeout"
-              ? copy.searchTimeout
-              : copy.searchError,
-          );
-        }
-      } finally {
-        if (isCurrentSearch(requestId)) {
-          searchPendingRef.current = null;
-          setSearchLoading(false);
-        }
-      }
-    },
-    [
-      searchEnabled,
-      searchReadKey,
-      materialEnabled,
-      beginSearch,
-      clearGroupSearch,
-      isCurrentSearch,
-      onSearchStateChange,
-      listPage,
-      pageSize,
-      query,
-      updateSearchState,
-      useViewedListFilter,
-      runGroupSearch,
-      searchLanguage,
-      searchMaterialReady,
-      copy.searchTimeout,
-      copy.searchError,
-      viewedList?.type,
-      viewedListId,
-    ],
   );
 
   const openEntryDetail = useCallback(
@@ -503,25 +420,6 @@ export function DictionarySearchTab({
     updateSearchState,
   ]);
 
-  const lastSearchedQueryRef = useRef<string | null>(null);
-  useEffect(() => {
-    const trimmed = query.trim();
-    const typed =
-      lastSearchedQueryRef.current !== null &&
-      lastSearchedQueryRef.current !== trimmed;
-    const run = () => {
-      lastSearchedQueryRef.current = trimmed;
-      void runSearch();
-    };
-    // Typing debounces; restored queries, pagination, filters and clearing run at once.
-    if (!typed || !trimmed) {
-      run();
-      return;
-    }
-    const timer = window.setTimeout(run, SEARCH_INPUT_DEBOUNCE_MS);
-    return () => window.clearTimeout(timer);
-  }, [query, runSearch, open]);
-
   useEffect(() => {
     if (!autoFocusQuery) return;
     const raf = window.requestAnimationFrame(() => {
@@ -547,7 +445,6 @@ export function DictionarySearchTab({
     ? viewedListName
     : sourceLabel;
   const groupedSearchActive = !useViewedListFilter;
-  const hasCurrentResults = searchFreshRef.current?.key === searchReadKey;
   const resultCountLabel =
     query.trim() || useViewedListFilter || (materialEnabled)
       ? formatUiMessage(copy.pageScope, {
@@ -641,7 +538,7 @@ export function DictionarySearchTab({
             updateSearchState({languageCode:draft.languageCode,dictionaryId:draft.dictionaryId,applyListFilter:Boolean(draft.applyListFilter),collectionId:draft.collectionId ?? null,
               entryFilters:{parts:[...draft.parts].sort(),article:draft.article},page:1,groupPageCursors:[null],groupHasMore:false,
               groupTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});
-            setSearchRefreshRevision((revision) => revision + 1);
+            refreshSearch();
             setFiltersOpen(false);
           }}/>}
 
@@ -935,7 +832,7 @@ export function DictionarySearchTab({
                   userId={userId}
                   userLists={userLists}
                   onListsUpdated={async () => {
-                    searchFreshRef.current = null;
+                    invalidateFreshness();
                     await reloadLists();
                     if (useViewedListFilter || query.trim() || (materialEnabled)) {
                       void runSearch(true);
@@ -969,7 +866,7 @@ export function DictionarySearchTab({
           interfaceLanguage={interfaceLanguage}
           userLists={userLists}
           onListsUpdated={async () => {
-            searchFreshRef.current = null;
+            invalidateFreshness();
             await reloadLists();
             if (useViewedListFilter || query.trim() || (materialEnabled)) {
               void runSearch(true);
