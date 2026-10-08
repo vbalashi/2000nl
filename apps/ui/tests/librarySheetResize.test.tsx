@@ -13,6 +13,7 @@ function Harness({ id = "one", onDismiss }: { id?: string;onDismiss?:()=>void })
 describe("Library sheet resizing", () => {
   test("bounds include the bottom navigation and safe area and never invert on tiny viewports", () => {
     expect(sheetBounds(900, 106)).toEqual({ min: 240, max: 786 });
+    expect(sheetBounds(900, 106, 32)).toEqual({ min: 240, max: 754 });
     expect(sheetBounds(200, 72)).toEqual({ min: 50.4, max: 120 });
     expect(clampSheetHeight(999, sheetBounds(900, 106))).toBe(786);
     expect(clampSheetHeight(-20, sheetBounds(900, 106))).toBe(240);

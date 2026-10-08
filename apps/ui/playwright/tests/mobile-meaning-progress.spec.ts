@@ -117,6 +117,14 @@ test("@pilot shared stationary headers drag, body scrolls, pointer focus has no 
   await handle.focus();
   await expect(handle).toHaveCSS("outline-style", "solid");
   // Expand enough to expose the meaning's existing status chip.
+  await sheet.evaluate((el) =>
+    (el as HTMLElement).style.setProperty("--sheet-top-inset", "32px"),
+  );
+  await handle.press("End");
+  expect((await sheet.boundingBox())!.y).toBeGreaterThanOrEqual(40);
+  await sheet.evaluate((el) =>
+    (el as HTMLElement).style.removeProperty("--sheet-top-inset"),
+  );
   await handle.press("End");
   await sheet
     .getByRole("button", { name: /Reviewing|Herhalen/, exact: true })
@@ -137,6 +145,14 @@ test("@pilot shared stationary headers drag, body scrolls, pointer focus has no 
   await drag(page, title, 100);
   await expect.poll(dialogHeight).toBeGreaterThan(initial + 80);
   await page.mouse.up();
+  await dialog.evaluate((el) =>
+    (el as HTMLElement).style.setProperty("--sheet-top-inset", "32px"),
+  );
+  await resize.press("End");
+  expect((await dialog.boundingBox())!.y).toBeGreaterThanOrEqual(40);
+  await dialog.evaluate((el) =>
+    (el as HTMLElement).style.removeProperty("--sheet-top-inset"),
+  );
   await resize.press("Home");
   await resize.click();
   await expect.poll(dialogHeight).toBeCloseTo(initial, 0);

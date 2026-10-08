@@ -70,3 +70,5 @@ footer is absent. Quiet actions use 44px touch targets. The card dock grows to i
 content instead of holding a fixed height that makes wrapped/touch actions extend
 below the viewport. Root viewport-fit=cover makes the existing safe-area contract
 available to the AppFrame, navigation, sheets and Training in iOS standalone mode.
+Immersive Training also reserves the top inset, and both sheet controllers subtract
+the top safe area from their maximum height so the handle stays below the notch.

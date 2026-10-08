@@ -1,7 +1,11 @@
 import React from "react";
 
-export function sheetBounds(viewportHeight: number, bottom: number) {
-  const max = Math.max(0, viewportHeight - bottom - 8);
+export function sheetBounds(
+  viewportHeight: number,
+  bottom: number,
+  topInset = 0,
+) {
+  const max = Math.max(0, viewportHeight - bottom - topInset - 8);
   return { min: Math.min(240, max * 0.42), max };
 }
 export function clampSheetHeight(
@@ -35,6 +39,13 @@ export function useResizableSheet(
         ref.current
           ? parseFloat(getComputedStyle(ref.current).bottom) || 0
           : 72,
+        ref.current
+          ? parseFloat(
+              getComputedStyle(ref.current).getPropertyValue(
+                "--sheet-top-inset",
+              ),
+            ) || 0
+          : 0,
       ),
     [],
   );
@@ -124,8 +135,7 @@ export function useResizableSheet(
         );
         setHeight(current.currentHeight);
       },
-      onPointerUp: (event: React.PointerEvent<HTMLElement>) =>
-        finish(event),
+      onPointerUp: (event: React.PointerEvent<HTMLElement>) => finish(event),
       onPointerCancel: (event: React.PointerEvent<HTMLElement>) =>
         finish(event, true),
       onLostPointerCapture: (event: React.PointerEvent<HTMLElement>) =>

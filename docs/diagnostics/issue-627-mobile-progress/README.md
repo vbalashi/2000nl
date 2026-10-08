@@ -19,7 +19,8 @@ Validation:
 - 114 focused UI tests, including shared-header drag/control isolation and menus.
 - 8 new Chromium/WebKit checks: Library/progress header drag, independent scrolling,
   headword typography, pointer/keyboard focus, EN/NL/RU menu descriptions, 320px
-  touch targets and viewport fit.
+  touch targets and viewport fit. Injected 32px top inset confirms both shared
+  sheet bounds keep the handle below the safe area.
 - 9 existing browser checks: Library gesture edges, approved Training presentation,
   exclusion menu on front/back cards and keyboard dismissal.
 - Typecheck, lint, production build, practice-style guard passed. Existing lint

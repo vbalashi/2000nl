@@ -32,6 +32,7 @@ export function SheetDragRegion({
       {...gestures}
       className={`${className ?? ""} ${controller ? s.dragRegion : ""}`}
       onPointerDown={(event) => {
+        if (window.matchMedia("(min-width: 701px)").matches) return;
         if (
           (event.target as Element).closest(
             "button,a,input,select,textarea,summary,[role=button]",
