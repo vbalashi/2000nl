@@ -57,3 +57,19 @@ Private complete outputs/checksums live in `.worktrees/.reference-sync-backup-20
 The215–220 migration sequence belongs to PR625 (issue623). Integrate that reviewed release first; the catalog optimization must be a separate forward change after220, not reuse215 or roll the local database back. No migration number is reserved or rollout authorized by this diagnostic PR.
 
 A dedicated17.6 container validated the complete candidate on the623schema selection declaring DB220:60JSON+4auth+5contract checks passed. Initial PR625CI at04b0bb7a failed migration bootstrap coverage for219/220, not styles. The owning checkout was updated during this session; final test reported complete bootstrap coverage (no missing forward files). The harness can read an explicitly selected schema checkout and apply checksum-verified manifest files absent from bootstrap only within its disposable fixture; this does not repair source CI or alter primary DB. Full CI/review approval for625 remains a prerequisite. Test containers removed.
+
+## Migration draft after release #625
+
+Reference main synchronized at `04a4b3dc` (release #625 plus documentation #626).
+Merged that base into the #413 checkout. Migration 221 is an unregistered draft
+rebuilt from the latest catalog definition in migration 203. The harness now
+accepts `CATALOG_PROTOTYPE_VALIDATE_MIGRATION=1`: it preserves the original
+function, applies the actual migration in a disposable dedicated server, clones
+the migrated function, and restores the baseline for exact comparisons.
+
+PostgreSQL 17.6: all 60 JSON comparisons, four authentication checks and five
+independent response checks passed. Eight reversed-order measurements: baseline
+21.016–30.787 ms, migrated 11.624–21.982 ms; repeated shared hits 19423 versus
+5068. No shared reads or temporary spill. This does not establish removal of
+production outliers. Migration is not registered in the deploy manifest or
+bootstrap yet: postflight, release integration and review remain required.

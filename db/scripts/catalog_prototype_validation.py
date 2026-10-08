@@ -174,7 +174,18 @@ try:
             sql('', file=file)
             missing.append(entry['migrationId'])
     print(json.dumps({'stage':'selected schema','contract':manifest['contractId'],'explicit_fixture_forward_migrations':missing}),flush=True)
-    sql(candidate_definition() + "\nREVOKE ALL ON FUNCTION public.catalog_prototype_candidate(uuid,text,text) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.catalog_prototype_candidate(uuid,text,text) TO authenticated;")
+    migration = os.environ.get("CATALOG_PROTOTYPE_VALIDATE_MIGRATION")
+    if migration:
+        # Preserve the real baseline, then test the shipped replacement rather than
+        # independently recreating its query in the test harness.
+        baseline = sql("SELECT pg_get_functiondef('public.get_available_word_lists(uuid,text,text)'::regprocedure);")
+        sql("", file="db/migrations/221_collection_catalog_single_entry_scan.sql")
+        migrated = sql("SELECT pg_get_functiondef('public.get_available_word_lists(uuid,text,text)'::regprocedure);")
+        migrated = migrated.replace("FUNCTION public.get_available_word_lists(", "FUNCTION public.catalog_prototype_candidate(", 1)
+        sql(migrated.rstrip().rstrip(';') + ';\n' + baseline.rstrip().rstrip(';') + ';\n'
+            + "REVOKE ALL ON FUNCTION public.catalog_prototype_candidate(uuid,text,text) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.catalog_prototype_candidate(uuid,text,text) TO authenticated;")
+    else:
+        sql(candidate_definition() + "\nREVOKE ALL ON FUNCTION public.catalog_prototype_candidate(uuid,text,text) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.catalog_prototype_candidate(uuid,text,text) TO authenticated;")
     sql(f"""INSERT INTO public.languages(code,name) VALUES('en','English') ON CONFLICT DO NOTHING;
 INSERT INTO auth.users(id,email) VALUES('{QA}','test@2000nl.test'),('{OTHER}','other@fixture.invalid');
 INSERT INTO public.dictionaries(id,language_code,slug,name,kind,visibility,minimum_subscription_tier)
