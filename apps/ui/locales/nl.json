@@ -670,7 +670,7 @@
       "excludedResult": "Uitgesloten"
     },
     "cardActions": {
-      "knownHelp": "Pauzeer deze richting omdat je het antwoord al kent. De andere richting blijft beschikbaar.",
+      "knownHelp": "Je kent dit antwoord al. Pauzeer herhalingen alleen in deze richting.",
       "title": "Kaartacties",
       "exclude": "Uitsluiten",
       "known": "Als bekend markeren",
