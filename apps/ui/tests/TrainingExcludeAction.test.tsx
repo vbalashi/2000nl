@@ -35,8 +35,10 @@ test("without a known capability exclusion remains explicit", () => {
   const exclude = vi.fn();
   render(<TrainingExcludeAction language="en" disabled={false} onClick={exclude} />);
   fireEvent.click(screen.getByRole("button"));
+  expect(exclude).not.toHaveBeenCalled();
+  expect(screen.getByRole("menu")).toBeVisible();
+  fireEvent.click(screen.getByRole("menuitem", { name: "Exclude" }));
   expect(exclude).toHaveBeenCalledOnce();
-  expect(screen.queryByRole("menu")).not.toBeInTheDocument();
 });
 
 test("disabled controls preserve their owner", () => {

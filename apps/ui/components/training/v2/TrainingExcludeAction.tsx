@@ -32,7 +32,6 @@ export function TrainingExcludeAction({
     setAnchor(null);
     trigger.current?.focus({ preventScroll: true });
   }, []);
-  const hasMenu = Boolean(knownAction);
   return (<>
 
     <button
@@ -40,25 +39,25 @@ export function TrainingExcludeAction({
       type="button"
       className={`${senseCardQuietAction()} min-w-0 max-w-full whitespace-normal`}
       disabled={disabled}
-      onClick={event => hasMenu ? anchor ? close() : setAnchor(event.currentTarget) : onClick()}
-      aria-haspopup={hasMenu ? "menu" : undefined}
-      aria-expanded={hasMenu ? Boolean(anchor) : undefined}
+      onClick={event => anchor ? close() : setAnchor(event.currentTarget)}
+      aria-haspopup="menu"
+      aria-expanded={Boolean(anchor)}
       title={t.help}
       aria-label={t.help}
     >
       <EyeOff size={16} className="shrink-0" aria-hidden="true" />
       <span className="min-w-0 break-words text-left">{t.label}</span>
-      {hasMenu && (anchor
+      {(anchor
         ? <ChevronUp size={14} className="shrink-0" aria-hidden="true" />
         : <ChevronDown size={14} className="shrink-0" aria-hidden="true" />)}
     </button>
-    {anchor && hasMenu && knownAction ? <ActionMenu
+    {anchor ? <ActionMenu
       anchor={anchor} language={language} title={getUiMessages(language).cardActions.title}
       onClose={close} items={[
         { id: "exclude", label: t.label, description: t.help, icon: <EyeOff size={15} aria-hidden="true" />,
           disabled, onSelect: () => { close(); onClick(); } },
-        { id: "known", label: knownAction.label, description: getUiMessages(language).cardActions.knownHelp, icon: <Check size={15} aria-hidden="true" />,
-          disabled, onSelect: () => { close(); knownAction.onClick(); } },
+        ...(knownAction ? [{ id: "known", label: knownAction.label, description: getUiMessages(language).cardActions.knownHelp, icon: <Check size={15} aria-hidden="true" />,
+          disabled, onSelect: () => { close(); knownAction.onClick(); } }] : []),
       ]} /> : null}
     </>);
 

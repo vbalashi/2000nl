@@ -98,7 +98,7 @@ export function SenseCardHeadwordLockup({
           <div className="flex min-w-0 items-center font-sense-serif">
             <div
               ref={fit.row}
-              className={`flex w-full min-w-0 items-baseline ${training ? `${trainingWordSize} ${variant === "article" ? "gap-[0.22em]" : "gap-[0.22rem]"}` : "gap-[0.22em]"} ${
+              className={`flex w-full min-w-0 items-baseline ${variant === "training-face" ? "justify-center text-center" : ""} ${training ? `${trainingWordSize} ${variant === "article" ? "gap-[0.22em]" : "gap-[0.22rem]"}` : "gap-[0.22em]"} ${
                 longHeadword ? "flex-1" : ""
               }`}
             >

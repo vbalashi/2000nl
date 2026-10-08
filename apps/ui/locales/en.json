@@ -625,7 +625,7 @@
       "exclusion": {
         "label": "Exclude",
         "help": "Exclude from training in both directions",
-        "done": "Pair excluded from training",
+        "done": "Excluded from training in both directions",
         "undo": "Undo",
         "failed": "Could not complete the action. Try again.",
         "dismiss": "Dismiss",
