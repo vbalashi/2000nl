@@ -1744,8 +1744,15 @@ test("discarding an uncommitted list draft preserves the active stats request", 
   useTwoListScope();
   fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
   const requests: Array<{ scope: unknown; resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void }> = [];
+  const priorMatchMedia = window.matchMedia;
   fetchStats.mockImplementation((_userId: string, _modes: string[], scope: unknown) => new Promise((resolve) => { requests.push({ scope, resolve }); }));
   try {
+    window.matchMedia = ((query: string) => {
+      const result = priorMatchMedia(query);
+      return query === "(prefers-reduced-motion: reduce)"
+        ? { ...result, matches: true }
+        : result;
+    }) as typeof window.matchMedia;
     render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
     await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
     await waitFor(() => expect(requests).toHaveLength(1));
@@ -1760,11 +1767,15 @@ test("discarding an uncommitted list draft preserves the active stats request", 
     await waitFor(() => expect(requests).toHaveLength(1));
     expect(requests[0]!.scope).toEqual(expect.objectContaining({ listId: activeList.id, listType: activeList.type }));
   } finally {
-    await act(async () => {
-      for (const request of requests) request.resolve(defaultTrainingStats);
-    });
-    restoreDefaultListScope();
-    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+    try {
+      await act(async () => {
+        for (const request of requests) request.resolve(defaultTrainingStats);
+      });
+    } finally {
+      restoreDefaultListScope();
+      fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+      window.matchMedia = priorMatchMedia;
+    }
   }
 });
 test("late stats for a previous list cannot replace visible no-chrome stats", async () => {
