@@ -27,9 +27,11 @@ for (let sample = 0; sample < 10; sample += 1) {
     });
     await page.setViewportSize({width:390,height:844});
     await setupAuthenticatedTrainingAttributionPage(page, 0, {visualProfile:"answer"});
-    await expect.poll(()=>reads).toBe(3);
+    await page.waitForTimeout(900);
+    expect(reads).toBe(0);
     const tabs=page.locator('[data-app-mobile-navigation="tabs"]');
     await tabs.getByRole("button").nth(1).click();
+    await expect.poll(()=>reads).toBe(3);
     await expect(page.getByTestId("library-headword-group-fixture-group-0")).toBeVisible();
     await expect(page.locator('[data-testid^="library-headword-group-fixture-group-"]')).toHaveCount(50);
     await expect(page.getByTestId("library-workspace").getByRole("alert")).toHaveCount(0);
@@ -40,6 +42,7 @@ for (let sample = 0; sample < 10; sample += 1) {
         await tabs.getByRole("button").nth(0).click();
         const started=Date.now();
         await tabs.getByRole("button").nth(1).click();
+    await expect.poll(()=>reads).toBe(3);
         await expect(page.getByTestId("library-headword-group-fixture-group-0")).toBeVisible();
         timings.push(Date.now()-started);
         expect(reads).toBe(3);

@@ -143,3 +143,39 @@ Characterize navigation/state behavior before changing gates. Keep lookup and
 session selection semantics intact. If deferral improves a local stressed
 scenario, request a separately bounded before/after QA capture; one observed
 Start alone is not a stable performance benchmark or proof of resource cause.
+
+## Bounded candidate fix
+
+The source audit confirms an unconditional750ms preload in LibraryDestination.
+The component now waits for its first visible opening before mounting the
+catalog/search child, keeps it mounted on same-account navigation, and resets
+its local state through an owner key on account change. This avoids speculative
+first-entry Library work, not every possible later hidden catalog read.
+
+Ordinary Start now refreshes stats only after its first loadWord settles,
+including failed and thrown load paths. Stats remains asynchronous and eventual;
+this does not defer prerequisites or change authoritative session creation.
+TrainingTodaySetup disables its recipe-availability read while existing
+startPending is true. Its existing hook aborts its client fetch on disable and
+resumes when enabled. Client abort does not prove managed SQL execution stopped.
+
+Regression tests first failed for hidden preload, account-switch retention,
+stats before first-card settlement, and availability while Start is pending;
+they pass after the change. Local targeted suites cover failure and eventual
+refresh as well as success. Related browser scenarios passed15/15: ten initial
+Library recovery runs now assert0 search requests before first opening and
+retain50 rows after recovery; pagination, Training overview/early/empty/retry,
+and startup continuity also pass.
+
+The first browser attempts were blocked by test authentication configuration:
+real-local wrapper uses127.0.0.1 while fixtures install a localhost Supabase
+storage key. After running the standard mocked Playwright server with its
+localhost/dummy credentials on temporary3101, all15 passed. The temporary
+server was stopped; canonical3100 was not changed.
+
+No candidate change has been deployed, and no after-fix production speedup is
+claimed. The confirmed benefit so far is absence/deferral of unnecessary reads
+in characterized scenarios. #413 remains open for database first-use/tail
+attribution and an independently approved before/after production measurement.
+
+Final local validation:167/167 component/unit tests across TrainingScreen, Library lifecycle/grouping, pilot commit and overview setup;15/15 browser scenarios; UI typecheck and lint pass with the pre-existing audio-hook dependency warning only. No candidate production deployment or after-fix capture was performed.
