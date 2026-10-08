@@ -737,3 +737,24 @@ Postflight 213 verifies the additive column, false default and retained RLS.
 ## Audio swipe preference (migration 214)
 
 Migration 214 adds the account-wide opt-in `training_audio_swipe_enabled` boolean, default false, to existing `user_settings`. RLS remains unchanged. The UI uses the existing word audio callback for a short upward stroke; normal text scrolling takes precedence. The contract appends its immutable checksum and exact structural/RLS postflight.
+
+## Exact meaning enrollment and progress (215–220, #623)
+
+Migration 215 skips a Known sibling during Learn and preserves rated scheduler
+state and the reference clock. Migration 216 retains meaning familiarity through
+Known history without synthetic reviews. Migration 217 narrows existing word
+exclusions to their recorded initiating Entry and preserves immutable receipts.
+Migration 218 adds authenticated current-progress reads, a batch lookup, and a
+service-principal-only atomic resume with revision checking and retry receipts.
+Migration 219 takes the shared meaning lock before directional state rows in the
+existing verified-action implementation.
+
+Migration 220 replaces per-entry progress calls with a bounded set-based batch
+(up to 1,250 meanings) and gives single and batch reads the same projection.
+
+The contract advances to 220. Postflight checks enrollment, familiarity trigger,
+exact exclusion index/predicate, read/resume grants, receipt RLS and serialization.
+After rollout, verify exact health commit/contract, one Learn opening both
+ungraded directions, directional Known with a usable sibling, exact meaning
+exclusion/resume, and History navigation to the Library Entry. UI progress does
+not fabricate grades or include idiom exercise statistics.

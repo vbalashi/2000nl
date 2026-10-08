@@ -1,3 +1,4 @@
+import {getUiMessages} from "@/lib/uiMessages";
 import React from "react";
 import { financeEntry, furnitureEntry } from "./platformV2LibraryFixture";
 import { supabase } from "@/lib/supabaseClient";
@@ -3327,7 +3328,7 @@ test.each([false, true])("Library inline grade preserves scope and selection (fa
     await waitFor(() => expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
       actionId: "review-card", reviewResult: "success", target: expect.objectContaining({ entryId: dictionaryBoom.id, cardTypeId: "word-to-definition" }),
     })));
-    if (failed) expect(await screen.findByText("library_grade_failed")).toBeVisible();
+    if (failed) expect(await screen.findByText(getUiMessages("en").trainingSession.exclusion.failed)).toBeVisible();
     expect(screen.getByRole("textbox", { name: "Search words" })).toBeVisible();
     expect(screen.queryByRole("button", { name: /Train next/i })).not.toBeInTheDocument();
     expect(fetchTrainingWordByLookup).not.toHaveBeenCalled();

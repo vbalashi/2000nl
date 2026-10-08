@@ -1,5 +1,8 @@
 "use client";
-import { LibraryLearningSummary } from "./LibraryLearningSummary";
+import {useMeaningLearningActions} from './useMeaningLearningActions';
+import {MeaningLearningProgress} from '@/components/practice/MeaningLearningProgress';
+import {meaningLearningStatus} from '../../../../../packages/shared/types/meaningLearningProgress';
+import {getUiMessages} from '@/lib/uiMessages';
 import { useWordDetailsClose } from "../WordDetailsHeader";
 
 import React from "react";
@@ -40,6 +43,7 @@ import {
 } from "./librarySenseCardModel";
 
 type Props = {
+  userId?: string;
   revealActiveMeaning?: boolean;
   model: LibrarySenseCardGroupModel;
   interfaceLanguage: OnboardingLanguage;
@@ -59,7 +63,8 @@ type Props = {
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
   onReport?: (meaning: LibrarySenseCardModel) => void;
-  onExclude?: () => void;
+  onExclude?: (entryId:string) => void;
+  onProgressChanged?: () => void | Promise<void>;
   exclusionDisabled?: boolean;
   reportableEntryIds?: ReadonlySet<string>;
   onFollowCrossReference?: (target: {
@@ -76,6 +81,7 @@ type Props = {
 const DETAILS_SCROLL_FADE_HEIGHT = 44;
 
 export function LibrarySenseCardGroup({
+  userId,
   revealActiveMeaning = true,
   model,
   interfaceLanguage,
@@ -96,6 +102,7 @@ export function LibrarySenseCardGroup({
   onTrainNext,
   onReport,
   onExclude,
+  onProgressChanged,
   exclusionDisabled,
   reportableEntryIds,
   onFollowCrossReference,
@@ -411,7 +418,7 @@ export function LibrarySenseCardGroup({
                   onOpenCollections={onOpenCollections}
                   onTrainNext={onTrainNext}
                   onReport={onReport}
-                  onExclude={onExclude}
+                  userId={userId} onExclude={onExclude} onProgressChanged={onProgressChanged}
                   exclusionDisabled={exclusionDisabled}
                   reportableEntryIds={reportableEntryIds}
                   onAction={(capability) => {
@@ -432,6 +439,7 @@ export function LibrarySenseCardGroup({
 
 function MeaningCard({
   meaning,
+  userId,
   showSenseForms,
   formPartOfSpeech,
   headword,
@@ -450,11 +458,13 @@ function MeaningCard({
   onTrainNext,
   onReport,
   onExclude,
+  onProgressChanged,
   exclusionDisabled,
   reportableEntryIds,
   onAction,
 }: {
   meaning: LibrarySenseCardModel;
+  userId?:string;
   headword:string;
   showSenseForms?:boolean;
   formPartOfSpeech?:string;
@@ -472,7 +482,8 @@ function MeaningCard({
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
   onReport?: (meaning: LibrarySenseCardModel) => void;
-  onExclude?: () => void;
+  onExclude?: (entryId:string) => void;
+  onProgressChanged?: () => void | Promise<void>;
   exclusionDisabled?: boolean;
   reportableEntryIds?: ReadonlySet<string>;
   onAction: (capability: LibraryMutationCapability) => void;
@@ -490,7 +501,10 @@ function MeaningCard({
   const formsId=React.useId();
   const senseForms=wordFormDetail(meaning.wordDetails,formPartOfSpeech??" ");
 
-  const exposure = meaning.undoKnown ? (
+  const [progressOpen,setProgressOpen]=React.useState(false);
+  const actions=useMeaningLearningActions(meaning.entryId,userId,meaning.meaningProgress,onProgressChanged);
+  const statusLabel=meaning.meaningProgress ? getUiMessages(interfaceLanguage).learningProgress[meaningLearningStatus(meaning.meaningProgress)] : null;
+  const exposure = statusLabel ? <LearningStateBadge label={statusLabel} tone="light"/> : meaning.undoKnown ? (
     <span className={surfaces.known}>
       {t("senseCard.known.marked")}
     </span>
@@ -519,7 +533,8 @@ function MeaningCard({
         state.expanded ? "pb-3 pt-4" : "py-2.5"
       }`}
     >
-      {<span className={surfaces.frameExposure}>{exposure}</span>}
+      <span className={surfaces.frameExposure}><button type="button" className={surfaces.statusAction} aria-haspopup="dialog" onClick={event=>{event.stopPropagation();setProgressOpen(true);}}>{exposure}</button></span>
+      {progressOpen&&<MeaningLearningProgress entryId={meaning.entryId} language={interfaceLanguage} onClose={()=>setProgressOpen(false)} onChanged={onProgressChanged}/>}
       {meaning.displayOrdinal != null ? (
         <span className={`absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center ${surfaces.ordinal}`}>
           {meaning.displayOrdinal}
@@ -582,16 +597,18 @@ function MeaningCard({
             {<ProductionArticleReading><ArticleSenseRelations relation={lexicalRelationDetail(meaning.wordDetails)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage}/>{showSenseForms&&senseForms&&<><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="summary" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="body" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></>}<ArticleMeaningDetails definition={meaning.definition} details={meaning.details} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible}/></ProductionArticleReading>}
 
 
-            <LibraryLearningSummary meaning={meaning} language={interfaceLanguage} />
             {(
-              <LibraryMeaningActions meaning={meaning} language={interfaceLanguage} busy={busy} collectionCount={collectionCount}
+              <LibraryMeaningActions meaning={meaning} language={interfaceLanguage} busy={busy||actions.busy} collectionCount={collectionCount}
                 onAction={onAction}
-                onExclude={onExclude} exclusionDisabled={exclusionDisabled}
+                onProgress={()=>setProgressOpen(true)}
+                onResume={userId ? ()=>void actions.resume() : undefined}
+                onExclude={onExclude ? ()=>onExclude(meaning.entryId) : userId ? ()=>void actions.exclude() : undefined} exclusionDisabled={exclusionDisabled||Boolean(meaning.meaningProgress?.exclusionId)}
                 onCollections={onOpenCollections ? () => { onActiveMeaningChange?.(meaning.entryId); onOpenCollections(meaning); } : undefined}
                 onTrainNext={onTrainNext ? () => { onActiveMeaningChange?.(meaning.entryId); onTrainNext(meaning); } : undefined}
               onReport={onReport && reportableEntryIds?.has(meaning.entryId) ? () => onReport(meaning) : undefined}
               />
             )}
+            {actions.failed&&<p role="alert">{getUiMessages(interfaceLanguage).trainingSession.exclusion.failed}</p>}
             {translationState ? (
               <div
                 role={translationState === "failed" ? "alert" : "status"}

@@ -18,3 +18,5 @@
 .result [data-rating=Easy] { color: var(--practice-info); }
 .result [data-rating=Excluded] { color: var(--practice-text-muted); }
 @media(max-width:700px) { .history,.state { padding: 0 18px 24px; } }
+
+.wordLink{padding:0;background:transparent;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:var(--practice-border);text-underline-offset:3px}.wordLink:hover{text-decoration-color:currentColor}.wordLink:focus-visible{outline:2px solid var(--practice-focus);outline-offset:3px}

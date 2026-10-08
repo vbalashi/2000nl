@@ -78,7 +78,7 @@ test.each(['en','nl','ru'] as const)('Library word exclusion menu is read-only u
  const card=screen.getByTestId('library-sense-card-'+selected.entryId);
  fireEvent.click(within(card).getByRole('button',{name:getUiMessages(language).library.moreActions}));
  expect(exclude).not.toHaveBeenCalled();expect(action).not.toHaveBeenCalled();expect(report).not.toHaveBeenCalled();
- const menu=screen.getByRole('menu');expect(within(menu).getAllByRole('menuitem')).toHaveLength(3);
+ const menu=screen.getByRole('menu');expect(within(menu).getAllByRole('menuitem')).toHaveLength(4);
  fireEvent.click(within(menu).getByRole('menuitem',{name:getUiMessages(language).trainingSession.exclusion.headwordLabel}));
  expect(exclude).toHaveBeenCalledTimes(1);expect(action).not.toHaveBeenCalled();expect(report).not.toHaveBeenCalled();
  expect(screen.queryByRole('menu')).not.toBeInTheDocument();expect(card).toHaveAttribute('data-expanded','true');

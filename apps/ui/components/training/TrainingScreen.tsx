@@ -460,6 +460,7 @@ function TrainingScreenContent({
   } | null>(null);
   const [detailInitialGroup, setDetailInitialGroup] =
     useState<PlatformHeadwordGroupV2 | null>(null);
+  const [historyMeaningIntent,setHistoryMeaningIntent]=React.useState<import('@/components/navigation/LibraryDestination').LibraryMeaningIntent|null>(null);
   const [statisticsMaterialIntent, setStatisticsMaterialIntent] =
     useState<TrainingMaterialIntent | null>(null);
   const [stats, setStats] = useState<DetailedStats>({
@@ -2800,6 +2801,7 @@ function TrainingScreenContent({
         />
       )}
       <LibraryDestination
+        meaningIntent={historyMeaningIntent}
         open={visibleDestination === "library"}
         userId={user.id}
         language={currentTrainingLanguage}
@@ -2832,6 +2834,7 @@ function TrainingScreenContent({
         onHistory={openTrainingHistory}
       />
       <TrainingHistoryDestination
+        onOpenMeaning={item=>{setHistoryMeaningIntent({ownerId:user.id,key:crypto.randomUUID(),entryId:item.entryId,headword:item.headword,contentLanguageCode:currentTrainingLanguage});onRequestDestination("library");}}
         open={destination === TRAINING_HISTORY_DESTINATION}
         userId={user.id}
         interfaceLanguage={onboardingLang}

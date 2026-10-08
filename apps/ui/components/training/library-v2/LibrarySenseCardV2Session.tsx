@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { useTrainingExclusion } from "../v2/useTrainingExclusion";
 import { TrainingExclusionUndoNotice } from "../v2/TrainingExclusionUndoNotice";
 import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -405,7 +404,10 @@ function SenseCardV2Session({
         if (unverifiedActionIdentity.current === expectedDetailIdentity) {
           setAcceptedRefreshFailed(true);
           setLoading(false);
-        } else setError(cause instanceof Error ? cause.message : "action_failed");
+        } else if(cause instanceof Error && ["state_conflict","card_is_known","platform_action_not_available"].includes(cause.message)){
+          await load(undefined,undefined,expectedDetailIdentity);
+          if(isCurrentAction())setError(platformV2Message(interfaceLanguage,"senseCard.training.stateRefreshed"));
+        }else setError(getUiMessages(interfaceLanguage).trainingSession.exclusion.failed);
       }
     } finally {
       pendingActions.current.delete(pendingKey);
@@ -629,24 +631,16 @@ function SenseCardV2Session({
     [],
   );
 
-  const exclusionEntryId = model?.meanings[0]?.entryId ?? entryId;
-  const headwordExclusion = useTrainingExclusion({
-    context: "library", userId:userId ?? "", identity:group?.headwordGroupId ?? entryId,
-    sessionId:null, target:{kind:"headword",entryId:exclusionEntryId},
-    onAccepted:async()=>{},
-  });
-  const exclusionError = headwordExclusion.failed ? getUiMessages(interfaceLanguage).trainingSession.exclusion.failed : null;
-
   const lookupErrorText = lookupError
     ? platformV2Message(interfaceLanguage, `senseCard.lookup.${lookupError}`)
     : null;
   const errorNotice =
-    acceptedRefreshFailed || lookupErrorText || error || exclusionError ? (
+    acceptedRefreshFailed || lookupErrorText || error ? (
       <p
         role="alert"
         className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
       >
-        {acceptedRefreshFailed ? platformV2Message(interfaceLanguage, "senseCard.learning.savedReloadFailed") : lookupErrorText ?? error ?? exclusionError}
+        {acceptedRefreshFailed ? platformV2Message(interfaceLanguage, "senseCard.learning.savedReloadFailed") : lookupErrorText ?? error}
         {lookupError || acceptedRefreshFailed ? (
           <button
             type="button"
@@ -695,8 +689,9 @@ function SenseCardV2Session({
       {userId ? <TrainingExclusionUndoNotice userId={userId} language={interfaceLanguage}/> : null}
       <div className="min-h-0 flex-1">
         <LibrarySenseCardGroup
-          contentLanguage={contentLanguageCode}
+          contentLanguage={group?.dictionary.sourceLanguageCode ?? contentLanguageCode}
           translationLanguage={translationLanguage??undefined}
+          userId={userId}
           model={model}
           interfaceLanguage={interfaceLanguage}
           busyIdentity={busyIdentity}
@@ -742,9 +737,8 @@ function SenseCardV2Session({
             if (target.targetEntryId) setActiveMeaningId(target.targetEntryId);
             setActiveReferenceTarget(target);
           }}
+          onProgressChanged={async()=>{await load();}}
           onAction={(capability) => void handleAction(capability)}
-          onExclude={userId && group?.headwordGroupId && model.meanings.length ? () => void headwordExclusion.exclude() : undefined}
-          exclusionDisabled={headwordExclusion.busy || Boolean(busyIdentity)}
           onReport={showGlobalDetailsActions ? meaning => {
             if (!group) return;
             const entry = group.entries.find(candidate => candidate.kind === "sense-card" && candidate.entryId === meaning.entryId);

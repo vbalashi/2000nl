@@ -1,3 +1,4 @@
+import type {MeaningLearningProgress} from '../../../../../packages/shared/types/meaningLearningProgress';
 import type {
   DictionaryLookupResult,
   DictionarySummary,
@@ -25,6 +26,7 @@ import {
 import type { ResolvedPlatformV2CrossReferenceTarget } from "../platformV2CrossReferenceResolver";
 
 export type ProjectionCardState = {
+  meaningProgress?: MeaningLearningProgress;
   stateRevision: string;
   knownMark?: {
     markId: string;
@@ -348,6 +350,7 @@ function projectCardState(
 ): PlatformSenseCardStateV2 {
   return {
     cardTypeId,
+    ...(state.meaningProgress ? {meaningProgress: state.meaningProgress} : {}),
     scheduler: {
       phase: schedulerPhase(state),
       repeatCount: state.clickCount,
