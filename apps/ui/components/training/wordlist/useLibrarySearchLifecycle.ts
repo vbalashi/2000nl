@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { useAccountMaterial } from "@/components/practice/material/AccountMaterialProvider";
 import { fetchPlatformV2LibraryGroupPage } from "@/lib/platform/platformV2LibraryClient";
@@ -20,6 +27,10 @@ export type LibrarySearchGroupPage = Awaited<
   ReturnType<typeof fetchPlatformV2LibraryGroupPage>
 >;
 type GroupPage = LibrarySearchGroupPage;
+type GroupSelectionProjection = Pick<
+  DictionarySearchTabState,
+  "selectedHeadwordGroupId" | "detailSelection"
+>;
 
 type Input = {
   state: DictionarySearchTabState;
@@ -43,12 +54,10 @@ type Input = {
     materialRevision: number | undefined;
   };
   copy: { searchError: string; searchTimeout: string };
-  onGroupPage: (
+  projectGroupSelection: (
+    current: DictionarySearchTabState,
     groups: LibraryHeadwordGroupResult[],
-    page: GroupPage,
-    scopeKey: string,
-    scoped: boolean,
-  ) => void;
+  ) => GroupSelectionProjection;
 };
 
 /** Owns applied Library reads while keeping result snapshots in the parent state. */
@@ -59,7 +68,7 @@ export function useLibrarySearchLifecycle({
   readiness,
   scope,
   copy,
-  onGroupPage,
+  projectGroupSelection,
 }: Input) {
   const {
     active,
@@ -130,6 +139,21 @@ export function useLibrarySearchLifecycle({
     materialRevision,
     refreshRevision,
   ]);
+  const blockedByMaterial = !listMode && !ready;
+  const previousReadScopeRef = useRef({ readKey, blockedByMaterial });
+
+  useLayoutEffect(() => {
+    const previous = previousReadScopeRef.current;
+    if (previous.readKey !== readKey || (!previous.blockedByMaterial && blockedByMaterial)) {
+      // Fence the old read before the query debounce; visibility changes alone must retain pending work.
+      requestSequenceRef.current += 1;
+      requestControllerRef.current?.abort();
+      requestControllerRef.current = null;
+      pendingRef.current = null;
+      setLoading(false);
+    }
+    previousReadScopeRef.current = { readKey, blockedByMaterial };
+  }, [readKey, blockedByMaterial]);
 
   const isCurrentSearch = useCallback(
     (requestId: number) => requestSequenceRef.current === requestId,
@@ -255,7 +279,26 @@ export function useLibrarySearchLifecycle({
               !dictionaryId ||
               group.group.dictionary.dictionaryId === dictionaryId,
           );
-          onGroupPage(groups, result, groupScopeKey, scoped);
+          setState((current) => {
+            const previousScope = !scoped || current.groupScopeKey === groupScopeKey;
+            const currentPage = previousScope ? current.page : 1;
+            const nextCursors = previousScope
+              ? current.groupPageCursors.slice(0, currentPage)
+              : [null];
+            nextCursors[currentPage] = result.nextGroupCursor;
+            return {
+              ...current,
+              groupResults: groups,
+              page: currentPage,
+              groupScopeKey,
+              groupPageCursors: nextCursors,
+              groupHasMore: Boolean(result.nextGroupCursor),
+              wordResults: [],
+              wordTotal: result.librarySearch?.totalGroups ?? groups.length,
+              groupTotal: result.librarySearch?.totalGroups ?? null,
+              ...projectGroupSelection(current, groups),
+            };
+          });
           freshRef.current = { key: readKey, at: Date.now() };
           return;
         }
@@ -322,7 +365,7 @@ export function useLibrarySearchLifecycle({
       translationLanguageCode,
       groupCursor,
       isCurrentSearch,
-      onGroupPage,
+      projectGroupSelection,
       groupScopeKey,
       collectionId,
       collectionType,
@@ -362,7 +405,9 @@ export function useLibrarySearchLifecycle({
   useEffect(
     () => () => {
       requestControllerRef.current?.abort();
+      requestControllerRef.current = null;
       requestSequenceRef.current += 1;
+      pendingRef.current = null;
     },
     [],
   );

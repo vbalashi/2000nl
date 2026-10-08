@@ -37,10 +37,7 @@ import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { LibraryHeadwordGroupResultsList } from "./LibraryHeadwordGroupResultsList";
-import {
-  useLibrarySearchLifecycle,
-  type LibrarySearchGroupPage,
-} from "./useLibrarySearchLifecycle";
+import { useLibrarySearchLifecycle } from "./useLibrarySearchLifecycle";
 import type { LibraryHeadwordGroupResult } from "./libraryHeadwordGroupResults";
 import {
   createDictionarySearchTabState,
@@ -217,52 +214,33 @@ export function DictionarySearchTab({
       ) ?? null,
     [groupResults, selectedHeadwordGroupId],
   );
-  const onGroupPage = useCallback(
+  const projectGroupSelection = useCallback(
     (
+      current: DictionarySearchTabState,
       nextGroups: LibraryHeadwordGroupResult[],
-      result: LibrarySearchGroupPage,
-      scopeKey: string,
-      scoped: boolean,
     ) => {
-      onSearchStateChange((current) => {
-        const previousScope = !scoped || current.groupScopeKey === scopeKey;
-        const nextPage = previousScope ? current.page : 1;
-        const nextCursors = previousScope
-          ? current.groupPageCursors.slice(0, nextPage)
-          : [null];
-        nextCursors[nextPage] = result.nextGroupCursor;
-        const selectedStillVisible = nextGroups.find(
-          (group) => group.headwordGroupId === current.selectedHeadwordGroupId,
-        );
-        const selected = selectedStillVisible ?? nextGroups[0] ?? null;
-        return {
-          ...current,
-          groupResults: nextGroups,
-          page: nextPage,
-          groupScopeKey: scopeKey,
-          groupPageCursors: nextCursors,
-          groupHasMore: Boolean(result.nextGroupCursor),
-          selectedHeadwordGroupId:
-            current.detailSelection && !selectedStillVisible
-              ? current.selectedHeadwordGroupId
-              : (selected?.headwordGroupId ?? null),
-          wordResults: [],
-          wordTotal: result.librarySearch?.totalGroups ?? nextGroups.length,
-          groupTotal: result.librarySearch?.totalGroups ?? null,
-          detailSelection:
-            current.detailSelection ??
-            (selected
-              ? {
-                  entryId: selected.selectedEntryId,
-                  headword: selected.headword,
-                  contentLanguageCode:
-                    selected.group.dictionary.sourceLanguageCode,
-                }
-              : null),
-        };
-      });
+      const selectedStillVisible = nextGroups.find(
+        (group) => group.headwordGroupId === current.selectedHeadwordGroupId,
+      );
+      const selected = selectedStillVisible ?? nextGroups[0] ?? null;
+      return {
+        selectedHeadwordGroupId:
+          current.detailSelection && !selectedStillVisible
+            ? current.selectedHeadwordGroupId
+            : (selected?.headwordGroupId ?? null),
+        detailSelection:
+          current.detailSelection ??
+          (selected
+            ? {
+                entryId: selected.selectedEntryId,
+                headword: selected.headword,
+                contentLanguageCode:
+                  selected.group.dictionary.sourceLanguageCode,
+              }
+            : null),
+      };
     },
-    [onSearchStateChange],
+    [],
   );
   const {
     loading: searchLoading,
@@ -293,7 +271,7 @@ export function DictionarySearchTab({
       materialRevision: material?.revision,
     },
     copy,
-    onGroupPage,
+    projectGroupSelection,
   });
   const openGroupDetail = useCallback(
     (result: LibraryHeadwordGroupResult) => {

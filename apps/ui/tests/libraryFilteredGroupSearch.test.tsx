@@ -6,7 +6,6 @@ import {
   createDictionarySearchTabState,
   type DictionarySearchTabState,
 } from "@/components/training/wordlist/dictionarySearchTabState";
-import type { LibrarySearchGroupPage } from "@/components/training/wordlist/useLibrarySearchLifecycle";
 import type { LibraryHeadwordGroupResult } from "@/components/training/wordlist/libraryHeadwordGroupResults";
 import { multiSenseBankGroup, financeEntry, furnitureEntry } from "./platformV2LibraryFixture";
 
@@ -22,29 +21,27 @@ function setup() {
       query: "bank",
       entryFilters: { parts: ["noun"], article: null },
     }));
-    const onGroupPage = useCallback(
-      (
-        groups: LibraryHeadwordGroupResult[],
-        result: LibrarySearchGroupPage,
-        scopeKey: string,
-        scoped: boolean,
-      ) => {
-        setState((current) => {
-          const sameScope = !scoped || current.groupScopeKey === scopeKey;
-          const page = sameScope ? current.page : 1;
-          const cursors = sameScope ? current.groupPageCursors.slice(0, page) : [null];
-          cursors[page] = result.nextGroupCursor;
-          return {
-            ...current,
-            groupResults: groups,
-            page,
-            groupScopeKey: scopeKey,
-            groupPageCursors: cursors,
-            groupHasMore: Boolean(result.nextGroupCursor),
-            groupTotal: result.librarySearch?.totalGroups ?? null,
-            wordTotal: result.librarySearch?.totalGroups ?? groups.length,
-          };
-        });
+    const projectGroupSelection = useCallback(
+      (current: DictionarySearchTabState, groups: LibraryHeadwordGroupResult[]) => {
+        const selectedStillVisible = groups.find(
+          (group) => group.headwordGroupId === current.selectedHeadwordGroupId,
+        );
+        const selected = selectedStillVisible ?? groups[0] ?? null;
+        return {
+          selectedHeadwordGroupId:
+            current.detailSelection && !selectedStillVisible
+              ? current.selectedHeadwordGroupId
+              : selected?.headwordGroupId ?? null,
+          detailSelection:
+            current.detailSelection ??
+            (selected
+              ? {
+                  entryId: selected.selectedEntryId,
+                  headword: selected.headword,
+                  contentLanguageCode: selected.group.dictionary.sourceLanguageCode,
+                }
+              : null),
+        };
       },
       [],
     );
@@ -65,9 +62,9 @@ function setup() {
         materialRevision: 1,
       },
       copy: { searchError: "search failed", searchTimeout: "search timed out" },
-      onGroupPage,
+      projectGroupSelection,
     });
-    return { state, setState, search, onGroupPage };
+    return { state, setState, search };
   });
 }
 
