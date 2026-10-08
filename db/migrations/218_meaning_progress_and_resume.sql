@@ -54,7 +54,7 @@ GRANT EXECUTE ON FUNCTION public.resume_meaning_learning_as_principal_v1(uuid,uu
 CREATE OR REPLACE FUNCTION public.get_meanings_learning_progress_v1(p_entry_ids uuid[])
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public,private,pg_temp AS $$
 DECLARE result jsonb; BEGIN
- IF auth.uid() IS NULL THEN RAISE EXCEPTION 'unauthorized'; END IF;
+ IF (SELECT auth.uid()) IS NULL THEN RAISE EXCEPTION 'unauthorized'; END IF;
  IF cardinality(p_entry_ids)>100 THEN RAISE EXCEPTION 'meaning_progress_limit'; END IF;
  SELECT COALESCE(jsonb_agg(public.get_meaning_learning_progress_v1(id)), '[]'::jsonb) INTO result FROM (SELECT DISTINCT unnest(p_entry_ids) id) targets;
  RETURN result;

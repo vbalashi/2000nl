@@ -495,7 +495,7 @@
     {
       "migrationId": 218,
       "file": "db/migrations/218_meaning_progress_and_resume.sql",
-      "sha256": "a08b5528f50822128cf68b6ebfbe1fe15610317c172c3161b231b535a35f3e8a"
+      "sha256": "9c0b872695587d2f251b567ad1276085a6f9787186ab16c80c754f9787500021"
     },
     {
       "migrationId": 219,
