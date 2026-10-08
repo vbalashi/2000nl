@@ -208,7 +208,7 @@ export function TrainingCardFace({
           {partOfSpeech ? (
             <span
               data-testid="training-face-part-of-speech"
-              className={`${chrome.metadata} self-start`}
+              className={`${chrome.metadata} self-start mb-auto`}
             >
               <span className={chrome.pos}>
                 <span aria-hidden="true" className={chrome.dot} />

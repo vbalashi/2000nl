@@ -71,3 +71,25 @@ for (const fixture of ["short", "long-word", "long"]) {
     expect(await page.locator("html").evaluate(node => node.scrollWidth)).toBe(320);
   });
 }
+
+test("Indigo buttons have quiet boundaries and a distinct keyboard focus", async ({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.goto("/dev/sense-card-gate?prototype=exercise");
+  await page.addStyleTag({content:"nextjs-portal { display: none; }"});
+  await page.getByRole("button", {name:"Light / dark"}).click();
+  // Cosmetic fixture state only: no account preferences are written.
+  await page.locator("main").evaluate(node => node.setAttribute("data-practice-palette", "indigo"));
+  for (const name of ["Show hint", "Show answer"]) {
+    const button = page.getByRole("button", {name,exact:true});
+    const colours = await button.evaluate(node => {
+      const style = getComputedStyle(node);
+      return {border:style.borderColor,quiet:style.getPropertyValue("--practice-border").trim()};
+    });
+    expect(colours.border).toBe("rgb(65, 65, 110)");
+    expect(colours.quiet).toBe("#41416e");
+  }
+  await page.getByRole("button", {name:"Show answer",exact:true}).press("Shift+Tab");
+  const focused = page.getByRole("button", {name:"Show hint",exact:true});
+  await expect(focused).toBeFocused();
+  expect(await focused.evaluate(node => getComputedStyle(node).outlineWidth)).toBe("2px");
+});

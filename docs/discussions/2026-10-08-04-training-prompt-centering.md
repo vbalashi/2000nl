@@ -6,4 +6,4 @@ The main prompt text block (word, phrase, or multiline explanation) is the ancho
 
 Existing Exclude copy and one-item menu agreement remains applicable. Idiom recovery is under investigation: transport supports restore, but UI discoverability has not been established. No new idiom Known or recovery controls are accepted in this change. No later user-facing restore path was found; follow-up #634 tracks it.
 
-Implementation pending validation.
+Implemented in PR #635; release verification pending.
