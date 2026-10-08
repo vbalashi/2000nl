@@ -73,3 +73,26 @@ Pilot gesture browser expectations now test the agreed shared behavior:
 Home reaches compact, clicks cycle compact/medium/max, live mouse/touch motion
 follows the pointer and release snaps. Cancellation/capture loss still restores
 the previous height. All five real-navigation pilot checks passed locally.
+
+
+## Verified release
+
+[PR 625](https://github.com/vbalashi/2000nl/pull/625) merged as
+`631e209354121df7d5489130b02c2e02fcb17f2e`.
+[Final CI](https://github.com/vbalashi/2000nl/actions/runs/37812042114) passed:
+2,116 UI checks (344 DB-dependent checks skipped here and covered separately),
+180 API checks, 184 ordinary browser checks, 25 pilot browser checks and 17
+training-reliability checks. Two existing mobile Report cases passed on retry;
+three configured ordinary browser cases were skipped. Disposable SQL: 356 passed.
+
+[Deployment](https://github.com/vbalashi/2000nl/actions/runs/37814176682) succeeded.
+Independent exact-commit health verification confirmed version `0.18.1200`,
+commit `631e209354121df7d5489130b02c2e02fcb17f2e`, health `ok`, and
+expected/actual `2000nl-db-220`, migration 220, compatible true.
+Reference main was synchronized to that commit and canonical local 3100 health
+confirmed the same code/contract.
+
+`current-appearance.png` and `current-progress.png` show the actual local
+application using its test account/data and the current production component
+families (Inter, Larger text, Indigo). They replace the outdated SettingsPrototype
+route as the visual reference; no production learner data is included.
