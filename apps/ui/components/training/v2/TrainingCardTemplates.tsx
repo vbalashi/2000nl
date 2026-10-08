@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useTrainingInteractions } from "@/components/practice/ui/TrainingInteractionPreferences";
 import {
   ChevronDown,
   Languages,
@@ -191,6 +192,7 @@ export function TrainingCardFace({
   hintLabel: string;
   contentLabel: string;
 }) {
+  const { preferences } = useTrainingInteractions();
   return (
     <div
       data-testid="training-face-scroll"
@@ -246,7 +248,7 @@ export function TrainingCardFace({
           )}
         </div>
         {hint ? (
-          <aside className={approved.faceHint} data-visible={hintVisible} aria-hidden={!hintVisible}>
+          <aside className={approved.faceHint} data-visible={hintVisible} data-motion={preferences.animation ? undefined : "off"} aria-hidden={!hintVisible}>
             <p className={approved.faceHintLabel}>
               {hintLabel}
             </p>

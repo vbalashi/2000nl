@@ -39,4 +39,4 @@ Accepted: Inter 52px regular wordmark with accented nl and three flowing dots, n
 
 ## Training front layout (2026-10-08)
 
-Accepted: centre the main prompt independently of instructions; reserve hint space and fade hints without moving the prompt. Shared fronts retain readable overflow for long content. Normal Training button boundaries use the quiet border role, preserving keyboard focus. Implemented in PR #635; release verification pending. [Discussion](../discussions/2026-10-08-04-training-prompt-centering.md), #633.
+Accepted: centre the main prompt independently of instructions; reserve hint space and fade hints without moving the prompt. Shared fronts retain readable overflow for long content. Normal Training button boundaries use the quiet border role, preserving keyboard focus. Implemented in [PR #635](https://github.com/vbalashi/2000nl/pull/635); validation and release evidence are recorded there. [Discussion](../discussions/2026-10-08-04-training-prompt-centering.md), #633.

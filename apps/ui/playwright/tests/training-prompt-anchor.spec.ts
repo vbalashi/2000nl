@@ -95,3 +95,15 @@ test("Indigo buttons have quiet boundaries and a distinct keyboard focus", async
   await expect(focused).toBeFocused();
   expect(await focused.evaluate(node => getComputedStyle(node).outlineWidth)).toBe("2px");
 });
+
+test("hint fade respects existing animation preferences and reduced motion", async ({page}) => {
+  await page.goto("/dev/sense-card-gate?prototype=exercise");
+  const hint = page.getByTestId("training-face-scroll").locator("aside");
+  await expect(hint).toHaveCSS("transition-duration", "0.18s");
+  await page.getByRole("checkbox", {name:"animation",exact:true}).uncheck();
+  await expect(hint).toHaveCSS("transition-duration", "0s");
+  await page.getByRole("checkbox", {name:"animation",exact:true}).check();
+  await page.emulateMedia({reducedMotion:"reduce"});
+  // The shared reduced-motion reset keeps a tiny duration for event delivery.
+  await expect(hint).toHaveCSS("transition-property", "none");
+});

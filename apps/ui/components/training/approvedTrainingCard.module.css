@@ -301,6 +301,7 @@
   transition: opacity 180ms ease;
 }
 .faceHint[data-visible="true"] { opacity: 1; visibility: visible; }
+.faceHint[data-motion="off"] { transition: none; }
 @media (prefers-reduced-motion: reduce) { .faceHint { transition: none; } }
 
 .faceHintLabel {
