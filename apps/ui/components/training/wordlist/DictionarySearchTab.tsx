@@ -170,6 +170,7 @@ export function DictionarySearchTab({
   const [availableLanguages, setAvailableLanguages] = useState<
     AvailableLearningLanguage[]
   >([]);
+  const [searchRefreshRevision, setSearchRefreshRevision] = useState(0);
   const [dictionarySources, setDictionarySources] = useState<
     AvailableDictionarySource[]
   >([]);
@@ -254,6 +255,7 @@ export function DictionarySearchTab({
     useViewedListFilter ? viewedList?.type : null,
     searchState.entryFilters,
     material?.revision,
+    searchRefreshRevision,
   ]);
   const runSearch = useCallback(
     async (force = false) => {
@@ -639,6 +641,7 @@ export function DictionarySearchTab({
             updateSearchState({languageCode:draft.languageCode,dictionaryId:draft.dictionaryId,applyListFilter:Boolean(draft.applyListFilter),collectionId:draft.collectionId ?? null,
               entryFilters:{parts:[...draft.parts].sort(),article:draft.article},page:1,groupPageCursors:[null],groupHasMore:false,
               groupTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});
+            setSearchRefreshRevision((revision) => revision + 1);
             setFiltersOpen(false);
           }}/>}
 

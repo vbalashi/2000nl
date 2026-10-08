@@ -399,6 +399,17 @@ test("approved chips panel excludes disabled sources, cancels drafts and applies
  fireEvent.click(screen.getByRole("button",{name:copy.library.showResults}));
  await waitFor(()=>expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).at(-1)?.[0]).toMatchObject({cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:["noun"],article:null}}}));
  expect(repository.save).not.toHaveBeenCalled();
+ const appliedRequestCount=fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).length;
+ expect(screen.getByTestId("library-headword-group-enabled-b")).toBeInTheDocument();
+
+ // Applying the already-selected filters clears the rows, so it must also
+ // trigger a fresh lookup even though the serialized search scope is unchanged.
+ fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));
+ await waitFor(()=>expect(screen.getByRole("button",{name:copy.library.showResults})).toBeEnabled());
+ fireEvent.click(screen.getByRole("button",{name:copy.library.showResults}));
+ await waitFor(()=>expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0])).toHaveLength(appliedRequestCount+1));
+ expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:["noun"],article:null}}}));
+ expect(await screen.findByTestId("library-headword-group-enabled-b")).toBeInTheDocument();
 });
 
 beforeEach(()=>{
