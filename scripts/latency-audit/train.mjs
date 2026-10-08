@@ -16,12 +16,14 @@ async function startSession(kind) {
   await startBtn().waitFor({ timeout: 30000 });
   await page.waitForFunction(() => [...document.querySelectorAll("button")].some((x) => /^(Start current setup|Start training|Training starten|Continue training|Начать тренировку|Продолжить тренировку)$/i.test((x.textContent || "").trim()) && !x.disabled), null, { timeout: 60000 });
   const netMark = net.length;
+  const timingMark = await page.evaluate(() => window.__lat.timings.length);
   const ts = Date.now();
   await startBtn().click();
   await ready.waitFor({ timeout: 60000 });
   const ms = Date.now() - ts;
   await page.waitForTimeout(1500);
-  emit({ type: "start", kind, ms, clickedAtMs: ts, readyAtMs: ts + ms, net: net.slice(netMark) });
+  const events = await page.evaluate((mark) => window.__lat.timings.slice(mark), timingMark);
+  emit({ type: "start", kind, ms, clickedAtMs: ts, readyAtMs: ts + ms, events, net: net.slice(netMark) });
   console.log(`${kind} start: click→first card ${ms}ms`);
 }
 

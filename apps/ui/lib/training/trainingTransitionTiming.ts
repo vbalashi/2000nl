@@ -4,6 +4,8 @@ export type TrainingTransitionStage =
   | "training.preferences"
   | "training.active-scope-hydration"
   | "training.scenarios"
+  | "training.scope-commit"
+  | "training.session-start"
   | "next-card.selection"
   | "next-card.prefetch"
   | "next-card.preparation"
@@ -53,7 +55,7 @@ const preparedEntryTransitions = new Map<
   string,
   { transitionId: string; renderStartedAt: number | null }
 >();
-type TrainingUserTransitionAction = "continue" | "learn" | "review" | "retry";
+type TrainingUserTransitionAction = "continue" | "learn" | "review" | "retry" | "start";
 const activeUserTransitions = new Map<
   string,
   { startedAt: number; action: TrainingUserTransitionAction }
