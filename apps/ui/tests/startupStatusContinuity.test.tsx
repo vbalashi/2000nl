@@ -16,11 +16,14 @@ test.each(["en", "ru", "nl"] as const)("auth, palette and hydration waits share 
   view.rerender(<AccountPracticeAppearanceProvider userId="owner" repository={pending}><AccountPresentationReady language={language}><p>ready</p></AccountPresentationReady></AccountPracticeAppearanceProvider>);
   expect(view.getByTestId("startup-logo-screen").innerHTML).toBe(initial);
 });
-test("unknown interface language reserves the same heading instead of moving the logo", () => {
+test("unknown interface language preserves the same dots while accessible copy becomes ready", () => {
   const view = render(<TrainingBootstrapShell interfaceLanguage="ru" interfaceLanguageReady={false} />);
   const status = view.getByRole("status");
-  expect(status.querySelector("h1")).toHaveStyle({visibility:"hidden"});
+  const dots = status.querySelector(".startup-dots");
+  expect(dots?.children).toHaveLength(3);
+  expect(view.queryByRole("heading")).not.toBeInTheDocument();
   view.rerender(<TrainingBootstrapShell interfaceLanguage="ru" interfaceLanguageReady />);
   expect(view.getByRole("heading")).toHaveTextContent("Подготавливаем тренировку");
-  expect(status.querySelector("h1")).not.toHaveStyle({visibility:"hidden"});
+  expect(view.getByRole("heading")).toHaveClass("sr-only");
+  expect(status.querySelector(".startup-dots")).toBe(dots);
 });
