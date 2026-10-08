@@ -52,3 +52,9 @@
 .menu{border-color:color-mix(in srgb,var(--practice-text) 12%,transparent)}
 .menu button:hover{border-color:transparent}
 .menu button:active{transform:none}
+
+.menu:has(.menuDescription){width:min(300px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;scrollbar-width:none}
+.menu:has(.menuDescription) button{align-items:flex-start}
+.menu:has(.menuDescription) button>svg{flex-shrink:0;margin-top:3px}
+.menuCopy{min-width:0}
+.menuDescription{display:block;margin-top:4px;color:var(--practice-text-muted);font-size:var(--practice-text-label);line-height:1.5}

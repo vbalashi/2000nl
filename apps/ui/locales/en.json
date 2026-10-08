@@ -670,6 +670,7 @@
       "excludedResult": "Excluded"
     },
     "cardActions": {
+      "knownHelp": "Pause this direction because you already know the answer. The other direction stays available.",
       "title": "Card actions",
       "exclude": "Exclude",
       "known": "Mark as known",

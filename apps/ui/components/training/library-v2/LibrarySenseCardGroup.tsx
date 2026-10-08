@@ -5,6 +5,7 @@ import {meaningLearningStatus} from '../../../../../packages/shared/types/meanin
 import {getUiMessages} from '@/lib/uiMessages';
 import { useWordDetailsClose } from "../WordDetailsHeader";
 
+import { SheetDragRegion } from "@/components/practice/ui/SheetDragRegion";
 import React from "react";
 import { X } from "lucide-react";
 import { LibraryMeaningActions } from "./LibraryMeaningActions";
@@ -279,7 +280,7 @@ export function LibrarySenseCardGroup({
       data-testid="library-sense-card-group"
       className={`relative flex h-full flex-col overflow-hidden [container-type:inline-size] ${surfaces.group}`}
     >
-      <header tabIndex={0} aria-label={model.headword}
+      <SheetDragRegion tabIndex={0} aria-label={model.headword}
         className={`shrink-0 px-4 pb-5 pt-4 sm:px-7 ${surfaces.header}`}>
         <SenseCardHeadwordLockup
           article={model.article}
@@ -326,7 +327,7 @@ export function LibrarySenseCardGroup({
           }
         />
         {commonForms&&<ProductionArticleReading><ArticleWordForms detail={commonForms} headword={model.headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="summary" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></ProductionArticleReading>}
-      </header>
+      </SheetDragRegion>
 
       <div className="relative min-h-0 flex-1">
         <div

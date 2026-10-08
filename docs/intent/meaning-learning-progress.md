@@ -45,3 +45,28 @@ History остаётся существующей панелью Statistics → 
 База владеет enrollment, Known, исключениями, расписанием и атомарным возвратом. Существующая Platform lookup проекция выдаёт общий текущий прогресс одним batch RPC, без клиентского вывода FSRS. Клиент хранит только видимость и размер панели и намерение повторить запрос с тем же event ID.
 
 UI опирается на AppFrame, LibrarySenseCardGroup, LibraryMeaningActions, SenseCardChrome, ActionMenu, DialogSurface, WordDetailDrawer, RecentActivityList и semantic practice theme. Актуальные [правила контролов](control-system.md) и semantic tokens имеют приоритет над историческими примерами V2. Глобальный CSS макета не переносится в приложение. Проверяем 320px/desktop, светлую/тёмную тему, доступность клавиатурой, настоящие API и реальные состояния.
+
+### Mobile follow-up (#627)
+
+Library and Learning Progress use one sheet controller and shared stationary-header
+`SheetDragRegion`. Dragging any non-interactive header content resizes the sheet;
+buttons, links and disclosure controls retain their own action. The shared handle
+has a 44px hit area. The independent reading body scrolls without resizing.
+The progress headword uses the existing UI body-lg role, with the same Inter UI
+family and account text scaling as other controls; dictionary reading retains
+Newsreader. No new typography family is introduced.
+
+Known and meaning exclusion menu items have secondary localized explanations in
+the shared ActionMenu. Known pauses the current direction; meaning exclusion
+pauses both ordinary directions. These are presentation changes only.
+
+The input-modality owner distinguishes pointer-driven programmatic/native-dialog
+focus from keyboard navigation. Pointer focus does not draw keyboard rings;
+keyboard input restores them. Focus is retained for native modal trapping,
+scroll-region keyboard access and opener restoration.
+
+Immersive Training owns its bottom safe-area inset even when the separate stats
+footer is absent. Quiet actions use 44px touch targets. The card dock grows to its
+content instead of holding a fixed height that makes wrapped/touch actions extend
+below the viewport. Root viewport-fit=cover makes the existing safe-area contract
+available to the AppFrame, navigation, sheets and Training in iOS standalone mode.

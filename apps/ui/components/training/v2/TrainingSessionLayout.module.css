@@ -269,3 +269,5 @@
 /* Keep a validated card visually stable during the background ownership read.
  * Controls remain disabled; errors and actual learner actions retain busy styling. */
 .authorityRefreshing button:disabled { opacity: 1; }
+
+@media(max-width:700px){.main.mainApproved{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}}

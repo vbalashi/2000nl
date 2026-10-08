@@ -92,3 +92,5 @@
 .statusAction{display:inline-flex;align-items:center;padding:0;border:0;background:transparent;color:inherit;font:inherit;pointer-events:auto;cursor:pointer;min-height:18px}
 .statusAction:focus-visible{outline:2px solid var(--practice-focus);outline-offset:3px;border-radius:4px}
 .statusAction:hover{text-decoration:underline;text-underline-offset:3px}
+
+:global(html[data-input-modality=pointer]) :is(.readingRegion,.header):focus-visible{box-shadow:none}

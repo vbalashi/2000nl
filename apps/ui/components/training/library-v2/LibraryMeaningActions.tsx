@@ -34,9 +34,9 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
   const blocked = Boolean(meaning.meaningProgress?.exclusionId || meaning.meaningProgress?.directions.some(d=>d.knownMarkId) || meaning.undoKnown);
   const items: ActionMenuItem[] = [];
   if(onProgress)items.push({id:"progress",label:getUiMessages(language).learningProgress.title,onSelect:()=>{close();onProgress();}});
-  if (onExclude) items.push({id:"exclude",label:getUiMessages(language).trainingSession.exclusion.headwordLabel,icon:<EyeOff size={15} aria-hidden="true"/>,disabled:busy || exclusionDisabled,
+  if (onExclude) items.push({id:"exclude",label:getUiMessages(language).trainingSession.exclusion.headwordLabel,description:getUiMessages(language).trainingSession.exclusion.headwordHelp,icon:<EyeOff size={15} aria-hidden="true"/>,disabled:busy || exclusionDisabled,
     onSelect:()=>{close();onExclude();}});
-  if (meaning.markKnown) items.push({id:"known",label:t(meaning.markKnown.messageKey),icon:<Check size={15} aria-hidden="true"/>,disabled:busy,
+  if (meaning.markKnown) items.push({id:"known",label:t(meaning.markKnown.messageKey),description:getUiMessages(language).cardActions.knownHelp,icon:<Check size={15} aria-hidden="true"/>,disabled:busy,
     onSelect:()=>{close();onAction(meaning.markKnown!);}});
   if (onReport) items.push({id:"report",label:t("senseCard.report"),icon:<Flag size={15} aria-hidden="true"/>,disabled:busy,
     onSelect:()=>{close();onReport();}});

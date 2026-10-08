@@ -16,6 +16,9 @@ for (const language of ["en", "nl", "ru"] as const) {
     fireEvent.click(trigger);
     expect(exclude).not.toHaveBeenCalled();
     expect(known).not.toHaveBeenCalled();
+    expect(screen.getByText(t.help)).toBeVisible();
+    expect(screen.getByText(getUiMessages(language).cardActions.knownHelp)).toBeVisible();
+    expect(screen.getByRole("menuitem", {name:t.label})).toHaveAccessibleDescription(t.help);
     fireEvent.click(screen.getByRole("menuitem", { name: "Known capability label" }));
     expect(known).toHaveBeenCalledOnce();
     expect(exclude).not.toHaveBeenCalled();

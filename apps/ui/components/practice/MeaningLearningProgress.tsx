@@ -15,6 +15,7 @@ import {
   resumeMeaningProgress,
 } from "@/lib/platform/meaningProgressClient";
 import { DialogSurface } from "./ui/DialogSurface";
+import { SheetDragRegion } from "./ui/SheetDragRegion";
 import { SheetHandle } from "./ui/SheetHandle";
 import { useResizableSheet } from "./ui/useResizableSheet";
 import s from "./meaningLearningProgress.module.css";
@@ -96,7 +97,7 @@ export function MeaningLearningProgress({
       <div className={s.handle}>
         <SheetHandle controller={sheet} label={t.resize} />
       </div>
-      <header className={s.heading}>
+      <SheetDragRegion controller={sheet} className={s.heading}>
         <div>
           <h2 id={titleId}>{t.title}</h2>
           {progress && <p>{progress.headword}</p>}
@@ -109,7 +110,7 @@ export function MeaningLearningProgress({
         >
           <X size={18} />
         </button>
-      </header>
+      </SheetDragRegion>
       <div className={s.body} tabIndex={0}>
         {!progress && !failed && <p role="status">{t.loading}</p>}
         {failed && (

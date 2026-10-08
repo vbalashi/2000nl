@@ -11,7 +11,7 @@ export function clampSheetHeight(
   return Math.max(bounds.min, Math.min(bounds.max, height));
 }
 
-/** Handle-only gestures leave the article's independent scrolling untouched. */
+/** Header gestures leave the article's independent scrolling untouched. */
 export function useResizableSheet(
   resetKey: string | null,
   onDismiss?: () => void,
@@ -66,7 +66,7 @@ export function useResizableSheet(
     };
   }, [update]);
   const finish = (
-    event: React.PointerEvent<HTMLButtonElement>,
+    event: React.PointerEvent<HTMLElement>,
     cancelled = false,
   ) => {
     const current = gesture.current;
@@ -99,7 +99,7 @@ export function useResizableSheet(
     expanded,
     dragging,
     handleProps: {
-      onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => {
+      onPointerDown: (event: React.PointerEvent<HTMLElement>) => {
         if (!event.isPrimary || event.button !== 0 || !ref.current) return;
         suppressClick.current = false;
         gesture.current = {
@@ -111,7 +111,7 @@ export function useResizableSheet(
         };
         event.currentTarget.setPointerCapture(event.pointerId);
       },
-      onPointerMove: (event: React.PointerEvent<HTMLButtonElement>) => {
+      onPointerMove: (event: React.PointerEvent<HTMLElement>) => {
         const current = gesture.current;
         if (!current || current.id !== event.pointerId) return;
         const delta = current.y - event.clientY;
@@ -124,11 +124,11 @@ export function useResizableSheet(
         );
         setHeight(current.currentHeight);
       },
-      onPointerUp: (event: React.PointerEvent<HTMLButtonElement>) =>
+      onPointerUp: (event: React.PointerEvent<HTMLElement>) =>
         finish(event),
-      onPointerCancel: (event: React.PointerEvent<HTMLButtonElement>) =>
+      onPointerCancel: (event: React.PointerEvent<HTMLElement>) =>
         finish(event, true),
-      onLostPointerCapture: (event: React.PointerEvent<HTMLButtonElement>) =>
+      onLostPointerCapture: (event: React.PointerEvent<HTMLElement>) =>
         finish(event, true),
       onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
         if (suppressClick.current && event.detail !== 0) {
