@@ -1717,7 +1717,7 @@ test("resume errors expose an actionable retry instead of waiting forever", asyn
   ).toHaveAttribute("role", "alert");
   expect(screen.queryByText("Preparing your next card…")).not.toBeInTheDocument();
   expect(fetchStats).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: "Retry session check" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Retry session check" }));
 
   await waitFor(() =>
     expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2),
