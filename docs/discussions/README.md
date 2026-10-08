@@ -62,3 +62,5 @@
 - [2026-10-07: UI retirement and bounded refactor](2026-10-07-01-ui-retirement-and-refactor.md)
 
 - [2026-10-08: bounded retirement release readiness](2026-10-08-01-retirement-release-readiness.md)
+
+- [2026-10-08: telemetry и владельцы состояния](2026-10-08-02-state-ownership-refactor.md)

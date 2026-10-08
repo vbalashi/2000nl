@@ -12,6 +12,8 @@ import type { TrainingMode } from "@/lib/types";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   beginTrainingUserTransition,
+  createTrainingTransitionId,
+  finishTrainingUserTransition,
   measureTrainingTransitionStage,
   recordTrainingEntryRendered,
 } from "@/lib/training/trainingTransitionTiming";
@@ -94,6 +96,7 @@ type Props = {
   ) => void | Promise<void>;
   onProgressActionAccepted: (
     capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" | "exclude-headword" },
+    transitionId?: string,
   ) => Promise<
     Extract<
       TrainingCardSwipeCommitOutcome,
@@ -386,6 +389,8 @@ export function TrainingSenseCardV2Session({
     const pendingToken = {};
     let frozenRequest: PlatformOrdinaryActionRequest | null = null;
     let progressActionPending = false;
+    let progressTransitionId: string | null = null;
+    let progressCompletion: string | null = "cancelled";
     try {
       if (capability.actionId === "request-translation") {
         await requestPlatformV2Translation(capability);
@@ -412,20 +417,17 @@ export function TrainingSenseCardV2Session({
         return "accepted";
       }
       if (!isPlatformV2TrainingActionCapability(capability)) return "rejected";
+      if (capability.actionId === "start-learning" || capability.actionId === "review-card") {
+        progressTransitionId = nextTransitionId ?? createTrainingTransitionId();
+        beginTrainingUserTransition(
+          progressTransitionId,
+          capability.actionId === "start-learning" ? "learn" : "review",
+        );
+      }
       if (wordInContext && contextHintWriteRef.current &&
           (capability.actionId === "start-learning" || capability.actionId === "review-card" || capability.actionId === "mark-known")) {
         await contextHintWriteRef.current;
         if (!actionIsCurrent()) return "rejected";
-      }
-      if (
-        nextTransitionId &&
-        (capability.actionId === "start-learning" ||
-          capability.actionId === "review-card")
-      ) {
-        beginTrainingUserTransition(
-          nextTransitionId,
-          capability.actionId === "start-learning" ? "learn" : "review",
-        );
       }
       if (
         capability.actionId === "start-learning" ||
@@ -441,13 +443,14 @@ export function TrainingSenseCardV2Session({
         frozenRequest = request;
         setReportOperation({ request, observedOutcome: "unknown" });
       };
-      const response = nextTransitionId
+      const mutationTransitionId = progressTransitionId ?? nextTransitionId;
+      const response = mutationTransitionId
         ? await measureTrainingTransitionStage(
-            nextTransitionId,
+            mutationTransitionId,
             "review.mutation",
             () =>
               performPlatformV2TrainingAction(capability, {
-                transitionId: nextTransitionId,
+                transitionId: mutationTransitionId,
                 trainingSessionId: trainingSessionId ?? undefined,
                 onRequestFrozen,
               }),
@@ -499,7 +502,13 @@ export function TrainingSenseCardV2Session({
           rememberPendingKnownUndo(null);
         }
         try {
-          const outcome = await onProgressActionAccepted(capability);
+          const outcome = progressTransitionId
+            ? await onProgressActionAccepted(capability, progressTransitionId)
+            : await onProgressActionAccepted(capability);
+          progressCompletion = !actionIsCurrent() ? "cancelled"
+            : outcome === "accepted-next-presented" ? null
+            : outcome === "accepted-session-complete" ? "session-complete"
+            : "error-next-unavailable";
           return actionIsCurrent() ? outcome : "rejected";
         } catch (cause) {
           if (!actionIsCurrent()) return "rejected";
@@ -513,12 +522,14 @@ export function TrainingSenseCardV2Session({
           // failure while presenting the next card must never make the
           // mutation retryable: preserve the accepted grade and expose only
           // load/presentation recovery to the caller.
+          progressCompletion = "error-next-unavailable";
           return "accepted-next-unavailable";
         }
       }
       return "accepted";
     } catch (cause) {
       if (!actionIsCurrent()) return "rejected";
+      progressCompletion = "error-action";
       setNoticeTone("error");
       const code = cause instanceof Error ? cause.message : "action_failed";
       if (code === "training_session_superseded") {
@@ -556,6 +567,9 @@ export function TrainingSenseCardV2Session({
       }
       return "rejected";
     } finally {
+      if (progressTransitionId && progressCompletion) {
+        finishTrainingUserTransition(progressTransitionId, progressCompletion);
+      }
       if (progressActionPending) {
         onProgressActionPendingChange?.(false, pendingToken);
       }

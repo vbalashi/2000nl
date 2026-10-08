@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   beginTrainingUserTransition,
+  claimTrainingEntryPresentation,
   markTrainingEntryPresentationStarted,
   recordTrainingTransitionResponse,
   recordTrainingTransitionTiming,
@@ -14,6 +15,32 @@ afterEach(() => {
 });
 
 describe("training transition render timing", () => {
+  test("late speculative preparation cannot replace the accepted presentation", () => {
+    const dispatch = vi.spyOn(window, "dispatchEvent");
+    beginTrainingUserTransition("accepted-action", "review");
+    claimTrainingEntryPresentation("entry-claimed", "accepted-action");
+    registerTrainingEntryTransition("entry-claimed", "stale-prefetch");
+    recordTrainingEntryRendered("entry-claimed");
+    const details = dispatch.mock.calls.flatMap(([event]) =>
+      event instanceof CustomEvent && event.type === "2000nl:training-transition-timing"
+        ? [event.detail] : []);
+    expect(details).toContainEqual(expect.objectContaining({
+      transitionId: "accepted-action", stage: "transition.total", outcome: "review-ready",
+    }));
+    expect(details).not.toContainEqual(expect.objectContaining({
+      transitionId: "stale-prefetch", stage: "card.render",
+    }));
+
+    beginTrainingUserTransition("second-action", "learn");
+    claimTrainingEntryPresentation("entry-claimed", "second-action");
+    recordTrainingEntryRendered("entry-claimed");
+    const laterDetails = dispatch.mock.calls.flatMap(([event]) =>
+      event instanceof CustomEvent && event.type === "2000nl:training-transition-timing"
+        ? [event.detail] : []);
+    expect(laterDetails).toContainEqual(expect.objectContaining({
+      transitionId: "second-action", stage: "transition.total", outcome: "learn-ready",
+    }));
+  });
   test("starts render timing at presentation instead of including preparation", () => {
     const dispatch = vi.spyOn(window, "dispatchEvent");
     const now = vi.spyOn(performance, "now");

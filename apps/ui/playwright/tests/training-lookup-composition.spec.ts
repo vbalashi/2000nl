@@ -49,6 +49,9 @@ test("models serialized versus overlapped exact lookup composition without optim
       await expect(card).toBeVisible();
       fixture.beginMeasuredTransitions();
       const durationsMs: number[] = [];
+      const actionEntryIds: string[] = [];
+      const displayedHeadwords = new Set<string>();
+      const presentedNextHeadwords: string[] = [];
 
       for (let sample = 0; sample <= SAMPLE_COUNT; sample += 1) {
         await page
@@ -58,6 +61,8 @@ test("models serialized versus overlapped exact lookup composition without optim
           .click();
         const headword = card.locator('h2[aria-label]').first();
         const before = await headword.getAttribute("aria-label");
+        expect(before).toBeTruthy();
+        displayedHeadwords.add(before!);
         const action = page.getByRole("button", {
           name: /Begin met leren|Учить|Start learning|Goed|Хорошо|Good/i,
         });
@@ -66,15 +71,40 @@ test("models serialized versus overlapped exact lookup composition without optim
         await page.waitForTimeout(100);
         await expect(headword).toHaveAttribute("aria-label", before ?? "");
         await page.waitForFunction(
-          (previousHeadword) =>
-            document
-              .querySelector('[data-testid="training-sense-card-v2"] h2[aria-label]')
-              ?.getAttribute("aria-label") !== previousHeadword,
+          (previousHeadword) => {
+            const card = document.querySelector(
+              '[data-testid="training-sense-card-v2"]',
+            );
+            const nextHeadword = card?.querySelector('h2[aria-label]');
+            const nextLabel = nextHeadword?.getAttribute("aria-label");
+            return Boolean(nextLabel && nextLabel !== previousHeadword);
+          },
           before,
         );
+        await expect(card).toBeVisible();
+        const nextHeadword = await card
+          .locator('h2[aria-label]')
+          .first()
+          .getAttribute("aria-label");
+        expect(nextHeadword).toBeTruthy();
+        expect(nextHeadword).not.toBe(before);
+        displayedHeadwords.add(nextHeadword!);
+        presentedNextHeadwords.push(nextHeadword!);
+        const target = fixture.requests.progressActions[sample]?.target as
+          | { kind: string; entryId: string }
+          | undefined;
+        expect(target).toMatchObject({ kind: "sense-card" });
+        expect(typeof target?.entryId).toBe("string");
+        actionEntryIds.push(target!.entryId);
         const durationMs = Number((performance.now() - startedAt).toFixed(1));
         if (sample > 0) durationsMs.push(durationMs);
       }
+      expect(fixture.requests.progressActions).toHaveLength(SAMPLE_COUNT + 1);
+      expect(actionEntryIds).toHaveLength(SAMPLE_COUNT + 1);
+      expect(new Set(actionEntryIds).size).toBe(SAMPLE_COUNT + 1);
+      expect(displayedHeadwords.size).toBe(SAMPLE_COUNT + 2);
+      expect(presentedNextHeadwords).toHaveLength(SAMPLE_COUNT + 1);
+      expect(new Set(presentedNextHeadwords).size).toBe(SAMPLE_COUNT + 1);
 
       results.push({
         profile: profile.name,

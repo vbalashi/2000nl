@@ -12,6 +12,7 @@ import {
   measureTrainingTransitionStage,
   recordTrainingEntryTerminalFailure,
   recordTrainingTransitionTiming,
+  claimTrainingEntryPresentation,
 } from "@/lib/training/trainingTransitionTiming";
 import {
   generateReviewTurnId,
@@ -200,9 +201,12 @@ export function useTrainingTurnController(input: Inputs) {
     currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
 
   const presentWord = useCallback(
-    (word: TrainingWord | null) => {
+    (word: TrainingWord | null, transitionId?: string) => {
       clearAcceptedTransitionRecovery();
-      if (word) markTrainingEntryPresentationStarted(word.id);
+      if (word) {
+        if (transitionId) claimTrainingEntryPresentation(word.id, transitionId);
+        else markTrainingEntryPresentationStarted(word.id);
+      }
       const presentationId = word ? generateReviewTurnId() : null;
       currentTurnIdRef.current = presentationId;
       setCurrentPresentationId(presentationId);
@@ -301,9 +305,9 @@ export function useTrainingTurnController(input: Inputs) {
   );
 
   const presentPreparedCandidate = useCallback(
-    (word: TrainingWord) => {
+    (word: TrainingWord, transitionId?: string) => {
       setLoadingWord(false);
-      presentWord(word);
+      presentWord(word, transitionId);
     },
     [presentWord],
   );
@@ -460,7 +464,7 @@ export function useTrainingTurnController(input: Inputs) {
               );
               return "error";
             }
-            presentWord(preparedOverrideWord);
+            presentWord(preparedOverrideWord, transitionId);
             setNextCardOverrideNotice(
               `${overrideWord.headword} is nu de volgende kaart. Daarna gaat normale training verder.`,
             );
@@ -582,7 +586,7 @@ export function useTrainingTurnController(input: Inputs) {
           );
           return "error";
         }
-        presentWord(nextWord);
+        presentWord(nextWord, transitionId);
         return "loaded";
       } catch (cause) {
         if (!isCurrentLoad()) {
@@ -685,7 +689,7 @@ export function useTrainingTurnController(input: Inputs) {
     [],
   );
 
-  const beginAcceptedCardTransition = useCallback(() => {
+  const beginAcceptedCardTransition = useCallback((actionTransitionId?: string) => {
     if (!currentWord) return null;
     const wordMode = currentWord.mode ?? enabledModes[0] ?? "word-to-definition";
     const currentCardKey = getTrainingCardKey(currentWord, wordMode);
@@ -705,7 +709,7 @@ export function useTrainingTurnController(input: Inputs) {
     }
     const prefetched = consumePreparedNextTurn(currentCardKey);
     const transitionId =
-      prefetched?.transitionId ?? nextTransitionId ?? createTrainingTransitionId();
+      actionTransitionId ?? prefetched?.transitionId ?? nextTransitionId ?? createTrainingTransitionId();
     recordTrainingTransitionTiming({
       transitionId,
       stage: "next-card.prefetch",
@@ -713,7 +717,7 @@ export function useTrainingTurnController(input: Inputs) {
       outcome: prefetched ? "accepted-hit" : "accepted-miss",
     });
     if (prefetched && !prefetched.v2Ready) {
-      presentPreparedCandidate(prefetched.word);
+      presentPreparedCandidate(prefetched.word, transitionId);
     }
     return {
       word: currentWord,
@@ -772,6 +776,7 @@ export function useTrainingTurnController(input: Inputs) {
 
       if (reachedSessionLimit) {
         presentWord(null);
+        finishTrainingUserTransition(transition.transitionId, "session-complete");
         acceptedTransitionRetryRef.current = null;
         setAcceptedTransitionLoadStalled(false);
         setUsableCandidatesExhausted(true);
@@ -793,12 +798,13 @@ export function useTrainingTurnController(input: Inputs) {
           // invalidate an on-demand selection. The accepted mutation remains
           // settled, but an old candidate must not replace the new session.
           void backgroundRefresh;
+          finishTrainingUserTransition(transition.transitionId, "cancelled");
           return "accepted-next-unavailable";
         }
         if (isTrainingWarmReady(warmResult)) {
           acceptedTransitionRetryRef.current = null;
           setAcceptedTransitionLoadStalled(false);
-          presentPreparedCandidate(prefetched.word);
+          presentPreparedCandidate(prefetched.word, transition.transitionId);
           void backgroundRefresh;
           return "accepted-next-presented";
         } else {
@@ -873,7 +879,7 @@ export function useTrainingTurnController(input: Inputs) {
   );
 
   const acceptPlatformProgressAction = useCallback(
-    async (capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" | "exclude-headword" }) => {
+    async (capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" | "exclude-headword" }, transitionId?: string) => {
       if (!currentWord || actionLoadingRef.current) {
         return "accepted-next-unavailable" as const;
       }
@@ -883,7 +889,7 @@ export function useTrainingTurnController(input: Inputs) {
         // Exclusion affects both directions: a prefetched reverse card may now
         // be unavailable and must return through the authoritative selector.
         if (capability.actionId === "exclude-pair" || capability.actionId === "exclude-headword") resetPreparedNextTurn();
-        const transition = beginAcceptedCardTransition();
+        const transition = beginAcceptedCardTransition(transitionId);
         if (!transition) return "accepted-next-unavailable" as const;
         return await finishAcceptedCardTransition(transition, {
           statsLabel: `AFTER ${transition.word.headword} (platform-v2)`,

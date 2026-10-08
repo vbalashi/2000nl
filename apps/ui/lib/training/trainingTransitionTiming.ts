@@ -94,9 +94,20 @@ export function registerTrainingEntryTransition(
   entryId: string,
   transitionId: string,
 ) {
+  // Detached preparation can finish after the accepted card was presented.
+  // Its speculative id must not replace the action that owns that render.
+  const existing = preparedEntryTransitions.get(entryId);
+  if (existing?.renderStartedAt != null) return;
   preparedEntryTransitions.set(entryId, {
     transitionId,
     renderStartedAt: null,
+  });
+}
+
+export function claimTrainingEntryPresentation(entryId: string, transitionId: string) {
+  preparedEntryTransitions.set(entryId, {
+    transitionId,
+    renderStartedAt: performance.now(),
   });
 }
 
