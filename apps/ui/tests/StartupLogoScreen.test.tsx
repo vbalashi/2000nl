@@ -9,6 +9,9 @@ test.each(["en", "nl", "ru"] as const)("approved %s startup has logo and status 
   expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
   expect(screen.queryByTestId("app-header")).not.toBeInTheDocument();
   expect(screen.queryByTestId("training-loading-indicator")).not.toBeInTheDocument();
+  expect(screen.getByRole("status")).toHaveAccessibleName();
+  expect(document.querySelectorAll(".startup-dots i")).toHaveLength(3);
+  expect(screen.getByRole("heading")).toHaveClass("sr-only");
 });
 test("approved bootstrap keeps retry available after failure", () => {
   const retry = vi.fn();

@@ -32,3 +32,7 @@
 | Уборка UI | Удалить старое представление по фактическим потребителям, затем разделять оставшиеся обязанности Setup/Library и Training с characterization-тестами. Сохранить утверждённый UI, настройки и учебные контракты. Исполнение: #610 / #255. Текущий этап ограничен проверками готовности PR #611; дальнейшее дробление Library/Training — отдельно. | [Обсуждение](../discussions/2026-10-07-01-ui-retirement-and-refactor.md), [границы этапа](../discussions/2026-10-08-01-retirement-release-readiness.md) |
 
 | Следующий рефакторинг UI | После опубликованного #611: telemetry finite sessions → Library search lifecycle → Training resume/reconciliation, с characterization, одним координатором и неизменным нормативом1s. Цель #612 ограничена review-ready PR; SQL-оптимизация #413 и merge/deploy отдельно. Реализация начата, не завершена. | [Согласование](../discussions/2026-10-08-02-state-ownership-refactor.md), [план](../exec-plans/active/issue-612-state-ownership.md) |
+
+## PWA launch identity (2026-10-08)
+
+Accepted: Inter 52px regular wordmark with accented nl and three flowing dots, no visible loading subtitle. Launcher icon uses the complete one-line wordmark on graphite with safe mask padding. Startup can read a validated cosmetic palette/theme cookie, refreshed only from confirmed profile settings; profile readiness remains authoritative. Native pre-page splash remains platform-controlled and fixed neutral. [Discussion](../discussions/2026-10-08-03-pwa-launch-identity.md), issue #630. Implementation pending release.

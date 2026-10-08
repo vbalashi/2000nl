@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { cacheStartupAppearance } from "@/lib/preferences/startupAppearance";
 import { StartupStatus } from "@/components/training/pilot/StartupStatus";
 import { StartupLogoScreen } from "@/components/training/pilot/StartupLogoScreen";
 import startup from "@/components/training/pilot/startupLogo.module.css";
@@ -66,6 +67,7 @@ function AccountAppearanceSession({
       .then((value) => {
         if (!cancelled) {
           setPalette(value);
+          cacheStartupAppearance(value);
           setLoadStatus("ready");
         }
       })
@@ -83,7 +85,7 @@ function AccountAppearanceSession({
     setSaveStatus("saving");
     try {
       await repository.save(userId, value);
-      if (alive.current) setSaveStatus("saved");
+      if (alive.current) { cacheStartupAppearance(value); setSaveStatus("saved"); }
     } catch {
       if (alive.current) setSaveStatus("error");
     } finally {

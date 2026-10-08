@@ -1,17 +1,17 @@
-/* Account colour is unknown until preferences load: use an achromatic surface. */
+/* Neutral fallback; a validated cosmetic cache may provide the last profile palette. */
 .startup {
   display:flex;
   min-height:100dvh;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:24px;
+  gap:30px;
   background:var(--practice-startup-surface);
   color:var(--practice-startup-text);
   font-family:var(--practice-startup-font-ui);
 }
-.logo { margin:0; font-size:32px; font-weight:400; letter-spacing:-.04em; line-height:1; }
-.ink { color:inherit; }
+.logo { margin:0; font-size:52px; font-weight:400; letter-spacing:-.04em; line-height:1; }
+.ink { color:var(--practice-startup-accent); }
 .status { text-align:center; max-width:min(480px,calc(100vw - 48px)); }
 .status h1,.status p { margin:0; color:inherit; font-size:var(--practice-startup-text-size); line-height:20px; font-weight:400; }
 .status button { margin-top:16px; border:1px solid currentColor; border-radius:8px; padding:8px 16px; background:transparent; color:inherit; }

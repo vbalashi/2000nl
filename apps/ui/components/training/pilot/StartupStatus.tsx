@@ -17,8 +17,9 @@ export function StartupStatus({ language = "en", copyVisible = true }: {
 }) {
   return <StartupLogoScreen>
     <section role="status" aria-busy="true" data-context="bootstrap"
-      aria-label={copyVisible ? undefined : copy[language]}>
-      <h1 style={{ visibility: copyVisible ? undefined : "hidden" }}>{copy[language]}</h1>
+      aria-label={copy[language]} aria-live="polite">
+      {copyVisible ? <h1 className="sr-only">{copy[language]}</h1> : null}
+      <span className="startup-dots" aria-hidden="true"><i /><i /><i /></span>
     </section>
   </StartupLogoScreen>;
 }
