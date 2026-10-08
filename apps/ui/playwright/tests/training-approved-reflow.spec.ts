@@ -157,3 +157,19 @@ test("the selected translation at the end of a long Answer remains reachable", a
   expect(await headword.boundingBox()).toEqual(headwordBefore);
   expect(await dock.boundingBox()).toEqual(dockBefore);
 });
+
+test("front prompt stays centred when the hint opens", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/dev/sense-card-gate?prototype=reading&mode=reverse&clean=1");
+  await assertTestFontsReady(page);
+  const stage = page.getByTestId("training-sense-card-stage");
+  const prompt = stage.getByTestId("reverse-prompt");
+  const region = stage.getByTestId("training-face-scroll");
+  const before = await prompt.boundingBox();
+  const area = await region.boundingBox();
+  expect(Math.abs(before!.y + before!.height / 2 - area!.y - area!.height / 2)).toBeLessThan(2);
+  await stage.getByRole("button", { name: "Hint tonen", exact: true }).click();
+  await expect(region.locator("aside")).toBeVisible();
+  const after = await prompt.boundingBox();
+  expect(Math.abs(after!.y - before!.y)).toBeLessThan(1);
+});

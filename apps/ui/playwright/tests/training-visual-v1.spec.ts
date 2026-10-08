@@ -190,7 +190,7 @@ test("captures the approved long-idiom answer", async ({ browser }) => {
       name: /Antwoord tonen|Показать ответ|Show answer/i,
     })
     .click();
-  await expect(page.getByText("iets nodig hebben")).toBeVisible();
+  await expect(page.getByTestId("training-answer-scroll").getByText("iets nodig hebben")).toBeVisible();
   await page.screenshot({
     path: resolve(artifactDirectory, "training-long-idiom-402x874.png"),
   });

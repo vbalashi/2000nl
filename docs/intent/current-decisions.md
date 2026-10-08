@@ -36,3 +36,7 @@
 ## PWA launch identity (2026-10-08)
 
 Accepted: Inter 52px regular wordmark with accented nl and three flowing dots, no visible loading subtitle. Launcher icon uses the complete one-line wordmark on graphite at the owner-selected 132px / 500 source size; uncommon Android masks may crop beyond the conservative safe circle. Startup can read a validated cosmetic palette/theme cookie, refreshed only from confirmed profile settings; profile readiness remains authoritative. Native pre-page splash remains platform-controlled and fixed neutral. [Discussion](../discussions/2026-10-08-03-pwa-launch-identity.md), issue #630. Implementation pending release.
+
+## Training front layout (2026-10-08)
+
+Accepted: centre the main prompt independently of instructions; reserve hint space and fade hints without moving the prompt. Shared fronts retain readable overflow for long content. Normal Training button boundaries use the quiet border role, preserving keyboard focus. Implemented in [PR #635](https://github.com/vbalashi/2000nl/pull/635); validation and release evidence are recorded there. [Discussion](../discussions/2026-10-08-04-training-prompt-centering.md), #633.

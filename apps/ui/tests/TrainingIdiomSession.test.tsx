@@ -285,6 +285,8 @@ test("excludes the idiom pair, advances once, and keeps Undo available after com
       name: getUiMessages("en").trainingSession.exclusion.help,
     }),
   );
+  expect(performTrainingExclusion).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("menuitem", { name: getUiMessages("en").trainingSession.exclusion.label }));
   expect(await screen.findByText("Session complete")).toBeInTheDocument();
   expect(performTrainingExclusion).toHaveBeenNthCalledWith(
     1,

@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useTrainingInteractions } from "@/components/practice/ui/TrainingInteractionPreferences";
 import {
   ChevronDown,
   Languages,
@@ -191,6 +192,7 @@ export function TrainingCardFace({
   hintLabel: string;
   contentLabel: string;
 }) {
+  const { preferences } = useTrainingInteractions();
   return (
     <div
       data-testid="training-face-scroll"
@@ -203,19 +205,19 @@ export function TrainingCardFace({
       }}
       className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:thin] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--practice-focus,#818cf8)]"
     >
-      <div className="flex min-h-full flex-col p-[18px]">
-        {partOfSpeech ? (
-          <span
-            data-testid="training-face-part-of-speech"
-            className={`${chrome.metadata} self-start`}
-          >
-            <span className={chrome.pos}>
-              <span aria-hidden="true" className={chrome.dot} />
-              {trainingPartOfSpeechLabel(partOfSpeech)}
+      <div className={approved.faceLayout}>
+        <div className={approved.facePrelude}>
+          {partOfSpeech ? (
+            <span
+              data-testid="training-face-part-of-speech"
+              className={`${chrome.metadata} self-start mb-auto`}
+            >
+              <span className={chrome.pos}>
+                <span aria-hidden="true" className={chrome.dot} />
+                {trainingPartOfSpeechLabel(partOfSpeech)}
+              </span>
             </span>
-          </span>
-        ) : null}
-        <div className="my-auto flex shrink-0 flex-col items-center gap-4 px-2 py-6 text-center sm:px-10">
+          ) : null}
           {label ? (
             <span className={approved.faceInstruction}>
               {label}
@@ -223,6 +225,8 @@ export function TrainingCardFace({
           ) : null}
           {recallTarget ? <p data-testid="training-face-recall-target" className={approved.recallTarget}>{recallTarget}</p> : null}
           {contextLabel ? <p className={approved.faceInstruction}>{contextLabel}</p> : null}
+        </div>
+        <div className={approved.facePrompt} data-testid="training-main-prompt">
           {prompt.kind === "explanation" ? (
             <>
               <p
@@ -243,16 +247,16 @@ export function TrainingCardFace({
             />
           )}
         </div>
-        {hint && hintVisible ? (
-          <aside className="mt-4 shrink-0 rounded-2xl border border-slate-300 bg-white px-4 py-3 dark:border-slate-700 dark:bg-[#191e27]">
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        {hint ? (
+          <aside className={approved.faceHint} data-visible={hintVisible} data-motion={preferences.animation ? undefined : "off"} aria-hidden={!hintVisible}>
+            <p className={approved.faceHintLabel}>
               {hintLabel}
             </p>
-            <p className="border-l-[3px] border-[color:var(--practice-border,#818cf8)] pl-3 font-sense-serif text-[length:var(--reading-hint-size,18px)] italic leading-[var(--reading-hint-leading,28px)] text-slate-800 dark:text-slate-200">
+            <p className={approved.faceHintText}>
               {hint.text}
             </p>
           </aside>
-        ) : null}
+        ) : <div />}
       </div>
     </div>
   );

@@ -625,7 +625,7 @@
       "exclusion": {
         "label": "Uitsluiten",
         "help": "In beide richtingen uitsluiten van training",
-        "done": "Paar uitgesloten van training",
+        "done": "Uitgesloten van training in beide richtingen",
         "undo": "Ongedaan maken",
         "failed": "De actie is niet gelukt. Probeer opnieuw.",
         "dismiss": "Sluiten",
