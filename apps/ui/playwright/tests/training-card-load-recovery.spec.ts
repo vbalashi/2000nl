@@ -24,7 +24,7 @@ test("a failed prepared card recovers after closing and continuing on desktop an
 
     await page
       .getByRole("button", {
-        name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen/i,
+        name: /^(?:Start training|Training starten|Начать тренировку)$/,
       })
       .click();
     await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
@@ -46,17 +46,17 @@ test("a failed prepared card recovers after closing and continuing on desktop an
     );
     await page
       .getByRole("button", {
-        name: /Terug naar Vandaag|Вернуться на Сегодня|Back to Today/i,
+        name: /^(?:Back to training|Terug naar training|Вернуться к тренировкам)$/i,
       })
       .click();
-    await expect(
-      page.getByText(
-        /20 reviews due|20 herhalingen klaar|Повторений к выполнению: 20/i,
-      ),
-    ).toBeVisible();
+    const currentTraining = page.getByRole("region", {
+      name: /Current training|Huidige training|Текущая тренировка/i,
+    });
+    await expect(currentTraining).toBeVisible();
+    await expect(currentTraining.getByText("49", { exact: true })).toBeVisible();
     await page
       .getByRole("button", {
-        name: /Продолжить сессию|Continue session|Sessie voortzetten/i,
+        name: /^(?:Continue training|Training hervatten|Продолжить тренировку)$/i,
       })
       .click();
     await expect(failure).toBeVisible();
@@ -122,7 +122,7 @@ test("a missing Platform presentation identity is retired before the next sessio
 
   await page
     .getByRole("button", {
-      name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen/i,
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
     })
     .click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();

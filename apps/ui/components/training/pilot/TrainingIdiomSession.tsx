@@ -3,7 +3,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import {
   fetchNextPlatformV2IdiomTrainingSessionExercise,
   markPlatformV2IdiomTrainingSessionMemberUnavailable,
@@ -247,15 +246,15 @@ export function TrainingIdiomSession({
     }
   };
 
-  const preparationFailed = trainingPresentationV1Enabled() && error && !candidate && !loading && !terminal;
+  const preparationFailed = error && !candidate && !loading && !terminal;
 
   return (
     <TrainingSessionV2Layout
-      approvedPresentation={trainingPresentationV1Enabled()}
+      approvedPresentation={true}
       phase={loading ? "loading" : error && !candidate ? "failure" : "ready"}
       chrome={
         <TrainingSessionChrome
-          approvedPresentation={trainingPresentationV1Enabled()}
+          approvedPresentation={true}
           interfaceLanguage={interfaceLanguage}
           scenario="idiom"
           mode={

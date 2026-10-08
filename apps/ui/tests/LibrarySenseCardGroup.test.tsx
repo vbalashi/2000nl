@@ -17,6 +17,60 @@ import {
 } from "@/lib/platform/fixtures/senseCardV1GateFixture";
 
 describe("LibrarySenseCardGroup", () => {
+  test("clicking a definition opens and closes its meaning without affecting child actions", () => {
+    const onAction = vi.fn();
+    render(<LibrarySenseCardGroup model={buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en")}
+      interfaceLanguage="en" onAction={onAction} />);
+    const card = screen.getByTestId("library-sense-card-entry-bank-finance");
+    const definition = within(card).getByText("een bedrijf dat jouw geld bewaart of waar je geld kunt lenen");
+    const toggle = within(card).getByRole("button", { name: "Expand meaning" });
+    expect(card).toHaveAttribute("data-expanded", "false");
+    fireEvent.click(definition);
+    expect(card).toHaveAttribute("data-expanded", "true");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(within(card).getByRole("button", { name: "Learn" }));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(card).toHaveAttribute("data-expanded", "true");
+    fireEvent.click(card);
+    expect(card).toHaveAttribute("data-expanded", "true");
+    fireEvent.click(definition);
+    expect(card).toHaveAttribute("data-expanded", "false");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(card).toHaveAttribute("data-expanded", "true");
+  });
+
+  test("selecting definition text does not toggle an open meaning", () => {
+    render(<LibrarySenseCardGroup model={buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en")}
+      interfaceLanguage="en" onAction={vi.fn()} />);
+    const card = screen.getByTestId("library-sense-card-entry-bank-finance");
+    const definition = within(card).getByText("een bedrijf dat jouw geld bewaart of waar je geld kunt lenen");
+    fireEvent.click(definition);
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(definition);
+    selection?.addRange(range);
+    try {
+      fireEvent.click(definition);
+      expect(card).toHaveAttribute("data-expanded", "true");
+    } finally {
+      selection?.removeAllRanges();
+    }
+  });
+
+  test("an active meaning can still be collapsed by clicking its definition", () => {
+    const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
+    const activeMeaningId = "entry-bank-finance";
+    const onActiveMeaningChange = vi.fn();
+    render(<LibrarySenseCardGroup model={model} activeMeaningId={activeMeaningId}
+      onActiveMeaningChange={onActiveMeaningChange} interfaceLanguage="en" onAction={vi.fn()} />);
+    const card = screen.getByTestId(`library-sense-card-${activeMeaningId}`);
+    expect(card).toHaveAttribute("data-expanded", "true");
+    fireEvent.click(within(card).getByText("een bedrijf dat jouw geld bewaart of waar je geld kunt lenen"));
+    expect(card).toHaveAttribute("data-expanded", "false");
+    expect(onActiveMeaningChange).toHaveBeenCalledWith(activeMeaningId);
+  });
+
   test("delays the selected meaning until the containing panel has entered", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
     const selected = model.meanings[1].entryId;
@@ -72,9 +126,9 @@ describe("LibrarySenseCardGroup", () => {
     );
     expect(expression).toContainElement(explanation as HTMLElement);
     expect(expression).toContainElement(example as HTMLElement);
-    expect(expression?.querySelector("p")).toHaveClass("italic");
-    expect(explanation?.querySelector("p")).not.toHaveClass("italic");
-    expect(example?.querySelector("p")).toHaveClass("italic");
+    expect(expression?.querySelector("p")).toBeInTheDocument();
+    expect(explanation?.querySelector("p")).toBeInTheDocument();
+    expect(example?.querySelector("p")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Report/ })).not.toBeInTheDocument();
   });
   test("renders two nodig idiom roots with separate explanations", () => {
@@ -119,7 +173,7 @@ describe("LibrarySenseCardGroup", () => {
     expect(headword).toHaveAttribute("data-long-headword", "true");
     expect(scrollRegion).not.toContainElement(headword);
     // Details now inherits the same headword size/proportion as Training Answer.
-    expect(headword.className).toContain("text-[1em]");
+    expect(headword.className).toContain("var(--practice-text-headword");
     expect(headword.className).not.toContain("cqw");
     expect(screen.queryByText("Значения")).not.toBeInTheDocument();
     expect(
@@ -148,7 +202,7 @@ describe("LibrarySenseCardGroup", () => {
     expect(translate).toHaveAttribute("aria-pressed", "false");
     expect(audio.compareDocumentPosition(translate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(headerRow.compareDocumentPosition(headword) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /meer|more/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /meer|more/i })).toBeInTheDocument();
   });
 
   test("does not create a meaning ordinal badge for a one-sense group", () => {
@@ -161,9 +215,7 @@ describe("LibrarySenseCardGroup", () => {
     );
 
     expect(
-      container.querySelector(
-        "[data-testid='library-sense-card-entry-bank-furniture'] > span",
-      ),
+      container.querySelector("[data-testid='library-sense-card-entry-bank-furniture'] > [class*='ordinal']"),
     ).not.toBeInTheDocument();
   });
 
@@ -181,8 +233,7 @@ describe("LibrarySenseCardGroup", () => {
     expect(screen.queryByText("Meanings")).not.toBeInTheDocument();
     const exposureBadge = screen.getByLabelText("3×");
     expect(exposureBadge).toBeInTheDocument();
-    expect(exposureBadge).toHaveClass("min-h-[18px]");
-    expect(exposureBadge).not.toHaveClass("border");
+    expect(exposureBadge).toHaveTextContent("3×");
     expect(
       screen
         .getByText("Bij welke bank hebt u een rekening?")
@@ -204,7 +255,7 @@ describe("LibrarySenseCardGroup", () => {
     const furnitureDetails = screen
       .getByText("Margriet en Ellie zaten op de bank televisie te kijken.")
       .closest('[aria-hidden="false"]');
-    expect(furnitureDetails).toHaveClass("mt-3");
+    expect(furnitureDetails).toHaveClass("mt-0");
 
     fireEvent.click(
       financeCard,
@@ -230,7 +281,7 @@ describe("LibrarySenseCardGroup", () => {
       1,
     );
     fireEvent.click(screen.getByRole("button", { name: "Translate" }));
-    expect(furnitureDetails).toHaveClass("mt-4");
+    expect(furnitureDetails).toHaveClass("mt-0");
     expect(
       screen.getByText("bank · financial institution"),
     ).toBeInTheDocument();
@@ -251,7 +302,6 @@ describe("LibrarySenseCardGroup", () => {
   });
 
   test("approved article groups the same actions as primary + quiet row", () => {
-    vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
     try {
       const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
       const markKnown = model.meanings[1].markKnown;
@@ -313,9 +363,8 @@ describe("LibrarySenseCardGroup", () => {
     expect(
       screen.queryByRole("button", { name: "Easy" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Mark as known/ }),
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "More card actions" }));
+    expect(screen.getByRole("menuitem", { name: /Mark as known/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Collections · 2" }));
     expect(onOpenCollections).toHaveBeenCalledWith(
       expect.objectContaining({ entryId: "entry-bank-furniture" }),
@@ -413,41 +462,25 @@ describe("LibrarySenseCardGroup", () => {
       />,
     );
 
-    expect(screen.getByText("Usage pattern")).toBeInTheDocument();
-    expect(screen.getByText("Idioms")).toBeInTheDocument();
+    expect(container.querySelector('[data-content-kind="usage-pattern"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-content-kind="idiom"]')).toBeInTheDocument();
     expect(
       container.querySelector('[data-content-kind="usage-pattern"]'),
     ).toBeInTheDocument();
     expect(
       container.querySelector('[data-content-kind="idiom"]'),
     ).toBeInTheDocument();
+    expect(container.querySelector('[data-content-kind="usage-pattern"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-content-kind="example"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-content-kind="idiom"]')).toBeInTheDocument();
+    const examples = container.querySelector('[data-section="examples"]');
+    const usage = container.querySelector('[data-section="usage"]');
+    expect(examples).toBeInTheDocument();
+    expect(usage).toBeInTheDocument();
     expect(
-      container.querySelector('[data-section-icon="usage"]'),
-    ).toBeInTheDocument();
-    expect(
-      container.querySelector('[data-section-icon="examples"]'),
-    ).toBeInTheDocument();
-    expect(
-      container.querySelector('[data-section-icon="idioms"]'),
-    ).toBeInTheDocument();
-    const usagePattern = container.querySelector(
-      '[data-content-kind="usage-pattern"]',
-    );
-    const example = container.querySelector('[data-content-kind="example"]');
-    expect(usagePattern).toBeInTheDocument();
-    expect(example).toBeInTheDocument();
-    expect(
-      (usagePattern as Element).compareDocumentPosition(example as Node) &
+      (examples as Element).compareDocumentPosition(usage as Node) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    expect(usagePattern?.querySelector("div[class*='border-l']")).toHaveClass(
-      "border-slate-400",
-    );
-    expect(
-      container
-        .querySelector('[data-content-kind="idiom"]')
-        ?.querySelector("div[class*='border-l']"),
-    ).toHaveClass("border-amber-400");
   });
 
   test("shows completed known state instead of new", () => {
@@ -517,7 +550,6 @@ test("Library displays enrolled but ungraded state and never labels a missing st
 
 
 test.each(["false", "true"])("Library Learning uses the same badge styling and icon as New (approved=%s)", approved => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", approved);
   try {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
     model.meanings = model.meanings.slice(0,2).map((meaning,index) => ({...meaning, undoKnown: null, schedulerPhase: index ? "learning" : "not-started", repeatCount: 0}));

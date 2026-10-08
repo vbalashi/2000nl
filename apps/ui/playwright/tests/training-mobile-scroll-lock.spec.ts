@@ -2,11 +2,9 @@ import {expect,test} from "@playwright/test";
 import {setupAuthenticatedTrainingAttributionPage} from "../support/trainingAttributionHarness";
 
 test.use({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true", "Approved presentation is opt-in.");
 for (const profile of ["compact","long-idiom"] as const) {
- test(`${profile}: mobile chrome and footer stay fixed while the answer scrolls`,async({page})=>{
+ test(`${profile}: mobile chrome and rating actions stay fixed while the answer scrolls`,async({page})=>{
   await setupAuthenticatedTrainingAttributionPage(page,0,{
-   devTestLogin:true,
    visualProfile:profile === "compact" ? "face" : profile,
    settingsOverrides:{reading_size_phone:"extra"},
   });

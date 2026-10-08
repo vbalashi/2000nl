@@ -46,8 +46,6 @@ export function AccountMaterialProvider(props: {
   children: React.ReactNode;
   repository?: MaterialRepository;
 }) {
-  if (process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true")
-    return <>{props.children}</>;
   return <AccountMaterialSession key={props.userId} {...props} />;
 }
 function AccountMaterialSession({

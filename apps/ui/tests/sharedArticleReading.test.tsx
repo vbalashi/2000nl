@@ -33,7 +33,7 @@ test('an absent translation renders nothing; a collapsed translation stays hidde
 });
 
 test('Library approved renderer preserves the hierarchy and keeps translation toggles read-only',()=>{
- vi.stubEnv('NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1','true');const action=vi.fn();
+ const action=vi.fn();
  const model=buildLibrarySenseCardGroupModel(goedGroup,'en');
  const view=render(<LibrarySenseCardGroup model={model} interfaceLanguage="en" contentLanguage="nl" translationLanguage="en" translationEnabled onAction={action}/>);
  const expression=view.container.querySelector('[data-content-node-id="idiom-goed"]')!;
@@ -44,7 +44,6 @@ test('Library approved renderer preserves the hierarchy and keeps translation to
 });
 
 test('Training and Library use the same content IDs and nested renderer in approved mode',()=>{
- vi.stubEnv('NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1','true');
  const model=buildTrainingSenseCardModel({group:goedGroup,entry:goedEntry,interfaceLanguage:'ru'});
  const view=render(<TrainingCardAnswerBody model={model} interfaceLanguage="ru" contentLanguage="nl" translationLanguage="en" translationVisible onReachEnd={vi.fn()}/>);
  const expression=view.container.querySelector('[data-content-node-id="idiom-goed"]')!;
@@ -54,7 +53,7 @@ test('Training and Library use the same content IDs and nested renderer in appro
 });
 
 test('approved Library keeps selected meaning and dispatches original server capabilities',()=>{
- vi.stubEnv('NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1','true');const action=vi.fn();const collections=vi.fn();
+ const action=vi.fn(),collections=vi.fn();
  const model=buildLibrarySenseCardGroupModel(multiSenseBankGroup,'en');const selected=model.meanings[1];
  render(<LibrarySenseCardGroup model={model} activeMeaningId={selected.entryId} interfaceLanguage="en" onOpenCollections={collections} onAction={action}/>);
  const card=screen.getByTestId('library-sense-card-'+selected.entryId);
@@ -73,7 +72,7 @@ test('approved Library keeps selected meaning and dispatches original server cap
 });
 
 test.each(['en','nl','ru'] as const)('Library word exclusion menu is read-only until the explicit localized action (%s)',language=>{
- vi.stubEnv('NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1','true');const action=vi.fn(),exclude=vi.fn(),report=vi.fn();
+ const action=vi.fn(),exclude=vi.fn(),report=vi.fn();
  const model=buildLibrarySenseCardGroupModel(multiSenseBankGroup,language),selected=model.meanings[1];
  render(<LibrarySenseCardGroup model={model} activeMeaningId={selected.entryId} interfaceLanguage={language} onAction={action} onExclude={exclude} onReport={report} reportableEntryIds={new Set([selected.entryId])}/>);
  const card=screen.getByTestId('library-sense-card-'+selected.entryId);

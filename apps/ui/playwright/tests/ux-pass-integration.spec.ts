@@ -2,9 +2,6 @@ import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 import { multiSenseBankGroup } from "../../tests/platformV2LibraryFixture";
 import { shiftDate } from "../../lib/training/activity/model";
-
-test.skip(process.env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1 !== "true", "Approved UI required");
-
 test("@pilot Library sheet preserves mouse and touch heights in the real navigation", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 610, height: 900 });
   await setupAuthenticatedTrainingAttributionPage(page, 0, { visualProfile: "answer", devTestLogin: process.env.TRAINING_RELIABILITY_DEV_LOGIN === "true" });
@@ -86,7 +83,7 @@ test("@pilot builder offers one Translation with a nonempty contextual direction
     card_modes: ['word-to-definition', 'definition-to-word'], graduation_threshold: 21, enabled: true, sort_order: 1,
   }] }));
   await page.reload();
-  await page.locator('button[class*="configure"]').click();
+  await page.getByRole('button', { name: /^(?:Create training|Training maken|Training aanmaken|Создать тренировку)$/i }).click();
   await expect(page.getByRole('heading', { name: /Session builder|Настройка тренировки|Training samenstellen/i })).toBeVisible();
   await page.getByRole('button', { name: /^(Exercises|Упражнения|Oefeningen) /i }).click();
   const translation = page.getByRole('button', { name: /^(Translation|Перевод|Vertaling)$/i });

@@ -4,13 +4,9 @@ import {
   ChevronDown,
   Languages,
   Lightbulb,
-  List,
   MoreHorizontal,
-  Quote,
-  Route,
   Volume2,
 } from "lucide-react";
-import {sharedArticlePresentationV1Enabled, trainingPresentationV1Enabled} from "@/lib/platform/platformV2Rollout";
 import approved from "../approvedTrainingCard.module.css";
 import chrome from "@/components/practice/article/senseChrome.module.css";
 import {ArticleContentNode,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
@@ -23,24 +19,19 @@ import {
   ExposureBadge,
   SenseCardReveal,
   SenseCardHeadwordLockup,
-  SenseSectionHeader,
 } from "../SenseCardChrome";
-import type { TrainingSenseCardContent } from "./trainingSenseCardModel";
 
 import type {
   TrainingCardAnswer,
   TrainingCardPrompt,
 } from "@/lib/training/exerciseCardPresentation";
 
-export const trainingCardStageClassName =
-  "mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-[10px] font-sense-sans text-slate-900 dark:text-[#F4F6FA] [container-type:inline-size]";
-
 export const approvedTrainingCardStageClassName =
   `mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-[10px] font-sense-sans [container-type:inline-size] ${approved.stage}`;
 
 /** Stage classes for the active presentation; approved screens use palette roles. */
 export function trainingStageClassName() {
-  return trainingPresentationV1Enabled() ? approvedTrainingCardStageClassName : trainingCardStageClassName;
+  return approvedTrainingCardStageClassName;
 }
 
 export function TrainingCardShell({
@@ -53,7 +44,7 @@ export function TrainingCardShell({
   return (
     <article
       data-testid="training-sense-card-shell"
-      className={`relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden ${trainingPresentationV1Enabled() ? approved.shell : "rounded-[14px] border border-slate-300 bg-slate-50 shadow-[0_18px_55px_rgba(15,23,42,0.12)] dark:border-[#4B5360] dark:bg-[#20252D] dark:shadow-none"} ${answerVisible ? "gap-[6px] p-[18px]" : ""}`}
+      className={`relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden ${approved.shell} ${answerVisible ? "gap-[6px] p-[18px]" : ""}`}
     >
       {children}
     </article>
@@ -93,18 +84,18 @@ export function TrainingCardAnswerHeader({
 }) {
   return (
     <header className="relative z-10 flex shrink-0 flex-col gap-0">
-      <div className={trainingPresentationV1Enabled() ? approved.headerRow : "mb-2 flex min-h-[34px] items-center justify-between gap-2"}>
-        <div className={trainingPresentationV1Enabled() ? chrome.metadata : "flex min-w-0 items-center gap-[7px] text-[13px] text-slate-500 dark:text-[#BFC7D4]"}>
+      <div className={approved.headerRow}>
+        <div className={chrome.metadata}>
           {model.partOfSpeech ? (
-            <span className={trainingPresentationV1Enabled() ? chrome.pos : "inline-flex items-center gap-2 font-medium"}>
-              <span className={trainingPresentationV1Enabled() ? chrome.dot : "h-2 w-2 rounded-full bg-emerald-500 dark:bg-[#37D99B]"} />
+            <span className={chrome.pos}>
+              <span className={chrome.dot} />
               <span title={model.partOfSpeech}>
                 {trainingPartOfSpeechLabel(model.partOfSpeech)}
               </span>
             </span>
           ) : null}
           {model.coreVocabularyLabel ? (
-            <span className={trainingPresentationV1Enabled() ? chrome.badge : "rounded-md bg-indigo-500/10 px-2 py-1 font-semibold text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]"}>
+            <span className={chrome.badge}>
               {model.coreVocabularyLabel}
             </span>
           ) : null}
@@ -125,7 +116,7 @@ export function TrainingCardAnswerHeader({
               <Volume2 aria-hidden="true" className="h-5 w-5" />
             </TrainingCardIconButton>
           ) : null}
-          {translationAvailable || trainingPresentationV1Enabled() ? (
+          {(
             <TrainingCardIconButton
               label={translationLabel}
               active={translationVisible}
@@ -134,7 +125,7 @@ export function TrainingCardAnswerHeader({
             >
               <Languages aria-hidden="true" className="h-5 w-5" />
             </TrainingCardIconButton>
-          ) : null}
+          )}
           {onOpenDetails ? (
             <TrainingCardIconButton
               label={moreLabel}
@@ -216,10 +207,10 @@ export function TrainingCardFace({
         {partOfSpeech ? (
           <span
             data-testid="training-face-part-of-speech"
-            className={trainingPresentationV1Enabled() ? `${chrome.metadata} self-start` : "self-start text-[13px] text-slate-500 dark:text-slate-400"}
+            className={`${chrome.metadata} self-start`}
           >
             <span className={chrome.pos}>
-              <span aria-hidden="true" className={trainingPresentationV1Enabled() ? chrome.dot : "h-2 w-2 rounded-full bg-emerald-500"} />
+              <span aria-hidden="true" className={chrome.dot} />
               {trainingPartOfSpeechLabel(partOfSpeech)}
             </span>
           </span>
@@ -282,7 +273,6 @@ export function TrainingCardAnswerBody({
   translationLanguage?: string;
   onReachEnd: () => void;
 }) {
-  const approvedArticle = sharedArticlePresentationV1Enabled();
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const continuationFocusPendingRef = React.useRef(false);
   const [scrollState, setScrollState] = React.useState({
@@ -346,83 +336,11 @@ export function TrainingCardAnswerBody({
         style={{ maskImage, WebkitMaskImage: maskImage }}
         className={`h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${approved.answerScroll}`}
       >
-        {approvedArticle ? <ProductionArticleReading>
+        <ProductionArticleReading>
           {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>)}
           <ArticleSenseRelations relation={lexicalRelationDetail(model.wordDetails)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage}/>
           <ArticleMeaningDetails definition={null} details={[...usagePatterns,...examples,...idioms,...notes]} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>
-        </ProductionArticleReading> : <>        {definitions.length ? (
-          <div className="space-y-3 pt-1">
-            {definitions.map((item) => (
-              <ContentItem
-                key={item.contentNodeId}
-                item={item}
-                translationVisible={translationVisible}
-              />
-            ))}
-          </div>
-        ) : null}
-        {usagePatterns.length ? (
-          <ContentSection
-            section="usage"
-            title={t("senseCard.sections.usagePattern")}
-            count={usagePatterns.length}
-            icon={<Route aria-hidden="true" className="h-3 w-3" />}
-          >
-            {usagePatterns.map((item) => (
-              <ContentItem
-                key={item.contentNodeId}
-                item={item}
-                translationVisible={translationVisible}
-                accent="usage"
-              />
-            ))}
-          </ContentSection>
-        ) : null}
-        {examples.length ? (
-          <ContentSection
-            section="examples"
-            title={t("senseCard.sections.examples")}
-            count={examples.length}
-            icon={<List aria-hidden="true" className="h-3 w-3" />}
-          >
-            {examples.map((item) => (
-              <ContentItem
-                key={item.contentNodeId}
-                item={item}
-                translationVisible={translationVisible}
-                accent="example"
-              />
-            ))}
-          </ContentSection>
-        ) : null}
-        {idioms.length ? (
-          <ContentSection
-            section="idioms"
-            title={t("senseCard.sections.idioms")}
-            count={idioms.length}
-            icon={<Quote aria-hidden="true" className="h-3 w-3" />}
-          >
-            {idioms.map((item) => (
-              <ContentItem
-                key={item.contentNodeId}
-                item={item}
-                translationVisible={translationVisible}
-                accent="idiom"
-              />
-            ))}
-          </ContentSection>
-        ) : null}
-        {notes.length ? (
-          <ContentSection section="notes" title={t("senseCard.sections.notes")}>
-            {notes.map((item) => (
-              <ContentItem
-                key={item.contentNodeId}
-                item={item}
-                translationVisible={translationVisible}
-              />
-            ))}
-          </ContentSection>
-        ) : null}</>}
+        </ProductionArticleReading>
 
       </div>
       {scrollState.bottom ? (
@@ -436,112 +354,10 @@ export function TrainingCardAnswerBody({
               behavior: "smooth",
             });
           }}
-          className={trainingPresentationV1Enabled() ? chrome.scrollCue : "absolute bottom-2 left-1/2 z-10 flex h-7 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 text-slate-600 shadow-lg hover:bg-slate-100 hover:text-slate-900 dark:border-slate-600 dark:bg-[#171b22]/95 dark:text-slate-300 dark:hover:border-slate-400 dark:hover:text-white"}
+          className={chrome.scrollCue}
         >
           <ChevronDown aria-hidden="true" className="h-4 w-4" />
         </button>
-      ) : null}
-    </div>
-  );
-}
-
-function ContentSection({
-  section,
-  title,
-  count,
-  icon,
-  children,
-}: {
-  section: "usage" | "examples" | "idioms" | "notes";
-  title: string;
-  count?: number;
-  icon?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="mt-4 first:mt-0" data-section={section}>
-      <SenseSectionHeader
-        label={title}
-        icon={icon}
-        count={count}
-        tone="light"
-      />
-      <div className={section === "idioms" ? "space-y-5 pt-2" : "space-y-3"}>
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function ContentItem({
-  item,
-  translationVisible,
-  accent = "none",
-}: {
-  item: TrainingSenseCardContent;
-  translationVisible: boolean;
-  accent?: "none" | "usage" | "example" | "idiom";
-}) {
-  const nested = Boolean(item.parentContentNodeId);
-  const nestedDefinition = nested && item.kind === "definition";
-  const literary =
-    accent === "usage" ||
-    accent === "example" ||
-    accent === "idiom" ||
-    (nested && item.kind === "example");
-  const border =
-    accent === "usage"
-      ? "border-l-[3px] border-slate-400 pl-4 dark:border-slate-500"
-      : accent === "example"
-        ? "border-l-[3px] border-indigo-400 pl-4"
-        : accent === "idiom"
-          ? "border-l-[3px] border-amber-400 pl-[10px]"
-          : "";
-  return (
-    <div
-      className={border}
-      data-content-node-id={item.contentNodeId}
-      data-parent-content-node-id={item.parentContentNodeId ?? undefined}
-      data-content-kind={item.kind}
-    >
-      <div className="flex items-start gap-2">
-        <p
-          className={`min-w-0 flex-1 ${
-            nestedDefinition
-              ? "font-sense-sans text-[length:var(--reading-nested-size,13px)] leading-[var(--reading-nested-leading,1.35)] text-slate-500 dark:text-[#BFC7D4]"
-              : literary
-                ? "font-sense-serif italic text-slate-900 dark:text-[#F4F6FA] text-[length:var(--reading-literary-size,16px)] leading-[var(--reading-literary-leading,1.4)]"
-                : "font-sense-serif text-[length:var(--reading-body-size,16px)] leading-[var(--reading-body-leading,1.15)] text-slate-900 dark:text-[#F4F6FA]"
-          }`}
-        >
-          {item.text}
-        </p>
-      </div>
-      {item.translation ? (
-        <SenseCardReveal open={translationVisible}>
-          <p
-            data-content-translation="true"
-            className="mt-1 text-[length:var(--reading-translation-size,13px)] leading-[var(--reading-translation-leading,1.35)] text-slate-500 dark:text-[#BFC7D4]"
-          >
-            {item.translation}
-          </p>
-        </SenseCardReveal>
-      ) : null}
-      {item.children?.length ? (
-        <div
-          className={
-            accent === "idiom" ? "mt-1 space-y-0.5 pl-0" : "mt-2 space-y-2 pl-4"
-          }
-        >
-          {item.children.map((child) => (
-            <ContentItem
-              key={child.contentNodeId}
-              item={child}
-              translationVisible={translationVisible}
-              accent="none"
-            />
-          ))}
-        </div>
       ) : null}
     </div>
   );
@@ -568,7 +384,6 @@ export function TrainingCardFaceControls({
   onShowAnswer: () => void;
   showAnswerRef: React.RefObject<HTMLButtonElement>;
 }) {
-  const approvedPresentation = trainingPresentationV1Enabled();
   return (
     <div className="flex gap-2">
       {hintAvailable ? (
@@ -577,7 +392,7 @@ export function TrainingCardFaceControls({
           aria-label={hintVisible ? hideHintLabel : showHintLabel}
           disabled={busy}
           onClick={onToggleHint}
-          className={approvedPresentation ? approved.hint : "flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-indigo-700 outline-none transition hover:bg-indigo-50 focus-visible:bg-indigo-100 disabled:opacity-50 dark:border-[#7B8491] dark:bg-[#171B22] dark:text-[#9D94FF] dark:hover:border-indigo-400/70 dark:hover:bg-[#201f36] dark:focus-visible:bg-[#252348]"}
+          className={approved.hint}
         >
           <Lightbulb aria-hidden="true" className="h-5 w-5" />
         </button>
@@ -588,7 +403,7 @@ export function TrainingCardFaceControls({
         aria-label={showAnswerLabel}
         disabled={busy}
         onClick={onShowAnswer}
-        className={approvedPresentation ? `${approved.primary} flex-1` : "h-[46px] flex-1 rounded-xl border border-indigo-400 bg-indigo-600 px-4 text-sm font-bold text-white outline-none transition hover:bg-indigo-700 focus-visible:bg-indigo-700 disabled:opacity-50 dark:border-[#8B89F6] dark:bg-[#262648] dark:text-[#F4F6FA] dark:hover:bg-[#332f60] dark:focus-visible:bg-[#3a356b]"}
+        className={`${approved.primary} flex-1`}
       >
         <span>{showAnswerLabel}</span>
       </button>
@@ -656,11 +471,7 @@ export function TrainingCardIconButton({
       aria-pressed={active}
       disabled={disabled}
       onClick={onClick}
-      className={trainingPresentationV1Enabled() ? chrome.iconAction : `flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border outline-none transition focus-visible:shadow-[inset_0_-3px_0_rgba(79,70,229,0.65)] disabled:opacity-50 dark:focus-visible:shadow-[inset_0_-3px_0_rgba(165,180,252,0.75)] ${
-        active
-          ? "border-slate-300 bg-indigo-100 text-indigo-700 dark:border-slate-600 dark:bg-indigo-400/10 dark:text-indigo-200"
-          : "border-slate-300 bg-white text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:bg-transparent dark:text-slate-300 dark:hover:border-slate-400"
-      }`}
+      className={chrome.iconAction}
     >
       {children}
     </button>
@@ -673,8 +484,7 @@ export function TrainingCardSecondaryActions({
   children: React.ReactNode;
 }) {
   return (
-    <div data-testid="training-secondary-actions" className={trainingPresentationV1Enabled()
-      ? approved.secondaryActions : "flex h-6 min-h-6 shrink-0 items-center justify-between gap-3"}>
+    <div data-testid="training-secondary-actions" className={approved.secondaryActions}>
       {children}
     </div>
   );

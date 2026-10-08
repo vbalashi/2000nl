@@ -21,3 +21,7 @@ Validation commands now have a canonical home in `AGENTS.md`, but related detail
 ### Local QA contract signal and grouped-search readiness
 
 Open evidence from 2026-09-29: [missing deployment ledger and empty search index](local-qa-contract-2026-09-29.md). UI expects `2000nl-db-176`; local health cannot read an actual contract, and the read-only checker confirms at least one ledger table is absent. This must be distinguished from a proven missing migration. Search backfill is a separate issue. The note includes reproduction, counts, repair boundaries and acceptance checks.
+
+### Finite-session attribution benchmark
+
+[Fixture and timing-event alignment](training-attribution-finite-session.md): the opt-in benchmark advances the card but lacks a matched finite-session transition timing event. Keep its performance budget and resolve the observability/test contract in a separate slice; normal browser smoke does not validate this benchmark.

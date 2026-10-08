@@ -9,7 +9,7 @@ test("@pilot statement timeout retries selection only and reaches a ready card",
   });
 
   const startCurrentSetup = page.getByRole("button", {
-    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+    name: /^(?:Start training|Training starten|Начать тренировку)$/,
   });
   await expect(startCurrentSetup).toBeEnabled();
   expect(harness.requests.scheduler).toHaveLength(0);
@@ -25,7 +25,7 @@ test("@pilot statement timeout retries selection only and reaches a ready card",
     .getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ })
     .click();
   const continueSession = page.getByRole("button", {
-    name: /Continue session|Sessie voortzetten|Продолжить сессию/,
+    name: /^(?:Continue training|Training hervatten|Продолжить тренировку)$/i,
   });
   await expect(continueSession).toBeEnabled();
   await continueSession.click();
@@ -47,12 +47,19 @@ test("@pilot statement timeout retries selection only and reaches a ready card",
 test("@pilot statement timeout retry reports an honest no-match terminal outcome", async ({
   page,
 }) => {
+  let sessionSelectionResponses = 0;
+  page.on("response", (response) => {
+    const path = new URL(response.url()).pathname;
+    if (path.endsWith("/rpc/get_next_training_session_card")) {
+      sessionSelectionResponses += 1;
+    }
+  });
   const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
     sessionOutcomes: ["statement-timeout", "empty"],
   });
 
   const startCurrentSetup = page.getByRole("button", {
-    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/,
+    name: /^(?:Start training|Training starten|Начать тренировку)$/,
   });
   await expect(startCurrentSetup).toBeEnabled();
   expect(harness.requests.session).toHaveLength(0);
@@ -67,11 +74,17 @@ test("@pilot statement timeout retry reports an honest no-match terminal outcome
     .getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ })
     .click();
 
+  await expect.poll(() => harness.requests.session.length).toBe(2);
+  await expect.poll(() => sessionSelectionResponses).toBe(2);
+  const currentSession = page.getByRole("region", {
+    name: /Current training|Huidige training|Текущая тренировка/i,
+  });
+  await expect(currentSession).toBeVisible();
   await expect(
-    page.getByText(
-      /No card is ready for this setup|Er staat nog geen kaart klaar|Пока нет готовой карточки/,
-    ),
-  ).toBeVisible();
+    page.getByRole("button", {
+      name: /^(?:Continue training|Training hervatten|Продолжить тренировку)$/i,
+    }),
+  ).toBeDisabled();
   expect(harness.requests.session).toHaveLength(2);
   expect(harness.requests.sessionStarts).toHaveLength(1);
   expect(harness.requests.scheduler).toHaveLength(0);

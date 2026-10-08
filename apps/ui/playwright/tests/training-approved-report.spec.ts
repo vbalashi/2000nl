@@ -4,9 +4,6 @@ import { platformV2Message } from "../../lib/platform/platformV2ClientI18n";
 
 // This gate tests the actual production Report owner with controlled lookup,
 // not preview reporting and not a write to the live feedback service.
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true" ||
-  process.env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1 !== "true", "Approved presentation is opt-in.");
-
 for (const [index, language] of (["en", "nl", "ru"] as const).entries()) {
   for (const mode of ["light", "dark"] as const) {
     test(`${language} ${mode}: Extra Report retains its footer and training state`, async ({ page }, testInfo) => {

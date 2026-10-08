@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true", "Approved presentation is opt-in.");
 for (const mode of ["light", "dark"] as const) test(`pending context uses shared motion and preserves retry (${mode})`, async ({page},testInfo) => {
   await page.setViewportSize({width:857,height:1235});
   await page.emulateMedia({reducedMotion:"no-preference"});

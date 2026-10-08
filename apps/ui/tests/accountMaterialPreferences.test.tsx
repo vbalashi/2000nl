@@ -94,15 +94,13 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   dictionaries.mockResolvedValue([]);
 });
-test("flag-off does not read material or expose new controls", () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "false");
+test("account material preferences load and expose their controls", async () => {
   const repo = repository();
   render(view(repo));
-  expect(repo.load).not.toHaveBeenCalled();
-  expect(screen.queryByRole("switch")).toBeNull();
+  expect(await screen.findByRole("switch", { name: "Study English" })).toBeInTheDocument();
+  expect(repo.load).toHaveBeenCalledOnce();
 });
 test("loads implicit readable languages and saves pause as canonical codes without optimistic state", async () => {
   const repo = repository();

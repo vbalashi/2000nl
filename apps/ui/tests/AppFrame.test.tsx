@@ -18,16 +18,14 @@ function renderFrame() {
   );
 }
 
-test("owns one accessible application header and main content landmark", () => {
+test("owns the approved header, tab navigation and main content landmark", () => {
   renderFrame();
 
   expect(screen.getByTestId("app-header")).toBeInTheDocument();
   expect(screen.getByLabelText("2000nl")).toBeInTheDocument();
   expect(screen.getByRole("main")).toHaveTextContent("Destination content");
-  expect(screen.getAllByRole("navigation")).toHaveLength(1);
-  expect(
-    screen.getByRole("button", { name: "Destinations: Training" }),
-  ).toBeVisible();
+  expect(screen.getAllByRole("navigation")).toHaveLength(2);
+  expect(screen.getAllByRole("button", { name: "Training" })).toHaveLength(2);
 });
 
 test("routes desktop destination choices through one typed callback", () => {
@@ -76,9 +74,7 @@ test("disables every frame-owned navigation control during a blocked transition"
       expect(button).toBeDisabled();
     }
   }
-  expect(
-    screen.getByRole("button", { name: "Destinations: Training" }),
-  ).toBeDisabled();
+  expect(screen.getByRole("button", { name: "2000nl: Training" })).toBeDisabled();
 });
 
 test("can disable utility controls while the frame is blocked", () => {
@@ -101,7 +97,7 @@ test("can disable utility controls while the frame is blocked", () => {
   expect(screen.getByRole("button", { name: "Settings" })).toBeDisabled();
 });
 
-test("keeps menu placement internal and exposes its state to assistive technology", () => {
+test("approved tabs route destination choices through the owner callback", () => {
   const onNavigate = vi.fn();
   render(
     <AppFrame
@@ -116,42 +112,16 @@ test("keeps menu placement internal and exposes its state to assistive technolog
     </AppFrame>,
   );
 
-  const menuButton = screen.getByRole("button", {
-    name: "Destinations: Training",
-  });
-  expect(menuButton).toHaveAttribute("aria-expanded", "false");
-  fireEvent.click(menuButton);
-  expect(menuButton).toHaveAttribute("aria-expanded", "true");
-  fireEvent.click(
-    within(screen.getByRole("group", { name: "Destinations" })).getByRole(
-      "button",
-      { name: "Library" },
-    ),
-  );
+  const tabs = document.querySelector('[data-app-mobile-navigation="tabs"]') as HTMLElement;
+  fireEvent.click(within(tabs).getByRole("button", { name: "Library" }));
   expect(onNavigate).toHaveBeenCalledWith("library");
-  expect(menuButton).toHaveAttribute("aria-expanded", "false");
-  expect(menuButton).toHaveFocus();
 });
 
-test("closes the compact destination menu with Escape and restores focus", () => {
-  renderFrame();
-
-  const menuButton = screen.getByRole("button", {
-    name: "Destinations: Training",
-  });
-  fireEvent.click(menuButton);
-  expect(screen.getByRole("group", { name: "Destinations" })).toBeVisible();
-
-  fireEvent.keyDown(document, { key: "Escape" });
-
-  expect(screen.queryByRole("group", { name: "Destinations" })).toBeNull();
-  expect(menuButton).toHaveFocus();
-});
-
-test("shows the current secondary destination in the compact header control", () => {
+test("shows the active Settings utility in the approved header", () => {
   render(
     <AppFrame
       activeDestination="settings"
+      settingsActive
       interfaceLanguage="en"
       themePreference="system"
       onNavigate={vi.fn()}
@@ -162,14 +132,10 @@ test("shows the current secondary destination in the compact header control", ()
     </AppFrame>,
   );
 
-  expect(
-    screen.getByRole("button", { name: "Destinations: Settings" }),
-  ).toHaveTextContent("Settings");
+  expect(screen.getByRole("button", { name: "Settings" })).toHaveAttribute("aria-current", "page");
 });
 
-test("approved presentation replaces the mobile menu with a bottom tab bar", () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
-  try {
+test("approved bottom tabs are always present and immersive sessions mark the frame", () => {
     const onNavigate = vi.fn();
     const { container, rerender } = render(
       <AppFrame activeDestination="library" interfaceLanguage="en" themePreference="system"
@@ -191,9 +157,6 @@ test("approved presentation replaces the mobile menu with a bottom tab bar", () 
       </AppFrame>,
     );
     expect(container.querySelector("[data-app-frame]")).toHaveAttribute("data-immersive", "true");
-  } finally {
-    vi.unstubAllEnvs();
-  }
 });
 
 

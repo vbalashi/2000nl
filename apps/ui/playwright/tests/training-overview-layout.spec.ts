@@ -1,8 +1,6 @@
 import {expect,test} from '@playwright/test';
 import {setupAuthenticatedTrainingAttributionPage} from '../support/trainingAttributionHarness';
-const approved=process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1==='true';
 for(const profile of [{name:'desktop',width:1280,height:900,language:'en',dark:false},{name:'mobile',width:390,height:844,language:'ru',dark:true}])test(`selected hero remains fixed while100Saved scroll and Load ${profile.name}`,async({page},info)=>{
- test.skip(!approved,'Approved overview');
  await page.setViewportSize({width:profile.width,height:profile.height});
  await page.emulateMedia({colorScheme:profile.dark?'dark':'light'});
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:profile.language},theme_preference:profile.dark?'dark':'light'}});

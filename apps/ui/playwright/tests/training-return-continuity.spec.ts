@@ -1,7 +1,5 @@
 import { expect, test } from '@playwright/test';
 import { setupAuthenticatedTrainingAttributionPage } from '../support/trainingAttributionHarness';
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== 'true', 'Approved presentation only');
-
 for (const active of [false,true]) test(`${active ? 'active' : 'idle'} retained Training does not flash Preparing training after Library return`, async ({page}, info) => {
   await page.setViewportSize({width:1440,height:900});
   await setupAuthenticatedTrainingAttributionPage(page,0,{visualProfile:'answer',bootstrapReadDelayMs:500,devTestLogin: process.env.TRAINING_CONTINUITY_DEV_LOGIN === "true"});

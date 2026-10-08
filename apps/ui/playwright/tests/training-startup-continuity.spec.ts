@@ -1,7 +1,5 @@
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
-
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true", "Requires approved presentation.");
 test("@pilot reload retains the approved startup surface until the overview is ready", async ({page}) => {
   await page.addInitScript(() => {
     const observed: string[] = [];

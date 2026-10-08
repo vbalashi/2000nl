@@ -3,7 +3,6 @@
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
-import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import s from "@/components/practice/library/libraryOverlays.module.css";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -47,7 +46,6 @@ export function LibraryCollectionsPicker({
   onOpenListMembership,
 }: Props) {
   const editingBlocked = busyListId !== null || membershipState !== "ready";
-  const approved = sharedArticlePresentationV1Enabled();
   const titleId = React.useId();
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [query, setQuery] = React.useState("");
@@ -62,15 +60,6 @@ export function LibraryCollectionsPicker({
     setQuery("");
     setNewListName("");
   }, [open]);
-
-  React.useEffect(() => {
-    if (!open || approved) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open, approved]);
 
   if (!open) return null;
 
@@ -98,7 +87,7 @@ export function LibraryCollectionsPicker({
             }}
           >
             <input
-              autoFocus={approved}
+              autoFocus
               value={newListName}
               aria-label={t("senseCard.collections.createPlaceholder")}
               onChange={(event) => setNewListName(event.target.value)}
@@ -116,23 +105,21 @@ export function LibraryCollectionsPicker({
 
   const content = (
       <section
-        role={approved ? undefined : "dialog"}
-        aria-modal={approved ? undefined : true}
         aria-labelledby={titleId}
-        className={approved ? `${s.sheet} ${s.production}` : "flex max-h-[min(680px,calc(100dvh-2rem))] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-2xl dark:border-slate-600 dark:bg-[#20252f]"}
+        className={`${s.sheet} ${s.production}`}
       >
         <header data-dialog-part="heading" className="flex items-start gap-4 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
           <div className="min-w-0 flex-1">
-            <p className={approved ? "sr-only" : "text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300"}>
+            <p className="sr-only">
               {headword}
             </p>
             <h2
               id={titleId}
               className="mt-1 text-xl font-semibold text-slate-950 dark:text-white"
             >
-              {approved ? copy.title : t("senseCard.collections.title")}
+              {copy.title}
             </h2>
-            <p className={approved ? "sr-only" : "mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400"}>
+            <p className="sr-only">
               {definition}
             </p>
           </div>
@@ -142,11 +129,11 @@ export function LibraryCollectionsPicker({
             onClick={onClose}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-600 transition hover:bg-slate-200 dark:bg-[#171b22] dark:text-slate-300 dark:hover:bg-slate-700"
           >
-            {approved ? <X aria-hidden="true" size={18} /> : "×"}
+            <X aria-hidden="true" size={18} />
           </button>
         </header>
 
-        {approved ? <p className={s.hint}>{copy.hint}</p> : null}
+        <p className={s.hint}>{copy.hint}</p>
         <div data-dialog-part="fields" className="space-y-3 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
           <label className="block">
             <span className="sr-only">{t("senseCard.collections.search")}</span>
@@ -159,10 +146,9 @@ export function LibraryCollectionsPicker({
               className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-[#171b22] dark:text-slate-100"
             />
           </label>
-          {!approved ? createForm : null}
         </div>
 
-        <div data-dialog-part="body" role={approved ? "region" : undefined} aria-label={approved ? t("senseCard.collections.title") : undefined} tabIndex={approved ? 0 : undefined} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+        <div data-dialog-part="body" role="region" aria-label={t("senseCard.collections.title")} tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
           {membershipState === "loading" ? <p role="status">{t("senseCard.collections.loadingMembership")}</p> : null}
           {membershipState === "failed" ? <div>
             <p role="alert">{t("senseCard.collections.membershipFailed")}</p>
@@ -224,12 +210,12 @@ export function LibraryCollectionsPicker({
           ) : null}
         </div>
 
-        {approved ? <div className={s.creation}>
+        <div className={s.creation}>
           {creating ? createForm : <button type="button" disabled={editingBlocked}
             onClick={() => { setNewListName(query); setCreating(true); }}>
             <Plus aria-hidden="true" size={15} />{copy.new}
           </button>}
-        </div> : null}
+        </div>
 
         <footer data-dialog-part="footer" className="flex min-h-12 items-center justify-between gap-3 border-t border-slate-200 px-5 py-3 dark:border-slate-700">
           <p role="status" className="text-xs text-emerald-700 dark:text-emerald-300">
@@ -245,11 +231,6 @@ export function LibraryCollectionsPicker({
         </footer>
       </section>
   );
-  return approved ? <DialogSurface className={s.dialog} lang={interfaceLanguage}
-    aria-labelledby={titleId} initialFocusRef={searchRef} onDismiss={onClose}>{content}</DialogSurface> : (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[1px]"
-      role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
-      {content}
-    </div>
-  );
+  return <DialogSurface className={s.dialog} lang={interfaceLanguage}
+    aria-labelledby={titleId} initialFocusRef={searchRef} onDismiss={onClose}>{content}</DialogSurface>;
 }

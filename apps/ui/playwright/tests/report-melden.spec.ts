@@ -122,9 +122,9 @@ for (const profile of profiles) {
     await fixture.getByRole("button", { name: "Melden" }).click();
     await expect(dialog).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`${profile.name}-answer-dark.png`) });
-    await page.locator('[data-training-hotkeys-suspended="true"]').click({
-      position: { x: 8, y: 8 },
-    });
+    // The approved surface uses a native dialog; click the viewport backdrop
+    // rather than an offset inside the dialog element itself.
+    await page.mouse.click(8, 8);
     await expect(dialog).toBeHidden();
     await expect(fixture.getByRole("button", { name: "Melden" })).toBeFocused();
   });
@@ -184,7 +184,8 @@ test("accepted delivery stays on the same compact sheet", async ({ page }, testI
   await page.setViewportSize({ width: 402, height: 874 });
   await page.goto("/dev/sense-card-gate");
   const fixture = page.locator('[data-gate-fixture="SC-01/02"]').first();
-  await fixture.getByRole("button", { name: "Melden" }).click();
+  const report = fixture.getByRole("button", { name: "Melden" });
+  await report.click();
   const dialog = page.getByRole("dialog", { name: "Wat klopt er niet?" });
   await dialog.getByRole("radio", { name: "Iets anders" }).click();
   await dialog.getByRole("button", { name: "Versturen" }).click();
@@ -196,6 +197,9 @@ test("accepted delivery stays on the same compact sheet", async ({ page }, testI
   await page.keyboard.press("Shift+Tab");
   await expect(close).toBeFocused();
   await page.screenshot({ path: testInfo.outputPath("mobile-402x874-sent-dark.png") });
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(report).toBeFocused();
 });
 
 test("online transient failure truthfully shows a scheduled retry", async ({ page }, testInfo) => {

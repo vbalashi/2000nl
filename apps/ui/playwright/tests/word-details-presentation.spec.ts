@@ -3,7 +3,6 @@ import {gateBankGroup,gateFurnitureEntry} from '../../lib/platform/fixtures/sens
 import {projectPlatformV2WordDetails} from '../../lib/platform/platformV2RichContent';
 
 // Shared forms are part of the independently enabled article presentation.
-test.skip(process.env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1 !== 'true', 'Shared article presentation is opt-in.');
 const wordDetails=projectPlatformV2WordDetails({id:gateFurnitureEntry.entryId,headword:'gaan',raw:{verb_forms:['ging','is gegaan'],conjugation_table:{present:{ik:'ga',wij:'gaan'},past:{ik:'ging',wij:'gingen'},perfect:{auxiliary:'is',participle:'gegaan'}},meanings:[{synonyms:['zich bewegen']}]}},[])!;
 const group={...gateBankGroup,header:{...gateBankGroup.header,text:'gaan',article:undefined,displayPronunciation:undefined,partOfSpeech:{termId:'partOfSpeech.ww',messageKey:'partOfSpeech.ww',sourceValue:'ww'}},entries:[{...gateFurnitureEntry,wordDetails}],senseCount:1,entryCount:1};
 for(const width of [320,430,1440])for(const colorScheme of ['light','dark'] as const)test(`shared forms and relations at ${width} ${colorScheme}`,async({page},testInfo)=>{

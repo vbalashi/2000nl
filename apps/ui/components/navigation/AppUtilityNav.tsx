@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Monitor, Moon, Settings, Sun, SunMoon } from "lucide-react";
+import { Monitor, Moon, Settings, Sun } from "lucide-react";
 import { Tooltip } from "@/components/Tooltip";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
@@ -37,7 +37,6 @@ export type AppUtilityNavProps = {
   disabled?: boolean;
   onCycleTheme: () => void;
   onOpenSettings: () => void;
-  appearance?: "default" | "quiet";
 };
 
 function UtilityButton({
@@ -46,7 +45,6 @@ function UtilityButton({
   onClick,
   children,
   tour,
-  appearance = "default",
   disabled = false,
 }: {
   label: string;
@@ -54,7 +52,6 @@ function UtilityButton({
   onClick: () => void;
   children: React.ReactNode;
   tour?: string;
-  appearance?: AppUtilityNavProps["appearance"];
   disabled?: boolean;
 }) {
   return (
@@ -67,15 +64,7 @@ function UtilityButton({
         disabled={disabled}
         data-tour={tour}
         onClick={onClick}
-        className={
-          appearance === "quiet"
-            ? "relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-slate-600 outline-none hover:bg-slate-400/10 focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-50 dark:text-[#BFC7D4] md:h-10 md:w-10"
-            : `relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 md:h-10 md:w-10 ${
-                current
-                  ? "border-indigo-500 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-200 dark:ring-indigo-900"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              }`
-        }
+        className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-slate-600 outline-none hover:bg-slate-400/10 focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-50 dark:text-[#BFC7D4] md:h-10 md:w-10"
       >
         {children}
       </button>
@@ -90,13 +79,10 @@ export function AppUtilityNav({
   disabled = false,
   onCycleTheme,
   onOpenSettings,
-  appearance = "default",
 }: AppUtilityNavProps) {
   const text = copy[interfaceLanguage];
   const themeLabel = `${text.theme}: ${text[themePreference]}`;
-  const ThemeIcon = appearance === "quiet"
-    ? { light: Sun, dark: Moon, system: Monitor }[themePreference]
-    : SunMoon;
+  const ThemeIcon = { light: Sun, dark: Moon, system: Monitor }[themePreference];
 
   return (
     <div className="flex items-center gap-1 justify-self-end text-sm text-slate-500 md:gap-2 dark:text-slate-300">
@@ -104,12 +90,11 @@ export function AppUtilityNav({
         label={themeLabel}
         onClick={onCycleTheme}
         disabled={disabled}
-        appearance={appearance}
       >
         <ThemeIcon
           aria-hidden="true"
-          className={appearance === "quiet" ? "h-[18px] w-[18px]" : "h-5 w-5"}
-          strokeWidth={appearance === "quiet" ? 1.5 : 2}
+          className="h-[18px] w-[18px]"
+          strokeWidth={1.5}
         />
       </UtilityButton>
       <UtilityButton
@@ -118,12 +103,11 @@ export function AppUtilityNav({
         onClick={onOpenSettings}
         disabled={disabled}
         tour="settings-button"
-        appearance={appearance}
       >
         <Settings
           aria-hidden="true"
-          className={appearance === "quiet" ? "h-[18px] w-[18px]" : "h-5 w-5"}
-          strokeWidth={appearance === "quiet" ? 1.5 : 2}
+          className="h-[18px] w-[18px]"
+          strokeWidth={1.5}
         />
       </UtilityButton>
     </div>

@@ -1,10 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 
-const approvedTabs = process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 === "true";
-
 const startButton =
-  /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten|Training starten|Start training|Начать тренировку/i;
+  /^(?:Start training|Training starten|Начать тренировку)$/;
 const answerButton = /Antwoord tonen|Показать ответ|Show answer/i;
 
 async function preparePilotPage(
@@ -216,105 +214,6 @@ test.describe("stable application frame @pilot", () => {
     await returnToTraining();
   });
 
-  test("mobile Training has one reachable destination navigation treatment", async ({
-    page,
-  }, testInfo) => {
-    test.skip(approvedTabs, "The approved presentation uses the bottom tab bar (training-approved-navigation.spec).");
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
-    await preparePilotPage(page);
-
-    const visibleTreatment = page.locator(
-      "[data-app-mobile-navigation]:visible",
-    );
-    await expect(visibleTreatment).toHaveCount(1);
-    const strategy = "menu";
-    await startSession(page);
-    await expect(visibleTreatment).toHaveCount(1);
-    await expect(visibleTreatment).toHaveAttribute(
-      "data-app-mobile-navigation",
-      strategy!,
-    );
-    const stage = page.getByTestId("training-sense-card-stage");
-    await expect(stage).toHaveAttribute("data-side", "face");
-    await page.getByRole("button", { name: answerButton }).click();
-    await expect(stage).toHaveAttribute("data-side", "answer");
-
-    await visibleTreatment
-      .getByRole("button", { name: /Navigatie: Training/ })
-      .click();
-    const choices = page.getByRole("group", { name: "Navigatie" });
-    await expect(
-      choices.getByRole("button", { name: "Training" }),
-    ).toBeVisible();
-    await expect(
-      choices.getByRole("button", { name: "Bibliotheek" }),
-    ).toBeVisible();
-    await expect(
-      choices.getByRole("button", { name: "Statistieken" }),
-    ).toBeVisible();
-    await page.screenshot({
-      path: testInfo.outputPath("mobile-training-menu-open-dark.png"),
-    });
-    await choices.getByRole("button", { name: "Bibliotheek" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Bibliotheek" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /Navigatie: Bibliotheek/ }),
-    ).toBeVisible();
-  });
-
-  for (const viewport of [
-    { name: "phone", width: 390, height: 844 },
-    { name: "compact", width: 320, height: 568 },
-  ]) {
-    test(`${viewport.name} light keeps navigation through Face, Answer and Library`, async ({
-      page,
-    }, testInfo) => {
-      test.skip(approvedTabs, "The approved presentation hides app chrome during a mobile session.");
-      await page.setViewportSize({
-        width: viewport.width,
-        height: viewport.height,
-      });
-      await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
-      await preparePilotPage(page);
-      await expect(
-        page.getByRole("button", { name: /Navigatie: Training/ }),
-      ).toBeVisible();
-
-      await startSession(page);
-      const stage = page.getByTestId("training-sense-card-stage");
-      await expect(stage).toHaveAttribute("data-side", "face");
-      await page.getByRole("button", { name: answerButton }).click();
-      await expect(stage).toHaveAttribute("data-side", "answer");
-      await expect(
-        page.getByRole("button", { name: /Navigatie: Training/ }),
-      ).toBeVisible();
-
-      await page.getByRole("button", { name: /Navigatie: Training/ }).click();
-      await page
-        .getByRole("group", { name: "Navigatie" })
-        .getByRole("button", { name: "Bibliotheek" })
-        .click();
-      await expect(
-        page.getByRole("heading", { name: "Bibliotheek" }),
-      ).toBeVisible();
-      await expect(
-        page.getByRole("button", { name: /Navigatie: Bibliotheek/ }),
-      ).toBeVisible();
-      expect(
-        await page.locator("html").evaluate((element) => ({
-          clientWidth: element.clientWidth,
-          scrollWidth: element.scrollWidth,
-        })),
-      ).toEqual({ clientWidth: viewport.width, scrollWidth: viewport.width });
-      await page.screenshot({
-        path: testInfo.outputPath(`${viewport.name}-library-light.png`),
-      });
-    });
-  }
-
   test("compact phone keeps the shared header and session controls in bounds", async ({
     page,
   }, testInfo) => {
@@ -327,30 +226,12 @@ test.describe("stable application frame @pilot", () => {
     await page.getByRole("button", { name: answerButton }).click();
     await expect(stage).toHaveAttribute("data-side", "answer");
 
-    if (approvedTabs) {
-      await expect(page.getByTestId("app-header")).toBeHidden();
-      await expect(page.locator('[data-app-mobile-navigation="tabs"]')).toBeHidden();
-    } else {
-      await expect(page.getByTestId("app-header")).toBeVisible();
-      const brand = page.getByLabel("2000nl", { exact: true });
-      await expect(brand).toBeVisible();
-      expect(
-        await brand.evaluate(
-          (element) => element.scrollWidth <= element.clientWidth,
-        ),
-      ).toBe(true);
-      await expect(
-        page.getByRole("button", { name: /Navigatie: Training/ }),
-      ).toBeVisible();
-    }
+    await expect(page.getByTestId("app-header")).toBeHidden();
+    await expect(page.locator('[data-app-mobile-navigation="tabs"]')).toBeHidden();
     await expect(
       page.getByRole("button", { name: "Sessie sluiten" }),
     ).toBeVisible();
-    if (approvedTabs) {
-      await expect(page.getByTestId("training-review-grid")).toBeVisible();
-    } else {
-      await expect(page.getByText("Herhaling", { exact: true })).toBeVisible();
-    }
+    await expect(page.getByTestId("training-review-grid")).toBeVisible();
     expect(
       await page.locator("html").evaluate((element) => ({
         clientWidth: element.clientWidth,
@@ -360,16 +241,8 @@ test.describe("stable application frame @pilot", () => {
     await page.screenshot({
       path: testInfo.outputPath("compact-phone-training-dark.png"),
     });
-    if (approvedTabs) {
-      await page.getByRole("button", { name: "Sessie sluiten" }).click();
-      await page.locator('[data-app-mobile-navigation="tabs"]').getByRole("button", { name: "Bibliotheek" }).click();
-    } else {
-      await page.getByRole("button", { name: /Navigatie: Training/ }).click();
-      await page
-        .getByRole("group", { name: "Navigatie" })
-        .getByRole("button", { name: "Bibliotheek" })
-        .click();
-    }
+    await page.getByRole("button", { name: "Sessie sluiten" }).click();
+    await page.locator('[data-app-mobile-navigation="tabs"]').getByRole("button", { name: "Bibliotheek" }).click();
     await expect(
       page.getByRole("heading", { name: "Bibliotheek" }),
     ).toBeVisible();

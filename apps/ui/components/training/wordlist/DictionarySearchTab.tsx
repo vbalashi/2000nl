@@ -11,17 +11,13 @@ import React from "react";
 import { LIBRARY_PAGE_SIZE } from "@/lib/platform/libraryPagination";
 import { SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { LibraryResultList, LibraryResultRow } from "@/components/practice/library/LibraryResultList";
-import { LibraryEntryEditor } from "@/components/practice/library/LibraryEntryEditor";
 import { AccountLibraryFilters } from "@/components/practice/library/AccountLibraryFilters";
 import { EMPTY_LIBRARY_ENTRY_FILTERS } from "@/lib/platform/librarySearchScope";
 import { LIBRARY_PART_LABELS } from "@/components/practice/library/LibraryFilters";
-import { sharedArticlePresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import workspace from "@/components/practice/library/libraryWorkspace.module.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  copyEntryToUserDictionary,
-  createUserDictionaryEntry,
   fetchAvailableDictionarySources,
   fetchAvailableLearningLanguages,
   fetchDictionaryEntryById,
@@ -68,7 +64,6 @@ type Props = {
   reloadLists: () => Promise<void>;
   notifyListsUpdated: () => void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
-  onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   onTrainWord?: (wordId: string) => void;
   autoFocusQuery?: boolean;
   searchState: DictionarySearchTabState;
@@ -143,13 +138,12 @@ export function DictionarySearchTab({
   reloadLists,
   notifyListsUpdated,
   onOpenListMembership,
-  onUserDictionaryEntryCreated,
   onTrainWord,
   autoFocusQuery,
   searchState,
   onSearchStateChange,
 }: Props) {
-  const approved = sharedArticlePresentationV1Enabled();
+
   const {
     query,
     applyListFilter,
@@ -176,24 +170,13 @@ export function DictionarySearchTab({
   const [availableLanguages, setAvailableLanguages] = useState<
     AvailableLearningLanguage[]
   >([]);
+  const [searchRefreshRevision, setSearchRefreshRevision] = useState(0);
   const [dictionarySources, setDictionarySources] = useState<
     AvailableDictionarySource[]
   >([]);
-  const [customEntryOpen, setCustomEntryOpen] = useState(false);
-  const [customHeadword, setCustomHeadword] = useState("");
-  const [customDefinition, setCustomDefinition] = useState("");
-  const [customTranslation, setCustomTranslation] = useState("");
-  const [customTranslationLanguage, setCustomTranslationLanguage] =
-    useState(translationLang);
-  const [customExample, setCustomExample] = useState("");
-  const [customNotes, setCustomNotes] = useState("");
-  const [customEntrySaving, setCustomEntrySaving] = useState(false);
-  const [customEntryMessage, setCustomEntryMessage] = useState<string | null>(
-    null,
-  );
   const queryRef = useRef<HTMLInputElement | null>(null);
   const latestDetailRequestRef = useRef(0);
-  const pageSize = approved ? LIBRARY_PAGE_SIZE : 20;
+  const pageSize = LIBRARY_PAGE_SIZE;
   const updateSearchState = useCallback(
     (patch: Partial<DictionarySearchTabState>) => {
       onSearchStateChange((current) => ({ ...current, ...patch }));
@@ -244,7 +227,7 @@ export function DictionarySearchTab({
     contentLanguageCode: searchLanguage,
     translationLanguageCode: translationLang,
     dictionaryId,
-    defaultFilters: approved && materialEnabled ? EMPTY_LIBRARY_ENTRY_FILTERS : undefined,
+    defaultFilters: materialEnabled ? EMPTY_LIBRARY_ENTRY_FILTERS : undefined,
   });
   const detailEntryInCurrentResults = useMemo(
     () =>
@@ -272,6 +255,7 @@ export function DictionarySearchTab({
     useViewedListFilter ? viewedList?.type : null,
     searchState.entryFilters,
     material?.revision,
+    searchRefreshRevision,
   ]);
   const runSearch = useCallback(
     async (force = false) => {
@@ -300,7 +284,7 @@ export function DictionarySearchTab({
         return;
       }
       const hasQuery = Boolean(query.trim());
-      if (!hasQuery && !useViewedListFilter && !(approved && materialEnabled)) {
+      if (!hasQuery && !useViewedListFilter && !(materialEnabled)) {
         updateSearchState({
           wordResults: [],
           groupResults: [],
@@ -379,7 +363,6 @@ export function DictionarySearchTab({
     [
       searchEnabled,
       searchReadKey,
-      approved,
       materialEnabled,
       beginSearch,
       clearGroupSearch,
@@ -429,110 +412,6 @@ export function DictionarySearchTab({
     },
     [onSearchStateChange, searchLanguage, updateSearchState, userId],
   );
-
-  const handleUserDictionaryEntryCreated = useCallback(
-    (entry: DictionaryEntry) => {
-      searchFreshRef.current = null;
-      onUserDictionaryEntryCreated?.(entry);
-      onSearchStateChange((current) => ({
-        ...current,
-        detailSelection: {
-          entryId: entry.id,
-          headword: entry.headword,
-          contentLanguageCode: entry.language_code ?? searchLanguage,
-        },
-        wordResults: [
-          entry,
-          ...current.wordResults.filter((item) => item.id !== entry.id),
-        ],
-        wordTotal: Math.max(current.wordTotal, current.wordResults.length + 1),
-      }));
-    },
-    [onSearchStateChange, onUserDictionaryEntryCreated, searchLanguage],
-  );
-
-  const handleCopyToUserDictionary = useCallback(
-    async (entryId: string) => {
-      const copiedEntryId = await copyEntryToUserDictionary({ entryId });
-      const copiedEntry = await fetchDictionaryEntryById(copiedEntryId, userId);
-      if (copiedEntry) handleUserDictionaryEntryCreated(copiedEntry);
-    },
-    [handleUserDictionaryEntryCreated, userId],
-  );
-
-  const createCustomEntry = useCallback(async () => {
-    const headword = (customHeadword || query).trim();
-    const definition = customDefinition.trim();
-    const translation =
-      translationLang && customTranslationLanguage === translationLang
-        ? customTranslation.trim()
-        : "";
-    const example = customExample.trim();
-    const notes = customNotes.trim();
-
-    if (!headword) {
-      setCustomEntryMessage(copy.entryRequired);
-      return;
-    }
-    if (!definition && !translation && !example && !notes) {
-      setCustomEntryMessage(copy.entryContentRequired);
-      return;
-    }
-
-    setCustomEntrySaving(true);
-    setCustomEntryMessage(null);
-    try {
-      const entryId = await createUserDictionaryEntry({
-        entry: {
-          headword,
-          languageCode: searchLanguage,
-          ...(definition ? { definition } : {}),
-          ...(translation
-            ? {
-                translation: {
-                  languageCode: translationLang!,
-                  text: translation,
-                },
-              }
-            : {}),
-          ...(example ? { example: { source: example } } : {}),
-          ...(notes ? { notes } : {}),
-        },
-      });
-      const createdEntry = await fetchDictionaryEntryById(entryId, userId);
-      if (createdEntry) {
-        handleUserDictionaryEntryCreated(createdEntry);
-      }
-      setCustomHeadword("");
-      setCustomDefinition("");
-      setCustomTranslation("");
-      setCustomExample("");
-      setCustomNotes("");
-      setCustomEntryOpen(false);
-      setCustomEntryMessage(copy.entryCreated);
-    } catch (error) {
-      console.error("Error creating user dictionary entry", error);
-      setCustomEntryMessage(copy.entrySaveError);
-    } finally {
-      setCustomEntrySaving(false);
-    }
-  }, [
-    copy.entryRequired,
-    copy.entryContentRequired,
-    copy.entryCreated,
-    copy.entrySaveError,
-    customDefinition,
-    customExample,
-    customHeadword,
-    customNotes,
-    customTranslation,
-    customTranslationLanguage,
-    translationLang,
-    handleUserDictionaryEntryCreated,
-    query,
-    searchLanguage,
-    userId,
-  ]);
 
   useEffect(() => {
     if (!searchEnabled || searchState.languageCode) return;
@@ -665,12 +544,12 @@ export function DictionarySearchTab({
     wordTotal,
   );
   const resultScopeLabel = useViewedListFilter
-    ? approved ? viewedListName : formatUiMessage(copy.collectionScope, { name: viewedListName })
-    : approved ? sourceLabel : formatUiMessage(copy.sourceScope, { source: sourceLabel });
+    ? viewedListName
+    : sourceLabel;
   const groupedSearchActive = !useViewedListFilter;
   const hasCurrentResults = searchFreshRef.current?.key === searchReadKey;
   const resultCountLabel =
-    query.trim() || useViewedListFilter || (approved && materialEnabled)
+    query.trim() || useViewedListFilter || (materialEnabled)
       ? formatUiMessage(copy.pageScope, {
           count: formatUiCount(
             interfaceLanguage,
@@ -681,28 +560,26 @@ export function DictionarySearchTab({
           page: number(page),
           source: sourceLabel,
         })
-      : approved ? null : copy.typeQuery;
+      : null;
   const emptyHeading = useViewedListFilter
     ? copy.emptyCollection
-    : query.trim() || (approved && materialEnabled)
+    : query.trim() || (materialEnabled)
       ? copy.noWords
       : copy.emptyQuery;
   const emptyDescription = useViewedListFilter
     ? formatUiMessage(copy.emptyCollectionHint, { name: viewedListName })
-    : query.trim() || (approved && materialEnabled)
+    : query.trim() || (materialEnabled)
       ? formatUiMessage(copy.noResultsHint, { source: sourceLabel })
       : copy.emptyQueryHint;
 
   const results = (
-    <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${approved ? workspace.listPane : ""}`}>
+    <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${workspace.listPane}`}>
       <div
         className={
-          approved
-            ? `${workspace.toolbar} space-y-3`
-            : "shrink-0 space-y-3 border-b border-slate-100 p-4 dark:border-slate-800"
+          `${workspace.toolbar} space-y-3`
         }
       >
-        <div className={approved && materialEnabled ? workspace.searchRow : undefined}>
+        <div className={materialEnabled ? workspace.searchRow : undefined}>
         <div className="relative min-w-0 flex-1">
           <svg
             className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
@@ -732,9 +609,7 @@ export function DictionarySearchTab({
             aria-label={copy.search}
             placeholder={copy.searchPlaceholder}
             className={
-              approved
-                ? workspace.input
-                : "h-12 w-full rounded-2xl border border-primary/50 bg-white pl-12 pr-12 text-base text-slate-900 shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-primary/60 dark:bg-slate-950 dark:text-white"
+              workspace.input
             }
           />
           {query ? (
@@ -748,13 +623,13 @@ export function DictionarySearchTab({
                   groupHasMore: false,
                 });
               }}
-              className={approved ? workspace.clearSearch : "absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"}
+              className={workspace.clearSearch}
             >
               <span className="sr-only">{copy.clearSearch}</span>x
             </button>
           ) : null}
         </div>
-        {approved && materialEnabled && <button type="button" className={workspace.filterButton}
+        {materialEnabled && <button type="button" className={workspace.filterButton}
           aria-label={copy.filters} aria-haspopup="dialog" disabled={!searchMaterialReady}
           data-active={Boolean(searchState.entryFilters?.parts.length || dictionaryId)} onClick={()=>setFiltersOpen(true)}>
           <SlidersHorizontal size={18}/>
@@ -766,15 +641,14 @@ export function DictionarySearchTab({
             updateSearchState({languageCode:draft.languageCode,dictionaryId:draft.dictionaryId,applyListFilter:Boolean(draft.applyListFilter),collectionId:draft.collectionId ?? null,
               entryFilters:{parts:[...draft.parts].sort(),article:draft.article},page:1,groupPageCursors:[null],groupHasMore:false,
               groupTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});
+            setSearchRefreshRevision((revision) => revision + 1);
             setFiltersOpen(false);
           }}/>}
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div
             className={
-              approved
-                ? workspace.scope
-                : "text-xs text-slate-500 dark:text-slate-400"
+              workspace.scope
             }
           >
             {languageDisplayName(interfaceLanguage, searchLanguage)} ·{" "}
@@ -784,26 +658,8 @@ export function DictionarySearchTab({
                 {part === "noun" && searchState.entryFilters?.article ? ` (${searchState.entryFilters.article})` : ""}
               </React.Fragment>)}
           </div>
-          {approved && hasCurrentResults && <span className={workspace.scope}>{formatUiCount(interfaceLanguage,
+          {hasCurrentResults && <span className={workspace.scope}>{formatUiCount(interfaceLanguage,
             useViewedListFilter ? wordTotal : (groupTotal ?? groupResults.length),copy,"matchingGroup")}</span>}
-          {!approved && <label className={approved ? workspace.onlyCollection : "hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300"}>
-            {approved ? formatUiMessage(copy.onlyNamedCollection, { name: viewedListName }) : copy.onlyCollection}
-            <input
-              type="checkbox"
-              checked={applyListFilter}
-              disabled={!viewedListId}
-              onChange={() => {
-                onSearchStateChange((current) => ({
-                  ...current,
-                  applyListFilter: !current.applyListFilter,
-                  page: 1,
-                  groupPageCursors: [null],
-                  groupHasMore: false,
-                }));
-              }}
-              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-600"
-            />
-          </label>}
         </div>
 
         {useViewedListFilter && (viewedList?.unavailable_source_count ?? 0) > 0 ? (
@@ -827,19 +683,15 @@ export function DictionarySearchTab({
             )}
           </p>
         )}
-        {!(approved && materialEnabled) && (<>
+        {!(materialEnabled) && (<>
         <div
           className={
-            approved
-              ? workspace.scopeControls
-              : "rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-950/40"
+            workspace.scopeControls
           }
         >
           <div
             className={
-              approved
-                ? workspace.caption
-                : "mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              workspace.caption
             }
           >
             {copy.searchScope}
@@ -847,9 +699,7 @@ export function DictionarySearchTab({
           <div className="grid gap-2 sm:grid-cols-2">
             <label
               className={
-                approved
-                  ? workspace.label
-                  : "grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300"
+                workspace.label
               }
             >
               <span>{copy.learningLanguage}</span>
@@ -868,9 +718,7 @@ export function DictionarySearchTab({
                   useViewedListFilter || (Boolean(material) && !materialReady)
                 }
                 className={
-                  approved
-                    ? workspace.field
-                    : "h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                  workspace.field
                 }
               >
                 {(scopeLanguages.length
@@ -892,9 +740,7 @@ export function DictionarySearchTab({
             </label>
             <label
               className={
-                approved
-                  ? workspace.label
-                  : "grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300"
+                workspace.label
               }
             >
               <span>{copy.dictionarySource}</span>
@@ -913,9 +759,7 @@ export function DictionarySearchTab({
                   useViewedListFilter || (Boolean(material) && !materialReady)
                 }
                 className={
-                  approved
-                    ? workspace.field
-                    : "h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                  workspace.field
                 }
               >
                 <option value="all">{copy.allSources}</option>
@@ -930,216 +774,22 @@ export function DictionarySearchTab({
         </div>
         </>)}
 
-        {!approved && <div
-          className={
-            approved
-              ? workspace.entryControls
-              : "rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60"
-          }
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <div
-                className={
-                  approved
-                    ? workspace.caption
-                    : "text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
-                }
-              >
-                {copy.myDictionary}
-              </div>
-              <div
-                className={
-                  approved
-                    ? workspace.scope
-                    : "text-xs text-slate-500 dark:text-slate-400"
-                }
-              >
-                {(!approved || customEntryOpen) && copy.myDictionaryHint}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setCustomEntryOpen((value) => !value);
-                setCustomHeadword((value) => value || query.trim());
-                setCustomEntryMessage(null);
-              }}
-              className={
-                approved
-                  ? workspace.button
-                  : "rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-              }
-            >
-              {customEntryOpen ? copy.closeEntry : copy.addEntry}
-            </button>
-          </div>
-
-          {customEntryOpen ? (
-            <LibraryEntryEditor modal={approved} locale={interfaceLanguage} busy={customEntrySaving} onClose={() => setCustomEntryOpen(false)}>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <label
-                  className={
-                    approved
-                      ? workspace.label
-                      : "grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300"
-                  }
-                >
-                  <span>{copy.headword}</span>
-                  <input
-                    value={customHeadword}
-                    onChange={(event) => setCustomHeadword(event.target.value)}
-                    className={
-                      approved
-                        ? workspace.field
-                        : "h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                    }
-                  />
-                </label>
-                <label
-                  className={
-                    approved
-                      ? workspace.label
-                      : "grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300"
-                  }
-                >
-                  <span>{copy.definition}</span>
-                  <input
-                    value={customDefinition}
-                    onChange={(event) =>
-                      setCustomDefinition(event.target.value)
-                    }
-                    className={
-                      approved
-                        ? workspace.field
-                        : "h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                    }
-                  />
-                </label>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <label
-                  className={
-                    approved
-                      ? workspace.label
-                      : "grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300"
-                  }
-                >
-                  <span>
-                    {copy.translation}
-                    {translationLang
-                      ? ` · ${languageDisplayName(interfaceLanguage, translationLang)}`
-                      : ""}
-                  </span>
-                  <input
-                    disabled={!translationLang}
-                    value={
-                      translationLang && customTranslationLanguage === translationLang
-                        ? customTranslation
-                        : ""
-                    }
-                    onChange={(event) => {
-                      setCustomTranslation(event.target.value);
-                      setCustomTranslationLanguage(translationLang);
-                    }}
-                    className={
-                      approved
-                        ? workspace.field
-                        : "h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                    }
-                  />
-                </label>
-                <label
-                  className={
-                    approved
-                      ? workspace.label
-                      : "grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300"
-                  }
-                >
-                  <span>{copy.example}</span>
-                  <input
-                    value={customExample}
-                    onChange={(event) => setCustomExample(event.target.value)}
-                    className={
-                      approved
-                        ? workspace.field
-                        : "h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                    }
-                  />
-                </label>
-              </div>
-              <label
-                className={
-                  approved
-                    ? workspace.label
-                    : "grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300"
-                }
-              >
-                <span>{copy.note}</span>
-                <input
-                  value={customNotes}
-                  onChange={(event) => setCustomNotes(event.target.value)}
-                  className={
-                    approved
-                      ? workspace.field
-                      : "h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                  }
-                />
-              </label>
-              <div className={approved ? workspace.editorActions : "flex flex-wrap items-center gap-3"}>
-                <button
-                  type="button"
-                  disabled={customEntrySaving}
-                  onClick={() => void createCustomEntry()}
-                  className={
-                    approved
-                      ? workspace.button
-                      : "rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:brightness-105 disabled:opacity-60"
-                  }
-                >
-                  {copy.saveEntry}
-                </button>
-                {customEntryMessage ? (
-                  <span
-                    className={
-                      approved
-                        ? workspace.notice
-                        : "text-xs font-semibold text-slate-600 dark:text-slate-300"
-                    }
-                  >
-                    {customEntryMessage}
-                  </span>
-                ) : null}
-              </div>
-            </LibraryEntryEditor>
-          ) : customEntryMessage ? (
-            <div role="status" className={approved ? workspace.notice : "mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300"}>
-              {customEntryMessage}
-            </div>
-          ) : null}
-        </div>}
-
-        {!approved && resultCountLabel && <div className={approved ? workspace.scope : "space-y-0.5 text-xs text-slate-500 dark:text-slate-400"}>
-          <div>{resultCountLabel}</div>
-        </div>}
       </div>
 
       <div
         className={
-          approved
-            ? workspace.results
-            : "scrollbar-hide min-h-0 flex-1 overflow-y-auto p-3"
+          workspace.results
         }
       >
         {searchError ? (
           <div
             role="alert"
-            className={approved ? workspace.error : "rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200"}
+            className={workspace.error}
           >
             <p>{searchError}</p>
             <button
               type="button"
-              className={approved ? workspace.button : "mt-3 rounded-full border border-current px-3 py-1.5 font-semibold"}
+              className={workspace.button}
               onClick={() => void runSearch(true)}
             >
               {copy.retry}
@@ -1151,7 +801,7 @@ export function DictionarySearchTab({
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
-                className={approved ? workspace.skeleton : "h-20 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800"}
+                className={workspace.skeleton}
               />
             ))}
           </div>
@@ -1162,7 +812,7 @@ export function DictionarySearchTab({
             selectedHeadwordGroupId={selectedHeadwordGroupId}
             onSelect={openGroupDetail}
           />
-        ) : approved && wordResults.length ? (
+        ) : wordResults.length ? (
           <LibraryResultList language={interfaceLanguage} listing="preview" entrySelection hasDetail={Boolean(detailSelection)}
             showSource={new Set(wordResults.map(entry => entry.dictionary_id)).size > 1}>
             {wordResults.map(entry => <LibraryResultRow
@@ -1180,99 +830,19 @@ export function DictionarySearchTab({
               onSelect={() => void openEntryDetail(entry)}
             />)}
           </LibraryResultList>
-        ) : wordResults.length ? (
-          <div className="space-y-2">
-            {wordResults.map((entry, index) => {
-              const selected = detailSelection?.entryId === entry.id;
-              const previousGroup =
-                index > 0 ? wordResults[index - 1]?.search_group_id : null;
-              const showGroupHeader =
-                groupedSearchActive &&
-                entry.search_group_id &&
-                entry.search_group_id !== previousGroup;
-              return (
-                <React.Fragment
-                  key={`${entry.search_group_id ?? "flat"}-${entry.id}`}
-                >
-                  {showGroupHeader ? (
-                    <div className="px-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      {entry.search_group_id === "headwords"
-                        ? copy.headwords
-                        : entry.search_group_id === "examples"
-                          ? copy.examples
-                          : entry.search_group_id === "definitions"
-                            ? copy.definitions
-                            : copy.alphabetical}
-                    </div>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => void openEntryDetail(entry)}
-                    className={`w-full rounded-2xl border p-3 text-left transition ${
-                      selected
-                        ? "border-primary/50 bg-primary/5 shadow-sm"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:bg-slate-800"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-slate-900 dark:text-white">
-                            {entry.headword}
-                          </span>
-                          <span
-                            className={
-                              approved
-                                ? workspace.scope
-                                : "text-xs text-slate-500 dark:text-slate-400"
-                            }
-                          >
-                            {getPartOfSpeechLabel(
-                              interfaceLanguage,
-                              entry.part_of_speech ?? null,
-                            )}{" "}
-                            · {dictionaryLabel(entry)} ·{" "}
-                            {meaningLabel(entry, interfaceLanguage)}
-                          </span>
-                        </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                            {searchMatchLabel(entry, copy.dictionaryEntry)}
-                          </span>
-                        </div>
-                        <p className="mt-1 line-clamp-2 text-sm text-slate-700 dark:text-slate-300">
-                          {firstDefinition(entry, copy.noDefinition)}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        {entry.is_nt2_2000 ? (
-                          <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
-                            NT2 2000
-                          </span>
-                        ) : null}
-                        <span className="hidden text-slate-400 sm:inline">
-                          ...
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                </React.Fragment>
-              );
-            })}
-          </div>
         ) : (
-          <div className={approved ? workspace.empty : "flex min-h-[260px] flex-col items-center justify-center gap-3 text-center"}>
-            <div className={approved ? workspace.emptyTitle : "text-base font-semibold text-slate-900 dark:text-white"}>
+          <div className={workspace.empty}>
+            <div className={workspace.emptyTitle}>
               {emptyHeading}
             </div>
-            <div className={approved ? workspace.notice : "max-w-[440px] text-sm text-slate-600 dark:text-slate-300"}>
+            <div className={workspace.notice}>
               {emptyDescription}
             </div>
             {hasResettableLookupState ? (
               <button
                 type="button"
                 onClick={resetLookup}
-                className={approved ? workspace.button : "rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"}
+                className={workspace.button}
               >
                 {copy.clearSearch}
               </button>
@@ -1286,31 +856,10 @@ export function DictionarySearchTab({
           groupedSearchActive ? "library-group-pagination" : undefined
         }
         className={
-          approved
-            ? workspace.pagination
-            : "flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+          workspace.pagination
         }
       >
-        {!approved && <span>
-          {groupedSearchActive
-            ? formatUiMessage(copy.pageCount, {
-                page: number(page),
-                count: formatUiCount(
-                  interfaceLanguage,
-                  groupResults.length,
-                  copy,
-                  "group",
-                ),
-              })
-            : formatUiMessage(copy.wordRange, {
-                start: number(
-                  wordResults.length ? (page - 1) * pageSize + 1 : 0,
-                ),
-                end: number(Math.min(wordTotal, page * pageSize)),
-                total: number(wordTotal),
-              })}
-        </span>}
-        {approved && <span className={workspace.pageIndicator}>{number(page)} / {number(Math.max(1,Math.ceil((useViewedListFilter ? wordTotal : (groupTotal ?? 0))/pageSize)))}</span>}
+        {<span className={workspace.pageIndicator}>{number(page)} / {number(Math.max(1,Math.ceil((useViewedListFilter ? wordTotal : (groupTotal ?? 0))/pageSize)))}</span>}
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -1323,12 +872,10 @@ export function DictionarySearchTab({
             aria-label={copy.previous}
             disabled={page === 1}
             className={
-              approved
-                ? workspace.button
-                : "rounded-full border border-slate-300 px-3 py-1 font-semibold disabled:opacity-50 dark:border-slate-700"
+              workspace.button
             }
           >
-            {approved ? <ChevronLeft size={18} aria-hidden="true"/> : copy.previous}
+            {<ChevronLeft size={18} aria-hidden="true"/>}
           </button>
           <button
             type="button"
@@ -1343,12 +890,10 @@ export function DictionarySearchTab({
               groupedSearchActive ? !groupHasMore : page * pageSize >= wordTotal
             }
             className={
-              approved
-                ? workspace.button
-                : "rounded-full border border-slate-300 px-3 py-1 font-semibold disabled:opacity-50 dark:border-slate-700"
+              workspace.button
             }
           >
-            {approved ? <ChevronRight size={18} aria-hidden="true"/> : copy.next}
+            {<ChevronRight size={18} aria-hidden="true"/>}
           </button>
         </div>
       </div>}
@@ -1358,40 +903,25 @@ export function DictionarySearchTab({
   return (
     <div
       className={
-        approved
-          ? `${theme.theme} ${workspace.shell}`
-          : "relative flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/70"
+        `${theme.theme} ${workspace.shell}`
       }
-      data-colour-mode={approved ? "app" : undefined}
+      data-colour-mode={"app"}
     >
-      <div className={approved ? workspace.columns : "flex min-h-0 flex-1"}
+      <div className={workspace.columns}
         data-detail-open={detailSelection ? "true" : "false"}>
         {results}
         <aside
           className={
-            approved
-              ? workspace.detail
-              : "hidden w-[380px] shrink-0 border-l border-slate-100 lg:block dark:border-slate-800"
+            workspace.detail
           }
         >
           {detailSelection ? (
             <div className="flex h-full min-h-0 flex-col">
-              {approved ? (
+              {(
                 <div className={detailEntryInCurrentResults ? workspace.srOnly : workspace.detailNotice}>
                   <h2>{copy.details}</h2>
                   {!detailEntryInCurrentResults ? <p>{copy.retainedEntry}</p> : null}
                 </div>
-              ) : (
-              <div className="border-b border-slate-100 bg-slate-50 px-5 py-2 text-xs dark:border-slate-800 dark:bg-slate-900">
-                <div className="font-semibold text-slate-700 dark:text-slate-200">
-                  {copy.details}
-                </div>
-                {!detailEntryInCurrentResults ? (
-                  <div className="mt-0.5 text-slate-500 dark:text-slate-400">
-                    {copy.retainedEntry}
-                  </div>
-                ) : null}
-              </div>
               )}
               <div className="flex min-h-0 flex-1 flex-col">
                 <WordDetailsCloseProvider onClose={() => updateSearchState({detailSelection:null,selectedHeadwordGroupId:null,mobileDetailOpen:false})} interfaceLanguage={interfaceLanguage}>
@@ -1407,14 +937,13 @@ export function DictionarySearchTab({
                   onListsUpdated={async () => {
                     searchFreshRef.current = null;
                     await reloadLists();
-                    if (useViewedListFilter || query.trim() || (approved && materialEnabled)) {
+                    if (useViewedListFilter || query.trim() || (materialEnabled)) {
                       void runSearch(true);
                     }
                     notifyListsUpdated();
                   }}
                   onOpenListMembership={onOpenListMembership}
                   onTrainWord={onTrainWord}
-                  onCopyToUserDictionary={handleCopyToUserDictionary}
                   viewport="desktop"
                 />
                 </WordDetailsCloseProvider>
@@ -1428,7 +957,7 @@ export function DictionarySearchTab({
         </aside>
       </div>
 
-      <div className={approved ? workspace.mobileDetail : "lg:hidden"}>
+      <div className={workspace.mobileDetail}>
         <WordDetailDrawer
           selection={detailSelection}
           initialGroup={selectedGroupResult?.group}
@@ -1442,14 +971,13 @@ export function DictionarySearchTab({
           onListsUpdated={async () => {
             searchFreshRef.current = null;
             await reloadLists();
-            if (useViewedListFilter || query.trim() || (approved && materialEnabled)) {
+            if (useViewedListFilter || query.trim() || (materialEnabled)) {
               void runSearch(true);
             }
             notifyListsUpdated();
           }}
           onOpenListMembership={onOpenListMembership}
           onTrainWord={onTrainWord}
-          onCopyToUserDictionary={handleCopyToUserDictionary}
         />
       </div>
     </div>

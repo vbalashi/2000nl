@@ -30,7 +30,7 @@ vi.mock("@/components/training/TrainingScreen", () => ({
     return (
       <div>
         <p>training mount {mountNumber.current}</p>
-        <p>destination {destination ?? "legacy"}</p>
+        <p>destination {destination ?? "unknown"}</p>
         <button onClick={() => onRequestDestination?.("library")}>
           Library
         </button>
@@ -262,7 +262,6 @@ test("returning from History replaces its entry so Back cannot loop into History
 
 
 test("approved history returns to its Statistics origin without remounting Training", () => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
   try {
     window.history.replaceState({},"","/");
     render(<TrainingLibraryShell user={{id:"user-1"} as User} />);

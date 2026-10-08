@@ -19,7 +19,7 @@ async function startFixture(
   });
   await page
     .getByRole("button", {
-      name: /Huidige selectie starten|Start met huidige instellingen/i,
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
     })
     .click();
 }
@@ -69,7 +69,7 @@ test("History and Settings return to the revealed card, while theme stays app-ow
   await history.focus();
   await page.keyboard.press("Enter");
   await page
-    .getByRole("button", { name: "Terug naar training", exact: true })
+    .getByRole("button", { name: /Geschiedenis sluiten|Close history|Закрыть историю/i })
     .click();
   await expect(stage).toHaveAttribute("data-side", "answer");
   await expect(history).toBeFocused();
@@ -125,11 +125,11 @@ for (const viewport of viewports) {
       );
       await expect(session.getByTestId("training-session-name")).toHaveCSS(
         "font-size",
-        "12px",
+        viewport.width <= 390 ? "14px" : "16px",
       );
       await expect(session.getByTestId("training-session-name")).toHaveCSS(
         "font-weight",
-        "500",
+        "550",
       );
       await expect(
         session.getByRole("button", { name: "Geschiedenis" }),
@@ -137,21 +137,27 @@ for (const viewport of viewports) {
       await expect(
         session.getByRole("button", { name: "Sessie sluiten" }),
       ).toBeVisible();
-      await expect(
-        header.getByRole("button", { name: "Instellingen" }),
-      ).toBeVisible();
-      await expect(
-        header.getByRole("button", { name: /Thema:/ }),
-      ).toBeVisible();
-      const headerBox = (await header.boundingBox())!;
+      if (viewport.width <= 390) {
+        await expect(header.getByRole("button", { name: "Instellingen" })).toHaveCount(0);
+        await expect(header.getByRole("button", { name: /Thema:/ })).toHaveCount(0);
+      } else {
+        await expect(
+          header.getByRole("button", { name: "Instellingen" }),
+        ).toBeVisible();
+        await expect(
+          header.getByRole("button", { name: /Thema:/ }),
+        ).toBeVisible();
+      }
+      const headerBox = await header.boundingBox();
       const sessionBox = (await session.boundingBox())!;
-      expect(sessionBox.y - headerBox.y - headerBox.height).toBeCloseTo(
-        viewport.inset,
+      const approvedInset = viewport.width >= 768 && viewport.height >= 700 ? 28 : 14;
+      const topReference = headerBox ?? (await page.locator("main").boundingBox())!;
+      expect(sessionBox.y - topReference.y - (headerBox?.height ?? 0)).toBeCloseTo(
+        approvedInset,
         0,
       );
       expect(sessionBox.width).toBe(viewport.cardWidth);
-      expect(sessionBox.height).toBe(48);
-      const footer = page.locator('footer[data-compact="true"]');
+      expect(sessionBox.height).toBe(62);
       for (const side of ["face", "answer"] as const) {
         if (side === "answer")
           await stage.getByRole("button", { name: "Antwoord tonen" }).click();
@@ -164,35 +170,13 @@ for (const viewport of viewports) {
         const dock = (await page
           .getByTestId("training-sense-card-dock")
           .boundingBox())!;
-        const footerBox = (await footer.boundingBox())!;
-        expect(dock.y + dock.height).toBeLessThanOrEqual(
-          footerBox.y - viewport.inset + 1,
-        );
-        expect(footerBox.y + footerBox.height).toBe(viewport.height);
+        expect(dock.y + dock.height).toBeLessThanOrEqual(viewport.height);
         expect(
           await page.evaluate(() => document.documentElement.scrollWidth),
         ).toBe(viewport.width);
         expect(
           await page.evaluate(() => document.documentElement.scrollHeight),
         ).toBe(viewport.height);
-        const labelTops = await footer
-          .locator(
-            '[data-testid="training-session-footer-progress"] > div > span:first-child',
-          )
-          .evaluateAll((nodes) =>
-            nodes.map((node) => node.getBoundingClientRect().top),
-          );
-        expect(labelTops).toHaveLength(3);
-        expect(Math.max(...labelTops) - Math.min(...labelTops)).toBeLessThan(1);
-        const label = footer
-          .locator('[data-testid="training-session-footer-progress"] > div')
-          .first();
-        const spans = await label
-          .locator(":scope > span")
-          .evaluateAll((nodes) =>
-            nodes.map((node) => node.getBoundingClientRect().top),
-          );
-        expect(Math.abs(spans[0] - spans[1])).toBeLessThan(1);
         expect(
           await page
             .locator("html")
@@ -202,12 +186,11 @@ for (const viewport of viewports) {
           path: testInfo.outputPath(`${viewport.name}-${theme}-${side}.png`),
         });
       }
-      // The new placement must still return to Today through the real owner callback.
+      // Closing the session uses its real owner callback and leaves the card stage.
       await session.getByRole("button", { name: "Sessie sluiten" }).click();
       await expect(stage).toBeHidden();
-      await expect(
-        page.getByRole("button", { name: /Huidige selectie starten/i }),
-      ).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Training", level: 1 })).toBeVisible();
+      await expect(page.getByRole("button", { name: /^Training (starten|hervatten)$/ })).toBeEnabled();
     });
   }
 }

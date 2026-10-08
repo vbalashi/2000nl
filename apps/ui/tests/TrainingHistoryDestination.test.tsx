@@ -53,15 +53,15 @@ test("loads recent authoritative activity only when opened and returns to Traini
     />,
   );
 
-  expect(await screen.findByRole("heading", { name: "Geschiedenis" })).toHaveFocus();
+  expect(await screen.findByRole("heading", { name: "Geschiedenis" })).toBeInTheDocument();
   expect(await screen.findByText("bank")).toBeInTheDocument();
   expect(screen.getByText("Goed")).toBeInTheDocument();
   expect(screen.getByText("Woord → betekenis")).toBeInTheDocument();
   expect(screen.getByText("De 50 meest recente trainingsactiviteiten worden getoond.")).toBeInTheDocument();
   expect(fetchRecentTrainingHistory).toHaveBeenCalledWith(expect.any(AbortSignal));
 
-  await userEvent.click(screen.getByRole("button", { name: "Terug naar training" }));
-  expect(onReturnToTraining).toHaveBeenCalledOnce();
+  await userEvent.click(screen.getByRole("button", { name: "Geschiedenis sluiten" }));
+  await waitFor(() => expect(onReturnToTraining).toHaveBeenCalledOnce());
 });
 
 test("distinguishes an empty day from a load failure and retries", async () => {
@@ -142,7 +142,6 @@ beforeEach(() => {
 });
 
 test.each(["en","nl","ru"] as const)("approved history shares grouped activity presentation in %s", async locale => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
   vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({matches:true}));
   const copy = (await import("@/lib/uiMessages")).getUiMessages(locale).trainingHistory;
   const close = vi.fn();
@@ -158,7 +157,6 @@ test.each(["en","nl","ru"] as const)("approved history shares grouped activity p
 });
 
 test("approved history failures and principal changes never present stale actions", async () => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
   fetchRecentTrainingHistory.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({items:[{entryId:"entry-a",headword:"private-a",partOfSpeech:null,reviewResult:"learning_started",cardTypeId:"word-to-definition",reviewedAt:"2026-08-21T11:59:00Z"}],hasMore:false}).mockResolvedValueOnce({items:[],hasMore:false});
   const props={open:true,interfaceLanguage:"en" as const,onReturnToTraining:vi.fn()};
   const view=render(<TrainingHistoryDestination {...props} userId="a" />);

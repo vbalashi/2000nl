@@ -47,7 +47,6 @@ test('headword forms require all senses to agree; missing or differing forms sta
 });
 
 test('relations remain attached to their meaning even with no forms and are never translated',()=>{
- vi.stubEnv('NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1','true');
  const group=structuredClone(multiSenseBankGroup);const entries=group.entries.filter(e=>e.kind==='sense-card');
  entries[0].wordDetails=details({meanings:[{synonyms:['de zetel']}]});entries[1].wordDetails=details({meanings:[{antonyms:['unique opposite']}]});
  const model=buildLibrarySenseCardGroupModel(group,'en');

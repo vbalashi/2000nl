@@ -186,6 +186,28 @@ const restHandler = async (route: any) => {
     return;
   }
 
+  if (pathname.endsWith("/rpc/get_available_dictionary_sources")) {
+    const body = request.postDataJSON?.() ?? {};
+    const languageCode = body.p_language_code ?? "nl";
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify([
+        {
+          id: "dictionary-1",
+          language_code: languageCode,
+          slug: languageCode === "nl" ? "nl-vandale" : "en-core",
+          name: languageCode === "nl" ? "VanDale Dutch" : "English dictionary",
+          kind: "curated",
+          visibility: "public",
+          is_editable: false,
+          entry_count: entries.length,
+        },
+      ]),
+    });
+    return;
+  }
+
   if (pathname.endsWith("/rpc/get_training_scenarios")) {
     await route.fulfill({
       status: 200,
@@ -500,6 +522,49 @@ const restHandler = async (route: any) => {
 async function setupAuthenticatedTrainingPage(page: Page) {
   nextWordIndex = 0;
 
+  let trainingSetups = {
+    revision: 0,
+    document: { schemaVersion: 1, trainings: [], mainTrainingId: null },
+  };
+  let materialPreferences = {
+    revision: 0,
+    document: {
+      schemaVersion: 1,
+      learningLanguages: [],
+      disabledDictionaryIds: [],
+    },
+  };
+
+  await page.route("**/api/training/setups", async (route: Route) => {
+    if (route.request().method() === "PUT") {
+      const body = route.request().postDataJSON?.() ?? {};
+      trainingSetups = {
+        revision: trainingSetups.revision + 1,
+        document: body.document,
+      };
+    }
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(trainingSetups),
+    });
+  });
+
+  await page.route("**/api/settings/material", async (route: Route) => {
+    if (route.request().method() === "PUT") {
+      const body = route.request().postDataJSON?.() ?? {};
+      materialPreferences = {
+        revision: materialPreferences.revision + 1,
+        document: body.document,
+      };
+    }
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(materialPreferences),
+    });
+  });
+
   await page.route("**/auth/v1/user**", async (route: Route) => {
     const method = route.request().method().toUpperCase();
     if (method === "OPTIONS") {
@@ -513,8 +578,11 @@ async function setupAuthenticatedTrainingPage(page: Page) {
     });
   });
 
-  await page.route("**/api/platform/v2/lookup", async (route: Route) => {
+  await page.route(
+    /\/api\/(?:platform\/v2\/lookup|library\/search)$/,
+    async (route: Route) => {
     const body = route.request().postDataJSON?.() ?? {};
+    const isLibrarySearch = new URL(route.request().url()).pathname === "/api/library/search";
     const query = typeof body.query === "string" ? body.query : "";
     const matchingEntries = entries.filter((entry) =>
       entry.headword.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
@@ -583,10 +651,19 @@ async function setupAuthenticatedTrainingPage(page: Page) {
           intent: "dictionary-lookup",
         },
         groups,
+        ...(isLibrarySearch
+          ? {
+              librarySearch: {
+                totalGroups: groups.length,
+                matchingEntryIds: matchingEntries.map((entry) => entry.id),
+              },
+            }
+          : {}),
         page: { selectedTierComplete: true, nextGroupCursor: null },
       }),
     });
-  });
+    },
+  );
 
   await page.route("**/api/platform/v1/actions", async (route: Route) => {
     const body = route.request().postDataJSON?.() ?? {};
@@ -610,7 +687,7 @@ async function setupAuthenticatedTrainingPage(page: Page) {
 
 async function startPreparedTrainingSession(page: Page) {
   const startButton = page.getByRole("button", {
-    name: /Start current setup|Huidige selectie starten|Начать с текущими настройками/i,
+    name: /^(?:Start training|Training starten|Начать тренировку)$/,
   });
   const cardHeading = page.getByRole("heading", { name: /huis/i });
   await expect
@@ -646,14 +723,17 @@ test("training flow preserves the answer while word details open @pilot", async 
       name: /Show answer|Toon antwoord|Показать ответ/i,
     })
     .click();
+  const trainingCard = page.getByRole("region", { name: "Next training card" });
+  await expect(trainingCard).toContainText("Een gebouw waar mensen wonen.");
   await page.getByRole("button", { name: /Word details|Woorddetails/i }).click();
 
   // The shared action opens Word details without changing the active card.
-  const drawer = page.locator("div.fixed.inset-0.z-40");
+  const drawer = page.getByRole("dialog", { name: "Word details" });
   await expect(drawer).toBeVisible();
   await expect(
     drawer.getByRole("heading", { level: 2, name: /huis/i })
   ).toBeVisible();
+  await expect(trainingCard).toContainText("Een gebouw waar mensen wonen.");
   await expect(page.getByRole("button", { name: "Recent" })).toHaveCount(0);
   // This fixture uses the default English interface, not its Dutch study language.
   await drawer.getByRole("button", { name: "Close", exact: true }).click();
@@ -672,7 +752,7 @@ test("the Library dictionary search surface renders @pilot", async ({ page }) =>
   ).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Search words", exact: true })).toBeVisible();
   await expect(
-    page.getByText("Dutch · Searching All dictionaries"),
+    page.getByText("Dutch · All dictionaries"),
   ).toBeVisible();
   await page.getByRole("textbox", { name: "Search words", exact: true }).fill("huis");
   const headwordResult = page.getByTestId(
@@ -681,7 +761,7 @@ test("the Library dictionary search surface renders @pilot", async ({ page }) =>
   await expect(headwordResult).toBeVisible();
   await expect(headwordResult).toContainText("huis");
   await expect(headwordResult).toContainText("VanDale Dutch");
-  await expect(headwordResult).toContainText("1 betekenis");
+  await expect(headwordResult).toContainText("1 meaning");
   await headwordResult.click();
   await expect(page.getByText("Een gebouw waar mensen wonen.").first()).toBeVisible();
 });
@@ -691,26 +771,9 @@ test("the Library dictionary search surface renders on mobile @pilot", async ({
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await setupAuthenticatedTrainingPage(page);
-  await startPreparedTrainingSession(page);
   await page
-    .getByRole("button", {
-      name: /Show answer|Toon antwoord|Показать ответ/i,
-    })
-    .click();
-  await page.getByRole("button", { name: /Word details|Woorddetails/i }).click();
-  const detailsDrawer = page.locator("div.fixed.inset-0.z-40");
-  await expect(detailsDrawer).toBeVisible();
-  await expect(
-    detailsDrawer.getByRole("heading", { level: 2, name: /huis/i }),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Recent" })).toHaveCount(0);
-  await detailsDrawer.getByRole("button", { name: "Close", exact: true }).click();
-  await expect(detailsDrawer).toBeHidden();
-
-  await page.getByRole("button", { name: /Destinations: Training/ }).click();
-  await page
-    .getByRole("group", { name: "Destinations" })
-    .getByRole("button", { name: "Library" })
+    .getByRole("navigation", { name: "Primary" })
+    .getByRole("button", { name: "Library", exact: true })
     .click();
   await expect(
     page.getByRole("heading", { level: 1, name: /Library|Bibliotheek/ }),

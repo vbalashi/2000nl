@@ -58,3 +58,7 @@
 - [2026-09-28: утверждение Library и первый Statistics](2026-09-28-07-library-approved-statistics.md)
 
 - [Known и исключение headword](2026-10-01-02-known-headword-exclusion.md) — 2026-10-01.
+
+- [2026-10-07: UI retirement and bounded refactor](2026-10-07-01-ui-retirement-and-refactor.md)
+
+- [2026-10-08: bounded retirement release readiness](2026-10-08-01-retirement-release-readiness.md)

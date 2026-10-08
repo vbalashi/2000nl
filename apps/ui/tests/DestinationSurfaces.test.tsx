@@ -1,10 +1,21 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { SettingsDestination } from "@/components/navigation/SettingsDestination";
 import { StatisticsDestination } from "@/components/navigation/StatisticsDestination";
 
-test("App Settings exposes application preferences and the signed-in account", () => {
+vi.mock("@/components/navigation/statistics/AccountStatistics", () => ({
+  AccountStatistics: ({ userId, languageCode, open, interfaceLanguage, onPractiseMaterial, onHistory }: {
+    userId: string; languageCode: string; open: boolean; interfaceLanguage: string;
+    onPractiseMaterial: (language: string, material: { kind: "all" }) => void; onHistory?: () => void;
+  }) => <section>
+    <p>{`${userId}:${languageCode}:${open}:${interfaceLanguage}`}</p>
+    <button onClick={() => onPractiseMaterial(languageCode, { kind: "all" })}>Practise</button>
+    {onHistory ? <button onClick={onHistory}>Recent activity</button> : null}
+  </section>,
+}));
+
+test("App Settings exposes application preferences and the signed-in account", async () => {
   const onThemeChange = vi.fn();
   const onInterfaceLanguageChange = vi.fn();
   const onTranslationLanguageChange = vi.fn();
@@ -25,39 +36,41 @@ test("App Settings exposes application preferences and the signed-in account", (
     />,
   );
 
-  expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
-  expect(screen.getByText("Interface language")).toBeInTheDocument();
-  expect(screen.getByText("Translation language")).toBeInTheDocument();
-  expect(
-    screen.getByRole("heading", { name: "Keyboard shortcuts" }),
-  ).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Settings", level: 1 })).toBeInTheDocument();
+  const sections = within(screen.getByRole("navigation", { name: "Settings sections" }));
+  fireEvent.click(sections.getByRole("button", { name: "Shortcuts" }));
+  expect(screen.getByRole("heading", { name: "Training shortcuts" })).toBeInTheDocument();
   expect(screen.queryByText(/audio quality/i)).not.toBeInTheDocument();
-  expect(screen.queryByText(/subscription/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/training setup/i)).not.toBeInTheDocument();
   expect(screen.queryByRole("navigation", { name: "Primary" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Search" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Help" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "History" })).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Account" })).not.toBeInTheDocument();
+  fireEvent.click(sections.getByRole("button", { name: "Appearance" }));
+  fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+  expect(onThemeChange).toHaveBeenCalledWith("dark");
+  fireEvent.click(sections.getByRole("button", { name: "Languages" }));
+  expect(screen.getByText("Interface language")).toBeInTheDocument();
+  expect(screen.getByText("Translation language")).toBeInTheDocument();
+  fireEvent.click(screen.getByLabelText("Interface language"));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Русский" }));
+  expect(onInterfaceLanguageChange).toHaveBeenCalledWith("ru");
+  fireEvent.click(sections.getByRole("button", { name: "Account" }));
   expect(screen.getByRole("heading", { name: "Account" })).toBeInTheDocument();
   expect(screen.getByText("learner@example.com")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
   expect(onSignOut).toHaveBeenCalledOnce();
-
-  fireEvent.click(screen.getByRole("button", { name: "Dark" }));
-  expect(onThemeChange).toHaveBeenCalledWith("dark");
-  fireEvent.change(screen.getByLabelText("Interface language"), {
-    target: { value: "ru" },
-  });
-  expect(onInterfaceLanguageChange).toHaveBeenCalledWith("ru");
 });
 
-test("Statistics uses real available counters and returns to Training", () => {
-  const onStartTraining = vi.fn();
+test("Statistics always uses the account presentation and forwards its actions", () => {
+  const onHistory = vi.fn();
+  const onPractiseMaterial = vi.fn();
   render(
     <StatisticsDestination
       open
+      userId="account"
+      languageCode="nl"
       interfaceLanguage="en"
       stats={{
         newWordsToday: 4,
@@ -72,26 +85,14 @@ test("Statistics uses real available counters and returns to Training", () => {
         totalWordsLearned: 120,
         totalWordsInList: 2000,
       }}
-      onStartTraining={onStartTraining}
+      onStartTraining={vi.fn()}
+      onPractiseMaterial={onPractiseMaterial}
+      onHistory={onHistory}
     />,
   );
-
-  expect(
-    screen.getByRole("heading", { name: "Statistics" }),
-  ).toBeInTheDocument();
-  expect(screen.getByText("4")).toBeInTheDocument();
-  expect(screen.getByText("7")).toBeInTheDocument();
-  expect(screen.getByText("9")).toBeInTheDocument();
-  expect(screen.getByText("120 / 2000")).toBeInTheDocument();
-  expect(screen.queryByText(/retention/i)).not.toBeInTheDocument();
-  expect(screen.queryByText(/streak/i)).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Search" })).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Help" })).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "History" })).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Account" })).not.toBeInTheDocument();
-  expect(screen.queryByRole("navigation", { name: "Primary" })).not.toBeInTheDocument();
-
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
-  expect(onStartTraining).toHaveBeenCalledOnce();
+  expect(screen.getByText("account:nl:true:en")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Practise" }));
+  expect(onPractiseMaterial).toHaveBeenCalledWith("nl", { kind: "all" });
+  fireEvent.click(screen.getByRole("button", { name: "Recent activity" }));
+  expect(onHistory).toHaveBeenCalledOnce();
 });

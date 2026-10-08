@@ -9,7 +9,6 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 test("mounts both preference reads concurrently behind one readiness gate", async () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   let palette!: (v: "indigo") => void, spacing!: (v: "airy") => void;
   const a = {
       load: vi.fn(

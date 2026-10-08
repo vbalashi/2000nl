@@ -114,20 +114,17 @@ test("active time waits for prepared sentence content and pauses with the enclos
 
 afterEach(() => { vi.unstubAllEnvs(); });
 
-test.each([true, false])("approved session shell is shared while rollout is %s", async (approved) => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", String(approved));
+test("sentence session uses the approved shared shell", async () => {
   vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValue(candidate);
   vi.mocked(loadSentenceExerciseContent).mockResolvedValue({ state: "ready", content } as never);
   render(<TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} />);
   await screen.findByRole("button", { name: "Show answer" });
-  expect(screen.getByTestId("training-session-chrome")).toHaveAttribute("data-visual-spec", approved ? "training-approved-v1" : "training-height-b");
-  if (approved) expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
-  else expect(screen.getByTestId("training-session-footer-progress")).toBeInTheDocument();
+  expect(screen.getByTestId("training-session-chrome")).toHaveAttribute("data-visual-spec", "training-approved-v1");
+  expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
 });
 
 for (const language of ["en", "nl", "ru"] as const) {
   test(`approved sentence preparation failure has separate retry and exit owners in ${language}`, async () => {
-    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
     vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValue(candidate);
     vi.mocked(loadSentenceExerciseContent).mockRejectedValue(new Error("lookup_unavailable"));
     const onExit = vi.fn();

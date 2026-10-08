@@ -12,8 +12,7 @@ import { readingSizeStyles, type ReadingSize } from "@/lib/reading/readingSize";
 import { TrainingDetailsDrawer } from "@/components/training/TrainingDetailsDrawer";
 import { WordDetailDrawer } from "@/components/training/wordlist/WordDetailDrawer";
 
-// Real Details modules; browser tests replace only lookup HTTP responses and
-// record copy requests without mutating a dictionary or learning state.
+// Real Details modules; browser tests replace only lookup HTTP responses.
 export function UnifiedDetailsGate({
   size = "normal",
   drawer = false,
@@ -26,7 +25,6 @@ export function UnifiedDetailsGate({
   const longFixture = fixture === "long";
   const [entryId, setEntryId] = React.useState(gateFurnitureEntry.entryId);
   const [training, setTraining] = React.useState(false);
-  const [copied, setCopied] = React.useState("");
   const props = {
     entryId,
     headword: longFixture
@@ -36,7 +34,6 @@ export function UnifiedDetailsGate({
     contentLanguageCode: "nl",
     translationTargetLanguageCode: "en",
     interfaceLanguage: "nl" as const,
-    onCopyToUserDictionary: async (selected: string) => { setCopied(selected); },
   };
   return (
     <main style={readingSizeStyles[size]} className="flex h-dvh flex-col gap-2 bg-background-light p-2 text-slate-900 dark:bg-background-dark dark:text-slate-100">
@@ -53,10 +50,9 @@ export function UnifiedDetailsGate({
             />
           </TrainingDetailsDrawer>
         ) : drawer ? (
-          <WordDetailDrawer selection={{ entryId, headword: props.headword }} open onClose={() => setTraining(false)} userId="" userLists={[]} contentLanguageCode="nl" translationLang="en" interfaceLanguage="nl" onCopyToUserDictionary={props.onCopyToUserDictionary} />
+          <WordDetailDrawer selection={{ entryId, headword: props.headword }} open onClose={() => setTraining(false)} userId="" userLists={[]} contentLanguageCode="nl" translationLang="en" interfaceLanguage="nl" />
         ) : <LibraryWordDetail {...props} />}
       </div>
-      <output data-testid="copied-entry" className="shrink-0 text-xs">{copied}</output>
     </main>
   );
 }

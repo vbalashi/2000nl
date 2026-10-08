@@ -1,8 +1,9 @@
 import {expect,test} from "@playwright/test";
+import { assertTestFontsReady } from "../utils/assertTestFontsReady";
 for (const width of [320,390,768]) {
  test(`long headwords fit consistently on both sides at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:1100});
-  await page.goto('/dev/headword-fit');await page.evaluate(()=>document.fonts.ready);
+  await page.goto('/dev/headword-fit');await assertTestFontsReady(page);
   for(const mode of ['plain','syllables']){
    if(mode==='syllables')await page.getByRole('button',{name:'Toggle syllables',exact:true}).click();
    await expect(page.locator('h2').first()).toHaveAttribute('data-headword-fit',/single-line|wrap/);

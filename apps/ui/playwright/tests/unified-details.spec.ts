@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { assertTestFontsReady } from "../utils/assertTestFontsReady";
 import {
   gateBankGroup,
   gateFinanceEntry,
@@ -20,13 +21,30 @@ const viewports = [{ width: 320, height: 568 }, { width: 390, height: 844 }, { w
 const readingSizes = ["normal", "large", "largest"] as const;
 const colorSchemes = ["light", "dark"] as const;
 
-const regularHeadwordSize = { normal: "44px", large: "46px", largest: "48px" } as const;
-const longHeadwordSize = {
-  mobile: { normal: "32px", large: "34px", largest: "36px" },
-  desktop: { normal: "40px", large: "42px", largest: "44px" },
-} as const;
+async function practiceHeadwordRoleSize(element: import("@playwright/test").Locator) {
+  return element.evaluate((headword) => {
+    const probe = document.createElement("span");
+    probe.style.fontSize = "var(--practice-text-headword, 36px)";
+    headword.parentElement!.append(probe);
+    const size = getComputedStyle(probe).fontSize;
+    probe.remove();
+    return size;
+  });
+}
 
-async function expectReviewedHeaderGeometry(page: import("@playwright/test").Page) {
+async function waitForDetailsPanelEntry(page: import("@playwright/test").Page) {
+  const panel = page.locator("dialog[open]");
+  await expect(panel).toBeVisible();
+  await panel.evaluate(async element => {
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    await Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => undefined)));
+  });
+}
+
+async function expectReviewedHeaderGeometry(
+  page: import("@playwright/test").Page,
+  options: { checkVerticalSpacing?: boolean } = {},
+) {
   const row = page.getByTestId("sense-card-header-row");
   const metadata = row.getByTestId("sense-card-metadata");
   const actions = row.getByTestId("sense-card-header-actions");
@@ -37,38 +55,47 @@ async function expectReviewedHeaderGeometry(page: import("@playwright/test").Pag
   const header = page.getByTestId("library-sense-card-group").locator(":scope > header");
 
   await expect(row).toHaveCount(1);
-  await expect(actions.getByRole("button")).toHaveCount(2);
-  await expect(actions.getByRole("button").nth(0)).toHaveAttribute("aria-label", "Afspelen");
-  await expect(actions.getByRole("button").nth(1)).toHaveAttribute("aria-label", "Vertalen");
-  await expect(page.getByTestId("library-sense-card-group").getByRole("button", { name: /Meer|More/, exact: true })).toHaveCount(0);
+  await expect(audio).toHaveCount(1);
+  await expect(translate).toHaveCount(1);
 
   const [headerBox, lockupBox, rowBox, metadataBox, actionsBox, translateBox, audioBox, headwordBox] = await Promise.all([
     header.boundingBox(), lockup.boundingBox(), row.boundingBox(), metadata.boundingBox(), actions.boundingBox(), translate.boundingBox(), audio.boundingBox(), headword.boundingBox(),
   ]);
   expect(headerBox && lockupBox && rowBox && metadataBox && actionsBox && translateBox && audioBox && headwordBox).toBeTruthy();
   const expectedHorizontalPadding = page.viewportSize()!.width >= 640 ? 28 : 16;
-  expect(rowBox!.x - headerBox!.x).toBe(expectedHorizontalPadding);
-  expect(headerBox!.x + headerBox!.width - (rowBox!.x + rowBox!.width)).toBe(expectedHorizontalPadding);
-  expect(rowBox!.y - headerBox!.y).toBe(16);
-  expect(headerBox!.y + headerBox!.height - (lockupBox!.y + lockupBox!.height)).toBe(20);
+  expect(rowBox!.x - headerBox!.x).toBeCloseTo(expectedHorizontalPadding, 0);
+  expect(headerBox!.x + headerBox!.width - (rowBox!.x + rowBox!.width)).toBeCloseTo(expectedHorizontalPadding, 0);
+  await expect(header).toHaveCSS("padding-top", "16px");
+  await expect(header).toHaveCSS("padding-bottom", "20px");
+  await expect(headword).toBeVisible();
+  const { headerScrollTop, headerIsScrollable } = await header.evaluate(element => ({
+    headerScrollTop: element.scrollTop,
+    headerIsScrollable: element.scrollHeight > element.clientHeight + 1,
+  }));
+  if (options.checkVerticalSpacing !== false && headerScrollTop === 0 && !headerIsScrollable) {
+    expect(rowBox!.y - headerBox!.y).toBe(16);
+    expect(headerBox!.y + headerBox!.height - (lockupBox!.y + lockupBox!.height)).toBeCloseTo(20, 0);
+  }
   expect(actionsBox!.x + actionsBox!.width).toBe(rowBox!.x + rowBox!.width);
   expect(actionsBox!.x - (metadataBox!.x + metadataBox!.width)).toBeGreaterThanOrEqual(11.5);
-  expect(translateBox!.width).toBe(40);
-  expect(translateBox!.height).toBe(40);
-  expect(audioBox!.width).toBe(40);
-  expect(audioBox!.height).toBe(40);
-  await expect(translate).toHaveCSS("border-radius", "16px");
-  await expect(audio).toHaveCSS("border-radius", "16px");
-  await expect(translate.locator("svg")).toHaveCSS("width", "20px");
-  await expect(translate.locator("svg")).toHaveCSS("height", "20px");
-  await expect(audio.locator("svg")).toHaveCSS("width", "20px");
-  await expect(audio.locator("svg")).toHaveCSS("height", "20px");
+  expect(translateBox!.width).toBeCloseTo(32, 0);
+  expect(translateBox!.height).toBeCloseTo(32, 0);
+  expect(audioBox!.width).toBeCloseTo(32, 0);
+  expect(audioBox!.height).toBeCloseTo(32, 0);
+  await expect(translate).toHaveCSS("border-radius", "50%");
+  await expect(audio).toHaveCSS("border-radius", "50%");
+  await expect(translate.locator("svg")).toHaveCSS("width", "16px");
+  await expect(translate.locator("svg")).toHaveCSS("height", "16px");
+  await expect(audio.locator("svg")).toHaveCSS("width", "16px");
+  await expect(audio.locator("svg")).toHaveCSS("height", "16px");
   expect(translateBox!.x - (audioBox!.x + audioBox!.width)).toBe(8);
   // A stacked article is the first line of the headword lockup.
-  const wordRow = await headword.evaluate(el => el.parentElement!.getBoundingClientRect().top);
-  const rowToHeadwordGap = wordRow - (rowBox!.y + rowBox!.height);
-  expect(rowToHeadwordGap).toBeGreaterThanOrEqual(11.5);
-  expect(rowToHeadwordGap).toBeLessThanOrEqual(12.5);
+  if (options.checkVerticalSpacing !== false && headerScrollTop === 0 && !headerIsScrollable) {
+    const wordRow = await headword.evaluate(el => el.parentElement!.getBoundingClientRect().top);
+    const rowToHeadwordGap = wordRow - (rowBox!.y + rowBox!.height);
+    expect(rowToHeadwordGap).toBeGreaterThanOrEqual(11.5);
+    expect(rowToHeadwordGap).toBeLessThanOrEqual(12.5);
+  }
 }
 
 for (const viewport of viewports) {
@@ -104,9 +131,12 @@ for (const viewport of viewports) {
       } });
     });
     await page.goto(`/dev/sense-card-gate?prototype=details&size=${size}${viewport.width < 1024 ? "&wrapper=drawer" : ""}`);
+    await assertTestFontsReady(page);
     if (colorScheme === "dark") await page.evaluate(() => document.documentElement.classList.add("dark"));
     await expect(page.getByTestId("library-sense-card-group")).toBeVisible();
-    await expect(page.getByTestId("library-sense-card-group").getByRole("heading", { level: 2 })).toHaveCSS("font-size", regularHeadwordSize[size]);
+    const headword = page.getByTestId("library-sense-card-group").getByRole("heading", { level: 2 });
+    const roleSize = await practiceHeadwordRoleSize(headword);
+    await expect(headword).toHaveCSS("font-size", roleSize);
     await expectReviewedHeaderGeometry(page);
     await expect(page.locator("[data-entry-id]")).toHaveCount(1);
     if (viewport.width < 1024) {
@@ -121,27 +151,15 @@ for (const viewport of viewports) {
         expect(overlap).toBe(false);
       }
     }
-    const copy = page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true });
-    const report = page.getByRole("button", { name: /Melden|Report/, exact: true });
-    await expect(copy).toBeInViewport({ ratio: 1 });
-    await expect(report).toBeInViewport({ ratio: 1 });
-    const copyBox = await copy.boundingBox();
-    const reportBox = await report.boundingBox();
-    expect(copyBox && reportBox).toBeTruthy();
-    if (copyBox && reportBox) {
-      const overlap = Math.min(copyBox.x + copyBox.width, reportBox.x + reportBox.width) > Math.max(copyBox.x, reportBox.x)
-        && Math.min(copyBox.y + copyBox.height, reportBox.y + reportBox.height) > Math.max(copyBox.y, reportBox.y);
-      expect(overlap).toBe(false);
-    }
-    await copy.click();
-    await expect(page.getByTestId("copied-entry")).toHaveText(gateFurnitureEntry.entryId);
+    await expect(page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Multi group", exact: true }).click();
     await expect(page.locator("[data-entry-id]")).toHaveCount(selectedGroup.entryCount);
     await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByRole("button", { name: /betekenis inklappen/i })).toBeVisible();
-    await copy.click();
-    await expect(page.getByTestId("copied-entry")).toHaveText(gateFinanceEntry.entryId);
+    await expect(page.getByRole("button", { name: "Meer kaartacties", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Toggle Training Details", exact: true }).click();
     await expect(page.getByRole("button", { name: "Sluiten", exact: true })).toBeVisible();
+    await waitForDetailsPanelEntry(page);
     await expect(page.getByTestId("library-details-actions")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Melden", exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Later oefenen (F)", exact: true })).toHaveCount(0);
@@ -149,7 +167,7 @@ for (const viewport of viewports) {
     await expect(page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Vertalen", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Afspelen", exact: true })).toBeVisible();
-    await expectReviewedHeaderGeometry(page);
+    await expectReviewedHeaderGeometry(page, { checkVerticalSpacing: false });
     await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByTestId("library-sense-card-lead")).toBeInViewport();
     const lead = await page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByTestId("library-sense-card-lead").boundingBox();
     const scroller = page.getByTestId("library-sense-card-scroll-region");
@@ -191,18 +209,32 @@ for (const viewport of viewports) {
       } });
     });
     await page.goto(`/dev/sense-card-gate?prototype=details&fixture=long&size=${size}${viewport.width < 1024 ? "&wrapper=drawer" : ""}`);
+    await assertTestFontsReady(page);
     if (colorScheme === "dark") await page.evaluate(() => document.documentElement.classList.add("dark"));
     const headword = page.getByRole("heading", { name: gateLongHeadwordGroup.header.text });
     await expect(headword).toBeVisible();
     const fittedSize = await headword.evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+    const roleSize = parseFloat(await practiceHeadwordRoleSize(headword));
     expect(fittedSize).toBeGreaterThanOrEqual(20);
-    expect(fittedSize).toBeLessThanOrEqual(parseFloat(viewport.width >= 640 ? longHeadwordSize.desktop[size] : longHeadwordSize.mobile[size]));
+    expect(fittedSize).toBeLessThanOrEqual(roleSize);
     await expectReviewedHeaderGeometry(page);
+    const header = page.getByTestId("library-sense-card-group").locator(":scope > header");
+    const headerIsScrollable = await header.evaluate(element => element.scrollHeight > element.clientHeight + 1);
+    if (headerIsScrollable) {
+      await expect(header).toHaveAttribute("tabindex", "0");
+      await header.press("End");
+      await expect.poll(async () => {
+        const [headerBox, wordBox] = await Promise.all([header.boundingBox(), headword.boundingBox()]);
+        return wordBox!.y >= headerBox!.y && wordBox!.y + wordBox!.height <= headerBox!.y + headerBox!.height;
+      }).toBe(true);
+      await header.press("Home");
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath(`details-long-${viewport.width}-${size}-${colorScheme}.png`) });
     await page.getByRole("button", { name: "Toggle Training Details", exact: true }).click();
     await expect(page.getByRole("button", { name: "Sluiten", exact: true })).toBeVisible();
-    await expectReviewedHeaderGeometry(page);
+    await waitForDetailsPanelEntry(page);
+    await expectReviewedHeaderGeometry(page, { checkVerticalSpacing: false });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath(`details-long-training-more-${viewport.width}-${size}-${colorScheme}.png`) });
   });

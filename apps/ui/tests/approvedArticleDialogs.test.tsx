@@ -9,7 +9,6 @@ import { WordDetailDrawer } from "@/components/training/wordlist/WordDetailDrawe
 import { areTrainingHotkeysSuspended } from "@/components/training/trainingHotkeys";
 
 beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true,
     value: vi.fn(function (this: HTMLDialogElement) { this.setAttribute("open", ""); }) });
   Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true,
@@ -45,13 +44,15 @@ test("Report stays inside the themed word panel and closes only its own modal", 
   await waitFor(() => expect(trigger).toHaveFocus());
 });
 
-test("Library uses a non-modal bottom sheet and closes through its header action", () => {
+test("Library uses a resizable non-modal bottom sheet without a global Escape listener", () => {
   const onClose = vi.fn();
   const view = render(<WordDetailDrawer selection={{ entryId: "entry-1", headword: "huis" }} open
     onClose={onClose} userId="user-1" contentLanguageCode="nl" translationLang="en"
     interfaceLanguage="ru" userLists={[]} />);
   expect(screen.getByRole("region", {name: "Сведения о слове"})).toBeInTheDocument();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  fireEvent.keyDown(window, { key: "Escape" });
+  expect(onClose).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Закрыть" }));
   expect(onClose).toHaveBeenCalledOnce();
   view.unmount();

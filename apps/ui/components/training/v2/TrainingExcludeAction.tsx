@@ -3,7 +3,6 @@ import React from "react";
 import { getUiMessages } from "@/lib/uiMessages";
 import { Check, ChevronDown, ChevronUp, EyeOff } from "lucide-react";
 import { ActionMenu } from "@/components/practice/ui/ActionMenu";
-import { trainingPresentationV1Enabled } from "@/lib/platform/platformV2Rollout";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { senseCardQuietAction } from "../SenseCardChrome";
 /** Compatibility adapter; exclusion and undo copy has one catalog owner. */
@@ -33,7 +32,7 @@ export function TrainingExcludeAction({
     setAnchor(null);
     trigger.current?.focus({ preventScroll: true });
   }, []);
-  const hasMenu = trainingPresentationV1Enabled() && Boolean(knownAction);
+  const hasMenu = Boolean(knownAction);
   return (<>
 
     <button

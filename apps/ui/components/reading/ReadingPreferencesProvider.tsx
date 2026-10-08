@@ -9,15 +9,12 @@ type SaveStatus = "idle" | "saving" | "saved" | "error";
 type ReadingSettings = {
   preferences: ReadingPreferences;
   device: ReadingDevice;
-  deviceStored: boolean;
   loadStatus: "loading" | "ready" | "error";
   saveStatus: Record<ReadingDevice, SaveStatus>;
-  setDevice: (device: ReadingDevice) => void;
   save: (device: ReadingDevice, size: ReadingSize) => Promise<void>;
   reload: () => void;
 };
 const Context = React.createContext<ReadingSettings | null>(null);
-const deviceKey = "2000nl.reading-device.v1";
 
 export function useReadingSettings() { return React.useContext(Context); }
 
@@ -36,7 +33,6 @@ function ReadingSession({ userId, repository = readingPreferencesRepository, chi
 }) {
   const [preferences, setPreferences] = React.useState<ReadingPreferences>(defaultReadingPreferences);
   const [device, updateDevice] = React.useState<ReadingDevice>("desktop");
-  const [deviceStored, setDeviceStored] = React.useState(true);
   const [loadStatus, setLoadStatus] = React.useState<ReadingSettings["loadStatus"]>("loading");
   const [saveStatus, setSaveStatus] = React.useState<ReadingSettings["saveStatus"]>({ phone: "idle", desktop: "idle" });
   const [loadAttempt, setLoadAttempt] = React.useState(0);
@@ -45,10 +41,6 @@ function ReadingSession({ userId, repository = readingPreferencesRepository, chi
 
   React.useEffect(() => {
     let selected = detectReadingDevice(navigator);
-    if (process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true") try {
-      const stored = window.localStorage.getItem(deviceKey);
-      if (stored === "phone" || stored === "desktop") selected = stored;
-    } catch { setDeviceStored(false); }
     updateDevice(selected);
   }, []);
 
@@ -68,11 +60,6 @@ function ReadingSession({ userId, repository = readingPreferencesRepository, chi
     return () => { cancelled = true; };
   }, [userId, repository, loadAttempt]);
 
-  const setDevice = (next: ReadingDevice) => {
-    updateDevice(next);
-    try { window.localStorage.setItem(deviceKey, next); setDeviceStored(true); }
-    catch { setDeviceStored(false); }
-  };
   const save = async (profile: ReadingDevice, size: ReadingSize) => {
     if (loadStatus !== "ready" || pending.current[profile]) return;
     pending.current[profile] = true;
@@ -86,8 +73,8 @@ function ReadingSession({ userId, repository = readingPreferencesRepository, chi
     } finally { pending.current[profile] = false; }
   };
 
-  return <Context.Provider value={{ preferences, device, deviceStored, loadStatus, saveStatus, setDevice, save, reload: () => setLoadAttempt((n) => n + 1) }}>
-    <div className="contents" data-reading-device={device} data-reading-size={preferences[device]} data-text-size={process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 === "true" ? accountTextSize[preferences[device]] : undefined} style={{...readingSizeStyles[preferences[device]], ...(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 === "true" ? accountTextSizeStyles(preferences[device]) : {})}}>
+  return <Context.Provider value={{ preferences, device, loadStatus, saveStatus, save, reload: () => setLoadAttempt((n) => n + 1) }}>
+    <div className="contents" data-reading-device={device} data-reading-size={preferences[device]} data-text-size={accountTextSize[preferences[device]]} style={{...readingSizeStyles[preferences[device]], ...accountTextSizeStyles(preferences[device])}}>
       {children}
     </div>
   </Context.Provider>;

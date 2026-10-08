@@ -30,8 +30,6 @@ export function AccountPracticeAppearanceProvider(props: {
   repository?: PracticePaletteRepository;
   children: React.ReactNode;
 }) {
-  if (process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true")
-    return <>{props.children}</>;
   return <AccountAppearanceSession key={props.userId} {...props} />;
 }
 function AccountAppearanceSession({

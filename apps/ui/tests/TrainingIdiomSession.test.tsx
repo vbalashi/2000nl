@@ -511,7 +511,7 @@ test.each(["audio", "translation"] as const)("failed %s stays inside the shared 
   expect(screen.getByRole("button", { name: "Good" })).toBeEnabled();
 });
 
-test("the common footer loads independently and refreshes authoritative counters after a grade", async () => {
+test("authoritative counters refresh after a grade while the session uses approved chrome", async () => {
   let resolveStats!: (value: Awaited<ReturnType<typeof readIdiomTrainingStats>>) => void;
   vi.mocked(readIdiomTrainingStats).mockImplementationOnce(() => new Promise(resolve => { resolveStats = resolve; }));
   vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise)
@@ -523,17 +523,16 @@ test("the common footer loads independently and refreshes authoritative counters
     contentLanguageCode="nl" translationTargetLanguageCode={null}
     interfaceLanguage="en" onExit={vi.fn()} />);
   const reveal = await screen.findByRole("button",{name:"Show answer"});
-  expect(screen.getByLabelText("New: loading")).toBeInTheDocument();
+  expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
+  expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
   resolveStats({contractVersion:"training-idiom-stats-v1",newCardsToday:2,
     reviewCardsDone:3,reviewCardsDue:4,totalCardsStarted:12,totalCardsInScope:30});
-  await waitFor(() => expect(screen.getByTestId("training-session-footer-progress")).toHaveTextContent("3/7"));
-  expect(screen.getByTestId("training-session-footer-progress")).toHaveTextContent("12/30");
+  await waitFor(() => expect(readIdiomTrainingStats).toHaveBeenCalledOnce());
   vi.mocked(readIdiomTrainingStats).mockResolvedValueOnce({contractVersion:"training-idiom-stats-v1",
     newCardsToday:3,reviewCardsDone:3,reviewCardsDue:5,totalCardsStarted:13,totalCardsInScope:30});
   fireEvent.click(reveal);
   fireEvent.click(screen.getByRole("button",{name:"Good"}));
-  await waitFor(() => expect(screen.getByTestId("training-session-footer-progress")).toHaveTextContent("13/30"));
-  expect(screen.getByTestId("training-session-footer-progress")).toHaveTextContent("3/7");
+  await waitFor(() => expect(readIdiomTrainingStats).toHaveBeenCalledTimes(2));
   expect(readIdiomTrainingStats).toHaveBeenCalledTimes(2);
   expect(readIdiomTrainingStats).toHaveBeenLastCalledWith(session.sessionId);
 });
@@ -553,20 +552,17 @@ test("active time waits for prepared idiom content and pauses with the enclosing
 
 afterEach(() => { vi.unstubAllEnvs(); });
 
-test.each([true, false])("approved session shell is shared while rollout is %s", async (approved) => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", String(approved));
+test("idiom session uses the approved shared shell", async () => {
   vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
   vi.mocked(loadIdiomExerciseContent).mockResolvedValue({ state: "ready", content } as never);
   render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} />);
   await screen.findByRole("button", { name: "Show answer" });
-  expect(screen.getByTestId("training-session-chrome")).toHaveAttribute("data-visual-spec", approved ? "training-approved-v1" : "training-height-b");
-  if (approved) expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
-  else expect(screen.getByTestId("training-session-footer-progress")).toBeInTheDocument();
+  expect(screen.getByTestId("training-session-chrome")).toHaveAttribute("data-visual-spec", "training-approved-v1");
+  expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
 });
 
 for (const language of ["en", "nl", "ru"] as const) {
   test(`approved idiom preparation failure has separate retry and exit owners in ${language}`, async () => {
-    vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
     vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
     vi.mocked(loadIdiomExerciseContent).mockRejectedValue(new Error("lookup_unavailable"));
     const onExit = vi.fn();

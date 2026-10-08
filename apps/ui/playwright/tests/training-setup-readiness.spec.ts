@@ -4,19 +4,14 @@ import { writeFile } from "node:fs/promises";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 
 const copy = {
-  greeting: /Good morning|Goedemorgen|Доброе утро/i,
-  statsPending: /Loading progress…|Voortgang laden…|Загружаем статистику…/i,
+  trainingHeading: /^(?:Training|Тренировка)$/i,
+  mainTrainingRegion: /^(?:Main training|Hoofdtraining|Основная тренировка|Current training|Huidige training|Текущая тренировка)$/i,
   cardPending:
     /Preparing your next card|Je volgende kaart wordt voorbereid|Подготавливаем следующую карточку/i,
-  continue: /Continue session|Sessie doorgaan|Продолжить сессию/i,
-  start: /Start current setup|Huidige selectie starten|Начать с текущими настройками/i,
+  continue: /^(?:Continue training|Training hervatten|Продолжить тренировку)$/i,
+  start: /^(?:Start training|Training starten|Начать тренировку)$/,
   closeSession: /Close session|Sessie sluiten|Закрыть сессию/i,
-  statsReady:
-    /\d+ reviews due · \d+ new this study day|\d+ herhalingen klaar · \d+ nieuw deze studiedag|Повторений к выполнению: \d+ · новых за учебный день: \d+/i,
-  adjust: /Adjust training|Training aanpassen|Настроить тренировку/i,
-  setupHeading: /Build your session|Stel je sessie samen|Соберите сессию/i,
-  rhythm: /Review ↔ new rhythm|Ritme herhaling|Ритм повторений/i,
-  backToToday: /Back to Today|Terug naar Vandaag|Назад к экрану Сегодня/i,
+  backToTraining: /^(?:Back to training|Terug naar training|Вернуться к тренировкам)$/i,
 };
 
 function summarizeRequestIdentities(requests: Record<string, unknown>[]) {
@@ -74,6 +69,12 @@ test("setup remains usable without card selection while scoped stats are held fo
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 900 });
+  let statsResponseReceived = false;
+  page.on("response", (response) => {
+    if (new URL(response.url()).pathname.endsWith("/rpc/get_detailed_training_stats")) {
+      statsResponseReceived = true;
+    }
+  });
   const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
     statsDelayMs: 10_000,
     visualProfile: "answer",
@@ -82,10 +83,11 @@ test("setup remains usable without card selection while scoped stats are held fo
 
   await expect.poll(() => harness.requests.stats.length).toBe(1);
   const statsRequestObservedAt = harness.requests.requestTimes.stats[0]!;
-  await expect(page.getByRole("heading", { name: copy.greeting })).toBeVisible();
+  await expect(page.getByRole("heading", { name: copy.trainingHeading })).toBeVisible();
+  await expect(page.getByRole("region", { name: copy.mainTrainingRegion })).toBeVisible();
   const setupAvailableMs = Date.now() - statsRequestObservedAt;
   expect(setupAvailableMs).toBeLessThanOrEqual(1_000);
-  await expect(page.getByText(copy.statsPending).first()).toBeVisible();
+  expect(statsResponseReceived).toBe(false);
 
   const startCurrentSetup = page.getByRole("button", { name: copy.start });
   await expect(page.getByRole("button", { name: copy.continue })).toHaveCount(0);
@@ -107,26 +109,11 @@ test("setup remains usable without card selection while scoped stats are held fo
   );
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await attachScreenshot(
+  const mobileOverviewScreenshot = await attachScreenshot(
     page,
     testInfo,
-    "mobile-today-with-stats-pending.png",
+    "mobile-training-overview-with-stats-pending.png",
   );
-
-  await page.getByRole("button", { name: copy.adjust }).click();
-  await expect(page.getByRole("heading", { name: copy.setupHeading })).toBeVisible();
-  await expect(page.getByRole("slider", { name: copy.rhythm })).toBeEnabled();
-  const setupScreenshot = await attachScreenshot(
-    page,
-    testInfo,
-    "editable-setup-with-stats-pending.png",
-  );
-  await attachScreenshot(
-    page,
-    testInfo,
-    "mobile-editable-setup-with-stats-pending.png",
-  );
-  await page.getByRole("button", { name: copy.backToToday }).click();
   await page.setViewportSize({ width: 1280, height: 900 });
   await expect(startCurrentSetup).toBeEnabled();
   expect(harness.requests.scheduler).toHaveLength(0);
@@ -141,10 +128,9 @@ test("setup remains usable without card selection while scoped stats are held fo
   expect(harness.requests.progressActionReconciliations).toHaveLength(0);
 
   await page.getByRole("button", { name: copy.closeSession }).click();
-  await expect(page.getByRole("heading", { name: copy.greeting })).toBeVisible();
-  await expect(page.getByText(copy.statsReady).first()).toBeVisible({
-    timeout: 15_000,
-  });
+  await expect(page.getByRole("heading", { name: copy.trainingHeading })).toBeVisible();
+  await expect.poll(() => statsResponseReceived, { timeout: 15_000 }).toBe(true);
+  await expect(page.getByRole("region", { name: copy.mainTrainingRegion })).toBeVisible();
   const statsHeldDurationMs = Date.now() - statsRequestObservedAt;
   expect(statsHeldDurationMs).toBeGreaterThanOrEqual(9_000);
   expect(harness.requests.stats.length).toBeGreaterThanOrEqual(1);
@@ -174,9 +160,7 @@ test("setup remains usable without card selection while scoped stats are held fo
     configuredStatsDelayMs: 10_000,
     screenshots: [
       testInfo.outputPath("today-without-card-and-stats-pending.png"),
-      setupScreenshot,
-      testInfo.outputPath("mobile-today-with-stats-pending.png"),
-      testInfo.outputPath("mobile-editable-setup-with-stats-pending.png"),
+      mobileOverviewScreenshot,
     ],
   });
 });
@@ -190,7 +174,8 @@ test("a delayed ordinary scheduler is never invoked before or after pilot Start"
     visualProfile: "answer",
     devTestLogin: false,
   });
-  await expect(page.getByRole("heading", { name: copy.greeting })).toBeVisible();
+  await expect(page.getByRole("heading", { name: copy.trainingHeading })).toBeVisible();
+  await expect(page.getByRole("region", { name: copy.mainTrainingRegion })).toBeVisible();
   const startCurrentSetup = page.getByRole("button", { name: copy.start });
   await expect(page.getByRole("button", { name: copy.continue })).toHaveCount(0);
   await expect(startCurrentSetup).toBeEnabled({ timeout: 4_000 });
@@ -201,22 +186,12 @@ test("a delayed ordinary scheduler is never invoked before or after pilot Start"
   expect(harness.requests.projectionLookups).toHaveLength(0);
   await expect(page.getByText(copy.cardPending)).toHaveCount(0);
 
-  await page.getByRole("button", { name: copy.adjust }).click();
-  await expect(page.getByRole("heading", { name: copy.setupHeading })).toBeVisible();
-  await expect(page.getByRole("slider", { name: copy.rhythm })).toBeEnabled();
-  await expect(
-    page.getByRole("button", {
-      name: /Start training|Training starten|Начать тренировку/i,
-    }),
-  ).toBeEnabled();
   const screenshot = await attachScreenshot(
     page,
     testInfo,
     "setup-with-no-card-request.png",
   );
 
-  await page.getByRole("button", { name: copy.backToToday }).click();
-  await expect(startCurrentSetup).toBeEnabled();
   expect(harness.requests.scheduler).toHaveLength(0);
   const startClickedAt = Date.now();
   await startCurrentSetup.click();
@@ -351,7 +326,8 @@ test("projection starts after Start and keeps the setup visible until the card i
     visualProfile: "answer",
     devTestLogin: false,
   });
-  await expect(page.getByRole("heading", { name: copy.greeting })).toBeVisible();
+  await expect(page.getByRole("heading", { name: copy.trainingHeading })).toBeVisible();
+  await expect(page.getByRole("region", { name: copy.mainTrainingRegion })).toBeVisible();
   const startCurrentSetup = page.getByRole("button", { name: copy.start });
   await expect(page.getByRole("button", { name: copy.continue })).toHaveCount(0);
   await expect(startCurrentSetup).toBeEnabled({ timeout: 4_000 });
@@ -367,23 +343,13 @@ test("projection starts after Start and keeps the setup visible until the card i
     "setup-before-projection-request.png",
   );
 
-  await page.getByRole("button", { name: copy.adjust }).click();
-  await expect(page.getByRole("heading", { name: copy.setupHeading })).toBeVisible();
-  await expect(page.getByRole("slider", { name: copy.rhythm })).toBeEnabled();
-  await expect(
-    page.getByRole("button", {
-      name: /Start training|Training starten|Начать тренировку/i,
-    }),
-  ).toBeEnabled();
-  await page.getByRole("button", { name: copy.backToToday }).click();
-
   const startClickedAt = Date.now();
   await startCurrentSetup.click();
   await expect.poll(() => harness.requests.projectionLookups.length).toBe(1);
   const projectionRequestObservedAt = harness.requests.requestTimes.projection[0]!;
   expect(projectionRequestObservedAt).toBeGreaterThanOrEqual(startClickedAt);
-  await expect(page.getByText(copy.cardPending)).toBeVisible();
-  await expect(page.getByRole("button", { name: /Starting…|Starten…|Запускаем…/i })).toBeDisabled();
+  await expect(page.getByRole("region", { name: copy.mainTrainingRegion })).toBeVisible();
+  await expect(startCurrentSetup).toBeDisabled();
   expect(harness.requests.sessionStarts).toHaveLength(1);
   expectOnlyOwnedSessionSelections(harness.requests.session);
 

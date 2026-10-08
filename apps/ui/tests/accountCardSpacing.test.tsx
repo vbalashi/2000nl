@@ -14,7 +14,6 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 test("account spacing selection persists without changing palette or text size and resets by owner", async () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   const repository = {
     load: vi
       .fn()
@@ -53,7 +52,6 @@ test("account spacing selection persists without changing palette or text size a
   );
 });
 test("stale owner load cannot change the next owner and failed saves expose retry", async () => {
-  vi.stubEnv("NEXT_PUBLIC_TRAINING_PRESENTATION_V1", "true");
   let resolveA!: (value: "airy") => void;
   const repository = {
     load: vi.fn().mockImplementation((id: string) =>

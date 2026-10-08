@@ -1,8 +1,5 @@
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
-
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true", "Requires approved presentation.");
-
 test("@pilot idle authority checks retain the mounted card", async ({ page }) => {
   test.setTimeout(60_000);
   let authorityReads = 0;

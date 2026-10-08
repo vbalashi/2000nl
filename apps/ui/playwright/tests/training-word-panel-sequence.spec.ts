@@ -1,10 +1,6 @@
 import { platformV2Message } from "../../lib/platform/platformV2ClientI18n";
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
-
-test.skip(process.env.NEXT_PUBLIC_TRAINING_PRESENTATION_V1 !== "true" ||
-  process.env.NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1 !== "true", "Approved presentation is opt-in.");
-
 for (const width of [320, 390, 1024]) {
   test(`word panel enters before the selected meaning expands, and restores focus at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
@@ -48,13 +44,12 @@ for (const width of [320, 390, 1024]) {
     expect(await picker.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
     await expect(picker.getByRole("alert")).toContainText(t("senseCard.collections.membershipFailed"));
     await expect(picker.getByText(t("senseCard.collections.empty"), { exact: true })).toHaveCount(0);
-    await picker.getByPlaceholder(t("senseCard.collections.createPlaceholder")).fill("QA, not submitted");
-    const create = picker.getByRole("button", { name: t("senseCard.collections.create"), exact: true });
-    await expect(create).toBeDisabled();
+    const createCollection = picker.getByRole("button", { name: /New collection|Nieuwe collectie|Новая коллекция/i });
+    await expect(createCollection).toBeDisabled();
     membershipUnavailable = false;
     await picker.getByRole("button", { name: t("senseCard.collections.retryMembership"), exact: true }).click();
     await expect(picker.getByRole("alert")).toHaveCount(0);
-    await expect(create).toBeEnabled();
+    await expect(createCollection).toBeEnabled();
     await expect(picker.getByRole("button", { name: /^(Done|Gereed|Готово)$/ })).toBeInViewport({ ratio: 1 });
     await page.keyboard.press("Escape");
     await expect(picker).toHaveCount(0);

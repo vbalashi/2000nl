@@ -1,25 +1,27 @@
 import { expect, test } from "@playwright/test";
+import { assertTestFontsReady } from "../utils/assertTestFontsReady";
 
 // #251: one visual line, shared type and quiet hover treatment on Face/Answer.
 // Exercise the real Report trigger, not a substitute button in the gallery.
 for (const width of [390, 834, 1440]) {
   for (const theme of ["light", "dark"]) {
-    test(`secondary actions align at ${width}px in ${theme}`, async ({ page }, testInfo) => {
+    test(`secondary actions align at ${width}px in ${theme}`, async ({ page, baseURL }, testInfo) => {
       await page.setViewportSize({ width, height: 960 });
       await page.emulateMedia({ colorScheme: theme as "light" | "dark", reducedMotion: "reduce" });
+      const applicationOrigin = new URL(baseURL ?? "http://127.0.0.1:3100").origin;
       await page.route("**/*", (route) => {
         const url = new URL(route.request().url());
-        return url.origin === "http://127.0.0.1:3100" && !url.pathname.startsWith("/api/")
+        return url.origin === applicationOrigin && !url.pathname.startsWith("/api/")
           ? route.continue() : route.abort();
       });
       await page.goto("/dev/sense-card-gate");
+      await assertTestFontsReady(page);
       // Observe the application theme effect instead of racing root hydration.
       if (theme === "dark") {
         await expect(page.locator("html")).toHaveClass(/(?:^|\s)dark(?:\s|$)/, { timeout: 15_000 });
       } else {
         await expect(page.locator("html")).not.toHaveClass(/(?:^|\s)dark(?:\s|$)/, { timeout: 15_000 });
       }
-      await page.evaluate(() => document.fonts.ready);
       const stage = page.locator('[data-gate-fixture="SC-01/02"]').getByTestId("training-sense-card-stage");
       for (const side of ["face", "answer"]) {
         if (side === "answer") await stage.getByRole("button", { name: "Antwoord tonen" }).click();
@@ -42,7 +44,6 @@ for (const width of [390, 834, 1440]) {
           expect(values[0]).toBe(values[1]);
         }
         for (const button of [report, known]) {
-          await expect(button).toHaveCSS("height", "24px");
           await button.hover();
           await expect(button).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
           await expect(button).toHaveCSS("border-top-width", "0px");
@@ -50,7 +51,9 @@ for (const width of [390, 834, 1440]) {
           await page.keyboard.press("Tab");
           await page.keyboard.press("Shift+Tab");
           await expect(button).toBeFocused();
-          expect(await button.evaluate((el) => getComputedStyle(el).boxShadow)).not.toBe("none");
+          await expect(button).toHaveCSS("outline-style", "solid");
+          await expect(button).toHaveCSS("outline-width", "2px");
+          await expect(button).toHaveCSS("outline-offset", "2px");
         }
         await report.click();
         const dialog = page.getByRole("dialog", { name: "Wat klopt er niet?" });

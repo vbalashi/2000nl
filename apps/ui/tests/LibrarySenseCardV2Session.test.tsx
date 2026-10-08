@@ -165,6 +165,8 @@ describe("LibrarySenseCardV2Session", () => {
   });
 
   beforeEach(() => {
+    Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value() { this.setAttribute("open", ""); } });
+    Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value() { this.removeAttribute("open"); } });
     fetchGroup.mockReset();
     fetchCrossReferenceTarget.mockReset();
     performAction.mockReset();
@@ -273,7 +275,6 @@ describe("LibrarySenseCardV2Session", () => {
   });
 
   test("approved Report is selected in the meaning menu and restores that menu opener", async () => {
-    vi.stubEnv("NEXT_PUBLIC_SHARED_ARTICLE_PRESENTATION_V1", "true");
     const originalShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype,"showModal");
     const originalClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype,"close");
     Object.defineProperty(HTMLDialogElement.prototype,"showModal",{configurable:true,value:function(){this.setAttribute("open","");}});
@@ -314,19 +315,13 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        onCopyToUserDictionary={vi.fn()}
       />,
     );
 
     await screen.findByTestId("library-sense-card-group");
-    expect(screen.getAllByRole("button", { name: "Report" })).toHaveLength(1);
-    expect(
-      screen.getByRole("button", { name: "Report" }).closest(
-        '[data-testid="library-details-actions"]',
-      ),
-    ).not.toBeNull();
     expect(screen.queryByRole("button", { name: /Report:/ })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Report" }));
+    fireEvent.click(screen.getByRole("button", { name: "More card actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Report" }));
     expect(await screen.findByRole("dialog", { name: "What is wrong?" })).toBeInTheDocument();
     expect(screen.getAllByRole("radio")).toHaveLength(6);
     expect(performAction).not.toHaveBeenCalled();
@@ -346,13 +341,15 @@ describe("LibrarySenseCardV2Session", () => {
         interfaceLanguage="en"
         userId="training-user"
         onTrainWord={trainNext}
-        onCopyToUserDictionary={vi.fn()}
       />,
     );
 
     await screen.findByTestId("library-sense-card-group");
     expect(screen.queryByTestId("library-details-actions")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Report" })).not.toBeInTheDocument();
+    const trainingMore = screen.getByRole("button", { name: "More card actions" });
+    fireEvent.click(trainingMore);
+    expect(screen.queryByRole("menuitem", { name: "Report" })).not.toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "Escape" });
     expect(
       screen.queryByRole("button", { name: "Practice later (F)" }),
     ).not.toBeInTheDocument();
@@ -365,9 +362,14 @@ describe("LibrarySenseCardV2Session", () => {
     expect(screen.getByRole("button", { name: "Collections" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Collections" }));
     expect(
-      screen.getByRole("dialog", { name: "Collections for this meaning" }),
+      screen.getByRole("dialog", { name: "Collections" }),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    const collectionsDialog = screen.getByRole("dialog", { name: "Collections" });
+    fireEvent(collectionsDialog, new Event("cancel", { bubbles: false, cancelable: true }));
+    expect(screen.queryByRole("dialog", { name: "Collections" })).not.toBeInTheDocument();
+    expect(screen.getByTestId("library-sense-card-group")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Collections" }));
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(screen.queryByRole("button", { name: "Train next" })).not.toBeInTheDocument();
     expect(trainNext).not.toHaveBeenCalled();
   });
@@ -425,7 +427,8 @@ describe("LibrarySenseCardV2Session", () => {
 
     await screen.findByTestId("library-sense-card-group");
     expect(screen.queryByRole("button", { name: /Report:/ })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Report" }));
+    fireEvent.click(screen.getByRole("button", { name: "More card actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Report" }));
     expect(await screen.findByRole("dialog", { name: "What is wrong?" })).toBeInTheDocument();
     expect(performAction).not.toHaveBeenCalled();
   });
@@ -705,7 +708,7 @@ describe("LibrarySenseCardV2Session", () => {
     );
   });
 
-  test("opens the requested second meaning and copies that exact entry", async () => {
+  test("opens the requested second meaning without exposing retired copy controls", async () => {
     const copyEntry = vi.fn().mockResolvedValue(undefined);
     fetchGroup.mockResolvedValue(multiSenseBankGroup);
 
@@ -716,7 +719,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        onCopyToUserDictionary={copyEntry}
       />,
     );
 
@@ -727,11 +729,11 @@ describe("LibrarySenseCardV2Session", () => {
     expect(
       screen.getByTestId(`library-sense-card-${furnitureEntry.entryId}`),
     ).toHaveAttribute("data-expanded", "false");
-    fireEvent.click(screen.getByRole("button", { name: "Copy to my dictionary" }));
-    await waitFor(() => expect(copyEntry).toHaveBeenCalledWith(financeEntry.entryId));
+    expect(screen.queryByRole("button", { name: "Copy to my dictionary" })).not.toBeInTheDocument();
+    expect(copyEntry).not.toHaveBeenCalled();
   });
 
-  test("activating a collapsed meaning with its chevron changes copy identity", async () => {
+  test("activating a collapsed meaning changes selection without showing retired copy controls", async () => {
     const copyEntry = vi.fn().mockResolvedValue(undefined);
     fetchGroup.mockResolvedValue(multiSenseBankGroup);
 
@@ -742,7 +744,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        onCopyToUserDictionary={copyEntry}
       />,
     );
 
@@ -754,8 +755,8 @@ describe("LibrarySenseCardV2Session", () => {
       within(financeCard).getByRole("button", { name: "Expand meaning" }),
     );
     expect(financeCard).toHaveAttribute("data-expanded", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Copy to my dictionary" }));
-    await waitFor(() => expect(copyEntry).toHaveBeenCalledWith(financeEntry.entryId));
+    expect(screen.queryByRole("button", { name: "Copy to my dictionary" })).not.toBeInTheDocument();
+    expect(copyEntry).not.toHaveBeenCalled();
   });
 
   test("brings the initially selected meaning into the internal scroll viewport", async () => {
@@ -1117,7 +1118,6 @@ describe("LibrarySenseCardV2Session", () => {
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
         initialGroup={mixedDaarGroup}
-        onCopyToUserDictionary={copyEntry}
       />,
     );
 
@@ -1163,10 +1163,8 @@ describe("LibrarySenseCardV2Session", () => {
     expect(targetCard).toHaveAttribute("data-expanded", "true");
     fireEvent.click(alternateCard);
     expect(alternateCard).toHaveAttribute("data-expanded", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Copy to my dictionary" }));
-    await waitFor(() =>
-      expect(copyEntry).toHaveBeenCalledWith(furnitureEntry.entryId),
-    );
+    expect(screen.queryByRole("button", { name: "Copy to my dictionary" })).not.toBeInTheDocument();
+    expect(copyEntry).not.toHaveBeenCalled();
   });
 
   test("normalizes the translation-off sentinel before lookup", async () => {

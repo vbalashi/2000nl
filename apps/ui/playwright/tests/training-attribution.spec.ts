@@ -43,7 +43,7 @@ test("authenticated Training transition attribution harness", async ({
       { bootstrapReadDelayMs: 80 },
     );
     const startCurrentSettings = page.getByRole("button", {
-      name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen/i,
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
     });
     await expect(startCurrentSettings).toBeVisible();
     await startCurrentSettings.click();
@@ -54,7 +54,7 @@ test("authenticated Training transition attribution harness", async ({
       })
       .click();
     const continueSession = page.getByRole("button", {
-      name: /Продолжить сессию|Continue session|Sessie voortzetten/i,
+      name: /^(?:Continue training|Training hervatten|Продолжить тренировку)$/i,
     });
     await expect(continueSession).toBeVisible();
     await continueSession.click();
@@ -112,7 +112,30 @@ test("authenticated Training transition attribution harness", async ({
           );
         },
         index + 1,
-      );
+        { timeout: 15_000 },
+      ).catch(async (error) => {
+        // A transition has a 1s budget. A missing timing event should fail with
+        // bounded evidence instead of consuming the entire 120s profile run.
+        const diagnosticPath = testInfo.outputPath(
+          `stalled-transition-${profile.name}-${index + 1}.json`,
+        );
+        const requestCounts = Object.fromEntries(
+          Object.entries(fixture.requests)
+            .filter(([, value]) => Array.isArray(value))
+            .map(([key, value]) => [key, (value as unknown[]).length]),
+        );
+        await writeFile(diagnosticPath, JSON.stringify({
+          profile: profile.name,
+          expectedCompleted: index + 1,
+          capture: await readTrainingAttributionCapture(page),
+          requestCounts,
+        }, null, 2), "utf8");
+        await testInfo.attach("stalled-transition", {
+          path: diagnosticPath,
+          contentType: "application/json",
+        });
+        throw error;
+      });
     }
 
     const capture = await readTrainingAttributionCapture(page);
