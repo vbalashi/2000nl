@@ -43,12 +43,10 @@ export function LibraryDestination({
   const [searchState, setSearchState] = useState<DictionarySearchTabState>(() =>
     createDictionarySearchTabState(),
   );
-  const [preload, setPreload] = useState(false);
+  const [hasOpened, setHasOpened] = useState(open);
   useEffect(() => {
-    // Warm one list after the initial screen has painted, never in the foreground path.
-    const timer = window.setTimeout(() => setPreload(true), 750);
-    return () => window.clearTimeout(timer);
-  }, [userId]);
+    if (open) setHasOpened(true);
+  }, [open]);
   const viewedList = activeList ?? lists[0] ?? null;
   const userLists = useMemo(
     () => lists.filter((list) => list.type === "user"),
@@ -68,26 +66,28 @@ export function LibraryDestination({
           {getUiMessages(interfaceLanguage).library.title}
         </h1>
         <div className="min-h-0 flex-1 overflow-hidden">
-          <DictionarySearchTab
-            open={open}
-            preload={preload}
-            userId={userId}
-            language={language}
-            translationLang={translationLang}
-            interfaceLanguage={interfaceLanguage}
-            userLists={userLists}
-            collections={lists}
-            viewedListId={viewedList?.id ?? null}
-            viewedList={viewedList}
-            viewedListName={viewedList?.name ?? "VanDale 2k"}
-            reloadLists={onReloadLists}
-            notifyListsUpdated={() => {}}
-            onOpenListMembership={onOpenListMembership}
-            onTrainWord={onTrainWord}
-            autoFocusQuery={open}
-            searchState={searchState}
-            onSearchStateChange={setSearchState}
-          />
+          {hasOpened || open ? (
+            <DictionarySearchTab
+              open={open}
+              preload={false}
+              userId={userId}
+              language={language}
+              translationLang={translationLang}
+              interfaceLanguage={interfaceLanguage}
+              userLists={userLists}
+              collections={lists}
+              viewedListId={viewedList?.id ?? null}
+              viewedList={viewedList}
+              viewedListName={viewedList?.name ?? "VanDale 2k"}
+              reloadLists={onReloadLists}
+              notifyListsUpdated={() => {}}
+              onOpenListMembership={onOpenListMembership}
+              onTrainWord={onTrainWord}
+              autoFocusQuery={open}
+              searchState={searchState}
+              onSearchStateChange={setSearchState}
+            />
+          ) : null}
         </div>
       </div>
     </section>
