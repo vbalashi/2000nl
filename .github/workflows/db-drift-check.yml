@@ -10,6 +10,7 @@ on:
       - 'db/migrations/**'
       - 'db/deploy-contract/**'
       - 'db/scripts/deploy_db_contract*.mjs'
+      - 'db/scripts/catalog_prototype_validation.py'
       - 'db/scripts/pre_switch_read_probe.integration.test.mjs'
       - 'db/scripts/scheduler_cold_io.integration.test.mjs'
       - 'db/scripts/scheduler_readiness_diagnostic*.mjs'
@@ -41,6 +42,7 @@ on:
       - 'db/migrations/**'
       - 'db/deploy-contract/**'
       - 'db/scripts/deploy_db_contract*.mjs'
+      - 'db/scripts/catalog_prototype_validation.py'
       - 'db/scripts/pre_switch_read_probe.integration.test.mjs'
       - 'db/scripts/scheduler_cold_io.integration.test.mjs'
       - 'db/scripts/scheduler_readiness_diagnostic*.mjs'
@@ -98,6 +100,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Validate actual catalog migration and access contract
+        env:
+          CATALOG_PROTOTYPE_TEST_BASE_DB_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+          CATALOG_PROTOTYPE_VALIDATE_MIGRATION: '1'
+        run: python3 db/scripts/catalog_prototype_validation.py
 
       - name: Check migration anti-patterns
         id: check-patterns

@@ -174,12 +174,17 @@ try:
             sql('', file=file)
             missing.append(entry['migrationId'])
     print(json.dumps({'stage':'selected schema','contract':manifest['contractId'],'explicit_fixture_forward_migrations':missing}),flush=True)
+    # Pin the pre-change catalog independently of the current bootstrap version.
+    previous = (SCHEMA_ROOT / "db/migrations/203_collection_source_availability.sql").read_text()
+    previous = previous[previous.index("CREATE OR REPLACE FUNCTION get_available_word_lists("):previous.rindex("COMMIT;")]
+    sql(previous)
     migration = os.environ.get("CATALOG_PROTOTYPE_VALIDATE_MIGRATION")
     if migration:
         # Preserve the real baseline, then test the shipped replacement rather than
         # independently recreating its query in the test harness.
         baseline = sql("SELECT pg_get_functiondef('public.get_available_word_lists(uuid,text,text)'::regprocedure);")
         sql("", file="db/migrations/221_collection_catalog_single_entry_scan.sql")
+        sql("BEGIN READ ONLY;\n" + "\\i db/deploy-contract/read-only-postflight-221.sql\nROLLBACK;")
         migrated = sql("SELECT pg_get_functiondef('public.get_available_word_lists(uuid,text,text)'::regprocedure);")
         migrated = migrated.replace("FUNCTION public.get_available_word_lists(", "FUNCTION public.catalog_prototype_candidate(", 1)
         sql(migrated.rstrip().rstrip(';') + ';\n' + baseline.rstrip().rstrip(';') + ';\n'
@@ -230,6 +235,24 @@ VACUUM (ANALYZE) public.word_entries; ANALYZE public.word_list_items;""")
     shape=sql("SELECT count(*)||','||round(avg(pg_column_size(e))) FROM public.word_entries e;").strip().split(',')
     assert int(shape[0])==18184 and float(shape[1])>1500, 'Wide fixture shape mismatch'
     parity("wide corpus 18184 entries, overlapping collections")
+    # Characterize demand-driven materialization when curated scope is absent.
+    # Buffer work is a deterministic regression guard; wall timing is evidence,
+    # not a flaky assertion on host scheduling.
+    for language, kind in [('nl','user'), ('zz','curated'), ('zz','user'), ('nl','unexpected')]:
+        work = {}
+        for fn in ['get_available_word_lists','catalog_prototype_candidate']:
+            query = f"EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) SELECT public.{fn}('{QA}','{language}','{kind}');"
+            output = sql(f"BEGIN READ ONLY; SET LOCAL statement_timeout='10s'; SET LOCAL jit=off; {claims()} {query} {query} ROLLBACK;")
+            decoder=json.JSONDecoder(); plans=[]; offset=0
+            while True:
+                start=output.find('[',offset)
+                if start<0: break
+                value,end=decoder.raw_decode(output[start:]); offset=start+end
+                if value and isinstance(value[0],dict) and 'Plan' in value[0]: plans.append(value[0])
+            assert len(plans)==2
+            work[fn]={'execution_ms':plans[-1]['Execution Time'], 'shared_hits':plans[-1]['Plan'].get('Shared Hit Blocks',0)}
+        assert work['catalog_prototype_candidate']['shared_hits'] <= work['get_available_word_lists']['shared_hits'] + 128, 'Suppressed curated scope performs unexpected entry scan'
+        print(json.dumps({'stage':'suppressed curated scope','language':language,'type':kind,'samples':work}),flush=True)
     samples=[]
     for order in [('get_available_word_lists','catalog_prototype_candidate'),('catalog_prototype_candidate','get_available_word_lists')]:
         body=f"BEGIN READ ONLY; SET LOCAL statement_timeout='10s'; SET LOCAL jit=off; SET LOCAL work_mem='2184kB'; {claims()}\n"

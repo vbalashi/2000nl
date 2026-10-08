@@ -73,3 +73,28 @@ independent response checks passed. Eight reversed-order measurements: baseline
 5068. No shared reads or temporary spill. This does not establish removal of
 production outliers. Migration is not registered in the deploy manifest or
 bootstrap yet: postflight, release integration and review remain required.
+
+### Release integration and review checks
+
+Registered exact migration checksum in contract 221, included bootstrap and
+read-only security postflight chained through 220. Actual migration suite also
+runs in CI on its isolated PostgreSQL service. Production read-only `prosrc`
+comparison confirmed the deployed catalog still matches migration 203.
+Deployment manifest validation, 19 deploy-runner tests and six UI contract tests
+passed. Postflight 221 passed inside a read-only disposable transaction.
+
+Review identified missing performance evidence for suppressed curated scope.
+Wide-fixture repeat reads now check that candidate buffer hits cannot exceed
+baseline by more than 128 (ordinary curated delta is about 14000). Results:
+
+| Scope | Baseline ms / hits | Migrated ms / hits |
+|---|---:|---:|
+| nl, user | 1.068 / 326 | 1.112 / 320 |
+| zz, curated | 0.834 / 19 | 0.898 / 13 |
+| zz, user | 1.162 / 325 | 1.192 / 319 |
+| nl, unexpected | 0.929 / 18 | 0.661 / 12 |
+
+These rule out an unconditional full wide-entry scan in those fixture scopes.
+They do not prove scaling for arbitrary future data sizes. All 69 semantic
+checks plus four scope-work guards passed. Review and latest-head CI remain
+required before declaring the PR release-ready.

@@ -1,3 +1,10 @@
+> Current checkpoint after #625: migration 221 is prepared as a bounded reduction
+> of ordinary catalog work, with exact response/access parity on isolated fixtures.
+> Earlier stop conditions below record the investigation at that time. The
+> matched slow profile later identified repeated entry scans; the proposed
+> migration reduces that work but has not proved removal of the production tail.
+> Keep #413 open and remeasure after release.
+
 # Collection catalog: bounded first-call diagnosis
 
 Date: 2026-10-08. Issue: https://github.com/vbalashi/2000nl/issues/413
