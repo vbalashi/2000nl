@@ -51,3 +51,10 @@ first-party dictionary-lookup intent. Training review and connected-client
 lookups keep their existing reads; paired route tests assert that distinction.
 Dark theme was verified in real Chrome at 1280×900 with 1 px backdrop blur;
 temporary viewport/media overrides and the 3101 process were removed.
+
+Final narrow-screen CI regression: the localized meaning-exclusion label now
+wraps within the existing quiet-action component at Extra text size. All six
+language/theme Report checks passed at 320/844 px. Shared drawer geometry is
+measured in one animation frame, preserving the exact spacing assertions;
+all 36 existing Details checks passed across screen/text/theme combinations.
+Typecheck and lint passed (the existing audio-effect dependency warning remains).
