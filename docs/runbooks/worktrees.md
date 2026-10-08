@@ -9,22 +9,38 @@ All material 2000NL work happens in a project-local worktree:
 The directory is ignored by Git. It is intentionally inside the 2000NL
 workspace so its purpose and owner are obvious, without placing checkout state
 in `adhoc` or a shared directory outside the project. `main` remains the
-read-only reference checkout.
+read-only reference checkout. Release integration lands on `origin/main`; do
+not implement feature work or commit unrelated changes on the reference branch.
 
 ## Create and prepare
 
-From the main 2000NL checkout, after completing the lifecycle start checks and
-claiming an owning GitHub issue, run:
+From the canonical main 2000NL checkout, after completing the lifecycle start
+checks and claiming an owning GitHub issue, run:
 
 ```bash
 scripts/create-worktree.sh 123 concise-scope
 ```
 
-The command fetches `origin/main`, creates
+The command first runs `scripts/sync-reference.sh`, then creates
 `codex/123-concise-scope`, adds the checkout under `.worktrees`, then runs a
 clean `npm ci --include=dev --prefer-offline` inside that checkout's `apps/ui`.
 This installs the local `next`, `tsc`, `vitest`, and `playwright` commands from
 the committed lockfile.
+
+After a release merge, the canonical `main` checkout may be behind its
+upstream. Sync it directly with:
+
+```bash
+scripts/sync-reference.sh
+```
+
+This is a fast-forward-only operation. It requires the canonical checkout to
+be clean, on `main`, and tracking `origin/main`; it fetches and fast-forwards
+only when local `main` is an ancestor of `origin/main`. It refuses dirty,
+wrong-branch, locally-ahead, and divergent states without stashing, resetting,
+or resolving local work. Preserve any local changes or commits explicitly
+before retrying. `create-worktree.sh` invokes the same sync before adding its
+new worktree, so a stale reference checkout cannot silently seed new work.
 
 For work that will run browser e2e tests, request the Playwright browser too:
 

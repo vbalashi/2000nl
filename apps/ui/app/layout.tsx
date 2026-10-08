@@ -1,5 +1,6 @@
 import "../styles/globals.css";
 import type { ReactNode } from "react";
+import type { Viewport } from "next";
 import { Inter, Newsreader } from "next/font/google";
 import { SystemThemeEffect } from "@/components/theme/SystemThemeEffect";
 import { OfflineBanner } from "@/components/system/OfflineBanner";
@@ -24,6 +25,13 @@ export const metadata = {
   description:
     "Leer de NT2 woorden met een Supabase-gestuurde training. Zet Luistermodus (🎧) aan en tik op een woord in een voorbeeldzin om uitspraak te horen.",
   manifest: "/manifest.json"
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
