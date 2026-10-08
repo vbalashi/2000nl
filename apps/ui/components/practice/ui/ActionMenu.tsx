@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import s from "../library/libraryOverlays.module.css";
 
 export type ActionMenuItem = {
   id: string;
   label: string;
+  description?: string;
   icon?: React.ReactNode;
   disabled?: boolean;
   onSelect: () => void;
@@ -20,9 +21,10 @@ export function ActionMenu({ anchor, title, language, items, onClose }: {
   items: ActionMenuItem[];
   onClose: () => void;
 }) {
+  const descriptionId = useId();
   const ref = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{top: number; left: number} | null>(null);
-  const signature = items.map(item => `${item.id}:${item.label}:${Boolean(item.disabled)}`).join("|");
+  const signature = items.map(item => `${item.id}:${item.label}:${item.description ?? ""}:${Boolean(item.disabled)}`).join("|");
   useLayoutEffect(() => {
     const menu = ref.current!;
     menu.showPopover?.();
@@ -73,8 +75,8 @@ export function ActionMenu({ anchor, title, language, items, onClose }: {
       buttons[event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1
         : (index + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length]?.focus();
     }}>
-    {items.map(item => <button type="button" role="menuitem" key={item.id} disabled={item.disabled} onClick={item.onSelect}>
-      {item.icon}{item.label}
+    {items.map(item => <button type="button" role="menuitem" key={item.id} disabled={item.disabled} aria-label={item.label} aria-describedby={item.description ? `${descriptionId}-${item.id}` : undefined} onClick={item.onSelect}>
+      {item.icon}<span className={s.menuCopy}>{item.label}{item.description && <span id={`${descriptionId}-${item.id}`} className={s.menuDescription}>{item.description}</span>}</span>
     </button>)}
   </div>, anchor.closest("dialog") || anchor.closest("[data-practice-palette]") || document.body);
 }

@@ -190,3 +190,9 @@
   outline: none;
   box-shadow: none;
 }
+
+/* Pointer-driven auto/restored focus is not keyboard navigation. Safari may still match :focus-visible. */
+:global(html[data-input-modality=pointer]) .theme :focus-visible{outline:none!important}
+
+/* WebKit may omit :focus-visible on an opener restored after keyboard Escape. */
+:global(html[data-input-modality=keyboard]) .theme :where(button,summary,a,select,input[type=checkbox],input[type=radio]):focus{outline:2px solid var(--practice-focus);outline-offset:2px}

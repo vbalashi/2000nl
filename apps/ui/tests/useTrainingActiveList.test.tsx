@@ -52,6 +52,23 @@ const dictionarySourceList = {
 };
 
 describe("useTrainingActiveList", () => {
+  test("never exposes the previous language catalogue as ready during a language switch", async () => {
+    let resolveEnglish!: (lists: WordListSummary[]) => void;
+    fetchAvailableLists.mockImplementation((_user: string, language: string) => language === "en" ? new Promise(resolve => { resolveEnglish = resolve; }) : Promise.resolve([curatedList]));
+    const observed: {language: string; status: string}[] = [];
+    const {result, rerender} = renderHook(({language}) => {
+      const state = useTrainingActiveList({userId: "user-1", language, showSettings: false});
+      observed.push({language, status: state.listCatalogStatus});
+      return state;
+    }, {initialProps: {language: "nl"}});
+    await waitFor(() => expect(result.current.listCatalogStatus).toBe("ready"));
+    rerender({language: "en"});
+    await waitFor(() => expect(result.current.hydratedLanguage).toBe("en"));
+    expect(observed.some(state => state.language === "en" && state.status === "ready")).toBe(false);
+    await act(async () => resolveEnglish([englishList]));
+    expect(result.current.listCatalogStatus).toBe("ready");
+  });
+
   beforeEach(() => {
     fetchActiveTrainingScope.mockReset();
     fetchAvailableLists.mockReset();

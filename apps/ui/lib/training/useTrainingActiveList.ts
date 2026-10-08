@@ -48,6 +48,7 @@ export function useTrainingActiveList(params: {
   const [availableLists, setAvailableLists] = useState<WordListSummary[]>([]);
   const [listCatalogStatus, setListCatalogStatus] =
     useState<TrainingListCatalogStatus>("loading");
+  const [catalogOwner, setCatalogOwner] = useState<{userId: string; language: string} | null>(null);
   const [listHydrated, setListHydrated] = useState(false);
   const [hydratedLanguage, setHydratedLanguage] = useState<string | null>(null);
   const currentLanguageRef = useRef(language);
@@ -77,6 +78,7 @@ export function useTrainingActiveList(params: {
     languageGenerationRef.current += 1;
     setAvailableLists([]);
     setListCatalogStatus("loading");
+    setCatalogOwner(null);
     setListHydrated(false);
     setHydratedLanguage(null);
     setActiveTrainingScope(null);
@@ -97,6 +99,7 @@ export function useTrainingActiveList(params: {
         requestedLanguage === currentLanguageRef.current
       ) {
         setAvailableLists(lists);
+        setCatalogOwner({userId, language: requestedLanguage});
         setListCatalogStatus("ready");
       }
       return lists;
@@ -108,6 +111,7 @@ export function useTrainingActiveList(params: {
         // An unavailable catalog is not an empty catalog. Keep the last
         // successful snapshot so callers cannot revoke a saved run because
         // a transient request failed.
+        setCatalogOwner({userId, language: requestedLanguage});
         setListCatalogStatus("error");
       }
       return [];
@@ -264,11 +268,15 @@ export function useTrainingActiveList(params: {
       try {
         lists = await fetchAvailableLists(userId, language);
       } catch {
-        if (isCurrentRequest()) setListCatalogStatus("error");
+        if (isCurrentRequest()) {
+          setCatalogOwner({userId, language: requestedLanguage});
+          setListCatalogStatus("error");
+        }
         return null;
       }
       if (!isCurrentRequest()) return null;
       setAvailableLists(lists);
+      setCatalogOwner({userId, language: requestedLanguage});
       setListCatalogStatus("ready");
 
       const active = await fetchActiveTrainingScope({
@@ -327,7 +335,9 @@ export function useTrainingActiveList(params: {
     availableLists,
     handleListsUpdated,
     hydratedLanguage,
-    listCatalogStatus,
+    // A new owner/language must never observe the previous catalogue as ready,
+    // including the render before the scoping effect clears local state.
+    listCatalogStatus: catalogOwner?.userId === userId && catalogOwner?.language === language ? listCatalogStatus : "loading" as TrainingListCatalogStatus,
     listHydrated,
     listOptions,
     persistListChange,

@@ -624,13 +624,13 @@
       },
       "exclusion": {
         "label": "Uitsluiten",
-        "help": "Sluit dit paar in beide richtingen uit van training",
+        "help": "In beide richtingen uitsluiten van training",
         "done": "Paar uitgesloten van training",
         "undo": "Ongedaan maken",
         "failed": "De actie is niet gelukt. Probeer opnieuw.",
         "dismiss": "Sluiten",
-        "headwordLabel": "Deze betekenis niet bestuderen",
-        "headwordHelp": "Sluit deze betekenis in beide richtingen uit van woordtraining",
+        "headwordLabel": "Uitsluiten",
+        "headwordHelp": "In beide richtingen uitsluiten van training",
         "headwordDone": "Betekenis uitgesloten van woordtraining"
       },
       "completedOne": "{count} oefening voltooid",
@@ -670,6 +670,7 @@
       "excludedResult": "Uitgesloten"
     },
     "cardActions": {
+      "knownHelp": "Alleen deze richting",
       "title": "Kaartacties",
       "exclude": "Uitsluiten",
       "known": "Als bekend markeren",

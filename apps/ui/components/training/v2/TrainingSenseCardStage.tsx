@@ -302,9 +302,9 @@ export function TrainingSenseCardStage({
           answerVisible
             ? model.reviewCapabilities.length
               ? "min-h-[78px]"
-              : "h-[76px] min-h-[76px]"
+              : "min-h-[76px]"
             : reportAction || exclusionAction || model.markKnownCapability
-              ? "h-[76px] min-h-[76px]"
+              ? "min-h-[76px]"
               : "h-11 min-h-11"
         }`}
       >

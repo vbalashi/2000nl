@@ -55,9 +55,9 @@ export function TrainingExcludeAction({
     {anchor && hasMenu && knownAction ? <ActionMenu
       anchor={anchor} language={language} title={getUiMessages(language).cardActions.title}
       onClose={close} items={[
-        { id: "exclude", label: t.label, icon: <EyeOff size={15} aria-hidden="true" />,
+        { id: "exclude", label: t.label, description: t.help, icon: <EyeOff size={15} aria-hidden="true" />,
           disabled, onSelect: () => { close(); onClick(); } },
-        { id: "known", label: knownAction.label, icon: <Check size={15} aria-hidden="true" />,
+        { id: "known", label: knownAction.label, description: getUiMessages(language).cardActions.knownHelp, icon: <Check size={15} aria-hidden="true" />,
           disabled, onSelect: () => { close(); knownAction.onClick(); } },
       ]} /> : null}
     </>);

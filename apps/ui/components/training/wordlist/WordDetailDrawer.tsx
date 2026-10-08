@@ -1,4 +1,5 @@
 import React from "react";
+import {SheetDragProvider} from "@/components/practice/ui/SheetDragRegion";
 import {SheetHandle} from "@/components/practice/ui/SheetHandle";
 import { useLibrarySheetResize } from "./useLibrarySheetResize";
 import type {
@@ -73,8 +74,8 @@ export function WordDetailDrawer({
     data-dragging={resize.dragging} style={resize.height === undefined ? undefined : { height: resize.height }}
     aria-label={platformV2Message(interfaceLanguage,"senseCard.wordDetails.open")}>
     <SheetHandle controller={resize} label={getUiMessages(interfaceLanguage).library[expanded ? "collapseCard" : "expandCard"]}/>
-    <WordDetailsCloseProvider onClose={onClose} interfaceLanguage={interfaceLanguage}>
+    <SheetDragProvider value={resize}><WordDetailsCloseProvider onClose={onClose} interfaceLanguage={interfaceLanguage}>
       <div className="min-h-0 flex-1">{detail(entered)}</div>
-    </WordDetailsCloseProvider>
+    </WordDetailsCloseProvider></SheetDragProvider>
   </section>;
 }

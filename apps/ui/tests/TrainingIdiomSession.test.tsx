@@ -282,7 +282,7 @@ test("excludes the idiom pair, advances once, and keeps Undo available after com
   );
   fireEvent.click(
     await screen.findByRole("button", {
-      name: "Exclude this pair from training in both directions",
+      name: getUiMessages("en").trainingSession.exclusion.help,
     }),
   );
   expect(await screen.findByText("Session complete")).toBeInTheDocument();

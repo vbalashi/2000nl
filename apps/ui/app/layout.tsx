@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { Viewport } from "next";
 import { Inter, Newsreader } from "next/font/google";
 import { SystemThemeEffect } from "@/components/theme/SystemThemeEffect";
+import { InputModality } from "@/components/system/InputModality";
 import { OfflineBanner } from "@/components/system/OfflineBanner";
 import { DiagnosticReportOutboxBootstrap } from "@/components/feedback/DiagnosticReportOutboxBootstrap";
 
@@ -30,6 +31,7 @@ export const metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
   maximumScale: 1,
   userScalable: false,
 };
@@ -97,6 +99,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="min-h-screen bg-background-light text-slate-900 dark:bg-background-dark dark:text-white">
+        <InputModality />
         <SystemThemeEffect />
         <OfflineBanner />
         <DiagnosticReportOutboxBootstrap />

@@ -2076,7 +2076,7 @@ describe("TrainingSenseCardV2Session", () => {
     },
     {
       interfaceLanguage: "ru" as const,
-      markLabel: "Отметить как знакомое",
+      markLabel: platformV2Message("ru", "senseCard.known.mark"),
       undoLabel: "Отменить отметку",
       failureMessage: "Не удалось отменить отметку. Попробуйте ещё раз.",
     },

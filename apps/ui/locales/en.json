@@ -624,13 +624,13 @@
       },
       "exclusion": {
         "label": "Exclude",
-        "help": "Exclude this pair from training in both directions",
+        "help": "Exclude from training in both directions",
         "done": "Pair excluded from training",
         "undo": "Undo",
         "failed": "Could not complete the action. Try again.",
         "dismiss": "Dismiss",
-        "headwordLabel": "Do not study this meaning",
-        "headwordHelp": "Exclude this meaning from ordinary word training in both directions",
+        "headwordLabel": "Exclude",
+        "headwordHelp": "Exclude from training in both directions",
         "headwordDone": "Meaning excluded from word training"
       },
       "completedOne": "{count} exercise completed",
@@ -670,6 +670,7 @@
       "excludedResult": "Excluded"
     },
     "cardActions": {
+      "knownHelp": "Only this direction",
       "title": "Card actions",
       "exclude": "Exclude",
       "known": "Mark as known",
