@@ -78,6 +78,11 @@ import {
 } from "./v2/TrainingSessionSurface";
 import sessionStyles from "./v2/TrainingSessionLayout.module.css";
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
+import {
+  classifyResumeSnapshot,
+  decideAuthoritySnapshot,
+  decideResumePreflight,
+} from "./trainingSessionDecisions";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
 import { useAuthoritativeTrainingSessionPlan } from "./v2/useTrainingSessionPlan";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -1722,29 +1727,39 @@ function TrainingScreenContent({
     ) {
       return;
     }
+    const preflight = decideResumePreflight(sessionResumeRecord, {
+      languagesResolved: trainingLanguagesResolved,
+      catalogError: trainingLanguagesCatalogError,
+      permittedCodes: trainingLanguageCodes,
+      currentLanguage: currentTrainingLanguage,
+      listHydrated,
+      hydratedLanguage,
+      listCatalogStatus,
+      availableLists,
+    });
     // An ordinary first visit has no resumable session. Resolve immediately
-    // instead of waiting for optional list hydration that may not be
-    // available on an empty or fixture-backed setup surface.
-    if (!sessionResumeRecord) {
+    // instead of waiting for optional list hydration.
+    if (preflight.kind === "no-record") {
       setSessionResumeScopeResolved(true);
       setSessionResumeResolved(true);
       return;
     }
-    if (!trainingLanguagesResolved) return;
-    if (trainingLanguagesCatalogError) {
+    if (preflight.kind === "wait" && preflight.reason === "language-catalog") return;
+    if (preflight.kind === "retryable-error" && preflight.reason === "language-catalog") {
       sessionResumeAttemptedRef.current = true;
       setSessionResumeError(true);
       setTrainingLoadError("training_resume_failed");
       return;
     }
     const record = sessionResumeRecord;
+    // The decision is pure and intentionally doesn't carry records through its
+    // return type; retain this local guard for TypeScript without shifting any
+    // side effects.
+    if (!record) return;
     completionDraftRef.current = null;
     setSessionDisplayName(record.sessionName);
     setSessionTrainingId(record.trainingId);
-    const savedLanguagePermitted = trainingLanguageCodes.includes(
-      record.languageCode,
-    );
-    if (!savedLanguagePermitted) {
+    if (preflight.kind === "discard" && preflight.reason === "language") {
       sessionResumeAttemptedRef.current = true;
       const resumeGeneration = sessionResumeGenerationRef.current;
       void clearTrainingSessionResume(user.id).then(() => {
@@ -1758,43 +1773,31 @@ function TrainingScreenContent({
       });
       return;
     }
-    if (record.languageCode !== currentTrainingLanguage) {
+    if (preflight.kind === "switch-language") {
       // Rehydrate the list catalogue in the saved language before deciding
       // whether that saved list is still permitted. Keep the record intact
       // across this internal language transition.
       trainingLanguageManuallyChangedRef.current = true;
       languageHydrationPendingRef.current = true;
       languageHydrationObservedNotReadyRef.current = false;
-      setCurrentTrainingLanguage(record.languageCode);
+      setCurrentTrainingLanguage(preflight.language);
       return;
     }
-    // A saved session must still validate its list against the hydrated
-    // catalogue before it can be resumed.
-    if (
-      !listHydrated ||
-      hydratedLanguage !== record.languageCode ||
-      listCatalogStatus === "loading"
-    ) {
-      return;
-    }
-    if (listCatalogStatus === "error") {
+    if (preflight.kind === "wait" && preflight.reason === "list-catalog") return;
+    if (preflight.kind === "retryable-error" && preflight.reason === "list-catalog") {
       sessionResumeAttemptedRef.current = true;
       setSessionResumeError(true);
       setTrainingLoadError("training_resume_failed");
       return;
     }
-
+    // A saved session must still validate its list against the hydrated
+    // catalogue before it can be resumed.
     sessionResumeAttemptedRef.current = true;
     const resumeGeneration = sessionResumeGenerationRef.current;
     const resolveResume = async () => {
       languageHydrationPendingRef.current = false;
       languageHydrationObservedNotReadyRef.current = false;
-      if (
-        record.listId !== null &&
-          !availableLists.some(
-            (list) => list.id === record.listId && list.type === record.listType,
-          )
-      ) {
+      if (preflight.kind === "discard" && preflight.reason === "list") {
         await clearTrainingSessionResume(user.id);
         if (componentMountedRef.current) {
           setSessionResumeScopeResolved(true);
@@ -1826,16 +1829,8 @@ function TrainingScreenContent({
         ) {
           return;
         }
-        const hasRemainingMember = Boolean(
-          idiomSnapshot?.members.some(
-            (member) => !member.consumedAt && !member.unavailableAt,
-          ),
-        );
-        if (
-          !idiomSnapshot ||
-          idiomSnapshot.runStatus === "superseded" ||
-          !hasRemainingMember
-        ) {
+        const idiomResume = classifyResumeSnapshot(idiomSnapshot);
+        if (!idiomSnapshot || idiomResume.kind !== "resumable") {
           await clearTrainingSessionResume(user.id);
           setIdiomSession(null);
           setActiveExerciseFamily("meaning");
@@ -1890,8 +1885,8 @@ function TrainingScreenContent({
           return;
         }
         if (!componentMountedRef.current || sessionResumeGenerationRef.current !== resumeGeneration) return;
-        const hasRemainingMember = Boolean(snapshot?.members.some((member) => !member.consumedAt && !member.unavailableAt));
-        if (!snapshot || snapshot.runStatus === "superseded" || !hasRemainingMember) {
+        const sentenceResume = classifyResumeSnapshot(snapshot);
+        if (!snapshot || sentenceResume.kind !== "resumable") {
           await clearTrainingSessionResume(user.id);
           setSentenceSession(null); setActiveExerciseFamily("meaning"); setExerciseFamilyForResume("meaning");
           setSessionReplacementWarning(snapshot?.runStatus === "superseded");
@@ -1931,13 +1926,14 @@ function TrainingScreenContent({
       ) {
         return;
       }
-      if (!snapshot) {
+      const resumeClassification = classifyResumeSnapshot(snapshot);
+      if (resumeClassification.kind === "missing") {
         await clearTrainingSessionResume(user.id);
         setSessionResumeScopeResolved(true);
         setSessionResumeResolved(true);
         return;
       }
-      if (snapshot.runStatus === "superseded") {
+      if (resumeClassification.kind === "superseded") {
         const savedList = record.listId
           ? availableLists.find(
               (list) =>
@@ -1967,17 +1963,13 @@ function TrainingScreenContent({
         return;
       }
 
-      const hasRemainingMember = Boolean(
-        snapshot?.members.some(
-          (member) => !member.consumedAt && !member.unavailableAt,
-        ),
-      );
-      if (!hasRemainingMember) {
+      if (resumeClassification.kind === "no-remaining-member") {
         await clearTrainingSessionResume(user.id);
         setSessionResumeScopeResolved(true);
         setSessionResumeResolved(true);
         return;
       }
+      if (!snapshot) return;
 
       const activeList = record.listId
         ? availableLists.find(
@@ -2173,14 +2165,18 @@ function TrainingScreenContent({
         return false;
       }
       setSessionAuthorityRefreshing(false);
-      if (!snapshot || snapshot.runStatus === "superseded") {
+      const authority = decideAuthoritySnapshot(
+        snapshot,
+        sessionId,
+        reconciledSessionPlanRef.current,
+      );
+      if (authority.kind === "superseded") {
         handleTrainingSessionSuperseded({ sessionId, authorityGeneration });
         return false;
       }
-      const previousRevision = reconciledSessionPlanRef.current?.sessionId === sessionId
-        ? reconciledSessionPlanRef.current.revision : 0;
-      const revision = snapshot.planRevision ?? 0;
-      if (revision !== previousRevision) {
+      if (!snapshot) return false;
+      const revision = authority.revision;
+      if (authority.kind === "replan") {
         // The server replaced only the unconsumed plan. Keep accepted progress,
         // discard prefetched selections, and ask the same owned run for its next member.
         let pending = sessionReplanLoadRef.current;

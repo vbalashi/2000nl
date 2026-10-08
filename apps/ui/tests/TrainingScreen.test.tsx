@@ -1342,6 +1342,39 @@ test("discards a resume for a language removed from the catalog before list hydr
   expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
 });
 
+test("does not fetch a saved run until its saved-language list catalogue is hydrated", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-saved-language-gate", userId: "user-1",
+    languageCode: "en", listId: "list-1", listType: "curated",
+    scenarioId: "understanding", modes: ["word-to-definition"],
+    cardFilter: "both", newReviewRatio: 2, focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  let resolveSavedLanguageLists!: (lists: typeof defaultAvailableList[]) => void;
+  fetchAvailableLists.mockImplementation((_userId: string, languageCode: string) =>
+    languageCode === "en"
+      ? new Promise((resolve) => { resolveSavedLanguageLists = resolve; })
+      : Promise.resolve([defaultAvailableList]),
+  );
+  fetchTrainingSessionSnapshot.mockResolvedValueOnce({
+    sessionId: "session-saved-language-gate", runStatus: "active", runGeneration: 1,
+    sessionSize: 5, plannedNew: 1, plannedReview: 0, plannedPractice: 0,
+    plannedTotal: 5, requestedTotal: 5, planRevision: 0, completedActions: 0,
+    plannedAt: "2026-09-10T12:00:00Z",
+    members: [{ ordinal: 1, entryId: "word-1", cardTypeId: "word-to-definition",
+      queueSource: "new", consumedAt: null, unavailableAt: null }],
+  });
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await waitFor(() => expect(fetchAvailableLists).toHaveBeenCalledWith("user-1", "en"));
+  expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
+  await act(async () => resolveSavedLanguageLists([defaultAvailableList]));
+  expect(await screen.findByTestId("mock-training-sense-card-v2")).toBeInTheDocument();
+  expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
+    "user-1", "session-saved-language-gate",
+  );
+});
+
 test("Statistics and Settings destinations preserve the current Training turn", async () => {
   function Harness() {
     const [destination, setDestination] =
@@ -4294,6 +4327,48 @@ test.each(["focus", "return"] as const)(
     );
   },
 );
+
+test("a same-run revision keeps the accepted-card position and server counts", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-replan-count", userId: "user-1", languageCode: "nl",
+    listId: "list-1", listType: "curated", scenarioId: "understanding",
+    modes: ["word-to-definition"], cardFilter: "both", newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" }, sessionSize: 5,
+  });
+  const firstMember = {
+    ordinal: 1, entryId: "word-1", cardTypeId: "word-to-definition",
+    queueSource: "new", consumedAt: null, unavailableAt: null,
+  };
+  const initial = {
+    sessionId: "session-replan-count", runStatus: "active" as const,
+    runGeneration: 1, sessionSize: 5 as const, plannedNew: 2, plannedReview: 3,
+    plannedPractice: 0, plannedTotal: 5, requestedTotal: 5,
+    plannedAt: "2026-09-10T12:00:00Z", planRevision: 0, completedActions: 0,
+    members: [firstMember],
+  };
+  fetchTrainingSessionSnapshot.mockResolvedValue(initial);
+  fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByTestId("mock-training-sense-card-v2");
+  expect(await screen.findByTestId("training-session-position")).toHaveTextContent("0 / 5");
+
+  fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+  await waitFor(() => expect(mockV2ProgressActionCompleted).toHaveBeenCalledWith("accepted-next-presented"));
+  await waitFor(() => expect(screen.getByTestId("training-session-position")).toHaveTextContent("1 / 5"));
+
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...initial, planRevision: 1, completedActions: 1,
+    members: [
+      { ...firstMember, consumedAt: "2026-09-10T12:01:00Z" },
+      { ...firstMember, ordinal: 2, entryId: overrideWord.id },
+    ],
+  });
+  fetchNextTrainingWordByScenario.mockResolvedValue(overrideWord);
+  act(() => window.dispatchEvent(new Event("focus")));
+  await screen.findByRole("heading", { name: "boom" });
+  expect(screen.getByTestId("training-session-position")).toHaveTextContent("1 / 5");
+  expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
+});
 
 test("replan coalesces overlapping checks, retries failed reads, and fences late takeover", async () => {
   await writeTrainingSessionResume({
