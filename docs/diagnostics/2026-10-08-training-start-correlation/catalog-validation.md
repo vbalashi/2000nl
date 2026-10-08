@@ -51,3 +51,9 @@ Next review should assess materialization cost for much larger catalogs, user-on
 No forward migration/manifest entry is included: overlapping local schema work already reaches220 while this release reference remains214. Integrate a production change only after the owning migration sequence and rollout boundary are agreed and the candidate is independently reviewed. The diagnostic prototype has no authorization-safe API endpoint of its own and must not be pasted directly into a public route. #413 remains open.
 
 Private complete outputs/checksums live in `.worktrees/.reference-sync-backup-2026-10-08/622-release-measurement/catalog-isolated-validation/`.
+
+## Contract220 coordination
+
+The215–220 migration sequence belongs to PR625 (issue623). Integrate that reviewed release first; the catalog optimization must be a separate forward change after220, not reuse215 or roll the local database back. No migration number is reserved or rollout authorized by this diagnostic PR.
+
+A dedicated17.6 container validated the complete candidate on the623schema selection declaring DB220:60JSON+4auth+5contract checks passed. Initial PR625CI at04b0bb7a failed migration bootstrap coverage for219/220, not styles. The owning checkout was updated during this session; final test reported complete bootstrap coverage (no missing forward files). The harness can read an explicitly selected schema checkout and apply checksum-verified manifest files absent from bootstrap only within its disposable fixture; this does not repair source CI or alter primary DB. Full CI/review approval for625 remains a prerequisite. Test containers removed.

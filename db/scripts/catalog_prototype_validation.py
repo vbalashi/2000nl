@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Disposable local validation of diagnostic catalog prototype; never migrates a live DB."""
 import json
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -9,6 +10,9 @@ import time
 from urllib.parse import urlsplit, urlunsplit
 
 ROOT = Path(__file__).resolve().parents[2]
+SCHEMA_ROOT = Path(os.environ.get("CATALOG_PROTOTYPE_SCHEMA_ROOT", str(ROOT))).resolve()
+if not (SCHEMA_ROOT / "db/migrations/bootstrap.sql").is_file():
+    raise SystemExit("Selected schema checkout lacks bootstrap.sql")
 BASE = os.environ.get("CATALOG_PROTOTYPE_TEST_BASE_DB_URL")
 if not BASE:
     raise SystemExit("Set an explicit dedicated-container loopback database URL; canonical local DB is not a test target")
@@ -25,9 +29,9 @@ HIDDEN = "413d0000-0000-0000-0000-000000000002"
 def sql(text, target=TARGET, file=None):
     args = ["psql", "-d", target, "-X", "-q", "-At", "-v", "ON_ERROR_STOP=1"]
     if file:
-        args += ["-f", str(ROOT / file)]
+        args += ["-f", str(SCHEMA_ROOT / file)]
     r = subprocess.run(args, input=None if file else text, text=True,
-                       capture_output=True, cwd=ROOT, timeout=90)
+                       capture_output=True, cwd=SCHEMA_ROOT if file else ROOT, timeout=90)
     if r.returncode:
         raise RuntimeError("Disposable test SQL failed: " + r.stderr[-1600:])
     return r.stdout
@@ -157,6 +161,19 @@ try:
     created = True
     sql("", file="db/scripts/plain_postgres_supabase_compat.sql")
     sql("", file="db/migrations/bootstrap.sql")
+    manifest = json.loads((SCHEMA_ROOT / "packages/shared/deployment/db-contract.json").read_text())
+    bootstrap = (SCHEMA_ROOT / "db/migrations/bootstrap.sql").read_text()
+    missing = []
+    for entry in manifest['migrations']:
+        file = entry['file']
+        if not re.fullmatch(r'db/migrations/[0-9]{3}_[a-z0-9_]+\.sql', file):
+            raise ValueError('Unexpected manifest migration path')
+        if not re.search(r'^\\i\s+' + re.escape(file) + r'\s*$', bootstrap, re.M):
+            if hashlib.sha256((SCHEMA_ROOT / file).read_bytes()).hexdigest() != entry['sha256']:
+                raise ValueError('Forward fixture migration checksum mismatch')
+            sql('', file=file)
+            missing.append(entry['migrationId'])
+    print(json.dumps({'stage':'selected schema','contract':manifest['contractId'],'explicit_fixture_forward_migrations':missing}),flush=True)
     sql(candidate_definition() + "\nREVOKE ALL ON FUNCTION public.catalog_prototype_candidate(uuid,text,text) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.catalog_prototype_candidate(uuid,text,text) TO authenticated;")
     sql(f"""INSERT INTO public.languages(code,name) VALUES('en','English') ON CONFLICT DO NOTHING;
 INSERT INTO auth.users(id,email) VALUES('{QA}','test@2000nl.test'),('{OTHER}','other@fixture.invalid');
