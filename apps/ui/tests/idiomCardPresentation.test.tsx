@@ -65,7 +65,9 @@ describe("exercise card field bindings", () => {
       expect(
         screen.queryByText(content.examples[0].text),
       ).not.toBeInTheDocument();
-      expect(screen.queryByText(content.headword)).not.toBeInTheDocument();
+      // Reserve hint geometry, but conceal it visually and from assistive technology.
+      expect(screen.getByText(content.headword).closest("aside")).toHaveAttribute("aria-hidden", "true");
+      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
       fireEvent.click(screen.getByRole("button", { name: /show hint/i }));
       expect(screen.getByText(content.headword)).toBeVisible();
       expect(screen.queryByText(concealed)).not.toBeInTheDocument();

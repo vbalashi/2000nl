@@ -206,15 +206,15 @@ export function TrainingCardFace({
       <div className={approved.faceLayout}>
         <div className={approved.facePrelude}>
           {partOfSpeech ? (
-          <span
-            data-testid="training-face-part-of-speech"
-            className={`${chrome.metadata} self-start`}
-          >
-            <span className={chrome.pos}>
-              <span aria-hidden="true" className={chrome.dot} />
-              {trainingPartOfSpeechLabel(partOfSpeech)}
+            <span
+              data-testid="training-face-part-of-speech"
+              className={`${chrome.metadata} self-start`}
+            >
+              <span className={chrome.pos}>
+                <span aria-hidden="true" className={chrome.dot} />
+                {trainingPartOfSpeechLabel(partOfSpeech)}
+              </span>
             </span>
-          </span>
           ) : null}
           {label ? (
             <span className={approved.faceInstruction}>
