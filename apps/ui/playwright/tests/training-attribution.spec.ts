@@ -27,8 +27,8 @@ test("authenticated Training transition attribution harness", async ({
   const stableEvidence =
     process.env.TRAINING_ATTRIBUTION_STABLE_EVIDENCE === "true";
   const profiles = [
-    { name: "desktop", width: 1440, height: 900 },
-    { name: "mobile", width: 390, height: 844 },
+    { name: "desktop", width: 1440, height: 900, accountLanguageCode: "nl" },
+    { name: "mobile", width: 390, height: 844, accountLanguageCode: "en" },
   ] as const;
   const reports: TrainingAttributionProfileReport[] = [];
 
@@ -40,12 +40,19 @@ test("authenticated Training transition attribution harness", async ({
     const fixture = await setupAuthenticatedTrainingAttributionPage(
       page,
       injectedDelayMs,
-      { bootstrapReadDelayMs: 80, sessionPlannedTotal: TRAINING_ATTRIBUTION_TRANSITIONS + 1 },
+      {
+        bootstrapReadDelayMs: 80,
+        sessionPlannedTotal: TRAINING_ATTRIBUTION_TRANSITIONS + 1,
+        accountLanguageCode: profile.accountLanguageCode,
+      },
     );
     const startCurrentSettings = page.getByRole("button", {
       name: /^(?:Start training|Training starten|Начать тренировку)$/,
     });
     await expect(startCurrentSettings).toBeVisible();
+    expect(fixture.requests.activeScope).toContainEqual(expect.objectContaining({
+      p_language_code: profile.accountLanguageCode,
+    }));
     await startCurrentSettings.click();
     await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
     await page
@@ -204,7 +211,7 @@ test("authenticated Training transition attribution harness", async ({
     ),
   );
   const report = {
-    schemaVersion: "training-transition-attribution-v3",
+    schemaVersion: "training-transition-attribution-v4",
     appCommit: execFileSync("git", ["rev-parse", "HEAD"], {
       encoding: "utf8",
     }).trim(),
@@ -301,7 +308,10 @@ test("authenticated Training transition attribution harness", async ({
     }
     expect(profile.bootstrapReads.auth).not.toBeNull();
     expect(profile.bootstrapReads.independent).toHaveLength(3);
-    expect(profile.bootstrapReads.overlapProven).toBe(true);
+    expect(profile.bootstrapReads.authBeforePreferences).toBe(true);
+    expect(profile.bootstrapReads.preferencesBeforeScope).toBe(true);
+    expect(profile.bootstrapReads.preferencesBeforeScenarios).toBe(true);
+    expect(profile.bootstrapReads.scopeScenariosOverlapProven).toBe(true);
   }
   if (expectedVerdict === "red") {
     for (const slow of reports.flatMap((profile) => profile.overThreshold)) {

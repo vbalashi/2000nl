@@ -98,11 +98,18 @@ export type TrainingAttributionProfileReport = {
   unclassifiedOverThreshold: TrainingTimingEvent[];
   scenarioRequestCount: number;
   bootstrapReads: {
-    contract: "auth-gates-independent-training-reads";
+    contract: "auth-preferences-before-training-scope-and-scenarios";
     auth: TrainingTimingEvent | null;
     independent: TrainingTimingEvent[];
+    /** @deprecated Historical three-way overlap; retained as measured evidence. */
     overlapMs: number;
+    /** @deprecated Historical three-way overlap; retained as measured evidence. */
     overlapProven: boolean;
+    authBeforePreferences: boolean;
+    preferencesBeforeScope: boolean;
+    preferencesBeforeScenarios: boolean;
+    scopeScenariosOverlapMs: number;
+    scopeScenariosOverlapProven: boolean;
   };
 };
 
@@ -154,6 +161,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     abortActionNumber?: number;
     reconcileDelayMs?: number;
     bootstrapReadDelayMs?: number;
+    accountLanguageCode?: string;
     /** Delay the active-scope/list hydration request independently of other bootstrap reads. */
     activeScopeDelayMs?: number;
     /** Delay the authoritative list summary used to resolve the saved scope. */
@@ -202,11 +210,13 @@ export async function setupAuthenticatedTrainingAttributionPage(
   const sessionPlanRequests: Record<string, unknown>[] = [];
   const sessionStartRequests: Record<string, unknown>[] = [];
   const sessionRequests: Record<string, unknown>[] = [];
+  const activeScopeRequests: Record<string, unknown>[] = [];
   const progressActionRequests: Record<string, unknown>[] = [];
   const progressActionReconciliationRequests: Record<string, unknown>[] = [];
   const projectionLookupRequests: Record<string, unknown>[] = [];
   const unavailableSessionRequests: Record<string, unknown>[] = [];
   const sessionMembers = entries.slice(0, options.sessionPlannedTotal ?? 50);
+  const accountLanguageCode = options.accountLanguageCode ?? "nl";
   const defaultPlan = {
     plannedNew: Math.ceil((options.sessionPlannedTotal ?? 50) * 0.6),
     plannedReview: Math.floor((options.sessionPlannedTotal ?? 50) * 0.4),
@@ -761,7 +771,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
 
     if (pathname.endsWith("/rpc/get_learning_preferences")) {
       await wait(options.bootstrapReadDelayMs ?? 0);
-      await fulfillJson(route, learningPreferences(), "preferences");
+      await fulfillJson(route, learningPreferences(accountLanguageCode), "preferences");
       return;
     }
     if (pathname.endsWith("/rpc/get_training_scenarios")) {
@@ -803,7 +813,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     if (pathname.endsWith("/rpc/get_available_word_lists")) {
       await fulfillJson(
         route,
-        body.p_list_type === "user" ? [] : [wordListSummary()],
+        body.p_list_type === "user" ? [] : [wordListSummary(accountLanguageCode)],
         "lists",
       );
       return;
@@ -813,8 +823,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
         route,
         [
           {
-            code: "nl",
-            label: "Nederlands",
+            code: accountLanguageCode,
+            label: accountLanguageCode === "nl" ? "Nederlands" : "English",
             dictionary_count: 1,
             curated_list_count: 1,
             user_list_count: 0,
@@ -834,11 +844,12 @@ export async function setupAuthenticatedTrainingAttributionPage(
       return;
     }
     if (pathname.endsWith("/rpc/get_active_training_scope")) {
+      activeScopeRequests.push({ ...body });
       await wait(options.activeScopeDelayMs ?? options.bootstrapReadDelayMs ?? 0);
       await fulfillJson(
         route,
         {
-          language_code: "nl",
+          language_code: accountLanguageCode,
           active_list_id: "list-attribution",
           active_list_type: "curated",
           active_scenario: "understanding",
@@ -856,7 +867,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
       await fulfillJson(
         route,
         {
-          language_code: "nl",
+          language_code: accountLanguageCode,
           active_list_id: body.p_list_id ?? "list-attribution",
           active_list_type: body.p_list_type ?? "curated",
           active_scenario: body.p_active_scenario ?? "understanding",
@@ -880,7 +891,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     }
     if (pathname.endsWith("/rpc/get_word_list_summary")) {
       await wait(options.listSummaryDelayMs ?? 0);
-      await fulfillJson(route, wordListSummary(), "list-summary");
+      await fulfillJson(route, wordListSummary(accountLanguageCode), "list-summary");
       return;
     }
     if (pathname.endsWith("/rpc/get_detailed_training_stats")) {
@@ -945,7 +956,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
           ? visualFixture
             ? { ...visualFixture.settings, ...options.settingsOverrides }
             : {
-                ...learningPreferences(),
+                ...learningPreferences(accountLanguageCode),
                 theme_preference: "system",
                 translation_lang: "ru",
                 preferences: {},
@@ -957,7 +968,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
       return;
     }
     if (pathname.endsWith("/word_lists")) {
-      await fulfillJson(route, [wordListSummary()], "word-lists");
+      await fulfillJson(route, [wordListSummary(accountLanguageCode)], "word-lists");
       return;
     }
     if (pathname.endsWith("/word_list_items")) {
@@ -988,6 +999,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
       sessionPlans: sessionPlanRequests,
       sessionStarts: sessionStartRequests,
       session: sessionRequests,
+      activeScope: activeScopeRequests,
       progressActions: progressActionRequests,
       progressActionReconciliations: progressActionReconciliationRequests,
       projectionLookups: projectionLookupRequests,
@@ -1241,6 +1253,13 @@ export function buildTrainingAttributionProfileReport(
           Math.max(...independent.map((event) => event.monotonicStartedAtMs)),
       )
     : 0;
+  const preferences = independent.find((event) => event.stage === "training.preferences");
+  const scope = independent.find((event) => event.stage === "training.active-scope-hydration");
+  const scenarios = independent.find((event) => event.stage === "training.scenarios");
+  const scopeScenariosOverlapMs = scope && scenarios
+    ? Math.max(0, Math.min(scope.monotonicEndedAtMs, scenarios.monotonicEndedAtMs) -
+        Math.max(scope.monotonicStartedAtMs, scenarios.monotonicStartedAtMs))
+    : 0;
 
   return {
     profile,
@@ -1274,11 +1293,19 @@ export function buildTrainingAttributionProfileReport(
     unclassifiedOverThreshold,
     scenarioRequestCount,
     bootstrapReads: {
-      contract: "auth-gates-independent-training-reads",
+      contract: "auth-preferences-before-training-scope-and-scenarios",
       auth,
       independent,
       overlapMs,
       overlapProven: independent.length === 3 && overlapMs > 0,
+      authBeforePreferences: Boolean(auth && preferences &&
+        auth.monotonicEndedAtMs <= preferences.monotonicStartedAtMs),
+      preferencesBeforeScope: Boolean(preferences && scope &&
+        preferences.monotonicEndedAtMs <= scope.monotonicStartedAtMs),
+      preferencesBeforeScenarios: Boolean(preferences && scenarios &&
+        preferences.monotonicEndedAtMs <= scenarios.monotonicStartedAtMs),
+      scopeScenariosOverlapMs,
+      scopeScenariosOverlapProven: scopeScenariosOverlapMs > 0,
     },
   };
 }
@@ -1540,24 +1567,24 @@ function buildLookupGroup(
   };
 }
 
-function learningPreferences() {
+function learningPreferences(languageCode = "nl") {
   return {
     training_mode: "word-to-definition",
     modes_enabled: ["word-to-definition"],
     card_filter: "both",
-    language_code: "nl",
+    language_code: languageCode,
     new_review_ratio: 2,
     active_scenario: "understanding",
   };
 }
 
-function wordListSummary() {
+function wordListSummary(languageCode = "nl") {
   return {
     id: "list-attribution",
     slug: "attribution-list",
     name: "Attribution list",
-    language_code: "nl",
-    primary_language_code: "nl",
+    language_code: languageCode,
+    primary_language_code: languageCode,
     is_primary: true,
     word_list_items: [{ count: fixtureEntries.length }],
   };
