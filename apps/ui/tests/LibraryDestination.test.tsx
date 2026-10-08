@@ -70,3 +70,15 @@ test("hidden Library stays inactive until opened and retains search state across
   rerender(<LibraryDestination {...props} open />);
   expect(screen.getByTestId("library-search")).toHaveAttribute("data-query", "huis");
 });
+
+test("a new account does not inherit a hidden mount or search state", () => {
+  const { rerender } = render(<LibraryDestination {...props} open />);
+  fireEvent.click(screen.getByRole("button", { name: "Set search query" }));
+  expect(screen.getByTestId("library-search")).toHaveAttribute("data-query", "huis");
+
+  rerender(<LibraryDestination {...props} userId="another-library-user" open={false} />);
+  expect(screen.queryByTestId("library-search")).not.toBeInTheDocument();
+
+  rerender(<LibraryDestination {...props} userId="another-library-user" open />);
+  expect(screen.getByTestId("library-search")).toHaveAttribute("data-query", "");
+});

@@ -28,7 +28,11 @@ type Props = {
   onTrainWord?: (wordId: string) => void;
 };
 
-export function LibraryDestination({
+export function LibraryDestination(props: Props) {
+  return <LibraryDestinationSession key={props.userId} {...props} />;
+}
+
+function LibraryDestinationSession({
   open,
   userId,
   language,
