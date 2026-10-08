@@ -151,3 +151,11 @@ The owner found a preview/results mismatch (Dutch, empty query, All dictionaries
 `3728da05` adds a component-local refresh revision to the existing search key and increments it on Apply. Existing request/generation ownership, filter predicates, transport validation and ACLs are unchanged. A CI-safe component regression exercises two identical Apply actions, asserts a fresh scoped request and restored row, and fails without the refresh signal. Worker cf9f0559/f20b336b were integrated atomically; their final tree matches the integration tree. The temporary live-DB diagnostic spec is excluded, and no raw dictionary responses are attached to test artifacts.
 
 Independent review accepted the three-line runtime change and test. Root focused suites pass28/28, including the full26-case grouping file; worker typecheck/lint pass. Broad Library/Training extraction and optional telemetry work remain excluded. The baseline b6d99aa8 fullCI passed2055 units,186 normal browser cases,24 pilot and17 training reliability cases; the new source requires a fresh submitted-head CI. No merge/deployment is authorized by this correction.
+
+## Owner review: pagination and meaning definition toggle
+
+At 820px with a Library detail open, the absolute pager shrank to available half-column width while inheriting wrapping. The two arrows were 40px apart vertically. Give the floating pager intrinsic content width and disable wrapping; its width may exceed the list column as requested. Preserve the existing button dimensions.
+
+The meaning-card click handler previously only expanded collapsed cards. Definition-lead clicks now toggle either way. Collapsed-card background expansion remains supported, while expanded body clicks, nested controls and selected text do not toggle. The native disclosure button and its accessibility state remain unchanged.
+
+Independent review found no blockers. Root Library grouping, meaning-card and shared-reading suites pass 57/57; typecheck, lint and the style ratchet pass (existing warning/debt unchanged). A mocked-auth/transport browser regression measures actual indicator/arrow alignment at 820px with detail open. No API, DB, scheduler or broader state refactor is included. The owner-review server remains on canonical port 3100. Release still requires the new submitted-head CI; no merge or deployment is performed.
