@@ -118,3 +118,42 @@ removed with `git worktree remove <path>` after recording the evidence in its
 issue or handoff.
 
 Do not create new 2000NL worktrees in `/Users/khrustal/adhoc`.
+
+## Required lifecycle checkpoints
+
+`main` is the clean, current reference checkout. Worktrees isolate unfinished
+work; they do not replace synchronizing the reference. Do not edit product code
+on reference `main` or merge abandoned work merely to retire a directory.
+
+1. **Start:** fetch/sync the reference with `scripts/sync-reference.sh`, then
+   create or deliberately resume one issue-owned worktree. Report its path,
+   branch, base commit, owner and issue. Reuse an existing suitable checkout
+   rather than create another for the same scope.
+2. **Checkpoint:** commit a coherent, checked change on its feature branch.
+   Keep unreviewed research, restricted corpora and secrets out of release PRs.
+   If pausing, record remaining work and the exact branch/commit in the issue.
+3. **Merge:** integrate only reviewed, validated changes through their PR.
+   Separate open work remains isolated. Squash merging preserves the accepted
+   change in main but does not make feature commits ancestors of main.
+4. **Release:** verify deployment when applicable, then fast-forward reference
+   main with `scripts/sync-reference.sh`. Verify local HEAD equals freshly
+   fetched origin/main; report deployment commit separately. A dirty main is a
+   preservation/coordination problem, never a reason to reset or auto-stash it.
+5. **Retire:** after confirming owner/session/process inactivity, inspect dirty
+   files, ignored artifacts, unique commits, upstream and PR state again.
+   Preserve unpublished work and needed ignored artifacts, record recovery paths
+   and evidence, then remove the checkout using `git worktree remove <path>`.
+   Keep branch refs until unique commit preservation is verified. Do not use
+   force removal to get past dirty work.
+
+At the end of each completed issue and during the daily logbook checkpoint,
+review worktrees for retirement. Keep checkouts only for active work, explicit
+paused work, pending review, running services, or required local evidence/data.
+Git commits, PRs and retained branch refs provide code history; installed
+`node_modules`, build output and an idle checkout do not provide extra history.
+There is no automatic merging or deletion by age, and no periodic database reset.
+
+For squash-merged candidates, verify the merged PR head matches the saved branch
+head and inspect any commits made after it. A closed-unmerged PR, an issue number,
+or a clean status alone does not prove its work was integrated. Unknown ownership
+and important ignored files block automatic retirement.
