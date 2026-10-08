@@ -89,6 +89,15 @@ promotes a boundary change.
   and privacy/redaction behavior before splitting by domain.
 - Do not scatter new operational notes in random docs; add stable system guidance to `ARCHITECTURE.md`, intent to `docs/intent`, and runbook/debug material to `docs/`.
 
+## Worktree completion rule
+
+At issue completion and the daily logbook checkpoint, follow the start → PR
+review/merge → release verification → reference-main sync → worktree retirement
+checkpoints in `docs/runbooks/worktrees.md`. Reuse a suitable existing issue
+checkout. Do not keep finished checkouts solely for history, merge abandoned
+branches merely to clean up, or remove dirty/active/evidence-owning worktrees.
+Record preservation and retirement decisions in the owning issue or handoff.
+
 ## Validation Commands
 
 Run the narrowest relevant checks for the files you touched.
