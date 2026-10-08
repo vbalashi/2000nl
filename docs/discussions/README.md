@@ -64,3 +64,5 @@
 - [2026-10-08: bounded retirement release readiness](2026-10-08-01-retirement-release-readiness.md)
 
 - [2026-10-08: telemetry и владельцы состояния](2026-10-08-02-state-ownership-refactor.md)
+
+- [2026-10-08: First-use authentication and branded email](./2026-10-08-04-first-use-auth.md) — #632, audit and implementation direction.
