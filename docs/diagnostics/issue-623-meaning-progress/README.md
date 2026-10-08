@@ -45,3 +45,9 @@ without replacing the new genuine deployment receipts. Read-only check passed:
 50 entries, 4 learner states and 1 historical review retained. No production DB
 was accessed by these checks. Initial CI also caught an obsolete 214/#407
 assertion in the standalone deployment-gate tests; it now asserts 220/#623.
+
+Final performance boundary review: the batch progress read is limited to
+first-party dictionary-lookup intent. Training review and connected-client
+lookups keep their existing reads; paired route tests assert that distinction.
+Dark theme was verified in real Chrome at 1280×900 with 1 px backdrop blur;
+temporary viewport/media overrides and the 3101 process were removed.

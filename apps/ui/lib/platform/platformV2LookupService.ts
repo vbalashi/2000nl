@@ -245,7 +245,7 @@ export async function performPlatformV2Lookup(
           }),
         )
       : null;
-  const progressPromise = context.kind === "authenticated" && context.auth.principal.authKind === "first_party"
+  const progressPromise = request.intent === "dictionary-lookup" && context.kind === "authenticated" && context.auth.principal.authKind === "first_party"
     ? context.auth.supabase.rpc("get_meanings_learning_progress_v1", {p_entry_ids:entryIds})
     : Promise.resolve({data:[],error:null});
   const statePromise =
