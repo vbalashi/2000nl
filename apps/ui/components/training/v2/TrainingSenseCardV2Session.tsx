@@ -542,7 +542,7 @@ export function TrainingSenseCardV2Session({
           observedOutcome: classifyTrainingActionOutcome(code),
         });
       }
-      if (code === "state_conflict") {
+      if (["state_conflict","card_is_known","platform_action_not_available"].includes(code)) {
         const refreshed = await load(undefined, {
           preserveCard: true,
           usePrefetch: false,

@@ -38,7 +38,7 @@ export function TrainingExcludeAction({
     <button
       ref={trigger}
       type="button"
-      className={`${senseCardQuietAction()} min-w-0`}
+      className={`${senseCardQuietAction()} min-w-0 max-w-full whitespace-normal`}
       disabled={disabled}
       onClick={event => hasMenu ? anchor ? close() : setAnchor(event.currentTarget) : onClick()}
       aria-haspopup={hasMenu ? "menu" : undefined}
@@ -47,7 +47,7 @@ export function TrainingExcludeAction({
       aria-label={t.help}
     >
       <EyeOff size={16} className="shrink-0" aria-hidden="true" />
-      <span className="break-words">{t.label}</span>
+      <span className="min-w-0 break-words text-left">{t.label}</span>
       {hasMenu && (anchor
         ? <ChevronUp size={14} className="shrink-0" aria-hidden="true" />
         : <ChevronDown size={14} className="shrink-0" aria-hidden="true" />)}

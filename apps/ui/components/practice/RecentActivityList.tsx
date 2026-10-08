@@ -14,7 +14,8 @@ export type ActivityRow = {
 };
 
 /** Shared presentation; action identity, scope and loading stay with the caller. */
-export function RecentActivityList({ items, locale, scopeLabel, emptyLabel, listLabel }: {
+export function RecentActivityList({ items, locale, scopeLabel, emptyLabel, listLabel, onSelectItem }: {
+  onSelectItem?: (id:string)=>void;
   items: ActivityRow[];
   locale: OnboardingLanguage;
   scopeLabel: string;
@@ -35,7 +36,7 @@ export function RecentActivityList({ items, locale, scopeLabel, emptyLabel, list
       {[...groups].map(([day, actions]) => <section key={day}>
         <h3>{day}</h3>
         <ol>{actions.map(item => <li key={item.id}>
-          <div className={s.word}><strong>{item.word}</strong><span>{item.exercise}</span></div>
+          <div className={s.word}><strong>{onSelectItem ? <button type="button" className={s.wordLink} onClick={()=>onSelectItem(item.id)}>{item.word}</button> : item.word}</strong><span>{item.exercise}</span></div>
           <div className={s.result}><strong data-rating={item.tone}>{item.result}</strong>
             <time dateTime={item.at}>{times.format(new Date(item.at))}</time>
           </div>

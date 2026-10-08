@@ -1,3 +1,4 @@
+import {parseMeaningLearningProgress,type MeaningLearningProgress} from '../../../../packages/shared/types/meaningLearningProgress';
 import { LIBRARY_RPC_GROUP_LIMIT } from "./libraryPagination";
 import { libraryEntryMatchesFilters, type LibrarySearchScope } from "./librarySearchScope";
 import type {
@@ -244,6 +245,9 @@ export async function performPlatformV2Lookup(
           }),
         )
       : null;
+  const progressPromise = request.intent === "dictionary-lookup" && context.kind === "authenticated" && context.auth.principal.authKind === "first_party"
+    ? context.auth.supabase.rpc("get_meanings_learning_progress_v1", {p_entry_ids:entryIds})
+    : Promise.resolve({data:[],error:null});
   const statePromise =
     context.kind === "authenticated"
       ? measure<RpcResult>(timings, "lookup.user-state", async () =>
@@ -280,10 +284,11 @@ export async function performPlatformV2Lookup(
       }),
   );
   crossReferencePromise.catch(() => undefined);
-  const [identityResult, stateResult, eagerTranslationResult] = await Promise.all([
+  const [identityResult, stateResult, eagerTranslationResult, progressResult] = await Promise.all([
     identityPromise,
     statePromise,
     eagerTranslationPromise,
+    progressPromise,
   ]);
 
   if (identityResult.error) {
@@ -316,6 +321,8 @@ export async function performPlatformV2Lookup(
       serverTiming: serverTiming(),
     };
   }
+  if (progressResult.error) return {payload:{error:"meaning_progress_unavailable"},status:503,serverTiming:serverTiming()};
+  const progressByEntryId = new Map<string, MeaningLearningProgress>((Array.isArray(progressResult.data) ? progressResult.data : []).map((value:unknown) => {const progress=parseMeaningLearningProgress(value);return [progress.entryId,progress];}));
   const stateByEntryId = new Map<string, Record<string, unknown>>();
   for (const row of Array.isArray(stateResult.data) ? stateResult.data : []) {
     const record = asRecord(row);
@@ -468,7 +475,7 @@ export async function performPlatformV2Lookup(
               cardState:
                 context.kind === "authenticated"
                   ? projectionCardState(
-                      stateByEntryId.get(entry.id),
+                      stateByEntryId.get(entry.id), progressByEntryId.get(entry.id),
                     )
                   : null,
               entryTranslation:
@@ -733,11 +740,13 @@ function dictionarySummary(
 
 function projectionCardState(
   row?: Record<string, unknown>,
+  meaningProgress?: MeaningLearningProgress,
 ): ProjectionCardState {
   const knownMarkId = stringOrNull(row?.known_mark_id);
   const knownMarkRevision = stringOrNull(row?.known_mark_revision);
   const knownMarkedAt = stringOrNull(row?.known_marked_at);
   return {
+    ...(meaningProgress ? {meaningProgress} : {}),
     stateRevision: stringOrNull(row?.state_revision) ?? "untracked",
     knownMark:
       knownMarkId && knownMarkRevision && knownMarkedAt

@@ -1,3 +1,4 @@
+import type {MeaningLearningProgress} from './meaningLearningProgress';
 import type { CardTypeId, LookupIntent, PlatformSourceContextV2 } from "./platform";
 import type { DisplayedTranslationArtifactIdentityV1 } from "../platform-v2/displayedTranslationArtifactIdentityV1";
 
@@ -367,6 +368,7 @@ export type PlatformKnownMarkV2 = {
 };
 
 export type PlatformSenseCardStateV2 = {
+  meaningProgress?: MeaningLearningProgress;
   cardTypeId: CardTypeId;
   scheduler: {
     phase:

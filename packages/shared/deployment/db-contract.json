@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-214",
+  "contractId": "2000nl-db-220",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 214,
-    "coordinationIssue": 407,
+    "requiredMigrationId": 220,
+    "coordinationIssue": 623,
     "compatibilityPhase": "legacy-first-party-compatible",
     "strictEnforcementIssue": 399
   },
@@ -476,9 +476,39 @@
       "migrationId": 214,
       "file": "db/migrations/214_training_audio_swipe.sql",
       "sha256": "b5ef784366ebb0619d59ae2e8d85a91eb8054abc84a0621cb2f9d492ab08e7a0"
+    },
+    {
+      "migrationId": 215,
+      "file": "db/migrations/215_known_safe_meaning_enrollment.sql",
+      "sha256": "bfd06c3f95cc930e2f0edea092e0ad6c52ed4b24c4a6e9e9385f9b67fe8c33ea"
+    },
+    {
+      "migrationId": 216,
+      "file": "db/migrations/216_known_meaning_familiarity.sql",
+      "sha256": "8afc915986b880c0e332f52095a032ad1fbef27a93fde4012e89245366169f15"
+    },
+    {
+      "migrationId": 217,
+      "file": "db/migrations/217_exact_meaning_exclusions.sql",
+      "sha256": "40a922fc9d84903ea8fdb1b397f1fd7aa65616e69458f9e6a9f34af69d29fbca"
+    },
+    {
+      "migrationId": 218,
+      "file": "db/migrations/218_meaning_progress_and_resume.sql",
+      "sha256": "9c0b872695587d2f251b567ad1276085a6f9787186ab16c80c754f9787500021"
+    },
+    {
+      "migrationId": 219,
+      "file": "db/migrations/219_meaning_mutation_serialization.sql",
+      "sha256": "fef3e0b4d17d9f9559f3e44651f93e39b02253b7fcf87ecee9264ef757c16c56"
+    },
+    {
+      "migrationId": 220,
+      "file": "db/migrations/220_set_based_meaning_progress.sql",
+      "sha256": "7975d81bc5ec6084e6281f9e31a6d9e4cedae2fab0b3600e2d12bd5079f299fe"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-214.sql",
+  "postflightProbe": "db/deploy-contract/postflight-220.sql",
   "preSwitchReadProbe": {
     "file": "db/deploy-contract/pre-switch-read-probe-164.sql",
     "sha256": "e4ea2002e4d65225d28ac4d7313426d4ca2ae91e2a6c514d223783e174d74a88",
@@ -487,7 +517,7 @@
     "overBudgetAction": "warn"
   },
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-214.sql",
-    "sha256": "ded36b6783b9803910227cabc25d7b97f7edfbce0c58c2c79bfe0991b82222b9"
+    "file": "db/deploy-contract/read-only-postflight-220.sql",
+    "sha256": "869f877121bee028be28306e75392102f17a70d3ad0841707e56f4f580bf9168"
   }
 }

@@ -27,3 +27,9 @@ export function completeExclusionUndo(value:PendingExclusionUndo) {
   restoredListeners.forEach(listener=>listener(value.userId,value.request.exclusionId));
   if (pending === value) rememberExclusionUndo(null);
 }
+
+/** Atomic meaning resume has already restored this exact exclusion on the server. */
+export function completeMeaningExclusionResume(exclusionId: string | null) {
+  const value = getExclusionUndo();
+  if (exclusionId && value?.request.exclusionId === exclusionId) completeExclusionUndo(value);
+}

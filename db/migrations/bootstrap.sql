@@ -572,3 +572,12 @@
 
 \i db/migrations/213_training_syllable_display.sql
 \i db/migrations/214_training_audio_swipe.sql
+
+\i db/migrations/215_known_safe_meaning_enrollment.sql
+\i db/migrations/216_known_meaning_familiarity.sql
+\i db/migrations/217_exact_meaning_exclusions.sql
+\i db/migrations/218_meaning_progress_and_resume.sql
+
+\i db/migrations/219_meaning_mutation_serialization.sql
+
+\i db/migrations/220_set_based_meaning_progress.sql

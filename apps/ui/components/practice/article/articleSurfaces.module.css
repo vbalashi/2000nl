@@ -88,3 +88,7 @@
 .scrollFade{background:linear-gradient(to bottom,var(--practice-canvas),color-mix(in srgb,var(--practice-canvas) 90%,transparent),transparent)}
 .scrollFade[data-scroll-affordance="bottom"]{background:linear-gradient(to top,var(--practice-canvas),color-mix(in srgb,var(--practice-canvas) 90%,transparent),transparent)}
 .scrollFadeIcon{color:var(--practice-text-muted)}
+
+.statusAction{display:inline-flex;align-items:center;padding:0;border:0;background:transparent;color:inherit;font:inherit;pointer-events:auto;cursor:pointer;min-height:18px}
+.statusAction:focus-visible{outline:2px solid var(--practice-focus);outline-offset:3px;border-radius:4px}
+.statusAction:hover{text-decoration:underline;text-underline-offset:3px}
