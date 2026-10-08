@@ -48,3 +48,5 @@ None of these proves an individual request cause.
 
 Sanitized artifacts are ignored under tmp/latency-audit/managed-interval-*
 and copied to the project-local recovery archive.
+
+Next bounded step completed: [own-backend wait sampling](./catalog-backend-waits.md).
