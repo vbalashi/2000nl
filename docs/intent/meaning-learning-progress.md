@@ -72,3 +72,14 @@ below the viewport. Root viewport-fit=cover makes the existing safe-area contrac
 available to the AppFrame, navigation, sheets and Training in iOS standalone mode.
 Immersive Training also reserves the top inset, and both sheet controllers subtract
 the top safe area from their maximum height so the handle stays below the notch.
+
+### Agreed action-menu copy — 2026-10-08
+
+Library and Training use the same exclusion title (Exclude / Uitsluiten /
+Исключить) with the description “Exclude from training in both directions”
+(“In beide richtingen uitsluiten van training” / “Исключить из тренировок в
+обоих направлениях”). Known describes “Only this direction” (“Alleen deze
+richting” / “Только это направление”). Do not expose the internal term pair.
+The scope remains authoritative: a meaning or the independent exercise.
+Progress has the Statistics icon; exclusion triggers and menu items use EyeOff.
+No new explanatory text is added beside the primary resume button.
