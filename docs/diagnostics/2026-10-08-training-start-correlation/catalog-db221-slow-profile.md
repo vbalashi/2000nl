@@ -117,3 +117,7 @@ Scripts/sanitized production profiles and local synthetic fixture logs are in
 the ignored recovery directory `622-release-measurement/catalog-db221-slow-profile/`,
 with the parent SHA256SUMS updated. Local fixture raw notices contain only
 synthetic data; production raw SQL notices were not persisted.
+
+Follow-up: [unprofiled interval and managed metrics](./catalog-managed-interval.md)
+and [scale/visibility index experiment](./catalog-covering-scale-visibility.md).
+These update the evidence and current tracker-state caveats above.
