@@ -69,6 +69,12 @@ promotes a boundary change.
   `.worktrees/` container and installs its own UI dependencies. Do not create
   new 2000NL worktrees under `/Users/khrustal/adhoc`, and never share or link
   `node_modules` between worktrees.
+- Treat the canonical reference checkout's `main` as read-only. After release
+  merges, sync it from `origin/main` with `scripts/sync-reference.sh` before
+  creating the next worktree; `create-worktree.sh` runs this check itself.
+  The sync refuses a dirty checkout, the wrong branch/upstream, or local-only
+  and divergent commits. Preserve and resolve local work explicitly; never
+  stash, reset, or overwrite it to make the sync pass.
 
 - Before substantial code changes, new features, contract changes, or refactors,
   read the platform engineering principles and decide the owning layer/module.

@@ -96,7 +96,7 @@ cleanup_failed_creation() {
 
 trap cleanup_failed_creation ERR
 
-git fetch origin main
+"$repo_root/scripts/sync-reference.sh"
 git worktree add -b "$branch" "$target" origin/main
 created=true
 
