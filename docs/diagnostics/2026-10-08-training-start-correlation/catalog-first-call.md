@@ -48,3 +48,21 @@ Three series completed without product/production changes:
 Clients closed normally, observers stopped, all transactions rolled back. Deliberate one-second observer-attachment sleeps remain outside EXPLAIN measured durations. Session pooler port5432 tests are not an exact reproduction of REST/pooler routing, and backend first-use does not imply cold shared database cache. No owner/user browser was touched.
 
 Decision unchanged: there is no verified targeted fix. Stop blind repetitions and prioritize a scoped server-side profile of a slow nested call. Existing auto_explain could potentially support a session-specific diagnostic, but availability of its sanitized log output and approved logging/redaction boundary must be established first. A global logging rollout or compute upgrade is not warranted by these samples.
+
+## Third bounded goal: actual nested execution profiles
+
+Safe scoped profiling was available and three profile captures completed. Only transaction-local auto_explain settings were used. Existing log_min_messages=warning was checked before capture; DEBUG5 plan messages were delivered to the private client capture, below the inspected server log severity threshold. No global logging configuration changed. Parameter logging disabled; UUIDs and QA email redacted in memory before writing artifacts. Read-only transaction and 10-second timeout retained; all settings rolled back.
+
+| Profile | Instrumentation | Outer first/repeat ms | Nested catalog first/repeat ms |
+| --- | --- | --- | --- |
+| 1 | Nested analyze/buffers, per-node timing OFF | 3284.461 / 52.954 | 3261.785 / 50.964 |
+| 2 | Nested analyze/buffers, per-node timing ON | 60.455 / 58.257 | 58.578 / 56.452 |
+| 3 | Session-pooler, nested analyze/buffers, per-node timing ON | 79.269 / 59.145 | 67.008 / 57.194 |
+
+Slow profile1 places almost all elapsed time in execution of the main nested catalog SQL, not entirely in outer function setup or nested query planning. Authentication expression and dictionary-row helper queries each measured 0.012–0.028 ms for its first call. Main slow plan has shared hits only, no reported disk/temp reads. Instrumentation can affect absolute timings; this does not establish precise uninstrumented overhead or managed CPU pressure. Nested durations are inclusive and must not be summed.
+
+Profiles2/3 expose per-node times but are warm/fast. They show the same three dictionary-entry scans; they do not identify the node responsible for profile1 because per-node timing was disabled there. A slow TIMING ON profile is still required before selecting a node-specific fix. Scope has narrowed from general first-use hypotheses to the actual nested catalog executor interval.
+
+Reproduction instructions and parameter semantics are based on PostgreSQL17 auto_explain documentation: https://www.postgresql.org/docs/17/auto-explain.html . Per-node timing has overhead; keep profiling bounded to isolated QA read calls. Private scripts and redacted captures: `622-release-measurement/catalog-profile-goal/`, `catalog-profile-timing-goal/`, `catalog-profile-session-goal/` in the recovery directory described above. The scripts are preserved as diagnostics, not a generic operational command to run on arbitrary users.
+
+Next: at most a small bounded set of TIMING ON captures around naturally slow calls, aligned with managed resource measurements, or test a candidate query on an isolated representative local database with semantic parity. No speculative production SQL or global logging change has been made.
