@@ -35,3 +35,13 @@ Targeted final UI regression checks: 87 tests passed.
 History browser QA: the existing Statistics → Recent activity panel retains
 its grade/date rows; clicking huis opened its exact Entry in Library and the
 status opened current progress. Final undo-notification checks: 20 passed.
+
+Final contract recovery/checkpoint: the unreleased 218 guard was aligned with
+CI's auth call pattern, its exact checksum updated, and 219/220 bootstrap paths
+made canonical. Disposable SQL remained 356/356. The local DB was backed up,
+recreated from baseline 122, and advanced through the real managed gate to 220
+(readiness 23 ms); original Auth/application data was restored from backup
+without replacing the new genuine deployment receipts. Read-only check passed:
+50 entries, 4 learner states and 1 historical review retained. No production DB
+was accessed by these checks. Initial CI also caught an obsolete 214/#407
+assertion in the standalone deployment-gate tests; it now asserts 220/#623.
