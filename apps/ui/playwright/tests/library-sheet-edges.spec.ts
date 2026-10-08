@@ -28,7 +28,8 @@ for (const width of [390,610]) test(`@pilot Library sheet edge gestures at ${wid
   await handle.press('ArrowUp'); await expect.poll(height).toBeCloseTo(initial+40,0);
   await handle.press('ArrowDown'); await expect.poll(height).toBeCloseTo(initial,0);
   await handle.press('End'); await expect.poll(height).toBeCloseTo(820,0);
-  await handle.press('Home'); await expect.poll(height).toBeCloseTo(initial,0);
+  await handle.press('Home'); await expect.poll(height).toBeCloseTo(240,0);
+  await handle.click(); await expect.poll(height).toBeCloseTo(initial,0);
   let box=(await handle.boundingBox())!;
   await page.mouse.move(box.x+80,box.y+14);await page.mouse.down();
   await page.mouse.move(box.x+80,box.y-100,{steps:4});

@@ -58,3 +58,18 @@ language/theme Report checks passed at 320/844 px. Shared drawer geometry is
 measured in one animation frame, preserving the exact spacing assertions;
 all 36 existing Details checks passed across screen/text/theme combinations.
 Typecheck and lint passed (the existing audio-effect dependency warning remains).
+
+Owner screenshot review caught an outdated SettingsPrototype demonstration
+route (not an application regression): the approved SettingsDestination,
+Appearance/TextSize components, theme and navigation are unchanged from the
+running production commit 94039290. The owner's actual Chrome Settings page
+was used as the reference, including computed Inter typography. Canonical
+3100 now serves the real feature application rather than the old demo route;
+the retired 4188 mock entry redirects to that actual application. The local
+QA Auth refresh-token sequence was advanced to its restored row maximum after
+an OTP mint exposed a backup-restore sequence mismatch; no user rows were edited.
+
+Pilot gesture browser expectations now test the agreed shared behavior:
+Home reaches compact, clicks cycle compact/medium/max, live mouse/touch motion
+follows the pointer and release snaps. Cancellation/capture loss still restores
+the previous height. All five real-navigation pilot checks passed locally.
