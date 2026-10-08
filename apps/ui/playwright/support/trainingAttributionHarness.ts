@@ -603,6 +603,9 @@ export async function setupAuthenticatedTrainingAttributionPage(
         excludedCardKeys.length > 0
       ) {
         if (!sessionOnDemandReady) {
+          // A forced empty result is a prefetch miss; the next selection is
+          // the authoritative on-demand fallback, not another lifecycle miss.
+          if (lifecycleScenariosEnabled) expectOnDemandSelection = true;
           await fulfillJson(route, [], "scheduler-prefetch-miss");
           return;
         }
@@ -700,6 +703,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
         excludedCardKeys.length > 0 &&
         !sessionOnDemandReady
       ) {
+        // An empty prefetch must be followed by a real authoritative selection.
+        if (lifecycleScenariosEnabled) expectOnDemandSelection = true;
         await fulfillJson(route, [], "session-prefetch-miss");
         return;
       }
