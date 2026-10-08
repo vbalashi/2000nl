@@ -439,7 +439,7 @@ test("container client requires a digest and forwards DB settings by name, never
   assert.doesNotMatch(args, /topsecret|postgresql:\/\/|db\.example/);
 });
 
-test("the repository contract enables the reviewed meaning-progress rollout", () => {
+test("the repository contract enables the reviewed catalog rollout", () => {
   const result = spawnSync(
     process.execPath,
     [
@@ -454,7 +454,7 @@ test("the repository contract enables the reviewed meaning-progress rollout", ()
   assert.equal(result.status, 0, result.stderr);
   assert.equal(
     result.stdout.trim(),
-    "enabled 220 623",
+    "enabled 221 413",
   );
 });
 

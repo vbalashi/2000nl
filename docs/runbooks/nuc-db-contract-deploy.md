@@ -758,3 +758,19 @@ After rollout, verify exact health commit/contract, one Learn opening both
 ungraded directions, directional Known with a usable sibling, exact meaning
 exclusion/resume, and History navigation to the Library Entry. UI progress does
 not fabricate grades or include idiom exercise statistics.
+
+## Collection catalog scan (migration 221, issue #413)
+
+Migration 221 replaces only the curated count relation in the migration-203
+catalog RPC. It materializes entry identity and dictionary once, groups selected
+collection memberships by dictionary, and retains the identity guard, browse
+policy, user-owned collection branch, JSON shape and ordering. It changes no
+learner data or scheduling state. Previous app images remain compatible.
+Postflight 221 chains the DB220 checks and pins the catalog security boundary
+and materialized relation. The dedicated Postgres validation compares the actual
+replacement against migration 203 on small and wide fixtures; do not run that
+fixture on the canonical local Supabase postmaster.
+
+Warm-query reduction is established; removal of sporadic multi-second production
+latency is not. After release, remeasure the read-only catalog separately from
+Training start and compare ordinary timings and outliers.
