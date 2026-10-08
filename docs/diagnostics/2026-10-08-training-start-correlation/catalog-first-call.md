@@ -36,3 +36,15 @@ Capture nested statement planning/execution on an actually slow first-use backen
 Private replay scripts, plans and exact-PID wait samples are preserved at:
 `/Users/khrustal/dev/2000nl/.worktrees/.reference-sync-backup-2026-10-08/622-release-measurement/`
 under `catalog-goal/` and `catalog-diagnosis.md`. They contain no tokens, request bodies or dictionary content. No unrestricted raw trace is published.
+
+## Second bounded goal: connection and initialization controls
+
+Three series completed without product/production changes:
+
+1. Read-only profiling capability inspection: auto_explain is preloaded, threshold 10000 ms, nested statements off, analyze off; track_functions=none, track_io_timing=off, pg_stat_statements.track=top. No configured profiling captures the 1.5–4.3 second nested path. This is a capability finding, not a cause. No extension/logging setting was changed.
+2. Three sequential probes with distinct session-pooler backends, holding prior completed clients idle so the next client cannot reuse their backend. Only one catalog query executes at a time; an exact-PID observer samples separately. First/repeat curated times: PID3552264 1501.178/50.626 ms; PID3552265 64.614/50.772 ms; PID3552266 73.525/51.744 ms. These PIDs had newly observed backend_start timestamps. A new backend is not sufficient to cause a slow call. The slow sample again reports cached blocks/JIT off; sampled active waits are empty, not proof of CPU saturation.
+3. Personal-catalog-before-curated control across three distinct backends: personal 26.188–30.427 ms; first curated 51.111–55.294 ms; repeat curated 48.646–52.296 ms. IMPORTANT: these are exactly the SAME three backend PIDs already exercised in series2. They are warmed controls, not evidence that a personal-list preflight fixes first-use latency. Do not add a speculative warm-up request.
+
+Clients closed normally, observers stopped, all transactions rolled back. Deliberate one-second observer-attachment sleeps remain outside EXPLAIN measured durations. Session pooler port5432 tests are not an exact reproduction of REST/pooler routing, and backend first-use does not imply cold shared database cache. No owner/user browser was touched.
+
+Decision unchanged: there is no verified targeted fix. Stop blind repetitions and prioritize a scoped server-side profile of a slow nested call. Existing auto_explain could potentially support a session-specific diagnostic, but availability of its sanitized log output and approved logging/redaction boundary must be established first. A global logging rollout or compute upgrade is not warranted by these samples.
