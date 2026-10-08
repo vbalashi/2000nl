@@ -15,3 +15,11 @@ No UI redesign, SQL/DB/API contract changes, scheduler policy or learning mutati
 ## First checkpoint
 
 Root baseline opt-in benchmark on unchanged merged application source/canonical3100 fails at first accepted-action timing wait while UI advances. Evidence `/tmp/612-telemetry-baseline.log` and Playwright stalled-transition attachment. This establishes a red reproduction; no deadline or budget changes. Independent agents inspect timing identity and propose Library/Training seams; those extractions remain pending until telemetry is accepted.
+
+## Accepted internal designs
+
+Telemetry: the historical selection-ready barrier accepts pre-close events. More importantly, a real immediate post-resume action can run without a speculative nextTransitionId. Allocate the action transition before awaits and carry it through the mutation and actual next presentation, including warm and fallback paths. Close terminal/rejection/cancellation outcomes once; terminal completion is never a substitute for a distinct-next-card ready sample. Existing action idempotency and payloads remain unchanged.
+
+Library: one applied-search lifecycle hook replaces the existing group hook plus top-level freshness/pending/debounce ownership. Preserve the parent-owned DictionarySearchTabState snapshots, cursor lifetime and reopen/preload behavior through a compatibility adapter; do not turn persisted result state into hook-local state. Existing dictionary/list transports remain. Material/catalog readiness, draft filter preview, detail hydration and selection remain outside. Add characterization of in-flight identical Apply, stale collection results, mode switching and deactivation; avoid adding speculative new canonicalization behavior.
+
+Training: pure preflight/snapshot/reconciliation decisions receive values and return bounded outcomes. TrainingScreen remains sole executor of fetches, refs, setters, timers, family-specific restore and side-effect order. Preserve generation/session fences, replan promise coalescing, accepted counters and existing error codes. Characterize pending language/list hydration and accepted-progress preservation before extraction. No second controller.
