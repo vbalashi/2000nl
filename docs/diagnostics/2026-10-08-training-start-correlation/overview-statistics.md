@@ -45,3 +45,8 @@ failed with one speculative read. Exact A/B adoption keeps baseline9 after
 late A due5; pilot first Start baseline7 survives the next scope due15;
 a failed initial read still permits the next success to initialize baseline7.
 Independent code review found no remaining blocker.
+
+Combined validation after merging PR621/main e5e1e4b:113/113 relevant
+unit/component tests,7/7 browser scenarios, typecheck and focused lint pass.
+This includes the ordinary Start telemetry, navigation cancellation, held
+statistics and existing answer attribution. Temporary3101 server stopped.
