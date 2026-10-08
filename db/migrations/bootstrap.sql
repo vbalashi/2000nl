@@ -578,6 +578,6 @@
 \i db/migrations/217_exact_meaning_exclusions.sql
 \i db/migrations/218_meaning_progress_and_resume.sql
 
-\ir 219_meaning_mutation_serialization.sql
+\i db/migrations/219_meaning_mutation_serialization.sql
 
-\ir 220_set_based_meaning_progress.sql
+\i db/migrations/220_set_based_meaning_progress.sql
