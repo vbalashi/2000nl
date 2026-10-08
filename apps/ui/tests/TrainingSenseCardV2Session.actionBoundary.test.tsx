@@ -74,6 +74,8 @@ function acceptedActionResponse() {
   return {
     ok: true,
     status: 200,
+    // The correlated action telemetry reads Server-Timing and request-id headers.
+    headers: new Headers(),
     json: async () => ({
       contractVersion: "platform-action-v2",
       actionId: "review-card",
