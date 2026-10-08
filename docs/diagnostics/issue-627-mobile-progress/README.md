@@ -39,3 +39,15 @@ Local DB221 was applied through the managed forward gate to match the already
 merged #624 reference. This issue changes no DB schema, scheduler or learning state.
 WebKit automation is not a physical iPhone check; home-indicator/notch insets still
 need the owner's real-device confirmation after release.
+
+## Release-check follow-up
+
+Final full CI exposed a pre-existing language-switch race in saved-run
+restoration: the previous list catalogue could briefly report ready after
+the selected language changed. A new hook regression captures every render
+before the deferred target-language catalogue resolves; it failed before
+the fix. The catalogue status now projects its user/language ownership and
+reports loading until the matching observation arrives. All 118 hook, resume
+policy and TrainingScreen checks passed after the fix; typecheck passed.
+Approved concise menu copy required updating two old literal test expectations;
+all 90 exercise and TrainingSenseCard tests passed afterwards.
