@@ -728,6 +728,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
           data-testid="mock-training-sense-card-v2"
           data-training-session-id={trainingSessionId ?? ""}
           data-presentation-identity={presentationIdentity ?? ""}
+          data-initial-review-due={sessionFooter.initialReviewDue ?? ""}
         >
           <span aria-live="polite">
             {focusOnPresentation ? "Next training card" : ""}
@@ -1444,7 +1445,7 @@ test("first-pilot Start reveals the mounted card and closing offers resume", asy
   expect(
     await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ }),
   ).toBeInTheDocument();
-  await waitFor(() => expect(fetchStats).toHaveBeenCalled());
+  expect(fetchStats).not.toHaveBeenCalled();
   expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
   expect(startTrainingSession).not.toHaveBeenCalled();
   expect(fetchTrainingSessionPlan).not.toHaveBeenCalled();
@@ -1610,6 +1611,7 @@ test("first pilot selection starts only after Start and belongs to its run", asy
       ),
     ).not.toBeInTheDocument();
     expect(startCurrentSetup).toBeEnabled();
+    expect(fetchStats).not.toHaveBeenCalled();
     expect(screen.queryByRole("button", { name: /Continue session|Sessie doorgaan/ })).not.toBeInTheDocument();
     expect(screen.queryByTestId("training-card-frame")).not.toBeInTheDocument();
     expect(screen.queryByText("Laden…")).not.toBeInTheDocument();
@@ -1640,10 +1642,12 @@ test("first pilot selection starts only after Start and belongs to its run", asy
       defaultStartedTrainingSession.sessionId,
     );
     expect(screen.queryByRole("heading", { name: "huis" })).not.toBeInTheDocument();
+    expect(fetchStats).not.toHaveBeenCalled();
     await act(async () => resolveFirstCard(mockWord));
     expect(
       await screen.findByRole("heading", { name: "huis" }),
     ).toBeInTheDocument();
+    await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
   } finally {
     fetchNextTrainingWordByScenario.mockReset();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
@@ -1683,7 +1687,8 @@ test("resume scope validation is visible and blocks stats for the pre-resume sco
   expect(fetchStats).not.toHaveBeenCalled();
 
   await act(async () => resolveResume(null));
-  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  await waitFor(() => expect(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ })).toBeEnabled());
+  expect(fetchStats).not.toHaveBeenCalled();
 });
 
 test("resume errors expose an actionable retry instead of waiting forever", async () => {
@@ -1716,31 +1721,32 @@ test("resume errors expose an actionable retry instead of waiting forever", asyn
   await waitFor(() =>
     expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2),
   );
-  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  await waitFor(() => expect(screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ })).toBeEnabled());
+  expect(fetchStats).not.toHaveBeenCalled();
   expect(
     screen.queryByText("Your saved session could not be checked."),
   ).not.toBeInTheDocument();
 });
 
-test("starting while stats are pending reuses the request and keeps counts unknown", async () => {
+test("starting loads stats after the first card and keeps counts unknown while pending", async () => {
   let resolveStats!: (stats: Awaited<ReturnType<typeof fetchStats>>) => void;
   fetchStats.mockImplementation(() => new Promise((resolve) => { resolveStats = resolve; }));
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
   expect(await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ })).toBeInTheDocument();
-  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  expect(fetchStats).not.toHaveBeenCalled();
   const startButton = await screen.findByRole("button", { name: /Start training|Training starten|Начать тренировку/ });
   await waitFor(() => expect(startButton).toBeEnabled());
   expect(screen.queryByText(/0\/2000/)).not.toBeInTheDocument();
   fireEvent.click(startButton);
   expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
   expect(startTrainingSession).toHaveBeenCalledOnce();
-  expect(fetchStats).toHaveBeenCalledOnce();
+  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
   // The approved session surface omits the old stats footer while the read is pending.
   expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
   expect(screen.queryByText(/0\/2000/)).not.toBeInTheDocument();
   await act(async () => resolveStats(defaultTrainingStats));
 });
-test("late stats from the old setup scope cannot replace the current session stats", async () => {
+test("a changed setup scope starts only the committed session stats read", async () => {
   useTwoListScope();
   fetchAvailableLists.mockResolvedValue([activeList, { ...secondaryList, default_scenario_id: "understanding" }, userOwnedList]);
   const requests: Array<{ scope: unknown; resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void }> = [];
@@ -1748,28 +1754,54 @@ test("late stats from the old setup scope cannot replace the current session sta
   try {
     render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
     await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
-    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests).toHaveLength(0);
     fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
     fireEvent.click(await screen.findByRole("button", { name: /^Source / }));
     fireEvent.click(screen.getByRole("button", { name: /secondary list/i }));
-    expect(requests).toHaveLength(1);
+    expect(requests).toHaveLength(0);
     const startButton = screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ });
     await waitFor(() => expect(startButton).toBeEnabled());
     fireEvent.click(startButton);
     expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
-    await waitFor(() => expect(requests).toHaveLength(2));
-    expect(requests[0]!.scope).toEqual(expect.objectContaining({ listId: activeList.id, listType: activeList.type }));
-    expect(requests[1]!.scope).toEqual(expect.objectContaining({ listId: secondaryList.id, listType: secondaryList.type }));
-    await act(async () => requests[1]!.resolve({ ...defaultTrainingStats, newCardsToday: 22 }));
-    await act(async () => requests[0]!.resolve({ ...defaultTrainingStats, newCardsToday: 3 }));
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]!.scope).toEqual(expect.objectContaining({ listId: secondaryList.id, listType: secondaryList.type }));
+    await act(async () => requests[0]!.resolve({ ...defaultTrainingStats, newCardsToday: 22 }));
     expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
-    // No stats footer is rendered in the approved session, so stale counts cannot replace visible state.
     expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
     expect(updateActiveTrainingScope).toHaveBeenCalledWith(expect.objectContaining({ listId: secondaryList.id, listType: secondaryList.type }));
   } finally {
     await act(async () => {
       for (const request of requests) request.resolve(defaultTrainingStats);
     });
+    restoreDefaultListScope();
+  }
+});
+test("the first Start stats baseline survives a later scoped session read", async () => {
+  useTwoListScope();
+  fetchAvailableLists.mockResolvedValue([activeList, { ...secondaryList, default_scenario_id: "understanding" }, userOwnedList]);
+  fetchStats
+    .mockResolvedValueOnce({ ...defaultTrainingStats, reviewCardsDue: 7 })
+    .mockResolvedValueOnce({ ...defaultTrainingStats, reviewCardsDue: 15 });
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    const start = await screen.findByRole("button", { name: /Start training|Training starten|Начать тренировку/ });
+    await waitFor(() => expect(start).toBeEnabled());
+    expect(fetchStats).not.toHaveBeenCalled();
+    fireEvent.click(start);
+    const firstCard = await screen.findByTestId("mock-training-sense-card-v2");
+    await waitFor(() => expect(firstCard).toHaveAttribute("data-initial-review-due", "7"));
+    fireEvent.click(screen.getByRole("button", { name: /Sessie sluiten|Close session|Закрыть сессию/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Source / }));
+    fireEvent.click(screen.getByRole("button", { name: /secondary list/i }));
+    const nextStart = screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ });
+    await waitFor(() => expect(nextStart).toBeEnabled());
+    fireEvent.click(nextStart);
+    const nextCard = await screen.findByTestId("mock-training-sense-card-v2");
+    await waitFor(() => expect(fetchStats).toHaveBeenCalledTimes(2));
+    expect(nextCard).toHaveAttribute("data-initial-review-due", "7");
+    expect(fetchStats.mock.calls[1]?.[2]).toEqual(expect.objectContaining({ listId: secondaryList.id }));
+  } finally {
     restoreDefaultListScope();
   }
 });
@@ -1788,11 +1820,11 @@ test("discarding an uncommitted list draft preserves the active stats request", 
     }) as typeof window.matchMedia;
     render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
     await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
-    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests).toHaveLength(0);
     fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
     fireEvent.click(await screen.findByRole("button", { name: /^Source / }));
     fireEvent.click(screen.getByRole("button", { name: /secondary list/i }));
-    expect(requests).toHaveLength(1); // Draft edits do not commit a new stats scope.
+    expect(requests).toHaveLength(0); // Draft edits do not start a stats read.
     fireEvent.click(screen.getByRole("button", { name: "Back to Training" }));
     await screen.findByRole("button", { name: "Create training" });
     fireEvent.click(await screen.findByRole("button", { name: /Start training|Training starten|Начать тренировку/ }));
@@ -1850,19 +1882,45 @@ test("returning to a pending no-chrome stats scope adopts its original request",
     fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
     fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
     await waitFor(() => expect(requests).toHaveLength(2));
+    const progress = screen.getByRole("contentinfo");
+    await act(async () => requests[1]!.resolve({ ...defaultTrainingStats, newCardsToday: 29, reviewCardsDue: 9 }));
+    await waitFor(() => expect(progress).toHaveTextContent("29"));
+    expect(progress).toHaveTextContent("0/9");
     fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
     fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
     await waitFor(() => expect(requests).toHaveLength(2));
     expect(requests[0]!.scope).toEqual(expect.objectContaining({ listId: activeList.id, listType: activeList.type }));
     expect(requests[1]!.scope).toEqual(expect.objectContaining({ listId: secondaryList.id, listType: secondaryList.type }));
-    const progress = screen.getByRole("contentinfo");
-    await act(async () => requests[0]!.resolve({ ...defaultTrainingStats, newCardsToday: 17 }));
+    await act(async () => requests[0]!.resolve({ ...defaultTrainingStats, newCardsToday: 17, reviewCardsDue: 5 }));
     await waitFor(() => expect(progress).toHaveTextContent("17"));
-    await act(async () => requests[1]!.resolve({ ...defaultTrainingStats, newCardsToday: 29 }));
+    expect(progress).toHaveTextContent("0/9");
+    expect(progress).not.toHaveTextContent("0/5");
     expect(progress).toHaveTextContent("17");
     expect(progress).not.toHaveTextContent("29");
   } finally {
     await act(async () => { for (const request of requests) request.resolve(defaultTrainingStats); });
+    restoreDefaultListScope();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+test("a failed first stats read leaves the review baseline for the next successful scope", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockImplementation(() => new Promise(() => undefined));
+  fetchStats
+    .mockRejectedValueOnce(new Error("stats unavailable"))
+    .mockResolvedValueOnce({ ...defaultTrainingStats, newCardsToday: 12, reviewCardsDue: 7 });
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+    await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+    fireEvent.click(await screen.findByRole("button", { name: "Wijzigen" }));
+    fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
+    await waitFor(() => expect(fetchStats).toHaveBeenCalledTimes(2));
+    const progress = screen.getByRole("contentinfo");
+    await waitFor(() => expect(progress).toHaveTextContent("0/7"));
+    expect(fetchStats.mock.calls[0]?.[3]).toBe("INITIAL LOAD");
+    expect(fetchStats.mock.calls[1]?.[3]).toBe("SCOPE CHANGE");
+  } finally {
     restoreDefaultListScope();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
   }
@@ -1872,16 +1930,20 @@ test("setup and the prepared card stay usable while scoped stats are pending", a
   fetchStats.mockImplementation(() => new Promise((resolve) => { statsRequests.push({ resolve }); }));
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
   expect(await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ })).toBeInTheDocument();
-  await waitFor(() => expect(statsRequests).toHaveLength(1));
-  expect(statsRequests).toHaveLength(1);
+  expect(statsRequests).toHaveLength(0);
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(await screen.findByRole("button", { name: /^Filters / }));
   expect(screen.getByRole("button", { name: "Verbs" })).toBeEnabled();
   const startButton = screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ });
   await waitFor(() => expect(startButton).toBeEnabled());
   expect(startTrainingSession).not.toHaveBeenCalled();
+  expect(statsRequests).toHaveLength(0);
+  fireEvent.click(startButton);
+  expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+  await waitFor(() => expect(statsRequests).toHaveLength(1));
   await act(async () => statsRequests[0]!.resolve(defaultTrainingStats));
-  expect(startTrainingSession).not.toHaveBeenCalled();
+  expect(startTrainingSession).toHaveBeenCalledOnce();
+  expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
 });
 test("resumes a still-active server session after refresh without starting another session", async () => {
   await writeTrainingSessionResume({
@@ -1962,6 +2024,11 @@ test("resumes a still-active server session after refresh without starting anoth
   expect(
     await screen.findByTestId("mock-training-sense-card-v2"),
   ).toBeInTheDocument();
+  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  expect(fetchStats.mock.calls[0]?.[2]).toEqual(expect.objectContaining({
+    listId: "list-1",
+    listType: "curated",
+  }));
   expect(await screen.findByTestId("training-session-position")).toHaveTextContent(
     "2 / 5",
   );
@@ -2767,7 +2834,7 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
   expect(mockV2ProgressAction).not.toHaveBeenCalled();
 });
 
-test("stats errors leave the approved training overview usable without creating a session", async () => {
+test("stats errors leave the prepared card usable after Start", async () => {
   fetchStats.mockImplementation(async () => {
     throw new Error("stats unavailable");
   });
@@ -2776,12 +2843,15 @@ test("stats errors leave the approved training overview usable without creating 
   expect(
     await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ }),
   ).toBeInTheDocument();
-  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  expect(fetchStats).not.toHaveBeenCalled();
   expect(await screen.findByRole("button", { name: /^Edit / })).toBeEnabled();
   expect(startTrainingSession).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: /^Edit / }));
-  expect(await screen.findByRole("heading", { name: /Session builder|Training samenstellen/ })).toBeInTheDocument();
-  expect(startTrainingSession).not.toHaveBeenCalled();
+  const startButton = screen.getByRole("button", { name: /Start training|Training starten|Начать тренировку/ });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  fireEvent.click(startButton);
+  expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  expect(startTrainingSession).toHaveBeenCalledOnce();
 });
 
 test("pilot Start returns to the overview when the replacement queue has no cards", async () => {

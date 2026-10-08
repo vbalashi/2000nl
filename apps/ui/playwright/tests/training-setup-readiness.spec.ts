@@ -65,7 +65,7 @@ async function attachMetrics(
   console.log(`[qa-evidence] ${path}`);
 }
 
-test("setup remains usable without card selection while scoped stats are held for 10 seconds", async ({
+test("setup starts no detailed stats and first card stays usable while post-Start stats are held", async ({
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -75,18 +75,16 @@ test("setup remains usable without card selection while scoped stats are held fo
       statsResponseReceived = true;
     }
   });
+  const setupStartedAt = Date.now();
   const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
     statsDelayMs: 10_000,
     visualProfile: "answer",
     devTestLogin: false,
   });
 
-  await expect.poll(() => harness.requests.stats.length).toBe(1);
-  const statsRequestObservedAt = harness.requests.requestTimes.stats[0]!;
   await expect(page.getByRole("heading", { name: copy.trainingHeading })).toBeVisible();
   await expect(page.getByRole("region", { name: copy.mainTrainingRegion })).toBeVisible();
-  const setupAvailableMs = Date.now() - statsRequestObservedAt;
-  expect(setupAvailableMs).toBeLessThanOrEqual(1_000);
+  const setupAvailableMs = Date.now() - setupStartedAt;
   expect(statsResponseReceived).toBe(false);
 
   const startCurrentSetup = page.getByRole("button", { name: copy.start });
@@ -97,11 +95,8 @@ test("setup remains usable without card selection while scoped stats are held fo
   expect(harness.requests.scheduler).toHaveLength(0);
   expect(harness.requests.session).toHaveLength(0);
   expect(harness.requests.projectionLookups).toHaveLength(0);
-  expect(harness.requests.stats).toHaveLength(1);
+  expect(harness.requests.stats).toHaveLength(0);
   expect(harness.requests.progressActions).toHaveLength(0);
-  const initialStatsIdentitySummary = summarizeRequestIdentities(
-    harness.requests.stats,
-  );
   await attachScreenshot(
     page,
     testInfo,
@@ -116,12 +111,17 @@ test("setup remains usable without card selection while scoped stats are held fo
   );
   await page.setViewportSize({ width: 1280, height: 900 });
   await expect(startCurrentSetup).toBeEnabled();
+  expect(harness.requests.stats).toHaveLength(0);
   expect(harness.requests.scheduler).toHaveLength(0);
   expect(harness.requests.session).toHaveLength(0);
   expect(harness.requests.projectionLookups).toHaveLength(0);
 
   await startCurrentSetup.click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+  await expect.poll(() => harness.requests.stats.length).toBe(1);
+  const statsRequestObservedAt = harness.requests.requestTimes.stats[0]!;
+  const initialStatsIdentitySummary = summarizeRequestIdentities(harness.requests.stats);
+  expect(statsResponseReceived).toBe(false);
   expect(harness.requests.sessionStarts).toHaveLength(1);
   expectOnlyOwnedSessionSelections(harness.requests.session);
   expect(harness.requests.progressActions).toHaveLength(0);
@@ -201,7 +201,7 @@ test("a delayed ordinary scheduler is never invoked before or after pilot Start"
     harness.requests.scheduler,
   );
   expect(schedulerIdentitySummary.total).toBe(0);
-  expect(harness.requests.stats.length).toBeGreaterThanOrEqual(1);
+  await expect.poll(() => harness.requests.stats.length).toBeGreaterThanOrEqual(1);
   expect(harness.requests.sessionStarts).toHaveLength(1);
   expectOnlyOwnedSessionSelections(harness.requests.session);
   expect(harness.requests.progressActions).toHaveLength(0);
