@@ -67,7 +67,7 @@ on this sample alone.
 
 One production QA Start-to-first-card capture, zero answers/grades:
 `bash scripts/latency-audit/run.sh train.mjs 0 0 desktop-start-413`.
-This creates or continues a QA session and is pending explicit owner approval
+This creates or continues a QA session and was explicitly approved by the owner
 under docs/runbooks/production-latency-measurement.md. It mints and revokes the
 QA login via run.sh. Do not run SQL probes concurrently. No owner browser
 session is touched. A stale selector/harness must be repaired and locally
@@ -87,3 +87,59 @@ be selected. Existing selection, privacy and release guardrails remain intact.
 Validation: six scheduler diagnostic/activity sampler tests pass. Raw bounded
 aggregate evidence is in read-only-probe.txt; no request bodies, tokens, card
 content or learner identities are included.
+
+## Approved production Start capture
+
+The owner approved one Start-to-first-card QA run with zero answers/grades.
+An initial harness attempt timed out before clicking Start and revoked its login.
+A read-only page inspection found that the saved destination/default route could
+show Library; explicitly opening `?destination=training` exposed Start training.
+The repaired harness also recognizes Dutch Training starten, closes its browser
+in finally, calls the measured first start `initial` rather than claiming a cold
+cache, and saves explicit click/ready timestamps for future captures.
+
+The one successful Start capture measured **6877ms click-to-first-ready**, with
+**7554ms initial navigation-to-Start-visible** measured separately. It invoked
+scope persistence and one Start RPC; no answer, review, Learn or Known action
+was submitted. Temporary login was successfully revoked. No session credential
+artifacts remain. The created QA Training session itself is not deleted or reset.
+
+| Observed request | End-to-end duration, ms |
+| --- | ---: |
+| update_active_training_scope |1143.003|
+| start_training_session |2424.591|
+| get_next_training_session_card |732.733|
+| /api/platform/v2/lookup |2454.290|
+
+These requests are in the first-card path, largely sequential. Their durations
+sum6754.617ms, close to the6877ms action window, but small overlaps and body/
+completion boundaries mean this is an approximate decomposition, not an exact
+sum of independent spans. The historical slow UI plan query is a different
+RPC from start_training_session; do not call the5382ms probe the SQL execution
+of this captured Start.
+
+Lookup HTTP2454ms exposes route.total2356.8ms, route.auth0.8ms with a cache hit,
+route.operation2354.4ms, exact-group1696.7ms, user-state503.6ms,
+translations655.6ms. Some spans overlap/nest; do not sum Server-Timing values.
+The direct RPCs expose no application SQL breakdown or X-Request-Id. Lookup
+request ID is in qa-start-network.jsonl. This sample points to server operation
+rather than authentication as the dominant lookup cost, not a specific SQL fix.
+
+Background Library search took6152.955ms and began before Start. Availability
+and detailed stats refreshed during first-card acquisition (2430.548/2479.261ms),
+beside the lookup. Records are selected by request-finished time; a request in
+start.net can have begun before the click. The sample establishes overlap, not
+that these calls caused contention or can be removed without reviewing owners.
+Audio resolution and TTS occur after lookup; no answer action was needed.
+
+The raw network record uses the capture version before explicit clickedAtMs/
+readyAtMs fields were added. Its6877ms action duration is measured directly;
+request absolute timestamps are present, but do not invent missing click/
+ready timestamps or align them to database diagnostics from an earlier run.
+
+Next narrow work: trace why inactive Library loads during Training bootstrap
+and whether nonessential stats/availability refreshes can wait for first ready.
+Characterize navigation/state behavior before changing gates. Keep lookup and
+session selection semantics intact. If deferral improves a local stressed
+scenario, request a separately bounded before/after QA capture; one observed
+Start alone is not a stable performance benchmark or proof of resource cause.
