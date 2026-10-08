@@ -696,6 +696,32 @@ export async function setupAuthenticatedTrainingAttributionPage(
       if (options.forceOnDemandLookupEveryAction && excludedCardKeys.length > 0) {
         sessionOnDemandReady = false;
       }
+      if (lifecycleScenariosEnabled && excludedCardKeys.length > 0) {
+        if (expectOnDemandSelection) {
+          expectOnDemandSelection = false;
+        } else {
+          backgroundScenarioIndex += 1;
+          const scenario = (["hit", "miss", "fallback"] as const)[
+            (backgroundScenarioIndex - 1) % 3
+          ]!;
+          acceptedScenario = scenario;
+          if (scenario === "miss") {
+            expectOnDemandSelection = true;
+            await fulfillJson(route, [], "session-prefetch-miss");
+            return;
+          }
+          if (scenario === "fallback") {
+            const nextEntry = sessionMembers.find(
+              (candidate) =>
+                !consumedSessionEntryIds.has(candidate.id) &&
+                !unavailableSessionEntryIds.has(candidate.id) &&
+                !excludedCardKeys.includes(`${candidate.id}:word-to-definition`),
+            );
+            if (nextEntry) failWarmupLookupsForEntries.add(nextEntry.id);
+            expectOnDemandSelection = true;
+          }
+        }
+      }
       const entry = isInvalidPreparedCandidate
         ? invalidEntry!
         : sessionMembers.find(
