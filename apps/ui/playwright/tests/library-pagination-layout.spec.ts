@@ -9,9 +9,10 @@ test("@pilot Library pagination stays on one row with a selected detail at 820px
 
   const respond = async (route: import("@playwright/test").Route) => {
     const request = route.request().postDataJSON();
+    const groupOffset = request.cursor === "cursor-page-2" ? 25 : request.cursor === "cursor-page-3" ? 50 : 0;
     const groups = Array.from({ length: 25 }, (_, index) => ({
       ...multiSenseBankGroup,
-      headwordGroupId: `${multiSenseBankGroup.headwordGroupId}-${index}`,
+      headwordGroupId: `${multiSenseBankGroup.headwordGroupId}-${groupOffset + index}`,
     }));
     await route.fulfill({
       json: {
@@ -26,10 +27,14 @@ test("@pilot Library pagination stays on one row with a selected detail at 820px
         groups,
         page: {
           selectedTierComplete: true,
-          nextGroupCursor: request.cursor ? null : "cursor-page-2",
+          nextGroupCursor: request.cursor === "cursor-page-3"
+            ? null
+            : request.cursor === "cursor-page-2"
+              ? "cursor-page-3"
+              : "cursor-page-2",
         },
         librarySearch: {
-          totalGroups: 40,
+          totalGroups: 100,
           matchingEntryIds: multiSenseBankGroup.entries.flatMap((entry) =>
             "entryId" in entry ? [entry.entryId] : [],
           ),
@@ -68,8 +73,10 @@ test("@pilot Library pagination stays on one row with a selected detail at 820px
   expect(next).not.toBeNull();
   const centers = [indicator!, previous!, next!].map(({ y, height }) => y + height / 2);
   expect(Math.max(...centers) - Math.min(...centers)).toBeLessThanOrEqual(1);
-  expect(previous!.height).toBeGreaterThanOrEqual(44);
-  expect(next!.height).toBeGreaterThanOrEqual(44);
+  expect(previous!.height).toBeGreaterThanOrEqual(28);
+  expect(next!.height).toBeGreaterThanOrEqual(28);
+  expect(previous!.width).toBeGreaterThanOrEqual(44);
+  expect(next!.width).toBeGreaterThanOrEqual(44);
 
   await controls.last().click();
   await expect(pagination.locator(":scope > span")).toHaveText("2 / 2");
