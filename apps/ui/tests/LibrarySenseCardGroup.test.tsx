@@ -17,6 +17,60 @@ import {
 } from "@/lib/platform/fixtures/senseCardV1GateFixture";
 
 describe("LibrarySenseCardGroup", () => {
+  test("clicking a definition opens and closes its meaning without affecting child actions", () => {
+    const onAction = vi.fn();
+    render(<LibrarySenseCardGroup model={buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en")}
+      interfaceLanguage="en" onAction={onAction} />);
+    const card = screen.getByTestId("library-sense-card-entry-bank-finance");
+    const definition = within(card).getByText("een bedrijf dat jouw geld bewaart of waar je geld kunt lenen");
+    const toggle = within(card).getByRole("button", { name: "Expand meaning" });
+    expect(card).toHaveAttribute("data-expanded", "false");
+    fireEvent.click(definition);
+    expect(card).toHaveAttribute("data-expanded", "true");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(within(card).getByRole("button", { name: "Learn" }));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(card).toHaveAttribute("data-expanded", "true");
+    fireEvent.click(card);
+    expect(card).toHaveAttribute("data-expanded", "true");
+    fireEvent.click(definition);
+    expect(card).toHaveAttribute("data-expanded", "false");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(card).toHaveAttribute("data-expanded", "true");
+  });
+
+  test("selecting definition text does not toggle an open meaning", () => {
+    render(<LibrarySenseCardGroup model={buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en")}
+      interfaceLanguage="en" onAction={vi.fn()} />);
+    const card = screen.getByTestId("library-sense-card-entry-bank-finance");
+    const definition = within(card).getByText("een bedrijf dat jouw geld bewaart of waar je geld kunt lenen");
+    fireEvent.click(definition);
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(definition);
+    selection?.addRange(range);
+    try {
+      fireEvent.click(definition);
+      expect(card).toHaveAttribute("data-expanded", "true");
+    } finally {
+      selection?.removeAllRanges();
+    }
+  });
+
+  test("an active meaning can still be collapsed by clicking its definition", () => {
+    const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
+    const activeMeaningId = "entry-bank-finance";
+    const onActiveMeaningChange = vi.fn();
+    render(<LibrarySenseCardGroup model={model} activeMeaningId={activeMeaningId}
+      onActiveMeaningChange={onActiveMeaningChange} interfaceLanguage="en" onAction={vi.fn()} />);
+    const card = screen.getByTestId(`library-sense-card-${activeMeaningId}`);
+    expect(card).toHaveAttribute("data-expanded", "true");
+    fireEvent.click(within(card).getByText("een bedrijf dat jouw geld bewaart of waar je geld kunt lenen"));
+    expect(card).toHaveAttribute("data-expanded", "false");
+    expect(onActiveMeaningChange).toHaveBeenCalledWith(activeMeaningId);
+  });
+
   test("delays the selected meaning until the containing panel has entered", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
     const selected = model.meanings[1].entryId;

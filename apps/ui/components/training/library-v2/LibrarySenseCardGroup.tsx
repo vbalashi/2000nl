@@ -479,9 +479,12 @@ function MeaningCard({
 }) {
   const t = (key: string, variables?: Record<string, string | number>) =>
     platformV2Message(interfaceLanguage, key, variables);
-  const activateCard = () => {
+  const activateCard = (event: React.MouseEvent<HTMLElement>) => {
+    if (window.getSelection()?.toString()) return;
+    if ((event.target as Element).closest("button, a, input, select, textarea, [role='button']")) return;
+    if (state.expanded && !(event.target as Element).closest("[data-meaning-lead]")) return;
     onActiveMeaningChange?.(meaning.entryId);
-    if (!state.expanded) onToggleExpanded();
+    onToggleExpanded();
   };
   const [formsOpen,setFormsOpen]=React.useState(false);
   const formsId=React.useId();
