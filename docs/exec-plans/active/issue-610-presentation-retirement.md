@@ -115,3 +115,21 @@ CI run 37698227186 on `64ff6b6d0bbca881002872445764eb4d54d1135a` completed with 
 The two foreign-owner cases queried Start before the startup gate exposed accessible content; the discard-draft case queried Start synchronously during the asynchronous return transition. `5574df81` adds positive accessible-ready waits in only those tests. Claim failure, no-actionable-card, session identity, one stats request and active scope assertions are retained. No deadlines, production runtime or browser-source changes. Focused CI-mode cases (3/3), the whole TrainingScreen file (78/78), and independent review pass. Browser acceptance at `074fc88b` and live runtime/health smoke at `64ff6b6d` remain applicable because their source has an empty diff after this correction. Fresh submitted-head CI remains the final gate.
 
 Full root `CI=true` Vitest at `5574df81`: **235 files passed, 2,055 tests passed, 339 optional tests skipped**, 126.3 seconds; all 78 TrainingScreen cases pass. This supersedes the earlier unit acceptance for the corrected test source. The change was independently reviewed without findings.
+
+## Resumed single CI blocker — 2026-10-08
+
+Owner resumed the bounded follow-up. The remaining 5-second draft-discard test timeout was reproduced without changing the deadline or removing its Start/adoption leg. Temporary tagged boundary probes under host CPU contention reached Back at 3.855/4.443 seconds and the returned overview at 5.544/5.804 seconds, beyond the test deadline; deferred stats cleanup finishes in milliseconds in green runs. This identifies an aggregate test-budget/animated-transition sensitivity, not a demonstrated hung stats request.
+
+Independent Linux reproduction used a clean tracked `git archive` of `6dedf537`, official `node:20-bookworm` (Node 20.20.2, Linux ARM64), isolated dependencies, no host node_modules/env/DB access. At one CPU, the baseline passed at 4.692 seconds and reproduced the exact 5,000ms timeout at 7.554 seconds. It does not fail on every run. A same-container warm A/B comparison was baseline 4.731 seconds vs candidate 3.500 seconds; four candidate runs passed at 3.448–3.630 seconds. A separate half-CPU startup lookup failure was excluded from the target diagnosis.
+
+Reproduction invocation (from `apps/ui`):
+
+```sh
+CI=true npx vitest run tests/TrainingScreen.test.tsx -t 'discarding an uncommitted list draft preserves the active stats request'
+```
+
+`d7b332bf` changes only that test's exact `prefers-reduced-motion: reduce` query and restores the prior fixture in nested `finally`. All other media queries delegate to the existing fixture. The real component already supports this branch; production code and the 5-second deadline are unchanged. Full Back → Start → card, the single unresolved stats request and active-list scope assertions remain. Normal-motion 100ms holding and initiating-focus restoration still have dedicated `TrainingScreenTransition` tests. Pending stats, list scope and word mocks are restored even if cleanup throws.
+
+Focused host stress passes after the fix; full TrainingScreen CI-mode suite passes 78/78. Independent review found no coverage/global-state blocker. All temporary debug stamps are removed; the isolated Docker container and dependency volume were removed. Original red/green evidence is retained, including the controlled environment/code identity and limitations. Fresh full CI remains the acceptance gate; its verdict is recorded in the issue checkpoint and evidence manifest.
+
+Root full `CI=true` Vitest at `d7b332bf`: **235 files / 2,055 tests passed, 339 optional skipped**, 133.05 seconds. Final typecheck, lint and style audit pass; existing warnings remain. Application and browser source have an empty diff from the preceding accepted checkpoints, so their build/browser evidence remains applicable.
