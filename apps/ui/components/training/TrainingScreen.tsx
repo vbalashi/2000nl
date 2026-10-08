@@ -646,7 +646,6 @@ function TrainingScreenContent({
     async (
       scope?: { listId?: string | null; listType?: WordListType | null },
       logContext?: string,
-      isInitialLoad?: boolean,
     ) => {
       if (!user?.id) return;
       const effectiveListId = scope?.listId ?? wordListId;
@@ -671,6 +670,7 @@ function TrainingScreenContent({
         setStatsReadiness({ key: scopeKey, status: "pending" });
         return;
       }
+      statsInitialFetchPendingRef.current = false;
       const generation = (statsRequestGenerationRef.current += 1);
       const request = {
         userId: user.id,
@@ -728,53 +728,13 @@ function TrainingScreenContent({
         )
       ) return;
 
-      if (isInitialLoad || initialReviewDue === null) {
-        const totalReviewDue = fresh.reviewCardsDone + fresh.reviewCardsDue;
-        setInitialReviewDue(totalReviewDue);
-        trainingDebug.log(
-          `%c 📌 Fixed HERHALING Y = ${totalReviewDue} (session start)`,
-          "color: #f59e0b; font-weight: bold;",
-        );
-      }
+      const totalReviewDue = fresh.reviewCardsDone + fresh.reviewCardsDue;
+      setInitialReviewDue((previous) => previous ?? totalReviewDue);
       setStats(fresh);
       setStatsReadiness({ key: request.scopeKey, status: "ready" });
     },
-    [user?.id, currentTrainingLanguage, enabledModes, wordListId, wordListType, initialReviewDue],
+    [user?.id, currentTrainingLanguage, enabledModes, wordListId, wordListType],
   );
-
-  useEffect(() => {
-    if (
-      !user?.id ||
-      !sessionResumeScopeResolved ||
-      !trainingLanguagesResolved ||
-      !listHydrated ||
-      hydratedLanguage !== currentTrainingLanguage ||
-      listCatalogStatus !== "ready" ||
-      (listOptions.length > 0 && !wordListId) ||
-      statsRequestedKeyRef.current === currentStatsScopeKey
-    ) {
-      return;
-    }
-    const isInitialFetch = statsInitialFetchPendingRef.current;
-    statsInitialFetchPendingRef.current = false;
-    void loadStats(
-      undefined,
-      isInitialFetch ? "INITIAL LOAD" : "SCOPE CHANGE",
-      isInitialFetch,
-    );
-  }, [
-    currentStatsScopeKey,
-    currentTrainingLanguage,
-    hydratedLanguage,
-    listHydrated,
-    listCatalogStatus,
-    listOptions.length,
-    loadStats,
-    sessionResumeScopeResolved,
-    trainingLanguagesResolved,
-    user?.id,
-    wordListId,
-  ]);
 
   const selectionPort = useTrainingTurnSelectionPort({
     userId: user.id,
@@ -1683,6 +1643,42 @@ function TrainingScreenContent({
     startSession,
     setExerciseFamilyForResume,
   } = trainingPilot;
+
+  useEffect(() => {
+    if (
+      !user?.id ||
+      !sessionResumeScopeResolved ||
+      !trainingLanguagesResolved ||
+      !listHydrated ||
+      hydratedLanguage !== currentTrainingLanguage ||
+      listCatalogStatus !== "ready" ||
+      (listOptions.length > 0 && !wordListId) ||
+      statsRequestedKeyRef.current === currentStatsScopeKey ||
+      (trainingTodaySetupEnabled &&
+        (trainingPilot.surface !== "session" || cardPreparationStatus !== "ready"))
+    ) {
+      return;
+    }
+    void loadStats(
+      undefined,
+      statsInitialFetchPendingRef.current ? "INITIAL LOAD" : "SCOPE CHANGE",
+    );
+  }, [
+    cardPreparationStatus,
+    currentStatsScopeKey,
+    currentTrainingLanguage,
+    hydratedLanguage,
+    listHydrated,
+    listCatalogStatus,
+    listOptions.length,
+    loadStats,
+    sessionResumeScopeResolved,
+    trainingLanguagesResolved,
+    trainingPilot.surface,
+    trainingTodaySetupEnabled,
+    user?.id,
+    wordListId,
+  ]);
 
   useEffect(() => {
     if (
