@@ -201,7 +201,7 @@ test("a delayed ordinary scheduler is never invoked before or after pilot Start"
     harness.requests.scheduler,
   );
   expect(schedulerIdentitySummary.total).toBe(0);
-  expect(harness.requests.stats.length).toBeGreaterThanOrEqual(1);
+  await expect.poll(() => harness.requests.stats.length).toBeGreaterThanOrEqual(1);
   expect(harness.requests.sessionStarts).toHaveLength(1);
   expectOnlyOwnedSessionSelections(harness.requests.session);
   expect(harness.requests.progressActions).toHaveLength(0);
