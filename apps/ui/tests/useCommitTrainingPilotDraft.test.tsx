@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { useCommitTrainingPilotDraft } from "@/components/training/pilot/useTrainingPilotController";
 import type { TrainingSetupDraft } from "@/components/training/pilot/TrainingTodaySetup";
@@ -25,6 +25,40 @@ const draft: TrainingSetupDraft = {
   sourceValue: "all",
   sessionSize: 10,
 };
+
+test.each([
+  ["loaded", true, null],
+  ["selection-error", false, "training_load_failed"],
+] as const)("defers Start statistics until the first card settles (%s)", async (outcome, expected, expectedError) => {
+  updateActiveTrainingScope.mockReset().mockResolvedValue({ error: null });
+  startTrainingSession.mockReset().mockResolvedValue({
+    sessionId: "first-card-session", runStatus: "active", plannedTotal: 1,
+  });
+  let resolveWord!: (result: "loaded" | "selection-error") => void;
+  const loadWord = vi.fn().mockImplementation(() => new Promise<"loaded" | "selection-error">((resolve) => {
+    resolveWord = resolve;
+  }));
+  const loadStats = vi.fn().mockImplementation(() => new Promise<void>(() => undefined));
+  const reportError = vi.fn();
+  const { result } = renderHook(() => useCommitTrainingPilotDraft({
+    userId: "user-1", languageCode: "nl", resolveList: () => null,
+    applyListLocally: vi.fn(), applyPreferences: vi.fn(), applyFocusFilter: vi.fn(),
+    resetQueue: vi.fn(), loadStats, loadWord, reportError,
+  }));
+
+  let start!: Promise<boolean>;
+  await act(async () => { start = result.current({ ...draft, materialMode: "all-dictionaries" }); });
+  await waitFor(() => expect(loadWord).toHaveBeenCalledOnce());
+  expect(loadStats).not.toHaveBeenCalled();
+
+  await act(async () => {
+    resolveWord(outcome);
+    expect(await start).toBe(expected);
+  });
+  expect(loadStats).toHaveBeenCalledOnce();
+  expect(loadStats).toHaveBeenCalledWith({ listId: null, listType: null });
+  if (expectedError) expect(reportError).toHaveBeenLastCalledWith(expectedError);
+});
 
 test("missing saved material cannot fall back to the current training scope", async () => {
   startTrainingSession.mockReset();

@@ -238,7 +238,7 @@ export function TrainingTodaySetup({
   const accountMaterial = useAccountMaterial();
   const availabilityRecipe = selectedTraining ?? (!account.snapshot.document.trainings.length ? {languageCode:trainingLanguageCode??"nl",draft:initialDraft} : null);
   const availabilityResult = useTrainingAvailability({ownerId:userId??null,recipe:availabilityRecipe,
-    enabled:screen === "today" && account.status === "ready" && material.status === "ready" &&
+    enabled:screen === "today" && !startPending && account.status === "ready" && material.status === "ready" &&
       Boolean(availabilityRecipe && availabilityRecipe.languageCode === trainingLanguageCode && !pendingLanguage && !isTrainingSetupPaused(availabilityRecipe.draft)),
     refresh:JSON.stringify([account.snapshot.revision,accountMaterial?.snapshot?.revision,ownedSession?.id,ownedSession?.completed,stats.reviewCardsDone,stats.newCardsToday,translationTargetLanguageCode])});
   const availability = availabilityRecipe ? {trainingId:selectedTrainingId??"current-setup",status:availabilityResult.status === "ready"?"ready" as const:availabilityResult.status === "error"?"error" as const:"loading" as const,
