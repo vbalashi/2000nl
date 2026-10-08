@@ -343,15 +343,19 @@ export function useCommitTrainingPilotDraft({
       applyPreferences(draft);
       applyFocusFilter(focusFilter);
       resetQueue();
-      loadStats(scope);
-      const loadResult = await loadWord({
-        scope,
-        queueTurn: "new",
-        scenario: draft.scenarioId,
-        cardFilter: draft.cardFilter,
-        focusFilter,
-        trainingSessionId: session.sessionId,
-      });
+      let loadResult: LoadNextTrainingTurnResult;
+      try {
+        loadResult = await loadWord({
+          scope,
+          queueTurn: "new",
+          scenario: draft.scenarioId,
+          cardFilter: draft.cardFilter,
+          focusFilter,
+          trainingSessionId: session.sessionId,
+        });
+      } finally {
+        loadStats(scope);
+      }
       if (isTrainingLoadFailure(loadResult)) reportError("training_load_failed");
       return loadResult === "loaded";
     },

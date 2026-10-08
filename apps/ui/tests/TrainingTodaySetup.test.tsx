@@ -6,7 +6,8 @@ import {
   type TrainingSetupDraft,
 } from "@/components/training/pilot/TrainingTodaySetup";
 import type { TrainingSetupsDocument, TrainingSetupsSnapshot } from "@/lib/training/setups/model";
-vi.mock("@/lib/training/availability/useTrainingAvailability",()=>({useTrainingAvailability:()=>({status:"ready",value:{dueToday:8,totalReviews:120,newCards:20,studyDay:"2026-10-03",timezone:"Europe/Amsterdam",asOf:"2026-10-03T10:00:00Z"},refreshing:false,refreshFailed:false,reload:vi.fn()})}));
+const { availabilityRequests } = vi.hoisted(() => ({ availabilityRequests: vi.fn() }));
+vi.mock("@/lib/training/availability/useTrainingAvailability",()=>({useTrainingAvailability:(input: { enabled: boolean })=>{availabilityRequests(input);return {status:"ready",value:{dueToday:8,totalReviews:120,newCards:20,studyDay:"2026-10-03",timezone:"Europe/Amsterdam",asOf:"2026-10-03T10:00:00Z"},refreshing:false,refreshFailed:false,reload:vi.fn()};}}));
 const { accounts } = vi.hoisted(() => ({ accounts: new Map<string, TrainingSetupsSnapshot>() }));
 vi.mock("@/lib/training/setups/client", () => ({
   fetchAccountTrainingSetups: async (userId: string) => accounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } },
@@ -22,7 +23,7 @@ const dialogPrototype=HTMLDialogElement.prototype;
 const showModalDescriptor=Object.getOwnPropertyDescriptor(dialogPrototype,"showModal"),closeDescriptor=Object.getOwnPropertyDescriptor(dialogPrototype,"close");
 beforeAll(()=>{Object.defineProperties(dialogPrototype,{showModal:{configurable:true,value(){this.setAttribute("open","");}},close:{configurable:true,value(){this.removeAttribute("open");}}});});
 afterAll(()=>{if(showModalDescriptor)Object.defineProperty(dialogPrototype,"showModal",showModalDescriptor);else Reflect.deleteProperty(dialogPrototype,"showModal");if(closeDescriptor)Object.defineProperty(dialogPrototype,"close",closeDescriptor);else Reflect.deleteProperty(dialogPrototype,"close");});
-beforeEach(() => {accounts.clear();vi.stubGlobal("matchMedia",vi.fn(()=>({matches:true,addEventListener:vi.fn(),removeEventListener:vi.fn()})));});
+beforeEach(() => {accounts.clear();availabilityRequests.mockClear();vi.stubGlobal("matchMedia",vi.fn(()=>({matches:true,addEventListener:vi.fn(),removeEventListener:vi.fn()})));});
 const seedAccount = (userId: string, trainings: unknown[]) => accounts.set(userId, { revision: 0, document: { schemaVersion: 1, trainings: trainings.map((item: any) => ({ ...item, languageCode: "nl" })), mainTrainingId: null } });
 
 const initialDraft: TrainingSetupDraft = {
@@ -158,6 +159,19 @@ test("a pending Start stays disabled until its first request completes", async (
   expect(start).toBeDisabled();
   fireEvent.click(start);
   expect(onStart).not.toHaveBeenCalled();
+});
+
+test("overview availability pauses for an in-flight Start and resumes on settle", async () => {
+  const props = { ...baseProps, userId: "availability-start", trainingLanguageCode: "nl", hasOwnedSession: false };
+  const view = render(<TrainingTodaySetup {...props} />);
+  await screen.findByRole("button", { name: "Create training" });
+  await waitFor(() => expect(availabilityRequests).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: true })));
+
+  view.rerender(<TrainingTodaySetup {...props} startPending />);
+  expect(availabilityRequests).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: false }));
+
+  view.rerender(<TrainingTodaySetup {...props} startPending={false} />);
+  expect(availabilityRequests).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: true }));
 });
 
 test("Back discards builder edits before another training is created", async () => {
