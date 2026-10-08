@@ -1351,6 +1351,8 @@ function buildCausalAttribution(
     observedCategoryDurations[category] = unionDuration(intervals);
   }
   const criticalStages = [
+    "training.scope-commit",
+    "training.session-start",
     "review.mutation",
     "next-card.selection",
     "preparation.total",
@@ -1623,6 +1625,7 @@ function summarizeDurations(values: number[]): DurationSummary {
 
 function classifyTrainingStage(stage: string): TrainingAttributionCategory | null {
   if (stage === "auth.session") return "auth";
+  if (stage === "training.scope-commit" || stage === "training.session-start") return "mutation";
   if (stage.startsWith("training.")) return "hydration";
   if (
     stage === "next-card.selection" ||

@@ -1,7 +1,8 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { expect, test, vi } from "vitest";
-import { useCommitTrainingPilotDraft } from "@/components/training/pilot/useTrainingPilotController";
+import { afterEach, expect, test, vi } from "vitest";
+import { useCommitTrainingPilotDraft, useTrainingPilotController } from "@/components/training/pilot/useTrainingPilotController";
 import type { TrainingSetupDraft } from "@/components/training/pilot/TrainingTodaySetup";
+import { beginTrainingUserTransition, claimTrainingEntryPresentation, recordTrainingEntryRendered } from "@/lib/training/trainingTransitionTiming";
 
 const { startTrainingSession, startIdiomSession, startTranslationSession, updateActiveTrainingScope } = vi.hoisted(() => ({
   startTrainingSession: vi.fn(),
@@ -15,6 +16,16 @@ vi.mock("@/lib/trainingService", () => ({
   updateActiveTrainingScope,
 }));
 
+afterEach(() => { vi.restoreAllMocks(); });
+
+function transitionEvents(dispatch: { mock: { calls: [Event][] } }) {
+  return dispatch.mock.calls.flatMap(([event]) =>
+    event instanceof CustomEvent && event.type === "2000nl:training-transition-timing"
+      ? [event.detail as { transitionId: string; stage: string; outcome: string }]
+      : [],
+  );
+}
+
 const draft: TrainingSetupDraft = {
   scenarioId: "understanding",
   modes: ["word-to-definition"],
@@ -25,6 +36,222 @@ const draft: TrainingSetupDraft = {
   sourceValue: "all",
   sessionSize: 10,
 };
+
+test("ordinary Start keeps one diagnostic identity across scope, session, selection and card readiness", async () => {
+  updateActiveTrainingScope.mockReset().mockResolvedValue({ error: null });
+  startTrainingSession.mockReset().mockResolvedValue({
+    sessionId: "server-session", runStatus: "active", plannedTotal: 1,
+  });
+  const dispatch = vi.spyOn(window, "dispatchEvent");
+  const loadWord = vi.fn().mockResolvedValue("loaded");
+  const { result } = renderHook(() => useCommitTrainingPilotDraft({
+    userId: "user-1", languageCode: "nl", resolveList: () => null,
+    applyListLocally: vi.fn(), applyPreferences: vi.fn(), applyFocusFilter: vi.fn(),
+    resetQueue: vi.fn(), loadStats: vi.fn(), loadWord, reportError: vi.fn(),
+  }));
+  beginTrainingUserTransition("start-diagnostic", "start");
+
+  await act(async () => {
+    expect(await result.current({ ...draft, materialMode: "all-dictionaries" }, undefined, undefined, "start-diagnostic")).toBe(true);
+  });
+
+  expect(transitionEvents(dispatch).map(({ stage }) => stage)).toEqual([
+    "transition.start", "training.scope-commit", "training.session-start",
+  ]);
+  expect(loadWord).toHaveBeenCalledWith(expect.objectContaining({
+    trainingSessionId: "server-session", transitionId: "start-diagnostic",
+  }));
+  const requestId = startTrainingSession.mock.calls[0]?.[3];
+  expect(requestId).toEqual(expect.any(String));
+  expect(requestId).not.toBe("start-diagnostic");
+  expect(startTrainingSession.mock.calls[0]?.[2]).not.toHaveProperty("transitionId");
+  expect(updateActiveTrainingScope.mock.calls[0]?.[0]).not.toHaveProperty("transitionId");
+  expect(transitionEvents(dispatch)).not.toContainEqual(expect.objectContaining({ stage: "transition.total" }));
+
+  claimTrainingEntryPresentation("word-1", "start-diagnostic");
+  recordTrainingEntryRendered("word-1");
+  recordTrainingEntryRendered("word-1");
+  expect(transitionEvents(dispatch)).toContainEqual(expect.objectContaining({
+    transitionId: "start-diagnostic", stage: "transition.total", outcome: "start-ready",
+  }));
+  expect(transitionEvents(dispatch).filter(({ stage }) => stage === "transition.total")).toHaveLength(1);
+});
+
+test("an empty ordinary plan closes Start timing without a ready card", async () => {
+  updateActiveTrainingScope.mockReset().mockResolvedValue({ error: null });
+  startTrainingSession.mockReset().mockResolvedValue({ sessionId: "empty", runStatus: "active", plannedTotal: 0 });
+  const dispatch = vi.spyOn(window, "dispatchEvent");
+  const loadWord = vi.fn();
+  const { result } = renderHook(() => useCommitTrainingPilotDraft({
+    userId: "user-1", languageCode: "nl", resolveList: () => null,
+    applyListLocally: vi.fn(), applyPreferences: vi.fn(), applyFocusFilter: vi.fn(),
+    resetQueue: vi.fn(), loadStats: vi.fn(), loadWord, reportError: vi.fn(),
+  }));
+  beginTrainingUserTransition("start-empty", "start");
+  await act(async () => {
+    expect(await result.current({ ...draft, materialMode: "all-dictionaries" }, undefined, undefined, "start-empty")).toBe(false);
+  });
+  expect(loadWord).not.toHaveBeenCalled();
+  expect(transitionEvents(dispatch)).toContainEqual(expect.objectContaining({
+    transitionId: "start-empty", stage: "transition.total", outcome: "start-empty-plan",
+  }));
+  expect(transitionEvents(dispatch)).not.toContainEqual(expect.objectContaining({ stage: "card.render" }));
+});
+
+test("a rejected scope closes Start timing before any session RPC", async () => {
+  updateActiveTrainingScope.mockReset().mockResolvedValue({ error: "unavailable" });
+  startTrainingSession.mockReset();
+  const dispatch = vi.spyOn(window, "dispatchEvent");
+  const { result } = renderHook(() => useCommitTrainingPilotDraft({
+    userId: "user-1", languageCode: "nl", resolveList: () => null,
+    applyListLocally: vi.fn(), applyPreferences: vi.fn(), applyFocusFilter: vi.fn(),
+    resetQueue: vi.fn(), loadStats: vi.fn(), loadWord: vi.fn(), reportError: vi.fn(),
+  }));
+  beginTrainingUserTransition("start-scope-rejected", "start");
+  await act(async () => {
+    expect(await result.current({ ...draft, materialMode: "all-dictionaries" }, undefined, undefined, "start-scope-rejected")).toBe(false);
+  });
+  expect(startTrainingSession).not.toHaveBeenCalled();
+  expect(transitionEvents(dispatch)).toContainEqual(expect.objectContaining({
+    transitionId: "start-scope-rejected", stage: "transition.total", outcome: "start-scope-error",
+  }));
+});
+
+test("a failed session RPC closes Start timing without changing its request UUID", async () => {
+  updateActiveTrainingScope.mockReset().mockResolvedValue({ error: null });
+  startTrainingSession.mockReset().mockRejectedValue(new Error("training_material_unavailable"));
+  const dispatch = vi.spyOn(window, "dispatchEvent");
+  const reportError = vi.fn();
+  const { result } = renderHook(() => useCommitTrainingPilotDraft({
+    userId: "user-1", languageCode: "nl", resolveList: () => null,
+    applyListLocally: vi.fn(), applyPreferences: vi.fn(), applyFocusFilter: vi.fn(),
+    resetQueue: vi.fn(), loadStats: vi.fn(), loadWord: vi.fn(), reportError,
+  }));
+  beginTrainingUserTransition("start-session-failed", "start");
+  await act(async () => {
+    expect(await result.current({ ...draft, materialMode: "all-dictionaries" }, undefined, undefined, "start-session-failed")).toBe(false);
+  });
+  expect(reportError).toHaveBeenCalledWith("training_material_unavailable");
+  expect(startTrainingSession.mock.calls[0]?.[3]).toEqual(expect.any(String));
+  expect(startTrainingSession.mock.calls[0]?.[3]).not.toBe("start-session-failed");
+  expect(transitionEvents(dispatch)).toContainEqual(expect.objectContaining({
+    transitionId: "start-session-failed", stage: "training.session-start", outcome: "failed",
+  }));
+  expect(transitionEvents(dispatch)).toContainEqual(expect.objectContaining({
+    transitionId: "start-session-failed", stage: "transition.total", outcome: "start-session-error",
+  }));
+});
+
+test("accepted Start blocks a duplicate and unmount closes its diagnostic once", async () => {
+  const dispatch = vi.spyOn(window, "dispatchEvent");
+  let resolveCommit!: (committed: boolean) => void;
+  const onCommitDraft = vi.fn().mockImplementation(() => new Promise<boolean>((resolve) => {
+    resolveCommit = resolve;
+  }));
+  const loadTrainingScenarios = vi.fn().mockResolvedValue([{
+    id: "understanding", enabled: true, nameEn: "Meaning", cardModes: ["word-to-definition"],
+    graduationThreshold: 0, sortOrder: 0,
+  }]);
+  const { result, unmount } = renderHook(() => useTrainingPilotController({
+    enabled: true, interfaceLanguage: "en", setupPrerequisites: "ready",
+    activeScenario: "understanding", enabledModes: ["word-to-definition"],
+    cardFilter: "both", activeListValue: "curated:nt2", newReviewRatio: 2,
+    sessionSize: 10, focusFilter: { dateWindow: "all" },
+    listOptions: [{ value: "curated:nt2", label: "NT2 2000" }],
+    dictionaryOptions: [], sourceOptions: [], onCommitDraft, onRetry: vi.fn(),
+    loadTrainingScenarios,
+  }));
+  await waitFor(() => expect(result.current.scenarioLoading).toBe(false));
+  let start!: Promise<boolean>;
+  act(() => { start = result.current.startSession({ ...draft, listValue: "curated:nt2" }); });
+  expect(onCommitDraft).toHaveBeenCalledOnce();
+  const transitionId = onCommitDraft.mock.calls[0]?.[3];
+  expect(transitionId).toMatch(/^training-/);
+  expect(transitionEvents(dispatch)).toContainEqual(expect.objectContaining({
+    transitionId, stage: "transition.start", outcome: "start",
+  }));
+  expect(await result.current.startSession({ ...draft, listValue: "curated:nt2" })).toBe(false);
+  expect(onCommitDraft).toHaveBeenCalledOnce();
+
+  unmount();
+  expect(transitionEvents(dispatch)).toContainEqual(expect.objectContaining({
+    transitionId, stage: "transition.total", outcome: "start-cancelled",
+  }));
+  resolveCommit(true);
+  expect(await start).toBe(true);
+  expect(transitionEvents(dispatch).filter(({ stage }) => stage === "transition.total")).toHaveLength(1);
+});
+
+test("a later accepted Start closes an unfinished earlier diagnostic before claiming its card", async () => {
+  const dispatch = vi.spyOn(window, "dispatchEvent");
+  const onCommitDraft = vi.fn().mockResolvedValue(true);
+  const loadTrainingScenarios = vi.fn().mockResolvedValue([{
+    id: "understanding", enabled: true, nameEn: "Meaning", cardModes: ["word-to-definition"],
+    graduationThreshold: 0, sortOrder: 0,
+  }]);
+  const { result, unmount } = renderHook(() => useTrainingPilotController({
+    enabled: true, interfaceLanguage: "en", setupPrerequisites: "ready",
+    activeScenario: "understanding", enabledModes: ["word-to-definition"],
+    cardFilter: "both", activeListValue: "curated:nt2", newReviewRatio: 2,
+    sessionSize: 10, focusFilter: { dateWindow: "all" },
+    listOptions: [{ value: "curated:nt2", label: "NT2 2000" }],
+    dictionaryOptions: [], sourceOptions: [], onCommitDraft, onRetry: vi.fn(),
+    loadTrainingScenarios,
+  }));
+  await waitFor(() => expect(result.current.scenarioLoading).toBe(false));
+  const selected = { ...draft, listValue: "curated:nt2" };
+  await act(async () => { expect(await result.current.startSession(selected)).toBe(true); });
+  const firstId = onCommitDraft.mock.calls[0]?.[3];
+  expect(firstId).toMatch(/^training-/);
+  await act(async () => { expect(await result.current.startSession(selected)).toBe(true); });
+  const secondId = onCommitDraft.mock.calls[1]?.[3];
+  expect(secondId).toMatch(/^training-/);
+  expect(secondId).not.toBe(firstId);
+  expect(transitionEvents(dispatch)).toContainEqual(expect.objectContaining({
+    transitionId: firstId, stage: "transition.total", outcome: "start-cancelled",
+  }));
+  claimTrainingEntryPresentation("word-1", secondId);
+  recordTrainingEntryRendered("word-1");
+  unmount();
+  expect(transitionEvents(dispatch).filter(({ stage }) => stage === "transition.total")).toEqual([
+    expect.objectContaining({ transitionId: firstId, outcome: "start-cancelled" }),
+    expect.objectContaining({ transitionId: secondId, outcome: "start-ready" }),
+  ]);
+});
+
+test("leaving Training cancels Start timing before a hidden card can report ready", async () => {
+  const dispatch = vi.spyOn(window, "dispatchEvent");
+  const onCommitDraft = vi.fn().mockResolvedValue(true);
+  const loadTrainingScenarios = vi.fn().mockResolvedValue([{
+    id: "understanding", enabled: true, nameEn: "Meaning", cardModes: ["word-to-definition"],
+    graduationThreshold: 0, sortOrder: 0,
+  }]);
+  const { result, rerender } = renderHook(
+    ({ presentationActive }: { presentationActive: boolean }) => useTrainingPilotController({
+      enabled: true, presentationActive, interfaceLanguage: "en", setupPrerequisites: "ready",
+      activeScenario: "understanding", enabledModes: ["word-to-definition"],
+      cardFilter: "both", activeListValue: "curated:nt2", newReviewRatio: 2,
+      sessionSize: 10, focusFilter: { dateWindow: "all" },
+      listOptions: [{ value: "curated:nt2", label: "NT2 2000" }],
+      dictionaryOptions: [], sourceOptions: [], onCommitDraft, onRetry: vi.fn(),
+      loadTrainingScenarios,
+    }),
+    { initialProps: { presentationActive: true } },
+  );
+  await waitFor(() => expect(result.current.scenarioLoading).toBe(false));
+  await act(async () => {
+    expect(await result.current.startSession({ ...draft, listValue: "curated:nt2" })).toBe(true);
+  });
+  const transitionId = onCommitDraft.mock.calls[0]?.[3];
+  expect(transitionId).toMatch(/^training-/);
+
+  rerender({ presentationActive: false });
+  claimTrainingEntryPresentation("word-hidden", transitionId);
+  recordTrainingEntryRendered("word-hidden");
+  expect(transitionEvents(dispatch).filter(({ stage }) => stage === "transition.total")).toEqual([
+    expect.objectContaining({ transitionId, outcome: "start-cancelled" }),
+  ]);
+});
 
 test.each([
   ["loaded", true, null],

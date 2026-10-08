@@ -1597,6 +1597,7 @@ function TrainingScreenContent({
       : "pending";
   const trainingPilot = useTrainingPilotController({
     enabled: trainingTodaySetupEnabled,
+    presentationActive: visibleDestination === "training",
     translationTargetLanguageCode: translationLang === "off" ? null : translationLang,
     interfaceLanguage: onboardingLang,
     setupPrerequisites: trainingSetupPrerequisites,
