@@ -10,3 +10,6 @@ Accepted direction from current app/PWA standards: Inter regular wordmark, neutr
 
 ## Owner email review
 Owner selected English as the initial language and asked to review templates together before applying them. English magic-link/code, first-entry confirmation and recovery previews are available at localhost:4185. Language-aware delivery is proposed future work and requires agreeing how language is captured and maintained; no language metadata is sent by this slice. Existing production templates are untouched.
+
+## Email copy refinement
+Owner clarified that NL means New Language and the app covers any learning language, not Dutch/Netherlands. Remove instructional intro lines and Dutch marketing footer from auth emails. Keep concise single-use/link fallback details and unrequested-email footer. Requested copy action cannot run inside standard email clients because scripts/clipboard handlers are unsupported; code remains standalone selectable text, with user-select:all as progressive enhancement only. No inert copy button will be shipped.
