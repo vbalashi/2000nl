@@ -214,3 +214,11 @@ test("aborts the history transport when leaving the destination", async () => {
   view.rerender(<TrainingHistoryDestination {...props} open={false} />);
   expect(transportSignal?.aborted).toBe(true);
 });
+
+test('links the existing history row to its exact current meaning',async()=>{
+ const item={activityId:'exact-meaning-history',entryId:'meaning-two',headword:'bank',partOfSpeech:'zn',reviewResult:'review_success',cardTypeId:'definition-to-word',reviewedAt:'2026-10-08T10:00:00Z'};
+ fetchRecentTrainingHistory.mockResolvedValueOnce({items:[item],hasMore:false});const onOpenMeaning=vi.fn();
+ render(<TrainingHistoryDestination open userId="history-navigation-owner" interfaceLanguage="en" onReturnToTraining={()=>{}} onOpenMeaning={onOpenMeaning}/>);
+ await userEvent.click(await screen.findByRole('button',{name:'bank'}));expect(onOpenMeaning).toHaveBeenCalledWith(item);
+ expect(screen.getByText('Good')).toBeInTheDocument();
+});

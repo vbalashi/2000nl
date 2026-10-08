@@ -114,9 +114,9 @@ describeIfDb('headword exclusion availability',()=>{
    const before=(await client.query('select to_jsonb(s) state from user_card_status s where user_id=$1',[userId])).rows;
    const eventId=randomUUID(),mark=await action(client,userId,entries[0],eventId);
    expect(mark).toMatchObject({status:'accepted',excluded:true,consumption:null,family:'meaning'});
-   for(const entry of entries){
-    expect(await excluded(client,userId,entry,'word-to-definition')).toBe(true);
-    expect(await excluded(client,userId,entry,'definition-to-word')).toBe(true);
+   for(const [index,entry] of entries.entries()){
+    expect(await excluded(client,userId,entry,'word-to-definition')).toBe(index===0);
+    expect(await excluded(client,userId,entry,'definition-to-word')).toBe(index===0);
     expect(await excluded(client,userId,entry,'listen-recognize')).toBe(false);
     expect(await excluded(client,userId,entry,'listen-type')).toBe(false);
     expect(await excluded(client,userId,entry,'direct','idiom')).toBe(false);
@@ -131,17 +131,17 @@ describeIfDb('headword exclusion availability',()=>{
     select dictionary_id,identity_scheme_version,$2,source_group_key,3,$3,'active',first_seen_run_id,last_seen_run_id,
      manifest_checksum,content_fingerprint_version,$2,identity_evidence,reconciliation_decision
     from private.source_entry_bindings where word_entry_id=$1 and binding_state='active'`,[entries[0],randomUUID(),later]);
-   expect(await excluded(client,userId,later,'word-to-definition')).toBe(true);
-   expect(await excluded(client,userId,later,'definition-to-word')).toBe(true);
+   expect(await excluded(client,userId,later,'word-to-definition')).toBe(false);
+   expect(await excluded(client,userId,later,'definition-to-word')).toBe(false);
    const candidates=(await client.query(`select entry_id from private.training_scheduler_candidates_v2(
     $1,ARRAY['word-to-definition','definition-to-word'],null,'curated','both','auto',
     ARRAY[]::uuid[],ARRAY[]::text[],'{}',false,false)`,[userId])).rows;
-   expect(candidates.some(row=>[...entries,later].includes(row.entry_id))).toBe(false);
+   expect(candidates.some(row=>row.entry_id===entries[0])).toBe(false);
 
    expect((await client.query('select to_jsonb(s) state from user_card_status s where user_id=$1',[userId])).rows).toEqual(before);
    expect((await client.query('select count(*)::int count from user_card_known_marks where user_id=$1',[userId])).rows[0].count).toBe(0);
-   // Restore can be addressed through another meaning, but requires this exact mark.
-   expect((await action(client,userId,entries[1],randomUUID(),mark.exclusionId)).excluded).toBe(false);
+   // Restore addresses the exact initiating meaning.
+   expect((await action(client,userId,entries[0],randomUUID(),mark.exclusionId)).excluded).toBe(false);
    expect(await excluded(client,userId,entries[0],'word-to-definition')).toBe(false);
    expect((await action(client,userId,entries[0],eventId)).status).toBe('duplicate');
    expect(await excluded(client,userId,entries[1],'definition-to-word')).toBe(false);
@@ -151,6 +151,17 @@ describeIfDb('headword exclusion availability',()=>{
    await client.query('savepoint conflict');
    await expect(action(client,userId,entries[1],eventId)).rejects.toThrow('exclusion_idempotency_conflict');
    await client.query('rollback to savepoint conflict');
+  },userId);
+ });
+ test('resume clears exact meaning exclusion and both Known marks without changing ratings',async()=>{
+  const userId=randomUUID();await withTransaction(pool,async client=>{
+   await ensureUserWithSettings(client,userId);const entry=await insertWord(client,`excluded-resume-${randomUUID()}`);await bindSourceEntries(client,[entry]);
+   for(const type of ['word-to-definition','definition-to-word'])await client.query(`select perform_platform_v2_card_action($1,'mark-known',$2,$3,COALESCE((select state_revision::text from user_card_status where user_id=$1 and entry_id=$2 and card_type_id=$3),'untracked'),null,null,null,$4,null,'first_party',null)`,[userId,entry,type,randomUUID()]);
+   const mark=await action(client,userId,entry,randomUUID());expect(mark.excluded).toBe(true);
+   const before=(await client.query('select get_meaning_learning_progress_v1($1) progress',[entry])).rows[0].progress;
+   const result=(await client.query('select resume_meaning_learning_as_principal_v1($1,$2,$3,$4) result',[userId,entry,before.revision,randomUUID()])).rows[0].result;
+   expect(result.progress.exclusionId).toBeNull();expect(result.progress.directions.every((d:{knownMarkId:string|null;phase:string;gradedAttempts:number})=>d.knownMarkId===null&&d.phase==='learning'&&d.gradedAttempts===0)).toBe(true);
+   expect((await client.query('select count(*)::int n from user_review_log where user_id=$1',[userId])).rows[0].n).toBe(0);
   },userId);
  });
  test('unbound entries cannot invent a headword identity',async()=>{
@@ -164,7 +175,7 @@ describeIfDb('headword exclusion availability',()=>{
    expect((await client.query('select count(*)::int count from private.training_headword_exclusion_events where user_id=$1',[userId])).rows[0].count).toBe(0);
   },userId);
  });
- test('an in-flight headword exclusion serializes a review of a sibling meaning',async()=>{
+ test('an in-flight meaning exclusion serializes and rejects a review of that meaning',async()=>{
   const userId=randomUUID(),setup=await pool.connect(),excluding=await pool.connect(),reviewing=await pool.connect();
   try {
    await setup.query('begin');await ensureUserWithSettings(setup,userId);
@@ -174,7 +185,7 @@ describeIfDb('headword exclusion availability',()=>{
    await reviewing.query('begin');await reviewing.query("select set_config('request.jwt.claim.sub',$1,true)",[userId]);
    await reviewing.query("set local statement_timeout='2s'");
    let settled=false;
-   const pending=reviewing.query("select public.handle_card_review($1,$2,'definition-to-word','success',$3)",[userId,entries[1],randomUUID()])
+   const pending=reviewing.query("select public.handle_card_review($1,$2,'definition-to-word','success',$3)",[userId,entries[0],randomUUID()])
     .then(()=>{settled=true;return 'accepted';},(error:Error)=>{settled=true;return error.message;});
    await new Promise(resolve=>setTimeout(resolve,50));expect(settled).toBe(false);
    await excluding.query('commit');expect(await pending).toContain('training_pair_excluded');
@@ -188,7 +199,7 @@ describeIfDb('headword exclusion availability',()=>{
   }
  });
 
- test('Training consumes only the owned current member and reports a queued sibling unavailable',async()=>{
+ test('Training consumes only the excluded meaning and keeps a queued sibling available',async()=>{
   const userId=randomUUID();
   await withTransaction(pool,async client=>{
    await ensureUserWithSettings(client,userId);
@@ -211,7 +222,7 @@ describeIfDb('headword exclusion availability',()=>{
    const members=(await client.query('select ordinal,consumed_at from training_session_members where session_id=$1 order by ordinal',[session])).rows;
    expect(members[0].consumed_at).not.toBeNull();expect(members[1].consumed_at).toBeNull();
    expect((await client.query('select get_next_training_session_card($1,$2) card',[userId,session])).rows[0].card)
-    .toMatchObject({trainingSessionUnavailable:true,entryId:entries[1],reason:'pair-excluded'});
+    .toMatchObject({id:entries[1],trainingSessionOrdinal:2});
    expect((await client.query('select count(*)::int count from user_card_status where user_id=$1',[userId])).rows[0].count).toBe(0);
    await action(client,userId,entries[0],randomUUID(),mark.exclusionId);
    expect((await client.query('select ordinal,consumed_at from training_session_members where session_id=$1 order by ordinal',[session])).rows).toEqual(members);

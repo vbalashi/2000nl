@@ -1,3 +1,4 @@
+import type {MeaningLearningProgress} from '../../../../../packages/shared/types/meaningLearningProgress';
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -43,6 +44,7 @@ export type LibraryMutationCapability =
 export type LibrarySenseContent = PlatformV2SenseContentNode;
 
 export type LibrarySenseCardModel = {
+  meaningProgress?: MeaningLearningProgress;
   entryId: string;
   wordDetails?: PlatformWordDetailsV2;
   cardTypeId: CardTypeId;
@@ -256,6 +258,7 @@ function buildMeaning(
     nextDueAt: entry.card?.scheduler.phase === "learning"
       ? entry.card.scheduler.learningDueAt ?? null
       : entry.card?.scheduler.nextReviewAt ?? null,
+    meaningProgress: entry.card?.meaningProgress,
     schedulerPhase: entry.card?.scheduler.phase ?? null,
     reviewCapabilities: entry.card?.cardTypeId === "word-to-definition" &&
       ["learning", "reviewing"].includes(entry.card.scheduler.phase)

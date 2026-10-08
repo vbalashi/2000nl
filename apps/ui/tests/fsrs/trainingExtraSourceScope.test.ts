@@ -422,7 +422,7 @@ async function sourceEntries(
          where id = $1`,
         [siblingKnownMarks[0].id, siblingUndoEvents[0].id],
       );
-      expect(await siblingKnownEligibility()).toBe(false);
+      expect(await siblingKnownEligibility()).toBe(true);
 
       const { rows: sourceRows } = await client.query(
         `insert into learning_sources (
@@ -495,7 +495,8 @@ async function sourceEntries(
          where id = $1`,
         [knownRows[0].id, undoEventRows[0].id],
       );
-      expect(await knownEligibility()).toBe(false);
+      // Undo retains familiarity; the ungraded reverse is ready to study.
+      expect(await knownEligibility()).toBe(true);
 
       await client.query("savepoint malformed_extra_scope");
       await expect(sourceEntries(client, userId, {

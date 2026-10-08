@@ -58,9 +58,17 @@ async function expectReviewedHeaderGeometry(
   await expect(audio).toHaveCount(1);
   await expect(translate).toHaveCount(1);
 
-  const [headerBox, lockupBox, rowBox, metadataBox, actionsBox, translateBox, audioBox, headwordBox] = await Promise.all([
-    header.boundingBox(), lockup.boundingBox(), row.boundingBox(), metadata.boundingBox(), actions.boundingBox(), translate.boundingBox(), audio.boundingBox(), headword.boundingBox(),
-  ]);
+  // The drawer animates as a unit: compare all coordinates from the same frame.
+  const geometryElements = await Promise.all([
+    header, lockup, row, metadata, actions, translate, audio, headword,
+  ].map(locator => locator.elementHandle()));
+  const [headerBox, lockupBox, rowBox, metadataBox, actionsBox, translateBox, audioBox, headwordBox] = await page.evaluate(
+    elements => elements.map(element => {
+      if (!element) return null;
+      const { x, y, width, height } = element.getBoundingClientRect();
+      return { x, y, width, height };
+    }), geometryElements,
+  );
   expect(headerBox && lockupBox && rowBox && metadataBox && actionsBox && translateBox && audioBox && headwordBox).toBeTruthy();
   const expectedHorizontalPadding = page.viewportSize()!.width >= 640 ? 28 : 16;
   expect(rowBox!.x - headerBox!.x).toBeCloseTo(expectedHorizontalPadding, 0);
@@ -91,8 +99,11 @@ async function expectReviewedHeaderGeometry(
   expect(translateBox!.x - (audioBox!.x + audioBox!.width)).toBe(8);
   // A stacked article is the first line of the headword lockup.
   if (options.checkVerticalSpacing !== false && headerScrollTop === 0 && !headerIsScrollable) {
-    const wordRow = await headword.evaluate(el => el.parentElement!.getBoundingClientRect().top);
-    const rowToHeadwordGap = wordRow - (rowBox!.y + rowBox!.height);
+    // Measure both moving elements in one frame while the sheet settles.
+    const rowToHeadwordGap = await headword.evaluate(el => {
+      const row = el.closest("header")!.querySelector('[data-testid="sense-card-header-row"]')!;
+      return el.parentElement!.getBoundingClientRect().top - row.getBoundingClientRect().bottom;
+    });
     expect(rowToHeadwordGap).toBeGreaterThanOrEqual(11.5);
     expect(rowToHeadwordGap).toBeLessThanOrEqual(12.5);
   }

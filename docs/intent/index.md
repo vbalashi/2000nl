@@ -53,3 +53,5 @@
 - Work-in-progress plans belong in `docs/exec-plans/active/`.
 - Completed implementation records belong in `docs/exec-plans/completed/`.
 - Known debt and structural cleanup items belong in `docs/tech-debt/`.
+
+- [Meaning learning progress](./meaning-learning-progress.md): enrollment, Known, exact meaning exclusion and current progress UI (#623).

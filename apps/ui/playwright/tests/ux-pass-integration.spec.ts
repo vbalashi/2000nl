@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 import { multiSenseBankGroup } from "../../tests/platformV2LibraryFixture";
 import { shiftDate } from "../../lib/training/activity/model";
-test("@pilot Library sheet preserves mouse and touch heights in the real navigation", async ({ page }, testInfo) => {
+test("@pilot Library sheet follows mouse and touch and snaps to shared stops in the real navigation", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 610, height: 900 });
   await setupAuthenticatedTrainingAttributionPage(page, 0, { visualProfile: "answer", devTestLogin: process.env.TRAINING_RELIABILITY_DEV_LOGIN === "true" });
   const respond = async (route: import('@playwright/test').Route) => {
@@ -18,7 +18,7 @@ test("@pilot Library sheet preserves mouse and touch heights in the real navigat
   await page.route("**/api/platform/v2/lookup", respond);
   await page.locator('[data-app-mobile-navigation="tabs"]').getByRole('button').nth(1).click();
   await page.locator('[data-testid^="library-headword-group-"]').first().click();
-  const handle = page.getByRole('button', { name: /Expand word card|Развернуть карточку слова|Woordkaart uitklappen/i });
+  const handle = page.getByRole('button', { name: /Expand word card|Collapse word card|Развернуть карточку слова|Свернуть карточку слова|Woordkaart uitklappen|Woordkaart inklappen/i });
   await expect(handle).toBeVisible();
   const sheet = page.locator('section[data-dragging]');
   await expect(sheet.getByTestId('library-sense-card-group')).toBeVisible();
@@ -27,17 +27,21 @@ test("@pilot Library sheet preserves mouse and touch heights in the real navigat
   const initial = await height();
   let box = (await handle.boundingBox())!;
   await page.mouse.move(box.x + 80, box.y + 14); await page.mouse.down();
-  await page.mouse.move(box.x + 80, box.y - 109, { steps: 8 }); await page.mouse.up();
+  await page.mouse.move(box.x + 80, box.y - 109, { steps: 8 });
   await expect.poll(height).toBeCloseTo(initial + 123, 0);
+  await page.mouse.up();
+  await expect.poll(height).toBeCloseTo(initial, 0);
   const mouse = await height();
   box = (await handle.boundingBox())!;
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: box.x + 80, y: box.y + 14 }] });
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: box.x + 80, y: box.y - 53 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: box.x + 80, y: box.y - 276 }] });
+  await expect.poll(height).toBeCloseTo(820, 0);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await expect.poll(height).toBeCloseTo(mouse + 67, 0);
+  await expect.poll(height).toBeCloseTo(820, 0);
   const touch = await height();
-  await handle.press('Home'); await expect.poll(height).toBeCloseTo(initial, 0);
+  await handle.press('Home'); await expect.poll(height).toBeCloseTo(240, 0);
+  await handle.click(); await expect.poll(height).toBeCloseTo(initial, 0);
   await handle.click(); await expect(sheet.locator('button[aria-expanded="true"]').first()).toBeVisible();
   await testInfo.attach('pointer-evidence.json', { body: JSON.stringify({ source: 'real Library UI, mocked transport', initial, mouse, touch }), contentType: 'application/json' });
   await page.screenshot({ path: testInfo.outputPath('expanded-library.png') });

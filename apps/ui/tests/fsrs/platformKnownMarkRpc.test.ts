@@ -168,14 +168,16 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
       const userId = randomUUID();
       await ensureUserWithSettings(client, userId);
       const entryId = await insertWord(client, `directional-known-${randomUUID()}`);
+      await client.query("select set_config('request.jwt.claim.sub',$1,true)", [userId]);
       const marks = [];
       for (const direction of ['word-to-definition', 'definition-to-word']) {
+        const current = await client.query(`select state_revision from get_platform_v2_card_states_for_entries($1,ARRAY[$2]::uuid[],ARRAY[$3]::text[])`, [userId, entryId, direction]);
         const { rows } = await client.query(
           `select perform_platform_v2_card_action(
-             $1::uuid, 'mark-known', $2::uuid, $3::text, 'untracked',
+             $1::uuid, 'mark-known', $2::uuid, $3::text, $5::text,
              null, null, null, $4::uuid, null, 'first_party', null
            ) as result`,
-          [userId, entryId, direction, randomUUID()],
+          [userId, entryId, direction, randomUUID(), current.rows[0].state_revision],
         );
         expect(rows[0].result.status).toBe('accepted');
         marks.push(rows[0].result.card);
@@ -273,7 +275,7 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
       )!;
       const undone = await client.query(
         `select perform_platform_v2_card_action(
-           $1::uuid, 'undo-known', $2::uuid, 'definition-to-word', 'untracked',
+           $1::uuid, 'undo-known', $2::uuid, 'definition-to-word', $6::text,
            $3::uuid, $4::text, null, $5::uuid, null, 'first_party', null
          ) as result`,
         [
@@ -282,6 +284,7 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
           reverse.known_mark_id,
           reverse.known_mark_revision,
           undoEventId,
+          reverse.state_revision,
         ],
       );
       expect(undone.rows[0].result).toEqual(
@@ -312,14 +315,8 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
           where user_id = $1 and entry_id = $2 and card_type_id = 'word-to-definition'`,
         [userId, entryId],
       );
-      const learned = await client.query(
-        `select perform_platform_v2_card_action(
-           $1::uuid, 'start-learning', $2::uuid, 'word-to-definition', $3::text,
-           null, null, null, $4::uuid, null, 'first_party', null
-         ) as result`,
-        [userId, entryId, directState.rows[0].state_revision, randomUUID()],
-      );
-      expect(learned.rows[0].result.status).toBe('accepted');
+      // Undo exposes ratings immediately; no second Learn and no fake review.
+      expect(directState.rows[0].state_revision).toBeTruthy();
 
       const directionalFsrs = await client.query(
         `select card_type_id, fsrs_reps, seen_count, in_learning
@@ -339,7 +336,7 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
         {
           card_type_id: 'word-to-definition',
           fsrs_reps: 0,
-          seen_count: 1,
+          seen_count: 0,
           in_learning: true,
         },
       ]);

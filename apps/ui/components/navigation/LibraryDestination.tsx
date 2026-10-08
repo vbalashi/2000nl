@@ -15,7 +15,10 @@ import type {
   WordListSummary,
 } from "@/lib/types";
 
+export type LibraryMeaningIntent = {ownerId:string;key:string;entryId:string;headword:string;contentLanguageCode:string};
+
 type Props = {
+  meaningIntent?: LibraryMeaningIntent | null;
   open: boolean;
   userId: string;
   language: string;
@@ -43,10 +46,17 @@ function LibraryDestinationSession({
   onReloadLists,
   onOpenListMembership,
   onTrainWord,
+  meaningIntent,
 }: Props) {
   const [searchState, setSearchState] = useState<DictionarySearchTabState>(() =>
     createDictionarySearchTabState(),
   );
+  const lastIntent = React.useRef<string>();
+  useEffect(()=>{
+    if(!meaningIntent || meaningIntent.ownerId!==userId || lastIntent.current===meaningIntent.key)return;
+    lastIntent.current=meaningIntent.key;
+    setSearchState(current=>({...current,query:meaningIntent.headword,applyListFilter:false,selectedHeadwordGroupId:null,detailSelection:{entryId:meaningIntent.entryId,headword:meaningIntent.headword,contentLanguageCode:meaningIntent.contentLanguageCode},mobileDetailOpen:true}));
+  },[meaningIntent,userId]);
   const [hasOpened, setHasOpened] = useState(open);
   useEffect(() => {
     if (open) setHasOpened(true);

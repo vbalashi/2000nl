@@ -509,6 +509,9 @@ describe("/api/platform/v2/lookup", () => {
 
     expect(response.status).toBe(200);
     const payload = await response.json();
+    const progressCalls = rpc.mock.calls.filter(([name]) => name === "get_meanings_learning_progress_v1");
+    expect(progressCalls).toHaveLength(intent === "dictionary-lookup" ? 1 : 0);
+    if (intent === "dictionary-lookup") expect(progressCalls[0][1]).toEqual({p_entry_ids:[targetEntryId,siblingEntryId]});
     expect(payload.query).toBe("bank");
     expect(payload.groups).toHaveLength(1);
     expect(payload.groups[0]).toEqual(

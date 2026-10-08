@@ -11,7 +11,7 @@ import type { LibraryMutationCapability, LibrarySenseCardModel } from "./library
 import s from "@/components/practice/article/articleActions.module.css";
 
 /** Presentation adapter; authoritative capabilities and callbacks stay with the owner. */
-export function LibraryMeaningActions({ meaning, language, busy, collectionCount, onAction, onCollections, onReport, onExclude, exclusionDisabled }: {
+export function LibraryMeaningActions({ meaning, language, busy, collectionCount, onAction, onCollections, onReport, onExclude, exclusionDisabled, onProgress, onResume }: {
   meaning: LibrarySenseCardModel;
   language: OnboardingLanguage;
   busy: boolean;
@@ -21,6 +21,8 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
   onTrainNext?: () => void;
   onReport?: () => void;
   onExclude?: () => void;
+  onProgress?: () => void;
+  onResume?: () => void;
   exclusionDisabled?: boolean;
 }) {
   const [anchor, setAnchor] = React.useState<HTMLButtonElement | null>(null);
@@ -29,7 +31,9 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
   const t = (key: string) => platformV2Message(language, key);
   const labels = getUiMessages(language).library;
   const primary = meaning.undoKnown ?? meaning.startLearning;
+  const blocked = Boolean(meaning.meaningProgress?.exclusionId || meaning.meaningProgress?.directions.some(d=>d.knownMarkId) || meaning.undoKnown);
   const items: ActionMenuItem[] = [];
+  if(onProgress)items.push({id:"progress",label:getUiMessages(language).learningProgress.title,onSelect:()=>{close();onProgress();}});
   if (onExclude) items.push({id:"exclude",label:getUiMessages(language).trainingSession.exclusion.headwordLabel,icon:<EyeOff size={15} aria-hidden="true"/>,disabled:busy || exclusionDisabled,
     onSelect:()=>{close();onExclude();}});
   if (meaning.markKnown) items.push({id:"known",label:t(meaning.markKnown.messageKey),icon:<Check size={15} aria-hidden="true"/>,disabled:busy,
@@ -37,9 +41,9 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
   if (onReport) items.push({id:"report",label:t("senseCard.report"),icon:<Flag size={15} aria-hidden="true"/>,disabled:busy,
     onSelect:()=>{close();onReport();}});
   return <div data-testid="library-primary-actions" className={s.group}>
-    {primary ? <button type="button" className={s.primary} disabled={busy} onClick={()=>onAction(primary)}>{t(primary.messageKey)}</button>
+    {blocked && onResume ? <button type="button" className={s.primary} disabled={busy} onClick={onResume}>{getUiMessages(language).learningProgress.resume}</button> : primary ? <button type="button" className={s.primary} disabled={busy} onClick={()=>onAction(primary)}>{t(primary.messageKey)}</button>
       : null}
-    {!primary ? <LibraryMeaningRatings meaning={meaning} language={language} busy={busy} onAction={onAction}/> : null}
+    {!primary && !blocked ? <LibraryMeaningRatings meaning={meaning} language={language} busy={busy} onAction={onAction}/> : null}
     <div data-testid="library-service-actions" className={s.row}>
       {onCollections ? <button type="button" className={s.quiet} aria-haspopup="dialog" onClick={onCollections}>
         <List size={14} aria-hidden="true"/>{t("senseCard.collections.label")}{collectionCount > 0 ? ` · ${new Intl.NumberFormat(language).format(collectionCount)}` : ""}

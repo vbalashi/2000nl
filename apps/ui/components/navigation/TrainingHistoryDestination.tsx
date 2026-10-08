@@ -36,6 +36,7 @@ type Props = {
   userId: string;
   interfaceLanguage: OnboardingLanguage;
   onReturnToTraining: () => void;
+  onOpenMeaning?: (item:RecentTrainingHistoryItem)=>void;
 };
 
 export function TrainingHistoryDestination({
@@ -43,6 +44,7 @@ export function TrainingHistoryDestination({
   userId,
   interfaceLanguage,
   onReturnToTraining,
+  onOpenMeaning,
 }: Props) {
   const text = getUiMessages(interfaceLanguage).trainingHistory;
   const exerciseLabel = (item: RecentTrainingHistoryItem) => item.exercise
@@ -74,6 +76,7 @@ export function TrainingHistoryDestination({
         <p>{text.error}</p><button type="button" className={stateStyle.button} onClick={() => setRequestVersion(version => version + 1)}>{text.retry}</button>
       </div> : null}
       {visibleLoadState.status === "ready" && <RecentActivityList items={items} locale={interfaceLanguage}
+        onSelectItem={onOpenMeaning ? id=>{const item=visibleLoadState.items.find(item=>item.activityId===id);if(item)onOpenMeaning(item);} : undefined}
         scopeLabel={text.subtitle} emptyLabel={text.empty} listLabel={text.list} />}
       {visibleLoadState.status === "ready" && visibleLoadState.hasMore && <div className={activityStyle.state}><p className={stateStyle.notice}>{text.truncated}</p></div>}
     </PracticePanel>
