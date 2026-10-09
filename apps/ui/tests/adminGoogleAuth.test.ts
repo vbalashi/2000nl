@@ -35,7 +35,7 @@ beforeEach(() => {
   auth.signOut.mockResolvedValue({ error: null }); audit.mockResolvedValue(undefined);
 });
 function post(path: string, requestOrigin = origin) {
-  return new Request(`${origin}/api/admin/auth/${path}`, { method: "POST", headers: { origin: requestOrigin, "content-type": "application/json" },  });
+  return new Request(`${origin}/api/admin/auth/${path}`, { method: "POST", headers: { origin: requestOrigin, "content-type": "application/json" }, body: "{}" });
 }
 describe("Google admin login for an existing learner identity", () => {
   it("starts Google without an email or operator preflight", async () => {
