@@ -61,3 +61,10 @@ describe("training session decisions", () => {
     expect(decideAuthoritySnapshot(snapshot, "session-1", reconciled)).toEqual(expected);
   });
 });
+
+test.each(["completed", "exhausted"])("terminal %s snapshot cannot revive a stale remaining member", completionReason => {
+  expect(classifyResumeSnapshot({
+    runStatus:"active",completionReason,completedActions:2,plannedTotal:5,
+    members:[{consumedAt:null,unavailableAt:null}],
+  })).toEqual({kind:"no-remaining-member"});
+});

@@ -37,6 +37,9 @@ import { TrainingIdiomCard } from "./TrainingIdiomCard";
 
 import { useRecordedStudyTime } from "../useRecordedStudyTime";
 
+import { useTrainingExerciseProgress } from "../useTrainingExerciseProgress";
+import type { TrainingSessionProgress } from "@/lib/training/sessionLifecycle";
+
 import type {CardFilter} from "@/lib/types";
 type Props = TrainingCompletionActions & {
   cardFilter?: CardFilter;
@@ -48,6 +51,7 @@ type Props = TrainingCompletionActions & {
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
   onExit: () => void;
+  onProgress?: (progress: TrainingSessionProgress) => void;
   onSessionSuperseded?: () => void;
   onHistory?: () => void;
   onPlayResolvedAudio?: (url: string, label: string) => void;
@@ -68,6 +72,7 @@ export function TrainingIdiomSession({
   translationTargetLanguageCode,
   interfaceLanguage,
   onExit,
+  onProgress,
   onRestart, onEdit, pending, startFailed,
   onSessionSuperseded,
   onHistory,
@@ -78,11 +83,8 @@ export function TrainingIdiomSession({
   const [candidate, setCandidate] =
     useState<PlatformIdiomExerciseCandidateV2 | null>(null);
   const [content, setContent] = useState<IdiomExerciseContent | null>(null);
-  const [completedCount, setCompletedCount] = useState(
-    session.completedActions,
-  );
+  const { completed: completedCount, accept, finish } = useTrainingExerciseProgress(session, onProgress);
   const footerStats = useIdiomTrainingStats(session.sessionId, completedCount);
-  const completedCountRef = useRef(session.completedActions);
   const [terminal, setTerminal] = useState<"complete" | "empty" | null>(
     session.plannedTotal === 0 ? session.completedActions > 0 ? "complete" : "empty" : null,
   );
@@ -152,7 +154,8 @@ export function TrainingIdiomSession({
           continue;
         }
         if (next.status === "completed" || next.status === "exhausted") {
-          setTerminal(completedCountRef.current > 0 ? "complete" : "empty");
+          const completedActions = finish({ ...next, status: next.status });
+          setTerminal(completedActions > 0 ? "complete" : "empty");
           activeTransitionIdRef.current = null;
           finishTrainingUserTransition(transitionId, `terminal-${next.status}`);
           return;
@@ -175,6 +178,7 @@ export function TrainingIdiomSession({
     }
   }, [
     contentLanguageCode,
+    finish,
     session.sessionId,
     translationTargetLanguageCode,
     userId,
@@ -210,8 +214,7 @@ export function TrainingIdiomSession({
     sessionId: session.sessionId,
     target: { kind: "exercise", targetId: candidate?.targetId ?? "" },
     onAccepted: async () => {
-      completedCountRef.current += 1;
-      setCompletedCount(completedCountRef.current);
+      accept();
       await loadNext();
     },
   });
@@ -236,8 +239,7 @@ export function TrainingIdiomSession({
         reviewResult,
       });
       actionClientEventIdRef.current = null;
-      completedCountRef.current += 1;
-      setCompletedCount(completedCountRef.current);
+      accept();
       await loadNext();
     } catch {
       setError(true);
