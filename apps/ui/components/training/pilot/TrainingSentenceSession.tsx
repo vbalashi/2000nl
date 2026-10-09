@@ -11,6 +11,7 @@ import { TrainingCompletion, type TrainingCompletionActions } from "../v2/Traini
 import { TrainingSessionState } from "../v2/TrainingSessionState";
 import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
 import { TrainingSessionNotice } from "../v2/TrainingSessionSurface";
+import { TrainingSessionProgressRim } from "../v2/TrainingSessionProgressRim";
 import { TrainingSessionChrome } from "../v2/TrainingSessionChrome";
 import { TrainingSessionStatsFooter } from "../TrainingSessionStatsFooter";
 import { useTranslationTrainingStats } from "./useTranslationTrainingStats";
@@ -24,6 +25,9 @@ import { resolvePlatformV2Audio } from "@/lib/platform/platformV2TrainingMediaCl
 
 import { useRecordedStudyTime } from "../useRecordedStudyTime";
 
+import { useTrainingExerciseProgress } from "../useTrainingExerciseProgress";
+import type { TrainingSessionProgress } from "@/lib/training/sessionLifecycle";
+
 type Props = TrainingCompletionActions & {
   sessionName?: string;
   studyTimeEnabled?: boolean;
@@ -33,6 +37,7 @@ type Props = TrainingCompletionActions & {
   translationTargetLanguageCode: string;
   interfaceLanguage: OnboardingLanguage;
   onExit: () => void;
+  onProgress?: (progress: TrainingSessionProgress) => void;
   onSessionSuperseded?: () => void;
   onHistory?: () => void;
   onPlayResolvedAudio?: (url: string, label: string) => void;
@@ -45,8 +50,7 @@ export function TrainingSentenceSession(props: Props) {
   const t = getUiMessages(interfaceLanguage).trainingExercises.sentence;
   const [candidate, setCandidate] = useState<(PlatformTranslationExerciseCandidateV2 & { ordinal: number }) | null>(null);
   const [content, setContent] = useState<SentenceExerciseContent | null>(null);
-  const [completed, setCompleted] = useState(session.completedActions);
-  const completedRef = useRef(session.completedActions);
+  const { completed, accept, finish } = useTrainingExerciseProgress(session, props.onProgress);
   const [revealed, setRevealed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -80,14 +84,14 @@ export function TrainingSentenceSession(props: Props) {
           await markPlatformV2TranslationTrainingSessionMemberUnavailable(userId, session.sessionId, next.targetId, next.reason);
           continue;
         }
-        if (next.status === "completed" || next.status === "exhausted") { setTerminal(completedRef.current >= session.plannedTotal && session.plannedTotal > 0 ? "complete" : "empty"); return; }
+        if (next.status === "completed" || next.status === "exhausted") { const count = finish({ ...next, status: next.status }); setTerminal(count > 0 ? "complete" : "empty"); return; }
         if (next.status === "superseded") { supersededCallback.current?.(); return; }
         setFailed(true); return;
       }
       setFailed(true);
     } catch { if (current === generation.current) setFailed(true); }
     finally { if (current === generation.current) setLoading(false); }
-  }, [userId, session.sessionId, session.plannedTotal, contentLanguageCode, translationTargetLanguageCode]);
+  }, [userId, session.sessionId, contentLanguageCode, translationTargetLanguageCode, finish]);
   useEffect(() => {
     const generationRef = generation;
     void loadNext();
@@ -125,7 +129,7 @@ export function TrainingSentenceSession(props: Props) {
     return () => controller.abort();
   }, [candidate, content, loading, terminal, session.members, session.runGeneration, session.sessionId, contentLanguageCode, translationTargetLanguageCode]);
 
-  const exclusion = useTrainingExclusion({ userId, onSessionSuperseded: onSessionSuperseded ?? onExit, identity: candidate?.targetKey ?? "none", sessionId: session.sessionId, target: { kind: "exercise", targetId: candidate?.targetId ?? "" }, onAccepted: async () => { completedRef.current++; setCompleted(completedRef.current); await loadNext(); } });
+  const exclusion = useTrainingExclusion({ userId, onSessionSuperseded: onSessionSuperseded ?? onExit, identity: candidate?.targetKey ?? "none", sessionId: session.sessionId, target: { kind: "exercise", targetId: candidate?.targetId ?? "" }, onAccepted: async () => { accept(); await loadNext(); } });
   useRecordedStudyTime({ ownerId: userId, sessionId: session.sessionId, family: "sentence", entryId: candidate?.entryId, targetId: candidate?.targetId,
     enabled: studyTimeEnabled && Boolean(candidate && content) && !loading && !terminal && !submitting && !exclusion.busy && !exclusion.failed });
   async function grade(result: PlatformTrainingExerciseReviewResultV2) {
@@ -134,13 +138,14 @@ export function TrainingSentenceSession(props: Props) {
     try {
       const clientEventId = eventId.current ?? crypto.randomUUID(); eventId.current = clientEventId;
       await performPlatformV2TranslationExerciseAction({ trainingSessionId: session.sessionId, clientEventId, candidate, reviewResult: result });
-      eventId.current = null; completedRef.current++; setCompleted(completedRef.current); await loadNext();
+      eventId.current = null; accept(); await loadNext();
     } catch { setFailed(true); } finally { setSubmitting(false); }
   }
   const preparationFailed = failed && !candidate && !loading && !terminal;
+  const sessionPresentation = { kind: "planned" as const, position: Math.min(completed, session.requestedTotal), total: session.requestedTotal, fraction: session.requestedTotal ? Math.min(completed / session.requestedTotal, 1) : 0 };
   const presentation = content ? buildSentenceCardPresentation({ content, interfaceLanguage, translationTargetLanguageCode, repeatCount: candidate?.state?.seenCount ?? 0 }) : null;
-  return <TrainingSessionV2Layout approvedPresentation={true} phase={loading ? "loading" : failed && !candidate ? "failure" : "ready"}
-    chrome={<TrainingSessionChrome approvedPresentation={true} interfaceLanguage={interfaceLanguage} scenario="idiom" mode="word-to-definition" cardFilter="both" sessionName={props.sessionName || t.title} presentation={{ kind: "planned", position: Math.min(completed, session.requestedTotal), total: session.requestedTotal, fraction: session.requestedTotal ? Math.min(completed / session.requestedTotal, 1) : 0 }} onHistory={onHistory} onClose={onExit} disabled={submitting || exclusion.busy} />}
+  return <TrainingSessionV2Layout approvedPresentation={true} progress={!loading && !(failed && !candidate) && !terminal ? <TrainingSessionProgressRim presentation={sessionPresentation} language={interfaceLanguage} /> : null} phase={loading ? "loading" : failed && !candidate ? "failure" : "ready"}
+    chrome={<TrainingSessionChrome approvedPresentation={true} interfaceLanguage={interfaceLanguage} scenario="idiom" mode="word-to-definition" cardFilter="both" sessionName={props.sessionName || t.title} presentation={sessionPresentation} onHistory={onHistory} onClose={onExit} disabled={submitting || exclusion.busy} />}
     notice={!preparationFailed && (failed || exclusion.failed) ? <TrainingSessionNotice notice={{ kind: "error", message: exclusion.failed ? trainingExclusionCopy[interfaceLanguage].failed : t.failed, retryLabel: t.retry, retryDisabled: submitting || loading, onRetry: () => exclusion.failed ? void exclusion.exclude() : void loadNext() }} /> : null}
     footer={<TrainingSessionStatsFooter {...stats} interfaceLanguage={interfaceLanguage} />}>
       {loading ? <TrainingSessionState loading title={t.loading} /> : null}

@@ -4,6 +4,7 @@ import { resolveSentencePrompt } from "./sentenceExerciseContent";
 import { fetchTrainingSessionSnapshot } from "./selectionService";
 
 export type WordContextPrompt = {
+  recallTarget?: string;
   text: string;
   sourceText: string;
   contentNodeId: string;
@@ -96,9 +97,15 @@ export async function loadWordContextPrompt(input: {
   if (loaded.state !== "ready") return { state: "source-unavailable" };
   const prompt = resolveSentencePrompt(loaded.content, input.translationTargetLanguageCode);
   if (prompt.status !== "ready") return { state: "translation-pending" };
+  const translation = loaded.content.entry.translation;
+  const recallTarget = translation?.status === "ready" && translation.isFresh &&
+    translation.entryId === input.entryId &&
+    translation.targetLanguageCode === input.translationTargetLanguageCode
+    ? translation.text?.trim() : undefined;
   return {
     state: "ready",
     prompt: {
+      ...(recallTarget ? { recallTarget } : {}),
       text: prompt.text,
       sourceText: loaded.content.sentence.text,
       contentNodeId: source.contentNodeId,

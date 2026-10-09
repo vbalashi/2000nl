@@ -70,7 +70,8 @@ export function TrainingSenseCardStage({
     if (!hintVisible) onHintOpened?.();
     setHintVisible(!hintVisible);
   }, [hintVisible, onHintOpened]);
-  const [translationVisible, setTranslationVisible] = React.useState(false);
+  const wordInContext = Boolean(contextPrompt);
+  const [translationVisible, setTranslationVisible] = React.useState(wordInContext);
   const stageRef = React.useRef<HTMLElement>(null);
   const primaryAnswerActionRef = React.useRef<HTMLButtonElement>(null);
   const showAnswerRef = React.useRef<HTMLButtonElement>(null);
@@ -93,6 +94,7 @@ export function TrainingSenseCardStage({
   const answerModel = contextPrompt
     ? {
         ...model,
+        entryTranslation: contextPrompt.recallTarget?.trim() || model.entryTranslation,
         examples: [{
           ...selectedExample,
           contentNodeId: contextPrompt.contentNodeId,
@@ -104,22 +106,23 @@ export function TrainingSenseCardStage({
         }],
       }
     : model;
+  const hasDisplayTranslation = hasTranslation(answerModel);
   const translationActionAvailable = Boolean(
     model.requestTranslationCapability,
   );
-  const contextTarget = contextPrompt ? model.entryTranslation?.trim() : undefined;
+  const contextTarget = contextPrompt ? (contextPrompt.recallTarget?.trim() || model.entryTranslation?.trim()) : undefined;
   const listeningMode = mode === "listen-recognize";
   const { capture, moving } = useTrainingPromptReveal({ root: stageRef, revealed: answerVisible,
     enabled: !listeningMode, identity: model.entryId });
   const revealAnswer = React.useCallback(() => { capture(); onSideChange("answer"); }, [capture, onSideChange]);
   const toggleTranslation = React.useCallback(() => {
     if (busy || moving) return;
-    if (!hasTranslation(model) && model.requestTranslationCapability) {
+    if (!hasDisplayTranslation && model.requestTranslationCapability) {
       setTranslationVisible(true); onAction(model.requestTranslationCapability); return;
     }
     setTranslationVisible(visible => !visible);
-  }, [busy, moving, model, onAction]);
-  useCardVerticalSwipe({ root: stageRef, audioEnabled: !busy && !moving && Boolean(model.audioCapability && onPlayAudio), onPlayAudio, enabled: answerVisible && !busy && !moving && (hasTranslation(model) || translationActionAvailable), onToggle: toggleTranslation });
+  }, [busy, moving, model, onAction, hasDisplayTranslation]);
+  useCardVerticalSwipe({ root: stageRef, audioEnabled: !busy && !moving && Boolean(model.audioCapability && onPlayAudio), onPlayAudio, enabled: answerVisible && !busy && !moving && (hasDisplayTranslation || translationActionAvailable), onToggle: toggleTranslation });
 
 
   React.useEffect(() => {
@@ -129,8 +132,8 @@ export function TrainingSenseCardStage({
 
   React.useEffect(() => {
     setHintVisible(false);
-    setTranslationVisible(false);
-  }, [model.entryId]);
+    setTranslationVisible(wordInContext);
+  }, [model.entryId, wordInContext]);
 
   React.useEffect(() => {
     if (previousAnswerVisibleRef.current === answerVisible) return;
@@ -176,7 +179,7 @@ export function TrainingSenseCardStage({
         toggleHint();
         return;
       }
-      if (key === "t" && answerVisible && hasTranslation(model)) {
+      if (key === "t" && answerVisible && hasDisplayTranslation) {
         event.preventDefault();
         setTranslationVisible((visible) => !visible);
         return;
@@ -199,7 +202,7 @@ export function TrainingSenseCardStage({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [answerVisible, busy, moving, hint, model, onAction, onSideChange, revealAnswer, toggleHint]);
+  }, [answerVisible, busy, moving, hint, hasDisplayTranslation, model, onAction, onSideChange, revealAnswer, toggleHint]);
 
   return (
     <section
@@ -236,12 +239,12 @@ export function TrainingSenseCardStage({
         {answerVisible ? (
           <>
             <EntityHeader
-              model={model}
+              model={answerModel}
               translationVisible={translationVisible}
               translationAvailable={
-                hasTranslation(model) || translationActionAvailable
+                hasDisplayTranslation || translationActionAvailable
               }
-              translationLabel={t(hasTranslation(model) || translationActionAvailable ? "senseCard.translation.request" : "senseCard.translation.disabled")}
+              translationLabel={t(hasDisplayTranslation || translationActionAvailable ? "senseCard.translation.request" : "senseCard.translation.disabled")}
               audioLabel={t("senseCard.audio.play")}
               busy={busy || moving}
               moreLabel={t("senseCard.wordDetails.open")}
@@ -253,7 +256,7 @@ export function TrainingSenseCardStage({
               contentLanguage={contentLanguage}
               translationLanguage={translationLanguage}
               model={answerModel}
-              translationVisible={Boolean(contextPrompt) || translationVisible}
+              translationVisible={translationVisible}
               interfaceLanguage={interfaceLanguage}
               onReachEnd={() => primaryAnswerActionRef.current?.focus()}
             />

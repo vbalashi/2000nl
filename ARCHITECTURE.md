@@ -113,6 +113,14 @@ Docker Supabase URL. For local DB/RPC checks, prefer
   their authenticated persistence and session semantics are not optional styling.
   `scripts/check-training-retirements.mjs --final-training` enforces retired
   presentation symbols across active code, tests and deployment configuration.
+- Training home/resume finalization is shared across families in
+  `sessionLifecycle.ts` and `useTrainingSessionLifecycle.ts`: completed,
+  exhausted, superseded and fully consumed runs cannot resume; terminal runs
+  clear their browser resume record. Idiom and legacy sentence runtimes publish
+  accepted counts and server terminal results through `useTrainingExerciseProgress`.
+  Ordinary meaning/word-in-context runtimes feed their existing turn-controller
+  counters and exhaustion verdict into the same finalizer. Transport errors retain
+  resume state. See [the lifecycle discussion](docs/discussions/2026-10-09-02-training-lifecycle.md).
 - UI-only changes: validate with `npm run lint` and relevant UI tests in `apps/ui`.
 - FSRS or DB changes: validate migrations plus `apps/ui/tests/fsrs/*.test.ts`; prefer the local Supabase Docker harness in `docs/runbooks/local-supabase-test-env.md`, and avoid production DBs for migration-driven tests.
 - Auth/provider changes: confirm required env vars, callback URLs, and service-role boundaries remain server-side.

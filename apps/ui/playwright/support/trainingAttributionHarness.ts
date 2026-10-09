@@ -156,6 +156,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
   injectedDelayMs: number,
   options: {
     /** Preserve the real controller while exercising multi-meaning article states. */
+    /** Install routes without installing auth or navigating, for staged bootstrap tests. */
+    deferNavigation?: boolean;
     transformLookupGroup?: (group: PlatformHeadwordGroupV2) => PlatformHeadwordGroupV2;
     invalidEntryIds?: string[];
     projectionMissingEntryIds?: string[];
@@ -993,7 +995,9 @@ export async function setupAuthenticatedTrainingAttributionPage(
     await fulfillJson(route, { error: "Not mocked by attribution harness" }, "missing", 404);
   });
 
-  if (options.devTestLogin) {
+  if (options.deferNavigation) {
+    // The caller controls auth refresh and navigation after all routes are installed.
+  } else if (options.devTestLogin) {
     await page.goto("/dev/test-login?redirectTo=/");
     await page.waitForURL((url) => url.pathname === "/");
   } else {

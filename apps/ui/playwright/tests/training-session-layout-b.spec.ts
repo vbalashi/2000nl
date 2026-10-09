@@ -1,6 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 
+test.use({ video: { mode: "on", size: { width: 390, height: 844 } }, hasTouch: true });
+
 async function startFixture(
   page: Page,
   profile: "answer" | "long-idiom" | "recoverable-error" = "answer",
@@ -16,6 +18,8 @@ async function startFixture(
   });
   await setupAuthenticatedTrainingAttributionPage(page, 0, {
     visualProfile: profile,
+    sessionPlannedTotal: 15,
+    settingsOverrides: { training_grade_swipe_enabled: true, training_animation_enabled: true },
   });
   await page
     .getByRole("button", {
@@ -23,6 +27,74 @@ async function startFixture(
     })
     .click();
 }
+
+test.describe("animated swipe preview", () => {
+
+  test("rim remains fixed during a real touch drag and cancelled swipe", async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "no-preference" });
+    await startFixture(page);
+    for (let i = 0; i < 6; i++) {
+      await page.getByRole("button", { name: /Antwoord tonen/i }).click();
+      const position = await page.getByTestId("training-session-position").innerText();
+      const learn = page.getByRole("button", { name: /Begin met leren/i });
+      if (await learn.isVisible()) await learn.click();
+      else await page.getByRole("button", { name: /Goed/i }).click();
+      await expect(page.getByTestId("training-session-position")).not.toHaveText(position);
+    }
+    await page.getByRole("button", { name: /Antwoord tonen/i }).click();
+    const rim = page.getByTestId("training-session-progress-track");
+    const before = await rim.boundingBox();
+    const client = await page.context().newCDPSession(page);
+    await page.waitForTimeout(800);
+    await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 170, y: 360 }] });
+    for (let x = 180; x <= 270; x += 10) {
+      await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x, y: 360 }] });
+      await page.waitForTimeout(70);
+    }
+    await expect(page.getByTestId("training-card-swipe-wrapper")).not.toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 0)");
+    expect(await rim.boundingBox()).toEqual(before);
+    await page.screenshot({ path: testInfo.outputPath("rim-detached-mid-swipe.png") });
+    await page.waitForTimeout(900);
+    await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await page.waitForTimeout(800);
+    expect(await rim.boundingBox()).toEqual(before);
+    await expect(page.getByTestId("training-card-swipe-wrapper")).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 0)");
+  });
+});
+
+test("session rim stays outside swipe layer through reveal and accepted next card", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  await startFixture(page);
+  const rim = page.getByTestId("training-session-progress-track");
+  const shell = page.getByTestId("training-sense-card-shell");
+  await expect(rim).toBeVisible();
+  await expect(rim.locator("div")).toHaveCSS("height", "9px");
+  const before = (await rim.boundingBox())!;
+  const card = (await shell.boundingBox())!;
+  expect(before.x).toBe(card.x);
+  expect(before.y).toBe(card.y);
+  expect(before.width).toBe(card.width);
+  expect(await rim.evaluate(el => el.closest('[data-testid="training-card-swipe-wrapper"]'))).toBeNull();
+  await page.getByRole("button", { name: /Antwoord tonen|Show answer/i }).click();
+  expect(await rim.boundingBox()).toEqual(before);
+  const oldPosition = await page.getByTestId("training-session-position").innerText();
+  const learn = page.getByRole("button", { name: /Begin met leren|Start learning/i });
+  if (await learn.isVisible()) await learn.click();
+  else await page.getByRole("button", { name: /Goed|Good/i }).click();
+  await expect(page.getByTestId("training-session-position")).not.toHaveText(oldPosition);
+  expect(await rim.boundingBox()).toEqual(before);
+  for (let i = 0; i < 5; i++) {
+    await page.getByRole("button", { name: /Antwoord tonen|Show answer/i }).click();
+    const position = await page.getByTestId("training-session-position").innerText();
+    if (await learn.isVisible()) await learn.click();
+    else await page.getByRole("button", { name: /Goed|Good/i }).click();
+    await expect(page.getByTestId("training-session-position")).not.toHaveText(position);
+    expect(await rim.boundingBox()).toEqual(before);
+  }
+  await page.screenshot({ path: testInfo.outputPath("persistent-rim-next.png") });
+});
 
 const viewports = [
   { name: "phone", width: 390, height: 844, inset: 10, cardWidth: 358 },

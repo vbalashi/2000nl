@@ -24,25 +24,25 @@ export function ActionMenu({ anchor, title, language, items, onClose }: {
   const descriptionId = useId();
   const ref = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{top: number; left: number} | null>(null);
-  const signature = items.map(item => `${item.id}:${item.label}:${item.description ?? ""}:${Boolean(item.disabled)}`).join("|");
+  const onCloseRef = useRef(onClose);
+  const focused = useRef(false);
+  const lastFocusedItem = useRef<HTMLButtonElement | null>(null);
+  useLayoutEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+  const signature = items.map(item => `${item.id}:${item.label}:${item.description ?? ""}`).join("|");
   useLayoutEffect(() => {
     const menu = ref.current!;
+    focused.current = false;
+    lastFocusedItem.current = null;
     menu.showPopover?.();
-    const box = menu.getBoundingClientRect(), trigger = anchor.getBoundingClientRect();
-    setPosition({
-      left: Math.max(12, Math.min(trigger.right - box.width, window.innerWidth - box.width - 12)),
-      top: trigger.bottom + 8 + box.height <= window.innerHeight - 12
-        ? trigger.bottom + 8 : Math.max(12, trigger.top - box.height - 8),
-    });
     const dismiss = (event: Event) => {
       if (event.type === "scroll" && menu.contains(event.target as Node)) return;
-      onClose();
+      onCloseRef.current();
     };
     const outside = (event: PointerEvent) => {
-      if (!menu.contains(event.target as Node) && !anchor.contains(event.target as Node)) onClose();
+      if (!menu.contains(event.target as Node) && !anchor.contains(event.target as Node)) onCloseRef.current();
     };
     const toggled = (event: Event) => {
-      if ((event as Event & {newState?: string}).newState === "closed") onClose();
+      if ((event as Event & {newState?: string}).newState === "closed") onCloseRef.current();
     };
     document.addEventListener("pointerdown", outside);
     window.addEventListener("resize", dismiss);
@@ -55,18 +55,44 @@ export function ActionMenu({ anchor, title, language, items, onClose }: {
       menu.removeEventListener("toggle", toggled);
       menu.hidePopover?.();
     };
-  }, [anchor, onClose, signature]);
+  }, [anchor]);
+  // Updating action availability must not hide/reopen the native popover.
+  // Only changes to its content require a fresh geometry measurement.
   useLayoutEffect(() => {
-    if (position) ref.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus({preventScroll: true});
+    const menu = ref.current!;
+    const box = menu.getBoundingClientRect(), trigger = anchor.getBoundingClientRect();
+    setPosition({
+      left: Math.max(12, Math.min(trigger.right - box.width, window.innerWidth - box.width - 12)),
+      top: trigger.bottom + 8 + box.height <= window.innerHeight - 12
+        ? trigger.bottom + 8 : Math.max(12, trigger.top - box.height - 8),
+    });
+  }, [anchor, signature]);
+  useLayoutEffect(() => {
+    if (position && !focused.current) {
+      const first = ref.current?.querySelector<HTMLButtonElement>("button:not(:disabled)");
+      if (first) { first.focus({preventScroll: true}); focused.current = true; }
+    }
   }, [position]);
+  // Native disabling blurs a menu item. Restore that same item after a brief
+  // authority fence, without moving focus away from another active control.
+  const availability = items.map(item => `${item.id}:${Boolean(item.disabled)}`).join("|");
+  useLayoutEffect(() => {
+    const item = lastFocusedItem.current;
+    if (item?.isConnected && !item.disabled && document.activeElement === document.body) {
+      item.focus({preventScroll: true});
+    }
+  }, [availability]);
   return createPortal(<div ref={ref} popover="auto" role="menu" aria-label={title} lang={language}
     className={s.menu} style={{...position, visibility: position ? "visible" : "hidden"}}
     onClick={event => event.stopPropagation()}
+    onFocusCapture={event => {
+      if (event.target instanceof HTMLButtonElement) lastFocusedItem.current = event.target;
+    }}
     onKeyDown={event => {
       event.stopPropagation();
       if (event.key === "Escape" || event.key === "Tab") {
         if (event.key === "Escape") event.preventDefault();
-        onClose(); return;
+        onCloseRef.current(); return;
       }
       if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
       event.preventDefault();

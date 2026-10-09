@@ -5,6 +5,7 @@
 
 | Тема | Действующее решение | Основание |
 | --- | --- | --- |
+| Жизненный цикл Training | Единое правило для всех типов: актуальный прогресс незавершённого run; completed/exhausted не предлагают Continue и не сохраняют запись продолжения. Общая обработка в работе #647, не выпущена. | [Обсуждение](../discussions/2026-10-09-02-training-lifecycle.md) |
 | Импорт словаря | Временный staging и одна транзакция; при отсутствии истории — пакетная вставка узлов, при обновлении — сверка изменившихся узлов с сохранением UUID. Полный импорт нужен для нового корпуса/пустой базы, обычная QA использует fixture. | [Обсуждение](../discussions/2026-09-30-01-dictionary-import-staging.md), [ADR-0016](../adr/0016-staged-dictionary-import.md) |
 | Документирование | Каждое существенное обсуждение — отдельная датированная запись; новые решения обновляют этот реестр и соответствующие ADR, старые обсуждения сохраняются. | [Обсуждение](../discussions/2026-09-25-02-decision-recording.md), [правила](../discussions/README.md) |
 | Слово в контексте | Перевод примера служит подсказкой для вспоминания конкретного значения; обычная reverse-очередь и единый FSRS, ротация примеров без отдельного прогресса. В истории — вариант предъявления и открытие подсказки. Оценок старого режима нет, перенос прогресса не требуется. Alignment/подсветка вне MVP. | [Модель](../discussions/2026-09-25-03-word-in-context.md), [переход](../discussions/2026-09-25-04-word-context-transition.md), [ADR-0015](../adr/0015-word-in-context-shared-reverse-state.md) |
@@ -50,3 +51,10 @@ Accepted: centre the main prompt independently of instructions; reserve hint spa
 [Обсуждение](../discussions/2026-10-09-01-active-training-article.md).
 
 | PWA icon revision | Принята фиксированная Lavender, 2000 / nl в две строки, Inter 400; Android maskable с дополнительным отступом 5%. Реализовано в #642, выпуск ожидает проверок. | [Обсуждение](../discussions/2026-10-09-01-lavender-icon.md) |
+
+## Кромка прогресса тренировки (2026-10-09)
+
+Принят вариант «Постоянная кромка»: приглушённый индикатор 9 px по верхнему краю карточки, вне свайп-слоя, с мягкой нижней границей и плавным заполнением. Существующая семантика прогресса сохраняется. [Обсуждение](../discussions/2026-10-09-02-training-progress-rim.md), #644.
+## Training startup recovery (2026-10-09)
+
+Accepted: prerequisite loading and retry share the branded logo/dots surface; actual failures retain actionable retry without the obsolete framed panel. Pending work must not become a fabricated failure. Original Pixel request failure remains unconfirmed. [Discussion](../discussions/2026-10-09-02-startup-recovery.md), #575. Implemented in the issue checkout; release pending.

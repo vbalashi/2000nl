@@ -6,7 +6,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const finalTraining = process.argv.includes("--final-training");
 const retired = ["onTrainingAction", "trainingActionEntryId"];
 if (finalTraining) {
-  retired.push("useLegacyTrainingReviewPort", "submitLegacyReview", "reviewLegacy",
+  retired.push("TrainingPilotStatePanel", "useLegacyTrainingReviewPort", "submitLegacyReview", "reviewLegacy",
     "projectTrainingCardPresentation", "TrainingCard", "TrainingCardPresentation",
     "FirstTimeButtonGroup", "AudioModeToggle", "InteractiveText",
     "trainingPresentationV1Enabled", "sharedArticlePresentationV1Enabled",

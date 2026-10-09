@@ -29,6 +29,11 @@
 
 ## Архив
 
+- [2026-10-09: общий жизненный цикл Training](2026-10-09-02-training-lifecycle.md) — #647.
+- [2026-10-09: пропавшая подсказка первой карточки Translation](2026-10-09-03-missing-context-target.md)
+
+- [2026-10-09: единая видимость перевода на обороте Translation](2026-10-09-02-translation-recall-target.md)
+
 - [2026-10-09: активная карточка в словарной статье](2026-10-09-01-active-training-article.md)
 
 - [2026-09-30: пауза учебного материала и начатая тренировка](2026-09-30-02-paused-training-material.md)
@@ -72,3 +77,5 @@
 - [2026-10-08: prompt centering and hints](2026-10-08-04-training-prompt-centering.md) — #633; main prompt anchor, quiet boundaries, idiom recovery follow-up #634.
 
 - [2026-10-09: Lavender icon revision](2026-10-09-01-lavender-icon.md) — #642.
+
+- [2026-10-09: Training startup recovery](2026-10-09-02-startup-recovery.md)

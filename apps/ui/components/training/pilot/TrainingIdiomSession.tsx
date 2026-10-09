@@ -26,6 +26,7 @@ import { TrainingCompletion, type TrainingCompletionActions } from "../v2/Traini
 import { TrainingSessionState } from "../v2/TrainingSessionState";
 import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
 import { TrainingSessionNotice } from "../v2/TrainingSessionSurface";
+import { TrainingSessionProgressRim } from "../v2/TrainingSessionProgressRim";
 import { TrainingSessionChrome } from "../v2/TrainingSessionChrome";
 
 import { TrainingSessionStatsFooter } from "../TrainingSessionStatsFooter";
@@ -36,6 +37,9 @@ import { trainingExclusionCopy } from "../v2/TrainingExcludeAction";
 import { TrainingIdiomCard } from "./TrainingIdiomCard";
 
 import { useRecordedStudyTime } from "../useRecordedStudyTime";
+
+import { useTrainingExerciseProgress } from "../useTrainingExerciseProgress";
+import type { TrainingSessionProgress } from "@/lib/training/sessionLifecycle";
 
 import type {CardFilter} from "@/lib/types";
 type Props = TrainingCompletionActions & {
@@ -48,6 +52,7 @@ type Props = TrainingCompletionActions & {
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
   onExit: () => void;
+  onProgress?: (progress: TrainingSessionProgress) => void;
   onSessionSuperseded?: () => void;
   onHistory?: () => void;
   onPlayResolvedAudio?: (url: string, label: string) => void;
@@ -68,6 +73,7 @@ export function TrainingIdiomSession({
   translationTargetLanguageCode,
   interfaceLanguage,
   onExit,
+  onProgress,
   onRestart, onEdit, pending, startFailed,
   onSessionSuperseded,
   onHistory,
@@ -78,11 +84,8 @@ export function TrainingIdiomSession({
   const [candidate, setCandidate] =
     useState<PlatformIdiomExerciseCandidateV2 | null>(null);
   const [content, setContent] = useState<IdiomExerciseContent | null>(null);
-  const [completedCount, setCompletedCount] = useState(
-    session.completedActions,
-  );
+  const { completed: completedCount, accept, finish } = useTrainingExerciseProgress(session, onProgress);
   const footerStats = useIdiomTrainingStats(session.sessionId, completedCount);
-  const completedCountRef = useRef(session.completedActions);
   const [terminal, setTerminal] = useState<"complete" | "empty" | null>(
     session.plannedTotal === 0 ? session.completedActions > 0 ? "complete" : "empty" : null,
   );
@@ -152,7 +155,8 @@ export function TrainingIdiomSession({
           continue;
         }
         if (next.status === "completed" || next.status === "exhausted") {
-          setTerminal(completedCountRef.current > 0 ? "complete" : "empty");
+          const completedActions = finish({ ...next, status: next.status });
+          setTerminal(completedActions > 0 ? "complete" : "empty");
           activeTransitionIdRef.current = null;
           finishTrainingUserTransition(transitionId, `terminal-${next.status}`);
           return;
@@ -175,6 +179,7 @@ export function TrainingIdiomSession({
     }
   }, [
     contentLanguageCode,
+    finish,
     session.sessionId,
     translationTargetLanguageCode,
     userId,
@@ -210,8 +215,7 @@ export function TrainingIdiomSession({
     sessionId: session.sessionId,
     target: { kind: "exercise", targetId: candidate?.targetId ?? "" },
     onAccepted: async () => {
-      completedCountRef.current += 1;
-      setCompletedCount(completedCountRef.current);
+      accept();
       await loadNext();
     },
   });
@@ -236,8 +240,7 @@ export function TrainingIdiomSession({
         reviewResult,
       });
       actionClientEventIdRef.current = null;
-      completedCountRef.current += 1;
-      setCompletedCount(completedCountRef.current);
+      accept();
       await loadNext();
     } catch {
       setError(true);
@@ -247,10 +250,17 @@ export function TrainingIdiomSession({
   };
 
   const preparationFailed = error && !candidate && !loading && !terminal;
+  const sessionPresentation = {
+    kind: "planned" as const,
+    position: Math.min(completedCount, session.requestedTotal),
+    total: session.requestedTotal,
+    fraction: session.requestedTotal > 0 ? Math.min(completedCount / session.requestedTotal, 1) : 0,
+  };
 
   return (
     <TrainingSessionV2Layout
       approvedPresentation={true}
+      progress={!loading && !(error && !candidate) && !terminal ? <TrainingSessionProgressRim presentation={sessionPresentation} language={interfaceLanguage} /> : null}
       phase={loading ? "loading" : error && !candidate ? "failure" : "ready"}
       chrome={
         <TrainingSessionChrome
@@ -264,15 +274,7 @@ export function TrainingIdiomSession({
           }
           cardFilter={cardFilter}
           sessionName={sessionName || t.title}
-          presentation={{
-            kind: "planned",
-            position: Math.min(completedCount, session.requestedTotal),
-            total: session.requestedTotal,
-            fraction:
-              session.requestedTotal > 0
-                ? Math.min(completedCount / session.requestedTotal, 1)
-                : 0,
-          }}
+          presentation={sessionPresentation}
           onHistory={onHistory}
           onClose={onExit}
           disabled={submitting || exclusion.busy}
