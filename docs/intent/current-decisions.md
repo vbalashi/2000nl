@@ -50,3 +50,7 @@ Accepted: centre the main prompt independently of instructions; reserve hint spa
 [Обсуждение](../discussions/2026-10-09-01-active-training-article.md).
 
 | PWA icon revision | Принята фиксированная Lavender, 2000 / nl в две строки, Inter 400; Android maskable с дополнительным отступом 5%. Реализовано в #642, выпуск ожидает проверок. | [Обсуждение](../discussions/2026-10-09-01-lavender-icon.md) |
+
+## Training startup recovery (2026-10-09)
+
+Accepted: prerequisite loading and retry share the branded logo/dots surface; actual failures retain actionable retry without the obsolete framed panel. Pending work must not become a fabricated failure. Original Pixel request failure remains unconfirmed. [Discussion](../discussions/2026-10-09-02-startup-recovery.md), #575. Implemented in the issue checkout; release pending.
