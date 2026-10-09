@@ -46,6 +46,10 @@ diagnostic passes after adapting the preserved assertion to the shared canonical
 signature field. Guidance check passes after correcting a stale221 range.
 DB drift CI initially hit Docker Hub unauthenticated limits; use the verified
 public ECR mirror of the same official PostgreSQL17 service image.
+Full CI exposed seven auth-bootstrap fixtures missing the now-required account
+setup/material/scope reads. Install the shared complete backend fixture before
+gating auth/preferences; all seven viewport/language cases pass locally.
+The pinned contract-client image also uses the verified ECR mirror digest.
 No DB migrations, manifest modifications, production data edits or corpus promotion.
 All ten component PRs remain open until the single integration release merges.
 Release deployment, exact production commit verification, reference-main sync,
