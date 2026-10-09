@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       samples:
-        description: "Number of fresh-connection read-only samples per component"
+        description: "Number of fresh-connection read-only samples per component (max 3)"
         required: false
-        default: "5"
+        default: "3"
         type: string
       first_component:
         description: "Which session-plan overload runs first on the sampled backend"
@@ -40,8 +40,8 @@ jobs:
           git fetch origin main --quiet
           git reset --hard origin/main
           case "${DIAGNOSTIC_SAMPLES}" in
-            1|2|3|4|5|6|7|8|9|10) ;;
-            *) echo "samples must be an integer from 1 to 10" >&2; exit 64 ;;
+            1|2|3) ;;
+            *) echo "samples must be an integer from 1 to 3" >&2; exit 64 ;;
           esac
           case "${DIAGNOSTIC_FIRST_COMPONENT}" in
             public|ui-public) ;;
