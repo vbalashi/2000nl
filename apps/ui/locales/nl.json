@@ -203,6 +203,12 @@
     "zn": "zelfstandig naamwoord"
   },
   "ui": {
+    "activeTrainingCard": {
+      "title": "Nu aan het oefenen",
+      "hint": "Beoordeel in de training",
+      "actionHint": "Wijzig deze kaart in de training",
+      "headwordHint": "Deze actie heeft invloed op de actieve kaart. Wijzig die in de training"
+    },
     "learningProgress": {
       "title": "Leervoortgang",
       "wordToMeaning": "Woord → betekenis",

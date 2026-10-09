@@ -13,6 +13,7 @@ export function useMeaningLearningActions(
   userId: string | undefined,
   progress: MeaningLearningProgress | undefined,
   onChanged?: () => void | Promise<void>,
+  protection?: {active: boolean; headword: boolean},
 ) {
   const [busy, setBusy] = React.useState(false),
     [failed, setFailed] = React.useState(false);
@@ -31,7 +32,7 @@ export function useMeaningLearningActions(
     },
   });
   const resume = async () => {
-    if (busy || !userId) return;
+    if (busy || !userId || protection?.active) return;
     setBusy(true);
     setFailed(false);
     try {
@@ -39,6 +40,7 @@ export function useMeaningLearningActions(
         progress: await fetchMeaningProgress(entryId),
         eventId: crypto.randomUUID(),
       };
+      if(protection?.headword && request.progress.exclusionId)return;
       pending.current = request;
       await resumeMeaningProgress(request.progress, request.eventId);
       completeMeaningExclusionResume(request.progress.exclusionId);
@@ -59,7 +61,7 @@ export function useMeaningLearningActions(
   };
   return {
     resume,
-    exclude: exclusion.exclude,
+    exclude: () => { if(!protection?.active && !protection?.headword) return exclusion.exclude(); },
     busy: busy || exclusion.busy,
     failed: failed || exclusion.failed,
   };

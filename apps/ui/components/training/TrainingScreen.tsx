@@ -457,6 +457,7 @@ function TrainingScreenContent({
     entryId: string;
     headword: string;
     contentLanguageCode?: string;
+    trainingGuard?: import("./library-v2/trainingArticleGuard").TrainingArticleGuard;
   } | null>(null);
   const [detailInitialGroup, setDetailInitialGroup] =
     useState<PlatformHeadwordGroupV2 | null>(null);
@@ -1195,6 +1196,7 @@ function TrainingScreenContent({
       setDetailSelection({
         entryId,
         headword,
+        trainingGuard: {entryId, headwordGroupId: details?.group?.headwordGroupId ?? null},
         contentLanguageCode:
           details?.group?.dictionary.sourceLanguageCode ??
           currentWord?.language_code ??
@@ -2723,6 +2725,7 @@ function TrainingScreenContent({
             <div className="flex h-full min-h-0 flex-col gap-3">
               <div className="min-h-0 flex-1">
                 <TrainingMoreSenseCardV2Session
+                  trainingGuard={detailSelection.trainingGuard}
                   revealActiveMeaning={entered}
                   entryId={detailSelection.entryId}
                   initialGroup={detailInitialGroup ?? undefined}

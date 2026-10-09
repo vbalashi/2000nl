@@ -53,6 +53,8 @@ type Props = {
   busyIdentity?: string | null;
   actionsDisabled?: boolean;
   inlineGrading?: boolean;
+  activeTrainingEntryId?: string;
+  headwordTrainingBlocked?: boolean;
   audioBusy?: boolean;
   onPlayAudio?: () => void;
   translationEnabled?: boolean;
@@ -91,6 +93,8 @@ export function LibrarySenseCardGroup({
   busyIdentity = null,
   actionsDisabled = false,
   inlineGrading = true,
+  activeTrainingEntryId,
+  headwordTrainingBlocked = false,
   audioBusy = false,
   onPlayAudio,
   translationEnabled = false,
@@ -390,6 +394,8 @@ export function LibrarySenseCardGroup({
                 <MeaningCard
                   key={identity}
                   meaning={inlineGrading ? meaning : {...meaning, reviewCapabilities: []}}
+                  activeTraining={meaning.entryId === activeTrainingEntryId}
+                  headwordTrainingBlocked={headwordTrainingBlocked}
                   showSenseForms={!commonForms}
                   formPartOfSpeech={model.formPartOfSpeech}
                   headword={model.headword}
@@ -423,6 +429,7 @@ export function LibrarySenseCardGroup({
                   exclusionDisabled={exclusionDisabled}
                   reportableEntryIds={reportableEntryIds}
                   onAction={(capability) => {
+                    if(capability.target.entryId === activeTrainingEntryId)return;
                     onActiveMeaningChange?.(capability.target.entryId);
                     onAction(capability);
                   }}
@@ -447,6 +454,8 @@ function MeaningCard({
   groupPartOfSpeech,
   state,
   interfaceLanguage,
+  activeTraining = false,
+  headwordTrainingBlocked = false,
   contentLanguage,
   translationLanguage,
   busy,
@@ -464,6 +473,8 @@ function MeaningCard({
   reportableEntryIds,
   onAction,
 }: {
+  activeTraining?: boolean;
+  headwordTrainingBlocked?: boolean;
   meaning: LibrarySenseCardModel;
   userId?:string;
   headword:string;
@@ -503,7 +514,7 @@ function MeaningCard({
   const senseForms=wordFormDetail(meaning.wordDetails,formPartOfSpeech??" ");
 
   const [progressOpen,setProgressOpen]=React.useState(false);
-  const actions=useMeaningLearningActions(meaning.entryId,userId,meaning.meaningProgress,onProgressChanged);
+  const actions=useMeaningLearningActions(meaning.entryId,userId,meaning.meaningProgress,onProgressChanged,{active:activeTraining,headword:headwordTrainingBlocked});
   const statusLabel=meaning.meaningProgress ? getUiMessages(interfaceLanguage).learningProgress[meaningLearningStatus(meaning.meaningProgress)] : null;
   const exposure = statusLabel ? <LearningStateBadge label={statusLabel} tone="light"/> : meaning.undoKnown ? (
     <span className={surfaces.known}>
@@ -535,7 +546,7 @@ function MeaningCard({
       }`}
     >
       <span className={surfaces.frameExposure}><button type="button" className={surfaces.statusAction} aria-haspopup="dialog" onClick={event=>{event.stopPropagation();setProgressOpen(true);}}>{exposure}</button></span>
-      {progressOpen&&<MeaningLearningProgress entryId={meaning.entryId} language={interfaceLanguage} onClose={()=>setProgressOpen(false)} onChanged={onProgressChanged}/>}
+      {progressOpen&&<MeaningLearningProgress learningActionsBlocked={activeTraining} headwordActionsBlocked={headwordTrainingBlocked} entryId={meaning.entryId} language={interfaceLanguage} onClose={()=>setProgressOpen(false)} onChanged={onProgressChanged}/>}
       {meaning.displayOrdinal != null ? (
         <span className={`absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center ${surfaces.ordinal}`}>
           {meaning.displayOrdinal}
@@ -599,11 +610,11 @@ function MeaningCard({
 
 
             {(
-              <LibraryMeaningActions meaning={meaning} language={interfaceLanguage} busy={busy||actions.busy} collectionCount={collectionCount}
+              <LibraryMeaningActions activeTraining={activeTraining} headwordTrainingBlocked={headwordTrainingBlocked} meaning={meaning} language={interfaceLanguage} busy={busy||actions.busy} collectionCount={collectionCount}
                 onAction={onAction}
                 onProgress={()=>setProgressOpen(true)}
                 onResume={userId ? ()=>void actions.resume() : undefined}
-                onExclude={onExclude ? ()=>onExclude(meaning.entryId) : userId ? ()=>void actions.exclude() : undefined} exclusionDisabled={exclusionDisabled||Boolean(meaning.meaningProgress?.exclusionId)}
+                onExclude={onExclude ? ()=>{if(!activeTraining && !headwordTrainingBlocked)onExclude(meaning.entryId);} : userId ? ()=>void actions.exclude() : undefined} exclusionDisabled={exclusionDisabled||Boolean(meaning.meaningProgress?.exclusionId)}
                 onCollections={onOpenCollections ? () => { onActiveMeaningChange?.(meaning.entryId); onOpenCollections(meaning); } : undefined}
                 onTrainNext={onTrainNext ? () => { onActiveMeaningChange?.(meaning.entryId); onTrainNext(meaning); } : undefined}
               onReport={onReport && reportableEntryIds?.has(meaning.entryId) ? () => onReport(meaning) : undefined}

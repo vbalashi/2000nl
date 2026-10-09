@@ -203,6 +203,12 @@
     "zn": "noun"
   },
   "ui": {
+    "activeTrainingCard": {
+      "title": "Currently practising",
+      "hint": "Rate on the training screen",
+      "actionHint": "Change this card on the training screen",
+      "headwordHint": "This action affects the active card. Change it on the training screen"
+    },
     "learningProgress": {
       "title": "Learning progress",
       "wordToMeaning": "Word → meaning",
