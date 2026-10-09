@@ -70,3 +70,5 @@
 - [2026-10-08: prompt centering and hints](2026-10-08-04-training-prompt-centering.md) — #633; main prompt anchor, quiet boundaries, idiom recovery follow-up #634.
 
 - [2026-10-09: медиа и первые оплаты](2026-10-09-01-media-and-first-paying-users.md)
+
+- [2026-10-09: Free и гипотезы цены](2026-10-09-02-free-tier-and-pricing-hypotheses.md)
