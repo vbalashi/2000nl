@@ -1196,7 +1196,7 @@ function TrainingScreenContent({
       setDetailSelection({
         entryId,
         headword,
-        trainingGuard: {entryId, headwordGroupId: details?.group.headwordGroupId ?? null},
+        trainingGuard: {entryId, headwordGroupId: details?.group?.headwordGroupId ?? null},
         contentLanguageCode:
           details?.group?.dictionary.sourceLanguageCode ??
           currentWord?.language_code ??
