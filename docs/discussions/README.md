@@ -30,6 +30,9 @@
 ## Архив
 
 - [2026-10-09: общий жизненный цикл Training](2026-10-09-02-training-lifecycle.md) — #647.
+- [2026-10-09: пропавшая подсказка первой карточки Translation](2026-10-09-03-missing-context-target.md)
+
+- [2026-10-09: единая видимость перевода на обороте Translation](2026-10-09-02-translation-recall-target.md)
 
 - [2026-10-09: активная карточка в словарной статье](2026-10-09-01-active-training-article.md)
 
