@@ -70,7 +70,8 @@ export function TrainingSenseCardStage({
     if (!hintVisible) onHintOpened?.();
     setHintVisible(!hintVisible);
   }, [hintVisible, onHintOpened]);
-  const [translationVisible, setTranslationVisible] = React.useState(false);
+  const wordInContext = Boolean(contextPrompt);
+  const [translationVisible, setTranslationVisible] = React.useState(wordInContext);
   const stageRef = React.useRef<HTMLElement>(null);
   const primaryAnswerActionRef = React.useRef<HTMLButtonElement>(null);
   const showAnswerRef = React.useRef<HTMLButtonElement>(null);
@@ -129,8 +130,8 @@ export function TrainingSenseCardStage({
 
   React.useEffect(() => {
     setHintVisible(false);
-    setTranslationVisible(false);
-  }, [model.entryId]);
+    setTranslationVisible(wordInContext);
+  }, [model.entryId, wordInContext]);
 
   React.useEffect(() => {
     if (previousAnswerVisibleRef.current === answerVisible) return;
@@ -253,7 +254,7 @@ export function TrainingSenseCardStage({
               contentLanguage={contentLanguage}
               translationLanguage={translationLanguage}
               model={answerModel}
-              translationVisible={Boolean(contextPrompt) || translationVisible}
+              translationVisible={translationVisible}
               interfaceLanguage={interfaceLanguage}
               onReachEnd={() => primaryAnswerActionRef.current?.focus()}
             />

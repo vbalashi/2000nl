@@ -39,3 +39,13 @@ This PR is a separate open branch, not included in codex/528-training-face.
 Before publishing, integrate #604 together with the training-face and account
 animation/gesture changes, then validate the combined release. Do not leave
 #604 for a later release. No merge or production deployment performed here.
+
+### Unified answer translation — 2026-10-09
+
+Owner confirmed that all answer translations share one visibility state: headword,
+definition and selected example are shown or hidden together. Word-in-context
+Translation starts with the complete answer translation shown; its translation
+button hides or shows all three. Ordinary training retains its hidden default.
+The question face and fallback eligibility remain unchanged. See the
+[owner clarification](../discussions/2026-10-09-02-translation-recall-target.md).
+Implementation is in #649; publication and owner verification are pending.
