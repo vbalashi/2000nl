@@ -243,10 +243,27 @@ describe("LibrarySenseCardV2Session", () => {
     await act(async()=>pending.resolve({accepted:true}));
   });
 
-  test("Training More never adds non-session review buttons",async()=>{
+  test("Training More protects the current meaning and leaves sibling Learn available",async()=>{
     render(<TrainingMoreSenseCardV2Session entryId={furnitureEntry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
-    await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`);
+    const active=await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`);
+    expect(within(active).getByRole("note")).toHaveTextContent("Currently practising");
+    const sibling=screen.getByTestId(`library-sense-card-${financeEntry.entryId}`);
+    fireEvent.click(within(sibling).getByRole("button",{name:"Expand meaning"}));
+    expect(within(sibling).getByRole("button",{name:"Learn"})).toBeEnabled();
+    expect(within(active).getByRole("note")).toHaveTextContent("Rate on the training screen");
     for(const name of ["Again","Hard","Good","Easy"])expect(screen.queryByRole("button",{name})).not.toBeInTheDocument();
+  });
+
+  test("Training More allows authoritative sibling grades without unlocking the active entry",async()=>{
+    render(<TrainingMoreSenseCardV2Session entryId={financeEntry.entryId} initialGroup={multiSenseBankGroup} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
+    const active=await screen.findByTestId(`library-sense-card-${financeEntry.entryId}`);
+    expect(within(active).queryByRole("button",{name:"Learn"})).not.toBeInTheDocument();
+    const sibling=screen.getByTestId(`library-sense-card-${furnitureEntry.entryId}`);
+    fireEvent.click(within(sibling).getByRole("button",{name:"Expand meaning"}));
+    fireEvent.click(within(sibling).getByRole("button",{name:"Good"}));
+    await waitFor(()=>expect(performAction).toHaveBeenCalledOnce());
+    expect(performAction.mock.calls[0][0]).toMatchObject({actionId:"review-card",target:{entryId:furnitureEntry.entryId}});
+    expect(within(active).getByRole("note")).toHaveTextContent("Currently practising");
   });
 
   test("an accepted collection removal followed by failed read is not reported as saved; retry only reads", async () => {
@@ -348,7 +365,7 @@ describe("LibrarySenseCardV2Session", () => {
     expect(screen.queryByTestId("library-details-actions")).not.toBeInTheDocument();
     const trainingMore = screen.getByRole("button", { name: "More card actions" });
     fireEvent.click(trainingMore);
-    expect(screen.queryByRole("menuitem", { name: "Report" })).not.toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Report" })).toBeEnabled();
     fireEvent.keyDown(window, { key: "Escape" });
     expect(
       screen.queryByRole("button", { name: "Practice later (F)" }),

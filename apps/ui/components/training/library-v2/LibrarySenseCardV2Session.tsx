@@ -31,7 +31,10 @@ import {
   type LibraryMutationCapability,
 } from "./librarySenseCardModel";
 
+import { trainingArticleProtection, type TrainingArticleGuard } from "./trainingArticleGuard";
+
 type Props = {
+  trainingGuard?: TrainingArticleGuard;
   revealActiveMeaning?: boolean;
   entryId: string;
   initialGroup?: PlatformHeadwordGroupV2;
@@ -54,10 +57,11 @@ export function LibrarySenseCardV2Session(props: Props) {
 }
 
 export function TrainingMoreSenseCardV2Session(props: Props) {
-  return <SenseCardV2Session {...props} context="training-more" />;
+  return <SenseCardV2Session {...props} trainingGuard={props.trainingGuard ?? {entryId:props.entryId,headwordGroupId:props.initialGroup?.headwordGroupId ?? null}} context="training-more" />;
 }
 
 function SenseCardV2Session({
+  trainingGuard,
   revealActiveMeaning = true,
   context,
   entryId,
@@ -378,7 +382,7 @@ function SenseCardV2Session({
     const expectedDetailIdentity = detailIdentityRef.current;
     const pendingKey = expectedDetailIdentity;
     if (unverifiedActionIdentity.current === expectedDetailIdentity) return;
-    if (context !== "library" && capability.actionId === "review-card") return;
+    if (trainingGuard?.entryId === capability.target.entryId) return;
     if (pendingActions.current.has(pendingKey)) return;
     pendingActions.current.add(pendingKey);
     const expectedActionGeneration = ++actionGeneration.current;
@@ -680,13 +684,12 @@ function SenseCardV2Session({
     );
   }
 
-  const showGlobalDetailsActions = context === "library";
   const reportableEntryIds = new Set((group?.entries ?? []).flatMap(entry => entry.kind === "sense-card" && entry.reportContentRevision &&
     entry.capabilities.some(capability => capability.actionId === "report-content" && capability.target.kind === "entry") ? [entry.entryId] : []));
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      {userId ? <TrainingExclusionUndoNotice userId={userId} language={interfaceLanguage}/> : null}
+      {userId && context === "library" ? <TrainingExclusionUndoNotice userId={userId} language={interfaceLanguage}/> : null}
       <div className="min-h-0 flex-1">
         <LibrarySenseCardGroup
           contentLanguage={group?.dictionary.sourceLanguageCode ?? contentLanguageCode}
@@ -696,7 +699,8 @@ function SenseCardV2Session({
           interfaceLanguage={interfaceLanguage}
           busyIdentity={busyIdentity}
           actionsDisabled={acceptedRefreshFailed}
-          inlineGrading={context === "library"}
+          activeTrainingEntryId={trainingGuard?.entryId}
+          headwordTrainingBlocked={trainingArticleProtection(trainingGuard, "", group?.headwordGroupId ?? "").headword}
           audioBusy={audioBusy}
           onPlayAudio={
             model.audioCapability ? () => void handlePlayAudio() : undefined
@@ -739,12 +743,12 @@ function SenseCardV2Session({
           }}
           onProgressChanged={async()=>{await load();}}
           onAction={(capability) => void handleAction(capability)}
-          onReport={showGlobalDetailsActions ? meaning => {
+          onReport={meaning => {
             if (!group) return;
             const entry = group.entries.find(candidate => candidate.kind === "sense-card" && candidate.entryId === meaning.entryId);
             if (entry?.kind !== "sense-card" || !reportableEntryIds.has(entry.entryId)) return;
-            setReportSnapshot(freezeSenseCardDiagnosticSnapshot({route:"library",group,entry}));
-          } : undefined}
+            setReportSnapshot(freezeSenseCardDiagnosticSnapshot({route:context === "library" ? "library" : "training",group,entry}));
+          }}
           reportableEntryIds={reportableEntryIds}
         />
       </div>

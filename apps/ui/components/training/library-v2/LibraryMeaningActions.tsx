@@ -2,7 +2,7 @@
 
 import React from "react";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
-import { Check, EyeOff, Flag, List, MoreHorizontal, ChartNoAxesColumn } from "lucide-react";
+import { Check, EyeOff, Flag, List, MoreHorizontal, ChartNoAxesColumn, LockKeyhole } from "lucide-react";
 import { ActionMenu, type ActionMenuItem } from "@/components/practice/ui/ActionMenu";
 import { getUiMessages } from "@/lib/uiMessages";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -11,7 +11,9 @@ import type { LibraryMutationCapability, LibrarySenseCardModel } from "./library
 import s from "@/components/practice/article/articleActions.module.css";
 
 /** Presentation adapter; authoritative capabilities and callbacks stay with the owner. */
-export function LibraryMeaningActions({ meaning, language, busy, collectionCount, onAction, onCollections, onReport, onExclude, exclusionDisabled, onProgress, onResume }: {
+export function LibraryMeaningActions({ meaning, language, busy, collectionCount, onAction, onCollections, onReport, onExclude, exclusionDisabled, onProgress, onResume, activeTraining = false, headwordTrainingBlocked = false }: {
+  activeTraining?: boolean;
+  headwordTrainingBlocked?: boolean;
   meaning: LibrarySenseCardModel;
   language: OnboardingLanguage;
   busy: boolean;
@@ -30,20 +32,25 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
   const close = React.useCallback(() => { setAnchor(null); trigger.current?.focus({preventScroll: true}); }, []);
   const t = (key: string) => platformV2Message(language, key);
   const labels = getUiMessages(language).library;
+  const protectionCopy = getUiMessages(language).activeTrainingCard;
+  const resumeBlocked = activeTraining || (headwordTrainingBlocked && Boolean(meaning.meaningProgress?.exclusionId));
   const primary = meaning.undoKnown ?? meaning.startLearning;
   const blocked = Boolean(meaning.meaningProgress?.exclusionId || meaning.meaningProgress?.directions.some(d=>d.knownMarkId) || meaning.undoKnown);
   const items: ActionMenuItem[] = [];
   if(onProgress)items.push({id:"progress",label:getUiMessages(language).learningProgress.title,icon:<ChartNoAxesColumn size={15} aria-hidden="true"/>,onSelect:()=>{close();onProgress();}});
-  if (onExclude) items.push({id:"exclude",label:getUiMessages(language).trainingSession.exclusion.headwordLabel,description:getUiMessages(language).trainingSession.exclusion.headwordHelp,icon:<EyeOff size={15} aria-hidden="true"/>,disabled:busy || exclusionDisabled,
-    onSelect:()=>{close();onExclude();}});
-  if (meaning.markKnown) items.push({id:"known",label:t(meaning.markKnown.messageKey),description:getUiMessages(language).cardActions.knownHelp,icon:<Check size={15} aria-hidden="true"/>,disabled:busy,
-    onSelect:()=>{close();onAction(meaning.markKnown!);}});
+  if (onExclude) items.push({id:"exclude",label:getUiMessages(language).trainingSession.exclusion.headwordLabel,description:activeTraining ? protectionCopy.actionHint : headwordTrainingBlocked ? protectionCopy.headwordHint : getUiMessages(language).trainingSession.exclusion.headwordHelp,icon:<EyeOff size={15} aria-hidden="true"/>,disabled:busy || exclusionDisabled || activeTraining || headwordTrainingBlocked,
+    onSelect:()=>{if(activeTraining || headwordTrainingBlocked)return;close();onExclude();}});
+  if (meaning.markKnown) items.push({id:"known",label:t(meaning.markKnown.messageKey),description:activeTraining ? protectionCopy.actionHint : getUiMessages(language).cardActions.knownHelp,icon:<Check size={15} aria-hidden="true"/>,disabled:busy || activeTraining,
+    onSelect:()=>{if(activeTraining)return;close();onAction(meaning.markKnown!);}});
   if (onReport) items.push({id:"report",label:t("senseCard.report"),icon:<Flag size={15} aria-hidden="true"/>,disabled:busy,
     onSelect:()=>{close();onReport();}});
   return <div data-testid="library-primary-actions" className={s.group}>
-    {blocked && onResume ? <button type="button" className={s.primary} disabled={busy} onClick={onResume}>{getUiMessages(language).learningProgress.resume}</button> : primary ? <button type="button" className={s.primary} disabled={busy} onClick={()=>onAction(primary)}>{t(primary.messageKey)}</button>
+    {activeTraining ? <div className={s.trainingGuard} role="note" data-testid="active-training-card-notice">
+      <LockKeyhole size={16} aria-hidden="true"/><div><strong>{protectionCopy.title}</strong><span>{protectionCopy.hint}</span></div>
+    </div> : blocked && onResume ? <button type="button" className={s.primary} disabled={busy || resumeBlocked} onClick={()=>{if(!resumeBlocked)onResume();}}>{getUiMessages(language).learningProgress.resume}</button> : primary ? <button type="button" className={s.primary} disabled={busy} onClick={()=>onAction(primary)}>{t(primary.messageKey)}</button>
       : null}
-    {!primary && !blocked ? <LibraryMeaningRatings meaning={meaning} language={language} busy={busy} onAction={onAction}/> : null}
+    {!activeTraining && !primary && !blocked ? <LibraryMeaningRatings meaning={meaning} language={language} busy={busy} onAction={onAction}/> : null}
+    {!activeTraining && resumeBlocked && blocked ? <p className={s.status}>{protectionCopy.headwordHint}</p> : null}
     <div data-testid="library-service-actions" className={s.row}>
       {onCollections ? <button type="button" className={s.quiet} aria-haspopup="dialog" onClick={onCollections}>
         <List size={14} aria-hidden="true"/>{t("senseCard.collections.label")}{collectionCount > 0 ? ` · ${new Intl.NumberFormat(language).format(collectionCount)}` : ""}

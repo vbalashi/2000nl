@@ -109,3 +109,24 @@
 /* Library card actions are a separate 28px family; rating controls have their own styles. */
 .group[data-testid="library-primary-actions"] .primary{border:0;border-radius:8.4px;background:var(--practice-surface-hover)}
 .group[data-testid="library-primary-actions"] .quiet{border-radius:8.4px}
+
+/* Accepted active-training notice occupies the primary action slot. */
+.trainingGuard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--practice-surface-hover);
+  color: var(--practice-text-secondary);
+  font-size: var(--practice-text-caption);
+  line-height: 1.45;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.trainingGuard > svg { flex-shrink: 0; }
+.trainingGuard strong { display: block; color: var(--practice-text); font-weight: 500; }
+.trainingGuard span { display: block; }

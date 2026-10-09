@@ -155,6 +155,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
   page: Page,
   injectedDelayMs: number,
   options: {
+    /** Preserve the real controller while exercising multi-meaning article states. */
+    transformLookupGroup?: (group: PlatformHeadwordGroupV2) => PlatformHeadwordGroupV2;
     invalidEntryIds?: string[];
     projectionMissingEntryIds?: string[];
     abortFirstActionAfterMs?: number;
@@ -377,11 +379,11 @@ export async function setupAuthenticatedTrainingAttributionPage(
           cardTypeId: body.cardTypeId ?? "word-to-definition",
           intent: "training-review",
         },
-        groups: entry
-          ? [visualFixture
-              ? visualFixture.lookupGroups[entry.id]!
-              : buildLookupGroup(entry, entries.indexOf(entry) < 3, invalidEntryIds.has(entry.id))]
-          : [],
+        groups: entry ? [(() => {
+          const group = visualFixture ? visualFixture.lookupGroups[entry.id]!
+            : buildLookupGroup(entry, entries.indexOf(entry) < 3, invalidEntryIds.has(entry.id));
+          return options.transformLookupGroup?.(group) ?? group;
+        })()] : [],
         page: { selectedTierComplete: true, nextGroupCursor: null },
       },
       "lookup",
