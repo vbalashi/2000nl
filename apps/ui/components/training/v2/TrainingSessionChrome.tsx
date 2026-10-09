@@ -83,7 +83,7 @@ export function TrainingSessionChrome({
           <X aria-hidden="true" />
         </button>
       </div>
-      {presentation.kind === "planned" ? (
+      {presentation.kind === "planned" && !approvedPresentation ? (
         <div
           data-testid="training-session-progress-track"
           className={styles.progress}
