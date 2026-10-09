@@ -243,15 +243,17 @@ describe("LibrarySenseCardV2Session", () => {
     await act(async()=>pending.resolve({accepted:true}));
   });
 
-  test("Training More protects the current meaning and leaves sibling Learn available",async()=>{
+  test("Training More keeps enrolled meanings read-only while new meanings retain Learn",async()=>{
     render(<TrainingMoreSenseCardV2Session entryId={furnitureEntry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
-    const active=await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`);
-    expect(within(active).getByRole("note")).toHaveTextContent("Currently practising");
-    const sibling=screen.getByTestId(`library-sense-card-${financeEntry.entryId}`);
-    fireEvent.click(within(sibling).getByRole("button",{name:"Expand meaning"}));
-    expect(within(sibling).getByRole("button",{name:"Learn"})).toBeEnabled();
-    expect(within(active).getByRole("note")).toHaveTextContent("Rate on the training screen");
+    const enrolled=await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`);
+    expect(within(enrolled).queryByRole("button",{name:"Learn"})).not.toBeInTheDocument();
+    expect(within(enrolled).getByRole("note")).toHaveTextContent("Currently practising");
+    expect(within(enrolled).getByRole("note")).toHaveTextContent("Rate on the training screen");
     for(const name of ["Again","Hard","Good","Easy"])expect(screen.queryByRole("button",{name})).not.toBeInTheDocument();
+    const fresh=screen.getByTestId(`library-sense-card-${financeEntry.entryId}`);
+    fireEvent.click(within(fresh).getByRole("button",{name:"Expand meaning"}));
+    expect(within(fresh).getByRole("button",{name:"Learn"})).toBeEnabled();
+    expect(performAction).not.toHaveBeenCalled();
   });
 
   test("Training More allows authoritative sibling grades without unlocking the active entry",async()=>{
