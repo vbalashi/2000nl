@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { TrainingSessionProgressRim } from "./TrainingSessionProgressRim";
 import approved from "../approvedTrainingCard.module.css";
 import { FooterStats, type FooterStatsProps } from "../FooterStats";
 import {
@@ -75,6 +76,7 @@ export function TrainingSessionSurface({
       approvedPresentation={approvedPresentation}
       notice={notice ? <TrainingSessionNotice notice={notice} /> : null}
       readySurface={readySurface}
+      progress={chrome && phase === "ready" ? <TrainingSessionProgressRim presentation={chrome.presentation} language={chrome.interfaceLanguage} /> : null}
     >
       {children}
     </TrainingSessionV2Layout>

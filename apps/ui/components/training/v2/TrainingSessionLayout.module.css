@@ -158,6 +158,28 @@
   height: 100%;
   background: #8b89f6;
 }
+.progressRim {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 30;
+  height: max(9px, var(--practice-radius-panel));
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: var(--practice-radius-panel) var(--practice-radius-panel) 0 0;
+  background: color-mix(in srgb, var(--practice-accent) 4%, transparent);
+  mask-image: linear-gradient(to bottom, #000 4px, transparent 9px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 4px, transparent 9px);
+}
+.progressRimFill {
+  height: 9px;
+  background: color-mix(in srgb, var(--practice-accent) 52%, transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 7px), transparent);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 7px), transparent);
+  transition: width 450ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .progressRimFill { transition: none; }
+}
 .footer {
   display: flex;
   align-items: center;
