@@ -48,3 +48,5 @@ Accepted: centre the main prompt independently of instructions; reserve hint spa
 остальные значения сохраняют доступные действия, кроме общих действий над
 словом, затрагивающих активную карточку. Реализация: #640.
 [Обсуждение](../discussions/2026-10-09-01-active-training-article.md).
+
+| PWA icon revision | Принята фиксированная Lavender, 2000 / nl в две строки, Inter 400; Android maskable с дополнительным отступом 5%. Реализовано в #642, выпуск ожидает проверок. | [Обсуждение](../discussions/2026-10-09-01-lavender-icon.md) |

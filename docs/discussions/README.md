@@ -70,3 +70,5 @@
 - [2026-10-08: PWA launch identity](2026-10-08-03-pwa-launch-identity.md)
 
 - [2026-10-08: prompt centering and hints](2026-10-08-04-training-prompt-centering.md) — #633; main prompt anchor, quiet boundaries, idiom recovery follow-up #634.
+
+- [2026-10-09: Lavender icon revision](2026-10-09-01-lavender-icon.md) — #642.
