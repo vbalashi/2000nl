@@ -49,3 +49,8 @@ button hides or shows all three. Ordinary training retains its hidden default.
 The question face and fallback eligibility remain unchanged. See the
 [owner clarification](../discussions/2026-10-09-02-translation-recall-target.md).
 Implementation is in #649; publication and owner verification are pending.
+
+Word-context also carries the fresh recall-target translation from the same result
+that prepared the selected example, so an earlier training lookup cannot suppress
+the target after translation preparation succeeds. Both face and answer use this
+value when available. See the [missing-target investigation](../discussions/2026-10-09-03-missing-context-target.md).

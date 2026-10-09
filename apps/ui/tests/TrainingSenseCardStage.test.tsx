@@ -133,6 +133,16 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.getByRole("button", { name: "Good" })).toBeInTheDocument();
   });
 
+  test("context preparation supplies a fresh recall target when the card snapshot has none", () => {
+    const model = { ...buildTrainingSenseCardModel({ group: singleSenseGroup, entry: singleSenseEntry, interfaceLanguage: "en" }), entryTranslation: undefined };
+    render(<TrainingSenseCardStage model={model} mode="definition-to-word" interfaceLanguage="en" onAction={vi.fn()}
+      contextPrompt={{ recallTarget: "передумать", text: "я не пойду с тобой; я передумал", sourceText: "ik ga niet met je mee; ik heb mij bedacht", contentNodeId: "selected", sourceTextFingerprint: "fingerprint" }} />);
+    expect(screen.getByTestId("training-face-recall-target")).toHaveTextContent("передумать");
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    expect(screen.getByTestId("entry-translation")).toHaveTextContent("передумать");
+    expect(screen.getByTestId("entry-translation").closest('[aria-hidden]')).toHaveAttribute("aria-hidden", "false");
+  });
+
   test("renders two nodig idioms and the goed expression hierarchy", () => {
     const nodigModel = buildTrainingSenseCardModel({
       group: nodigGroup,
