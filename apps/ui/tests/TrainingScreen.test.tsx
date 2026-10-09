@@ -1301,7 +1301,20 @@ test("preserves a resumable session when the language catalog fails transiently"
   expect(window.localStorage.getItem("2000nl:training-session:user-1")).not.toBeNull();
   expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
 
+  expect(screen.getByTestId("startup-logo-screen")).toBeVisible();
+  expect(screen.queryByTestId("training-loading-indicator")).not.toBeInTheDocument();
+  let releaseLanguages!: () => void;
+  const retryPending = new Promise<void>(resolve => { releaseLanguages = resolve; });
+  fetchAvailableLearningLanguages.mockImplementationOnce(async () => {
+    await retryPending;
+    return [{code: "nl", label: "Nederlands", dictionaryCount: 1, curatedListCount: 1, userListCount: 0, hasTrainingEligibleLists: true}];
+  });
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  await waitFor(() => expect(screen.getByRole("status", {name:"Preparing training"})).toBeVisible());
+  expect(screen.getByTestId("startup-logo-screen")).toBeVisible();
+  expect(screen.queryByTestId("training-loading-indicator")).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", {name:"Preparing training"})).toHaveClass("sr-only");
+  await act(async () => { releaseLanguages(); });
 
   expect(await screen.findByTestId("mock-training-sense-card-v2")).toBeInTheDocument();
   expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(

@@ -54,3 +54,6 @@ Accepted: centre the main prompt independently of instructions; reserve hint spa
 ## Кромка прогресса тренировки (2026-10-09)
 
 Принят вариант «Постоянная кромка»: приглушённый индикатор 9 px по верхнему краю карточки, вне свайп-слоя, с мягкой нижней границей и плавным заполнением. Существующая семантика прогресса сохраняется. [Обсуждение](../discussions/2026-10-09-02-training-progress-rim.md), #644.
+## Training startup recovery (2026-10-09)
+
+Accepted: prerequisite loading and retry share the branded logo/dots surface; actual failures retain actionable retry without the obsolete framed panel. Pending work must not become a fabricated failure. Original Pixel request failure remains unconfirmed. [Discussion](../discussions/2026-10-09-02-startup-recovery.md), #575. Implemented in the issue checkout; release pending.

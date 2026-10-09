@@ -639,3 +639,25 @@ test("Update renames the same saved identity while Save as creates a separate re
  expect(recipes.find(item=>item.id==="original-id")?.name).toBe("Renamed");
  expect(recipes.find(item=>item.name==="Copy")?.id).not.toBe("original-id");
 });
+
+
+test("failed startup retry keeps one branded waiting surface until ready", async () => {
+  const retry = vi.fn();
+  const view = render(<TrainingTodaySetup {...baseProps} userId="retry-surface" status="error" onRetry={retry} />);
+  expect(screen.getByTestId("startup-logo-screen")).toBeVisible();
+  expect(screen.getByRole("alert")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", {name: "Try again"}));
+  expect(retry).toHaveBeenCalledOnce();
+  for (const status of ["preparing", "loading"] as const) {
+    view.rerender(<TrainingTodaySetup {...baseProps} userId="retry-surface" status={status} onRetry={retry} />);
+    expect(screen.getByTestId("startup-logo-screen")).toBeVisible();
+    expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
+    expect(document.querySelectorAll(".startup-dots i")).toHaveLength(3);
+    expect(screen.queryByTestId("training-loading-indicator")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading")).toHaveClass("sr-only");
+    expect(screen.queryByRole("button", {name: "Try again"})).not.toBeInTheDocument();
+  }
+  view.rerender(<TrainingTodaySetup {...baseProps} userId="retry-surface" />);
+  await screen.findByRole("button", {name: "Create training"});
+  expect(screen.queryByTestId("startup-logo-screen")).not.toBeInTheDocument();
+});

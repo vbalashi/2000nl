@@ -3,7 +3,7 @@ import { getUiMessages } from "@/lib/uiMessages";
 import { applyResolvedTheme } from "@/lib/preferences/resolvedTheme";
 import {TrainingStartupGate} from "./pilot/TrainingStartupGate";
 import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
-import { AccountMaterialProvider } from "@/components/practice/material/AccountMaterialProvider";
+import { AccountMaterialProvider, useAccountMaterial } from "@/components/practice/material/AccountMaterialProvider";
 import { AccountPresentationReady } from "@/components/practice/ui/AccountPresentationReady";
 import { AccountCardSpacingProvider } from "@/components/practice/ui/AccountCardSpacingProvider";
 import { AccountPracticeAppearanceProvider } from "@/components/practice/ui/AccountPracticeAppearanceProvider";
@@ -282,6 +282,7 @@ function TrainingScreenContent({
   const [sessionReplacementWarning, setSessionReplacementWarning] =
     useState(false);
   const [sessionAuthorityRefreshing, setSessionAuthorityRefreshing] = useState(false);
+  const accountMaterial = useAccountMaterial();
   const [homeStartupSettled, setHomeStartupSettled] = useState(false);
   const handleHomeStartupReady = useCallback(() => setHomeStartupSettled(true), []);
   const [openTrainingEditor, setOpenTrainingEditor] = useState(false);
@@ -1625,7 +1626,10 @@ function TrainingScreenContent({
           trainingLanguagesCatalogError ||
           listCatalogStatus === "error")
       ) {
+        setHomeStartupSettled(false);
         setSessionResumeScopeResolved(false);
+        setSessionResumeResolved(false);
+        if (accountMaterial?.status === "error") accountMaterial.reload();
         setTrainingLoadError(null);
         setSessionResumeError(false);
         sessionResumeAttemptedRef.current = false;
@@ -2494,7 +2498,10 @@ function TrainingScreenContent({
   const studyTimeEnabled = destination === "training" && !detailsOpen && !showHotkeys && !showLanguageSelection && !navigationBlocked && !loadingWord && !sessionAuthorityChecking;
   return (
     <TrainingStartupGate
-      pending={trainingTodaySetupEnabled && destination === "training" && trainingPilot.surface !== "session" && !homeStartupSettled}
+      pending={trainingTodaySetupEnabled && destination === "training" && trainingPilot.surface !== "session" && !openTrainingEditor &&
+        (!homeStartupSettled || trainingPilot.status === "preparing")}
+      recovery={trainingTodaySetupEnabled && destination === "training" && trainingPilot.surface !== "session" && !openTrainingEditor && trainingPilot.status === "error"
+        ? { onRetry: () => void trainingPilot.retry() } : undefined}
       interfaceLanguage={onboardingLang}
     >
     <AppFrame
@@ -2525,6 +2532,7 @@ function TrainingScreenContent({
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
           <TrainingTodaySetup
             onStartupReady={handleHomeStartupReady}
+            startupPresentationManaged
             initialView={openTrainingEditor ? "setup" : "today"}
             materialIntent={statisticsMaterialIntent}
             onMaterialIntentConsumed={() => setStatisticsMaterialIntent(null)}

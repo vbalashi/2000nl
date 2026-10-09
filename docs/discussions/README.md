@@ -72,3 +72,5 @@
 - [2026-10-08: prompt centering and hints](2026-10-08-04-training-prompt-centering.md) — #633; main prompt anchor, quiet boundaries, idiom recovery follow-up #634.
 
 - [2026-10-09: Lavender icon revision](2026-10-09-01-lavender-icon.md) — #642.
+
+- [2026-10-09: Training startup recovery](2026-10-09-02-startup-recovery.md)

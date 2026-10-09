@@ -14,6 +14,7 @@
 .ink { color:var(--practice-startup-accent); }
 .status { text-align:center; max-width:min(480px,calc(100vw - 48px)); }
 .status h1,.status p { margin:0; color:inherit; font-size:var(--practice-startup-text-size); line-height:20px; font-weight:400; }
-.status button { margin-top:16px; border:1px solid currentColor; border-radius:8px; padding:8px 16px; background:transparent; color:inherit; }
+.status p { margin-top:10px; }
+.status button { min-height:44px; cursor:pointer; margin-top:16px; border:1px solid currentColor; border-radius:8px; padding:8px 16px; background:transparent; color:inherit; }
 /* Do not fade each readiness gate separately: that produces repeated flashes. */
 .ready { min-height:0; }
