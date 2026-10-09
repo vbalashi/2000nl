@@ -72,6 +72,12 @@ vi.mock("@/lib/training/listService", async (importOriginal) => ({
   ]),
 }));
 
+vi.mock("@/lib/platform/platformV2IdiomExerciseClient", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/platform/platformV2IdiomExerciseClient")>(),
+  fetchPlatformV2IdiomTrainingSessionSnapshot: vi.fn(),
+  fetchNextPlatformV2IdiomTrainingSessionExercise: vi.fn(),
+}));
+
 const legacyTranslationSnapshot = vi.fn();
 const legacyTranslationStart = vi.fn();
 vi.mock("@/lib/platform/platformV2TranslationExerciseClient", async (importOriginal) => ({
@@ -4598,4 +4604,36 @@ test("another account cannot resume the owned legacy sentence record",async()=>{
  await screen.findByRole("heading",{name:/^(Training|Тренировка)$/});
  expect(screen.queryByTestId("legacy-sentence-session")).toBeNull();
  expect(legacyTranslationSnapshot).not.toHaveBeenCalled();expect(legacyTranslationStart).not.toHaveBeenCalled();
+});
+
+test.each([["completed",5],["exhausted",2]] as const)("%s idiom run returns home without a stale Continue training", async (status, completedActions) => {
+  const {fetchAccountTrainingSetups} = await import("@/lib/training/setups/client");
+  vi.mocked(fetchAccountTrainingSetups).mockResolvedValueOnce({revision:1,document:{schemaVersion:1,mainTrainingId:"idioms",trainings:[{
+    id:"idioms",name:"Idioms",languageCode:"nl",draft:{family:"idiom",scenarioId:"idiom",modes:["word-to-definition"],cardFilter:"both",newReviewRatio:2,dateWindow:"all",listValue:"curated:list-1",sourceValue:"",sessionSize:5}
+  }]}});
+  const idioms = await import("@/lib/platform/platformV2IdiomExerciseClient");
+  vi.mocked(idioms.fetchPlatformV2IdiomTrainingSessionSnapshot).mockResolvedValue({
+    contractVersion: "platform-idiom-exercise-session-v2", sessionId: "idiom-finished",
+    exerciseFamily: "idiom", direction: "direct", sessionSize: "5", requestedTotal: 5,
+    plannedNew: 5, plannedReview: 0, plannedPractice: 0, plannedTotal: 5,
+    plannedAt: "2026-10-09T20:00:00Z", runStatus: "active", runGeneration: 1,
+    completedActions: 0, completionReason: null,
+    members: [{ordinal:1, consumedAt:null, unavailableAt:null}],
+  } as never);
+  vi.mocked(idioms.fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({
+    status, completedActions, requestedTotal: 5,
+  } as never);
+  await writeTrainingSessionResume({
+    trainingId:"idioms", sessionId: "idiom-finished", userId: user.id, family: "idiom", languageCode: "nl",
+    listId: "list-1", listType: "curated", scenarioId: "understanding",
+    modes: ["word-to-definition"], cardFilter: "both", newReviewRatio: 2,
+    focusFilter: {dateWindow:"all"}, sessionSize:5,
+  });
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  fireEvent.click(await screen.findByRole("button", {name:"Back to home"}));
+  await screen.findByRole("button", {name:/^(Start|Continue) training$/});
+  expect(screen.queryByRole("button", {name:"Continue training"})).toBeNull();
+  expect(screen.queryByText("IN PROGRESS")).toBeNull();
+  await waitFor(async () => expect(await readTrainingSessionResume(user.id)).toBeNull());
+  expect(screen.getByRole("button", {name:"Start training"})).toBeInTheDocument();
 });

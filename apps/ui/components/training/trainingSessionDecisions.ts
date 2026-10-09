@@ -1,3 +1,4 @@
+import { canContinueTrainingSession } from "@/lib/training/sessionLifecycle";
 import type { TrainingSessionResumeRecord } from "@/lib/training/sessionResumeStore";
 import type { TrainingSessionSnapshot } from "@/lib/trainingService";
 import type { WordListSummary } from "@/lib/types";
@@ -58,11 +59,19 @@ export type ResumeSnapshotClassification =
 export function classifyResumeSnapshot(
   snapshot: {
     runStatus?: string;
+    completedActions?: number;
+    plannedTotal?: number;
+    completionReason?: string | null;
     members: readonly { consumedAt: string | null; unavailableAt: string | null }[];
   } | null,
 ): ResumeSnapshotClassification {
   if (!snapshot) return { kind: "missing" };
   if (snapshot.runStatus === "superseded") return { kind: "superseded" };
+  if (!canContinueTrainingSession({
+    ...snapshot,
+    completedActions: snapshot.completedActions ?? 0,
+    plannedTotal: snapshot.plannedTotal ?? null,
+  })) return { kind: "no-remaining-member" };
   if (!snapshot.members.some((member) => !member.consumedAt && !member.unavailableAt)) {
     return { kind: "no-remaining-member" };
   }

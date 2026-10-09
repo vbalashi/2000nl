@@ -1,5 +1,6 @@
 "use client";
 
+import { canContinueTrainingSession } from "@/lib/training/sessionLifecycle";
 import React,{useEffect,useRef,useState} from "react";
 import {AddAction} from "./ui/AddAction";
 import {ChevronDown,ChevronUp,Play,Plus} from "lucide-react";
@@ -46,7 +47,7 @@ export function TrainingOverview({state:incomingState,launchPending=false,interf
  },[state.status,trainingCount]);
  if(state.status==="loading")return <div className={s.home} lang={interfaceLanguage} aria-busy="true"><h1 className={s.srOnly}>{navigation.training}</h1><p role="status">{copy.loading}</p></div>;
  if(state.status==="error")return <div className={s.home} lang={interfaceLanguage} aria-busy={launchPending}><h1>{navigation.training}</h1><p role="alert">{state.message}</p><button className={s.start} onClick={onRetry}>{copy.retry}</button></div>;
- const resumable=state.resume&&(state.resume.total===null||state.resume.total>state.resume.completed)?state.resume:undefined;
+ const resumable=state.resume&&canContinueTrainingSession({completedActions:state.resume.completed,plannedTotal:state.resume.total})?state.resume:undefined;
  const main=resumable?.training??state.trainings.find(item=>item.id===(resumable?.trainingId||state.mainId));
  const resume=main&&resumable?.trainingId===main.id?resumable:undefined;
  const empty=main&&state.emptyTraining?.trainingId===main.id?state.emptyTraining:undefined;

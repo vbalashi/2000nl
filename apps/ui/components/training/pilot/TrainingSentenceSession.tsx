@@ -24,6 +24,9 @@ import { resolvePlatformV2Audio } from "@/lib/platform/platformV2TrainingMediaCl
 
 import { useRecordedStudyTime } from "../useRecordedStudyTime";
 
+import { useTrainingExerciseProgress } from "../useTrainingExerciseProgress";
+import type { TrainingSessionProgress } from "@/lib/training/sessionLifecycle";
+
 type Props = TrainingCompletionActions & {
   sessionName?: string;
   studyTimeEnabled?: boolean;
@@ -33,6 +36,7 @@ type Props = TrainingCompletionActions & {
   translationTargetLanguageCode: string;
   interfaceLanguage: OnboardingLanguage;
   onExit: () => void;
+  onProgress?: (progress: TrainingSessionProgress) => void;
   onSessionSuperseded?: () => void;
   onHistory?: () => void;
   onPlayResolvedAudio?: (url: string, label: string) => void;
@@ -45,8 +49,7 @@ export function TrainingSentenceSession(props: Props) {
   const t = getUiMessages(interfaceLanguage).trainingExercises.sentence;
   const [candidate, setCandidate] = useState<(PlatformTranslationExerciseCandidateV2 & { ordinal: number }) | null>(null);
   const [content, setContent] = useState<SentenceExerciseContent | null>(null);
-  const [completed, setCompleted] = useState(session.completedActions);
-  const completedRef = useRef(session.completedActions);
+  const { completed, accept, finish } = useTrainingExerciseProgress(session, props.onProgress);
   const [revealed, setRevealed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -80,14 +83,14 @@ export function TrainingSentenceSession(props: Props) {
           await markPlatformV2TranslationTrainingSessionMemberUnavailable(userId, session.sessionId, next.targetId, next.reason);
           continue;
         }
-        if (next.status === "completed" || next.status === "exhausted") { setTerminal(completedRef.current >= session.plannedTotal && session.plannedTotal > 0 ? "complete" : "empty"); return; }
+        if (next.status === "completed" || next.status === "exhausted") { const count = finish({ ...next, status: next.status }); setTerminal(count > 0 ? "complete" : "empty"); return; }
         if (next.status === "superseded") { supersededCallback.current?.(); return; }
         setFailed(true); return;
       }
       setFailed(true);
     } catch { if (current === generation.current) setFailed(true); }
     finally { if (current === generation.current) setLoading(false); }
-  }, [userId, session.sessionId, session.plannedTotal, contentLanguageCode, translationTargetLanguageCode]);
+  }, [userId, session.sessionId, contentLanguageCode, translationTargetLanguageCode, finish]);
   useEffect(() => {
     const generationRef = generation;
     void loadNext();
@@ -125,7 +128,7 @@ export function TrainingSentenceSession(props: Props) {
     return () => controller.abort();
   }, [candidate, content, loading, terminal, session.members, session.runGeneration, session.sessionId, contentLanguageCode, translationTargetLanguageCode]);
 
-  const exclusion = useTrainingExclusion({ userId, onSessionSuperseded: onSessionSuperseded ?? onExit, identity: candidate?.targetKey ?? "none", sessionId: session.sessionId, target: { kind: "exercise", targetId: candidate?.targetId ?? "" }, onAccepted: async () => { completedRef.current++; setCompleted(completedRef.current); await loadNext(); } });
+  const exclusion = useTrainingExclusion({ userId, onSessionSuperseded: onSessionSuperseded ?? onExit, identity: candidate?.targetKey ?? "none", sessionId: session.sessionId, target: { kind: "exercise", targetId: candidate?.targetId ?? "" }, onAccepted: async () => { accept(); await loadNext(); } });
   useRecordedStudyTime({ ownerId: userId, sessionId: session.sessionId, family: "sentence", entryId: candidate?.entryId, targetId: candidate?.targetId,
     enabled: studyTimeEnabled && Boolean(candidate && content) && !loading && !terminal && !submitting && !exclusion.busy && !exclusion.failed });
   async function grade(result: PlatformTrainingExerciseReviewResultV2) {
@@ -134,7 +137,7 @@ export function TrainingSentenceSession(props: Props) {
     try {
       const clientEventId = eventId.current ?? crypto.randomUUID(); eventId.current = clientEventId;
       await performPlatformV2TranslationExerciseAction({ trainingSessionId: session.sessionId, clientEventId, candidate, reviewResult: result });
-      eventId.current = null; completedRef.current++; setCompleted(completedRef.current); await loadNext();
+      eventId.current = null; accept(); await loadNext();
     } catch { setFailed(true); } finally { setSubmitting(false); }
   }
   const preparationFailed = failed && !candidate && !loading && !terminal;
