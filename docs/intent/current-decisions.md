@@ -40,3 +40,7 @@ Accepted: Inter 52px regular wordmark with accented nl and three flowing dots, n
 ## Training front layout (2026-10-08)
 
 Accepted: centre the main prompt independently of instructions; reserve hint space and fade hints without moving the prompt. Shared fronts retain readable overflow for long content. Normal Training button boundaries use the quiet border role, preserving keyboard focus. Implemented in [PR #635](https://github.com/vbalashi/2000nl/pull/635); validation and release evidence are recorded there. [Discussion](../discussions/2026-10-08-04-training-prompt-centering.md), #633.
+
+## Медиа и первые оплаты (2026-10-09)
+
+Принято проверять оплату за ядро 2000 NL без ожидания завершения всей экосистемы; аудитория не ограничена родным языком. Идеи статей сохраняются постоянно в отдельном банке с отслеживанием написания и публикаций. Цена, каналы, домены и движок ещё обсуждаются. [Основание](../discussions/2026-10-09-01-media-and-first-paying-users.md), [банк идей](../marketing/article-ideas/README.md). Реализация продукта этим решением не подтверждается.
