@@ -38,8 +38,14 @@ the omission. Preserve the existing admin JSON{} request contract in its test.
 ## Validation and lifecycle
 
 Local DB221 health and search-index probes pass. Ingestion:136 passed/12 skipped;
-diagnostic unit tests:12 passed. Full UI and mobile/browser suites are running.
-Typecheck/lint pass before final integration corrections; final recheck pending.
+diagnostic unit tests:12 passed. Full UI:2164 passed/344 skipped across248 passing files. Browser:24 passed
+with mocked transports and real components (initial login failures were a test
+storage-key hostname mismatch, corrected via runner env). Final typecheck/lint pass,
+with the existing handlePlayAudio warning. Disposable18,184-entry PostgreSQL
+diagnostic passes after adapting the preserved assertion to the shared canonical
+signature field. Guidance check passes after correcting a stale221 range.
+DB drift CI initially hit Docker Hub unauthenticated limits; use the verified
+public ECR mirror of the same official PostgreSQL17 service image.
 No DB migrations, manifest modifications, production data edits or corpus promotion.
 All ten component PRs remain open until the single integration release merges.
 Release deployment, exact production commit verification, reference-main sync,

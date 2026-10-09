@@ -154,7 +154,7 @@ function assertNestedFunctionTiming(sample, wrapperArgumentTypes) {
   for (const [schema, name, argumentTypes] of expected) {
     const matching = sample.functionStats.filter((row) =>
       row.schema === schema && row.function === name &&
-      row.argumentTypes === argumentTypes && row.calls > 0,
+      row.signature === `${schema}.${name}(${argumentTypes.replace(/,\s*/g, ",")})` && row.calls > 0,
     );
     assert.equal(matching.length, 1,
       `Missing or ambiguous function timing for ${schema}.${name}(${argumentTypes}): ${JSON.stringify(sample.functionStats)}`);
