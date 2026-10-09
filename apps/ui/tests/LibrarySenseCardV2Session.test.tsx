@@ -243,10 +243,15 @@ describe("LibrarySenseCardV2Session", () => {
     await act(async()=>pending.resolve({accepted:true}));
   });
 
-  test("Training More never adds non-session review buttons",async()=>{
+  test("Training More keeps enrolled meanings read-only while new meanings retain Learn",async()=>{
     render(<TrainingMoreSenseCardV2Session entryId={furnitureEntry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
-    await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`);
+    const enrolled=await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`);
+    expect(within(enrolled).queryByRole("button",{name:"Learn"})).not.toBeInTheDocument();
     for(const name of ["Again","Hard","Good","Easy"])expect(screen.queryByRole("button",{name})).not.toBeInTheDocument();
+    const fresh=screen.getByTestId(`library-sense-card-${financeEntry.entryId}`);
+    fireEvent.click(within(fresh).getByRole("button",{name:"Expand meaning"}));
+    expect(within(fresh).getByRole("button",{name:"Learn"})).toBeEnabled();
+    expect(performAction).not.toHaveBeenCalled();
   });
 
   test("an accepted collection removal followed by failed read is not reported as saved; retry only reads", async () => {
