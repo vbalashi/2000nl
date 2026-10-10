@@ -7,6 +7,8 @@ import type { CardFilter, TrainingMode } from "@/lib/types";
 import { trainingSessionLabel } from "./trainingSessionLabels";
 import type { TrainingSessionPresentationSnapshot } from "./useTrainingSessionPresentation";
 import styles from "./TrainingSessionLayout.module.css";
+import { TrainingSessionProgress } from "./TrainingSessionProgress";
+import { useTrainingInteractions } from "@/components/practice/ui/TrainingInteractionPreferences";
 
 const copy = {
   nl: { close: "Sessie sluiten", history: "Geschiedenis" },
@@ -26,6 +28,8 @@ export type TrainingSessionChromeProps = {
   onClose: () => void;
   disabled?: boolean;
   approvedPresentation?: boolean;
+  /** Show progress only while the session is ready. */
+  showProgress?: boolean;
 };
 
 export function TrainingSessionChrome({
@@ -40,12 +44,14 @@ export function TrainingSessionChrome({
   onClose,
   disabled = false,
   approvedPresentation = false,
+  showProgress = false,
 }: TrainingSessionChromeProps) {
   const text = copy[interfaceLanguage];
+  const { preferences } = useTrainingInteractions();
   const name =
     sessionName ??
     trainingSessionLabel(interfaceLanguage, scenario, mode, cardFilter);
-  return (
+  const chrome = (
     <section
       data-testid="training-session-chrome"
       data-visual-spec={approvedPresentation ? "training-approved-v1" : "training-height-b"}
@@ -95,5 +101,18 @@ export function TrainingSessionChrome({
         </div>
       ) : null}
     </section>
+  );
+  if (!approvedPresentation) return chrome;
+  return (
+    <div className={styles.progressHeader}>
+      {chrome}
+      {showProgress && presentation.kind === "planned" && preferences.progressAnimation !== "off" ? (
+        <TrainingSessionProgress
+          presentation={presentation}
+          language={interfaceLanguage}
+          variant={preferences.progressAnimation}
+        />
+      ) : null}
+    </div>
   );
 }

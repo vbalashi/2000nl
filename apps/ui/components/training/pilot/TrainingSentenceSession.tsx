@@ -11,7 +11,6 @@ import { TrainingCompletion, type TrainingCompletionActions } from "../v2/Traini
 import { TrainingSessionState } from "../v2/TrainingSessionState";
 import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
 import { TrainingSessionNotice } from "../v2/TrainingSessionSurface";
-import { TrainingSessionProgressRim } from "../v2/TrainingSessionProgressRim";
 import { TrainingSessionChrome } from "../v2/TrainingSessionChrome";
 import { TrainingSessionStatsFooter } from "../TrainingSessionStatsFooter";
 import { useTranslationTrainingStats } from "./useTranslationTrainingStats";
@@ -144,8 +143,8 @@ export function TrainingSentenceSession(props: Props) {
   const preparationFailed = failed && !candidate && !loading && !terminal;
   const sessionPresentation = { kind: "planned" as const, position: Math.min(completed, session.requestedTotal), total: session.requestedTotal, fraction: session.requestedTotal ? Math.min(completed / session.requestedTotal, 1) : 0 };
   const presentation = content ? buildSentenceCardPresentation({ content, interfaceLanguage, translationTargetLanguageCode, repeatCount: candidate?.state?.seenCount ?? 0 }) : null;
-  return <TrainingSessionV2Layout approvedPresentation={true} progress={!loading && !(failed && !candidate) && !terminal ? <TrainingSessionProgressRim presentation={sessionPresentation} language={interfaceLanguage} /> : null} phase={loading ? "loading" : failed && !candidate ? "failure" : "ready"}
-    chrome={<TrainingSessionChrome approvedPresentation={true} interfaceLanguage={interfaceLanguage} scenario="idiom" mode="word-to-definition" cardFilter="both" sessionName={props.sessionName || t.title} presentation={sessionPresentation} onHistory={onHistory} onClose={onExit} disabled={submitting || exclusion.busy} />}
+  return <TrainingSessionV2Layout approvedPresentation={true} phase={loading ? "loading" : failed && !candidate ? "failure" : "ready"}
+    chrome={<TrainingSessionChrome approvedPresentation={true} interfaceLanguage={interfaceLanguage} scenario="idiom" mode="word-to-definition" cardFilter="both" sessionName={props.sessionName || t.title} presentation={sessionPresentation} showProgress={!loading && !(failed && !candidate) && !terminal} onHistory={onHistory} onClose={onExit} disabled={submitting || exclusion.busy} />}
     notice={!preparationFailed && (failed || exclusion.failed) ? <TrainingSessionNotice notice={{ kind: "error", message: exclusion.failed ? trainingExclusionCopy[interfaceLanguage].failed : t.failed, retryLabel: t.retry, retryDisabled: submitting || loading, onRetry: () => exclusion.failed ? void exclusion.exclude() : void loadNext() }} /> : null}
     footer={<TrainingSessionStatsFooter {...stats} interfaceLanguage={interfaceLanguage} />}>
       {loading ? <TrainingSessionState loading title={t.loading} /> : null}

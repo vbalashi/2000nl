@@ -27,8 +27,6 @@ import { TrainingSessionState } from "../v2/TrainingSessionState";
 import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
 import { TrainingSessionNotice } from "../v2/TrainingSessionSurface";
 import { TrainingSessionChrome } from "../v2/TrainingSessionChrome";
-import { TrainingSessionProgress } from "../v2/TrainingSessionProgress";
-import { useTrainingInteractions } from "@/components/practice/ui/TrainingInteractionPreferences";
 
 import { TrainingSessionStatsFooter } from "../TrainingSessionStatsFooter";
 import { useIdiomTrainingStats } from "./useIdiomTrainingStats";
@@ -82,7 +80,6 @@ export function TrainingIdiomSession({
   onOpenDetails,
 }: Props) {
   const t = getUiMessages(interfaceLanguage).trainingExercises.idiom;
-  const { preferences } = useTrainingInteractions();
   const [candidate, setCandidate] =
     useState<PlatformIdiomExerciseCandidateV2 | null>(null);
   const [content, setContent] = useState<IdiomExerciseContent | null>(null);
@@ -278,6 +275,7 @@ export function TrainingIdiomSession({
           cardFilter={cardFilter}
           sessionName={sessionName || t.title}
           presentation={sessionPresentation}
+          showProgress={!loading && !(error && !candidate) && !terminal}
           onHistory={onHistory}
           onClose={onExit}
           disabled={submitting || exclusion.busy}
@@ -299,9 +297,6 @@ export function TrainingIdiomSession({
           />
         ) : null
       }
-      progress={!loading && !(error && !candidate) && session.requestedTotal > 0 && preferences.progressAnimation !== "off" ? (
-        <TrainingSessionProgress presentation={sessionPresentation} language={interfaceLanguage} variant={preferences.progressAnimation} />
-      ) : null}
       footer={
         <TrainingSessionStatsFooter
           {...footerStats}

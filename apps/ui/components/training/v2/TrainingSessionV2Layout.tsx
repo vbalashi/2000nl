@@ -31,7 +31,6 @@ export function TrainingSessionV2Layout({
   footer,
   notice,
   readySurface,
-  progress,
   authorityRefreshing = false,
   approvedPresentation = false,
   children,
@@ -41,7 +40,6 @@ export function TrainingSessionV2Layout({
   footer: React.ReactNode;
   notice?: React.ReactNode;
   readySurface?: TrainingSessionReadySurface;
-  progress?: React.ReactNode;
   authorityRefreshing?: boolean;
   approvedPresentation?: boolean;
   children: React.ReactNode;
@@ -57,7 +55,7 @@ export function TrainingSessionV2Layout({
         className={`${styles.main} ${approvedPresentation ? styles.mainApproved : ""} ${authorityRefreshing ? styles.authorityRefreshing : ""}`}
       >
         <section className={styles.stack}>
-          {chrome || progress ? <div className={styles.progressHeader}>{chrome}{progress}</div> : null}
+          {chrome}
           <div
             data-testid="training-card-scroll-region"
             className="flex min-h-0 flex-1 flex-col overflow-clip px-0"
