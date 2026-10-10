@@ -1,0 +1,75 @@
+{
+  "id": "nose-ru",
+  "inputHash": "60311f4c83656409c44d85f030e9bba7743e24c1df753e5a95fecdf89d375294",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "нос",
+      "alternativeTexts": [],
+      "baseText": "нос",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "часть тела, с помощью которой человек чувствует запахи"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "упасть носом в масло",
+        "text": "неожиданно оказаться в благоприятной ситуации"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "неожиданно оказаться в благоприятной ситуации"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"нос\",\"alternativeTexts\":[],\"baseText\":\"нос\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"часть тела, с помощью которой человек чувствует запахи\"},{\"fieldId\":\"idiom:0\",\"text\":\"неожиданно оказаться в благоприятной ситуации\",\"literalText\":\"упасть носом в масло\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"неожиданно оказаться в благоприятной ситуации\"}]}",
+  "responseHash": "cd8132e43168c1d409f6628cb25523519ee1635cdf1e1587b2a57404ded3f204",
+  "usage": {
+    "completion_tokens": 615,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 499,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 105,
+      "engine_ttlt_ms": 3682,
+      "pre_inference_ms": 83,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 313,
+      "service_ttlt_ms": 3886,
+      "user_visible_ttft_ms": 229
+    },
+    "prompt_tokens": 1574,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 503,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2189
+  },
+  "elapsedMs": 4310,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "abfc9448-7afe-4d1e-896a-3443eb9589a6",
+      "inputTokens": 1574,
+      "outputTokens": 615,
+      "event": "translation_attempt",
+      "correlationId": "62c5dd80-5a47-4155-a606-6177b1a413db",
+      "attempt": 1,
+      "elapsedMs": 4310,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

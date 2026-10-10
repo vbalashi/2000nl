@@ -1,0 +1,75 @@
+{
+  "id": "monkey-ru",
+  "inputHash": "0a723525db26bd53152b38a5ad9befa4cf55b1f2cfc34c18b9e570e5157b2360",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "обезьяна",
+      "alternativeTexts": [],
+      "baseText": "обезьяна",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "животное"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "Теперь обезьяна выходит из рукава.",
+        "text": "Теперь становится ясен скрытый замысел."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "Теперь становится ясен скрытый замысел."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"обезьяна\",\"alternativeTexts\":[],\"baseText\":\"обезьяна\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"животное\"},{\"fieldId\":\"idiom:0\",\"text\":\"Теперь становится ясен скрытый замысел.\",\"literalText\":\"Теперь обезьяна выходит из рукава.\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"Теперь становится ясен скрытый замысел.\"}]}",
+  "responseHash": "b3e7155aa28e914cf1b7e339103469b6d4abac0f0c7b69131b3de626ed193ecf",
+  "usage": {
+    "completion_tokens": 310,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 196,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 63,
+      "engine_ttlt_ms": 1682,
+      "pre_inference_ms": 71,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 268,
+      "service_ttlt_ms": 1882,
+      "user_visible_ttft_ms": 197
+    },
+    "prompt_tokens": 1706,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 2016
+  },
+  "elapsedMs": 2434,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "a00cba04-54f2-48af-9932-f977de62d9cc",
+      "inputTokens": 1706,
+      "outputTokens": 310,
+      "event": "translation_attempt",
+      "correlationId": "cb9a2c92-8bbe-4fa9-9827-05b528d5675f",
+      "attempt": 1,
+      "elapsedMs": 2434,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

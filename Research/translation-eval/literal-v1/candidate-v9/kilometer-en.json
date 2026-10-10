@@ -1,0 +1,66 @@
+{
+  "id": "kilometer-en",
+  "inputHash": "ff16ba771c356e41c529b53b2bd15b84e7367b46a2470102bd6ac6cd048f45cb",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "kilometer",
+      "alternativeTexts": [],
+      "baseText": "kilometer",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a unit of length equal to one thousand meters"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"kilometer\",\"alternativeTexts\":[],\"baseText\":\"kilometer\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a unit of length equal to one thousand meters\"}]}",
+  "responseHash": "fc42f4b28debf34e1056158513373f807ce3d9900ff7b6542fb275412958ab8e",
+  "usage": {
+    "completion_tokens": 95,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 37,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 72,
+      "engine_ttlt_ms": 543,
+      "pre_inference_ms": 115,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 342,
+      "service_ttlt_ms": 819,
+      "user_visible_ttft_ms": 228
+    },
+    "prompt_tokens": 1662,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 452,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1757
+  },
+  "elapsedMs": 1252,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "817a4dd1-19ba-4e50-84ba-9e4db3f40ae4",
+      "inputTokens": 1662,
+      "outputTokens": 95,
+      "event": "translation_attempt",
+      "correlationId": "372537e1-41fb-4cff-87ce-5c9a370b5cb1",
+      "attempt": 1,
+      "elapsedMs": 1252,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

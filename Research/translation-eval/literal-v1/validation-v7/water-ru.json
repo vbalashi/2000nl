@@ -1,0 +1,75 @@
+{
+  "id": "water-ru",
+  "inputHash": "e626697ceab9a7d9c816c885ea72c31bf8e1fa8c7e8cd4a5146eb05a98920ebc",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "жидкость",
+      "alternativeTexts": [],
+      "baseText": "вода",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "жидкость"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "носить воду в море",
+        "text": "заниматься бесполезным делом"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "делать бесполезную работу"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"жидкость\",\"alternativeTexts\":[],\"baseText\":\"вода\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"жидкость\"},{\"fieldId\":\"idiom:0\",\"text\":\"заниматься бесполезным делом\",\"literalText\":\"носить воду в море\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"делать бесполезную работу\"}]}",
+  "responseHash": "4d7b945fd1485aa3f6ef6659f5325745d26612d7e4dcb5f2d26e9583da311c17",
+  "usage": {
+    "completion_tokens": 244,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 141,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 68,
+      "engine_ttlt_ms": 1316,
+      "pre_inference_ms": 107,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 316,
+      "service_ttlt_ms": 1559,
+      "user_visible_ttft_ms": 209
+    },
+    "prompt_tokens": 1449,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1446,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1693
+  },
+  "elapsedMs": 2338,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "f0a810a5-f656-4097-a521-910d406ad109",
+      "inputTokens": 1449,
+      "outputTokens": 244,
+      "event": "translation_attempt",
+      "correlationId": "f6232a8d-8fd7-46c6-bf24-e78da0013a53",
+      "attempt": 1,
+      "elapsedMs": 2338,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

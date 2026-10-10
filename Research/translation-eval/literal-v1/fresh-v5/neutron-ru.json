@@ -1,0 +1,66 @@
+{
+  "id": "neutron-ru",
+  "inputHash": "7151a23a87e160a59f5a6500f035430ec4f9dafe2d799d746995704e57c95666",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "нейтрон",
+      "alternativeTexts": [],
+      "baseText": "нейтрон",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "электрически нейтральная частица в атомном ядре"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"нейтрон\",\"alternativeTexts\":[],\"baseText\":\"нейтрон\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"электрически нейтральная частица в атомном ядре\"}]}",
+  "responseHash": "5688919193710f7904bbe413164b41156213fb7e342d6b00bbf50a62f2554feb",
+  "usage": {
+    "completion_tokens": 117,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 51,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 69,
+      "engine_ttlt_ms": 680,
+      "pre_inference_ms": 47,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 256,
+      "service_ttlt_ms": 863,
+      "user_visible_ttft_ms": 209
+    },
+    "prompt_tokens": 905,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1022
+  },
+  "elapsedMs": 1232,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "462206a8-6570-402f-8412-b7511d3359e7",
+      "inputTokens": 905,
+      "outputTokens": 117,
+      "event": "translation_attempt",
+      "correlationId": "d7da9e90-8f96-428f-93ee-7ffca23b464a",
+      "attempt": 1,
+      "elapsedMs": 1232,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

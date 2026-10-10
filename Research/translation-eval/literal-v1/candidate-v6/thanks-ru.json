@@ -1,0 +1,77 @@
+{
+  "id": "thanks-ru",
+  "inputHash": "50f58ea9df914f5b9910881395594a0498e737ec6727f26738832e4f305ddf47",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "благодарность",
+      "alternativeTexts": [
+        "признательность"
+      ],
+      "baseText": "благодарность",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "признательность за помощь"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "сердечная благодарность",
+        "text": "Большое спасибо"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "дружелюбное выражение благодарности"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"благодарность\",\"alternativeTexts\":[\"признательность\"],\"baseText\":\"благодарность\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"признательность за помощь\"},{\"fieldId\":\"idiom:0\",\"text\":\"Большое спасибо\",\"literalText\":\"сердечная благодарность\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"дружелюбное выражение благодарности\"}]}",
+  "responseHash": "ca14ec1791b8ea508c4cc3456ce0a4fa602e2664465b824398c54a92c7af7f65",
+  "usage": {
+    "completion_tokens": 372,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 261,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 73,
+      "engine_ttlt_ms": 2265,
+      "pre_inference_ms": 85,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 320,
+      "service_ttlt_ms": 2507,
+      "user_visible_ttft_ms": 235
+    },
+    "prompt_tokens": 1186,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1183,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1558
+  },
+  "elapsedMs": 3075,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "08df35bc-b66b-4526-92f1-fbc904b89c05",
+      "inputTokens": 1186,
+      "outputTokens": 372,
+      "event": "translation_attempt",
+      "correlationId": "4c7a4193-25f7-44cb-9c7b-2117513e44ce",
+      "attempt": 1,
+      "elapsedMs": 3075,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

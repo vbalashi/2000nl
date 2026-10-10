@@ -1,0 +1,74 @@
+{
+  "id": "hand-ru",
+  "inputHash": "c48e907e2d12ae46b179858995bfa3fec7b9b9be882016f003a2dca95e953fe6",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "кисть руки",
+      "alternativeTexts": [],
+      "baseText": "рука",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "часть тела"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "немного помочь"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "немного помочь кому-либо"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"кисть руки\",\"alternativeTexts\":[],\"baseText\":\"рука\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"часть тела\"},{\"fieldId\":\"idiom:0\",\"text\":\"немного помочь\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"немного помочь кому-либо\"}]}",
+  "responseHash": "5955c9a488cbec87b64187b6ec0c522c51a93586d3c74bec8b225b904f4a2a43",
+  "usage": {
+    "completion_tokens": 271,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 185,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 58,
+      "engine_ttlt_ms": 1675,
+      "pre_inference_ms": 108,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 304,
+      "service_ttlt_ms": 1917,
+      "user_visible_ttft_ms": 196
+    },
+    "prompt_tokens": 940,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1211
+  },
+  "elapsedMs": 2589,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "2eb16ce5-241c-4b7a-a0e0-5c5924cc7e30",
+      "inputTokens": 940,
+      "outputTokens": 271,
+      "event": "translation_attempt",
+      "correlationId": "bb4b45aa-d232-4bfb-b6e4-2a67f8a90a79",
+      "attempt": 1,
+      "elapsedMs": 2589,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

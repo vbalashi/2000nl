@@ -1,0 +1,77 @@
+{
+  "id": "lamp-ru",
+  "inputHash": "ee0f212a8fd4a31e521550d2c40987ae0d515ccd0fd39465b444c2965d35c570",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лампа",
+      "alternativeTexts": [
+        "светильник"
+      ],
+      "baseText": "лампа",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "предмет, который излучает свет"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "наткнуться на лампу",
+        "text": "попасться на чём-то предосудительном"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "быть пойманным на чём-то неправильном"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лампа\",\"alternativeTexts\":[\"светильник\"],\"baseText\":\"лампа\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"предмет, который излучает свет\"},{\"fieldId\":\"idiom:0\",\"text\":\"попасться на чём-то предосудительном\",\"literalText\":\"наткнуться на лампу\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"быть пойманным на чём-то неправильном\"}]}",
+  "responseHash": "df8cbcdada9089263d40370cad207dafdea9cab2097693293e9b1a6654a86323",
+  "usage": {
+    "completion_tokens": 357,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 238,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 139,
+      "engine_ttlt_ms": 1835,
+      "pre_inference_ms": 69,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 351,
+      "service_ttlt_ms": 2042,
+      "user_visible_ttft_ms": 282
+    },
+    "prompt_tokens": 1189,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1186,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1546
+  },
+  "elapsedMs": 2992,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "5afbb4af-d608-4a3b-9877-cf3821830705",
+      "inputTokens": 1189,
+      "outputTokens": 357,
+      "event": "translation_attempt",
+      "correlationId": "7bbd38ef-a161-44d1-97e5-5012a3f9afae",
+      "attempt": 1,
+      "elapsedMs": 2992,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

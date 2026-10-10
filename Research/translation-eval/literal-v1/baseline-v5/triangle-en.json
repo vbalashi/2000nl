@@ -1,0 +1,66 @@
+{
+  "id": "triangle-en",
+  "inputHash": "cb4334ab63462db27c41d25c8dd4e00e6b815e91bf7b10b61b394c527c8c5dbb",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "triangle",
+      "alternativeTexts": [],
+      "baseText": "triangle",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a figure with exactly three straight sides"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"triangle\",\"alternativeTexts\":[],\"baseText\":\"triangle\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a figure with exactly three straight sides\"}]}",
+  "responseHash": "362010d72b6b4a5f54b4ca499ec52fa9ed5f74ace7504ca62560cc4950e89fef",
+  "usage": {
+    "completion_tokens": 103,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 49,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 75,
+      "engine_ttlt_ms": 596,
+      "pre_inference_ms": 70,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 295,
+      "service_ttlt_ms": 813,
+      "user_visible_ttft_ms": 225
+    },
+    "prompt_tokens": 904,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1007
+  },
+  "elapsedMs": 1280,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "c865d17e-d90d-4885-8420-287b0840f898",
+      "inputTokens": 904,
+      "outputTokens": 103,
+      "event": "translation_attempt",
+      "correlationId": "1070c8c3-5666-42ad-8ec0-3c586fb7e8b9",
+      "attempt": 1,
+      "elapsedMs": 1280,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

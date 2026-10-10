@@ -1,0 +1,66 @@
+{
+  "id": "neutron-ru",
+  "inputHash": "28ec35ab7201625494325daa7716dc7d245a8f4796fe4a856d429530800a45f8",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "нейтрон",
+      "alternativeTexts": [],
+      "baseText": "нейтрон",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "электрически незаряженная частица в ядре атома"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"нейтрон\",\"alternativeTexts\":[],\"baseText\":\"нейтрон\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"электрически незаряженная частица в ядре атома\"}]}",
+  "responseHash": "332d0ef8634276be59f8301243e471572261886466bb7d42dfe53d7c0e66e30d",
+  "usage": {
+    "completion_tokens": 119,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 53,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 105,
+      "engine_ttlt_ms": 843,
+      "pre_inference_ms": 105,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 365,
+      "service_ttlt_ms": 1096,
+      "user_visible_ttft_ms": 260
+    },
+    "prompt_tokens": 1663,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 453,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1782
+  },
+  "elapsedMs": 1464,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "78308d99-e919-4c2c-b418-87dff8f42cfb",
+      "inputTokens": 1663,
+      "outputTokens": 119,
+      "event": "translation_attempt",
+      "correlationId": "ba0e8b1c-3e09-4d10-b67a-567158bbf4ca",
+      "attempt": 1,
+      "elapsedMs": 1464,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

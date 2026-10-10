@@ -1,0 +1,25 @@
+{
+  "method": "agent",
+  "blind": false,
+  "humanApproved": false,
+  "manifestHash": "7a5d2a356809afda42c855c06db997d48daff1e1ac33f8a84cc5363e20812f03",
+  "scope": "Focused synthetic ru/en cases, not population quality or a human review. Serious literal errors counted separately from primary meaning errors. No penalty for optional omission.",
+  "items": [
+    {
+      "id": "long-en",
+      "responseHash": "69c120a39ac6c2e45f5840dd0fba71eb27583b1c8484b21fb0232f7191995d2c",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "long-ru",
+      "responseHash": "8bdf11cfcb2dbb25b52fc68c1e76ec5b12365e14820d08b841fffefadb539643",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    }
+  ]
+}

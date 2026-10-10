@@ -1,0 +1,75 @@
+{
+  "id": "ice-en",
+  "inputHash": "e2a4d7fce9a4dbf2f75c7f2115e46415abee0ccaed4e664e3c15a3e478195722",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "ice",
+      "alternativeTexts": [],
+      "baseText": "ice",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "frozen water"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "break the ice"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "ease the initial tension in social interaction"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"ice\",\"alternativeTexts\":[],\"baseText\":\"ice\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"frozen water\"},{\"fieldId\":\"idiom:0\",\"text\":\"break the ice\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"ease the initial tension in social interaction\"}]}",
+  "responseHash": "d44324c952647db31eca0beddee77022c0f607ce0a95bbe37ff2891146a4200b",
+  "usage": {
+    "completion_tokens": 162,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 72,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 81,
+      "engine_ttlt_ms": 934,
+      "pre_inference_ms": 66,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 294,
+      "service_ttlt_ms": 1143,
+      "user_visible_ttft_ms": 228
+    },
+    "prompt_tokens": 1566,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 495,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1728
+  },
+  "elapsedMs": 1522,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "949c86af-bd4d-4ac8-ba19-7c65ef8d5866",
+      "inputTokens": 1566,
+      "outputTokens": 162,
+      "event": "translation_attempt",
+      "correlationId": "f007f730-dc44-4c4b-878c-f9433f2b8b57",
+      "attempt": 1,
+      "elapsedMs": 1522,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

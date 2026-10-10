@@ -1,0 +1,74 @@
+{
+  "id": "cow-en",
+  "inputHash": "f38c30716b6dde1c683ac097bcd79a91b319798db61d1e4f2ccb3e434a67a60d",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cow",
+      "alternativeTexts": [],
+      "baseText": "cow",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an animal that produces milk"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "make small talk"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to chat pleasantly about unimportant things"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"cow\",\"alternativeTexts\":[],\"baseText\":\"cow\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an animal that produces milk\"},{\"fieldId\":\"idiom:0\",\"text\":\"make small talk\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to chat pleasantly about unimportant things\"}]}",
+  "responseHash": "ca1c4129e646ca2be890c65e9371f16a99b9953eb9c38b336653790be0c99dc9",
+  "usage": {
+    "completion_tokens": 191,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 104,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 78,
+      "engine_ttlt_ms": 1314,
+      "pre_inference_ms": 120,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 367,
+      "service_ttlt_ms": 1542,
+      "user_visible_ttft_ms": 246
+    },
+    "prompt_tokens": 953,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1144
+  },
+  "elapsedMs": 2011,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "ca672ab3-ad6d-4ce6-bf86-91083008462b",
+      "inputTokens": 953,
+      "outputTokens": 191,
+      "event": "translation_attempt",
+      "correlationId": "603af74e-9b70-462e-ab18-6f2d62719a9b",
+      "attempt": 1,
+      "elapsedMs": 2011,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

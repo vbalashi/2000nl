@@ -1,0 +1,75 @@
+{
+  "id": "horse-ru",
+  "inputHash": "a962635a93d060568a25cbb62aa933dbbadac8cffb6d2c914756a490a3ba1c68",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лошадь",
+      "alternativeTexts": [],
+      "baseText": "лошадь",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "крупное копытное животное, на котором можно ездить верхом"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "запрячь лошадь позади телеги",
+        "text": "ставить телегу впереди лошади"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "что-либо делать в неправильном порядке"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лошадь\",\"alternativeTexts\":[],\"baseText\":\"лошадь\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"крупное копытное животное, на котором можно ездить верхом\"},{\"fieldId\":\"idiom:0\",\"text\":\"ставить телегу впереди лошади\",\"literalText\":\"запрячь лошадь позади телеги\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"что-либо делать в неправильном порядке\"}]}",
+  "responseHash": "050ebd0df498f290d552c9e49bbcdc5e81c336c9db44557f0661cd817b9c96ae",
+  "usage": {
+    "completion_tokens": 475,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 350,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 56,
+      "engine_ttlt_ms": 2658,
+      "pre_inference_ms": 79,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 276,
+      "service_ttlt_ms": 2873,
+      "user_visible_ttft_ms": 197
+    },
+    "prompt_tokens": 1714,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 504,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 2189
+  },
+  "elapsedMs": 3123,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "1ba38751-524f-498c-a3ed-2a22700fb2e5",
+      "inputTokens": 1714,
+      "outputTokens": 475,
+      "event": "translation_attempt",
+      "correlationId": "8c167e7d-fc3e-4fa8-8298-6478053694b0",
+      "attempt": 1,
+      "elapsedMs": 3123,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "tomorrow-en",
+  "inputHash": "6181410a5ee21de0210b4e12613c5820423437a812d50312c32c2c64a91e79ac",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "tomorrow",
+      "alternativeTexts": [],
+      "baseText": "tomorrow",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "on the day after today"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "See you tomorrow"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "a farewell greeting used when you expect to see each other again the next day"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"tomorrow\",\"alternativeTexts\":[],\"baseText\":\"tomorrow\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"on the day after today\"},{\"fieldId\":\"idiom:0\",\"text\":\"See you tomorrow\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"a farewell greeting used when you expect to see each other again the next day\"}]}",
+  "responseHash": "0df2286f4b008a411229ed90e0ed42fe25931d78c7a55ca5b55c78e568c010b4",
+  "usage": {
+    "completion_tokens": 238,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 136,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 65,
+      "engine_ttlt_ms": 1244,
+      "pre_inference_ms": 49,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 225,
+      "service_ttlt_ms": 1387,
+      "user_visible_ttft_ms": 176
+    },
+    "prompt_tokens": 1571,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 500,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1809
+  },
+  "elapsedMs": 1733,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "7b4f111c-971a-486c-931f-5d18aa873bf4",
+      "inputTokens": 1571,
+      "outputTokens": 238,
+      "event": "translation_attempt",
+      "correlationId": "7bc9cef9-1e9f-40b2-9d53-a59f6f919be1",
+      "attempt": 1,
+      "elapsedMs": 1733,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

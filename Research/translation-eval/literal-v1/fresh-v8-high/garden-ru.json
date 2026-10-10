@@ -1,0 +1,75 @@
+{
+  "id": "garden-ru",
+  "inputHash": "66ba5825af3feb14b1407e4ea175d385e474838808ad8f89c460f63f96c4b822",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "сад",
+      "alternativeTexts": [],
+      "baseText": "сад",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "участок земли с растениями возле дома"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "водить кого-либо вокруг сада",
+        "text": "водить кого-либо за нос"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "намеренно вводить кого-либо в заблуждение"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"сад\",\"alternativeTexts\":[],\"baseText\":\"сад\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"участок земли с растениями возле дома\"},{\"fieldId\":\"idiom:0\",\"text\":\"водить кого-либо за нос\",\"literalText\":\"водить кого-либо вокруг сада\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"намеренно вводить кого-либо в заблуждение\"}]}",
+  "responseHash": "fa61ef304b88a131d624283da90f24ccfea1cb391fcc9afdccfdf4c5fce22870",
+  "usage": {
+    "completion_tokens": 565,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 457,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 104,
+      "engine_ttlt_ms": 3399,
+      "pre_inference_ms": 44,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 284,
+      "service_ttlt_ms": 3574,
+      "user_visible_ttft_ms": 240
+    },
+    "prompt_tokens": 1572,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1569,
+      "cached_tokens": 0
+    },
+    "total_tokens": 2137
+  },
+  "elapsedMs": 4170,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "26143f29-d1e7-466d-957c-620e1d13ba02",
+      "inputTokens": 1572,
+      "outputTokens": 565,
+      "event": "translation_attempt",
+      "correlationId": "74422a9a-11ea-4b56-bcd6-53d1c2f22654",
+      "attempt": 1,
+      "elapsedMs": 4170,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

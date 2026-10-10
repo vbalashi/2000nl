@@ -1,0 +1,69 @@
+{
+  "id": "bank-seat-en",
+  "inputHash": "b4fb40e1e3ca12bd567ad4322059bfcfe88eaf8ded0556040f9accd656b6e1e5",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "sofa",
+      "alternativeTexts": [
+        "couch",
+        "bench"
+      ],
+      "baseText": "bank",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a long piece of furniture on which several people can sit"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"sofa\",\"alternativeTexts\":[\"couch\",\"bench\"],\"baseText\":\"bank\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a long piece of furniture on which several people can sit\"}]}",
+  "responseHash": "2a43303985bca61e29a50d64172b7cad744ddf37b0a9c42373bdb18576c3ef4a",
+  "usage": {
+    "completion_tokens": 276,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 212,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 214,
+      "engine_ttlt_ms": 1907,
+      "pre_inference_ms": 92,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 487,
+      "service_ttlt_ms": 2138,
+      "user_visible_ttft_ms": 395
+    },
+    "prompt_tokens": 902,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1178
+  },
+  "elapsedMs": 2476,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "b9e9ee07-a2c6-408b-8546-f43c3851a245",
+      "inputTokens": 902,
+      "outputTokens": 276,
+      "event": "translation_attempt",
+      "correlationId": "02465a78-39ac-4fcb-a65f-5b0f1e5d7913",
+      "attempt": 1,
+      "elapsedMs": 2476,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

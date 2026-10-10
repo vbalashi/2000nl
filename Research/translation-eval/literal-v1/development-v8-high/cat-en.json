@@ -1,0 +1,75 @@
+{
+  "id": "cat-en",
+  "inputHash": "7095e5ddef4e45dff58c39d0bb7f1885d02e6d39363803b44d448c090bcdbb04",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cat",
+      "alternativeTexts": [],
+      "baseText": "cat",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a pet"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "watch the cat come out of the tree",
+        "text": "wait and see"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "first wait to see how a situation develops"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"cat\",\"alternativeTexts\":[],\"baseText\":\"cat\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a pet\"},{\"fieldId\":\"idiom:0\",\"text\":\"wait and see\",\"literalText\":\"watch the cat come out of the tree\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"first wait to see how a situation develops\"}]}",
+  "responseHash": "50e077ab7014f9dcf8030b665f94294c2a4cc4ad4e1468572b50c847d0cf7c09",
+  "usage": {
+    "completion_tokens": 607,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 510,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 111,
+      "engine_ttlt_ms": 3847,
+      "pre_inference_ms": 100,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 389,
+      "service_ttlt_ms": 4100,
+      "user_visible_ttft_ms": 289
+    },
+    "prompt_tokens": 1568,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 497,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2175
+  },
+  "elapsedMs": 4585,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "3311f663-da2e-42df-965f-2b2d65213508",
+      "inputTokens": 1568,
+      "outputTokens": 607,
+      "event": "translation_attempt",
+      "correlationId": "dbec2b06-16a0-4573-a121-e29790ad32a9",
+      "attempt": 1,
+      "elapsedMs": 4584,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

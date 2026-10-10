@@ -1,0 +1,66 @@
+{
+  "id": "square-ru",
+  "inputHash": "3caff9f94a9319a363a6ec32292d95da41b2115cebcb5c2a43960ed8b3f3dcea",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "квадрат",
+      "alternativeTexts": [],
+      "baseText": "квадрат",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "геометрическая фигура с четырьмя равными сторонами и четырьмя прямыми углами"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"квадрат\",\"alternativeTexts\":[],\"baseText\":\"квадрат\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"геометрическая фигура с четырьмя равными сторонами и четырьмя прямыми углами\"}]}",
+  "responseHash": "43e17f3ae11ef97a20f9dbab1f8e07c97569578dd3d82c0f2babc3038889bda6",
+  "usage": {
+    "completion_tokens": 219,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 144,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 66,
+      "engine_ttlt_ms": 1338,
+      "pre_inference_ms": 74,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 293,
+      "service_ttlt_ms": 1552,
+      "user_visible_ttft_ms": 219
+    },
+    "prompt_tokens": 1413,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1410,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1632
+  },
+  "elapsedMs": 1989,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "2a059048-0eae-427e-9b48-2739179c8c5a",
+      "inputTokens": 1413,
+      "outputTokens": 219,
+      "event": "translation_attempt",
+      "correlationId": "fb6621fc-e73f-4dc3-a16f-9818f0b426e9",
+      "attempt": 1,
+      "elapsedMs": 1989,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,66 @@
+{
+  "id": "arm-limb-ru",
+  "inputHash": "0c6fd3d38e81a227593477c80bc7325a8f8e60ea227d755df082ffb09a1592c4",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "рука",
+      "alternativeTexts": [],
+      "baseText": "рука",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "часть тела между плечом и кистью"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"рука\",\"alternativeTexts\":[],\"baseText\":\"рука\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"часть тела между плечом и кистью\"}]}",
+  "responseHash": "a5cfbe88734c8b05c81320bc81ff3ba03f1e14ec67511543719aeb277babf30e",
+  "usage": {
+    "completion_tokens": 140,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 82,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 72,
+      "engine_ttlt_ms": 1083,
+      "pre_inference_ms": 46,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 270,
+      "service_ttlt_ms": 1277,
+      "user_visible_ttft_ms": 224
+    },
+    "prompt_tokens": 1522,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 451,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1662
+  },
+  "elapsedMs": 1782,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "ce22625e-b418-4bad-9f74-dc7170ff5c47",
+      "inputTokens": 1522,
+      "outputTokens": 140,
+      "event": "translation_attempt",
+      "correlationId": "d17e333b-c5b8-4eb0-acea-7d48b902c5e0",
+      "attempt": 1,
+      "elapsedMs": 1782,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

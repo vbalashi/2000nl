@@ -1,0 +1,75 @@
+{
+  "id": "basket-ru",
+  "inputHash": "3dd63ed39ca4e9aaf2bb5c71ab5b41afbd842f0dfe935dca479dd9c45ba48614",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "корзина",
+      "alternativeTexts": [],
+      "baseText": "корзина",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "плетёная ёмкость"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "провалиться сквозь корзину",
+        "text": "оказаться разоблачённым"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "быть разоблачённым; оказаться не таким хорошим, как ты утверждал"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"корзина\",\"alternativeTexts\":[],\"baseText\":\"корзина\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"плетёная ёмкость\"},{\"fieldId\":\"idiom:0\",\"text\":\"оказаться разоблачённым\",\"literalText\":\"провалиться сквозь корзину\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"быть разоблачённым; оказаться не таким хорошим, как ты утверждал\"}]}",
+  "responseHash": "57412fff8bc2d33ed4196e83435e17220a53e6f727c7388a165fbbf26a174189",
+  "usage": {
+    "completion_tokens": 305,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 185,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 68,
+      "engine_ttlt_ms": 1770,
+      "pre_inference_ms": 96,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 309,
+      "service_ttlt_ms": 2032,
+      "user_visible_ttft_ms": 213
+    },
+    "prompt_tokens": 1195,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1192,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1500
+  },
+  "elapsedMs": 2467,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "cee684a0-7c1a-4703-b019-63c50db2d0b9",
+      "inputTokens": 1195,
+      "outputTokens": 305,
+      "event": "translation_attempt",
+      "correlationId": "57fbc7ef-6777-4c5a-a090-a97bfb89ea7e",
+      "attempt": 1,
+      "elapsedMs": 2466,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

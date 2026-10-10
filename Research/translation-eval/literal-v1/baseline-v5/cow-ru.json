@@ -1,0 +1,74 @@
+{
+  "id": "cow-ru",
+  "inputHash": "b48fc564a238dc16bcc515cdc6257d5d2af3e32eebdba6ab488620ba9ef895ab",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "корова",
+      "alternativeTexts": [],
+      "baseText": "корова",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "животное, дающее молоко"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "непринуждённо болтать о пустяках"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "непринуждённо беседовать о неважных вещах"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"корова\",\"alternativeTexts\":[],\"baseText\":\"корова\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"животное, дающее молоко\"},{\"fieldId\":\"idiom:0\",\"text\":\"непринуждённо болтать о пустяках\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"непринуждённо беседовать о неважных вещах\"}]}",
+  "responseHash": "96fe1641e1a380e8aa8a8bfba558d1463a6f98c94c48562dde889f3972721bf2",
+  "usage": {
+    "completion_tokens": 234,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 122,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 65,
+      "engine_ttlt_ms": 1129,
+      "pre_inference_ms": 68,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 274,
+      "service_ttlt_ms": 1334,
+      "user_visible_ttft_ms": 207
+    },
+    "prompt_tokens": 953,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1187
+  },
+  "elapsedMs": 1866,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "810dbc26-5e1a-4c1d-8051-51e73ad72fc3",
+      "inputTokens": 953,
+      "outputTokens": 234,
+      "event": "translation_attempt",
+      "correlationId": "5eaebce8-08fb-498b-b5a6-98fd73ba003f",
+      "attempt": 1,
+      "elapsedMs": 1866,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

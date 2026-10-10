@@ -1,0 +1,75 @@
+{
+  "id": "garden-en",
+  "inputHash": "3762775d2dc6e0cc76896f2608e95675e4c27f86000c3e0a9602aa99eb861192",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "garden",
+      "alternativeTexts": [],
+      "baseText": "garden",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a plot of land with plants beside a house"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "lead someone around the garden",
+        "text": "deliberately mislead someone"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "deliberately mislead someone"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"garden\",\"alternativeTexts\":[],\"baseText\":\"garden\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a plot of land with plants beside a house\"},{\"fieldId\":\"idiom:0\",\"text\":\"deliberately mislead someone\",\"literalText\":\"lead someone around the garden\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"deliberately mislead someone\"}]}",
+  "responseHash": "f7d2586b615c91c268aed6bed230feb72a805133fc8729fa55833e7b15bdd34c",
+  "usage": {
+    "completion_tokens": 234,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 132,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 96,
+      "engine_ttlt_ms": 1265,
+      "pre_inference_ms": 100,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 338,
+      "service_ttlt_ms": 1502,
+      "user_visible_ttft_ms": 238
+    },
+    "prompt_tokens": 1711,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1945
+  },
+  "elapsedMs": 2013,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "71280545-a718-4152-a4ba-04b2c05ce8e5",
+      "inputTokens": 1711,
+      "outputTokens": 234,
+      "event": "translation_attempt",
+      "correlationId": "fff45460-3580-4cf2-8ce7-c3c7a0664bb9",
+      "attempt": 1,
+      "elapsedMs": 2013,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

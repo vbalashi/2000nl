@@ -1,0 +1,397 @@
+{
+  "method": "agent",
+  "blind": false,
+  "humanApproved": false,
+  "manifestHash": "50002d3986b2bcd408200dd4c68820f79b5478cd3580930dde14149e54618495",
+  "scope": "Focused synthetic ru/en cases, not population quality or a human review. Serious literal errors counted separately from primary meaning errors. No penalty for optional omission.",
+  "items": [
+    {
+      "id": "angry-en",
+      "responseHash": "43c8224f1d3d5484bcdb53afec5c37f1397ed1d3b8ff7ab5d00375409dd3f0a8",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "angry-ru",
+      "responseHash": "9852f58f0fe893898f4a809b9de1e76e024cb02a6bfe8a6510c984d29f9c0a50",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "bank-money-en",
+      "responseHash": "a4b137a964c180569fd36b3246d9d9206ac8693d66279f1bfa00e468abba64f2",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "bank-money-ru",
+      "responseHash": "f36b74594d8864cb08e451b2b00ce1673fc4348778c6bdc0fa04ead79e62b0a3",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "bank-seat-en",
+      "responseHash": "2a43303985bca61e29a50d64172b7cad744ddf37b0a9c42373bdb18576c3ef4a",
+      "decision": "needs-work",
+      "severity": "minor",
+      "failureCodes": [
+        "unnecessary-alternative"
+      ],
+      "rationale": "Bench and sofa/couch introduce competing sub-senses for an underspecified furniture definition."
+    },
+    {
+      "id": "bank-seat-ru",
+      "responseHash": "2034acc3420c88e2cde279938beb74e8dd51b886a69a2a6e21ae485baba66d46",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "basket-en",
+      "responseHash": "0679bfd8e13098fa14331fd5c796b5360777e617b1064f670e01661a36b25195",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "basket-ru",
+      "responseHash": "6d039be77f4de31515fe8b78a315299f21bec19a491398bd675ba03321f367c7",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "bridge-en",
+      "responseHash": "5cd3c144f070a48f5da0f55146371104afd72e61489f6d7dd2dd5b178f9f60ab",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "bridge-ru",
+      "responseHash": "5ea6f9e5058810fb85f46d9a8abb0d6de47c4fb03912482a8a9f6099dfafc127",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "butter-en",
+      "responseHash": "44ac44c276aa20c536c6c39213bdd01a791fb238c534ed87a74148cdb6733f35",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "butter-ru",
+      "responseHash": "a36222ac529d4d6e449662e34626fe6cade67531c54bb336bab14464f01ca143",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "cat-en",
+      "responseHash": "7c343774702dfda5ac4f5e9b2a698980bac05d19bc6e0a85b090a66eccdf2de2",
+      "decision": "needs-work",
+      "severity": "serious",
+      "failureCodes": [
+        "sense-mismatch"
+      ],
+      "rationale": "Headword cat replaced by superclass pet."
+    },
+    {
+      "id": "cat-ru",
+      "responseHash": "0d1350885a6f4a3238e5b23f028a2bedf60d240fe4a73545e9c790673803c895",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "cow-en",
+      "responseHash": "ca1c4129e646ca2be890c65e9371f16a99b9953eb9c38b336653790be0c99dc9",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "cow-ru",
+      "responseHash": "96fe1641e1a380e8aa8a8bfba558d1463a6f98c94c48562dde889f3972721bf2",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "cow-simple-en",
+      "responseHash": "5b142f443eb993406b361fe9b8232c4e891023c62efd68ceb9028a49a667ec2e",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "cow-simple-ru",
+      "responseHash": "9d08c11af578fcdc28f1f4c524bdea56e399173e8b8a9711b6f66c68edf91278",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "egg-en",
+      "responseHash": "c5e04d9d2d462ffee390645852c9231ced127cd30d52b4b2deac8c9413e2fac4",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "egg-ru",
+      "responseHash": "b9f2993f74ec72ec8eef254f69a62ada0d1533ce5ab6525972a2361c4bc308ec",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "fast-en",
+      "responseHash": "a837268f8ed4e134dfb36968229e7508e14dfa9136ee5efbc364ecebbef61080",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "fast-ru",
+      "responseHash": "a400995809a34d311d5c2038de1cc02c7917ef4c9bc283a20aaf591268726892",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "hand-en",
+      "responseHash": "12e5b130c0b214025d7fb79730a17e403a95bb68bf2a21efc93aa2d914d186b7",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "hand-ru",
+      "responseHash": "5955c9a488cbec87b64187b6ec0c522c51a93586d3c74bec8b225b904f4a2a43",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "ice-en",
+      "responseHash": "d8f6f4f23296bf820fd37acc0d9f5c0858471d6160782c1b2e56a3ed633fada2",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "ice-ru",
+      "responseHash": "10f124663485787b4fc0281e2b777301a681ff7d6dff1180b6bfe564d0c7bd87",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "kilometer-en",
+      "responseHash": "fc42f4b28debf34e1056158513373f807ce3d9900ff7b6542fb275412958ab8e",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "kilometer-ru",
+      "responseHash": "fba4c07a9b5ff656b651b2e6a9a7c58172400d39428e2856284a2715345b85db",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "lamp-en",
+      "responseHash": "b128d2b868ace50a7aa2894dad4664a7470c271ae7a72981d99ba9c3860eb8bd",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "lamp-ru",
+      "responseHash": "412625b3654b044bc66750d2365c4a9db1c8023f82bfa485795affd0baf7f161",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "luck-en",
+      "responseHash": "0bb77ca8cc68b697741a8a5a89a5c9d0576924be5e7b1e32d8d6ecca32f7d7e3",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "luck-ru",
+      "responseHash": "893542dac1867be84b1caf185034b414e58bfcc3add30454ac5b7d67fb0fb4d5",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "nose-en",
+      "responseHash": "618ada781fe171f7621441ef955693072382eeb035093e6f8b0e5a25108c5659",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "nose-ru",
+      "responseHash": "ae66556fa752d91b4abbc645281ee3e92cbb941068f280240c193fc18d19990a",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "oxygen-en",
+      "responseHash": "a4f4724ecc9fcd44988b1771dca0dc4e17ea83172360a8a7d31dbc34e2e70fd5",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "oxygen-ru",
+      "responseHash": "d6a60699156811fa970050717729a9db1f103915c234b435ffa3c837dad06ab1",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "prevent-en",
+      "responseHash": "d740ad5cae663878aded1bd4dd98238a0c308646db67b01fb7f9b9e0956c5401",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "prevent-ru",
+      "responseHash": "ed93825a38612dd6e11b5ecc2373f961a1bc22770edb01f1d7ac6b58ad0c78ce",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "sad-en",
+      "responseHash": "4495b4aa04c7c21723fb340d6349a74a6502ef0b30fdbad6c2821425f4f1db0c",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "sad-ru",
+      "responseHash": "9237361f684f2c27b349273149c62554f6b3bdd92b26d0b1b19ec59276afdce5",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "thanks-en",
+      "responseHash": "2332a99ea9661ef037830b4930e8ddd0077bc3af8597c85e1404381b6f2030e8",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "thanks-ru",
+      "responseHash": "a3c2dc41cc17efc2e6d7b55b6a28b1257f15e9af12bb8c511d34e0e29a4ad5d2",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "triangle-en",
+      "responseHash": "362010d72b6b4a5f54b4ca499ec52fa9ed5f74ace7504ca62560cc4950e89fef",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "triangle-ru",
+      "responseHash": "d44fd60421408f2160f7ab894067f125b9def2abc32f8163faa37f21adee7c48",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "understand-en",
+      "responseHash": "4a50942100b0e6d5e8c62450dcaa37f9937613b368056225d1b88cf89856d85d",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "understand-ru",
+      "responseHash": "2727847e5d913dd4e6553ac3eff8cfe30093a0d8bd99a3b9160de661d5ec3049",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "victim-en",
+      "responseHash": "3ba77337acf22d2bd7689b50765f08eafa18b6af1f7bc9daed4038b163dc1303",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "victim-ru",
+      "responseHash": "1bc51c215fadbf6216c95b2a582469b0a309ca5795c6fbc2abc3ec7ee023abef",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    }
+  ]
+}

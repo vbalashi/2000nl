@@ -1,0 +1,66 @@
+{
+  "id": "neutron-en",
+  "inputHash": "23ccb987d629b1e7bb3cabe1bea8eecb71fccedd6024391e8bdd0793505f82ec",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "neutron",
+      "alternativeTexts": [],
+      "baseText": "neutron",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "An electrically neutral particle in an atomic nucleus."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"neutron\",\"alternativeTexts\":[],\"baseText\":\"neutron\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"An electrically neutral particle in an atomic nucleus.\"}]}",
+  "responseHash": "b9b440b23119e25a26c4ad66bb8293daab2a67976ea1dc7f277dad97f0ba2a79",
+  "usage": {
+    "completion_tokens": 100,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 42,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 102,
+      "engine_ttlt_ms": 665,
+      "pre_inference_ms": 82,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 297,
+      "service_ttlt_ms": 856,
+      "user_visible_ttft_ms": 214
+    },
+    "prompt_tokens": 1663,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 453,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1763
+  },
+  "elapsedMs": 1230,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "b0212fc2-ae74-457b-84b5-d142663ec80e",
+      "inputTokens": 1663,
+      "outputTokens": 100,
+      "event": "translation_attempt",
+      "correlationId": "a9ba61be-ce5a-4eba-a81b-5b78da808bbc",
+      "attempt": 1,
+      "elapsedMs": 1230,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,66 @@
+{
+  "id": "square-en",
+  "inputHash": "fb5b9870a5c4c91ba64d316523296e8f4ea45fec3ed904448d777cd514fe5959",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "square",
+      "alternativeTexts": [],
+      "baseText": "square",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a figure with four equal sides and four right angles"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"square\",\"alternativeTexts\":[],\"baseText\":\"square\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a figure with four equal sides and four right angles\"}]}",
+  "responseHash": "cddd3a334a3d34da3fdd10bfdc90c981fccf77326fd2e4aabfb29bb78a9b319f",
+  "usage": {
+    "completion_tokens": 51,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 4,
+      "engine_ttft_ms": 73,
+      "engine_ttlt_ms": 291,
+      "pre_inference_ms": 90,
+      "service_tbt_ms": 4,
+      "service_ttft_ms": 339,
+      "service_ttlt_ms": 553,
+      "user_visible_ttft_ms": 250
+    },
+    "prompt_tokens": 1413,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1410,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1464
+  },
+  "elapsedMs": 1113,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "be1037f7-4585-4f30-a064-b14e02c29229",
+      "inputTokens": 1413,
+      "outputTokens": 51,
+      "event": "translation_attempt",
+      "correlationId": "0b36f6b5-ad23-44e6-81ac-a320e2c871ab",
+      "attempt": 1,
+      "elapsedMs": 1113,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

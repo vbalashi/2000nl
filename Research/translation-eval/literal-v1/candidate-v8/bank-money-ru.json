@@ -1,0 +1,66 @@
+{
+  "id": "bank-money-ru",
+  "inputHash": "d8748d057dcdd1f4f5b6492bf5155c3c268a0d6c084807b48b8bede87ec50dc6",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "банк",
+      "alternativeTexts": [],
+      "baseText": "банк",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "учреждение, которое хранит деньги и выдает их в кредит"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"банк\",\"alternativeTexts\":[],\"baseText\":\"банк\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"учреждение, которое хранит деньги и выдает их в кредит\"}]}",
+  "responseHash": "5393ffdbd646e38a6e1e15ab0ed9b41eb75b675feed9bd8901c3c9a421276a95",
+  "usage": {
+    "completion_tokens": 123,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 62,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 60,
+      "engine_ttlt_ms": 784,
+      "pre_inference_ms": 100,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 300,
+      "service_ttlt_ms": 1016,
+      "user_visible_ttft_ms": 199
+    },
+    "prompt_tokens": 1521,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 450,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1644
+  },
+  "elapsedMs": 1534,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "003eeaeb-ec3f-4a99-bc10-01b76a0fbf61",
+      "inputTokens": 1521,
+      "outputTokens": 123,
+      "event": "translation_attempt",
+      "correlationId": "385b20e8-4ebd-464d-a005-adbb0d828bdb",
+      "attempt": 1,
+      "elapsedMs": 1533,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

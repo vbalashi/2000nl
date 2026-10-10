@@ -1,0 +1,123 @@
+{
+  "id": "long-en",
+  "inputHash": "1f42a1743d0b8d66ac13105c05b8b9db7c058b4f9ae8e5113653952062907dfa",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cow",
+      "alternativeTexts": [],
+      "baseText": "cow",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an adult female bovine that gives milk"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "talk about cows and calves",
+        "text": "make small talk"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to have a pleasant chat about unimportant things"
+      },
+      {
+        "fieldId": "idiom:0:example:0",
+        "text": "Over coffee, the neighbors made small talk."
+      },
+      {
+        "fieldId": "example:0",
+        "text": "Example 1: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals."
+      },
+      {
+        "fieldId": "example:1",
+        "text": "Example 2: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals."
+      },
+      {
+        "fieldId": "example:2",
+        "text": "Example 3: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals."
+      },
+      {
+        "fieldId": "example:3",
+        "text": "Example 4: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals."
+      },
+      {
+        "fieldId": "example:4",
+        "text": "Example 5: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals."
+      },
+      {
+        "fieldId": "example:5",
+        "text": "Example 6: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals."
+      },
+      {
+        "fieldId": "example:6",
+        "text": "Example 7: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals."
+      },
+      {
+        "fieldId": "example:7",
+        "text": "Example 8: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals."
+      },
+      {
+        "fieldId": "example:8",
+        "text": "Example 9: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals."
+      },
+      {
+        "fieldId": "example:9",
+        "text": "Example 10: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals."
+      },
+      {
+        "fieldId": "example:10",
+        "text": "Example 11: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"cow\",\"alternativeTexts\":[],\"baseText\":\"cow\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an adult female bovine that gives milk\"},{\"fieldId\":\"idiom:0\",\"text\":\"make small talk\",\"literalText\":\"talk about cows and calves\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to have a pleasant chat about unimportant things\"},{\"fieldId\":\"idiom:0:example:0\",\"text\":\"Over coffee, the neighbors made small talk.\"},{\"fieldId\":\"example:0\",\"text\":\"Example 1: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals.\"},{\"fieldId\":\"example:1\",\"text\":\"Example 2: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals.\"},{\"fieldId\":\"example:2\",\"text\":\"Example 3: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals.\"},{\"fieldId\":\"example:3\",\"text\":\"Example 4: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals.\"},{\"fieldId\":\"example:4\",\"text\":\"Example 5: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals.\"},{\"fieldId\":\"example:5\",\"text\":\"Example 6: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals.\"},{\"fieldId\":\"example:6\",\"text\":\"Example 7: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals.\"},{\"fieldId\":\"example:7\",\"text\":\"Example 8: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals.\"},{\"fieldId\":\"example:8\",\"text\":\"Example 9: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals.\"},{\"fieldId\":\"example:9\",\"text\":\"Example 10: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals.\"},{\"fieldId\":\"example:10\",\"text\":\"Example 11: The farmer takes the cow to the pasture every morning, where the animal grazes calmly while he carefully closes the gate and then prepares the feed for the other animals.\"}]}",
+  "responseHash": "69c120a39ac6c2e45f5840dd0fba71eb27583b1c8484b21fb0232f7191995d2c",
+  "usage": {
+    "completion_tokens": 1409,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 761,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 128,
+      "engine_ttlt_ms": 7424,
+      "pre_inference_ms": 106,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 396,
+      "service_ttlt_ms": 7686,
+      "user_visible_ttft_ms": 291
+    },
+    "prompt_tokens": 2213,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1142,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 3622
+  },
+  "elapsedMs": 8283,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "a9df4749-07e3-4043-9f34-5f27ff57dd60",
+      "inputTokens": 2213,
+      "outputTokens": 1409,
+      "event": "translation_attempt",
+      "correlationId": "ceaaa93e-e50a-4483-a40d-0d69ac078746",
+      "attempt": 1,
+      "elapsedMs": 8283,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

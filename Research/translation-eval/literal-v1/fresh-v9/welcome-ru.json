@@ -1,0 +1,75 @@
+{
+  "id": "welcome-ru",
+  "inputHash": "768e2fbec4ae7903bbbdf85135a2b68801b196300f1ae20d15048e015357e338",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "желанный",
+      "alternativeTexts": [],
+      "baseText": "желанный",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Тот, кого рады принять."
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "От всей души добро пожаловать!"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "Сердечное приветствие по случаю чьего-либо прихода."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"желанный\",\"alternativeTexts\":[],\"baseText\":\"желанный\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Тот, кого рады принять.\"},{\"fieldId\":\"idiom:0\",\"text\":\"От всей души добро пожаловать!\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"Сердечное приветствие по случаю чьего-либо прихода.\"}]}",
+  "responseHash": "92afb3a6efbf1a82a006426f728563c5a751e40037a525cad904f7b6183f2724",
+  "usage": {
+    "completion_tokens": 467,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 357,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 65,
+      "engine_ttlt_ms": 2893,
+      "pre_inference_ms": 105,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 316,
+      "service_ttlt_ms": 3140,
+      "user_visible_ttft_ms": 211
+    },
+    "prompt_tokens": 1707,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 497,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 2174
+  },
+  "elapsedMs": 3632,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "dc2cc337-59ab-48e9-aecb-f0076a1989d7",
+      "inputTokens": 1707,
+      "outputTokens": 467,
+      "event": "translation_attempt",
+      "correlationId": "2e981d2e-96e8-48f6-9d80-0234166b9982",
+      "attempt": 1,
+      "elapsedMs": 3632,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

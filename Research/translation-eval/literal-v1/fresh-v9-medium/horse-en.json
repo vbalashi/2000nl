@@ -1,0 +1,75 @@
+{
+  "id": "horse-en",
+  "inputHash": "2072d5d25892450419e0a940a98c218dc694604e03712b5453fedf450de3bd96",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "horse",
+      "alternativeTexts": [],
+      "baseText": "horse",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a large hoofed animal that people can ride"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "harness the horse behind the wagon",
+        "text": "put the cart before the horse"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to tackle something in the wrong order"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"horse\",\"alternativeTexts\":[],\"baseText\":\"horse\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a large hoofed animal that people can ride\"},{\"fieldId\":\"idiom:0\",\"text\":\"put the cart before the horse\",\"literalText\":\"harness the horse behind the wagon\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to tackle something in the wrong order\"}]}",
+  "responseHash": "4b312737381e2ba8d4919c31e8cb7f4b3d93a80cb189821b427365217405c117",
+  "usage": {
+    "completion_tokens": 386,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 281,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 65,
+      "engine_ttlt_ms": 2219,
+      "pre_inference_ms": 81,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 242,
+      "service_ttlt_ms": 2391,
+      "user_visible_ttft_ms": 161
+    },
+    "prompt_tokens": 1714,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 504,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 2100
+  },
+  "elapsedMs": 2739,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "732c762a-15d4-4460-b19f-7e2ba63eb11b",
+      "inputTokens": 1714,
+      "outputTokens": 386,
+      "event": "translation_attempt",
+      "correlationId": "20ef29b0-d252-4410-8d32-ff131288e0e7",
+      "attempt": 1,
+      "elapsedMs": 2739,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

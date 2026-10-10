@@ -1,0 +1,75 @@
+{
+  "id": "butter-ru",
+  "inputHash": "f3aed3c433a73bacaa7b597f70ab5a5b3ecb3a231518efb5d8047ed005ce4dec",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "сливочное масло",
+      "alternativeTexts": [],
+      "baseText": "масло",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Пищевой жир, изготовляемый из молока."
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "иметь масло на голове",
+        "text": "У самого рыльце в пушку."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "самому быть виноватым в том, в чём упрекаешь другого"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"сливочное масло\",\"alternativeTexts\":[],\"baseText\":\"масло\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Пищевой жир, изготовляемый из молока.\"},{\"fieldId\":\"idiom:0\",\"text\":\"У самого рыльце в пушку.\",\"literalText\":\"иметь масло на голове\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"самому быть виноватым в том, в чём упрекаешь другого\"}]}",
+  "responseHash": "fb2cba245df587b7e729f0556d564ab5269a593b00210b3850ed32965419ea7c",
+  "usage": {
+    "completion_tokens": 400,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 278,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 72,
+      "engine_ttlt_ms": 2385,
+      "pre_inference_ms": 110,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 344,
+      "service_ttlt_ms": 2654,
+      "user_visible_ttft_ms": 234
+    },
+    "prompt_tokens": 1573,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 502,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1973
+  },
+  "elapsedMs": 3187,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "0a466b67-d827-47b1-8589-186216343527",
+      "inputTokens": 1573,
+      "outputTokens": 400,
+      "event": "translation_attempt",
+      "correlationId": "f0b83078-877f-4403-8b8e-5657905d77aa",
+      "attempt": 1,
+      "elapsedMs": 3187,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

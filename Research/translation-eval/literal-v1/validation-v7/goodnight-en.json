@@ -1,0 +1,75 @@
+{
+  "id": "goodnight-en",
+  "inputHash": "3e19cebde6c6875f94ad36ac43c458cdc7f391310a88eca370ad7188f39f8d26",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "night",
+      "alternativeTexts": [],
+      "baseText": "night",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "the dark part of the day"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "Good night"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "a wish for a pleasant night"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"night\",\"alternativeTexts\":[],\"baseText\":\"night\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"the dark part of the day\"},{\"fieldId\":\"idiom:0\",\"text\":\"Good night\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"a wish for a pleasant night\"}]}",
+  "responseHash": "269385c6fb5dd152bd35db86481a770ce240ab68fe95c3180d447e3e70645509",
+  "usage": {
+    "completion_tokens": 166,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 75,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 81,
+      "engine_ttlt_ms": 946,
+      "pre_inference_ms": 251,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 552,
+      "service_ttlt_ms": 1364,
+      "user_visible_ttft_ms": 301
+    },
+    "prompt_tokens": 1453,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1450,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1619
+  },
+  "elapsedMs": 1778,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "8b23bce1-1623-4454-8e73-7da01237f6f8",
+      "inputTokens": 1453,
+      "outputTokens": 166,
+      "event": "translation_attempt",
+      "correlationId": "b6bd7117-ddab-446f-b810-23fdb138b8db",
+      "attempt": 1,
+      "elapsedMs": 1778,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

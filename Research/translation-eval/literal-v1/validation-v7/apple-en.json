@@ -1,0 +1,75 @@
+{
+  "id": "apple-en",
+  "inputHash": "e1fbc3a168cd0fe0af59f4c5aa84a8074ed6d07a47cd68725bc50aa76d32e161",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "apple",
+      "alternativeTexts": [],
+      "baseText": "apple",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a fruit"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "have a little apple to peel with someone",
+        "text": "want to talk things out with someone"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "want to talk through a conflict with someone"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"apple\",\"alternativeTexts\":[],\"baseText\":\"apple\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a fruit\"},{\"fieldId\":\"idiom:0\",\"text\":\"want to talk things out with someone\",\"literalText\":\"have a little apple to peel with someone\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"want to talk through a conflict with someone\"}]}",
+  "responseHash": "0e235862a5591b3be567a6ca10b8c7cd7db059d3b2449b6e6618d9ed0c216ff0",
+  "usage": {
+    "completion_tokens": 296,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 195,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 63,
+      "engine_ttlt_ms": 1740,
+      "pre_inference_ms": 82,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 304,
+      "service_ttlt_ms": 1970,
+      "user_visible_ttft_ms": 222
+    },
+    "prompt_tokens": 1456,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1453,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1752
+  },
+  "elapsedMs": 2203,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "4ab5d849-0b45-404c-8f82-5b6f6020d06f",
+      "inputTokens": 1456,
+      "outputTokens": 296,
+      "event": "translation_attempt",
+      "correlationId": "89360e2c-fd75-4241-b61b-4f09177ca908",
+      "attempt": 1,
+      "elapsedMs": 2203,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

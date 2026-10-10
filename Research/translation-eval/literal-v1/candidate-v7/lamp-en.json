@@ -1,0 +1,75 @@
+{
+  "id": "lamp-en",
+  "inputHash": "3bb79ce5d84a075b5177ec7ffabb128fa0f1597b8dcc19fec02f799476755583",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "lamp",
+      "alternativeTexts": [],
+      "baseText": "lamp",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an object that gives off light"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "walk into the lamp",
+        "text": "get caught doing something wrong"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "be caught doing something wrong"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"lamp\",\"alternativeTexts\":[],\"baseText\":\"lamp\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an object that gives off light\"},{\"fieldId\":\"idiom:0\",\"text\":\"get caught doing something wrong\",\"literalText\":\"walk into the lamp\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"be caught doing something wrong\"}]}",
+  "responseHash": "bbaf1aeacd0f85fd7125efe2ce43e9eabbb48ec82571f96021ed1b661e0a8f94",
+  "usage": {
+    "completion_tokens": 266,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 170,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 66,
+      "engine_ttlt_ms": 1758,
+      "pre_inference_ms": 75,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 278,
+      "service_ttlt_ms": 1967,
+      "user_visible_ttft_ms": 203
+    },
+    "prompt_tokens": 1455,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1452,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1721
+  },
+  "elapsedMs": 2247,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "b577b2c2-0646-4a2d-b357-c5c0ec648776",
+      "inputTokens": 1455,
+      "outputTokens": 266,
+      "event": "translation_attempt",
+      "correlationId": "5c9730ae-7f93-4149-895c-1ac3c337fe44",
+      "attempt": 1,
+      "elapsedMs": 2247,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

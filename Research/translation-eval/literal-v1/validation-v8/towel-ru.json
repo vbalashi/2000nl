@@ -1,0 +1,75 @@
+{
+  "id": "towel-ru",
+  "inputHash": "5821e5b6d121e5eaee3fcdb5f63764cc7b6185c7c6f86bec304aefd1b9415078",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "полотенце",
+      "alternativeTexts": [],
+      "baseText": "полотенце",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "ткань, которой вытираются"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "бросить полотенце на ринг",
+        "text": "сдаться"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "сдаться"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"полотенце\",\"alternativeTexts\":[],\"baseText\":\"полотенце\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"ткань, которой вытираются\",\"fieldId\":\"definition\"},{\"fieldId\":\"idiom:0\",\"text\":\"сдаться\",\"literalText\":\"бросить полотенце на ринг\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"сдаться\"}]}",
+  "responseHash": "a0f9f0574370992443d015e6417ff13ac52984d8b6335d608b22d8e88c4f510e",
+  "usage": {
+    "completion_tokens": 102,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 71,
+      "engine_ttlt_ms": 612,
+      "pre_inference_ms": 68,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 282,
+      "service_ttlt_ms": 820,
+      "user_visible_ttft_ms": 214
+    },
+    "prompt_tokens": 1569,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1671
+  },
+  "elapsedMs": 1347,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "80acad98-574f-42c6-94d9-95324669c7f8",
+      "inputTokens": 1569,
+      "outputTokens": 102,
+      "event": "translation_attempt",
+      "correlationId": "51768582-b100-4696-954c-72ded736c6cb",
+      "attempt": 1,
+      "elapsedMs": 1347,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

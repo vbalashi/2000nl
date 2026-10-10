@@ -1,0 +1,75 @@
+{
+  "id": "horse-ru",
+  "inputHash": "01b1d8cbe136a7b466376b5dd0bd8ff32720eca3bd5f2e720efe2c4f489f537b",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лошадь",
+      "alternativeTexts": [],
+      "baseText": "лошадь",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "крупное копытное животное, на котором люди могут ездить верхом"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "ставить телегу впереди лошади"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "делать что-либо не в той последовательности"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лошадь\",\"alternativeTexts\":[],\"baseText\":\"лошадь\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"крупное копытное животное, на котором люди могут ездить верхом\"},{\"fieldId\":\"idiom:0\",\"text\":\"ставить телегу впереди лошади\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"делать что-либо не в той последовательности\"}]}",
+  "responseHash": "dc96b4602f67e74a6cdc83de74d1769f20fc2e1ab52cc54f7482adc157bcddc0",
+  "usage": {
+    "completion_tokens": 1029,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 906,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 113,
+      "engine_ttlt_ms": 5667,
+      "pre_inference_ms": 80,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 331,
+      "service_ttlt_ms": 5887,
+      "user_visible_ttft_ms": 252
+    },
+    "prompt_tokens": 1575,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 504,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2604
+  },
+  "elapsedMs": 6355,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "12cd61ed-ee43-4320-baba-443b0466e198",
+      "inputTokens": 1575,
+      "outputTokens": 1029,
+      "event": "translation_attempt",
+      "correlationId": "308c88b2-70fa-4e8f-af3f-41c52e323cd7",
+      "attempt": 1,
+      "elapsedMs": 6355,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

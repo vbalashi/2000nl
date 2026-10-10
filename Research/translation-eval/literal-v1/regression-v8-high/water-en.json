@@ -1,0 +1,75 @@
+{
+  "id": "water-en",
+  "inputHash": "7ccaa722660bf01769a9a3f0663d1c04cd77184691a4eef8057c955f1382374a",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "water",
+      "alternativeTexts": [],
+      "baseText": "water",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a liquid"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to carry water to the sea",
+        "text": "to do pointless work"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to do useless work"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"water\",\"alternativeTexts\":[],\"baseText\":\"water\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a liquid\"},{\"fieldId\":\"idiom:0\",\"text\":\"to do pointless work\",\"literalText\":\"to carry water to the sea\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to do useless work\"}]}",
+  "responseHash": "081ebf7c5c8809ff17a2ef5d9e9ec466c87b4fcacd0b41a81837e347c7d46714",
+  "usage": {
+    "completion_tokens": 358,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 266,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 98,
+      "engine_ttlt_ms": 2029,
+      "pre_inference_ms": 105,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 340,
+      "service_ttlt_ms": 2267,
+      "user_visible_ttft_ms": 235
+    },
+    "prompt_tokens": 1561,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 490,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1919
+  },
+  "elapsedMs": 2781,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e30e2cd3-5f20-47e6-b627-e8bdaa2c7ed7",
+      "inputTokens": 1561,
+      "outputTokens": 358,
+      "event": "translation_attempt",
+      "correlationId": "394145af-efbc-4a99-90f6-30d34803a76a",
+      "attempt": 1,
+      "elapsedMs": 2781,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

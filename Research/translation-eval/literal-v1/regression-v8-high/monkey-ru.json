@@ -1,0 +1,75 @@
+{
+  "id": "monkey-ru",
+  "inputHash": "fcd6c6c2c6487a6d5bdd53000da3fef655d8574ffd18741aa72f473d62d322c8",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "обезьяна",
+      "alternativeTexts": [],
+      "baseText": "обезьяна",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "животное"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "Теперь обезьяна вылезает из рукава.",
+        "text": "Теперь раскрылись истинные намерения."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "Теперь становится понятен скрытый замысел."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"обезьяна\",\"alternativeTexts\":[],\"baseText\":\"обезьяна\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"животное\"},{\"fieldId\":\"idiom:0\",\"text\":\"Теперь раскрылись истинные намерения.\",\"literalText\":\"Теперь обезьяна вылезает из рукава.\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"Теперь становится понятен скрытый замысел.\"}]}",
+  "responseHash": "db5504472847adfb5d70b45d04121fc54e315cbfd24d7e30ea09f19060103ae8",
+  "usage": {
+    "completion_tokens": 715,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 596,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 248,
+      "engine_ttlt_ms": 4201,
+      "pre_inference_ms": 47,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 450,
+      "service_ttlt_ms": 4399,
+      "user_visible_ttft_ms": 403
+    },
+    "prompt_tokens": 1567,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2282
+  },
+  "elapsedMs": 5017,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "d45cbad7-d526-46e8-ad3b-b7d72bd69716",
+      "inputTokens": 1567,
+      "outputTokens": 715,
+      "event": "translation_attempt",
+      "correlationId": "1fa7984b-e3ec-4ac2-a18b-1716043b071b",
+      "attempt": 1,
+      "elapsedMs": 5017,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

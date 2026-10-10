@@ -1,0 +1,75 @@
+{
+  "id": "egg-ru",
+  "inputHash": "6f764b0ce47fa703ccdc5490e0ad4e8e9c064863fc4a73e8c57d950ca9c86a89",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "яйцо",
+      "alternativeTexts": [],
+      "baseText": "яйцо",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "то, что откладывает птица"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "суметь избавиться от своего яйца",
+        "text": "иметь возможность рассказать о том, что тебя волнует"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "иметь возможность рассказать о том, что тебя занимает"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"яйцо\",\"alternativeTexts\":[],\"baseText\":\"яйцо\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"то, что откладывает птица\"},{\"fieldId\":\"idiom:0\",\"text\":\"иметь возможность рассказать о том, что тебя волнует\",\"literalText\":\"суметь избавиться от своего яйца\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"иметь возможность рассказать о том, что тебя занимает\"}]}",
+  "responseHash": "c20d39a684e8d65e345fcc49536737f1b1544aacf1eb64c95947f227d65e1b0b",
+  "usage": {
+    "completion_tokens": 542,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 424,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 78,
+      "engine_ttlt_ms": 3696,
+      "pre_inference_ms": 127,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 446,
+      "service_ttlt_ms": 4058,
+      "user_visible_ttft_ms": 319
+    },
+    "prompt_tokens": 1706,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 2248
+  },
+  "elapsedMs": 4467,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "7abd2586-42ef-461e-8003-de2eba17ece1",
+      "inputTokens": 1706,
+      "outputTokens": 542,
+      "event": "translation_attempt",
+      "correlationId": "5c0f6582-e53a-4509-a4b7-0280d482a945",
+      "attempt": 1,
+      "elapsedMs": 4467,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

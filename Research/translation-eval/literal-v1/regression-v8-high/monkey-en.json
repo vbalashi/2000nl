@@ -1,0 +1,75 @@
+{
+  "id": "monkey-en",
+  "inputHash": "6c690829ff38617e95f1d3651f0e830874c1896be9635679f006e9aec8fe4b1f",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "monkey",
+      "alternativeTexts": [],
+      "baseText": "monkey",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an animal"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "Now the monkey comes out of the sleeve.",
+        "text": "Now the hidden motive becomes clear."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "now the hidden intention becomes clear"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"monkey\",\"alternativeTexts\":[],\"baseText\":\"monkey\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an animal\"},{\"fieldId\":\"idiom:0\",\"text\":\"Now the hidden motive becomes clear.\",\"literalText\":\"Now the monkey comes out of the sleeve.\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"now the hidden intention becomes clear\"}]}",
+  "responseHash": "4596cbd1d00052176636939ceab23b203d47993bdd5eec799e37e6e53e4f8374",
+  "usage": {
+    "completion_tokens": 431,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 330,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 121,
+      "engine_ttlt_ms": 2712,
+      "pre_inference_ms": 171,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 480,
+      "service_ttlt_ms": 3045,
+      "user_visible_ttft_ms": 309
+    },
+    "prompt_tokens": 1567,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1998
+  },
+  "elapsedMs": 3825,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "1a0e2eb5-09ff-4144-a713-5aed98cf8cec",
+      "inputTokens": 1567,
+      "outputTokens": 431,
+      "event": "translation_attempt",
+      "correlationId": "cddee56c-0ba8-459a-b207-73677d7c1750",
+      "attempt": 1,
+      "elapsedMs": 3825,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

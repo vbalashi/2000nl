@@ -1,0 +1,75 @@
+{
+  "id": "tomorrow-ru",
+  "inputHash": "c802b73908b136e57713b2c5405e760a91f04987998d2dd9f1de439b938cd568",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "завтра",
+      "alternativeTexts": [],
+      "baseText": "завтра",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "в день, следующий за сегодняшним"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "До завтра!"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "прощальное приветствие, используемое, когда ожидают снова увидеться на следующий день"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"завтра\",\"alternativeTexts\":[],\"baseText\":\"завтра\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"в день, следующий за сегодняшним\"},{\"fieldId\":\"idiom:0\",\"text\":\"До завтра!\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"прощальное приветствие, используемое, когда ожидают снова увидеться на следующий день\"}]}",
+  "responseHash": "c2c50d06e0074c2262048823ef4512553ebed2715689f0c27bd1227eed3773a8",
+  "usage": {
+    "completion_tokens": 259,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 149,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 75,
+      "engine_ttlt_ms": 1546,
+      "pre_inference_ms": 94,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 272,
+      "service_ttlt_ms": 1746,
+      "user_visible_ttft_ms": 178
+    },
+    "prompt_tokens": 1571,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 500,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1830
+  },
+  "elapsedMs": 2121,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "5edbb4fb-9e90-49e2-8e13-0215d185ad8e",
+      "inputTokens": 1571,
+      "outputTokens": 259,
+      "event": "translation_attempt",
+      "correlationId": "68d5bafb-ff24-4890-8beb-b1e406d69d04",
+      "attempt": 1,
+      "elapsedMs": 2121,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,66 @@
+{
+  "id": "oxygen-ru",
+  "inputHash": "af1dd7faf9e23312a5ddd82e71aeb821a275e78e8f2c22dec89f2d49b4b72edd",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "кислород",
+      "alternativeTexts": [],
+      "baseText": "кислород",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "химический элемент с символом O"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"кислород\",\"alternativeTexts\":[],\"baseText\":\"кислород\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"химический элемент с символом O\"}]}",
+  "responseHash": "d6a60699156811fa970050717729a9db1f103915c234b435ffa3c837dad06ab1",
+  "usage": {
+    "completion_tokens": 53,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 4,
+      "engine_ttft_ms": 78,
+      "engine_ttlt_ms": 304,
+      "pre_inference_ms": 120,
+      "service_tbt_ms": 4,
+      "service_ttft_ms": 376,
+      "service_ttlt_ms": 585,
+      "user_visible_ttft_ms": 256
+    },
+    "prompt_tokens": 1410,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1407,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1463
+  },
+  "elapsedMs": 1017,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "c469c3e3-31ce-4532-9337-74f6b595e873",
+      "inputTokens": 1410,
+      "outputTokens": 53,
+      "event": "translation_attempt",
+      "correlationId": "97c1a2d2-a344-4d79-a7f5-cf0a2366e03e",
+      "attempt": 1,
+      "elapsedMs": 1017,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

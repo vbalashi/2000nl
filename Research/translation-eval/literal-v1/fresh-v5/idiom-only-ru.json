@@ -1,0 +1,65 @@
+{
+  "id": "idiom-only-ru",
+  "inputHash": "985780cf38732bad7db8a5c3dcc03dae5b7cc121a32c328b4e29fe90de03435c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": null,
+    "contentTranslations": [
+      {
+        "fieldId": "idiom:0",
+        "text": "раскрыть, что натворил человек"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "раскрыть, что сделал человек"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":null,\"contentTranslations\":[{\"fieldId\":\"idiom:0\",\"text\":\"раскрыть, что натворил человек\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"раскрыть, что сделал человек\"}]}",
+  "responseHash": "9b9fadc54090f83f2d39fed6c1e8549449f2aec746fc98e4f07bcba52408989a",
+  "usage": {
+    "completion_tokens": 472,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 406,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 71,
+      "engine_ttlt_ms": 2980,
+      "pre_inference_ms": 73,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 288,
+      "service_ttlt_ms": 3184,
+      "user_visible_ttft_ms": 215
+    },
+    "prompt_tokens": 936,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1408
+  },
+  "elapsedMs": 3603,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "85b175bc-2587-4db7-bab1-4fc22b0fe0f3",
+      "inputTokens": 936,
+      "outputTokens": 472,
+      "event": "translation_attempt",
+      "correlationId": "4457d7de-4f4d-4540-ab63-0590bac1e75c",
+      "attempt": 1,
+      "elapsedMs": 3603,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

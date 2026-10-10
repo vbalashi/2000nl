@@ -1,0 +1,75 @@
+{
+  "id": "egg-en",
+  "inputHash": "14c50f9b026b0eac571aa22b0612be92169fd3794856fa2b0e577b6d5c104f4e",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "egg",
+      "alternativeTexts": [],
+      "baseText": "egg",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "something that a bird lays"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "be able to talk about what’s on one’s mind"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "be able to say what’s on your mind"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"egg\",\"alternativeTexts\":[],\"baseText\":\"egg\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"something that a bird lays\"},{\"fieldId\":\"idiom:0\",\"text\":\"be able to talk about what’s on one’s mind\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"be able to say what’s on your mind\"}]}",
+  "responseHash": "bcc35571404e7519b5cf8c5831102dc74d1fa9ec876d30693a5304956f8a8412",
+  "usage": {
+    "completion_tokens": 434,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 332,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 87,
+      "engine_ttlt_ms": 2702,
+      "pre_inference_ms": 95,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 328,
+      "service_ttlt_ms": 2936,
+      "user_visible_ttft_ms": 233
+    },
+    "prompt_tokens": 1567,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2001
+  },
+  "elapsedMs": 3337,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "35e5475e-69f7-46c3-84cf-64e609302e7b",
+      "inputTokens": 1567,
+      "outputTokens": 434,
+      "event": "translation_attempt",
+      "correlationId": "d8911e88-c6b8-4661-8592-de788afc4c8c",
+      "attempt": 1,
+      "elapsedMs": 3337,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

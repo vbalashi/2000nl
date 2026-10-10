@@ -1,0 +1,66 @@
+{
+  "id": "triangle-ru",
+  "inputHash": "9043528727a256167665ec8a9ba82dda7ac1332637871d31e3e02221e32502ad",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "треугольник",
+      "alternativeTexts": [],
+      "baseText": "треугольник",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Фигура ровно с тремя прямыми сторонами."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"треугольник\",\"alternativeTexts\":[],\"baseText\":\"треугольник\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Фигура ровно с тремя прямыми сторонами.\"}]}",
+  "responseHash": "46f94761fe2333c6698883e7faab724265381e31c2e0f4e16e5347b07833d66d",
+  "usage": {
+    "completion_tokens": 61,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 4,
+      "engine_ttft_ms": 56,
+      "engine_ttlt_ms": 333,
+      "pre_inference_ms": 176,
+      "service_tbt_ms": 4,
+      "service_ttft_ms": 415,
+      "service_ttlt_ms": 669,
+      "user_visible_ttft_ms": 239
+    },
+    "prompt_tokens": 1523,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 452,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1584
+  },
+  "elapsedMs": 1309,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "bb995a17-c219-44d5-91d4-d1b6ccd2ea5b",
+      "inputTokens": 1523,
+      "outputTokens": 61,
+      "event": "translation_attempt",
+      "correlationId": "d8add5c3-a1d2-4c14-9cb7-096063e884ab",
+      "attempt": 1,
+      "elapsedMs": 1309,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "egg-ru",
+  "inputHash": "23b45d23fe0938867cb3fe45eb651ade1c027da4de61a39551c1565a3961a173",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "яйцо",
+      "alternativeTexts": [],
+      "baseText": "яйцо",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "то, что откладывает птица"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "смочь избавиться от своего яйца",
+        "text": "иметь возможность выговориться"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "мочь рассказать о том, что тебя занимает"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"яйцо\",\"alternativeTexts\":[],\"baseText\":\"яйцо\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"то, что откладывает птица\"},{\"fieldId\":\"idiom:0\",\"text\":\"иметь возможность выговориться\",\"literalText\":\"смочь избавиться от своего яйца\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"мочь рассказать о том, что тебя занимает\"}]}",
+  "responseHash": "c86a06491305885bde17d72d0c0c54e20f843daf30fddc8faab352964efaf1a2",
+  "usage": {
+    "completion_tokens": 356,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 246,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 67,
+      "engine_ttlt_ms": 2022,
+      "pre_inference_ms": 64,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 272,
+      "service_ttlt_ms": 2223,
+      "user_visible_ttft_ms": 208
+    },
+    "prompt_tokens": 1189,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1186,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1545
+  },
+  "elapsedMs": 2703,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "cb421d49-05ab-4cba-a43d-20fa05323a50",
+      "inputTokens": 1189,
+      "outputTokens": 356,
+      "event": "translation_attempt",
+      "correlationId": "9b02f752-632c-47a5-8cd1-0433274204d7",
+      "attempt": 1,
+      "elapsedMs": 2703,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

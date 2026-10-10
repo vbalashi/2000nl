@@ -1,0 +1,74 @@
+{
+  "id": "bridge-ru",
+  "inputHash": "154034360104cd907437cdb36783d4005a9f2afbc0a6de7c08ea5131e1156e23",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "мост",
+      "alternativeTexts": [],
+      "baseText": "мост",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "сооружение для переправы через воду"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "наконец заплатить или что-нибудь дать"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "наконец заплатить или что-нибудь дать"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"мост\",\"alternativeTexts\":[],\"baseText\":\"мост\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"сооружение для переправы через воду\"},{\"fieldId\":\"idiom:0\",\"text\":\"наконец заплатить или что-нибудь дать\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"наконец заплатить или что-нибудь дать\"}]}",
+  "responseHash": "5ea6f9e5058810fb85f46d9a8abb0d6de47c4fb03912482a8a9f6099dfafc127",
+  "usage": {
+    "completion_tokens": 263,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 160,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 65,
+      "engine_ttlt_ms": 1520,
+      "pre_inference_ms": 76,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 281,
+      "service_ttlt_ms": 1731,
+      "user_visible_ttft_ms": 205
+    },
+    "prompt_tokens": 944,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1207
+  },
+  "elapsedMs": 2102,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "640965c4-8e2f-4fea-8920-21c05072db51",
+      "inputTokens": 944,
+      "outputTokens": 263,
+      "event": "translation_attempt",
+      "correlationId": "ee9f2d0f-bc8a-4d79-83dd-43059d08a624",
+      "attempt": 1,
+      "elapsedMs": 2102,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

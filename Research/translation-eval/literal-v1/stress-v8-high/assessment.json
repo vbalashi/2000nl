@@ -1,0 +1,29 @@
+{
+  "method": "agent",
+  "blind": false,
+  "humanApproved": false,
+  "manifestHash": "ed53beb5f983d052e74bb253bbf0acc92c6b950c4a6f3f4021a8b3a72107967a",
+  "scope": "Focused synthetic ru/en cases, not population quality or a human review. Serious literal errors counted separately from primary meaning errors. No penalty for optional omission.",
+  "items": [
+    {
+      "id": "long-en",
+      "responseHash": "6e4d2eea729e04d333d57d7149e0b5c355e539cd065e6aee1ba5fcaf61e24277",
+      "decision": "needs-work",
+      "severity": "serious",
+      "failureCodes": [
+        "input-budget-fragment"
+      ],
+      "rationale": "Earlier request builder lost the idiom explanation and truncated an owned example to T; input assembly defect, not provider output truncation."
+    },
+    {
+      "id": "long-ru",
+      "responseHash": "bc6b53be081d1cb5d498ff2a674949cf4ec1192f93cbe7abbdb016bd4206c34b",
+      "decision": "needs-work",
+      "severity": "serious",
+      "failureCodes": [
+        "input-budget-fragment"
+      ],
+      "rationale": "Earlier request builder lost the idiom explanation and truncated an owned example to T; input assembly defect, not provider output truncation."
+    }
+  ]
+}

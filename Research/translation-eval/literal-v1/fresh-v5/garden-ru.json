@@ -1,0 +1,74 @@
+{
+  "id": "garden-ru",
+  "inputHash": "cf40ce33f712d20bf5344ce5c956b19cf7a9c842bda334f7852729f4fc8f6551",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "сад",
+      "alternativeTexts": [],
+      "baseText": "сад",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "участок земли с растениями возле дома"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "обвести кого-либо вокруг пальца"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "намеренно обмануть кого-либо"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"сад\",\"alternativeTexts\":[],\"baseText\":\"сад\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"участок земли с растениями возле дома\"},{\"fieldId\":\"idiom:0\",\"text\":\"обвести кого-либо вокруг пальца\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"намеренно обмануть кого-либо\"}]}",
+  "responseHash": "c0acf6d495cdb50e9e009ce2dbefeeee6cecf29626f05d90e262c941cb692809",
+  "usage": {
+    "completion_tokens": 216,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 120,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 68,
+      "engine_ttlt_ms": 1337,
+      "pre_inference_ms": 102,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 310,
+      "service_ttlt_ms": 1574,
+      "user_visible_ttft_ms": 208
+    },
+    "prompt_tokens": 953,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1169
+  },
+  "elapsedMs": 2123,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "0b36a5cf-9e72-4df5-9783-70020832b324",
+      "inputTokens": 953,
+      "outputTokens": 216,
+      "event": "translation_attempt",
+      "correlationId": "83253c74-9cca-48f9-a2b8-12331b2a20d4",
+      "attempt": 1,
+      "elapsedMs": 2123,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

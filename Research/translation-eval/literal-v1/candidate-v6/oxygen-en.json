@@ -1,0 +1,66 @@
+{
+  "id": "oxygen-en",
+  "inputHash": "d89086ac07dbf65ce626daad9261b601ea9511601e7423948d0d8698199c560c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "oxygen",
+      "alternativeTexts": [],
+      "baseText": "oxygen",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "the chemical element with the symbol O"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"oxygen\",\"alternativeTexts\":[],\"baseText\":\"oxygen\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"the chemical element with the symbol O\"}]}",
+  "responseHash": "a4f4724ecc9fcd44988b1771dca0dc4e17ea83172360a8a7d31dbc34e2e70fd5",
+  "usage": {
+    "completion_tokens": 92,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 38,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 76,
+      "engine_ttlt_ms": 625,
+      "pre_inference_ms": 109,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 347,
+      "service_ttlt_ms": 892,
+      "user_visible_ttft_ms": 239
+    },
+    "prompt_tokens": 1144,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1141,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1236
+  },
+  "elapsedMs": 1361,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e54115a4-aa86-4e05-b4ac-bbcc07568ff3",
+      "inputTokens": 1144,
+      "outputTokens": 92,
+      "event": "translation_attempt",
+      "correlationId": "dbfccb98-0672-47c0-ad04-3a720ac1de3c",
+      "attempt": 1,
+      "elapsedMs": 1360,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

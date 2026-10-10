@@ -1,0 +1,66 @@
+{
+  "id": "prevent-en",
+  "inputHash": "f82931ad0aa7dd43952ed2a1fd1085f549f4a14c50533fb711c8b0a53a3bfccf",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "prevent",
+      "alternativeTexts": [],
+      "baseText": "prevent",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "to prevent something from happening"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"prevent\",\"alternativeTexts\":[],\"baseText\":\"prevent\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"to prevent something from happening\"}]}",
+  "responseHash": "c503c767c2ead40528fc1a9fadbae9d6e0db178cad811e27b7afdce0e29d0f5a",
+  "usage": {
+    "completion_tokens": 182,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 130,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 66,
+      "engine_ttlt_ms": 1351,
+      "pre_inference_ms": 116,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 346,
+      "service_ttlt_ms": 1620,
+      "user_visible_ttft_ms": 231
+    },
+    "prompt_tokens": 1657,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 447,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1839
+  },
+  "elapsedMs": 2021,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "780651cd-1ee8-4cda-ac9b-c58763dfbb52",
+      "inputTokens": 1657,
+      "outputTokens": 182,
+      "event": "translation_attempt",
+      "correlationId": "3300ace4-2650-4b81-a94b-c40401bf1c54",
+      "attempt": 1,
+      "elapsedMs": 2021,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

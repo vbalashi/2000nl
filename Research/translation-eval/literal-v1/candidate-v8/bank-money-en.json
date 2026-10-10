@@ -1,0 +1,66 @@
+{
+  "id": "bank-money-en",
+  "inputHash": "38377ac31944d7b38ba55fe057ab27921183798c2f10924d39bf006869da9bfb",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "bank",
+      "alternativeTexts": [],
+      "baseText": "bank",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an institution that keeps and lends money"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"bank\",\"alternativeTexts\":[],\"baseText\":\"bank\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an institution that keeps and lends money\"}]}",
+  "responseHash": "13c53277bb22bd1c4bbe110905316353e1082fd71230efd96a09446b80e215a3",
+  "usage": {
+    "completion_tokens": 103,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 49,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 74,
+      "engine_ttlt_ms": 701,
+      "pre_inference_ms": 75,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 283,
+      "service_ttlt_ms": 907,
+      "user_visible_ttft_ms": 208
+    },
+    "prompt_tokens": 1521,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 450,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1624
+  },
+  "elapsedMs": 1350,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "f9fb7389-bb09-4424-a211-5fe5ca9a791e",
+      "inputTokens": 1521,
+      "outputTokens": 103,
+      "event": "translation_attempt",
+      "correlationId": "2a84371e-356d-4ab4-9273-0d3d317282a9",
+      "attempt": 1,
+      "elapsedMs": 1350,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

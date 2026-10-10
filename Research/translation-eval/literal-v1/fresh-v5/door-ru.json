@@ -1,0 +1,74 @@
+{
+  "id": "door-ru",
+  "inputHash": "2954b15ad825c5f7356ccf06602f2d84b11f4e47473a0c6da09193ca75dbd0e6",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "дверь",
+      "alternativeTexts": [],
+      "baseText": "дверь",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "подвижная створка, закрывающая вход"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "сразу, без предисловий, сказать, зачем пришёл"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "сразу сказать, зачем пришёл, без предисловий"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"дверь\",\"alternativeTexts\":[],\"baseText\":\"дверь\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"подвижная створка, закрывающая вход\"},{\"fieldId\":\"idiom:0\",\"text\":\"сразу, без предисловий, сказать, зачем пришёл\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"сразу сказать, зачем пришёл, без предисловий\"}]}",
+  "responseHash": "63d8628b0629158d67427a73e07799b2ce03a595567f7d920cb797c7134f7cde",
+  "usage": {
+    "completion_tokens": 312,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 199,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 75,
+      "engine_ttlt_ms": 1711,
+      "pre_inference_ms": 73,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 288,
+      "service_ttlt_ms": 1920,
+      "user_visible_ttft_ms": 216
+    },
+    "prompt_tokens": 953,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1265
+  },
+  "elapsedMs": 2444,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "65ec7773-1b96-4a0c-85d4-e79107ef5739",
+      "inputTokens": 953,
+      "outputTokens": 312,
+      "event": "translation_attempt",
+      "correlationId": "6b03248f-73fb-47fe-bad8-9c7cedb0573e",
+      "attempt": 1,
+      "elapsedMs": 2444,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

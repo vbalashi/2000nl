@@ -1,0 +1,66 @@
+{
+  "id": "idiom-only-ru",
+  "inputHash": "8988c222f4053de33b24b4c893eb786fd958f431c31901bccef7287b32a42a9a",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": null,
+    "contentTranslations": [
+      {
+        "fieldId": "idiom:0",
+        "literalText": "открыть книжечку о ком-либо",
+        "text": "раскрыть, что сделал кто-либо"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "раскрыть, что сделал человек"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"книга\",\"alternativeTexts\":[],\"baseText\":\"книга\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"idiom:0\",\"text\":\"раскрыть, что сделал кто-либо\",\"literalText\":\"открыть книжечку о ком-либо\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"раскрыть, что сделал человек\"}]}",
+  "responseHash": "ccdb2a1d14c5f7bdc59e808c61ad9a1585c1c50610bb3051dc9ef9e19468dc73",
+  "usage": {
+    "completion_tokens": 579,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 483,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 81,
+      "engine_ttlt_ms": 3471,
+      "pre_inference_ms": 80,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 297,
+      "service_ttlt_ms": 3689,
+      "user_visible_ttft_ms": 217
+    },
+    "prompt_tokens": 1694,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 484,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 2273
+  },
+  "elapsedMs": 4074,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "747d3d74-0a3f-44d5-a966-9e6d74e7438d",
+      "inputTokens": 1694,
+      "outputTokens": 579,
+      "event": "translation_attempt",
+      "correlationId": "d847b72c-68b7-43fa-95c9-17ab9f9834f8",
+      "attempt": 1,
+      "elapsedMs": 4074,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "bridge-ru",
+  "inputHash": "6b84e3a8f7ab57eef675730656f8a92e223df74727f8bea0614f4a36700e2f06",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "мост",
+      "alternativeTexts": [],
+      "baseText": "мост",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Сооружение, соединяющее берега через водное пространство."
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "перейти через мост",
+        "text": "Наконец заплатить или что-нибудь отдать."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "Наконец заплатить или что-нибудь отдать."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"мост\",\"alternativeTexts\":[],\"baseText\":\"мост\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Сооружение, соединяющее берега через водное пространство.\"},{\"fieldId\":\"idiom:0\",\"text\":\"Наконец заплатить или что-нибудь отдать.\",\"literalText\":\"перейти через мост\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"Наконец заплатить или что-нибудь отдать.\"}]}",
+  "responseHash": "806b14e2600520bccc94e711c200cb72bd25e4972c20fb79ecd711ec1c5a8959",
+  "usage": {
+    "completion_tokens": 327,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 207,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 73,
+      "engine_ttlt_ms": 1876,
+      "pre_inference_ms": 85,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 310,
+      "service_ttlt_ms": 2105,
+      "user_visible_ttft_ms": 225
+    },
+    "prompt_tokens": 1185,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1182,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1512
+  },
+  "elapsedMs": 2382,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "aeb6eb40-e1fb-45c3-a7df-0f41b8adb50d",
+      "inputTokens": 1185,
+      "outputTokens": 327,
+      "event": "translation_attempt",
+      "correlationId": "2fb96ff6-9e3e-4583-a038-afff3145d6a5",
+      "attempt": 1,
+      "elapsedMs": 2382,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

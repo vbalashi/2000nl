@@ -1,0 +1,68 @@
+{
+  "id": "cheap-ru",
+  "inputHash": "0759029a53ff1fa8312b6926ffc2bae02aee406a625e44a84361f8390948bfb5",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "недорогой",
+      "alternativeTexts": [
+        "дешёвый"
+      ],
+      "baseText": "недорогой",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "который стоит недорого"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"недорогой\",\"alternativeTexts\":[\"дешёвый\"],\"baseText\":\"недорогой\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"который стоит недорого\"}]}",
+  "responseHash": "3c843595746c44b2f4b23d7666623c7fc9291e7ddf37fc3f3fc65fd71d979cc2",
+  "usage": {
+    "completion_tokens": 179,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 114,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 63,
+      "engine_ttlt_ms": 1040,
+      "pre_inference_ms": 134,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 313,
+      "service_ttlt_ms": 1302,
+      "user_visible_ttft_ms": 179
+    },
+    "prompt_tokens": 1658,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 448,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1837
+  },
+  "elapsedMs": 1969,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "11eecf7a-d93d-44ca-93bb-c560c43db639",
+      "inputTokens": 1658,
+      "outputTokens": 179,
+      "event": "translation_attempt",
+      "correlationId": "b38a89d5-700b-4745-a422-5a897aae5580",
+      "attempt": 1,
+      "elapsedMs": 1969,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

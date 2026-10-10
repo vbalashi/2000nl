@@ -1,0 +1,75 @@
+{
+  "id": "hand-ru",
+  "inputHash": "cae41eed4add6dfe6bd39209aaafc86622d8a7539109f4ee3cc89f19499b3df1",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "рука",
+      "alternativeTexts": [],
+      "baseText": "рука",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "часть тела"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "немного помочь"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "немного помочь кому-либо"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"рука\",\"alternativeTexts\":[],\"baseText\":\"рука\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"часть тела\"},{\"fieldId\":\"idiom:0\",\"text\":\"немного помочь\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"немного помочь кому-либо\"}]}",
+  "responseHash": "ac3b754ab186c6d1adeaef02e3a324d7892fa7ab889aaf8218028cb322234bb0",
+  "usage": {
+    "completion_tokens": 241,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 151,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 70,
+      "engine_ttlt_ms": 1426,
+      "pre_inference_ms": 184,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 395,
+      "service_ttlt_ms": 1747,
+      "user_visible_ttft_ms": 211
+    },
+    "prompt_tokens": 1698,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 488,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1939
+  },
+  "elapsedMs": 2114,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "2b29c371-0037-4f7b-ac16-1d2d7f129a9f",
+      "inputTokens": 1698,
+      "outputTokens": 241,
+      "event": "translation_attempt",
+      "correlationId": "19bb5eb1-1915-43d2-a483-70424dc23641",
+      "attempt": 1,
+      "elapsedMs": 2114,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

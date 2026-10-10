@@ -1,0 +1,75 @@
+{
+  "id": "cow-ru",
+  "inputHash": "7c8c46c370eb29b9c6f236a4addc9eddaf828fa59ae5e5a60161aed0875280cd",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "корова",
+      "alternativeTexts": [],
+      "baseText": "корова",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "животное, дающее молоко"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "разговаривать о коровках и телятах",
+        "text": "непринуждённо беседовать о пустяках"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "непринуждённо беседовать о незначительных вещах"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"корова\",\"alternativeTexts\":[],\"baseText\":\"корова\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"животное, дающее молоко\"},{\"fieldId\":\"idiom:0\",\"text\":\"непринуждённо беседовать о пустяках\",\"literalText\":\"разговаривать о коровках и телятах\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"непринуждённо беседовать о незначительных вещах\"}]}",
+  "responseHash": "eded7fd7960a11c40ca109a0ad6f9b3439e2bec1b240bdd3dd79df4899a41670",
+  "usage": {
+    "completion_tokens": 277,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 149,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 74,
+      "engine_ttlt_ms": 1513,
+      "pre_inference_ms": 73,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 284,
+      "service_ttlt_ms": 1723,
+      "user_visible_ttft_ms": 211
+    },
+    "prompt_tokens": 1460,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1457,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1737
+  },
+  "elapsedMs": 2467,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "2582ddf2-3ca5-44af-8ea5-9fc3eda7e1cf",
+      "inputTokens": 1460,
+      "outputTokens": 277,
+      "event": "translation_attempt",
+      "correlationId": "96867ff6-1b1d-46fc-9e76-a507507289d1",
+      "attempt": 1,
+      "elapsedMs": 2466,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

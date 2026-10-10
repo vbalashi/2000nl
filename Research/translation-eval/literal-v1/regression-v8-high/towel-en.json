@@ -1,0 +1,75 @@
+{
+  "id": "towel-en",
+  "inputHash": "1d7cd45c53e8b532f3715594ae75882052df8863732d0c27a1ee31537eb7316a",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "towel",
+      "alternativeTexts": [],
+      "baseText": "towel",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a cloth for drying off"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "throw in the towel"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "give up"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"towel\",\"alternativeTexts\":[],\"baseText\":\"towel\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a cloth for drying off\"},{\"fieldId\":\"idiom:0\",\"text\":\"throw in the towel\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"give up\"}]}",
+  "responseHash": "e51d2658b2165dd5cb1a94d9e0717de6c3051b8cd8a1bf4ceb272826f8001f15",
+  "usage": {
+    "completion_tokens": 345,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 255,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 343,
+      "engine_ttlt_ms": 2285,
+      "pre_inference_ms": 46,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 534,
+      "service_ttlt_ms": 2471,
+      "user_visible_ttft_ms": 488
+    },
+    "prompt_tokens": 1569,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1914
+  },
+  "elapsedMs": 2773,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "f066f522-7c3d-4bb4-9c76-94e079c2a797",
+      "inputTokens": 1569,
+      "outputTokens": 345,
+      "event": "translation_attempt",
+      "correlationId": "78c4fe31-bc44-4ca3-90bf-e1e7e3b20a2b",
+      "attempt": 1,
+      "elapsedMs": 2773,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

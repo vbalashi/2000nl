@@ -1,0 +1,68 @@
+{
+  "id": "angry-ru",
+  "inputHash": "d0cba06d048b7fca9e083e316f5e679103741d9370ea369ebb6f04717da512e9",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "сердитый",
+      "alternativeTexts": [
+        "рассерженный"
+      ],
+      "baseText": "сердитый",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "сердитый из-за того, что произошло что-то неприятное"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"сердитый\",\"alternativeTexts\":[\"рассерженный\"],\"baseText\":\"сердитый\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"сердитый из-за того, что произошло что-то неприятное\"}]}",
+  "responseHash": "41b2cbab4ea2b339f437bc05b9816e7e3d9f06f4a7a62fe010556a413893bb31",
+  "usage": {
+    "completion_tokens": 170,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 98,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 186,
+      "engine_ttlt_ms": 1179,
+      "pre_inference_ms": 90,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 428,
+      "service_ttlt_ms": 1411,
+      "user_visible_ttft_ms": 338
+    },
+    "prompt_tokens": 1412,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1409,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1582
+  },
+  "elapsedMs": 1798,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "50aa3707-0ec4-4a02-87c4-4250d547637d",
+      "inputTokens": 1412,
+      "outputTokens": 170,
+      "event": "translation_attempt",
+      "correlationId": "6e5376d2-ead6-4a9c-a9d6-4fe0d240a97a",
+      "attempt": 1,
+      "elapsedMs": 1797,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

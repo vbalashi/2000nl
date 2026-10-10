@@ -1,0 +1,74 @@
+{
+  "id": "door-en",
+  "inputHash": "94ffce3a1e4279d5535bb8a4a8d16d68858c8e1659422ee59c8e71e2abfcf7cf",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "door",
+      "alternativeTexts": [],
+      "baseText": "door",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a movable barrier that closes an entrance"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "get straight to the point without any preamble"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "say immediately why you have come, without an introduction"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"door\",\"alternativeTexts\":[],\"baseText\":\"door\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a movable barrier that closes an entrance\"},{\"fieldId\":\"idiom:0\",\"text\":\"get straight to the point without any preamble\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"say immediately why you have come, without an introduction\"}]}",
+  "responseHash": "0c0b907cae622228b2a64beaca54f6adfc176d4fbe9e35399cc37e0fab75f185",
+  "usage": {
+    "completion_tokens": 258,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 160,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 84,
+      "engine_ttlt_ms": 1563,
+      "pre_inference_ms": 69,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 269,
+      "service_ttlt_ms": 1744,
+      "user_visible_ttft_ms": 200
+    },
+    "prompt_tokens": 953,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1211
+  },
+  "elapsedMs": 2404,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "a4e3ba12-4b76-4932-82d0-2e7b2bea4bef",
+      "inputTokens": 953,
+      "outputTokens": 258,
+      "event": "translation_attempt",
+      "correlationId": "5378d3fd-f12b-475f-af5c-3e56ec730760",
+      "attempt": 1,
+      "elapsedMs": 2403,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

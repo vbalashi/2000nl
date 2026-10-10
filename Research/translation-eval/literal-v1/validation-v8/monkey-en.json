@@ -1,0 +1,75 @@
+{
+  "id": "monkey-en",
+  "inputHash": "6c690829ff38617e95f1d3651f0e830874c1896be9635679f006e9aec8fe4b1f",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "monkey",
+      "alternativeTexts": [],
+      "baseText": "monkey",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an animal"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "Now the monkey comes out of the sleeve.",
+        "text": "Now the cat is out of the bag."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "Now the hidden intention becomes clear."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"monkey\",\"alternativeTexts\":[],\"baseText\":\"monkey\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an animal\"},{\"fieldId\":\"idiom:0\",\"text\":\"Now the cat is out of the bag.\",\"literalText\":\"Now the monkey comes out of the sleeve.\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"Now the hidden intention becomes clear.\"}]}",
+  "responseHash": "3f77b2f3f70dc2fb46c4c0677d83b03fedeefc7e108cb57a011e26ca4428c6ca",
+  "usage": {
+    "completion_tokens": 271,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 167,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 73,
+      "engine_ttlt_ms": 1611,
+      "pre_inference_ms": 103,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 312,
+      "service_ttlt_ms": 1845,
+      "user_visible_ttft_ms": 210
+    },
+    "prompt_tokens": 1567,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1838
+  },
+  "elapsedMs": 2634,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "8aa07a09-5130-4249-ac51-73eb57a3fa0e",
+      "inputTokens": 1567,
+      "outputTokens": 271,
+      "event": "translation_attempt",
+      "correlationId": "a90d4e5e-08aa-4f42-a1b0-12f1b771c050",
+      "attempt": 1,
+      "elapsedMs": 2634,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

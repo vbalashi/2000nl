@@ -1,0 +1,75 @@
+{
+  "id": "door-en",
+  "inputHash": "b9b1141f41e685b2b239dc0410e3cd74d7466399e1254dee4538c3e396e02a20",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "door",
+      "alternativeTexts": [],
+      "baseText": "door",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a movable closure for an entrance"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "get straight to the point"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to say immediately what you have come for, without an introduction"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"door\",\"alternativeTexts\":[],\"baseText\":\"door\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a movable closure for an entrance\"},{\"fieldId\":\"idiom:0\",\"text\":\"get straight to the point\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to say immediately what you have come for, without an introduction\"}]}",
+  "responseHash": "5eea9db8d3420856fef310dcc6f60886614f44650abf08e33fa3d4ed35071ed3",
+  "usage": {
+    "completion_tokens": 311,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 211,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 84,
+      "engine_ttlt_ms": 1753,
+      "pre_inference_ms": 95,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 318,
+      "service_ttlt_ms": 1983,
+      "user_visible_ttft_ms": 223
+    },
+    "prompt_tokens": 1711,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 2022
+  },
+  "elapsedMs": 2675,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "d3658587-d588-43d6-9f64-e4c4904b1d3e",
+      "inputTokens": 1711,
+      "outputTokens": 311,
+      "event": "translation_attempt",
+      "correlationId": "0dabc157-66d0-426a-8ab6-54384f328f2e",
+      "attempt": 1,
+      "elapsedMs": 2675,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

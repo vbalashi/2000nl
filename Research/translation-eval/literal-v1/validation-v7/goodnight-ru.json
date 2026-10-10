@@ -1,0 +1,75 @@
+{
+  "id": "goodnight-ru",
+  "inputHash": "78ce3c8a57b8f6cebde38510c1a2d274ded754ace5d0eea027c84c6e3b153dbb",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "ночь",
+      "alternativeTexts": [],
+      "baseText": "ночь",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "тёмная часть суток"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "Спокойной ночи"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "пожелание приятной ночи"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"ночь\",\"alternativeTexts\":[],\"baseText\":\"ночь\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"тёмная часть суток\"},{\"fieldId\":\"idiom:0\",\"text\":\"Спокойной ночи\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"пожелание приятной ночи\"}]}",
+  "responseHash": "36140d1e342a8638000489fe2175c2697cc814290f648dbc5e79b9996df2a1ff",
+  "usage": {
+    "completion_tokens": 91,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 4,
+      "engine_ttft_ms": 74,
+      "engine_ttlt_ms": 457,
+      "pre_inference_ms": 115,
+      "service_tbt_ms": 4,
+      "service_ttft_ms": 353,
+      "service_ttlt_ms": 731,
+      "user_visible_ttft_ms": 238
+    },
+    "prompt_tokens": 1453,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1450,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1544
+  },
+  "elapsedMs": 1139,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "819794cc-8056-431a-802c-d9e9cdbf0b0e",
+      "inputTokens": 1453,
+      "outputTokens": 91,
+      "event": "translation_attempt",
+      "correlationId": "1512b016-32e1-423f-91d1-e9416e42d02f",
+      "attempt": 1,
+      "elapsedMs": 1138,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

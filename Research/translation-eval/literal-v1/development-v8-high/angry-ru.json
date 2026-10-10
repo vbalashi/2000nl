@@ -1,0 +1,68 @@
+{
+  "id": "angry-ru",
+  "inputHash": "25b737076574a98e4040ba14c053110ffba60468a6cb9bc9e4e62f34c2761142",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "сердитый",
+      "alternativeTexts": [
+        "рассерженный"
+      ],
+      "baseText": "сердитый",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "сердитый из-за того, что произошло что-то неприятное"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"сердитый\",\"alternativeTexts\":[\"рассерженный\"],\"baseText\":\"сердитый\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"сердитый из-за того, что произошло что-то неприятное\"}]}",
+  "responseHash": "41b2cbab4ea2b339f437bc05b9816e7e3d9f06f4a7a62fe010556a413893bb31",
+  "usage": {
+    "completion_tokens": 299,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 227,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 100,
+      "engine_ttlt_ms": 1990,
+      "pre_inference_ms": 89,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 328,
+      "service_ttlt_ms": 2213,
+      "user_visible_ttft_ms": 239
+    },
+    "prompt_tokens": 1524,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 453,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1823
+  },
+  "elapsedMs": 2721,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "fa17db58-ce0f-4c06-a939-fc544022c921",
+      "inputTokens": 1524,
+      "outputTokens": 299,
+      "event": "translation_attempt",
+      "correlationId": "d22d8ab4-776e-4cd5-a166-29b720402ad0",
+      "attempt": 1,
+      "elapsedMs": 2721,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

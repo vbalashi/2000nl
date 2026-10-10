@@ -1,0 +1,76 @@
+{
+  "id": "lamp-ru",
+  "inputHash": "9b1533b2dc3468075994e3259a8522cd1680827d86ffa78dca2622ae2a515b06",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лампа",
+      "alternativeTexts": [
+        "светильник"
+      ],
+      "baseText": "лампа",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "предмет, служащий источником света"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "попасться с поличным"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "быть пойманным на чём-то предосудительном"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лампа\",\"alternativeTexts\":[\"светильник\"],\"baseText\":\"лампа\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"предмет, служащий источником света\"},{\"fieldId\":\"idiom:0\",\"text\":\"попасться с поличным\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"быть пойманным на чём-то предосудительном\"}]}",
+  "responseHash": "412625b3654b044bc66750d2365c4a9db1c8023f82bfa485795affd0baf7f161",
+  "usage": {
+    "completion_tokens": 366,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 259,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 132,
+      "engine_ttlt_ms": 1891,
+      "pre_inference_ms": 67,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 337,
+      "service_ttlt_ms": 2091,
+      "user_visible_ttft_ms": 271
+    },
+    "prompt_tokens": 948,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1314
+  },
+  "elapsedMs": 2329,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "24b21e40-abed-4b8d-a36d-f1f884dc9c32",
+      "inputTokens": 948,
+      "outputTokens": 366,
+      "event": "translation_attempt",
+      "correlationId": "f7387ddc-2184-4713-80c6-676edc9c68c6",
+      "attempt": 1,
+      "elapsedMs": 2329,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,66 @@
+{
+  "id": "cow-simple-ru",
+  "inputHash": "80c74c36be0a59bd09a6359af622ea499844b8fe3f9ed724952cde13b6cc4977",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "корова",
+      "alternativeTexts": [],
+      "baseText": "корова",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "взрослая самка крупного рогатого скота"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"корова\",\"alternativeTexts\":[],\"baseText\":\"корова\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"взрослая самка крупного рогатого скота\"}]}",
+  "responseHash": "9d08c11af578fcdc28f1f4c524bdea56e399173e8b8a9711b6f66c68edf91278",
+  "usage": {
+    "completion_tokens": 163,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 100,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 99,
+      "engine_ttlt_ms": 1034,
+      "pre_inference_ms": 66,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 309,
+      "service_ttlt_ms": 1235,
+      "user_visible_ttft_ms": 243
+    },
+    "prompt_tokens": 1520,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 449,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1683
+  },
+  "elapsedMs": 1578,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "fc2970a0-42a3-455f-ac22-2e657ea2683b",
+      "inputTokens": 1520,
+      "outputTokens": 163,
+      "event": "translation_attempt",
+      "correlationId": "a23ec3ba-3e9b-46e9-b073-a67a98509ea0",
+      "attempt": 1,
+      "elapsedMs": 1578,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

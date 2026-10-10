@@ -1,0 +1,66 @@
+{
+  "id": "cheap-en",
+  "inputHash": "0fb5e42eef501cfa35d3df510335bde1dda9bd9b1c707fd64a099a98726a5bc8",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cheap",
+      "alternativeTexts": [],
+      "baseText": "cheap",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "costing little money"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"cheap\",\"alternativeTexts\":[],\"baseText\":\"cheap\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"costing little money\"}]}",
+  "responseHash": "3c0c199c450cfb92ac9bd695d1737628931d926050852783d307532447181ec8",
+  "usage": {
+    "completion_tokens": 75,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 24,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 67,
+      "engine_ttlt_ms": 496,
+      "pre_inference_ms": 80,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 241,
+      "service_ttlt_ms": 665,
+      "user_visible_ttft_ms": 161
+    },
+    "prompt_tokens": 1658,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 448,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1733
+  },
+  "elapsedMs": 946,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "db3e5485-b0c8-4fe7-b060-37954a1e2307",
+      "inputTokens": 1658,
+      "outputTokens": 75,
+      "event": "translation_attempt",
+      "correlationId": "88941676-d808-4671-a023-dcb21aa99dda",
+      "attempt": 1,
+      "elapsedMs": 946,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

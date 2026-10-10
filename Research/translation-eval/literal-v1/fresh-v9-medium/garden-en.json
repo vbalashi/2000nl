@@ -1,0 +1,75 @@
+{
+  "id": "garden-en",
+  "inputHash": "3762775d2dc6e0cc76896f2608e95675e4c27f86000c3e0a9602aa99eb861192",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "garden",
+      "alternativeTexts": [],
+      "baseText": "garden",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a piece of land with plants near a house"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "lead someone around the garden",
+        "text": "deliberately mislead someone"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "Someone deliberately mislead"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"garden\",\"alternativeTexts\":[],\"baseText\":\"garden\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a piece of land with plants near a house\"},{\"fieldId\":\"idiom:0\",\"text\":\"deliberately mislead someone\",\"literalText\":\"lead someone around the garden\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"Someone deliberately mislead\"}]}",
+  "responseHash": "e6f1351abb78f8a9b661eb54a8b2cdf306a4c24f56059148e803a8f2a7f5184d",
+  "usage": {
+    "completion_tokens": 405,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 305,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 91,
+      "engine_ttlt_ms": 2487,
+      "pre_inference_ms": 64,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 250,
+      "service_ttlt_ms": 2641,
+      "user_visible_ttft_ms": 186
+    },
+    "prompt_tokens": 1711,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1708,
+      "cached_tokens": 0
+    },
+    "total_tokens": 2116
+  },
+  "elapsedMs": 3021,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "8fa6fae6-8060-4c0b-a1b0-4962158448dd",
+      "inputTokens": 1711,
+      "outputTokens": 405,
+      "event": "translation_attempt",
+      "correlationId": "d24390e8-f6a6-4bd1-a09e-4425ff20578a",
+      "attempt": 1,
+      "elapsedMs": 3021,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

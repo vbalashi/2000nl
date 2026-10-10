@@ -1,0 +1,68 @@
+{
+  "id": "prevent-ru",
+  "inputHash": "caf64304ea0406bf9b2229480966c55fcb4e4293c606616ed0abca25bd3f0a1f",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "предотвратить",
+      "alternativeTexts": [
+        "не допустить"
+      ],
+      "baseText": "предотвращать",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "не допустить, чтобы что-либо произошло"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"предотвратить\",\"alternativeTexts\":[\"не допустить\"],\"baseText\":\"предотвращать\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"не допустить, чтобы что-либо произошло\"}]}",
+  "responseHash": "6ce77d3a4dda921eac067511c68e42cb9aa601f50df0499ae368dd7558ac45ee",
+  "usage": {
+    "completion_tokens": 345,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 280,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 83,
+      "engine_ttlt_ms": 2356,
+      "pre_inference_ms": 186,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 436,
+      "service_ttlt_ms": 2705,
+      "user_visible_ttft_ms": 250
+    },
+    "prompt_tokens": 1140,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1137,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1485
+  },
+  "elapsedMs": 3169,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "cc977177-3356-42b3-848e-7dd7d3af76ea",
+      "inputTokens": 1140,
+      "outputTokens": 345,
+      "event": "translation_attempt",
+      "correlationId": "71a8aee0-55c7-4dbb-81cf-c2d674a62001",
+      "attempt": 1,
+      "elapsedMs": 3169,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

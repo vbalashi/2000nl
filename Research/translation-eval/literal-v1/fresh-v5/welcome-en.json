@@ -1,0 +1,74 @@
+{
+  "id": "welcome-en",
+  "inputHash": "62c3ded7635a6583362d9dd594f62aa24f7e9bc3daf692bf44dde70ee79fe8a0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "welcome",
+      "alternativeTexts": [],
+      "baseText": "welcome",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "welcome"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "a warm welcome"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "a warm greeting on someone’s arrival"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"welcome\",\"alternativeTexts\":[],\"baseText\":\"welcome\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"welcome\"},{\"fieldId\":\"idiom:0\",\"text\":\"a warm welcome\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"a warm greeting on someone’s arrival\"}]}",
+  "responseHash": "87cf0ccb8ed96b347b7733820c26b89c6a451b4494aee7b00e17cb6249f89b4f",
+  "usage": {
+    "completion_tokens": 330,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 247,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 92,
+      "engine_ttlt_ms": 2200,
+      "pre_inference_ms": 82,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 316,
+      "service_ttlt_ms": 2419,
+      "user_visible_ttft_ms": 233
+    },
+    "prompt_tokens": 949,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1279
+  },
+  "elapsedMs": 2818,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "aadf168b-4f6b-409c-aed4-2c4cab1b903d",
+      "inputTokens": 949,
+      "outputTokens": 330,
+      "event": "translation_attempt",
+      "correlationId": "bd14de8c-defa-44c8-b2e8-d957150c2069",
+      "attempt": 1,
+      "elapsedMs": 2818,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

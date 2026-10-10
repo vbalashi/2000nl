@@ -1,0 +1,74 @@
+{
+  "id": "hand-en",
+  "inputHash": "ecc096722db9ae1a7ee805b22743713531e4286dbb34fc112064c11b8a814f9b",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "hand",
+      "alternativeTexts": [],
+      "baseText": "hand",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a body part"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "give someone a bit of help"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "help someone a little"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"hand\",\"alternativeTexts\":[],\"baseText\":\"hand\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a body part\"},{\"fieldId\":\"idiom:0\",\"text\":\"give someone a bit of help\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"help someone a little\"}]}",
+  "responseHash": "12e5b130c0b214025d7fb79730a17e403a95bb68bf2a21efc93aa2d914d186b7",
+  "usage": {
+    "completion_tokens": 210,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 125,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 65,
+      "engine_ttlt_ms": 1374,
+      "pre_inference_ms": 95,
+      "service_tbt_ms": 8,
+      "service_ttft_ms": 324,
+      "service_ttlt_ms": 2021,
+      "user_visible_ttft_ms": 229
+    },
+    "prompt_tokens": 940,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1150
+  },
+  "elapsedMs": 2673,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "d0b90f35-2293-4524-9318-f59a6271b174",
+      "inputTokens": 940,
+      "outputTokens": 210,
+      "event": "translation_attempt",
+      "correlationId": "698e4e03-1bba-4fc3-88bb-aeb44d187994",
+      "attempt": 1,
+      "elapsedMs": 2673,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

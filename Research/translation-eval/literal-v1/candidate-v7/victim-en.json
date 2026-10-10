@@ -1,0 +1,66 @@
+{
+  "id": "victim-en",
+  "inputHash": "fb98d8c9e945c734e6a96e3b51032091b0b20f7c44869424cee5905191cff5b1",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "victim",
+      "alternativeTexts": [],
+      "baseText": "victim",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "someone who suffers harm or injury as a result of an event"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"victim\",\"alternativeTexts\":[],\"baseText\":\"victim\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"someone who suffers harm or injury as a result of an event\"}]}",
+  "responseHash": "3ba77337acf22d2bd7689b50765f08eafa18b6af1f7bc9daed4038b163dc1303",
+  "usage": {
+    "completion_tokens": 55,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 90,
+      "engine_ttlt_ms": 350,
+      "pre_inference_ms": 89,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 302,
+      "service_ttlt_ms": 557,
+      "user_visible_ttft_ms": 213
+    },
+    "prompt_tokens": 1416,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1413,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1471
+  },
+  "elapsedMs": 796,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "dfc52818-4b2a-470a-9ace-c200158a1280",
+      "inputTokens": 1416,
+      "outputTokens": 55,
+      "event": "translation_attempt",
+      "correlationId": "d16aba7c-b127-490b-af21-d345576ebd8d",
+      "attempt": 1,
+      "elapsedMs": 796,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

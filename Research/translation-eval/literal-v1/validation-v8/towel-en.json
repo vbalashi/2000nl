@@ -1,0 +1,75 @@
+{
+  "id": "towel-en",
+  "inputHash": "1d7cd45c53e8b532f3715594ae75882052df8863732d0c27a1ee31537eb7316a",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "towel",
+      "alternativeTexts": [],
+      "baseText": "towel",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a cloth for drying off"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "give up"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "give up"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"towel\",\"alternativeTexts\":[],\"baseText\":\"towel\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a cloth for drying off\"},{\"fieldId\":\"idiom:0\",\"text\":\"give up\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"give up\"}]}",
+  "responseHash": "23b52a2e55bf99bb87a0c0f29dc7993f7f5abdb6cbc33e12b284c2e76dbde093",
+  "usage": {
+    "completion_tokens": 178,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 90,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 119,
+      "engine_ttlt_ms": 1045,
+      "pre_inference_ms": 102,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 377,
+      "service_ttlt_ms": 1299,
+      "user_visible_ttft_ms": 274
+    },
+    "prompt_tokens": 1569,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1747
+  },
+  "elapsedMs": 1743,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "a576453c-4d5a-4d1c-9a17-520ab7c33540",
+      "inputTokens": 1569,
+      "outputTokens": 178,
+      "event": "translation_attempt",
+      "correlationId": "f26ffa37-f3f6-4ce8-acd0-17562c238511",
+      "attempt": 1,
+      "elapsedMs": 1743,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

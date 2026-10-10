@@ -1,0 +1,75 @@
+{
+  "id": "bridge-en",
+  "inputHash": "7b0ee63135a6ac4d3f99199e1c9ce369001c3df57f250d247b60911994a0b724",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "bridge",
+      "alternativeTexts": [],
+      "baseText": "bridge",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a connection across water"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "come over the bridge",
+        "text": "finally pay up or hand something over"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "finally pay or give something"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"bridge\",\"alternativeTexts\":[],\"baseText\":\"bridge\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a connection across water\"},{\"fieldId\":\"idiom:0\",\"text\":\"finally pay up or hand something over\",\"literalText\":\"come over the bridge\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"finally pay or give something\"}]}",
+  "responseHash": "1abc115d8df7f151289c7da59d6122ba9f2bdf4ac14f818c9b13822d9fac7eda",
+  "usage": {
+    "completion_tokens": 268,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 172,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 68,
+      "engine_ttlt_ms": 1684,
+      "pre_inference_ms": 86,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 316,
+      "service_ttlt_ms": 1909,
+      "user_visible_ttft_ms": 230
+    },
+    "prompt_tokens": 1185,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1182,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1453
+  },
+  "elapsedMs": 2348,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "1bcee34f-0a18-4d01-9088-4806ae94d861",
+      "inputTokens": 1185,
+      "outputTokens": 268,
+      "event": "translation_attempt",
+      "correlationId": "12ede70a-7fe2-4228-b7dc-1fc2d99c780e",
+      "attempt": 1,
+      "elapsedMs": 2348,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}
