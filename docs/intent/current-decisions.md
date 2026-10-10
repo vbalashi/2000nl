@@ -66,3 +66,11 @@ Accepted: prerequisite loading and retry share the branded logo/dots surface; ac
 Из article generation перенести методические принципы, сохранив раздельные
 данные и реализацию. Runtime promotion/default model change отдельно.
 [Обсуждение](../discussions/2026-10-10-02-translation-evaluation.md).
+
+### Персональные translation prompts — принято 2026-10-10
+
+Общий промпт является baseline. До выбора модели провести равную по бюджету
+настройку GPT-4.1/Luna 5.6/Luna 6 и новую общую validation с повторами;
+эксперимент начат, production default пока не меняется.
+Источник: [обсуждение](../discussions/2026-10-10-03-model-specific-translation-prompts.md),
+[план](../../Research/translation-eval/MODEL-TUNING-PLAN-2026-10-10.md).
