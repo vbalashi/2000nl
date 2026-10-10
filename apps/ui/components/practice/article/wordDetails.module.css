@@ -20,3 +20,5 @@
 .relationGroup p{padding:0 0 0 var(--practice-content-inset);font-size:var(--practice-literary-size);line-height:var(--practice-literary-leading);font-style:italic;color:var(--practice-text-secondary)}
 
 .facts dd{font-size:var(--practice-reading-small)}
+
+.relationTranslation{color:var(--practice-text-muted)}

@@ -6,6 +6,8 @@ import type {
 } from "../../../../packages/shared/types/platformV2";
 import type { DictionaryLookupPayload } from "./lookupService";
 import type { PlatformContentNodeBindingV2Input } from "./projections/senseCardV2";
+import { dictionaryLexicalRelationTexts } from "../dictionary/lexicalRelations";
+import { lexicalRelationId, lexicalRelationTextFingerprint } from "./platformV2LexicalRelationTranslations";
 
 export type PlatformV2ContentSectionInput = {
   sourcePath: string;
@@ -207,7 +209,7 @@ export function platformV2ContentRevision(
       stableJson({
         entryId,
         contentSections,
-        wordDetails,
+        wordDetails: wordDetails ? {...wordDetails,lexicalRelations:wordDetails.lexicalRelations.map(({translations:_translations,...source})=>source)} : null,
         crossReferenceQuery,
         headerEvidence: headerEvidence ?? null,
       }),
@@ -220,10 +222,11 @@ function relationItems(
   kind: "synonym" | "antonym",
   value: unknown,
 ): PlatformWordDetailsV2["lexicalRelations"] {
-  return uniqueStrings(value).map((text) => ({
-    relationId: stableId(entryId, "lexical-relation", kind, text),
+  return dictionaryLexicalRelationTexts(value).map((text) => ({
+    relationId: lexicalRelationId(entryId, kind, text),
     kind,
     text,
+    sourceTextFingerprint: lexicalRelationTextFingerprint(text),
   }));
 }
 

@@ -348,6 +348,8 @@ export type TranslationOverlay = {
     note: string | null;
   } | null;
   meanings?: Array<{
+    synonyms?: string[];
+    antonyms?: string[];
     definition?: string;
     context?: string;
     note?: string;

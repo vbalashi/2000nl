@@ -14,5 +14,5 @@ export function WordForms({model,...props}:{model:LibrarySenseCardGroupModel;var
  return <ArticleWordForms {...props} detail={details[`${model.headword}-${model.partOfSpeech}`]??null} headword={model.headword} interfaceLanguage={useContext(InterfaceLanguageContext)} contentLanguage="nl"/>;
 }
 export function SenseRelations({entryId,compact=false}:{entryId:string;compact?:boolean}){
- return <ArticleSenseRelations relation={relationsByEntry[entryId]} compact={compact} interfaceLanguage={useContext(InterfaceLanguageContext)} contentLanguage="nl"/>;
+ return <ArticleSenseRelations relation={Object.fromEntries(Object.entries(relationsByEntry[entryId]??{}).map(([kind,values])=>[kind,values.map((text,index)=>({relationId:`${entryId}:${kind}:${index}`,text}))]))} compact={compact} interfaceLanguage={useContext(InterfaceLanguageContext)} contentLanguage="nl"/>;
 }
