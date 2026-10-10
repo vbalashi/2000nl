@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { TrainingSessionProgressRim } from "./TrainingSessionProgressRim";
+import { TrainingSessionProgress } from "./TrainingSessionProgress";
+import { useTrainingInteractions } from "@/components/practice/ui/TrainingInteractionPreferences";
 import approved from "../approvedTrainingCard.module.css";
 import { FooterStats, type FooterStatsProps } from "../FooterStats";
 import {
@@ -62,6 +63,7 @@ export function TrainingSessionSurface({
   children,
 }: TrainingSessionSurfaceProps) {
   const approvedPresentation = Boolean(chrome);
+  const { preferences } = useTrainingInteractions();
   return (
     <TrainingSessionV2Layout
       phase={phase}
@@ -76,7 +78,7 @@ export function TrainingSessionSurface({
       approvedPresentation={approvedPresentation}
       notice={notice ? <TrainingSessionNotice notice={notice} /> : null}
       readySurface={readySurface}
-      progress={chrome && phase === "ready" ? <TrainingSessionProgressRim presentation={chrome.presentation} language={chrome.interfaceLanguage} /> : null}
+      progress={chrome && phase === "ready" && chrome.presentation.kind === "planned" && preferences.progressAnimation !== "off" ? <TrainingSessionProgress presentation={chrome.presentation} language={chrome.interfaceLanguage} variant={preferences.progressAnimation} /> : null}
     >
       {children}
     </TrainingSessionV2Layout>

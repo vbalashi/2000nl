@@ -8,7 +8,7 @@ export interface TrainingInteractionRepository {
 const columns = {
  animation:"training_animation_enabled", gradeSwipe:"training_grade_swipe_enabled",
  translationSwipe:"training_translation_swipe_enabled", syllableDoubleTap:"training_syllable_double_tap_enabled",
- showSyllables:"training_show_syllables", audioSwipe:"training_audio_swipe_enabled",
+ progressAnimation:"training_progress_animation", showSyllables:"training_show_syllables", audioSwipe:"training_audio_swipe_enabled",
 } as const;
 export const trainingInteractionRepository:TrainingInteractionRepository = {
  async load(userId){
@@ -19,7 +19,7 @@ export const trainingInteractionRepository:TrainingInteractionRepository = {
   return parseTrainingInteractions(Object.fromEntries(Object.entries(columns).map(([key,column])=>[key,record?.[column]])));
  },
  async save(userId,value){
-  if(Object.keys(columns).some(key=>typeof value[key as keyof TrainingInteractions]!=="boolean"))throw new Error("invalid_training_interactions");
+  if(Object.keys(columns).some(key=>key === "progressAnimation" ? !["off","dots","wave"].includes(value.progressAnimation) : typeof value[key as keyof TrainingInteractions]!=="boolean"))throw new Error("invalid_training_interactions");
   const {error}=await withPreferenceDeadline(signal=>supabase.from("user_settings").upsert({user_id:userId,
    ...Object.fromEntries(Object.entries(columns).map(([key,column])=>[column,value[key as keyof TrainingInteractions]]))},
    {onConflict:"user_id"}).abortSignal(signal));
