@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "translation-release-verification-v1",
+  "verifiedAt": "2026-10-10T18:00:20.841Z",
+  "commit": "642a5a01fb40fcda0617edebc7b51760c311da73",
+  "appVersion": "0.18.1270",
+  "health": "ok",
+  "databaseContract": "ok",
+  "runtimeProfile": "luna6",
+  "providerSmoke": [
+    {
+      "profile": "luna6",
+      "model": "gpt-6-luna",
+      "packagedPromptMatches": true,
+      "status": "ready",
+      "primaryText": "книга",
+      "usage": {
+        "input": 922,
+        "output": 152
+      }
+    },
+    {
+      "profile": "gpt41",
+      "model": "gpt-4.1",
+      "packagedPromptMatches": true,
+      "status": "ready",
+      "primaryText": "книга",
+      "usage": {
+        "input": 782,
+        "output": 62
+      }
+    }
+  ],
+  "scope": "Synthetic direct provider smoke from running container; no database writes or profile change",
+  "releasePR": 660,
+  "deployRun": 38073231825,
+  "successfulDeployAttempt": 2,
+  "firstAttemptFailure": "existing scheduler pre-switch read probe exceeded hard statement timeout; no app switch",
+  "codeCISuccessfulRun": 38072354855,
+  "releaseCIRerun": 38073231962,
+  "releaseCIRerunStatusAtCheckpoint": "unit tests passed; duplicate browser checks in progress",
+  "referenceMainSynced": true,
+  "archiveScope": "archive-v4 covers fresh100 experiment before this later release verification; this safe file is preserved in Git"
+}
