@@ -74,3 +74,9 @@ Accepted: prerequisite loading and retry share the branded logo/dots surface; ac
 эксперимент начат, production default пока не меняется.
 Источник: [обсуждение](../discussions/2026-10-10-03-model-specific-translation-prompts.md),
 [план](../../Research/translation-eval/MODEL-TUNING-PLAN-2026-10-10.md).
+
+Проверка выполнена: 144 вызова при равном бюджете, два tuning-кандидата на
+модель, новая validation с тремя повторами общего и выбранного промптов.
+Персональные версии не показали устойчивого общего преимущества; Luna 6 с
+общим v3 остаётся перспективной альтернативой. Production default не менялся.
+[Результаты и ограничения агентской оценки](../../Research/translation-eval/MODEL-TUNING-RESULTS-2026-10-10.md).
