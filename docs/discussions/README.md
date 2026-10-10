@@ -79,3 +79,5 @@
 - [2026-10-09: Lavender icon revision](2026-10-09-01-lavender-icon.md) — #642.
 
 - [2026-10-09: Training startup recovery](2026-10-09-02-startup-recovery.md)
+
+- [2026-10-10: отдельное направление оценки переводов](2026-10-10-02-translation-evaluation.md) — #657.

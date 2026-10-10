@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "translation-eval-decision-v1",
+  "status": "research-only",
+  "runtimePromotion": false,
+  "defaultModelChange": false,
+  "decisions": [
+    {
+      "prompt": "dictionary-meaning-v1",
+      "status": "baseline",
+      "reason": "Observed empty alternatives on all 12 original diagnostic cases in each of two GPT-4.1 comparisons"
+    },
+    {
+      "prompt": "dictionary-meaning-v2",
+      "status": "rejected",
+      "reason": "Useful alternatives improved but multiple baseText values became source copies/transliterations"
+    },
+    {
+      "prompt": "dictionary-meaning-v3",
+      "status": "candidate",
+      "reason": "On one 12-case development comparison: 8/8 useful alternatives, 4/4 controls empty, no base lexical gate failures; model and validation comparisons pending"
+    }
+  ]
+}

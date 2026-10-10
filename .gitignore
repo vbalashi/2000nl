@@ -62,3 +62,7 @@ reports/*-package-*/
 reports/ux-audit-*-source/
 reports/ui-ideas-*/
 review-packages/
+
+# Isolated translation evaluation runtime artifacts; publish only reviewed safe evidence.
+Research/translation-eval/runs/
+Research/translation-eval/comparisons/

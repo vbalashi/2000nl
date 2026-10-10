@@ -1,0 +1,235 @@
+{
+  "schemaVersion": "translation-eval-suite-v1",
+  "suiteId": "validation-v1",
+  "split": "validation",
+  "provenance": "Original examples frozen after candidate v3; do not tune prompts on validation outputs",
+  "cases": [
+    {
+      "id": "gemakkelijk_ru",
+      "allowedStems": [
+        "лёгк",
+        "легк",
+        "прост",
+        "несложн"
+      ],
+      "baseAllowedStems": [
+        "лёгк",
+        "легк",
+        "прост",
+        "несложн"
+      ],
+      "alternativesUseful": true,
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:gemakkelijk_ru",
+        "sourceContentFingerprint": "original-fixture:gemakkelijk_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "gemakkelijk",
+          "article": null,
+          "partOfSpeech": "bijvoeglijk naamwoord",
+          "partOfSpeechCode": "bn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "zonder veel moeite te doen of te begrijpen"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "De eerste vraag was gemakkelijk."
+          }
+        ]
+      }
+    },
+    {
+      "id": "vriendelijk_ru",
+      "allowedStems": [
+        "дружелюб",
+        "приветлив",
+        "любезн",
+        "доброжелат"
+      ],
+      "baseAllowedStems": [
+        "дружелюб",
+        "приветлив",
+        "любезн",
+        "доброжелат"
+      ],
+      "alternativesUseful": true,
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:vriendelijk_ru",
+        "sourceContentFingerprint": "original-fixture:vriendelijk_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "vriendelijk",
+          "article": null,
+          "partOfSpeech": "bijvoeglijk naamwoord",
+          "partOfSpeechCode": "bn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "aardig en prettig in de omgang met andere mensen"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "De medewerker was vriendelijk tegen ons."
+          }
+        ]
+      }
+    },
+    {
+      "id": "werkelijk_ru",
+      "allowedStems": [
+        "настоящ",
+        "реальн",
+        "действительн"
+      ],
+      "baseAllowedStems": [
+        "настоящ",
+        "реальн",
+        "действительн"
+      ],
+      "alternativesUseful": true,
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:werkelijk_ru",
+        "sourceContentFingerprint": "original-fixture:werkelijk_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "werkelijk",
+          "article": null,
+          "partOfSpeech": "bijvoeglijk naamwoord",
+          "partOfSpeechCode": "bn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "echt bestaand en niet verzonnen"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Dit is een werkelijk probleem."
+          }
+        ]
+      }
+    },
+    {
+      "id": "zeven_ru",
+      "allowedStems": [
+        "семь"
+      ],
+      "baseAllowedStems": [
+        "семь"
+      ],
+      "alternativesUseful": false,
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:zeven_ru",
+        "sourceContentFingerprint": "original-fixture:zeven_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "zeven",
+          "article": null,
+          "partOfSpeech": "telwoord",
+          "partOfSpeechCode": "tw"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "het getal na zes en voor acht"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Er liggen zeven appels op tafel."
+          }
+        ]
+      }
+    },
+    {
+      "id": "bank_seat_ru",
+      "allowedStems": [
+        "скамь",
+        "скамейк",
+        "лавк"
+      ],
+      "baseAllowedStems": [
+        "скамь",
+        "скамейк",
+        "лавк"
+      ],
+      "alternativesUseful": true,
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:bank_seat_ru",
+        "sourceContentFingerprint": "original-fixture:bank_seat_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "bank",
+          "article": "de",
+          "partOfSpeech": "zelfstandig naamwoord",
+          "partOfSpeechCode": "zn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "een lange zitplaats voor meerdere mensen"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Wij zitten samen op een bank in het park."
+          }
+        ]
+      }
+    },
+    {
+      "id": "idiom_only_ru",
+      "entryExpected": false,
+      "allowedStems": [],
+      "baseAllowedStems": [],
+      "alternativesUseful": false,
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:idiom-only",
+        "sourceContentFingerprint": "original-fixture:idiom-only:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "koe",
+          "article": "de",
+          "partOfSpeech": "zelfstandig naamwoord",
+          "partOfSpeechCode": "zn"
+        },
+        "content": [
+          {
+            "fieldId": "idiom:0",
+            "role": "idiom",
+            "text": "over koetjes en kalfjes praten"
+          },
+          {
+            "fieldId": "idiom:0:explanation",
+            "role": "idiom-explanation",
+            "text": "een ontspannen gesprek voeren over gewone kleine dingen"
+          }
+        ]
+      }
+    }
+  ]
+}

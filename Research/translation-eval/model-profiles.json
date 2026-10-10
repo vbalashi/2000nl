@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "translation-eval-model-profiles-v1",
+  "profiles": [
+    {"id":"gpt41","model":"gpt-4.1","envSource":"project","envPrefix":"AZURE_OPENAI","requestSettings":{"temperature":0},"tariff":null},
+    {"id":"luna56","model":"gpt-5.6-luna","envSource":"project","envPrefix":"AZURE_OPENAI_GPT56_LUNA","requestSettings":{"reasoning_effort":"low"},"tariff":null},
+    {"id":"luna6","model":"gpt-6-luna","envSource":"shared","envPrefix":"AZURE_OPENAI_GPT6_LUNA","requestSettings":{"reasoning_effort":"low"},"tariff":null}
+  ],
+  "tariffNote": "No verified Azure billing rates supplied. Preserve actual usage; monetary cost remains unknown."
+}

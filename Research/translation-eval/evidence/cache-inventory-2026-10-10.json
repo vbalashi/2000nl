@@ -1,0 +1,175 @@
+{
+  "scope": "read-only configured remote database, curated system/public dictionaries only; no learner state",
+  "groups": [
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "ru",
+      "providerRevision": "109cf135d00a9c5e7977c52f7dd4cb843360a1e4c0d924efe22b19ebc1cf3253",
+      "policy": "dictionary_meaning_v1:109cf135d00a9c5e7977c52f7dd4cb843360a1e4c0d924efe22b19ebc1cf3253",
+      "rows": 822,
+      "structured": 822,
+      "withAlternatives": 2
+    },
+    {
+      "provider": "deepl",
+      "status": "ready",
+      "targetLanguage": "ru",
+      "providerRevision": null,
+      "policy": null,
+      "rows": 509,
+      "structured": 0,
+      "withAlternatives": 0
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "ru",
+      "providerRevision": null,
+      "policy": null,
+      "rows": 437,
+      "structured": 0,
+      "withAlternatives": 0
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "en",
+      "providerRevision": "109cf135d00a9c5e7977c52f7dd4cb843360a1e4c0d924efe22b19ebc1cf3253",
+      "policy": "dictionary_meaning_v1:109cf135d00a9c5e7977c52f7dd4cb843360a1e4c0d924efe22b19ebc1cf3253",
+      "rows": 231,
+      "structured": 231,
+      "withAlternatives": 1
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "ru",
+      "providerRevision": "109cf135d00a9c5e7977c52f7dd4cb843360a1e4c0d924efe22b19ebc1cf3253",
+      "policy": "dictionary_meaning_idiom_only_v2:109cf135d00a9c5e7977c52f7dd4cb843360a1e4c0d924efe22b19ebc1cf3253",
+      "rows": 68,
+      "structured": 0,
+      "withAlternatives": 0
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "ru",
+      "providerRevision": "316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "policy": "dictionary_meaning_v1:316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "rows": 64,
+      "structured": 64,
+      "withAlternatives": 60
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "en",
+      "providerRevision": null,
+      "policy": null,
+      "rows": 19,
+      "structured": 0,
+      "withAlternatives": 0
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "ru",
+      "providerRevision": "316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "policy": "note_v1:316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "rows": 17,
+      "structured": 0,
+      "withAlternatives": 0
+    },
+    {
+      "provider": "deepl",
+      "status": "ready",
+      "targetLanguage": "en",
+      "providerRevision": null,
+      "policy": null,
+      "rows": 16,
+      "structured": 0,
+      "withAlternatives": 0
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "ru",
+      "providerRevision": "316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "policy": "dictionary_meaning_idiom_only_v2:316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "rows": 13,
+      "structured": 0,
+      "withAlternatives": 0
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "en",
+      "providerRevision": "316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "policy": "dictionary_meaning_v1:316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "rows": 10,
+      "structured": 10,
+      "withAlternatives": 10
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "ru",
+      "providerRevision": "builtin_dictionary_meaning_v1",
+      "policy": "dictionary_meaning_v1:109cf135d00a9c5e7977c52f7dd4cb843360a1e4c0d924efe22b19ebc1cf3253",
+      "rows": 6,
+      "structured": 6,
+      "withAlternatives": 0
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "en",
+      "providerRevision": "109cf135d00a9c5e7977c52f7dd4cb843360a1e4c0d924efe22b19ebc1cf3253",
+      "policy": "dictionary_meaning_idiom_only_v2:109cf135d00a9c5e7977c52f7dd4cb843360a1e4c0d924efe22b19ebc1cf3253",
+      "rows": 4,
+      "structured": 0,
+      "withAlternatives": 0
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "krc",
+      "providerRevision": "109cf135d00a9c5e7977c52f7dd4cb843360a1e4c0d924efe22b19ebc1cf3253",
+      "policy": "dictionary_meaning_v1:109cf135d00a9c5e7977c52f7dd4cb843360a1e4c0d924efe22b19ebc1cf3253",
+      "rows": 2,
+      "structured": 2,
+      "withAlternatives": 0
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "en",
+      "providerRevision": "316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "policy": "dictionary_meaning_idiom_only_v2:316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "rows": 1,
+      "structured": 0,
+      "withAlternatives": 0
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "ru",
+      "providerRevision": "builtin_dictionary_meaning_v1",
+      "policy": "dictionary_meaning_idiom_only_v2:316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "rows": 1,
+      "structured": 0,
+      "withAlternatives": 0
+    },
+    {
+      "provider": "openai",
+      "status": "ready",
+      "targetLanguage": "ru",
+      "providerRevision": "builtin_dictionary_meaning_v1",
+      "policy": "dictionary_meaning_v1:316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "rows": 1,
+      "structured": 1,
+      "withAlternatives": 0
+    }
+  ]
+}

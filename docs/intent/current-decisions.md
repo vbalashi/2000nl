@@ -58,3 +58,11 @@ Accepted: centre the main prompt independently of instructions; reserve hint spa
 ## Training startup recovery (2026-10-09)
 
 Accepted: prerequisite loading and retry share the branded logo/dots surface; actual failures retain actionable retry without the obsolete framed panel. Pending work must not become a fabricated failure. Original Pixel request failure remains unconfirmed. [Discussion](../discussions/2026-10-09-02-startup-recovery.md), #575. Implemented in the issue checkout; release pending.
+
+## Оценка переводов (2026-10-10)
+
+Принято отдельное направление и ветка #657: сохранять версии промптов,
+входы, модели, прогоны и оценки; сравнить GPT-4.1, Luna 5.6 и Luna 6.
+Из article generation перенести методические принципы, сохранив раздельные
+данные и реализацию. Runtime promotion/default model change отдельно.
+[Обсуждение](../discussions/2026-10-10-02-translation-evaluation.md).

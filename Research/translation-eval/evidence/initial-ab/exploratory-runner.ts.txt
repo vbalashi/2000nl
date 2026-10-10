@@ -1,0 +1,88 @@
+/* eslint-disable no-console */
+import fs from "node:fs";
+import path from "node:path";
+import { buildDictionaryMeaningTranslationMessages, parseDictionaryMeaningTranslationResult } from "../lib/translation/dictionaryMeaningTranslationContract";
+import { loadTranslationConfigFromEnv } from "../lib/translation/translationProvider";
+import { translationAlternativesEvalCases } from "./translationAlternativesEvalCases";
+import { evaluateAlternatives, hash } from "./translationAlternativesEval";
+const arg = (flag: string) => { const i = process.argv.indexOf(flag); return i < 0 ? null : process.argv[i + 1] ?? null; };
+const prompt = (version: "v1" | "v2" | "v3", role: "system" | "user") => fs.readFileSync(path.join(process.cwd(), `lib/translation/prompts/openai_dictionary_meaning_${role}_${version}.txt`), "utf8");
+
+async function main() {
+  const filter = arg("--case");
+  const cases = translationAlternativesEvalCases.filter(item => !filter || item.id === filter);
+  if (!cases.length) throw new Error("No matching cases");
+  const candidate = arg("--candidate") ?? "v2";
+  if (candidate !== "v2" && candidate !== "v3") throw new Error("Use candidate v2 or v3");
+  const profiles = (["v1", candidate] as const).map(version => {
+    const system = prompt(version, "system"), user = prompt(version, "user");
+    return { version, system, user, fingerprint: hash([system, user].join("\n---\n")) };
+  });
+  const plans = cases.flatMap((item, index) => (index % 2 ? [...profiles].reverse() : profiles).map(profile => {
+    const messages = buildDictionaryMeaningTranslationMessages(item.request);
+    messages[0].content = profile.system.trim();
+    const userPayload = JSON.parse(messages[1].content);
+    userPayload.instructions = profile.user.trim();
+    messages[1].content = JSON.stringify(userPayload);
+    return { item, profile, messages, messagesFingerprint: hash(JSON.stringify(messages)) };
+  }));
+  const fixtureHash = hash(JSON.stringify(translationAlternativesEvalCases));
+  if (!process.argv.includes("--execute")) {
+    console.log(JSON.stringify({ dryRun: true, fixtureHash, calls: plans.length, maxCalls: 24,
+      retries: 0, maxOutputTokensPerCall: 2200,
+      profiles: profiles.map(p => ({ version: p.version, fingerprint: p.fingerprint })),
+      cases: cases.map(c => c.id) }, null, 2));
+    return;
+  }
+  if (plans.length > 24) throw new Error("No more than 24 calls are allowed");
+  const output = arg("--output");
+  if (!output) throw new Error("--output is required for a live comparison");
+  const envFile = arg("--env-file");
+  if (envFile) for (const line of fs.readFileSync(envFile, "utf8").split(/\r?\n/)) {
+    const match = line.match(/^([A-Z_][A-Z_0-9]*)=(.*)$/);
+    if (match && !process.env[match[1]]) process.env[match[1]] = match[2].trim().replace(/^(["'])(.*)\1$/, "$2");
+  }
+  const config = loadTranslationConfigFromEnv();
+  const url = config.apiUrls?.openai ?? "";
+  const parsedUrl = new URL(url);
+  if (parsedUrl.protocol !== "https:" || !parsedUrl.hostname.endsWith(".openai.azure.com")) throw new Error("Use the configured private Azure OpenAI endpoint");
+  const model = config.models?.openai, key = config.apiKeys.openai;
+  if (!model || !key) throw new Error("Azure deployment/key is not configured");
+  if (model !== "gpt-4.1") throw new Error("This frozen comparison requires the configured gpt-4.1 deployment");
+  const endpoint = /\/openai\/v1\/?$/i.test(url) ? `${url.replace(/\/$/, "")}/chat/completions` : url;
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  const fd = fs.openSync(output, "wx", 0o600);
+  const append = (value: unknown) => { fs.writeSync(fd, JSON.stringify(value) + "\n"); fs.fsyncSync(fd); };
+  append({ kind: "manifest", schemaVersion: "translation-alternatives-ab-v1", at: new Date().toISOString(), fixtureHash,
+    maxCalls: 24, plannedCalls: plans.length, retries: 0, maxOutputTokensPerCall: 2200, configuredModel: model,
+    profiles: profiles.map(p => ({ version: p.version, fingerprint: p.fingerprint })) });
+  try {
+    for (const plan of plans) {
+      const startedAt = Date.now();
+      const response = await fetch(endpoint, {
+        method: "POST", headers: { "Content-Type": "application/json", "api-key": key },
+        body: JSON.stringify({ ...(!/\/openai\/deployments\//i.test(endpoint) ? { model } : {}), temperature: 0, max_tokens: 2200, messages: plan.messages }),
+        signal: AbortSignal.timeout(60_000),
+      });
+      if (!response.ok) {
+        append({ kind: "failure", caseId: plan.item.id, profile: plan.profile.version, status: response.status });
+        throw new Error(`Provider HTTP ${response.status}; stopped without retry`);
+      }
+      const data = await response.json(), choice = data.choices?.[0];
+      if (choice?.finish_reason !== "stop") throw new Error("Provider did not complete a bounded response");
+      const result = parseDictionaryMeaningTranslationResult(choice.message?.content ?? "", plan.item.request);
+      const evaluation = evaluateAlternatives(plan.item, result);
+      append({ kind: "result", caseId: plan.item.id, profile: plan.profile.version,
+        promptFingerprint: plan.profile.fingerprint, requestFingerprint: hash(JSON.stringify(plan.item.request)),
+        messagesFingerprint: plan.messagesFingerprint, model: data.model ?? model,
+        result, evaluation, usage: data.usage ?? null, elapsedMs: Date.now() - startedAt });
+      console.log(JSON.stringify({ caseId: plan.item.id, profile: plan.profile.version, entry: result.entryTranslation, evaluation }));
+    }
+    append({ kind: "completed", calls: plans.length });
+  } finally { fs.closeSync(fd); }
+}
+main().catch(error => {
+  console.error(error instanceof Error && /^(Use |This |Azure |No |--output|Provider )/.test(error.message)
+    ? error.message : "Comparison failed; preserved completed records; no automatic retry");
+  process.exitCode = 1;
+});
