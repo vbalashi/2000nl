@@ -150,3 +150,5 @@
 - [2026-10-10: мировые продажи и условная цена](2026-10-10-38-worldwide-sales-price-placeholder.md)
 
 - [2026-10-10: состав связанной подписки](2026-10-10-39-connected-subscription-scope.md)
+
+- [2026-10-10: конкурентные цены и первый срез](2026-10-10-40-competitor-price-research.md)
