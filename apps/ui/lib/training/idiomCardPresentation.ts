@@ -5,6 +5,7 @@ import {
 } from "@/lib/platform/projections/platformV2SenseContent";
 import type { TrainingExercisePresentation } from "./exerciseCardPresentation";
 import type { IdiomExerciseContent } from "./idiomExerciseContent";
+import { idiomHeadwordTranslation } from "./idiomHeadwordTranslation";
 
 /** Only the resolved target and its owned children enter the shared templates. */
 export function buildIdiomCardPresentation({
@@ -20,6 +21,7 @@ export function buildIdiomCardPresentation({
   translationTargetLanguageCode: string | null;
   repeatCount?: number;
 }): TrainingExercisePresentation {
+  const headwordTranslation = idiomHeadwordTranslation(content, translationTargetLanguageCode);
   const { rootNodes } = projectPlatformV2SenseContent({
     capabilities: [],
     contentNodes: [
@@ -60,6 +62,10 @@ export function buildIdiomCardPresentation({
           content.partOfSpeech ?? content.entry.partOfSpeech,
           interfaceLanguage,
         ) ?? undefined,
+      ...(headwordTranslation ? {
+        entryTranslation: headwordTranslation.text,
+        entryTranslationAlternatives: headwordTranslation.alternatives,
+      } : {}),
       repeatCount,
       definitions: [],
       examples: rootNodes,

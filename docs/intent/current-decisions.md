@@ -58,3 +58,11 @@ Accepted: centre the main prompt independently of instructions; reserve hint spa
 ## Training startup recovery (2026-10-09)
 
 Accepted: prerequisite loading and retry share the branded logo/dots surface; actual failures retain actionable retry without the obsolete framed panel. Pending work must not become a fabricated failure. Original Pixel request failure remains unconfirmed. [Discussion](../discussions/2026-10-09-02-startup-recovery.md), #575. Implemented in the issue checkout; release pending.
+
+## Полнота переводов (2026-10-10)
+
+Принято на текущий спринт: перевод самостоятельного headword на обороте
+идиомы → полезные эквиваленты одного значения → факультативный дословный
+перевод идиом → переводы синонимов/антонимов. Варианты разделяются лёгкой
+средней точкой `·`. Реализация начата, выпуск не выполнен.
+[Обсуждение](../discussions/2026-10-10-01-translation-sprint.md), #655.
