@@ -73,3 +73,6 @@ Research/translation-eval/cases/full-validation-v1.json
 
 /Research/translation-eval/cases/full-validation-luna56-continuation-v1.json
 /Research/translation-eval/cases/full100-recovery-v1.json
+
+/Research/translation-eval/cases/luna6-pilot-v5.json
+/Research/translation-eval/cases/fresh100-v1.json

@@ -1,0 +1,18 @@
+{
+  "frozenAt": "2026-10-10T17:19:47.685551+00:00",
+  "lunaPrompt": "luna6-single-pass-v5",
+  "lunaPromptFingerprint": "998960f599e9fc5211a6c82b2a9b7fa35a360c12571decef5e1c655e5609e0ec",
+  "gptPrompt": "dictionary-meaning-v4",
+  "pilotAccept": 16,
+  "pilotTotal": 20,
+  "seriousErrors": 0,
+  "remainingIssues": [
+    "modal rights vs lack of worry",
+    "urgency/unnatural modal infinitive",
+    "narrow extra equivalent",
+    "loss of fame in extra equivalent"
+  ],
+  "gate": "Luna accept > GPT accept; Luna sense/content<=2 count <= GPT count; critical direction/negation/obligation reversals <= GPT. Score3 reported separately. No absolute95% veto.",
+  "validationStarted": false,
+  "semanticJudgeCalls": 0
+}
