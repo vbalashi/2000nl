@@ -31,7 +31,6 @@ export function TrainingSessionV2Layout({
   footer,
   notice,
   readySurface,
-  progress,
   authorityRefreshing = false,
   approvedPresentation = false,
   children,
@@ -41,7 +40,6 @@ export function TrainingSessionV2Layout({
   footer: React.ReactNode;
   notice?: React.ReactNode;
   readySurface?: TrainingSessionReadySurface;
-  progress?: React.ReactNode;
   authorityRefreshing?: boolean;
   approvedPresentation?: boolean;
   children: React.ReactNode;
@@ -67,7 +65,6 @@ export function TrainingSessionV2Layout({
               data-testid="training-card-frame"
               className="relative mx-auto min-h-0 w-full flex-1 overflow-hidden transition-[height] duration-200"
             >
-              {progress}
               <div
                 ref={interaction?.ref}
                 data-testid="training-card-swipe-wrapper"

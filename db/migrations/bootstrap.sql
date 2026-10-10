@@ -583,3 +583,5 @@
 \i db/migrations/220_set_based_meaning_progress.sql
 
 \i db/migrations/221_collection_catalog_single_entry_scan.sql
+
+\i db/migrations/222_training_progress_animation.sql

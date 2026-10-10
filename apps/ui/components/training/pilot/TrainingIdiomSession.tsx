@@ -26,7 +26,6 @@ import { TrainingCompletion, type TrainingCompletionActions } from "../v2/Traini
 import { TrainingSessionState } from "../v2/TrainingSessionState";
 import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
 import { TrainingSessionNotice } from "../v2/TrainingSessionSurface";
-import { TrainingSessionProgressRim } from "../v2/TrainingSessionProgressRim";
 import { TrainingSessionChrome } from "../v2/TrainingSessionChrome";
 
 import { TrainingSessionStatsFooter } from "../TrainingSessionStatsFooter";
@@ -254,14 +253,15 @@ export function TrainingIdiomSession({
     kind: "planned" as const,
     position: Math.min(completedCount, session.requestedTotal),
     total: session.requestedTotal,
-    fraction: session.requestedTotal > 0 ? Math.min(completedCount / session.requestedTotal, 1) : 0,
+    fraction: session.requestedTotal > 0
+      ? Math.min(completedCount / session.requestedTotal, 1)
+      : 0,
   };
 
   return (
     <TrainingSessionV2Layout
       approvedPresentation={true}
-      progress={!loading && !(error && !candidate) && !terminal ? <TrainingSessionProgressRim presentation={sessionPresentation} language={interfaceLanguage} /> : null}
-      phase={loading ? "loading" : error && !candidate ? "failure" : "ready"}
+            phase={loading ? "loading" : error && !candidate ? "failure" : "ready"}
       chrome={
         <TrainingSessionChrome
           approvedPresentation={true}
@@ -275,6 +275,7 @@ export function TrainingIdiomSession({
           cardFilter={cardFilter}
           sessionName={sessionName || t.title}
           presentation={sessionPresentation}
+          showProgress={!loading && !(error && !candidate) && !terminal}
           onHistory={onHistory}
           onClose={onExit}
           disabled={submitting || exclusion.busy}
