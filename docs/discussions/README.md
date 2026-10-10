@@ -116,3 +116,5 @@
 - [2026-10-10: ориентиры дохода и команда](2026-10-10-21-income-milestones-and-two-person-team.md)
 
 - [2026-10-10: базовый семейный доход](2026-10-10-22-family-income-baseline.md)
+
+- [2026-10-10: чистый бюджет без пенсии и страхования](2026-10-10-23-net-living-budget-excludes-provisions.md)
