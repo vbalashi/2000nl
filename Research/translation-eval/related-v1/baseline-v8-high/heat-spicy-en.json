@@ -1,0 +1,76 @@
+{
+  "id": "heat-spicy-en",
+  "inputHash": "7f412835442a4306907ca68082c55993f5d52e8e2682f2389dcd815399d8d0cc",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "hot",
+      "alternativeTexts": [
+        "spicy"
+      ],
+      "baseText": "hot",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "with a strong peppery taste"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "spicy"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "mild"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"hot\",\"alternativeTexts\":[\"spicy\"],\"baseText\":\"hot\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"with a strong peppery taste\"},{\"fieldId\":\"synonym:0\",\"text\":\"spicy\"},{\"fieldId\":\"antonym:0\",\"text\":\"mild\"}]}",
+  "responseHash": "aba2a9120aacca366002dd7cc428b123eed0260a2feada47c5fcac5929ff4392",
+  "usage": {
+    "completion_tokens": 351,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 269,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 113,
+      "engine_ttlt_ms": 2412,
+      "pre_inference_ms": 77,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 329,
+      "service_ttlt_ms": 2620,
+      "user_visible_ttft_ms": 252
+    },
+    "prompt_tokens": 1560,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 489,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1911
+  },
+  "elapsedMs": 3120,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "a1058259-ef2f-41f2-9022-a03290da1fd7",
+      "inputTokens": 1560,
+      "outputTokens": 351,
+      "event": "translation_attempt",
+      "correlationId": "6084fd58-a29f-41ec-a273-12a652693711",
+      "attempt": 1,
+      "elapsedMs": 3120,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

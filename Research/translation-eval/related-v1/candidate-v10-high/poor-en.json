@@ -1,0 +1,76 @@
+{
+  "id": "poor-en",
+  "inputHash": "e76b0d848162b69a621b3ff4d7787b4db123684d85d71eed1c9fb54acd0afbf8",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "poor",
+      "alternativeTexts": [
+        "impoverished"
+      ],
+      "baseText": "poor",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "having little money"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "needy"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "rich"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"poor\",\"alternativeTexts\":[\"impoverished\"],\"baseText\":\"poor\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"having little money\"},{\"fieldId\":\"synonym:0\",\"text\":\"needy\"},{\"fieldId\":\"antonym:0\",\"text\":\"rich\"}]}",
+  "responseHash": "cd528380fbbbdbcd5007a58495b3b57bcb68d5d385e670368c9a77adab0bdf22",
+  "usage": {
+    "completion_tokens": 197,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 118,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 76,
+      "engine_ttlt_ms": 1300,
+      "pre_inference_ms": 107,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 579,
+      "service_ttlt_ms": 1824,
+      "user_visible_ttft_ms": 472
+    },
+    "prompt_tokens": 1756,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 523,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 1953
+  },
+  "elapsedMs": 2192,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "0cae7096-10a0-4eca-b41a-2fa7c76d52d6",
+      "inputTokens": 1756,
+      "outputTokens": 197,
+      "event": "translation_attempt",
+      "correlationId": "123f964e-2bdf-403e-8c17-67adc36c1245",
+      "attempt": 1,
+      "elapsedMs": 2192,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

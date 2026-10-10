@@ -1,0 +1,70 @@
+{
+  "id": "bank-money-en",
+  "inputHash": "39d94aee42eeaeb3c5a091bbf5b8e490e383ffaf886b924398d4e82e92b2c886",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "bank",
+      "alternativeTexts": [],
+      "baseText": "bank",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "An institution that keeps and lends money."
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "financial institution"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"bank\",\"alternativeTexts\":[],\"baseText\":\"bank\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"An institution that keeps and lends money.\"},{\"fieldId\":\"synonym:0\",\"text\":\"financial institution\"}]}",
+  "responseHash": "3ef4682cf271f64521e56ccc9ff28abd2c8a089d7e4fbf525041926f1f69fa62",
+  "usage": {
+    "completion_tokens": 196,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 128,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 121,
+      "engine_ttlt_ms": 1347,
+      "pre_inference_ms": 104,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 343,
+      "service_ttlt_ms": 1564,
+      "user_visible_ttft_ms": 239
+    },
+    "prompt_tokens": 1742,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 509,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 1938
+  },
+  "elapsedMs": 2045,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "8eb4fa19-df22-4e9d-b84a-65678e676408",
+      "inputTokens": 1742,
+      "outputTokens": 196,
+      "event": "translation_attempt",
+      "correlationId": "8926a56b-58b3-4359-905f-100e76f24a9a",
+      "attempt": 1,
+      "elapsedMs": 2044,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,79 @@
+{
+  "id": "cat-en",
+  "inputHash": "cdb99b7e5eabeb1aa5f77396385c19366a1b344d95ffa8160fc9b98227c6b699",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cat",
+      "alternativeTexts": [],
+      "baseText": "cat",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a pet"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "watch the cat from the tree",
+        "text": "wait and see"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to wait and see how a situation develops"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "female cat"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"cat\",\"alternativeTexts\":[],\"baseText\":\"cat\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a pet\"},{\"fieldId\":\"idiom:0\",\"text\":\"wait and see\",\"literalText\":\"watch the cat from the tree\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to wait and see how a situation develops\"},{\"fieldId\":\"synonym:0\",\"text\":\"female cat\"}]}",
+  "responseHash": "d12da2d79c55db628837505c1fe8cc9d45f15c778887b1b571565e921cc9b3b9",
+  "usage": {
+    "completion_tokens": 917,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 803,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 86,
+      "engine_ttlt_ms": 5624,
+      "pre_inference_ms": 91,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 332,
+      "service_ttlt_ms": 5851,
+      "user_visible_ttft_ms": 241
+    },
+    "prompt_tokens": 1788,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 555,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2705
+  },
+  "elapsedMs": 6205,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "4f76f928-484c-48f1-9f35-bb9cb54be819",
+      "inputTokens": 1788,
+      "outputTokens": 917,
+      "event": "translation_attempt",
+      "correlationId": "a62b82f7-3750-4672-bfc3-710ac20d88ac",
+      "attempt": 1,
+      "elapsedMs": 6205,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

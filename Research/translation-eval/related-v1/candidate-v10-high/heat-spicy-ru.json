@@ -1,0 +1,76 @@
+{
+  "id": "heat-spicy-ru",
+  "inputHash": "2975a290735314476f882629eb3a48cbadd081c31e2352cc2b1f2f0a6dd405be",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "острый",
+      "alternativeTexts": [
+        "жгучий"
+      ],
+      "baseText": "горячий",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "с ярко выраженным вкусом перца"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "пикантный"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "неострый"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"острый\",\"alternativeTexts\":[\"жгучий\"],\"baseText\":\"горячий\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"с ярко выраженным вкусом перца\"},{\"fieldId\":\"synonym:0\",\"text\":\"пикантный\"},{\"fieldId\":\"antonym:0\",\"text\":\"неострый\"}]}",
+  "responseHash": "0c21dd83c29b97ec12d246ea12da4ee8bd8cef3fd31519ccfd67aa5c82d972c2",
+  "usage": {
+    "completion_tokens": 605,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 512,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 101,
+      "engine_ttlt_ms": 3713,
+      "pre_inference_ms": 84,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 337,
+      "service_ttlt_ms": 3930,
+      "user_visible_ttft_ms": 253
+    },
+    "prompt_tokens": 1762,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 529,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2367
+  },
+  "elapsedMs": 4523,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e7f831d3-eadc-4981-8811-2af214324b71",
+      "inputTokens": 1762,
+      "outputTokens": 605,
+      "event": "translation_attempt",
+      "correlationId": "a9108369-82fb-4933-9b10-becae2ebc86b",
+      "attempt": 1,
+      "elapsedMs": 4523,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

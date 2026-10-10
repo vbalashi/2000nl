@@ -1,0 +1,74 @@
+{
+  "id": "old-object-en",
+  "inputHash": "8cbc89d9dc982204fd219c6a9199303909660e824d32dfb277298c9c94720993",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "old",
+      "alternativeTexts": [],
+      "baseText": "old",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "used for a long time and no longer new"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "worn-out"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "new"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"old\",\"alternativeTexts\":[],\"baseText\":\"old\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"used for a long time and no longer new\"},{\"fieldId\":\"synonym:0\",\"text\":\"worn-out\"},{\"fieldId\":\"antonym:0\",\"text\":\"new\"}]}",
+  "responseHash": "82ceb584a2b91a013367c47e745eaafc1895a1644950fc8b23c379fb8e8fc14f",
+  "usage": {
+    "completion_tokens": 204,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 122,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 91,
+      "engine_ttlt_ms": 1310,
+      "pre_inference_ms": 89,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 304,
+      "service_ttlt_ms": 1511,
+      "user_visible_ttft_ms": 215
+    },
+    "prompt_tokens": 1758,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 525,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 1962
+  },
+  "elapsedMs": 1887,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "176e4c79-6f8f-4382-bdb1-6291055839d5",
+      "inputTokens": 1758,
+      "outputTokens": 204,
+      "event": "translation_attempt",
+      "correlationId": "a0556b98-363b-4e63-81e2-11f65e8682a5",
+      "attempt": 1,
+      "elapsedMs": 1886,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

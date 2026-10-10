@@ -1,0 +1,74 @@
+{
+  "id": "old-age-en",
+  "inputHash": "77210c4f2fdb77acc9b4fd1044d7605eefd54d541befb36db6d756e7120f5d8c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "old",
+      "alternativeTexts": [],
+      "baseText": "old",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "having reached an advanced age"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "elderly"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "young"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"old\",\"alternativeTexts\":[],\"baseText\":\"old\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"having reached an advanced age\"},{\"fieldId\":\"synonym:0\",\"text\":\"elderly\"},{\"fieldId\":\"antonym:0\",\"text\":\"young\"}]}",
+  "responseHash": "194a65c16f04e9b52ec70cb97a5604fdbacd4fd1cf8a774f678c3a4c0cf3499b",
+  "usage": {
+    "completion_tokens": 284,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 207,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 112,
+      "engine_ttlt_ms": 1921,
+      "pre_inference_ms": 84,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 343,
+      "service_ttlt_ms": 2146,
+      "user_visible_ttft_ms": 259
+    },
+    "prompt_tokens": 1756,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 523,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2040
+  },
+  "elapsedMs": 2471,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "2fcb3df8-1aab-4ba1-87f1-d9afe062c25d",
+      "inputTokens": 1756,
+      "outputTokens": 284,
+      "event": "translation_attempt",
+      "correlationId": "df48e6ff-8765-4b6a-b606-bce00c1e7801",
+      "attempt": 1,
+      "elapsedMs": 2471,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

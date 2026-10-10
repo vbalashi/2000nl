@@ -1,0 +1,76 @@
+{
+  "id": "free-liberty-en",
+  "inputHash": "30eeb97a9bf2a33ef8cdda2509b1a74ae47cc1f2626055cda6ec5b8ee154cbd5",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "free",
+      "alternativeTexts": [
+        "at liberty"
+      ],
+      "baseText": "free",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "not imprisoned or under coercion"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "independent"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "imprisoned"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"free\",\"alternativeTexts\":[\"at liberty\"],\"baseText\":\"free\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"not imprisoned or under coercion\"},{\"fieldId\":\"synonym:0\",\"text\":\"independent\"},{\"fieldId\":\"antonym:0\",\"text\":\"imprisoned\"}]}",
+  "responseHash": "39fd80d9d5755ce08294054dea8a8493457be134d764da61d09982ec079ec6fd",
+  "usage": {
+    "completion_tokens": 369,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 285,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 598,
+      "engine_ttlt_ms": 2778,
+      "pre_inference_ms": 78,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 814,
+      "service_ttlt_ms": 2989,
+      "user_visible_ttft_ms": 735
+    },
+    "prompt_tokens": 1559,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 488,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1928
+  },
+  "elapsedMs": 3345,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "679c2712-25f8-430d-8414-b29ad1ea566c",
+      "inputTokens": 1559,
+      "outputTokens": 369,
+      "event": "translation_attempt",
+      "correlationId": "ce4ea664-d0c0-4479-8ffd-4d10b8d6e138",
+      "attempt": 1,
+      "elapsedMs": 3345,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

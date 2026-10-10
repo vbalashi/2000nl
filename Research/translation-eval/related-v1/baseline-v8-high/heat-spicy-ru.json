@@ -1,0 +1,76 @@
+{
+  "id": "heat-spicy-ru",
+  "inputHash": "d5c1cf48027773d9da7c62ee9c3a694b89918486a69787af17209b3ed4cad55c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "острый",
+      "alternativeTexts": [
+        "жгучий"
+      ],
+      "baseText": "горячий",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "с сильным вкусом перца"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "пикантный"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "неострый"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"острый\",\"alternativeTexts\":[\"жгучий\"],\"baseText\":\"горячий\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"с сильным вкусом перца\"},{\"fieldId\":\"synonym:0\",\"text\":\"пикантный\"},{\"fieldId\":\"antonym:0\",\"text\":\"неострый\"}]}",
+  "responseHash": "691399ed535a35a0e2d663bb3a495c10d0487867c4a002905818a72f28169ca4",
+  "usage": {
+    "completion_tokens": 527,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 436,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 117,
+      "engine_ttlt_ms": 3238,
+      "pre_inference_ms": 75,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 343,
+      "service_ttlt_ms": 3460,
+      "user_visible_ttft_ms": 268
+    },
+    "prompt_tokens": 1560,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 489,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2087
+  },
+  "elapsedMs": 4039,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "5761954e-abc6-48c2-adbe-b9f2f07e0932",
+      "inputTokens": 1560,
+      "outputTokens": 527,
+      "event": "translation_attempt",
+      "correlationId": "d7fbbc1d-8d98-4aef-b6f2-03cb346f59bb",
+      "attempt": 1,
+      "elapsedMs": 4039,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

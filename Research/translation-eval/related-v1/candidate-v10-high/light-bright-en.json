@@ -1,0 +1,76 @@
+{
+  "id": "light-bright-en",
+  "inputHash": "53a77741347425dd208403e91b5d151bbc8df53ea03adf2fe54dffcf5f3c0de1",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "light",
+      "alternativeTexts": [
+        "bright"
+      ],
+      "baseText": "light",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "having a lot of light; not dark"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "bright"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "dark"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"light\",\"alternativeTexts\":[\"bright\"],\"baseText\":\"light\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"having a lot of light; not dark\"},{\"fieldId\":\"synonym:0\",\"text\":\"bright\"},{\"fieldId\":\"antonym:0\",\"text\":\"dark\"}]}",
+  "responseHash": "8f06f5da403ff793f91c2d4487270588ec472768927c8e126f9183601a2df0d4",
+  "usage": {
+    "completion_tokens": 309,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 228,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 85,
+      "engine_ttlt_ms": 2063,
+      "pre_inference_ms": 176,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 362,
+      "service_ttlt_ms": 2335,
+      "user_visible_ttft_ms": 186
+    },
+    "prompt_tokens": 1760,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 527,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2069
+  },
+  "elapsedMs": 2739,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "3b8c2e34-7cbe-4d68-a4e5-48efd9c45943",
+      "inputTokens": 1760,
+      "outputTokens": 309,
+      "event": "translation_attempt",
+      "correlationId": "78fcdabb-8bbd-49e5-9b5a-db5a565c0f34",
+      "attempt": 1,
+      "elapsedMs": 2738,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

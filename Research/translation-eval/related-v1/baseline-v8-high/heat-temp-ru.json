@@ -1,0 +1,74 @@
+{
+  "id": "heat-temp-ru",
+  "inputHash": "7341740947bfa5a32385194c10ac9e2a7cf4dccf55a6a7a4251921c739431ad1",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "горячий",
+      "alternativeTexts": [],
+      "baseText": "горячий",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "имеющий очень высокую температуру"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "тёплый"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "холодный"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"горячий\",\"alternativeTexts\":[],\"baseText\":\"горячий\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"имеющий очень высокую температуру\"},{\"fieldId\":\"synonym:0\",\"text\":\"тёплый\"},{\"fieldId\":\"antonym:0\",\"text\":\"холодный\"}]}",
+  "responseHash": "8f63c28c6adc563ac2fa8da3b65381127141f5a84f5067579d264f500b78d139",
+  "usage": {
+    "completion_tokens": 268,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 181,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 94,
+      "engine_ttlt_ms": 1779,
+      "pre_inference_ms": 69,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 322,
+      "service_ttlt_ms": 1977,
+      "user_visible_ttft_ms": 253
+    },
+    "prompt_tokens": 1556,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 485,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1824
+  },
+  "elapsedMs": 2544,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e56b5427-2810-4821-a100-be7a3e05290a",
+      "inputTokens": 1556,
+      "outputTokens": 268,
+      "event": "translation_attempt",
+      "correlationId": "241ed1a5-ca4f-417a-9788-862a0a318bbe",
+      "attempt": 1,
+      "elapsedMs": 2544,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,76 @@
+{
+  "id": "capable-ru",
+  "inputHash": "cfa5850df317256450f9c8d6bf802ae9289593f481b6c016cb4320cf50a1353c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "умелый",
+      "alternativeTexts": [
+        "компетентный"
+      ],
+      "baseText": "красивый",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "умеющий хорошо выполнять какую-либо задачу"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "компетентный"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "некомпетентный"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"умелый\",\"alternativeTexts\":[\"компетентный\"],\"baseText\":\"красивый\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"умеющий хорошо выполнять какую-либо задачу\"},{\"fieldId\":\"synonym:0\",\"text\":\"компетентный\"},{\"fieldId\":\"antonym:0\",\"text\":\"некомпетентный\"}]}",
+  "responseHash": "683196a986bcdb04a60b4e6f111b5c82d98a7b7ce7b4ba761c6c9b17ab6e6e39",
+  "usage": {
+    "completion_tokens": 1129,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1024,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 95,
+      "engine_ttlt_ms": 6695,
+      "pre_inference_ms": 59,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 459,
+      "service_ttlt_ms": 6937,
+      "user_visible_ttft_ms": 400
+    },
+    "prompt_tokens": 1561,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 490,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2690
+  },
+  "elapsedMs": 7309,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "879d202e-a81e-4e33-8751-1a7dfb8951da",
+      "inputTokens": 1561,
+      "outputTokens": 1129,
+      "event": "translation_attempt",
+      "correlationId": "192b2786-ea1d-44ae-b9dc-caa2cfa150d3",
+      "attempt": 1,
+      "elapsedMs": 7308,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

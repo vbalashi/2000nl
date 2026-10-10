@@ -29,6 +29,11 @@ describe("one coherent dictionary translation profile",()=>{
   expect(getOpenAiDictionaryMeaningPromptFingerprint()).toBe(previous);
   vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6");expect(getOpenAiDictionaryMeaningPromptFingerprint()).not.toBe(previous);
  });
+ test("experimental relation prompt never replaces the default v8/high identity",()=>{
+  vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6");const baseline=getOpenAiDictionaryMeaningPromptFingerprint();
+  vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6-v8-high");expect(getOpenAiDictionaryMeaningPromptFingerprint()).toBe(baseline);
+  vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6-v10");expect(getOpenAiDictionaryMeaningPromptFingerprint()).not.toBe(baseline);
+ });
  test("unknown or incomplete profile fails closed instead of silently choosing another provider",()=>{
   azure();vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","arbitrary");expect(dictionaryTranslationProfile).toThrow("invalid_dictionary_translation_profile");
   vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6");vi.stubEnv("AZURE_OPENAI_GPT6_LUNA_API_KEY_PRIMARY","");vi.stubEnv("AZURE_OPENAI_GPT6_LUNA_API_KEY","");expect(()=>createTranslator(loadTranslationConfigFromEnv({purpose:"dictionary"}))).toThrow();

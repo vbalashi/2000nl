@@ -1,0 +1,74 @@
+{
+  "id": "light-bright-ru",
+  "inputHash": "93c75dd6baf522b9a6529a9912b200cca577bb3a6f610019787c100c88ab23d9",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "светлый",
+      "alternativeTexts": [],
+      "baseText": "светлый",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Наполненный светом, не тёмный."
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "яркий"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "тёмный"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"светлый\",\"alternativeTexts\":[],\"baseText\":\"светлый\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Наполненный светом, не тёмный.\"},{\"fieldId\":\"synonym:0\",\"text\":\"яркий\"},{\"fieldId\":\"antonym:0\",\"text\":\"тёмный\"}]}",
+  "responseHash": "55e6e6ed1a218189d1d9f7ea2b9f6d80de521f895fe02ab47c34c6565ab7e2d6",
+  "usage": {
+    "completion_tokens": 570,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 481,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 111,
+      "engine_ttlt_ms": 3421,
+      "pre_inference_ms": 104,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 397,
+      "service_ttlt_ms": 3677,
+      "user_visible_ttft_ms": 294
+    },
+    "prompt_tokens": 1760,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 527,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2330
+  },
+  "elapsedMs": 3996,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "40fec028-6631-461b-94be-217b755762da",
+      "inputTokens": 1760,
+      "outputTokens": 570,
+      "event": "translation_attempt",
+      "correlationId": "83601b9e-bbd7-4fc3-b3de-63a3c3a68231",
+      "attempt": 1,
+      "elapsedMs": 3996,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

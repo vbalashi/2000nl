@@ -1,0 +1,70 @@
+{
+  "id": "bank-money-ru",
+  "inputHash": "7ce573531dc5eebe877df11681f1e773a6acdae563493ba1aacc9174bc0df2c5",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "банк",
+      "alternativeTexts": [],
+      "baseText": "банк",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "учреждение, которое хранит деньги и выдаёт их в кредит"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "финансовое учреждение"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"банк\",\"alternativeTexts\":[],\"baseText\":\"банк\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"учреждение, которое хранит деньги и выдаёт их в кредит\"},{\"fieldId\":\"synonym:0\",\"text\":\"финансовое учреждение\"}]}",
+  "responseHash": "b92457ecce93d781b570a230aa5b39189647b09d3c976500ff202317aa378006",
+  "usage": {
+    "completion_tokens": 349,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 272,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 89,
+      "engine_ttlt_ms": 2249,
+      "pre_inference_ms": 80,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 238,
+      "service_ttlt_ms": 2393,
+      "user_visible_ttft_ms": 158
+    },
+    "prompt_tokens": 1540,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 469,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1889
+  },
+  "elapsedMs": 2707,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "db20eb49-e239-4786-a054-e2986490b075",
+      "inputTokens": 1540,
+      "outputTokens": 349,
+      "event": "translation_attempt",
+      "correlationId": "14ad86fd-c7af-4da4-b0ed-0753a15d97a1",
+      "attempt": 1,
+      "elapsedMs": 2707,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

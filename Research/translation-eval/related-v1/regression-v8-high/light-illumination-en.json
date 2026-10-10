@@ -1,0 +1,66 @@
+{
+  "id": "light-illumination-en",
+  "inputHash": "8a4cfcb28375af7457fe1b3a88b38373ee8efcfe261eb6d990e63f5e59a0d726",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "light",
+      "alternativeTexts": [],
+      "baseText": "light",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Radiation that allows you to see things."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"light\",\"alternativeTexts\":[],\"baseText\":\"light\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Radiation that allows you to see things.\"}]}",
+  "responseHash": "ca9b9e84930b60b6d4299d376a05c139c492a89fb0f35c00dd77d51c1ff98823",
+  "usage": {
+    "completion_tokens": 142,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 86,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 110,
+      "engine_ttlt_ms": 1042,
+      "pre_inference_ms": 89,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 382,
+      "service_ttlt_ms": 1297,
+      "user_visible_ttft_ms": 293
+    },
+    "prompt_tokens": 1523,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 452,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1665
+  },
+  "elapsedMs": 1633,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "8b91c82d-c4a3-42d8-8f3e-6bbf68ae216c",
+      "inputTokens": 1523,
+      "outputTokens": 142,
+      "event": "translation_attempt",
+      "correlationId": "a9b20dae-d150-4132-ba25-58c38d52f075",
+      "attempt": 1,
+      "elapsedMs": 1633,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

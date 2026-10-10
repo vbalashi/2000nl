@@ -14,6 +14,7 @@ import type { DictionaryLookupPayload } from "./lookupService";
 import { translationPolicyVersion } from "../translation/translationPolicy";
 import { buildDictionaryMeaningTranslationRequest } from "../translation/dictionaryMeaningTranslationContract";
 import type { TranslationProviderName } from "../translation/types";
+import { projectLexicalRelationTranslations, type LexicalRelationTranslations } from "./platformV2LexicalRelationTranslations";
 
 type TranslationRow = {
   id: string;
@@ -29,6 +30,7 @@ type TranslationRow = {
 };
 
 export type PlatformV2TranslationProjection = {
+  relationTranslationsById?: LexicalRelationTranslations;
   currentSourceContentFingerprint: string | null;
   entryTranslation: PlatformEntryTranslationStateV2 | null;
   nodeTranslationsById: Map<string, PlatformContentNodeTranslationV2[]>;
@@ -215,6 +217,19 @@ export async function resolvePlatformV2Translations(
       currentSourceContentFingerprint: currentContentRevision,
       entryTranslation,
       nodeTranslationsById,
+      relationTranslationsById: projectLexicalRelationTranslations({
+        entryId: entry.id,
+        meaning: Array.isArray(asRecord(entry.raw).meanings) ? (asRecord(entry.raw).meanings as unknown[])[0] : null,
+        overlay: row.overlay,
+        identity: {
+          translationId: row.id,
+          targetLanguageCode,
+          status: row.status,
+          translationPolicyVersion: currentPolicyVersion,
+          ...(row.provider_revision ? { providerRevision: row.provider_revision } : {}),
+          ...(errorCode ? { errorCode } : {}),
+        },
+      }),
     });
   }
 

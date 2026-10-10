@@ -5,6 +5,7 @@ import { SenseCardReveal } from "@/components/training/SenseCardChrome";
 import {getUiMessages,formatUiMessage} from "@/lib/uiMessages";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import s from "./wordDetails.module.css";
+import type {LexicalRelationDisplayItem} from "./wordDetailsPresentation";
 import {orderedConjugationPersons,orderedConjugationValues,conjugationPersonLabel} from "@/lib/dictionary/conjugationPresentation";
 
 export type WordFormDetail = {forms:{label:string;value:string}[];conjugation:Record<string,Record<string,string>>;pos:string};
@@ -91,10 +92,10 @@ function Disclosure({label,children}:{label:string;children:ReactNode}) {
   <SenseCardReveal open={open}><div id={id} inert={!open} aria-hidden={!open} className={s.body}>{children}</div></SenseCardReveal>
  </div>;
 }
-export function ArticleSenseRelations({relation,interfaceLanguage,contentLanguage,compact=false}:{relation?:{synonyms?:string[];antonyms?:string[]};interfaceLanguage:OnboardingLanguage;contentLanguage?:string;compact?:boolean}) {
+export function ArticleSenseRelations({relation,interfaceLanguage,contentLanguage,translationLanguage,translationVisible=false,compact=false}:{relation?:{synonyms?:LexicalRelationDisplayItem[];antonyms?:LexicalRelationDisplayItem[]};interfaceLanguage:OnboardingLanguage;contentLanguage?:string;translationLanguage?:string;translationVisible?:boolean;compact?:boolean}) {
  const copy=getUiMessages(interfaceLanguage).wordDetails;
  const groups=[{id:"synonyms",label:copy.synonyms,values:relation?.synonyms||[]},{id:"antonyms",label:copy.antonyms,values:relation?.antonyms||[]}].filter(g=>g.values.length);
  if(!groups.length)return null;
- const content=<div className={s.relations}>{groups.map(g=><div className={s.relationGroup} data-kind={g.id} key={g.id}><h3>{g.id==="synonyms"?<Link2 size={12}/>:<ArrowLeftRight size={12}/>}<span>{g.label}</span></h3><p lang={contentLanguage}>{g.values.join(" · ")}</p></div>)}</div>;
+ const content=<div className={s.relations}>{groups.map(g=><div className={s.relationGroup} data-kind={g.id} key={g.id}><h3>{g.id==="synonyms"?<Link2 size={12}/>:<ArrowLeftRight size={12}/>}<span>{g.label}</span></h3><p lang={contentLanguage}>{g.values.map((item,index)=><React.Fragment key={item.relationId}>{index>0&&" · "}<span lang={contentLanguage}>{item.text}</span>{item.translation&&<span lang={translationLanguage} hidden={!translationVisible} aria-hidden={!translationVisible} data-content-translation="true" className={s.relationTranslation}> ({item.translation})</span>}</React.Fragment>)}</p></div>)}</div>;
  return <section aria-label={copy.relations} className={s.sense}>{compact?<Disclosure label={groups.map(g=>g.label).join(" · ")}>{content}</Disclosure>:content}</section>;
 }

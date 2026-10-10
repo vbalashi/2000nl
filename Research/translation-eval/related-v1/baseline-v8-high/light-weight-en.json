@@ -1,0 +1,76 @@
+{
+  "id": "light-weight-en",
+  "inputHash": "01edae4154178d7031748d7fe4c8dfa878eb7d190028d16552d71ae471027614",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "light",
+      "alternativeTexts": [
+        "lightweight"
+      ],
+      "baseText": "light",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "weighing little"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "lightweight"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "heavy"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"light\",\"alternativeTexts\":[\"lightweight\"],\"baseText\":\"light\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"weighing little\"},{\"fieldId\":\"synonym:0\",\"text\":\"lightweight\"},{\"fieldId\":\"antonym:0\",\"text\":\"heavy\"}]}",
+  "responseHash": "afd949de18e0412038b440386a73edccb592767d33ca4e848d7b6f4b928fd385",
+  "usage": {
+    "completion_tokens": 219,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 140,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 105,
+      "engine_ttlt_ms": 1482,
+      "pre_inference_ms": 109,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 340,
+      "service_ttlt_ms": 1713,
+      "user_visible_ttft_ms": 231
+    },
+    "prompt_tokens": 1553,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 482,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1772
+  },
+  "elapsedMs": 2777,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "34e07207-4fcb-4545-85b9-ee9bf9ddb034",
+      "inputTokens": 1553,
+      "outputTokens": 219,
+      "event": "translation_attempt",
+      "correlationId": "83441ce8-f0a2-416c-95c1-e2176819128b",
+      "attempt": 1,
+      "elapsedMs": 2777,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

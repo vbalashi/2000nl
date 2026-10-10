@@ -1,0 +1,74 @@
+{
+  "id": "poor-en",
+  "inputHash": "a7910a88aed0ba39fd37c414fd2b0d3be60e6aa0267aadb45fb2c3bef940944c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "poor",
+      "alternativeTexts": [],
+      "baseText": "poor",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "having little money"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "needy"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "rich"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"poor\",\"alternativeTexts\":[],\"baseText\":\"poor\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"having little money\"},{\"fieldId\":\"synonym:0\",\"text\":\"needy\"},{\"fieldId\":\"antonym:0\",\"text\":\"rich\"}]}",
+  "responseHash": "c4e0a6a04d48fa74bf8e7d8b2a7fb790356b27c0035d064977f7a671432cee45",
+  "usage": {
+    "completion_tokens": 354,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 279,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 102,
+      "engine_ttlt_ms": 2315,
+      "pre_inference_ms": 89,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 331,
+      "service_ttlt_ms": 2541,
+      "user_visible_ttft_ms": 243
+    },
+    "prompt_tokens": 1554,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 483,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1908
+  },
+  "elapsedMs": 2786,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "75bbb843-3339-49c4-b1e8-7441cee7a052",
+      "inputTokens": 1554,
+      "outputTokens": 354,
+      "event": "translation_attempt",
+      "correlationId": "7eb6b282-169f-49e9-afd3-1bd3c401082d",
+      "attempt": 1,
+      "elapsedMs": 2786,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

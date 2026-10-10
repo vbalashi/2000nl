@@ -1,0 +1,74 @@
+{
+  "id": "light-bright-ru",
+  "inputHash": "c4be062d3e2fc16b544f677b9eaec61ebb01388ccb66533383b0dcd713df01b3",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "светлый",
+      "alternativeTexts": [],
+      "baseText": "лёгкий",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "хорошо освещённый, не тёмный"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "яркий"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "тёмный"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"светлый\",\"alternativeTexts\":[],\"baseText\":\"лёгкий\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"хорошо освещённый, не тёмный\"},{\"fieldId\":\"synonym:0\",\"text\":\"яркий\"},{\"fieldId\":\"antonym:0\",\"text\":\"тёмный\"}]}",
+  "responseHash": "9abdd13d35a1b894917cd97184bbc90b5e19a9ec9806b74102b3d4edaf76ef9a",
+  "usage": {
+    "completion_tokens": 736,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 639,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 100,
+      "engine_ttlt_ms": 4625,
+      "pre_inference_ms": 130,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 333,
+      "service_ttlt_ms": 4854,
+      "user_visible_ttft_ms": 203
+    },
+    "prompt_tokens": 1558,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 487,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2294
+  },
+  "elapsedMs": 5229,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "9a5c79a9-dc78-41d8-8172-5c5ad2a17bd4",
+      "inputTokens": 1558,
+      "outputTokens": 736,
+      "event": "translation_attempt",
+      "correlationId": "d6701049-0d37-4f27-afee-0457c60c16fd",
+      "attempt": 1,
+      "elapsedMs": 5228,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

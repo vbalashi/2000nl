@@ -1,0 +1,362 @@
+[
+  {
+    "id": "heat-temp-ru",
+    "inputHash": "a1a5fb8ba304fa32ca141dde9cfeca6d66cd0f57b2cd88701b21de04541f6cbb",
+    "responseHash": "8f63c28c6adc563ac2fa8da3b65381127141f5a84f5067579d264f500b78d139",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "heat-temp-en",
+    "inputHash": "1113fff17b1d0d329b58a50d8f581f8aa9cbbe5835df224cdaaa1045f02cd915",
+    "responseHash": "5ff357d887870fd3e36f88feb3fc690ba38169e8ec9d307a73376ed67a3e237e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "heat-spicy-ru",
+    "inputHash": "2975a290735314476f882629eb3a48cbadd081c31e2352cc2b1f2f0a6dd405be",
+    "responseHash": "0c21dd83c29b97ec12d246ea12da4ee8bd8cef3fd31519ccfd67aa5c82d972c2",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "heat-spicy-en",
+    "inputHash": "6aab84a86a09840ab7e81b837346956044120349346c902f2287add4cbbcdac5",
+    "responseHash": "86aed18197a50cd109dc7e2a71eeec04b3ac174d61b616cf6126d22841cdbb1d",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "light-weight-ru",
+    "inputHash": "a5d6e08127784c5840d9c679861addbeb1bb9f0a0620103dd5431561eb2d3dc0",
+    "responseHash": "a8c7a324b94c9d2496ad84bbbd665195264168b15e27b723bbb771811f639d84",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "light-weight-en",
+    "inputHash": "1654f2d9dd7a58dd91123e92579510afacaf77766b7bafe02dd4e317177543a4",
+    "responseHash": "afd949de18e0412038b440386a73edccb592767d33ca4e848d7b6f4b928fd385",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "light-bright-ru",
+    "inputHash": "93c75dd6baf522b9a6529a9912b200cca577bb3a6f610019787c100c88ab23d9",
+    "responseHash": "55e6e6ed1a218189d1d9f7ea2b9f6d80de521f895fe02ab47c34c6565ab7e2d6",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "light-bright-en",
+    "inputHash": "53a77741347425dd208403e91b5d151bbc8df53ea03adf2fe54dffcf5f3c0de1",
+    "responseHash": "8f06f5da403ff793f91c2d4487270588ec472768927c8e126f9183601a2df0d4",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "bank-seat-ru",
+    "inputHash": "d628d87c6bab68834023e2dd20e04d05fa1a8965eb260a1c8103f900eb37d013",
+    "responseHash": "12edd5efc225705022452a81e74e394330c4be826b46ec6b323433ae18abc618",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "bank-seat-en",
+    "inputHash": "42cd3f25dbdb8ed3823e20741c4afbbb122c4414edeac1897eb7c5fddb5039b0",
+    "responseHash": "3d1c4f1c3cac1ec0d7257234aee9144b3e46c995c55b85ddc22df2036e72b405",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "bank-money-ru",
+    "inputHash": "cbfd7171487802671f2f2c44d0896ceaf3629fde80b8d166fde456581f233289",
+    "responseHash": "bd27a325fcb70e9b4980eebe722f0b2e37f236615c56b622429c3bd98f94de8e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 1,
+    "relatedFieldsTotal": 1,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "bank-money-en",
+    "inputHash": "39d94aee42eeaeb3c5a091bbf5b8e490e383ffaf886b924398d4e82e92b2c886",
+    "responseHash": "3ef4682cf271f64521e56ccc9ff28abd2c8a089d7e4fbf525041926f1f69fa62",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 1,
+    "relatedFieldsTotal": 1,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "poor-ru",
+    "inputHash": "e4ec7fcc04333e253b9f93a97d9e8557df166a1ed8eda462ae0782a1c851ae24",
+    "responseHash": "1a3bf3285f31d1ce386122972424b712ed37d16230ad2a56d33700254afcebb8",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "poor-en",
+    "inputHash": "e76b0d848162b69a621b3ff4d7787b4db123684d85d71eed1c9fb54acd0afbf8",
+    "responseHash": "cd528380fbbbdbcd5007a58495b3b57bcb68d5d385e670368c9a77adab0bdf22",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": false,
+    "finding": {
+      "severity": "minor",
+      "category": "alternative",
+      "explanation": "Impoverished intensifies the broad selected sense having little money."
+    }
+  },
+  {
+    "id": "old-age-ru",
+    "inputHash": "75bc07a31f88836cacf3876d2439e0ca4cdaaf65a7b2196b69ac5c3a7c7d2284",
+    "responseHash": "741b5a728e8f5c7c77920c662aec255200586dc1cac3d9d2ff05d8884785f49d",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "old-age-en",
+    "inputHash": "77210c4f2fdb77acc9b4fd1044d7605eefd54d541befb36db6d756e7120f5d8c",
+    "responseHash": "194a65c16f04e9b52ec70cb97a5604fdbacd4fd1cf8a774f678c3a4c0cf3499b",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "old-object-ru",
+    "inputHash": "c9e196af71c0e49c1c6aa4000f60389e65191551680653acd541be36ebbfba90",
+    "responseHash": "75ac4b65f30450d1bda8cabc1282b2d80fc48698d6675b0812b46e8260a24ee3",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "old-object-en",
+    "inputHash": "8cbc89d9dc982204fd219c6a9199303909660e824d32dfb277298c9c94720993",
+    "responseHash": "82ceb584a2b91a013367c47e745eaafc1895a1644950fc8b23c379fb8e8fc14f",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "free-liberty-ru",
+    "inputHash": "346c743e836f4f3c835d25e5ca6e6e05f040c8b8554c48bb77acdd10788cb3ab",
+    "responseHash": "e245c64bf8f02cb8d122496dbd3693010c8b7593b7bfba5c759e39f13883626e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "free-liberty-en",
+    "inputHash": "c8cd0769017a04f1376e4a1654111ae2b929a7f6d78d488a4f5b017b0de9ad6e",
+    "responseHash": "fd937f14e1efa74bf811a597d4e1b91e6b07999c7518016f880f33f7c3e3c4b0",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "free-available-ru",
+    "inputHash": "1c9b87dfed2917a3a66a5cac25e72d90b2bb036890b133be3cb13620259cf410",
+    "responseHash": "4c399c2e497f99ef507206c0a8a63265b0b6a0058207ccfcc9e93d38940c21ae",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "free-available-en",
+    "inputHash": "7137bce481bd44a096b340efb00eca89263237c2e5dfdc8164b0d18b1f781369",
+    "responseHash": "928b6cd3ee8ee00e5c34695eddd21a9a4e789578fe736b41280a9546fc6b1a4a",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "give-ru",
+    "inputHash": "bc33acec5fa14c2d05909986122f41eb917d61d88ce20fea6ac3d80fdddb5efa",
+    "responseHash": "4ad302f77bbc50cf9c0b93725843894b266a131714f8facccea572dc70bc2878",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "give-en",
+    "inputHash": "b267e8b56d276e5b730fb2d12bfb8aebffe6d840a9a47651d7259eb900a39dc6",
+    "responseHash": "e3be4fff3a063e5ac51141398bdbe6ec6149c84be406a757eb5f9b28f46dc996",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "borrow-ru",
+    "inputHash": "66f913132fdc9fd813ba36e76860f5c4bb1fc7695f97fc287cc715f11abae82f",
+    "responseHash": "55c29761cb928ead58e3efb4c48a0061d4897a329f1bc9ff307b13de73c1768a",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "borrow-en",
+    "inputHash": "62ccc106165e3214b0cb674a1b07c9c3a41a3a0004e63f619085644549c48824",
+    "responseHash": "a07137a074220f58eb9722183c2997d1e6e883886a2897deef8a38eda26a3e54",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "smart-ru",
+    "inputHash": "696d63ebf223376e4549fe608b2ca66095a34913678a778e8ef4211e28f8864c",
+    "responseHash": "242b94b02a8e6f9877ff1d83d63494f823e5e3961a57c6cc8a69447a049bc279",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "smart-en",
+    "inputHash": "1b4cfd0c08bab4321bc2423f7581d1c14b57316608257223be4bd213105c1012",
+    "responseHash": "26459cce1df4684b4f8cf70f96d2991b9dfc005adb45c573c4bc1395280437db",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "capable-ru",
+    "inputHash": "ba65a44aaba558777913994706a0cb8c21e18b3d390134d524f3c0f3c0fa87d4",
+    "responseHash": "c9e1ed8749e692614c7aeae40e7ae5d388572142e6ca3f79c649ea7dedc997c9",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "capable-en",
+    "inputHash": "42f69909e78900e47d09549686e0b7abb654aba656cf5425b187962bcdf72ad3",
+    "responseHash": "e4dcd2195740f33f59a42cefaa435dd1a0b91a1c458ff1a4ac08704c8652439f",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 2,
+    "relatedFieldsTotal": 2,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "cat-ru",
+    "inputHash": "20ae14116584817dcad074ceae2a3a3984b802c8c9b7b728b12bf9c026f5f141",
+    "responseHash": "1be15b13395aae5bbd7cea04df9d89c6ba192efbb1730a4047894bc26f98ca96",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 1,
+    "relatedFieldsTotal": 1,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "cat-en",
+    "inputHash": "cdb99b7e5eabeb1aa5f77396385c19366a1b344d95ffa8160fc9b98227c6b699",
+    "responseHash": "d12da2d79c55db628837505c1fe8cc9d45f15c778887b1b571565e921cc9b3b9",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 1,
+    "relatedFieldsTotal": 1,
+    "wholeCardAccepted": false,
+    "finding": {
+      "severity": "serious",
+      "category": "literal-image",
+      "explanation": "Literal puts the observer in the tree: watch the cat from the tree."
+    }
+  }
+]

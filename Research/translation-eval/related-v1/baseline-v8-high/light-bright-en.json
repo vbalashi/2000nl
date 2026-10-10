@@ -1,0 +1,76 @@
+{
+  "id": "light-bright-en",
+  "inputHash": "6eeda22dd1069dd83967e64377f6c00320e0427142e6feaec884a651e7fe7eac",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "bright",
+      "alternativeTexts": [
+        "light"
+      ],
+      "baseText": "light",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "bright; having a lot of light, not dark"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "bright"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "dark"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"bright\",\"alternativeTexts\":[\"light\"],\"baseText\":\"light\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"bright; having a lot of light, not dark\"},{\"fieldId\":\"synonym:0\",\"text\":\"bright\"},{\"fieldId\":\"antonym:0\",\"text\":\"dark\"}]}",
+  "responseHash": "18a87e15a4573ec6889ed8835dd3bcd5a5cbde17445dc1dd6f531d808a6e9b8d",
+  "usage": {
+    "completion_tokens": 534,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 451,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 115,
+      "engine_ttlt_ms": 3420,
+      "pre_inference_ms": 81,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 394,
+      "service_ttlt_ms": 3696,
+      "user_visible_ttft_ms": 313
+    },
+    "prompt_tokens": 1558,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 487,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2092
+  },
+  "elapsedMs": 4016,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "58e0959b-c2ee-4846-ac5d-f1c33c579893",
+      "inputTokens": 1558,
+      "outputTokens": 534,
+      "event": "translation_attempt",
+      "correlationId": "4d412479-785d-4a15-b1c9-8a71db2c874d",
+      "attempt": 1,
+      "elapsedMs": 4016,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

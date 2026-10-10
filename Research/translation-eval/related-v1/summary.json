@@ -1,0 +1,67 @@
+{
+  "method": "agent-nonblind; exploratory descriptive comparison, no human approval or statistical superiority claim",
+  "decision": "Keep default v8/high. Both prompts translate all related fields correctly in this set; v10 does not improve whole-card quality. Fix source/overlay/projection/UI; no extra model request.",
+  "regressionSet": "Reused previous synthetic regression examples; not an independent held-out set.",
+  "runs": [
+    {
+      "run": "baseline-v8-high",
+      "count": 32,
+      "ready": 32,
+      "firstAttemptReady": 32,
+      "wholeCardAccepted": 31,
+      "serious": 1,
+      "relatedFieldsAccepted": 60,
+      "relatedFieldsTotal": 60,
+      "inputTokens": 49834,
+      "outputTokens": 16918,
+      "reasoningTokens": 14047,
+      "medianMs": 3615.5,
+      "p95Ms": 7711
+    },
+    {
+      "run": "candidate-v10-high",
+      "count": 32,
+      "ready": 32,
+      "firstAttemptReady": 32,
+      "wholeCardAccepted": 30,
+      "serious": 1,
+      "relatedFieldsAccepted": 60,
+      "relatedFieldsTotal": 60,
+      "inputTokens": 56298,
+      "outputTokens": 15292,
+      "reasoningTokens": 12452,
+      "medianMs": 3319.0,
+      "p95Ms": 7648
+    },
+    {
+      "run": "regression-v8-high",
+      "count": 24,
+      "ready": 24,
+      "firstAttemptReady": 24,
+      "wholeCardAccepted": 21,
+      "serious": 0,
+      "relatedFieldsAccepted": 0,
+      "relatedFieldsTotal": 0,
+      "inputTokens": 37084,
+      "outputTokens": 10598,
+      "reasoningTokens": 8581,
+      "medianMs": 2302.5,
+      "p95Ms": 7871
+    },
+    {
+      "run": "regression-v10-high",
+      "count": 24,
+      "ready": 24,
+      "firstAttemptReady": 24,
+      "wholeCardAccepted": 21,
+      "serious": 0,
+      "relatedFieldsAccepted": 0,
+      "relatedFieldsTotal": 0,
+      "inputTokens": 41932,
+      "outputTokens": 12088,
+      "reasoningTokens": 10078,
+      "medianMs": 2761.0,
+      "p95Ms": 8895
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "id": "borrow-en",
+  "inputHash": "62ccc106165e3214b0cb674a1b07c9c3a41a3a0004e63f619085644549c48824",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "to borrow",
+      "alternativeTexts": [],
+      "baseText": "to borrow",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "to temporarily receive something from someone and return it later"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "to take on loan"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "to lend"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"to borrow\",\"alternativeTexts\":[],\"baseText\":\"to borrow\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"to temporarily receive something from someone and return it later\"},{\"fieldId\":\"synonym:0\",\"text\":\"to take on loan\"},{\"fieldId\":\"antonym:0\",\"text\":\"to lend\"}]}",
+  "responseHash": "a07137a074220f58eb9722183c2997d1e6e883886a2897deef8a38eda26a3e54",
+  "usage": {
+    "completion_tokens": 365,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 278,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 123,
+      "engine_ttlt_ms": 2270,
+      "pre_inference_ms": 134,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 412,
+      "service_ttlt_ms": 2554,
+      "user_visible_ttft_ms": 277
+    },
+    "prompt_tokens": 1760,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 527,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2125
+  },
+  "elapsedMs": 3071,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "a6ba7e9c-1fb0-48f6-b457-61b107f8d32a",
+      "inputTokens": 1760,
+      "outputTokens": 365,
+      "event": "translation_attempt",
+      "correlationId": "80a384a3-4926-4a86-8be9-7a26b793ff39",
+      "attempt": 1,
+      "elapsedMs": 3071,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

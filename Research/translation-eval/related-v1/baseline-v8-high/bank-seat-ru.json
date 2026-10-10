@@ -1,0 +1,74 @@
+{
+  "id": "bank-seat-ru",
+  "inputHash": "c2dd1702acdea0d509bd29d248c5a549b68a6833a2077da82a25a757774bb465",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "диван",
+      "alternativeTexts": [],
+      "baseText": "банк",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "длинный предмет мебели, на котором сидят люди"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "скамья"
+      },
+      {
+        "fieldId": "synonym:1",
+        "text": "диван"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"диван\",\"alternativeTexts\":[],\"baseText\":\"банк\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"длинный предмет мебели, на котором сидят люди\"},{\"fieldId\":\"synonym:0\",\"text\":\"скамья\"},{\"fieldId\":\"synonym:1\",\"text\":\"диван\"}]}",
+  "responseHash": "53a8c3341c60c942af745ba2c44898e0a1466d70539a3b1097c1f6dbff726c72",
+  "usage": {
+    "completion_tokens": 1073,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 981,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 95,
+      "engine_ttlt_ms": 6565,
+      "pre_inference_ms": 85,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 295,
+      "service_ttlt_ms": 6760,
+      "user_visible_ttft_ms": 210
+    },
+    "prompt_tokens": 1555,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 484,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2628
+  },
+  "elapsedMs": 7155,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "8cbb35fb-2b1c-428f-9084-e858561bf95b",
+      "inputTokens": 1555,
+      "outputTokens": 1073,
+      "event": "translation_attempt",
+      "correlationId": "08169df4-bbca-4428-84fd-3ec023ed5b3a",
+      "attempt": 1,
+      "elapsedMs": 7154,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "tomorrow-ru",
+  "inputHash": "5754df616453606dbada38776a26915bb7a8d06b847ddac7f55519ba6dda4aad",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "завтра",
+      "alternativeTexts": [],
+      "baseText": "завтра",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "В день, следующий за сегодняшним."
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "До завтра!"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "Прощальное приветствие, когда ожидается, что вы снова увидитесь на следующий день."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"завтра\",\"alternativeTexts\":[],\"baseText\":\"завтра\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"В день, следующий за сегодняшним.\"},{\"fieldId\":\"idiom:0\",\"text\":\"До завтра!\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"Прощальное приветствие, когда ожидается, что вы снова увидитесь на следующий день.\"}]}",
+  "responseHash": "9be6e2f9d03148be072d281ea3511eae05ce8007c9a5b0818c7d95e6eb49cd69",
+  "usage": {
+    "completion_tokens": 289,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 178,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 111,
+      "engine_ttlt_ms": 1837,
+      "pre_inference_ms": 46,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 302,
+      "service_ttlt_ms": 2023,
+      "user_visible_ttft_ms": 256
+    },
+    "prompt_tokens": 1773,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 540,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2062
+  },
+  "elapsedMs": 2425,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "69a97b49-37ee-42e2-a5f5-ac38f4433002",
+      "inputTokens": 1773,
+      "outputTokens": 289,
+      "event": "translation_attempt",
+      "correlationId": "fffa96c9-1b30-4999-aa04-1353261f0056",
+      "attempt": 1,
+      "elapsedMs": 2425,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

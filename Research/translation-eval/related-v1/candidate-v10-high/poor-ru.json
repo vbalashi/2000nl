@@ -1,0 +1,76 @@
+{
+  "id": "poor-ru",
+  "inputHash": "e4ec7fcc04333e253b9f93a97d9e8557df166a1ed8eda462ae0782a1c851ae24",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "бедный",
+      "alternativeTexts": [
+        "небогатый"
+      ],
+      "baseText": "бедный",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "имеющий мало денег"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "нуждающийся"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "богатый"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"бедный\",\"alternativeTexts\":[\"небогатый\"],\"baseText\":\"бедный\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"имеющий мало денег\"},{\"fieldId\":\"synonym:0\",\"text\":\"нуждающийся\"},{\"fieldId\":\"antonym:0\",\"text\":\"богатый\"}]}",
+  "responseHash": "1a3bf3285f31d1ce386122972424b712ed37d16230ad2a56d33700254afcebb8",
+  "usage": {
+    "completion_tokens": 332,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 244,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 82,
+      "engine_ttlt_ms": 2273,
+      "pre_inference_ms": 91,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 272,
+      "service_ttlt_ms": 2459,
+      "user_visible_ttft_ms": 180
+    },
+    "prompt_tokens": 1756,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 523,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2088
+  },
+  "elapsedMs": 2966,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "6c826cda-1a25-4bdd-8a49-8c5d77a45bd6",
+      "inputTokens": 1756,
+      "outputTokens": 332,
+      "event": "translation_attempt",
+      "correlationId": "8acd4fdb-a13c-4451-af6b-dd3da988ba61",
+      "attempt": 1,
+      "elapsedMs": 2965,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

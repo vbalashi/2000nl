@@ -1,0 +1,76 @@
+{
+  "id": "free-available-en",
+  "inputHash": "17999a6aefbc9067ab3b3118ed61754b2598c5004aecf7bec6a64ab23a4b84d5",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "free",
+      "alternativeTexts": [
+        "available"
+      ],
+      "baseText": "free",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "available; not in use"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "available"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "occupied"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"free\",\"alternativeTexts\":[\"available\"],\"baseText\":\"free\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"available; not in use\"},{\"fieldId\":\"synonym:0\",\"text\":\"available\"},{\"fieldId\":\"antonym:0\",\"text\":\"occupied\"}]}",
+  "responseHash": "928b6cd3ee8ee00e5c34695eddd21a9a4e789578fe736b41280a9546fc6b1a4a",
+  "usage": {
+    "completion_tokens": 215,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 137,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 101,
+      "engine_ttlt_ms": 1366,
+      "pre_inference_ms": 84,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 328,
+      "service_ttlt_ms": 1586,
+      "user_visible_ttft_ms": 244
+    },
+    "prompt_tokens": 1558,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 487,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1773
+  },
+  "elapsedMs": 1939,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "691d8360-aa0f-4efc-b34b-8fe4ce212cd8",
+      "inputTokens": 1558,
+      "outputTokens": 215,
+      "event": "translation_attempt",
+      "correlationId": "da3b8f96-3303-4dee-bbf4-f382314a77cc",
+      "attempt": 1,
+      "elapsedMs": 1939,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

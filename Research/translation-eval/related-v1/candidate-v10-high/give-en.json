@@ -1,0 +1,74 @@
+{
+  "id": "give-en",
+  "inputHash": "b267e8b56d276e5b730fb2d12bfb8aebffe6d840a9a47651d7259eb900a39dc6",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "give",
+      "alternativeTexts": [],
+      "baseText": "give",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "to hand something to someone"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "give as a gift"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "receive"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"give\",\"alternativeTexts\":[],\"baseText\":\"give\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"to hand something to someone\"},{\"fieldId\":\"synonym:0\",\"text\":\"give as a gift\"},{\"fieldId\":\"antonym:0\",\"text\":\"receive\"}]}",
+  "responseHash": "e3be4fff3a063e5ac51141398bdbe6ec6149c84be406a757eb5f9b28f46dc996",
+  "usage": {
+    "completion_tokens": 376,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 297,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 139,
+      "engine_ttlt_ms": 2687,
+      "pre_inference_ms": 63,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 343,
+      "service_ttlt_ms": 2886,
+      "user_visible_ttft_ms": 280
+    },
+    "prompt_tokens": 1756,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 523,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2132
+  },
+  "elapsedMs": 3200,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "d190cab2-7212-41fb-97fd-c2511f0f6715",
+      "inputTokens": 1756,
+      "outputTokens": 376,
+      "event": "translation_attempt",
+      "correlationId": "92cfaaf6-40bf-48d0-9a83-5740d6f4012d",
+      "attempt": 1,
+      "elapsedMs": 3200,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

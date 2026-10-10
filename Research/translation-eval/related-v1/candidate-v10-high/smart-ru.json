@@ -1,0 +1,76 @@
+{
+  "id": "smart-ru",
+  "inputHash": "696d63ebf223376e4549fe608b2ca66095a34913678a778e8ef4211e28f8864c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "умный",
+      "alternativeTexts": [
+        "сообразительный"
+      ],
+      "baseText": "умный",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Способный быстро понимать и хорошо рассуждать."
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "разумный"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "глупый"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"умный\",\"alternativeTexts\":[\"сообразительный\"],\"baseText\":\"умный\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Способный быстро понимать и хорошо рассуждать.\"},{\"fieldId\":\"synonym:0\",\"text\":\"разумный\"},{\"fieldId\":\"antonym:0\",\"text\":\"глупый\"}]}",
+  "responseHash": "242b94b02a8e6f9877ff1d83d63494f823e5e3961a57c6cc8a69447a049bc279",
+  "usage": {
+    "completion_tokens": 573,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 482,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 103,
+      "engine_ttlt_ms": 3351,
+      "pre_inference_ms": 170,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 429,
+      "service_ttlt_ms": 3664,
+      "user_visible_ttft_ms": 259
+    },
+    "prompt_tokens": 1757,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 524,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2330
+  },
+  "elapsedMs": 3944,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "07ffb606-5b55-4035-a819-c765b2632700",
+      "inputTokens": 1757,
+      "outputTokens": 573,
+      "event": "translation_attempt",
+      "correlationId": "eca92659-a4bd-4ff1-afa2-821767298e0f",
+      "attempt": 1,
+      "elapsedMs": 3944,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}
