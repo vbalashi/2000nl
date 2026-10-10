@@ -42,3 +42,7 @@
 - [Zvw2026](https://www.belastingdienst.nl/wps/wcm/connect/fisin/fisin2026/inkomensafhankelijke_bijdrage_zorgverzekeringswet).
 - [Общий BTW21%](https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/zakelijk/btw/tarieven_en_vrijstellingen/goederen_diensten_21_btw/).
 - [Пенсионные сценарии](pension-scenarios.md), [страхование](insurance-notes.md), [расходы](cost-baseline.md).
+
+## Статус после обсуждения
+
+Владелец принял расчёт как рабочую основу с возможностью корректировки. Сценарии остаются условными; принятие не подтверждает персональную страховую цену или достаточность пенсии. [Источник](../discussions/2026-10-10-43-economic-model-accepted.md).
