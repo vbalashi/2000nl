@@ -26,8 +26,9 @@ import { TrainingCompletion, type TrainingCompletionActions } from "../v2/Traini
 import { TrainingSessionState } from "../v2/TrainingSessionState";
 import { TrainingSessionV2Layout } from "../v2/TrainingSessionV2Layout";
 import { TrainingSessionNotice } from "../v2/TrainingSessionSurface";
-import { TrainingSessionProgressRim } from "../v2/TrainingSessionProgressRim";
 import { TrainingSessionChrome } from "../v2/TrainingSessionChrome";
+import { TrainingSessionProgress } from "../v2/TrainingSessionProgress";
+import { useTrainingInteractions } from "@/components/practice/ui/TrainingInteractionPreferences";
 
 import { TrainingSessionStatsFooter } from "../TrainingSessionStatsFooter";
 import { useIdiomTrainingStats } from "./useIdiomTrainingStats";
@@ -81,6 +82,7 @@ export function TrainingIdiomSession({
   onOpenDetails,
 }: Props) {
   const t = getUiMessages(interfaceLanguage).trainingExercises.idiom;
+  const { preferences } = useTrainingInteractions();
   const [candidate, setCandidate] =
     useState<PlatformIdiomExerciseCandidateV2 | null>(null);
   const [content, setContent] = useState<IdiomExerciseContent | null>(null);
@@ -254,14 +256,15 @@ export function TrainingIdiomSession({
     kind: "planned" as const,
     position: Math.min(completedCount, session.requestedTotal),
     total: session.requestedTotal,
-    fraction: session.requestedTotal > 0 ? Math.min(completedCount / session.requestedTotal, 1) : 0,
+    fraction: session.requestedTotal > 0
+      ? Math.min(completedCount / session.requestedTotal, 1)
+      : 0,
   };
 
   return (
     <TrainingSessionV2Layout
       approvedPresentation={true}
-      progress={!loading && !(error && !candidate) && !terminal ? <TrainingSessionProgressRim presentation={sessionPresentation} language={interfaceLanguage} /> : null}
-      phase={loading ? "loading" : error && !candidate ? "failure" : "ready"}
+            phase={loading ? "loading" : error && !candidate ? "failure" : "ready"}
       chrome={
         <TrainingSessionChrome
           approvedPresentation={true}
@@ -296,6 +299,9 @@ export function TrainingIdiomSession({
           />
         ) : null
       }
+      progress={!loading && !(error && !candidate) && session.requestedTotal > 0 && preferences.progressAnimation !== "off" ? (
+        <TrainingSessionProgress presentation={sessionPresentation} language={interfaceLanguage} variant={preferences.progressAnimation} />
+      ) : null}
       footer={
         <TrainingSessionStatsFooter
           {...footerStats}

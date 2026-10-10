@@ -4,7 +4,7 @@
   "rollout": {
     "status": "enabled",
     "requiredMigrationId": 222,
-    "coordinationIssue": 644,
+    "coordinationIssue": 413,
     "compatibilityPhase": "legacy-first-party-compatible",
     "strictEnforcementIssue": 399
   },

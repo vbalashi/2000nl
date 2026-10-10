@@ -475,7 +475,8 @@ test.each(["en", "nl", "ru"] as const)(
     await screen.findByText("ergens helemaal klaar mee zijn");
     expect(container.querySelector("[data-training-session-main]")).toBeInTheDocument();
     expect(screen.getByTestId("training-session-position")).toHaveTextContent("2 / 5");
-    expect(screen.getByTestId("training-session-progress-track").firstElementChild).toHaveStyle({ width: "40%" });
+    expect(screen.getByTestId("training-session-progress-track")).toHaveAttribute("aria-valuemax", "5");
+    expect(screen.getByTestId("training-session-progress-track")).toHaveAttribute("aria-valuenow", "2");
     const chrome = screen.getByTestId("training-session-chrome");
     const utilities = chrome.querySelectorAll("button");
     expect(utilities).toHaveLength(2);
