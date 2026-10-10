@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "translation-eval-decision-v1",
+  "status": "frozen-before-validation",
+  "runtimePromotion": false,
+  "selectionMethod": "Non-blind agent review, predefined semantic-error / needs-work / usefulness / first-candidate tie-break",
+  "selected": [
+    {"model":"gpt41","prompt":"gpt41-tuned-v2","reason":"v1: adjective POS error plus idiom grammar; v2: no POS error, two orthography/preposition corrections. Fewer mandatory meaning/POS errors, despite same two needs-work."},
+    {"model":"luna56","prompt":"luna56-tuned-v2","reason":"v1 one negation orthography correction; v2 six accept."},
+    {"model":"luna6","prompt":"luna6-tuned-v1","reason":"Both iterations six accept, identical prompt text; select first by tie-break."}
+  ],
+  "validationSuite":"tuning-validation-v2",
+  "validationRepeat":3,
+  "baseline":"dictionary-meaning-v3",
+  "tuningCallsCompleted":36,
+  "validationCallCap":108
+}

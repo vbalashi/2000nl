@@ -1,0 +1,211 @@
+{
+  "schemaVersion": "translation-eval-review-v1",
+  "runId": "tuning-gpt41-r2",
+  "reviewer": "Codex primary agent",
+  "method": "agent",
+  "reviewedAt": "2026-10-10T16:27:37.896485+00:00",
+  "manifestHash": "a19ee732726e382d9a2717d69caa2423709b1569ed9fd37286121940bb8bc0e1",
+  "reviewContext": "Non-blind agent assessment of every frozen output; no independent human or judge approval.",
+  "items": [
+    {
+      "jobId": "moeilijk_ru-1",
+      "responseHash": "9b0f00e9b795194ecaeb5b4967b268e707ad7a82b1e71964e8c278bf2ab5d1d8",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 3,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnatural-language"
+      ],
+      "rationale": "Трудность выполнения/понимания сохранена; «трудный/сложный» — полезные варианты; пример задания точен. В ответе снова «не легко» без противопоставления; нужна редакция «нелегко/непросто».",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "трудный",
+          "alternativeTexts": [
+            "сложный"
+          ],
+          "baseText": "трудный",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "не легко сделать или понять"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Это задание трудное."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "gemakkelijk_ru-1",
+      "responseHash": "43ef5577c77ac874a52cc77a7609fdecf97b58e25785d4f63924412bf9cf3bdf",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Лёгкость выполнения/понимания сохранена, пример первого вопроса точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "легкий",
+          "alternativeTexts": [
+            "простой"
+          ],
+          "baseText": "легкий",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "без особых усилий сделать или понять"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Первый вопрос был легким."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "idiom_only_ru-1",
+      "responseHash": "118dc8db0eaf4f175091cacca3057f1123ca85f554423bdb612857553e189a65",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 3,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnatural-language"
+      ],
+      "rationale": "Идиома передаёт непринуждённый разговор о несущественном; idiom-only null корректен (base неприменим, нейтральные 5). Нужна грамматическая правка «об обычных».",
+      "observedResult": {
+        "entryTranslation": null,
+        "contentTranslations": [
+          {
+            "fieldId": "idiom:0",
+            "text": "говорить о пустяках"
+          },
+          {
+            "fieldId": "idiom:0:explanation",
+            "text": "вести непринуждённую беседу о обычных мелочах"
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "typisch_strange_ru-1",
+      "responseHash": "91e0b0a8938e59835707b229f9ed1af1198fe4056a9e142ab0ae7d7134aa1ec3",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Primary и варианты передают странное/неожиданное, base «типичный» отдельно; определение и пример точны.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "странный",
+          "alternativeTexts": [
+            "необычный"
+          ],
+          "baseText": "типичный",
+          "note": "В этом значении слово используется для описания чего-то неожиданного или странного, а не типичного."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "странный или неожиданный"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Как странно, что никто ничего не слышал!"
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "praten_en-1",
+      "responseHash": "cbd11c307208ffc92f05fdec916fb3dac1e9615ae3635aab9979ce250bcb615b",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Talk и варианты передают разговор с собеседником; определение и пример точны. Converse формальнее, speak шире; они допустимы в данном контексте.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "talk",
+          "alternativeTexts": [
+            "speak",
+            "converse"
+          ],
+          "baseText": "talk",
+          "note": "To use words to have a conversation with someone."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "To use words to have a conversation with someone."
+          },
+          {
+            "fieldId": "example:0",
+            "text": "We talk calmly with each other."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "koe_ru-1",
+      "responseHash": "326f4332cae5bee1c7ef38467e55ff70f0c9813ae1512d75f22efea4f5d33609",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Корова точно передаёт взрослую самку КРС; definition/example корректны; [] оправдан.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "корова",
+          "alternativeTexts": [],
+          "baseText": "корова",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "взрослая самка крупного рогатого скота"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Корова стоит на лугу."
+          }
+        ]
+      }
+    }
+  ]
+}
