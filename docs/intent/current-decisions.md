@@ -71,8 +71,8 @@ Accepted: prerequisite loading and retry share the branded logo/dots surface; ac
 
 ## 2026-10-10: Luna 6 dictionary translation profile
 
-Accepted after the fresh100 relative gate: Luna 6 with tuned v5 becomes the dictionary translation default; GPT-4.1 v4 and legacy v1 remain selectable rollback profiles. Model, prompt, settings and cache identity switch together. Evidence, scope and limitations: [discussion](../discussions/2026-10-10-07-luna6-translation-release.md). Operations: [rollout and rollback](../runbooks/dictionary-translation-model-rollout.md). Implementation tracked in #659.
+Accepted after the fresh100 relative gate: Luna 6 became the dictionary translation default with v5; the accepted optional-literal follow-up selects v8/high after the focused comparison (release tracked in #655); GPT-4.1 v4 and legacy v1 remain selectable rollback profiles. Model, prompt, settings and cache identity switch together. Evidence, scope and limitations: [discussion](../discussions/2026-10-10-07-luna6-translation-release.md). Operations: [rollout and rollback](../runbooks/dictionary-translation-model-rollout.md). Implementation tracked in #659.
 
 ## Эквиваленты и дословность единым запросом — принято, 2026-10-10
 
-Объединить этапы2–3 #655: альтернативы только при пользе для понимания, дословность идиомы отдельным факультативным полем после естественного перевода. Базовый путь — один запрос; второй последовательный запрос только запасной эксперимент при недостаточном качестве. Версии/ответы/оценки сохраняются. Основание: [обсуждение](../discussions/2026-10-10-02-translation-equivalents-literal.md). Реализация пока не завершена.
+Объединить этапы2–3 #655: альтернативы только при пользе для понимания, дословность идиомы отдельным факультативным полем после естественного перевода. Базовый путь — один запрос; второй последовательный запрос только запасной эксперимент при недостаточном качестве. Версии/ответы/оценки сохраняются. Основание: [обсуждение](../discussions/2026-10-10-02-translation-equivalents-literal.md). Реализация и оценка выполняются в #655; выбран v8/high по сохранённым экспериментам.

@@ -29,6 +29,9 @@
 
 ## Архив
 
+- [2026-10-10: необязательные эквиваленты и дословность](2026-10-10-02-translation-equivalents-literal.md) — #655.
+- [2026-10-10: сравнение reasoning effort](2026-10-10-03-translation-reasoning-effort.md) — #655.
+
 - [2026-10-09: общий жизненный цикл Training](2026-10-09-02-training-lifecycle.md) — #647.
 - [2026-10-09: пропавшая подсказка первой карточки Translation](2026-10-09-03-missing-context-target.md)
 

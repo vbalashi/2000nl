@@ -182,6 +182,9 @@ export async function resolvePlatformV2Translations(
         row.status === "ready"
           ? translatedTextAtSourcePath(row.overlay, binding.sourcePath)
           : null;
+      const literalPath = binding.sourcePath.replace(/(idioms\[\d+\])(?:\.expression)?$/, "$1.literalText");
+      const literalText = binding.kind === "idiom" && row.status === "ready" && text && literalPath !== binding.sourcePath
+        ? translatedTextAtSourcePath(row.overlay, literalPath) : null;
       const nodeStatus =
         row.status === "ready" && !text ? "not-available" : row.status;
       nodeTranslationsById.set(binding.contentNodeId, [
@@ -193,6 +196,7 @@ export async function resolvePlatformV2Translations(
           targetLanguageCode,
           status: nodeStatus,
           ...(text ? { text } : {}),
+          ...(literalText ? { literalText } : {}),
           sourceTextFingerprint: binding.sourceTextFingerprint,
           translationPolicyVersion: currentPolicyVersion,
           ...(row.provider_revision

@@ -14,9 +14,11 @@ for (const direction of ["Direct", "Reverse"]) {
     await expect(card.getByTestId("entry-translation")).toBeVisible();
     await expect(card.getByTestId("entry-translation")).toHaveText("корова");
     await expect(card.getByText("говорить о пустяках", { exact: true })).toBeVisible();
+    await expect(card.getByText("(literally: говорить о коровках и телятах)", { exact: true })).toBeVisible();
     await expect(card.getByText("een dier dat melk geeft", { exact: true })).toHaveCount(0);
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-pressed", "false");
+    await expect(card.getByText("(literally: говорить о коровках и телятах)", { exact: true }).locator("xpath=ancestor::*[@aria-hidden][1]")).toHaveAttribute("aria-hidden", "true");
     // Translation slots keep layout space and hide through aria-hidden/opacity.
     await expect(card.getByTestId("entry-translation").locator("xpath=ancestor::*[@aria-hidden][1]")).toHaveAttribute("aria-hidden", "true");
     await expect(card.getByText("говорить о пустяках", { exact: true }).locator("xpath=ancestor::*[@aria-hidden][1]")).toHaveAttribute("aria-hidden", "true");
