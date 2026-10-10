@@ -148,3 +148,5 @@
 - [2026-10-10: конечная цена и платежи](2026-10-10-37-consumer-price-and-payments.md)
 
 - [2026-10-10: мировые продажи и условная цена](2026-10-10-38-worldwide-sales-price-placeholder.md)
+
+- [2026-10-10: состав связанной подписки](2026-10-10-39-connected-subscription-scope.md)
