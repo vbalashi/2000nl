@@ -122,3 +122,5 @@ per-run review для submit-review: его нужно связать через
   100 real meanings; common v4 selected before70-case held-out evaluation;
   390 first-attempt protocol calls plus1 separately logged recovery. Anonymous
   local review: `runs/review-full100-v1/index.html`.
+
+Fresh100 follow-up and conditional promotion: [results](FRESH100_RESULTS.md), [bound summary](evidence/fresh100-v1/summary.json). Research remains separate from release issue #659.

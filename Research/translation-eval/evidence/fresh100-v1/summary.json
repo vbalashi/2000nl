@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "translation-fresh100-summary-v1",
+  "agentReviewNonBlind": true,
+  "humanApproved": false,
+  "models": {
+    "gpt41": {
+      "runId": "fresh100-gpt41-v4",
+      "manifestHash": "2acee2d776720eada60faab8b53fd4a13899bfef77f7064873ebd6c3e6e5ab85",
+      "promptFingerprint": "f7bb99e1da2a700d56815da8ac15d21ecf94a1963e4640422c6cc05b5b30ea9a",
+      "accept": 55,
+      "seriousSenseContent": 6,
+      "criticalDirectionNegationModality": 1,
+      "allDimensionsBelow3": 8,
+      "score3SenseContent": 9,
+      "inputTokens": 86865,
+      "outputTokens": 12934,
+      "reasoningTokens": 0,
+      "cachedTokens": 0,
+      "knownReferenceUSD": 0.277202,
+      "actualAzureInvoiceUSD": null,
+      "latencyP50Ms": 2903.5,
+      "latencyP95Ms": 4358,
+      "withAlternativeCandidates": 88,
+      "ready": 100,
+      "failed": 0
+    },
+    "luna6": {
+      "runId": "fresh100-luna6-v5",
+      "manifestHash": "180aad8257e472ea52da27bbe4366b8a0cbba38504b2ede2d6ac77ebea5af040",
+      "promptFingerprint": "998960f599e9fc5211a6c82b2a9b7fa35a360c12571decef5e1c655e5609e0ec",
+      "accept": 93,
+      "seriousSenseContent": 2,
+      "criticalDirectionNegationModality": 1,
+      "allDimensionsBelow3": 2,
+      "score3SenseContent": 3,
+      "inputTokens": 100865,
+      "outputTokens": 30895,
+      "reasoningTokens": 20076,
+      "cachedTokens": 0,
+      "knownReferenceUSD": 0.025534,
+      "actualAzureInvoiceUSD": null,
+      "latencyP50Ms": 2451.5,
+      "latencyP95Ms": 4065,
+      "withAlternativeCandidates": 44,
+      "ready": 100,
+      "failed": 0
+    }
+  },
+  "gatePassed": true,
+  "pairedDiscordance": {
+    "lunaOnlyAccept": 40,
+    "gptOnlyAccept": 2,
+    "exactTwoSidedBinomialP": 4.1109160520136356e-10,
+    "limitation": "Conditional on subjective agent labels; does not remove reviewer bias or enriched sampling limitations."
+  },
+  "referencePriceScope": "Same2026-10-10 public uncached Standard short-context rates as full100. Translation only; no audio/review. Not confirmed Azure deployment tariff."
+}

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "translation-research-archive-v1",
+  "path": "/Users/khrustal/dev/2000nl/db/data/research-archives/translation-eval-2026-10-10-v4.tar.gz",
+  "sha256": "42ef1fa03df5444e693f7289a55ce9a9e3e9ebcbe495db2b19d727ea86db7841",
+  "bytes": 3681786,
+  "files": 4040,
+  "includesFresh100": true,
+  "restrictedSource": "Local only; do not publish archive"
+}
