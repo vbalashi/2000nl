@@ -1,0 +1,77 @@
+{
+  "id": "lamp-ru",
+  "inputHash": "504396bab19029f13022a92647729372abc5ec2b580e5f623a252dc7e7a63f87",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лампа",
+      "alternativeTexts": [
+        "светильник"
+      ],
+      "baseText": "лампа",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "предмет, который излучает свет"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "наткнуться на лампу",
+        "text": "попасться с поличным"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "быть пойманным, когда делаешь что-то плохое"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лампа\",\"alternativeTexts\":[\"светильник\"],\"baseText\":\"лампа\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"предмет, который излучает свет\"},{\"fieldId\":\"idiom:0\",\"text\":\"попасться с поличным\",\"literalText\":\"наткнуться на лампу\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"быть пойманным, когда делаешь что-то плохое\"}]}",
+  "responseHash": "43cc73d160abc377b7d48043eb09854653a84d90624f446544b4ed3df06e040e",
+  "usage": {
+    "completion_tokens": 965,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 843,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 89,
+      "engine_ttlt_ms": 5584,
+      "pre_inference_ms": 45,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 250,
+      "service_ttlt_ms": 5753,
+      "user_visible_ttft_ms": 205
+    },
+    "prompt_tokens": 1569,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2534
+  },
+  "elapsedMs": 6236,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "9c1aafd0-f3b2-4c9b-b816-4637a41d9473",
+      "inputTokens": 1569,
+      "outputTokens": 965,
+      "event": "translation_attempt",
+      "correlationId": "2b124453-bb73-49fc-be94-d94f1ac0bcac",
+      "attempt": 1,
+      "elapsedMs": 6236,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

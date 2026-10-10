@@ -1,0 +1,301 @@
+[
+  {
+    "id": "flowers-ru",
+    "inputHash": "f12ce0ab3aa4d49624adae4eab14fe692fc9fad6a390e74974101e65d9f704fd",
+    "responseHash": "34119882bc20be5fdba2b0df295ef598bd1b6e3b535b40203a4c130bc6d97067",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "flowers-en",
+    "inputHash": "27683c397bcfb33baf854f266a7ed03196ec4aae665dda7d3046b2f8d06a0b2c",
+    "responseHash": "5d3b2b5fc12949fcf5555d78ecac8fe70545ddd627c6bf91ed623f39fb1b9e79",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "hair-ru",
+    "inputHash": "7296a74dfd52d7eaff00046dc79103a4ff5a7d5ee93df166db3e8e973e74db89",
+    "responseHash": "66007b95b90caf2067f9cea63aa73748cc9faaccc13df9ec31cc2edef87a7968",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "hair-en",
+    "inputHash": "bb242ce614ef7f8a25085a9d13b433bc8e647c767486f2e3dbaf125f64dab3fe",
+    "responseHash": "3f9b9841cfab335a9416eca1f09737024adcebe2515e04b58979dbcfb5c08fad",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "molehill-ru",
+    "inputHash": "8559165c1df79585d400b2099b678d3b38c105eed8df78e6b6e569efc926e03f",
+    "responseHash": "1d31c3998a48554fc53f3b407eb2e67f2ea94da32c51a02cf0896c78027ae899",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "category": "literal-usefulness",
+        "field": "idiom:0.literalText",
+        "explanation": "Natural fly-to-elephant already conveys the familiar small-insect/elephant image; mosquito variation adds little."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "molehill-en",
+    "inputHash": "1c5e51171e45ff7d223a86466f819fef16f7c523f6ba2a41ad09d85a6206ed5f",
+    "responseHash": "cc79acebbc04f7b8fd3ff9e8728c46b79295a81e9246409a11221f8e0e97840e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "quay-ru",
+    "inputHash": "aeec5b6ae08bf43bdcb25ef558361cd85d64d71d93eae3d36982deff6c6bb7c1",
+    "responseHash": "1fa656a449e215a06ec83a14732a8a923be2889b69655bea8d52aa3a31eb6ffe",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "quay-en",
+    "inputHash": "d4b1a331a52df6ef9eb67d3429cbd41e8f9bd3e8a49cc14b0ed6f7af00199fb8",
+    "responseHash": "a0f34d7d83838d275dd99b075116a791dc7b1ea258a50abed02437ca1af0a360",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "wire-ru",
+    "inputHash": "7b81e6e3f03dab6692ebaa32db1ced36a9caabd12145fc425998dc0008968da5",
+    "responseHash": "5aaff22d3800785d780552edb1e560ba5498a329e4224ab3d5162f2c58058491",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "wire-en",
+    "inputHash": "f611ab52d6551527f306fa5c271c71f33cfae87738ba55ded58c13074fcaaaed",
+    "responseHash": "682675359dad3af4b0f0c88e5d2bd3120f6eae7ffa5156f06a09ba27387cc986",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "delivery",
+        "category": "contract-invalid",
+        "field": "idiom:0:explanation",
+        "explanation": "HTTP200 and complete JSON, but explanation text is empty. Strict parser rejects the whole response. Permanent contract failure, no transient retry."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "spoon-ru",
+    "inputHash": "d337124fb7473ce8d755158285d24ee5b3e766ddaeabd0a97ccd6100e994d58f",
+    "responseHash": "341136fce2a0b72dbb82ff6fe6ed6cb403b7f2233c32d4ad81e8379c4fbb491a",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "spoon-en",
+    "inputHash": "901aecc0adb7b238ecd8b64f32b73b92708ae1466eb2cab773deefa1c65060e1",
+    "responseHash": "074226f7d427bde3d6ccf83b50ea7a5b8d85845134c662f4951199be1b879b9b",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "stone-ru",
+    "inputHash": "17abdc2da7bc97159a82cf2ae2da2e554f9981bdaecccf1d5e2eedb5e12c67de",
+    "responseHash": "a47b8d9c5d1e2825827d57515dbc9daee86d31bd9d2b685f80082fb4c641c5b2",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "stone-en",
+    "inputHash": "52136b3d9ee54ff0acac04fcd4fc7195ca0fecd7cada83b591ccefe62421296b",
+    "responseHash": "c37ff10d14fb268556c0388dffd26c317c2463ed16424403b7690fddc79b18a5",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "rain-ru",
+    "inputHash": "6efda8915c42d11f275eeb9f5e39a7d48cd37b726e973d81120d5ca00494b7dc",
+    "responseHash": "1f8d52c2d801c2db9f9a082fe39f763332ba49f8ea2cd773c253c591eca2ab7e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "serious",
+        "category": "literal-image",
+        "field": "idiom:0.literalText",
+        "explanation": "Drup is dripping water/drops, not an isolated drop that someone enters. Source check: Onze Taal van-de-regen-in-de-drup-raken."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": true,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "rain-en",
+    "inputHash": "ceb8705785a6fe2d1aa585c3f72a3ad99fbe49a90f63dd8dff9be23eb730c2e1",
+    "responseHash": "ac7556cf9aa2af92d513be3e6f47027adccc08ee6d2f777cb8925a28221dde5b",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "category": "literal-grammar",
+        "field": "idiom:0.literalText",
+        "explanation": "Into the drip is an awkward target rendering; dripping water needs clearer wording or null."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": true,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "oil-ru",
+    "inputHash": "e085e26d0405686a3228a6b4a79bb24216b778f186b0123bdf827add3c2412ce",
+    "responseHash": "61ca36a9aa8d91f089865f4f5242a7ee98742632f564d6564442b3374e468190",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "category": "literal-omission",
+        "field": "idiom:0.literalText",
+        "explanation": "Natural text now only says worsen a conflict, hiding the useful oil/fire image, but literal remains null."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": true,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "oil-en",
+    "inputHash": "12e0a4a8d85c9d127ccb59139e2f4ac81ea830b8d6f8e3f25f191290aa9fdcd0",
+    "responseHash": "23c7b010a893757bcba7be008dbac4504c090ec70c9d899bea4f11206ddbafcf",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "birthday-ru",
+    "inputHash": "fb30811e431de00d84efb329486de928d1b010945857cd4fc5b5fed09ba1d246",
+    "responseHash": "6d7380ade2511485cb49bcbb6469cfbe094607722ebe8b55b5bf96540038001c",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "birthday-en",
+    "inputHash": "23aba10040995db6a0842606e41c58f498badb93dde5566532e50945f188ae24",
+    "responseHash": "51f1c9419fcdfe6d91037cdf79c678a6052462ab8bd1e8aa7e86d771c08830e3",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "water-ru",
+    "inputHash": "197c81d120f716f887d39fda84541ab4e8f87934ce5210051725fa560f5a425f",
+    "responseHash": "be875bd4cd5102a7e23b3f906730c8f891ed8317808719c94193e2b6874d0ad5",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "water-en",
+    "inputHash": "ececd6151d6f9a7265b5b7f41ce3fa720f38c4cf37b7d0c053e2f253d83056a7",
+    "responseHash": "439d4c8198ef02b369ec82be5cc2b50bc46e4ebc467744549710633446a835ba",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "heavy-ru",
+    "inputHash": "1596b72e0afe25d2167210328b833eddf1da30cc154a426cf6472d38b98c4b03",
+    "responseHash": "b846fcd397186221df801f1dba3570c8284df1140b0a9e13183249aea161643d",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "heavy-en",
+    "inputHash": "1db993d97cba6089b2c094ff7f3126080ad521452a1fc93b6899e0ad70eea067",
+    "responseHash": "1f815c0db34ee570cf3b57e79a34015416e2dcd0c54f23edfaf2f819a8acc1c7",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  }
+]

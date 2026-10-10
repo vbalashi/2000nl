@@ -1,0 +1,75 @@
+{
+  "id": "hair-en",
+  "inputHash": "9718d04f4f9267b576448b6edb2b0cbb3725cd11b0c5e03a4c7ef71ccb27478e",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "hair",
+      "alternativeTexts": [],
+      "baseText": "hair",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a thin strand that grows on the skin"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to sit with one’s hands in one’s hair",
+        "text": "to be at one’s wits’ end"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "not know how to solve a problem"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"hair\",\"alternativeTexts\":[],\"baseText\":\"hair\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a thin strand that grows on the skin\"},{\"fieldId\":\"idiom:0\",\"text\":\"to be at one’s wits’ end\",\"literalText\":\"to sit with one’s hands in one’s hair\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"not know how to solve a problem\"}]}",
+  "responseHash": "8a597ec048bbd96768fa604e032f1b14c84fc291ee1c29ad8dfead37e148149c",
+  "usage": {
+    "completion_tokens": 449,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 339,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 100,
+      "engine_ttlt_ms": 2665,
+      "pre_inference_ms": 85,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 296,
+      "service_ttlt_ms": 2871,
+      "user_visible_ttft_ms": 211
+    },
+    "prompt_tokens": 1573,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 502,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2022
+  },
+  "elapsedMs": 3317,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "181faf33-a8ea-491f-a8d4-11e560219e9f",
+      "inputTokens": 1573,
+      "outputTokens": 449,
+      "event": "translation_attempt",
+      "correlationId": "2afc7d4a-b7f5-453b-a9d7-dff286d58200",
+      "attempt": 1,
+      "elapsedMs": 3317,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

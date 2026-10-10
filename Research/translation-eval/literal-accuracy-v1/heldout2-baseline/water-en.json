@@ -1,0 +1,75 @@
+{
+  "id": "water-en",
+  "inputHash": "8e8aa4f4104103615598555c258a9377f5a56522ffce0311ca7021493e57304c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "water",
+      "alternativeTexts": [],
+      "baseText": "water",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a clear liquid"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "drink a glass of water"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "drink water from a glass"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"water\",\"alternativeTexts\":[],\"baseText\":\"water\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a clear liquid\"},{\"fieldId\":\"idiom:0\",\"text\":\"drink a glass of water\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"drink water from a glass\"}]}",
+  "responseHash": "da80f764007ae572994e73358ae48e0e997ba92d1f026389048475090795d33f",
+  "usage": {
+    "completion_tokens": 204,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 114,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 96,
+      "engine_ttlt_ms": 1222,
+      "pre_inference_ms": 74,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 306,
+      "service_ttlt_ms": 1427,
+      "user_visible_ttft_ms": 232
+    },
+    "prompt_tokens": 1562,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 491,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1766
+  },
+  "elapsedMs": 1735,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "885e6d52-e33b-4360-b5e9-12b013af801e",
+      "inputTokens": 1562,
+      "outputTokens": 204,
+      "event": "translation_attempt",
+      "correlationId": "f43e3e99-fbe0-490c-82ab-c3f9cac61dbb",
+      "attempt": 1,
+      "elapsedMs": 1735,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

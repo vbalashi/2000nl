@@ -1,0 +1,75 @@
+{
+  "id": "butter-ru",
+  "inputHash": "359835e64272f869eb5087d31f5c871e1bb52aa67d497c4bbb62881ba8ec5d9b",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "сливочное масло",
+      "alternativeTexts": [],
+      "baseText": "сливочное масло",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "жировой продукт, изготовляемый из молока"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "иметь масло на голове",
+        "text": "самому быть виноватым в том, в чём упрекаешь другого"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "самому быть виноватым в том, в чём упрекаешь другого"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"сливочное масло\",\"alternativeTexts\":[],\"baseText\":\"сливочное масло\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"жировой продукт, изготовляемый из молока\"},{\"fieldId\":\"idiom:0\",\"text\":\"самому быть виноватым в том, в чём упрекаешь другого\",\"literalText\":\"иметь масло на голове\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"самому быть виноватым в том, в чём упрекаешь другого\"}]}",
+  "responseHash": "53ee79738bd971d510ba02d73118b6d3c091d0806a4a31f8cfa06d98c527302b",
+  "usage": {
+    "completion_tokens": 1051,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 913,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 93,
+      "engine_ttlt_ms": 6486,
+      "pre_inference_ms": 94,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 350,
+      "service_ttlt_ms": 6717,
+      "user_visible_ttft_ms": 255
+    },
+    "prompt_tokens": 1726,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 505,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2777
+  },
+  "elapsedMs": 7132,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "41fd9b9f-6c97-4de7-a6ef-f10ae75c9079",
+      "inputTokens": 1726,
+      "outputTokens": 1051,
+      "event": "translation_attempt",
+      "correlationId": "1f022bdb-e8f4-4041-823e-8b42aeb9acb9",
+      "attempt": 1,
+      "elapsedMs": 7132,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

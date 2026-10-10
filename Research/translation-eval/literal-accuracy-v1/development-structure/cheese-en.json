@@ -1,0 +1,75 @@
+{
+  "id": "cheese-en",
+  "inputHash": "adaff6e4de53f8fa4fe449aa5888f7f8437663db3c56f24c10c39799c471645b",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cheese",
+      "alternativeTexts": [],
+      "baseText": "cheese",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "food made from milk"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "eat the cheese off someone's bread",
+        "text": "take away someone's advantage or opportunity"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "take away someone's advantage or opportunity"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"cheese\",\"alternativeTexts\":[],\"baseText\":\"cheese\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"food made from milk\"},{\"fieldId\":\"idiom:0\",\"text\":\"take away someone's advantage or opportunity\",\"literalText\":\"eat the cheese off someone's bread\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"take away someone's advantage or opportunity\"}]}",
+  "responseHash": "21b17574814cef93de8f58a6d11964b99bf16facfed17a3c831ae9304259ac2b",
+  "usage": {
+    "completion_tokens": 455,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 355,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 173,
+      "engine_ttlt_ms": 2784,
+      "pre_inference_ms": 151,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 479,
+      "service_ttlt_ms": 3084,
+      "user_visible_ttft_ms": 328
+    },
+    "prompt_tokens": 1724,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 503,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2179
+  },
+  "elapsedMs": 3491,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "4a1ee400-fc27-48f2-b1b3-a7c357b1f451",
+      "inputTokens": 1724,
+      "outputTokens": 455,
+      "event": "translation_attempt",
+      "correlationId": "f35d5414-8800-47a5-b822-62087f24d644",
+      "attempt": 1,
+      "elapsedMs": 3490,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

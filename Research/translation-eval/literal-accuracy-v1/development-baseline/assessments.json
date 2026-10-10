@@ -1,0 +1,470 @@
+[
+  {
+    "id": "cat-ru",
+    "inputHash": "debdd969a6fc00374b58893730203e343658184aff6c13ce1a773416c95956e7",
+    "responseHash": "e5ef10d90f829b0328bdd6868c056016b164e329e0c63a257c65346a2bebfe81",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "serious",
+        "category": "literal-image",
+        "field": "idiom:0.literalText",
+        "explanation": "Changes out-of-tree relation to a cat on a tree."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "cat-en",
+    "inputHash": "f9764e918b710c36c2e41d9688b8080e03c4bf559dfb50ee0d4ba25d924926c5",
+    "responseHash": "5c5ed430af8c45a0b494c8a0fd301a8ecc5862277a61b0b1c409e84ed7ecb583",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "serious",
+        "category": "literal-image",
+        "field": "idiom:0.literalText",
+        "explanation": "Changes out-of-tree relation to a cat in a tree."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "cow-ru",
+    "inputHash": "d59c745419f0da5ba991cf37fabdf0165c3c314ef887ebfca5c65008cb781786",
+    "responseHash": "65abd5d84dea3bc1947ce61aea0fa996e850c90cf7698c7271f3eab0eada9eb6",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "cow-en",
+    "inputHash": "fc29131f53fa76cec260d26b46006f01ae03007e712e9804a1531b36410b39f1",
+    "responseHash": "5051ccb8327674d3041e38c1ce94a0c2c932a053ce795a480244e80458116d90",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "monkey-ru",
+    "inputHash": "d2bfb1bd78d7406cf5a82c86b317f8933b58bd4ac5ec45e9267475f6f16515e9",
+    "responseHash": "79d15ad452bfce6c5348ce88b78270acadab90ba32cd7f09a8bef5485e408387",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "monkey-en",
+    "inputHash": "8319660a786940a096185dfe69dda5efa43ef033b02104302d6ad7b7cf5d1912",
+    "responseHash": "772dbc8098e998316b7240b933bd74a14cbb41607640be5d7e94ccd9f9178aee",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "butter-ru",
+    "inputHash": "03dfed0a74e47f7a353af4fa632fc46ce09b88027912bd0983afba490a9dd84b",
+    "responseHash": "15da15ff5ef5dd9a13bea6a426f87af9ff976826c67073302a15503424889a1c",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "butter-en",
+    "inputHash": "0d6686b1b450f3d2d8424c6b2bbb14d9253f3b7412257008ff249a605d52e39e",
+    "responseHash": "896413e147fcdf2eaf6fad74a9337aa1a180f103fe1df4d16b9ecd38a2cad5bd",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "door-ru",
+    "inputHash": "1ff5a52b46172416611caad0b8c757fc996287304ca55d2197f1fedfc0200fdc",
+    "responseHash": "5f226ff8fdbf046fb4e70bfd0195dc496336e839d73e98135274e7a006a92b34",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "door-en",
+    "inputHash": "03232684712961ec5466b5d0def02f958aedafc07f0db08039eb289e464a4595",
+    "responseHash": "8a8168b7aa0a9385387ef84c872a5620a73dcb01509b53e2699c0154627067d3",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "hare-ru",
+    "inputHash": "83ca177d63d26ec3605c1aa9b17d0184529c4a3bea64c6f5d98653d21ade1776",
+    "responseHash": "58af16e564f8e125978ae780334edc2311f4e7bfa333917364472b0c5e981401",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "hare-en",
+    "inputHash": "d4adbff49765652fc15417be58154c189501e949847251f38db221cb2e478110",
+    "responseHash": "8fbfb2a58fb25c9be6fa90dcfb2369fff7262d8d483eb54fb06c18a4d3512b62",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "cheese-ru",
+    "inputHash": "dc3a160a08adfba794fda94c292d02f953fdb70d232c2be98c3c071394cada1c",
+    "responseHash": "9f05701de0de8d0087bd3da061c89567947b4ebfde170f30227558451dc23538",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "cheese-en",
+    "inputHash": "f6a1f969aad20364a1154347af8a3142740e43ee1d7c6d9018aded8a8a0601b1",
+    "responseHash": "a0b4ee26ecdc36ce6906f493f01e4775e4e2add12b7da75ce5d27b6d1c7cde20",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "nose-ru",
+    "inputHash": "d491d05aba2c81b1132cb3b969847f50a2fd376144b84e55b68102ecc81e1566",
+    "responseHash": "774ff76751649a2af53a59b5009a94b0e82c78c3cbce9edbc68a58db7e147b61",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "nose-en",
+    "inputHash": "9482a3462f5ca7570b1cbe59c6c2866b7ad25ee1c389cab577eb3ac7ccd45525",
+    "responseHash": "7c7103e5fb8a82a11d4f4e2309f0934fb8852fc64e89ce51fbeac7f3869e3189",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "lamp-ru",
+    "inputHash": "504396bab19029f13022a92647729372abc5ec2b580e5f623a252dc7e7a63f87",
+    "responseHash": "43cc73d160abc377b7d48043eb09854653a84d90624f446544b4ed3df06e040e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "lamp-en",
+    "inputHash": "a61f8f45ec20dc04d34339cc8ccea16a09934561ff566651a9a7ec8368c8b061",
+    "responseHash": "dd9688ae09321df7f69fb5bcde849ead626a36a1d64286f49557e615415325c2",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "boat-ru",
+    "inputHash": "865f54ff0f3cbe4cd21a07a8fa2b729d02285307e7e849d621ad69825c6e8454",
+    "responseHash": "247a8919b568cbe44480b36524ca4d20e1cb46101b6bf995c80adbc8e8a4b573",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "boat-en",
+    "inputHash": "1edbc99e9bdd1788912f56592eded9a7ec51c5fd042b753f306ef3deeff108af",
+    "responseHash": "9862f903d935949adf676ce087fa50c4ff1888fe344ab913b597fefd9eae4d52",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "rose-ru",
+    "inputHash": "83554a57834a0dfbe2acd2abcf4f094086e1eac873c8b42803e05220a4111c36",
+    "responseHash": "d059f7a2d6d2898e081a3c6929cc9ba13f1fb67667ae97d1d475cfa36bd41d56",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "rose-en",
+    "inputHash": "ff3c73ce1fd3fecf918ba89d5892d26add919a7b33d390dc18a48cf2111ee9c4",
+    "responseHash": "87d3113707d3471724b1742158a90abec3bbcd9086eb1993eb3846282e7c93db",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "leg-ru",
+    "inputHash": "638b0629a20452606c82f15a3ce59fa65ca4fe301279f5f444446b6bf8c86d44",
+    "responseHash": "0be51b9b81a70352983ae1721d9c3c1e253f5806e08aa711e34606275b3ee9b1",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "leg-en",
+    "inputHash": "1beba81b3bae0d7d7e0bcc687aea5fba2f4f91bb6248f3655d6dd5e8e11ff9a0",
+    "responseHash": "d6346a7b7c60117721278a6063d2a5ad2fc6a786422908dfab1876b46dd8faf0",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "horse-ru",
+    "inputHash": "8bf64a2b4314c52687a2fc4eba5a3b9e618fde30d4ee56d14688db9a99af5797",
+    "responseHash": "1fe67134fe29aac4518e93da1d11f5fe7fe5a58edf085fbd69c47d375db66061",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "horse-en",
+    "inputHash": "eb6294442f73c83ba28a2cae5ce467616479c879ce90b0a70b9c958864899cd3",
+    "responseHash": "8876849821b3c8f8c6c9176244f9b389bf78e1bdeaa8aafc8ebf4da3e99e861a",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "category": "literal-usefulness",
+        "field": "idiom:0.literalText",
+        "explanation": "Natural cart-before-horse already conveys the same ordering image."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "ice-ru",
+    "inputHash": "5abd9ab2aa46fc6b22b2ed55fbd177c439bc03a220d1b26b88b70e94c265b13d",
+    "responseHash": "a4994764804cdae1aeade1fb8f56ae4d4877717e97f8995d35a177a93c8dfbba",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "ice-en",
+    "inputHash": "33d2c5ba3d32abc3efc97add440620f59780b4a51bafd56408770b53b28420af",
+    "responseHash": "f4f64d4c6daa8cfe16083c49a05a781a72f813beb705c75bddc51b57597ca726",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "thanks-ru",
+    "inputHash": "b276ddae7a2b03def64bb5bcdac4dbabaf2b61ef4a5beba3b1f5086e1b919b07",
+    "responseHash": "26ac1e31d6609aa08bf14975d814d69ac6fb94de35825ee16acbf891827cbcb6",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "thanks-en",
+    "inputHash": "2459768d2eacddcc7cb02162a44cdfc3919ba4508c5d9a4d585adbbefc17dc84",
+    "responseHash": "66101076f059dbf86cb4c1368ade1f988aefc18d3a73e654acb76600c19d5683",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "luck-ru",
+    "inputHash": "8aee19761ace9436cd197ef077759cef90818c6dca110ca0d380529c74ae5145",
+    "responseHash": "33f9fdcae6dd7ee78992f9ab0c1d187cced79a16e621a045781375560541fc6b",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "luck-en",
+    "inputHash": "3f74ac5894c845fb59e7317bd398d825820fcd2df063621213e8b6aa7ee8a317",
+    "responseHash": "6035f3619b0dc93586574085f88054bc4774fb5d99f727763240f3ea4ae457ac",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "welcome-ru",
+    "inputHash": "3f5a144dd7debdd7640ddce8a4c26aad9a0f252fe97b1fcca77ea638ac9a081f",
+    "responseHash": "b05ea0df9642db373262087fb72c2286a62cfbd8cfa4719570d63d558ba437e5",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "welcome-en",
+    "inputHash": "1db7e9ee25ec5020c588d2d8d11ff2c3b55b0fa4888e460d11aa8fa1b201dba1",
+    "responseHash": "a69448ac8742df518e8c23888d6ca37c440a1fe8b4120d9dea03d7647a897c2a",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "coffee-ru",
+    "inputHash": "a7e005a138bfa0dca759a2c9636a6b32d98f490bd1acf9b2b385a38dc0d480d7",
+    "responseHash": "cd4497c930131a803ccc89f22cf55b145c8d7070761277bef1841c5ba86ccf23",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "coffee-en",
+    "inputHash": "32ec1891f800e997e4726228de2978afce588f07e257bfdbb5fc22a6a3092ef9",
+    "responseHash": "6b4d342dfc838f0665123e796980464b00f0442583beb75c0ee30472b66afa0a",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "category": "natural-detail",
+        "field": "idiom:0.text",
+        "explanation": "Transparent source cup of coffee becomes a little coffee; cup is omitted."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "anger-ru",
+    "inputHash": "4a0141ad985cd15e378ada8a3e265c9c61e84cffd1a7b5700bb1dda9df4d9d5b",
+    "responseHash": "fde0b0f639e1e6e8313925ea28d47645dc6ee4a3839f3e3d80547842bccdefab",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "anger-en",
+    "inputHash": "eba09ebe40bc01fd5f7b7fc1dcc0db1791a6da5da2d35264093992ac14a318da",
+    "responseHash": "fae698fdefdbd6ae40d3eadbed37948c890672f2aa9129081a6d7bef32163781",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "poor-ru",
+    "inputHash": "819b46b719246294d25bca71897253369db70577a8fce78f3141d69f25bd9c54",
+    "responseHash": "d4ff400d32ab4d8f02deb05eef4caefbce06371a601c58dc0354bcf2c94aebff",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "poor-en",
+    "inputHash": "7a3d17262dd5720c1cf103b5b69164007b873c98495db494905031b9536fdcf9",
+    "responseHash": "d72e6f55ba49b50ff084d0c5bda9aa293fddc6e0541e8ed91a11cc8194701b0f",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  }
+]

@@ -1,0 +1,75 @@
+{
+  "id": "thanks-ru",
+  "inputHash": "de731ba6241a27c8b979730463f76084522c225e6f834c6a9fc6b1c88662dcf0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "благодарить",
+      "alternativeTexts": [],
+      "baseText": "благодарить",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "говорить, что испытываешь благодарность"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "От всей души благодарю"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "искренне благодарить кого-либо"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"благодарить\",\"alternativeTexts\":[],\"baseText\":\"благодарить\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"говорить, что испытываешь благодарность\"},{\"fieldId\":\"idiom:0\",\"text\":\"От всей души благодарю\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"искренне благодарить кого-либо\"}]}",
+  "responseHash": "e7ac6be8370f8bd00ddb3faeb3f166caf1dd928cf864eee7a5d2f46eb1763807",
+  "usage": {
+    "completion_tokens": 715,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 605,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 99,
+      "engine_ttlt_ms": 4441,
+      "pre_inference_ms": 73,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 309,
+      "service_ttlt_ms": 4646,
+      "user_visible_ttft_ms": 235
+    },
+    "prompt_tokens": 1713,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 492,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2428
+  },
+  "elapsedMs": 5163,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "edd33693-3d06-433f-afa3-984dac13c64f",
+      "inputTokens": 1713,
+      "outputTokens": 715,
+      "event": "translation_attempt",
+      "correlationId": "9dcacc3a-4ee4-4329-8308-54479b9529d9",
+      "attempt": 1,
+      "elapsedMs": 5163,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

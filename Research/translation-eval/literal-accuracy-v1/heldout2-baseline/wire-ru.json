@@ -1,0 +1,75 @@
+{
+  "id": "wire-ru",
+  "inputHash": "a7bc1d18ed2a68c8abd8b94228043aac35f32d3dd47da756cb04753be91826f6",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "нить",
+      "alternativeTexts": [],
+      "baseText": "нить",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "длинный тонкий кусок материала"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "потерять нить рассказа или мысли"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "перестать понимать, как продолжать рассказ или мысль"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"нить\",\"alternativeTexts\":[],\"baseText\":\"нить\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"длинный тонкий кусок материала\"},{\"fieldId\":\"idiom:0\",\"text\":\"потерять нить рассказа или мысли\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"перестать понимать, как продолжать рассказ или мысль\"}]}",
+  "responseHash": "d813d6906b0dcc7e8f380678a6775fcab8b24e7e269ca91434d126e7c4b28357",
+  "usage": {
+    "completion_tokens": 741,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 628,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 318,
+      "engine_ttlt_ms": 4256,
+      "pre_inference_ms": 48,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 523,
+      "service_ttlt_ms": 4457,
+      "user_visible_ttft_ms": 474
+    },
+    "prompt_tokens": 1569,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2310
+  },
+  "elapsedMs": 4873,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "a5a24902-e60d-4ab9-a9fc-031ecf6cc24d",
+      "inputTokens": 1569,
+      "outputTokens": 741,
+      "event": "translation_attempt",
+      "correlationId": "e26dcf4b-a906-48fd-a0c0-e05dfc351032",
+      "attempt": 1,
+      "elapsedMs": 4873,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

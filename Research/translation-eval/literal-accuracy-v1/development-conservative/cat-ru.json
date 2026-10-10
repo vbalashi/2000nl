@@ -1,0 +1,75 @@
+{
+  "id": "cat-ru",
+  "inputHash": "bfb47b1ce27b57029a67c67a0426b7e7c7b5956c909ab48dccf0f4a6c20bb7ee",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "кошка",
+      "alternativeTexts": [],
+      "baseText": "кошка",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "домашнее животное"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "наблюдать за кошкой на дереве",
+        "text": "сначала выжидать, чтобы посмотреть, как будет развиваться ситуация"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "сначала выжидать, как будет развиваться ситуация"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"кошка\",\"alternativeTexts\":[],\"baseText\":\"кошка\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"домашнее животное\"},{\"fieldId\":\"idiom:0\",\"text\":\"сначала выжидать, чтобы посмотреть, как будет развиваться ситуация\",\"literalText\":\"наблюдать за кошкой на дереве\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"сначала выжидать, как будет развиваться ситуация\"}]}",
+  "responseHash": "e1c09421d97cf509b1ba8b784f57f98c8b6d97fbf2af53ed6f4cc82e15ccee04",
+  "usage": {
+    "completion_tokens": 1149,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1024,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 107,
+      "engine_ttlt_ms": 6895,
+      "pre_inference_ms": 326,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 698,
+      "service_ttlt_ms": 7480,
+      "user_visible_ttft_ms": 371
+    },
+    "prompt_tokens": 1722,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 497,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2871
+  },
+  "elapsedMs": 8095,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "cf37bc88-72ce-41a6-a081-acb6e91aa5da",
+      "inputTokens": 1722,
+      "outputTokens": 1149,
+      "event": "translation_attempt",
+      "correlationId": "02e2b6a8-66e6-4ccf-b246-ff5f151b29b1",
+      "attempt": 1,
+      "elapsedMs": 8094,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "leg-en",
+  "inputHash": "1beba81b3bae0d7d7e0bcc687aea5fba2f4f91bb6248f3655d6dd5e8e11ff9a0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "leg",
+      "alternativeTexts": [],
+      "baseText": "leg",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a body part that you stand and walk on"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "step out of bed with the wrong leg",
+        "text": "get out of bed on the wrong side"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to be in a bad mood from the start of the day"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"leg\",\"alternativeTexts\":[],\"baseText\":\"leg\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a body part that you stand and walk on\"},{\"fieldId\":\"idiom:0\",\"text\":\"get out of bed on the wrong side\",\"literalText\":\"step out of bed with the wrong leg\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to be in a bad mood from the start of the day\"}]}",
+  "responseHash": "d6346a7b7c60117721278a6063d2a5ad2fc6a786422908dfab1876b46dd8faf0",
+  "usage": {
+    "completion_tokens": 625,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 512,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 91,
+      "engine_ttlt_ms": 3630,
+      "pre_inference_ms": 84,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 321,
+      "service_ttlt_ms": 3856,
+      "user_visible_ttft_ms": 237
+    },
+    "prompt_tokens": 1574,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 503,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2199
+  },
+  "elapsedMs": 4237,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "f1f798b1-eff5-491a-9b1c-129afefb6faa",
+      "inputTokens": 1574,
+      "outputTokens": 625,
+      "event": "translation_attempt",
+      "correlationId": "19da0757-e62f-4e8f-b976-f80663086c13",
+      "attempt": 1,
+      "elapsedMs": 4237,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

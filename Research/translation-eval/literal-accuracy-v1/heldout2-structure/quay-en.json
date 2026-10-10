@@ -1,0 +1,77 @@
+{
+  "id": "quay-en",
+  "inputHash": "d4b1a331a52df6ef9eb67d3429cbd41e8f9bd3e8a49cc14b0ed6f7af00199fb8",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "shore",
+      "alternativeTexts": [
+        "bank"
+      ],
+      "baseText": "shore",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "the solid bank beside the water"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to fall between the bank and the ship",
+        "text": "to belong nowhere and therefore be left without help"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to belong nowhere and therefore receive no help"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"shore\",\"alternativeTexts\":[\"bank\"],\"baseText\":\"shore\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"the solid bank beside the water\"},{\"fieldId\":\"idiom:0\",\"text\":\"to belong nowhere and therefore be left without help\",\"literalText\":\"to fall between the bank and the ship\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to belong nowhere and therefore receive no help\"}]}",
+  "responseHash": "a0f34d7d83838d275dd99b075116a791dc7b1ea258a50abed02437ca1af0a360",
+  "usage": {
+    "completion_tokens": 1259,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1138,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 133,
+      "engine_ttlt_ms": 7765,
+      "pre_inference_ms": 67,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 332,
+      "service_ttlt_ms": 7959,
+      "user_visible_ttft_ms": 265
+    },
+    "prompt_tokens": 1720,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 499,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2979
+  },
+  "elapsedMs": 8424,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "1c54b2dc-74b3-435e-b083-f2e0e7785f8a",
+      "inputTokens": 1720,
+      "outputTokens": 1259,
+      "event": "translation_attempt",
+      "correlationId": "06210fb3-682e-4ca7-b29f-79c5e4661911",
+      "attempt": 1,
+      "elapsedMs": 8424,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

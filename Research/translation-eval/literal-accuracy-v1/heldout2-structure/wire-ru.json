@@ -1,0 +1,75 @@
+{
+  "id": "wire-ru",
+  "inputHash": "7b81e6e3f03dab6692ebaa32db1ced36a9caabd12145fc425998dc0008968da5",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "нить",
+      "alternativeTexts": [],
+      "baseText": "проволока",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "длинный тонкий отрезок материала"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "потерять нить рассказа или мысли"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "перестать понимать, как дальше развивается рассказ или мысль"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"нить\",\"alternativeTexts\":[],\"baseText\":\"проволока\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"длинный тонкий отрезок материала\"},{\"fieldId\":\"idiom:0\",\"text\":\"потерять нить рассказа или мысли\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"перестать понимать, как дальше развивается рассказ или мысль\"}]}",
+  "responseHash": "5aaff22d3800785d780552edb1e560ba5498a329e4224ab3d5162f2c58058491",
+  "usage": {
+    "completion_tokens": 1213,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1090,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 96,
+      "engine_ttlt_ms": 7184,
+      "pre_inference_ms": 124,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 370,
+      "service_ttlt_ms": 7454,
+      "user_visible_ttft_ms": 246
+    },
+    "prompt_tokens": 1719,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2932
+  },
+  "elapsedMs": 7906,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "47ee2b47-7fee-4e74-9f68-e8a9203f635a",
+      "inputTokens": 1719,
+      "outputTokens": 1213,
+      "event": "translation_attempt",
+      "correlationId": "e714c49e-7071-4070-a1d2-5c770093ca80",
+      "attempt": 1,
+      "elapsedMs": 7906,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

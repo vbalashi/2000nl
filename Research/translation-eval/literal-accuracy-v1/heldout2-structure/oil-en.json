@@ -1,0 +1,75 @@
+{
+  "id": "oil-en",
+  "inputHash": "12e0a4a8d85c9d127ccb59139e2f4ac81ea830b8d6f8e3f25f191290aa9fdcd0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "oil",
+      "alternativeTexts": [],
+      "baseText": "oil",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a greasy liquid"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "add fuel to the fire"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "make a conflict worse"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"oil\",\"alternativeTexts\":[],\"baseText\":\"oil\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a greasy liquid\"},{\"fieldId\":\"idiom:0\",\"text\":\"add fuel to the fire\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"make a conflict worse\"}]}",
+  "responseHash": "23c7b010a893757bcba7be008dbac4504c090ec70c9d899bea4f11206ddbafcf",
+  "usage": {
+    "completion_tokens": 683,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 588,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 115,
+      "engine_ttlt_ms": 3942,
+      "pre_inference_ms": 105,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 381,
+      "service_ttlt_ms": 4203,
+      "user_visible_ttft_ms": 276
+    },
+    "prompt_tokens": 1716,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 495,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2399
+  },
+  "elapsedMs": 4462,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "a64ba0db-2a00-47f2-b93e-b7e2aaf2f125",
+      "inputTokens": 1716,
+      "outputTokens": 683,
+      "event": "translation_attempt",
+      "correlationId": "f5ab5cb4-4c2a-4f26-bb72-2530de2433c6",
+      "attempt": 1,
+      "elapsedMs": 4462,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

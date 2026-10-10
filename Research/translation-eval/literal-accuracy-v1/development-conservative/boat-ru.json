@@ -1,0 +1,75 @@
+{
+  "id": "boat-ru",
+  "inputHash": "2031f43ee57cb3fecb64dad639171a33a25b9e110ad9ec4b01682a215ee0f5e0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лодка",
+      "alternativeTexts": [],
+      "baseText": "лодка",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "судно"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "остаться за бортом"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "не иметь права участвовать или не соответствовать условиям"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лодка\",\"alternativeTexts\":[],\"baseText\":\"лодка\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"судно\"},{\"fieldId\":\"idiom:0\",\"text\":\"остаться за бортом\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"не иметь права участвовать или не соответствовать условиям\"}]}",
+  "responseHash": "585682e5bc90dc911a51ca4d00c97a243df0585327cfc8b3740994ed390d8212",
+  "usage": {
+    "completion_tokens": 840,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 735,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 91,
+      "engine_ttlt_ms": 4914,
+      "pre_inference_ms": 89,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 332,
+      "service_ttlt_ms": 5138,
+      "user_visible_ttft_ms": 243
+    },
+    "prompt_tokens": 1721,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2561
+  },
+  "elapsedMs": 5506,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "c253ff69-cb06-4a95-9257-96cd70b76da0",
+      "inputTokens": 1721,
+      "outputTokens": 840,
+      "event": "translation_attempt",
+      "correlationId": "b5d88a36-278a-44db-996b-4dbbb38694ec",
+      "attempt": 1,
+      "elapsedMs": 5506,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

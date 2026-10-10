@@ -1,0 +1,75 @@
+{
+  "id": "monkey-ru",
+  "inputHash": "d2bfb1bd78d7406cf5a82c86b317f8933b58bd4ac5ec45e9267475f6f16515e9",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "обезьяна",
+      "alternativeTexts": [],
+      "baseText": "обезьяна",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "животное, которое часто хорошо лазает"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "Обезьяна выходит из рукава",
+        "text": "Становится ясно, каковы были истинные намерения."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "Скрытое намерение становится ясным"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"обезьяна\",\"alternativeTexts\":[],\"baseText\":\"обезьяна\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"животное, которое часто хорошо лазает\"},{\"fieldId\":\"idiom:0\",\"text\":\"Становится ясно, каковы были истинные намерения.\",\"literalText\":\"Обезьяна выходит из рукава\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"Скрытое намерение становится ясным\"}]}",
+  "responseHash": "79d15ad452bfce6c5348ce88b78270acadab90ba32cd7f09a8bef5485e408387",
+  "usage": {
+    "completion_tokens": 565,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 443,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 86,
+      "engine_ttlt_ms": 3174,
+      "pre_inference_ms": 118,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 368,
+      "service_ttlt_ms": 3453,
+      "user_visible_ttft_ms": 250
+    },
+    "prompt_tokens": 1571,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 500,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2136
+  },
+  "elapsedMs": 3851,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e465f1bc-61ce-412c-bdd1-01504f5fe973",
+      "inputTokens": 1571,
+      "outputTokens": 565,
+      "event": "translation_attempt",
+      "correlationId": "36373266-adb9-4135-a175-485bc3a62ee0",
+      "attempt": 1,
+      "elapsedMs": 3851,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

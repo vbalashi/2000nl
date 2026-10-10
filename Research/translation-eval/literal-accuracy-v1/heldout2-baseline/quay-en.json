@@ -1,0 +1,77 @@
+{
+  "id": "quay-en",
+  "inputHash": "bd79dfa075ecf750d582816b3461650d919cc2052a4e8b13e3a415cc7bf768bc",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "shore",
+      "alternativeTexts": [
+        "bank"
+      ],
+      "baseText": "shore",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "the firm bank beside the water"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "fall between the shore and the ship",
+        "text": "fall between the cracks"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to belong nowhere and therefore receive no help"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"shore\",\"alternativeTexts\":[\"bank\"],\"baseText\":\"shore\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"the firm bank beside the water\"},{\"fieldId\":\"idiom:0\",\"text\":\"fall between the cracks\",\"literalText\":\"fall between the shore and the ship\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to belong nowhere and therefore receive no help\"}]}",
+  "responseHash": "f5a480f623f794be6bb6f0313b35a89a9741aeb4ed0db0803792a26699482b61",
+  "usage": {
+    "completion_tokens": 987,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 878,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 101,
+      "engine_ttlt_ms": 5951,
+      "pre_inference_ms": 108,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 532,
+      "service_ttlt_ms": 6346,
+      "user_visible_ttft_ms": 424
+    },
+    "prompt_tokens": 1570,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 499,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2557
+  },
+  "elapsedMs": 7606,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "536772ca-9b8b-4cde-ab74-c58b1fad426a",
+      "inputTokens": 1570,
+      "outputTokens": 987,
+      "event": "translation_attempt",
+      "correlationId": "dc1418bc-faec-47b7-8568-498cf75850b1",
+      "attempt": 1,
+      "elapsedMs": 7606,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

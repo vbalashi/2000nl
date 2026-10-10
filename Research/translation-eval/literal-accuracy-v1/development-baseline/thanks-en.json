@@ -1,0 +1,75 @@
+{
+  "id": "thanks-en",
+  "inputHash": "2459768d2eacddcc7cb02162a44cdfc3919ba4508c5d9a4d585adbbefc17dc84",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "to thank",
+      "alternativeTexts": [],
+      "baseText": "to thank",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "to say that one is grateful"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "Heartfelt thanks"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to sincerely thank someone"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"to thank\",\"alternativeTexts\":[],\"baseText\":\"to thank\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"to say that one is grateful\"},{\"fieldId\":\"idiom:0\",\"text\":\"Heartfelt thanks\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to sincerely thank someone\"}]}",
+  "responseHash": "66101076f059dbf86cb4c1368ade1f988aefc18d3a73e654acb76600c19d5683",
+  "usage": {
+    "completion_tokens": 707,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 609,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 95,
+      "engine_ttlt_ms": 4321,
+      "pre_inference_ms": 70,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 431,
+      "service_ttlt_ms": 4515,
+      "user_visible_ttft_ms": 361
+    },
+    "prompt_tokens": 1563,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 492,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2270
+  },
+  "elapsedMs": 4754,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "8576eae4-db3d-4e61-93b7-2e88735afa12",
+      "inputTokens": 1563,
+      "outputTokens": 707,
+      "event": "translation_attempt",
+      "correlationId": "245de13f-1985-440b-96f0-3e2f2bd08247",
+      "attempt": 1,
+      "elapsedMs": 4754,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

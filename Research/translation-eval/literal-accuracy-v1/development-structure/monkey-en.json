@@ -1,0 +1,75 @@
+{
+  "id": "monkey-en",
+  "inputHash": "4e15a779f87815bd385de997a98e54e93a9e79c7a67fd94cd5007b3b3a4e583e",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "monkey",
+      "alternativeTexts": [],
+      "baseText": "monkey",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an animal that is often good at climbing"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "the monkey comes out of the sleeve",
+        "text": "the real intention becomes clear"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "the hidden intention becomes clear"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"monkey\",\"alternativeTexts\":[],\"baseText\":\"monkey\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an animal that is often good at climbing\"},{\"fieldId\":\"idiom:0\",\"text\":\"the real intention becomes clear\",\"literalText\":\"the monkey comes out of the sleeve\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"the hidden intention becomes clear\"}]}",
+  "responseHash": "aa377c35975d6254746d52060d9220f3dd95422dddacd6dd7a4f679178e3db7a",
+  "usage": {
+    "completion_tokens": 446,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 343,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 99,
+      "engine_ttlt_ms": 2836,
+      "pre_inference_ms": 73,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 311,
+      "service_ttlt_ms": 3043,
+      "user_visible_ttft_ms": 237
+    },
+    "prompt_tokens": 1721,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 500,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2167
+  },
+  "elapsedMs": 3445,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "8cba6d08-71bd-4e7a-a756-3c79bf7eed0d",
+      "inputTokens": 1721,
+      "outputTokens": 446,
+      "event": "translation_attempt",
+      "correlationId": "121123e7-03c5-4880-8d89-dc11928d7ab4",
+      "attempt": 1,
+      "elapsedMs": 3445,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

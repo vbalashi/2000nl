@@ -1,0 +1,75 @@
+{
+  "id": "flowers-en",
+  "inputHash": "27683c397bcfb33baf854f266a7ed03196ec4aae665dda7d3046b2f8d06a0b2c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "flower",
+      "alternativeTexts": [],
+      "baseText": "flower",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "the colored part of a plant"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "put the flowers outside",
+        "text": "to celebrate exuberantly"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to celebrate exuberantly"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"flower\",\"alternativeTexts\":[],\"baseText\":\"flower\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"the colored part of a plant\"},{\"fieldId\":\"idiom:0\",\"text\":\"to celebrate exuberantly\",\"literalText\":\"put the flowers outside\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to celebrate exuberantly\"}]}",
+  "responseHash": "5d3b2b5fc12949fcf5555d78ecac8fe70545ddd627c6bf91ed623f39fb1b9e79",
+  "usage": {
+    "completion_tokens": 680,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 580,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 95,
+      "engine_ttlt_ms": 4005,
+      "pre_inference_ms": 77,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 321,
+      "service_ttlt_ms": 4226,
+      "user_visible_ttft_ms": 244
+    },
+    "prompt_tokens": 1720,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 499,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2400
+  },
+  "elapsedMs": 4933,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "497d597e-f9df-4580-9b4f-f54dd86091a0",
+      "inputTokens": 1720,
+      "outputTokens": 680,
+      "event": "translation_attempt",
+      "correlationId": "f55416b0-9484-42cb-b5c6-a361b2076238",
+      "attempt": 1,
+      "elapsedMs": 4932,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

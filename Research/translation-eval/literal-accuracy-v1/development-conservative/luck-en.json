@@ -1,0 +1,75 @@
+{
+  "id": "luck-en",
+  "inputHash": "f382cb52a312668ab39d7e525389641fef4e3fd7cc97260c97dc0cda97e3de18",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "success",
+      "alternativeTexts": [],
+      "baseText": "success",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a favorable result"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "Good luck!"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to wish someone a good outcome"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"success\",\"alternativeTexts\":[],\"baseText\":\"success\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a favorable result\"},{\"fieldId\":\"idiom:0\",\"text\":\"Good luck!\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to wish someone a good outcome\"}]}",
+  "responseHash": "5d5acab878ca6cb700ec12b3acf5ec47c65857d676260ed6b352b697fa007a18",
+  "usage": {
+    "completion_tokens": 385,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 296,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 105,
+      "engine_ttlt_ms": 2320,
+      "pre_inference_ms": 73,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 318,
+      "service_ttlt_ms": 2529,
+      "user_visible_ttft_ms": 244
+    },
+    "prompt_tokens": 1716,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 491,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2101
+  },
+  "elapsedMs": 2891,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "2d0b4902-e332-4897-907b-773c3cc517f6",
+      "inputTokens": 1716,
+      "outputTokens": 385,
+      "event": "translation_attempt",
+      "correlationId": "a054a4cc-ec7a-45a4-ba72-97e15330263f",
+      "attempt": 1,
+      "elapsedMs": 2891,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "cat-ru",
+  "inputHash": "6b9a4127636e96e62956967094d96d0f8225547acca6014043366ed899bf2a9f",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "кошка",
+      "alternativeTexts": [],
+      "baseText": "кошка",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "домашнее животное"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "выжидать и смотреть, что будет дальше"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "сначала выжидать, как будет развиваться ситуация"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"кошка\",\"alternativeTexts\":[],\"baseText\":\"кошка\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"домашнее животное\"},{\"fieldId\":\"idiom:0\",\"text\":\"выжидать и смотреть, что будет дальше\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"сначала выжидать, как будет развиваться ситуация\"}]}",
+  "responseHash": "07eab251ba751668f1dd65fa2fbb02a2c010edfde56f27c72f8667f7404afaa6",
+  "usage": {
+    "completion_tokens": 1470,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1352,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 111,
+      "engine_ttlt_ms": 9215,
+      "pre_inference_ms": 83,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 332,
+      "service_ttlt_ms": 9432,
+      "user_visible_ttft_ms": 249
+    },
+    "prompt_tokens": 1718,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1715,
+      "cached_tokens": 0
+    },
+    "total_tokens": 3188
+  },
+  "elapsedMs": 9988,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "cd8211a2-beed-4384-9727-505d6b891a9c",
+      "inputTokens": 1718,
+      "outputTokens": 1470,
+      "event": "translation_attempt",
+      "correlationId": "5d2bd644-020d-4bdb-afbe-b6ec04a16e64",
+      "attempt": 1,
+      "elapsedMs": 9988,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

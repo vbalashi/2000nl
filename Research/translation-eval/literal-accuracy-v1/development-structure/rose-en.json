@@ -1,0 +1,75 @@
+{
+  "id": "rose-en",
+  "inputHash": "99201597bf9456fbdd9ac42eedf8548f5c131e3e320bf2d56135a37c0cf71a48",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "rose",
+      "alternativeTexts": [],
+      "baseText": "rose",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a flower that often has a strong scent"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to sit on roses",
+        "text": "to be sitting pretty"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to be in a very favorable position"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"rose\",\"alternativeTexts\":[],\"baseText\":\"rose\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a flower that often has a strong scent\"},{\"fieldId\":\"idiom:0\",\"text\":\"to be sitting pretty\",\"literalText\":\"to sit on roses\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to be in a very favorable position\"}]}",
+  "responseHash": "b45c8d402009da1626f48c31eb880e05451741a4e5051c55329d2e655e1e7d4d",
+  "usage": {
+    "completion_tokens": 388,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 289,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 112,
+      "engine_ttlt_ms": 2188,
+      "pre_inference_ms": 79,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 335,
+      "service_ttlt_ms": 2407,
+      "user_visible_ttft_ms": 256
+    },
+    "prompt_tokens": 1719,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2107
+  },
+  "elapsedMs": 2650,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "629c47c2-b57e-476b-8f12-9c2946d8180e",
+      "inputTokens": 1719,
+      "outputTokens": 388,
+      "event": "translation_attempt",
+      "correlationId": "a2766655-8ae2-46b9-b14f-258a71188b3b",
+      "attempt": 1,
+      "elapsedMs": 2649,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

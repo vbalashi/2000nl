@@ -1,0 +1,75 @@
+{
+  "id": "molehill-en",
+  "inputHash": "1c5e51171e45ff7d223a86466f819fef16f7c523f6ba2a41ad09d85a6206ed5f",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "mosquito",
+      "alternativeTexts": [],
+      "baseText": "mosquito",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a small insect that can bite"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "make an elephant out of a mosquito",
+        "text": "make a mountain out of a molehill"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to make a small problem seem much bigger than it is"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"mosquito\",\"alternativeTexts\":[],\"baseText\":\"mosquito\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a small insect that can bite\"},{\"fieldId\":\"idiom:0\",\"text\":\"make a mountain out of a molehill\",\"literalText\":\"make an elephant out of a mosquito\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to make a small problem seem much bigger than it is\"}]}",
+  "responseHash": "cc79acebbc04f7b8fd3ff9e8728c46b79295a81e9246409a11221f8e0e97840e",
+  "usage": {
+    "completion_tokens": 317,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 207,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 99,
+      "engine_ttlt_ms": 1944,
+      "pre_inference_ms": 74,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 287,
+      "service_ttlt_ms": 2128,
+      "user_visible_ttft_ms": 213
+    },
+    "prompt_tokens": 1725,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 504,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2042
+  },
+  "elapsedMs": 2516,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "1a831c32-bbe1-4720-b241-7136ea9f96be",
+      "inputTokens": 1725,
+      "outputTokens": 317,
+      "event": "translation_attempt",
+      "correlationId": "ddacb4bc-d159-46ad-951d-f438d4a89bef",
+      "attempt": 1,
+      "elapsedMs": 2516,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "boat-en",
+  "inputHash": "7dbef19030f542153daf5d0015b427d1fc11dbf380c62a68e7708ad1389789ce",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "boat",
+      "alternativeTexts": [],
+      "baseText": "boat",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a watercraft"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to fall outside the boat",
+        "text": "to be left out or not qualify"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "not be allowed to take part or not be eligible"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"boat\",\"alternativeTexts\":[],\"baseText\":\"boat\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a watercraft\"},{\"fieldId\":\"idiom:0\",\"text\":\"to be left out or not qualify\",\"literalText\":\"to fall outside the boat\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"not be allowed to take part or not be eligible\"}]}",
+  "responseHash": "a0524e03cc4a56968197ae1b1355e8be0566d7a60d7d1a220470526a92d9c9ee",
+  "usage": {
+    "completion_tokens": 653,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 546,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 97,
+      "engine_ttlt_ms": 4062,
+      "pre_inference_ms": 118,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 362,
+      "service_ttlt_ms": 4323,
+      "user_visible_ttft_ms": 244
+    },
+    "prompt_tokens": 1717,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2370
+  },
+  "elapsedMs": 4817,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "9c86bf9e-1c02-4c8d-a530-9d2c28299b24",
+      "inputTokens": 1717,
+      "outputTokens": 653,
+      "event": "translation_attempt",
+      "correlationId": "e35dc71d-22c1-4e7b-b1d7-5760f37a2f0b",
+      "attempt": 1,
+      "elapsedMs": 4817,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

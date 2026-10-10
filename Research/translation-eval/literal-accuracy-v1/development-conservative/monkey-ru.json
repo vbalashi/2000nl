@@ -1,0 +1,75 @@
+{
+  "id": "monkey-ru",
+  "inputHash": "67d4abcb819cc17084327d394d1e5ae96d7370975ef323969979ec972b795bd2",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "обезьяна",
+      "alternativeTexts": [],
+      "baseText": "обезьяна",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "животное, которое часто хорошо лазает"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "Обезьяна вылезает из рукава",
+        "text": "Скрытые намерения становятся явными."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "Скрытый замысел становится явным."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"обезьяна\",\"alternativeTexts\":[],\"baseText\":\"обезьяна\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"животное, которое часто хорошо лазает\"},{\"fieldId\":\"idiom:0\",\"text\":\"Скрытые намерения становятся явными.\",\"literalText\":\"Обезьяна вылезает из рукава\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"Скрытый замысел становится явным.\"}]}",
+  "responseHash": "91d3b69c4c0ee7793578dbbef72e690735fb77ade5fb437b370775aa4d965652",
+  "usage": {
+    "completion_tokens": 757,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 631,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 94,
+      "engine_ttlt_ms": 4851,
+      "pre_inference_ms": 94,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 350,
+      "service_ttlt_ms": 5095,
+      "user_visible_ttft_ms": 256
+    },
+    "prompt_tokens": 1725,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 500,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2482
+  },
+  "elapsedMs": 10271,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "f3c618b4-a5f5-4336-8031-21e94b76f148",
+      "inputTokens": 1725,
+      "outputTokens": 757,
+      "event": "translation_attempt",
+      "correlationId": "2a657ed2-b253-442e-a226-f3f2a0c56a9f",
+      "attempt": 1,
+      "elapsedMs": 10271,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "lamp-ru",
+  "inputHash": "e7e86e29638f0b310bfdb38c5a1f8d523a1290787380e5164cc834cf89873a2e",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лампа",
+      "alternativeTexts": [],
+      "baseText": "лампа",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "предмет, который даёт свет"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "наткнуться на лампу",
+        "text": "быть пойманным с поличным во время совершения проступка"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "быть застигнутым во время совершения какого-либо проступка"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лампа\",\"alternativeTexts\":[],\"baseText\":\"лампа\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"предмет, который даёт свет\"},{\"fieldId\":\"idiom:0\",\"text\":\"быть пойманным с поличным во время совершения проступка\",\"literalText\":\"наткнуться на лампу\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"быть застигнутым во время совершения какого-либо проступка\"}]}",
+  "responseHash": "c6d327f05da3bf476e8f07cb96d2d7f25aebbe4946ae4c58de78af143d30c9db",
+  "usage": {
+    "completion_tokens": 1584,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1451,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 105,
+      "engine_ttlt_ms": 9634,
+      "pre_inference_ms": 85,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 339,
+      "service_ttlt_ms": 9862,
+      "user_visible_ttft_ms": 254
+    },
+    "prompt_tokens": 1723,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 3307
+  },
+  "elapsedMs": 10241,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e6ecb10c-28d3-43ac-92fc-60b2a983248e",
+      "inputTokens": 1723,
+      "outputTokens": 1584,
+      "event": "translation_attempt",
+      "correlationId": "edcd4412-c9e9-4f82-82e4-ef6855ce076d",
+      "attempt": 1,
+      "elapsedMs": 10241,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

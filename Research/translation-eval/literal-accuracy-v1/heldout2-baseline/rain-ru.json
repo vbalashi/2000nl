@@ -1,0 +1,75 @@
+{
+  "id": "rain-ru",
+  "inputHash": "10fe3ddb2f8f28601ec09c7d498c34e2f971b51167582a6de734e1443fb00b5b",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "дождь",
+      "alternativeTexts": [],
+      "baseText": "дождь",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Вода, падающая с неба каплями."
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "Попасть из дождя под капель.",
+        "text": "Попасть из огня да в полымя."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "Попасть из трудной ситуации в ещё худшую."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"дождь\",\"alternativeTexts\":[],\"baseText\":\"дождь\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Вода, падающая с неба каплями.\"},{\"fieldId\":\"idiom:0\",\"text\":\"Попасть из огня да в полымя.\",\"literalText\":\"Попасть из дождя под капель.\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"Попасть из трудной ситуации в ещё худшую.\"}]}",
+  "responseHash": "904255fa47a73b59e306a6365cb4929a3f8e3cb809f284a560539bbbe7b4b72e",
+  "usage": {
+    "completion_tokens": 794,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 666,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 111,
+      "engine_ttlt_ms": 4900,
+      "pre_inference_ms": 80,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 333,
+      "service_ttlt_ms": 5117,
+      "user_visible_ttft_ms": 254
+    },
+    "prompt_tokens": 1579,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 508,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2373
+  },
+  "elapsedMs": 5592,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "200f82c4-5fcc-49ba-8dde-48ab795cc485",
+      "inputTokens": 1579,
+      "outputTokens": 794,
+      "event": "translation_attempt",
+      "correlationId": "b3214387-072d-4b58-95e5-8a137299d883",
+      "attempt": 1,
+      "elapsedMs": 5592,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

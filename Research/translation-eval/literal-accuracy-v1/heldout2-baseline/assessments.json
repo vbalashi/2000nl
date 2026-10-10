@@ -1,0 +1,287 @@
+[
+  {
+    "id": "flowers-ru",
+    "inputHash": "6ad57c0dd7ca2fd08b5acb25be7957931c46a0f0101a2ad9f51052c366f60e68",
+    "responseHash": "5fbc6973491335a9d43b20bf1e771c620a0428df498051357b695571254630af",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "flowers-en",
+    "inputHash": "a5ea93e7b7b95d5e7d5751f1374b1f420974696ba721aab9e7083ffdec4531f0",
+    "responseHash": "138f8301eb5f83e94f0c43cd7891d40bbe1376d5bf7163a0d006a5121392f672",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "hair-ru",
+    "inputHash": "9f8f25f036abe3ec09d83b9d4565130d10f3c4cdae771f7c4c31c510cceff501",
+    "responseHash": "11af2c7634f12cc0fefb6bc6ebab3396e9d98bdbfc0734a44af7cef7383b4af0",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "hair-en",
+    "inputHash": "9718d04f4f9267b576448b6edb2b0cbb3725cd11b0c5e03a4c7ef71ccb27478e",
+    "responseHash": "8a597ec048bbd96768fa604e032f1b14c84fc291ee1c29ad8dfead37e148149c",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "molehill-ru",
+    "inputHash": "d8a805d5af227c95ef1e7c77b6b7a7ddd30c8cf2d126998fd97fb69003c641b3",
+    "responseHash": "be271f1bf2960a8e573ec8c3ecf02cae19fdb4c8763e3696d9f5fdecf411ba22",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "category": "literal-usefulness",
+        "field": "idiom:0.literalText",
+        "explanation": "Natural fly-to-elephant already conveys the familiar small-insect/elephant image; mosquito variation adds little."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "molehill-en",
+    "inputHash": "dcc8d2078bddf4cd4a1dd96699395f1a4e94390b6c51176bdba92ffb0be92695",
+    "responseHash": "0b5a95f58326b04f2956c403e80e0421b116052d12866defcf53558115540d2f",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "quay-ru",
+    "inputHash": "d9838e861eeb347d72902cadd5111d618dd5ab959558f04399b23960c2e65170",
+    "responseHash": "59710735caba813da1922400dbba19193e721ab1cc2842fe50609a56e49e0500",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "quay-en",
+    "inputHash": "bd79dfa075ecf750d582816b3461650d919cc2052a4e8b13e3a415cc7bf768bc",
+    "responseHash": "f5a480f623f794be6bb6f0313b35a89a9741aeb4ed0db0803792a26699482b61",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "wire-ru",
+    "inputHash": "a7bc1d18ed2a68c8abd8b94228043aac35f32d3dd47da756cb04753be91826f6",
+    "responseHash": "d813d6906b0dcc7e8f380678a6775fcab8b24e7e269ca91434d126e7c4b28357",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "wire-en",
+    "inputHash": "fdacac9c0c84298752927889504fab5b83e0f2e1853e11bbb21f964205f56e9b",
+    "responseHash": "2bb115b76b77ef3701544ed97c98c5af5e156d7e954f17debdd69b8510a8962a",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "spoon-ru",
+    "inputHash": "7f65ec443d29ace9bb0655022c9d09be23b68931b93a2ea86f5bce8d844f4154",
+    "responseHash": "33f0c11260ac6631769e90f463428e80037cac4d1fd16e4eee605791186e87b0",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "category": "literal-grammar",
+        "field": "idiom:0.literalText",
+        "explanation": "Словно его влили с ложкой каши is awkward and blurs a porridge spoon with a spoonful of porridge."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": true,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "spoon-en",
+    "inputHash": "51ed7142896a82057ffc139fc3002cb103e9ec19c4e800690902650f158b3769",
+    "responseHash": "21cd9471be2f7bb9f8bb7a1dd34cddb00a890b240aaabe8862555c425a433d0e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "stone-ru",
+    "inputHash": "1f62aaf0eac7c4017745d0760f8cae9ca178008ff04760dc6b083178f245a62e",
+    "responseHash": "ac4681e4a964b42a68364bc4aac3a0f5ecbd9746ac4588c14f6689e55fdcd26a",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "stone-en",
+    "inputHash": "5d4bf5c67a64514f518f8b516c4f530e9efe3ba8bbf2d3675a637b5adbce0a64",
+    "responseHash": "42c7cf43724c20a60fee993e70bad49ae34f290f9404ab0d8dc6e84acb609ce3",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "rain-ru",
+    "inputHash": "10fe3ddb2f8f28601ec09c7d498c34e2f971b51167582a6de734e1443fb00b5b",
+    "responseHash": "904255fa47a73b59e306a6365cb4929a3f8e3cb809f284a560539bbbe7b4b72e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "rain-en",
+    "inputHash": "cf97976613c7710d37c4e83255959efd295ceb48ef9b489f03c88a59f4c715b0",
+    "responseHash": "ed5cb89e3727aa1966281bf785486d19d482653a90c70ad4ae846fe62e20a6bb",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "category": "literal-grammar",
+        "field": "idiom:0.literalText",
+        "explanation": "Into the drip is an awkward target rendering; dripping water needs clearer wording or null."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": true,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "oil-ru",
+    "inputHash": "f0fcadaf5056e9f1c60f2754d30afd82f9ca8a0e2bfe41a6f4f3b4a24c1a72ee",
+    "responseHash": "c25d9b12145924b39ccf6d56ecf25694808e7021778a047d0b796ae32dd5b65c",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "oil-en",
+    "inputHash": "d8fbaabb4063bf8e6b5a184e2447f6c15a6d6e6e68c07966c4b4a2347c68ae5d",
+    "responseHash": "a5e1ddc47d7f95a4d939dcf920d29b5b9b38c0c9629a85255cbaf7f21fed4eaf",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "birthday-ru",
+    "inputHash": "01e6ed41f244f92cdba83c000ca6881d5a57499af58d8f9bac987f1cca3b9eb0",
+    "responseHash": "9ac4472e54bb4971607c875eecdb2f3d16a4dce1f90c70a238bb91cba9121712",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "birthday-en",
+    "inputHash": "2f56f8a8d2245c75bf742d42b2bea19b589a926124bfb05979d7231e00d34791",
+    "responseHash": "7205237bd7473a42ba2d80173d006a2dcd71dd9eb40d53c5c2deb080bf64fb5c",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "water-ru",
+    "inputHash": "3a902573f48988d775f656ecdd3c2fa83bfcc3ccbdc163870da2855c561d3230",
+    "responseHash": "be875bd4cd5102a7e23b3f906730c8f891ed8317808719c94193e2b6874d0ad5",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "water-en",
+    "inputHash": "8e8aa4f4104103615598555c258a9377f5a56522ffce0311ca7021493e57304c",
+    "responseHash": "da80f764007ae572994e73358ae48e0e997ba92d1f026389048475090795d33f",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "heavy-ru",
+    "inputHash": "cdc5117a995ed5a2583524be2db22c0539d7d6866a2c83f54c8b486d0fb8cbc1",
+    "responseHash": "b846fcd397186221df801f1dba3570c8284df1140b0a9e13183249aea161643d",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "heavy-en",
+    "inputHash": "5a820998f8dc5def64c2b9b6682629ffcf777d24cf60be3123490ed62f9211ba",
+    "responseHash": "1f815c0db34ee570cf3b57e79a34015416e2dcd0c54f23edfaf2f819a8acc1c7",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  }
+]

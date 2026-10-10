@@ -1,0 +1,75 @@
+{
+  "id": "hair-ru",
+  "inputHash": "9f8f25f036abe3ec09d83b9d4565130d10f3c4cdae771f7c4c31c510cceff501",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "волос",
+      "alternativeTexts": [],
+      "baseText": "волосы",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "тонкий волос, растущий на коже"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "сидеть, держа руки в волосах",
+        "text": "не знать, как решить проблему"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "не знать, как решить проблему"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"волос\",\"alternativeTexts\":[],\"baseText\":\"волосы\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"тонкий волос, растущий на коже\"},{\"fieldId\":\"idiom:0\",\"text\":\"не знать, как решить проблему\",\"literalText\":\"сидеть, держа руки в волосах\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"не знать, как решить проблему\"}]}",
+  "responseHash": "11af2c7634f12cc0fefb6bc6ebab3396e9d98bdbfc0734a44af7cef7383b4af0",
+  "usage": {
+    "completion_tokens": 1429,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1309,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 95,
+      "engine_ttlt_ms": 8554,
+      "pre_inference_ms": 85,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 319,
+      "service_ttlt_ms": 8773,
+      "user_visible_ttft_ms": 234
+    },
+    "prompt_tokens": 1573,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 502,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 3002
+  },
+  "elapsedMs": 9115,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "41cc96fa-7f95-445c-8ea3-39aa4af6a1bc",
+      "inputTokens": 1573,
+      "outputTokens": 1429,
+      "event": "translation_attempt",
+      "correlationId": "4e392feb-b987-4c3b-856c-4c5be27640fc",
+      "attempt": 1,
+      "elapsedMs": 9115,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

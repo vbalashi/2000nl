@@ -1,0 +1,75 @@
+{
+  "id": "wire-en",
+  "inputHash": "fdacac9c0c84298752927889504fab5b83e0f2e1853e11bbb21f964205f56e9b",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "thread",
+      "alternativeTexts": [],
+      "baseText": "thread",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a long, thin piece of material"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "lose the thread of a story or train of thought"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "no longer know how a story or thought continues"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"thread\",\"alternativeTexts\":[],\"baseText\":\"thread\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a long, thin piece of material\"},{\"fieldId\":\"idiom:0\",\"text\":\"lose the thread of a story or train of thought\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"no longer know how a story or thought continues\"}]}",
+  "responseHash": "2bb115b76b77ef3701544ed97c98c5af5e156d7e954f17debdd69b8510a8962a",
+  "usage": {
+    "completion_tokens": 1019,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 910,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 104,
+      "engine_ttlt_ms": 6353,
+      "pre_inference_ms": 75,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 322,
+      "service_ttlt_ms": 6566,
+      "user_visible_ttft_ms": 247
+    },
+    "prompt_tokens": 1569,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2588
+  },
+  "elapsedMs": 6945,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "7d0d9781-e429-4748-8493-d6992d14aef6",
+      "inputTokens": 1569,
+      "outputTokens": 1019,
+      "event": "translation_attempt",
+      "correlationId": "6ea11c9f-3ebf-4582-92dc-dabfbc4b933c",
+      "attempt": 1,
+      "elapsedMs": 6944,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

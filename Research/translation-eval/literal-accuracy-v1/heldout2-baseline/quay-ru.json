@@ -1,0 +1,75 @@
+{
+  "id": "quay-ru",
+  "inputHash": "d9838e861eeb347d72902cadd5111d618dd5ab959558f04399b23960c2e65170",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "берег",
+      "alternativeTexts": [],
+      "baseText": "берег",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "участок суши у воды"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "упасть между берегом и кораблём",
+        "text": "оказаться нигде не своим и из-за этого остаться без помощи"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "нигде не быть своим и поэтому не получать помощи"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"берег\",\"alternativeTexts\":[],\"baseText\":\"берег\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"участок суши у воды\"},{\"fieldId\":\"idiom:0\",\"text\":\"оказаться нигде не своим и из-за этого остаться без помощи\",\"literalText\":\"упасть между берегом и кораблём\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"нигде не быть своим и поэтому не получать помощи\"}]}",
+  "responseHash": "59710735caba813da1922400dbba19193e721ab1cc2842fe50609a56e49e0500",
+  "usage": {
+    "completion_tokens": 1766,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1631,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 98,
+      "engine_ttlt_ms": 10947,
+      "pre_inference_ms": 78,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 311,
+      "service_ttlt_ms": 11155,
+      "user_visible_ttft_ms": 233
+    },
+    "prompt_tokens": 1570,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 499,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 3336
+  },
+  "elapsedMs": 11680,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "515d4ac2-6f3c-4f37-8f5b-05a8426ab284",
+      "inputTokens": 1570,
+      "outputTokens": 1766,
+      "event": "translation_attempt",
+      "correlationId": "2690d5a7-567e-4c15-94a4-892c220f0648",
+      "attempt": 1,
+      "elapsedMs": 11679,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

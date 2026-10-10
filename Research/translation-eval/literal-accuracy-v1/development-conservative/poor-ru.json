@@ -1,0 +1,66 @@
+{
+  "id": "poor-ru",
+  "inputHash": "13b5a8485d6adc432d5f4fd77de421728a8f9761cac97551f87ea137bc3b3809",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "бедный",
+      "alternativeTexts": [],
+      "baseText": "бедный",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "имеющий мало денег"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"бедный\",\"alternativeTexts\":[],\"baseText\":\"бедный\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"имеющий мало денег\"}]}",
+  "responseHash": "96413900b97d65f3a49a05dcf2f0967917625922f02be7e250507f1015943052",
+  "usage": {
+    "completion_tokens": 214,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 161,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 87,
+      "engine_ttlt_ms": 1534,
+      "pre_inference_ms": 98,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 332,
+      "service_ttlt_ms": 1773,
+      "user_visible_ttft_ms": 234
+    },
+    "prompt_tokens": 1671,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 446,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 1885
+  },
+  "elapsedMs": 2306,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "ee0e94d1-89c9-4825-9d2e-e2f2981da9f2",
+      "inputTokens": 1671,
+      "outputTokens": 214,
+      "event": "translation_attempt",
+      "correlationId": "2d8b8a72-3d9f-41e4-a7ee-f5e01f4058b3",
+      "attempt": 1,
+      "elapsedMs": 2306,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

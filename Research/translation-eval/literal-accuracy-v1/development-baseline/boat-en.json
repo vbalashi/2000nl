@@ -1,0 +1,75 @@
+{
+  "id": "boat-en",
+  "inputHash": "1edbc99e9bdd1788912f56592eded9a7ec51c5fd042b753f306ef3deeff108af",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "boat",
+      "alternativeTexts": [],
+      "baseText": "boat",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a watercraft"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "fall outside the boat",
+        "text": "be excluded from taking part or from consideration"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "not be allowed to take part or not be considered eligible"
+      }
+    ]
+  },
+  "raw": "{\n  \"entryTranslation\": {\n    \"primaryText\": \"boat\",\n    \"alternativeTexts\": [],\n    \"baseText\": \"boat\",\n    \"note\": null\n  },\n  \"contentTranslations\": [\n    {\n      \"fieldId\": \"definition\",\n      \"text\": \"a watercraft\"\n    },\n    {\n      \"fieldId\": \"idiom:0\",\n      \"text\": \"be excluded from taking part or from consideration\",\n      \"literalText\": \"fall outside the boat\"\n    },\n    {\n      \"fieldId\": \"idiom:0:explanation\",\n      \"text\": \"not be allowed to take part or not be considered eligible\"\n    }\n  ]\n}",
+  "responseHash": "9862f903d935949adf676ce087fa50c4ff1888fe344ab913b597fefd9eae4d52",
+  "usage": {
+    "completion_tokens": 1085,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 925,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 110,
+      "engine_ttlt_ms": 6670,
+      "pre_inference_ms": 80,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 334,
+      "service_ttlt_ms": 6890,
+      "user_visible_ttft_ms": 254
+    },
+    "prompt_tokens": 1567,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2652
+  },
+  "elapsedMs": 7379,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "878c8366-7eaa-4962-8c35-4f71df4898d0",
+      "inputTokens": 1567,
+      "outputTokens": 1085,
+      "event": "translation_attempt",
+      "correlationId": "7cc0edf0-d04a-40ee-8ff3-d535cb1ad56a",
+      "attempt": 1,
+      "elapsedMs": 7379,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "spoon-en",
+  "inputHash": "51ed7142896a82057ffc139fc3002cb103e9ec19c4e800690902650f158b3769",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "spoon",
+      "alternativeTexts": [],
+      "baseText": "spoon",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an implement used to bring liquid food to the mouth"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to have something fed to you with a porridge spoon",
+        "text": "to have something instilled in you from early childhood"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to learn something from early childhood"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"spoon\",\"alternativeTexts\":[],\"baseText\":\"spoon\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an implement used to bring liquid food to the mouth\"},{\"fieldId\":\"idiom:0\",\"text\":\"to have something instilled in you from early childhood\",\"literalText\":\"to have something fed to you with a porridge spoon\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to learn something from early childhood\"}]}",
+  "responseHash": "21cd9471be2f7bb9f8bb7a1dd34cddb00a890b240aaabe8862555c425a433d0e",
+  "usage": {
+    "completion_tokens": 817,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 696,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 92,
+      "engine_ttlt_ms": 4966,
+      "pre_inference_ms": 141,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 412,
+      "service_ttlt_ms": 5274,
+      "user_visible_ttft_ms": 271
+    },
+    "prompt_tokens": 1581,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 510,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2398
+  },
+  "elapsedMs": 5716,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e725d5a8-d406-474b-b19a-49c18442f811",
+      "inputTokens": 1581,
+      "outputTokens": 817,
+      "event": "translation_attempt",
+      "correlationId": "75c1158b-d12d-4c3e-a172-e1c184c79365",
+      "attempt": 1,
+      "elapsedMs": 5716,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

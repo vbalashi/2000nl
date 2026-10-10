@@ -1,0 +1,75 @@
+{
+  "id": "cow-ru",
+  "inputHash": "1000ed996f3acde3c689ab619b9ab5b81f062064e3eac3570684addc8fbb82f5",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "корова",
+      "alternativeTexts": [],
+      "baseText": "корова",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "взрослая самка крупного рогатого скота"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "разговаривать о коровках и телятах",
+        "text": "непринуждённо беседовать о пустяках"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "дружелюбно разговаривать о незначительных вещах"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"корова\",\"alternativeTexts\":[],\"baseText\":\"корова\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"взрослая самка крупного рогатого скота\"},{\"fieldId\":\"idiom:0\",\"text\":\"непринуждённо беседовать о пустяках\",\"literalText\":\"разговаривать о коровках и телятах\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"дружелюбно разговаривать о незначительных вещах\"}]}",
+  "responseHash": "52bed3e16cbe708ea11b15862980cc400432dc5d7d53adbbc318fc415224d638",
+  "usage": {
+    "completion_tokens": 587,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 455,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 93,
+      "engine_ttlt_ms": 3347,
+      "pre_inference_ms": 122,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 399,
+      "service_ttlt_ms": 3619,
+      "user_visible_ttft_ms": 278
+    },
+    "prompt_tokens": 1726,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2313
+  },
+  "elapsedMs": 3965,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e0a90258-2478-4a88-9575-34a57e5ca829",
+      "inputTokens": 1726,
+      "outputTokens": 587,
+      "event": "translation_attempt",
+      "correlationId": "9fbfbbea-99c6-4ab5-b042-ed6c525198af",
+      "attempt": 1,
+      "elapsedMs": 3964,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

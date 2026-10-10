@@ -1,0 +1,75 @@
+{
+  "id": "molehill-ru",
+  "inputHash": "d8a805d5af227c95ef1e7c77b6b7a7ddd30c8cf2d126998fd97fb69003c641b3",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "комар",
+      "alternativeTexts": [],
+      "baseText": "комар",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "маленькое насекомое, которое может кусать"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "делать из комара слона",
+        "text": "делать из мухи слона"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "представлять небольшую проблему гораздо более серьёзной, чем она есть на самом деле"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"комар\",\"alternativeTexts\":[],\"baseText\":\"комар\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"маленькое насекомое, которое может кусать\"},{\"fieldId\":\"idiom:0\",\"text\":\"делать из мухи слона\",\"literalText\":\"делать из комара слона\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"представлять небольшую проблему гораздо более серьёзной, чем она есть на самом деле\"}]}",
+  "responseHash": "be271f1bf2960a8e573ec8c3ecf02cae19fdb4c8763e3696d9f5fdecf411ba22",
+  "usage": {
+    "completion_tokens": 596,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 475,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 91,
+      "engine_ttlt_ms": 3216,
+      "pre_inference_ms": 74,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 308,
+      "service_ttlt_ms": 3441,
+      "user_visible_ttft_ms": 234
+    },
+    "prompt_tokens": 1575,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 504,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2171
+  },
+  "elapsedMs": 3855,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "1c015f0f-6d10-424a-86ec-a1f65859cd88",
+      "inputTokens": 1575,
+      "outputTokens": 596,
+      "event": "translation_attempt",
+      "correlationId": "062749fa-d49a-4ba4-9d78-be5f448ea923",
+      "attempt": 1,
+      "elapsedMs": 3854,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

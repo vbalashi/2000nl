@@ -1,0 +1,75 @@
+{
+  "id": "cow-en",
+  "inputHash": "fc29131f53fa76cec260d26b46006f01ae03007e712e9804a1531b36410b39f1",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cow",
+      "alternativeTexts": [],
+      "baseText": "cow",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an adult female bovine"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "talk about cows and calves",
+        "text": "make small talk"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "talk pleasantly about trivial things"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"cow\",\"alternativeTexts\":[],\"baseText\":\"cow\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an adult female bovine\"},{\"fieldId\":\"idiom:0\",\"text\":\"make small talk\",\"literalText\":\"talk about cows and calves\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"talk pleasantly about trivial things\"}]}",
+  "responseHash": "5051ccb8327674d3041e38c1ce94a0c2c932a053ce795a480244e80458116d90",
+  "usage": {
+    "completion_tokens": 386,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 292,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 107,
+      "engine_ttlt_ms": 2513,
+      "pre_inference_ms": 57,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 317,
+      "service_ttlt_ms": 2718,
+      "user_visible_ttft_ms": 260
+    },
+    "prompt_tokens": 1572,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1958
+  },
+  "elapsedMs": 3120,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "312430a2-17ed-4403-902a-c14500274d6c",
+      "inputTokens": 1572,
+      "outputTokens": 386,
+      "event": "translation_attempt",
+      "correlationId": "687cf5df-24fa-48fd-bacf-60e40a4a15db",
+      "attempt": 1,
+      "elapsedMs": 3120,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

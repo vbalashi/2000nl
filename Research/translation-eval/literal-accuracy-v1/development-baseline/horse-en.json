@@ -1,0 +1,75 @@
+{
+  "id": "horse-en",
+  "inputHash": "eb6294442f73c83ba28a2cae5ce467616479c879ce90b0a70b9c958864899cd3",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "horse",
+      "alternativeTexts": [],
+      "baseText": "horse",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a large animal that people can ride"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "hitch the horse behind the wagon",
+        "text": "put the cart before the horse"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "do things in the wrong order"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"horse\",\"alternativeTexts\":[],\"baseText\":\"horse\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a large animal that people can ride\"},{\"fieldId\":\"idiom:0\",\"text\":\"put the cart before the horse\",\"literalText\":\"hitch the horse behind the wagon\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"do things in the wrong order\"}]}",
+  "responseHash": "8876849821b3c8f8c6c9176244f9b389bf78e1bdeaa8aafc8ebf4da3e99e861a",
+  "usage": {
+    "completion_tokens": 467,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 365,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 110,
+      "engine_ttlt_ms": 2645,
+      "pre_inference_ms": 48,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 315,
+      "service_ttlt_ms": 2839,
+      "user_visible_ttft_ms": 268
+    },
+    "prompt_tokens": 1572,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2039
+  },
+  "elapsedMs": 3386,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "0ede016f-a3bc-4357-8097-c014d561b4d5",
+      "inputTokens": 1572,
+      "outputTokens": 467,
+      "event": "translation_attempt",
+      "correlationId": "54941e21-5da0-42fd-a0d5-1262937e4eb2",
+      "attempt": 1,
+      "elapsedMs": 3386,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

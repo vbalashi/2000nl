@@ -1,0 +1,75 @@
+{
+  "id": "birthday-ru",
+  "inputHash": "01e6ed41f244f92cdba83c000ca6881d5a57499af58d8f9bac987f1cca3b9eb0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "день рождения",
+      "alternativeTexts": [],
+      "baseText": "день рождения",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "ежегодное празднование дня рождения человека"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "от всего сердца поздравляю"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "искренне поздравить кого-либо"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"день рождения\",\"alternativeTexts\":[],\"baseText\":\"день рождения\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"ежегодное празднование дня рождения человека\"},{\"fieldId\":\"idiom:0\",\"text\":\"от всего сердца поздравляю\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"искренне поздравить кого-либо\"}]}",
+  "responseHash": "9ac4472e54bb4971607c875eecdb2f3d16a4dce1f90c70a238bb91cba9121712",
+  "usage": {
+    "completion_tokens": 509,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 406,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 96,
+      "engine_ttlt_ms": 2762,
+      "pre_inference_ms": 97,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 343,
+      "service_ttlt_ms": 3028,
+      "user_visible_ttft_ms": 246
+    },
+    "prompt_tokens": 1575,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 504,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2084
+  },
+  "elapsedMs": 3499,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "1f875a6a-86c8-433c-8dd0-7ef4deb53066",
+      "inputTokens": 1575,
+      "outputTokens": 509,
+      "event": "translation_attempt",
+      "correlationId": "47d71168-6048-41db-a8fe-e2cd184ce16c",
+      "attempt": 1,
+      "elapsedMs": 3499,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

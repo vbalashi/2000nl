@@ -1,0 +1,75 @@
+{
+  "id": "stone-ru",
+  "inputHash": "1f62aaf0eac7c4017745d0760f8cae9ca178008ff04760dc6b083178f245a62e",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "камень",
+      "alternativeTexts": [],
+      "baseText": "камень",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "твёрдый кусок природного материала"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "одним ударом убить двух мух",
+        "text": "одним выстрелом убить двух зайцев"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "одним действием достичь двух целей"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"камень\",\"alternativeTexts\":[],\"baseText\":\"камень\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"твёрдый кусок природного материала\"},{\"fieldId\":\"idiom:0\",\"text\":\"одним выстрелом убить двух зайцев\",\"literalText\":\"одним ударом убить двух мух\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"одним действием достичь двух целей\"}]}",
+  "responseHash": "ac4681e4a964b42a68364bc4aac3a0f5ecbd9746ac4588c14f6689e55fdcd26a",
+  "usage": {
+    "completion_tokens": 625,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 512,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 97,
+      "engine_ttlt_ms": 3957,
+      "pre_inference_ms": 76,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 316,
+      "service_ttlt_ms": 4168,
+      "user_visible_ttft_ms": 241
+    },
+    "prompt_tokens": 1569,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2194
+  },
+  "elapsedMs": 4551,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "04899d97-ecc2-4150-8c5a-0d1881a47529",
+      "inputTokens": 1569,
+      "outputTokens": 625,
+      "event": "translation_attempt",
+      "correlationId": "610651ef-2cad-493a-ad07-6b067c3baac6",
+      "attempt": 1,
+      "elapsedMs": 4551,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

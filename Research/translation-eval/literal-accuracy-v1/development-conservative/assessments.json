@@ -1,0 +1,456 @@
+[
+  {
+    "id": "cat-ru",
+    "inputHash": "bfb47b1ce27b57029a67c67a0426b7e7c7b5956c909ab48dccf0f4a6c20bb7ee",
+    "responseHash": "e1c09421d97cf509b1ba8b784f57f98c8b6d97fbf2af53ed6f4cc82e15ccee04",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "serious",
+        "category": "literal-image",
+        "field": "idiom:0.literalText",
+        "explanation": "Changes out-of-tree relation to a cat on a tree."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "cat-en",
+    "inputHash": "a8acda4a3e79d3cc5f539460d41f3dfe3a582103d6ea84cac2511480e1dd85fd",
+    "responseHash": "15f6cc6e9b887483caa4bbf84115ee13d3e22117305043df155bce68ed8435af",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "cow-ru",
+    "inputHash": "1000ed996f3acde3c689ab619b9ab5b81f062064e3eac3570684addc8fbb82f5",
+    "responseHash": "52bed3e16cbe708ea11b15862980cc400432dc5d7d53adbbc318fc415224d638",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "cow-en",
+    "inputHash": "49ef4d192a8d0be68acc86c086f502848a40273a075e10c72df177ef81c53bf5",
+    "responseHash": "39438f7fa411f5a48c58fc26b9dc78871b9d5737f15d5767e5e7e38389096ec5",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "monkey-ru",
+    "inputHash": "67d4abcb819cc17084327d394d1e5ae96d7370975ef323969979ec972b795bd2",
+    "responseHash": "91d3b69c4c0ee7793578dbbef72e690735fb77ade5fb437b370775aa4d965652",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "monkey-en",
+    "inputHash": "04c032324bea061b562326979066b9b572b6127955129238301168290f5357b6",
+    "responseHash": "ef32ceebd3e9021d202591657fc0cb7326e1c148402a7c3c4194ed4b1320405b",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "butter-ru",
+    "inputHash": "1615f40a1183c00823ec0ed9bd02a61127de6f33d7c5a597f9732998e56ef185",
+    "responseHash": "3941a7187b80c0d7ddeaa18db517393e2bf5d3904dbc30274932b67165fc759c",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "butter-en",
+    "inputHash": "4e2ad254e91c5786feb30bb08e7971259c89f7572e5c3ebd8e88d077090bbb5a",
+    "responseHash": "896413e147fcdf2eaf6fad74a9337aa1a180f103fe1df4d16b9ecd38a2cad5bd",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "door-ru",
+    "inputHash": "80d9500265149947f837777d9628dfdd2f7ca1535783696741d59ba0d8105527",
+    "responseHash": "dad5f131062eda67e53c9640c62b7dc7368f619c68cccae94c0bd461c1f96b09",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "door-en",
+    "inputHash": "0c55d7d0f3e4ffc08209365645fa715a66bfef3f57dcde2c75f7a875b20bac4a",
+    "responseHash": "9ef1e72435708b3c621a9287519b257bec40eb9b72801eb1776338032aa2744f",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "hare-ru",
+    "inputHash": "70ed3e7dae12b7a82ad603cdefbe5313b7f6fe9940f2666ccc9ac3e171f0cb4f",
+    "responseHash": "58af16e564f8e125978ae780334edc2311f4e7bfa333917364472b0c5e981401",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "hare-en",
+    "inputHash": "7f2e56797150cc5bb56104551a2298816150f2dd3fea5805225d077e8e37fdea",
+    "responseHash": "8fbfb2a58fb25c9be6fa90dcfb2369fff7262d8d483eb54fb06c18a4d3512b62",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "cheese-ru",
+    "inputHash": "13c0a0e7f49a30b14e2af0fa4359de2b40e71058290aa77d1893d30e4302c93b",
+    "responseHash": "62a99766c369e09c247e7c1c2dbc84dab637154b95111cfbe64816af15aedf1f",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "cheese-en",
+    "inputHash": "b55801f60367393a97d1d45130aa0d8e2444bc7fbc259f1d44bf78ec7dd1b564",
+    "responseHash": "134027292dae76ead4520ab2e3914c2e9aab435fd8ca26ad67a1d04cf188167c",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "nose-ru",
+    "inputHash": "7d63dbd553ff8fed0b0461e9608c90dcfc808a4cb0cdac5da072b7afbafa63d7",
+    "responseHash": "6156cf6a4feeb32bae03fbfac87d0bd81a1d6fe62eaf2b8825779bb5811c15ae",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "nose-en",
+    "inputHash": "412f37acd8e7382fd719c5e7afb7839967887d51c190fd86a02499808682dfba",
+    "responseHash": "e89368817331d457684bb2ab197bfc16ea2c9e2afdcac9f16756a1ff1f803753",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "lamp-ru",
+    "inputHash": "e7e86e29638f0b310bfdb38c5a1f8d523a1290787380e5164cc834cf89873a2e",
+    "responseHash": "c6d327f05da3bf476e8f07cb96d2d7f25aebbe4946ae4c58de78af143d30c9db",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "lamp-en",
+    "inputHash": "c1cb761570b8fb0b647c134c2e07c34b0a528509d4595000d5d949d1a12428d0",
+    "responseHash": "b2848ccb7ea147041a5a6b7d3ef149cd14ddb5ba3206c9951239c4f33a4f6d24",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "boat-ru",
+    "inputHash": "2031f43ee57cb3fecb64dad639171a33a25b9e110ad9ec4b01682a215ee0f5e0",
+    "responseHash": "585682e5bc90dc911a51ca4d00c97a243df0585327cfc8b3740994ed390d8212",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "boat-en",
+    "inputHash": "b25bd302621f6c964e44572c7ecc14ed70d337468f275e0080e77b888010058e",
+    "responseHash": "556fde35b5f2acfa7982d130687d6667bb934f1cd30fd258f07a900d23dd0a9a",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "rose-ru",
+    "inputHash": "b57817433617600c0ec594e98fe596415a96cad19faaafc3ac86adc629d16cf4",
+    "responseHash": "d059f7a2d6d2898e081a3c6929cc9ba13f1fb67667ae97d1d475cfa36bd41d56",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "rose-en",
+    "inputHash": "e0e9f1c43c7da25f5aa7b1bdb66b3aeace8814e820131971bca05b7a57726961",
+    "responseHash": "76aad1095dd4dbddc5c060d1bf1f271e7cd1385b735630ab85f1ad1259515e3a",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
+  },
+  {
+    "id": "leg-ru",
+    "inputHash": "6f7a2252cdc5b4e16ab213b74c43aa22a31ba3d1e0f8f9b18b6f6affc6740a4f",
+    "responseHash": "0be51b9b81a70352983ae1721d9c3c1e253f5806e08aa711e34606275b3ee9b1",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "leg-en",
+    "inputHash": "4c01ff1d0019237b9607b09f3a7c3ae0cdcffc3231d592cc7210177c467af517",
+    "responseHash": "3e2566a3cc043e6d727f71074636f38b60f0e23efd64ea134e5666f8f8fd1a8e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "horse-ru",
+    "inputHash": "86989f4ed1e93409638e7294a2ec354bd8242234f7a9369b43aa8396f47b25f1",
+    "responseHash": "5739e72e70b2f058b0603253ccb48bbc85586333cd1d9133b550a4348308bc36",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "horse-en",
+    "inputHash": "35093352a2569c409540dec802149ff5ced69f06f75f8c3a35c64505b91b12ea",
+    "responseHash": "852c642214908842a5445a2dc9a15aa441192605104f63c6da858dcca22c64e7",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "ice-ru",
+    "inputHash": "42c336d2dbed87c8ab95ae58e620d759fbc7d77b6cd6dd98c23311b09e328e17",
+    "responseHash": "af797dd904052f716fa310218eee5d59846a658e5236856e3a18bd71083bb57d",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "ice-en",
+    "inputHash": "e7c1235b02fe6de85757e387055e6581391361a306b904703a41512992507553",
+    "responseHash": "5c9311a841d82f1149f55f19759840a78bdc940fe8572b10eb85cec82a89a41b",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "thanks-ru",
+    "inputHash": "c88a7d271936fc8df602c47dce5025de79fb6fe2e50ec099c791b06fa58660cd",
+    "responseHash": "ee020d814c449c5a7127d6f55522dae95e15e58a634766a6fbc80e20debdb0a3",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "thanks-en",
+    "inputHash": "7b9363ecb1c13b50fe113037549f651248a6a60e15d825c40264a12e14c7cade",
+    "responseHash": "9c18f6bff718f0b45a285d1f4e752c9e38777e7edc6fdeeb06a6aed656a77d7e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "luck-ru",
+    "inputHash": "54cb353acce7a3728bbaebde9879434e03ab2ffebb3200e392d5d4673ae5bae2",
+    "responseHash": "8394b36a24c7f0b0712625bc10d62fcf03b3ecab180d95c4eebe27a8ee6fb75e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "luck-en",
+    "inputHash": "f382cb52a312668ab39d7e525389641fef4e3fd7cc97260c97dc0cda97e3de18",
+    "responseHash": "5d5acab878ca6cb700ec12b3acf5ec47c65857d676260ed6b352b697fa007a18",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "welcome-ru",
+    "inputHash": "95bb980d750a799bc3a6d3726f77682ae10249614ee594cbffb716165bd04664",
+    "responseHash": "ff4c2cd0afdfb6eac43d8ae683b4cfc8e50fdb2282da37f11173ab1927cd66d7",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "welcome-en",
+    "inputHash": "26372ee63123deb364e50980eb54703f8395e25b8686ed10bf8adf46b32f20a3",
+    "responseHash": "b7bdea6dcae8b1ae8469ef0d554fc984de1508fb7e562724ca4fcb655cfb17b6",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "category": "literal-usefulness",
+        "field": "idiom:0.literalText",
+        "explanation": "Social welcome formula does not need a from-the-heart literal."
+      }
+    ],
+    "wholeCardAccepted": false,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "coffee-ru",
+    "inputHash": "6eecc4d7e5b75b74788c8b02d649f1324b7a2a0d65cf88e4e35e1a2b650de50b",
+    "responseHash": "9f2304de07b9808d0e35d7e89bcb0a82f04bd8edfa616ef728cc6ca475fecbb3",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "coffee-en",
+    "inputHash": "f5f1531e85c579b8f2d1d01af287c1a8c0418818a51e5250e98466bdce210b3e",
+    "responseHash": "2318a2edd498d7a043799d4db864d1391b220eec5badc98ba5423f7e6d697387",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "anger-ru",
+    "inputHash": "8316fc4b485a964ce1f58c60c97f3fae700f215a7234d7f8ecf265a0a7d0403f",
+    "responseHash": "fde0b0f639e1e6e8313925ea28d47645dc6ee4a3839f3e3d80547842bccdefab",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "anger-en",
+    "inputHash": "2a01e498e98e08af3997c834dd58d7eefec951554c28cff5c575c7819aefaf30",
+    "responseHash": "7e3015ef802931852ec5090ca02bda2ba06c063e003511072bfbef2d2651ba7e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "poor-ru",
+    "inputHash": "13b5a8485d6adc432d5f4fd77de421728a8f9761cac97551f87ea137bc3b3809",
+    "responseHash": "96413900b97d65f3a49a05dcf2f0967917625922f02be7e250507f1015943052",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  },
+  {
+    "id": "poor-en",
+    "inputHash": "1ee7f49585e047c270cf2e28ce242c4622d6d4764e4c2ebbe7ffe498d0017a8f",
+    "responseHash": "00e295269d6369803442360fae0c06297691c79e67298d0e3fad7c23f5b6efb2",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
+  }
+]

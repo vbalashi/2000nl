@@ -1,0 +1,75 @@
+{
+  "id": "rose-ru",
+  "inputHash": "11c96900837120601ed2d1f8f8dabdbfdadfab9c3e3aaf35fe1847fdf8890e73",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "роза",
+      "alternativeTexts": [],
+      "baseText": "роза",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "цветок, часто обладающий сильным ароматом"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "сидеть на розах",
+        "text": "быть в очень выгодном положении"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "находиться в очень выгодном положении"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"роза\",\"alternativeTexts\":[],\"baseText\":\"роза\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"цветок, часто обладающий сильным ароматом\"},{\"fieldId\":\"idiom:0\",\"text\":\"быть в очень выгодном положении\",\"literalText\":\"сидеть на розах\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"находиться в очень выгодном положении\"}]}",
+  "responseHash": "0b72b635cab4e9553def57ec26d51a222a8d1d97fb59cc82772edd95c4443b9c",
+  "usage": {
+    "completion_tokens": 452,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 343,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 137,
+      "engine_ttlt_ms": 2645,
+      "pre_inference_ms": 87,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 384,
+      "service_ttlt_ms": 2877,
+      "user_visible_ttft_ms": 297
+    },
+    "prompt_tokens": 1719,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2171
+  },
+  "elapsedMs": 3271,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e321acef-996b-4faf-83ea-aeff45324934",
+      "inputTokens": 1719,
+      "outputTokens": 452,
+      "event": "translation_attempt",
+      "correlationId": "c5bc8bc0-1b60-4dc1-b1a9-77278860014f",
+      "attempt": 1,
+      "elapsedMs": 3271,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

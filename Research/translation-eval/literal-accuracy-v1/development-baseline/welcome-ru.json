@@ -1,0 +1,75 @@
+{
+  "id": "welcome-ru",
+  "inputHash": "3f5a144dd7debdd7640ddce8a4c26aad9a0f252fe97b1fcca77ea638ac9a081f",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "желанный",
+      "alternativeTexts": [],
+      "baseText": "желанный",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "тот, кого рады принять"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "Рады вас приветствовать!"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "тепло приветствовать кого-либо по прибытии"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"желанный\",\"alternativeTexts\":[],\"baseText\":\"желанный\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"тот, кого рады принять\"},{\"fieldId\":\"idiom:0\",\"text\":\"Рады вас приветствовать!\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"тепло приветствовать кого-либо по прибытии\"}]}",
+  "responseHash": "b05ea0df9642db373262087fb72c2286a62cfbd8cfa4719570d63d558ba437e5",
+  "usage": {
+    "completion_tokens": 1081,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 975,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 94,
+      "engine_ttlt_ms": 6716,
+      "pre_inference_ms": 49,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 342,
+      "service_ttlt_ms": 6917,
+      "user_visible_ttft_ms": 294
+    },
+    "prompt_tokens": 1567,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2648
+  },
+  "elapsedMs": 7326,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "6397b46a-7523-44b4-98d7-8bfdf7bb701c",
+      "inputTokens": 1567,
+      "outputTokens": 1081,
+      "event": "translation_attempt",
+      "correlationId": "6839c4e8-2f4d-432f-902e-d07a730fb931",
+      "attempt": 1,
+      "elapsedMs": 7326,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}
