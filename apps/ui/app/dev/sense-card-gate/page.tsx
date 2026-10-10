@@ -33,7 +33,7 @@ export default async function SenseCardGatePage({
     family={searchParams.family === "sentence" ? "sentence" : "idiom"}
     state={searchParams.state === "context-pending" || searchParams.state === "empty" || searchParams.state === "loading" || searchParams.state === "error" || searchParams.state === "unsupported" || searchParams.state === "exhausted" || searchParams.state === "failure" ? searchParams.state : "complete"}
     dark={searchParams.mode === "dark"} />;
-  if (searchParams?.prototype === "exercise") return <ExerciseCardGate />;
+  if (searchParams?.prototype === "exercise") return <ExerciseCardGate cow={searchParams.fixture === "koe"} />;
   if (searchParams?.prototype === "reading") {
     return <ReadingSizePrototype />;
   }

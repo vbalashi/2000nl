@@ -79,3 +79,5 @@
 - [2026-10-09: Lavender icon revision](2026-10-09-01-lavender-icon.md) — #642.
 
 - [2026-10-09: Training startup recovery](2026-10-09-02-startup-recovery.md)
+
+- [2026-10-10: переводы карточек, план спринта](2026-10-10-01-translation-sprint.md) — #655.
