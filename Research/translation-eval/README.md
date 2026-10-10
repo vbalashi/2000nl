@@ -108,3 +108,12 @@ per-run review для submit-review: его нужно связать через
 Содержательная [агентская оценка 54 ответов](SEMANTIC-REVIEW-2026-10-10.md):
 49 accept, 5 needs-work. Это отдельный этап после автоматических проверок;
 решение — расширенная проверка до production promotion, GPT-4.1 пока остаётся default.
+
+## Персональные промпты моделей
+
+[План равного бюджета](MODEL-TUNING-PLAN-2026-10-10.md) и
+[результаты 144 вызовов](MODEL-TUNING-RESULTS-2026-10-10.md). Две tuning-итерации
+на модель, новая общая validation, baseline и tuned, по три повтора.
+В `runs/review-tuning-{gpt41,luna56,luna6}-v2/index.html` — новые анонимные
+страницы сравнения внутри модели. Оценки агента/источники/ограничения сохранены
+отдельно в evidence/model-tuning-2026-10-10; итог не меняет production default.

@@ -1,0 +1,1143 @@
+{
+  "schemaVersion": "translation-eval-assessment-v1",
+  "runId": "heldout-luna56-baseline-v2",
+  "manifestHash": "3bbd9a7e3223bb4e59590e547a76859e534bcb0dc207697d9e1eddc8859dc947",
+  "evaluatorHash": "ecfd7fa2659b048cab7867f18028bca38551c848ec4801821bb2e0bd465481e1",
+  "frozenAssessmentCodeHash": "55d1492bfb3379bb092af523e1d96d82507944040e69f6db6eb32b0f38755996",
+  "currentAssessmentCodeHash": "55d1492bfb3379bb092af523e1d96d82507944040e69f6db6eb32b0f38755996",
+  "currentEvaluatorHash": "ecfd7fa2659b048cab7867f18028bca38551c848ec4801821bb2e0bd465481e1",
+  "reviewStatus": "automatic-checks-only",
+  "humanApproved": false,
+  "rows": [
+    {
+      "jobId": "duidelijk_ru-1",
+      "caseId": "duidelijk_ru",
+      "repetition": 1,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 2,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": true
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "понятный",
+          "alternativeTexts": [
+            "ясный",
+            "чёткий"
+          ],
+          "baseText": "понятный",
+          "note": "Легко понять, без путаницы."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "легко понять и не вызывающий путаницы"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Объяснение учителя понятное."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 165,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 73,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 6,
+          "engine_ttft_ms": 73,
+          "engine_ttlt_ms": 1010,
+          "pre_inference_ms": 79,
+          "service_tbt_ms": 6,
+          "service_ttft_ms": 287,
+          "service_ttlt_ms": 1219,
+          "user_visible_ttft_ms": 208
+        },
+        "prompt_tokens": 739,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 904
+      },
+      "elapsedMs": 1738,
+      "responseHash": "44d43c4cfd7d3572e29f3e29c395304eedb99a596468064cd726b4566e5d7f7f"
+    },
+    {
+      "jobId": "duidelijk_ru-2",
+      "caseId": "duidelijk_ru",
+      "repetition": 2,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 2,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": true
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "понятный",
+          "alternativeTexts": [
+            "ясный",
+            "чёткий"
+          ],
+          "baseText": "ясный",
+          "note": "Легко понять; не вызывает путаницы."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "легко понять и не вызывает путаницы"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Объяснение учителя понятное."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 321,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 230,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 6,
+          "engine_ttft_ms": 71,
+          "engine_ttlt_ms": 2091,
+          "pre_inference_ms": 67,
+          "service_tbt_ms": 6,
+          "service_ttft_ms": 270,
+          "service_ttlt_ms": 2284,
+          "user_visible_ttft_ms": 203
+        },
+        "prompt_tokens": 739,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 1060
+      },
+      "elapsedMs": 2621,
+      "responseHash": "c07a0325b03522a209ef3ef2dae1267fa2470c104ea0bc5a699fdfe78a42a29b"
+    },
+    {
+      "jobId": "duidelijk_ru-3",
+      "caseId": "duidelijk_ru",
+      "repetition": 3,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 2,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": true
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "понятный",
+          "alternativeTexts": [
+            "ясный",
+            "чёткий"
+          ],
+          "baseText": "ясный",
+          "note": "Легко понять, без путаницы."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "легко понять и не вызывающий путаницы"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Объяснение учителя понятное."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 271,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 180,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 6,
+          "engine_ttft_ms": 79,
+          "engine_ttlt_ms": 1686,
+          "pre_inference_ms": 93,
+          "service_tbt_ms": 6,
+          "service_ttft_ms": 335,
+          "service_ttlt_ms": 1924,
+          "user_visible_ttft_ms": 243
+        },
+        "prompt_tokens": 739,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 1010
+      },
+      "elapsedMs": 2175,
+      "responseHash": "717c6e85c9d638b5f90393f4108b889457828d02804f161f5f342d12d2b8a453"
+    },
+    {
+      "jobId": "hoeven_ru-1",
+      "caseId": "hoeven_ru",
+      "repetition": 1,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 2,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": true
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "не нужно",
+          "alternativeTexts": [
+            "не надо",
+            "не быть обязанным"
+          ],
+          "baseText": "нужно",
+          "note": "Употребляется только с отрицанием и означает отсутствие обязанности что-либо делать."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "употребляется только с отрицанием: не быть обязанным что-либо делать"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Тебе сегодня не нужно работать."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 348,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 246,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 7,
+          "engine_ttft_ms": 89,
+          "engine_ttlt_ms": 2453,
+          "pre_inference_ms": 67,
+          "service_tbt_ms": 7,
+          "service_ttft_ms": 258,
+          "service_ttlt_ms": 2605,
+          "user_visible_ttft_ms": 191
+        },
+        "prompt_tokens": 740,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 1088
+      },
+      "elapsedMs": 2863,
+      "responseHash": "84d4b24fedbd24778167191f7adf5f3f4a3bbae2ece23560292e43cee4446396"
+    },
+    {
+      "jobId": "hoeven_ru-2",
+      "caseId": "hoeven_ru",
+      "repetition": 2,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 2,
+        "unexpected": [
+          "не требуется"
+        ],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": true
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "не нужно",
+          "alternativeTexts": [
+            "не надо",
+            "не требуется"
+          ],
+          "baseText": "нужно",
+          "note": "Употребляется только с отрицанием и означает отсутствие обязанности что-либо делать."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "употребляется только с отрицанием: не быть обязанным что-либо делать"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Тебе сегодня не нужно работать."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 411,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 311,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 7,
+          "engine_ttft_ms": 63,
+          "engine_ttlt_ms": 2918,
+          "pre_inference_ms": 60,
+          "service_tbt_ms": 7,
+          "service_ttft_ms": 257,
+          "service_ttlt_ms": 3109,
+          "user_visible_ttft_ms": 197
+        },
+        "prompt_tokens": 740,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 1151
+      },
+      "elapsedMs": 3417,
+      "responseHash": "1eb1672120b43d617edbd539814c82c8a4687b3ce7503ab1c3a742b0e4d06213"
+    },
+    {
+      "jobId": "hoeven_ru-3",
+      "caseId": "hoeven_ru",
+      "repetition": 3,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 2,
+        "unexpected": [
+          "не требуется"
+        ],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": true
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "не нужно",
+          "alternativeTexts": [
+            "не обязан",
+            "не требуется"
+          ],
+          "baseText": "нужно",
+          "note": "Употребляется с отрицанием и означает отсутствие необходимости что-либо делать."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "употребляется только с отрицанием: не быть обязанным что-либо делать"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Тебе сегодня не нужно работать."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 345,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 246,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 7,
+          "engine_ttft_ms": 78,
+          "engine_ttlt_ms": 2445,
+          "pre_inference_ms": 85,
+          "service_tbt_ms": 7,
+          "service_ttft_ms": 295,
+          "service_ttlt_ms": 2658,
+          "user_visible_ttft_ms": 210
+        },
+        "prompt_tokens": 740,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 1085
+      },
+      "elapsedMs": 2987,
+      "responseHash": "7a92995d094e229da881b591a65f7d8a5a3ed073f2f500e49458b468b815bd4c"
+    },
+    {
+      "jobId": "vriendelijk_en-1",
+      "caseId": "vriendelijk_en",
+      "repetition": 1,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 1,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": true
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "friendly",
+          "alternativeTexts": [
+            "kind"
+          ],
+          "baseText": "friendly",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "kind and pleasant in dealings with other people"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "The neighbor is always friendly to us."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 141,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 69,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 6,
+          "engine_ttft_ms": 82,
+          "engine_ttlt_ms": 973,
+          "pre_inference_ms": 86,
+          "service_tbt_ms": 6,
+          "service_ttft_ms": 302,
+          "service_ttlt_ms": 1188,
+          "user_visible_ttft_ms": 216
+        },
+        "prompt_tokens": 740,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 881
+      },
+      "elapsedMs": 1671,
+      "responseHash": "8619123cc0f8e5be71b5235867ab82b2eb3dbcb5302aa7d4ea6da7a8961b0d97"
+    },
+    {
+      "jobId": "vriendelijk_en-2",
+      "caseId": "vriendelijk_en",
+      "repetition": 2,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 2,
+        "unexpected": [
+          "nice"
+        ],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": true
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "friendly",
+          "alternativeTexts": [
+            "kind",
+            "nice"
+          ],
+          "baseText": "friendly",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "kind and pleasant in dealing with other people"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "The neighbor is always friendly to us."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 139,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 65,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 6,
+          "engine_ttft_ms": 106,
+          "engine_ttlt_ms": 990,
+          "pre_inference_ms": 69,
+          "service_tbt_ms": 6,
+          "service_ttft_ms": 304,
+          "service_ttlt_ms": 1185,
+          "user_visible_ttft_ms": 235
+        },
+        "prompt_tokens": 740,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 879
+      },
+      "elapsedMs": 1662,
+      "responseHash": "621dc04c1de17a85fdc6cf21e82eb10002237292c25c55850e55972e50ac07fa"
+    },
+    {
+      "jobId": "vriendelijk_en-3",
+      "caseId": "vriendelijk_en",
+      "repetition": 3,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 2,
+        "unexpected": [
+          "nice"
+        ],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": true
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "friendly",
+          "alternativeTexts": [
+            "nice",
+            "amiable"
+          ],
+          "baseText": "friendly",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "nice and pleasant in dealing with other people"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "The neighbor is always friendly toward us."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 124,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 49,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 6,
+          "engine_ttft_ms": 69,
+          "engine_ttlt_ms": 792,
+          "pre_inference_ms": 72,
+          "service_tbt_ms": 6,
+          "service_ttft_ms": 275,
+          "service_ttlt_ms": 994,
+          "user_visible_ttft_ms": 203
+        },
+        "prompt_tokens": 740,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 864
+      },
+      "elapsedMs": 1223,
+      "responseHash": "43a6d8d4ee10c7d3ab762ea5e46edb394ebdccc83cb1a1556c93834ae7fbfe4f"
+    },
+    {
+      "jobId": "arm_ru-1",
+      "caseId": "arm_ru",
+      "repetition": 1,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 0,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": false
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "рука",
+          "alternativeTexts": [],
+          "baseText": "рука",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "часть тела между плечом и кистью руки"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Она несёт сумку на руке."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 199,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 124,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 5,
+          "engine_ttft_ms": 100,
+          "engine_ttlt_ms": 1174,
+          "pre_inference_ms": 237,
+          "service_tbt_ms": 5,
+          "service_ttft_ms": 648,
+          "service_ttlt_ms": 1719,
+          "user_visible_ttft_ms": 411
+        },
+        "prompt_tokens": 735,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 934
+      },
+      "elapsedMs": 2121,
+      "responseHash": "a3202edfb035bb83b449e2f4071ef28c0e71f646bf5d6d90f2fc5030c7af2d58"
+    },
+    {
+      "jobId": "arm_ru-2",
+      "caseId": "arm_ru",
+      "repetition": 2,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 0,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": false
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "рука",
+          "alternativeTexts": [],
+          "baseText": "рука",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "часть тела между плечом и кистью"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Она несёт сумку на руке."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 151,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 77,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 6,
+          "engine_ttft_ms": 69,
+          "engine_ttlt_ms": 935,
+          "pre_inference_ms": 72,
+          "service_tbt_ms": 6,
+          "service_ttft_ms": 283,
+          "service_ttlt_ms": 1144,
+          "user_visible_ttft_ms": 211
+        },
+        "prompt_tokens": 735,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 886
+      },
+      "elapsedMs": 1430,
+      "responseHash": "29ae82ea03d194862a42f617813fc8367ee68f86922fe0d1fa22d7866f7c2a4a"
+    },
+    {
+      "jobId": "arm_ru-3",
+      "caseId": "arm_ru",
+      "repetition": 3,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 0,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": false
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "рука",
+          "alternativeTexts": [],
+          "baseText": "рука",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "часть тела между плечом и кистью руки"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Она несёт сумку на руке."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 194,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 119,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 6,
+          "engine_ttft_ms": 73,
+          "engine_ttlt_ms": 1220,
+          "pre_inference_ms": 71,
+          "service_tbt_ms": 6,
+          "service_ttft_ms": 276,
+          "service_ttlt_ms": 1418,
+          "user_visible_ttft_ms": 205
+        },
+        "prompt_tokens": 735,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 929
+      },
+      "elapsedMs": 1942,
+      "responseHash": "2c7aa8964137f4c1d8ebb13d35ccaba5a8553dd0aace8fbc509730726293f5d3"
+    },
+    {
+      "jobId": "twaalf_ru-1",
+      "caseId": "twaalf_ru",
+      "repetition": 1,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 0,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": false
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "двенадцать",
+          "alternativeTexts": [],
+          "baseText": "двенадцать",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "число после одиннадцати и перед тринадцатью"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "В классе двенадцать учеников."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 77,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 4,
+          "engine_ttft_ms": 62,
+          "engine_ttlt_ms": 380,
+          "pre_inference_ms": 220,
+          "service_tbt_ms": 4,
+          "service_ttft_ms": 482,
+          "service_ttlt_ms": 765,
+          "user_visible_ttft_ms": 262
+        },
+        "prompt_tokens": 736,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 813
+      },
+      "elapsedMs": 1232,
+      "responseHash": "e6e31a82afa06d641456d50f20b124959678bd025bc81fb5d837963d31edfa74"
+    },
+    {
+      "jobId": "twaalf_ru-2",
+      "caseId": "twaalf_ru",
+      "repetition": 2,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 0,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": false
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "двенадцать",
+          "alternativeTexts": [],
+          "baseText": "двенадцать",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "число после одиннадцати и перед тринадцатью"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "В классе двенадцать учеников."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 77,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 4,
+          "engine_ttft_ms": 67,
+          "engine_ttlt_ms": 409,
+          "pre_inference_ms": 138,
+          "service_tbt_ms": 5,
+          "service_ttft_ms": 272,
+          "service_ttlt_ms": 637,
+          "user_visible_ttft_ms": 133
+        },
+        "prompt_tokens": 736,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 813
+      },
+      "elapsedMs": 1290,
+      "responseHash": "9d76948fa0f9b09f624864c52410c18524d8a29c7958b793608faac86f394604"
+    },
+    {
+      "jobId": "twaalf_ru-3",
+      "caseId": "twaalf_ru",
+      "repetition": 3,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 0,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": false
+      },
+      "result": {
+        "entryTranslation": {
+          "primaryText": "двенадцать",
+          "alternativeTexts": [],
+          "baseText": "двенадцать",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "число после одиннадцати и перед тринадцатью"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "В классе двенадцать учеников."
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 77,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 5,
+          "engine_ttft_ms": 87,
+          "engine_ttlt_ms": 460,
+          "pre_inference_ms": 172,
+          "service_tbt_ms": 5,
+          "service_ttft_ms": 320,
+          "service_ttlt_ms": 691,
+          "user_visible_ttft_ms": 148
+        },
+        "prompt_tokens": 736,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 813
+      },
+      "elapsedMs": 1263,
+      "responseHash": "5abc81b4edc1121dee43be782f66d910a9f75de9222182b40365b4aacabe4009"
+    },
+    {
+      "jobId": "idiom_weather_en-1",
+      "caseId": "idiom_weather_en",
+      "repetition": 1,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 0,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": false
+      },
+      "result": {
+        "entryTranslation": null,
+        "contentTranslations": [
+          {
+            "fieldId": "idiom:0",
+            "text": "through thick and thin"
+          },
+          {
+            "fieldId": "idiom:0:explanation",
+            "text": "even when the weather is bad, without giving up"
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 338,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 263,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 6,
+          "engine_ttft_ms": 67,
+          "engine_ttlt_ms": 1986,
+          "pre_inference_ms": 93,
+          "service_tbt_ms": 6,
+          "service_ttft_ms": 330,
+          "service_ttlt_ms": 2244,
+          "user_visible_ttft_ms": 237
+        },
+        "prompt_tokens": 746,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 1084
+      },
+      "elapsedMs": 2683,
+      "responseHash": "537fea4545c1ff4a4d1422c17e178279f030c34303943540852b60910836c445"
+    },
+    {
+      "jobId": "idiom_weather_en-2",
+      "caseId": "idiom_weather_en",
+      "repetition": 2,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 0,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": false
+      },
+      "result": {
+        "entryTranslation": null,
+        "contentTranslations": [
+          {
+            "fieldId": "idiom:0",
+            "text": "through thick and thin"
+          },
+          {
+            "fieldId": "idiom:0:explanation",
+            "text": "even when the weather is bad, without giving up"
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 315,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 256,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 6,
+          "engine_ttft_ms": 79,
+          "engine_ttlt_ms": 2075,
+          "pre_inference_ms": 76,
+          "service_tbt_ms": 6,
+          "service_ttft_ms": 462,
+          "service_ttlt_ms": 2453,
+          "user_visible_ttft_ms": 386
+        },
+        "prompt_tokens": 746,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 1061
+      },
+      "elapsedMs": 2844,
+      "responseHash": "6910ad0d4c5337e0fc91d5ce822638d7bfb2232eae6f6b79a16ea4eec50cf45b"
+    },
+    {
+      "jobId": "idiom_weather_en-3",
+      "caseId": "idiom_weather_en",
+      "repetition": 3,
+      "outcome": "ready",
+      "evaluation": {
+        "baseUnexpected": false,
+        "hasPrimary": true,
+        "alternativeCount": 0,
+        "unexpected": [],
+        "excessive": false,
+        "controlViolation": false,
+        "usefulAlternativesPresent": false
+      },
+      "result": {
+        "entryTranslation": null,
+        "contentTranslations": [
+          {
+            "fieldId": "idiom:0",
+            "text": "through thick and thin"
+          },
+          {
+            "fieldId": "idiom:0:explanation",
+            "text": "even when the weather is bad, without giving up"
+          }
+        ]
+      },
+      "usage": {
+        "completion_tokens": 249,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "reasoning_tokens": 190,
+          "rejected_prediction_tokens": 0
+        },
+        "latency_checkpoint": {
+          "engine_tbt_ms": 6,
+          "engine_ttft_ms": 64,
+          "engine_ttlt_ms": 1465,
+          "pre_inference_ms": 82,
+          "service_tbt_ms": 6,
+          "service_ttft_ms": 283,
+          "service_ttlt_ms": 1679,
+          "user_visible_ttft_ms": 200
+        },
+        "prompt_tokens": 746,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 995
+      },
+      "elapsedMs": 1881,
+      "responseHash": "03aaef2c8d5bbe56339f0219f77456adcfa00830da362e73c8b90b29d156e500"
+    }
+  ],
+  "summary": {
+    "planned": 18,
+    "ready": 18,
+    "hardFailures": 0,
+    "lexicalReviewRequired": 4,
+    "withUsefulAlternatives": 9,
+    "inputTokensKnown": 13308,
+    "outputTokensKnown": 3942,
+    "missingUsage": 0,
+    "medianLatencyMs": 1942,
+    "maximumLatencyMs": 3417,
+    "monetaryCost": null
+  }
+}

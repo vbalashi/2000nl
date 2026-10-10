@@ -1,0 +1,175 @@
+{
+  "schemaVersion": "translation-model-tuning-summary-v1",
+  "reviewMethod": "agent",
+  "independentBlindReview": false,
+  "tuningCalls": 36,
+  "validationCalls": 108,
+  "totalCalls": 144,
+  "rows": [
+    {
+      "runId": "heldout-gpt41-baseline-v2",
+      "manifestHash": "2d729544484d13f343ed3d2435cf8ad7e06386feef67e1017b0c5bbcc87aaf03",
+      "reviewHash": "c190aa38452038e840022eea794e4eaaf392f45924a3e8b9f99d7f41a859ad40",
+      "model": "gpt-4.1",
+      "promptId": "dictionary-meaning-v3",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "reviewMethod": "agent",
+      "accept": 17,
+      "needsWork": 1,
+      "allRepeatsAcceptedCases": 5,
+      "mixedDecisionCases": 1,
+      "sensitivityExcludingHoevenAndWeather": {
+        "accept": 12,
+        "total": 12
+      },
+      "failureCodeCounts": {
+        "base-translation-error": 1
+      },
+      "inputTokens": 13326,
+      "outputTokens": 2106,
+      "missingUsage": 0,
+      "medianLatencyMs": 1452.5,
+      "maxLatencyMs": 3194,
+      "monetaryCost": null
+    },
+    {
+      "runId": "heldout-gpt41-tuned-v2",
+      "manifestHash": "1065b09f76dd23e29942b685887a6b36d9cdf3bb555d48ac29c2aa97bd136682",
+      "reviewHash": "70b32e7bd0828884eb6cf8746cf2aa75d797656df2ca51fa20094bb7a41ecc05",
+      "model": "gpt-4.1",
+      "promptId": "gpt41-tuned-v2",
+      "promptFingerprint": "61810bb0dabaf89705052ca54c9e0cca02884eb6e54230d5f6b8f02b1858b2c0",
+      "reviewMethod": "agent",
+      "accept": 14,
+      "needsWork": 4,
+      "allRepeatsAcceptedCases": 4,
+      "mixedDecisionCases": 1,
+      "sensitivityExcludingHoevenAndWeather": {
+        "accept": 11,
+        "total": 12
+      },
+      "failureCodeCounts": {
+        "base-translation-error": 3,
+        "content-translation-error": 1
+      },
+      "inputTokens": 16890,
+      "outputTokens": 1959,
+      "missingUsage": 0,
+      "medianLatencyMs": 1440.5,
+      "maxLatencyMs": 2055,
+      "monetaryCost": null
+    },
+    {
+      "runId": "heldout-luna56-baseline-v2",
+      "manifestHash": "3bbd9a7e3223bb4e59590e547a76859e534bcb0dc207697d9e1eddc8859dc947",
+      "reviewHash": "006ad5a22b2bc78cca413dac429b1e9abb986bd1e35a595c675a0c313bb9822c",
+      "model": "gpt-5.6-luna",
+      "promptId": "dictionary-meaning-v3",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "reviewMethod": "agent",
+      "accept": 13,
+      "needsWork": 5,
+      "allRepeatsAcceptedCases": 4,
+      "mixedDecisionCases": 1,
+      "sensitivityExcludingHoevenAndWeather": {
+        "accept": 10,
+        "total": 12
+      },
+      "failureCodeCounts": {
+        "unnatural-language": 2,
+        "content-translation-error": 3
+      },
+      "inputTokens": 13308,
+      "outputTokens": 3942,
+      "missingUsage": 0,
+      "medianLatencyMs": 1911.5,
+      "maxLatencyMs": 3417,
+      "monetaryCost": null
+    },
+    {
+      "runId": "heldout-luna56-tuned-v2",
+      "manifestHash": "0d2056565a835f4fe8aa25e18d814fd952f954f8ff9474ad35056218523a8298",
+      "reviewHash": "e8b1c0525720d9634c26ff1613d77032df0ff39c448959aa3ff287c6bbf3b324",
+      "model": "gpt-5.6-luna",
+      "promptId": "luna56-tuned-v2",
+      "promptFingerprint": "1d8245020943713e4670811f3eea223a7ec1c7a0f8bb624aaa6f69c4b0c9482c",
+      "reviewMethod": "agent",
+      "accept": 12,
+      "needsWork": 6,
+      "allRepeatsAcceptedCases": 3,
+      "mixedDecisionCases": 2,
+      "sensitivityExcludingHoevenAndWeather": {
+        "accept": 11,
+        "total": 12
+      },
+      "failureCodeCounts": {
+        "unnatural-language": 1,
+        "base-translation-error": 2,
+        "weak-equivalent": 2,
+        "content-translation-error": 2
+      },
+      "inputTokens": 15720,
+      "outputTokens": 3631,
+      "missingUsage": 0,
+      "medianLatencyMs": 1750.0,
+      "maxLatencyMs": 4680,
+      "monetaryCost": null
+    },
+    {
+      "runId": "heldout-luna6-baseline-v2",
+      "manifestHash": "39e130c28f0d7396a105e56f6b4ce54b629bec0bf132736f0a2aca7512926f29",
+      "reviewHash": "64be7db60f06eb81f884442570672b75a6288b22e9f1ce8004717cc6927c5fdb",
+      "model": "gpt-6-luna",
+      "promptId": "dictionary-meaning-v3",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "reviewMethod": "agent",
+      "accept": 17,
+      "needsWork": 1,
+      "allRepeatsAcceptedCases": 5,
+      "mixedDecisionCases": 1,
+      "sensitivityExcludingHoevenAndWeather": {
+        "accept": 11,
+        "total": 12
+      },
+      "failureCodeCounts": {
+        "unnatural-language": 1
+      },
+      "inputTokens": 13308,
+      "outputTokens": 3615,
+      "missingUsage": 0,
+      "medianLatencyMs": 1684.0,
+      "maxLatencyMs": 3169,
+      "monetaryCost": null
+    },
+    {
+      "runId": "heldout-luna6-tuned-v2",
+      "manifestHash": "e17b6bbafa1c4abc69176d4fef4574c3820949847f7dd3d679aee0ee4d225e2e",
+      "reviewHash": "361dcb285e49c7e2be4d6dc14d7b31fb137d6b48a6c45adc47ed6d58c4fe5a73",
+      "model": "gpt-6-luna",
+      "promptId": "luna6-tuned-v1",
+      "promptFingerprint": "66081629022aa75fa117d16c3dbe3ad729f170c6d440daa613b2d82dcf77554c",
+      "reviewMethod": "agent",
+      "accept": 14,
+      "needsWork": 4,
+      "allRepeatsAcceptedCases": 4,
+      "mixedDecisionCases": 2,
+      "sensitivityExcludingHoevenAndWeather": {
+        "accept": 12,
+        "total": 12
+      },
+      "failureCodeCounts": {
+        "weak-equivalent": 1,
+        "sense-mismatch": 1,
+        "content-translation-error": 2
+      },
+      "inputTokens": 14964,
+      "outputTokens": 3875,
+      "missingUsage": 0,
+      "medianLatencyMs": 1787.5,
+      "maxLatencyMs": 2971,
+      "monetaryCost": null
+    }
+  ],
+  "runtimePromotion": false,
+  "defaultModelChange": false
+}

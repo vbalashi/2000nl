@@ -1,0 +1,605 @@
+{
+  "schemaVersion": "translation-eval-review-v1",
+  "runId": "heldout-luna6-tuned-v2",
+  "reviewer": "Codex primary agent",
+  "method": "agent",
+  "reviewedAt": "2026-10-10T16:30:17.285438+00:00",
+  "manifestHash": "e17b6bbafa1c4abc69176d4fef4574c3820949847f7dd3d679aee0ee4d225e2e",
+  "reviewContext": "Non-blind agent review of all frozen outputs, not human/independent judgment. Ambiguous hoeven base and weather idiom are identified for sensitivity analysis.",
+  "items": [
+    {
+      "jobId": "duidelijk_ru-1",
+      "responseHash": "7d1e3ef6a577696fbdc1ad9ff9d48d227ec7e66e48f3e894651d4d36573b9710",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Primary и варианты передают понятность/ясность; легко понять, отсутствие путаницы и пример объяснения сохранены. Дополнительный вариант уместен в объяснении, но менее универсален, чем «понятный».",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "понятный",
+          "alternativeTexts": [
+            "ясный",
+            "доходчивый"
+          ],
+          "baseText": "понятный",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "легко понимаемый и не вызывающий путаницы"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Объяснение учителя понятно."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "duidelijk_ru-2",
+      "responseHash": "5bdbd764d0db3a39f062c76fff7e045396711d568d786121e4ae03bee470afcf",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Primary и варианты передают понятность/ясность; легко понять, отсутствие путаницы и пример объяснения сохранены. Дополнительный вариант уместен в объяснении, но менее универсален, чем «понятный».",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "понятный",
+          "alternativeTexts": [
+            "ясный",
+            "доходчивый"
+          ],
+          "baseText": "ясный",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "легко понимаемый и не вызывающий путаницы"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Объяснение учителя понятное."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "duidelijk_ru-3",
+      "responseHash": "15d68da95c3d0691418499224109107843251b5b119a8b760f8a92794378a342",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Primary и варианты передают понятность/ясность; легко понять, отсутствие путаницы и пример объяснения сохранены. Дополнительный вариант уместен в объяснении, но менее универсален, чем «понятный».",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "понятный",
+          "alternativeTexts": [
+            "ясный",
+            "доходчивый"
+          ],
+          "baseText": "ясный",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "легко понимаемый и не вызывающий путаницы"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Объяснение учителя понятное."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "hoeven_ru-1",
+      "responseHash": "56253dbd4a672ea1adf321d038e3408780e0c03e8f1173049ba8cecdc41961b1",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "В заданном meaning отрицание обязанности сохранено в entry и content; пример сегодня не работать точен. Context-free base проверяется отдельно. Исходная формулировка only-with-negation упрощает реальные условия употребления; оценка относительно данного входа, не полная лексикографическая истина. Вариант «не быть должным» неестественен в обычном русском выражении обязанности.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "не быть обязанным",
+          "alternativeTexts": [
+            "не быть должным"
+          ],
+          "baseText": "быть обязанным",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "употребляется только с отрицанием: не быть обязанным что-либо делать"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Тебе не нужно сегодня работать."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "hoeven_ru-2",
+      "responseHash": "cbce7cae5e28ea49ea5453d409f6a491a6e96638fee77d6bb960b6a69ef33e51",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 2,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "sense-mismatch"
+      ],
+      "rationale": "В заданном meaning отрицание обязанности сохранено в entry и content; пример сегодня не работать точен. Context-free base проверяется отдельно. Исходная формулировка only-with-negation упрощает реальные условия употребления; оценка относительно данного входа, не полная лексикографическая истина. Entry утвердил обязанность, хотя выбранное определение и пример выражают её отсутствие. Базовый смысл нельзя переносить в selected entry.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "быть обязанным",
+          "alternativeTexts": [
+            "нужно",
+            "надо"
+          ],
+          "baseText": "быть обязанным",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "употребляется только с отрицанием: не быть обязанным что-либо делать"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Тебе сегодня не нужно работать."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "hoeven_ru-3",
+      "responseHash": "dc73c3019f6ff69d5210602a2e4524821081b812a06ab6c99e296a29eece773e",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "В заданном meaning отрицание обязанности сохранено в entry и content; пример сегодня не работать точен. Context-free base проверяется отдельно. Исходная формулировка only-with-negation упрощает реальные условия употребления; оценка относительно данного входа, не полная лексикографическая истина.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "не быть обязанным",
+          "alternativeTexts": [
+            "не нужно"
+          ],
+          "baseText": "быть обязанным",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "употребляется только с отрицанием: не быть обязанным что-либо делать"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Тебе сегодня не нужно работать."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "vriendelijk_en-1",
+      "responseHash": "e39ff30f41f72f3b9125863372dda263e7cd01f9130f947da83626047a512137",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Friendly и варианты выражают приятное доброжелательное общение; определение и пример соседа точны.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "friendly",
+          "alternativeTexts": [
+            "kind",
+            "amiable"
+          ],
+          "baseText": "friendly",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "kind and pleasant in the way one interacts with other people"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "The neighbor is always friendly to us."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "vriendelijk_en-2",
+      "responseHash": "df74eac3908a15d543a3eefaed1d60f871f882527a4c3a72e824071e59c76195",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Friendly и варианты выражают приятное доброжелательное общение; определение и пример соседа точны.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "friendly",
+          "alternativeTexts": [
+            "pleasant",
+            "amiable"
+          ],
+          "baseText": "friendly",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "kind and pleasant in dealing with other people"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "The neighbor is always friendly to us."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "vriendelijk_en-3",
+      "responseHash": "32cc6087d54605abe726afbe46d7b847b235093ac3b036ea059c58b0cca389cf",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Friendly и варианты выражают приятное доброжелательное общение; определение и пример соседа точны.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "friendly",
+          "alternativeTexts": [
+            "amiable",
+            "pleasant"
+          ],
+          "baseText": "friendly",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "kind and pleasant in one’s dealings with other people"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "The neighbor is always friendly to us."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "arm_ru-1",
+      "responseHash": "c7b09eb435940a99ac4eb637f0156f939c4ed38b8169de3d7a4aeafc4264d053",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Рука передаёт часть тела, варианты не нужны; границы shoulder/hand переданы как плечо/кисть, пример сумки на руке точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "рука",
+          "alternativeTexts": [],
+          "baseText": "рука",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "часть тела между плечом и кистью"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Она несёт сумку на руке."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "arm_ru-2",
+      "responseHash": "5872b0cf0630131699a3874412277c53371b8735a6c6b70fbe5edaf62617b3ef",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Рука передаёт часть тела, варианты не нужны; границы shoulder/hand переданы как плечо/кисть, пример сумки на руке точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "рука",
+          "alternativeTexts": [],
+          "baseText": "рука",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "часть тела между плечом и кистью руки"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Она несёт сумку, перекинув её через руку."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "arm_ru-3",
+      "responseHash": "b7dfb4f6b6e029f6337f05c38bd3a28ee5b881ae33e1f622a1d63a574fa166e3",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Рука передаёт часть тела, варианты не нужны; границы shoulder/hand переданы как плечо/кисть, пример сумки на руке точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "рука",
+          "alternativeTexts": [],
+          "baseText": "рука",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "часть тела между плечом и кистью"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Она несёт сумку на руке."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "twaalf_ru-1",
+      "responseHash": "c61049e17eed05a4d4ce2148e6cf0ca7a21498644c1ed493b6390e58751cd199",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Двенадцать и границы одиннадцать/тринадцать верны; пустой список оправдан, пример класса точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "двенадцать",
+          "alternativeTexts": [],
+          "baseText": "двенадцать",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "число после одиннадцати и перед тринадцатью"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "В классе двенадцать учеников."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "twaalf_ru-2",
+      "responseHash": "bf2109e2788833fe478a3b7b3e07370e97c0cfb3b7fc0bc8da941cc3ba038892",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Двенадцать и границы одиннадцать/тринадцать верны; пустой список оправдан, пример класса точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "двенадцать",
+          "alternativeTexts": [],
+          "baseText": "двенадцать",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "число после одиннадцати и перед тринадцатью"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "В классе двенадцать учеников."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "twaalf_ru-3",
+      "responseHash": "6c2132302d3768bbf405c4a31b0a3c21bae68f3f9a2d282d36f69101969be3f2",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Двенадцать и границы одиннадцать/тринадцать верны; пустой список оправдан, пример класса точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "двенадцать",
+          "alternativeTexts": [],
+          "baseText": "двенадцать",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "число после одиннадцати и перед тринадцатью"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "В классе двенадцать учеников."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "idiom_weather_en-1",
+      "responseHash": "e2e432315d0ee1ce99f8dda0ca3a943cf970116326d9b4183b5fedc3ff54a516",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Самостоятельного entry нет согласно idiom-only контракту (base неприменим, нейтральные 5). Идиома и объяснение передают продолжение действий в плохую погоду. Through thick and thin обобщает трудности и теряет явно заданную погоду. По этой source explanation нужен погодный эквивалент; спорную широту идиомы учитывать в sensitivity-разборе.",
+      "observedResult": {
+        "entryTranslation": null,
+        "contentTranslations": [
+          {
+            "fieldId": "idiom:0",
+            "text": "through thick and thin"
+          },
+          {
+            "fieldId": "idiom:0:explanation",
+            "text": "even when the weather is bad, without giving up"
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "idiom_weather_en-2",
+      "responseHash": "1f7673b4d5201123776161597e4decdde91bfa0098ab454841835ca65fb46c3e",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Самостоятельного entry нет согласно idiom-only контракту (base неприменим, нейтральные 5). Идиома и объяснение передают продолжение действий в плохую погоду.",
+      "observedResult": {
+        "entryTranslation": null,
+        "contentTranslations": [
+          {
+            "fieldId": "idiom:0",
+            "text": "through all weathers"
+          },
+          {
+            "fieldId": "idiom:0:explanation",
+            "text": "even when the weather is bad, without giving up"
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "idiom_weather_en-3",
+      "responseHash": "bb28681047f67ca100295cb6dc9e956ea10424b7a66a5188c01f5b41248b3fb3",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Самостоятельного entry нет согласно idiom-only контракту (base неприменим, нейтральные 5). Идиома и объяснение передают продолжение действий в плохую погоду. Through thick and thin обобщает трудности и теряет явно заданную погоду. По этой source explanation нужен погодный эквивалент; спорную широту идиомы учитывать в sensitivity-разборе.",
+      "observedResult": {
+        "entryTranslation": null,
+        "contentTranslations": [
+          {
+            "fieldId": "idiom:0",
+            "text": "through thick and thin"
+          },
+          {
+            "fieldId": "idiom:0:explanation",
+            "text": "even when the weather is bad, without giving up"
+          }
+        ]
+      }
+    }
+  ]
+}

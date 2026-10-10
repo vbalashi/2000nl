@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "translation-eval-comparison-v1",
+  "reviewStatus": "automatic-checks-only",
+  "humanApproved": false,
+  "comparisonKey": "966a8f5202037878f8c3cb3ca0717a8a49cba5c65f4fa47cc763593b4091ddbe",
+  "runs": [
+    {
+      "runId": "heldout-gpt41-baseline-v2",
+      "manifestHash": "2d729544484d13f343ed3d2435cf8ad7e06386feef67e1017b0c5bbcc87aaf03",
+      "model": "gpt-4.1",
+      "settings": {
+        "temperature": 0
+      },
+      "promptId": "dictionary-meaning-v3",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "summary": {
+        "planned": 18,
+        "ready": 18,
+        "hardFailures": 0,
+        "lexicalReviewRequired": 3,
+        "withUsefulAlternatives": 9,
+        "inputTokensKnown": 13326,
+        "outputTokensKnown": 2106,
+        "missingUsage": 0,
+        "medianLatencyMs": 1464,
+        "maximumLatencyMs": 3194,
+        "monetaryCost": null
+      }
+    },
+    {
+      "runId": "heldout-gpt41-tuned-v2",
+      "manifestHash": "1065b09f76dd23e29942b685887a6b36d9cdf3bb555d48ac29c2aa97bd136682",
+      "model": "gpt-4.1",
+      "settings": {
+        "temperature": 0
+      },
+      "promptId": "gpt41-tuned-v2",
+      "promptFingerprint": "61810bb0dabaf89705052ca54c9e0cca02884eb6e54230d5f6b8f02b1858b2c0",
+      "summary": {
+        "planned": 18,
+        "ready": 18,
+        "hardFailures": 0,
+        "lexicalReviewRequired": 2,
+        "withUsefulAlternatives": 9,
+        "inputTokensKnown": 16890,
+        "outputTokensKnown": 1959,
+        "missingUsage": 0,
+        "medianLatencyMs": 1455,
+        "maximumLatencyMs": 2055,
+        "monetaryCost": null
+      }
+    }
+  ],
+  "caveats": [
+    "Development results are not held-out validation",
+    "One draw does not establish model reliability",
+    "No verified Azure tariff; monetary cost is unknown",
+    "No automatic production promotion"
+  ]
+}
