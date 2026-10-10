@@ -162,3 +162,5 @@
 - [2026-10-10: читатели до отбора статей](2026-10-10-44-reader-profiles-before-editorial-selection.md)
 
 - [2026-10-10: основной читатель и преподавательские подборки](2026-10-10-45-primary-reader-and-teacher-lists.md)
+
+- [2026-10-10: brainstorm тем под читателей](2026-10-10-46-reader-article-brainstorm.md)
