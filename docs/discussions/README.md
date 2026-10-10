@@ -94,3 +94,5 @@
 - [2026-10-10: структура стратегии и планов](2026-10-10-10-strategy-planning-structure.md)
 
 - [2026-10-10: студия и два портфолио](2026-10-10-11-studio-scope-and-author-portfolios.md)
+
+- [2026-10-10: продуктовый фокус и консультации](2026-10-10-12-product-focus-and-consulting.md)
