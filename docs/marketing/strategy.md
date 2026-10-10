@@ -68,3 +68,7 @@
 - [Редакционная сотня](../discussions/2026-10-10-01-editorial-free-100.md), [упражнения и списки](../discussions/2026-10-10-02-free-100-exercises-and-subsets.md), [перевод и аудио](../discussions/2026-10-10-03-free-100-translation-and-audio.md)
 - [Язык и профессиональный бренд](../discussions/2026-10-10-04-editorial-language-and-personal-brand.md), [общий блог](../discussions/2026-10-10-05-dilumeo-shared-blog.md), [исправление имени и ритм](../discussions/2026-10-10-06-brand-correction-and-cadence.md)
 - [Словарь перед запуском](../discussions/2026-10-10-07-owned-dictionary-and-paid-beta.md), [условия беты](../discussions/2026-10-10-08-beta-capacity-and-standard-plans.md), [плавное привлечение](../discussions/2026-10-10-09-gradual-organic-launch.md)
+
+## Масштаб студии и личные портфолио — принято
+
+Студия разных цифровых продуктов; обучение — первое основное направление. У Николая и Олеси самостоятельные личные бренды: медиа должно накапливать материалы-портфолио и поддерживать карьерные возможности обоих. Профессиональный опыт показываем кратко и выборочно. [Основание](../discussions/2026-10-10-11-studio-scope-and-author-portfolios.md), [анализ опыта](author-positioning-notes.md).
