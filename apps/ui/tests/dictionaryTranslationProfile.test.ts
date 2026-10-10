@@ -40,6 +40,6 @@ describe("one coherent dictionary translation profile",()=>{
   const messages=buildDictionaryMeaningTranslationMessages(request);expect(messages[0].content).toBe(system.trim());expect(JSON.parse(messages[1].content).instructions).toBe(user.trim());
   const mock=vi.fn(async(_url: unknown, _init?: RequestInit)=>new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify({entryTranslation:{primaryText:"проверка",alternativeTexts:[],baseText:"проверка",note:null},contentTranslations:[{fieldId:"definition",text:"проверка"}]})}}],usage:{prompt_tokens:10,completion_tokens:20}}),{status:200}));vi.stubGlobal("fetch",mock);vi.spyOn(console,"info").mockImplementation(()=>{});
   const {translator}=createTranslator(loadTranslationConfigFromEnv({purpose:"dictionary"}));await translator.translateDictionaryMeaning!(request);const body=JSON.parse(mock.mock.calls[0][1]!.body as string);
-  expect(body).toMatchObject({model:"gpt-6-luna",reasoning_effort:"high",max_completion_tokens:2200,messages});expect(body).not.toHaveProperty("temperature");expect(body).not.toHaveProperty("max_tokens");
+  expect(body).toMatchObject({model:"gpt-6-luna",reasoning_effort:"high",max_completion_tokens:2200,response_format:{type:"json_object"},messages});expect(body).not.toHaveProperty("temperature");expect(body).not.toHaveProperty("max_tokens");
  });
 });

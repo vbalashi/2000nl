@@ -22,7 +22,7 @@ export function dictionaryTranslationProfile() {
     systemFile: id === "legacy" ? "openai_dictionary_meaning_system_v1.txt" : `openai_dictionary_meaning_${prompt}_system.txt`,
     userFile: id === "legacy" ? "openai_dictionary_meaning_user_v1.txt" : `openai_dictionary_meaning_${prompt}_user.txt`,
     requestSettings: luna
-      ? { reasoning_effort: id === "luna6" ? "high" as const : "low" as const, max_completion_tokens: 2200 }
+      ? { reasoning_effort: id === "luna6" ? "high" as const : "low" as const, max_completion_tokens: 2200, ...(id !== "luna6-v5" ? { response_format: { type: "json_object" as const } } : {}) }
       : { temperature: 0, max_tokens: 2200 },
   };
 }

@@ -18,4 +18,6 @@ Provider diagnostics include stage, reason, model, HTTP status, request ID, dura
 
 Known limit: provider retries may outlast the existing client timeout and pending-claim lease. This release does not redesign those deadlines; inspect request IDs before manually repeating an apparently stalled translation. Retries address transport failures, not semantic mistakes.
 
+New literal-enabled profiles explicitly request JSON-object response mode, matching the evaluated provider payload; v5 rollback settings stay unchanged.
+
 Luna v8 adds optional `literalText` on idiom content translations in the same request. Missing/null literal remains valid for prior profiles and non-useful images. The stored JSON overlay carries `meanings[i].idioms[j].literalText`; no SQL migration is required. Public node translations expose it only alongside the ready, fresh natural idiom translation. Training and Library use the shared article renderer and common visibility switch. There is no second enrichment request or bulk refresh. Select `luna6-v5` for the immediate pre-literal prompt rollback.
