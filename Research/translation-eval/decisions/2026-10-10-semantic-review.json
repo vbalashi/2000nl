@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "translation-eval-decision-v1",
+  "status": "agent-reviewed-research-candidate",
+  "runtimePromotion": false,
+  "defaultModelChange": false,
+  "reviewMethod": "agent",
+  "independentBlindReview": false,
+  "reviewedResponses": 54,
+  "accept": 49,
+  "needsWork": 5,
+  "prompt": "dictionary-meaning-v3",
+  "decision": "expand-validation-before-promotion",
+  "modelDecision": "retain-gpt41-default",
+  "reason": "Useful same-sense alternatives observed, but each model has one validation response needing revision; no verified Azure tariffs.",
+  "source": "SEMANTIC-REVIEW-2026-10-10.md"
+}
