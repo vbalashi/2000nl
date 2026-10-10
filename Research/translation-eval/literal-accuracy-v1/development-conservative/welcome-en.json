@@ -1,0 +1,75 @@
+{
+  "id": "welcome-en",
+  "inputHash": "26372ee63123deb364e50980eb54703f8395e25b8686ed10bf8adf46b32f20a3",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "welcome",
+      "alternativeTexts": [],
+      "baseText": "welcome",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "welcome"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "a welcome from the heart",
+        "text": "give someone a warm welcome"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "greet someone warmly upon arrival"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"welcome\",\"alternativeTexts\":[],\"baseText\":\"welcome\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"welcome\"},{\"fieldId\":\"idiom:0\",\"text\":\"give someone a warm welcome\",\"literalText\":\"a welcome from the heart\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"greet someone warmly upon arrival\"}]}",
+  "responseHash": "b7bdea6dcae8b1ae8469ef0d554fc984de1508fb7e562724ca4fcb655cfb17b6",
+  "usage": {
+    "completion_tokens": 1504,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1400,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 107,
+      "engine_ttlt_ms": 9580,
+      "pre_inference_ms": 48,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 296,
+      "service_ttlt_ms": 9766,
+      "user_visible_ttft_ms": 248
+    },
+    "prompt_tokens": 1721,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 3225
+  },
+  "elapsedMs": 10182,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "af66c06b-9f89-4c78-bba6-a2e4da6c7920",
+      "inputTokens": 1721,
+      "outputTokens": 1504,
+      "event": "translation_attempt",
+      "correlationId": "cced502b-5090-48ef-885c-3d57fe925b71",
+      "attempt": 1,
+      "elapsedMs": 10182,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

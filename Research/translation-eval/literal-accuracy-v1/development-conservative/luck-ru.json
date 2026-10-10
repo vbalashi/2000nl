@@ -1,0 +1,75 @@
+{
+  "id": "luck-ru",
+  "inputHash": "54cb353acce7a3728bbaebde9879434e03ab2ffebb3200e392d5d4673ae5bae2",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "успех",
+      "alternativeTexts": [],
+      "baseText": "успех",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "благоприятный результат"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "Удачи!"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "пожелать кому-либо благополучного исхода"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"успех\",\"alternativeTexts\":[],\"baseText\":\"успех\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"благоприятный результат\"},{\"fieldId\":\"idiom:0\",\"text\":\"Удачи!\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"пожелать кому-либо благополучного исхода\"}]}",
+  "responseHash": "8394b36a24c7f0b0712625bc10d62fcf03b3ecab180d95c4eebe27a8ee6fb75e",
+  "usage": {
+    "completion_tokens": 379,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 278,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 128,
+      "engine_ttlt_ms": 2406,
+      "pre_inference_ms": 70,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 335,
+      "service_ttlt_ms": 2608,
+      "user_visible_ttft_ms": 265
+    },
+    "prompt_tokens": 1716,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 491,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2095
+  },
+  "elapsedMs": 2948,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "964dcef1-181a-4702-9391-33c0026306d1",
+      "inputTokens": 1716,
+      "outputTokens": 379,
+      "event": "translation_attempt",
+      "correlationId": "7ea74395-f85d-4b0f-b1bc-2016a020998a",
+      "attempt": 1,
+      "elapsedMs": 2948,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "welcome-en",
+  "inputHash": "1db7e9ee25ec5020c588d2d8d11ff2c3b55b0fa4888e460d11aa8fa1b201dba1",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "welcome",
+      "alternativeTexts": [],
+      "baseText": "welcome",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "gladly received"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "to welcome someone warmly"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to greet someone warmly on arrival"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"welcome\",\"alternativeTexts\":[],\"baseText\":\"welcome\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"gladly received\"},{\"fieldId\":\"idiom:0\",\"text\":\"to welcome someone warmly\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to greet someone warmly on arrival\"}]}",
+  "responseHash": "a69448ac8742df518e8c23888d6ca37c440a1fe8b4120d9dea03d7647a897c2a",
+  "usage": {
+    "completion_tokens": 950,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 852,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 96,
+      "engine_ttlt_ms": 5562,
+      "pre_inference_ms": 94,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 331,
+      "service_ttlt_ms": 5798,
+      "user_visible_ttft_ms": 237
+    },
+    "prompt_tokens": 1567,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2517
+  },
+  "elapsedMs": 6220,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "41c82c20-2be0-43f8-8d9e-e30cd455e972",
+      "inputTokens": 1567,
+      "outputTokens": 950,
+      "event": "translation_attempt",
+      "correlationId": "7601573a-1e62-4699-8ad2-5fd2ed741410",
+      "attempt": 1,
+      "elapsedMs": 6220,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

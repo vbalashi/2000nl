@@ -1,0 +1,66 @@
+{
+  "id": "poor-en",
+  "inputHash": "7a3d17262dd5720c1cf103b5b69164007b873c98495db494905031b9536fdcf9",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "poor",
+      "alternativeTexts": [],
+      "baseText": "poor",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "having little money"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"poor\",\"alternativeTexts\":[],\"baseText\":\"poor\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"having little money\"}]}",
+  "responseHash": "d72e6f55ba49b50ff084d0c5bda9aa293fddc6e0541e8ed91a11cc8194701b0f",
+  "usage": {
+    "completion_tokens": 155,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 105,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 107,
+      "engine_ttlt_ms": 1046,
+      "pre_inference_ms": 77,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 330,
+      "service_ttlt_ms": 1262,
+      "user_visible_ttft_ms": 253
+    },
+    "prompt_tokens": 1517,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 446,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1672
+  },
+  "elapsedMs": 1578,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "b73472e0-b113-42bc-9e55-113aefe9c902",
+      "inputTokens": 1517,
+      "outputTokens": 155,
+      "event": "translation_attempt",
+      "correlationId": "c996cf97-4184-4814-8603-0be96d62da4f",
+      "attempt": 1,
+      "elapsedMs": 1577,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

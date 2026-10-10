@@ -1,0 +1,75 @@
+{
+  "id": "leg-en",
+  "inputHash": "3567466bf3790d75d2c54e5a42897a9ef1a5897ab99fdaf821455066661adb0b",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "leg",
+      "alternativeTexts": [],
+      "baseText": "leg",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a body part used for standing and walking"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to step out of bed with the wrong leg",
+        "text": "to get out of bed on the wrong side"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to be in a bad mood from the beginning of the day"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"leg\",\"alternativeTexts\":[],\"baseText\":\"leg\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a body part used for standing and walking\"},{\"fieldId\":\"idiom:0\",\"text\":\"to get out of bed on the wrong side\",\"literalText\":\"to step out of bed with the wrong leg\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to be in a bad mood from the beginning of the day\"}]}",
+  "responseHash": "06bf689534505b29622801111752756f3c2c3d176c3b3af26dac506021a0583e",
+  "usage": {
+    "completion_tokens": 896,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 776,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 99,
+      "engine_ttlt_ms": 5216,
+      "pre_inference_ms": 46,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 310,
+      "service_ttlt_ms": 5409,
+      "user_visible_ttft_ms": 264
+    },
+    "prompt_tokens": 1724,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 503,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2620
+  },
+  "elapsedMs": 5922,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "1d888f3c-ecd9-42cf-ab90-45f24ae144e2",
+      "inputTokens": 1724,
+      "outputTokens": 896,
+      "event": "translation_attempt",
+      "correlationId": "f63f7ea7-f750-4241-a9f7-ba56fbd25982",
+      "attempt": 1,
+      "elapsedMs": 5922,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

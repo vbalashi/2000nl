@@ -1,0 +1,66 @@
+{
+  "id": "anger-en",
+  "inputHash": "2a01e498e98e08af3997c834dd58d7eefec951554c28cff5c575c7819aefaf30",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "indignant",
+      "alternativeTexts": [],
+      "baseText": "angry",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Annoyed because something is unfair."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"indignant\",\"alternativeTexts\":[],\"baseText\":\"angry\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Annoyed because something is unfair.\"}]}",
+  "responseHash": "7e3015ef802931852ec5090ca02bda2ba06c063e003511072bfbef2d2651ba7e",
+  "usage": {
+    "completion_tokens": 390,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 333,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 104,
+      "engine_ttlt_ms": 2461,
+      "pre_inference_ms": 77,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 317,
+      "service_ttlt_ms": 2676,
+      "user_visible_ttft_ms": 240
+    },
+    "prompt_tokens": 1678,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 453,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2068
+  },
+  "elapsedMs": 3058,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "7a2df52f-97b3-40fb-921b-fdbc0453fbde",
+      "inputTokens": 1678,
+      "outputTokens": 390,
+      "event": "translation_attempt",
+      "correlationId": "c5d58b8f-5839-4c4c-a386-e6bfac69014a",
+      "attempt": 1,
+      "elapsedMs": 3058,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,383 @@
+[
+  {
+    "id": "cat-ru",
+    "inputHash": "6b9a4127636e96e62956967094d96d0f8225547acca6014043366ed899bf2a9f",
+    "responseHash": "07eab251ba751668f1dd65fa2fbb02a2c010edfde56f27c72f8667f7404afaa6",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "category": "natural-grammar",
+        "field": "idiom:0:explanation",
+        "explanation": "Выжидать, как будет развиваться is awkward; needs an observing/seeing verb or a different construction."
+      }
+    ],
+    "wholeCardAccepted": false
+  },
+  {
+    "id": "cat-en",
+    "inputHash": "61f3d9b29aecb32d79cb3ba9e763b3ca88acf380e8a3321f8f23c5f4eca34787",
+    "responseHash": "585a3139f82e3da59263e000076da5339b32da5230cd342aad19900250ce9442",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "cow-ru",
+    "inputHash": "ac2b4367cadf99eee1b545e04f9ce693ae159bb242e3e03b1e24eaf63afb9273",
+    "responseHash": "7ce7650dcbb44f3d0814073d4d26d9ac6b24ac6f1764bf0fcf9025b94e49c093",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "cow-en",
+    "inputHash": "c5a0fcce835937dc9dc5117eb854f40129be6faec73ae3bcc7202ccd247a92d5",
+    "responseHash": "beb79aa3f03e6b71763210a8d990444cfc5b80f752c64ae464ddda48c39f1da7",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "monkey-ru",
+    "inputHash": "e4356eafb67be5b81da899bd2d838f7e4f2a32a345fda6435213a5dda7d2df89",
+    "responseHash": "36425500e76b5532eeed122faefb8dd2b2bba5438a4502331b7d93a203722800",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "monkey-en",
+    "inputHash": "4e15a779f87815bd385de997a98e54e93a9e79c7a67fd94cd5007b3b3a4e583e",
+    "responseHash": "aa377c35975d6254746d52060d9220f3dd95422dddacd6dd7a4f679178e3db7a",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "butter-ru",
+    "inputHash": "359835e64272f869eb5087d31f5c871e1bb52aa67d497c4bbb62881ba8ec5d9b",
+    "responseHash": "53ee79738bd971d510ba02d73118b6d3c091d0806a4a31f8cfa06d98c527302b",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "butter-en",
+    "inputHash": "73065476270c385670df31dab9989c1d743a0946e2ec8f8f059f9c67b354eed9",
+    "responseHash": "35752e6a0dda9033878feed58c6c8a486588352af749abf7996538d2bc3eccb8",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "door-ru",
+    "inputHash": "6074557d356e79651ff94f7f3194dd7f5905c9b514e8ae5b38f5eaa34948cdde",
+    "responseHash": "c3ec1cac8f915e505873814801c28bdbc7a8509dfeb476113977884e274f0c2f",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "door-en",
+    "inputHash": "0e247c1eb7def17eb4bd50b2c251334cfdf9f7dc7f531437a4adf05e8d54f661",
+    "responseHash": "2b7f30ea40224cc8db9cffebca2fd0d002de2edb19f1658b5bf2efea2d406fc0",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "hare-ru",
+    "inputHash": "a9241f156bd1ad2d9b512d216112f2aec89b5063df69219c6e7873f6e689f637",
+    "responseHash": "58af16e564f8e125978ae780334edc2311f4e7bfa333917364472b0c5e981401",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "hare-en",
+    "inputHash": "7a67f2446a5f0ac5eee4cf1e1d160c12a9fad9a2b4521077dd6827471fa994c0",
+    "responseHash": "ca13fbc1d55fdd83c3387def35898268709ff5fc0c2a6fbdfcb0fa8efb4825c7",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "cheese-ru",
+    "inputHash": "3cb904c09ce8d8a6487df41198bc2c7d13d04b97e0ef8bebd00d2b813ff18f47",
+    "responseHash": "25c7de040701984b603f588482b5dd420aad0e86731132804d5a110a9c76b6ca",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "cheese-en",
+    "inputHash": "adaff6e4de53f8fa4fe449aa5888f7f8437663db3c56f24c10c39799c471645b",
+    "responseHash": "21b17574814cef93de8f58a6d11964b99bf16facfed17a3c831ae9304259ac2b",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "nose-ru",
+    "inputHash": "6dc0cbe0d66a8b64ce1ce5c2ad91793c21aabefa9595dced0d84185bb700cd56",
+    "responseHash": "239f09605411d646d545e6bd8544ba3dffee03ae4f0e48359cb04ea251d0a4ca",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "nose-en",
+    "inputHash": "1cae80c61073a20f50f4696ced5096afec510add8e94f0a38d89638d82c13640",
+    "responseHash": "d43331153ca2a6f6e8689bd2e1ce95bf32a29c362afef8381d997d1b3a51f657",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "lamp-ru",
+    "inputHash": "3acabb5559c2e9148206f28dc391a4401fb494f247f0590e76931e22849a02d2",
+    "responseHash": "3532c944f58d143af39e1f15e26dd0ff17747dc429759312990e4ca99ed01993",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "lamp-en",
+    "inputHash": "748fca4426a9be3adfd694d18ad29888f0dfeb331b4f74e684477781b08ddefc",
+    "responseHash": "455ad1d1bd5dac95421085f8b2344e10453034783894a7112b20e62a686f98f5",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "category": "literal-grammar",
+        "field": "idiom:0.literalText",
+        "explanation": "Walk against the lamp is an awkward calque for bumping into it."
+      }
+    ],
+    "wholeCardAccepted": false
+  },
+  {
+    "id": "boat-ru",
+    "inputHash": "7b2d5518253a5e357083786418fdefe5c7cc984fab738debf9a3ffc04e5c602d",
+    "responseHash": "ced37a51d9e1bc3b4e02418351322fcd768532821eb9502148faa5e48037cc1e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "boat-en",
+    "inputHash": "7dbef19030f542153daf5d0015b427d1fc11dbf380c62a68e7708ad1389789ce",
+    "responseHash": "a0524e03cc4a56968197ae1b1355e8be0566d7a60d7d1a220470526a92d9c9ee",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "rose-ru",
+    "inputHash": "11c96900837120601ed2d1f8f8dabdbfdadfab9c3e3aaf35fe1847fdf8890e73",
+    "responseHash": "0b72b635cab4e9553def57ec26d51a222a8d1d97fb59cc82772edd95c4443b9c",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "rose-en",
+    "inputHash": "99201597bf9456fbdd9ac42eedf8548f5c131e3e320bf2d56135a37c0cf71a48",
+    "responseHash": "b45c8d402009da1626f48c31eb880e05451741a4e5051c55329d2e655e1e7d4d",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "leg-ru",
+    "inputHash": "5cea14c15b3548e5114a0bb0ee09394271a083f28036cc68f819ee4e5995e6f7",
+    "responseHash": "0be51b9b81a70352983ae1721d9c3c1e253f5806e08aa711e34606275b3ee9b1",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "leg-en",
+    "inputHash": "3567466bf3790d75d2c54e5a42897a9ef1a5897ab99fdaf821455066661adb0b",
+    "responseHash": "06bf689534505b29622801111752756f3c2c3d176c3b3af26dac506021a0583e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "horse-ru",
+    "inputHash": "f7198fb8a87e081d3c0b0777ba2b30a8c208c330a47b8f824043e325f567c77f",
+    "responseHash": "1f9e6961730dc7fd22da5bc3909454bcc0a2b2b544c5d1aa2c517166572d7536",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "category": "literal-usefulness",
+        "field": "idiom:0.literalText",
+        "explanation": "Natural cart-before-horse already conveys the same ordering image."
+      }
+    ],
+    "wholeCardAccepted": false
+  },
+  {
+    "id": "horse-en",
+    "inputHash": "8ddc3da1fa87ce778510aab0a0e5c20bcfa8db5631da0efb2f59503cacd954ab",
+    "responseHash": "0ec0e6328d75d29a7b63a83591045c7b47e9f0290e878d841827797d4c330219",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "ice-ru",
+    "inputHash": "52293fb4f015c6fcffd493e7d7fd960fcb2a41f46825f6177a2dd929d422b155",
+    "responseHash": "af797dd904052f716fa310218eee5d59846a658e5236856e3a18bd71083bb57d",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "ice-en",
+    "inputHash": "77b0a313cc12bf68b9693aa1db466315f0a216986407a5d871fb5f30a122d6f1",
+    "responseHash": "147f292ea29c0356380ee1dd8cbc72e40a22c033ebb364965d6407c2458e1602",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "thanks-ru",
+    "inputHash": "de731ba6241a27c8b979730463f76084522c225e6f834c6a9fc6b1c88662dcf0",
+    "responseHash": "e7ac6be8370f8bd00ddb3faeb3f166caf1dd928cf864eee7a5d2f46eb1763807",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "thanks-en",
+    "inputHash": "4d6eba08fd0e89389c9d4c410a4845ed13580818aec5c2a25a1d8f51ba70155b",
+    "responseHash": "2fd04f8f8afbef3227a054382b9d2034ef55a3ea26789f910ff78d6165452f3c",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "luck-ru",
+    "inputHash": "fc319a75ade0296b1066e6fe9b8642b12da23b93f7d6d43ef9704d634d21a262",
+    "responseHash": "8394b36a24c7f0b0712625bc10d62fcf03b3ecab180d95c4eebe27a8ee6fb75e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "luck-en",
+    "inputHash": "b06dcb2b615d2098f1ae6f1d94d672a88ebbdf6e416d7753b0c09f63b95482ef",
+    "responseHash": "5d5acab878ca6cb700ec12b3acf5ec47c65857d676260ed6b352b697fa007a18",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "welcome-ru",
+    "inputHash": "8e4d0fde4780606f2109ef7837c81e83ce4d1a1ce05174488fcb4285cc8515f2",
+    "responseHash": "bda36f0340e8fefb13ff3789b99553a99c605415c6ab3265baeb408e007a4228",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "welcome-en",
+    "inputHash": "636c26ab2fc3f409de25f6fa6bc2261c2ee1b69d69dedd771b63f2abd16102dc",
+    "responseHash": "ffd185bedf11362e30fd63dff164f15ea30dcb02ced600426dea1b89e7620420",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "coffee-ru",
+    "inputHash": "fd9a6b68c8af11fdae7f5814e130c9d0342a33745b44c9834be2f63ef7d3d81d",
+    "responseHash": "e383296776f2af00646794e158872175ef93fc34ad0fbd5ae3dadb38b7ecaae3",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "coffee-en",
+    "inputHash": "dc38f22eb66ca64ae78afe3e4839bbbfb32c5920ae3d3bcb12492442dd933462",
+    "responseHash": "ffba1891575a00759aed2e4e60c07f394a1e7f70c72b735f466d316284b94d7e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "anger-ru",
+    "inputHash": "f6835371e603cfc2e7447cb69814349de1abd78011d810faa7e29679c0860887",
+    "responseHash": "0d83623fa14a2ef41b9210d31fc3ddc77b390a21e6bd40f7da3a46c834f1b20e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "anger-en",
+    "inputHash": "5a1d1ca4bd955ee31328a25f2a35f65fcb88ee08c3c525bd465ef28435b207f1",
+    "responseHash": "fae698fdefdbd6ae40d3eadbed37948c890672f2aa9129081a6d7bef32163781",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "poor-ru",
+    "inputHash": "878e0b78afe4d17b23f972ee1c6028a9a080e19fa60205587ba43a2016eca81b",
+    "responseHash": "b24070d4a46c822910b547f4d69b5424b4e787d538cd0ee0a070522101f30eff",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  },
+  {
+    "id": "poor-en",
+    "inputHash": "5a0c3418dd32fbeef5682ba8093fa007fd633a4a818227ed06453c0ec657684d",
+    "responseHash": "d72e6f55ba49b50ff084d0c5bda9aa293fddc6e0541e8ed91a11cc8194701b0f",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "findings": [],
+    "wholeCardAccepted": true
+  }
+]

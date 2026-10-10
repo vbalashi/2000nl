@@ -1,0 +1,75 @@
+{
+  "id": "coffee-en",
+  "inputHash": "32ec1891f800e997e4726228de2978afce588f07e257bfdbb5fc22a6a3092ef9",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "coffee",
+      "alternativeTexts": [],
+      "baseText": "coffee",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a warm drink made from ground coffee beans"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "drink a little coffee"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to drink a small amount of coffee"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"coffee\",\"alternativeTexts\":[],\"baseText\":\"coffee\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a warm drink made from ground coffee beans\"},{\"fieldId\":\"idiom:0\",\"text\":\"drink a little coffee\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to drink a small amount of coffee\"}]}",
+  "responseHash": "6b4d342dfc838f0665123e796980464b00f0442583beb75c0ee30472b66afa0a",
+  "usage": {
+    "completion_tokens": 568,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 472,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 105,
+      "engine_ttlt_ms": 3361,
+      "pre_inference_ms": 71,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 316,
+      "service_ttlt_ms": 3567,
+      "user_visible_ttft_ms": 245
+    },
+    "prompt_tokens": 1570,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 499,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2138
+  },
+  "elapsedMs": 3966,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "79ec160f-ad3a-4cb0-92e5-0d3b63beeb6d",
+      "inputTokens": 1570,
+      "outputTokens": 568,
+      "event": "translation_attempt",
+      "correlationId": "41066cf1-070e-4cf8-bd20-1ed76ce6a76e",
+      "attempt": 1,
+      "elapsedMs": 3966,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

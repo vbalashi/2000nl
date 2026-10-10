@@ -1,0 +1,34 @@
+{
+  "selectedVariant": "structure",
+  "selectedAt": "2026-10-10T20:45:02.741113+00:00",
+  "beforeHeldOutCalls": true,
+  "development": [
+    {
+      "run": "development-baseline",
+      "accepted": 36,
+      "total": 40,
+      "serious": 2,
+      "minor": 2,
+      "naturalPrimaryFindings": 1
+    },
+    {
+      "run": "development-structure",
+      "accepted": 37,
+      "total": 40,
+      "serious": 0,
+      "minor": 3,
+      "naturalPrimaryFindings": 1
+    },
+    {
+      "run": "development-conservative",
+      "accepted": 38,
+      "total": 40,
+      "serious": 1,
+      "minor": 1,
+      "naturalPrimaryFindings": 0
+    }
+  ],
+  "reason": "Fewer serious image errors (0 vs2 baseline and1 conservative), no increase in natural/primary finding count vs baseline (1 each). All19 genuinely useful nonshared development images retained. Cat omitted rather than repaired; extra shared/grammar issues remain.",
+  "method": "nonblind agent review, no human approval or statistical claim",
+  "heldOutManifestHash": "4ea4600196ca5cb282ef9904fc1b92711ce432bc92df21482261ab4e586241d7"
+}

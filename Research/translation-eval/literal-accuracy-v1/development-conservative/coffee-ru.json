@@ -1,0 +1,75 @@
+{
+  "id": "coffee-ru",
+  "inputHash": "6eecc4d7e5b75b74788c8b02d649f1324b7a2a0d65cf88e4e35e1a2b650de50b",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "кофе",
+      "alternativeTexts": [],
+      "baseText": "кофе",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "тёплый напиток из молотых кофейных зёрен"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "выпить чашечку кофе"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "выпить небольшое количество кофе"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"кофе\",\"alternativeTexts\":[],\"baseText\":\"кофе\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"тёплый напиток из молотых кофейных зёрен\"},{\"fieldId\":\"idiom:0\",\"text\":\"выпить чашечку кофе\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"выпить небольшое количество кофе\"}]}",
+  "responseHash": "9f2304de07b9808d0e35d7e89bcb0a82f04bd8edfa616ef728cc6ca475fecbb3",
+  "usage": {
+    "completion_tokens": 594,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 483,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 97,
+      "engine_ttlt_ms": 3543,
+      "pre_inference_ms": 77,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 314,
+      "service_ttlt_ms": 3757,
+      "user_visible_ttft_ms": 237
+    },
+    "prompt_tokens": 1724,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 499,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2318
+  },
+  "elapsedMs": 4152,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "85969eb0-1305-47e0-909c-e1dba6a08878",
+      "inputTokens": 1724,
+      "outputTokens": 594,
+      "event": "translation_attempt",
+      "correlationId": "6a839cc3-66bd-406b-bcb6-df9a04cc9692",
+      "attempt": 1,
+      "elapsedMs": 4152,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

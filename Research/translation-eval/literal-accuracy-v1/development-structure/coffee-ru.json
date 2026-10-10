@@ -1,0 +1,75 @@
+{
+  "id": "coffee-ru",
+  "inputHash": "fd9a6b68c8af11fdae7f5814e130c9d0342a33745b44c9834be2f63ef7d3d81d",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "кофе",
+      "alternativeTexts": [],
+      "baseText": "кофе",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "тёплый напиток из молотых кофейных зёрен"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "выпить чашечку кофе"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "выпить немного кофе"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"кофе\",\"alternativeTexts\":[],\"baseText\":\"кофе\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"тёплый напиток из молотых кофейных зёрен\"},{\"fieldId\":\"idiom:0\",\"text\":\"выпить чашечку кофе\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"выпить немного кофе\"}]}",
+  "responseHash": "e383296776f2af00646794e158872175ef93fc34ad0fbd5ae3dadb38b7ecaae3",
+  "usage": {
+    "completion_tokens": 573,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 464,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 162,
+      "engine_ttlt_ms": 3526,
+      "pre_inference_ms": 66,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 367,
+      "service_ttlt_ms": 3730,
+      "user_visible_ttft_ms": 301
+    },
+    "prompt_tokens": 1720,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 499,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2293
+  },
+  "elapsedMs": 4035,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "44293cd5-d330-40b9-bf31-b472ddd91819",
+      "inputTokens": 1720,
+      "outputTokens": 573,
+      "event": "translation_attempt",
+      "correlationId": "7de42be4-9668-4ac2-be59-c36273281a8f",
+      "attempt": 1,
+      "elapsedMs": 4035,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}
