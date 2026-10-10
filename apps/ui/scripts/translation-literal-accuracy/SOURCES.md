@@ -9,3 +9,5 @@ Primary references checked 2026-10-10:
 - F.A. Stoett primary historical collection index: https://www.dbnl.org/tekst/stoe002nede01_01/
 
 A guessed Etymologiebank cat URL was unavailable; no evidence is claimed from it. Cat is an ambiguity/abstention probe, not a demand to invent a specific scene. Moving the observer into the tree or changing out-of to on remains an error if a literal is emitted.
+
+After observing the held-out rain output, the disputed noun was checked against https://onzetaal.nl/schatkamer/lezen/uitdrukkingen/van-de-regen-in-de-drup-raken and Stoett's original https://www.dbnl.org/tekst/stoe002nede01_01/stoe002nede01_01_1992.php . Drup is dripping water/drops; the isolated-drop Russian reading changes the image. This is post-output verification of a lexical fact, not a change to the frozen accuracy criterion or model input.
