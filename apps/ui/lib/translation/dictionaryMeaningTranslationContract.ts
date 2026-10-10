@@ -1,3 +1,4 @@
+import { dictionaryTranslationProfile } from "./dictionaryTranslationProfile";
 import { loadPromptText } from "./prompts/promptLoader";
 import type { OpenAITranslationMessage } from "./openaiTranslationContract";
 import { dictionaryTranslationContext } from "./dictionaryTranslationContext";
@@ -238,7 +239,7 @@ export function buildDictionaryMeaningTranslationMessages(
     {
       role: "system",
       content: loadPromptText(
-        "openai_dictionary_meaning_system_v1.txt",
+        dictionaryTranslationProfile().systemFile,
       ).trim(),
     },
     {
@@ -260,7 +261,7 @@ export function buildDictionaryMeaningTranslationMessages(
           ],
         },
         instructions: loadPromptText(
-          "openai_dictionary_meaning_user_v1.txt",
+          dictionaryTranslationProfile().userFile,
         ).trim(),
       }),
     },

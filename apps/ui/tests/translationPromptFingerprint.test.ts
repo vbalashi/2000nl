@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const prompts = vi.hoisted(() =>
   new Map<string, string>([
@@ -19,7 +19,9 @@ import {
 } from "@/lib/translation/prompts/promptFingerprint";
 
 describe("translation prompt fingerprint isolation", () => {
+  afterEach(() => { vi.unstubAllEnvs(); });
   beforeEach(() => {
+    vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE", "legacy");
     prompts.set("openai_translation_system_v1.txt", "fragment system v1");
     prompts.set("openai_translation_user_instructions_v1.txt", "fragment user v1");
     prompts.set("openai_dictionary_meaning_system_v1.txt", "meaning system v1");

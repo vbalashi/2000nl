@@ -211,12 +211,14 @@ describe("OpenAITranslator", () => {
   let warnSpy: any;
 
   beforeEach(() => {
+    vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE", "legacy");
     fetchMock.mockReset();
     vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     warnSpy?.mockRestore?.();
     vi.unstubAllGlobals();
   });
