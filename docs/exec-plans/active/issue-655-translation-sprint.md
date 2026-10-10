@@ -95,3 +95,21 @@ browser-сценария PASS. 558 сохранённых provider responses; v8
 на основных наборах, один серьёзный literal-image defect, 0 critical. Оценка agent,
 non-blind; человеческое подтверждение и независимая population-оценка отсутствуют.
 Два финальных длинных примера прошли после устранения обрывков optional content.
+
+## Выпуск объединённого этапа2–3
+
+PR#663 (head6ca9e4c90a960d22f14b25a9af0c489a60ac2f9f) объединён в
+34487358d5f78f52330a5ab39b4c902b537e92a5. Deploy38080046000 PASS;
+production0.18.1273 health ok, DB contract222 unchanged. Synthetic provider smoke
+из рабочего контейнера: packaged v8 prompt matches, Luna6/high, strict contract PASS,
+корова + natural idiom + literal line, 5758ms, без DB writes. Reference main synced.
+Общий CI38079318136 на abdfc6d0 PASS; финальная server-only поправка JSON mode
+6ca9e4c9 покрыта повторными69 tests/typecheck/lint, общий duplicate CI ещё выполнялся.
+
+Research branch codex/655-literal-eval сохранена отдельно в draft PR#662,
+head15d3634c, raw evidence commitd7fdff1d. Полный архив604 файлов проверен:
+/Users/khrustal/adhoc/2000nl-research-archives/655-literal-v1/research-15d3634c.tar.
+HTML, README, receipts и screenshot живут вне feature checkout; остановленный
+чистый checkout этапа2–3 подлежит retirement после docs checkpoint. Старый
+research657/PR658 остаётся активным и не затрагивается. Спринт655 открыт:
+далее переводы синонимов/антонимов.
