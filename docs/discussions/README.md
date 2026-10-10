@@ -158,3 +158,5 @@
 - [2026-10-10: первый расчёт семейной цели](2026-10-10-42-family-income-first-calculation.md)
 
 - [2026-10-10: экономическая модель принята как основа](2026-10-10-43-economic-model-accepted.md)
+
+- [2026-10-10: читатели до отбора статей](2026-10-10-44-reader-profiles-before-editorial-selection.md)
