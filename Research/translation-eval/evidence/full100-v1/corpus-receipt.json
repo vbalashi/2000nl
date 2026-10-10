@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "translation-full100-corpus-receipt-v1",
+  "cases": 100,
+  "development": 30,
+  "validation": 70,
+  "sourcePoolHash": "5a87440b86c72e10ef9e07c41320eb692768773ec4fc501ac5546c3c44f8d234",
+  "sourcePoolRows": 5000,
+  "strata": [
+    {
+      "id": "definition-idioms",
+      "total": 20,
+      "development": 6,
+      "validation": 14
+    },
+    {
+      "id": "multiple-examples",
+      "total": 20,
+      "development": 6,
+      "validation": 14
+    },
+    {
+      "id": "usage-pattern",
+      "total": 15,
+      "development": 4,
+      "validation": 11
+    },
+    {
+      "id": "ordinary-example",
+      "total": 25,
+      "development": 8,
+      "validation": 17
+    },
+    {
+      "id": "idiom-only",
+      "total": 10,
+      "development": 3,
+      "validation": 7
+    },
+    {
+      "id": "definition-only",
+      "total": 10,
+      "development": 3,
+      "validation": 7
+    }
+  ],
+  "languages": {
+    "ru": 70,
+    "en": 30
+  },
+  "posCounts": {
+    "zn": 45,
+    "ww": 32,
+    "bn": 16,
+    "tw": 1,
+    "vv": 1,
+    "vz": 2,
+    "bw": 2,
+    "afk": 1
+  },
+  "contentCharacters": {
+    "min": 8,
+    "median": 113,
+    "p95": 233,
+    "max": 284
+  },
+  "suiteHashes": {
+    "development": "0c3d8bb3ec28f1fec5ec1d43ed3f4729c672538809baeebbfff8b08da6a4be30",
+    "validation": "fbde367dcb140ba04efc5e11c591cb7be4c1d22315f06ec5c65459ed22560f39"
+  },
+  "privacy": "No learner/user dictionary data; corpus texts and outputs local only; safe aggregate receipt versioned",
+  "samplingCaveat": "Stratified enriched dictionary sample, not unbiased production traffic"
+}
