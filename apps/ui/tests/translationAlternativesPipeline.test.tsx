@@ -1,0 +1,31 @@
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import { expect, test, vi } from "vitest";
+import { buildDictionaryMeaningTranslationRequest, parseDictionaryMeaningTranslationResult } from "@/lib/translation/dictionaryMeaningTranslationContract";
+import { buildDictionaryMeaningTranslationArtifact } from "@/lib/translation/dictionaryMeaningTranslationArtifact";
+import { updateOwnedDictionaryMeaningTranslation } from "@/lib/translation/dictionaryMeaningTranslationCache";
+import { sanitizeTranslationOverlay } from "@/lib/translation/translationArtifactSafety";
+import { resolvePlatformV2Translations } from "@/lib/platform/platformV2TranslationService";
+import { contentFingerprint, normalizeDictionaryContent } from "@/lib/platform/projections/dictionaryContent";
+import { ordinaryTranslationPolicyVersion } from "@/lib/translation/translationPolicy";
+import { buildTrainingSenseCardModel } from "@/components/training/v2/trainingSenseCardModel";
+import { TrainingCardAnswerHeader } from "@/components/training/v2/TrainingCardTemplates";
+import { singleSenseEntry, singleSenseGroup } from "./platformV2TrainingFixture";
+
+test("provider alternatives survive cache write/JSON read, sanitization, V2 projection and visible dot-separated answer", async()=>{
+ process.env.TRANSLATION_PROVIDER="openai";
+ const word={id:singleSenseEntry.entryId,language_code:"nl",headword:"praten",part_of_speech:"ww",raw:{meanings:[{definition:"een gesprek voeren"}]}};
+ const revision=contentFingerprint(normalizeDictionaryContent(word as any));
+ const request=buildDictionaryMeaningTranslationRequest({entryId:word.id,sourceContentFingerprint:revision,sourceLanguageCode:"nl",targetLanguageCode:"ru",word});
+ const parsed=parseDictionaryMeaningTranslationResult(JSON.stringify({entryTranslation:{primaryText:"говорить",alternativeTexts:["разговаривать","беседовать"],baseText:"говорить",note:null},contentTranslations:[{fieldId:"definition",text:"вести разговор"}]}),request);
+ let stored:any=null;
+ const query:any={update:(values:any)=>{stored=JSON.parse(JSON.stringify(values));return query;},eq:()=>query,then:(resolve:any)=>Promise.resolve({error:null}).then(resolve)};
+ await updateOwnedDictionaryMeaningTranslation({from:()=>query},{wordEntryId:word.id,targetLanguageCode:"ru",provider:"openai",sourceFingerprint:"test",claimUpdatedAt:"2026-10-10T10:00:00Z"},{overlay:buildDictionaryMeaningTranslationArtifact(parsed),status:"ready",source_content_revision:revision,translation_policy_version:ordinaryTranslationPolicyVersion("openai"),provider_revision:"test"});
+ stored.overlay=sanitizeTranslationOverlay(stored.overlay);
+ const readQuery:any={select:()=>readQuery,in:()=>readQuery,eq:()=>readQuery,then:(resolve:any)=>Promise.resolve({data:[{...stored,id:"translation-test",word_entry_id:word.id,target_lang:"ru",provider:"openai",error_message:null}],error:null}).then(resolve)};
+ const projection=await resolvePlatformV2Translations({supabase:{from:()=>readQuery}} as any,{entries:[word],bindingsByEntryId:new Map(),targetLanguageCode:"ru"});
+ expect(projection.ok).toBe(true);if(!projection.ok)return;
+ const model=buildTrainingSenseCardModel({group:{...singleSenseGroup,header:{...singleSenseGroup.header,text:"praten",displayPronunciation:"praten",article:undefined}},entry:{...singleSenseEntry,contentRevision:revision,translation:projection.byEntryId.get(word.id)!.entryTranslation},interfaceLanguage:"ru"});
+ render(<TrainingCardAnswerHeader model={model} translationVisible translationAvailable translationLabel="Перевод" audioLabel="Аудио" moreLabel="Ещё" busy={false} onToggleTranslation={vi.fn()}/>);
+ expect(screen.getByTestId("entry-translation")).toHaveTextContent("говорить · разговаривать · беседовать");
+});
