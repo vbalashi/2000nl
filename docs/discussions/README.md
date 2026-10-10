@@ -120,3 +120,5 @@
 - [2026-10-10: чистый бюджет без пенсии и страхования](2026-10-10-23-net-living-budget-excludes-provisions.md)
 
 - [2026-10-10: единый бюджет инфраструктуры](2026-10-10-24-infrastructure-budget.md)
+
+- [2026-10-10: бюджет AI/TTS и кеш](2026-10-10-25-provider-budget-and-cache-load.md)
