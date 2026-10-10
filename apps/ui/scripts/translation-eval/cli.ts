@@ -60,6 +60,8 @@ async function main() {
       if (!row || row.responseHash !== item.responseHash || !["accept", "reject", "needs-work"].includes(item.decision) || !item.rationale?.trim() || !Array.isArray(item.failureCodes) || item.failureCodes.some((c: string) => !failureCodes.includes(c))) throw new Error("unbound_review");
       const fields = ["senseFidelity", "equivalentUsefulness", "naturalness", "contentFidelity", "baseCorrectness"];
       if (!item.scores || Object.keys(item.scores).length !== fields.length || fields.some(k => !Number.isInteger(item.scores[k]) || item.scores[k] < 0 || item.scores[k] > 5)) throw new Error("invalid_review_scores");
+      if (item.decision === "accept" && (fields.some(k => item.scores[k] < 4) || item.failureCodes.length)) throw new Error("review_acceptance_threshold_failed");
+      if (item.decision !== "accept" && !item.failureCodes.length) throw new Error("review_failure_code_required");
     }
     if (!process.argv.includes("--write")) { console.log(JSON.stringify({ dryRun: true, valid: true })); return; }
     writeNew(path.join(run, "reviews", id(arg("--review", "review-v1")) + ".json"), review); console.log("review_saved"); return;

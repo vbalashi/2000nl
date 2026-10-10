@@ -58,7 +58,8 @@ run. Автоматических retries нет. Lock защищает от о�
 Deadline начинается при первом execute и не обновляется при resume.
 Запрос фиксируется до отправки; response сохраняет исходный content, parsed
 result, served model, usage, elapsedMs и hash тела запроса. Output token cap
-и call cap ограничены, input bounded production-контрактом. Строгий общий
+и call cap ограничены. Замороженные оригинальные fixtures небольшие; CLI не
+заменяет production-валидацию произвольных новых входов. Строгий общий
 денежный лимит не заявляется: тариф Azure пока не подтверждён.
 
 ## Оценка и сравнение
@@ -93,3 +94,13 @@ pipeline не являются подтверждённым тарифом эт�
 
 Runtime prompt и модель приложения пока не меняются. Для принятия нужны review,
 регрессии и отдельное решение о lazy cache refresh и rollout.
+
+## Первое сравнение
+
+[Инвентаризация](PROMPT-INVENTORY.md) и [отчёт 10 октября](REPORT-2026-10-10.md).
+Анонимная оценка: `python3 Research/translation-eval/scripts/render-review.py
+--runs development-gpt41-v3,development-luna56-v3,development-luna6-v3,validation-gpt41-v3,validation-luna56-v3,validation-luna6-v3
+--output-dir Research/translation-eval/runs/review-new`. HTML сохраняет оценки
+локально в браузере и экспортирует черновик JSON; отдельный blind-key.json
+раскрывает модели после оценки. Экспорт анонимной страницы не является готовым
+per-run review для submit-review: его нужно связать через ключ и заполнить коды.

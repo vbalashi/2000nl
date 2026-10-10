@@ -1,0 +1,9 @@
+{
+  "archive": "/Users/khrustal/dev/2000nl/db/data/research-archives/translation-eval-2026-10-10-v1.tar.gz",
+  "sha256": "c59a34a3607defdcf6d1255ae9bac9e60d3f80fb8a543d1fb1f1cd6cf7f0a446",
+  "bytes": 240974,
+  "runCount": 9,
+  "providerCalls": 63,
+  "initialABCalls": 48,
+  "humanApproved": false
+}
