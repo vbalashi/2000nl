@@ -138,3 +138,5 @@
 - [2026-10-10: подтверждение eenmanszaak](2026-10-10-32-eenmanszaak-confirmation.md)
 
 - [2026-10-10: тарифы бухгалтерии](2026-10-10-33-accounting-prices.md)
+
+- [2026-10-10: бюджет бухгалтерии принят](2026-10-10-34-accounting-budget-accepted.md)
