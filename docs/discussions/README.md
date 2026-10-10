@@ -84,3 +84,5 @@
 - [2026-10-10: общий блог Dilumeo](2026-10-10-05-dilumeo-shared-blog.md)
 
 - [2026-10-10: исправление имени и ритм](2026-10-10-06-brand-correction-and-cadence.md)
+
+- [2026-10-10: собственный словарь и платная бета](2026-10-10-07-owned-dictionary-and-paid-beta.md)
