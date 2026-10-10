@@ -19,6 +19,12 @@ export function buildDictionaryMeaningTranslationArtifact(
     if (field.fieldId === "definition") meaning.definition = field.text;
     if (field.fieldId === "usage-pattern") meaning.context = field.text;
     if (field.fieldId === "usage-note") meaning.note = field.text;
+    const relationMatch = field.fieldId.match(/^(synonym|antonym):(\d+)$/);
+    if (relationMatch) {
+      const key = relationMatch[1] === "synonym" ? "synonyms" : "antonyms";
+      meaning[key] ??= [];
+      meaning[key][Number(relationMatch[2])] = field.text;
+    }
     const exampleMatch = field.fieldId.match(/^example:(\d+)$/);
     if (exampleMatch) {
       meaning.examples ??= [];

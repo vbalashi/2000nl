@@ -2,6 +2,7 @@ import { dictionaryTranslationProfile } from "./dictionaryTranslationProfile";
 import { loadPromptText } from "./prompts/promptLoader";
 import type { OpenAITranslationMessage } from "./openaiTranslationContract";
 import { dictionaryTranslationContext } from "./dictionaryTranslationContext";
+import { dictionaryLexicalRelationTexts } from "../dictionary/lexicalRelations";
 
 export const DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION =
   "dictionary-meaning-translation-v1" as const;
@@ -32,6 +33,8 @@ export type DictionaryMeaningContentRole =
   | "example"
   | "idiom"
   | "idiom-explanation"
+  | "synonym"
+  | "antonym"
   | "usage-note";
 
 export type DictionaryMeaningTranslationRequestV1 = {
@@ -164,8 +167,9 @@ export function buildDictionaryMeaningTranslationRequest(params: {
     if (!text) return;
     // Optional content must not become a one-character fragment when
     // earlier content consumes the remaining request budget.
-    if ((role === "example" || role === "idiom" || role === "idiom-explanation" || role === "usage-note") &&
+    if (role !== "definition" && role !== "usage-pattern" &&
       text !== boundedString(value, DICTIONARY_MEANING_TRANSLATION_LIMITS.contentItemCharacters)) return;
+    if ((role === "synonym" || role === "antonym") && text !== String(value).trim()) return;
     content.push({ fieldId, role, text });
     remainingContentCharacters -= metadataCharacters + unicodeLength(text);
     remainingContentTokenUpperBound -=
@@ -179,6 +183,11 @@ export function buildDictionaryMeaningTranslationRequest(params: {
     const idiom = asRecord(value);
     push(`idiom:${index}`, "idiom", typeof value === "string" ? value : idiom.expression);
     push(`idiom:${index}:explanation`, "idiom-explanation", idiom.explanation);
+  }
+  for (const kind of ["synonym", "antonym"] as const) {
+    for (const [index, text] of dictionaryLexicalRelationTexts(meaning[`${kind}s`]).entries()) {
+      push(`${kind}:${index}`, kind, text);
+    }
   }
   for (const [index, value] of idiomValues.entries()) {
     for (const [exampleIndex, example] of asArray(asRecord(value).examples).entries()) {

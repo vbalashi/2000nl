@@ -3,6 +3,7 @@ import type { DictionaryLookupPayload } from "../lookupService";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
+import { dictionaryLexicalRelationTexts } from "../../dictionary/lexicalRelations";
 
 export function contentFingerprint(content: unknown) {
   const record = asRecord(content);
@@ -53,7 +54,11 @@ export function normalizeDictionaryContent(
     rawMeanings.length > 0
       ? rawMeanings.map((meaning) => {
           const item = asRecord(meaning);
+          const synonyms = dictionaryLexicalRelationTexts(item.synonyms);
+          const antonyms = dictionaryLexicalRelationTexts(item.antonyms);
           return {
+            ...(synonyms.length ? { synonyms } : {}),
+            ...(antonyms.length ? { antonyms } : {}),
             definition:
               typeof item.definition === "string"
                 ? item.definition

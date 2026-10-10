@@ -46,7 +46,7 @@ test('headword forms require all senses to agree; missing or differing forms sta
  expect(commonWordForms([a,b],'zn')).toBeNull();expect(commonWordForms([a,undefined],'zn')).toBeNull();
 });
 
-test('relations remain attached to their meaning even with no forms and are never translated',()=>{
+test('relations remain attached to their meaning with no forms and no cached translation',()=>{
  const group=structuredClone(multiSenseBankGroup);const entries=group.entries.filter(e=>e.kind==='sense-card');
  entries[0].wordDetails=details({meanings:[{synonyms:['de zetel']}]});entries[1].wordDetails=details({meanings:[{antonyms:['unique opposite']}]});
  const model=buildLibrarySenseCardGroupModel(group,'en');

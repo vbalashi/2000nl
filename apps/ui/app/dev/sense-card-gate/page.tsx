@@ -1,3 +1,4 @@
+import {RelatedWordGate} from "./RelatedWordGate";
 import { TrainingSessionStateGate } from "./TrainingSessionStateGate";
 import { ExerciseCardGate } from "./ExerciseCardGate";
 import { SenseCardGateHarness } from "./SenseCardGateHarness";
@@ -33,6 +34,7 @@ export default async function SenseCardGatePage({
     family={searchParams.family === "sentence" ? "sentence" : "idiom"}
     state={searchParams.state === "context-pending" || searchParams.state === "empty" || searchParams.state === "loading" || searchParams.state === "error" || searchParams.state === "unsupported" || searchParams.state === "exhausted" || searchParams.state === "failure" ? searchParams.state : "complete"}
     dark={searchParams.mode === "dark"} />;
+  if (searchParams?.prototype === "related-words") return <RelatedWordGate/>;
   if (searchParams?.prototype === "exercise") return <ExerciseCardGate cow={searchParams.fixture === "koe"} />;
   if (searchParams?.prototype === "reading") {
     return <ReadingSizePrototype />;
