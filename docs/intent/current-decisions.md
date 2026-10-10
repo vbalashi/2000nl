@@ -58,3 +58,7 @@ Accepted: centre the main prompt independently of instructions; reserve hint spa
 ## Training startup recovery (2026-10-09)
 
 Accepted: prerequisite loading and retry share the branded logo/dots surface; actual failures retain actionable retry without the obsolete framed panel. Pending work must not become a fabricated failure. Original Pixel request failure remains unconfirmed. [Discussion](../discussions/2026-10-09-02-startup-recovery.md), #575. Implemented in the issue checkout; release pending.
+
+## 2026-10-10: Luna 6 dictionary translation profile
+
+Accepted after the fresh100 relative gate: Luna 6 with tuned v5 becomes the dictionary translation default; GPT-4.1 v4 and legacy v1 remain selectable rollback profiles. Model, prompt, settings and cache identity switch together. Evidence, scope and limitations: [discussion](../discussions/2026-10-10-07-luna6-translation-release.md). Operations: [rollout and rollback](../runbooks/dictionary-translation-model-rollout.md). Implementation tracked in #659.
