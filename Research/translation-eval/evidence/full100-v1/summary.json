@@ -1,0 +1,366 @@
+{
+  "schemaVersion": "translation-full100-summary-v1",
+  "reviewMethod": "non-blind agent",
+  "independentHumanApproval": false,
+  "productionChanged": false,
+  "referenceRatesUSDPerMillion": {
+    "gpt41": {
+      "input": 2,
+      "output": 8
+    },
+    "luna56": {
+      "input": 0.2,
+      "output": 1.2
+    },
+    "luna6": {
+      "input": 0.1,
+      "output": 0.5
+    }
+  },
+  "rateDate": "2026-10-10",
+  "costScope": "Translation calls only, uncached public Standard short-context reference rates; no audio, review, tax or discounts. Not verified Azure invoice.",
+  "models": {
+    "gpt41": {
+      "development": {
+        "attempts": 30,
+        "responses": 30,
+        "failedAttempts": 0,
+        "missingUsage": 0,
+        "accept": 19,
+        "mainErrors": 2,
+        "failureCodes": {
+          "content-translation-error": 2,
+          "weak-equivalent": 5,
+          "unnatural-language": 2,
+          "base-translation-error": 2,
+          "unnecessary-alternative": 1
+        },
+        "inputTokens": 25913,
+        "outputTokens": 3858,
+        "cachedTokens": 0,
+        "reasoningTokens": 0,
+        "referenceUSD": 0.08269,
+        "actualAzureCost": null,
+        "inputP50": 858.5,
+        "inputP95": 961,
+        "outputP50": 119.0,
+        "outputP95": 210,
+        "latencyP50": 2994.5,
+        "latencyP95": 4229,
+        "acceptWilson95": [
+          0.45513246433604937,
+          0.7812629779598231
+        ]
+      },
+      "heldOut": {
+        "attempts": 70,
+        "responses": 70,
+        "failedAttempts": 0,
+        "missingUsage": 0,
+        "accept": 46,
+        "mainErrors": 7,
+        "failureCodes": {
+          "unnatural-language": 4,
+          "content-translation-error": 7,
+          "weak-equivalent": 13,
+          "base-translation-error": 4,
+          "sense-mismatch": 1
+        },
+        "inputTokens": 60314,
+        "outputTokens": 9000,
+        "cachedTokens": 0,
+        "reasoningTokens": 0,
+        "referenceUSD": 0.192628,
+        "actualAzureCost": null,
+        "inputP50": 859.0,
+        "inputP95": 924,
+        "outputP50": 128.0,
+        "outputP95": 195,
+        "latencyP50": 2790.5,
+        "latencyP95": 3757,
+        "acceptWilson95": [
+          0.5403933101563949,
+          0.7575417291710302
+        ]
+      },
+      "selectedPromptFull100": {
+        "attempts": 100,
+        "responses": 100,
+        "failedAttempts": 0,
+        "missingUsage": 0,
+        "accept": 65,
+        "mainErrors": 9,
+        "failureCodes": {
+          "content-translation-error": 9,
+          "weak-equivalent": 18,
+          "unnatural-language": 6,
+          "base-translation-error": 6,
+          "unnecessary-alternative": 1,
+          "sense-mismatch": 1
+        },
+        "inputTokens": 86227,
+        "outputTokens": 12858,
+        "cachedTokens": 0,
+        "reasoningTokens": 0,
+        "referenceUSD": 0.275318,
+        "actualAzureCost": null,
+        "inputP50": 859.0,
+        "inputP95": 924,
+        "outputP50": 126.5,
+        "outputP95": 196,
+        "latencyP50": 2879.5,
+        "latencyP95": 3757,
+        "acceptWilson95": [
+          0.5525426042919797,
+          0.7363589534652197
+        ]
+      }
+    },
+    "luna56": {
+      "development": {
+        "attempts": 30,
+        "responses": 30,
+        "failedAttempts": 0,
+        "missingUsage": 0,
+        "accept": 26,
+        "mainErrors": 2,
+        "failureCodes": {
+          "content-translation-error": 2,
+          "unnecessary-alternative": 1,
+          "weak-equivalent": 1
+        },
+        "inputTokens": 25883,
+        "outputTokens": 6411,
+        "cachedTokens": 0,
+        "reasoningTokens": 3233,
+        "referenceUSD": 0.012869799999999999,
+        "actualAzureCost": null,
+        "inputP50": 857.5,
+        "inputP95": 960,
+        "outputP50": 163.0,
+        "outputP95": 582,
+        "latencyP50": 1690.5,
+        "latencyP95": 4349,
+        "acceptWilson95": [
+          0.7031831605558306,
+          0.9469043057578189
+        ]
+      },
+      "heldOut": {
+        "attempts": 70,
+        "responses": 69,
+        "failedAttempts": 1,
+        "missingUsage": 1,
+        "accept": 46,
+        "mainErrors": 7,
+        "failureCodes": {
+          "weak-equivalent": 12,
+          "unnatural-language": 5,
+          "content-translation-error": 3,
+          "base-translation-error": 3,
+          "sense-mismatch": 4
+        },
+        "inputTokens": 59382,
+        "outputTokens": 10565,
+        "cachedTokens": 0,
+        "reasoningTokens": 3680,
+        "referenceUSD": 0.0245544,
+        "actualAzureCost": null,
+        "inputP50": 858,
+        "inputP95": 923,
+        "outputP50": 105,
+        "outputP95": 411,
+        "latencyP50": 1125,
+        "latencyP95": 3084,
+        "acceptWilson95": [
+          0.5492625453552142,
+          0.7664910899301172
+        ]
+      },
+      "selectedPromptFull100": {
+        "attempts": 100,
+        "responses": 99,
+        "failedAttempts": 1,
+        "missingUsage": 1,
+        "accept": 72,
+        "mainErrors": 9,
+        "failureCodes": {
+          "content-translation-error": 5,
+          "unnecessary-alternative": 1,
+          "weak-equivalent": 13,
+          "unnatural-language": 5,
+          "base-translation-error": 3,
+          "sense-mismatch": 4
+        },
+        "inputTokens": 85265,
+        "outputTokens": 16976,
+        "cachedTokens": 0,
+        "reasoningTokens": 6913,
+        "referenceUSD": 0.0374242,
+        "actualAzureCost": null,
+        "inputP50": 858,
+        "inputP95": 932,
+        "outputP50": 112,
+        "outputP95": 455,
+        "latencyP50": 1183,
+        "latencyP95": 3734,
+        "acceptWilson95": [
+          0.632288909736815,
+          0.8052772113659294
+        ]
+      },
+      "eventualFull100": {
+        "attempts": 100,
+        "responses": 100,
+        "failedAttempts": 0,
+        "missingUsage": 0,
+        "accept": 73,
+        "mainErrors": 9,
+        "failureCodes": {
+          "content-translation-error": 5,
+          "unnecessary-alternative": 1,
+          "weak-equivalent": 13,
+          "unnatural-language": 5,
+          "base-translation-error": 3,
+          "sense-mismatch": 4
+        },
+        "inputTokens": 86127,
+        "outputTokens": 17081,
+        "cachedTokens": 0,
+        "reasoningTokens": 6913,
+        "referenceUSD": 0.03772260000000001,
+        "actualAzureCost": null,
+        "inputP50": 858.0,
+        "inputP95": 923,
+        "outputP50": 111.0,
+        "outputP95": 454,
+        "latencyP50": 1184.0,
+        "latencyP95": 3663,
+        "acceptWilson95": [
+          0.6356769977376873,
+          0.8073053908233518
+        ]
+      }
+    },
+    "luna6": {
+      "development": {
+        "attempts": 30,
+        "responses": 30,
+        "failedAttempts": 0,
+        "missingUsage": 0,
+        "accept": 30,
+        "mainErrors": 0,
+        "failureCodes": {},
+        "inputTokens": 25883,
+        "outputTokens": 9104,
+        "cachedTokens": 0,
+        "reasoningTokens": 5954,
+        "referenceUSD": 0.0071403000000000005,
+        "actualAzureCost": null,
+        "inputP50": 857.5,
+        "inputP95": 960,
+        "outputP50": 295.5,
+        "outputP95": 483,
+        "latencyP50": 2400.0,
+        "latencyP95": 3537,
+        "acceptWilson95": [
+          0.8864829086095221,
+          1.0
+        ]
+      },
+      "heldOut": {
+        "attempts": 70,
+        "responses": 70,
+        "failedAttempts": 0,
+        "missingUsage": 0,
+        "accept": 59,
+        "mainErrors": 6,
+        "failureCodes": {
+          "content-translation-error": 5,
+          "unnatural-language": 3,
+          "weak-equivalent": 3,
+          "sense-mismatch": 1,
+          "base-translation-error": 1
+        },
+        "inputTokens": 60244,
+        "outputTokens": 20319,
+        "cachedTokens": 0,
+        "reasoningTokens": 13099,
+        "referenceUSD": 0.0161839,
+        "actualAzureCost": null,
+        "inputP50": 858.0,
+        "inputP95": 923,
+        "outputP50": 287.5,
+        "outputP95": 501,
+        "latencyP50": 2349.0,
+        "latencyP95": 4049,
+        "acceptWilson95": [
+          0.7401153685651781,
+          0.9099247172401131
+        ]
+      },
+      "selectedPromptFull100": {
+        "attempts": 100,
+        "responses": 100,
+        "failedAttempts": 0,
+        "missingUsage": 0,
+        "accept": 89,
+        "mainErrors": 6,
+        "failureCodes": {
+          "content-translation-error": 5,
+          "unnatural-language": 3,
+          "weak-equivalent": 3,
+          "sense-mismatch": 1,
+          "base-translation-error": 1
+        },
+        "inputTokens": 86127,
+        "outputTokens": 29423,
+        "cachedTokens": 0,
+        "reasoningTokens": 19053,
+        "referenceUSD": 0.0233242,
+        "actualAzureCost": null,
+        "inputP50": 858.0,
+        "inputP95": 923,
+        "outputP50": 288.0,
+        "outputP95": 492,
+        "latencyP50": 2349.0,
+        "latencyP95": 4017,
+        "acceptWilson95": [
+          0.8136853697209698,
+          0.9374586804477487
+        ]
+      }
+    }
+  },
+  "experimentMissingUsage": 1,
+  "experimentCalls": 390,
+  "experimentReferenceUSD": 0.4439777,
+  "recovery": {
+    "attempts": 1,
+    "responses": 1,
+    "failedAttempts": 0,
+    "missingUsage": 0,
+    "accept": 1,
+    "mainErrors": 0,
+    "failureCodes": {},
+    "inputTokens": 862,
+    "outputTokens": 105,
+    "cachedTokens": 0,
+    "reasoningTokens": 0,
+    "referenceUSD": 0.0002984,
+    "actualAzureCost": null,
+    "inputP50": 862,
+    "inputP95": 862,
+    "outputP50": 105,
+    "outputP95": 105,
+    "latencyP50": 1340,
+    "latencyP95": 1340,
+    "acceptWilson95": [
+      0.20654329147389294,
+      1.0
+    ],
+    "excludedFromFirstAttemptMetrics": true
+  },
+  "experimentCallsIncludingRecovery": 391,
+  "experimentReferenceUSDIncludingRecoveryKnown": 0.44427609999999995
+}

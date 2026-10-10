@@ -10,6 +10,8 @@ for c in suite['cases'][a.offset:a.offset+a.limit]:
   for v in versions:
    name=f'full-dev-{model}-v{v}' if a.split=='development' else f'full-validation-{model}-v1'
    f=r/'runs'/name/'responses'/(c['id']+'-1.json')
+   if not f.exists() and a.split=='validation' and model=='luna56':
+    f=r/'runs/full-validation-luna56-continuation-v1/responses'/(c['id']+'-1.json')
    if not f.exists():print(model,v,'pending');continue
    o=json.loads(f.read_text());res=o.get('result')
    if not res:print(model,v,o['outcome']);continue

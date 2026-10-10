@@ -88,3 +88,10 @@ Accepted: prerequisite loading and retry share the branded logo/dots surface; ac
 по жалобам/ошибкам валидатора, сохранять историю замен; механизм пока предложен,
 не внедрён. Исследовательские сравнения нескольких моделей остаются offline.
 [Источник](../discussions/2026-10-10-04-single-pass-translations-and-targeted-review.md).
+
+### Повторы временных сбоев перевода — принято 2026-10-10
+
+До трёх повторов после исходного запроса для временных HTTP429/5xx,
+таймаутов/обрывов; типизированная безопасная диагностика каждой попытки.
+Ошибки контракта и permanent4xx разбирать отдельно. First-attempt и recovery
+статистику сохранять раздельно. [Обсуждение](../discussions/2026-10-10-05-translation-retries-and-diagnostics.md).

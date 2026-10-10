@@ -1,0 +1,14 @@
+{
+  "stage": "contract",
+  "status": 200,
+  "requestId": "9d8a4f1f-58b9-428b-abe7-6bcae601d058",
+  "inputTokens": 862,
+  "outputTokens": 105,
+  "event": "translation_attempt",
+  "correlationId": "25a31743-e710-4230-8fc3-398c4a5a7e37",
+  "attempt": 1,
+  "elapsedMs": 1378,
+  "outcome": "ready",
+  "retry": false,
+  "retryDelayMs": 0
+}

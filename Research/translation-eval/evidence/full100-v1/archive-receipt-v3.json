@@ -1,0 +1,9 @@
+{
+  "archive": "/Users/khrustal/dev/2000nl/db/data/research-archives/translation-eval-2026-10-10-v3.tar.gz",
+  "sha256": "2ff6ce8b88ad0583c4212fe08157122fda123566bdaa6363786a9c50a5c868da",
+  "bytes": 3102046,
+  "fileCount": 3086,
+  "createdAt": "2026-10-10T17:11:54.821497+00:00",
+  "verification": "Opened archive and matched every full-* manifest/response byte-for-byte with local evidence. Research source/cases/review pages included. No credentials or learner data.",
+  "retirement": "Active evidence-owning worktree retained for owner review; no merge/release/sync/retirement."
+}

@@ -1,3 +1,4 @@
+import { withTranslationRetries, safeProviderRequestId, retryAfterMs, type TranslationAttemptDiagnostic } from "./translationRetry";
 import type {
   ITranslator,
   TranslationProviderTextRequest,
@@ -55,6 +56,7 @@ export type OpenAIDictionaryMeaningTranslationResult =
 
 type OpenAIChatResponse = {
   choices?: Array<{
+    finish_reason?: string;
     message?: {
       content?: string | null;
     };
@@ -68,7 +70,7 @@ const DEFAULT_API_URL = "https://api.openai.com/v1/chat/completions";
 // Verified via OpenAI Platform docs (Context7): "gpt-5.2"
 const DEFAULT_MODEL = "gpt-5.2";
 const DEFAULT_TIMEOUT_MS = 15000;
-const DEFAULT_MAX_RETRIES = 2;
+const DEFAULT_MAX_RETRIES = 3;
 
 function looksLikeAzureOpenAI(apiUrl: string) {
   // Azure OpenAI endpoints commonly use:
@@ -96,10 +98,6 @@ function resolveChatCompletionsUrl(apiUrl: string) {
 function keyHash(apiKey: string) {
   if (!apiKey) return "";
   return crypto.createHash("sha256").update(apiKey).digest("hex").slice(0, 10);
-}
-
-async function delay(ms: number) {
-  await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export class OpenAITranslator implements ITranslator {
@@ -165,10 +163,11 @@ export class OpenAITranslator implements ITranslator {
     const openaiKeyHash = keyHash(this.apiKey);
     let lastError: unknown = null;
     try {
-      const result = await this.withRetries(async () =>
+      const result = await this.withRetries(async diagnostic =>
         parseOpenAITranslationResult(
           await this.requestChatContent(
             buildOpenAITranslationMessages(texts, targetLang, context),
+            diagnostic,
           ),
           texts.length,
         ),
@@ -230,10 +229,11 @@ export class OpenAITranslator implements ITranslator {
       throw new Error("OPENAI_API_KEY is not configured");
     }
     try {
-      const result = await this.withRetries(async () =>
+      const result = await this.withRetries(async diagnostic =>
         parseDictionaryMeaningTranslationResult(
           await this.requestChatContent(
             buildDictionaryMeaningTranslationMessages(request),
+            diagnostic,
           ),
           request,
         ),
@@ -276,27 +276,19 @@ export class OpenAITranslator implements ITranslator {
     }
   }
 
-  private async withRetries<T>(operation: () => Promise<T>): Promise<T> {
-    let lastError: unknown = null;
-    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
-      try {
-        return await operation();
-      } catch (error) {
-        lastError = normalizeTranslationProviderError(
-          error,
-          "provider_response_error",
-        );
-        if (attempt < this.maxRetries) {
-          await delay(300 * Math.pow(2, attempt));
-        }
-      }
-    }
-    throw normalizeTranslationProviderError(lastError);
+  private async withRetries<T>(operation: (diagnostic: TranslationAttemptDiagnostic) => Promise<T>): Promise<T> {
+    return withTranslationRetries(operation, {
+      maxRetries: this.maxRetries,
+      classify: error => normalizeTranslationProviderError(error, "provider_response_error").failure.code,
+      log: event => console.info("[translation] attempt", event),
+    });
   }
 
   private async requestChatContent(
     messages: OpenAITranslationMessage[],
+    diagnostic: TranslationAttemptDiagnostic,
   ): Promise<string> {
+    if (/^[a-zA-Z0-9._-]{1,100}$/.test(this.model)) diagnostic.model = this.model;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
     const isAzure = looksLikeAzureOpenAI(this.apiUrl);
@@ -320,30 +312,49 @@ export class OpenAITranslator implements ITranslator {
         body: JSON.stringify(body),
         signal: controller.signal,
       });
+      diagnostic.stage = "response";
+      diagnostic.status = response.status;
+      diagnostic.requestId = safeProviderRequestId(response.headers?.get("x-request-id") ?? response.headers?.get("apim-request-id") ?? null);
+      diagnostic.retryAfterMs = retryAfterMs(response.headers?.get("retry-after") ?? null);
       if (!response.ok) {
+        diagnostic.reason = "http_status";
         const responseBody = await response.text().catch(() => "");
         throw safeTranslationProviderError("provider_http_error", {
           status: response.status,
           diagnostic: responseBody || response.statusText,
         });
       }
-      const data = (await response.json()) as OpenAIChatResponse;
+      let data: OpenAIChatResponse;
+      try { data = (await response.json()) as OpenAIChatResponse; }
+      catch { diagnostic.reason = "invalid_json"; throw safeTranslationProviderError("provider_response_error", null); }
       if (data?.error?.message) {
+        diagnostic.reason = "provider_reported_error";
         throw safeTranslationProviderError(
           "provider_response_error",
           data.error.message,
         );
       }
+      const usage = (data as { usage?: { prompt_tokens?: number; completion_tokens?: number } }).usage;
+      if (Number.isInteger(usage?.prompt_tokens) && usage!.prompt_tokens! >= 0) diagnostic.inputTokens = usage!.prompt_tokens;
+      if (Number.isInteger(usage?.completion_tokens) && usage!.completion_tokens! >= 0) diagnostic.outputTokens = usage!.completion_tokens;
+      if (data?.choices?.[0]?.finish_reason && data.choices[0].finish_reason !== "stop") {
+        diagnostic.reason = "incomplete";
+        throw safeTranslationProviderError("provider_response_error", null);
+      }
       const content = data?.choices?.[0]?.message?.content ?? "";
       if (!content.trim()) {
+        diagnostic.reason = "empty_content";
         throw safeTranslationProviderError("provider_empty_response", "empty");
       }
+      diagnostic.stage = "contract";
       return content;
     } catch (error) {
       if (controller.signal.aborted) {
+        diagnostic.reason = "timeout";
         throw safeTranslationProviderError("provider_timeout", error);
       }
-      throw normalizeTranslationProviderError(error, "provider_network_error");
+      if (diagnostic.stage === "request") diagnostic.reason = "network";
+      throw normalizeTranslationProviderError(error, diagnostic.stage === "request" ? "provider_network_error" : "provider_response_error");
     } finally {
       clearTimeout(timeout);
     }

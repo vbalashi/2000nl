@@ -15,6 +15,8 @@ const sourcePaths = [
   "apps/ui/scripts/translation-eval/core.ts", "apps/ui/scripts/translation-eval/evaluate.ts",
   "apps/ui/scripts/translation-eval/profiles.ts", "apps/ui/scripts/translation-eval/types.ts",
   "apps/ui/scripts/translation-eval/cli.ts",
+  "apps/ui/scripts/translation-eval/recover-full100.ts",
+  "apps/ui/lib/translation/translationRetry.ts",
   "apps/ui/lib/translation/dictionaryMeaningTranslationContract.ts",
   "apps/ui/lib/translation/prompts/promptLoader.ts",
   "apps/ui/lib/translation/dictionaryTranslationContext.ts",

@@ -1,0 +1,1044 @@
+{
+  "schemaVersion": "translation-eval-review-v1",
+  "runId": "full-validation-gpt41-v1",
+  "reviewer": "Codex primary agent",
+  "method": "agent",
+  "reviewedAt": "2026-10-10T17:02:19.235470+00:00",
+  "manifestHash": "98cf143a070ed956b7fa4556061f9c6d6b9c2f2855de235f09cb8475b59f1359",
+  "reviewContext": "All 209 ready first-attempt validation outputs inspected against exact NL inputs; non-blind primary-agent review, not independent/human approval. HTTP500 kept separately.",
+  "items": [
+    {
+      "jobId": "full007-1",
+      "responseHash": "3a5b0bebdaa40df937c9417ccb6e3e0d05328f38542e620c1cb1bb50ce19b916",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Копьё, пример охоты и идиома быстрого ухода переданы. Дротик/пика — более узкие соответствия; отъезд вместо ухода не задан источником."
+    },
+    {
+      "jobId": "full008-1",
+      "responseHash": "b4abf8942b5c820d10d89a459e62821ba69a2b4341157506c1197e4a3b50c14f",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Пинок и штрафной удар проверены. Базовый перевод без контекста может быть лестницей/ступенью. В Luna6 запрет сопернику мешать заменён действием игрока, который не позволяет мешать."
+    },
+    {
+      "jobId": "full009-1",
+      "responseHash": "22d68c33323a97d9149d828b1b2781e1cf55b0c356a48e139c7d6fd16e53749c",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Недоверие и выражение сомнения сохранены; многословный вариант Luna5.6 является описанием, а не полезным дополнительным эквивалентом."
+    },
+    {
+      "jobId": "full010-1",
+      "responseHash": "7a413be73ca306fa266c7f39c236776d986a5b5249afcaa472e394154b497aae",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Плоскодонное судно и общая трудная ситуация переданы; баржа несколько уже исходного общего названия."
+    },
+    {
+      "jobId": "full011-1",
+      "responseHash": "ed5322457e9103f870d2ca57002ae65102b5bc9e20ae926efdd6f041b669f30d",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Нагревание еды и потепление климата переданы без смыслового сдвига."
+    },
+    {
+      "jobId": "full012-1",
+      "responseHash": "9107bddf1fbbc6db04668cc1fca9389ac6133d96c4a1d66a86b2a45f1ff20190",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Избегание встречи и малое различие по возрасту переданы. Описательная альтернатива допустима здесь как обычное выражение избегания."
+    },
+    {
+      "jobId": "full013-1",
+      "responseHash": "c857f2c672be482d719d1daf2aaf3db1c6cbeecb02a45e8d99d80a8ad1d1a92f",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Личная сфера и близкая дружба сохранены; private/intimate/personal применимы к данному значению."
+    },
+    {
+      "jobId": "full014-1",
+      "responseHash": "3d7ab63b2a6fa99d0cc1a9785a6739ea750eabde17cbcacda9b3db4ef34c687e",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 3,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnatural-language"
+      ],
+      "rationale": "Остаток времени и неудовлетворительный результат работы переданы. GPT даёт неграмматичное определение; Luna5.6 добавляет повторное описание вместо нового эквивалента."
+    },
+    {
+      "jobId": "full015-1",
+      "responseHash": "9794daaafcad8bcc6542c5552252d18927ed1f9863e09d3934f4708f8c13584a",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 2,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Обязанность в основном примере сохранена. Выражение срочной необходимости в туалет требует полного перевода; GPT в отдельной идиоме теряет туалет, обе Luna теряют срочность. Быть должным менее естественно, чем быть обязанным/должен."
+    },
+    {
+      "jobId": "full016-1",
+      "responseHash": "eb3c79590ac7b2902aa866f4d5663ffb1292c33db712fd2ffd55edd8bb4ff2d9",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 3,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnatural-language"
+      ],
+      "rationale": "Увеличительный прибор и внимательное рассмотрение переведены. Взять под лупу у GPT — неестественная калька вместо рассмотреть под лупой."
+    },
+    {
+      "jobId": "full017-1",
+      "responseHash": "20c4ee6d3604353c3038056e35ff72a64701c5f4f9f26a129396a30b3aac9d08",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Айсберг и видимая часть большей проблемы переданы. Ледяная гора слишком широкая альтернатива без морского контекста."
+    },
+    {
+      "jobId": "full018-1",
+      "responseHash": "3478fbcfbf75e62e0885b40ecdf6d6e8b16d355e8a75bec20b0353eba99c621a",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Публичная речь и перебивание говорящего переданы; доклад допустим с небольшой оговоркой о жанре."
+    },
+    {
+      "jobId": "full019-1",
+      "responseHash": "d5f451cbfb11ab9b2a1840e79a20baf83c314c98b2752576dcf0301bed64b058",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Порядковое числительное и оба названия переданы. Написание 2nd не отдельный лексический эквивалент. Introduce laws у Luna5.6 уже, чем make laws в объяснении."
+    },
+    {
+      "jobId": "full020-1",
+      "responseHash": "987dd38fabab1901af5162662f0bf87f96aa97dc5e1a55e6ec4c16fc37ec4129",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Корабль и обе идиомы переданы. Сочетание clear the decks with the staff звучит неестественно; английский пример требует переформулировки."
+    },
+    {
+      "jobId": "full027-1",
+      "responseHash": "806586d6108b967d4f3e33ad2130e8f0baf3ee75209cb801e478bbbd49c6ce35",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Отрицательная приставка и оба примера сохранены; без- зависит от конкретного слова и допустимо с оговоркой."
+    },
+    {
+      "jobId": "full028-1",
+      "responseHash": "b4dcb7d6850d86a62c4e3063c0428b79ee7a440d296a1912324fe44b6200ede5",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Опора, подлокотники и перила. GPT сохраняет оба примера. Luna6 превращает несколько подлокотников стула в несколько спинок; Luna5.6 серверная ошибка без повторного запроса."
+    },
+    {
+      "jobId": "full029-1",
+      "responseHash": "0d7b18e29cf27aee1b1ad2b56ae8268cceb5bfc0cfa2142d8fdf1206748f8a1d",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Лёгкие клочки, снег и пыль проверены. У GPT кусочек слишком общий эквивалент; у Luna6 несогласованное с неба падал ... снег."
+    },
+    {
+      "jobId": "full030-1",
+      "responseHash": "ff312571b1148f56b38cb2e629bc86240fd2a05b5b06e7617fe9c7e7bdaf9a0e",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Привычка и ещё не наступившее привыкание сохранены. Адаптировавшийся применимо с небольшой оговоркой. Привычный у Luna5.6 описывает привычный предмет, а не привыкшего человека."
+    },
+    {
+      "jobId": "full031-1",
+      "responseHash": "ddab8b24a596d4e831a475fc54e21e724233e384652edc85839fd14116cc75c2",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Размер группы и площадь сада сохранены."
+    },
+    {
+      "jobId": "full032-1",
+      "responseHash": "a0774eb65deeb118f1354e862d9bae4864d4ff021e297223f46e8858eb6d1c81",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Условное наклонение и отрицательное условное предложение проверены. Если бы/можно было бы у GPT добавляют условие/возможность, которых отдельное zou не задаёт. Быть в условном наклонении у Luna5.6 — грамматическое описание вместо эквивалента."
+    },
+    {
+      "jobId": "full033-1",
+      "responseHash": "2ac0be3a5ee5c5f766f5f8412bad3f7beeb7c91ed0024295bfb73563e2187311",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Связь с историей, исторический центр и исследование переданы. Historic может означать исторически значимый, потому менее точен как общий эквивалент historical."
+    },
+    {
+      "jobId": "full034-1",
+      "responseHash": "a7cda6f674d43d769bef565ad1330f1b3724994c5c0d871fa8460c5f521142c2",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Почтовая служба, отправка письма и приход почты сохранены; газеты у GPT немного сужают печатные издания."
+    },
+    {
+      "jobId": "full035-1",
+      "responseHash": "6d636d5f1db86efed944baaf73b107dbc067648e3d48bb4570ea834774542925",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Игра на инструменте и исполнение произведений сохранены."
+    },
+    {
+      "jobId": "full036-1",
+      "responseHash": "7298c5b8f0a71bce1f948b0b71e255ad1c33b1eff629047262be42c03134b2bb",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Тянуться рукой и протягивать руку начальнику переданы."
+    },
+    {
+      "jobId": "full037-1",
+      "responseHash": "7c92c66efbd00befd52c69506eee18b80ba6f6c9249c345ee950d039126abd80",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Предлог оценён в каждом примере. GPT превращает просьбу постелить покрывало в вопрос о желании; Luna6 добавляет ползание вместо общего движения."
+    },
+    {
+      "jobId": "full038-1",
+      "responseHash": "aa7a1fd73704e79c6e0ef29459f32176a20c78507949fc51c70d01ccbf898fa5",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Расшифровка письма/иероглифов сохранена. Decodes у Luna6 — личная форма вместо словарного инфинитива."
+    },
+    {
+      "jobId": "full039-1",
+      "responseHash": "362e6b4d813f64a5deadd5c91a5a42501212a4e3df8338b4e31cd69846755f8a",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Присоединение к группе и союзу передано. Краткий базовый перевод допустим как самостоятельный русский глагол."
+    },
+    {
+      "jobId": "full040-1",
+      "responseHash": "0ecf39736aeb50d244be641b370bfb50f84c96e80893344f8095691aec160531",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Отсутствие человека/предмета и отрицание начала праздника сохранены."
+    },
+    {
+      "jobId": "full045-1",
+      "responseHash": "67783ca8ead93906fe8d760900240f7133a901574b28874d53428bdb017bb8b9",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 3
+      },
+      "failureCodes": [
+        "base-translation-error"
+      ],
+      "rationale": "Рефлексивное удивление передано. Базовый перевод bare verbazen у GPT передан как рефлексивный be surprised вместо astonish."
+    },
+    {
+      "jobId": "full046-1",
+      "responseHash": "fb7360800d96b5063b04172f429e170175f176764c13c1227d68f10f81e3baa3",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 3
+      },
+      "failureCodes": [
+        "weak-equivalent",
+        "base-translation-error"
+      ],
+      "rationale": "Отсутствие необходимого бассейна сохранено в объяснении. Лишаться у GPT означает потерю, а не изначальное отсутствие. Luna5.6 повторяет ошибку потери/лишения в primary."
+    },
+    {
+      "jobId": "full047-1",
+      "responseHash": "fa3e313f4d1a367779505e14409e4ac8458c4070f2cd6fcc284e1a30c9de5159",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Различие людей, вещей и фильма с книгой сохранено."
+    },
+    {
+      "jobId": "full048-1",
+      "responseHash": "fc13796604625e936f0f7277193f05259fb67b2f484b2eb7350e2c094b6fa72a",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Копание ям для посадки передано; excavate несколько формальнее, но тот же смысл."
+    },
+    {
+      "jobId": "full049-1",
+      "responseHash": "73c1fd3e3d3b1e241e858f693b2811dedd46a6d354ec513d34716619c1872dc8",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Износ вещей до истощения ресурса сохранён. Use up допустимо по общей дефиниции, хотя для одежды менее обычно."
+    },
+    {
+      "jobId": "full050-1",
+      "responseHash": "deec5090808563685389ef145e225104eaf211371ad9b9a70876f0994431bb51",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Включение прибора и необходимость включить радио сохранены. Пара включать/включить — грамматический вид того же глагола, а не дополнительный эквивалент."
+    },
+    {
+      "jobId": "full051-1",
+      "responseHash": "6c4642eb2274104c80b059b435cc9c49988cf144fde2d65bc79644e56f9fccbd",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Недооценка и пример экзамена сохранены; менее способный немного сужает универсальную дефиницию."
+    },
+    {
+      "jobId": "full052-1",
+      "responseHash": "10a3f2cbeaa0ceb9fd6cc476e6f3a521387e1f14541f6b005d30d6e29e722d82",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Звук козы передан. Издавать блеяние у GPT — повторная описательная форма вместо полезной альтернативы."
+    },
+    {
+      "jobId": "full053-1",
+      "responseHash": "b9fafce0252f32dccb6b6d42fa5b0d2453d0691848cd86a55a86fef4928c2d75",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Прекращение и последний кадр фильма сохранены; общая конструкция кто-либо заканчивается неестественна без дополнения."
+    },
+    {
+      "jobId": "full054-1",
+      "responseHash": "b2f4072b79935c41b422d97fa485aa75eaf85452961dc1cd5d309e0daac9e710",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 3,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent",
+        "unnatural-language"
+      ],
+      "rationale": "Получение высказывания с усилием сохранено. GPT даёт неграмматичное определение и вынудить ответ. Luna5.6 использует неестественное выманить высказывание; Luna6 опускает слуховую/речевую часть определения."
+    },
+    {
+      "jobId": "full055-1",
+      "responseHash": "bc87a08ef801865d1840ef5cad1f668fdc1ff0e8b02ea7f2fb0d130d35e9e11e",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Пение и три песни переданы. Определение Luna5.6 теряет музыкальные тона и допускает любой звук голосом."
+    },
+    {
+      "jobId": "full064-1",
+      "responseHash": "b0f9c7bced73ac59a50eb1cd9253c00d19d1d7ae4e5e9627ac6cb3a33c13ee50",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 3
+      },
+      "failureCodes": [
+        "base-translation-error"
+      ],
+      "rationale": "Имущество внутри дома и его страховка переданы. Утварь у Luna5.6 уже совокупности всех домашних вещей; базовое имущество GPT шире полного составного слова."
+    },
+    {
+      "jobId": "full065-1",
+      "responseHash": "48ea29cecdb11bbc7ef8cc815a9262c1f9e09786cf6162c44b57c209ef99792b",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 2
+      },
+      "failureCodes": [
+        "base-translation-error"
+      ],
+      "rationale": "Визит домой может быть врача или другого специалиста. GPT теряет домашнюю составляющую в base. Обе Luna неправомерно ограничивают основное значение врачом, хотя источник говорит например врач."
+    },
+    {
+      "jobId": "full066-1",
+      "responseHash": "28c41bbe33575f3fb12994ec50089fc0bfb4090ddd54492bf2afb8449ca68f61",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Покорность и отсутствие сопротивления сохранены."
+    },
+    {
+      "jobId": "full067-1",
+      "responseHash": "ff68198ece7321d55bf3d0a26c390789706081a4d7a28511ea7020c7653bcf9a",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Небольшая степень удивления сохранена, все три эквивалента уместны."
+    },
+    {
+      "jobId": "full068-1",
+      "responseHash": "806417f560066f23dff4ab6e197e237e8caccc81286d7c2ab5c696351070e390",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Аббревиатура известного важного лица и помещение для таких гостей сохранены. У Luna5.6 note важность заменена влиятельностью; основное определение точно."
+    },
+    {
+      "jobId": "full069-1",
+      "responseHash": "6573e238660ea604180bd3ca79a58dd5c1aba1b533166d528a5e5d859eab778a",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent",
+        "content-translation-error"
+      ],
+      "rationale": "Религиозная профессиональная помощь и больничный контекст переданы. GPT неправомерно ограничивает общую функцию протестантским священнослужителем в note; духовник уже исходной категории."
+    },
+    {
+      "jobId": "full070-1",
+      "responseHash": "54a6d7cedf6b73c19af152c8108fc3c54ffc9e25a27168ed6e94bf36eb36d6a3",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Неясность и уклончивый ответ о возрасте переданы."
+    },
+    {
+      "jobId": "full071-1",
+      "responseHash": "09e69d46b3cf06a7c95f988192f88fa4687c067cc11a8d7065ac79c83357fce1",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Наркоз с введением в сон и отсутствие боли переданы. Анестезия у Luna5.6 слишком широка: может быть местной без сна."
+    },
+    {
+      "jobId": "full072-1",
+      "responseHash": "0ec26336a356d9fe59c97582c30b735ae176b4ed254eae5f82e483f171a93649",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Отсутствие и точное количество коллег сохранены. Дополнительный вариант отрицания не даёт нового эквивалента, но может помогать начинающему; небольшая оговорка."
+    },
+    {
+      "jobId": "full073-1",
+      "responseHash": "76852dbded30face8b85e89288d8189f1e594c623ac985f2f2070df2ab9fdb53",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Известность в поп-музыке сохранена. Pop singer у обеих Luna не гарантирует известность, потому не равнозначно pop star."
+    },
+    {
+      "jobId": "full074-1",
+      "responseHash": "e07b67a1c6ff169929d9afcac6d9c275a2b1b8054780a0c0f4bcc6abece6c35c",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 2,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 2,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "sense-mismatch",
+        "content-translation-error"
+      ],
+      "rationale": "Употребление daar как частицы без пространственного смысла. GPT и Luna5.6 ошибочно выбирают там. GPT также меняет настоящее высказывание на будущее реактивное что скажешь на это; Luna6 передаёт частицу естественно."
+    },
+    {
+      "jobId": "full075-1",
+      "responseHash": "dcc88b2d3d5d595396f447c19ceccd86eb7c91ca896ea9c0a28538b4b7709268",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Нечестный/непорядочный характер замечания передан; fair/honest немного различаются, но в этом контексте допустимы."
+    },
+    {
+      "jobId": "full076-1",
+      "responseHash": "a51aaf4e7456438faf27dc3d0e431195839e6c356114f8ed050b7fa7257f6128",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Не сдаваться и осуществление планов оценены. GPT заменяет неудавшееся проведение планов в жизнь неудавшейся настойчивостью."
+    },
+    {
+      "jobId": "full077-1",
+      "responseHash": "21166bd4768112c1f39124a712b311fb8190fa4087815b578f4177bd5a5941c0",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Дополнительные страницы издания и нахождение статьи сохранены."
+    },
+    {
+      "jobId": "full078-1",
+      "responseHash": "e00bda6d4e9923d0de32eb38613dbfde3e54f0cb8731c5f0f84e069e220c79f5",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 3,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent",
+        "unnatural-language"
+      ],
+      "rationale": "Несчётность и многократные переезды сохранены. Неподсчитываемый у GPT неестественный словарный вариант."
+    },
+    {
+      "jobId": "full079-1",
+      "responseHash": "56c661799431243fbbdc15ab1b24fe82c1dcc5531967a31bfa070ef38e43eb4b",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Незаменимость книги в отпуске передана. Нужный без усиления у GPT/Luna6 слишком слаб для действительно необходимого; каникулы у Luna5.6 допустимый вариант vakantie с оговоркой."
+    },
+    {
+      "jobId": "full080-1",
+      "responseHash": "3f7ae63aed6da8c8ea3a6a7a26025f05eceb6f7eebcab6ee07186f352721f401",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Обнародование и неполное опубликование результатов переданы с сохранением отрицания."
+    },
+    {
+      "jobId": "full084-1",
+      "responseHash": "28a5452daf1c376fe01e6ff05610c288b0634b29278441d69f3fddb200c9b6a1",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Overgrote — подавляющая/подавляюще большая часть. Greater part у Luna6 теряет усиление, хотя объяснение grootste в источнике также упрощено."
+    },
+    {
+      "jobId": "full085-1",
+      "responseHash": "b67f542becf4fa652124b726d194ee45185a3702016a727d6b1f95ef5216a32c",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Нужда муниципалитета в деньгах сохранена; самостоятельного entry по контракту нет."
+    },
+    {
+      "jobId": "full086-1",
+      "responseHash": "fb21e1bd0d07ae3cc3e6205047b48adfb2be55250394288301459783c5b6907d",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 1,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Источник: субъект не может причинить вред. GPT меняет роли на субъект, которому нельзя навредить; это существенная смысловая ошибка, даже при верном примере бронирования."
+    },
+    {
+      "jobId": "full087-1",
+      "responseHash": "1e8df90351cee68ffe83c152b1946d67c0b7c09ba8c9c9b8953da5c1d8be0042",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Признание правоты и решение судьи переданы; суд вместо судьи у GPT допустимая метонимия."
+    },
+    {
+      "jobId": "full088-1",
+      "responseHash": "0344f723be5d57fc565771c25f9eff047390b93bc5194057cfd85b5cee4ea94b",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Идиома означает острое ведение переговоров на пределе возможностей. На острие ножа у обеих Luna неестественно по-русски; требуется на лезвии ножа/на грани."
+    },
+    {
+      "jobId": "full089-1",
+      "responseHash": "4b657785dcf27805b0874196e7d720ede7b6c178a7524a5418d5043a16afae00",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Начало разговора передано естественно."
+    },
+    {
+      "jobId": "full090-1",
+      "responseHash": "941a6d009e2e991ae03387be0bd0ff07edbc16427367a86bb05d22d4f8c9332b",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "В источнике потенциальная ошибка: налог на заработную плату в объяснении налога недвижимости. Переводчик должен сохранить и отметить источник, не исправлять молча. GPT заменяет заработную плату более общим доходом."
+    },
+    {
+      "jobId": "full094-1",
+      "responseHash": "a38c778fdb24801560bdcd4b733f94d7f7349e4b27644ed0cb4befb0e23303fd",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Покупательная способность и возможность приобретать товары/услуги сохранены."
+    },
+    {
+      "jobId": "full095-1",
+      "responseHash": "d5d75426dac78430c4eaaa3e4fd29a9400d11b336d1bb5f48a7b544ddc504526",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Учительница начальной школы передана. Альтернативы GPT/Luna5.6 отличаются только предлогом; Luna6 даёт два обычных названия той же должности."
+    },
+    {
+      "jobId": "full096-1",
+      "responseHash": "846703ad1c1578fcb02a57b2bbe96f761404b4bb8bd942e027c928980a851cfb",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 4,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Человек с признаками обоих полов передан. Интерсексуал у Luna5.6 неоднозначен и неудачен для нейтрального обозначения телесных особенностей; рекомендуется интерсекс-человек."
+    },
+    {
+      "jobId": "full097-1",
+      "responseHash": "9d35a3b98f20047e0d3cddfd10a82a9f927aeb0f47465e31e833b5538d59eca8",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Рассказ рисунками и комикс сохранены, базовая полоса — отдельное обычное значение."
+    },
+    {
+      "jobId": "full098-1",
+      "responseHash": "0301249138e6dc5181eb0ba3b7889d98ccb4b8fcd7ad3ec99b44c69dd803527a",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Пастух овец передан; sheepherd у Luna5.6 — неправильное название лица вместо shepherd/sheep herder."
+    },
+    {
+      "jobId": "full099-1",
+      "responseHash": "92d74cd7252fb59cb6e1e458742393a3521bbc252630dff4de751b1d39ca1c18",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Таксист и профессиональная перевозка людей сохранены."
+    },
+    {
+      "jobId": "full100-1",
+      "responseHash": "8a577a2b47d9316cf8aa7f4b0e51cb55c19e695370fc686ac3b28d59886744b7",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Название страны и её расположение в Европе сохранены."
+    }
+  ]
+}

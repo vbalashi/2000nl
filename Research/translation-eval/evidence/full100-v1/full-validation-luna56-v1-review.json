@@ -1,0 +1,232 @@
+{
+  "schemaVersion": "translation-eval-review-v1",
+  "runId": "full-validation-luna56-v1",
+  "reviewer": "Codex primary agent",
+  "method": "agent",
+  "reviewedAt": "2026-10-10T17:02:19.239271+00:00",
+  "manifestHash": "f3c7327da1a8b0763f1d8dd58f9da0b8625579e4b3da48b4248ea680f6051968",
+  "reviewContext": "All 209 ready first-attempt validation outputs inspected against exact NL inputs; non-blind primary-agent review, not independent/human approval. HTTP500 kept separately.",
+  "items": [
+    {
+      "jobId": "full007-1",
+      "responseHash": "071e32b523a5dbb128d6390ad7541e2b23db6271cce8dcbc984b88a4751eafeb",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Копьё, пример охоты и идиома быстрого ухода переданы. Дротик/пика — более узкие соответствия; отъезд вместо ухода не задан источником."
+    },
+    {
+      "jobId": "full008-1",
+      "responseHash": "451424d16cfa77a02d8f7539bf75ab7c1c32df5022ac643281357adbbebf54b5",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Пинок и штрафной удар проверены. Базовый перевод без контекста может быть лестницей/ступенью. В Luna6 запрет сопернику мешать заменён действием игрока, который не позволяет мешать."
+    },
+    {
+      "jobId": "full009-1",
+      "responseHash": "cc938dffdc315f1050ae57fbfade384c891e1df2f0d8115d56d290a30870b5b5",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Недоверие и выражение сомнения сохранены; многословный вариант Luna5.6 является описанием, а не полезным дополнительным эквивалентом."
+    },
+    {
+      "jobId": "full010-1",
+      "responseHash": "13e0815ebfe7f218ac97c6cfbf81c3f00e51d80b064e2cb0fe68cf0c6a7ffced",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Плоскодонное судно и общая трудная ситуация переданы; баржа несколько уже исходного общего названия."
+    },
+    {
+      "jobId": "full011-1",
+      "responseHash": "11371512012604546a98016beef23cd9de81c470eb0a62ce097102c2ccf120e0",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Нагревание еды и потепление климата переданы без смыслового сдвига."
+    },
+    {
+      "jobId": "full012-1",
+      "responseHash": "93865256b9ba42eee548bcc1702f6179450a47696950d59155b5d851df98944f",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Избегание встречи и малое различие по возрасту переданы. Описательная альтернатива допустима здесь как обычное выражение избегания."
+    },
+    {
+      "jobId": "full013-1",
+      "responseHash": "fde811580158b9fe73420f9e21bc1c283abe44b8a8205ee855870fffe84a91d9",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Личная сфера и близкая дружба сохранены; private/intimate/personal применимы к данному значению."
+    },
+    {
+      "jobId": "full014-1",
+      "responseHash": "e390d3c0d446b5712cc71ccac619bb932de2efa6cf1ba6ea88fcf47a8be78d50",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Остаток времени и неудовлетворительный результат работы переданы. GPT даёт неграмматичное определение; Luna5.6 добавляет повторное описание вместо нового эквивалента."
+    },
+    {
+      "jobId": "full015-1",
+      "responseHash": "5df8867eec1e1c0a8a2e949b09358ba44360fcdd1f3dcd4bb746e6ff2289f818",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 3,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnatural-language",
+        "content-translation-error"
+      ],
+      "rationale": "Обязанность в основном примере сохранена. Выражение срочной необходимости в туалет требует полного перевода; GPT в отдельной идиоме теряет туалет, обе Luna теряют срочность. Быть должным менее естественно, чем быть обязанным/должен."
+    },
+    {
+      "jobId": "full016-1",
+      "responseHash": "4894d1bc29b21646d1c4b69255c4953795b168b74b2cbf45bada5c04d6edd94e",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Увеличительный прибор и внимательное рассмотрение переведены. Взять под лупу у GPT — неестественная калька вместо рассмотреть под лупой."
+    },
+    {
+      "jobId": "full017-1",
+      "responseHash": "a136fb8acaa3519e5c9b66b69c6dc0103b5b64601bc18ba4facf323194aa0408",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Айсберг и видимая часть большей проблемы переданы. Ледяная гора слишком широкая альтернатива без морского контекста."
+    },
+    {
+      "jobId": "full018-1",
+      "responseHash": "916613fa265bdc81275a63f8248996559334c1caa52dd9e40b6f8cd1a1762749",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Публичная речь и перебивание говорящего переданы; доклад допустим с небольшой оговоркой о жанре."
+    },
+    {
+      "jobId": "full019-1",
+      "responseHash": "d6b737bd6814bdc2682bcff5660ef34d4e975aa57bd088d188d14d18a900d3a3",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Порядковое числительное и оба названия переданы. Написание 2nd не отдельный лексический эквивалент. Introduce laws у Luna5.6 уже, чем make laws в объяснении."
+    },
+    {
+      "jobId": "full020-1",
+      "responseHash": "f9b125dd67c19a240732031c6c8c9423fcfc3cc2b0968b6b7ade375297d3a57f",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 3,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnatural-language"
+      ],
+      "rationale": "Корабль и обе идиомы переданы. Сочетание clear the decks with the staff звучит неестественно; английский пример требует переформулировки."
+    },
+    {
+      "jobId": "full027-1",
+      "responseHash": "214d5227f310c11562162406a4d4d89771f9fc2a9f4a6ca0f9bda222044252dd",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Отрицательная приставка и оба примера сохранены; без- зависит от конкретного слова и допустимо с оговоркой."
+    }
+  ]
+}

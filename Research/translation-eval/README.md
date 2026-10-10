@@ -117,3 +117,8 @@ per-run review для submit-review: его нужно связать через
 В `runs/review-tuning-{gpt41,luna56,luna6}-v2/index.html` — новые анонимные
 страницы сравнения внутри модели. Оценки агента/источники/ограничения сохранены
 отдельно в evidence/model-tuning-2026-10-10; итог не меняет production default.
+
+- [Full100 results, measured costs and retry amendment](FULL100-RESULTS-v1.md):
+  100 real meanings; common v4 selected before70-case held-out evaluation;
+  390 first-attempt protocol calls plus1 separately logged recovery. Anonymous
+  local review: `runs/review-full100-v1/index.html`.
