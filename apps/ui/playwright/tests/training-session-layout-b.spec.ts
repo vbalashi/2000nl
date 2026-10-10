@@ -6,6 +6,7 @@ test.use({ video: { mode: "on", size: { width: 390, height: 844 } }, hasTouch: t
 async function startFixture(
   page: Page,
   profile: "answer" | "long-idiom" | "recoverable-error" = "answer",
+  progress: "dots" | "wave" | "off" = "dots",
 ) {
   // Fail closed outside deterministic transport handlers; never use a real account/DB.
   await page.route("**/*", (route) => {
@@ -19,7 +20,7 @@ async function startFixture(
   await setupAuthenticatedTrainingAttributionPage(page, 0, {
     visualProfile: profile,
     sessionPlannedTotal: 15,
-    settingsOverrides: { training_grade_swipe_enabled: true, training_animation_enabled: true },
+    settingsOverrides: { training_progress_animation: progress, training_grade_swipe_enabled: true, training_animation_enabled: true },
   });
   await page
     .getByRole("button", {
@@ -30,7 +31,7 @@ async function startFixture(
 
 test.describe("animated swipe preview", () => {
 
-  test("rim remains fixed during a real touch drag and cancelled swipe", async ({ page }, testInfo) => {
+  test("session indicator remains fixed during a real touch drag and cancelled swipe", async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ colorScheme: "dark", reducedMotion: "no-preference" });
     await startFixture(page);
@@ -54,7 +55,7 @@ test.describe("animated swipe preview", () => {
     }
     await expect(page.getByTestId("training-card-swipe-wrapper")).not.toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 0)");
     expect(await rim.boundingBox()).toEqual(before);
-    await page.screenshot({ path: testInfo.outputPath("rim-detached-mid-swipe.png") });
+    await page.screenshot({ path: testInfo.outputPath("progress-mid-swipe.png") });
     await page.waitForTimeout(900);
     await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await page.waitForTimeout(800);
@@ -63,19 +64,18 @@ test.describe("animated swipe preview", () => {
   });
 });
 
-test("session rim stays outside swipe layer through reveal and accepted next card", async ({ page }, testInfo) => {
+test("session progress stays above the card through reveal and accepted next card", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   await startFixture(page);
   const rim = page.getByTestId("training-session-progress-track");
   const shell = page.getByTestId("training-sense-card-shell");
   await expect(rim).toBeVisible();
-  await expect(rim.locator("div")).toHaveCSS("height", "9px");
+  await expect(rim).toHaveAttribute("data-variant", "dots");
   const before = (await rim.boundingBox())!;
   const card = (await shell.boundingBox())!;
-  expect(before.x).toBe(card.x);
-  expect(before.y).toBe(card.y);
-  expect(before.width).toBe(card.width);
+  expect(before.y + before.height).toBeLessThan(card.y);
+  expect(before.width).toBeLessThan(card.width);
   expect(await rim.evaluate(el => el.closest('[data-testid="training-card-swipe-wrapper"]'))).toBeNull();
   await page.getByRole("button", { name: /Antwoord tonen|Show answer/i }).click();
   expect(await rim.boundingBox()).toEqual(before);
@@ -93,7 +93,7 @@ test("session rim stays outside swipe layer through reveal and accepted next car
     await expect(page.getByTestId("training-session-position")).not.toHaveText(position);
     expect(await rim.boundingBox()).toEqual(before);
   }
-  await page.screenshot({ path: testInfo.outputPath("persistent-rim-next.png") });
+  await page.screenshot({ path: testInfo.outputPath("quiet-dots-next.png") });
 });
 
 const viewports = [
@@ -229,7 +229,7 @@ for (const viewport of viewports) {
         0,
       );
       expect(sessionBox.width).toBe(viewport.cardWidth);
-      expect(sessionBox.height).toBe(62);
+      expect(sessionBox.height).toBe(29);
       for (const side of ["face", "answer"] as const) {
         if (side === "answer")
           await stage.getByRole("button", { name: "Antwoord tonen" }).click();
@@ -238,7 +238,7 @@ for (const viewport of viewports) {
           .boundingBox())!;
         expect(card.width).toBe(viewport.cardWidth);
         expect(card.x).toBe(sessionBox.x);
-        expect(card.y - sessionBox.y - sessionBox.height).toBe(10);
+        expect(card.y - sessionBox.y - sessionBox.height).toBe(25);
         const dock = (await page
           .getByTestId("training-sense-card-dock")
           .boundingBox())!;
@@ -266,3 +266,39 @@ for (const viewport of viewports) {
     });
   }
 }
+
+for (const variant of ["wave", "off"] as const) {
+ test(`progress preference ${variant} is applied from the account`, async ({page}, testInfo) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.emulateMedia({colorScheme:"dark",reducedMotion:"reduce"});
+  await startFixture(page,"answer",variant);
+  const progress=page.getByTestId("training-session-progress-track");
+  if(variant==="off") await expect(progress).toHaveCount(0);
+  else await expect(progress).toHaveAttribute("data-variant",variant);
+  await expect(page.getByTestId("training-session-position")).toBeVisible();
+  await page.screenshot({path:testInfo.outputPath(`progress-${variant}.png`)});
+ });
+}
+
+test("Appearance switches progress off and to wave without losing the revealed card", async ({page},testInfo)=>{
+ await page.setViewportSize({width:834,height:1112});
+ await startFixture(page);
+ await page.getByRole("button",{name:"Antwoord tonen"}).click();
+ await page.getByTestId("app-header").getByRole("button",{name:"Instellingen"}).click();
+ await page.getByRole("button",{name:/Uiterlijk|Weergave|Vormgeving/,exact:true}).click();
+ const group=page.getByRole("group",{name:"Voortgangsanimatie"});
+ await expect(group.getByRole("button",{name:"Stippen",exact:true})).toHaveAttribute("aria-pressed","true");
+ const saved=page.waitForRequest(request=>request.url().includes('/user_settings') && request.method()==='POST' && request.postDataJSON()?.training_progress_animation==='off');
+ await group.getByRole("button",{name:"Uit",exact:true}).click();
+ await saved;
+ await expect(group.getByRole("button",{name:"Uit",exact:true})).toBeEnabled();
+ await page.getByRole("button",{name:"Training",exact:true}).click();
+ await expect(page.getByTestId("training-session-progress-track")).toHaveCount(0);
+ await expect(page.getByTestId("training-sense-card-stage")).toHaveAttribute("data-side","answer");
+ await page.getByTestId("app-header").getByRole("button",{name:"Instellingen"}).click();
+ await group.getByRole("button",{name:"Golf",exact:true}).click();
+ await expect(group.getByRole("button",{name:"Golf",exact:true})).toBeEnabled();
+ await page.screenshot({path:testInfo.outputPath("appearance-progress.png")});
+ await page.getByRole("button",{name:"Training",exact:true}).click();
+ await expect(page.getByTestId("training-session-progress-track")).toHaveAttribute("data-variant","wave");
+});

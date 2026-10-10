@@ -57,7 +57,7 @@ export function TrainingSessionV2Layout({
         className={`${styles.main} ${approvedPresentation ? styles.mainApproved : ""} ${authorityRefreshing ? styles.authorityRefreshing : ""}`}
       >
         <section className={styles.stack}>
-          {chrome}
+          {chrome || progress ? <div className={styles.progressHeader}>{chrome}{progress}</div> : null}
           <div
             data-testid="training-card-scroll-region"
             className="flex min-h-0 flex-1 flex-col overflow-clip px-0"
@@ -67,7 +67,6 @@ export function TrainingSessionV2Layout({
               data-testid="training-card-frame"
               className="relative mx-auto min-h-0 w-full flex-1 overflow-hidden transition-[height] duration-200"
             >
-              {progress}
               <div
                 ref={interaction?.ref}
                 data-testid="training-card-swipe-wrapper"
