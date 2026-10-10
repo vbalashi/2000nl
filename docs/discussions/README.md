@@ -78,3 +78,5 @@
 - [2026-10-10: упражнения и подборки внутри Free 100](2026-10-10-02-free-100-exercises-and-subsets.md)
 
 - [2026-10-10: перевод и озвучка Free 100](2026-10-10-03-free-100-translation-and-audio.md)
+
+- [2026-10-10: язык медиа и личный бренд](2026-10-10-04-editorial-language-and-personal-brand.md)
