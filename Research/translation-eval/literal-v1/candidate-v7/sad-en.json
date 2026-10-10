@@ -1,0 +1,68 @@
+{
+  "id": "sad-en",
+  "inputHash": "3ffc26bbe32282f243efcc6f85ff3da29f0a343659cea03d9af9ac9097689b52",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "sad",
+      "alternativeTexts": [
+        "sorrowful"
+      ],
+      "baseText": "sad",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "feeling sad"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"sad\",\"alternativeTexts\":[\"sorrowful\"],\"baseText\":\"sad\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"feeling sad\"}]}",
+  "responseHash": "4495b4aa04c7c21723fb340d6349a74a6502ef0b30fdbad6c2821425f4f1db0c",
+  "usage": {
+    "completion_tokens": 141,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 87,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 65,
+      "engine_ttlt_ms": 1019,
+      "pre_inference_ms": 99,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 303,
+      "service_ttlt_ms": 1254,
+      "user_visible_ttft_ms": 204
+    },
+    "prompt_tokens": 1406,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1403,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1547
+  },
+  "elapsedMs": 1574,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "6d249510-af91-4964-b8b1-61b059ec3004",
+      "inputTokens": 1406,
+      "outputTokens": 141,
+      "event": "translation_attempt",
+      "correlationId": "1f8b5627-29d1-4027-a424-08c092e2a3cd",
+      "attempt": 1,
+      "elapsedMs": 1574,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "cow-ru",
+  "inputHash": "16cebb3b07a7fc2e9b57f8990d4402681a2c1495551f68e33138f0713cd3b3b2",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "корова",
+      "alternativeTexts": [],
+      "baseText": "корова",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "животное, дающее молоко"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "разговаривать о коровках и телятах",
+        "text": "непринуждённо беседовать о пустяках"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "непринуждённо и приятно беседовать о незначительных вещах"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"корова\",\"alternativeTexts\":[],\"baseText\":\"корова\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"животное, дающее молоко\"},{\"fieldId\":\"idiom:0\",\"text\":\"непринуждённо беседовать о пустяках\",\"literalText\":\"разговаривать о коровках и телятах\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"непринуждённо и приятно беседовать о незначительных вещах\"}]}",
+  "responseHash": "22c460968debd3c561180815917c31486a11a01e8f2a4cca8f1b1bdccc32d6c0",
+  "usage": {
+    "completion_tokens": 319,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 189,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 66,
+      "engine_ttlt_ms": 1769,
+      "pre_inference_ms": 150,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 372,
+      "service_ttlt_ms": 2068,
+      "user_visible_ttft_ms": 221
+    },
+    "prompt_tokens": 1194,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1191,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1513
+  },
+  "elapsedMs": 2931,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "ecf5b620-1982-4e90-b0fd-0ed477c77dd2",
+      "inputTokens": 1194,
+      "outputTokens": 319,
+      "event": "translation_attempt",
+      "correlationId": "e083f1e9-c92e-47ea-994c-6aeee207c52e",
+      "attempt": 1,
+      "elapsedMs": 2931,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

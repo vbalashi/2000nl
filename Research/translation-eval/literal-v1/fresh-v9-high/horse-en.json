@@ -1,0 +1,75 @@
+{
+  "id": "horse-en",
+  "inputHash": "2072d5d25892450419e0a940a98c218dc694604e03712b5453fedf450de3bd96",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "horse",
+      "alternativeTexts": [],
+      "baseText": "horse",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a large hoofed animal that people can ride"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "hitch the horse behind the cart",
+        "text": "put the cart before the horse"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to do something in the wrong order"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"horse\",\"alternativeTexts\":[],\"baseText\":\"horse\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a large hoofed animal that people can ride\"},{\"fieldId\":\"idiom:0\",\"text\":\"put the cart before the horse\",\"literalText\":\"hitch the horse behind the cart\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to do something in the wrong order\"}]}",
+  "responseHash": "dc7711faa62dacc4bb34d3bc70cb0fcc85db88913ff149b824953cbaad93f85a",
+  "usage": {
+    "completion_tokens": 426,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 321,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 92,
+      "engine_ttlt_ms": 2625,
+      "pre_inference_ms": 87,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 326,
+      "service_ttlt_ms": 2853,
+      "user_visible_ttft_ms": 239
+    },
+    "prompt_tokens": 1714,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 504,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 2140
+  },
+  "elapsedMs": 3221,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "aeb4660f-9e63-4623-86a9-c0910c515008",
+      "inputTokens": 1714,
+      "outputTokens": 426,
+      "event": "translation_attempt",
+      "correlationId": "b12efb45-0faf-45d9-b54d-26a9ac9de975",
+      "attempt": 1,
+      "elapsedMs": 3221,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

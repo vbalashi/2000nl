@@ -1,0 +1,75 @@
+{
+  "id": "butter-ru",
+  "inputHash": "bd1ce0f7c6336669339066600f3257bf2576d9077509dc64c4ee243603906240",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "сливочное масло",
+      "alternativeTexts": [],
+      "baseText": "сливочное масло",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "жир, получаемый из молока"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "иметь масло на голове",
+        "text": "у самого рыльце в пушку"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "самому быть виноватым в том, в чём упрекаешь другого"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"сливочное масло\",\"alternativeTexts\":[],\"baseText\":\"сливочное масло\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"жир, получаемый из молока\"},{\"fieldId\":\"idiom:0\",\"text\":\"у самого рыльце в пушку\",\"literalText\":\"иметь масло на голове\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"самому быть виноватым в том, в чём упрекаешь другого\"}]}",
+  "responseHash": "d102e62d1773cb131d77176d2b3794902e34f1f9eb295fd728d3385bcfab5e29",
+  "usage": {
+    "completion_tokens": 360,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 239,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 73,
+      "engine_ttlt_ms": 2133,
+      "pre_inference_ms": 93,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 355,
+      "service_ttlt_ms": 2366,
+      "user_visible_ttft_ms": 261
+    },
+    "prompt_tokens": 1195,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1192,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1555
+  },
+  "elapsedMs": 2764,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e5655d03-02af-431b-8ac7-6a27ee584a64",
+      "inputTokens": 1195,
+      "outputTokens": 360,
+      "event": "translation_attempt",
+      "correlationId": "db9e3fc9-3960-4fdb-839b-145f89ba0731",
+      "attempt": 1,
+      "elapsedMs": 2764,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

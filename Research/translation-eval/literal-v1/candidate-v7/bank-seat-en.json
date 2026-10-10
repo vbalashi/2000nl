@@ -1,0 +1,68 @@
+{
+  "id": "bank-seat-en",
+  "inputHash": "f9ef4216e8e1c9977ff90da8ac3126ec9e535a939541e0041ed24da6774d085c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "bench",
+      "alternativeTexts": [
+        "settee"
+      ],
+      "baseText": "bench",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a long piece of furniture on which several people can sit"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"bench\",\"alternativeTexts\":[\"settee\"],\"baseText\":\"bench\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a long piece of furniture on which several people can sit\"}]}",
+  "responseHash": "9f960b203d74f00c2e9fb040b9d2a82012190bf89384c3cd6ba7815f5205c9d4",
+  "usage": {
+    "completion_tokens": 55,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 4,
+      "engine_ttft_ms": 68,
+      "engine_ttlt_ms": 303,
+      "pre_inference_ms": 102,
+      "service_tbt_ms": 4,
+      "service_ttft_ms": 339,
+      "service_ttlt_ms": 551,
+      "user_visible_ttft_ms": 237
+    },
+    "prompt_tokens": 1409,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1406,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1464
+  },
+  "elapsedMs": 950,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "3c31c30b-456a-4726-8e47-cf3e71748e68",
+      "inputTokens": 1409,
+      "outputTokens": 55,
+      "event": "translation_attempt",
+      "correlationId": "ba4fedfb-a4af-44ee-8bd4-3a1919d47d75",
+      "attempt": 1,
+      "elapsedMs": 950,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

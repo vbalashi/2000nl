@@ -1,0 +1,66 @@
+{
+  "id": "cow-simple-en",
+  "inputHash": "2b8509104d30ee7b059034b03d564d2ddaaa73ce427ae668bca999b9e9b88060",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cow",
+      "alternativeTexts": [],
+      "baseText": "cow",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an adult female bovine"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"cow\",\"alternativeTexts\":[],\"baseText\":\"cow\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an adult female bovine\"}]}",
+  "responseHash": "5b142f443eb993406b361fe9b8232c4e891023c62efd68ceb9028a49a667ec2e",
+  "usage": {
+    "completion_tokens": 46,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 4,
+      "engine_ttft_ms": 68,
+      "engine_ttlt_ms": 278,
+      "pre_inference_ms": 95,
+      "service_tbt_ms": 4,
+      "service_ttft_ms": 307,
+      "service_ttlt_ms": 513,
+      "user_visible_ttft_ms": 212
+    },
+    "prompt_tokens": 1408,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1405,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1454
+  },
+  "elapsedMs": 881,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "0c0ffa73-68d6-407b-88f8-d9e6279cf20b",
+      "inputTokens": 1408,
+      "outputTokens": 46,
+      "event": "translation_attempt",
+      "correlationId": "355143d7-5b5c-4f76-82fd-5731c6b92fd6",
+      "attempt": 1,
+      "elapsedMs": 881,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

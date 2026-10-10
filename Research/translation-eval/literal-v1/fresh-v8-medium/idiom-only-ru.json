@@ -1,0 +1,66 @@
+{
+  "id": "idiom-only-ru",
+  "inputHash": "b1f4f39c9fbf76a0c043e71667fb91d914ae9101443e16de97eb54fa9198a6df",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": null,
+    "contentTranslations": [
+      {
+        "fieldId": "idiom:0",
+        "literalText": "открыть книжечку о ком-либо",
+        "text": "рассказать, что кто-то натворил"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "раскрыть, что сделал кто-либо"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":null,\"contentTranslations\":[{\"fieldId\":\"idiom:0\",\"text\":\"рассказать, что кто-то натворил\",\"literalText\":\"открыть книжечку о ком-либо\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"раскрыть, что сделал кто-либо\"}]}",
+  "responseHash": "cbd2363c59b1edf70d92888c6b349a8d335be8c7232dd20f80459896702a52f4",
+  "usage": {
+    "completion_tokens": 966,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 880,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 78,
+      "engine_ttlt_ms": 5851,
+      "pre_inference_ms": 164,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 433,
+      "service_ttlt_ms": 6098,
+      "user_visible_ttft_ms": 269
+    },
+    "prompt_tokens": 1555,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 484,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2521
+  },
+  "elapsedMs": 6581,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "23933b53-ea36-49d5-92a1-e6ae60082d82",
+      "inputTokens": 1555,
+      "outputTokens": 966,
+      "event": "translation_attempt",
+      "correlationId": "6b9bd79c-5ea0-4382-9cb4-225d13a0532e",
+      "attempt": 1,
+      "elapsedMs": 6581,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

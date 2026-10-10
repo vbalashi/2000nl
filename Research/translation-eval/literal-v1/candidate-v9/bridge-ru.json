@@ -1,0 +1,75 @@
+{
+  "id": "bridge-ru",
+  "inputHash": "3d49dbc73d9f5dc14d9ccdbad32738889424ec34e5053b5e25cef538dced4427",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "мост",
+      "alternativeTexts": [],
+      "baseText": "мост",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "сооружение, обеспечивающее связь через водное пространство"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "прийти через мост",
+        "text": "наконец заплатить или отдать что-либо"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "наконец заплатить или что-либо дать"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"мост\",\"alternativeTexts\":[],\"baseText\":\"мост\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"сооружение, обеспечивающее связь через водное пространство\"},{\"fieldId\":\"idiom:0\",\"text\":\"наконец заплатить или отдать что-либо\",\"literalText\":\"прийти через мост\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"наконец заплатить или что-либо дать\"}]}",
+  "responseHash": "8b1d248aae836443455786482e67b83e3d0d61b74be60a6e27a3ca71309ee7a9",
+  "usage": {
+    "completion_tokens": 441,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 325,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 82,
+      "engine_ttlt_ms": 2745,
+      "pre_inference_ms": 56,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 292,
+      "service_ttlt_ms": 2952,
+      "user_visible_ttft_ms": 236
+    },
+    "prompt_tokens": 1702,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 492,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 2143
+  },
+  "elapsedMs": 3482,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "bdb3667c-7c89-4bda-9c53-6a8e83acb9ce",
+      "inputTokens": 1702,
+      "outputTokens": 441,
+      "event": "translation_attempt",
+      "correlationId": "58666c82-d2cc-4789-8095-0dfbcba8f621",
+      "attempt": 1,
+      "elapsedMs": 3482,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

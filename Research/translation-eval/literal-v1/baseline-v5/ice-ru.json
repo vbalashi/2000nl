@@ -1,0 +1,74 @@
+{
+  "id": "ice-ru",
+  "inputHash": "c28e0e35d61becfa9f123ac1194ba0015473445fd2872120f6f4e313b4904313",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лёд",
+      "alternativeTexts": [],
+      "baseText": "лёд",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "замёрзшая вода"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "растопить лёд"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "снять первоначальное напряжение в общении"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лёд\",\"alternativeTexts\":[],\"baseText\":\"лёд\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"замёрзшая вода\"},{\"fieldId\":\"idiom:0\",\"text\":\"растопить лёд\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"снять первоначальное напряжение в общении\"}]}",
+  "responseHash": "10f124663485787b4fc0281e2b777301a681ff7d6dff1180b6bfe564d0c7bd87",
+  "usage": {
+    "completion_tokens": 174,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 79,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 70,
+      "engine_ttlt_ms": 968,
+      "pre_inference_ms": 92,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 310,
+      "service_ttlt_ms": 1205,
+      "user_visible_ttft_ms": 218
+    },
+    "prompt_tokens": 947,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1121
+  },
+  "elapsedMs": 1549,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "7ad6b3bb-659d-442a-972f-ea11e1314e38",
+      "inputTokens": 947,
+      "outputTokens": 174,
+      "event": "translation_attempt",
+      "correlationId": "cfdd2864-36e0-402a-b014-2b4e66fb9c8f",
+      "attempt": 1,
+      "elapsedMs": 1549,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

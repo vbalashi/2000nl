@@ -1,0 +1,75 @@
+{
+  "id": "cow-ru",
+  "inputHash": "4780240c6544a9c6fa36ad1da4d7d994dbdd9fd9fc40161784eb9d12bd0061a8",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "корова",
+      "alternativeTexts": [],
+      "baseText": "корова",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "животное, которое даёт молоко"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "разговаривать о коровках и телятах",
+        "text": "болтать о пустяках"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "непринуждённо разговаривать о пустяках"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"корова\",\"alternativeTexts\":[],\"baseText\":\"корова\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"животное, которое даёт молоко\"},{\"fieldId\":\"idiom:0\",\"text\":\"болтать о пустяках\",\"literalText\":\"разговаривать о коровках и телятах\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"непринуждённо разговаривать о пустяках\"}]}",
+  "responseHash": "2f49a14697f92db4c328c13e2c0f73aaa1233d48112f38cc6aaf46868d046fec",
+  "usage": {
+    "completion_tokens": 333,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 213,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 70,
+      "engine_ttlt_ms": 1845,
+      "pre_inference_ms": 235,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 459,
+      "service_ttlt_ms": 2269,
+      "user_visible_ttft_ms": 224
+    },
+    "prompt_tokens": 1572,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1905
+  },
+  "elapsedMs": 3113,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "f2de0c86-25fa-44f6-88ec-1ea1c58aea45",
+      "inputTokens": 1572,
+      "outputTokens": 333,
+      "event": "translation_attempt",
+      "correlationId": "046c4a31-d1dc-4246-a8e5-a6aa63f91d7f",
+      "attempt": 1,
+      "elapsedMs": 3112,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

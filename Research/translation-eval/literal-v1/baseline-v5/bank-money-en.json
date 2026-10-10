@@ -1,0 +1,66 @@
+{
+  "id": "bank-money-en",
+  "inputHash": "c689fc7f938796be637f5bf0e13ac7db03bf3617f5633e819821eaad84c8d49c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "bank",
+      "alternativeTexts": [],
+      "baseText": "bank",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an institution that keeps money safe and lends it"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"bank\",\"alternativeTexts\":[],\"baseText\":\"bank\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an institution that keeps money safe and lends it\"}]}",
+  "responseHash": "a4b137a964c180569fd36b3246d9d9206ac8693d66279f1bfa00e468abba64f2",
+  "usage": {
+    "completion_tokens": 112,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 56,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 66,
+      "engine_ttlt_ms": 791,
+      "pre_inference_ms": 67,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 276,
+      "service_ttlt_ms": 975,
+      "user_visible_ttft_ms": 209
+    },
+    "prompt_tokens": 902,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1014
+  },
+  "elapsedMs": 1342,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "c23f746f-6c1c-4cd4-a9e4-f073b030b41d",
+      "inputTokens": 902,
+      "outputTokens": 112,
+      "event": "translation_attempt",
+      "correlationId": "facbd8f2-ecda-4041-8607-007dfdbc5d6a",
+      "attempt": 1,
+      "elapsedMs": 1342,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

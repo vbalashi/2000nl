@@ -1,0 +1,74 @@
+{
+  "id": "butter-en",
+  "inputHash": "48c735293a52d0570d669b7d890e5c635ece5c79a4d9af2f2e6cf1a736702893",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "butter",
+      "alternativeTexts": [],
+      "baseText": "butter",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a fat made from milk"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "to be guilty of the same thing you accuse someone else of"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to be guilty of the same thing you accuse someone else of"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"butter\",\"alternativeTexts\":[],\"baseText\":\"butter\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a fat made from milk\"},{\"fieldId\":\"idiom:0\",\"text\":\"to be guilty of the same thing you accuse someone else of\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to be guilty of the same thing you accuse someone else of\"}]}",
+  "responseHash": "44ac44c276aa20c536c6c39213bdd01a791fb238c534ed87a74148cdb6733f35",
+  "usage": {
+    "completion_tokens": 256,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 153,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 98,
+      "engine_ttlt_ms": 1686,
+      "pre_inference_ms": 111,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 357,
+      "service_ttlt_ms": 1940,
+      "user_visible_ttft_ms": 245
+    },
+    "prompt_tokens": 954,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1210
+  },
+  "elapsedMs": 2304,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "1d17b160-70f7-48f5-8684-ea54556990b2",
+      "inputTokens": 954,
+      "outputTokens": 256,
+      "event": "translation_attempt",
+      "correlationId": "abf8f50d-c771-49a2-852d-d68695e55ba0",
+      "attempt": 1,
+      "elapsedMs": 2304,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

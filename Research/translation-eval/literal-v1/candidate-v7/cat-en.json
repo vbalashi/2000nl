@@ -1,0 +1,75 @@
+{
+  "id": "cat-en",
+  "inputHash": "19da39b5529a36b137ef934c0c74744feb7a98807a6bba910f7106f5409020b9",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "pet",
+      "alternativeTexts": [],
+      "baseText": "cat",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a pet"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "wait and see"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "first wait to see how a situation develops"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"pet\",\"alternativeTexts\":[],\"baseText\":\"cat\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a pet\"},{\"fieldId\":\"idiom:0\",\"text\":\"wait and see\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"first wait to see how a situation develops\"}]}",
+  "responseHash": "7750b9539325a7a8facc61e859498bdfa0a14f4ad5eb6beaf2ba510eedeb6e9c",
+  "usage": {
+    "completion_tokens": 387,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 297,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 71,
+      "engine_ttlt_ms": 2330,
+      "pre_inference_ms": 127,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 355,
+      "service_ttlt_ms": 2609,
+      "user_visible_ttft_ms": 228
+    },
+    "prompt_tokens": 1456,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1453,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1843
+  },
+  "elapsedMs": 3353,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "d7840b12-57fb-4adf-b940-4d4769fff384",
+      "inputTokens": 1456,
+      "outputTokens": 387,
+      "event": "translation_attempt",
+      "correlationId": "fa00c31c-4a24-45c7-a285-3d4d9d08f6ac",
+      "attempt": 1,
+      "elapsedMs": 3353,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "cat-en",
+  "inputHash": "3429cbcdb8405e26d11740eec656372c2d4e6a80c92980f68b3c8c51261ab051",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cat",
+      "alternativeTexts": [],
+      "baseText": "cat",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a pet"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "wait and see how things develop"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "first wait and see how a situation develops"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"cat\",\"alternativeTexts\":[],\"baseText\":\"cat\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a pet\"},{\"fieldId\":\"idiom:0\",\"text\":\"wait and see how things develop\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"first wait and see how a situation develops\"}]}",
+  "responseHash": "15f6cc6e9b887483caa4bbf84115ee13d3e22117305043df155bce68ed8435af",
+  "usage": {
+    "completion_tokens": 310,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 217,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 95,
+      "engine_ttlt_ms": 1817,
+      "pre_inference_ms": 103,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 318,
+      "service_ttlt_ms": 2033,
+      "user_visible_ttft_ms": 215
+    },
+    "prompt_tokens": 1707,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 497,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 2017
+  },
+  "elapsedMs": 2682,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "2d82a847-c50c-4af8-940f-a76b7abf1473",
+      "inputTokens": 1707,
+      "outputTokens": 310,
+      "event": "translation_attempt",
+      "correlationId": "d5d57abc-2696-49b4-8335-b744b7d46469",
+      "attempt": 1,
+      "elapsedMs": 2682,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

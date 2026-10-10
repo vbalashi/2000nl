@@ -1,0 +1,75 @@
+{
+  "id": "hand-en",
+  "inputHash": "d6de44715836c5c8fe2a9aecd1d132820b090515fd0b856c03f57c17552df190",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "hand",
+      "alternativeTexts": [],
+      "baseText": "hand",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a body part"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "give someone a little help"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to help someone a little"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"hand\",\"alternativeTexts\":[],\"baseText\":\"hand\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a body part\"},{\"fieldId\":\"idiom:0\",\"text\":\"give someone a little help\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to help someone a little\"}]}",
+  "responseHash": "2958226b3e5b730a7aa05b2fece1439757847286f112935adc2ece104f962a91",
+  "usage": {
+    "completion_tokens": 211,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 121,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 67,
+      "engine_ttlt_ms": 1103,
+      "pre_inference_ms": 76,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 281,
+      "service_ttlt_ms": 1311,
+      "user_visible_ttft_ms": 205
+    },
+    "prompt_tokens": 1559,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 488,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1770
+  },
+  "elapsedMs": 1856,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "7c24d637-75f6-4665-8429-001814713826",
+      "inputTokens": 1559,
+      "outputTokens": 211,
+      "event": "translation_attempt",
+      "correlationId": "b7afd07c-f3ea-48a1-9834-2c6404865745",
+      "attempt": 1,
+      "elapsedMs": 1856,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

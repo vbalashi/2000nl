@@ -1,0 +1,75 @@
+{
+  "id": "welcome-en",
+  "inputHash": "b8e363e1330b848603d5d90e7f62a5718eae90f789ede46b1ad1da475c2e5ff0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "welcome",
+      "alternativeTexts": [],
+      "baseText": "welcome",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "gladly received"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "a warm welcome"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "a warm greeting when someone arrives"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"welcome\",\"alternativeTexts\":[],\"baseText\":\"welcome\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"gladly received\"},{\"fieldId\":\"idiom:0\",\"text\":\"a warm welcome\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"a warm greeting when someone arrives\"}]}",
+  "responseHash": "3f5339d6abeed6eeab00a56cf1e6e033c7450aa88af225c2f0fef9a8bb57a194",
+  "usage": {
+    "completion_tokens": 602,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 512,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 105,
+      "engine_ttlt_ms": 3710,
+      "pre_inference_ms": 103,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 359,
+      "service_ttlt_ms": 3963,
+      "user_visible_ttft_ms": 256
+    },
+    "prompt_tokens": 1568,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 497,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2170
+  },
+  "elapsedMs": 4349,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "12640d73-6a20-4e8d-894e-e86957ff16fd",
+      "inputTokens": 1568,
+      "outputTokens": 602,
+      "event": "translation_attempt",
+      "correlationId": "b2a164b5-1828-4194-a7d2-989232e27390",
+      "attempt": 1,
+      "elapsedMs": 4349,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

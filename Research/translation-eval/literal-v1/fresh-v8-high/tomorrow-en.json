@@ -1,0 +1,75 @@
+{
+  "id": "tomorrow-en",
+  "inputHash": "6181410a5ee21de0210b4e12613c5820423437a812d50312c32c2c64a91e79ac",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "tomorrow",
+      "alternativeTexts": [],
+      "baseText": "tomorrow",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "on the day after today"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "See you tomorrow."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "a farewell greeting used when you expect to see each other again the following day"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"tomorrow\",\"alternativeTexts\":[],\"baseText\":\"tomorrow\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"on the day after today\"},{\"fieldId\":\"idiom:0\",\"text\":\"See you tomorrow.\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"a farewell greeting used when you expect to see each other again the following day\"}]}",
+  "responseHash": "f71f6fc4fb207a8fcd6ecfb6608a9ca76047290992654f6d8d0548be7fe8c35c",
+  "usage": {
+    "completion_tokens": 214,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 112,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 104,
+      "engine_ttlt_ms": 1352,
+      "pre_inference_ms": 123,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 489,
+      "service_ttlt_ms": 1733,
+      "user_visible_ttft_ms": 366
+    },
+    "prompt_tokens": 1571,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 500,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1785
+  },
+  "elapsedMs": 2461,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "cbd449dc-94e1-4946-8cf0-7c567837e81e",
+      "inputTokens": 1571,
+      "outputTokens": 214,
+      "event": "translation_attempt",
+      "correlationId": "15c4f13f-04dc-47a0-adbb-44b246a1c547",
+      "attempt": 1,
+      "elapsedMs": 2460,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

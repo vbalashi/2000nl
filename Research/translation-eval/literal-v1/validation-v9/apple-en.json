@@ -1,0 +1,75 @@
+{
+  "id": "apple-en",
+  "inputHash": "3cbc8c5de827f70bf916a22a995856e0eca8e8799c244ca7412b3bcc494fdae3",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "apple",
+      "alternativeTexts": [],
+      "baseText": "apple",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a fruit"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "have a little apple to peel with someone",
+        "text": "want to talk through a conflict with someone"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "want to talk through a conflict with someone"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"apple\",\"alternativeTexts\":[],\"baseText\":\"apple\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a fruit\"},{\"fieldId\":\"idiom:0\",\"text\":\"want to talk through a conflict with someone\",\"literalText\":\"have a little apple to peel with someone\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"want to talk through a conflict with someone\"}]}",
+  "responseHash": "2020569e3822d3dd97af68fc427b537c19f2c79b4c5bffddbe343cb63eae52f6",
+  "usage": {
+    "completion_tokens": 291,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 189,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 68,
+      "engine_ttlt_ms": 1780,
+      "pre_inference_ms": 101,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 320,
+      "service_ttlt_ms": 2027,
+      "user_visible_ttft_ms": 219
+    },
+    "prompt_tokens": 1707,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 497,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1998
+  },
+  "elapsedMs": 2377,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "d2324041-8a67-4a40-bd5e-1f8f09cdb6d4",
+      "inputTokens": 1707,
+      "outputTokens": 291,
+      "event": "translation_attempt",
+      "correlationId": "445fe680-8545-48a9-b520-57f71cc01639",
+      "attempt": 1,
+      "elapsedMs": 2376,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

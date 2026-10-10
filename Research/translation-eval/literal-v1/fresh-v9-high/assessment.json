@@ -1,0 +1,207 @@
+{
+  "method": "agent",
+  "blind": false,
+  "humanApproved": false,
+  "manifestHash": "2a089bd52030ecb0cbc62b98d9537cb82c751824dae983a7efd5398094c25edc",
+  "scope": "Focused synthetic ru/en cases, not population quality or a human review. Serious literal errors counted separately from primary meaning errors. No penalty for optional omission.",
+  "items": [
+    {
+      "id": "calm-en",
+      "responseHash": "9a7fed3c200d4240ea0b989453b34b430e20071af28581e165988881f25066de",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "calm-ru",
+      "responseHash": "0ce83b1639bc21b4024d63db5c589644d5a620aadc65bfe39b44a85a60fa8219",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "cheap-en",
+      "responseHash": "4268f6bc19f366149ab120d16e924ff25efb81da03cbea2d21537194bf0b9103",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "cheap-ru",
+      "responseHash": "96a7adc2b31126aebe631524736abb0641b4999a5ba20fa5f4e2cf3d81030f7f",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "door-en",
+      "responseHash": "939c7c17cce63a6a575f4efc9c9a6c56f18abcf9abab912c040c5a1495fa01a1",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "door-ru",
+      "responseHash": "a6a42676e3921a58d7ddc2a7210c65aa49e3139a53d4fbebba63a8fab5a09b5c",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "garden-en",
+      "responseHash": "929abee61d3daf41c47c0c33c18a4baf5586e9a89c5de54e54b858f35f4d8feb",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "garden-ru",
+      "responseHash": "5d7a2e225dcbd46184ce34a40756a7af85b11b08282f1e5657ef824cfefc5349",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "horse-en",
+      "responseHash": "dc7711faa62dacc4bb34d3bc70cb0fcc85db88913ff149b824953cbaad93f85a",
+      "decision": "needs-work",
+      "severity": "minor",
+      "failureCodes": [
+        "unnecessary-literal"
+      ],
+      "rationale": "Same horse/cart image already present."
+    },
+    {
+      "id": "horse-ru",
+      "responseHash": "95a7aa4d52c731d63977537e6a13d1df76dfed19c7cf1af436ba871ca956ad0c",
+      "decision": "needs-work",
+      "severity": "minor",
+      "failureCodes": [
+        "unnatural-language"
+      ],
+      "rationale": "Запрягать телегу is not the normal Russian idiom; literal also repeats its image."
+    },
+    {
+      "id": "idiom-only-en",
+      "responseHash": "7cc51cc25564e69bb2d4877f81dd183cd7348dd54c7383c0dee1530589241ec1",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "idiom-only-ru",
+      "responseHash": "2773fe285ce3be6ed93e034b7261294de67c9fea8eccf0074d2a401f83691850",
+      "decision": "needs-work",
+      "severity": "minor",
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Ordinary tell weakens the revealing/disclosing action."
+    },
+    {
+      "id": "light-en",
+      "responseHash": "5c807a8ed8ea1baf06ae9df79f3e025a3712196951e6488fec51b52d6705842f",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "light-illumination-en",
+      "responseHash": "b305158490f7d1300127e467b4f8fe62a2fa98b9abd76de230e68b4b5700ac18",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "light-illumination-ru",
+      "responseHash": "52ee93407d0ae4a05e21efc2ee9e1de12bab79e1986fcefa40a3eb2a0b39bbba",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "light-ru",
+      "responseHash": "7f66fd3850c9c770ef997fcbafff0c3d39edd0909ec10bdcebaa4e5ea3a6a63d",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "neutron-en",
+      "responseHash": "b9b440b23119e25a26c4ad66bb8293daab2a67976ea1dc7f277dad97f0ba2a79",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "neutron-ru",
+      "responseHash": "332d0ef8634276be59f8301243e471572261886466bb7d42dfe53d7c0e66e30d",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "octagon-en",
+      "responseHash": "cb8dfb75a06e41b46bea858c793512890fe915517a93d414d90f7de7978c4948",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "octagon-ru",
+      "responseHash": "a56a7b0c7d939f47b4aa54aee4c0bfd1d86dca655415a1f267627eae23af3105",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "tomorrow-en",
+      "responseHash": "c292c7454ecac33e0c28346650c4a3c070d25ecfe0580aaf037a01c905b10562",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "tomorrow-ru",
+      "responseHash": "ebaf6a6a6b4f822f9be6e06f0cff27fbc4f21b3d20f11f212f78a0374ef1431d",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "welcome-en",
+      "responseHash": "3f5339d6abeed6eeab00a56cf1e6e033c7450aa88af225c2f0fef9a8bb57a194",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "welcome-ru",
+      "responseHash": "020d01003678d7132452eb21bd0437d21490b7a66522299a06c02f00845271db",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    }
+  ]
+}

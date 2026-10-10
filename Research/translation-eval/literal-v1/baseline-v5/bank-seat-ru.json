@@ -1,0 +1,68 @@
+{
+  "id": "bank-seat-ru",
+  "inputHash": "9e01e70e6d86d65729530986c69660bf4016527cf45bc1b22c1f01372192e12d",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "скамья",
+      "alternativeTexts": [
+        "лавка"
+      ],
+      "baseText": "скамья",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "длинный предмет мебели, на котором могут сидеть несколько человек"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"скамья\",\"alternativeTexts\":[\"лавка\"],\"baseText\":\"скамья\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"длинный предмет мебели, на котором могут сидеть несколько человек\"}]}",
+  "responseHash": "2034acc3420c88e2cde279938beb74e8dd51b886a69a2a6e21ae485baba66d46",
+  "usage": {
+    "completion_tokens": 128,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 61,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 74,
+      "engine_ttlt_ms": 773,
+      "pre_inference_ms": 82,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 293,
+      "service_ttlt_ms": 987,
+      "user_visible_ttft_ms": 211
+    },
+    "prompt_tokens": 902,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1030
+  },
+  "elapsedMs": 1367,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "6c45a41b-d640-4f12-840a-31673e85c954",
+      "inputTokens": 902,
+      "outputTokens": 128,
+      "event": "translation_attempt",
+      "correlationId": "006c97cb-b119-420d-8d62-9c54a2782dcd",
+      "attempt": 1,
+      "elapsedMs": 1367,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

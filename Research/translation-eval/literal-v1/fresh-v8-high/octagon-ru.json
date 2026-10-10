@@ -1,0 +1,66 @@
+{
+  "id": "octagon-ru",
+  "inputHash": "9da87b571b7dd33dd75c9a713a4808cc42aa2d067c3be46072c3b8361d6b3566",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "восьмиугольник",
+      "alternativeTexts": [],
+      "baseText": "восьмиугольник",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "плоская фигура с восемью прямыми сторонами"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"восьмиугольник\",\"alternativeTexts\":[],\"baseText\":\"восьмиугольник\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"плоская фигура с восемью прямыми сторонами\"}]}",
+  "responseHash": "a56a7b0c7d939f47b4aa54aee4c0bfd1d86dca655415a1f267627eae23af3105",
+  "usage": {
+    "completion_tokens": 191,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 120,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 97,
+      "engine_ttlt_ms": 1062,
+      "pre_inference_ms": 65,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 299,
+      "service_ttlt_ms": 1260,
+      "user_visible_ttft_ms": 233
+    },
+    "prompt_tokens": 1526,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 455,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1717
+  },
+  "elapsedMs": 1619,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "ce545b53-98a1-4604-9a07-f96cda05fe9b",
+      "inputTokens": 1526,
+      "outputTokens": 191,
+      "event": "translation_attempt",
+      "correlationId": "a3656653-9e1a-4847-bc5b-95cf6ca2cece",
+      "attempt": 1,
+      "elapsedMs": 1619,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

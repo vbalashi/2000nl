@@ -1,0 +1,77 @@
+{
+  "id": "monkey-en",
+  "inputHash": "4a5eb3fc7c38687fe94d200c0cc60e00a22ed575766ad102dd1da76255222ff0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "monkey",
+      "alternativeTexts": [
+        "ape"
+      ],
+      "baseText": "monkey",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an animal"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "Now the monkey comes out of the sleeve.",
+        "text": "Now the hidden agenda becomes clear."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "Now the hidden intention becomes clear."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"monkey\",\"alternativeTexts\":[\"ape\"],\"baseText\":\"monkey\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an animal\"},{\"fieldId\":\"idiom:0\",\"text\":\"Now the hidden agenda becomes clear.\",\"literalText\":\"Now the monkey comes out of the sleeve.\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"Now the hidden intention becomes clear.\"}]}",
+  "responseHash": "27ce85c7526b1bad9903e94b794a7707798679b62f9452de4603a03c99ed08d4",
+  "usage": {
+    "completion_tokens": 248,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 144,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 76,
+      "engine_ttlt_ms": 1519,
+      "pre_inference_ms": 68,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 321,
+      "service_ttlt_ms": 1760,
+      "user_visible_ttft_ms": 254
+    },
+    "prompt_tokens": 1455,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1452,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1703
+  },
+  "elapsedMs": 2342,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "f85dfff8-08b4-49e6-97b6-d65da308431d",
+      "inputTokens": 1455,
+      "outputTokens": 248,
+      "event": "translation_attempt",
+      "correlationId": "11deee27-3fee-4b80-afa6-892b714e0641",
+      "attempt": 1,
+      "elapsedMs": 2342,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "apple-ru",
+  "inputHash": "845791acc30d10be7d8d27926ffaa180023e3adbc2f4662608c25e4c36d96fc8",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "яблоко",
+      "alternativeTexts": [],
+      "baseText": "яблоко",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "плод"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "иметь с кем-то яблочко, которое нужно очистить",
+        "text": "хотеть поговорить с кем-либо, чтобы разрешить конфликт"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "хотеть обсудить с кем-либо конфликт"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"яблоко\",\"alternativeTexts\":[],\"baseText\":\"яблоко\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"плод\"},{\"fieldId\":\"idiom:0\",\"text\":\"хотеть поговорить с кем-либо, чтобы разрешить конфликт\",\"literalText\":\"иметь с кем-то яблочко, которое нужно очистить\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"хотеть обсудить с кем-либо конфликт\"}]}",
+  "responseHash": "4e945dcbd278ff755d40a806ccd424bde2851329a62b4276c7ed4b46291de6a6",
+  "usage": {
+    "completion_tokens": 792,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 667,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 99,
+      "engine_ttlt_ms": 4704,
+      "pre_inference_ms": 97,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 343,
+      "service_ttlt_ms": 4944,
+      "user_visible_ttft_ms": 246
+    },
+    "prompt_tokens": 1568,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 497,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2360
+  },
+  "elapsedMs": 5479,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "ea5e0286-7665-4595-a746-77793311b33d",
+      "inputTokens": 1568,
+      "outputTokens": 792,
+      "event": "translation_attempt",
+      "correlationId": "76bd31c2-de20-489f-a5a1-c1b6a60d3516",
+      "attempt": 1,
+      "elapsedMs": 5479,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

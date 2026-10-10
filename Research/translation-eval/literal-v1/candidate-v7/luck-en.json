@@ -1,0 +1,77 @@
+{
+  "id": "luck-en",
+  "inputHash": "c58da3ab2398b380e2be4fee748a1d824cc442e4eb2da38e02335c1ea823ee77",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "good fortune",
+      "alternativeTexts": [
+        "luck"
+      ],
+      "baseText": "luck",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a favorable state"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "Good luck!"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "a wish that things will go well"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"good fortune\",\"alternativeTexts\":[\"luck\"],\"baseText\":\"luck\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a favorable state\"},{\"fieldId\":\"idiom:0\",\"text\":\"Good luck!\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"a wish that things will go well\"}]}",
+  "responseHash": "d7f6db7a6178bd7e5a861612359e87132005f4cad21d5ae956e0fd8c95c3d287",
+  "usage": {
+    "completion_tokens": 228,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 135,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 121,
+      "engine_ttlt_ms": 1472,
+      "pre_inference_ms": 74,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 330,
+      "service_ttlt_ms": 1676,
+      "user_visible_ttft_ms": 256
+    },
+    "prompt_tokens": 1451,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1448,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1679
+  },
+  "elapsedMs": 1969,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "4068a050-94fd-403f-adfa-84e2b9e0fa02",
+      "inputTokens": 1451,
+      "outputTokens": 228,
+      "event": "translation_attempt",
+      "correlationId": "8224d069-17c7-4b0e-bd62-f9973ac200b7",
+      "attempt": 1,
+      "elapsedMs": 1969,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

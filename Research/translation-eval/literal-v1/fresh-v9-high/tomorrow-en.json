@@ -1,0 +1,75 @@
+{
+  "id": "tomorrow-en",
+  "inputHash": "192928de887eab897067cc0879caa5778097e5066e7f080f9cd36b506281c3e8",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "tomorrow",
+      "alternativeTexts": [],
+      "baseText": "tomorrow",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "on the day after today"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "See you tomorrow."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "a farewell used when you expect to see each other again the following day"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"tomorrow\",\"alternativeTexts\":[],\"baseText\":\"tomorrow\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"on the day after today\"},{\"fieldId\":\"idiom:0\",\"text\":\"See you tomorrow.\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"a farewell used when you expect to see each other again the following day\"}]}",
+  "responseHash": "c292c7454ecac33e0c28346650c4a3c070d25ecfe0580aaf037a01c905b10562",
+  "usage": {
+    "completion_tokens": 425,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 324,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 137,
+      "engine_ttlt_ms": 2660,
+      "pre_inference_ms": 73,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 355,
+      "service_ttlt_ms": 2873,
+      "user_visible_ttft_ms": 281
+    },
+    "prompt_tokens": 1710,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 500,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 2135
+  },
+  "elapsedMs": 3342,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "793f6786-0aa3-410b-aab9-7ab7540f1d06",
+      "inputTokens": 1710,
+      "outputTokens": 425,
+      "event": "translation_attempt",
+      "correlationId": "f6e51749-e42c-44d3-915f-a5d6f0ec9633",
+      "attempt": 1,
+      "elapsedMs": 3342,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

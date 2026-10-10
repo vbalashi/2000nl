@@ -1,0 +1,66 @@
+{
+  "id": "light-illumination-ru",
+  "inputHash": "8e548d7f3500f242d15d5afa6d7f8524740dd19a8bdefd7438639a18922bfb4c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "свет",
+      "alternativeTexts": [],
+      "baseText": "свет",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "излучение, позволяющее видеть предметы"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"свет\",\"alternativeTexts\":[],\"baseText\":\"свет\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"излучение, позволяющее видеть предметы\"}]}",
+  "responseHash": "52ee93407d0ae4a05e21efc2ee9e1de12bab79e1986fcefa40a3eb2a0b39bbba",
+  "usage": {
+    "completion_tokens": 160,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 102,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 72,
+      "engine_ttlt_ms": 1175,
+      "pre_inference_ms": 165,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 383,
+      "service_ttlt_ms": 1510,
+      "user_visible_ttft_ms": 217
+    },
+    "prompt_tokens": 1662,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 452,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1822
+  },
+  "elapsedMs": 2088,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "baba4bad-8da9-4a8e-b89c-333f35a2daa3",
+      "inputTokens": 1662,
+      "outputTokens": 160,
+      "event": "translation_attempt",
+      "correlationId": "4ce0836f-00a7-4072-9a78-7f787c5dea42",
+      "attempt": 1,
+      "elapsedMs": 2088,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

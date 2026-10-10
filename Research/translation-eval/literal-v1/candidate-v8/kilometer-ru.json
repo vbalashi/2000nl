@@ -1,0 +1,66 @@
+{
+  "id": "kilometer-ru",
+  "inputHash": "72b2825858088a48c12ff5610c8eff5368899163317a92d4b2009c46576ea3e0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "километр",
+      "alternativeTexts": [],
+      "baseText": "километр",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "единица измерения длины, равная тысяче метров"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"километр\",\"alternativeTexts\":[],\"baseText\":\"километр\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"единица измерения длины, равная тысяче метров\"}]}",
+  "responseHash": "fba4c07a9b5ff656b651b2e6a9a7c58172400d39428e2856284a2715345b85db",
+  "usage": {
+    "completion_tokens": 58,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 4,
+      "engine_ttft_ms": 63,
+      "engine_ttlt_ms": 300,
+      "pre_inference_ms": 103,
+      "service_tbt_ms": 4,
+      "service_ttft_ms": 303,
+      "service_ttlt_ms": 537,
+      "user_visible_ttft_ms": 201
+    },
+    "prompt_tokens": 1523,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 452,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1581
+  },
+  "elapsedMs": 762,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "9fa7deb0-f348-464c-8c64-5c4264c188c0",
+      "inputTokens": 1523,
+      "outputTokens": 58,
+      "event": "translation_attempt",
+      "correlationId": "efb6c203-564f-41ff-acf8-a83fc6a0c0c7",
+      "attempt": 1,
+      "elapsedMs": 762,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

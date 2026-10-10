@@ -1,0 +1,74 @@
+{
+  "id": "lamp-en",
+  "inputHash": "db83d76d9a7c63d9d27b18de310de71b0f4b3ec52c61369c616404031534f0b4",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "lamp",
+      "alternativeTexts": [],
+      "baseText": "lamp",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an object that gives off light"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "get caught doing something wrong"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "be caught doing something wrong"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"lamp\",\"alternativeTexts\":[],\"baseText\":\"lamp\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an object that gives off light\"},{\"fieldId\":\"idiom:0\",\"text\":\"get caught doing something wrong\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"be caught doing something wrong\"}]}",
+  "responseHash": "b128d2b868ace50a7aa2894dad4664a7470c271ae7a72981d99ba9c3860eb8bd",
+  "usage": {
+    "completion_tokens": 312,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 224,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 74,
+      "engine_ttlt_ms": 1923,
+      "pre_inference_ms": 83,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 297,
+      "service_ttlt_ms": 2141,
+      "user_visible_ttft_ms": 215
+    },
+    "prompt_tokens": 948,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1260
+  },
+  "elapsedMs": 2583,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "3b5050e4-7790-4182-9d0e-bfe3d02ebb5c",
+      "inputTokens": 948,
+      "outputTokens": 312,
+      "event": "translation_attempt",
+      "correlationId": "9e6d5839-a0ae-480a-9c9c-59a9cb45d661",
+      "attempt": 1,
+      "elapsedMs": 2583,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

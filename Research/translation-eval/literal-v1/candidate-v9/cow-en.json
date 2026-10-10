@@ -1,0 +1,75 @@
+{
+  "id": "cow-en",
+  "inputHash": "4c27d454839478c203cee15bf84337bc9f24c4ac4eb40735d7200516477be4cf",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cow",
+      "alternativeTexts": [],
+      "baseText": "cow",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an animal that gives milk"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "talk about little cows and calves",
+        "text": "chat pleasantly about trivial things"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "chat pleasantly about unimportant things"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"cow\",\"alternativeTexts\":[],\"baseText\":\"cow\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an animal that gives milk\"},{\"fieldId\":\"idiom:0\",\"text\":\"chat pleasantly about trivial things\",\"literalText\":\"talk about little cows and calves\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"chat pleasantly about unimportant things\"}]}",
+  "responseHash": "4a0bcfcf325b15e8986a791812e0c147cbf3452f9b1347bca530cce383c2babe",
+  "usage": {
+    "completion_tokens": 316,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 218,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 67,
+      "engine_ttlt_ms": 2046,
+      "pre_inference_ms": 90,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 300,
+      "service_ttlt_ms": 2275,
+      "user_visible_ttft_ms": 209
+    },
+    "prompt_tokens": 1711,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1708,
+      "cached_tokens": 0
+    },
+    "total_tokens": 2027
+  },
+  "elapsedMs": 2700,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "765b16dc-5cb1-47f3-a55d-8bd4cd1dd834",
+      "inputTokens": 1711,
+      "outputTokens": 316,
+      "event": "translation_attempt",
+      "correlationId": "4fe93524-1663-4e20-a2cb-a24dd5db6571",
+      "attempt": 1,
+      "elapsedMs": 2700,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

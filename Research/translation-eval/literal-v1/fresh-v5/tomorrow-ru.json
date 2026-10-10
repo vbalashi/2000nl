@@ -1,0 +1,74 @@
+{
+  "id": "tomorrow-ru",
+  "inputHash": "5ff1f4445a24a6aff391748d1eb9b82ae8679d433df8da5e2d0830c66594a04a",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "завтра",
+      "alternativeTexts": [],
+      "baseText": "завтра",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "в день, следующий за сегодняшним"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "До завтра!"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "прощальное приветствие, когда ожидается, что вы снова увидитесь на следующий день"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"завтра\",\"alternativeTexts\":[],\"baseText\":\"завтра\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"в день, следующий за сегодняшним\"},{\"fieldId\":\"idiom:0\",\"text\":\"До завтра!\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"прощальное приветствие, когда ожидается, что вы снова увидитесь на следующий день\"}]}",
+  "responseHash": "286b7ac019141c3ff646257d4a269791f13bf749e5730722be32666ef1491bf1",
+  "usage": {
+    "completion_tokens": 225,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 121,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 68,
+      "engine_ttlt_ms": 1275,
+      "pre_inference_ms": 96,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 301,
+      "service_ttlt_ms": 1482,
+      "user_visible_ttft_ms": 205
+    },
+    "prompt_tokens": 952,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1177
+  },
+  "elapsedMs": 1761,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "3216ccc1-7a38-4272-84ac-ab750ce8caa8",
+      "inputTokens": 952,
+      "outputTokens": 225,
+      "event": "translation_attempt",
+      "correlationId": "4857941e-ff8d-44ea-87b1-b41603fb5cc9",
+      "attempt": 1,
+      "elapsedMs": 1761,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

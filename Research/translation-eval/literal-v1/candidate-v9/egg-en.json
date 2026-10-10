@@ -1,0 +1,75 @@
+{
+  "id": "egg-en",
+  "inputHash": "378fb02cf666c57135ca1dbb9e6aeaeb5907340751f302bffe0ac14a17e89d61",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "egg",
+      "alternativeTexts": [],
+      "baseText": "egg",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "something a bird lays"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "be able to lose one’s egg",
+        "text": "be able to talk about what’s on one’s mind"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "be able to say what’s on your mind"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"egg\",\"alternativeTexts\":[],\"baseText\":\"egg\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"something a bird lays\"},{\"fieldId\":\"idiom:0\",\"text\":\"be able to talk about what’s on one’s mind\",\"literalText\":\"be able to lose one’s egg\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"be able to say what’s on your mind\"}]}",
+  "responseHash": "6702039ba907371575b2cdc05d3cb158db32a11137561991095d6ca5b5e1f005",
+  "usage": {
+    "completion_tokens": 337,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 230,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 94,
+      "engine_ttlt_ms": 2206,
+      "pre_inference_ms": 91,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 327,
+      "service_ttlt_ms": 2435,
+      "user_visible_ttft_ms": 236
+    },
+    "prompt_tokens": 1706,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 2043
+  },
+  "elapsedMs": 2675,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "66088442-152e-4fe0-801e-5a7f4eccbe19",
+      "inputTokens": 1706,
+      "outputTokens": 337,
+      "event": "translation_attempt",
+      "correlationId": "6bd6419d-0a76-4a7e-830e-b9f5e326e5cc",
+      "attempt": 1,
+      "elapsedMs": 2675,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

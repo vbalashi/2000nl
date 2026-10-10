@@ -1,0 +1,75 @@
+{
+  "id": "garden-en",
+  "inputHash": "64010e05561f8e3a5d9beb2ddc98dfb08465cfae08fa8725b7709ff2a73044fa",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "garden",
+      "alternativeTexts": [],
+      "baseText": "garden",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a piece of land with plants next to a house"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "to lead someone up the garden path"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to deliberately mislead someone"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"garden\",\"alternativeTexts\":[],\"baseText\":\"garden\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a piece of land with plants next to a house\"},{\"fieldId\":\"idiom:0\",\"text\":\"to lead someone up the garden path\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to deliberately mislead someone\"}]}",
+  "responseHash": "04eae57879ed9e04833d9df66b5b077eb6c307c3ee84f1378a4cb4601e372776",
+  "usage": {
+    "completion_tokens": 495,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 396,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 111,
+      "engine_ttlt_ms": 3341,
+      "pre_inference_ms": 81,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 333,
+      "service_ttlt_ms": 3559,
+      "user_visible_ttft_ms": 252
+    },
+    "prompt_tokens": 1572,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2067
+  },
+  "elapsedMs": 4374,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "73c4d78e-6a1f-4dd7-be34-ee98fdbf7bab",
+      "inputTokens": 1572,
+      "outputTokens": 495,
+      "event": "translation_attempt",
+      "correlationId": "97744f50-e438-44f8-80ee-4dcefdf0b31f",
+      "attempt": 1,
+      "elapsedMs": 4374,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

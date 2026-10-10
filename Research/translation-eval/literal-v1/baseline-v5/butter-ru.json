@@ -1,0 +1,74 @@
+{
+  "id": "butter-ru",
+  "inputHash": "cc625ad8754361127c6fd27c0c3a89bf21f72dc3af381229c686f958f9b40758",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "сливочное масло",
+      "alternativeTexts": [],
+      "baseText": "масло",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "жир, изготовленный из молока"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "у самого рыльце в пушку"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "самому быть виновным в том, в чём упрекаешь другого"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"сливочное масло\",\"alternativeTexts\":[],\"baseText\":\"масло\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"жир, изготовленный из молока\"},{\"fieldId\":\"idiom:0\",\"text\":\"у самого рыльце в пушку\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"самому быть виновным в том, в чём упрекаешь другого\"}]}",
+  "responseHash": "a36222ac529d4d6e449662e34626fe6cade67531c54bb336bab14464f01ca143",
+  "usage": {
+    "completion_tokens": 351,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 243,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 73,
+      "engine_ttlt_ms": 2208,
+      "pre_inference_ms": 72,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 287,
+      "service_ttlt_ms": 2418,
+      "user_visible_ttft_ms": 216
+    },
+    "prompt_tokens": 954,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1305
+  },
+  "elapsedMs": 3170,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "0316d64f-b148-48b7-b118-e6a09b864bb3",
+      "inputTokens": 954,
+      "outputTokens": 351,
+      "event": "translation_attempt",
+      "correlationId": "5cca81f2-922a-47c6-a3b3-44e8017fe9f4",
+      "attempt": 1,
+      "elapsedMs": 3170,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

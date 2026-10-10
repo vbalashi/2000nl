@@ -1,0 +1,74 @@
+{
+  "id": "basket-ru",
+  "inputHash": "dabda9305a353ccac59c67b302cc5ae7b2a1e019aeb44e02ee613a43b973d525",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "плетёная корзина",
+      "alternativeTexts": [],
+      "baseText": "корзина",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "плетёная корзина"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "быть разоблачённым и оказаться не таким хорошим, как утверждал"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "быть разоблачённым; оказаться не таким хорошим, как утверждал"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"плетёная корзина\",\"alternativeTexts\":[],\"baseText\":\"корзина\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"плетёная корзина\"},{\"fieldId\":\"idiom:0\",\"text\":\"быть разоблачённым и оказаться не таким хорошим, как утверждал\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"быть разоблачённым; оказаться не таким хорошим, как утверждал\"}]}",
+  "responseHash": "6d039be77f4de31515fe8b78a315299f21bec19a491398bd675ba03321f367c7",
+  "usage": {
+    "completion_tokens": 350,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 231,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 64,
+      "engine_ttlt_ms": 1897,
+      "pre_inference_ms": 102,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 349,
+      "service_ttlt_ms": 2142,
+      "user_visible_ttft_ms": 247
+    },
+    "prompt_tokens": 954,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1304
+  },
+  "elapsedMs": 2748,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "4d2cf400-6b65-4d39-b767-21fb031ad7a5",
+      "inputTokens": 954,
+      "outputTokens": 350,
+      "event": "translation_attempt",
+      "correlationId": "2b57d279-8184-4644-b288-7703b98b6de0",
+      "attempt": 1,
+      "elapsedMs": 2748,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

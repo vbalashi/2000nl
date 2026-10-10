@@ -1,0 +1,75 @@
+{
+  "id": "basket-ru",
+  "inputHash": "e89f08a59150f06565e645b6b79f50f072c84f3ec18a751ac0308eac2c16f7ca",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "корзина",
+      "alternativeTexts": [],
+      "baseText": "корзина",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "плетёная ёмкость"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "провалиться сквозь корзину",
+        "text": "быть разоблачённым и оказаться не таким хорошим, как о себе заявлял"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "быть разоблачённым; оказаться не таким хорошим, как утверждал"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"корзина\",\"alternativeTexts\":[],\"baseText\":\"корзина\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"плетёная ёмкость\"},{\"fieldId\":\"idiom:0\",\"text\":\"быть разоблачённым и оказаться не таким хорошим, как о себе заявлял\",\"literalText\":\"провалиться сквозь корзину\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"быть разоблачённым; оказаться не таким хорошим, как утверждал\"}]}",
+  "responseHash": "68f915ec5ac9729ab828060bc03fa72aabcd5d3eca22d4eeb8282cd83d4307eb",
+  "usage": {
+    "completion_tokens": 451,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 318,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 73,
+      "engine_ttlt_ms": 2894,
+      "pre_inference_ms": 102,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 324,
+      "service_ttlt_ms": 3139,
+      "user_visible_ttft_ms": 222
+    },
+    "prompt_tokens": 1461,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1458,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1912
+  },
+  "elapsedMs": 3535,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "2de21a12-3d48-4e6e-9eb5-cf2b98aab4e4",
+      "inputTokens": 1461,
+      "outputTokens": 451,
+      "event": "translation_attempt",
+      "correlationId": "76c3e5c8-5d41-4885-ad9d-b0fcf779334f",
+      "attempt": 1,
+      "elapsedMs": 3535,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

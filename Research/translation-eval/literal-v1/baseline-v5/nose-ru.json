@@ -1,0 +1,74 @@
+{
+  "id": "nose-ru",
+  "inputHash": "3830a02173ec6d14d1672af523dab7aab4b317ef1f8e5c17dabb00af81f433ba",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "нос",
+      "alternativeTexts": [],
+      "baseText": "нос",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "часть тела, с помощью которой человек ощущает запахи"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "неожиданно попасть в благоприятную ситуацию"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "неожиданно оказаться в благоприятной ситуации"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"нос\",\"alternativeTexts\":[],\"baseText\":\"нос\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"часть тела, с помощью которой человек ощущает запахи\"},{\"fieldId\":\"idiom:0\",\"text\":\"неожиданно попасть в благоприятную ситуацию\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"неожиданно оказаться в благоприятной ситуации\"}]}",
+  "responseHash": "ae66556fa752d91b4abbc645281ee3e92cbb941068f280240c193fc18d19990a",
+  "usage": {
+    "completion_tokens": 353,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 248,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 167,
+      "engine_ttlt_ms": 2148,
+      "pre_inference_ms": 74,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 382,
+      "service_ttlt_ms": 2358,
+      "user_visible_ttft_ms": 308
+    },
+    "prompt_tokens": 955,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1308
+  },
+  "elapsedMs": 2856,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "6d92bcf1-6914-40e2-b589-6105567da472",
+      "inputTokens": 955,
+      "outputTokens": 353,
+      "event": "translation_attempt",
+      "correlationId": "f0e018c2-924e-4093-ba0b-15723ccc2312",
+      "attempt": 1,
+      "elapsedMs": 2856,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

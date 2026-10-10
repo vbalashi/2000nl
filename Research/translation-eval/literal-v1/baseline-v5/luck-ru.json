@@ -1,0 +1,74 @@
+{
+  "id": "luck-ru",
+  "inputHash": "2acd200197ee7190158ee0b042af85667f5b6a7dc0c29b27cb94a8aae59c7fcf",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "удача",
+      "alternativeTexts": [],
+      "baseText": "удача",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "благоприятное положение дел"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "Удачи!"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "пожелание, чтобы всё прошло хорошо"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"удача\",\"alternativeTexts\":[],\"baseText\":\"удача\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"благоприятное положение дел\"},{\"fieldId\":\"idiom:0\",\"text\":\"Удачи!\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"пожелание, чтобы всё прошло хорошо\"}]}",
+  "responseHash": "893542dac1867be84b1caf185034b414e58bfcc3add30454ac5b7d67fb0fb4d5",
+  "usage": {
+    "completion_tokens": 401,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 308,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 67,
+      "engine_ttlt_ms": 2522,
+      "pre_inference_ms": 116,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 371,
+      "service_ttlt_ms": 2822,
+      "user_visible_ttft_ms": 255
+    },
+    "prompt_tokens": 944,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1345
+  },
+  "elapsedMs": 3203,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "694dacc6-663b-441b-be34-eb8805402bef",
+      "inputTokens": 944,
+      "outputTokens": 401,
+      "event": "translation_attempt",
+      "correlationId": "e12d9d96-0352-4c2d-aaf0-45b893684a93",
+      "attempt": 1,
+      "elapsedMs": 3203,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

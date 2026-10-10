@@ -1,0 +1,66 @@
+{
+  "id": "square-ru",
+  "inputHash": "b91080f9667327ee8c2c0308a2bdf22a9279b2e8d89d006000e5750ec4dcde38",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "квадрат",
+      "alternativeTexts": [],
+      "baseText": "квадрат",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "геометрическая фигура с четырьмя равными сторонами и четырьмя прямыми углами"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"квадрат\",\"alternativeTexts\":[],\"baseText\":\"квадрат\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"геометрическая фигура с четырьмя равными сторонами и четырьмя прямыми углами\"}]}",
+  "responseHash": "43e17f3ae11ef97a20f9dbab1f8e07c97569578dd3d82c0f2babc3038889bda6",
+  "usage": {
+    "completion_tokens": 137,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 62,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 72,
+      "engine_ttlt_ms": 887,
+      "pre_inference_ms": 108,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 332,
+      "service_ttlt_ms": 1151,
+      "user_visible_ttft_ms": 224
+    },
+    "prompt_tokens": 1664,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 454,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1801
+  },
+  "elapsedMs": 1734,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "52b05f6d-fe9c-4766-b2fc-5285cb537186",
+      "inputTokens": 1664,
+      "outputTokens": 137,
+      "event": "translation_attempt",
+      "correlationId": "a3912ca3-76a3-4fe1-a774-85f34966b71d",
+      "attempt": 1,
+      "elapsedMs": 1734,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

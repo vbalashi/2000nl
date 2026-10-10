@@ -1,0 +1,75 @@
+{
+  "id": "apple-en",
+  "inputHash": "96ab813b001c7feee480897e6fed80a1c180bd925dd3cdf11f7c15c6b9870b4f",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "apple",
+      "alternativeTexts": [],
+      "baseText": "apple",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a fruit"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to have a little apple to peel with someone",
+        "text": "to have a bone to pick with someone"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to want to talk through a conflict with someone"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"apple\",\"alternativeTexts\":[],\"baseText\":\"apple\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a fruit\"},{\"fieldId\":\"idiom:0\",\"text\":\"to have a bone to pick with someone\",\"literalText\":\"to have a little apple to peel with someone\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to want to talk through a conflict with someone\"}]}",
+  "responseHash": "079b76aea1394e6e09ae5a98aa1d1e13f84b82508022ef578d63d6ff9b2cc870",
+  "usage": {
+    "completion_tokens": 476,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 372,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 81,
+      "engine_ttlt_ms": 2951,
+      "pre_inference_ms": 125,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 331,
+      "service_ttlt_ms": 3202,
+      "user_visible_ttft_ms": 206
+    },
+    "prompt_tokens": 1568,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 497,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2044
+  },
+  "elapsedMs": 3659,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "4bbb435d-0601-4f23-8c6c-b949b6b942c0",
+      "inputTokens": 1568,
+      "outputTokens": 476,
+      "event": "translation_attempt",
+      "correlationId": "178045bb-9a25-46f1-a46c-58b720f746cd",
+      "attempt": 1,
+      "elapsedMs": 3659,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

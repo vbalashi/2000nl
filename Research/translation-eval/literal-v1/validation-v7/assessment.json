@@ -1,0 +1,209 @@
+{
+  "method": "agent",
+  "blind": false,
+  "humanApproved": false,
+  "manifestHash": "f1a94dfbe0f56a7e43bab860b9b8b2f72adb0e0539f23bbc6124df3b4f9ac0ed",
+  "scope": "Focused synthetic ru/en cases, not population quality or a human review. Serious literal errors counted separately from primary meaning errors. No penalty for optional omission.",
+  "items": [
+    {
+      "id": "apple-en",
+      "responseHash": "0e235862a5591b3be567a6ca10b8c7cd7db059d3b2449b6e6618d9ed0c216ff0",
+      "decision": "needs-work",
+      "severity": "minor",
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Talk things out does not explicitly retain a conflict."
+    },
+    {
+      "id": "apple-ru",
+      "responseHash": "b669d5f36d32873972b4ebf73071538e9f20db2d21c4e59de0710e9fb5ec941e",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "arm-limb-en",
+      "responseHash": "5a581eba5364a1432e1c4bb1336200acf6116bb8230d65c72c70249aac13aff6",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "arm-limb-ru",
+      "responseHash": "a5cfbe88734c8b05c81320bc81ff3ba03f1e14ec67511543719aeb277babf30e",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "arm-poor-en",
+      "responseHash": "39a9ec295f8e2d2c602acce35bb387f224323ac3503a2809a66e291c8acf8596",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "arm-poor-ru",
+      "responseHash": "fc5da51a560256f405501944078dd3c44fd08502f22cbf236a9a7f89e361ca18",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "beautiful-en",
+      "responseHash": "25f919ac0f9f78353e864461265d4dd3dc7b067c8102dc30bc0ec522a8c5301a",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "beautiful-ru",
+      "responseHash": "3decb336292af616d091b589937fba8991d610085dc8048cc91632ddb6ab40e4",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "big-en",
+      "responseHash": "897e973a7583a37a19098ec6a1e96f189244c22115e7f4ee02b669602c3474f2",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "big-ru",
+      "responseHash": "d12f1fdfa37f90214e22c147df01da83c0c9b89f189b2751474659ee3effe451",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "electron-en",
+      "responseHash": "39ff09c32f3465d172a9aeddaa8e75fd70cccaa562217fb511ee9ec199bbd6d1",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "electron-ru",
+      "responseHash": "1179d2e8eb37275315b35d7a8e859a2309f909e95e76722893295e3a1f9768a9",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "goodnight-en",
+      "responseHash": "269385c6fb5dd152bd35db86481a770ce240ab68fe95c3180d447e3e70645509",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "goodnight-ru",
+      "responseHash": "36140d1e342a8638000489fe2175c2697cc814290f648dbc5e79b9996df2a1ff",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "hello-en",
+      "responseHash": "e8c87db5eeeee7458d2bb9e221f63edb5f4baff2471c8fd4d5988182a0d24be1",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "hello-ru",
+      "responseHash": "d44bdc5e202b135a633b4427bf46126f7278f3f3a8b36d2d84fd459f046e98a1",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "monkey-en",
+      "responseHash": "27ce85c7526b1bad9903e94b794a7707798679b62f9452de4603a03c99ed08d4",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "monkey-ru",
+      "responseHash": "9422b6c38626c909d6010c4c945a38e3b7a05e707e930a508ad30e1b131a08e6",
+      "decision": "needs-work",
+      "severity": "serious",
+      "failureCodes": [
+        "sense-mismatch"
+      ],
+      "rationale": "Headword monkey replaced by animal."
+    },
+    {
+      "id": "square-en",
+      "responseHash": "cddd3a334a3d34da3fdd10bfdc90c981fccf77326fd2e4aabfb29bb78a9b319f",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "square-ru",
+      "responseHash": "43e17f3ae11ef97a20f9dbab1f8e07c97569578dd3d82c0f2babc3038889bda6",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "towel-en",
+      "responseHash": "e51d2658b2165dd5cb1a94d9e0717de6c3051b8cd8a1bf4ceb272826f8001f15",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "towel-ru",
+      "responseHash": "dbe54297432a8195baaa17718af1f7af25edae724818e761235c4229389dbc8c",
+      "decision": "accept",
+      "severity": null,
+      "failureCodes": [],
+      "rationale": "Meets the focused exact-sense, usefulness, grammaticality and optional-image rubric; omission alone is not an error."
+    },
+    {
+      "id": "water-en",
+      "responseHash": "9a3c3e902bc1e6df29ed8078013e23caee7a155804aff914a43dd494f25c8e0f",
+      "decision": "needs-work",
+      "severity": "serious",
+      "failureCodes": [
+        "sense-mismatch"
+      ],
+      "rationale": "Headword water replaced by liquid."
+    },
+    {
+      "id": "water-ru",
+      "responseHash": "4d7b945fd1485aa3f6ef6659f5325745d26612d7e4dcb5f2d26e9583da311c17",
+      "decision": "needs-work",
+      "severity": "serious",
+      "failureCodes": [
+        "sense-mismatch"
+      ],
+      "rationale": "Headword water replaced by liquid."
+    }
+  ]
+}

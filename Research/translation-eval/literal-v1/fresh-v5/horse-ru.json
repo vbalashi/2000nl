@@ -1,0 +1,74 @@
+{
+  "id": "horse-ru",
+  "inputHash": "fbc850e9181dcdbaf44c980c5044c199abc9db3da6d77b15ffbef69dd7fc8065",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лошадь",
+      "alternativeTexts": [],
+      "baseText": "лошадь",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "крупное копытное животное, на котором люди могут ездить верхом"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "запрягать телегу впереди лошади"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "что-либо делать в неправильном порядке"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лошадь\",\"alternativeTexts\":[],\"baseText\":\"лошадь\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"крупное копытное животное, на котором люди могут ездить верхом\"},{\"fieldId\":\"idiom:0\",\"text\":\"запрягать телегу впереди лошади\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"что-либо делать в неправильном порядке\"}]}",
+  "responseHash": "30349bcf421f6f8def21748078574462aa4a44799399e48f0f95f0cc908cbd34",
+  "usage": {
+    "completion_tokens": 262,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 149,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 60,
+      "engine_ttlt_ms": 1325,
+      "pre_inference_ms": 92,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 308,
+      "service_ttlt_ms": 1551,
+      "user_visible_ttft_ms": 217
+    },
+    "prompt_tokens": 956,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1218
+  },
+  "elapsedMs": 1804,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "d0dd4d03-7f62-4d4a-9a90-ad6e4a452bf2",
+      "inputTokens": 956,
+      "outputTokens": 262,
+      "event": "translation_attempt",
+      "correlationId": "e6fd1a12-6224-4e43-8fe9-82f217e3b91c",
+      "attempt": 1,
+      "elapsedMs": 1803,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

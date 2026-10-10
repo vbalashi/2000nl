@@ -1,0 +1,66 @@
+{
+  "id": "electron-en",
+  "inputHash": "26dd956274526d66664f8bc1626b7038ace3b5e38eb5b88dbaa7aa76975d2fff",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "electron",
+      "alternativeTexts": [],
+      "baseText": "electron",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a particle with a negative electric charge"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"electron\",\"alternativeTexts\":[],\"baseText\":\"electron\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a particle with a negative electric charge\"}]}",
+  "responseHash": "be157988ff279e332ed74cda224ae22e516b92573b7739a70cf8a5c190279b97",
+  "usage": {
+    "completion_tokens": 87,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 33,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 66,
+      "engine_ttlt_ms": 541,
+      "pre_inference_ms": 79,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 283,
+      "service_ttlt_ms": 753,
+      "user_visible_ttft_ms": 204
+    },
+    "prompt_tokens": 1661,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 451,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1748
+  },
+  "elapsedMs": 1099,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "3c6c4981-ea22-4d15-9aec-9fdf0ae02195",
+      "inputTokens": 1661,
+      "outputTokens": 87,
+      "event": "translation_attempt",
+      "correlationId": "6bbaf3a9-0153-44ef-9161-915022a9a009",
+      "attempt": 1,
+      "elapsedMs": 1099,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

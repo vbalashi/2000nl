@@ -1,0 +1,68 @@
+{
+  "id": "prevent-ru",
+  "inputHash": "7018d477c5120b61975e80e628bcb46e2f0159d65ab7ec39b4a4e3bd92b516d0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "предотвращать",
+      "alternativeTexts": [
+        "не допускать"
+      ],
+      "baseText": "предотвращать",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "не допустить, чтобы что-либо произошло"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"предотвращать\",\"alternativeTexts\":[\"не допускать\"],\"baseText\":\"предотвращать\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"не допустить, чтобы что-либо произошло\"}]}",
+  "responseHash": "1a2a58df36df1becd8409fe1fecbb5b6a979a227fb0e22e21797012088babf35",
+  "usage": {
+    "completion_tokens": 254,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 188,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 77,
+      "engine_ttlt_ms": 1532,
+      "pre_inference_ms": 84,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 308,
+      "service_ttlt_ms": 1765,
+      "user_visible_ttft_ms": 224
+    },
+    "prompt_tokens": 1518,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 447,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1772
+  },
+  "elapsedMs": 2275,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "1339447d-2e60-450e-81cf-aa37aa628483",
+      "inputTokens": 1518,
+      "outputTokens": 254,
+      "event": "translation_attempt",
+      "correlationId": "f9ddf42b-a3be-4131-be59-1a8e612a9570",
+      "attempt": 1,
+      "elapsedMs": 2275,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

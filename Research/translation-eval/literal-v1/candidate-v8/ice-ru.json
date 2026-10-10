@@ -1,0 +1,75 @@
+{
+  "id": "ice-ru",
+  "inputHash": "3da5a0078c0b0adbaae29d83b229d290fd4933a1220e73710c2e6efec5216bc5",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лёд",
+      "alternativeTexts": [],
+      "baseText": "лёд",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "замёрзшая вода"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "растопить лёд"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "снять первоначальное напряжение в общении"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лёд\",\"alternativeTexts\":[],\"baseText\":\"лёд\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"замёрзшая вода\"},{\"fieldId\":\"idiom:0\",\"text\":\"растопить лёд\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"снять первоначальное напряжение в общении\"}]}",
+  "responseHash": "530671e01ca251c237625d263933a3460fd6e6aad36973e6dd709955c8807a82",
+  "usage": {
+    "completion_tokens": 247,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 147,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 113,
+      "engine_ttlt_ms": 1479,
+      "pre_inference_ms": 90,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 341,
+      "service_ttlt_ms": 1703,
+      "user_visible_ttft_ms": 251
+    },
+    "prompt_tokens": 1566,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 495,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1813
+  },
+  "elapsedMs": 2119,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "37af3550-8603-4199-8871-9f8d30177fda",
+      "inputTokens": 1566,
+      "outputTokens": 247,
+      "event": "translation_attempt",
+      "correlationId": "ae769cdf-d3a1-4db5-933b-12b7fbc9f3c6",
+      "attempt": 1,
+      "elapsedMs": 2119,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

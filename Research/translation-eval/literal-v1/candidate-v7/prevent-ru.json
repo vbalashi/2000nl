@@ -1,0 +1,68 @@
+{
+  "id": "prevent-ru",
+  "inputHash": "ce2f1f38eb2795b7573799357a4a7ac81e177447d5d5ee95218556c5e7380dbf",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "предотвращать",
+      "alternativeTexts": [
+        "не допускать"
+      ],
+      "baseText": "предотвращать",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "препятствовать тому, чтобы что-либо произошло"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"предотвращать\",\"alternativeTexts\":[\"не допускать\"],\"baseText\":\"предотвращать\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"препятствовать тому, чтобы что-либо произошло\"}]}",
+  "responseHash": "47145c4194fed366b70588a29db142576f9cc9052195adb51dbde1ea06e93dad",
+  "usage": {
+    "completion_tokens": 258,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 190,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 69,
+      "engine_ttlt_ms": 1572,
+      "pre_inference_ms": 108,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 328,
+      "service_ttlt_ms": 1817,
+      "user_visible_ttft_ms": 221
+    },
+    "prompt_tokens": 1406,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1403,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1664
+  },
+  "elapsedMs": 2319,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "58d70148-6da8-4a61-8eaf-f997c33cb0e4",
+      "inputTokens": 1406,
+      "outputTokens": 258,
+      "event": "translation_attempt",
+      "correlationId": "26797d73-fa32-4c1b-a65f-05357671b459",
+      "attempt": 1,
+      "elapsedMs": 2319,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

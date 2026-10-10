@@ -1,0 +1,66 @@
+{
+  "id": "idiom-only-ru",
+  "inputHash": "b1f4f39c9fbf76a0c043e71667fb91d914ae9101443e16de97eb54fa9198a6df",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": null,
+    "contentTranslations": [
+      {
+        "fieldId": "idiom:0",
+        "literalText": "открыть книжечку о ком-либо",
+        "text": "раскрыть, что кто-то сделал"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "раскрыть, что кто-то сделал"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":null,\"contentTranslations\":[{\"fieldId\":\"idiom:0\",\"text\":\"раскрыть, что кто-то сделал\",\"literalText\":\"открыть книжечку о ком-либо\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"раскрыть, что кто-то сделал\"}]}",
+  "responseHash": "26dd195bdef4b53245be883172bafdcbb9e7ab576abb894fe36552519e97e4d0",
+  "usage": {
+    "completion_tokens": 1518,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1427,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 103,
+      "engine_ttlt_ms": 8427,
+      "pre_inference_ms": 117,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 363,
+      "service_ttlt_ms": 8682,
+      "user_visible_ttft_ms": 246
+    },
+    "prompt_tokens": 1555,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 484,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 3073
+  },
+  "elapsedMs": 9086,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "6b5477d9-a74a-4a6f-b45e-0d086a6ebcc5",
+      "inputTokens": 1555,
+      "outputTokens": 1518,
+      "event": "translation_attempt",
+      "correlationId": "c8585c2c-f776-4e77-b944-51f21801040c",
+      "attempt": 1,
+      "elapsedMs": 9086,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

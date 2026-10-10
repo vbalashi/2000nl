@@ -1,0 +1,75 @@
+{
+  "id": "lamp-ru",
+  "inputHash": "5e12d90a6014a67ecca7860ca3eed0d509802eef9f20aa283323faf352c46c0a",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лампа",
+      "alternativeTexts": [],
+      "baseText": "лампа",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "предмет, который даёт свет"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "наткнуться на лампу",
+        "text": "попасться на чём-то предосудительном"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "быть уличённым в чём-то предосудительном"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лампа\",\"alternativeTexts\":[],\"baseText\":\"лампа\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"предмет, который даёт свет\"},{\"fieldId\":\"idiom:0\",\"text\":\"попасться на чём-то предосудительном\",\"literalText\":\"наткнуться на лампу\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"быть уличённым в чём-то предосудительном\"}]}",
+  "responseHash": "1f999acb766c3a92752bb96337bc8958809c6e83858d4c9fc1fe750273deb137",
+  "usage": {
+    "completion_tokens": 1075,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 954,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 101,
+      "engine_ttlt_ms": 6550,
+      "pre_inference_ms": 164,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 430,
+      "service_ttlt_ms": 6872,
+      "user_visible_ttft_ms": 266
+    },
+    "prompt_tokens": 1567,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2642
+  },
+  "elapsedMs": 7471,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "b0eb616d-797b-458c-95b3-fbda2b46446d",
+      "inputTokens": 1567,
+      "outputTokens": 1075,
+      "event": "translation_attempt",
+      "correlationId": "257570d1-9188-42e4-8e85-0799cc0f873b",
+      "attempt": 1,
+      "elapsedMs": 7471,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

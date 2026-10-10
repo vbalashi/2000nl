@@ -1,0 +1,66 @@
+{
+  "id": "electron-ru",
+  "inputHash": "ec81c62a56fb0c98f7cbb56bfdac9d13e88c0c85c9a8de46256fedec9943fc03",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "электрон",
+      "alternativeTexts": [],
+      "baseText": "электрон",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "частица с отрицательным электрическим зарядом"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"электрон\",\"alternativeTexts\":[],\"baseText\":\"электрон\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"частица с отрицательным электрическим зарядом\"}]}",
+  "responseHash": "1179d2e8eb37275315b35d7a8e859a2309f909e95e76722893295e3a1f9768a9",
+  "usage": {
+    "completion_tokens": 136,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 75,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 125,
+      "engine_ttlt_ms": 882,
+      "pre_inference_ms": 111,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 400,
+      "service_ttlt_ms": 1133,
+      "user_visible_ttft_ms": 290
+    },
+    "prompt_tokens": 1522,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 451,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1658
+  },
+  "elapsedMs": 1407,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "f25cc964-6fbe-4a36-8ad9-5efa2b6cce4e",
+      "inputTokens": 1522,
+      "outputTokens": 136,
+      "event": "translation_attempt",
+      "correlationId": "fee2f33e-a57b-4664-a755-213be6dba7f4",
+      "attempt": 1,
+      "elapsedMs": 1407,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

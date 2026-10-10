@@ -1,0 +1,68 @@
+{
+  "id": "victim-ru",
+  "inputHash": "846fce1e478169cbea7951c9ae8292d971cd8bfc1dec835ffd04d26a90e6b482",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "пострадавший",
+      "alternativeTexts": [
+        "жертва"
+      ],
+      "baseText": "жертва",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "человек, понесший ущерб или получивший травму в результате какого-либо события"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"пострадавший\",\"alternativeTexts\":[\"жертва\"],\"baseText\":\"жертва\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"человек, понесший ущерб или получивший травму в результате какого-либо события\"}]}",
+  "responseHash": "261e068dd179ab14771ccc1162fe952e7761a1763af4f231de72a020a9238faa",
+  "usage": {
+    "completion_tokens": 173,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 97,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 86,
+      "engine_ttlt_ms": 1055,
+      "pre_inference_ms": 72,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 316,
+      "service_ttlt_ms": 1282,
+      "user_visible_ttft_ms": 244
+    },
+    "prompt_tokens": 1150,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1147,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1323
+  },
+  "elapsedMs": 1605,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "059984d0-86da-44b6-aa3d-a3aaec48f999",
+      "inputTokens": 1150,
+      "outputTokens": 173,
+      "event": "translation_attempt",
+      "correlationId": "35cfce3e-298b-4025-abbd-dce603bb9e10",
+      "attempt": 1,
+      "elapsedMs": 1605,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

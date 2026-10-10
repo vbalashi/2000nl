@@ -1,0 +1,74 @@
+{
+  "id": "basket-en",
+  "inputHash": "b499c9a3970f6139e85440d8dbdedcda15b21cc582866bc975369e52c7467b7a",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "basket",
+      "alternativeTexts": [],
+      "baseText": "basket",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a woven container"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "be exposed as not being as good as you claimed to be"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "be exposed; turn out not to be as good as you claimed"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"basket\",\"alternativeTexts\":[],\"baseText\":\"basket\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a woven container\"},{\"fieldId\":\"idiom:0\",\"text\":\"be exposed as not being as good as you claimed to be\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"be exposed; turn out not to be as good as you claimed\"}]}",
+  "responseHash": "0679bfd8e13098fa14331fd5c796b5360777e617b1064f670e01661a36b25195",
+  "usage": {
+    "completion_tokens": 244,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 144,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 144,
+      "engine_ttlt_ms": 1501,
+      "pre_inference_ms": 48,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 326,
+      "service_ttlt_ms": 1678,
+      "user_visible_ttft_ms": 278
+    },
+    "prompt_tokens": 954,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1198
+  },
+  "elapsedMs": 2048,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "aaee7d5b-1f62-4505-bae7-f42384dac6e3",
+      "inputTokens": 954,
+      "outputTokens": 244,
+      "event": "translation_attempt",
+      "correlationId": "1754956f-6854-423c-b461-522413f0921f",
+      "attempt": 1,
+      "elapsedMs": 2048,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

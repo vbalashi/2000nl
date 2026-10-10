@@ -1,0 +1,75 @@
+{
+  "id": "cow-ru",
+  "inputHash": "4780240c6544a9c6fa36ad1da4d7d994dbdd9fd9fc40161784eb9d12bd0061a8",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "корова",
+      "alternativeTexts": [],
+      "baseText": "корова",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "животное, которое даёт молоко"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "говорить о коровках и телятах",
+        "text": "непринуждённо болтать о пустяках"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "приятно беседовать о неважных вещах"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"корова\",\"alternativeTexts\":[],\"baseText\":\"корова\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"животное, которое даёт молоко\"},{\"fieldId\":\"idiom:0\",\"text\":\"непринуждённо болтать о пустяках\",\"literalText\":\"говорить о коровках и телятах\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"приятно беседовать о неважных вещах\"}]}",
+  "responseHash": "1db4bbfd222cf4e4591399a083e3de9194647da62e3cb50d3fc9a17eabdc1477",
+  "usage": {
+    "completion_tokens": 595,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 473,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 104,
+      "engine_ttlt_ms": 3727,
+      "pre_inference_ms": 2866,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 4692,
+      "service_ttlt_ms": 8259,
+      "user_visible_ttft_ms": 1827
+    },
+    "prompt_tokens": 1572,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2167
+  },
+  "elapsedMs": 11818,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "ae0031e8-a930-4c6e-bcb9-393657b52e97",
+      "inputTokens": 1572,
+      "outputTokens": 595,
+      "event": "translation_attempt",
+      "correlationId": "e39c0f63-19b3-4ed3-b8ca-e67736d56225",
+      "attempt": 1,
+      "elapsedMs": 11818,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

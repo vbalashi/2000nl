@@ -1,0 +1,66 @@
+{
+  "id": "neutron-en",
+  "inputHash": "0e9b10ad66373f2868380802f35ffcdfbad86c1137736b6720afd56d259b21f4",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "neutron",
+      "alternativeTexts": [],
+      "baseText": "neutron",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "An electrically uncharged particle in an atomic nucleus."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"neutron\",\"alternativeTexts\":[],\"baseText\":\"neutron\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"An electrically uncharged particle in an atomic nucleus.\"}]}",
+  "responseHash": "b81a9dec37b40cdcb7e824f08bb3e9ccaffb281e7b80dcedd2c3e10c4ad2b440",
+  "usage": {
+    "completion_tokens": 93,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 34,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 185,
+      "engine_ttlt_ms": 757,
+      "pre_inference_ms": 102,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 569,
+      "service_ttlt_ms": 1137,
+      "user_visible_ttft_ms": 467
+    },
+    "prompt_tokens": 1524,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 453,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1617
+  },
+  "elapsedMs": 1456,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "cfdb3651-477e-49b9-8ac9-73b0a96f3e5b",
+      "inputTokens": 1524,
+      "outputTokens": 93,
+      "event": "translation_attempt",
+      "correlationId": "7c0e2375-902b-4b4e-a6b5-6890eeecf5c0",
+      "attempt": 1,
+      "elapsedMs": 1456,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

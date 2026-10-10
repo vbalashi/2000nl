@@ -1,0 +1,75 @@
+{
+  "id": "nose-en",
+  "inputHash": "78708e8a8e2ec20cdab151994cb6a9f977fe3dec9ac2ae6f8e445b1709fd0b2a",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "nose",
+      "alternativeTexts": [],
+      "baseText": "nose",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "the body part used for smelling"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "with your nose in the butter",
+        "text": "unexpectedly find yourself in a fortunate situation"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "unexpectedly find yourself in a fortunate situation"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"nose\",\"alternativeTexts\":[],\"baseText\":\"nose\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"the body part used for smelling\"},{\"fieldId\":\"idiom:0\",\"text\":\"unexpectedly find yourself in a fortunate situation\",\"literalText\":\"with your nose in the butter\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"unexpectedly find yourself in a fortunate situation\"}]}",
+  "responseHash": "df0e73812b6961e58a7695d2a057d1cc77f571801c67902aae1f8cf4f587d2ff",
+  "usage": {
+    "completion_tokens": 286,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 182,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 67,
+      "engine_ttlt_ms": 1703,
+      "pre_inference_ms": 82,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 320,
+      "service_ttlt_ms": 1950,
+      "user_visible_ttft_ms": 238
+    },
+    "prompt_tokens": 1574,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 503,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1860
+  },
+  "elapsedMs": 2351,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "9972a3f3-6904-4ad9-809d-e5524c8fc785",
+      "inputTokens": 1574,
+      "outputTokens": 286,
+      "event": "translation_attempt",
+      "correlationId": "d5480b56-b3b4-4f97-937e-5f9e23b4a034",
+      "attempt": 1,
+      "elapsedMs": 2350,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

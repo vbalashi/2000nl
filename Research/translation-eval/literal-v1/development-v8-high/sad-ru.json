@@ -1,0 +1,68 @@
+{
+  "id": "sad-ru",
+  "inputHash": "8c53f474aba391f39fd2a24e5e6b0dc64ab22927a00e8eb026e20ee3a49fa04c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "грустный",
+      "alternativeTexts": [
+        "печальный"
+      ],
+      "baseText": "грустный",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "испытывающий печаль"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"грустный\",\"alternativeTexts\":[\"печальный\"],\"baseText\":\"грустный\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"испытывающий печаль\"}]}",
+  "responseHash": "37c45225864e574396c30da543c8f659bbb6008874a63cff01caddf2466167f8",
+  "usage": {
+    "completion_tokens": 206,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 145,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 94,
+      "engine_ttlt_ms": 1284,
+      "pre_inference_ms": 74,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 306,
+      "service_ttlt_ms": 1491,
+      "user_visible_ttft_ms": 231
+    },
+    "prompt_tokens": 1518,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 447,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1724
+  },
+  "elapsedMs": 1801,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "0791a1a1-87cd-4f8b-9989-8ded38c51a98",
+      "inputTokens": 1518,
+      "outputTokens": 206,
+      "event": "translation_attempt",
+      "correlationId": "27d30336-1ac1-4603-bacb-a2f3d59a1ba3",
+      "attempt": 1,
+      "elapsedMs": 1801,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

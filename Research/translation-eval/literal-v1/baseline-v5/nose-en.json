@@ -1,0 +1,74 @@
+{
+  "id": "nose-en",
+  "inputHash": "070ba2a5af3f0157919d0720b06648a353d584d6b203a06fae430ab3fc14da22",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "nose",
+      "alternativeTexts": [],
+      "baseText": "nose",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "the body part you use to smell"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "to unexpectedly find yourself in a favorable situation"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to unexpectedly find yourself in a favorable situation"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"nose\",\"alternativeTexts\":[],\"baseText\":\"nose\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"the body part you use to smell\"},{\"fieldId\":\"idiom:0\",\"text\":\"to unexpectedly find yourself in a favorable situation\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to unexpectedly find yourself in a favorable situation\"}]}",
+  "responseHash": "618ada781fe171f7621441ef955693072382eeb035093e6f8b0e5a25108c5659",
+  "usage": {
+    "completion_tokens": 257,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 162,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 67,
+      "engine_ttlt_ms": 1510,
+      "pre_inference_ms": 48,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 249,
+      "service_ttlt_ms": 1688,
+      "user_visible_ttft_ms": 200
+    },
+    "prompt_tokens": 955,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1212
+  },
+  "elapsedMs": 2058,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "7b9830d0-a75e-4b8c-9e12-c937858a3bb2",
+      "inputTokens": 955,
+      "outputTokens": 257,
+      "event": "translation_attempt",
+      "correlationId": "c9176106-db58-4e46-baf2-c6bf127ccdbe",
+      "attempt": 1,
+      "elapsedMs": 2058,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

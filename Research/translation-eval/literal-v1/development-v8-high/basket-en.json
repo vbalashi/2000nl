@@ -1,0 +1,75 @@
+{
+  "id": "basket-en",
+  "inputHash": "fed594964d5579bf8d10bcb65d0ded65b98a64ddb9f43c715e792f38c4f6d5e6",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "basket",
+      "alternativeTexts": [],
+      "baseText": "basket",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a woven container"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "fall through the basket",
+        "text": "be exposed as not being as good as you claimed"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to be exposed; to turn out not to be as good as you claimed"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"basket\",\"alternativeTexts\":[],\"baseText\":\"basket\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a woven container\"},{\"fieldId\":\"idiom:0\",\"text\":\"be exposed as not being as good as you claimed\",\"literalText\":\"fall through the basket\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to be exposed; to turn out not to be as good as you claimed\"}]}",
+  "responseHash": "eb8a4cd041f8101da4dbcb4a96247b1344d4a7e7124df08fa49e3e94b1e261db",
+  "usage": {
+    "completion_tokens": 619,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 511,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 86,
+      "engine_ttlt_ms": 3319,
+      "pre_inference_ms": 90,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 319,
+      "service_ttlt_ms": 3547,
+      "user_visible_ttft_ms": 229
+    },
+    "prompt_tokens": 1573,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 502,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2192
+  },
+  "elapsedMs": 3961,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "8aab24e4-e1a4-4215-9bef-15dada6095e1",
+      "inputTokens": 1573,
+      "outputTokens": 619,
+      "event": "translation_attempt",
+      "correlationId": "302424ad-1bad-4239-8284-cd4efc87b0e5",
+      "attempt": 1,
+      "elapsedMs": 3961,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

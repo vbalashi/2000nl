@@ -1,0 +1,77 @@
+{
+  "id": "thanks-en",
+  "inputHash": "ecb70ce607cac3ad5cc66adfbe0c27337e187a7bb32cb462b514dab4d51d59cf",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "gratitude",
+      "alternativeTexts": [
+        "thankfulness"
+      ],
+      "baseText": "gratitude",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "appreciation for help"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "Thank you very much."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "a friendly expression of gratitude"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"gratitude\",\"alternativeTexts\":[\"thankfulness\"],\"baseText\":\"gratitude\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"appreciation for help\"},{\"fieldId\":\"idiom:0\",\"text\":\"Thank you very much.\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"a friendly expression of gratitude\"}]}",
+  "responseHash": "a4678f4a4f8716b972ade33227a11f6d40b5fef73af1788d2c8280be0f6a2fe9",
+  "usage": {
+    "completion_tokens": 351,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 255,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 73,
+      "engine_ttlt_ms": 2021,
+      "pre_inference_ms": 132,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 460,
+      "service_ttlt_ms": 2379,
+      "user_visible_ttft_ms": 328
+    },
+    "prompt_tokens": 1452,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1449,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1803
+  },
+  "elapsedMs": 2710,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "0d94559f-ae99-42e8-8c50-c6d122a2c60e",
+      "inputTokens": 1452,
+      "outputTokens": 351,
+      "event": "translation_attempt",
+      "correlationId": "e37e8367-fc34-49a2-9d54-d8871ca91cae",
+      "attempt": 1,
+      "elapsedMs": 2710,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

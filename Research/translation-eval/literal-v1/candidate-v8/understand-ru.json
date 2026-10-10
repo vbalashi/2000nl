@@ -1,0 +1,66 @@
+{
+  "id": "understand-ru",
+  "inputHash": "f3af080b98da113d1a8da704d73e370bb66bd990e4b1962650dba5412236409e",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "понимать",
+      "alternativeTexts": [],
+      "baseText": "понимать",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "знать значение чего-либо"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"понимать\",\"alternativeTexts\":[],\"baseText\":\"понимать\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"знать значение чего-либо\"}]}",
+  "responseHash": "d26b232d027bf395352b32f5c0863d3fc4ed8a7f77419d933d34cb9802306949",
+  "usage": {
+    "completion_tokens": 155,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 99,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 57,
+      "engine_ttlt_ms": 1122,
+      "pre_inference_ms": 131,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 400,
+      "service_ttlt_ms": 1433,
+      "user_visible_ttft_ms": 269
+    },
+    "prompt_tokens": 1517,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 446,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1672
+  },
+  "elapsedMs": 1941,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "4abc3b5c-8a67-4625-8937-26f192262afa",
+      "inputTokens": 1517,
+      "outputTokens": 155,
+      "event": "translation_attempt",
+      "correlationId": "dd818da0-aa8c-43c6-ab28-1df537bd301a",
+      "attempt": 1,
+      "elapsedMs": 1940,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "door-ru",
+  "inputHash": "dcb264bfad49c7bc7bab647b1458e363c4727590ab7e21a3bd149c85c894cefe",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "дверь",
+      "alternativeTexts": [],
+      "baseText": "дверь",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "подвижная конструкция, закрывающая вход"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "ввалиться в дом вместе с дверью",
+        "text": "сразу перейти к сути, без предисловий"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "сразу сказать, зачем пришёл, без предисловия"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"дверь\",\"alternativeTexts\":[],\"baseText\":\"дверь\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"подвижная конструкция, закрывающая вход\"},{\"fieldId\":\"idiom:0\",\"text\":\"сразу перейти к сути, без предисловий\",\"literalText\":\"ввалиться в дом вместе с дверью\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"сразу сказать, зачем пришёл, без предисловия\"}]}",
+  "responseHash": "d0c5072677ba58bb76ce400389edb4cda4326ff0a865d7cc90517c18971b60c8",
+  "usage": {
+    "completion_tokens": 1086,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 957,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 103,
+      "engine_ttlt_ms": 6493,
+      "pre_inference_ms": 116,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 334,
+      "service_ttlt_ms": 6718,
+      "user_visible_ttft_ms": 219
+    },
+    "prompt_tokens": 1572,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2658
+  },
+  "elapsedMs": 7549,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "162e8fbf-d848-4c6c-bd47-10991ac42c7e",
+      "inputTokens": 1572,
+      "outputTokens": 1086,
+      "event": "translation_attempt",
+      "correlationId": "499f17b1-a1cb-4fd4-90b9-94f624dbf6d0",
+      "attempt": 1,
+      "elapsedMs": 7548,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

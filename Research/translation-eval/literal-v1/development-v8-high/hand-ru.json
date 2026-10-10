@@ -1,0 +1,75 @@
+{
+  "id": "hand-ru",
+  "inputHash": "02e60b35b9fad23268ab1489e3edce90b69fc2c471feb89297349b404dedd16d",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "кисть руки",
+      "alternativeTexts": [],
+      "baseText": "рука",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "часть тела"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "немного помочь кому-нибудь"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "немного помочь кому-нибудь"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"кисть руки\",\"alternativeTexts\":[],\"baseText\":\"рука\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"часть тела\"},{\"fieldId\":\"idiom:0\",\"text\":\"немного помочь кому-нибудь\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"немного помочь кому-нибудь\"}]}",
+  "responseHash": "2583ad40f968389b521e0e8500f69f10bc23b128c23af1d26676a86df74cf10a",
+  "usage": {
+    "completion_tokens": 700,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 601,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 98,
+      "engine_ttlt_ms": 4402,
+      "pre_inference_ms": 110,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 437,
+      "service_ttlt_ms": 4761,
+      "user_visible_ttft_ms": 327
+    },
+    "prompt_tokens": 1559,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 488,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2259
+  },
+  "elapsedMs": 5230,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "f1f1565d-30a4-4a4d-a4b5-ef2338038801",
+      "inputTokens": 1559,
+      "outputTokens": 700,
+      "event": "translation_attempt",
+      "correlationId": "2f06df10-d623-441c-9eda-f1a423df46ae",
+      "attempt": 1,
+      "elapsedMs": 5230,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

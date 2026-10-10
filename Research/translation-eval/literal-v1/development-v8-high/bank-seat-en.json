@@ -1,0 +1,68 @@
+{
+  "id": "bank-seat-en",
+  "inputHash": "50e00f07ad24ef761d29cb6fcf26242c98227970a82fface565f5fdc8d9802ef",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "sofa",
+      "alternativeTexts": [
+        "couch"
+      ],
+      "baseText": "sofa",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "A long piece of furniture on which several people can sit."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"sofa\",\"alternativeTexts\":[\"couch\"],\"baseText\":\"sofa\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"A long piece of furniture on which several people can sit.\"}]}",
+  "responseHash": "e6c1813540b137baece8348b19046663c8609d991db50cf815fca5b76fda77a3",
+  "usage": {
+    "completion_tokens": 260,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 196,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 132,
+      "engine_ttlt_ms": 1746,
+      "pre_inference_ms": 263,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 716,
+      "service_ttlt_ms": 2337,
+      "user_visible_ttft_ms": 453
+    },
+    "prompt_tokens": 1521,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 450,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1781
+  },
+  "elapsedMs": 2612,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "9354db7b-d5af-45c9-b129-0bdd7a2c3d63",
+      "inputTokens": 1521,
+      "outputTokens": 260,
+      "event": "translation_attempt",
+      "correlationId": "f48baca1-705f-4c35-aa77-79b9ef06f943",
+      "attempt": 1,
+      "elapsedMs": 2612,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

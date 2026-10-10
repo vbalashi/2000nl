@@ -1,0 +1,66 @@
+{
+  "id": "bank-seat-ru",
+  "inputHash": "a4e5c2b393445ac725c5df088e705f575bd5cf0634940e1a8c2fed6b68813c12",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "скамья",
+      "alternativeTexts": [],
+      "baseText": "банк",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "длинный предмет мебели, на котором могут сидеть несколько человек"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"скамья\",\"alternativeTexts\":[],\"baseText\":\"банк\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"длинный предмет мебели, на котором могут сидеть несколько человек\"}]}",
+  "responseHash": "1d70549f06d0fe242603f643dc4eed45fd26d7ceb6795961981f8ddc92187a31",
+  "usage": {
+    "completion_tokens": 220,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 158,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 96,
+      "engine_ttlt_ms": 1345,
+      "pre_inference_ms": 45,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 315,
+      "service_ttlt_ms": 1576,
+      "user_visible_ttft_ms": 270
+    },
+    "prompt_tokens": 1409,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1406,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1629
+  },
+  "elapsedMs": 1918,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "84731d13-00db-4149-8996-7a7b32087de1",
+      "inputTokens": 1409,
+      "outputTokens": 220,
+      "event": "translation_attempt",
+      "correlationId": "e0b13e50-3e38-4a8c-af1a-9dab6986a4df",
+      "attempt": 1,
+      "elapsedMs": 1918,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,66 @@
+{
+  "id": "octagon-en",
+  "inputHash": "f848a9bfeec0e0073ef6bf5412944f53ff59adeaf1fa10d769eb34ad06193d8e",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "octagon",
+      "alternativeTexts": [],
+      "baseText": "octagon",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a flat shape with eight straight sides"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"octagon\",\"alternativeTexts\":[],\"baseText\":\"octagon\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a flat shape with eight straight sides\"}]}",
+  "responseHash": "3f5ed72ad3eb05680acddd17d4989ad4ccc81c19161ebc92fd216440e7df736c",
+  "usage": {
+    "completion_tokens": 133,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 77,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 101,
+      "engine_ttlt_ms": 846,
+      "pre_inference_ms": 77,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 324,
+      "service_ttlt_ms": 1064,
+      "user_visible_ttft_ms": 247
+    },
+    "prompt_tokens": 1526,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 455,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1659
+  },
+  "elapsedMs": 1572,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "f3b5d809-d485-45e6-878c-2324655f5fd2",
+      "inputTokens": 1526,
+      "outputTokens": 133,
+      "event": "translation_attempt",
+      "correlationId": "5c8ccb54-5cd0-49b5-a95d-31bc19013ac1",
+      "attempt": 1,
+      "elapsedMs": 1572,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

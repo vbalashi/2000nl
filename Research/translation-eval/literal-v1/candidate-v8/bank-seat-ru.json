@@ -1,0 +1,66 @@
+{
+  "id": "bank-seat-ru",
+  "inputHash": "4551673a603bd8ce7019f68cc4b216f525b6ff01ecde3561a803db6b8ad3c4ea",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "диван",
+      "alternativeTexts": [],
+      "baseText": "банк",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Длинный предмет мебели, на котором могут сидеть несколько человек."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"диван\",\"alternativeTexts\":[],\"baseText\":\"банк\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Длинный предмет мебели, на котором могут сидеть несколько человек.\"}]}",
+  "responseHash": "4b8faa7b0f0ee023a1893b4e219ba35bd3c2fb47c808c181a525446485dd69bf",
+  "usage": {
+    "completion_tokens": 269,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 207,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 68,
+      "engine_ttlt_ms": 1758,
+      "pre_inference_ms": 82,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 293,
+      "service_ttlt_ms": 1976,
+      "user_visible_ttft_ms": 210
+    },
+    "prompt_tokens": 1521,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 450,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1790
+  },
+  "elapsedMs": 2247,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "49077a0e-f1de-4626-bbaa-65a17d488bd6",
+      "inputTokens": 1521,
+      "outputTokens": 269,
+      "event": "translation_attempt",
+      "correlationId": "fbc30f03-3684-4dd1-877b-e3f083292bcc",
+      "attempt": 1,
+      "elapsedMs": 2247,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,74 @@
+{
+  "id": "horse-en",
+  "inputHash": "e31a580296547249fc05e0fa0f34aaa8e94150a928c53334237a6cda76bdf6b8",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "horse",
+      "alternativeTexts": [],
+      "baseText": "horse",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a large hoofed animal that people can ride"
+      },
+      {
+        "fieldId": "idiom:0",
+        "text": "to put the cart before the horse"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to do things in the wrong order"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"horse\",\"alternativeTexts\":[],\"baseText\":\"horse\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a large hoofed animal that people can ride\"},{\"fieldId\":\"idiom:0\",\"text\":\"to put the cart before the horse\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to do things in the wrong order\"}]}",
+  "responseHash": "640f8781dfee46e01e8b52358360b8b53ce0194e2be60ec06f0487a340892d37",
+  "usage": {
+    "completion_tokens": 196,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 101,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 72,
+      "engine_ttlt_ms": 1141,
+      "pre_inference_ms": 67,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 250,
+      "service_ttlt_ms": 1316,
+      "user_visible_ttft_ms": 183
+    },
+    "prompt_tokens": 956,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1152
+  },
+  "elapsedMs": 1659,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "d29f36d1-9f3b-4c95-abd6-dbf9a846453d",
+      "inputTokens": 956,
+      "outputTokens": 196,
+      "event": "translation_attempt",
+      "correlationId": "b1fb06f9-0bb4-4656-9039-607524145322",
+      "attempt": 1,
+      "elapsedMs": 1659,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,68 @@
+{
+  "id": "bank-seat-ru",
+  "inputHash": "61445f43927a974cc3d44e953296a02cb0478337395878c8683c2b2105ce576c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "скамья",
+      "alternativeTexts": [
+        "лавка"
+      ],
+      "baseText": "диван",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "длинный предмет мебели, на котором могут сидеть несколько человек"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"скамья\",\"alternativeTexts\":[\"лавка\"],\"baseText\":\"диван\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"длинный предмет мебели, на котором могут сидеть несколько человек\"}]}",
+  "responseHash": "a9ae799e51724bc35daa8359af304175a9e27c81bd05c76a31e9c3d1b11565d6",
+  "usage": {
+    "completion_tokens": 240,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 174,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 70,
+      "engine_ttlt_ms": 1467,
+      "pre_inference_ms": 95,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 303,
+      "service_ttlt_ms": 1923,
+      "user_visible_ttft_ms": 208
+    },
+    "prompt_tokens": 1660,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 450,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1900
+  },
+  "elapsedMs": 2550,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "0ce122f7-a0eb-4eb7-b81c-27383e020dc9",
+      "inputTokens": 1660,
+      "outputTokens": 240,
+      "event": "translation_attempt",
+      "correlationId": "8959ab55-b534-41b6-84c1-dfe90dfda858",
+      "attempt": 1,
+      "elapsedMs": 2550,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

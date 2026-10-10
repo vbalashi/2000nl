@@ -1,0 +1,75 @@
+{
+  "id": "horse-en",
+  "inputHash": "2072d5d25892450419e0a940a98c218dc694604e03712b5453fedf450de3bd96",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "horse",
+      "alternativeTexts": [],
+      "baseText": "horse",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a large hoofed animal that people can ride"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "put the cart before the horse"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to do something in the wrong order"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"horse\",\"alternativeTexts\":[],\"baseText\":\"horse\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a large hoofed animal that people can ride\"},{\"fieldId\":\"idiom:0\",\"text\":\"put the cart before the horse\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to do something in the wrong order\"}]}",
+  "responseHash": "8d0d1bf28c143382ca93dce6398ec35bcd827710f01c554ec56a188f46a8b376",
+  "usage": {
+    "completion_tokens": 220,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 121,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 64,
+      "engine_ttlt_ms": 1185,
+      "pre_inference_ms": 112,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 327,
+      "service_ttlt_ms": 1466,
+      "user_visible_ttft_ms": 215
+    },
+    "prompt_tokens": 1714,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 504,
+      "cached_tokens": 1207
+    },
+    "total_tokens": 1934
+  },
+  "elapsedMs": 2081,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "ec814d36-9089-4561-bcae-5461c5068bad",
+      "inputTokens": 1714,
+      "outputTokens": 220,
+      "event": "translation_attempt",
+      "correlationId": "437c3414-76ef-4bcb-bd57-92a1258993c1",
+      "attempt": 1,
+      "elapsedMs": 2081,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}
