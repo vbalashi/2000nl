@@ -63,6 +63,7 @@ export type DictionaryMeaningTranslationResultV1 = {
   contentTranslations: Array<{
     fieldId: string;
     text: string;
+    literalText?: string | null;
   }>;
 };
 
@@ -127,11 +128,6 @@ export function buildDictionaryMeaningTranslationRequest(params: {
   ].filter((value): value is string => value !== null);
   const content: DictionaryMeaningTranslationRequestV1["content"] = [];
   const idiomValues = asArray(meaning.idioms);
-  const reservedIdiomIndex = idiomValues.findIndex(hasTextualIdiom);
-  const sourceIsIdiomOnly =
-    reservedIdiomIndex >= 0 &&
-    !hasText(meaning.definition) &&
-    !hasText(meaning.context);
   let remainingContentCharacters = Math.min(
     DICTIONARY_MEANING_TRANSLATION_LIMITS.contentCharacters,
     DICTIONARY_MEANING_TRANSLATION_LIMITS.requestStringCharacters -
@@ -166,43 +162,31 @@ export function buildDictionaryMeaningTranslationRequest(params: {
       remainingContentTokenUpperBound - metadataTokenUpperBound,
     );
     if (!text) return;
+    // Optional content must not become a one-character fragment when
+    // earlier content consumes the remaining request budget.
+    if ((role === "example" || role === "idiom" || role === "idiom-explanation" || role === "usage-note") &&
+      text !== boundedString(value, DICTIONARY_MEANING_TRANSLATION_LIMITS.contentItemCharacters)) return;
     content.push({ fieldId, role, text });
     remainingContentCharacters -= metadataCharacters + unicodeLength(text);
     remainingContentTokenUpperBound -=
       metadataTokenUpperBound + tokenUpperBound(text);
   };
-  const pushIdiom = (idiomValue: unknown, index: number) => {
-    if (typeof idiomValue === "string") {
-      push(`idiom:${index}`, "idiom", idiomValue);
-      return;
-    }
-    const idiom = asRecord(idiomValue);
-    push(`idiom:${index}`, "idiom", idiom.expression);
-    push(
-      `idiom:${index}:explanation`,
-      "idiom-explanation",
-      idiom.explanation,
-    );
-    for (const [exampleIndex, example] of asArray(idiom.examples).entries()) {
-      push(`idiom:${index}:example:${exampleIndex}`, "example", example);
-    }
-  };
-
+  // Reserve idiom meaning constraints before examples for every meaning,
+  // including meanings with a standalone definition.
   push("definition", "definition", meaning.definition);
   push("usage-pattern", "usage-pattern", meaning.context);
-  // Preserve the semantic classification and its owned subtree even when
-  // standalone examples would otherwise exhaust the bounded provider payload.
-  if (sourceIsIdiomOnly) {
-    pushIdiom(idiomValues[reservedIdiomIndex], reservedIdiomIndex);
+  for (const [index, value] of idiomValues.entries()) {
+    const idiom = asRecord(value);
+    push(`idiom:${index}`, "idiom", typeof value === "string" ? value : idiom.expression);
+    push(`idiom:${index}:explanation`, "idiom-explanation", idiom.explanation);
+  }
+  for (const [index, value] of idiomValues.entries()) {
+    for (const [exampleIndex, example] of asArray(asRecord(value).examples).entries()) {
+      push(`idiom:${index}:example:${exampleIndex}`, "example", example);
+    }
   }
   for (const [index, example] of asArray(meaning.examples).entries()) {
     push(`example:${index}`, "example", example);
-  }
-  for (const [index, idiomValue] of idiomValues.entries()) {
-    if (sourceIsIdiomOnly && index === reservedIdiomIndex) {
-      continue;
-    }
-    pushIdiom(idiomValue, index);
   }
   push("usage-note", "usage-note", meaning.note);
 
@@ -220,16 +204,6 @@ export function buildDictionaryMeaningTranslationRequest(params: {
     },
     content,
   };
-}
-
-function hasText(value: unknown) {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
-function hasTextualIdiom(value: unknown) {
-  return typeof value === "string"
-    ? hasText(value)
-    : hasText(asRecord(value).expression);
 }
 
 export function buildDictionaryMeaningTranslationMessages(
@@ -257,6 +231,7 @@ export function buildDictionaryMeaningTranslationMessages(
             {
               fieldId: "string",
               text: "string",
+              ...(dictionaryTranslationProfile().literalIdioms ? { literalText: "string | null; idiom fields only" } : {}),
             },
           ],
         },
@@ -350,7 +325,9 @@ export function parseDictionaryMeaningTranslationResult(
     throw new Error("contentTranslations must align with request content");
   }
   const contentTranslations = payload.contentTranslations.map((value, index) => {
-    const item = strictRecord(value, ["fieldId", "text"], `contentTranslations[${index}]`);
+    const hasLiteral = Boolean(value && typeof value === "object" && "literalText" in value);
+    const item = strictRecord(value, hasLiteral ? ["fieldId", "text", "literalText"] : ["fieldId", "text"], `contentTranslations[${index}]`);
+    if (hasLiteral && request.content[index].role !== "idiom") throw new Error("literalText is allowed only on idiom fields");
     const fieldId = requiredString(
       item.fieldId,
       `contentTranslations[${index}].fieldId`,
@@ -360,6 +337,7 @@ export function parseDictionaryMeaningTranslationResult(
     }
     return {
       fieldId,
+      ...(hasLiteral ? { literalText: nullableBoundedString(item.literalText, `contentTranslations[${index}].literalText`, DICTIONARY_MEANING_TRANSLATION_LIMITS.contentTranslationCharacters) } : {}),
       text: requiredBoundedString(
         item.text,
         `contentTranslations[${index}].text`,

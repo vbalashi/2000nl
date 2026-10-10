@@ -66,3 +66,32 @@ verification записывается в issue#655, без объявления 
 точного значения; аналогично повторно запрашивается видимое сообщение
 Library failure. Ожидания0/5,1/5 и видимого alert сохранены, product-код
 не менялся. Весь TrainingScreen.test.tsx:84/84 PASS локально.
+
+## Объединённый этап2–3: эквиваленты и дословность
+
+2026-10-10: принято единое выполнение с запасным двухшаговым экспериментом
+([обсуждение](../../discussions/2026-10-10-02-translation-equivalents-literal.md)).
+Новый checkout `.worktrees/655-idiom-literal`, ветка `codex/655-idiom-literal`,
+base e54fd5b36789. Старый checkout этапа1 снят; исторические checkpoint выше сохранены.
+
+Реализован optional literalText на точном idiom content item, хранение в существующем
+JSON overlay и публичная node translation projection. Training/Library используют
+общий renderer с локализованной подписью и общей видимостью. Схема SQL не меняется.
+Приоритет сборки: definition/usage, идиомы и их объяснения, owned examples,
+standalone examples; неполные optional поля из-за общего бюджета пропускаются.
+Причина — stress-пример показал потерю объяснения и однобуквенный обрывок.
+
+Сравниваются Luna v5–v9 и матрица v8/v9 × low/medium/high. Frozen synthetic inputs,
+raw answers, settings, token usage, retry diagnostics и non-blind agent assessments
+хранятся отдельно в Research/translation-eval/literal-v1 в research PR#662
+(ветка codex/655-literal-eval, d7fdff1d; release не включает raw research). Никаких пользовательских
+корпусов и секретов. Проверенный кандидат v8/high; известный literal-image defect
+cat-ru сохранён. Второй запрос не включается: однопроходный вариант прошёл
+относительную проверку; стоимость/задержки reasoning явно учитываются.
+Выпуск отслеживается в #655; весь спринт, включая связанные слова, не завершён.
+
+Checkpoint этапа2–3: 69 focused unit/component tests, typecheck и два мобильных
+browser-сценария PASS. 558 сохранённых provider responses; v8/high 95/96 accepted
+на основных наборах, один серьёзный literal-image defect, 0 critical. Оценка agent,
+non-blind; человеческое подтверждение и независимая population-оценка отсутствуют.
+Два финальных длинных примера прошли после устранения обрывков optional content.

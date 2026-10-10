@@ -27,7 +27,7 @@ export function buildDictionaryMeaningTranslationArtifact(
     const idiomMatch = field.fieldId.match(/^idiom:(\d+)$/);
     if (idiomMatch) {
       meaning.idioms ??= [];
-      meaning.idioms[Number(idiomMatch[1])] = { expression: field.text };
+      meaning.idioms[Number(idiomMatch[1])] = { expression: field.text, ...(field.literalText ? { literalText: field.literalText } : {}) };
     }
     const explanationMatch = field.fieldId.match(/^idiom:(\d+):explanation$/);
     if (explanationMatch) {

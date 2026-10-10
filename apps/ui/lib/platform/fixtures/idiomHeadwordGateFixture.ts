@@ -7,7 +7,7 @@ export const cowIdiomGateContent: IdiomExerciseContent = (() => {
   const expression = { contentNodeId: "cow-idiom", parentContentNodeId: null, kind: "idiom" as const,
     text: "over koetjes en kalfjes praten", order: 0, sourceTextFingerprint: "cow-idiom-v1", translations: [
       { translationId: "cow-expression-ru", targetLanguageCode: "ru", status: "ready" as const,
-        text: "говорить о пустяках", sourceTextFingerprint: "cow-idiom-v1", translationPolicyVersion: "gate-v1" },
+        text: "говорить о пустяках", literalText: "говорить о коровках и телятах", sourceTextFingerprint: "cow-idiom-v1", translationPolicyVersion: "gate-v1" },
     ] };
   const explanation = { contentNodeId: "cow-explanation", parentContentNodeId: expression.contentNodeId,
     kind: "idiom-explanation" as const, text: "gezellig praten over dingen die niet belangrijk zijn",
