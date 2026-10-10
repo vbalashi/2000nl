@@ -1,0 +1,74 @@
+{
+  "id": "old-object-en",
+  "inputHash": "7b3d375f5b5a1fc9c43b65fd15fc3c71c4a21fcf3dccf88bcdefaa6b8bf7151a",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "old",
+      "alternativeTexts": [],
+      "baseText": "old",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "having been used for a long time and no longer new"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "worn-out"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "new"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"old\",\"alternativeTexts\":[],\"baseText\":\"old\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"having been used for a long time and no longer new\"},{\"fieldId\":\"synonym:0\",\"text\":\"worn-out\"},{\"fieldId\":\"antonym:0\",\"text\":\"new\"}]}",
+  "responseHash": "1ac17f25dd9052662ea5291932756c9347738ecaebbe61d5ace57279a1564927",
+  "usage": {
+    "completion_tokens": 219,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 135,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 100,
+      "engine_ttlt_ms": 1379,
+      "pre_inference_ms": 86,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 325,
+      "service_ttlt_ms": 1576,
+      "user_visible_ttft_ms": 240
+    },
+    "prompt_tokens": 1556,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 485,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1775
+  },
+  "elapsedMs": 1908,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "3f525629-6268-46f7-913b-4ed8f0c85903",
+      "inputTokens": 1556,
+      "outputTokens": 219,
+      "event": "translation_attempt",
+      "correlationId": "b6ea0915-89de-47b9-b310-bef55eb0e437",
+      "attempt": 1,
+      "elapsedMs": 1908,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

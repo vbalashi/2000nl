@@ -1,0 +1,75 @@
+{
+  "id": "garden-en",
+  "inputHash": "67ce78b54ccee93819a847010945873ddd243b9eea0a018d9dd2354878699d94",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "garden",
+      "alternativeTexts": [],
+      "baseText": "garden",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a plot of land with plants next to a house"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to lead someone around the garden",
+        "text": "to lead someone up the garden path"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to deliberately mislead someone"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"garden\",\"alternativeTexts\":[],\"baseText\":\"garden\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a plot of land with plants next to a house\"},{\"fieldId\":\"idiom:0\",\"text\":\"to lead someone up the garden path\",\"literalText\":\"to lead someone around the garden\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to deliberately mislead someone\"}]}",
+  "responseHash": "22c8c96b93721f5b004030b7371ffa95885e9b2ccbf33738f2d1429f1db47454",
+  "usage": {
+    "completion_tokens": 539,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 435,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 104,
+      "engine_ttlt_ms": 3212,
+      "pre_inference_ms": 104,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 380,
+      "service_ttlt_ms": 3466,
+      "user_visible_ttft_ms": 276
+    },
+    "prompt_tokens": 1774,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 541,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2313
+  },
+  "elapsedMs": 3957,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "a96beb91-67fe-47e0-833b-d7121a34aae9",
+      "inputTokens": 1774,
+      "outputTokens": 539,
+      "event": "translation_attempt",
+      "correlationId": "070416f0-986a-44d7-b562-cf5e53b5c7ba",
+      "attempt": 1,
+      "elapsedMs": 3956,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

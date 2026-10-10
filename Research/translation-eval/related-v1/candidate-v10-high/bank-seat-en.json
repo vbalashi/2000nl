@@ -1,0 +1,76 @@
+{
+  "id": "bank-seat-en",
+  "inputHash": "42cd3f25dbdb8ed3823e20741c4afbbb122c4414edeac1897eb7c5fddb5039b0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "sofa",
+      "alternativeTexts": [
+        "couch"
+      ],
+      "baseText": "bank",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a long piece of furniture that people sit on"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "bench"
+      },
+      {
+        "fieldId": "synonym:1",
+        "text": "sofa"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"sofa\",\"alternativeTexts\":[\"couch\"],\"baseText\":\"bank\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a long piece of furniture that people sit on\"},{\"fieldId\":\"synonym:0\",\"text\":\"bench\"},{\"fieldId\":\"synonym:1\",\"text\":\"sofa\"}]}",
+  "responseHash": "3d1c4f1c3cac1ec0d7257234aee9144b3e46c995c55b85ddc22df2036e72b405",
+  "usage": {
+    "completion_tokens": 694,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 603,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 103,
+      "engine_ttlt_ms": 4280,
+      "pre_inference_ms": 67,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 316,
+      "service_ttlt_ms": 4494,
+      "user_visible_ttft_ms": 249
+    },
+    "prompt_tokens": 1757,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 524,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2451
+  },
+  "elapsedMs": 4761,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "648c8c36-e72f-46f0-954d-ee4ae6d09839",
+      "inputTokens": 1757,
+      "outputTokens": 694,
+      "event": "translation_attempt",
+      "correlationId": "454ed223-9fd5-4ed3-a1d6-5861a6a19e3e",
+      "attempt": 1,
+      "elapsedMs": 4759,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

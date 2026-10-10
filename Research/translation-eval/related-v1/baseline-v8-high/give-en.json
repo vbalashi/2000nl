@@ -1,0 +1,76 @@
+{
+  "id": "give-en",
+  "inputHash": "14e34d1f4ab5ed44555f4fd36cb68c4f998cc159a91d89e60cf46cc5d258f320",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "give",
+      "alternativeTexts": [
+        "hand"
+      ],
+      "baseText": "give",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "to hand something to someone"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "give as a gift"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "receive"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"give\",\"alternativeTexts\":[\"hand\"],\"baseText\":\"give\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"to hand something to someone\"},{\"fieldId\":\"synonym:0\",\"text\":\"give as a gift\"},{\"fieldId\":\"antonym:0\",\"text\":\"receive\"}]}",
+  "responseHash": "374fc5fee360f866929daf59288a839e3a34af0b612b471c3ee6fc4a73310ff5",
+  "usage": {
+    "completion_tokens": 719,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 633,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 64,
+      "engine_ttlt_ms": 5249,
+      "pre_inference_ms": 84,
+      "service_tbt_ms": 7,
+      "service_ttft_ms": 252,
+      "service_ttlt_ms": 5428,
+      "user_visible_ttft_ms": 168
+    },
+    "prompt_tokens": 1554,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 483,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2273
+  },
+  "elapsedMs": 5847,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "56384cfe-936f-4f78-9dcd-126da61e9732",
+      "inputTokens": 1554,
+      "outputTokens": 719,
+      "event": "translation_attempt",
+      "correlationId": "9c126025-4ebe-4448-a627-c518e29d8589",
+      "attempt": 1,
+      "elapsedMs": 5847,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

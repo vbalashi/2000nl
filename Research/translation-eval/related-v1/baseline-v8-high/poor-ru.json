@@ -1,0 +1,76 @@
+{
+  "id": "poor-ru",
+  "inputHash": "6b2b14da5a580fac84997b780b25ec9516b747f493b04028696fb0d3031ed0ca",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "бедный",
+      "alternativeTexts": [
+        "малоимущий"
+      ],
+      "baseText": "бедный",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "имеющий мало денег"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "нуждающийся"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "богатый"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"бедный\",\"alternativeTexts\":[\"малоимущий\"],\"baseText\":\"бедный\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"имеющий мало денег\"},{\"fieldId\":\"synonym:0\",\"text\":\"нуждающийся\"},{\"fieldId\":\"antonym:0\",\"text\":\"богатый\"}]}",
+  "responseHash": "cc485a08828398a28e8af31db31147fdc87b7381528bc1289f305562998bd476",
+  "usage": {
+    "completion_tokens": 267,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 179,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 104,
+      "engine_ttlt_ms": 1720,
+      "pre_inference_ms": 78,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 293,
+      "service_ttlt_ms": 1911,
+      "user_visible_ttft_ms": 215
+    },
+    "prompt_tokens": 1554,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 483,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1821
+  },
+  "elapsedMs": 2148,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "d3180afb-a166-47c1-9985-42c93291151c",
+      "inputTokens": 1554,
+      "outputTokens": 267,
+      "event": "translation_attempt",
+      "correlationId": "8c5ae712-0bb7-4f62-a814-f877af87cb81",
+      "attempt": 1,
+      "elapsedMs": 2148,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

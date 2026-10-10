@@ -1,0 +1,75 @@
+{
+  "id": "door-en",
+  "inputHash": "bb6f9362a8c88b74fd7e4e8527c0ce2aa4b1d08182a6cd0dfd7a0ddfb99707c4",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "door",
+      "alternativeTexts": [],
+      "baseText": "door",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a movable closure for an entrance"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to fall into the house with the door",
+        "text": "to say what you came for straight away, without any introduction"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to say immediately why you have come, without an introduction"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"door\",\"alternativeTexts\":[],\"baseText\":\"door\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a movable closure for an entrance\"},{\"fieldId\":\"idiom:0\",\"text\":\"to say what you came for straight away, without any introduction\",\"literalText\":\"to fall into the house with the door\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to say immediately why you have come, without an introduction\"}]}",
+  "responseHash": "585f790311373c9de468630ce5f86b43c9fbd3d2bd3b781ca1d3dbd51ebaa900",
+  "usage": {
+    "completion_tokens": 731,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 612,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 107,
+      "engine_ttlt_ms": 4681,
+      "pre_inference_ms": 163,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 452,
+      "service_ttlt_ms": 5020,
+      "user_visible_ttft_ms": 288
+    },
+    "prompt_tokens": 1572,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2303
+  },
+  "elapsedMs": 5714,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "172701c9-409b-43cc-91db-0bf859df806b",
+      "inputTokens": 1572,
+      "outputTokens": 731,
+      "event": "translation_attempt",
+      "correlationId": "323252b8-3523-407a-9eb7-560b1bd2709b",
+      "attempt": 1,
+      "elapsedMs": 5714,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

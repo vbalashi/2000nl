@@ -1,0 +1,74 @@
+{
+  "id": "free-liberty-en",
+  "inputHash": "c8cd0769017a04f1376e4a1654111ae2b929a7f6d78d488a4f5b017b0de9ad6e",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "free",
+      "alternativeTexts": [],
+      "baseText": "free",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "not imprisoned or under duress"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "independent"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "imprisoned"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"free\",\"alternativeTexts\":[],\"baseText\":\"free\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"not imprisoned or under duress\"},{\"fieldId\":\"synonym:0\",\"text\":\"independent\"},{\"fieldId\":\"antonym:0\",\"text\":\"imprisoned\"}]}",
+  "responseHash": "fd937f14e1efa74bf811a597d4e1b91e6b07999c7518016f880f33f7c3e3c4b0",
+  "usage": {
+    "completion_tokens": 431,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 350,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 120,
+      "engine_ttlt_ms": 2623,
+      "pre_inference_ms": 76,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 334,
+      "service_ttlt_ms": 2833,
+      "user_visible_ttft_ms": 258
+    },
+    "prompt_tokens": 1761,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 528,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2192
+  },
+  "elapsedMs": 3205,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "f3e3be15-6ee8-46db-933e-182cc3701bd7",
+      "inputTokens": 1761,
+      "outputTokens": 431,
+      "event": "translation_attempt",
+      "correlationId": "41bebf72-a51f-4b3c-9118-6fd4460d98ce",
+      "attempt": 1,
+      "elapsedMs": 3205,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

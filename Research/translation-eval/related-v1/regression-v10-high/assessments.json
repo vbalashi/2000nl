@@ -1,0 +1,278 @@
+[
+  {
+    "id": "door-ru",
+    "inputHash": "9b630d2fd67df68c69dfe59a024804916ab03125410a22176a5932a4048ffc2b",
+    "responseHash": "86af4a01884ca206d2b956e24031b44fe4c979aa63c4cb2f6b2b9362cd2ff30d",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "door-en",
+    "inputHash": "88222ca7b14cffc45963a7be549874e86d66a7e76c76389fe81fe122ed7e2391",
+    "responseHash": "8f7c056b6eeee29646418451af7fc2046e1b5dc74582f5724b46fb80bed30b3a",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "garden-ru",
+    "inputHash": "d7da15d49a0947190a2a2dc33b552276dc2d06d690dd3ceb5d9b364e469b01a9",
+    "responseHash": "5d7a2e225dcbd46184ce34a40756a7af85b11b08282f1e5657ef824cfefc5349",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "garden-en",
+    "inputHash": "67ce78b54ccee93819a847010945873ddd243b9eea0a018d9dd2354878699d94",
+    "responseHash": "22c8c96b93721f5b004030b7371ffa95885e9b2ccbf33738f2d1429f1db47454",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": false,
+    "finding": {
+      "severity": "minor",
+      "category": "literal-usefulness",
+      "explanation": "The natural garden-path equivalent already conveys the source garden image."
+    }
+  },
+  {
+    "id": "horse-ru",
+    "inputHash": "6db18ff749fd6d2898f2c8b6dca166e2d31dba6acbf707dceaedd55a91e17a11",
+    "responseHash": "941db5878d67377203e21ec45f0862edf048ba7871fb77827b91704d3a6b10bf",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "horse-en",
+    "inputHash": "1526eda626395e71416bb706f639505e1ff5d287de9b9f7bd6ec81edaed66f92",
+    "responseHash": "dc4033c95386867978be43edee43378b55fd3470e5b7319e7d5e995f05557309",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "welcome-ru",
+    "inputHash": "f6581425e15338c62c2c078df84337ad9e75ae336cf1a9521e50340fe9c598ae",
+    "responseHash": "8e4211b67d71660953167fb2cfc67cf55b810b5366b6b1b0021bc16c7a1b5d33",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "welcome-en",
+    "inputHash": "4397da1b31ca28f87e0193a84a93e4e1059f28fea2a9f5f5ab24b08c8ca52a6c",
+    "responseHash": "3f5339d6abeed6eeab00a56cf1e6e033c7450aa88af225c2f0fef9a8bb57a194",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": false,
+    "finding": {
+      "severity": "minor",
+      "category": "greeting",
+      "explanation": "A warm welcome is a noun phrase rather than the supplied greeting."
+    }
+  },
+  {
+    "id": "tomorrow-ru",
+    "inputHash": "5754df616453606dbada38776a26915bb7a8d06b847ddac7f55519ba6dda4aad",
+    "responseHash": "9be6e2f9d03148be072d281ea3511eae05ce8007c9a5b0818c7d95e6eb49cd69",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "tomorrow-en",
+    "inputHash": "7aa3abb2cbfcb0bad58daa3c8e6cd9648f1d1640bdccbce9b5e14502edcfa40a",
+    "responseHash": "0df2286f4b008a411229ed90e0ed42fe25931d78c7a55ca5b55c78e568c010b4",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "cheap-ru",
+    "inputHash": "0ba65331ecc9860a99a52ce08c7dfc6963576ad1dbbad0a38d2b887fa759d193",
+    "responseHash": "3c843595746c44b2f4b23d7666623c7fc9291e7ddf37fc3f3fc65fd71d979cc2",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "cheap-en",
+    "inputHash": "b692e9736c1a37be26bf496097880d497a5dd27c9cac92d21e51c5617817d842",
+    "responseHash": "4268f6bc19f366149ab120d16e924ff25efb81da03cbea2d21537194bf0b9103",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "calm-ru",
+    "inputHash": "c2346b50dab4062f05a353d67d51ae3ecd7c23354413471200b78ec4d898b8e6",
+    "responseHash": "adf0593125a1d8930634eadbb627799fdfe79d3258566d7f821fb4300013b0aa",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "calm-en",
+    "inputHash": "855adc66fb9a055b7025073a968cd025aa970067ce4fdb52e13bfd22f7dd2585",
+    "responseHash": "20aa5ec73375464a7d6cea199f54371bddf0236007571697d8c19f809fd3c3c3",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "neutron-ru",
+    "inputHash": "1e72c659bce87e952296d0301d5809a8f0b5dc74d828641c3a377d26b5eed50d",
+    "responseHash": "5688919193710f7904bbe413164b41156213fb7e342d6b00bbf50a62f2554feb",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "neutron-en",
+    "inputHash": "ed4f8dac0beba900404cb3bce690ec79ef19b1901e0c9f2161a1a19862f7e11a",
+    "responseHash": "b72ec68d52eae1b421701b760b636e745fd164e096b27719a822064e29d886f5",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "octagon-ru",
+    "inputHash": "2fc77bd58a4bfc4df83a533d7dd5d88bbc222c489583da156d319d3c5cb0ae2e",
+    "responseHash": "a56a7b0c7d939f47b4aa54aee4c0bfd1d86dca655415a1f267627eae23af3105",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "octagon-en",
+    "inputHash": "7ca23761b6ce1b0dacb771179b66f07fe5273df72d9d9fe37990d8e056b798f9",
+    "responseHash": "b2655a4d4b3ee7f6b9f911554a707b1e6bad9c55a97b81f5ec7664d2f5f5b94c",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "light-ru",
+    "inputHash": "fceb569aa1a2bbf1aa4b1b6bc2926728b8d7c18153ecc7cfc8a57e9e417fde47",
+    "responseHash": "c0cc2d145b8175437c770e98f91ad007cbb9912ea122f3bf269822e12a629dd6",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "light-en",
+    "inputHash": "9c4c360f11094fdfb45493d2688ba1cd27ff4e77553392df8658ff24a9cce119",
+    "responseHash": "f1ee4233351416529b2f99ae5d14f926f64cc51d062c68047ca3b98eca266b5e",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "light-illumination-ru",
+    "inputHash": "63a083a206fbd18b1617b7bcac50b64b80d8a1b759a982561437e659de4505fe",
+    "responseHash": "1cfc3d3e3ea747bf215514ca54083a99a7620f5476925f4c4e4aba316e3404d9",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "light-illumination-en",
+    "inputHash": "be273307f05a614d58b0b718defc62d2ff67c6584345cf3aeebf11ba8ecb5d72",
+    "responseHash": "b305158490f7d1300127e467b4f8fe62a2fa98b9abd76de230e68b4b5700ac18",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  },
+  {
+    "id": "idiom-only-ru",
+    "inputHash": "c6a205840a5c4f2ba5da8ce2ce50180a432e62023581f1192e00db43fa2a2186",
+    "responseHash": "adbf355fe8a21773e1f330f445aee167330dc08d469a9f4de40334142456a568",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": false,
+    "finding": {
+      "severity": "minor",
+      "category": "source-addition",
+      "explanation": "Натворил adds wrongdoing absent from the source explanation."
+    }
+  },
+  {
+    "id": "idiom-only-en",
+    "inputHash": "1a1f9957bdae2a49467a0933735db649d851265a39b28981a6fb8c061d49beb7",
+    "responseHash": "e910058c7ac7309fa526f0ee8b03fc784740217e745adb5753835038653897ef",
+    "method": "agent-nonblind",
+    "humanApproved": false,
+    "relatedFieldsAccepted": 0,
+    "relatedFieldsTotal": 0,
+    "wholeCardAccepted": true,
+    "finding": null
+  }
+]

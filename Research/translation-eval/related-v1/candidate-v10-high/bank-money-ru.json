@@ -1,0 +1,72 @@
+{
+  "id": "bank-money-ru",
+  "inputHash": "cbfd7171487802671f2f2c44d0896ceaf3629fde80b8d166fde456581f233289",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "банк",
+      "alternativeTexts": [
+        "кредитное учреждение"
+      ],
+      "baseText": "банк",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "учреждение, которое принимает деньги на хранение и выдает их в кредит"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "финансовое учреждение"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"банк\",\"alternativeTexts\":[\"кредитное учреждение\"],\"baseText\":\"банк\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"учреждение, которое принимает деньги на хранение и выдает их в кредит\"},{\"fieldId\":\"synonym:0\",\"text\":\"финансовое учреждение\"}]}",
+  "responseHash": "bd27a325fcb70e9b4980eebe722f0b2e37f236615c56b622429c3bd98f94de8e",
+  "usage": {
+    "completion_tokens": 327,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 242,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 98,
+      "engine_ttlt_ms": 2000,
+      "pre_inference_ms": 103,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 344,
+      "service_ttlt_ms": 2239,
+      "user_visible_ttft_ms": 241
+    },
+    "prompt_tokens": 1742,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 509,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2069
+  },
+  "elapsedMs": 2939,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "53da4fc1-003b-4262-954d-af98bcdaea03",
+      "inputTokens": 1742,
+      "outputTokens": 327,
+      "event": "translation_attempt",
+      "correlationId": "9744c9c1-46e7-4012-9cd4-611628547879",
+      "attempt": 1,
+      "elapsedMs": 2939,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

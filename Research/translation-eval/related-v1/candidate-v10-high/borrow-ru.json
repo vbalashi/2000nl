@@ -1,0 +1,74 @@
+{
+  "id": "borrow-ru",
+  "inputHash": "66f913132fdc9fd813ba36e76860f5c4bb1fc7695f97fc287cc715f11abae82f",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "брать на время",
+      "alternativeTexts": [],
+      "baseText": "брать на время",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "временно брать что-либо у кого-либо, а затем возвращать"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "брать во временное пользование"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "давать на время"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"брать на время\",\"alternativeTexts\":[],\"baseText\":\"брать на время\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"временно брать что-либо у кого-либо, а затем возвращать\"},{\"fieldId\":\"synonym:0\",\"text\":\"брать во временное пользование\"},{\"fieldId\":\"antonym:0\",\"text\":\"давать на время\"}]}",
+  "responseHash": "55c29761cb928ead58e3efb4c48a0061d4897a329f1bc9ff307b13de73c1768a",
+  "usage": {
+    "completion_tokens": 1129,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1024,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 103,
+      "engine_ttlt_ms": 6962,
+      "pre_inference_ms": 130,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 385,
+      "service_ttlt_ms": 7238,
+      "user_visible_ttft_ms": 255
+    },
+    "prompt_tokens": 1760,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 527,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2889
+  },
+  "elapsedMs": 7648,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "81714a60-e427-4736-b16b-54cbf45e10d4",
+      "inputTokens": 1760,
+      "outputTokens": 1129,
+      "event": "translation_attempt",
+      "correlationId": "78fe4d20-72ee-4374-9c7e-2ce2c09f6587",
+      "attempt": 1,
+      "elapsedMs": 7648,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

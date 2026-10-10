@@ -1,0 +1,76 @@
+{
+  "id": "light-weight-en",
+  "inputHash": "1654f2d9dd7a58dd91123e92579510afacaf77766b7bafe02dd4e317177543a4",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "light",
+      "alternativeTexts": [
+        "lightweight"
+      ],
+      "baseText": "light",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "weighing little"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "lightweight"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "heavy"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"light\",\"alternativeTexts\":[\"lightweight\"],\"baseText\":\"light\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"weighing little\"},{\"fieldId\":\"synonym:0\",\"text\":\"lightweight\"},{\"fieldId\":\"antonym:0\",\"text\":\"heavy\"}]}",
+  "responseHash": "afd949de18e0412038b440386a73edccb592767d33ca4e848d7b6f4b928fd385",
+  "usage": {
+    "completion_tokens": 261,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 182,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 96,
+      "engine_ttlt_ms": 1698,
+      "pre_inference_ms": 117,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 371,
+      "service_ttlt_ms": 1951,
+      "user_visible_ttft_ms": 254
+    },
+    "prompt_tokens": 1755,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 522,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2016
+  },
+  "elapsedMs": 2234,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "4817e4d7-caf1-469b-a888-144f4c2b0b29",
+      "inputTokens": 1755,
+      "outputTokens": 261,
+      "event": "translation_attempt",
+      "correlationId": "aab91fd9-a631-4e85-a1af-998456567ee0",
+      "attempt": 1,
+      "elapsedMs": 2233,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

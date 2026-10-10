@@ -1,0 +1,74 @@
+{
+  "id": "capable-ru",
+  "inputHash": "ba65a44aaba558777913994706a0cb8c21e18b3d390134d524f3c0f3c0fa87d4",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "умелый",
+      "alternativeTexts": [],
+      "baseText": "умелый",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "умеющий хорошо выполнять задачу"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "компетентный"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "некомпетентный"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"умелый\",\"alternativeTexts\":[],\"baseText\":\"умелый\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"умеющий хорошо выполнять задачу\"},{\"fieldId\":\"synonym:0\",\"text\":\"компетентный\"},{\"fieldId\":\"antonym:0\",\"text\":\"некомпетентный\"}]}",
+  "responseHash": "c9e1ed8749e692614c7aeae40e7ae5d388572142e6ca3f79c649ea7dedc997c9",
+  "usage": {
+    "completion_tokens": 555,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 465,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 106,
+      "engine_ttlt_ms": 3415,
+      "pre_inference_ms": 84,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 339,
+      "service_ttlt_ms": 3641,
+      "user_visible_ttft_ms": 255
+    },
+    "prompt_tokens": 1763,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 530,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2318
+  },
+  "elapsedMs": 4181,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "24833468-cec8-4c1a-9fd9-ccce0c10c627",
+      "inputTokens": 1763,
+      "outputTokens": 555,
+      "event": "translation_attempt",
+      "correlationId": "223bce62-ba62-4c01-9525-26e48476a659",
+      "attempt": 1,
+      "elapsedMs": 4181,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

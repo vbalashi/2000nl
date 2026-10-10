@@ -1,0 +1,74 @@
+{
+  "id": "light-weight-ru",
+  "inputHash": "a5d6e08127784c5840d9c679861addbeb1bb9f0a0620103dd5431561eb2d3dc0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лёгкий",
+      "alternativeTexts": [],
+      "baseText": "лёгкий",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "имеющий небольшой вес"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "легковесный"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "тяжёлый"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лёгкий\",\"alternativeTexts\":[],\"baseText\":\"лёгкий\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"имеющий небольшой вес\"},{\"fieldId\":\"synonym:0\",\"text\":\"легковесный\"},{\"fieldId\":\"antonym:0\",\"text\":\"тяжёлый\"}]}",
+  "responseHash": "a8c7a324b94c9d2496ad84bbbd665195264168b15e27b723bbb771811f639d84",
+  "usage": {
+    "completion_tokens": 599,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 512,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 101,
+      "engine_ttlt_ms": 3913,
+      "pre_inference_ms": 78,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 327,
+      "service_ttlt_ms": 4127,
+      "user_visible_ttft_ms": 249
+    },
+    "prompt_tokens": 1755,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 522,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2354
+  },
+  "elapsedMs": 4627,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "2535c018-c55b-4850-afa6-660ba23c3c34",
+      "inputTokens": 1755,
+      "outputTokens": 599,
+      "event": "translation_attempt",
+      "correlationId": "048bc829-0a9f-4ad4-87bb-8f8eb4941a10",
+      "attempt": 1,
+      "elapsedMs": 4627,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

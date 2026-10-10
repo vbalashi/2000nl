@@ -1,0 +1,76 @@
+{
+  "id": "old-age-ru",
+  "inputHash": "75bc07a31f88836cacf3876d2439e0ca4cdaaf65a7b2196b69ac5c3a7c7d2284",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "пожилой",
+      "alternativeTexts": [
+        "старый"
+      ],
+      "baseText": "старый",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "находящийся в преклонном возрасте"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "престарелый"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "молодой"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"пожилой\",\"alternativeTexts\":[\"старый\"],\"baseText\":\"старый\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"находящийся в преклонном возрасте\"},{\"fieldId\":\"synonym:0\",\"text\":\"престарелый\"},{\"fieldId\":\"antonym:0\",\"text\":\"молодой\"}]}",
+  "responseHash": "741b5a728e8f5c7c77920c662aec255200586dc1cac3d9d2ff05d8884785f49d",
+  "usage": {
+    "completion_tokens": 752,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 653,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 101,
+      "engine_ttlt_ms": 4590,
+      "pre_inference_ms": 88,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 349,
+      "service_ttlt_ms": 4812,
+      "user_visible_ttft_ms": 260
+    },
+    "prompt_tokens": 1756,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 523,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2508
+  },
+  "elapsedMs": 5195,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "384f3c15-a002-418b-be06-c05f72103596",
+      "inputTokens": 1756,
+      "outputTokens": 752,
+      "event": "translation_attempt",
+      "correlationId": "2b7c2c66-36cb-4998-9783-2c495473fe8b",
+      "attempt": 1,
+      "elapsedMs": 5195,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,76 @@
+{
+  "id": "free-available-en",
+  "inputHash": "7137bce481bd44a096b340efb00eca89263237c2e5dfdc8164b0d18b1f781369",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "free",
+      "alternativeTexts": [
+        "available"
+      ],
+      "baseText": "free",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "available; not in use"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "available"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "occupied"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"free\",\"alternativeTexts\":[\"available\"],\"baseText\":\"free\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"available; not in use\"},{\"fieldId\":\"synonym:0\",\"text\":\"available\"},{\"fieldId\":\"antonym:0\",\"text\":\"occupied\"}]}",
+  "responseHash": "928b6cd3ee8ee00e5c34695eddd21a9a4e789578fe736b41280a9546fc6b1a4a",
+  "usage": {
+    "completion_tokens": 254,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 176,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 70,
+      "engine_ttlt_ms": 1507,
+      "pre_inference_ms": 100,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 290,
+      "service_ttlt_ms": 1722,
+      "user_visible_ttft_ms": 190
+    },
+    "prompt_tokens": 1760,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 527,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2014
+  },
+  "elapsedMs": 1982,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "01ac8391-e8bf-4f4d-9555-96e4c9802e4a",
+      "inputTokens": 1760,
+      "outputTokens": 254,
+      "event": "translation_attempt",
+      "correlationId": "7ae392f2-d54d-4d0c-8290-d19cea1e501e",
+      "attempt": 1,
+      "elapsedMs": 1982,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

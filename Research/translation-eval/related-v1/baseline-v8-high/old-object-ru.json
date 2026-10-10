@@ -1,0 +1,74 @@
+{
+  "id": "old-object-ru",
+  "inputHash": "4f7391d23952db1d5cfb199cea05c6e1a3febf285317c1788a3a26072a9da20e",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "старый",
+      "alternativeTexts": [],
+      "baseText": "старый",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "долго бывший в употреблении и уже не новый"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "изношенный"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "новый"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"старый\",\"alternativeTexts\":[],\"baseText\":\"старый\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"долго бывший в употреблении и уже не новый\"},{\"fieldId\":\"synonym:0\",\"text\":\"изношенный\"},{\"fieldId\":\"antonym:0\",\"text\":\"новый\"}]}",
+  "responseHash": "a128a49453093d74795e809a057be2aa19f70b7c79659a4863fc8cefbd9976bd",
+  "usage": {
+    "completion_tokens": 264,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 177,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 106,
+      "engine_ttlt_ms": 1707,
+      "pre_inference_ms": 74,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 365,
+      "service_ttlt_ms": 1915,
+      "user_visible_ttft_ms": 291
+    },
+    "prompt_tokens": 1556,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 485,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1820
+  },
+  "elapsedMs": 2221,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "090cf415-1c14-471e-b334-6e5a27656d53",
+      "inputTokens": 1556,
+      "outputTokens": 264,
+      "event": "translation_attempt",
+      "correlationId": "34234d4a-ccd9-4034-ac4e-f805cfd186cd",
+      "attempt": 1,
+      "elapsedMs": 2221,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,76 @@
+{
+  "id": "borrow-ru",
+  "inputHash": "4bef766e5f9c68c7e620159ef2e7576ebe3672206ce5f0a0a88260719d755d51",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "брать у кого-либо на время",
+      "alternativeTexts": [
+        "брать на время"
+      ],
+      "baseText": "брать взаймы",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "временно получать что-либо от кого-либо и позднее возвращать"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "брать во временное пользование"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "давать кому-либо на время"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"брать у кого-либо на время\",\"alternativeTexts\":[\"брать на время\"],\"baseText\":\"брать взаймы\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"временно получать что-либо от кого-либо и позднее возвращать\"},{\"fieldId\":\"synonym:0\",\"text\":\"брать во временное пользование\"},{\"fieldId\":\"antonym:0\",\"text\":\"давать кому-либо на время\"}]}",
+  "responseHash": "6a43ff0ab1b9dfcd902bc901aaecc2e3732da1a0bcc234f2b973e724d37852ef",
+  "usage": {
+    "completion_tokens": 1140,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1023,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 96,
+      "engine_ttlt_ms": 7176,
+      "pre_inference_ms": 46,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 291,
+      "service_ttlt_ms": 7367,
+      "user_visible_ttft_ms": 246
+    },
+    "prompt_tokens": 1558,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 487,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2698
+  },
+  "elapsedMs": 7711,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "5f522a17-1690-48d5-96db-5e72a4d37c79",
+      "inputTokens": 1558,
+      "outputTokens": 1140,
+      "event": "translation_attempt",
+      "correlationId": "2616833e-05c7-4b32-8415-720c1514d3e9",
+      "attempt": 1,
+      "elapsedMs": 7711,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,74 @@
+{
+  "id": "heat-temp-en",
+  "inputHash": "1113fff17b1d0d329b58a50d8f581f8aa9cbbe5835df224cdaaa1045f02cd915",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "hot",
+      "alternativeTexts": [],
+      "baseText": "hot",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "having a very high temperature"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "warm"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "cold"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"hot\",\"alternativeTexts\":[],\"baseText\":\"hot\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"having a very high temperature\"},{\"fieldId\":\"synonym:0\",\"text\":\"warm\"},{\"fieldId\":\"antonym:0\",\"text\":\"cold\"}]}",
+  "responseHash": "5ff357d887870fd3e36f88feb3fc690ba38169e8ec9d307a73376ed67a3e237e",
+  "usage": {
+    "completion_tokens": 179,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 103,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 142,
+      "engine_ttlt_ms": 1309,
+      "pre_inference_ms": 74,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 368,
+      "service_ttlt_ms": 1516,
+      "user_visible_ttft_ms": 294
+    },
+    "prompt_tokens": 1758,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 1755,
+      "cached_tokens": 0
+    },
+    "total_tokens": 1937
+  },
+  "elapsedMs": 1997,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "b40afffc-ea4e-4c54-8732-41873f8834a1",
+      "inputTokens": 1758,
+      "outputTokens": 179,
+      "event": "translation_attempt",
+      "correlationId": "f6ee2ea3-9114-456e-ae21-1a08abe6557c",
+      "attempt": 1,
+      "elapsedMs": 1997,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,76 @@
+{
+  "id": "old-age-ru",
+  "inputHash": "a05c5fbcaaa556f3182331a7041acc9e161fae0df0cd2ddff34fcb07beaa66e0",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "пожилой",
+      "alternativeTexts": [
+        "старый"
+      ],
+      "baseText": "старый",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "имеющий преклонный возраст"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "пожилой"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "молодой"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"пожилой\",\"alternativeTexts\":[\"старый\"],\"baseText\":\"старый\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"имеющий преклонный возраст\"},{\"fieldId\":\"synonym:0\",\"text\":\"пожилой\"},{\"fieldId\":\"antonym:0\",\"text\":\"молодой\"}]}",
+  "responseHash": "119abc0a0a7eab244a16ea1b6e3b7edca077597b4205fbe9175ed267ed60e238",
+  "usage": {
+    "completion_tokens": 917,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 822,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 108,
+      "engine_ttlt_ms": 5780,
+      "pre_inference_ms": 98,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 367,
+      "service_ttlt_ms": 6014,
+      "user_visible_ttft_ms": 270
+    },
+    "prompt_tokens": 1554,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 483,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2471
+  },
+  "elapsedMs": 6522,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "5a350b7c-2cf1-4adf-af5c-19c75de772f9",
+      "inputTokens": 1554,
+      "outputTokens": 917,
+      "event": "translation_attempt",
+      "correlationId": "7cd7c083-fb3e-46c7-b8d9-b004db8546ca",
+      "attempt": 1,
+      "elapsedMs": 6522,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

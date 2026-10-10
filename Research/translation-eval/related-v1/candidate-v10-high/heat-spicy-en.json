@@ -1,0 +1,76 @@
+{
+  "id": "heat-spicy-en",
+  "inputHash": "6aab84a86a09840ab7e81b837346956044120349346c902f2287add4cbbcdac5",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "hot",
+      "alternativeTexts": [
+        "spicy"
+      ],
+      "baseText": "hot",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "having a strong peppery taste"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "spicy"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "mild"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"hot\",\"alternativeTexts\":[\"spicy\"],\"baseText\":\"hot\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"having a strong peppery taste\"},{\"fieldId\":\"synonym:0\",\"text\":\"spicy\"},{\"fieldId\":\"antonym:0\",\"text\":\"mild\"}]}",
+  "responseHash": "86aed18197a50cd109dc7e2a71eeec04b3ac174d61b616cf6126d22841cdbb1d",
+  "usage": {
+    "completion_tokens": 192,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 110,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 116,
+      "engine_ttlt_ms": 1310,
+      "pre_inference_ms": 103,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 359,
+      "service_ttlt_ms": 1548,
+      "user_visible_ttft_ms": 256
+    },
+    "prompt_tokens": 1762,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 529,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 1954
+  },
+  "elapsedMs": 2244,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "b8602cf8-5a69-4ffb-b20c-a5370d6cfa6e",
+      "inputTokens": 1762,
+      "outputTokens": 192,
+      "event": "translation_attempt",
+      "correlationId": "64814c88-87a9-4a2a-850b-b77f18fcb121",
+      "attempt": 1,
+      "elapsedMs": 2244,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,74 @@
+{
+  "id": "free-liberty-ru",
+  "inputHash": "346c743e836f4f3c835d25e5ca6e6e05f040c8b8554c48bb77acdd10788cb3ab",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "свободный",
+      "alternativeTexts": [],
+      "baseText": "свободный",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "не находящийся в заключении или под принуждением"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "независимый"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "заключённый"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"свободный\",\"alternativeTexts\":[],\"baseText\":\"свободный\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"не находящийся в заключении или под принуждением\"},{\"fieldId\":\"synonym:0\",\"text\":\"независимый\"},{\"fieldId\":\"antonym:0\",\"text\":\"заключённый\"}]}",
+  "responseHash": "e245c64bf8f02cb8d122496dbd3693010c8b7593b7bfba5c759e39f13883626e",
+  "usage": {
+    "completion_tokens": 441,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 346,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 107,
+      "engine_ttlt_ms": 2889,
+      "pre_inference_ms": 88,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 291,
+      "service_ttlt_ms": 3067,
+      "user_visible_ttft_ms": 203
+    },
+    "prompt_tokens": 1761,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 528,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2202
+  },
+  "elapsedMs": 3566,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "743749f3-9d4f-493d-88b8-8f09404db15b",
+      "inputTokens": 1761,
+      "outputTokens": 441,
+      "event": "translation_attempt",
+      "correlationId": "7dd488a6-1fdc-496e-8358-c102dbcdb28a",
+      "attempt": 1,
+      "elapsedMs": 3565,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

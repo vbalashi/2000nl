@@ -1,0 +1,75 @@
+{
+  "id": "garden-ru",
+  "inputHash": "66ba5825af3feb14b1407e4ea175d385e474838808ad8f89c460f63f96c4b822",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "сад",
+      "alternativeTexts": [],
+      "baseText": "сад",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "участок земли с растениями при доме"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "водить кого-либо вокруг сада",
+        "text": "намеренно вводить кого-либо в заблуждение"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "намеренно вводить кого-либо в заблуждение"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"сад\",\"alternativeTexts\":[],\"baseText\":\"сад\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"участок земли с растениями при доме\"},{\"fieldId\":\"idiom:0\",\"text\":\"намеренно вводить кого-либо в заблуждение\",\"literalText\":\"водить кого-либо вокруг сада\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"намеренно вводить кого-либо в заблуждение\"}]}",
+  "responseHash": "fabb3d3dea74966a929f23fa60b39c2f18285afbb60676365ee918ee04a7125d",
+  "usage": {
+    "completion_tokens": 592,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 479,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 99,
+      "engine_ttlt_ms": 3689,
+      "pre_inference_ms": 69,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 319,
+      "service_ttlt_ms": 3905,
+      "user_visible_ttft_ms": 250
+    },
+    "prompt_tokens": 1572,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2164
+  },
+  "elapsedMs": 4405,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "f76c83b2-06f3-49cf-b758-557995e48c5c",
+      "inputTokens": 1572,
+      "outputTokens": 592,
+      "event": "translation_attempt",
+      "correlationId": "9bd45bdf-9d23-46f5-b98e-a2eb7243b9f5",
+      "attempt": 1,
+      "elapsedMs": 4405,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

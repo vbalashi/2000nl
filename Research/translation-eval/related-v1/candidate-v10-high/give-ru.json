@@ -1,0 +1,76 @@
+{
+  "id": "give-ru",
+  "inputHash": "bc33acec5fa14c2d05909986122f41eb917d61d88ce20fea6ac3d80fdddb5efa",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "передавать",
+      "alternativeTexts": [
+        "вручать"
+      ],
+      "baseText": "давать",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "передавать что-либо кому-либо"
+      },
+      {
+        "fieldId": "synonym:0",
+        "text": "дарить"
+      },
+      {
+        "fieldId": "antonym:0",
+        "text": "получать"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"передавать\",\"alternativeTexts\":[\"вручать\"],\"baseText\":\"давать\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"передавать что-либо кому-либо\"},{\"fieldId\":\"synonym:0\",\"text\":\"дарить\"},{\"fieldId\":\"antonym:0\",\"text\":\"получать\"}]}",
+  "responseHash": "4ad302f77bbc50cf9c0b93725843894b266a131714f8facccea572dc70bc2878",
+  "usage": {
+    "completion_tokens": 385,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 295,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 324,
+      "engine_ttlt_ms": 2777,
+      "pre_inference_ms": 121,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 575,
+      "service_ttlt_ms": 3022,
+      "user_visible_ttft_ms": 454
+    },
+    "prompt_tokens": 1756,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 523,
+      "cached_tokens": 1230
+    },
+    "total_tokens": 2141
+  },
+  "elapsedMs": 3479,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "2e7a04f5-ab50-45cc-ae60-24e9e152093c",
+      "inputTokens": 1756,
+      "outputTokens": 385,
+      "event": "translation_attempt",
+      "correlationId": "5ecc34c6-199d-449a-9c06-721688b633d4",
+      "attempt": 1,
+      "elapsedMs": 3479,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

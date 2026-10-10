@@ -1,0 +1,66 @@
+{
+  "id": "idiom-only-en",
+  "inputHash": "1f05d660922fe0c19135ce2e7fb064dcabcc793bc00c7b2cb9e867cdc0dfb9d7",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": null,
+    "contentTranslations": [
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to open a little book about someone",
+        "text": "to reveal what someone has done"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to reveal what someone has done"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"book\",\"alternativeTexts\":[],\"baseText\":\"book\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"idiom:0\",\"text\":\"to reveal what someone has done\",\"literalText\":\"to open a little book about someone\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to reveal what someone has done\"}]}",
+  "responseHash": "2453466dd9560e10506f2b0126691848396fc2f60d3f205bd3ee6e7923ba2e56",
+  "usage": {
+    "completion_tokens": 1129,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1029,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 99,
+      "engine_ttlt_ms": 6427,
+      "pre_inference_ms": 688,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 1126,
+      "service_ttlt_ms": 7421,
+      "user_visible_ttft_ms": 438
+    },
+    "prompt_tokens": 1555,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 484,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2684
+  },
+  "elapsedMs": 7871,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e9be239e-a6fb-4a9c-b11e-785f2dcb5bfe",
+      "inputTokens": 1555,
+      "outputTokens": 1129,
+      "event": "translation_attempt",
+      "correlationId": "c46c5443-a9af-4a38-9f28-f63dd88a5d9c",
+      "attempt": 1,
+      "elapsedMs": 7870,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,66 @@
+{
+  "id": "idiom-only-ru",
+  "inputHash": "b1f4f39c9fbf76a0c043e71667fb91d914ae9101443e16de97eb54fa9198a6df",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": null,
+    "contentTranslations": [
+      {
+        "fieldId": "idiom:0",
+        "literalText": "открыть книжку о ком-либо",
+        "text": "раскрыть, что кто-либо сделал"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "раскрыть, что кто-либо сделал"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"книга\",\"alternativeTexts\":[],\"baseText\":\"книга\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"idiom:0\",\"text\":\"раскрыть, что кто-либо сделал\",\"literalText\":\"открыть книжку о ком-либо\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"раскрыть, что кто-либо сделал\"}]}",
+  "responseHash": "ee934071ff3c19182aa28eef7f08142ac5fa0564097ad361a562430fbac1aa08",
+  "usage": {
+    "completion_tokens": 1644,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1536,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 102,
+      "engine_ttlt_ms": 9231,
+      "pre_inference_ms": 92,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 309,
+      "service_ttlt_ms": 9417,
+      "user_visible_ttft_ms": 217
+    },
+    "prompt_tokens": 1555,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 484,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 3199
+  },
+  "elapsedMs": 9950,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "2087b027-57ee-4310-82c1-21aeadd0656f",
+      "inputTokens": 1555,
+      "outputTokens": 1644,
+      "event": "translation_attempt",
+      "correlationId": "1425cb14-bf31-4217-becb-d6a4be756d15",
+      "attempt": 1,
+      "elapsedMs": 9950,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

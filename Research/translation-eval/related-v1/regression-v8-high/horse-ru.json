@@ -1,0 +1,75 @@
+{
+  "id": "horse-ru",
+  "inputHash": "01b1d8cbe136a7b466376b5dd0bd8ff32720eca3bd5f2e720efe2c4f489f537b",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лошадь",
+      "alternativeTexts": [],
+      "baseText": "лошадь",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Большое копытное животное, на котором люди могут ездить верхом."
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "Запрягать лошадь позади телеги",
+        "text": "Ставить телегу впереди лошади"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "Делать что-либо в неправильном порядке"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лошадь\",\"alternativeTexts\":[],\"baseText\":\"лошадь\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Большое копытное животное, на котором люди могут ездить верхом.\"},{\"fieldId\":\"idiom:0\",\"text\":\"Ставить телегу впереди лошади\",\"literalText\":\"Запрягать лошадь позади телеги\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"Делать что-либо в неправильном порядке\"}]}",
+  "responseHash": "4252b056b26b1626c7d8b2a6c28930426aa78607c67058ffba5e57a94d254bc8",
+  "usage": {
+    "completion_tokens": 629,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 501,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 99,
+      "engine_ttlt_ms": 3589,
+      "pre_inference_ms": 85,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 329,
+      "service_ttlt_ms": 3808,
+      "user_visible_ttft_ms": 244
+    },
+    "prompt_tokens": 1575,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 504,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2204
+  },
+  "elapsedMs": 4068,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "eaa9b386-e07a-49a4-9fc7-4009eecea23a",
+      "inputTokens": 1575,
+      "outputTokens": 629,
+      "event": "translation_attempt",
+      "correlationId": "d81f624f-82a4-42ac-8fa3-791c8f3c63c3",
+      "attempt": 1,
+      "elapsedMs": 4068,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}
