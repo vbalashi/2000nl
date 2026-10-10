@@ -1,0 +1,75 @@
+{
+  "id": "hare-ru",
+  "inputHash": "70ed3e7dae12b7a82ad603cdefbe5313b7f6fe9940f2666ccc9ac3e171f0cb4f",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "заяц",
+      "alternativeTexts": [],
+      "baseText": "заяц",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "животное с длинными ушами и длинными задними лапами"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "выбрать заячью тропу",
+        "text": "дать дёру"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "быстро убежать"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"заяц\",\"alternativeTexts\":[],\"baseText\":\"заяц\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"животное с длинными ушами и длинными задними лапами\"},{\"fieldId\":\"idiom:0\",\"text\":\"дать дёру\",\"literalText\":\"выбрать заячью тропу\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"быстро убежать\"}]}",
+  "responseHash": "58af16e564f8e125978ae780334edc2311f4e7bfa333917364472b0c5e981401",
+  "usage": {
+    "completion_tokens": 690,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 572,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 150,
+      "engine_ttlt_ms": 4037,
+      "pre_inference_ms": 136,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 473,
+      "service_ttlt_ms": 4352,
+      "user_visible_ttft_ms": 337
+    },
+    "prompt_tokens": 1724,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 499,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2414
+  },
+  "elapsedMs": 4754,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "da16696c-57ec-4f35-995a-c4b19aa52747",
+      "inputTokens": 1724,
+      "outputTokens": 690,
+      "event": "translation_attempt",
+      "correlationId": "8de260d4-4a68-4c21-b8e6-d021f746094a",
+      "attempt": 1,
+      "elapsedMs": 4754,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "leg-ru",
+  "inputHash": "638b0629a20452606c82f15a3ce59fa65ca4fe301279f5f444446b6bf8c86d44",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "нога",
+      "alternativeTexts": [],
+      "baseText": "нога",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "часть тела, на которой стоят и ходят"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "встать не с той ноги"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "с самого начала дня быть в плохом настроении"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"нога\",\"alternativeTexts\":[],\"baseText\":\"нога\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"часть тела, на которой стоят и ходят\"},{\"fieldId\":\"idiom:0\",\"text\":\"встать не с той ноги\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"с самого начала дня быть в плохом настроении\"}]}",
+  "responseHash": "0be51b9b81a70352983ae1721d9c3c1e253f5806e08aa711e34606275b3ee9b1",
+  "usage": {
+    "completion_tokens": 454,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 348,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 95,
+      "engine_ttlt_ms": 2975,
+      "pre_inference_ms": 48,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 299,
+      "service_ttlt_ms": 3171,
+      "user_visible_ttft_ms": 250
+    },
+    "prompt_tokens": 1574,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 503,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2028
+  },
+  "elapsedMs": 3507,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "cfed64bf-af94-45e0-9dbb-1d23bf3ec3d4",
+      "inputTokens": 1574,
+      "outputTokens": 454,
+      "event": "translation_attempt",
+      "correlationId": "39052c36-c336-46f4-a723-9516f1ad3b35",
+      "attempt": 1,
+      "elapsedMs": 3507,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

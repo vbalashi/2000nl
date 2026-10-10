@@ -1,0 +1,75 @@
+{
+  "id": "butter-en",
+  "inputHash": "4e2ad254e91c5786feb30bb08e7971259c89f7572e5c3ebd8e88d077090bbb5a",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "butter",
+      "alternativeTexts": [],
+      "baseText": "butter",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a fatty product made from milk"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to have butter on one's head",
+        "text": "to be guilty of the very thing one accuses someone else of"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to be guilty oneself of what one accuses someone else of"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"butter\",\"alternativeTexts\":[],\"baseText\":\"butter\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a fatty product made from milk\"},{\"fieldId\":\"idiom:0\",\"text\":\"to be guilty of the very thing one accuses someone else of\",\"literalText\":\"to have butter on one's head\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to be guilty oneself of what one accuses someone else of\"}]}",
+  "responseHash": "896413e147fcdf2eaf6fad74a9337aa1a180f103fe1df4d16b9ecd38a2cad5bd",
+  "usage": {
+    "completion_tokens": 506,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 391,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 125,
+      "engine_ttlt_ms": 3066,
+      "pre_inference_ms": 67,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 275,
+      "service_ttlt_ms": 3215,
+      "user_visible_ttft_ms": 208
+    },
+    "prompt_tokens": 1730,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 505,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2236
+  },
+  "elapsedMs": 3584,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "85acb346-d580-4be1-b0ab-5d2c9d01feff",
+      "inputTokens": 1730,
+      "outputTokens": 506,
+      "event": "translation_attempt",
+      "correlationId": "fd75486d-c10e-4d9e-a6fb-49c8f555bf06",
+      "attempt": 1,
+      "elapsedMs": 3584,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

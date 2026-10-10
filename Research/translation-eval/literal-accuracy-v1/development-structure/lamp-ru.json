@@ -1,0 +1,75 @@
+{
+  "id": "lamp-ru",
+  "inputHash": "3acabb5559c2e9148206f28dc391a4401fb494f247f0590e76931e22849a02d2",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "лампа",
+      "alternativeTexts": [],
+      "baseText": "лампа",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "предмет, который даёт свет"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "наткнуться на лампу",
+        "text": "попасться с поличным"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "быть пойманным в тот момент, когда делаешь что-то не так"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"лампа\",\"alternativeTexts\":[],\"baseText\":\"лампа\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"предмет, который даёт свет\"},{\"fieldId\":\"idiom:0\",\"text\":\"попасться с поличным\",\"literalText\":\"наткнуться на лампу\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"быть пойманным в тот момент, когда делаешь что-то не так\"}]}",
+  "responseHash": "3532c944f58d143af39e1f15e26dd0ff17747dc429759312990e4ca99ed01993",
+  "usage": {
+    "completion_tokens": 1109,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 989,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 90,
+      "engine_ttlt_ms": 6523,
+      "pre_inference_ms": 96,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 369,
+      "service_ttlt_ms": 6771,
+      "user_visible_ttft_ms": 273
+    },
+    "prompt_tokens": 1719,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2828
+  },
+  "elapsedMs": 7154,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e94ea924-3bf5-4ed9-a1b4-9e378b9cc4ed",
+      "inputTokens": 1719,
+      "outputTokens": 1109,
+      "event": "translation_attempt",
+      "correlationId": "56d78be6-03af-4338-b375-76da620d0f70",
+      "attempt": 1,
+      "elapsedMs": 7154,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

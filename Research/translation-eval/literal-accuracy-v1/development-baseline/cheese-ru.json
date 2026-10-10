@@ -1,0 +1,75 @@
+{
+  "id": "cheese-ru",
+  "inputHash": "dc3a160a08adfba794fda94c292d02f953fdb70d232c2be98c3c071394cada1c",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "сыр",
+      "alternativeTexts": [],
+      "baseText": "сыр",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "пищевой продукт, который изготавливают из молока"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "съесть у кого-либо сыр с хлеба",
+        "text": "отнять у кого-либо преимущество или шанс"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "лишить кого-либо его преимущества или шанса"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"сыр\",\"alternativeTexts\":[],\"baseText\":\"сыр\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"пищевой продукт, который изготавливают из молока\"},{\"fieldId\":\"idiom:0\",\"text\":\"отнять у кого-либо преимущество или шанс\",\"literalText\":\"съесть у кого-либо сыр с хлеба\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"лишить кого-либо его преимущества или шанса\"}]}",
+  "responseHash": "9f05701de0de8d0087bd3da061c89567947b4ebfde170f30227558451dc23538",
+  "usage": {
+    "completion_tokens": 556,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 440,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 97,
+      "engine_ttlt_ms": 3456,
+      "pre_inference_ms": 110,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 368,
+      "service_ttlt_ms": 3708,
+      "user_visible_ttft_ms": 258
+    },
+    "prompt_tokens": 1574,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 503,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2130
+  },
+  "elapsedMs": 4115,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "59e722bd-b21d-481f-a668-4d0d3e1ad39f",
+      "inputTokens": 1574,
+      "outputTokens": 556,
+      "event": "translation_attempt",
+      "correlationId": "8158bc73-9702-4d8a-8803-51c160d3512e",
+      "attempt": 1,
+      "elapsedMs": 4114,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

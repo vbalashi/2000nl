@@ -1,0 +1,75 @@
+{
+  "id": "cat-en",
+  "inputHash": "f9764e918b710c36c2e41d9688b8080e03c4bf559dfb50ee0d4ba25d924926c5",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cat",
+      "alternativeTexts": [],
+      "baseText": "cat",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a pet"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "watch the cat in the tree",
+        "text": "wait and see how things develop"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "first wait to see how a situation develops"
+      }
+    ]
+  },
+  "raw": "{\n  \"entryTranslation\": {\n    \"primaryText\": \"cat\",\n    \"alternativeTexts\": [],\n    \"baseText\": \"cat\",\n    \"note\": null\n  },\n  \"contentTranslations\": [\n    {\n      \"fieldId\": \"definition\",\n      \"text\": \"a pet\"\n    },\n    {\n      \"fieldId\": \"idiom:0\",\n      \"text\": \"wait and see how things develop\",\n      \"literalText\": \"watch the cat in the tree\"\n    },\n    {\n      \"fieldId\": \"idiom:0:explanation\",\n      \"text\": \"first wait to see how a situation develops\"\n    }\n  ]\n}",
+  "responseHash": "5c5ed430af8c45a0b494c8a0fd301a8ecc5862277a61b0b1c409e84ed7ecb583",
+  "usage": {
+    "completion_tokens": 1160,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 1004,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 142,
+      "engine_ttlt_ms": 6998,
+      "pre_inference_ms": 102,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 431,
+      "service_ttlt_ms": 7277,
+      "user_visible_ttft_ms": 329
+    },
+    "prompt_tokens": 1568,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 497,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2728
+  },
+  "elapsedMs": 7986,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "b6cd685f-a3db-4516-9c46-ac53c9aba60e",
+      "inputTokens": 1568,
+      "outputTokens": 1160,
+      "event": "translation_attempt",
+      "correlationId": "8eb9b659-1ab5-4b16-a08f-d3a6c61fdf76",
+      "attempt": 1,
+      "elapsedMs": 7986,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

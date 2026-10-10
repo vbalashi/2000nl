@@ -1,0 +1,75 @@
+{
+  "id": "boat-en",
+  "inputHash": "b25bd302621f6c964e44572c7ecc14ed70d337468f275e0080e77b888010058e",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "boat",
+      "alternativeTexts": [],
+      "baseText": "boat",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a vessel"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "fall outside the boat",
+        "text": "be left out or not qualify"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "not be allowed to take part or not qualify"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"boat\",\"alternativeTexts\":[],\"baseText\":\"boat\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a vessel\"},{\"fieldId\":\"idiom:0\",\"text\":\"be left out or not qualify\",\"literalText\":\"fall outside the boat\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"not be allowed to take part or not qualify\"}]}",
+  "responseHash": "556fde35b5f2acfa7982d130687d6667bb934f1cd30fd258f07a900d23dd0a9a",
+  "usage": {
+    "completion_tokens": 730,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 627,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 95,
+      "engine_ttlt_ms": 4425,
+      "pre_inference_ms": 76,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 319,
+      "service_ttlt_ms": 4642,
+      "user_visible_ttft_ms": 242
+    },
+    "prompt_tokens": 1721,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 496,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2451
+  },
+  "elapsedMs": 5025,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "1b6f8b73-2042-473a-96ad-1f1be25ba3d2",
+      "inputTokens": 1721,
+      "outputTokens": 730,
+      "event": "translation_attempt",
+      "correlationId": "e939fb50-707d-43aa-a1ac-83bdc57b6c20",
+      "attempt": 1,
+      "elapsedMs": 5025,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

@@ -1,0 +1,75 @@
+{
+  "id": "hare-en",
+  "inputHash": "d4adbff49765652fc15417be58154c189501e949847251f38db221cb2e478110",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "hare",
+      "alternativeTexts": [],
+      "baseText": "hare",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an animal with long ears and long hind legs"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "choose the hare’s path",
+        "text": "take to one’s heels"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "flee quickly"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"hare\",\"alternativeTexts\":[],\"baseText\":\"hare\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an animal with long ears and long hind legs\"},{\"fieldId\":\"idiom:0\",\"text\":\"take to one’s heels\",\"literalText\":\"choose the hare’s path\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"flee quickly\"}]}",
+  "responseHash": "8fbfb2a58fb25c9be6fa90dcfb2369fff7262d8d483eb54fb06c18a4d3512b62",
+  "usage": {
+    "completion_tokens": 523,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 425,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 119,
+      "engine_ttlt_ms": 3104,
+      "pre_inference_ms": 95,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 362,
+      "service_ttlt_ms": 3333,
+      "user_visible_ttft_ms": 267
+    },
+    "prompt_tokens": 1570,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 499,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2093
+  },
+  "elapsedMs": 3716,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "730cbc9b-d85d-4a5a-8ffa-18e30b986b81",
+      "inputTokens": 1570,
+      "outputTokens": 523,
+      "event": "translation_attempt",
+      "correlationId": "4cbbe93e-78ab-45ec-bffa-1b3c24f53a4a",
+      "attempt": 1,
+      "elapsedMs": 3716,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

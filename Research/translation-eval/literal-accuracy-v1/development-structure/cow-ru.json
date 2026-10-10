@@ -1,0 +1,75 @@
+{
+  "id": "cow-ru",
+  "inputHash": "ac2b4367cadf99eee1b545e04f9ce693ae159bb242e3e03b1e24eaf63afb9273",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "корова",
+      "alternativeTexts": [],
+      "baseText": "корова",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "взрослая самка крупного рогатого скота"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "разговаривать о коровках и телятках",
+        "text": "по-дружески беседовать о пустяках"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "по-дружески беседовать о пустяках"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"корова\",\"alternativeTexts\":[],\"baseText\":\"корова\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"взрослая самка крупного рогатого скота\"},{\"fieldId\":\"idiom:0\",\"text\":\"по-дружески беседовать о пустяках\",\"literalText\":\"разговаривать о коровках и телятках\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"по-дружески беседовать о пустяках\"}]}",
+  "responseHash": "7ce7650dcbb44f3d0814073d4d26d9ac6b24ac6f1764bf0fcf9025b94e49c093",
+  "usage": {
+    "completion_tokens": 994,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 860,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 118,
+      "engine_ttlt_ms": 5505,
+      "pre_inference_ms": 86,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 336,
+      "service_ttlt_ms": 5719,
+      "user_visible_ttft_ms": 251
+    },
+    "prompt_tokens": 1722,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2716
+  },
+  "elapsedMs": 6021,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "3203f13c-0196-4d35-81d7-1422039976c9",
+      "inputTokens": 1722,
+      "outputTokens": 994,
+      "event": "translation_attempt",
+      "correlationId": "61ee210f-6cca-49c2-946c-ec67f2ae55a1",
+      "attempt": 1,
+      "elapsedMs": 6021,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

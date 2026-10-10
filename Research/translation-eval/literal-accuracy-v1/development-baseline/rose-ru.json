@@ -1,0 +1,75 @@
+{
+  "id": "rose-ru",
+  "inputHash": "83554a57834a0dfbe2acd2abcf4f094086e1eac873c8b42803e05220a4111c36",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "роза",
+      "alternativeTexts": [],
+      "baseText": "роза",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "цветок, часто обладающий сильным ароматом"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "сидеть на розах",
+        "text": "находиться в очень выгодном положении"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "находиться в очень выгодном положении"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"роза\",\"alternativeTexts\":[],\"baseText\":\"роза\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"цветок, часто обладающий сильным ароматом\"},{\"fieldId\":\"idiom:0\",\"text\":\"находиться в очень выгодном положении\",\"literalText\":\"сидеть на розах\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"находиться в очень выгодном положении\"}]}",
+  "responseHash": "d059f7a2d6d2898e081a3c6929cc9ba13f1fb67667ae97d1d475cfa36bd41d56",
+  "usage": {
+    "completion_tokens": 399,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 289,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 104,
+      "engine_ttlt_ms": 2441,
+      "pre_inference_ms": 77,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 320,
+      "service_ttlt_ms": 2652,
+      "user_visible_ttft_ms": 242
+    },
+    "prompt_tokens": 1569,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1968
+  },
+  "elapsedMs": 2957,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "84b5d70f-3096-4806-87c4-4ed27fe9949a",
+      "inputTokens": 1569,
+      "outputTokens": 399,
+      "event": "translation_attempt",
+      "correlationId": "d2221e2b-9715-4b34-a4f2-4f02ac45e177",
+      "attempt": 1,
+      "elapsedMs": 2957,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

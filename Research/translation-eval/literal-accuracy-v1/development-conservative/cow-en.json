@@ -1,0 +1,75 @@
+{
+  "id": "cow-en",
+  "inputHash": "49ef4d192a8d0be68acc86c086f502848a40273a075e10c72df177ef81c53bf5",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cow",
+      "alternativeTexts": [],
+      "baseText": "cow",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "an adult female bovine"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "talk about little cows and little calves",
+        "text": "make small talk"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "chat amiably about unimportant things"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"cow\",\"alternativeTexts\":[],\"baseText\":\"cow\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"an adult female bovine\"},{\"fieldId\":\"idiom:0\",\"text\":\"make small talk\",\"literalText\":\"talk about little cows and little calves\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"chat amiably about unimportant things\"}]}",
+  "responseHash": "39438f7fa411f5a48c58fc26b9dc78871b9d5737f15d5767e5e7e38389096ec5",
+  "usage": {
+    "completion_tokens": 509,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 411,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 97,
+      "engine_ttlt_ms": 3159,
+      "pre_inference_ms": 94,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 379,
+      "service_ttlt_ms": 3413,
+      "user_visible_ttft_ms": 285
+    },
+    "prompt_tokens": 1726,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 501,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2235
+  },
+  "elapsedMs": 4087,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "56a61418-c90a-4f7d-9e0e-0827a3caef29",
+      "inputTokens": 1726,
+      "outputTokens": 509,
+      "event": "translation_attempt",
+      "correlationId": "051ee2e8-7ea1-48e8-8acc-dbbd28d85dfb",
+      "attempt": 1,
+      "elapsedMs": 4087,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

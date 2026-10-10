@@ -1,0 +1,75 @@
+{
+  "id": "cheese-en",
+  "inputHash": "f6a1f969aad20364a1154347af8a3142740e43ee1d7c6d9018aded8a8a0601b1",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "cheese",
+      "alternativeTexts": [],
+      "baseText": "cheese",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Food made from milk."
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "To eat the cheese off someone's bread.",
+        "text": "To deprive someone of an advantage or opportunity."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "To take away someone's advantage or opportunity."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"cheese\",\"alternativeTexts\":[],\"baseText\":\"cheese\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Food made from milk.\"},{\"fieldId\":\"idiom:0\",\"text\":\"To deprive someone of an advantage or opportunity.\",\"literalText\":\"To eat the cheese off someone's bread.\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"To take away someone's advantage or opportunity.\"}]}",
+  "responseHash": "a0b4ee26ecdc36ce6906f493f01e4775e4e2add12b7da75ce5d27b6d1c7cde20",
+  "usage": {
+    "completion_tokens": 461,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 353,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 123,
+      "engine_ttlt_ms": 2834,
+      "pre_inference_ms": 88,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 347,
+      "service_ttlt_ms": 3052,
+      "user_visible_ttft_ms": 259
+    },
+    "prompt_tokens": 1574,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 503,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2035
+  },
+  "elapsedMs": 3446,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "602e1f14-47f3-41ff-aef3-5f92d925856b",
+      "inputTokens": 1574,
+      "outputTokens": 461,
+      "event": "translation_attempt",
+      "correlationId": "3d7e3138-c5da-4553-9681-f3222f6f1497",
+      "attempt": 1,
+      "elapsedMs": 3446,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

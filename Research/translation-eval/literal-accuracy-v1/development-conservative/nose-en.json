@@ -1,0 +1,75 @@
+{
+  "id": "nose-en",
+  "inputHash": "412f37acd8e7382fd719c5e7afb7839967887d51c190fd86a02499808682dfba",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "nose",
+      "alternativeTexts": [],
+      "baseText": "nose",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "the part of the face used for smelling"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "to fall with one's nose in the butter",
+        "text": "to unexpectedly find yourself in a fortunate situation"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to unexpectedly end up in a favorable situation"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"nose\",\"alternativeTexts\":[],\"baseText\":\"nose\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"the part of the face used for smelling\"},{\"fieldId\":\"idiom:0\",\"text\":\"to unexpectedly find yourself in a fortunate situation\",\"literalText\":\"to fall with one's nose in the butter\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to unexpectedly end up in a favorable situation\"}]}",
+  "responseHash": "e89368817331d457684bb2ab197bfc16ea2c9e2afdcac9f16756a1ff1f803753",
+  "usage": {
+    "completion_tokens": 672,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 558,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 119,
+      "engine_ttlt_ms": 3853,
+      "pre_inference_ms": 67,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 328,
+      "service_ttlt_ms": 4057,
+      "user_visible_ttft_ms": 260
+    },
+    "prompt_tokens": 1730,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 505,
+      "cached_tokens": 1222
+    },
+    "total_tokens": 2402
+  },
+  "elapsedMs": 4305,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "7a45542f-b0c6-49d8-b8b6-8373ab2070e7",
+      "inputTokens": 1730,
+      "outputTokens": 672,
+      "event": "translation_attempt",
+      "correlationId": "a9f87045-6dd7-47dc-b428-d5a5d80a634d",
+      "attempt": 1,
+      "elapsedMs": 4305,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}
