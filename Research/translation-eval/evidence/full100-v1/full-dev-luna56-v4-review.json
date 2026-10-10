@@ -1,0 +1,439 @@
+{
+  "schemaVersion": "translation-eval-review-v1",
+  "runId": "full-dev-luna56-v4",
+  "reviewer": "Codex primary agent",
+  "method": "agent",
+  "reviewedAt": "2026-10-10T16:53:46.971888+00:00",
+  "manifestHash": "39dff38edda10d40bd4ff29f3c5a63c7846a755065a22f18e4016b8ed3cba549",
+  "reviewContext": "All180 development source/outputs inspected by non-blind primary agent. Licensed source/outputs remain local. Not independent/human approval.",
+  "items": [
+    {
+      "jobId": "full001-1",
+      "responseHash": "e8787516db55f6124cba9462f941b4e94cc8d686630366618bf912294aa0130e",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Коллективное значение волос, цвет и ситуация с поиском присмотра за детьми проверены; идиома оценивается по объяснению беспомощности, а не образу рук."
+    },
+    {
+      "jobId": "full002-1",
+      "responseHash": "5a6d19c42e4be002efaf3a33b426dd3960ef14761e370972b37774026c2420aa",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Трясти/встряхивать, упаковка напитка и отрицательный жест головой соответствуют источнику; последняя идиома требует переносного осознания ошибки."
+    },
+    {
+      "jobId": "full003-1",
+      "responseHash": "3b92b00adbf9050df624ca50c82f733234de4731db1e9d188c86ce987d986af1",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Объединение вещей/стилей/организаций и принятие новой политики сохраняются; инфинитивные формулировки идиомы немного книжны, но понятны."
+    },
+    {
+      "jobId": "full004-1",
+      "responseHash": "471bb6b01bc5021996c45372fd75fa70e40a12227645c5c44bb65cdd1e27f8cd",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Коммерческий смысл и поездка по делам сохранены; идиома про заработок проверена отдельно."
+    },
+    {
+      "jobId": "full005-1",
+      "responseHash": "1bc1b8a960fd59170083a81ec13bb40d5bfca16106bd6ca4b2906068426bf95b",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Непереходное изменение, отсутствие перемены за годы и смена мнения переданы верно."
+    },
+    {
+      "jobId": "full006-1",
+      "responseHash": "5d10cf5ddf70662fdcee472f9d06b022478ad0c90a6e939d3e642d6ac75a62c2",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Узкая тонкая планка и дверь переданы; идиома о высокой планке соответствует высоким требованиям."
+    },
+    {
+      "jobId": "full021-1",
+      "responseHash": "2d9f6de98c213ce61a81ab526dc7608ac24aa3c1bac3e048e6b8677819015e54",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Усиление впечатления и укрепление позиции компании переданы; отрицание плохого положения не потеряно."
+    },
+    {
+      "jobId": "full022-1",
+      "responseHash": "4382dae0d4249a94abb4ee30bdf452960813d5cabe46b708879207b36fa622af",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Поддержание навыков и ведение дневника проверены; исходное значение само сочетает разные сочетаемости. Не добавлять неспособность там, где сказано только что больше не поддерживают навык. Добавлено «не могу» вместо «больше не поддерживаю»: источник не утверждает невозможность."
+    },
+    {
+      "jobId": "full023-1",
+      "responseHash": "e28bcbfa8fe8e5724b2d460f5cfc742cbb8c661b652aedaecd0bc8832adf7682",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Неприятный человек/вещь и неприятный сон переданы; mean/off-putting имеют более узкий оттенок, но поддерживаются примером человека."
+    },
+    {
+      "jobId": "full024-1",
+      "responseHash": "b3c10e1727d43e6653efc2352fea7087fda570a0a844d1d5a2c0e49264b9717a",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Осознание, отрицание будущей встречи и непонимание учебного материала сохраняются; возможен естественный совершенный/несовершенный вариант."
+    },
+    {
+      "jobId": "full025-1",
+      "responseHash": "617fedfed0583eb1e672e0d9154e8b3e7618c4412c2a2008d169f14f95d8ea4d",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Конкретность/реальность переданы, примеры мер и противопоставление расплывчатости сохранены; отдельные варианты имеют оттенок практичности."
+    },
+    {
+      "jobId": "full026-1",
+      "responseHash": "c453462ffab1f930aed0fb0fc2aa52b41802773ba703025647573101f426e537",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Контакт включает прикосновение и контакт с полицией; источник даёт оба контекста, отсутствие более узкого alternative само по себе не ошибка."
+    },
+    {
+      "jobId": "full041-1",
+      "responseHash": "1848035995cb7afbab5f6f1f658b379fc151010be0d5cd130fc8d7cced4a9c0c",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Высота/размер/превосходство сохранены; rise above лучше для деревьев, surpass для качества, но исходное определение включает оба."
+    },
+    {
+      "jobId": "full042-1",
+      "responseHash": "aac12ddf800ed1f51f2198e209bcf4fc91ea7d09f7d9b1cb7551722ffd959b0f",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Охрана места и наблюдение у входа переданы; base другого общеупотребительного смысла отделён от selected meaning."
+    },
+    {
+      "jobId": "full043-1",
+      "responseHash": "ee6b73e31e1bf24f59373d183ef7609be06b8565d08603600d1ea8885211b122",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Покупка существенного объекта и целого парка домов переданы; acquire немного шире purchase, но контекст покупки определён."
+    },
+    {
+      "jobId": "full044-1",
+      "responseHash": "e9eb2a6b18fc8116616d69c3ef8c28b7b9b9ffce43561173f095019d66da1a5c",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnecessary-alternative"
+      ],
+      "rationale": "Пересчёт единиц и направление евро→гульдены сохранены; отдельные варианты проверяются на лишнее обобщение. Convert into another unit повторяет primary с разъяснением, не отдельный полезный эквивалент."
+    },
+    {
+      "jobId": "full056-1",
+      "responseHash": "0158463cd572268303d9371f94d2e3ad2b84df6a2b155b712e294f794c149269",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Солидарность означает связь и готовность поддержать; пример поддержки протестующих профессоров передан. Сочувствие само по себе не выражает готовность поддержать, required исходным смыслом."
+    },
+    {
+      "jobId": "full057-1",
+      "responseHash": "b768488cf73e3d4cf7a7b687e298c8d3738d00b7a8619cb73eb301cb1540fbaf",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Сенсорная способность ощущать вкус, а не эстетические предпочтения, сохранена; возрастное ослабление передано."
+    },
+    {
+      "jobId": "full058-1",
+      "responseHash": "43269cc4d796d440c08acc882bb1ab24d99f8e5563d60ec13036f499380a5a00",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Наказание оставаться дома, опоздание девушки и длительность выходных сохранены; семейный контекст лучше передаёт grounding, house arrest допустимо разговорно, но более юридично."
+    },
+    {
+      "jobId": "full059-1",
+      "responseHash": "f0ed21ae8ddab08d36db3a0c63ae936a1eef76318ff9c0ece82cdd38d200b9c7",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Тонкий солёный картофельный ломтик и пакет детям сохранены; baked/fried — возможные способы передачи gebakken, не решаем кулинарный спор по одному слову."
+    },
+    {
+      "jobId": "full060-1",
+      "responseHash": "578e5abbb2c4a1ef559e4969e949569fe0ab03257199dff5b7347d5e9fd1fc06",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Восток как сторона восхода сохранён; пример проверяется на направление сада, а не только его местоположение. Сад выходит/обращён на восток, а перевод утверждает только расположение на востоке/восточной стороне."
+    },
+    {
+      "jobId": "full061-1",
+      "responseHash": "af795ac31e59a0a301f4feeb6217854e1bcae2ba474a6219ac7ee45ce8c33065",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Источник содержит две ветви: дурная известность или отсутствие известности. Нельзя подменить первую малой популярностью."
+    },
+    {
+      "jobId": "full062-1",
+      "responseHash": "91a69d0fc0393024e2e723be94d55b15a19358dcd0988fb0e39fa843c56335d5",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Пересдача после неудачи и разрешение новой попытки переданы; базовый перевод должен сохранять повторность."
+    },
+    {
+      "jobId": "full063-1",
+      "responseHash": "22aa43777b03d459946beeb1ce2bcff566e8cd91e5332d2a742ded8746273bdc",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Подходящее/постоянное торговое место передано; base черенок — отдельный допустимый смысл stek."
+    },
+    {
+      "jobId": "full081-1",
+      "responseHash": "7cdbe3031cd517efa147602faf96b7a7a83d59e9c60f248ec3ce9d3bcb7b4019",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Idiom-only null корректен, base неприменим (нейтральные5). Внешний стимул/дедлайн писателя требует естественного EN смысла, а не буквальной палки за дверью."
+    },
+    {
+      "jobId": "full082-1",
+      "responseHash": "5169064e51d263710c48bbd66e761cf2aabd24870fd1a67b87fcd06c628dff07",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Незапамятные времена, давняя привычка и отказ менять её сохранены; idiom-only null корректен."
+    },
+    {
+      "jobId": "full083-1",
+      "responseHash": "bc7288538de1d5c0bc66fdb0125e01bcff305c05aab4c0af1051c3f63d9b2ceb",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Неисправное устройство естественно переведено; idiom-only null корректен, base неприменим."
+    },
+    {
+      "jobId": "full091-1",
+      "responseHash": "eddd63fabeb9678b0f42926806008de963ee042566a0fe984afb013a8cc629b5",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Монстр/чудовище и существо только из рассказов переданы, признаки размера/уродства/опасности сохранены."
+    },
+    {
+      "jobId": "full092-1",
+      "responseHash": "23be9bcdf8ef55a54ef602545aecf05757787832220440730b3251cfdd806983",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Перевод термина заболевания и всех признаков исходного определения проверен только как лексическая задача, не медицинское объяснение."
+    },
+    {
+      "jobId": "full093-1",
+      "responseHash": "7a9bbd080f69e46c64dfa4d6946d15ceb880af4f9e8824e5113d9e87d08b4dc2",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Маленькая точка/крапинка переданы, [] тоже допустимо; краткость определения обусловлена самим источником."
+    }
+  ]
+}

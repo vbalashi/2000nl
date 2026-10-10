@@ -1,0 +1,454 @@
+{
+  "schemaVersion": "translation-eval-review-v1",
+  "runId": "full-dev-gpt41-v4",
+  "reviewer": "Codex primary agent",
+  "method": "agent",
+  "reviewedAt": "2026-10-10T16:53:46.968978+00:00",
+  "manifestHash": "9f1baf8b2de1ec7218504a0a30411906551478a89115998faeda543d5abc5104",
+  "reviewContext": "All180 development source/outputs inspected by non-blind primary agent. Licensed source/outputs remain local. Not independent/human approval.",
+  "items": [
+    {
+      "jobId": "full001-1",
+      "responseHash": "47d1a46adb3935157adc208b88d41334800b0020efce57177af040c3c022b5a4",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Коллективное значение волос, цвет и ситуация с поиском присмотра за детьми проверены; идиома оценивается по объяснению беспомощности, а не образу рук."
+    },
+    {
+      "jobId": "full002-1",
+      "responseHash": "6c3bdd6880fac37b7ec949fdfdbc08b41d8f8f9a9f62b93bcf7fbde8f8f20dce",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 2,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Трясти/встряхивать, упаковка напитка и отрицательный жест головой соответствуют источнику; последняя идиома требует переносного осознания ошибки. «Растолкать» переносную идиому осознания превращает в физическое пробуждение."
+    },
+    {
+      "jobId": "full003-1",
+      "responseHash": "eb4af53be848b5d289e4d555a7374e6a3db2121adf1ec9d8b078aca0328f904f",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Объединение вещей/стилей/организаций и принятие новой политики сохраняются; инфинитивные формулировки идиомы немного книжны, но понятны."
+    },
+    {
+      "jobId": "full004-1",
+      "responseHash": "c3425f842fba2f6fc851f004e59c3c4b37421131d727ab7827347ea82c565d8a",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Коммерческий смысл и поездка по делам сохранены; идиома про заработок проверена отдельно. «Деловые отношения» — отношения, а не сама торговля/коммерция."
+    },
+    {
+      "jobId": "full005-1",
+      "responseHash": "9b5e466d5699f64b74937aa62a6178408e5fe59df80184fbadcbae6f3e34b37a",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Непереходное изменение, отсутствие перемены за годы и смена мнения переданы верно."
+    },
+    {
+      "jobId": "full006-1",
+      "responseHash": "26d9c541b0a914b833a62d4cb397bcb0bb02fbd241ff936b27f699ea0e83d0db",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Узкая тонкая планка и дверь переданы; идиома о высокой планке соответствует высоким требованиям."
+    },
+    {
+      "jobId": "full021-1",
+      "responseHash": "5c7cc13f6a576d111ca9fa89f512abe05d7f49bb961a433bb6ae84506c013105",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Усиление впечатления и укрепление позиции компании переданы; отрицание плохого положения не потеряно."
+    },
+    {
+      "jobId": "full022-1",
+      "responseHash": "f45ab4cc7a409feb198887d12858a72fdef9a1e82e319f5159133c5c1ca25f2f",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 3,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnatural-language"
+      ],
+      "rationale": "Поддержание навыков и ведение дневника проверены; исходное значение само сочетает разные сочетаемости. Не добавлять неспособность там, где сказано только что больше не поддерживают навык. «Поддерживает свою профессию» вместо поддержания профессиональных знаний/навыков."
+    },
+    {
+      "jobId": "full023-1",
+      "responseHash": "4fc95aad19520470963cc4e6dc9623e817174975e56a72b85ff81c3bc96c4f25",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Неприятный человек/вещь и неприятный сон переданы; mean/off-putting имеют более узкий оттенок, но поддерживаются примером человека."
+    },
+    {
+      "jobId": "full024-1",
+      "responseHash": "55479b9c9dbd6845bfabfbc1e875632b02168d90315d7de40c221dd4ab1572af",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Осознание, отрицание будущей встречи и непонимание учебного материала сохраняются; возможен естественный совершенный/несовершенный вариант."
+    },
+    {
+      "jobId": "full025-1",
+      "responseHash": "5fbdad3a2253f8f6b01c185f0be2f78b7b233e3222231da5eb85c0d74d11d007",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Конкретность/реальность переданы, примеры мер и противопоставление расплывчатости сохранены; отдельные варианты имеют оттенок практичности."
+    },
+    {
+      "jobId": "full026-1",
+      "responseHash": "4366e06eb9432143c735fa592dffbe0fd12f2ac87270ecefdf7dbb7b529a0b91",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Контакт включает прикосновение и контакт с полицией; источник даёт оба контекста, отсутствие более узкого alternative само по себе не ошибка."
+    },
+    {
+      "jobId": "full041-1",
+      "responseHash": "1ce29bb8eacc1c6065c1e4c8f3b98b29c1c7143bcd992a7e5eb70d6c6fe796d9",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Высота/размер/превосходство сохранены; rise above лучше для деревьев, surpass для качества, но исходное определение включает оба."
+    },
+    {
+      "jobId": "full042-1",
+      "responseHash": "b81ba07e232ceb62f97b4dbac30867da63699c673e932da4a74919ce7b48fa0f",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Охрана места и наблюдение у входа переданы; base другого общеупотребительного смысла отделён от selected meaning."
+    },
+    {
+      "jobId": "full043-1",
+      "responseHash": "0673237929e47c792fbc1b6a35094480bd7143663b131a91fd4a91a6b37475dd",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Покупка существенного объекта и целого парка домов переданы; acquire немного шире purchase, но контекст покупки определён."
+    },
+    {
+      "jobId": "full044-1",
+      "responseHash": "dbebc8798d0bb667a47eb69f8733c2a210f640b47163da9ce912dc6c0f12d8b6",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Пересчёт единиц и направление евро→гульдены сохранены; отдельные варианты проверяются на лишнее обобщение."
+    },
+    {
+      "jobId": "full056-1",
+      "responseHash": "6a7b9fded8de77034bc68eee10f93bf38482909e191c1e4f48d3d8b85ccb6d14",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Солидарность означает связь и готовность поддержать; пример поддержки протестующих профессоров передан. Сочувствие само по себе не выражает готовность поддержать, required исходным смыслом."
+    },
+    {
+      "jobId": "full057-1",
+      "responseHash": "2ece85cc966d0d23803e9245fe114a3261009df67e5b3c0f0544a03e0c308442",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Сенсорная способность ощущать вкус, а не эстетические предпочтения, сохранена; возрастное ослабление передано."
+    },
+    {
+      "jobId": "full058-1",
+      "responseHash": "6d728943c448362b42c17ec1cbd4da9dc60919112d8c4217ecc229f752c41de1",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 2
+      },
+      "failureCodes": [
+        "base-translation-error",
+        "weak-equivalent"
+      ],
+      "rationale": "Наказание оставаться дома, опоздание девушки и длительность выходных сохранены; семейный контекст лучше передаёт grounding, house arrest допустимо разговорно, но более юридично. Base «house» теряет arrest: переводится целое huisarrest, не часть сложного слова. Home detention преимущественно юридично для семейного наказания из примера."
+    },
+    {
+      "jobId": "full059-1",
+      "responseHash": "6b9901aab6905dd9e3e44ec78e547604c44bdff40f5a16a216626a37e5e19f8a",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Тонкий солёный картофельный ломтик и пакет детям сохранены; baked/fried — возможные способы передачи gebakken, не решаем кулинарный спор по одному слову. Crispy potato slice — описание, не обычное название чипса, crisp полезнее."
+    },
+    {
+      "jobId": "full060-1",
+      "responseHash": "d49df857a8c65533c545eb77e0d22e4a6738966cd426c865c8e9f16c9ab11e67",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnecessary-alternative"
+      ],
+      "rationale": "Восток как сторона восхода сохранён; пример проверяется на направление сада, а не только его местоположение. Сторона восхода солнца — повтор определения вместо обычного эквивалента востока."
+    },
+    {
+      "jobId": "full061-1",
+      "responseHash": "032a0a0bea02d2d2931b7fb8428209c14cb913fd5342f7a5726acff6b39414cc",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 3,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnatural-language"
+      ],
+      "rationale": "Источник содержит две ветви: дурная известность или отсутствие известности. Нельзя подменить первую малой популярностью. «Обскурные вещи» неестественно для учебного русского определения."
+    },
+    {
+      "jobId": "full062-1",
+      "responseHash": "acfc3a1148a4498f6b4f957abe01f025bb9c3fc825cf702ac0df35d53c40d8d3",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 2
+      },
+      "failureCodes": [
+        "base-translation-error"
+      ],
+      "rationale": "Пересдача после неудачи и разрешение новой попытки переданы; базовый перевод должен сохранять повторность. Base «экзамен» теряет повторную попытку, содержащуюся в сложном слове herexamen."
+    },
+    {
+      "jobId": "full063-1",
+      "responseHash": "4cd5559e03e5699a6ade26469746eda03732c0c0dd4b9be81c85e2e9f4849d74",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Подходящее/постоянное торговое место передано; base черенок — отдельный допустимый смысл stek."
+    },
+    {
+      "jobId": "full081-1",
+      "responseHash": "672f3a7c877434b31adfbf63f7ba6922e4db83d809704d51d94f01125a535d03",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 2,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Idiom-only null корректен, base неприменим (нейтральные5). Внешний стимул/дедлайн писателя требует естественного EN смысла, а не буквальной палки за дверью. A stick behind the door — буквальная калька, не стимул/дедлайн; ошибка повторена в примере."
+    },
+    {
+      "jobId": "full082-1",
+      "responseHash": "298f30e136f024165fd4c0d2d9e6900cd0c34292848d931f7694f80f0b5313f1",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Незапамятные времена, давняя привычка и отказ менять её сохранены; idiom-only null корректен."
+    },
+    {
+      "jobId": "full083-1",
+      "responseHash": "1a18d63522d6ec89d57c6b8ad5d1c81bf570451e5af397b24691451ff8a812be",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Неисправное устройство естественно переведено; idiom-only null корректен, base неприменим."
+    },
+    {
+      "jobId": "full091-1",
+      "responseHash": "5ddf84cea491a57f50335156090b7a5e14c4993ac65b5085bc948edf2d2a6234",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Монстр/чудовище и существо только из рассказов переданы, признаки размера/уродства/опасности сохранены."
+    },
+    {
+      "jobId": "full092-1",
+      "responseHash": "10e533f6cfc4d426c01da6e6fd40b180191526d0a4f5117e951577c556898416",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Перевод термина заболевания и всех признаков исходного определения проверен только как лексическая задача, не медицинское объяснение. Злокачественная опухоль более узкое/смежное понятие, не универсальная замена названию рака."
+    },
+    {
+      "jobId": "full093-1",
+      "responseHash": "9eae08c38ad8c60ba09dc97a2c2a3009150e54e84dbbdf153c797874ca98ba2f",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Маленькая точка/крапинка переданы, [] тоже допустимо; краткость определения обусловлена самим источником."
+    }
+  ]
+}
