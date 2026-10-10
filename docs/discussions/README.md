@@ -86,3 +86,5 @@
 - [2026-10-10: исправление имени и ритм](2026-10-10-06-brand-correction-and-cadence.md)
 
 - [2026-10-10: собственный словарь и платная бета](2026-10-10-07-owned-dictionary-and-paid-beta.md)
+
+- [2026-10-10: бета и обычные тарифы](2026-10-10-08-beta-capacity-and-standard-plans.md)
