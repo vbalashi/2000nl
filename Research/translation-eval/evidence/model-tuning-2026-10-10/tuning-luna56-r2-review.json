@@ -1,0 +1,207 @@
+{
+  "schemaVersion": "translation-eval-review-v1",
+  "runId": "tuning-luna56-r2",
+  "reviewer": "Codex primary agent",
+  "method": "agent",
+  "reviewedAt": "2026-10-10T16:27:37.897013+00:00",
+  "manifestHash": "7dda55a19f1308f803abf3a7393979895780f85194d5abab5cdb5d1b0efcfbd8",
+  "reviewContext": "Non-blind agent assessment of every frozen output; no independent human or judge approval.",
+  "items": [
+    {
+      "jobId": "moeilijk_ru-1",
+      "responseHash": "e11130aeab638bbec731d62d33f7cf168afdbae66cc2a34fe32908db1b6fe4b4",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Трудность выполнения/понимания сохранена; «трудный/сложный» — полезные варианты; пример задания точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "трудный",
+          "alternativeTexts": [
+            "сложный"
+          ],
+          "baseText": "трудный",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "трудный для выполнения или понимания"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Это задание трудное."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "gemakkelijk_ru-1",
+      "responseHash": "3fd4d3602aeee700483713fb9f4c74e5975f969ce398f45650ff7c217131ea5f",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Лёгкость выполнения/понимания сохранена, пример первого вопроса точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "лёгкий",
+          "alternativeTexts": [
+            "простой"
+          ],
+          "baseText": "лёгкий",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "не требующий больших усилий для выполнения или понимания"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Первый вопрос был лёгким."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "idiom_only_ru-1",
+      "responseHash": "5a13660026186847ca6c12cd3ec3710e79a6f047dea75afd582279dc78feee46",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Идиома передаёт непринуждённый разговор о несущественном; idiom-only null корректен (base неприменим, нейтральные 5).",
+      "observedResult": {
+        "entryTranslation": null,
+        "contentTranslations": [
+          {
+            "fieldId": "idiom:0",
+            "text": "говорить о всяких пустяках"
+          },
+          {
+            "fieldId": "idiom:0:explanation",
+            "text": "вести непринуждённый разговор о повседневных мелочах"
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "typisch_strange_ru-1",
+      "responseHash": "5f8d13106e931acc53a746b10699914969e1535220d0b0ed0009e944bc6f91d4",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Primary и варианты передают странное/неожиданное, base «типичный» отдельно; определение и пример точны.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "странный",
+          "alternativeTexts": [
+            "необычный",
+            "неожиданный"
+          ],
+          "baseText": "типичный",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "странный или неожиданный"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Как странно, что никто ничего не слышал!"
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "praten_en-1",
+      "responseHash": "69901acb0b77b0c61da74a66a855f04ee5e0eefb6fd6a19f015b6bce7e548582",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Talk и варианты передают разговор с собеседником; определение и пример точны. Converse формальнее, speak шире; они допустимы в данном контексте.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "talk",
+          "alternativeTexts": [
+            "converse"
+          ],
+          "baseText": "talk",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "to use words to have a conversation with someone"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "We talk calmly with each other."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "koe_ru-1",
+      "responseHash": "b97dc5a109029990b903258f66172b7e346f03be17cb0a7b7e738da4120dca88",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Корова точно передаёт взрослую самку КРС; definition/example корректны; [] оправдан.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "корова",
+          "alternativeTexts": [],
+          "baseText": "корова",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "взрослая самка крупного рогатого скота"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Корова стоит на лугу."
+          }
+        ]
+      }
+    }
+  ]
+}

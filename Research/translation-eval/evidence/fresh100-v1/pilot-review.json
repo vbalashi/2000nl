@@ -1,0 +1,300 @@
+{
+  "schemaVersion": "translation-eval-review-v1",
+  "runId": "luna6-pilot-v5",
+  "reviewer": "Codex primary agent",
+  "method": "agent",
+  "reviewedAt": "2026-10-10T17:19:47.684949+00:00",
+  "manifestHash": "bc529b8d2ddda1bdcb4a26d082e80adc5fe5d95a8891142a92d195f98287018b",
+  "reviewContext": "Development-only20 old cases, targeted/non-blind; not evidence of held-out generalization.",
+  "items": [
+    {
+      "jobId": "full008-1",
+      "responseHash": "df220289a5f8b9485d03bda4aa57160f6dbdf38c41df60c0040ff3e217ab97f8",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "rationale": "Запрет мешать заменён отсутствием опасений помех; правовая модальность теряется."
+    },
+    {
+      "jobId": "full015-1",
+      "responseHash": "ec12eb0875e692c75411663bc13d996e5838fcf2962142b21ade39449c91171f",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 3,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error",
+        "unnatural-language"
+      ],
+      "rationale": "Потеря срочности и неестественное быть должным остаются."
+    },
+    {
+      "jobId": "full020-1",
+      "responseHash": "480042d66ba3c13d9a30e423be96b1127c0cc120e5638db88ebe6590cbb7ff80",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    },
+    {
+      "jobId": "full028-1",
+      "responseHash": "ddf9a2725900fe7a753e9641aa3f4ad89bdbe8368763e4a6924db882410d4592",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    },
+    {
+      "jobId": "full038-1",
+      "responseHash": "b7d76c46aaa9a4bfdddefa6406784aaa5e27b65c05c409c1b99adbb4c3a1c7e9",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    },
+    {
+      "jobId": "full054-1",
+      "responseHash": "fb06bdb56f52d29f03d4fccf43009433afd7a1c6d106c9d40fd869cae51159a3",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    },
+    {
+      "jobId": "full065-1",
+      "responseHash": "ac7702cb2bfde02f90ad949d132414bcbeb8afcc1c69e2ddb7b55ce1cd0a99a9",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Выездной приём уже обычного визита на дом и может проходить вне дома."
+    },
+    {
+      "jobId": "full073-1",
+      "responseHash": "59ecf97fecf65fffa021cb0253c36071ec83271ec678d14a9554c7fe79ec84c8",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "rationale": "Поп-певец может быть неизвестным, а pop star включает известность."
+    },
+    {
+      "jobId": "full079-1",
+      "responseHash": "5ef89a645e9017d912de50b141073e0067669a85570fb2d8a878baa77d0e9cbb",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    },
+    {
+      "jobId": "full084-1",
+      "responseHash": "f001aa3df67ddd78c88da99f2b99cf468df2563f26551ea359dda96d89c938de",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    },
+    {
+      "jobId": "full088-1",
+      "responseHash": "06a614e30dfc500469eda1fba4bca7da291d655e1fe68bdbbc2b72c52d0a760d",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Контекстное расширение идиомы/перефразирование допустимо с небольшой оговоркой; самостоятельный смысл сохранён."
+    },
+    {
+      "jobId": "full007-1",
+      "responseHash": "96262f7ca67791dd97c3d51e73102f12b82536ef2e7c4d29024fc7f82d716922",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    },
+    {
+      "jobId": "full011-1",
+      "responseHash": "e1187e7103a95f723904b31b4be03a48410d2fff5e64ccfb2b9b01c5143dbe62",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Контекстное расширение идиомы/перефразирование допустимо с небольшой оговоркой; самостоятельный смысл сохранён."
+    },
+    {
+      "jobId": "full013-1",
+      "responseHash": "ebdc057cbf911917810087672a61f10363f429b794f164ac5b1da86959a55e92",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Контекстное расширение идиомы/перефразирование допустимо с небольшой оговоркой; самостоятельный смысл сохранён."
+    },
+    {
+      "jobId": "full018-1",
+      "responseHash": "1987cb39c4e9875a17a436769789afd65d7e3c2930e35f7ebf94821dd20afbae",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    },
+    {
+      "jobId": "full031-1",
+      "responseHash": "dba09d1290d6db3efbd7386c1f2d553d4f5fba7b3807d920d0c27a37ff29833d",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    },
+    {
+      "jobId": "full047-1",
+      "responseHash": "ea6cc0b8e86c2f01905b466535b3c6f2a1e938a9c3de9b30d8a35ed8fec6585b",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    },
+    {
+      "jobId": "full067-1",
+      "responseHash": "56ef3e081f34bfbed5a91e09a4dcbaa0f11e2ffdccc3b8178f51e208f042edc3",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    },
+    {
+      "jobId": "full080-1",
+      "responseHash": "3e0f9050b00114938853cc8b5f4d76d170035d7846d59fe125c3a52740f9ed5b",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    },
+    {
+      "jobId": "full099-1",
+      "responseHash": "b54823beef37b2b292aeca2d75a288678284b9cf4f1a5b2717c689686323b98b",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Проверены NL definition/pattern/examples/idioms и все соответствующие поля; существенных ошибок не обнаружено."
+    }
+  ]
+}

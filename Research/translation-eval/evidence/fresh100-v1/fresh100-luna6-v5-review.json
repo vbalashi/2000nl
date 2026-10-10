@@ -1,0 +1,1526 @@
+{
+  "schemaVersion": "translation-eval-review-v1",
+  "runId": "fresh100-luna6-v5",
+  "reviewer": "Codex primary agent",
+  "method": "agent",
+  "reviewedAt": "2026-10-10T17:25:54.351655+00:00",
+  "manifestHash": "180aad8257e472ea52da27bbe4366b8a0cbba38504b2ede2d6ac77ebea5af040",
+  "reviewContext": "All200 exact source/output pairs inspected; primary-agent non-blind assessment. Serious criterion sense/content<=2, critical roles/negation/modality separate. Not independent human approval.",
+  "items": [
+    {
+      "jobId": "fresh001-1",
+      "responseHash": "608d2fb918b12c566d4b799f4c1b42815b98c57ed4e2855b7ce53198d7fadb5f",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Выдувание воздуха и высокомерные требования проверены; GPT добавляет слишком общие альтернативы и теряет требования в идиоме."
+    },
+    {
+      "jobId": "fresh002-1",
+      "responseHash": "967069ca66e39209e2d0d69a1a4759df34bef0349fc4fd76169088f171e8aa26",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Оба типа вуали сохранены. GPT перечисляет частный тип и более широкую категорию как альтернативы и калькирует идиому раскрытия секрета."
+    },
+    {
+      "jobId": "fresh003-1",
+      "responseHash": "740220b3ccb639bda17b1c505cfcccfb0459fde2ea9fb8cc6a8180eac0bb63c9",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Копьё и защита небольших школ. GPT передаёт защиту буквальным сломанным копьём, смысл идиомы в примере не раскрыт."
+    },
+    {
+      "jobId": "fresh004-1",
+      "responseHash": "792db13647b0a385632dedafa296790d62371512091f78dfb95e1d8ce0e5c952",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Разновидности небольшого помещения, раздевание, ярлык и крестик проверены. GPT даёт клетку для велосипедов, меняет раздеться на переодеться и крестик на галочку; Luna сохраняет детали."
+    },
+    {
+      "jobId": "fresh005-1",
+      "responseHash": "a2bdf924eb9941dc0b5e4cdf41d32468a11885fd7e4c86dd41d9c3614add41f5",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Органный регистр и демонстрация всех способностей. GPT оставляет буквальное открытие регистров вместо смысла идиомы, альтернативой даёт определение."
+    },
+    {
+      "jobId": "fresh006-1",
+      "responseHash": "35355a749ed158cc53f467140582396e4863fe79ab11b5aa417f2df849eb3640",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Ограничение, меры для фермеров и интеллектуальное ограничение переданы без существенных сдвигов."
+    },
+    {
+      "jobId": "fresh007-1",
+      "responseHash": "2a966013f1e806a6e34ca336bdb45d821f85dacef93023d99da8cde714aa6509",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Мысль, представление о вечере и отсутствие понятия проверены. GPT даёт кальку не было идеи вместо понятия."
+    },
+    {
+      "jobId": "fresh008-1",
+      "responseHash": "c9d36c73c58128651a693db2daf5edf38370a8c5336d7c55bfd0a840b073a6cf",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Сено и чрезмерная нагрузка переданы. Сухая трава у GPT шире заготовленного корма."
+    },
+    {
+      "jobId": "fresh009-1",
+      "responseHash": "57a1405d5d6d2a1d2c75d7559d15b832584e3d86a58e2e5e277ff1f53912c8a3",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Сидение и приглашение сесть переданы точно."
+    },
+    {
+      "jobId": "fresh010-1",
+      "responseHash": "c38115061b93fa8e1d2dc20cc358da16c96441fed1400af1d2c2d29c58baba11",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Пальцы руки и все четыре идиомы сверены по объяснениям. GPT калькирует садоводство и очевидность подсчётом пальцев, допускает неграмматичную дефиницию и уменьшительную альтернативу. Luna даёт естественные значения."
+    },
+    {
+      "jobId": "fresh011-1",
+      "responseHash": "4a911b4a09c319816424f9b37915ab91cec9e2b2d360acf3f71699f43285ac04",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Отсутствие/плохой уход и незначительное различие проверены."
+    },
+    {
+      "jobId": "fresh012-1",
+      "responseHash": "37dd369d9e4101e3481ca92d9bb464935af7b8a4327b6b107824ca9aae53f0e8",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Голень и обида/раздражение проверены; англоязычный shin допустим как часть ноги, shinbone точнее кости. GPT оставляет буквальный удар по голени в переносном контексте обиженных авторов писем."
+    },
+    {
+      "jobId": "fresh013-1",
+      "responseHash": "b05151b7670f08780ae7db0c73edd8843790d2877ac64fcb0b601b5d4c4fa159",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Жилой дом, отсутствие кофе и семейное воспитание проверены."
+    },
+    {
+      "jobId": "fresh014-1",
+      "responseHash": "8f7a371643c53fddbf5b603c6323aa0ecf483e46a21f7dde9d8cc3128789b31b",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 3,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "sense-mismatch"
+      ],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Краткий промежуток и противопоставленная идиома долгого времени. Luna в primary теряет краткость выбранного значения. Последний пример GPT неестественно выражает прошедшее время."
+    },
+    {
+      "jobId": "fresh015-1",
+      "responseHash": "bb3a209104444c9ab633c472bbd9ca4f62d8bde14d07bdb27f25e98fc59f79f8",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Короткий отрезок, путь и победа с сохранением обязательства работодателя проверены. GPT заменяет победу вытягиванием соломинки; образ и ситуация изменены."
+    },
+    {
+      "jobId": "fresh016-1",
+      "responseHash": "48b5b289d76e5b620cc2a94c54bbba35cb9df2e2a82c488aa47394eaae7b5697",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Последний элемент последовательности и вынужденное признание лжи сохранены. Крайний у GPT обычно не последний по времени/порядку."
+    },
+    {
+      "jobId": "fresh017-1",
+      "responseHash": "0777ad5c6e33a36090047ceaf1a05b85d8958f34dbb131e085f71b5e0d7e205e",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 3,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "weak-equivalent"
+      ],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Ответственность именно за ошибку, вина директора и жалобы на собственные последствия сохранены. Альтернатива GPT повторяет дефиницию, Luna даёт более широкую ответственность."
+    },
+    {
+      "jobId": "fresh018-1",
+      "responseHash": "3c5af2a62a2bd51010a486c214c5990c214430e0083940d498f277381e5a600a",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Плечо, жест неведения/безразличия и усердная общая работа сохранены. GPT дублирует число слова вместо альтернативы. Luna слегка сдвигает по поводу в из-за."
+    },
+    {
+      "jobId": "fresh019-1",
+      "responseHash": "14d533af5fb3540120c4137104d11859ea42b23b0f8867fd61b4e0da767cb226",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Типы школ оценены по данным определениям, которые сами упрощены. Luna сохраняет негосударственный/светский смысл; свободная школа GPT непонятна без переноса объяснения, учебное заведение шире школы."
+    },
+    {
+      "jobId": "fresh020-1",
+      "responseHash": "79ece6d0228811230c6dd724253e9fd8f7e63004ba62fd3a2f7404004ce176d7",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Момент, своевременность и современность проверены. GPT меняет очень современный на всегда современный."
+    },
+    {
+      "jobId": "fresh021-1",
+      "responseHash": "8ba5aefc19b62249c7e38976a9bff37de8aad8d2f25705b98a84b7ce32652fd4",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Опрятность людей/вещей и оба примера сохранены. Neat clothes/neat neighborhood немного менее естественны, чем smart clothes/decent area. Base net имеет допустимое отдельное английское значение."
+    },
+    {
+      "jobId": "fresh022-1",
+      "responseHash": "27e5ce6537f40f2f6406a8e18187aee3ba0fe1918a3947848482bf18e07e3ae9",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Физический контакт и опора на дерево/стену переданы. GPT включает причастие как эквивалент предлога; у Luna у шире контакта, но обычное контекстное соответствие."
+    },
+    {
+      "jobId": "fresh023-1",
+      "responseHash": "3e0989fa0472a8be40d3a3037644f71c2aa4c0bec499ab07cbd78fdaebdbb091",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Сигнал к действию и пример остановки сохранены. Сигнальное сообщение GPT — необязательное описание вместо полезного соответствия."
+    },
+    {
+      "jobId": "fresh024-1",
+      "responseHash": "f13002b5c6bfc310ff2b09cf321491e9f1d9ee053eb303a57d8ffc989db98443",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Оставшиеся дни и остальные жители с сохранением двух молодых семей проверены."
+    },
+    {
+      "jobId": "fresh025-1",
+      "responseHash": "12afb890ad377f5d0e87bac70fe9a311b1405673aeabe6126a010c87a6eb7031",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Опора досок и женщины на палку проверена; base поддерживать может быть отдельным обычным значением. Основываться на у GPT — переносное обоснование, не физическая опора."
+    },
+    {
+      "jobId": "fresh026-1",
+      "responseHash": "1e4c3880c1f7f15d85fc75ceeb9408817b1092e6a1a31cf419b7979c1e89b375",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 3,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnatural-language"
+      ],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Поникшие цветы и уставший ребёнок. GPT использует горбатиться о цветах и неграмматичную модель управления; Luna допускает несогласование ребёнок/она."
+    },
+    {
+      "jobId": "fresh027-1",
+      "responseHash": "f23cec21d22a800b4c50645f820700f498c57366ecb65f67c5fa6cb635c09f9e",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Намазываемая паста, зубная и шоколадная пасты сохранены; GPT даёт определения вместо альтернатив."
+    },
+    {
+      "jobId": "fresh028-1",
+      "responseHash": "795bc77b4021a57af1070b3bfe003a83cb83629d8aa49aaf0ce796a02f7fa40d",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 2,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Существование и отрицание сохранены. Luna заменяет Sinterklaas другим праздничным персонажем Santa Claus, вместо Saint Nicholas/Sinterklaas."
+    },
+    {
+      "jobId": "fresh029-1",
+      "responseHash": "13198bebfb59effab6246d5c9326a95f6990490d32febe12263d0a5b5d88d729",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Оплачиваемая работа и поиск работы сохранены. Трудоустройство у GPT — процесс получения работы, а не сама работа."
+    },
+    {
+      "jobId": "fresh030-1",
+      "responseHash": "afbff16c3f221278ddae5263f717980ed8a639d395344fb1b89bb8effb97217e",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Полная насыщенность ткани и рынка сохранена; переполненный у GPT предполагает избыток сверх ёмкости."
+    },
+    {
+      "jobId": "fresh031-1",
+      "responseHash": "cb816d2ac2fbd9d2e9c0778615d6ce9c5170f3bbd9f8daf50465c1338db6bd3d",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Официальность и ещё не объявленная забастовка проверены; прошлое время Luna допускает иной временной оттенок."
+    },
+    {
+      "jobId": "fresh032-1",
+      "responseHash": "57a97658cdd3b50bf37fa145e61f1eb26afbb1a54b861ae12fe9c389ecf366b2",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Обычай и поздравление семьи проверены. Привычай у GPT не нормативное слово; Luna корректно проясняет контекст поздравления."
+    },
+    {
+      "jobId": "fresh033-1",
+      "responseHash": "3dd629d53b4c8f748bba99780050f110b1daf9ee06e966a89f0d31a12e95df20",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Позднее время, задержка на15 минут и вопрос времени сохранены."
+    },
+    {
+      "jobId": "fresh034-1",
+      "responseHash": "980d3c5362a5f36e452142dcdd2a9ba28f201acbcccdf7d2f00093dd6f3889da",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Перемещение инструментом, песок и еда сохранены; ladle у GPT конкретнее общего действия, допустим по пищевому примеру."
+    },
+    {
+      "jobId": "fresh035-1",
+      "responseHash": "6a1c7f0a733f1f53a124d17ab10d0f7b974593dbaac70bc74b7b5064a7bd8605",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Междометия удовлетворения/удивления сохранены, без механического переноса союза."
+    },
+    {
+      "jobId": "fresh036-1",
+      "responseHash": "77763f6711638dacdb4c098a8bada966beb6362af3f98247efdfa9d1b5d33ec7",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Реклама продукта, собственного дела и пауза фильма сохранены; рекламное объявление у GPT допустимый предметный вариант."
+    },
+    {
+      "jobId": "fresh037-1",
+      "responseHash": "820a75ce558f8fb4a6ff843df71429b5b79467cec6a30e7292a3fdc9bc413d41",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Точность/непосредственное время и оба примера сохранены; right then у GPT сужает общий adverb до времени."
+    },
+    {
+      "jobId": "fresh038-1",
+      "responseHash": "ebba07be2c815314e00b9ce8a21a61d99408fc41bbbeac45407bd4d6787736f2",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Три устойчивые конструкции и засыпание сохранены. В/во у GPT — звуковой вариант, не дополнительный эквивалент."
+    },
+    {
+      "jobId": "fresh039-1",
+      "responseHash": "dcbab197a4bfc8b8a692d4555e276f6e5c42041b60263dff6160dcb5f9684e69",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 4,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Насильственное изгнание, пожар и действия солдат сверены; животные выгнаны пожаром у Luna немного неестественно."
+    },
+    {
+      "jobId": "fresh040-1",
+      "responseHash": "8f351036897c6850aab6616745617cc491d39627b30eb848fbc0343488b96efc",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Божье благословение и образное благо сохранены."
+    },
+    {
+      "jobId": "fresh041-1",
+      "responseHash": "022e91d83ad7238c3a34df0ea179db6087f7f0a7ca6c7c4cd78aa22830e06d93",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Уход за больным и четырьмя пострадавшими сохранён. Проходят уход у GPT неестественно."
+    },
+    {
+      "jobId": "fresh042-1",
+      "responseHash": "5fa643b611f044ed93197d472bb41c33f62e0b12204fbdeef5817ec529a8a0a7",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Очистка воды до питья сохранена. GPT заполняет alternatives видом глагола и повторной дефиницией."
+    },
+    {
+      "jobId": "fresh043-1",
+      "responseHash": "d88282a6722a3cd41bd320e8f2ce6a99444f1883f042e9b912281c8b4d2b7e85",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Чрезмерная длительность речи и мнение председателя сохранены; у GPT базовое отклонение от темы лишь смежно с пространным разговором."
+    },
+    {
+      "jobId": "fresh044-1",
+      "responseHash": "7851b653f1359d5b7b97323ee1d6dc5721e78c61075375c1a1c54366eaea5cdc",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Торговля старыми автомобилями с сохранением заработка на продаже проверена."
+    },
+    {
+      "jobId": "fresh045-1",
+      "responseHash": "4a8e70e7d800fcd33399bc28d57a246b5c0e736ba60e15ceedef01919552dccc",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Покрытие серебром и первый ботинок сына сохранены; обе основные формы silver-plate/plate with silver допустимы."
+    },
+    {
+      "jobId": "fresh046-1",
+      "responseHash": "e159eea4c5195d4d43c160d55a998d522cd4f16569f5fdc029bcaefd3e9bd48a",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Приём на работу/в члены в определении и трудоустройство в примере сохранены. Pattern конкретизирован по примеру с небольшой оговоркой."
+    },
+    {
+      "jobId": "fresh047-1",
+      "responseHash": "11da4b90fb37d2ebaddf77b3787c25f68909fa9b1e7accfd7bb7ab1cfd33dad0",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Разговорная бессмыслица передана; base болтать GPT слишком общий, поскольку не сохраняет бессмысленность."
+    },
+    {
+      "jobId": "fresh048-1",
+      "responseHash": "d5a2a298e1156acff6af6de2280b0e8aed00f4db12c63f7e45e483e586c00b26",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Ухудшение ситуации и высокий уровень воды сохранены."
+    },
+    {
+      "jobId": "fresh049-1",
+      "responseHash": "8442d65d18d49858ff4a303e7aab27a3e2b15bd09929abbdf9991531603148d0",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Нажатие пальцем и компьютерная кнопка сохранены."
+    },
+    {
+      "jobId": "fresh050-1",
+      "responseHash": "70bf6d9932ebfb5435d6aa9a5ba3f9e8886cc20c012c4c350381124d4de2f7e4",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Бушевание/свирепствование пожара, войны и бури сохранено."
+    },
+    {
+      "jobId": "fresh051-1",
+      "responseHash": "aeafeb54403f1204877c510b9da8fcc30a62bc9fa17b00a8cae5766910f070e0",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 4,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Грозовое явление и вся ночь сохранены; to thunderstorm у GPT не обычная английская словарная форма, предпочтительна фраза there is a thunderstorm."
+    },
+    {
+      "jobId": "fresh052-1",
+      "responseHash": "b18ab134a2f6440e15b3fcbaf5d7d5df4c382014c4a0f33adf7769c5d962d6bc",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Режиссура кино, сцены, радио и телевидения сохранена."
+    },
+    {
+      "jobId": "fresh053-1",
+      "responseHash": "a4ba45d7d2740593b741a074cacb40a54afefe2e0f8ecab196bc7b2bf224f65e",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 2,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "criticalDirectionNegationModality": true,
+      "rationale": "Heel leuk vinden означает очень любить/считать приятным, не быть нравящимся. Luna меняет направление в отдельном определении очень нравиться, хотя primary/pattern/example правильны. GPT также даёт инверсию нравиться, затем правильную активную ветвь; обе ошибки учитываются одинаково, base GPT теряет met."
+    },
+    {
+      "jobId": "fresh054-1",
+      "responseHash": "188313c8a5f3ad2e80167939730bec3c7cac337c19c0b8e147eae0ab913f968e",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Запотевание стекла и невозможность смотреть сквозь него сохранены."
+    },
+    {
+      "jobId": "fresh055-1",
+      "responseHash": "b13c6f1d677e09f5351584463629b5c9bc7a47769314106119b8097e9b186e3f",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 3,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "sense-mismatch",
+        "content-translation-error"
+      ],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Разрезать на две части не обязательно на равные половины. Luna добавляет равенство частей в primary и pattern."
+    },
+    {
+      "jobId": "fresh056-1",
+      "responseHash": "8e2c9f35b7948cf90ae9add824fd17ec2a30e844589f53a30267af556ae3ac27",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Фотокопия текста сохранена; copy в контексте допустимый обычный эквивалент."
+    },
+    {
+      "jobId": "fresh057-1",
+      "responseHash": "3b4395438830a10dfcbd2036447eb6d92d9c87d783da884cde981543b2e25cb8",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Метеорологическая область низкого давления и время её ухода сохранены; базовая депрессия допустима в другом обычном значении."
+    },
+    {
+      "jobId": "fresh058-1",
+      "responseHash": "23ce018a094dd325fe4ece430bfbb0e07d5535a76122a5e92686714ef9b0b2e4",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Недостатки начальника сохранены. Пробел у GPT более узок и обычно о знаниях, не общем недостатке."
+    },
+    {
+      "jobId": "fresh059-1",
+      "responseHash": "605b4817588751744249f79455e16831c7eb0f73e7a56e831ff0f64cb2cd375d",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Добавление соли и предлог сохранены; GPT даёт глаголы вместо дополнительных эквивалентов предлога."
+    },
+    {
+      "jobId": "fresh060-1",
+      "responseHash": "8de0da0c70632241d408bfc413d96868f810fc5067ec7ec3e14089d6b82eb9e2",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Полнота человека и необходимость меньше есть сохранены. Коренастый у GPT добавляет тип телосложения/роста."
+    },
+    {
+      "jobId": "fresh061-1",
+      "responseHash": "c9d3a0d983f300882bc987bbd79540e0ba4abe097dfa0eb303f095a99d6edf4c",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Гид для туристов и Эйфелева башня сохранены."
+    },
+    {
+      "jobId": "fresh062-1",
+      "responseHash": "78ca83052905b615bbe080a071f6455e5c4c08f26e5abe43585400a139c4edb2",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Узкая сторона коробки и постановка на ребро/бок сохранены. Ребро у GPT несколько конкретнее поверхности."
+    },
+    {
+      "jobId": "fresh063-1",
+      "responseHash": "12e361c3c16fb2cb96f6a935e0d39906a7b29bfc62d08babdca390f1b68d71a7",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Предлагаемая цена ещё не выполненных работ и две сметы сохранены. Estimate допустимо с оговоркой о приблизительности."
+    },
+    {
+      "jobId": "fresh064-1",
+      "responseHash": "2611b3fd49671e7da9154dc6590caa87cf61abd110f9cdf0af78552037e1bc3b",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Электричество и почти все дома двух стран в1950 сохранены; включить лампу вместо поддерживать горение Luna слегка меняет аспект."
+    },
+    {
+      "jobId": "fresh065-1",
+      "responseHash": "64659004ae114c8bdf9c54274acebbb74f62c13d4c6e71f9c6b05b24a880a9b4",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Приключение с неожиданностью, удовольствием и небольшой опасностью сохранено. Exploit у GPT означает выдающийся поступок и не эквивалентен приключению."
+    },
+    {
+      "jobId": "fresh066-1",
+      "responseHash": "376caf2494a7bd5be2cc004683aa033e2a6dae700b49ec248da64645bcb55477",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Источник содержит короткую ссылку er-, смысл уточняется примером ermee. GPT обрезает base до предлога с и переводит ссылку как с-. Luna сохраняет местоименную функцию."
+    },
+    {
+      "jobId": "fresh067-1",
+      "responseHash": "9d144fd756c5889f6674accf2cac8bb2b06dede5918ca0a1b2959650df5da5d2",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Объявление в печати, просьбы/предложения и поиск дома сохранены; газетное объявление GPT частный тип, но явно присутствует в определении."
+    },
+    {
+      "jobId": "fresh068-1",
+      "responseHash": "4bedb26c822111353cf2d03003f52c1c060393dfac029e74deecd7238c4851b0",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Небольшая влажность и руки от волнения сохранены."
+    },
+    {
+      "jobId": "fresh069-1",
+      "responseHash": "dfe41993bfa21ea19d5b027f53e4229bde7d3de5ff9417d4bc44e159352dc219",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Критерий оценки и запрет одинакового оценивания двух групп сохранены."
+    },
+    {
+      "jobId": "fresh070-1",
+      "responseHash": "dc277cbfd32335de6076dbd507ad1f38ab6051ecc17f15f36cc8a307effabe03",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 3,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "content-translation-error"
+      ],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Жидкость без постоянной формы и молоко/вода сохранены. GPT даёт описательную альтернативу, Luna заменяет мокроту жидкостью и делает определение круговым."
+    },
+    {
+      "jobId": "fresh071-1",
+      "responseHash": "f55c03a8eb952a0e92948a1db7b656da089ef0ad9a4ee4a7eee5e70c16040081",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Достаточная степень здоровья и контраст старости сохранены; quite old GPT добавляет небольшой оттенок степени."
+    },
+    {
+      "jobId": "fresh072-1",
+      "responseHash": "73e9f1ca9849bd5fe628cc6397ea32785acee03bfca1d53cd3c25922f02a1193",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Единица температуры и20 градусов завтра сохранены. GPT primary Цельсий называет человека/шкалу, не меру температуры."
+    },
+    {
+      "jobId": "fresh073-1",
+      "responseHash": "f7fdfc9dcbba7eff901c0f25ebc6e499617253935fa320e895c1bf099150e09c",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Отдельные несвязанные замечания и отсутствие связи с остальным сохранены."
+    },
+    {
+      "jobId": "fresh074-1",
+      "responseHash": "19bf5535774c22c2de30b68dba569db360f1c836698e65ac1bd521c07c5986b3",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Физическое ограничение после аварии и невозможность использовать части тела сохранены. Handicapped/invalid у GPT устаревшие/нежелательные варианты, отмечены как оговорка."
+    },
+    {
+      "jobId": "fresh075-1",
+      "responseHash": "c70bd6b15e3e4dd782141937b6680387159a866ca595582644401707fdff3815",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Цепь, связывающая заключённого со стеной. Shackle у GPT ближе к кандалам/скобе, а chain for prisoners повторяет определение."
+    },
+    {
+      "jobId": "fresh076-1",
+      "responseHash": "ab77b8a4d4372cfe028f5e1126ba46a08a54dfb38d58e626a089648075d97a30",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Запас товаров для будущего использования и кофе сохранены. Склад у GPT место хранения, не запас."
+    },
+    {
+      "jobId": "fresh077-1",
+      "responseHash": "e09529a2a345aeadfa91bf9023dae5c6ba0b88ee4153b8248a2821106e24fcd6",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Капли в нос, заложенность и точные количество/частота из источника переданы. Это проверка перевода, не рекомендация лечения."
+    },
+    {
+      "jobId": "fresh078-1",
+      "responseHash": "1dadd66234c9ec3d59a82f13e391f4f475a0c9f0fe2065fb5b802dcec1ab169b",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Выключенность и отрицание телевизор не был выключен весь вечер сохранены."
+    },
+    {
+      "jobId": "fresh079-1",
+      "responseHash": "1e4b6d9c54f0b10dc4988c8737d4825f1e5f09d0b0b2b702cc541a1b51b11d39",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Сопутствующее второстепенное событие и меньшая стоимость меры сохранены."
+    },
+    {
+      "jobId": "fresh080-1",
+      "responseHash": "0a9ca1d05160bf2ec1e1cdbb7f39ed13a05d567826153d07d94e39eb755c66da",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Быстрота и рост знаний о болезнях сохранены."
+    },
+    {
+      "jobId": "fresh081-1",
+      "responseHash": "d131357831d970bb9ac2e59fc86d243286b7707e453c8d90ea23e5f4526532e7",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Согласие, отрицание согласия и необходимость действия сохранены."
+    },
+    {
+      "jobId": "fresh082-1",
+      "responseHash": "8c8a6af9057585aac54b626fdb352ba03f62797def32ca4b90bc3d24e4440f85",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Выдержать трудную задачу до конца сохранено."
+    },
+    {
+      "jobId": "fresh083-1",
+      "responseHash": "fe7f138828a3ba838fd8a5b1d9443f534c7a325e10d9526be6258f38c9473406",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Сердечное поздравление с днём рождения. GPT даёт неграмматичное heartily congratulations."
+    },
+    {
+      "jobId": "fresh084-1",
+      "responseHash": "8c9729ae0e4ddc3d38c85fe292dd3d21a7bcd7934830298fe3d5e6c6f6263c3b",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Определённый момент массового заболевания сохранён."
+    },
+    {
+      "jobId": "fresh085-1",
+      "responseHash": "37b43a7c1b4731d43c0b33c57eefccdab13cc4651c10c4a09bd788e16b426485",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Безопасное возвращение домой здоровым сохранено."
+    },
+    {
+      "jobId": "fresh086-1",
+      "responseHash": "7fb669d602e4b376067240b0196784b94dec2db2ed1527707bb9ec76860e7969",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Пустить в обращение, продажа/использование и15000 экземпляров сохранены."
+    },
+    {
+      "jobId": "fresh087-1",
+      "responseHash": "c6483925134a48c4d6cdb8af294c4ff7f6c2f33e8bcefaa6a83def1609398ab4",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Беспорядочное/кривое расположение книг сохранено."
+    },
+    {
+      "jobId": "fresh088-1",
+      "responseHash": "e4f95dd09c8a4c1bc769491337d2c2751b01a67c89d5a614d486f5f5955cdf72",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Притворное непонимание/неслышание и долг пяти евро проверены; гендер говорящего в источнике не задан."
+    },
+    {
+      "jobId": "fresh089-1",
+      "responseHash": "c91671e24173bf5855fd4c0f5b564175d1d4e76a671f169c98c22e390340c528",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Не огорчаться и несостоявшееся собрание с двойным отрицанием сохранены."
+    },
+    {
+      "jobId": "fresh090-1",
+      "responseHash": "28ead4a82cf22e26abe20feff3b3afe8c3ea63118c25523a0ef3268b347c8839",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Хорошие отношения двух братьев сохранены."
+    },
+    {
+      "jobId": "fresh091-1",
+      "responseHash": "8af59ec0d927cddcb9be9b831722ac0062affe4a2e5d406c5aac557efd584379",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Дециметр равен10см. GPT даёт символ единицы как дополнительный эквивалент вместо лексического варианта."
+    },
+    {
+      "jobId": "fresh092-1",
+      "responseHash": "4ae94e28f98e72099376e4e0f5c2f1e096677825318e7073f21c0f0002a300d8",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Отчим, уход/смерть отца и другой родитель сохранены. Региональные Dutch названия в usage-note переведены буквально; желательно сохранить исходные термины, но смысл не утрачен."
+    },
+    {
+      "jobId": "fresh093-1",
+      "responseHash": "9e8b075f0cf4d684218f1994ec111cca3c9bcaa33c9ffcad4c5311c73938b4b2",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Коммунальное предприятие, вода/электроэнергия сохранены; GPT base компания теряет составную часть коммунальных услуг."
+    },
+    {
+      "jobId": "fresh094-1",
+      "responseHash": "c47aa33abd73858240fb28fd43f877ae20df0de1fb7ea83ce7a1a2fdbcd8263b",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Африка и часть света сохранены; континент GPT практически совпадает для данного имени."
+    },
+    {
+      "jobId": "fresh095-1",
+      "responseHash": "5113b762b30a7564afde5c7bd92987dc56238395d44edffba948f49d9ad15122",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Две пары игроков, сетка и допустимые отскоки от стеклянных стен сохранены; со стеклянными стенами у GPT требует формы предлога, небольшая грамматическая оговорка."
+    },
+    {
+      "jobId": "fresh096-1",
+      "responseHash": "3462134b09e183938a7f2ea1cb0353d961468523b06c66afcc558fd6cd45c908",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Новогоднее письмо-стихотворение,1 января и крестные родители сохранены. New Years poem у GPT уже письма, которое не обязательно стихотворное."
+    },
+    {
+      "jobId": "fresh097-1",
+      "responseHash": "0a1feb15ed4bfdc7cc80a0de7da392c321d760241be87275ec79a32609042bd8",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Сток воды в канализацию сохранён; base well допустимое отдельное значение."
+    },
+    {
+      "jobId": "fresh098-1",
+      "responseHash": "2abdf61992e9ffb75c611e32ad539757da74732787786d63b9992032848f5a55",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Иудаизм и определение религии сохранены. Еврейская религия в alternatives GPT повторяет определение, а не даёт новый лексический вариант."
+    },
+    {
+      "jobId": "fresh099-1",
+      "responseHash": "eed0bdc1691791f08572ddd28725a5b3ff2cb1b46ff2b4813fcd928f069f30fd",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Коморские Острова и страна в Африке сохранены."
+    },
+    {
+      "jobId": "fresh100-1",
+      "responseHash": "ba04fc6364a87f9a2274883d1d8913dafb31d35e3bc640fb539d41d444fa55a3",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "criticalDirectionNegationModality": false,
+      "rationale": "Жилой дом на колёсах сохранён, compound base должен сохранять жилую часть."
+    }
+  ]
+}

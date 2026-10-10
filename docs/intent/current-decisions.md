@@ -58,3 +58,47 @@ Accepted: centre the main prompt independently of instructions; reserve hint spa
 ## Training startup recovery (2026-10-09)
 
 Accepted: prerequisite loading and retry share the branded logo/dots surface; actual failures retain actionable retry without the obsolete framed panel. Pending work must not become a fabricated failure. Original Pixel request failure remains unconfirmed. [Discussion](../discussions/2026-10-09-02-startup-recovery.md), #575. Implemented in the issue checkout; release pending.
+
+## Оценка переводов (2026-10-10)
+
+Принято отдельное направление и ветка #657: сохранять версии промптов,
+входы, модели, прогоны и оценки; сравнить GPT-4.1, Luna 5.6 и Luna 6.
+Из article generation перенести методические принципы, сохранив раздельные
+данные и реализацию. Runtime promotion/default model change отдельно.
+[Обсуждение](../discussions/2026-10-10-02-translation-evaluation.md).
+
+### Персональные translation prompts — принято 2026-10-10
+
+Общий промпт является baseline. До выбора модели провести равную по бюджету
+настройку GPT-4.1/Luna 5.6/Luna 6 и новую общую validation с повторами;
+эксперимент начат, production default пока не меняется.
+Источник: [обсуждение](../discussions/2026-10-10-03-model-specific-translation-prompts.md),
+[план](../../Research/translation-eval/MODEL-TUNING-PLAN-2026-10-10.md).
+
+Проверка выполнена: 144 вызова при равном бюджете, два tuning-кандидата на
+модель, новая validation с тремя повторами общего и выбранного промптов.
+Персональные версии не показали устойчивого общего преимущества; Luna 6 с
+общим v3 остаётся перспективной альтернативой. Production default не менялся.
+[Результаты и ограничения агентской оценки](../../Research/translation-eval/MODEL-TUNING-RESULTS-2026-10-10.md).
+
+### Обычный перевод за один вызов — принято 2026-10-10
+
+Один основной prompt и один обычный вызов на значение/язык; автоматический
+содержательный judge для каждой карточки не нужен. Точечный пересмотр строить
+по жалобам/ошибкам валидатора, сохранять историю замен; механизм пока предложен,
+не внедрён. Исследовательские сравнения нескольких моделей остаются offline.
+[Источник](../discussions/2026-10-10-04-single-pass-translations-and-targeted-review.md).
+
+### Повторы временных сбоев перевода — принято 2026-10-10
+
+До трёх повторов после исходного запроса для временных HTTP429/5xx,
+таймаутов/обрывов; типизированная безопасная диагностика каждой попытки.
+Ошибки контракта и permanent4xx разбирать отдельно. First-attempt и recovery
+статистику сохранять раздельно. [Обсуждение](../discussions/2026-10-10-05-translation-retries-and-diagnostics.md).
+
+### Относительное переключение на Luna6 — принято 2026-10-10
+
+Дотюнить Luna6 и сравнить с GPT4.1 на100 новых значениях. Переключить с откатом,
+если полностью приемлемых больше, а серьёзных/критических смысловых ошибок
+не больше. Абсолютные95% не блокируют замену худшей текущей модели.
+[Источник и frozen gate](../discussions/2026-10-10-06-luna6-relative-promotion.md).

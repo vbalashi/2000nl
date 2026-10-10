@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "translation-eval-decision-v1",
+  "status": "equal-budget-experiment-complete",
+  "runtimePromotion": false,
+  "defaultModelChange": false,
+  "reviewMethod": "agent",
+  "independentBlindReview": false,
+  "callsCompleted": 144,
+  "tuningCalls": 36,
+  "validationCalls": 108,
+  "result": "No consistent held-out advantage of selected model-specific prompts over common v3 within this budget; retain all candidates, do not rule out Luna.",
+  "prospectiveAlternative": "Luna 6 with common v3 remains competitive on this small validation set",
+  "report": "MODEL-TUNING-RESULTS-2026-10-10.md"
+}

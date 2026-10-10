@@ -1,0 +1,414 @@
+{
+  "schemaVersion": "translation-eval-review-v1",
+  "runId": "development-luna56-v3",
+  "reviewer": "Codex primary agent",
+  "method": "agent",
+  "reviewedAt": "2026-10-10T16:18:23.762360+00:00",
+  "manifestHash": "5e21c019b76b1b179daaa74af1c8f58c4ad8e90399054bf873ab7dfe60393b38",
+  "reviewContext": "Non-blind review of frozen source and outputs; model identities and previous diagnostics were visible. Not independent human approval. No external judge call.",
+  "items": [
+    {
+      "jobId": "praten_ru-1",
+      "responseHash": "771f34c982018ceff608ab22daf731685d66f3b203a86f7f21e346f890e7d5b6",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Разговорное значение и общение с собеседником сохранены; варианты допустимы в этом контексте, пример точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "разговаривать",
+          "alternativeTexts": [
+            "говорить"
+          ],
+          "baseText": "говорить",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "использовать слова, чтобы вести разговор с кем-либо"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Мы спокойно разговариваем друг с другом."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "mooi_ru-1",
+      "responseHash": "6528def09023221c82c90eaacb16477844a4311a08b03788e647f2e7b599bd1e",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "«Красивый» и варианты относятся к приятному внешнему виду; пример цветов соответствует выбранному смыслу. Дополнительный вариант имеет оттенок привлекательности/симпатии; допустим, но менее универсален.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "красивый",
+          "alternativeTexts": [
+            "прекрасный",
+            "привлекательный"
+          ],
+          "baseText": "красивый",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "приятный на вид"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Она считает цветы красивыми."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "snel_ru-1",
+      "responseHash": "95f7a813aa5d1e0239d33404b06763183d75c4e0f88c3681fbe1161421024bcf",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "«Быстрый/скорый» соответствует скорости движения; определение и пример поезда точны. «Скорый» более ограничен по сочетаемости.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "быстрый",
+          "alternativeTexts": [
+            "скорый"
+          ],
+          "baseText": "быстрый",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "движущийся с высокой скоростью"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Это быстрый поезд."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "belangrijk_ru-1",
+      "responseHash": "d6bd5fc4493d2f1b45b693cd505501cfca9d32359edd145dba9b1c7b9f3ca738",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Важность/влияние сохранены в primary и вариантах; «значимый» выражает тот же смысл; пример решения точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "важный",
+          "alternativeTexts": [
+            "значимый"
+          ],
+          "baseText": "важный",
+          "note": "Имеющий большое значение или влияние на происходящее."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "имеющий большое значение или влияние на происходящее"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Это важное решение."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "moeilijk_ru-1",
+      "responseHash": "d0c6e521b0dbc005fb0eabb2d15b2900bb8c70a2802d95252e6f0240b1089dcb",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 3,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnatural-language"
+      ],
+      "rationale": "«Трудный/сложный» соответствует сложности выполнения или понимания; пример задания сохраняет смысл. «Не лёгкий для выполнения» требует редакции: «нелёгкий» либо «трудный для выполнения».",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "трудный",
+          "alternativeTexts": [
+            "сложный"
+          ],
+          "baseText": "трудный",
+          "note": "Требующий больших усилий для выполнения или понимания."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "не лёгкий для выполнения или понимания"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Это задание трудное."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "koe_ru-1",
+      "responseHash": "1b44859c8f87fc255250e2efdbf549407e257718a008d77fb7db4f2a328493ab",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "«Корова» соответствует взрослой самке КРС; варианты не нужны, определение и пример точны.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "корова",
+          "alternativeTexts": [],
+          "baseText": "корова",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "взрослая самка крупного рогатого скота"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Корова стоит на лугу."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "woensdag_ru-1",
+      "responseHash": "0ac4b5a7b164bfea5c76dce0e3eb8913b4186a3ea16313d8dd2bbefb1611e8b5",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "«Среда» и границы вторник/четверг точны; пустой список оправдан, пример возвращения сохранён.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "среда",
+          "alternativeTexts": [],
+          "baseText": "среда",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "день между вторником и четвергом"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "В среду я вернусь."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "bank_finance_ru-1",
+      "responseHash": "70f866798596816bef4a6b63e0600b6c4dffcf699fecd3d0a100703565609f43",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 4,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Финансовое значение сохранено: primary «банк», без искусственных альтернатив; пример открытия счёта точен. Betalen сужено до «переводят деньги»; лучше «совершают платежи».",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "банк",
+          "alternativeTexts": [],
+          "baseText": "банк",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "компания, где люди хранят, занимают и переводят деньги"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Я открываю счёт в банке."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "typisch_strange_ru-1",
+      "responseHash": "7be41d2d8bd1258f0faf58461858edb47bb205b65cb62495e2061a8e7ef618bc",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Контекстный primary «странный» отделён от базового «типичный». Варианты подтверждаются vreemd of onverwacht; пример удивления точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "странный",
+          "alternativeTexts": [
+            "необычный"
+          ],
+          "baseText": "типичный",
+          "note": "В этом значении означает «странный» или «неожиданный», а не «типичный»."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "странный или неожиданный"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Как странно, что никто ничего не слышал!"
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "praten_en-1",
+      "responseHash": "ae85fc821d2d5dd040ad4f9254e36617b8132a61e18bcd87828b884d4a939d38",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 4,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Talk/converse передают разговор с собеседником; converse формальнее, но корректен. Определение и пример сохраняют смысл.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "talk",
+          "alternativeTexts": [
+            "converse"
+          ],
+          "baseText": "talk",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "to use words to have a conversation with someone"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "We talk calmly with each other."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "mooi_en-1",
+      "responseHash": "cd59349661610af174120bfbf9aff90412da5b5d8a77466eeafe245b97c8357b",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Beautiful и варианты относятся к визуальной привлекательности; pleasant to look at и пример цветов точны.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "beautiful",
+          "alternativeTexts": [
+            "pretty"
+          ],
+          "baseText": "beautiful",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "pleasant to look at"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "She thinks the flowers are beautiful."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "koe_en-1",
+      "responseHash": "d78cd13fd0a23ad1293e6e139bf7e28e7b13d3016cf8bbbcce6e4a259b65f598",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Cow точно передаёт взрослую самку; пустой список оправдан. Meadow/pasture и стояние допустимо передают пример.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "cow",
+          "alternativeTexts": [],
+          "baseText": "cow",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "an adult female bovine"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "The cow is standing in the pasture."
+          }
+        ]
+      }
+    }
+  ]
+}

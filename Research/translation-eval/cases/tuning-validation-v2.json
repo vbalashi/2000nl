@@ -1,0 +1,234 @@
+{
+  "schemaVersion": "translation-eval-suite-v1",
+  "suiteId": "tuning-validation-v2",
+  "split": "validation",
+  "provenance": "Original RU/EN examples frozen before model-specific tuning calls. Six distinct sense/modality/body/number/idiom cases. Never adapt to outputs.",
+  "cases": [
+    {
+      "id": "duidelijk_ru",
+      "allowedStems": [
+        "ясн",
+        "понятн",
+        "четк",
+        "чётк"
+      ],
+      "baseAllowedStems": [
+        "ясн",
+        "понятн",
+        "четк",
+        "чётк"
+      ],
+      "alternativesUseful": true,
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:duidelijk_ru",
+        "sourceContentFingerprint": "original-fixture:duidelijk_ru:v2",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "duidelijk",
+          "article": null,
+          "partOfSpeech": "bijvoeglijk naamwoord",
+          "partOfSpeechCode": "bn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "gemakkelijk te begrijpen en niet verwarrend"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "De uitleg van de leraar is duidelijk."
+          }
+        ]
+      }
+    },
+    {
+      "id": "hoeven_ru",
+      "allowedStems": [
+        "нуж",
+        "обяз",
+        "долж",
+        "надо"
+      ],
+      "baseAllowedStems": [
+        "нуж",
+        "обяз",
+        "долж",
+        "надо"
+      ],
+      "alternativesUseful": true,
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:hoeven_ru",
+        "sourceContentFingerprint": "original-fixture:hoeven_ru:v2",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "hoeven",
+          "article": null,
+          "partOfSpeech": "werkwoord",
+          "partOfSpeechCode": "ww"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "alleen gebruikt met een ontkenning: niet verplicht zijn om iets te doen"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Je hoeft vandaag niet te werken."
+          }
+        ]
+      }
+    },
+    {
+      "id": "vriendelijk_en",
+      "allowedStems": [
+        "friend",
+        "kind",
+        "pleasant",
+        "amiab"
+      ],
+      "baseAllowedStems": [
+        "friend",
+        "kind",
+        "pleasant",
+        "amiab"
+      ],
+      "alternativesUseful": true,
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:vriendelijk_en",
+        "sourceContentFingerprint": "original-fixture:vriendelijk_en:v2",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "en",
+        "headword": {
+          "text": "vriendelijk",
+          "article": null,
+          "partOfSpeech": "bijvoeglijk naamwoord",
+          "partOfSpeechCode": "bn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "aardig en prettig in de omgang met andere mensen"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "De buurman is altijd vriendelijk tegen ons."
+          }
+        ]
+      }
+    },
+    {
+      "id": "arm_ru",
+      "allowedStems": [
+        "рук"
+      ],
+      "baseAllowedStems": [
+        "рук",
+        "бедн"
+      ],
+      "alternativesUseful": false,
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:arm_ru",
+        "sourceContentFingerprint": "original-fixture:arm_ru:v2",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "arm",
+          "article": "de",
+          "partOfSpeech": "zelfstandig naamwoord",
+          "partOfSpeechCode": "zn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "een lichaamsdeel tussen de schouder en de hand"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Zij draagt de tas over haar arm."
+          }
+        ]
+      }
+    },
+    {
+      "id": "twaalf_ru",
+      "allowedStems": [
+        "двенадцат"
+      ],
+      "baseAllowedStems": [
+        "двенадцат"
+      ],
+      "alternativesUseful": false,
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:twaalf_ru",
+        "sourceContentFingerprint": "original-fixture:twaalf_ru:v2",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "twaalf",
+          "article": null,
+          "partOfSpeech": "telwoord",
+          "partOfSpeechCode": "tw"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "het getal na elf en voor dertien"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Er zitten twaalf leerlingen in de klas."
+          }
+        ]
+      }
+    },
+    {
+      "id": "idiom_weather_en",
+      "allowedStems": [],
+      "baseAllowedStems": [],
+      "alternativesUseful": false,
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:idiom_weather_en",
+        "sourceContentFingerprint": "original-fixture:idiom_weather_en:v2",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "en",
+        "headword": {
+          "text": "weer",
+          "article": "de",
+          "partOfSpeech": "zelfstandig naamwoord",
+          "partOfSpeechCode": "zn"
+        },
+        "content": [
+          {
+            "fieldId": "idiom:0",
+            "role": "idiom",
+            "text": "door weer en wind"
+          },
+          {
+            "fieldId": "idiom:0:explanation",
+            "role": "idiom-explanation",
+            "text": "ook als het weer slecht is, zonder op te geven"
+          }
+        ]
+      },
+      "entryExpected": false
+    }
+  ]
+}

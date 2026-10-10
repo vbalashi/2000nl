@@ -1,0 +1,478 @@
+{
+  "schemaVersion": "translation-eval-suite-v1",
+  "suiteId": "development-v1",
+  "split": "development",
+  "provenance": "Original diagnostic fixtures created for #657; no article corpus inputs",
+  "cases": [
+    {
+      "id": "praten_ru",
+      "allowedStems": [
+        "говор",
+        "разговар",
+        "бесед",
+        "обща"
+      ],
+      "alternativesUseful": true,
+      "baseAllowedStems": [
+        "говор",
+        "разговар",
+        "бесед",
+        "обща"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:praten_ru",
+        "sourceContentFingerprint": "original-fixture:praten_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "praten",
+          "article": null,
+          "partOfSpeech": "werkwoord",
+          "partOfSpeechCode": "ww"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "woorden gebruiken om met iemand een gesprek te voeren"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "We praten rustig met elkaar."
+          }
+        ]
+      }
+    },
+    {
+      "id": "mooi_ru",
+      "allowedStems": [
+        "красив",
+        "прекрас",
+        "привлекат",
+        "симпатич"
+      ],
+      "alternativesUseful": true,
+      "baseAllowedStems": [
+        "красив",
+        "прекрас",
+        "привлекат",
+        "симпатич"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:mooi_ru",
+        "sourceContentFingerprint": "original-fixture:mooi_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "mooi",
+          "article": null,
+          "partOfSpeech": "bijvoeglijk naamwoord",
+          "partOfSpeechCode": "bn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "prettig om naar te kijken"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Zij vindt de bloemen mooi."
+          }
+        ]
+      }
+    },
+    {
+      "id": "snel_ru",
+      "allowedStems": [
+        "быстр",
+        "скор",
+        "стремительн"
+      ],
+      "alternativesUseful": true,
+      "baseAllowedStems": [
+        "быстр",
+        "скор",
+        "стремительн"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:snel_ru",
+        "sourceContentFingerprint": "original-fixture:snel_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "snel",
+          "article": null,
+          "partOfSpeech": "bijvoeglijk naamwoord",
+          "partOfSpeechCode": "bn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "met een hoge snelheid bewegend"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Dit is een snelle trein."
+          }
+        ]
+      }
+    },
+    {
+      "id": "belangrijk_ru",
+      "allowedStems": [
+        "важн",
+        "существенн",
+        "значим",
+        "значительн"
+      ],
+      "alternativesUseful": true,
+      "baseAllowedStems": [
+        "важн",
+        "существенн",
+        "значим",
+        "значительн"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:belangrijk_ru",
+        "sourceContentFingerprint": "original-fixture:belangrijk_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "belangrijk",
+          "article": null,
+          "partOfSpeech": "bijvoeglijk naamwoord",
+          "partOfSpeechCode": "bn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "met veel betekenis of invloed voor wat er gebeurt"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Dit is een belangrijke beslissing."
+          }
+        ]
+      }
+    },
+    {
+      "id": "moeilijk_ru",
+      "allowedStems": [
+        "трудн",
+        "сложн",
+        "непрост",
+        "нелёг",
+        "нелег"
+      ],
+      "alternativesUseful": true,
+      "baseAllowedStems": [
+        "трудн",
+        "сложн",
+        "непрост",
+        "нелёг",
+        "нелег"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:moeilijk_ru",
+        "sourceContentFingerprint": "original-fixture:moeilijk_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "moeilijk",
+          "article": null,
+          "partOfSpeech": "bijvoeglijk naamwoord",
+          "partOfSpeechCode": "bn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "niet gemakkelijk om te doen of te begrijpen"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Deze opdracht is moeilijk."
+          }
+        ]
+      }
+    },
+    {
+      "id": "koe_ru",
+      "allowedStems": [
+        "корова"
+      ],
+      "alternativesUseful": false,
+      "baseAllowedStems": [
+        "корова"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:koe_ru",
+        "sourceContentFingerprint": "original-fixture:koe_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "koe",
+          "article": "de",
+          "partOfSpeech": "zelfstandig naamwoord",
+          "partOfSpeechCode": "zn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "een volwassen vrouwelijk rund"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "De koe staat in de wei."
+          }
+        ]
+      }
+    },
+    {
+      "id": "woensdag_ru",
+      "allowedStems": [
+        "среда"
+      ],
+      "alternativesUseful": false,
+      "baseAllowedStems": [
+        "среда"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:woensdag_ru",
+        "sourceContentFingerprint": "original-fixture:woensdag_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "woensdag",
+          "article": "de",
+          "partOfSpeech": "zelfstandig naamwoord",
+          "partOfSpeechCode": "zn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "de dag tussen dinsdag en donderdag"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Woensdag kom ik terug."
+          }
+        ]
+      }
+    },
+    {
+      "id": "bank_finance_ru",
+      "allowedStems": [
+        "банк"
+      ],
+      "alternativesUseful": false,
+      "baseAllowedStems": [
+        "банк"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:bank_finance_ru",
+        "sourceContentFingerprint": "original-fixture:bank_finance_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "bank",
+          "article": "de",
+          "partOfSpeech": "zelfstandig naamwoord",
+          "partOfSpeechCode": "zn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "een bedrijf waar mensen geld bewaren, lenen en betalen"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Ik open een rekening bij de bank."
+          }
+        ]
+      }
+    },
+    {
+      "id": "typisch_strange_ru",
+      "allowedStems": [
+        "стран",
+        "необыч",
+        "удивительн",
+        "примечательн"
+      ],
+      "alternativesUseful": true,
+      "baseAllowedStems": [
+        "типич",
+        "характерн"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:typisch_strange_ru",
+        "sourceContentFingerprint": "original-fixture:typisch_strange_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "typisch",
+          "article": null,
+          "partOfSpeech": "bijvoeglijk naamwoord",
+          "partOfSpeechCode": "bn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "vreemd of onverwacht"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Wat typisch dat niemand iets heeft gehoord!"
+          }
+        ]
+      }
+    },
+    {
+      "id": "praten_en",
+      "allowedStems": [
+        "talk",
+        "speak",
+        "converse",
+        "chat"
+      ],
+      "alternativesUseful": true,
+      "baseAllowedStems": [
+        "talk",
+        "speak",
+        "converse",
+        "chat"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:praten_en",
+        "sourceContentFingerprint": "original-fixture:praten_en:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "en",
+        "headword": {
+          "text": "praten",
+          "article": null,
+          "partOfSpeech": "werkwoord",
+          "partOfSpeechCode": "ww"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "woorden gebruiken om met iemand een gesprek te voeren"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "We praten rustig met elkaar."
+          }
+        ]
+      }
+    },
+    {
+      "id": "mooi_en",
+      "allowedStems": [
+        "beautiful",
+        "pretty",
+        "lovely",
+        "attractive",
+        "nice",
+        "good-looking"
+      ],
+      "alternativesUseful": true,
+      "baseAllowedStems": [
+        "beautiful",
+        "pretty",
+        "lovely",
+        "attractive",
+        "nice",
+        "good-looking"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:mooi_en",
+        "sourceContentFingerprint": "original-fixture:mooi_en:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "en",
+        "headword": {
+          "text": "mooi",
+          "article": null,
+          "partOfSpeech": "bijvoeglijk naamwoord",
+          "partOfSpeechCode": "bn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "prettig om naar te kijken"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Zij vindt de bloemen mooi."
+          }
+        ]
+      }
+    },
+    {
+      "id": "koe_en",
+      "allowedStems": [
+        "cow"
+      ],
+      "alternativesUseful": false,
+      "baseAllowedStems": [
+        "cow"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:koe_en",
+        "sourceContentFingerprint": "original-fixture:koe_en:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "en",
+        "headword": {
+          "text": "koe",
+          "article": "de",
+          "partOfSpeech": "zelfstandig naamwoord",
+          "partOfSpeechCode": "zn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "een volwassen vrouwelijk rund"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "De koe staat in de wei."
+          }
+        ]
+      }
+    }
+  ]
+}

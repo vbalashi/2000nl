@@ -62,3 +62,17 @@ reports/*-package-*/
 reports/ux-audit-*-source/
 reports/ui-ideas-*/
 review-packages/
+
+# Isolated translation evaluation runtime artifacts; publish only reviewed safe evidence.
+Research/translation-eval/runs/
+Research/translation-eval/comparisons/
+
+# Licensed full dictionary evaluation fixtures remain local, hash receipts are versioned.
+Research/translation-eval/cases/full-development-v1.json
+Research/translation-eval/cases/full-validation-v1.json
+
+/Research/translation-eval/cases/full-validation-luna56-continuation-v1.json
+/Research/translation-eval/cases/full100-recovery-v1.json
+
+/Research/translation-eval/cases/luna6-pilot-v5.json
+/Research/translation-eval/cases/fresh100-v1.json

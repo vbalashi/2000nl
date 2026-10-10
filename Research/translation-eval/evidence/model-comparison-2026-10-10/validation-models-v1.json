@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "translation-eval-comparison-v1",
+  "reviewStatus": "automatic-checks-only",
+  "humanApproved": false,
+  "comparisonKey": "53f3f041171f7903aaab384dbb87a3e86808c7ee73805b753170624ed4b1d194",
+  "runs": [
+    {
+      "runId": "validation-gpt41-v3",
+      "manifestHash": "35c5da1b516c67b419f6b04ff0bcbc676f679ef4a16955caab733b691f2fada2",
+      "model": "gpt-4.1",
+      "settings": {
+        "temperature": 0
+      },
+      "promptId": "dictionary-meaning-v3",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "summary": {
+        "planned": 6,
+        "ready": 6,
+        "hardFailures": 0,
+        "lexicalReviewRequired": 1,
+        "withUsefulAlternatives": 4,
+        "inputTokensKnown": 4429,
+        "outputTokensKnown": 685,
+        "missingUsage": 0,
+        "medianLatencyMs": 1460,
+        "maximumLatencyMs": 1607,
+        "monetaryCost": null
+      }
+    },
+    {
+      "runId": "validation-luna56-v3",
+      "manifestHash": "bdbb22b7b5aa307d24c6e8dddcda314abaf821bd93afd4c73d3b45d8bcb8db34",
+      "model": "gpt-5.6-luna",
+      "settings": {
+        "reasoning_effort": "low"
+      },
+      "promptId": "dictionary-meaning-v3",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "summary": {
+        "planned": 6,
+        "ready": 6,
+        "hardFailures": 0,
+        "lexicalReviewRequired": 1,
+        "withUsefulAlternatives": 4,
+        "inputTokensKnown": 4423,
+        "outputTokensKnown": 1134,
+        "missingUsage": 0,
+        "medianLatencyMs": 2176,
+        "maximumLatencyMs": 2520,
+        "monetaryCost": null
+      }
+    },
+    {
+      "runId": "validation-luna6-v3",
+      "manifestHash": "1b2c15abfe7c4cc4d9a12fb01396d9567c94ccd0df601ee706de8e347b348c1b",
+      "model": "gpt-6-luna",
+      "settings": {
+        "reasoning_effort": "low"
+      },
+      "promptId": "dictionary-meaning-v3",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "summary": {
+        "planned": 6,
+        "ready": 6,
+        "hardFailures": 0,
+        "lexicalReviewRequired": 1,
+        "withUsefulAlternatives": 4,
+        "inputTokensKnown": 4423,
+        "outputTokensKnown": 1002,
+        "missingUsage": 0,
+        "medianLatencyMs": 1790,
+        "maximumLatencyMs": 1933,
+        "monetaryCost": null
+      }
+    }
+  ],
+  "caveats": [
+    "Development results are not held-out validation",
+    "One draw does not establish model reliability",
+    "No verified Azure tariff; monetary cost is unknown",
+    "No automatic production promotion"
+  ]
+}

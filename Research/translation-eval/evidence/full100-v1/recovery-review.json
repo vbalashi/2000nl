@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "translation-eval-review-v1",
+  "runId": "full100-recovery-luna56-1",
+  "reviewer": "Codex primary agent",
+  "method": "agent",
+  "reviewedAt": "2026-10-10T17:08:11.350381+00:00",
+  "manifestHash": "60f97a2f63291fc100b54bff40705f5a991b7550197e6d57f54019570760f02b",
+  "reviewContext": "Recovery only; excluded from frozen first-attempt metrics.",
+  "items": [
+    {
+      "jobId": "full028-1",
+      "responseHash": "b9f02f50ece518f2385f12c2de615206c29de215ef83971e2d5774a91f55b84a",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 4,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Опора, подлокотники стула и перила моста сохранены. Основное перила несколько уже общей дефиниции, но обычный эквивалент данного полисемичного слова."
+    }
+  ]
+}

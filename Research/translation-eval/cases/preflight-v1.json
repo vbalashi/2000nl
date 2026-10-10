@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "translation-eval-suite-v1",
+  "suiteId": "preflight-v1",
+  "split": "development",
+  "provenance": "Original diagnostic fixtures created for #657; no article corpus inputs",
+  "cases": [
+    {
+      "id": "praten_ru",
+      "allowedStems": [
+        "говор",
+        "разговар",
+        "бесед",
+        "обща"
+      ],
+      "alternativesUseful": true,
+      "baseAllowedStems": [
+        "говор",
+        "разговар",
+        "бесед",
+        "обща"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:praten_ru",
+        "sourceContentFingerprint": "original-fixture:praten_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "praten",
+          "article": null,
+          "partOfSpeech": "werkwoord",
+          "partOfSpeechCode": "ww"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "woorden gebruiken om met iemand een gesprek te voeren"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "We praten rustig met elkaar."
+          }
+        ]
+      }
+    },
+    {
+      "id": "koe_ru",
+      "allowedStems": [
+        "корова"
+      ],
+      "alternativesUseful": false,
+      "baseAllowedStems": [
+        "корова"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:koe_ru",
+        "sourceContentFingerprint": "original-fixture:koe_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "koe",
+          "article": "de",
+          "partOfSpeech": "zelfstandig naamwoord",
+          "partOfSpeechCode": "zn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "een volwassen vrouwelijk rund"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "De koe staat in de wei."
+          }
+        ]
+      }
+    },
+    {
+      "id": "typisch_strange_ru",
+      "allowedStems": [
+        "стран",
+        "необыч",
+        "удивительн",
+        "примечательн"
+      ],
+      "alternativesUseful": true,
+      "baseAllowedStems": [
+        "типич",
+        "характерн"
+      ],
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:typisch_strange_ru",
+        "sourceContentFingerprint": "original-fixture:typisch_strange_ru:v1",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": {
+          "text": "typisch",
+          "article": null,
+          "partOfSpeech": "bijvoeglijk naamwoord",
+          "partOfSpeechCode": "bn"
+        },
+        "content": [
+          {
+            "fieldId": "definition",
+            "role": "definition",
+            "text": "vreemd of onverwacht"
+          },
+          {
+            "fieldId": "example:0",
+            "role": "example",
+            "text": "Wat typisch dat niemand iets heeft gehoord!"
+          }
+        ]
+      }
+    }
+  ]
+}

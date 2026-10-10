@@ -1,0 +1,211 @@
+{
+  "schemaVersion": "translation-eval-review-v1",
+  "runId": "validation-luna56-v3",
+  "reviewer": "Codex primary agent",
+  "method": "agent",
+  "reviewedAt": "2026-10-10T16:18:23.766644+00:00",
+  "manifestHash": "bdbb22b7b5aa307d24c6e8dddcda314abaf821bd93afd4c73d3b45d8bcb8db34",
+  "reviewContext": "Non-blind review of frozen source and outputs; model identities and previous diagnostics were visible. Not independent human approval. No external judge call.",
+  "items": [
+    {
+      "jobId": "gemakkelijk_ru-1",
+      "responseHash": "d54cc0845aced2b48cad231248ef7d741d53a0c94ea5f356585c2e834017104b",
+      "decision": "needs-work",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 3,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [
+        "unnatural-language"
+      ],
+      "rationale": "«Лёгкий/простой» соответствует отсутствию больших усилий; пример первого вопроса точен. «Сложного понимания» — неестественное сочетание; лучше «то, что легко сделать или понять».",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "лёгкий",
+          "alternativeTexts": [
+            "простой",
+            "несложный"
+          ],
+          "baseText": "лёгкий",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "не требующий больших усилий или сложного понимания"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Первый вопрос был лёгким."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "vriendelijk_ru-1",
+      "responseHash": "cb82257749e48f37a91c10e42c87dfd1c94c7e14585b2bc3dd65e74f1c513576",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Primary и варианты передают приятное доброжелательное общение; пример отношения сотрудника сохранён.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "доброжелательный",
+          "alternativeTexts": [
+            "приветливый",
+            "любезный"
+          ],
+          "baseText": "дружелюбный",
+          "note": "О человеке, который хорошо и приятно относится к другим."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "добрый и приятный в общении с другими людьми"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Сотрудник был с нами любезен."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "werkelijk_ru-1",
+      "responseHash": "14a195028861c2bd8f257f0f993cc90b7df069d1a536a0a2ac7c685039290c6a",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "«Реальный» и варианты передают реально существующее, не вымышленное; пример проблемы точен.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "реальный",
+          "alternativeTexts": [
+            "настоящий",
+            "действительный"
+          ],
+          "baseText": "реальный",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "действительно существующий, а не вымышленный"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Это реальная проблема."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "zeven_ru-1",
+      "responseHash": "e0d481ae8d1f0f08cdf3eb370e855d6e54ed0a5d8bd5e2247c7c59f757465266",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Число семь, положение между шестью и восемью и пример яблок точны; альтернативы не нужны.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "семь",
+          "alternativeTexts": [],
+          "baseText": "семь",
+          "note": null
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "число после шести и перед восемью"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "На столе лежат семь яблок."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "bank_seat_ru-1",
+      "responseHash": "d47081d6151c21b1e1f6fe0400d78aa4652e856b694f71e4e04f70a2ddfa30de",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Primary/вариант соответствуют длинному сиденью; пример парка точен. Base без контекста может отражать другой обычный смысл bank: это не ошибка selected sense.",
+      "observedResult": {
+        "entryTranslation": {
+          "primaryText": "скамья",
+          "alternativeTexts": [
+            "лавка"
+          ],
+          "baseText": "диван",
+          "note": "Длинное сиденье для нескольких человек."
+        },
+        "contentTranslations": [
+          {
+            "fieldId": "definition",
+            "text": "длинное сиденье для нескольких человек"
+          },
+          {
+            "fieldId": "example:0",
+            "text": "Мы вместе сидим на скамейке в парке."
+          }
+        ]
+      }
+    },
+    {
+      "jobId": "idiom_only_ru-1",
+      "responseHash": "0148b4140f1c27d55d9499cd0fb8e52338bfd3c1c779bf8323600975f4e53aaa",
+      "decision": "accept",
+      "scores": {
+        "senseFidelity": 5,
+        "equivalentUsefulness": 5,
+        "naturalness": 5,
+        "contentFidelity": 5,
+        "baseCorrectness": 5
+      },
+      "failureCodes": [],
+      "rationale": "Идиома естественно передана как «говорить о пустяках»; null самостоятельного headword соответствует idiom-only контракту, base здесь неприменим (нейтральная оценка 5).",
+      "observedResult": {
+        "entryTranslation": null,
+        "contentTranslations": [
+          {
+            "fieldId": "idiom:0",
+            "text": "говорить о пустяках"
+          },
+          {
+            "fieldId": "idiom:0:explanation",
+            "text": "вести непринуждённый разговор о простых мелочах"
+          }
+        ]
+      }
+    }
+  ]
+}

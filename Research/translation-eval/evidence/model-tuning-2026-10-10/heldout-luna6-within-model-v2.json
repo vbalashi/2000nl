@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "translation-eval-comparison-v1",
+  "reviewStatus": "automatic-checks-only",
+  "humanApproved": false,
+  "comparisonKey": "966a8f5202037878f8c3cb3ca0717a8a49cba5c65f4fa47cc763593b4091ddbe",
+  "runs": [
+    {
+      "runId": "heldout-luna6-baseline-v2",
+      "manifestHash": "39e130c28f0d7396a105e56f6b4ce54b629bec0bf132736f0a2aca7512926f29",
+      "model": "gpt-6-luna",
+      "settings": {
+        "reasoning_effort": "low"
+      },
+      "promptId": "dictionary-meaning-v3",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "summary": {
+        "planned": 18,
+        "ready": 18,
+        "hardFailures": 0,
+        "lexicalReviewRequired": 2,
+        "withUsefulAlternatives": 9,
+        "inputTokensKnown": 13308,
+        "outputTokensKnown": 3615,
+        "missingUsage": 0,
+        "medianLatencyMs": 1692,
+        "maximumLatencyMs": 3169,
+        "monetaryCost": null
+      }
+    },
+    {
+      "runId": "heldout-luna6-tuned-v2",
+      "manifestHash": "e17b6bbafa1c4abc69176d4fef4574c3820949847f7dd3d679aee0ee4d225e2e",
+      "model": "gpt-6-luna",
+      "settings": {
+        "reasoning_effort": "low"
+      },
+      "promptId": "luna6-tuned-v1",
+      "promptFingerprint": "66081629022aa75fa117d16c3dbe3ad729f170c6d440daa613b2d82dcf77554c",
+      "summary": {
+        "planned": 18,
+        "ready": 18,
+        "hardFailures": 0,
+        "lexicalReviewRequired": 3,
+        "withUsefulAlternatives": 9,
+        "inputTokensKnown": 14964,
+        "outputTokensKnown": 3875,
+        "missingUsage": 0,
+        "medianLatencyMs": 1808,
+        "maximumLatencyMs": 2971,
+        "monetaryCost": null
+      }
+    }
+  ],
+  "caveats": [
+    "Development results are not held-out validation",
+    "One draw does not establish model reliability",
+    "No verified Azure tariff; monetary cost is unknown",
+    "No automatic production promotion"
+  ]
+}

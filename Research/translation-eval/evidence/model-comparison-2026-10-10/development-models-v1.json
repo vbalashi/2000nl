@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "translation-eval-comparison-v1",
+  "reviewStatus": "automatic-checks-only",
+  "humanApproved": false,
+  "comparisonKey": "93aea932f7e3cb6a22c865de3e856a6816c098ce2bd934a1ea96bf90a8f5f99c",
+  "runs": [
+    {
+      "runId": "development-gpt41-v3",
+      "manifestHash": "6e77694fb0650adde9c7af2cbd62c1c7991675f41530b56038719a4c5fcb69ea",
+      "model": "gpt-4.1",
+      "settings": {
+        "temperature": 0
+      },
+      "promptId": "dictionary-meaning-v3",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "summary": {
+        "planned": 12,
+        "ready": 12,
+        "hardFailures": 0,
+        "lexicalReviewRequired": 0,
+        "withUsefulAlternatives": 8,
+        "inputTokensKnown": 8819,
+        "outputTokensKnown": 1316,
+        "missingUsage": 0,
+        "medianLatencyMs": 1305,
+        "maximumLatencyMs": 2358,
+        "monetaryCost": null
+      }
+    },
+    {
+      "runId": "development-luna56-v3",
+      "manifestHash": "5e21c019b76b1b179daaa74af1c8f58c4ad8e90399054bf873ab7dfe60393b38",
+      "model": "gpt-5.6-luna",
+      "settings": {
+        "reasoning_effort": "low"
+      },
+      "promptId": "dictionary-meaning-v3",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "summary": {
+        "planned": 12,
+        "ready": 12,
+        "hardFailures": 0,
+        "lexicalReviewRequired": 0,
+        "withUsefulAlternatives": 8,
+        "inputTokensKnown": 8807,
+        "outputTokensKnown": 1653,
+        "missingUsage": 0,
+        "medianLatencyMs": 1399,
+        "maximumLatencyMs": 2854,
+        "monetaryCost": null
+      }
+    },
+    {
+      "runId": "development-luna6-v3",
+      "manifestHash": "232b2b196b11618aede97456dd90a5d56197cdd75e97a1a9fef69d0af9145d0a",
+      "model": "gpt-6-luna",
+      "settings": {
+        "reasoning_effort": "low"
+      },
+      "promptId": "dictionary-meaning-v3",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "summary": {
+        "planned": 12,
+        "ready": 12,
+        "hardFailures": 0,
+        "lexicalReviewRequired": 1,
+        "withUsefulAlternatives": 8,
+        "inputTokensKnown": 8807,
+        "outputTokensKnown": 1892,
+        "missingUsage": 0,
+        "medianLatencyMs": 1601,
+        "maximumLatencyMs": 2633,
+        "monetaryCost": null
+      }
+    }
+  ],
+  "caveats": [
+    "Development results are not held-out validation",
+    "One draw does not establish model reliability",
+    "No verified Azure tariff; monetary cost is unknown",
+    "No automatic production promotion"
+  ]
+}

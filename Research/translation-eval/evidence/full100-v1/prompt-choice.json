@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "full100-common-prompt-choice-v1",
+  "frozenAt": "2026-10-10T16:57:02.389956+00:00",
+  "selectedPrompt": "dictionary-meaning-v4",
+  "selectedPromptFingerprint": "f7bb99e1da2a700d56815da8ac15d21ecf94a1963e4640422c6cc05b5b30ea9a",
+  "criterion": "First predefined criterion: fewer pooled sense/content fidelity errors below 4. v3=8/90; v4=4/90. All needs-work v3=16; v4=15.",
+  "reviewMethod": "Non-blind primary agent; no independent or human approval.",
+  "development": [
+    {
+      "runId": "full-dev-gpt41-v3",
+      "manifestHash": "eb833a8199da7834bb3e814b94c4edfcd86929945a9bfd7fb36f28731dd60ecf",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "reviewed": 30,
+      "mainErrors": 4,
+      "needsWork": 9
+    },
+    {
+      "runId": "full-dev-gpt41-v4",
+      "manifestHash": "9f1baf8b2de1ec7218504a0a30411906551478a89115998faeda543d5abc5104",
+      "promptFingerprint": "f7bb99e1da2a700d56815da8ac15d21ecf94a1963e4640422c6cc05b5b30ea9a",
+      "reviewed": 30,
+      "mainErrors": 2,
+      "needsWork": 11
+    },
+    {
+      "runId": "full-dev-luna56-v3",
+      "manifestHash": "439f94f3205ef11e38c6de679f83f6c9a21f3bff6d4e055c524dbc585ff382cd",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "reviewed": 30,
+      "mainErrors": 2,
+      "needsWork": 3
+    },
+    {
+      "runId": "full-dev-luna56-v4",
+      "manifestHash": "39dff38edda10d40bd4ff29f3c5a63c7846a755065a22f18e4016b8ed3cba549",
+      "promptFingerprint": "f7bb99e1da2a700d56815da8ac15d21ecf94a1963e4640422c6cc05b5b30ea9a",
+      "reviewed": 30,
+      "mainErrors": 2,
+      "needsWork": 4
+    },
+    {
+      "runId": "full-dev-luna6-v3",
+      "manifestHash": "912f224c0ee1fd2c3a15ab465d79ff755e15147daecf15007c3b366bfcf03273",
+      "promptFingerprint": "4402f6235b7c88b95ed6ee9185db14dbe9abba87818445fe2250cd273a014546",
+      "reviewed": 30,
+      "mainErrors": 2,
+      "needsWork": 4
+    },
+    {
+      "runId": "full-dev-luna6-v4",
+      "manifestHash": "b93238853850bbdd01eb78de51bf3b82645259e3901af2ea6fd92df90a806a6e",
+      "promptFingerprint": "f7bb99e1da2a700d56815da8ac15d21ecf94a1963e4640422c6cc05b5b30ea9a",
+      "reviewed": 30,
+      "mainErrors": 0,
+      "needsWork": 0
+    }
+  ],
+  "validationStarted": false,
+  "productionChanged": false
+}

@@ -63,71 +63,19 @@ The OpenAI translator builds chat messages in code, but the editable prompt text
 
 The user message is a JSON payload (target language, POS, input texts, expected response format).
 
-## Why A Judge Agent?
+## Separate dictionary translation research
 
-Prompt changes are easy to make but hard to validate. Manual review is slow and inconsistent.
+The current reproducible workspace is [Research/translation-eval](../../Research/translation-eval/README.md).
+It freezes cases, candidate prompts, model settings, source snapshots, attempts,
+responses, usage and latency; reviews are stored separately from generation.
+Development and held-out validation suites are separate. GPT-4.1, Luna 5.6 and
+Luna 6 have distinct credential profiles. See its rubric and CLI commands.
+This workspace does not change the runtime prompt or article generation pipeline.
 
-A separate "judge" agent provides:
-- A repeatable rubric (sense disambiguation, negation handling, idioms not literal, no hallucinated meanings).
-- A numeric score (0-100) and pass/fail to gate changes.
-- Concrete issue lists and suggested prompt tweaks.
-
-This is not a perfect oracle, but it makes iteration much faster and creates an audit trail (JSONL logs).
-
-## The Scripted Loop
-
-### Fixtures (What We Translate)
-
-Curated cases live in:
-- `apps/ui/scripts/translationEvalCases.ts`
-
-These should include known-problematic items (examples from backlog):
-- POS disambiguation: `vaak` (adverb) vs article noise (`de vaak`)
-- Negative-context verbs: `hoeven` ("don’t need to") vs misleading primary sense
-- Idioms: `Het is hier kermis!` should be idiomatic (ruckus/chaos), not literal "fair"
-
-Add more cases whenever a user reports a bad translation.
-
-### Runner (Translate + Judge)
-
-Run:
-```bash
-cd apps/ui && npm run eval:translation -- --case hoeven_negative_context
-```
-
-Inspect the production request without network calls:
-
-```bash
-cd apps/ui && npm run eval:translation -- --case-prefix goed_zn_ --meaning-contract --dry-run
-```
-
-Useful flags:
-```bash
---min-score 85
---log-jsonl /tmp/translation-eval.jsonl
---case <id>
-```
-
-Env:
-- `OPENAI_API_KEY` is loaded from `.env.local` by default (repo root or `apps/ui/.env.local`)
-- Optional: `OPENAI_MODEL`, `OPENAI_API_URL`, `OPENAI_JUDGE_MODEL`
-
-Notes:
-- If the OpenAI account has no quota, you will get `429 insufficient_quota`.
-- Translation uses `temperature=0` for stability; judging also uses `temperature=0`.
-
-### Iterate
-
-1. Edit prompt files:
-   - `apps/ui/lib/translation/prompts/openai_translation_system_v1.txt`
-   - `apps/ui/lib/translation/prompts/openai_translation_user_instructions_v1.txt`
-2. Re-run `cd apps/ui && npm run eval:translation`.
-3. Repeat until the weakest cases pass and the average score is acceptable.
-
-Keep changes small and targeted:
-- Add explicit guidance for idioms (prefer equivalent idiom or natural paraphrase).
-- Add explicit guidance about negation and modal verbs (`hoeven`).
-- Add explicit guidance about POS usage (do not invent a different POS).
+The older `apps/ui/scripts/translationEvalCases.ts` and `eval:translation`
+runner remain useful diagnostics (including `--meaning-contract --dry-run`).
+They do not implement the proposed LLM judge or a `--min-score` quality gate.
+Do not interpret successful translation execution as semantic approval.
 
 ## Cache Invalidation / Prompt Fingerprint
 
@@ -144,7 +92,7 @@ versa):
 - `apps/ui/lib/translation/prompts/promptFingerprint.ts`
 
 Outcome:
-- Changing the prompt files will cause translations to refresh naturally on next card view (no manual DB deletion).
+- Changing the dictionary prompt fingerprint makes old artifacts stale. Refresh requires the next explicit translation request; read-only lookup/card display does not itself guarantee paid regeneration.
 
 ## Optional: Bulk Backfill After Prompt Changes
 

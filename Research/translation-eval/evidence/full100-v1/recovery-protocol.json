@@ -1,0 +1,8 @@
+{
+  "originalRun": "full-validation-luna56-v1",
+  "originalManifestHash": "f3c7327da1a8b0763f1d8dd58f9da0b8625579e4b3da48b4248ea680f6051968",
+  "originalResponseHash": "03f072c35af1823eeeb50aa697cd970a1b5c7d3f57fa060accc60e03ca121857",
+  "maxRecoveryCalls": 3,
+  "originalFirstAttemptUnchanged": true,
+  "promptFingerprint": "f7bb99e1da2a700d56815da8ac15d21ecf94a1963e4640422c6cc05b5b30ea9a"
+}
