@@ -102,3 +102,5 @@
 - [2026-10-10: редакционные направления и навигация](2026-10-10-14-editorial-directions-and-navigation.md)
 
 - [2026-10-10: образовательные каналы Олеси](2026-10-10-15-olesia-educational-channels.md)
+
+- [2026-10-10: архив и редакционный реестр](2026-10-10-16-owned-archive-and-editorial-register.md)
