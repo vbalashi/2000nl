@@ -90,3 +90,5 @@
 - [2026-10-10: бета и обычные тарифы](2026-10-10-08-beta-capacity-and-standard-plans.md)
 
 - [2026-10-10: постепенное привлечение](2026-10-10-09-gradual-organic-launch.md)
+
+- [2026-10-10: структура стратегии и планов](2026-10-10-10-strategy-planning-structure.md)
