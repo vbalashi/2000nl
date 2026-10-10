@@ -80,3 +80,5 @@
 - [2026-10-10: перевод и озвучка Free 100](2026-10-10-03-free-100-translation-and-audio.md)
 
 - [2026-10-10: язык медиа и личный бренд](2026-10-10-04-editorial-language-and-personal-brand.md)
+
+- [2026-10-10: общий блог Dilumeo](2026-10-10-05-dilumeo-shared-blog.md)
