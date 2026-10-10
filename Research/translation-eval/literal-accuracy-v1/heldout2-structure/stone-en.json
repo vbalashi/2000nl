@@ -1,0 +1,75 @@
+{
+  "id": "stone-en",
+  "inputHash": "52136b3d9ee54ff0acac04fcd4fc7195ca0fecd7cada83b591ccefe62421296b",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "stone",
+      "alternativeTexts": [],
+      "baseText": "stone",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a hard piece of natural material"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "hit two flies with one blow",
+        "text": "kill two birds with one stone"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "achieve two goals with one action"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"stone\",\"alternativeTexts\":[],\"baseText\":\"stone\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a hard piece of natural material\"},{\"fieldId\":\"idiom:0\",\"text\":\"kill two birds with one stone\",\"literalText\":\"hit two flies with one blow\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"achieve two goals with one action\"}]}",
+  "responseHash": "c37ff10d14fb268556c0388dffd26c317c2463ed16424403b7690fddc79b18a5",
+  "usage": {
+    "completion_tokens": 372,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 271,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 98,
+      "engine_ttlt_ms": 2395,
+      "pre_inference_ms": 102,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 341,
+      "service_ttlt_ms": 2634,
+      "user_visible_ttft_ms": 239
+    },
+    "prompt_tokens": 1719,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 498,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2091
+  },
+  "elapsedMs": 3042,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "14fd7c4d-c74b-434e-b1ac-bf2e807d959e",
+      "inputTokens": 1719,
+      "outputTokens": 372,
+      "event": "translation_attempt",
+      "correlationId": "6bf20199-9bd9-4fe4-ae04-a1c2ec45483f",
+      "attempt": 1,
+      "elapsedMs": 3042,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

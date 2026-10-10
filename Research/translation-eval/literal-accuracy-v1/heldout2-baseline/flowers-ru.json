@@ -1,0 +1,75 @@
+{
+  "id": "flowers-ru",
+  "inputHash": "6ad57c0dd7ca2fd08b5acb25be7957931c46a0f0101a2ad9f51052c366f60e68",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "цветок",
+      "alternativeTexts": [],
+      "baseText": "цветок",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "окрашенная часть растения"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "выставить цветочки на улицу",
+        "text": "веселиться на всю катушку"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "бурно праздновать"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"цветок\",\"alternativeTexts\":[],\"baseText\":\"цветок\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"окрашенная часть растения\"},{\"fieldId\":\"idiom:0\",\"text\":\"веселиться на всю катушку\",\"literalText\":\"выставить цветочки на улицу\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"бурно праздновать\"}]}",
+  "responseHash": "5fbc6973491335a9d43b20bf1e771c620a0428df498051357b695571254630af",
+  "usage": {
+    "completion_tokens": 1061,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 952,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 298,
+      "engine_ttlt_ms": 6614,
+      "pre_inference_ms": 146,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 595,
+      "service_ttlt_ms": 6905,
+      "user_visible_ttft_ms": 449
+    },
+    "prompt_tokens": 1570,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 499,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2631
+  },
+  "elapsedMs": 7678,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "1a6d4af8-6d8c-4042-81b6-0c13d8c5fdaf",
+      "inputTokens": 1570,
+      "outputTokens": 1061,
+      "event": "translation_attempt",
+      "correlationId": "fb066911-6213-48cf-a842-a0aff55331b9",
+      "attempt": 1,
+      "elapsedMs": 7678,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

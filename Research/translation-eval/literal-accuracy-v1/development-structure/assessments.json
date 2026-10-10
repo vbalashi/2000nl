@@ -13,7 +13,9 @@
         "explanation": "Выжидать, как будет развиваться is awkward; needs an observing/seeing verb or a different construction."
       }
     ],
-    "wholeCardAccepted": false
+    "wholeCardAccepted": false,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "cat-en",
@@ -22,7 +24,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "cow-ru",
@@ -31,7 +35,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "cow-en",
@@ -40,7 +46,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "monkey-ru",
@@ -49,7 +57,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "monkey-en",
@@ -58,7 +68,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "butter-ru",
@@ -67,7 +79,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "butter-en",
@@ -76,7 +90,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "door-ru",
@@ -85,7 +101,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "door-en",
@@ -94,7 +112,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "hare-ru",
@@ -103,7 +123,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "hare-en",
@@ -112,7 +134,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "cheese-ru",
@@ -121,7 +145,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "cheese-en",
@@ -130,7 +156,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "nose-ru",
@@ -139,7 +167,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "nose-en",
@@ -148,7 +178,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "lamp-ru",
@@ -157,7 +189,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "lamp-en",
@@ -173,7 +207,9 @@
         "explanation": "Walk against the lamp is an awkward calque for bumping into it."
       }
     ],
-    "wholeCardAccepted": false
+    "wholeCardAccepted": false,
+    "usefulImageEligible": true,
+    "usefulImageRetained": false
   },
   {
     "id": "boat-ru",
@@ -182,7 +218,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "boat-en",
@@ -191,7 +229,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "rose-ru",
@@ -200,7 +240,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "rose-en",
@@ -209,7 +251,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": true,
+    "usefulImageRetained": true
   },
   {
     "id": "leg-ru",
@@ -218,7 +262,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "leg-en",
@@ -227,7 +273,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "horse-ru",
@@ -243,7 +291,9 @@
         "explanation": "Natural cart-before-horse already conveys the same ordering image."
       }
     ],
-    "wholeCardAccepted": false
+    "wholeCardAccepted": false,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "horse-en",
@@ -252,7 +302,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "ice-ru",
@@ -261,7 +313,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "ice-en",
@@ -270,7 +324,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "thanks-ru",
@@ -279,7 +335,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "thanks-en",
@@ -288,7 +346,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "luck-ru",
@@ -297,7 +357,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "luck-en",
@@ -306,7 +368,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "welcome-ru",
@@ -315,7 +379,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "welcome-en",
@@ -324,7 +390,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "coffee-ru",
@@ -333,7 +401,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "coffee-en",
@@ -342,7 +412,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "anger-ru",
@@ -351,7 +423,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "anger-en",
@@ -360,7 +434,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "poor-ru",
@@ -369,7 +445,9 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   },
   {
     "id": "poor-en",
@@ -378,6 +456,8 @@
     "method": "agent-nonblind",
     "humanApproved": false,
     "findings": [],
-    "wholeCardAccepted": true
+    "wholeCardAccepted": true,
+    "usefulImageEligible": false,
+    "usefulImageRetained": false
   }
 ]

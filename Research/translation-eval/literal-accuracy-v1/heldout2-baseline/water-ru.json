@@ -1,0 +1,75 @@
+{
+  "id": "water-ru",
+  "inputHash": "3a902573f48988d775f656ecdd3c2fa83bfcc3ccbdc163870da2855c561d3230",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "вода",
+      "alternativeTexts": [],
+      "baseText": "вода",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "прозрачная жидкость"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "выпить стакан воды"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "пить воду из стакана"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"вода\",\"alternativeTexts\":[],\"baseText\":\"вода\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"прозрачная жидкость\"},{\"fieldId\":\"idiom:0\",\"text\":\"выпить стакан воды\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"пить воду из стакана\"}]}",
+  "responseHash": "be875bd4cd5102a7e23b3f906730c8f891ed8317808719c94193e2b6874d0ad5",
+  "usage": {
+    "completion_tokens": 305,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 208,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 102,
+      "engine_ttlt_ms": 1797,
+      "pre_inference_ms": 69,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 306,
+      "service_ttlt_ms": 1997,
+      "user_visible_ttft_ms": 238
+    },
+    "prompt_tokens": 1562,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 491,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 1867
+  },
+  "elapsedMs": 2353,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "84be7bc3-3185-43b5-8861-2945a31d3d2c",
+      "inputTokens": 1562,
+      "outputTokens": 305,
+      "event": "translation_attempt",
+      "correlationId": "51099a56-9870-41d2-a93c-a1a37afe3df2",
+      "attempt": 1,
+      "elapsedMs": 2353,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

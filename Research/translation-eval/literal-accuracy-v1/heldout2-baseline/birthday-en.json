@@ -1,0 +1,75 @@
+{
+  "id": "birthday-en",
+  "inputHash": "2f56f8a8d2245c75bf742d42b2bea19b589a926124bfb05979d7231e00d34791",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "birthday",
+      "alternativeTexts": [],
+      "baseText": "birthday",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "the annual commemoration of someone's date of birth"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "Heartfelt congratulations!"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to sincerely congratulate someone"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"birthday\",\"alternativeTexts\":[],\"baseText\":\"birthday\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"the annual commemoration of someone's date of birth\"},{\"fieldId\":\"idiom:0\",\"text\":\"Heartfelt congratulations!\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to sincerely congratulate someone\"}]}",
+  "responseHash": "7205237bd7473a42ba2d80173d006a2dcd71dd9eb40d53c5c2deb080bf64fb5c",
+  "usage": {
+    "completion_tokens": 495,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 400,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 7,
+      "engine_ttft_ms": 99,
+      "engine_ttlt_ms": 3332,
+      "pre_inference_ms": 113,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 383,
+      "service_ttlt_ms": 3589,
+      "user_visible_ttft_ms": 271
+    },
+    "prompt_tokens": 1575,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 504,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2070
+  },
+  "elapsedMs": 4101,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "c0d105a7-31e7-4a34-99a1-0486f6cfdeec",
+      "inputTokens": 1575,
+      "outputTokens": 495,
+      "event": "translation_attempt",
+      "correlationId": "3d4c4fc5-c6a6-471c-ac2e-4b7ad244299f",
+      "attempt": 1,
+      "elapsedMs": 4101,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

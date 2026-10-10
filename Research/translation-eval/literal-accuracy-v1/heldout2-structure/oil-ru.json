@@ -1,0 +1,75 @@
+{
+  "id": "oil-ru",
+  "inputHash": "e085e26d0405686a3228a6b4a79bb24216b778f186b0123bdf827add3c2412ce",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "масло",
+      "alternativeTexts": [],
+      "baseText": "масло",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "маслянистая жидкость"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "усугубить конфликт"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "усугубить конфликт"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"масло\",\"alternativeTexts\":[],\"baseText\":\"масло\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"маслянистая жидкость\"},{\"fieldId\":\"idiom:0\",\"text\":\"усугубить конфликт\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"усугубить конфликт\"}]}",
+  "responseHash": "61ca36a9aa8d91f089865f4f5242a7ee98742632f564d6564442b3374e468190",
+  "usage": {
+    "completion_tokens": 465,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 370,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 108,
+      "engine_ttlt_ms": 2850,
+      "pre_inference_ms": 203,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 507,
+      "service_ttlt_ms": 3271,
+      "user_visible_ttft_ms": 303
+    },
+    "prompt_tokens": 1716,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 495,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2181
+  },
+  "elapsedMs": 3955,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "b9745f42-c87f-47a3-aa58-92fb359ccce4",
+      "inputTokens": 1716,
+      "outputTokens": 465,
+      "event": "translation_attempt",
+      "correlationId": "ad6e00f5-91bc-4eb3-9e2e-27b6a14ad675",
+      "attempt": 1,
+      "elapsedMs": 3955,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

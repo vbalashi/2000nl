@@ -1,0 +1,75 @@
+{
+  "id": "spoon-ru",
+  "inputHash": "7f65ec443d29ace9bb0655022c9d09be23b68931b93a2ea86f5bce8d844f4154",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "ложка",
+      "alternativeTexts": [],
+      "baseText": "ложка",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "предмет, которым подносят жидкую пищу ко рту"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "получить что-либо, словно его влили с ложкой каши",
+        "text": "впитать что-либо с молоком матери"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "усвоить что-либо с раннего детства"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"ложка\",\"alternativeTexts\":[],\"baseText\":\"ложка\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"предмет, которым подносят жидкую пищу ко рту\"},{\"fieldId\":\"idiom:0\",\"text\":\"впитать что-либо с молоком матери\",\"literalText\":\"получить что-либо, словно его влили с ложкой каши\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"усвоить что-либо с раннего детства\"}]}",
+  "responseHash": "33f0c11260ac6631769e90f463428e80037cac4d1fd16e4eee605791186e87b0",
+  "usage": {
+    "completion_tokens": 1005,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 873,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 92,
+      "engine_ttlt_ms": 6255,
+      "pre_inference_ms": 110,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 323,
+      "service_ttlt_ms": 6482,
+      "user_visible_ttft_ms": 213
+    },
+    "prompt_tokens": 1581,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 510,
+      "cached_tokens": 1068
+    },
+    "total_tokens": 2586
+  },
+  "elapsedMs": 6829,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "33975f26-6726-4951-b299-982ff8a3a92a",
+      "inputTokens": 1581,
+      "outputTokens": 1005,
+      "event": "translation_attempt",
+      "correlationId": "b12a4f64-8f62-4d2d-b63d-1027f3e8a9b3",
+      "attempt": 1,
+      "elapsedMs": 6828,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

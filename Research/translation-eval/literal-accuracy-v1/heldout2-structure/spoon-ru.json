@@ -1,0 +1,75 @@
+{
+  "id": "spoon-ru",
+  "inputHash": "d337124fb7473ce8d755158285d24ee5b3e766ddaeabd0a97ccd6100e994d58f",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "ложка",
+      "alternativeTexts": [],
+      "baseText": "ложка",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "предмет, которым жидкую пищу подносят ко рту"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "получить что-либо, влитое в себя с помощью ложки для каши",
+        "text": "усвоить что-либо с самого раннего детства"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "учиться чему-либо с самого раннего детства"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"ложка\",\"alternativeTexts\":[],\"baseText\":\"ложка\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"предмет, которым жидкую пищу подносят ко рту\"},{\"fieldId\":\"idiom:0\",\"text\":\"усвоить что-либо с самого раннего детства\",\"literalText\":\"получить что-либо, влитое в себя с помощью ложки для каши\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"учиться чему-либо с самого раннего детства\"}]}",
+  "responseHash": "341136fce2a0b72dbb82ff6fe6ed6cb403b7f2233c32d4ad81e8379c4fbb491a",
+  "usage": {
+    "completion_tokens": 1029,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 892,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 108,
+      "engine_ttlt_ms": 5579,
+      "pre_inference_ms": 95,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 353,
+      "service_ttlt_ms": 5811,
+      "user_visible_ttft_ms": 258
+    },
+    "prompt_tokens": 1731,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 510,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2760
+  },
+  "elapsedMs": 6288,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "e14fadc0-d86c-4621-ae72-3c37aa3e9a65",
+      "inputTokens": 1731,
+      "outputTokens": 1029,
+      "event": "translation_attempt",
+      "correlationId": "8419141d-3b74-4851-8a0e-7c369efbebb7",
+      "attempt": 1,
+      "elapsedMs": 6288,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

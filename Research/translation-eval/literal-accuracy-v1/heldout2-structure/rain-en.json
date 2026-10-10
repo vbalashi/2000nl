@@ -1,0 +1,75 @@
+{
+  "id": "rain-en",
+  "inputHash": "ceb8705785a6fe2d1aa585c3f72a3ad99fbe49a90f63dd8dff9be23eb730c2e1",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "rain",
+      "alternativeTexts": [],
+      "baseText": "rain",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "Water that falls from the sky in drops."
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "Come from the rain into the drip.",
+        "text": "Go from bad to worse."
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "To end up in an even worse situation after being in a difficult one."
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"rain\",\"alternativeTexts\":[],\"baseText\":\"rain\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"Water that falls from the sky in drops.\"},{\"fieldId\":\"idiom:0\",\"text\":\"Go from bad to worse.\",\"literalText\":\"Come from the rain into the drip.\"},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"To end up in an even worse situation after being in a difficult one.\"}]}",
+  "responseHash": "ac7556cf9aa2af92d513be3e6f47027adccc08ee6d2f777cb8925a28221dde5b",
+  "usage": {
+    "completion_tokens": 613,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 500,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 95,
+      "engine_ttlt_ms": 3791,
+      "pre_inference_ms": 108,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 345,
+      "service_ttlt_ms": 4186,
+      "user_visible_ttft_ms": 237
+    },
+    "prompt_tokens": 1729,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 508,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2342
+  },
+  "elapsedMs": 4704,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "5f31d0bf-2e5c-4a20-b318-f81410e4f2a0",
+      "inputTokens": 1729,
+      "outputTokens": 613,
+      "event": "translation_attempt",
+      "correlationId": "640e0d97-ffcd-4fb3-9acb-a9f52eb48d9a",
+      "attempt": 1,
+      "elapsedMs": 4704,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

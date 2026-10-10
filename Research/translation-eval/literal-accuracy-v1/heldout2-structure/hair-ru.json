@@ -1,0 +1,75 @@
+{
+  "id": "hair-ru",
+  "inputHash": "7296a74dfd52d7eaff00046dc79103a4ff5a7d5ee93df166db3e8e973e74db89",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "волос",
+      "alternativeTexts": [],
+      "baseText": "волосы",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "тонкая нить, растущая на коже"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": "сидеть с руками в волосах",
+        "text": "не знать, как решить проблему"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "не знать, как решить проблему"
+      }
+    ]
+  },
+  "raw": "{\n  \"entryTranslation\": {\n    \"primaryText\": \"волос\",\n    \"alternativeTexts\": [],\n    \"baseText\": \"волосы\",\n    \"note\": null\n  },\n  \"contentTranslations\": [\n    {\n      \"fieldId\": \"definition\",\n      \"text\": \"тонкая нить, растущая на коже\"\n    },\n    {\n      \"fieldId\": \"idiom:0\",\n      \"text\": \"не знать, как решить проблему\",\n      \"literalText\": \"сидеть с руками в волосах\"\n    },\n    {\n      \"fieldId\": \"idiom:0:explanation\",\n      \"text\": \"не знать, как решить проблему\"\n    }\n  ]\n}",
+  "responseHash": "66007b95b90caf2067f9cea63aa73748cc9faaccc13df9ec31cc2edef87a7968",
+  "usage": {
+    "completion_tokens": 1130,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 964,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 6,
+      "engine_ttft_ms": 94,
+      "engine_ttlt_ms": 6653,
+      "pre_inference_ms": 73,
+      "service_tbt_ms": 6,
+      "service_ttft_ms": 301,
+      "service_ttlt_ms": 6856,
+      "user_visible_ttft_ms": 228
+    },
+    "prompt_tokens": 1723,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 502,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 2853
+  },
+  "elapsedMs": 7193,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "9d8b55ee-25f9-4a42-9622-408cab277871",
+      "inputTokens": 1723,
+      "outputTokens": 1130,
+      "event": "translation_attempt",
+      "correlationId": "ff253dde-0a4b-4358-9017-6787422634ca",
+      "attempt": 1,
+      "elapsedMs": 7193,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}

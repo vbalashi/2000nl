@@ -1,0 +1,75 @@
+{
+  "id": "water-en",
+  "inputHash": "ececd6151d6f9a7265b5b7f41ce3fa720f38c4cf37b7d0c053e2f253d83056a7",
+  "outcome": "ready",
+  "result": {
+    "entryTranslation": {
+      "primaryText": "water",
+      "alternativeTexts": [],
+      "baseText": "water",
+      "note": null
+    },
+    "contentTranslations": [
+      {
+        "fieldId": "definition",
+        "text": "a clear liquid"
+      },
+      {
+        "fieldId": "idiom:0",
+        "literalText": null,
+        "text": "to drink a glass of water"
+      },
+      {
+        "fieldId": "idiom:0:explanation",
+        "text": "to drink water from a glass"
+      }
+    ]
+  },
+  "raw": "{\"entryTranslation\":{\"primaryText\":\"water\",\"alternativeTexts\":[],\"baseText\":\"water\",\"note\":null},\"contentTranslations\":[{\"fieldId\":\"definition\",\"text\":\"a clear liquid\"},{\"fieldId\":\"idiom:0\",\"text\":\"to drink a glass of water\",\"literalText\":null},{\"fieldId\":\"idiom:0:explanation\",\"text\":\"to drink water from a glass\"}]}",
+  "responseHash": "439d4c8198ef02b369ec82be5cc2b50bc46e4ebc467744549710633446a835ba",
+  "usage": {
+    "completion_tokens": 231,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 139,
+      "rejected_prediction_tokens": 0
+    },
+    "latency_checkpoint": {
+      "engine_tbt_ms": 5,
+      "engine_ttft_ms": 96,
+      "engine_ttlt_ms": 1251,
+      "pre_inference_ms": 86,
+      "service_tbt_ms": 5,
+      "service_ttft_ms": 295,
+      "service_ttlt_ms": 1447,
+      "user_visible_ttft_ms": 208
+    },
+    "prompt_tokens": 1712,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 491,
+      "cached_tokens": 1218
+    },
+    "total_tokens": 1943
+  },
+  "elapsedMs": 1867,
+  "attempts": [
+    {
+      "stage": "contract",
+      "model": "gpt-6-luna",
+      "status": 200,
+      "requestId": "341bc786-f6a5-459c-8c92-63e0d98898a6",
+      "inputTokens": 1712,
+      "outputTokens": 231,
+      "event": "translation_attempt",
+      "correlationId": "f60a5b85-c68e-4d23-a630-4066ebef1bb5",
+      "attempt": 1,
+      "elapsedMs": 1867,
+      "outcome": "ready",
+      "retry": false,
+      "retryDelayMs": 0
+    }
+  ],
+  "failure": null
+}
