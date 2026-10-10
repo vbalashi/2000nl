@@ -3347,7 +3347,7 @@ test.each([false, true])("Library inline grade preserves scope and selection (fa
     await waitFor(() => expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
       actionId: "review-card", reviewResult: "success", target: expect.objectContaining({ entryId: dictionaryBoom.id, cardTypeId: "word-to-definition" }),
     })));
-    if (failed) expect(await screen.findByText(getUiMessages("en").trainingSession.exclusion.failed)).toBeVisible();
+    if (failed) await waitFor(() => expect(screen.getByText(getUiMessages("en").trainingSession.exclusion.failed)).toBeVisible());
     expect(screen.getByRole("textbox", { name: "Search words" })).toBeVisible();
     expect(screen.queryByRole("button", { name: /Train next/i })).not.toBeInTheDocument();
     expect(fetchTrainingWordByLookup).not.toHaveBeenCalled();
@@ -4440,7 +4440,7 @@ test("a same-run revision keeps the accepted-card position and server counts", a
   fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
   await screen.findByTestId("mock-training-sense-card-v2");
-  expect(await screen.findByTestId("training-session-position")).toHaveTextContent("0 / 5");
+  await waitFor(() => expect(screen.getByTestId("training-session-position")).toHaveTextContent("0 / 5"));
 
   fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
   await waitFor(() => expect(mockV2ProgressActionCompleted).toHaveBeenCalledWith("accepted-next-presented"));
@@ -4456,7 +4456,7 @@ test("a same-run revision keeps the accepted-card position and server counts", a
   fetchNextTrainingWordByScenario.mockResolvedValue(overrideWord);
   act(() => window.dispatchEvent(new Event("focus")));
   await screen.findByRole("heading", { name: "boom" });
-  expect(screen.getByTestId("training-session-position")).toHaveTextContent("1 / 5");
+  await waitFor(() => expect(screen.getByTestId("training-session-position")).toHaveTextContent("1 / 5"));
   expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
 });
 
