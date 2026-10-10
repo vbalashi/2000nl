@@ -112,3 +112,5 @@
 - [2026-10-10: расходы и собственный труд](2026-10-10-19-cost-update-and-founder-time.md)
 
 - [2026-10-10: чистый доход и работа партнёра](2026-10-10-20-net-income-and-partner-work.md)
+
+- [2026-10-10: ориентиры дохода и команда](2026-10-10-21-income-milestones-and-two-person-team.md)
