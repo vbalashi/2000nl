@@ -2,13 +2,13 @@
 
 Owner: https://github.com/vbalashi/2000nl/issues/674
 Accepted discussion: [2026-10-11](../../discussions/2026-10-11-05-reliable-translation-preparation.md).
-Status: implementation started; not released. Baseline: main 9c0335a9, app 0.18.1280, DB contract 222.
+Status: owner-prioritized queue/recovery/buffer stage released and verified. Production: d253a831, app 0.18.1282, DB contract 223. Semantic partitioning and expanded evaluation remain deferred.
 
 ## Updated rollout scope — 2026-10-11
 
 [Owner decision](../../discussions/2026-10-11-06-translation-rollout-order.md): the longest tested cards now translate successfully with the released prompt and budgets. Prioritize pending/recovery → worker lifecycle/health → latched-member buffer → end-to-end verification. Semantic partitioning and persisted partial results are deferred follow-up, not a release prerequisite. Preserve full-context generation and current budgets.
 
-## Current behavior and problem
+## Baseline behavior and problem
 
 Dictionary translation HTTP routes synchronously invoke the provider. A fresh pending cache row suppresses duplicate work for 300s but is not a durable executable job. Some training families prepare one next member, with different polling/retry behavior. Selected-field budgets do not prove whole-source completeness. Cloudflare may terminate the browser request before the provider finishes.
 
@@ -26,8 +26,8 @@ Server domain service in apps/ui/lib/translation; queue and atomic lease RPCs in
 - [x] Shared polling/recovery across ordinary, word-context, sentence, idiom and Library; disconnect must not cancel server work.
 - [x] Controlled latched-member buffer, current-card priority, bounded concurrency and pace-aware depth; no selection or learning mutations.
 - [ ] Safe timings/coverage metrics, repeatable quality fixtures, stale production-QA probe repair.
-- [ ] Focused tests/typecheck/lint, DB contracts, worker-process restart checks, local browser QA, code review and review-ready PR.
-- [ ] Approved rollout, production release checks, reference sync and safe retirement.
+- [x] Focused tests/typecheck/lint, DB contracts, worker-process restart checks, local browser QA, code review and review-ready PR.
+- [x] Approved rollout, production release checks and reference sync. Checkout retirement follows preservation of local evidence.
 
 Each integrated slice must identify remaining checkpoints; completing the first slice does not complete #674.
 
@@ -94,3 +94,13 @@ Owner authorized production release. Standards/security/operational review found
 PR #675 merged at 2d256472 and deploy 38156313155 succeeded. Production 0.18.1281 reported that exact commit, compatible DB contract 222, deep health ok and translationWorker.enabled=false. Reference main synchronized. The same clean issue checkout was reused on codex/674-activate-translation; the merged feature branch remains preserved.
 
 Activation adds migration 223 with exact checksum, chained read-only postflight (privacy/grants, identity/lease constraints, bounded claims and publication fences) and production deploy flag. Postflight passes locally; probe-only negative tests reject missing worker UPDATE privilege and missing function search_path. Independent review found no activation blocker. Prompt/provider budgets remain unchanged. CI and production activation verification are pending.
+
+## Verified production activation — 2026-10-11
+
+PR #676 merged at d253a8316f54cdbfeade900a959618a847859ccf; NUC deploy 38158573215 succeeded. Production 0.18.1282 reports that exact commit, compatible contract 223, deep health ok and translationWorker.enabled=true. UI and healthy worker use the same immutable image. Reference main synchronized to the deployment commit.
+
+One bounded production smoke enqueued the trusted NT2 bank entry at foreground priority without force, keeping prompt/model/budgets unchanged. Job 2da2f106-9eda-480f-a5ad-c18117573950 transitioned queued → running → ready on attempt 1 in about 4.3s. Readback confirmed ready cache, all job/cache identity fields matching and four translated coverage paths. No learner scheduling/progress was changed and no bulk regeneration occurred. Production restart/failure injection was not performed; those recovery cases are covered by local process/Postgres/browser tests.
+
+Latest activation CI: 2,299 unit tests pass, DB drift/security/guidance/release boundary pass; browser suites 217 + 29 + 17 pass, with one retried flaky case. Local contract gate 19 tests and operational scripts four tests pass; full read-only local postflight and isolated negative checks pass. CI caught stale guidance range and coordination-issue fixture; both were corrected before merge.
+
+Remaining scope: semantic fallback/persisted partial results and whole-source aggregate completeness are explicitly deferred. Expanded coverage/quality metrics and product cost admission remain separate follow-up; this release does not claim every possible provider/source failure is eliminated. Evidence and retirement handoff: /Users/khrustal/adhoc/2000nl-research-archives/674-release-2026-10-11/. Branch refs for #675/#676 are retained; temporary QA artifacts are preserved before removing the completed checkout.

@@ -161,7 +161,7 @@ v8/high, а не доказанное ухудшение языка готовы
 сохраняется. Только при пропуске idiom-explanation в иначе корректном JSON
 допускается один дополнительный запрос недостающих полей с полным контекстом;
 существующие значения сохраняются и весь результат проходит строгий контракт.
-Реализация и проверка25 сохранённых ответов готовы в PR #670, релиз ожидается.
+Реализация и проверка25 сохранённых ответов выпущены в PR #670.
 [Обсуждение](../discussions/2026-10-11-03-translation-missing-explanation-repair.md).
 
 ### 2026-10-11: длинные карточки — прямое расширение перед разбиением
@@ -169,7 +169,7 @@ v8/high, а не доказанное ухудшение языка готовы
 Принята попытка полного перевода одним запросом: поднять входные бюджеты и
 согласовать срок операции, клиентское ожидание и lease. Последовательный перевод
 частей рассматривать отдельно, если прямой подход не проходит проверку.
-Реализация в PR #673, ещё не выпущена.
+Реализация выпущена в PR #673.
 [Обсуждение](../discussions/2026-10-11-04-translation-recovery-budgets.md).
 
-Production activation of durable translation jobs is accepted for #674: contract 223 and matching healthy worker must precede the UI switch. Implementation is in the activation follow-up; production verification remains pending. [Decision](../discussions/2026-10-11-07-activate-translation-jobs.md).
+Production activation of durable translation jobs is accepted for #674: contract 223 and matching healthy worker must precede the UI switch. Implemented and production-verified in PR #676: app 0.18.1282 at d253a831, contract 223, healthy matching worker; one queued translation completed on its first attempt. [Decision](../discussions/2026-10-11-07-activate-translation-jobs.md).
