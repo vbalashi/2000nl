@@ -171,3 +171,5 @@ v8/high, а не доказанное ухудшение языка готовы
 частей рассматривать отдельно, если прямой подход не проходит проверку.
 Реализация в PR #673, ещё не выпущена.
 [Обсуждение](../discussions/2026-10-11-04-translation-recovery-budgets.md).
+
+Production activation of durable translation jobs is accepted for #674: contract 223 and matching healthy worker must precede the UI switch. Implementation is in the activation follow-up; production verification remains pending. [Decision](../discussions/2026-10-11-07-activate-translation-jobs.md).
