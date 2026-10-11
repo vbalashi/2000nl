@@ -186,3 +186,5 @@
 - [2026-10-09: Training startup recovery](2026-10-09-02-startup-recovery.md)
 
 - [2026-10-10: переводы карточек, план спринта](2026-10-10-01-translation-sprint.md) — #655.
+
+- [2026-10-11: вход студийного сайта и интеграция](2026-10-11-03-studio-entrypoints-and-integration.md)

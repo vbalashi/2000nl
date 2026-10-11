@@ -6,7 +6,7 @@
 | --- | --- |
 | Приложение и егоUI, production `2000.dilum.io` | [apps/ui/README.md](../../../apps/ui/README.md), [продуктовый intent](../../intent/index.md) |
 | Отдельный продуктовый лендинг2000nl и waitlist | [/Users/khrustal/dev/2000nl-landing/README.md](/Users/khrustal/dev/2000nl-landing/README.md), затем егоAGENTS.md и docs/waitlist-operations.md |
-| Студийный сайтdilum.io | Локальный прототип [/Users/khrustal/dev/dilum-landing/index.html](/Users/khrustal/dev/dilum-landing/index.html); на проверке2026-10-11 в каталоге нетREADME/AGENTS. Перед реализацией уточнить его статус и создать локальный вход в рамках работы в этом workspace. Прототип не доказывает развёртывание сайта. |
+| Студийный сайтdilum.io | Отдельный репозиторий: [/Users/khrustal/dev/dilum-landing/README.md](/Users/khrustal/dev/dilum-landing/README.md), затем егоAGENTS.md. Статическийindex.html, автодеплойCloudflare Pages; текущий домен и успешность деплоя проверять отдельно. README/AGENTS добавлены сопутствующей работой2026-10-11. |
 | Архитектура брендов и страниц | [Блок сайта](../planning/02-site-and-brands.md) |
 | Требования к блогу и редактору | [Система публикации](../planning/05-publishing-system.md) — движок/редактор ещё не выбраны |
 | Материал будущего блога | [Банк статей](../article-ideas/README.md); это внутренние идеи/планы, не готовые опубликованные страницы |
