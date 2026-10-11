@@ -19,7 +19,7 @@ describe("NUC database contract deployment", () => {
     expect(contract.rollout).toEqual({
       status: "enabled",
       requiredMigrationId: latest,
-      coordinationIssue: 413,
+      coordinationIssue: 674,
       compatibilityPhase: "legacy-first-party-compatible",
       strictEnforcementIssue: 399,
     });
