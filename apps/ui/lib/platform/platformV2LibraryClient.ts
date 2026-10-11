@@ -176,12 +176,17 @@ export async function requestPlatformV2LibraryTranslation(input: {
   entryId: string;
   targetLanguageCode: string;
   force?: boolean;
+  signal?: AbortSignal;
 }): Promise<"ready" | "pending" | "failed"> {
   const response = await fetchDictionaryMeaningTranslation({
     entryId: input.entryId,
     targetLanguageCode: input.targetLanguageCode,
     force: input.force,
+    signal: input.signal,
   });
+  // A gateway timeout does not establish whether the origin finished writing
+  // the overlay. Poll the same identity; the server lease prevents duplication.
+  if (response.status === 504 || response.status === 524) return "pending";
   if (!response.ok) throw new Error("translation_failed");
   const payload = (await response.json().catch(() => null)) as {
     status?: "ready" | "pending" | "failed";

@@ -34,6 +34,7 @@ export async function withTranslationRetries<T>(
   operation: (diagnostic: TranslationAttemptDiagnostic) => Promise<T>,
   options: {
     maxRetries?: number;
+    deadlineAtMs?: number;
     log: (event: TranslationAttemptLog) => void;
     classify: (error: unknown) => "provider_timeout" | "provider_network_error" | "provider_http_error" | "provider_response_error" | "provider_empty_response" | "provider_unknown_error" | "provider_fallback_error";
     sleep?: (ms: number) => Promise<void>;
@@ -53,8 +54,10 @@ export async function withTranslationRetries<T>(
       if (!diagnostic.reason && diagnostic.stage === "contract") diagnostic.reason = "contract_invalid";
       const transient = failureCode === "provider_timeout" || failureCode === "provider_network_error" ||
         (failureCode === "provider_http_error" && (diagnostic.status === 429 || (diagnostic.status !== undefined && diagnostic.status >= 500 && diagnostic.status <= 599)));
-      const retry = transient && attempt <= maxRetries;
-      const retryDelayMs = retry ? Math.max(300 * 2 ** (attempt - 1), diagnostic.retryAfterMs ?? 0) : 0;
+      const delay = Math.max(300 * 2 ** (attempt - 1), diagnostic.retryAfterMs ?? 0);
+      const retry = transient && attempt <= maxRetries &&
+        (options.deadlineAtMs === undefined || Date.now() + delay < options.deadlineAtMs);
+      const retryDelayMs = retry ? delay : 0;
       options.log({ ...diagnostic, event: "translation_attempt", correlationId, attempt, elapsedMs: Date.now() - started, outcome: "failed", failureCode, retry, retryDelayMs });
       if (!retry) throw error;
       await (options.sleep ?? (ms => new Promise(resolve => setTimeout(resolve, ms))))(retryDelayMs);

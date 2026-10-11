@@ -5,9 +5,9 @@ import {
 } from "./dictionaryMeaningTranslationContract";
 import type { TranslationProviderName } from "./types";
 
-export const TRANSLATION_PIPELINE_VERSION = "dictionary_meaning_examples_first_v2";
+export const TRANSLATION_PIPELINE_VERSION = "dictionary_meaning_full_budget_v3";
 export const IDIOM_ONLY_TRANSLATION_PIPELINE_VERSION =
-  "dictionary_meaning_idiom_only_v2";
+  "dictionary_meaning_idiom_only_full_budget_v3";
 
 export function translationPipelineVersion(
   request: DictionaryMeaningTranslationRequestV1,

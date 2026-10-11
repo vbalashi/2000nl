@@ -135,3 +135,29 @@ separate verification steps.
 Run the targeted TrainingSenseCardV2Session, useWordContextPrompt, wordContextPrompt, sentenceExerciseLoader, TrainingSentenceSession, LibrarySenseCardGroup and TrainingSessionV2Layout tests. The tests cover late readiness without a click, retry bounds, cancellation, failure classification, shared New/Learning chrome, and the approved canvas when a terminal session outlives the viewport wrapper.
 
 Issue: https://github.com/vbalashi/2000nl/issues/588. Database diagnosis is read-only; no scheduler or schema change is needed for these fixes. Production visual confirmation remains a release check.
+
+## 2026-10-11: direct full-budget experiment (#672 / #673)
+
+The expanded patch supersedes the initial 24-field workaround: 128 content
+items, 24,000 content characters / 10,000 estimated tokens, 24,600 request
+string characters / 11,000 estimated tokens. The 600-character per-field cap
+and 32,768 completion budget remain. Both pipeline policies are versioned to
+invalidate incomplete ready overlays lazily.
+
+Real Luna6/high calls, without production writes: oog returned all 29 fields
+and 10 examples in three full trials (37/50/42 seconds); hand returned all 64
+fields and 11 examples in two trials (97/73 seconds). Neither needed repair.
+A read-only replay of 12,280 stored entries found zero omitted fields among
+31,851 definition/context/note/idiom/explanation/example fields (lexical relation
+categories excluded). This is coverage evidence, not a corpus translation-quality
+or unlimited-size guarantee.
+
+The operation deadline is 240s shared by retries and explanation repair;
+client wait is 270s, pending lease/poll window 300s. Caller cancellation is
+forwarded. Gateway 504/524 means unknown outcome and resumes polling of the
+same identity. Cloudflare documents a default read timeout of 125s; the actual
+zone setting was not inspected. See
+https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-5xx-errors/error-524/ .
+A generic fallback already running at the outer deadline is not cancelled, but
+its late result cannot reach the coordinator cache write. No user grades,
+session members, or progress were edited. The patch is not yet deployed.

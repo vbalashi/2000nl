@@ -62,6 +62,7 @@ export async function prepareSentenceExerciseTranslation(input: {
     const result = await requestPlatformV2LibraryTranslation({
       entryId: input.entryId,
       targetLanguageCode: input.translationTargetLanguageCode,
+      ...(input.signal ? {signal:input.signal} : {}),
     });
     return { state: result === "ready" ? "ready" : result === "failed" ? "translation-unavailable" : "translation-pending" };
   } catch (error) {
@@ -97,7 +98,7 @@ export async function loadSentenceExerciseContent(input: {
         (item) => item.actionId === "request-translation" && item.target.entryId === input.candidate.entryId && item.targetLanguageCode === input.translationTargetLanguageCode,
       );
       if (!capability || capability.actionId !== "request-translation") return { state: "translation-unavailable" };
-      const result = await requestPlatformV2LibraryTranslation({ entryId: input.candidate.entryId, targetLanguageCode: input.translationTargetLanguageCode });
+      const result = await requestPlatformV2LibraryTranslation({ entryId: input.candidate.entryId, targetLanguageCode: input.translationTargetLanguageCode, ...(input.signal ? {signal:input.signal} : {}) });
       if (result !== "ready") return { state: result === "failed" ? "translation-unavailable" : "translation-pending" };
       group = await fetchPlatformV2LibraryGroup({
         entryId: input.candidate.entryId,

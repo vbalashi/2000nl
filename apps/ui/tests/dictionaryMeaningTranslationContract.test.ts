@@ -35,6 +35,12 @@ const request: DictionaryMeaningTranslationRequestV1 = {
 };
 
 describe("dictionary meaning translation contract", () => {
+  test("translates all content of a hand-sized article without sacrificing its training example", () => {
+    const built = buildDictionaryMeaningTranslationRequest({entryId:"hand-budget",sourceContentFingerprint:"revision",sourceLanguageCode:"nl",targetLanguageCode:"ru",word:{headword:"hand",raw:{meanings:[{definition:"een lichaamsdeel",examples:["ik geef je een hand"],idioms:Array.from({length:26},(_,index)=>({expression:`uitdrukking ${index}`,explanation:`uitleg ${index}`,examples:index<10?[`voorbeeld ${index}`]:[]}))}]}}});
+    expect(built.content).toHaveLength(64);
+    expect(built.content.filter(item=>item.role==="example")).toHaveLength(11);
+    expect(built.content.some(item=>item.fieldId==="example:0")).toBe(true);
+  });
   test("ordinary training examples survive an idiom-heavy article's bounded budget", () => {
     const built = buildDictionaryMeaningTranslationRequest({
       entryId: "oog-budget-regression", sourceContentFingerprint: "revision",

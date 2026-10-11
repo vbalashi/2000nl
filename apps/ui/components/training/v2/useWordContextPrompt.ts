@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { loadWordContextPrompt, type WordContextLoadResult } from "@/lib/training/wordContextPrompt";
+import { DICTIONARY_TRANSLATION_PENDING_MS } from "@/lib/translation/dictionaryTranslationBudgets";
 
 /** A concurrent translation request can finish after the initial pending response.
  * Recheck only the latched member, with a bounded wait and cancellation on exit. */
@@ -25,7 +26,7 @@ export function useWordContextPrompt({ cacheOwnerId, trainingSessionId, entryId,
         const loaded = await loadWordContextPrompt({userId: cacheOwnerId, sessionId: trainingSessionId, entryId, contentLanguageCode, translationTargetLanguageCode, signal: controller.signal});
         if (controller.signal.aborted) return;
         setResult(loaded);
-        if (loaded.state === "translation-pending" && rechecks++ < 10) timer = setTimeout(() => { void load(); }, 2000);
+        if (loaded.state === "translation-pending" && rechecks++ < DICTIONARY_TRANSLATION_PENDING_MS / 2000) timer = setTimeout(() => { void load(); }, 2000);
         if (loaded.state === "translation-unavailable") retryFailure();
       } catch {
         if (!controller.signal.aborted) {

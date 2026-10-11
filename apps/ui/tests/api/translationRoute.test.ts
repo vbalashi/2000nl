@@ -135,6 +135,20 @@ describe("/api/translation", () => {
     expect(createClient).not.toHaveBeenCalled();
   });
 
+  test.each([45_000,299_000])("does not reclaim a still-running translation after %s ms", async age => {
+    createClient.mockReturnValueOnce({auth:{getUser},rpc}).mockReturnValueOnce({from});
+    getUser.mockResolvedValueOnce({data:{user:{id:"user-1"}},error:null});
+    rpc.mockResolvedValueOnce({data:accessibleWord,error:null});
+    const row={...currentPendingTranslation(),updated_at:new Date(Date.now()-age).toISOString()};
+    from.mockReturnValue(queryChain({data:row,error:null}));
+    const {GET}=await import("@/app/api/translation/route");
+    const response=await GET(request("token-1","&force=1"));
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({status:"pending"});
+    expect(translateDictionaryMeaning).not.toHaveBeenCalled();
+    expect(from).toHaveBeenCalledTimes(1);
+  });
+
   test("rejects invalid target language metadata before provider work", async () => {
     const { GET } = await import("@/app/api/translation/route");
     const invalidRequest = new NextRequest(

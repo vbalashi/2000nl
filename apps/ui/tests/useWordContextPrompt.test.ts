@@ -33,11 +33,11 @@ test("pending context retries are bounded and leave manual recovery available", 
   vi.useFakeTimers();
   vi.mocked(loadWordContextPrompt).mockResolvedValue({state:"translation-pending"});
   const view=renderHook(() => useWordContextPrompt(input));
-  await act(async () => {await vi.advanceTimersByTimeAsync(60000);});
-  expect(loadWordContextPrompt).toHaveBeenCalledTimes(11);
+  await act(async () => {await vi.advanceTimersByTimeAsync(360000);});
+  expect(loadWordContextPrompt).toHaveBeenCalledTimes(151);
   expect(view.result.current).toEqual({state:"translation-pending"});
   await act(async () => {await vi.advanceTimersByTimeAsync(60000);});
-  expect(loadWordContextPrompt).toHaveBeenCalledTimes(11);
+  expect(loadWordContextPrompt).toHaveBeenCalledTimes(151);
 });
 
 test("leaving the card cancels pending translation rechecks", async () => {
