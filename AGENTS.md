@@ -14,6 +14,20 @@ This is the canonical agent entrypoint for the 2000nl monorepo. Use it to orient
 - `docs` - runbooks, feature notes, intent docs, exec plans, and debt tracking.
 - `ops` - deployment and infrastructure placeholders.
 
+## Route by Workstream
+
+Choose one route first; load its local entrypoint rather than the full archive.
+
+| Work | Start here | Boundary |
+| --- | --- | --- |
+| Application, dictionary, training, Platform | [Intent](docs/intent/index.md), then the relevant module README | Runtime code lives in this repo; `apps/api` is not the active backend. |
+| Product landing / waitlist, studio website / blog | [Website routes](docs/marketing/website/README.md) | Landing implementations are separate workspaces; do not build them inside `apps/ui` by default. |
+| Media strategy, audience, business economics | [Marketing](docs/marketing/README.md) | Planning assumptions are not implemented product contracts. |
+| Article ideas and briefs | [Article bank](docs/marketing/article-ideas/README.md) | Keep user-originated material separate from Codex suggestions; no automatic selection or publication. |
+| Research and experiments | [Research](docs/research/README.md), [Discovery](docs/discovery/README.md) | Evidence and proposed conclusions; not production behavior or publication-ready claims. |
+| Accepted implementation work | [Execution plans](docs/exec-plans/README.md) | Owning issue, code boundaries, validation and rollout. |
+| Discussion history / current decisions | [Discussions](docs/discussions/README.md) / [Current decisions](docs/intent/current-decisions.md) | Preserve reasoning; acceptance and implementation are separate statuses. |
+
 ## Related Workspaces
 
 2000NL is tracked with AudioFilms and Pontix in the shared GitHub Project

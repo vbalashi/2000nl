@@ -79,8 +79,112 @@
 
 - [2026-10-08: prompt centering and hints](2026-10-08-04-training-prompt-centering.md) — #633; main prompt anchor, quiet boundaries, idiom recovery follow-up #634.
 
+- [2026-10-09: медиа и первые оплаты](2026-10-09-01-media-and-first-paying-users.md)
+
+- [2026-10-09: Free и гипотезы цены](2026-10-09-02-free-tier-and-pricing-hypotheses.md)
+
+- [2026-10-10: фиксированная бесплатная подборка 100](2026-10-10-01-editorial-free-100.md)
+
+- [2026-10-10: упражнения и подборки внутри Free 100](2026-10-10-02-free-100-exercises-and-subsets.md)
+
+- [2026-10-10: перевод и озвучка Free 100](2026-10-10-03-free-100-translation-and-audio.md)
+
+- [2026-10-10: язык медиа и личный бренд](2026-10-10-04-editorial-language-and-personal-brand.md)
+
+- [2026-10-10: общий блог Dilumeo](2026-10-10-05-dilumeo-shared-blog.md)
+
+- [2026-10-10: исправление имени и ритм](2026-10-10-06-brand-correction-and-cadence.md)
+
+- [2026-10-10: собственный словарь и платная бета](2026-10-10-07-owned-dictionary-and-paid-beta.md)
+
+- [2026-10-10: бета и обычные тарифы](2026-10-10-08-beta-capacity-and-standard-plans.md)
+
+- [2026-10-10: постепенное привлечение](2026-10-10-09-gradual-organic-launch.md)
+
+- [2026-10-10: структура стратегии и планов](2026-10-10-10-strategy-planning-structure.md)
+
+- [2026-10-10: студия и два портфолио](2026-10-10-11-studio-scope-and-author-portfolios.md)
+
+- [2026-10-10: продуктовый фокус и консультации](2026-10-10-12-product-focus-and-consulting.md)
+
+- [2026-10-10: требования к блогу и профессиональные темы](2026-10-10-13-blog-requirements-and-work-topics.md)
+
+- [2026-10-10: редакционные направления и навигация](2026-10-10-14-editorial-directions-and-navigation.md)
+
+- [2026-10-10: образовательные каналы Олеси](2026-10-10-15-olesia-educational-channels.md)
+
+- [2026-10-10: архив и редакционный реестр](2026-10-10-16-owned-archive-and-editorial-register.md)
+
+- [2026-10-10: начало расчёта экономики](2026-10-10-17-economics-inventory.md)
+
+- [2026-10-10: исходные расходы](2026-10-10-18-initial-expenses.md)
+
+- [2026-10-10: расходы и собственный труд](2026-10-10-19-cost-update-and-founder-time.md)
+
+- [2026-10-10: чистый доход и работа партнёра](2026-10-10-20-net-income-and-partner-work.md)
+
+- [2026-10-10: ориентиры дохода и команда](2026-10-10-21-income-milestones-and-two-person-team.md)
+
+- [2026-10-10: базовый семейный доход](2026-10-10-22-family-income-baseline.md)
+
+- [2026-10-10: чистый бюджет без пенсии и страхования](2026-10-10-23-net-living-budget-excludes-provisions.md)
+
+- [2026-10-10: единый бюджет инфраструктуры](2026-10-10-24-infrastructure-budget.md)
+
+- [2026-10-10: бюджет AI/TTS и кеш](2026-10-10-25-provider-budget-and-cache-load.md)
+
+- [2026-10-10: нагрузка платящих активных](2026-10-10-26-paying-active-load.md)
+
+- [2026-10-10: рабочее время Олеси](2026-10-10-27-olesia-weekly-time.md)
+
+- [2026-10-10: рабочие недели](2026-10-10-28-working-weeks.md)
+
+- [2026-10-10: пенсионные сценарии](2026-10-10-29-pension-budget-scenarios.md)
+
+- [2026-10-10: страхование как новая статья](2026-10-10-30-insurance-new-expense.md)
+
+- [2026-10-10: подушка на шесть месяцев](2026-10-10-31-six-month-reserve.md)
+
+- [2026-10-10: подтверждение eenmanszaak](2026-10-10-32-eenmanszaak-confirmation.md)
+
+- [2026-10-10: тарифы бухгалтерии](2026-10-10-33-accounting-prices.md)
+
+- [2026-10-10: бюджет бухгалтерии принят](2026-10-10-34-accounting-budget-accepted.md)
+
+- [2026-10-10: бэкапы внутри инфраструктуры](2026-10-10-35-backups-within-infrastructure.md)
+
+- [2026-10-10: общий доменный бюджет](2026-10-10-36-total-domain-budget.md)
+
+- [2026-10-10: конечная цена и платежи](2026-10-10-37-consumer-price-and-payments.md)
+
+- [2026-10-10: мировые продажи и условная цена](2026-10-10-38-worldwide-sales-price-placeholder.md)
+
+- [2026-10-10: состав связанной подписки](2026-10-10-39-connected-subscription-scope.md)
+
+- [2026-10-10: конкурентные цены и первый срез](2026-10-10-40-competitor-price-research.md)
+
+- [2026-10-10: сохранить коммерческую модель](2026-10-10-41-keep-current-commercial-model.md)
+
+- [2026-10-10: первый расчёт семейной цели](2026-10-10-42-family-income-first-calculation.md)
+
+- [2026-10-10: экономическая модель принята как основа](2026-10-10-43-economic-model-accepted.md)
+
+- [2026-10-10: читатели до отбора статей](2026-10-10-44-reader-profiles-before-editorial-selection.md)
+
+- [2026-10-10: основной читатель и преподавательские подборки](2026-10-10-45-primary-reader-and-teacher-lists.md)
+
+- [2026-10-10: brainstorm тем под читателей](2026-10-10-46-reader-article-brainstorm.md)
+
+- [2026-10-10: происхождение идей статей](2026-10-10-47-article-idea-origin.md)
+
+- [2026-10-11: темы пользователя с планами и анонсами](2026-10-11-01-user-article-briefs.md)
+
+- [2026-10-11: маршрутизация направлений в harness](2026-10-11-02-harness-workstream-routing.md)
+
 - [2026-10-09: Lavender icon revision](2026-10-09-01-lavender-icon.md) — #642.
 
 - [2026-10-09: Training startup recovery](2026-10-09-02-startup-recovery.md)
 
 - [2026-10-10: переводы карточек, план спринта](2026-10-10-01-translation-sprint.md) — #655.
+
+- [2026-10-11: вход студийного сайта и интеграция](2026-10-11-03-studio-entrypoints-and-integration.md)
