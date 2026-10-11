@@ -1,5 +1,5 @@
 import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
-import { fetchDictionaryMeaningTranslation } from "@/lib/translation/translationApiClient";
+import { observeDictionaryMeaningTranslation } from "@/lib/translation/dictionaryTranslationObservation";
 import {
   forwardAbortSignal,
   platformFetchWithTimeout,
@@ -50,7 +50,7 @@ async function requestPlatformV2TranslationUncached(
   context: { transitionId?: string; signal?: AbortSignal },
 ): Promise<void> {
   const startedAt = performance.now();
-  const response = await fetchDictionaryMeaningTranslation({
+  const response = await observeDictionaryMeaningTranslation({
     entryId: capability.target.entryId,
     targetLanguageCode: capability.targetLanguageCode,
     signal: context.signal,
