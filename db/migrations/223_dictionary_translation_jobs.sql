@@ -1,6 +1,7 @@
 -- #674. Private execution queue; authenticated HTTP facades check dictionary ACL
 -- before using these service-role-only RPCs. This migration is not enabled in
 -- the deployment manifest until the worker and client contracts are integrated.
+-- Local/fresh bootstrap includes it to keep canonical schema coverage complete.
 BEGIN;
 
 CREATE TABLE public.dictionary_translation_jobs (

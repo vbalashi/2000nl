@@ -39,7 +39,7 @@ Implemented locally, not released:
 
 Validation at this checkpoint: UI typecheck passes; full UI suite 259 files / 2,272 tests passed (38 files / 353 DB-dependent tests skipped without DB URL); disposable Postgres suite 41 files / 365 tests passed, including nine queue contract tests. The additional idiom-only cache regression passed in the focused four-test coordinator suite. Lint passes with the existing unrelated handlePlayAudio dependency warning in TrainingSenseCardV2Session.tsx:617. No production mutation, worker-process deployment or browser release verification has been performed.
 
-Integration is deliberately pending: this draft migration is not in the deployment manifest/bootstrap; no worker service or queue-based HTTP behavior is enabled. The next integrated slice must connect authenticated enqueue/status, trusted source/provider identity resolution, independent worker startup/health and unified polling before queue rollout. Source inventory/semantic partitions/checkpoints and the bounded session buffer remain required scope, not completed by requested-field readiness.
+Integration is deliberately pending: this draft migration is included in local/fresh bootstrap for canonical schema coverage, but not in the production deployment manifest; no worker service or queue-based HTTP behavior is enabled. The next integrated slice must connect authenticated enqueue/status, trusted source/provider identity resolution, independent worker startup/health and unified polling before queue rollout. Source inventory/semantic partitions/checkpoints and the bounded session buffer remain required scope, not completed by requested-field readiness.
 
 ## Validation and rollout
 
@@ -48,3 +48,5 @@ Use local disposable Supabase/Postgres for migration iteration. Explicitly revok
 ## Risks to resolve
 
 Queue fairness and cost admission; old pending cache ownership during transition; source/policy changes while a job runs; delayed old provider writes; stable partition identity and context budget; actual deployed worker lifecycle and rollback; product capability coordination. Defaults and failure behavior must be explicit and tested before enabling the worker.
+
+CI initially caught the missing bootstrap include; it is now present without enabling production migration 223. The release-boundary declaration describes independent deployment of the cache-readiness foundation only; the PR remains draft and #674 remains in progress.
