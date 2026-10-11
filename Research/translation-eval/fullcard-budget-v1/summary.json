@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "translation-fullcard-budget-result-v1",
+  "manifestHash": "1447fbd8a14d0264a9b24bd653ba4974903000971ab6a21a919132eadfa3fa7e",
+  "cases": 25,
+  "baseline": {
+    "cap": 2200,
+    "timeoutMs": 15000,
+    "ready": 11,
+    "knownTokens": {
+      "prompt_tokens": 45632,
+      "completion_tokens": 48820,
+      "total_tokens": 94452,
+      "reasoning_tokens": 45221
+    },
+    "usageUnavailableAttempts": 11,
+    "knownCostReferenceUSD": {
+      "uncachedReferenceUSD": 0.028973199999999994,
+      "cacheAwareReferenceUSD": 0.02647824
+    }
+  },
+  "expanded": {
+    "cap": 32768,
+    "timeoutMs": 180000,
+    "ready": 22,
+    "firstAttemptReady": 22,
+    "withoutFindings": 19,
+    "majorCards": 0,
+    "minorCards": 3,
+    "providerCalls": 25,
+    "diagnostics": {
+      "ready": 22,
+      "contract_invalid": 3
+    },
+    "knownTokens": {
+      "prompt_tokens": 45632,
+      "completion_tokens": 61413,
+      "total_tokens": 107045,
+      "reasoning_tokens": 52052,
+      "cached_tokens": 45557,
+      "cache_write_tokens": 0
+    },
+    "usageUnavailableAttempts": 0,
+    "costReferenceUSD": {
+      "uncachedReferenceUSD": 0.0352697,
+      "cacheAwareReferenceUSD": 0.031169569999999994
+    },
+    "averagePerAttemptedCardUSD": {
+      "uncachedReferenceUSD": 0.001410788,
+      "cacheAwareReferenceUSD": 0.0012467827999999997
+    },
+    "extrapolated100SameMixUSD": {
+      "uncachedReferenceUSD": 0.1410788,
+      "cacheAwareReferenceUSD": 0.12467827999999997
+    },
+    "stats": {
+      "prompt_tokens": {
+        "min": 1700,
+        "mean": 1825.28,
+        "median": 1786,
+        "p95": 2047,
+        "max": 2195
+      },
+      "completion_tokens": {
+        "min": 833,
+        "mean": 2456.52,
+        "median": 2502,
+        "p95": 3989,
+        "max": 6277
+      },
+      "total_tokens": {
+        "min": 2543,
+        "mean": 4281.8,
+        "median": 4273,
+        "p95": 6036,
+        "max": 8472
+      }
+    },
+    "reasoningStats": {
+      "min": 555,
+      "mean": 2082.08,
+      "median": 2165,
+      "p95": 3443,
+      "max": 5183
+    },
+    "visibleOutputStats": {
+      "min": 215,
+      "mean": 374.44,
+      "median": 327,
+      "p95": 741,
+      "max": 1094
+    },
+    "elapsedMsStats": {
+      "min": 5934,
+      "mean": 16243,
+      "median": 15393,
+      "p95": 32139,
+      "max": 38378
+    },
+    "peakCapUtilization": 0.191558837890625
+  },
+  "servedModels": {
+    "gpt-6-luna-2026-09-22": 25
+  },
+  "reviewMethod": "Primary agent, nonblind; all completed fields reviewed; failures retained. Not human-approved.",
+  "pricing": {
+    "checkedDate": "2026-10-11",
+    "source": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+    "pricingSource": "https://developers.openai.com/api/docs/pricing",
+    "model": "gpt-6-luna",
+    "currency": "USD",
+    "unit": "1M tokens",
+    "standard": {
+      "input": 0.1,
+      "cachedInput": 0.01,
+      "cacheWrite": 0.125,
+      "outputIncludingReasoning": 0.5
+    },
+    "billing": "Public OpenAI reference; actual Azure invoice tariff unverified. Show uncached reference estimate and cache-aware estimate where usage permits; unavailable usage separate. No audio or review model calls."
+  },
+  "caveats": [
+    "Public OpenAI reference prices, actual Azure invoice tariff unverified. Cache-aware calculation uses reported read/write token subsets.",
+    "Completion includes reasoning; never charge reasoning a second time.",
+    "100-card money number is extrapolation from25 long meanings, not100 new calls.",
+    "Budget and timeout both changed; stochastic generations also differ. One draw per card.",
+    "Same production-bounded sources: three examples of longest source already omitted by application limits; this experiment does not restore them.",
+    "Original baseline has11 timeout attempts without usage; its known token/cost totals are lower bounds."
+  ]
+}
