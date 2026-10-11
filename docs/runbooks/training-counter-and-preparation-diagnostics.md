@@ -75,6 +75,53 @@ did not establish end-to-end training readiness. Provider transport retry,
 explanation repair, cache invalidation and UI preparation retry are separate
 mechanisms; none could introduce an example absent from the selected request.
 
+### Expanded coverage and live audit: draft hold
+
+The reordering is a partial fix, not a complete-source contract. `oog` contains
+29 content fields: one definition, nine idioms, nine explanations, and ten
+examples (one standalone and nine idiom examples), plus its headword. Both old
+and reordered requests contain 24 content fields and five examples; reordering
+replaces one idiom example with the standalone example. It does not translate
+all source examples. The complete content is only 1193 characters and an
+estimated 1881 content tokens including field/role metadata; the 24-item ceiling,
+not the other current content budgets, excludes the remaining examples here.
+
+A read-only census replayed the revised builder for 12280 stored entries with
+13374 standalone examples. One standalone example still failed exact coverage:
+the active `hand` entry with 26 idioms. The census includes stored entries rather
+than claiming a filtered active-training corpus. This is a known remaining
+counterexample to resolving starvation only by reordering.
+
+Live Luna6/high/32768-token testing performed one revised bounded request and
+three experimental complete-source requests (the latter bypassed the builder's
+24-item selection only; no production setting or DB/cache was changed). All
+four completed with one provider call each and no explanation repair. The
+complete requests returned all 29 fields in 37.1, 50.4 and 42.5 seconds. Their
+observed completion usage was 5387, 8145 and 6422 tokens. All ten examples were
+present in all three. Agent assessment found no major meaning/participant/
+negation errors; minor variation included more literal versus explanatory
+idiom wording and capitalization. This is a three-run check of one article,
+not a blinded linguistic evaluation or reliability guarantee for the corpus.
+Raw dictionary inputs/results remain in ignored `tmp/oog-live-audit/` in the
+issue worktree, which must be retained as evidence until preserved explicitly.
+
+Additional execution mismatches remain: the browser translation client defaults
+to 12 seconds, whereas the server provider allows 180 seconds per call; the
+coordinator treats same-fingerprint pending work as fresh for only 15 seconds.
+Successful observed generations exceeded both shorter windows. This proves
+timeout configuration is inconsistent; it does not establish a specific
+duplicate race in the reported production session. The owner-guarded cache
+write protects against late overwrites but does not itself prevent duplicate
+generation or report whether the final write matched a claim.
+
+PR #673 is held as a draft. Before claiming general recovery, implement explicit
+complete or exact-target coverage with bounded batches for large articles,
+validate the frozen example's readiness independently from entry readiness,
+align browser polling/execution and pending ownership lifetimes, and test
+concurrent owners, abandoned claims, slow success, missing non-explanation
+fields, source/policy changes and retry exhaustion. Do not release reordering
+as coverage of all known scenarios.
+
 Regression checks include an idiom-heavy request that previously omitted the
 ordinary example, old-ready-overlay invalidation, automatic failure recovery,
 retry bounds, and manual retry reset. The exact production `oog` source was
