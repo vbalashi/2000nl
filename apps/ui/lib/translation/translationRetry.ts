@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 
 export type TranslationAttemptDiagnostic = {
+  operation?: "explanation_repair";
   stage: "request" | "response" | "contract";
   status?: number;
   model?: string;

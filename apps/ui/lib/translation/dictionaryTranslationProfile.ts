@@ -18,11 +18,12 @@ export function dictionaryTranslationProfile() {
     id,
     model: luna ? "gpt-6-luna" : "gpt-4.1",
     envPrefix: luna ? "AZURE_OPENAI_GPT6_LUNA" : "AZURE_OPENAI",
+    timeoutMs: luna ? 180_000 : 15_000,
     literalIdioms: luna && id !== "luna6-v5",
     systemFile: id === "legacy" ? "openai_dictionary_meaning_system_v1.txt" : `openai_dictionary_meaning_${prompt}_system.txt`,
     userFile: id === "legacy" ? "openai_dictionary_meaning_user_v1.txt" : `openai_dictionary_meaning_${prompt}_user.txt`,
     requestSettings: luna
-      ? { reasoning_effort: (id === "luna6" || id === "luna6-v10" || id === "luna6-v8-high") ? "high" as const : "low" as const, max_completion_tokens: 2200, ...(id !== "luna6-v5" ? { response_format: { type: "json_object" as const } } : {}) }
+      ? { reasoning_effort: (id === "luna6" || id === "luna6-v10" || id === "luna6-v8-high") ? "high" as const : "low" as const, max_completion_tokens: 32768, ...(id !== "luna6-v5" ? { response_format: { type: "json_object" as const } } : {}) }
       : { temperature: 0, max_tokens: 2200 },
   };
 }

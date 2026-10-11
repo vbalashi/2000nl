@@ -19,7 +19,7 @@ export function getOpenAiDictionaryMeaningPromptFingerprint() {
   const meaningInstructions = loadPromptText(profile.userFile);
   // Preserve exact legacy cache identity for a full rollback.
   const prompt = [meaningSystem, meaningInstructions].join("\n---\n");
-  return sha256(profile.id === "legacy" ? prompt : JSON.stringify({ model: profile.model, settings: profile.requestSettings, prompt }));
+  return sha256(profile.id === "legacy" ? prompt : JSON.stringify({ model: profile.model, settings: profile.requestSettings, prompt, explanationRepair: loadPromptText("openai_dictionary_explanation_repair_v1.txt") }));
 }
 
 export function getDictionaryMeaningPromptFingerprint(
