@@ -386,7 +386,7 @@ describe("/api/translation", () => {
     });
   });
 
-  test("stores a sense-aware artifact with generated alternatives", async () => {
+  test("reclaims an expired pending lease and stores a sense-aware artifact", async () => {
     const userClient = { auth: { getUser }, rpc };
     const serviceClient = { from };
     createClient
@@ -420,7 +420,7 @@ describe("/api/translation", () => {
 
     const stalePending = {
       ...currentPendingTranslation(),
-      updated_at: "2020-01-01T00:00:00.000Z",
+      updated_at: new Date(Date.now() - 301_000).toISOString(),
     };
     const lookupChain = queryChain({ data: stalePending, error: null });
     const claimChain = queryChain({

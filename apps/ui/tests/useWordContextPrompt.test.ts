@@ -51,3 +51,23 @@ test("leaving the card cancels pending translation rechecks", async () => {
   expect(signal.aborted).toBe(true);
   expect(loadWordContextPrompt).toHaveBeenCalledTimes(1);
 });
+
+
+test("a slow pending translation becomes ready for the same frozen member", async () => {
+  vi.useFakeTimers();
+  const started = Date.now();
+  const prompt = {text: "перевод", sourceText: "voorbeeld", contentNodeId: "frozen-node", sourceTextFingerprint: "frozen-fingerprint"};
+  vi.mocked(loadWordContextPrompt).mockImplementation(async () =>
+    Date.now() - started < 100000 ? {state: "translation-pending"} : {state: "ready", prompt});
+  const view = renderHook(() => useWordContextPrompt(input));
+  await act(async () => {await vi.advanceTimersByTimeAsync(50000);});
+  expect(view.result.current?.state).toBe("translation-pending");
+  await act(async () => {await vi.advanceTimersByTimeAsync(52000);});
+  expect(view.result.current).toEqual({state: "ready", prompt});
+  for (const [request] of vi.mocked(loadWordContextPrompt).mock.calls) {
+    expect(request).toMatchObject({userId: "owner", sessionId: "run", entryId: "entry", translationTargetLanguageCode: "ru"});
+  }
+  const count = vi.mocked(loadWordContextPrompt).mock.calls.length;
+  await act(async () => {await vi.advanceTimersByTimeAsync(60000);});
+  expect(loadWordContextPrompt).toHaveBeenCalledTimes(count);
+});
