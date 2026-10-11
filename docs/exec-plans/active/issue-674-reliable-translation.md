@@ -88,3 +88,9 @@ GitHub UI tests themselves passed; the subsequent standalone QA-wrapper suite ca
 ## Release review — 2026-10-11
 
 Owner authorized production release. Standards/security/operational review found no blocking issue in bea5f621. Spec review identified pending source invalidation without a matching job: observation now re-enqueues needsEnqueue without force; six focused tests pass. CI's startup E2E assumed no translation request after Start; updated it to assert exactly the next frozen entry at background priority without force. Original scenario failed locally before the change and passes afterward. Production migration/activation remains separate from the default-off PR release.
+
+## Activation follow-up — 2026-10-11
+
+PR #675 merged at 2d256472 and deploy 38156313155 succeeded. Production 0.18.1281 reported that exact commit, compatible DB contract 222, deep health ok and translationWorker.enabled=false. Reference main synchronized. The same clean issue checkout was reused on codex/674-activate-translation; the merged feature branch remains preserved.
+
+Activation adds migration 223 with exact checksum, chained read-only postflight (privacy/grants, identity/lease constraints, bounded claims and publication fences) and production deploy flag. Postflight passes locally; probe-only negative tests reject missing worker UPDATE privilege and missing function search_path. Independent review found no activation blocker. Prompt/provider budgets remain unchanged. CI and production activation verification are pending.

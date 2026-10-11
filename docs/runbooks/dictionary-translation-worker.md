@@ -1,6 +1,6 @@
 # Dictionary translation worker (#674)
 
-Queue execution is off by default. The release must enable migration 223 through the exact-checksum/postflight DB manifest before setting `DICTIONARY_TRANSLATION_JOBS_ENABLED=true` in the NUC environment. Do not set the flag against contract 222 production. Semantic partitions are deferred by the owner; this worker retains the released full-context prompt and budgets.
+Compose defaults queue execution off for local/manual use. The production deploy workflow explicitly enables `DICTIONARY_TRANSLATION_JOBS_ENABLED=true` together with reviewed contract 223 and its exact-checksum/postflight manifest. Deploy applies the contract before starting the worker and switches UI only after worker health passes. Do not enable the flag against contract 222. Semantic partitions remain deferred; the released full-context prompt and budgets are unchanged. See [activation decision](../discussions/2026-10-11-07-activate-translation-jobs.md).
 
 `scripts/start-translation-worker.mjs` reads resolved Compose configuration in memory without logging secrets. When enabled it starts the `translation-jobs` profile's worker from the same immutable `UI_IMAGE_TAG` as UI, waits for container health, then the deploy workflow switches UI and checks deep health. When disabled it stops the worker. The worker uses the same server-side provider/Supabase configuration and a read-only audio mount.
 

@@ -264,7 +264,7 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 222 in order
+An enabled deployment must apply or verify migrations 123 through 223 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -774,3 +774,7 @@ fixture on the canonical local Supabase postmaster.
 Warm-query reduction is established; removal of sporadic multi-second production
 latency is not. After release, remeasure the read-only catalog separately from
 Training start and compare ordinary timings and outliers.
+
+## Durable translation preparation (migration 223)
+
+Issue #674 activates the private translation-job contract after PR #675 shipped default-off. Contract 223 appends the exact migration checksum and a chained read-only postflight for private queue/function permissions, identity/lease constraints, global concurrency reservation, bounded attempts and fenced atomic publication. The deploy workflow explicitly enables dictionary translation jobs. It applies the DB contract first, starts the worker from the matching immutable image, requires worker health, then switches UI and verifies deep health. First-activation rollback disables jobs for the previous UI image if no prior worker existed; additive DB objects remain applied. No bulk regeneration or prompt-budget change is included.
