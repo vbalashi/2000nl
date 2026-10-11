@@ -1,0 +1,16 @@
+{
+  "casesReplayed": 25,
+  "ready": 25,
+  "unchangedValidCases": 22,
+  "liveRepairCalls": 3,
+  "repairsAccepted": 3,
+  "preservedExistingValues": true,
+  "usage": {
+    "input": 2703,
+    "completion": 364
+  },
+  "extraCallsInitialPrototype": 2,
+  "initialPrototypeReady": 24,
+  "initialPrototypeRejectedReorderedCase": 1,
+  "limitation": "Frozen primary responses replayed, not25 new full translations. Agent nonblind review. v1 raw evidence preserved separately."
+}

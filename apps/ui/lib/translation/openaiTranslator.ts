@@ -1,3 +1,4 @@
+import { planDictionaryExplanationRepair, mergeDictionaryExplanationRepair } from "./dictionaryExplanationRepair";
 import { dictionaryTranslationProfile } from "./dictionaryTranslationProfile";
 import { withTranslationRetries, safeProviderRequestId, retryAfterMs, type TranslationAttemptDiagnostic } from "./translationRetry";
 import type {
@@ -108,6 +109,7 @@ export class OpenAITranslator implements ITranslator {
   private fallback?: ITranslator;
   private maxRetries: number;
   private timeoutMs: number;
+  private dictionaryTimeoutMs?: number;
 
   constructor(options: OpenAITranslatorOptions) {
     this.apiKey = options.apiKey;
@@ -116,6 +118,7 @@ export class OpenAITranslator implements ITranslator {
     this.fallback = options.fallback;
     this.maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.dictionaryTimeoutMs = options.timeoutMs;
   }
 
   async translateText(request: TranslationProviderTextRequest) {
@@ -230,16 +233,29 @@ export class OpenAITranslator implements ITranslator {
       throw new Error("OPENAI_API_KEY is not configured");
     }
     try {
-      const result = await this.withRetries(async diagnostic =>
-        parseDictionaryMeaningTranslationResult(
-          await this.requestChatContent(
-            buildDictionaryMeaningTranslationMessages(request),
-            diagnostic,
-            true,
-          ),
-          request,
-        ),
-      );
+      let content = "";
+      let result: DictionaryMeaningTranslationResultV1;
+      try {
+        result = await this.withRetries(async diagnostic => {
+          content = await this.requestChatContent(buildDictionaryMeaningTranslationMessages(request), diagnostic, true);
+          return parseDictionaryMeaningTranslationResult(content, request);
+        });
+      } catch (error) {
+        const repair = dictionaryTranslationProfile().id === "legacy" ? null : planDictionaryExplanationRepair(content, request);
+        if (!repair) throw error;
+        console.info("[translation] explanation repair", { phase: "requested", missingCount: repair.missing.length });
+        try {
+          result = await this.withRetries(async diagnostic => {
+            diagnostic.operation = "explanation_repair";
+            const patch = await this.requestChatContent(repair.messages, diagnostic, true);
+            return mergeDictionaryExplanationRepair(content, patch, request, repair.missing);
+          });
+          console.info("[translation] explanation repair", { phase: "ready", missingCount: repair.missing.length });
+        } catch (repairError) {
+          console.info("[translation] explanation repair", { phase: "failed", missingCount: repair.missing.length });
+          throw repairError;
+        }
+      }
       return {
         ...result,
         meta: {
@@ -293,7 +309,7 @@ export class OpenAITranslator implements ITranslator {
   ): Promise<string> {
     if (/^[a-zA-Z0-9._-]{1,100}$/.test(this.model)) diagnostic.model = this.model;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timeout = setTimeout(() => controller.abort(), dictionary ? (this.dictionaryTimeoutMs ?? dictionaryTranslationProfile().timeoutMs) : this.timeoutMs);
     const isAzure = looksLikeAzureOpenAI(this.apiUrl);
     try {
       const includeModel = !isAzure || !/\/openai\/deployments\//i.test(this.apiUrl);

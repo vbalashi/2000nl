@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "translation-fullcard-volume-report-v1",
+  "manifestHash": "7bb622dc3b58cee17b4256bd6384a627d744ba978523c08806a3ae7f2e42fcf1",
+  "reviewMethod": "primary agent; nonblind; all 86 completed responses reviewed field by field; 14 failures reviewed structurally; not human-approved; no external judge calls",
+  "bands": [
+    {
+      "band": "small",
+      "n": 25,
+      "sentCharacters": [
+        7,
+        67
+      ],
+      "ready": 25,
+      "accepted": 25,
+      "majorCards": 0,
+      "minorCards": 0,
+      "deliveryFailures": 0,
+      "firstAttemptReady": 25,
+      "contentFieldsReviewed": 36,
+      "contentFieldsWithFindings": 0,
+      "fieldFindingRate": 0.0,
+      "allIssueRateWilson95": [
+        0,
+        0.13319649395317873
+      ],
+      "sourceOmittedFields": 0,
+      "sourceTruncatedFields": 0,
+      "promptTokensRange": [
+        1565,
+        1597
+      ]
+    },
+    {
+      "band": "medium",
+      "n": 25,
+      "sentCharacters": [
+        73,
+        118
+      ],
+      "ready": 25,
+      "accepted": 24,
+      "majorCards": 0,
+      "minorCards": 1,
+      "deliveryFailures": 0,
+      "firstAttemptReady": 25,
+      "contentFieldsReviewed": 66,
+      "contentFieldsWithFindings": 1,
+      "fieldFindingRate": 0.015151515151515152,
+      "allIssueRateWilson95": [
+        0.007096050386699165,
+        0.19544472405022525
+      ],
+      "sourceOmittedFields": 0,
+      "sourceTruncatedFields": 0,
+      "promptTokensRange": [
+        1589,
+        1637
+      ]
+    },
+    {
+      "band": "large",
+      "n": 25,
+      "sentCharacters": [
+        121,
+        187
+      ],
+      "ready": 25,
+      "accepted": 25,
+      "majorCards": 0,
+      "minorCards": 0,
+      "deliveryFailures": 0,
+      "firstAttemptReady": 25,
+      "contentFieldsReviewed": 70,
+      "contentFieldsWithFindings": 0,
+      "fieldFindingRate": 0.0,
+      "allIssueRateWilson95": [
+        0,
+        0.13319649395317873
+      ],
+      "sourceOmittedFields": 0,
+      "sourceTruncatedFields": 0,
+      "promptTokensRange": [
+        1592,
+        1648
+      ]
+    },
+    {
+      "band": "long-tail",
+      "n": 25,
+      "sentCharacters": [
+        344,
+        1022
+      ],
+      "ready": 11,
+      "accepted": 11,
+      "majorCards": 0,
+      "minorCards": 0,
+      "deliveryFailures": 14,
+      "firstAttemptReady": 10,
+      "contentFieldsReviewed": 91,
+      "contentFieldsWithFindings": 0,
+      "fieldFindingRate": 0.0,
+      "allIssueRateWilson95": [
+        0.37067017019564436,
+        0.7333462505299744
+      ],
+      "sourceOmittedFields": 3,
+      "sourceTruncatedFields": 0,
+      "promptTokensRange": [
+        1709,
+        1842
+      ]
+    }
+  ],
+  "cards": 100,
+  "providerCalls": 111,
+  "attemptDiagnostics": {
+    "ready": 86,
+    "timeout": 11,
+    "incomplete": 13,
+    "contract_invalid": 1
+  },
+  "knownTokensFrom100ReceivedResponses": {
+    "prompt_tokens": 165820,
+    "completion_tokens": 98323,
+    "total_tokens": 264143,
+    "reasoning_tokens": 87460,
+    "cached_tokens": 110631
+  },
+  "usageUnavailableAttempts": 11,
+  "servedModels": {
+    "gpt-6-luna-2026-09-22": 100,
+    "unavailable": 11
+  },
+  "spearman": {
+    "sentCharacters_vs_anyIssue": 0.5234463200767867,
+    "sentCharacters_vs_semanticFieldFindingRate": -0.03277254838492816
+  },
+  "money": null,
+  "moneyNote": "No verified Azure billed rates used; actual tokens saved. No audio, revision or semantic judge calls.",
+  "caveats": [
+    "Frozen ownerless dictionary snapshot, not fresh production traffic.",
+    "25 longest tail deliberately enriched; group sizes do not represent traffic.",
+    "Complexity, idioms and number of fields vary with size; association is not causation.",
+    "Source omissions at application limits are separate from model translation quality.",
+    "Single draw per real card and nonblind agent assessment; uncertainty remains.",
+    "Execution processed groups from small to long; time/load confounds timeout comparisons.",
+    "Usage for 11 aborted timeout attempts is unavailable; known token totals are not a complete billing total."
+  ]
+}
