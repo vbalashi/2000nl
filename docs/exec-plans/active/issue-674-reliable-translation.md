@@ -52,3 +52,5 @@ Queue fairness and cost admission; old pending cache ownership during transition
 CI initially caught the missing bootstrap include; it is now present without enabling production migration 223. The release-boundary declaration describes independent deployment of the cache-readiness foundation only; the PR remains draft and #674 remains in progress.
 
 Further boundary regression: at the current maximum 128 content fields, translatedPaths contains 129 entries including headword. The safety filter previously dropped all coverage metadata at this boundary. It now preserves the legitimate 129 paths and still rejects oversized metadata; an artifact integration regression covers this case.
+
+GitHub UI tests themselves passed; the subsequent standalone QA-wrapper suite caught four legacy fixtures that treated an unauthenticated Today label as success. Those fixtures now include an authenticated shell/session, and a new negative test preserves the auth gate. The complete standalone wrapper suite passes locally: 19/19. GitHub DB drift/bootstrap and FSRS passed on 9923f08d.

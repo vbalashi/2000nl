@@ -56,23 +56,32 @@ test("production wrapper rejects a caller-supplied URL before minting", () => {
   assert.match(result.stderr, /Unknown arg: --url/);
 });
 
-test("surface probe recognizes the approved uppercase Dutch Today label", () => {
-  const marker = vm.runInNewContext(surfaceProbeExpression, {
-    document: { body: { innerText: "TRAINING · VANDAAG" } },
-    localStorage: {},
-  });
-  assert.equal(marker, "QA_SURFACE:TODAY");
-});
+function authenticatedProbeFixture(text) {
+  return {
+    Date,
+    document: {
+      body: { innerText: text },
+      querySelector: (selector) => selector === 'nav[aria-label="Primary"]' ? {} : null,
+    },
+    localStorage: {
+      "sb-fixture-auth-token": "fixture",
+      getItem: () => JSON.stringify({access_token:"fixture",expires_at:Math.floor(Date.now()/1000)+3600}),
+    },
+  };
+}
 
-for (const label of ["TRAINING · STUDY DAY", "TRAINING · STUDIEDAG", "ТРЕНИРОВКА · УЧЕБНЫЙ ДЕНЬ"]) {
-  test(`surface probe recognizes the current setup label: ${label}`, () => {
-    const marker = vm.runInNewContext(surfaceProbeExpression, {
-      document: { body: { innerText: label }, querySelector: () => null },
-      localStorage: {},
-    });
+for (const label of ["TRAINING · VANDAAG", "TRAINING · STUDY DAY", "TRAINING · STUDIEDAG", "ТРЕНИРОВКА · УЧЕБНЫЙ ДЕНЬ"]) {
+  test(`surface probe recognizes an authenticated legacy/setup label: ${label}`, () => {
+    const marker = vm.runInNewContext(surfaceProbeExpression, authenticatedProbeFixture(label));
     assert.equal(marker, "QA_SURFACE:TODAY");
   });
 }
+
+test("a legacy Today label without a valid session cannot bypass authentication", () => {
+  const fixture = authenticatedProbeFixture("TRAINING · VANDAAG");
+  fixture.localStorage = {};
+  assert.equal(vm.runInNewContext(surfaceProbeExpression, fixture), "QA_SURFACE:UNAUTHENTICATED");
+});
 
 test("surface probe does not treat a stale storage key as visible authentication", () => {
   const marker = vm.runInNewContext(surfaceProbeExpression, {
