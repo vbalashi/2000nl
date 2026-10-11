@@ -69,6 +69,7 @@ export function TrainingSessionSurface({
         <TrainingSessionChrome
           {...chrome}
           approvedPresentation={approvedPresentation}
+          showProgress={phase === "ready"}
         />
       ) : null}
       footer={approvedPresentation ? null : <FooterStats {...footer} />}

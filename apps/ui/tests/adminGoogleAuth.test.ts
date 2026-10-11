@@ -35,13 +35,13 @@ beforeEach(() => {
   auth.signOut.mockResolvedValue({ error: null }); audit.mockResolvedValue(undefined);
 });
 function post(path: string, requestOrigin = origin) {
-  return new Request(`${origin}/api/admin/auth/${path}`, { method: "POST", headers: { origin: requestOrigin, "content-type": "application/json" }, body: JSON.stringify({ email: user.email }) });
+  return new Request(`${origin}/api/admin/auth/${path}`, { method: "POST", headers: { origin: requestOrigin, "content-type": "application/json" }, body: "{}" });
 }
 describe("Google admin login for an existing learner identity", () => {
-  it("starts Google for an allowlisted existing user without touching their learner profile", async () => {
+  it("starts Google without an email or operator preflight", async () => {
     expect((await start(post("start"))).status).toBe(200);
-    expect(auth.signInWithOAuth).toHaveBeenCalledWith(expect.objectContaining({ provider: "google", options: expect.objectContaining({ redirectTo: `${origin}/api/admin/auth/callback` }) }));
-    expect(from).not.toHaveBeenCalledWith("user_settings");
+    expect(auth.signInWithOAuth).toHaveBeenCalledWith(expect.objectContaining({ provider: "google", options: expect.objectContaining({ redirectTo: `${origin}/api/admin/auth/callback`, queryParams: { prompt: "select_account" } }) }));
+    expect(from).not.toHaveBeenCalled();
   });
   it("rejects cross-origin sign-in", async () => {
     expect((await start(post("start", "https://other.example"))).status).toBe(403);
@@ -53,6 +53,8 @@ describe("Google admin login for an existing learner identity", () => {
     expect(response.headers.get("location")).toContain("state=signin-error");
     expect(sessions.insert).not.toHaveBeenCalled();
     expect(auth.signOut).toHaveBeenCalledWith({ scope: "local" });
+    expect(clearCookies).toHaveBeenCalled();
+    expect(audit).toHaveBeenCalledWith(expect.objectContaining({ action: "auth.sign_in_denied", outcome: "denied" }));
   });
   it("accepts linked Google on the existing email identity and registers an admin session", async () => {
     const response = await callback(new Request(`${origin}/api/admin/auth/callback?code=verified-code`));

@@ -25,7 +25,11 @@ export function MeaningLearningProgress({
   language,
   onClose,
   onChanged,
+  learningActionsBlocked = false,
+  headwordActionsBlocked = false,
 }: {
+  learningActionsBlocked?: boolean;
+  headwordActionsBlocked?: boolean;
   entryId: string;
   language: OnboardingLanguage;
   onClose: () => void;
@@ -49,8 +53,11 @@ export function MeaningLearningProgress({
       });
     return () => controller.abort();
   }, [entryId, retry]);
+  const mutationBlocked = learningActionsBlocked || (headwordActionsBlocked && Boolean(progress?.exclusionId));
+  const protectionCopy = getUiMessages(language).activeTrainingCard;
+  const protectionHint = learningActionsBlocked ? protectionCopy.actionHint : protectionCopy.headwordHint;
   const resume = async () => {
-    if (!progress || busy) return;
+    if (!progress || busy || mutationBlocked) return;
     setBusy(true);
     setFailed(false);
     const request = pending.current ?? {
@@ -124,6 +131,7 @@ export function MeaningLearningProgress({
         {progress && (
           <>
             <p className={s.hint}>{t.directionHint}</p>
+            {mutationBlocked && <p className={s.hint} role="note">{protectionHint}</p>}
             {progress.directions.map((direction) => (
               <Direction
                 key={direction.cardTypeId}
@@ -135,10 +143,10 @@ export function MeaningLearningProgress({
             {(meaningLearningStatus(progress) === "excluded" ||
               progress.directions.some((d) => d.knownMarkId)) && (
               <footer className={s.footer}>
-                <p>{t.resumeHelp}</p>
+                <p>{mutationBlocked ? protectionHint : t.resumeHelp}</p>
                 <button
                   type="button"
-                  disabled={busy}
+                  disabled={busy || mutationBlocked}
                   onClick={() => void resume()}
                 >
                   {t.resume}

@@ -12,7 +12,7 @@ test('loads account preferences and saves only interaction columns',async()=>{
  const fetch=vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({training_animation_enabled:false,training_grade_swipe_enabled:true}),{status:200})).mockResolvedValueOnce(new Response(null,{status:201}));vi.stubGlobal('fetch',fetch);
  const loaded=await trainingInteractionRepository.load('owner');expect(loaded).toEqual({...defaultTrainingInteractions,animation:false,gradeSwipe:true});
  await trainingInteractionRepository.save('owner',loaded);
- expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({user_id:'owner',training_animation_enabled:false,training_grade_swipe_enabled:true,training_translation_swipe_enabled:false,training_syllable_double_tap_enabled:false,training_show_syllables:false,training_audio_swipe_enabled:false});
+ expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({user_id:'owner',training_animation_enabled:false,training_grade_swipe_enabled:true,training_translation_swipe_enabled:false,training_syllable_double_tap_enabled:false,training_show_syllables:false,training_audio_swipe_enabled:false,training_progress_animation:'dots'});
 });
 test('failed saving keeps the confirmed account choice; returning to the app reloads account preferences',async()=>{
  const repository={load:vi.fn().mockResolvedValue(defaultTrainingInteractions),save:vi.fn().mockRejectedValue(new Error())};

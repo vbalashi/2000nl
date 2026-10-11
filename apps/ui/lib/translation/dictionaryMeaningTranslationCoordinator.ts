@@ -181,7 +181,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
 
   let provider: TranslationProviderName;
   let translator: ITranslator;
-  const config = loadTranslationConfigFromEnv();
+  const config = loadTranslationConfigFromEnv({ purpose: "dictionary" });
   try {
     const resolved = createTranslator(config);
     provider = resolved.provider;

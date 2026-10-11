@@ -29,6 +29,16 @@
 
 ## Архив
 
+- [2026-10-10: необязательные эквиваленты и дословность](2026-10-10-02-translation-equivalents-literal.md) — #655.
+- [2026-10-10: сравнение reasoning effort](2026-10-10-03-translation-reasoning-effort.md) — #655.
+
+- [2026-10-09: общий жизненный цикл Training](2026-10-09-02-training-lifecycle.md) — #647.
+- [2026-10-09: пропавшая подсказка первой карточки Translation](2026-10-09-03-missing-context-target.md)
+
+- [2026-10-09: единая видимость перевода на обороте Translation](2026-10-09-02-translation-recall-target.md)
+
+- [2026-10-09: активная карточка в словарной статье](2026-10-09-01-active-training-article.md)
+
 - [2026-09-30: пауза учебного материала и начатая тренировка](2026-09-30-02-paused-training-material.md)
 
 - [2026-09-30: staging-импорт и пустая база](2026-09-30-01-dictionary-import-staging.md)
@@ -170,3 +180,9 @@
 - [2026-10-11: темы пользователя с планами и анонсами](2026-10-11-01-user-article-briefs.md)
 
 - [2026-10-11: маршрутизация направлений в harness](2026-10-11-02-harness-workstream-routing.md)
+
+- [2026-10-09: Lavender icon revision](2026-10-09-01-lavender-icon.md) — #642.
+
+- [2026-10-09: Training startup recovery](2026-10-09-02-startup-recovery.md)
+
+- [2026-10-10: переводы карточек, план спринта](2026-10-10-01-translation-sprint.md) — #655.

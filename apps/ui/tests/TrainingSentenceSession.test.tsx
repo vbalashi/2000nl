@@ -76,10 +76,11 @@ test("prepares only the next latched sentence without advancing or grading", asy
 });
 
 test("sentence session reveals the selected translation, grades the same identity and continues", async () => {
+  const onProgress = vi.fn();
   vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValueOnce(candidate).mockResolvedValueOnce({ status: "completed", sessionId: session.sessionId, completedActions: 1, requestedTotal: 1 });
   vi.mocked(loadSentenceExerciseContent).mockResolvedValue({ state: "ready", content } as never);
   vi.mocked(performPlatformV2TranslationExerciseAction).mockResolvedValue({} as never);
-  render(<TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} />);
+  render(<TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} onProgress={onProgress} />);
   expect(await screen.findByText("Переведённый пример.")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
   expect(screen.getByText(content.sentence.text)).toBeVisible();
@@ -87,6 +88,10 @@ test("sentence session reveals the selected translation, grades the same identit
   fireEvent.click(screen.getByRole("button", { name: "Good" }));
   await waitFor(() => expect(performPlatformV2TranslationExerciseAction).toHaveBeenCalledWith(expect.objectContaining({ trainingSessionId: session.sessionId, candidate: expect.objectContaining({ targetId: candidate.targetId, family: "translation", direction: "recall" }), reviewResult: "success" })));
   expect(await screen.findByText("Session complete")).toBeVisible();
+  expect(onProgress.mock.calls.map(([update]) => update)).toEqual([
+    {sessionId:session.sessionId,completedActions:1,completionReason:null},
+    {sessionId:session.sessionId,completedActions:1,completionReason:"completed"},
+  ]);
 });
 
 test("a pending translation stays on the same session member and can be retried", async () => {

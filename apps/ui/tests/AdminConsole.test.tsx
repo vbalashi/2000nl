@@ -56,3 +56,22 @@ it("offers Google entry without a mandatory email control", async () => {
   fireEvent.click(google);
   await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/admin/auth/start", expect.objectContaining({ body: "{}" })));
 });
+
+it("keeps four registry columns and collapses technical detail", async () => {
+  const dictionary = { id: "dictionary-1", name: "Van Dale", slug: "vandale", languageCode: "nl", kind: "curated", visibility: "system", ownerId: null, updatedAt: null };
+  fetchMock.mockImplementation(async (url: string) => {
+    if (url === "/api/admin/session") return Response.json({ email: "operator@example.test", permissions: ["dictionaries.read"] });
+    if (url.startsWith("/api/admin/dictionaries?")) return Response.json({ items: [dictionary], hasNext: false, page: 1, pageSize: 25 });
+    if (url === "/api/admin/dictionaries/dictionary-1") return Response.json({ ...dictionary, description: null, schemaKey: "vandale-schema", schemaVersion: 1, sourceProvider: "Van Dale", sourceVersion: null, createdAt: null, schemaTitle: null, schemaRetiredAt: null, editable: false, minimumSubscriptionTier: null });
+    throw new Error(`Unexpected request ${url}`);
+  });
+  render(<AdminConsole />);
+  await screen.findAllByRole("link", { name: /Van Dale/ });
+  expect(screen.getAllByRole("columnheader").map((header) => header.textContent)).toEqual(["Словарь", "Язык", "Тип", "Текущая видимость"]);
+  fireEvent.click(screen.getAllByRole("link", { name: /Van Dale/ })[0]);
+  const technical = await screen.findByText("Технические сведения");
+  expect(technical.closest("details")).not.toHaveAttribute("open");
+  expect(screen.getByText("Доступ и состояние")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "К списку словарей" }));
+  await screen.findAllByRole("link", { name: /Van Dale/ });
+});

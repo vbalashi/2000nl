@@ -42,17 +42,38 @@ for(const profile of [{name:'desktop',width:1280,height:900,language:'en'},{name
  await page.screenshot({path:testInfo.outputPath('early-session.png'),fullPage:true});
 });
 
-test('training failure uses the current theme and preserves retry',async({page},testInfo)=>{
+test('training startup failure and slow retry share the branded surface',async({page},testInfo)=>{
  await page.setViewportSize({width:390,height:844});
+ await page.emulateMedia({colorScheme:'dark'});
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:'en'}}});
- await page.route('**/rpc/get_available_learning_languages',route=>route.fulfill({status:503,json:{message:'Fixture unavailable'}}));
- await page.route('**/rpc/get_detailed_training_stats',route=>route.fulfill({status:503,json:{message:'Fixture unavailable'}}));
- await page.route('**/rpc/start_training_session',route=>route.fulfill({status:503,json:{message:'Fixture unavailable'}}));
+ let retrying=false;
+ let release:()=>void=()=>{};
+ const pending=new Promise<void>(resolve=>{release=resolve;});
+ await page.route('**/rpc/get_available_learning_languages',async route=>{
+  if (!retrying) { await route.fulfill({status:503,json:{message:'Fixture unavailable'}}); return; }
+  await pending;
+  await route.fulfill({json:[{code:'nl',label:'Nederlands',dictionary_count:1,curated_list_count:1,user_list_count:0,has_training_eligible_lists:true}]});
+ });
  await page.reload();
-
  await expect(page.getByRole('heading',{name:'Training could not be loaded'})).toBeVisible();
+ await expect(page.getByTestId('startup-logo-screen')).toBeVisible();
+ await expect(page.getByTestId('training-loading-indicator')).toHaveCount(0);
+ await expect(page.getByRole('navigation',{name:'Primary'})).toHaveCount(0);
  await expect(page.getByRole('button',{name:'Try again'})).toBeEnabled();
- const panel=page.getByRole('alert').filter({has:page.getByRole('heading',{name:'Training could not be loaded'})});
- expect(await panel.getAttribute('class')).not.toMatch(/bg-white|slate|indigo/);
- await page.screenshot({path:testInfo.outputPath('training-error.png'),fullPage:true});
+ await page.screenshot({path:testInfo.outputPath('training-startup-error.png')});
+ retrying=true;
+ await page.getByRole('button',{name:'Try again'}).click();
+ await expect(page.getByRole('status',{name:'Preparing training'})).toBeVisible();
+ await expect(page.locator('.startup-dots i')).toHaveCount(3);
+ await expect(page.getByRole('heading',{name:'Training could not be loaded'})).toHaveCount(0);
+ await page.waitForTimeout(8500);
+ await expect(page.getByRole('status',{name:'Preparing training'})).toBeVisible();
+ await expect(page.getByTestId('startup-logo-screen')).toBeVisible();
+ await expect(page.getByTestId('training-loading-indicator')).toHaveCount(0);
+ await expect(page.getByRole('navigation',{name:'Primary'})).toHaveCount(0);
+ await expect(page.getByRole('heading',{name:'Preparing training'})).toHaveClass('sr-only');
+ await page.screenshot({path:testInfo.outputPath('training-startup-retry.png')});
+ release();
+ await expect(page.getByRole('button',{name:'Start training',exact:true})).toBeEnabled();
+ await expect(page.getByTestId('startup-logo-screen')).toHaveCount(0);
 });

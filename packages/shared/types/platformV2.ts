@@ -59,6 +59,8 @@ export type PlatformContentNodeTranslationV2 = {
   targetLanguageCode: string;
   status: "ready" | "pending" | "failed" | "not-available";
   text?: string;
+  /** Optional image-preserving literal rendering, only on an idiom translation. */
+  literalText?: string;
   sourceTextFingerprint: string;
   translationPolicyVersion: string;
   providerRevision?: string;
@@ -405,6 +407,8 @@ export type PlatformWordDetailsV2 = {
     kind: "synonym" | "antonym";
     text: string;
     targetEntryId?: string;
+    sourceTextFingerprint?: string;
+    translations?: Array<Omit<PlatformContentNodeTranslationV2, "literalText">>;
   }>;
   labels: PlatformSemanticTermV2[];
   grammarNotes: PlatformDetailTextV2[];

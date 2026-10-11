@@ -134,6 +134,7 @@ beforeEach(() => {
 });
 
 test("direct idiom reveals complete content and records the self-assessment", async () => {
+  const onProgress = vi.fn();
   const dispatch = vi.spyOn(window, "dispatchEvent");
   vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise)
     .mockResolvedValueOnce(candidate)
@@ -158,6 +159,7 @@ test("direct idiom reveals complete content and records the self-assessment", as
       contentLanguageCode="nl"
       translationTargetLanguageCode={null}
       interfaceLanguage="en"
+      onProgress={onProgress}
       onExit={vi.fn()}
     />,
   );
@@ -202,6 +204,11 @@ test("direct idiom reveals complete content and records the self-assessment", as
       }),
     ),
   );
+  expect(await screen.findByText("Session complete")).toBeVisible();
+  expect(onProgress.mock.calls.map(([progress]) => progress)).toEqual([
+    {sessionId:session.sessionId,completedActions:1,completionReason:null},
+    {sessionId:session.sessionId,completedActions:1,completionReason:"completed"},
+  ]);
 });
 
 test("the idiom answer exposes the same header and secondary actions as word cards", async () => {
@@ -468,7 +475,8 @@ test.each(["en", "nl", "ru"] as const)(
     await screen.findByText("ergens helemaal klaar mee zijn");
     expect(container.querySelector("[data-training-session-main]")).toBeInTheDocument();
     expect(screen.getByTestId("training-session-position")).toHaveTextContent("2 / 5");
-    expect(screen.getByTestId("training-session-progress-track").firstElementChild).toHaveStyle({ width: "40%" });
+    expect(screen.getByTestId("training-session-progress-track")).toHaveAttribute("aria-valuemax", "5");
+    expect(screen.getByTestId("training-session-progress-track")).toHaveAttribute("aria-valuenow", "2");
     const chrome = screen.getByTestId("training-session-chrome");
     const utilities = chrome.querySelectorAll("button");
     expect(utilities).toHaveLength(2);

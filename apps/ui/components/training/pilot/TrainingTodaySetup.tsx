@@ -15,7 +15,9 @@ import type {
   TrainingMode,
   TrainingSessionSize,
 } from "@/lib/types";
-import { TrainingPilotStatePanel } from "./TrainingPilotStatePanel";
+import { TrainingSetupEmptyState } from "./TrainingSetupEmptyState";
+import { StartupRecovery } from "./StartupRecovery";
+import { StartupStatus } from "./StartupStatus";
 import { mixStepSelection } from "./TrainingMixPicker";
 import { useAccountTrainingSetups } from "@/lib/training/setups/useAccountTrainingSetups";
 import {readLastSelectedTraining, resolveHighlightedTraining, writeLastSelectedTraining} from "@/lib/training/setups/lastSelected";
@@ -77,6 +79,7 @@ type Props = {
   startError?: string | null;
   initialDraft: TrainingSetupDraft;
   onStartupReady?: () => void;
+  startupPresentationManaged?: boolean;
   initialView?: "today" | "setup";
   stats: DetailedStats;
   scenarios: TrainingSetupOption[];
@@ -176,6 +179,7 @@ export function TrainingTodaySetup({
   initialDraft,
   initialView = "today",
   onStartupReady,
+  startupPresentationManaged = false,
   stats,
   scenarios,
   lists: readableLists,
@@ -405,27 +409,19 @@ export function TrainingTodaySetup({
   }, [materialIntent, onMaterialIntentConsumed, userId, material.status, trainingLanguageOptions, trainingLanguageCode, trainingLanguageLoading, pendingLanguage, onTrainingLanguageChange, initialDraft, t.materialUnavailable]);
 
   if (screen === "today" && status !== "ready") {
-    return status === "error" ? (
-      <TrainingPilotStatePanel
+    if (status === "empty" || status === "first-use") {
+      return <TrainingSetupEmptyState
         interfaceLanguage={interfaceLanguage}
         status={status}
-        context="training"
-        onRetry={onRetry}
-      />
-    ) : status === "empty" || status === "first-use" ? (
-      <TrainingPilotStatePanel
-        interfaceLanguage={interfaceLanguage}
-        status={status}
-        context="training"
         onSetUp={openSetup}
-      />
-    ) : (
-      <TrainingPilotStatePanel
-        interfaceLanguage={interfaceLanguage}
-        status={status === "preparing" ? "preparing" : "loading"}
-        context="training"
-      />
-    );
+      />;
+    }
+    if (startupPresentationManaged) return null;
+    return <div className="fixed inset-0 z-50" data-testid="training-startup-recovery">
+      {status === "error"
+        ? <StartupRecovery language={interfaceLanguage} context="training" onRetry={onRetry} />
+        : <StartupStatus language={interfaceLanguage} />}
+    </div>;
   }
 
   if (screen === "today") {

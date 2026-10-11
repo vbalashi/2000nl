@@ -26,6 +26,21 @@ describe("Platform V2 translation projection", () => {
     process.env.TRANSLATION_PROVIDER = "openai";
   });
 
+  test("reloads exact idiom literals from stored overlays without leaking to explanation or siblings", async () => {
+    const entry = { id:"cow",language_code:"nl",headword:"koe",part_of_speech:"zn",raw:{meanings:[{definition:"een dier",idioms:[{expression:"over koetjes en kalfjes praten",explanation:"over onbelangrijke dingen praten"},{expression:"iets anders"}]}]}};
+    const revision=contentFingerprint(normalizeDictionaryContent(entry as any));
+    const request=buildDictionaryMeaningTranslationRequest({entryId:entry.id,sourceContentFingerprint:revision,sourceLanguageCode:"nl",targetLanguageCode:"ru",word:entry});
+    const overlay=JSON.parse(JSON.stringify({headword:"корова",entryTranslation:{primaryText:"корова",alternativeTexts:[],baseText:"корова",note:null},meanings:[{definition:"животное",idioms:[{expression:"говорить о пустяках",literalText:"говорить о коровках и телятах",explanation:"беседовать о неважном"},{expression:"другое"}]}]}));
+    const from=vi.fn(()=>translationQuery([{id:"translation-cow",word_entry_id:"cow",target_lang:"ru",provider:"openai",status:"ready",overlay,source_content_revision:revision,translation_policy_version:translationPolicyVersion("openai",request)}]));
+    const bindings=[{contentNodeId:"idiom-0",sourcePath:"raw.meanings[0].idioms[0].expression",kind:"idiom",sourceTextFingerprint:"i0"},{contentNodeId:"explanation",sourcePath:"raw.meanings[0].idioms[0].explanation",kind:"idiom-explanation",sourceTextFingerprint:"e0"},{contentNodeId:"idiom-1",sourcePath:"raw.meanings[0].idioms[1]",kind:"idiom",sourceTextFingerprint:"i1"}];
+    const result=await resolvePlatformV2Translations({supabase:{from}} as any,{entries:[entry],bindingsByEntryId:new Map([["cow",bindings]]) as any,targetLanguageCode:"ru"});
+    expect(result.ok).toBe(true);if(!result.ok)return;
+    const nodes=result.byEntryId.get("cow")!.nodeTranslationsById;
+    expect(nodes.get("idiom-0")![0]).toMatchObject({text:"говорить о пустяках",literalText:"говорить о коровках и телятах"});
+    expect(nodes.get("explanation")![0]).not.toHaveProperty("literalText");
+    expect(nodes.get("idiom-1")![0]).not.toHaveProperty("literalText");
+  });
+
   test("fails closed when a cached overlay predates explicit content revision identity", async () => {
     const from = vi.fn(() =>
       translationQuery([

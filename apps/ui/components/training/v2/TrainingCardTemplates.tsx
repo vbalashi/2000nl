@@ -342,7 +342,7 @@ export function TrainingCardAnswerBody({
       >
         <ProductionArticleReading>
           {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>)}
-          <ArticleSenseRelations relation={lexicalRelationDetail(model.wordDetails)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage}/>
+          <ArticleSenseRelations relation={lexicalRelationDetail(model.wordDetails,translationLanguage)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>
           <ArticleMeaningDetails definition={null} details={[...usagePatterns,...examples,...idioms,...notes]} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>
         </ProductionArticleReading>
 

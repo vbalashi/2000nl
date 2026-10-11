@@ -43,3 +43,34 @@ test.each([ ["Again","fail"], ["Hard","hard"], ["Good","success"], ["Easy","easy
  expect(action).toHaveBeenCalledWith(meaning.reviewCapabilities.find(cap=>cap.reviewResult===result));
  expect(screen.queryByRole("button",{name:"Train next"})).not.toBeInTheDocument();
 });
+
+for(const language of ['ru','en','nl'] as const)test(`${language}: active card has an explanatory slot and blocked mutation items`,()=>{
+ const meaning=buildLibrarySenseCardGroupModel(multiSenseBankGroup,language).meanings[1];
+ const action=vi.fn(),exclude=vi.fn(),report=vi.fn(),collections=vi.fn();
+ render(<LibraryMeaningActions meaning={meaning} language={language} busy={false} collectionCount={1}
+   activeTraining headwordTrainingBlocked onAction={action} onExclude={exclude} onReport={report} onCollections={collections}/>);
+ const t=getUiMessages(language).activeTrainingCard;
+ expect(screen.getByRole('note')).toHaveTextContent(t.title);
+ expect(screen.getByRole('note')).toHaveTextContent(t.hint);
+ expect(screen.queryByRole('button',{name:platformV2Message(language,meaning.startLearning!.messageKey)})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:getUiMessages(language).library.moreActions}));
+ const exclusion=screen.getByRole('menuitem',{name:getUiMessages(language).trainingSession.exclusion.headwordLabel});
+ const known=screen.getByRole('menuitem',{name:platformV2Message(language,meaning.markKnown!.messageKey)});
+ expect(exclusion).toBeDisabled();expect(known).toBeDisabled();
+ expect(exclusion).toHaveAccessibleDescription(t.actionHint);
+ expect(known).toHaveAccessibleDescription(t.actionHint);
+ fireEvent.click(exclusion);fireEvent.click(known);
+ expect(action).not.toHaveBeenCalled();expect(exclude).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole('menuitem',{name:platformV2Message(language,'senseCard.report')}));
+ expect(report).toHaveBeenCalledOnce();
+});
+
+test('sibling Learn and Known stay available while word-wide exclusion is protected',()=>{
+ const meaning=buildLibrarySenseCardGroupModel(multiSenseBankGroup,'en').meanings[1];
+ const action=vi.fn();
+ render(<LibraryMeaningActions meaning={meaning} language="en" busy={false} collectionCount={0} headwordTrainingBlocked onAction={action} onExclude={vi.fn()}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Learn'}));expect(action).toHaveBeenCalledWith(meaning.startLearning);
+ fireEvent.click(screen.getByRole('button',{name:getUiMessages('en').library.moreActions}));
+ expect(screen.getByRole('menuitem',{name:getUiMessages('en').trainingSession.exclusion.headwordLabel})).toBeDisabled();
+ expect(screen.getByRole('menuitem',{name:'Mark as known'})).toBeEnabled();
+});

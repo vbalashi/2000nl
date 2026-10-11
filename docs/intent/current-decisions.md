@@ -5,6 +5,7 @@
 
 | Тема | Действующее решение | Основание |
 | --- | --- | --- |
+| Жизненный цикл Training | Единое правило для всех типов: актуальный прогресс незавершённого run; completed/exhausted не предлагают Continue и не сохраняют запись продолжения. Общая обработка в работе #647, не выпущена. | [Обсуждение](../discussions/2026-10-09-02-training-lifecycle.md) |
 | Импорт словаря | Временный staging и одна транзакция; при отсутствии истории — пакетная вставка узлов, при обновлении — сверка изменившихся узлов с сохранением UUID. Полный импорт нужен для нового корпуса/пустой базы, обычная QA использует fixture. | [Обсуждение](../discussions/2026-09-30-01-dictionary-import-staging.md), [ADR-0016](../adr/0016-staged-dictionary-import.md) |
 | Документирование | Каждое существенное обсуждение — отдельная датированная запись; новые решения обновляют этот реестр и соответствующие ADR, старые обсуждения сохраняются. | [Обсуждение](../discussions/2026-09-25-02-decision-recording.md), [правила](../discussions/README.md) |
 | Слово в контексте | Перевод примера служит подсказкой для вспоминания конкретного значения; обычная reverse-очередь и единый FSRS, ротация примеров без отдельного прогресса. В истории — вариант предъявления и открытие подсказки. Оценок старого режима нет, перенос прогресса не требуется. Alignment/подсветка вне MVP. | [Модель](../discussions/2026-09-25-03-word-in-context.md), [переход](../discussions/2026-09-25-04-word-context-transition.md), [ADR-0015](../adr/0015-word-in-context-shared-reverse-state.md) |
@@ -92,3 +93,43 @@ Accepted: centre the main prompt independently of instructions; reserve hint spa
 ## Архив материалов и редакционный реестр (2026-10-10)
 
 Собственный сайт — архив материалов и портфолио с удобным UI; внешние каналы — распространение, поиск — долгосрочное направление. Принят редакционный реестр тем/публикаций, детали инструмента отложены. [Основание](../discussions/2026-10-10-16-owned-archive-and-editorial-register.md).
+
+## Активная карточка в словарной статье (2026-10-09)
+
+Принято: вариант «Статус и подсказка» на месте учебных действий активного
+значения. Изменения его учебного состояния выполняются на экране тренировки;
+остальные значения сохраняют доступные действия, кроме общих действий над
+словом, затрагивающих активную карточку. Реализация: #640.
+[Обсуждение](../discussions/2026-10-09-01-active-training-article.md).
+
+| PWA icon revision | Принята фиксированная Lavender, 2000 / nl в две строки, Inter 400; Android maskable с дополнительным отступом 5%. Реализовано в #642, выпуск ожидает проверок. | [Обсуждение](../discussions/2026-10-09-01-lavender-icon.md) |
+
+## Анимация прогресса тренировки (2026-10-10)
+
+Принято: в Appearance выбрать «Выключена», «Точки» или «Волна»; по умолчанию — тихие точки. Индикатор расположен между компактной шапкой и карточкой, с отдельными отступами для двух вариантов; остаётся на месте при свайпе карточки. Выключенный режим и бесконечная сессия показывают только счётчик и не резервируют место под графику. Решение заменяет кромку из обсуждения 9 октября. [Обсуждение](../discussions/2026-10-10-01-training-progress-animation.md), #644 / PR #654.
+## Training startup recovery (2026-10-09)
+
+Accepted: prerequisite loading and retry share the branded logo/dots surface; actual failures retain actionable retry without the obsolete framed panel. Pending work must not become a fabricated failure. Original Pixel request failure remains unconfirmed. [Discussion](../discussions/2026-10-09-02-startup-recovery.md), #575. Implemented in the issue checkout; release pending.
+
+## Полнота переводов (2026-10-10)
+
+Принято на текущий спринт: перевод самостоятельного headword на обороте
+идиомы → полезные эквиваленты одного значения → факультативный дословный
+перевод идиом → переводы синонимов/антонимов. Варианты разделяются лёгкой
+средней точкой `·`. Этап1 реализован в PR#656; проверка и выпуск
+отслеживаются в #655. Промпт/модель переводов обновлены в #660;
+необязательные эквиваленты и дословность выпущены в #663;
+переводы связанных слов выпущены в #665 (0.18.1275).
+[Обсуждение](../discussions/2026-10-10-01-translation-sprint.md), #655.
+
+## 2026-10-10: Luna 6 dictionary translation profile
+
+Accepted after the fresh100 relative gate: Luna 6 became the dictionary translation default with v5; the accepted optional-literal follow-up selects v8/high after the focused comparison (release tracked in #655); GPT-4.1 v4 and legacy v1 remain selectable rollback profiles. Model, prompt, settings and cache identity switch together. Evidence, scope and limitations: [discussion](../discussions/2026-10-10-07-luna6-translation-release.md). Operations: [rollout and rollback](../runbooks/dictionary-translation-model-rollout.md). Implementation tracked in #659.
+
+## Эквиваленты и дословность единым запросом — реализовано, 2026-10-10
+
+Объединить этапы2–3 #655: альтернативы только при пользе для понимания, дословность идиомы отдельным факультативным полем после естественного перевода. Базовый путь — один запрос; второй последовательный запрос только запасной эксперимент при недостаточном качестве. Версии/ответы/оценки сохраняются. Основание: [обсуждение](../discussions/2026-10-10-02-translation-equivalents-literal.md). Выпущено в #663 (0.18.1273); выбран v8/high по сохранённым экспериментам. Research PR#662 хранит 558 синтетических ответов и non-blind agent assessment (95/96 у кандидата, один известный literal-image defect). Переводы связанных слов выпущены в #665 (0.18.1275) единым запросом; основной v8/high сохранён после сравнения v10. [Решение и оценки](../discussions/2026-10-10-04-related-word-translations.md).
+
+## Дословный образ: итог эксперимента, 2026-10-10
+
+После168синтетических вызовов сохраняем v8/high: structural исправил известный cat-пример, но на новой held-out выборке появился неверный rain/drop образ и пустое обязательное поле; общего безопасного улучшения нет. Два кандидата остаются исследованием в draft PR#668. Оценка агента неслепая, без человеческого/статистического утверждения. [Принятый эксперимент](../discussions/2026-10-10-08-literal-image-accuracy.md), [результат](../discussions/2026-10-10-09-literal-image-experiment-result.md), #655.

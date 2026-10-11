@@ -27,7 +27,7 @@ export const metadata = {
   description:
     "Leer de NT2 woorden met een Supabase-gestuurde training. Zet Luistermodus (🎧) aan en tik op een woord in een voorbeeldzin om uitspraak te horen.",
   manifest: "/manifest.json",
-  icons: { icon: "/icons/favicon-v2.ico" }
+  icons: { icon: "/icons/favicon-v3.ico" }
 };
 
 export const viewport: Viewport = {
@@ -48,7 +48,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="2000nl" />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon-v2.png" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon-v3.png" />
         {/* iOS PWA splash screens (portrait). */}
         <link
           rel="apple-touch-startup-image"

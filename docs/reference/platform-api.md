@@ -1693,3 +1693,15 @@ Neither action changes FSRS/Known or historical review events. A superseded
 session returns 409 and sends the UI to session recovery, not another retry of
 the stale session. Undo is offered across the next-card transition in the current
 tab and is scoped to the authenticated user.
+
+### Optional literal idiom translations
+
+A ready `PlatformContentNodeTranslationV2` for an idiom may include `literalText`
+(an image-preserving target-language rendering). It shares the natural text's
+translation ID, target language, source fingerprint and policy/provider revision.
+Absence means no literal rendering is available or useful; it must not trigger
+an extra client request. Non-idiom nodes do not expose this field. Source,
+policy or language mismatch suppresses both texts together. Consumers show the
+natural translation first and localize the literal label independently of the
+translation language. Older payloads remain valid. Stored overlays use
+`meanings[i].idioms[j].literalText`; `baseText` retains its headword meaning.

@@ -1,3 +1,4 @@
+import {firstExactRenderableNodeTranslationV1} from "../../../../../packages/shared/platform-v2/displayedTranslationArtifactIdentityV1";
 import type {PlatformWordDetailsV2} from '../../../../../packages/shared/types/platformV2';
 import type {WordFormDetail} from './ArticleWordDetails';
 
@@ -28,8 +29,13 @@ export function wordFormDetail(details:PlatformWordDetailsV2|undefined, pos:stri
  return {forms:forms.filter((form,i)=>forms.findIndex(f=>f.label===form.label&&f.value===form.value)===i),conjugation,pos:presentationPos};
 }
 
-export function lexicalRelationDetail(details?:PlatformWordDetailsV2){
- return {synonyms:details?.lexicalRelations.filter(r=>r.kind==='synonym').map(r=>r.text)??[],antonyms:details?.lexicalRelations.filter(r=>r.kind==='antonym').map(r=>r.text)??[]};
+export type LexicalRelationDisplayItem = {relationId:string;text:string;translation?:string};
+export function lexicalRelationDetail(details?:PlatformWordDetailsV2,targetLanguageCode?:string){
+ const values=(kind:"synonym"|"antonym"):LexicalRelationDisplayItem[]=>details?.lexicalRelations.filter(r=>r.kind===kind).map(r=>{
+  const translation=r.sourceTextFingerprint&&targetLanguageCode ? firstExactRenderableNodeTranslationV1((r.translations??[]).filter(t=>t.targetLanguageCode===targetLanguageCode),r.sourceTextFingerprint)?.text : undefined;
+  return {relationId:r.relationId,text:r.text,...(translation?{translation}:{})};
+ })??[];
+ return {synonyms:values("synonym"),antonyms:values("antonym")};
 }
 
 /** Headword-level display is safe only when every sense supplies identical forms. */

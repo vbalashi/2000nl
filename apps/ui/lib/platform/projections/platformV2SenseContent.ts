@@ -19,6 +19,7 @@ export type PlatformV2SenseContentNode = {
   kind: PlatformContentNodeKindV2;
   text: string;
   translation?: string;
+  literalTranslation?: string;
   reportCapability?: PlatformV2NodeReportCapability;
   children: PlatformV2SenseContentNode[];
 };
@@ -42,10 +43,11 @@ export function projectPlatformV2SenseContent(
   const orderedNodes = [...entry.contentNodes]
     .sort((left, right) => left.order - right.order)
     .map<PlatformV2SenseContentNode>((node) => {
-      const translation = firstExactRenderableNodeTranslationV1(
+      const renderedTranslation = firstExactRenderableNodeTranslationV1(
         node.translations,
         node.sourceTextFingerprint,
-      )?.text;
+      );
+      const translation = renderedTranslation?.text;
       const reportCapability = reportByContentNodeId.get(node.contentNodeId);
       return {
         contentNodeId: node.contentNodeId,
@@ -53,6 +55,7 @@ export function projectPlatformV2SenseContent(
         kind: node.kind,
         text: node.text,
         ...(translation ? { translation } : {}),
+        ...(node.kind === "idiom" && translation && renderedTranslation?.literalText ? { literalTranslation: renderedTranslation.literalText } : {}),
         ...(reportCapability ? { reportCapability } : {}),
         children: [],
       };

@@ -25,7 +25,7 @@ test("context prompt reads the latched node and its exact translation", async ()
     entryId: "entry-id", contentNodeId: "example-a", sourceTextFingerprint: "fingerprint-a",
   }, error: null } as never);
   vi.mocked(loadSentenceExerciseContent).mockResolvedValue({ state: "ready", content: {
-    group: {} as never, entry: {} as never,
+    group: {} as never, entry: { entryId: "entry-id", translation: { entryId: "entry-id", targetLanguageCode: "ru", status: "ready", isFresh: true, text: "слово" } } as never,
     sentence: {
       text: "Ik ken dit woord.",
       sourceTextFingerprint: "fingerprint-a",
@@ -34,7 +34,7 @@ test("context prompt reads the latched node and its exact translation", async ()
     } as never,
   } });
   await expect(loadWordContextPrompt(input)).resolves.toEqual({ state: "ready", prompt: {
-    text: "Я знаю это слово.", sourceText: "Ik ken dit woord.", contentNodeId: "example-a",
+    recallTarget: "слово", text: "Я знаю это слово.", sourceText: "Ik ken dit woord.", contentNodeId: "example-a",
     sourceTextFingerprint: "fingerprint-a",
   } });
   expect(loadSentenceExerciseContent).toHaveBeenCalledWith(expect.objectContaining({
@@ -77,4 +77,26 @@ test("lookahead warms only the next member's frozen example", async () => {
   expect(prepareSentenceExerciseTranslation).toHaveBeenCalledWith(expect.objectContaining({
     entryId: "next-entry", contentNodeId: "next-example",
   }));
+});
+
+
+test.each([
+  { isFresh: false }, { status: "failed" }, { targetLanguageCode: "en" },
+  { entryId: "another-entry" }, { text: "   " },
+])("does not supply an unusable meaning translation as the context target: %j", async (override) => {
+  vi.mocked(supabase.rpc).mockResolvedValue({ data: {
+    entryId: "entry-id", contentNodeId: "example-a", sourceTextFingerprint: "fingerprint-a",
+  }, error: null } as never);
+  vi.mocked(loadSentenceExerciseContent).mockResolvedValue({ state: "ready", content: {
+    group: {} as never, entry: { entryId: "entry-id", translation: {
+      entryId: "entry-id", targetLanguageCode: "ru", status: "ready", isFresh: true, text: "слово", ...override,
+    } } as never,
+    sentence: { text: "Ik ken dit woord.", sourceTextFingerprint: "fingerprint-a",
+      translations: [{ targetLanguageCode: "ru", sourceTextFingerprint: "fingerprint-a",
+        status: "ready", text: "Я знаю это слово.", translationId: "translation-a" }],
+    } as never,
+  } });
+  const result = await loadWordContextPrompt(input);
+  expect(result.state).toBe("ready");
+  if (result.state === "ready") expect(result.prompt.recallTarget).toBeUndefined();
 });

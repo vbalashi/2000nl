@@ -348,12 +348,14 @@ export type TranslationOverlay = {
     note: string | null;
   } | null;
   meanings?: Array<{
+    synonyms?: string[];
+    antonyms?: string[];
     definition?: string;
     context?: string;
     note?: string;
     examples?: string[];
     idioms?: Array<
-      string | { expression?: string; explanation?: string; examples?: string[] }
+      string | { expression?: string; literalText?: string; explanation?: string; examples?: string[] }
     >;
   }>;
   // Optional provenance/debug metadata. Persisted in DB as part of `overlay` JSON.

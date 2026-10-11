@@ -63,7 +63,7 @@ export function TrainingSessionV2Layout({
             {notice}
             <div
               data-testid="training-card-frame"
-              className="mx-auto min-h-0 w-full flex-1 overflow-hidden transition-[height] duration-200"
+              className="relative mx-auto min-h-0 w-full flex-1 overflow-hidden transition-[height] duration-200"
             >
               <div
                 ref={interaction?.ref}

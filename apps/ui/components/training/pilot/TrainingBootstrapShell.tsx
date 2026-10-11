@@ -2,10 +2,8 @@
 
 import React from "react";
 import { StartupStatus } from "./StartupStatus";
-import { StartupLogoScreen } from "./StartupLogoScreen";
-import { AppFrame } from "@/components/navigation/AppFrame";
+import { StartupRecovery } from "./StartupRecovery";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { TrainingPilotStatePanel } from "./TrainingPilotStatePanel";
 
 type Props =
   | {
@@ -23,11 +21,10 @@ type Props =
 export function TrainingBootstrapShell(props: Props) {
   const { interfaceLanguage } = props;
   const interfaceLanguageReady = props.interfaceLanguageReady ?? true;
-  const inertNavigate = () => undefined;
 
   return <div data-testid="training-bootstrap-shell">
     {props.status === "error"
-      ? <StartupLogoScreen><TrainingPilotStatePanel plain interfaceLanguage={interfaceLanguage} context="bootstrap" status="error" onRetry={props.onRetry} /></StartupLogoScreen>
+      ? <StartupRecovery language={interfaceLanguage} onRetry={props.onRetry} />
       : <StartupStatus language={interfaceLanguage} copyVisible={interfaceLanguageReady} />}
   </div>;
 }

@@ -9,7 +9,7 @@ import { spawnPostgresClient, preflightPostgresClient } from "./postgres_client.
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const options = {
     repoRoot,
     psqlBin: "psql",
@@ -18,7 +18,7 @@ function parseArgs(argv) {
     containerRuntimeBin: "docker",
     databaseUrlEnv: "SUPABASE_DB_URL",
     envFile: "",
-    samples: 5,
+    samples: 3,
     statementTimeoutMs: 10_000,
     firstComponent: "public",
   };
@@ -38,8 +38,8 @@ function parseArgs(argv) {
     else if (arg === "--first-component") options.firstComponent = value;
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  if (!Number.isSafeInteger(options.samples) || options.samples < 1 || options.samples > 10) {
-    throw new Error("--samples must be between 1 and 10");
+  if (!Number.isSafeInteger(options.samples) || options.samples < 1 || options.samples > 3) {
+    throw new Error("--samples must be between 1 and 3");
   }
   if (
     !Number.isSafeInteger(options.statementTimeoutMs) ||
@@ -199,7 +199,7 @@ COMMIT;
 `;
 }
 
-function redact(message) {
+export function redactDiagnosticOutput(message) {
   return message
     .replaceAll(/postgres(?:ql)?:\/\/[^\s'"<>]+/gi, "[redacted-db-url]")
     .replaceAll(/(password|token|secret|key)=([^\s]+)/gi, "$1=[redacted]")
@@ -261,7 +261,7 @@ function runSample(options, childEnv, component, sample) {
     },
   );
   const outerElapsedMs = performance.now() - outerStartedAt;
-  const output = redact(`${result.stdout ?? ""}${result.stderr ?? ""}`);
+  const output = redactDiagnosticOutput(`${result.stdout ?? ""}${result.stderr ?? ""}`);
   if (result.error) throw new Error(`PostgreSQL client runtime failed: ${result.error.message}`);
   if (result.signal) throw new Error(`psql stopped by ${result.signal}`);
   if (result.status !== 0) {
@@ -272,7 +272,7 @@ function runSample(options, childEnv, component, sample) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  if (options.psqlContainerImage) preflightPostgresClient(options, redact);
+  if (options.psqlContainerImage) preflightPostgresClient(options, redactDiagnosticOutput);
   const url = await databaseUrl(options);
   const childEnv = { ...process.env, ...databaseEnvironment(url), PGCONNECT_TIMEOUT: "10" };
   delete childEnv.SUPABASE_DB_URL;
@@ -303,6 +303,6 @@ async function main() {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main().catch((error) => {
-  process.stderr.write(`scheduler-readiness-diagnostic: ${redact(error instanceof Error ? error.message : String(error))}\n`);
+  process.stderr.write(`scheduler-readiness-diagnostic: ${redactDiagnosticOutput(error instanceof Error ? error.message : String(error))}\n`);
   process.exitCode = 1;
 });

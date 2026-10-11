@@ -1,0 +1,9 @@
+# Accepted: dictionary translations use Luna 6 with rollback
+
+The owner authorized tuning Luna 6 and switching if a fresh paired 100-case comparison beats GPT-4.1 without increasing serious errors. The frozen comparison passed: Luna 93 accepted versus GPT 55; serious sense/content errors 2 versus 6; critical role/negation/modality errors 1 each. All 200 requests completed on their first attempt. These are non-blind agent assessments, not owner approval of individual translations. The corpus is enriched for translation pitfalls and does not estimate population accuracy.
+
+Evidence and restricted source ownership remain in research PR #658, branch codex/657-translation-eval, under Research/translation-eval/evidence/fresh100-v1. Luna v5 prompt SHA256 is 998960f599e9fc5211a6c82b2a9b7fa35a360c12571decef5e1c655e5609e0ec; GPT comparator used common v4, rather than the application's old v1. Both model and prompt differ in this comparison.
+
+Accepted release scope: dictionary meaning translations use Luna 6 low reasoning with the exact tested v5 prompt. Generic fragments and article generation retain their configuration. A single profile selects model, prompt, request settings and cache identity. GPT-4.1 v4 is the normal rollback; legacy preserves the previous prompt/cache identity. Temporary transport failures allow three retries with bounded backoff and redacted typed diagnostics. Content/schema failures do not trigger blind retries.
+
+Reference translation cost per 100: Luna $0.025534, GPT $0.277202, including reasoning output tokens. These use public reference rates, not a verified Azure invoice; audio and review are excluded. Remaining Luna errors include cultural substitution and reversal of liking roles. User reports remain necessary; no per-card second-model review is introduced.

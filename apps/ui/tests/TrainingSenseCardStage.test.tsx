@@ -88,6 +88,7 @@ describe("TrainingSenseCardStage", () => {
     const model = {
       ...base,
       entryTranslation: "слово",
+      definitions: base.definitions.map(item => ({ ...item, translation: "Перевод определения." })),
       examples: [
         { contentNodeId: "selected", parentContentNodeId: null, kind: "example" as const,
           text: "Ik ken dit woord.", translation: "Я знаю это слово.", children: [] },
@@ -113,8 +114,33 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.getByText("het einde van je arm, waar je vingers aan zitten")).toBeInTheDocument();
     expect(screen.getByText("Ik ken dit woord.")).toBeInTheDocument();
     expect(screen.getAllByText("Я знаю это слово.")).toHaveLength(1);
+    expect(screen.getByTestId("entry-translation")).toHaveTextContent("слово");
+    const headwordTranslation = screen.getByTestId("entry-translation");
+    const definitionTranslation = screen.getByText("Перевод определения.");
+    const exampleTranslation = screen.getByText("Я знаю это слово.");
+    for (const node of [headwordTranslation, definitionTranslation, exampleTranslation]) {
+      expect(node.closest('[aria-hidden]')).toHaveAttribute("aria-hidden", "false");
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Translate" }));
+    for (const node of [headwordTranslation, definitionTranslation, exampleTranslation]) {
+      expect(node.closest('[aria-hidden]')).toHaveAttribute("aria-hidden", "true");
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Translate" }));
+    for (const node of [headwordTranslation, definitionTranslation, exampleTranslation]) {
+      expect(node.closest('[aria-hidden]')).toHaveAttribute("aria-hidden", "false");
+    }
     expect(screen.queryByText("Another sentence.")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Good" })).toBeInTheDocument();
+  });
+
+  test("context preparation supplies a fresh recall target when the card snapshot has none", () => {
+    const model = { ...buildTrainingSenseCardModel({ group: singleSenseGroup, entry: singleSenseEntry, interfaceLanguage: "en" }), entryTranslation: undefined };
+    render(<TrainingSenseCardStage model={model} mode="definition-to-word" interfaceLanguage="en" onAction={vi.fn()}
+      contextPrompt={{ recallTarget: "передумать", text: "я не пойду с тобой; я передумал", sourceText: "ik ga niet met je mee; ik heb mij bedacht", contentNodeId: "selected", sourceTextFingerprint: "fingerprint" }} />);
+    expect(screen.getByTestId("training-face-recall-target")).toHaveTextContent("передумать");
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    expect(screen.getByTestId("entry-translation")).toHaveTextContent("передумать");
+    expect(screen.getByTestId("entry-translation").closest('[aria-hidden]')).toHaveAttribute("aria-hidden", "false");
   });
 
   test("renders two nodig idioms and the goed expression hierarchy", () => {

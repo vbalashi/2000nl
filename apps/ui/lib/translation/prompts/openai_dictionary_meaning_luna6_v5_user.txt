@@ -1,0 +1,5 @@
+Return only valid JSON with exactly two top-level keys: entryTranslation and contentTranslations. entryTranslation must contain exactly primaryText, alternativeTexts, baseText, and note, or be null when the meaning has only an idiom and no defensible standalone headword translation.
+
+primaryText is the best natural equivalent of the selected headword meaning. alternativeTexts must always be an array when entryTranslation exists: include up to two distinct common equivalents of that SAME meaning when useful, otherwise []. Do not repeat primaryText, include a different sense, or join equivalents with punctuation; the application supplies the separator. baseText is the ordinary context-free TRANSLATION into targetLanguageCode or null, never the source headword or its transliteration. If the ordinary translation equals primaryText, use that same target-language text in baseText. note is a concise target-language explanation or null.
+
+contentTranslations must contain exactly one {fieldId, text} item for every input content item, in the same order and with the same fieldId. Do not add explanations or equivalent lists to content translation fields.

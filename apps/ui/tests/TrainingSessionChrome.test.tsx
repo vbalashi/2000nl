@@ -152,8 +152,7 @@ test("offers the approved frameless header without changing session controls or 
   const chrome = screen.getByTestId("training-session-chrome");
   expect(chrome).toHaveAttribute("data-visual-spec", "training-approved-v1");
   expect(screen.getByTestId("training-session-position")).toHaveTextContent("2 / 5");
-  expect(screen.getByTestId("training-session-progress-track").firstElementChild)
-    .toHaveStyle({ width: "40%" });
+  expect(screen.queryByTestId("training-session-progress-track")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Close session" }));
   expect(onClose).toHaveBeenCalledOnce();
 });

@@ -230,3 +230,35 @@ test("idiom answers retain available headword syllables for the shared gesture",
  const presentation=buildIdiomCardPresentation({content:{...content,headwordPronunciation:"ge·noeg"},direction:"direct",interfaceLanguage:"en",translationTargetLanguageCode:null});
  expect(presentation.answer.headword).toBe("ge·noeg");
 });
+
+test("headword equivalents appear on the answer only and follow the translation toggle", () => {
+  const translatedContent = {
+    ...content,
+    entry: {
+      ...content.entry,
+      translation: {
+        translationId: "headword-translation", entryId: content.entry.entryId,
+        targetLanguageCode: "ru", status: "ready" as const, isFresh: true,
+        sourceContentFingerprint: content.entry.contentRevision,
+        translationPolicyVersion: "test", text: "добро", alternativeTexts: ["благо"],
+      },
+    },
+  };
+  const presentation = buildIdiomCardPresentation({ content: translatedContent,
+    direction: "reverse", interfaceLanguage: "en", translationTargetLanguageCode: "ru" });
+  function TranslatedExercise() {
+    const [revealed, setRevealed] = React.useState(false);
+    return <TrainingExerciseCard presentation={presentation} interfaceLanguage="en"
+      revealed={revealed} onReveal={() => setRevealed(true)} busy={false} onGrade={vi.fn()} />;
+  }
+  render(<TranslatedExercise />);
+  expect(screen.queryByTestId("entry-translation")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+  const translation = screen.getByTestId("entry-translation");
+  expect(translation).toHaveTextContent("добро · благо");
+  expect(translation.closest('[aria-hidden="true"]')).not.toBeNull();
+  fireEvent.keyDown(document.activeElement!, { key: "t" });
+  expect(translation.closest('[aria-hidden="true"]')).toBeNull();
+  fireEvent.keyDown(document.activeElement!, { key: "t" });
+  expect(translation.closest('[aria-hidden="true"]')).not.toBeNull();
+});

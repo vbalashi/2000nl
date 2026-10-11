@@ -14,6 +14,7 @@ import {
   gateFurnitureEntry,
   gateSingleSenseGroup,
 } from "@/lib/platform/fixtures/senseCardV1GateFixture";
+import { cowIdiomGateContent } from "@/lib/platform/fixtures/idiomHeadwordGateFixture";
 import type { IdiomExerciseContent } from "@/lib/training/idiomExerciseContent";
 
 const expressionId = "gate-klaar-idiom";
@@ -53,7 +54,8 @@ const content: IdiomExerciseContent = {
 };
 
 /** Fixed presentation fixture; no session, auth, or learning-state writes. */
-export function ExerciseCardGate() {
+export function ExerciseCardGate({ cow = false }: { cow?: boolean }) {
+  const idiomContent = cow ? cowIdiomGateContent : content;
   const [context, setContext] = React.useState(false);
   const [sentence, setSentence] = React.useState(false);
   const [direction, setDirection] = React.useState<"direct" | "reverse">(
@@ -115,10 +117,10 @@ export function ExerciseCardGate() {
                 translationPolicyVersion: "gate-v1" }],
             } }, interfaceLanguage: "en", translationTargetLanguageCode: "en",
           })! : buildIdiomCardPresentation({
-            content,
+            content: idiomContent,
             direction,
             interfaceLanguage: "en",
-            translationTargetLanguageCode: null,
+            translationTargetLanguageCode: cow ? "ru" : null,
           })}
           interfaceLanguage="en"
           revealed={revealed}

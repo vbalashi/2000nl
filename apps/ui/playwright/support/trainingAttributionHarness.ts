@@ -155,6 +155,10 @@ export async function setupAuthenticatedTrainingAttributionPage(
   page: Page,
   injectedDelayMs: number,
   options: {
+    /** Preserve the real controller while exercising multi-meaning article states. */
+    /** Install routes without installing auth or navigating, for staged bootstrap tests. */
+    deferNavigation?: boolean;
+    transformLookupGroup?: (group: PlatformHeadwordGroupV2) => PlatformHeadwordGroupV2;
     invalidEntryIds?: string[];
     projectionMissingEntryIds?: string[];
     abortFirstActionAfterMs?: number;
@@ -377,11 +381,11 @@ export async function setupAuthenticatedTrainingAttributionPage(
           cardTypeId: body.cardTypeId ?? "word-to-definition",
           intent: "training-review",
         },
-        groups: entry
-          ? [visualFixture
-              ? visualFixture.lookupGroups[entry.id]!
-              : buildLookupGroup(entry, entries.indexOf(entry) < 3, invalidEntryIds.has(entry.id))]
-          : [],
+        groups: entry ? [(() => {
+          const group = visualFixture ? visualFixture.lookupGroups[entry.id]!
+            : buildLookupGroup(entry, entries.indexOf(entry) < 3, invalidEntryIds.has(entry.id));
+          return options.transformLookupGroup?.(group) ?? group;
+        })()] : [],
         page: { selectedTierComplete: true, nextGroupCursor: null },
       },
       "lookup",
@@ -991,7 +995,9 @@ export async function setupAuthenticatedTrainingAttributionPage(
     await fulfillJson(route, { error: "Not mocked by attribution harness" }, "missing", 404);
   });
 
-  if (options.devTestLogin) {
+  if (options.deferNavigation) {
+    // The caller controls auth refresh and navigation after all routes are installed.
+  } else if (options.devTestLogin) {
     await page.goto("/dev/test-login?redirectTo=/");
     await page.waitForURL((url) => url.pathname === "/");
   } else {

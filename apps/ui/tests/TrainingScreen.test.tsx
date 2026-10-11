@@ -72,6 +72,12 @@ vi.mock("@/lib/training/listService", async (importOriginal) => ({
   ]),
 }));
 
+vi.mock("@/lib/platform/platformV2IdiomExerciseClient", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/platform/platformV2IdiomExerciseClient")>(),
+  fetchPlatformV2IdiomTrainingSessionSnapshot: vi.fn(),
+  fetchNextPlatformV2IdiomTrainingSessionExercise: vi.fn(),
+}));
+
 const legacyTranslationSnapshot = vi.fn();
 const legacyTranslationStart = vi.fn();
 vi.mock("@/lib/platform/platformV2TranslationExerciseClient", async (importOriginal) => ({
@@ -1301,7 +1307,20 @@ test("preserves a resumable session when the language catalog fails transiently"
   expect(window.localStorage.getItem("2000nl:training-session:user-1")).not.toBeNull();
   expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
 
+  expect(screen.getByTestId("startup-logo-screen")).toBeVisible();
+  expect(screen.queryByTestId("training-loading-indicator")).not.toBeInTheDocument();
+  let releaseLanguages!: () => void;
+  const retryPending = new Promise<void>(resolve => { releaseLanguages = resolve; });
+  fetchAvailableLearningLanguages.mockImplementationOnce(async () => {
+    await retryPending;
+    return [{code: "nl", label: "Nederlands", dictionaryCount: 1, curatedListCount: 1, userListCount: 0, hasTrainingEligibleLists: true}];
+  });
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  await waitFor(() => expect(screen.getByRole("status", {name:"Preparing training"})).toBeVisible());
+  expect(screen.getByTestId("startup-logo-screen")).toBeVisible();
+  expect(screen.queryByTestId("training-loading-indicator")).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", {name:"Preparing training"})).toHaveClass("sr-only");
+  await act(async () => { releaseLanguages(); });
 
   expect(await screen.findByTestId("mock-training-sense-card-v2")).toBeInTheDocument();
   expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
@@ -3328,7 +3347,7 @@ test.each([false, true])("Library inline grade preserves scope and selection (fa
     await waitFor(() => expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
       actionId: "review-card", reviewResult: "success", target: expect.objectContaining({ entryId: dictionaryBoom.id, cardTypeId: "word-to-definition" }),
     })));
-    if (failed) expect(await screen.findByText(getUiMessages("en").trainingSession.exclusion.failed)).toBeVisible();
+    if (failed) await waitFor(() => expect(screen.getByText(getUiMessages("en").trainingSession.exclusion.failed)).toBeVisible());
     expect(screen.getByRole("textbox", { name: "Search words" })).toBeVisible();
     expect(screen.queryByRole("button", { name: /Train next/i })).not.toBeInTheDocument();
     expect(fetchTrainingWordByLookup).not.toHaveBeenCalled();
@@ -4421,7 +4440,7 @@ test("a same-run revision keeps the accepted-card position and server counts", a
   fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
   await screen.findByTestId("mock-training-sense-card-v2");
-  expect(await screen.findByTestId("training-session-position")).toHaveTextContent("0 / 5");
+  await waitFor(() => expect(screen.getByTestId("training-session-position")).toHaveTextContent("0 / 5"));
 
   fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
   await waitFor(() => expect(mockV2ProgressActionCompleted).toHaveBeenCalledWith("accepted-next-presented"));
@@ -4437,7 +4456,7 @@ test("a same-run revision keeps the accepted-card position and server counts", a
   fetchNextTrainingWordByScenario.mockResolvedValue(overrideWord);
   act(() => window.dispatchEvent(new Event("focus")));
   await screen.findByRole("heading", { name: "boom" });
-  expect(screen.getByTestId("training-session-position")).toHaveTextContent("1 / 5");
+  await waitFor(() => expect(screen.getByTestId("training-session-position")).toHaveTextContent("1 / 5"));
   expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
 });
 
@@ -4598,4 +4617,36 @@ test("another account cannot resume the owned legacy sentence record",async()=>{
  await screen.findByRole("heading",{name:/^(Training|Тренировка)$/});
  expect(screen.queryByTestId("legacy-sentence-session")).toBeNull();
  expect(legacyTranslationSnapshot).not.toHaveBeenCalled();expect(legacyTranslationStart).not.toHaveBeenCalled();
+});
+
+test.each([["completed",5],["exhausted",2]] as const)("%s idiom run returns home without a stale Continue training", async (status, completedActions) => {
+  const {fetchAccountTrainingSetups} = await import("@/lib/training/setups/client");
+  vi.mocked(fetchAccountTrainingSetups).mockResolvedValueOnce({revision:1,document:{schemaVersion:1,mainTrainingId:"idioms",trainings:[{
+    id:"idioms",name:"Idioms",languageCode:"nl",draft:{family:"idiom",scenarioId:"idiom",modes:["word-to-definition"],cardFilter:"both",newReviewRatio:2,dateWindow:"all",listValue:"curated:list-1",sourceValue:"",sessionSize:5}
+  }]}});
+  const idioms = await import("@/lib/platform/platformV2IdiomExerciseClient");
+  vi.mocked(idioms.fetchPlatformV2IdiomTrainingSessionSnapshot).mockResolvedValue({
+    contractVersion: "platform-idiom-exercise-session-v2", sessionId: "idiom-finished",
+    exerciseFamily: "idiom", direction: "direct", sessionSize: "5", requestedTotal: 5,
+    plannedNew: 5, plannedReview: 0, plannedPractice: 0, plannedTotal: 5,
+    plannedAt: "2026-10-09T20:00:00Z", runStatus: "active", runGeneration: 1,
+    completedActions: 0, completionReason: null,
+    members: [{ordinal:1, consumedAt:null, unavailableAt:null}],
+  } as never);
+  vi.mocked(idioms.fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({
+    status, completedActions, requestedTotal: 5,
+  } as never);
+  await writeTrainingSessionResume({
+    trainingId:"idioms", sessionId: "idiom-finished", userId: user.id, family: "idiom", languageCode: "nl",
+    listId: "list-1", listType: "curated", scenarioId: "understanding",
+    modes: ["word-to-definition"], cardFilter: "both", newReviewRatio: 2,
+    focusFilter: {dateWindow:"all"}, sessionSize:5,
+  });
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  fireEvent.click(await screen.findByRole("button", {name:"Back to home"}));
+  await screen.findByRole("button", {name:/^(Start|Continue) training$/});
+  expect(screen.queryByRole("button", {name:"Continue training"})).toBeNull();
+  expect(screen.queryByText("IN PROGRESS")).toBeNull();
+  await waitFor(async () => expect(await readTrainingSessionResume(user.id)).toBeNull());
+  expect(screen.getByRole("button", {name:"Start training"})).toBeInTheDocument();
 });

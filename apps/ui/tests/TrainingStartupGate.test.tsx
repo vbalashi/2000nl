@@ -1,5 +1,5 @@
 import React, {useEffect} from "react";
-import {act, cleanup, render, screen} from "@testing-library/react";
+import {act, cleanup, fireEvent, render, screen} from "@testing-library/react";
 import {afterEach, expect, test, vi} from "vitest";
 import {TrainingStartupGate} from "@/components/training/pilot/TrainingStartupGate";
 afterEach(() => {cleanup(); vi.useRealTimers(); vi.unstubAllEnvs();});
@@ -23,4 +23,23 @@ test("long-running startup keeps stable copy without concealing a settled error"
   expect(screen.getByRole("status")).toHaveTextContent("Preparing training");
   rerender(<TrainingStartupGate pending={false} interfaceLanguage="en"><div role="alert">Could not load</div></TrainingStartupGate>);
   expect(screen.getByRole("alert")).toBeVisible();
+});
+
+test("recovery and slow retry hide navigation while keeping readers mounted", () => {
+  vi.useFakeTimers();
+  const retry = vi.fn(), mounted = vi.fn(), unmounted = vi.fn();
+  function Reader() {useEffect(() => {mounted(); return unmounted;}, []); return <button>Settings behind startup</button>;}
+  const view = render(<TrainingStartupGate pending={false} interfaceLanguage="en" recovery={{onRetry:retry}}><Reader /></TrainingStartupGate>);
+  expect(screen.queryByRole("button", {name:"Settings behind startup"})).toBeNull();
+  expect(screen.getByRole("alert")).toBeVisible();
+  fireEvent.click(screen.getByRole("button",{name:"Try again"}));
+  expect(retry).toHaveBeenCalledOnce();
+  view.rerender(<TrainingStartupGate pending interfaceLanguage="en"><Reader /></TrainingStartupGate>);
+  act(() => vi.advanceTimersByTime(30000));
+  expect(screen.getByRole("status")).toHaveAttribute("aria-busy","true");
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(screen.queryByRole("button",{name:"Settings behind startup"})).toBeNull();
+  view.rerender(<TrainingStartupGate pending={false} interfaceLanguage="en"><Reader /></TrainingStartupGate>);
+  expect(screen.getByRole("button",{name:"Settings behind startup"})).toBeVisible();
+  expect(mounted).toHaveBeenCalledOnce(); expect(unmounted).not.toHaveBeenCalled();
 });

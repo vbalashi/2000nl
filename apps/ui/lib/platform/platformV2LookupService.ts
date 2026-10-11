@@ -1,3 +1,4 @@
+import { withLexicalRelationTranslations } from "./platformV2LexicalRelationTranslations";
 import {parseMeaningLearningProgress,type MeaningLearningProgress} from '../../../../packages/shared/types/meaningLearningProgress';
 import { LIBRARY_RPC_GROUP_LIMIT } from "./libraryPagination";
 import { libraryEntryMatchesFilters, type LibrarySearchScope } from "./librarySearchScope";
@@ -412,7 +413,7 @@ export async function performPlatformV2Lookup(
               : null;
             const wordDetails =
               context.kind === "authenticated"
-                ? projectedWordDetails
+                ? withLexicalRelationTranslations(projectedWordDetails, translationResult.byEntryId.get(entry.id)?.relationTranslationsById)
                 : null;
             const entryContentRevision = platformV2ContentRevision(
               entry.id,

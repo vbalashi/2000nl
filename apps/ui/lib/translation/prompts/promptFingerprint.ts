@@ -1,3 +1,4 @@
+import { dictionaryTranslationProfile } from "../dictionaryTranslationProfile";
 import crypto from "crypto";
 import { loadPromptText } from "./promptLoader";
 import type { TranslationProviderName } from "../types";
@@ -13,9 +14,12 @@ export function getOpenAiTranslationPromptFingerprint() {
 }
 
 export function getOpenAiDictionaryMeaningPromptFingerprint() {
-  const meaningSystem = loadPromptText("openai_dictionary_meaning_system_v1.txt");
-  const meaningInstructions = loadPromptText("openai_dictionary_meaning_user_v1.txt");
-  return sha256([meaningSystem, meaningInstructions].join("\n---\n"));
+  const profile = dictionaryTranslationProfile();
+  const meaningSystem = loadPromptText(profile.systemFile);
+  const meaningInstructions = loadPromptText(profile.userFile);
+  // Preserve exact legacy cache identity for a full rollback.
+  const prompt = [meaningSystem, meaningInstructions].join("\n---\n");
+  return sha256(profile.id === "legacy" ? prompt : JSON.stringify({ model: profile.model, settings: profile.requestSettings, prompt }));
 }
 
 export function getDictionaryMeaningPromptFingerprint(

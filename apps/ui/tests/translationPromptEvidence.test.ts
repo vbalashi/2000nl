@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { getOpenAiDictionaryMeaningPromptFingerprint } from "@/lib/translation/prompts/promptFingerprint";
 import {
   prepareDictionaryMeaningEvalCase,
@@ -19,6 +19,8 @@ const evidencePath = path.join(
 );
 
 describe("issue #196 live prompt evidence", () => {
+  beforeEach(() => { vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE", "legacy"); });
+  afterEach(() => { vi.unstubAllEnvs(); });
   test("preserves six safe typisch runs and executable neighboring results", () => {
     const raw = fs.readFileSync(evidencePath, "utf8");
     const evidence = JSON.parse(raw);

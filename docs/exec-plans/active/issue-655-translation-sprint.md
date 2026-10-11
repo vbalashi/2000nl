@@ -1,0 +1,115 @@
+# #655 — полнота переводов: текущий спринт
+
+Владелец: текущий чат Codex. Issue: https://github.com/vbalashi/2000nl/issues/655
+Checkout: `.worktrees/655-translation-sprint`; branch: `codex/655-translation-sprint`.
+Base: `4c5d0f266be3`. Порядок принят 2026-10-10; даты спринта не заданы.
+Основание: [обсуждение](../../discussions/2026-10-10-01-translation-sprint.md).
+
+## Этапы и критерии
+
+1. **Реализовано в PR #656; выпуск отслеживается в #655:** headword на обороте идиомы. Публичная проекция, выбранный язык,
+   свежий перевод самостоятельного значения; отсутствие данных не подменяется
+   идиомой. Проверить оба направления, reveal и скрытие перевода, sibling isolation.
+2. **Запланировано:** эквиваленты. Проследить prompt → parser → cache → projection
+   → Training/Library; полезные варианты одного значения, разделитель ` · `.
+   Проверить новые и сохранённые результаты, без обязательного числа вариантов.
+3. **Запланировано:** дословность. Отдельный контракт и хранение, optional/null,
+   подпись по языку; естественный перевод первый. Проверить idiomatic/nonidiomatic
+   примеры на нескольких языках; определить политику кеша до выпуска.
+4. **Запланировано:** синонимы/антонимы. Контекст значения, идентичность связанного
+   текста, выбранный язык, сохранение и отображение. Проверить частичные ответы.
+
+## Границы и выпуск
+
+Владеющие модули: idiom presentation для этапа 1; dictionary meaning translation
+и публичные проекции для последующих. Учебное состояние/FSRS не меняются.
+Этапы отдельно reviewable; focused tests, typecheck, lint. UI browser QA при
+готовности runtime. Старые записи и prompt fingerprint учитывать явно; массовой
+регенерации production-кеша нет. После review/merge проверить release, sync main
+и retirement; сейчас checkout активен, удалению не подлежит.
+
+## Проверенный checkpoint этапа 1
+
+2026-10-10: 27 focused tests (idiom content, presentation, headword selection),
+UI typecheck и focused lint прошли. Компонентная проверка подтверждает reveal,
+переключение переводов и разделитель ` · `. Browser/production QA не выполнялась.
+Новый код использует только уже готовые переводы; отдельный запрос перевода
+основного sibling-значения не добавлен. Отсутствующий кеш остаётся отсутствующим,
+не заменяется переводом другого значения. Этапы 2–4 и release ещё открыты.
+
+## Возобновление и QA этапа 1
+
+2026-10-10: продолжен существующий PR #656, интегрирован выпущенный main
+642a5a01 (Luna6), конфликт только реестра решений разрешён сохранением обеих
+записей. Local health: ok/local/contract222. Добавлен синтетический сценарий
+de koe с idiom-only entry и отдельным переведённым первым значением.
+30 focused Vitest tests, 2 мобильных browser tests и typecheck/lint PASS.
+В Codex iab проверены оба направления, появление после reveal, общая кнопка
+перевода, светлая/тёмная тема и мобильные390×844. Скриншот сохранён вне
+checkout в каталоге визуализаций текущего чата. Это QA-фикстура, не снимок
+production-данных; генерация отсутствующего sibling-перевода не добавлена.
+
+Этап2: prompt/cache diagnosis и Luna6 v5 выпущены в #660; отдельные результаты
+и новая сотня находятся в research PR #658. Полезные эквиваленты возвращаются
+без обязательного количества. Остальные этапы спринта остаются открыты.
+
+## Сопровождение выпуска
+
+PR#656 объединён в main85de9623da130345db7dedd401ed10d52a248c65.
+Последующий checkpoint использует тот же checkout, ветку
+`codex/655-idiom-release-checkpoint`. Состояние развёртывания и production
+verification записывается в issue#655, без объявления всего спринта завершённым.
+
+Общий CI обнаружил прежнюю гонку в тесте same-run revision: DOM-элемент
+счётчика существует с текстом0 до получения denominator5. В отдельном
+сопровождающем изменении ожидание появления элемента заменено ожиданием
+точного значения; аналогично повторно запрашивается видимое сообщение
+Library failure. Ожидания0/5,1/5 и видимого alert сохранены, product-код
+не менялся. Весь TrainingScreen.test.tsx:84/84 PASS локально.
+
+## Объединённый этап2–3: эквиваленты и дословность
+
+2026-10-10: принято единое выполнение с запасным двухшаговым экспериментом
+([обсуждение](../../discussions/2026-10-10-02-translation-equivalents-literal.md)).
+Новый checkout `.worktrees/655-idiom-literal`, ветка `codex/655-idiom-literal`,
+base e54fd5b36789. Старый checkout этапа1 снят; исторические checkpoint выше сохранены.
+
+Реализован optional literalText на точном idiom content item, хранение в существующем
+JSON overlay и публичная node translation projection. Training/Library используют
+общий renderer с локализованной подписью и общей видимостью. Схема SQL не меняется.
+Приоритет сборки: definition/usage, идиомы и их объяснения, owned examples,
+standalone examples; неполные optional поля из-за общего бюджета пропускаются.
+Причина — stress-пример показал потерю объяснения и однобуквенный обрывок.
+
+Сравниваются Luna v5–v9 и матрица v8/v9 × low/medium/high. Frozen synthetic inputs,
+raw answers, settings, token usage, retry diagnostics и non-blind agent assessments
+хранятся отдельно в Research/translation-eval/literal-v1 в research PR#662
+(ветка codex/655-literal-eval, d7fdff1d; release не включает raw research). Никаких пользовательских
+корпусов и секретов. Проверенный кандидат v8/high; известный literal-image defect
+cat-ru сохранён. Второй запрос не включается: однопроходный вариант прошёл
+относительную проверку; стоимость/задержки reasoning явно учитываются.
+Выпуск отслеживается в #655; весь спринт, включая связанные слова, не завершён.
+
+Checkpoint этапа2–3: 69 focused unit/component tests, typecheck и два мобильных
+browser-сценария PASS. 558 сохранённых provider responses; v8/high 95/96 accepted
+на основных наборах, один серьёзный literal-image defect, 0 critical. Оценка agent,
+non-blind; человеческое подтверждение и независимая population-оценка отсутствуют.
+Два финальных длинных примера прошли после устранения обрывков optional content.
+
+## Выпуск объединённого этапа2–3
+
+PR#663 (head6ca9e4c90a960d22f14b25a9af0c489a60ac2f9f) объединён в
+34487358d5f78f52330a5ab39b4c902b537e92a5. Deploy38080046000 PASS;
+production0.18.1273 health ok, DB contract222 unchanged. Synthetic provider smoke
+из рабочего контейнера: packaged v8 prompt matches, Luna6/high, strict contract PASS,
+корова + natural idiom + literal line, 5758ms, без DB writes. Reference main synced.
+Общий CI38079318136 на abdfc6d0 PASS; финальная server-only поправка JSON mode
+6ca9e4c9 покрыта повторными69 tests/typecheck/lint, общий duplicate CI ещё выполнялся.
+
+Research branch codex/655-literal-eval сохранена отдельно в draft PR#662,
+head15d3634c, raw evidence commitd7fdff1d. Полный архив604 файлов проверен:
+/Users/khrustal/adhoc/2000nl-research-archives/655-literal-v1/research-15d3634c.tar.
+HTML, README, receipts и screenshot живут вне feature checkout; остановленный
+чистый checkout этапа2–3 подлежит retirement после docs checkpoint. Старый
+research657/PR658 остаётся активным и не затрагивается. Спринт655 открыт:
+далее переводы синонимов/антонимов.

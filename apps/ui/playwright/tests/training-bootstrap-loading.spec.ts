@@ -65,6 +65,10 @@ async function holdSessionRefresh(
   page: Page,
   language: keyof typeof bootstrapHeading,
 ) {
+  // Startup also waits for account-owned setup/material and scope reads.
+  // Install the complete backend fixture, then override the gated preferences.
+  await setupAuthenticatedTrainingAttributionPage(page, 0, { deferNavigation: true });
+
   // This scenario mocks the database/auth boundary. Keep its health response
   // deterministic too: the real dev health warning otherwise mounts between
   // frame/header measurements and shifts the header by the banner height.
