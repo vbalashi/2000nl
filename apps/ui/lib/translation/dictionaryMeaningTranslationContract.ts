@@ -175,10 +175,18 @@ export function buildDictionaryMeaningTranslationRequest(params: {
     remainingContentTokenUpperBound -=
       metadataTokenUpperBound + tokenUpperBound(text);
   };
-  // Reserve idiom meaning constraints before examples for every meaning,
-  // including meanings with a standalone definition.
+  // Ordinary reverse training freezes a standalone example before translation.
+  // Reserve these prompts before optional idiom material can exhaust the budget.
   push("definition", "definition", meaning.definition);
   push("usage-pattern", "usage-pattern", meaning.context);
+  const hasStandaloneMeaning = content.some(item => item.role === "definition" || item.role === "usage-pattern");
+  const pushStandaloneExamples = () => {
+    for (const [index, example] of asArray(meaning.examples).entries()) {
+      push(`example:${index}`, "example", example);
+    }
+  };
+  if (hasStandaloneMeaning) pushStandaloneExamples();
+  // Keep idiom meaning constraints ahead of idiom examples.
   for (const [index, value] of idiomValues.entries()) {
     const idiom = asRecord(value);
     push(`idiom:${index}`, "idiom", typeof value === "string" ? value : idiom.expression);
@@ -194,9 +202,7 @@ export function buildDictionaryMeaningTranslationRequest(params: {
       push(`idiom:${index}:example:${exampleIndex}`, "example", example);
     }
   }
-  for (const [index, example] of asArray(meaning.examples).entries()) {
-    push(`example:${index}`, "example", example);
-  }
+  if (!hasStandaloneMeaning) pushStandaloneExamples();
   push("usage-note", "usage-note", meaning.note);
 
   return {
