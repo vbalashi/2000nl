@@ -50,6 +50,31 @@ limits still apply. Any future oversized selected example needs an explicit
 bounded targeted-translation contract, not endless retries or silently choosing
 another example.
 
+### Relationship to the preceding generator release (#670)
+
+Production health confirmed commit `872d2e8606f9118f8bdad6759721727bb4aad476`
+(#670). The affected overlay was updated at 2026-10-11 09:18:42 UTC with prompt
+fingerprint `129be0a92c4890f99ea96b8c5c48335d9e39fafa130597d0b96c2f92d0ef2035`,
+matching the current Luna6 profile including 32768 completion tokens, high
+reasoning, and the explanation-repair prompt. This was not merely an old
+artifact waiting for the new generator to invalidate it.
+
+The increased completion budget and 180-second provider timeout do not change
+request selection limits: 24 content items, 600 characters per item, 6000 content
+characters, and 2500 estimated content tokens. The #670 repair compares output
+against `request.content` and repairs missing idiom explanations only. Replaying
+the deployed builder on the exact source still omitted `example:0`; a synthetic
+complete response for its selected 24 fields passed the strict parser and
+produced no repair plan. No paid provider call was needed to establish this.
+
+The prior full-card experiment explicitly collected source-versus-sent coverage
+and omitted-field metrics, but its runtime delivery/repair checks validated the
+bounded selected request, not completeness of every source field or readiness
+of the frozen training member. Successful long-response generation therefore
+did not establish end-to-end training readiness. Provider transport retry,
+explanation repair, cache invalidation and UI preparation retry are separate
+mechanisms; none could introduce an example absent from the selected request.
+
 Regression checks include an idiom-heavy request that previously omitted the
 ordinary example, old-ready-overlay invalidation, automatic failure recovery,
 retry bounds, and manual retry reset. The exact production `oog` source was
