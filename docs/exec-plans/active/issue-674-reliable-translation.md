@@ -41,6 +41,16 @@ Validation at this checkpoint: UI typecheck passes; full UI suite 259 files / 2,
 
 Integration is deliberately pending: this draft migration is included in local/fresh bootstrap for canonical schema coverage, but not in the production deployment manifest; no worker service or queue-based HTTP behavior is enabled. The next integrated slice must connect authenticated enqueue/status, trusted source/provider identity resolution, independent worker startup/health and unified polling before queue rollout. Source inventory/semantic partitions/checkpoints and the bounded session buffer remain required scope, not completed by requested-field readiness.
 
+## Server integration checkpoint — 2026-10-11 (in progress)
+
+The default-off `DICTIONARY_TRANSLATION_JOBS_ENABLED` facade now separates authenticated enqueue/status from execution. It computes trusted identity, reuses complete cache artifacts, promotes foreground jobs and supports read-only observation without invoking the model. The synchronous path remains the default. Enqueue/status has a 15s operation deadline; worker REST calls have a separate 10s deadline, while generation retains its own provider/operation budgets.
+
+A standalone worker is bundled into the immutable UI image. It claims identity-only jobs, reconstructs the trusted source, verifies provider/policy/content identity before and after generation, renews leases and shuts down after draining an active job. A real child-process test kills one worker during generation and verifies that its replacement publishes with the replacement token; actual Postgres tests separately establish lease recovery and fencing.
+
+Migration 223 additionally hashes the canonical source row server-side and verifies it while holding the source lock during atomic publication. A source edit therefore prevents stale publication even without a competing enqueue. Ready-cache repair compares the observed cache timestamp, preventing an older request from invalidating a newly completed artifact. Disposable Postgres validation: 41 files / 367 tests pass. Worker/facade focused validation: 18 tests pass; typecheck passes.
+
+The browser transport now retains cancellation/deadlines through response-body reading and carries explicit observation/background intent. Shared polling and family integration are still pending. Worker health, Compose/deploy/rollback, full-source partitions, partial readiness, session buffering and browser QA remain required. Migration 223 is still absent from the production manifest, and the feature remains disabled in production.
+
 ## Validation and rollout
 
 Use local disposable Supabase/Postgres for migration iteration. Explicitly revoke public/authenticated queue table and function access; authenticated routes validate user access before service-role enqueue. Test deduplication under concurrent enqueue, exclusive claims, expired leases, late writes, failure exhaustion, source changes, provider partitions, browser disconnects and status polling. Training tests pin frozen membership and unchanged progress. Production DB deployment follows the exact-checksum/postflight manifest with no hold bypass. The worker must start with the matching immutable release and expose freshness/health; rollback must not strand or corrupt jobs. No bulk production regeneration.

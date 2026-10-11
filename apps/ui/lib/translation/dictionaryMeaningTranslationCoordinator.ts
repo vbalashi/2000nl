@@ -1,3 +1,4 @@
+import { dictionaryMeaningTranslationIdentity } from "./dictionaryMeaningTranslationIdentity";
 import { dictionaryMeaningTranslationCoverage } from "./dictionaryMeaningTranslationReadiness";
 import type { TranslationOverlay, WordEntryTranslationStatus } from "@/lib/types";
 import { DICTIONARY_TRANSLATION_PENDING_MS } from "./dictionaryTranslationBudgets";
@@ -10,19 +11,8 @@ import {
 import type { ITranslator } from "@/lib/translation/ITranslator";
 import type { TranslationProviderName } from "@/lib/translation/types";
 import { getDictionaryMeaningPromptFingerprint } from "@/lib/translation/prompts/promptFingerprint";
-import {
-  translationPipelineVersion,
-  translationPolicyVersion,
-} from "@/lib/translation/translationPolicy";
 import type { DictionaryLookupPayload } from "@/lib/platform/lookupService";
 import {
-  contentFingerprint,
-  normalizeDictionaryContent,
-  verifyDictionaryContentAudioLinks,
-} from "@/lib/platform/projections/dictionaryContent";
-import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
-import {
-  dictionaryMeaningTranslationFingerprint,
   dictionaryMeaningTranslatedPaths,
   resolveDictionaryMeaningTranslation,
 } from "@/lib/translation/dictionaryMeaningTranslationService";
@@ -283,32 +273,13 @@ export async function coordinateDictionaryMeaningTranslation(input: {
 
   // Cache readiness is checked against the actual requested source fields,
   // after computing the current source and policy identity below.
-  const sourceContent = await verifyDictionaryContentAudioLinks(
-    normalizeDictionaryContent(word as DictionaryLookupPayload),
-  );
-  const sourceContentRevision = contentFingerprint(sourceContent);
-  const selectedProviderRevision =
-    getDictionaryMeaningPromptFingerprint(provider);
-  const meaningRequest = buildDictionaryMeaningTranslationRequest({
-    entryId: wordEntryId,
-    sourceContentFingerprint: sourceContentRevision,
-    sourceLanguageCode:
-      typeof (word as any)?.language_code === "string"
-        ? (word as any).language_code
-        : "nl",
-    targetLanguageCode: dbLang,
-    word,
-  });
-  const currentTranslationPolicyVersion = translationPolicyVersion(
-    provider,
-    meaningRequest,
-  );
-  const fingerprint = dictionaryMeaningTranslationFingerprint({
+  const {
     request: meaningRequest,
-    pipelineVersion: translationPipelineVersion(meaningRequest),
-    provider,
-    promptFingerprint: selectedProviderRevision,
-  });
+    sourceContentRevision,
+    providerRevision: selectedProviderRevision,
+    policyVersion: currentTranslationPolicyVersion,
+    fingerprint,
+  } = await dictionaryMeaningTranslationIdentity({wordEntryId,word,dbLang,provider});
   const overlayComplete = dictionaryMeaningTranslationCoverage(
     meaningRequest, sanitizeTranslationOverlay(existing?.overlay),
   ).requestComplete;

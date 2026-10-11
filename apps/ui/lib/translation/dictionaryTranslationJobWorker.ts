@@ -11,6 +11,7 @@ export type DictionaryTranslationJob = {
   provider: "openai" | "deepl" | "gemini";
   source_fingerprint: string;
   source_content_revision: string;
+  source_row_revision: string;
   translation_policy_version: string;
   provider_revision: string;
   lease_token: string;
@@ -18,6 +19,12 @@ export type DictionaryTranslationJob = {
   created_at: string;
   available_at: string;
 };
+export class DictionaryTranslationJobSourceChangedError extends Error {
+  constructor() {
+    super("translation_job_source_changed");
+  }
+}
+
 type RpcClient = {
   rpc: (
     name: string,
@@ -147,8 +154,13 @@ export async function executeClaimedDictionaryTranslationJob(input: {
     const result = await rpc("fail_dictionary_translation_job_v1", {
       p_job_id: job.id,
       p_lease_token: job.lease_token,
-      p_error_code: failure.code,
-      p_retryable: true,
+      p_error_code:
+        error instanceof DictionaryTranslationJobSourceChangedError
+          ? "source_changed"
+          : failure.code,
+      p_retryable: !(
+        error instanceof DictionaryTranslationJobSourceChangedError
+      ),
     });
     // An unavailable database leaves the lease to expire and recover. Never
     // pretend that an unconfirmed completion or failure has been committed.

@@ -11,6 +11,7 @@ const job: DictionaryTranslationJob = {
   provider: "openai",
   source_fingerprint: "source",
   source_content_revision: "revision",
+  source_row_revision: "row-revision",
   translation_policy_version: "policy",
   provider_revision: "prompt",
   lease_token: "lease",

@@ -80,6 +80,31 @@ describe("translationApiClient", () => {
     vi.useRealTimers();
   });
 
+  test("bounds a stalled response body after successful headers", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+        status: 200,
+        text: () => new Promise(() => undefined),
+      }));
+      const pending = fetchDictionaryMeaningTranslation({
+        entryId: "entry-1", targetLanguageCode: "ru", timeoutMs: 10,
+      });
+      const rejection = expect(pending).rejects.toThrow("platform_request_timeout");
+      await vi.advanceTimersByTimeAsync(10);
+      await rejection;
+    } finally { vi.useRealTimers(); }
+  });
+
+  test("observes an existing background job without requesting a retry", async () => {
+    await fetchDictionaryMeaningTranslation({
+      entryId: "entry-1", targetLanguageCode: "ru", observeOnly: true, background: true,
+    });
+    expect(fetch).toHaveBeenCalledWith("/api/platform/translation", expect.objectContaining({
+      body: JSON.stringify({ entryId: "entry-1", targetLang: "ru", observeOnly: true, background: true }),
+    }));
+  });
+
   test("a slow successful generation survives the old 12-second browser timeout", async () => {
     vi.useFakeTimers();
     try {

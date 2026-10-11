@@ -249,17 +249,91 @@ describeIfDb("durable dictionary translation jobs", () => {
     },
   );
 
+  test("source edits fence publication even without a newer enqueue", async () => {
+    await withTransaction(pool, async (client) => {
+      const entry = await insertWord(client, `source-edit-${randomUUID()}`);
+      const job = await enqueue(client, entry);
+      const running = await claim(client);
+      await client.query(
+        "update word_entries set raw=$2::jsonb where id=$1",
+        [entry, JSON.stringify({meanings:[{definition:"changed source"}]})],
+      );
+      expect(
+        (
+          await client.query(
+            "select complete_dictionary_translation_job_v1($1,$2,'{}',null) result",
+            [job.id, running.lease_token],
+          )
+        ).rows[0].result,
+      ).toBe(false);
+      expect(
+        (
+          await client.query(
+            "select status,error_code from dictionary_translation_jobs where id=$1",
+            [job.id],
+          )
+        ).rows[0],
+      ).toEqual({ status: "superseded", error_code: "source_changed" });
+      expect(
+        (
+          await client.query(
+            "select count(*)::int n from word_entry_translations where word_entry_id=$1",
+            [entry],
+          )
+        ).rows[0].n,
+      ).toBe(0);
+      const replacement = await enqueue(client, entry); // same mocked content fingerprint, different SQL source revision
+      expect(replacement.id).not.toBe(job.id);
+      expect(replacement.source_row_revision).not.toBe(job.source_row_revision);
+    });
+  });
+
+  test("an enqueue that observed the pre-completion cache cannot restart a ready job", async () => {
+    await withTransaction(pool, async (client) => {
+      const entry = await insertWord(client, `ready-race-${randomUUID()}`);
+      const job = await enqueue(client, entry);
+      const running = await claim(client);
+      await client.query(
+        'select complete_dictionary_translation_job_v1($1,$2,\'{"headword":"translation"}\',null)',
+        [job.id, running.lease_token],
+      );
+      const refresh = (revision: Date | null) =>
+        client.query(
+          "select * from enqueue_dictionary_translation_job_v1($1,'ru','openai','one','source','policy','prompt',10,false,true,$2)",
+          [entry, revision],
+        );
+      expect((await refresh(null)).rows[0].status).toBe("ready");
+      const cache = (
+        await client.query(
+          "select updated_at from word_entry_translations where word_entry_id=$1",
+          [entry],
+        )
+      ).rows[0];
+      // Pass the original microsecond timestamp as text, not JS Date's truncated milliseconds.
+      const revision = (
+        await client.query(
+          "select updated_at::text revision from word_entry_translations where word_entry_id=$1",
+          [entry],
+        )
+      ).rows[0].revision;
+      expect(cache.updated_at).toBeTruthy();
+      expect((await refresh(revision)).rows[0].status).toBe("queued");
+    });
+  });
+
   test("queue tables and RPCs are inaccessible to client roles", async () => {
     for (const role of ["anon", "authenticated"]) {
       const { rows } = await pool.query(
         `select has_table_privilege($1,'public.dictionary_translation_jobs','select') table_read,
         has_function_privilege($1,'public.claim_dictionary_translation_job_v1()','execute') claim,
-        has_function_privilege($1,'public.enqueue_dictionary_translation_job_v1(uuid,text,text,text,text,text,text,integer,boolean)','execute') enqueue`,
+        has_function_privilege($1,'public.dictionary_translation_source_v1(uuid)','execute') source,
+        has_function_privilege($1,'public.enqueue_dictionary_translation_job_v1(uuid,text,text,text,text,text,text,integer,boolean,boolean,timestamptz)','execute') enqueue`,
         [role],
       );
       expect(rows[0]).toEqual({
         table_read: false,
         claim: false,
+        source: false,
         enqueue: false,
       });
     }

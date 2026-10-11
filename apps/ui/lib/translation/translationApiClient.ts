@@ -13,6 +13,8 @@ export async function fetchDictionaryMeaningTranslation(input: {
   targetLanguageCode: string;
   force?: boolean;
   debug?: boolean;
+  observeOnly?: boolean;
+  background?: boolean;
   signal?: AbortSignal;
   timeoutMs?: number;
 }): Promise<Response> {
@@ -41,8 +43,8 @@ export async function fetchDictionaryMeaningTranslation(input: {
 
   try {
     return await Promise.race([
-      (async () =>
-        fetch("/api/platform/translation", {
+      (async () => {
+        const response = await fetch("/api/platform/translation", {
           method: "POST",
           cache: "no-store",
           credentials: "same-origin",
@@ -53,8 +55,18 @@ export async function fetchDictionaryMeaningTranslation(input: {
             targetLang: input.targetLanguageCode,
             ...(input.force ? { force: true } : {}),
             ...(input.debug ? { debug: true } : {}),
+            ...(input.observeOnly ? { observeOnly: true } : {}),
+            ...(input.background ? { background: true } : {}),
           }),
-        }))(),
+        });
+        // Keep the deadline and caller cancellation active through the body.
+        const body = await response.text();
+        return new Response([204, 205, 304].includes(response.status) ? null : body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        });
+      })(),
       aborted,
     ]);
   } finally {
