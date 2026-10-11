@@ -34,8 +34,9 @@ The entry's ready translation suppressed its request-translation capability,
 so manual retry returned unavailable before invoking translation. Automatic
 rechecks previously applied only to pending results, not failures.
 
-Standalone meaning examples now precede optional idiom material in the bounded
-request. Idiom-only entries retain their existing constraint-first ordering.
+Standalone meaning examples now precede optional idiom examples and lexical
+relations in the bounded request. Definition, usage pattern and idiom meaning
+constraints retain priority; idiom-only entries retain their existing ordering.
 The ordinary pipeline policy is `dictionary_meaning_examples_first_v2`; old
 ordinary overlays fail freshness checks in both projection and coordinator and
 are regenerated lazily through the existing request capability. No scheduler,
