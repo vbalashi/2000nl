@@ -1,4 +1,6 @@
 import type { TranslationOverlay, WordEntryTranslationStatus } from "@/lib/types";
+import { DICTIONARY_TRANSLATION_PENDING_MS } from "./dictionaryTranslationBudgets";
+import { withDictionaryTranslationDeadline } from "./dictionaryTranslationDeadline";
 import { getTranslationServiceSupabase } from "@/lib/platform/serverSupabase";
 import {
   createTranslator,
@@ -320,7 +322,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
     provider,
     promptFingerprint: selectedProviderRevision,
   });
-  const pendingFreshForMs = 15_000;
+  const pendingFreshForMs = DICTIONARY_TRANSLATION_PENDING_MS;
   if (
     existing?.status === "pending" &&
     existing.source_fingerprint === fingerprint &&
@@ -589,7 +591,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
   }
   try {
     const { overlay, note, meta } =
-      await resolveDictionaryMeaningTranslation(translator, meaningRequest);
+      await withDictionaryTranslationDeadline(() => resolveDictionaryMeaningTranslation(translator, meaningRequest));
     const providerUsed = meta.providerUsed ?? null;
     const usedFallback = meta.usedFallback ?? false;
     const primaryFailure = meta.primaryFailure ?? null;

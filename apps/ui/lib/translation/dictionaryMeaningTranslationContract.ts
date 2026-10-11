@@ -15,12 +15,12 @@ export const DICTIONARY_MEANING_TRANSLATION_LIMITS = {
   articleCharacters: 32,
   partOfSpeechCharacters: 120,
   partOfSpeechCodeCharacters: 32,
-  contentItems: 24,
+  contentItems: 128,
   contentItemCharacters: 600,
-  contentCharacters: 6_000,
-  contentTokenUpperBound: 2_500,
-  requestStringCharacters: 6_600,
-  requestStringTokenUpperBound: 3_000,
+  contentCharacters: 24_000,
+  contentTokenUpperBound: 10_000,
+  requestStringCharacters: 24_600,
+  requestStringTokenUpperBound: 11_000,
   entryTranslationCharacters: 300,
   alternativeTexts: 5,
   contentTranslationCharacters: 1_200,
@@ -175,15 +175,23 @@ export function buildDictionaryMeaningTranslationRequest(params: {
     remainingContentTokenUpperBound -=
       metadataTokenUpperBound + tokenUpperBound(text);
   };
-  // Reserve idiom meaning constraints before examples for every meaning,
-  // including meanings with a standalone definition.
+  // Ordinary reverse training freezes a standalone example before translation.
+  // Reserve these prompts before optional idiom examples can exhaust the budget.
   push("definition", "definition", meaning.definition);
   push("usage-pattern", "usage-pattern", meaning.context);
+  const hasStandaloneMeaning = content.some(item => item.role === "definition" || item.role === "usage-pattern");
+  const pushStandaloneExamples = () => {
+    for (const [index, example] of asArray(meaning.examples).entries()) {
+      push(`example:${index}`, "example", example);
+    }
+  };
+  // Keep idiom meaning constraints ahead of idiom examples.
   for (const [index, value] of idiomValues.entries()) {
     const idiom = asRecord(value);
     push(`idiom:${index}`, "idiom", typeof value === "string" ? value : idiom.expression);
     push(`idiom:${index}:explanation`, "idiom-explanation", idiom.explanation);
   }
+  if (hasStandaloneMeaning) pushStandaloneExamples();
   for (const kind of ["synonym", "antonym"] as const) {
     for (const [index, text] of dictionaryLexicalRelationTexts(meaning[`${kind}s`]).entries()) {
       push(`${kind}:${index}`, kind, text);
@@ -194,9 +202,7 @@ export function buildDictionaryMeaningTranslationRequest(params: {
       push(`idiom:${index}:example:${exampleIndex}`, "example", example);
     }
   }
-  for (const [index, example] of asArray(meaning.examples).entries()) {
-    push(`example:${index}`, "example", example);
-  }
+  if (!hasStandaloneMeaning) pushStandaloneExamples();
   push("usage-note", "usage-note", meaning.note);
 
   return {

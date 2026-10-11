@@ -80,6 +80,20 @@ describe("translationApiClient", () => {
     vi.useRealTimers();
   });
 
+  test("a slow successful generation survives the old 12-second browser timeout", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal("fetch",vi.fn((_url,init)=>new Promise((resolve,reject)=>{
+        setTimeout(()=>resolve(new Response(JSON.stringify({status:"ready"}))),50_000);
+        init?.signal?.addEventListener("abort",()=>reject(new Error("aborted")));
+      })));
+      const result=fetchDictionaryMeaningTranslation({entryId:"oog",targetLanguageCode:"ru"});
+      const assertion=expect(result).resolves.toMatchObject({status:200});
+      await vi.advanceTimersByTimeAsync(50_000);
+      await assertion;
+    } finally {vi.useRealTimers();}
+  });
+
   test("bounds stalled session acquisition before fetch starts", async () => {
     vi.useFakeTimers();
     getSession.mockReturnValueOnce(new Promise(() => undefined));

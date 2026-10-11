@@ -3,6 +3,7 @@ import {
   fetchPlatformV2LibraryGroup,
   fetchPlatformV2LibraryGroupPage,
   fetchPlatformV2CrossReferenceTarget,
+  requestPlatformV2LibraryTranslation,
   selectPlatformV2CrossReferenceTarget,
   selectPlatformV2LibraryGroup,
 } from "@/lib/platform/platformV2LibraryClient";
@@ -550,4 +551,15 @@ describe("Library transient initial read recovery", () => {
     expect(fetchMock.mock.calls.map(call => JSON.parse(call[1].body).cursor)).toEqual([null,"page-two","page-two"]);
   });
 
+});
+
+describe("translation gateway recovery", () => {
+  test.each([504, 524])("treats HTTP %s as an unknown outcome to poll", async (status) => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("gateway timeout", { status })));
+    await expect(requestPlatformV2LibraryTranslation({ entryId: "entry", targetLanguageCode: "ru" })).resolves.toBe("pending");
+  });
+  test("preserves explicit upstream failures", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("failed", { status: 502 })));
+    await expect(requestPlatformV2LibraryTranslation({ entryId: "entry", targetLanguageCode: "ru" })).rejects.toThrow("translation_failed");
+  });
 });

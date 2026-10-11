@@ -22,6 +22,17 @@ const translationQuery = (data: unknown[]) => {
 };
 
 describe("Platform V2 translation projection", () => {
+  test("an old ready article missing its training example becomes stale and can be regenerated", async () => {
+    const entry = {id:"oog",language_code:"nl",headword:"oog",part_of_speech:"zn",raw:{meanings:[{definition:"een lichaamsdeel",examples:["mijn dochters hebben blauwe ogen"]}]}};
+    const revision = contentFingerprint(normalizeDictionaryContent(entry as any));
+    const request = buildDictionaryMeaningTranslationRequest({entryId:entry.id,sourceContentFingerprint:revision,sourceLanguageCode:"nl",targetLanguageCode:"ru",word:entry});
+    const oldPolicy = translationPolicyVersion("openai", request).replace("dictionary_meaning_full_budget_v3:", "dictionary_meaning_v1:");
+    const from = vi.fn(() => translationQuery([{id:"old-translation",word_entry_id:entry.id,target_lang:"ru",provider:"openai",status:"ready",overlay:{headword:"глаз",meanings:[{definition:"часть тела"}]},source_content_revision:revision,translation_policy_version:oldPolicy}]));
+    const result = await resolvePlatformV2Translations({supabase:{from}} as any,{entries:[entry],bindingsByEntryId:new Map(),targetLanguageCode:"ru"});
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.byEntryId.get(entry.id)?.entryTranslation).toMatchObject({status:"not-available",isFresh:false,errorCode:"stale-source"});
+  });
   beforeEach(() => {
     process.env.TRANSLATION_PROVIDER = "openai";
   });

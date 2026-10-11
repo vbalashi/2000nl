@@ -34,6 +34,37 @@ test("runtime makes one repair, logs safe operation, uses 180s timeout",async()=
 test("valid answer costs one request",async()=>{
  const mock=provider([full]);await new OpenAITranslator({apiKey:"secret",model:"gpt-6-luna"}).translateDictionaryMeaning(request);expect(mock).toHaveBeenCalledTimes(1);
 });
+
+test("primary transport retries share a four-minute operation budget",async()=>{
+ vi.useFakeTimers();vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6");
+ vi.spyOn(console,"info").mockImplementation(()=>{});
+ const mock=vi.fn((_url,init)=>new Promise((_resolve,reject)=>{init?.signal?.addEventListener("abort",()=>reject(new DOMException("timeout","AbortError")));}));
+ vi.stubGlobal("fetch",mock);
+ try {
+  const verdict=new OpenAITranslator({apiKey:"secret",model:"gpt-6-luna"}).translateDictionaryMeaning(request).catch(error=>error.message);
+  await vi.advanceTimersByTimeAsync(240_000);
+  expect(await verdict).toMatch(/^provider_timeout:/);
+  expect(mock).toHaveBeenCalledTimes(2);
+  expect(vi.getTimerCount()).toBe(0);
+ } finally {vi.useRealTimers();}
+});
+
+test("explanation repair receives only the remaining operation budget",async()=>{
+ vi.useFakeTimers();vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6");
+ vi.spyOn(console,"info").mockImplementation(()=>{});
+ let n=0;
+ const mock=vi.fn((_url,init)=>new Promise((resolve,reject)=>{
+  if(++n===1)setTimeout(()=>resolve(new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify(original)}}]}))),179_000);
+  init?.signal?.addEventListener("abort",()=>reject(new DOMException("timeout","AbortError")));
+ }));vi.stubGlobal("fetch",mock);
+ try {
+  const verdict=new OpenAITranslator({apiKey:"secret",model:"gpt-6-luna"}).translateDictionaryMeaning(request).catch(error=>error.message);
+  await vi.advanceTimersByTimeAsync(240_000);
+  expect(await verdict).toMatch(/^provider_timeout:/);
+  expect(mock).toHaveBeenCalledTimes(2);
+  expect(vi.getTimerCount()).toBe(0);
+ } finally {vi.useRealTimers();}
+});
 test("invalid repair fails without semantic retry loop",async()=>{
  const mock=provider([original,{contentTranslations:[]}]);await expect(new OpenAITranslator({apiKey:"secret",model:"gpt-6-luna"}).translateDictionaryMeaning(request)).rejects.toThrow();expect(mock).toHaveBeenCalledTimes(2);
 });

@@ -1,7 +1,8 @@
 import { authenticatedJsonHeaders } from "@/lib/platform/platformV2Http";
 import { forwardAbortSignal } from "@/lib/platform/platformFetchWithTimeout";
+import { DICTIONARY_TRANSLATION_CLIENT_MS } from "./dictionaryTranslationBudgets";
 
-const DEFAULT_TRANSLATION_TIMEOUT_MS = 12_000;
+const DEFAULT_TRANSLATION_TIMEOUT_MS = DICTIONARY_TRANSLATION_CLIENT_MS;
 
 export async function translationRequestHeaders(): Promise<HeadersInit> {
   return authenticatedJsonHeaders();

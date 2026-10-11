@@ -1,6 +1,13 @@
 import { describe, expect, test, vi } from "vitest";
 import { withTranslationRetries, safeProviderRequestId, retryAfterMs, type TranslationAttemptDiagnostic, type TranslationAttemptLog } from "@/lib/translation/translationRetry";
 describe("translation transient recovery", () => {
+  test("does not start a retry beyond the dictionary operation deadline", async () => {
+    const call=vi.fn(async(d:TranslationAttemptDiagnostic)=>{d.status=429;d.retryAfterMs=30_000;throw new Error("rate limited");});
+    const sleep=vi.fn();
+    await expect(withTranslationRetries(call,{deadlineAtMs:Date.now()+1000,classify:()=>"provider_http_error",log:()=>{},sleep})).rejects.toThrow("rate limited");
+    expect(call).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
   test("allows three retries, logs every attempt and preserves known usage", async () => {
     const logs: TranslationAttemptLog[] = [], waits:number[]=[]; let n = 0;
     const result = await withTranslationRetries(async d => {
