@@ -15,7 +15,6 @@ export const surfaceProbeExpression = `(() => {
   const today = ["training · vandaag", "training · today", "тренировка · сегодня",
     "training · studiedag", "training · study day", "тренировка · учебный день"]
     .some((label) => text.includes(label));
-  if (today) return "QA_SURFACE:TODAY";
   const authKey = Object.keys(localStorage).find((key) => key.startsWith("sb-") && key.endsWith("-auth-token"));
   let sessionValid = false;
   try {
@@ -27,6 +26,12 @@ export const surfaceProbeExpression = `(() => {
   const login = /magic link|sign in|log in|inloggen|войти/i.test(text);
   if (authForm || login || !sessionValid) return "QA_SURFACE:UNAUTHENTICATED";
   const authenticatedShell = Boolean(document.querySelector('nav[aria-label="Primary"]'));
+  const overview = document.querySelector('[data-training-pilot-surface="today"][aria-hidden="false"]');
+  const readyOverview = overview
+    && overview.querySelectorAll('section[aria-label] h2').length >= 2
+    && Boolean(overview.querySelector('dl'))
+    && !overview.querySelector('[role="alert"], [aria-busy="true"]');
+  if (authenticatedShell && (readyOverview || today)) return "QA_SURFACE:TODAY";
   return authenticatedShell ? "QA_SURFACE:AUTHENTICATED_OTHER" : "QA_SURFACE:AUTH_UNCONFIRMED";
 })()`;
 

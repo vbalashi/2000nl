@@ -1,10 +1,12 @@
 "use client";
+import { useLatchedTranslationBuffer } from "../v2/useLatchedTranslationBuffer";
+import { translationPendingCopy } from "@/lib/training/translationPendingCopy";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { PlatformTranslationExerciseCandidateV2, PlatformTranslationExerciseSessionV2, PlatformTrainingExerciseReviewResultV2 } from "../../../../../packages/shared/types/platformV2";
 import type { SentenceExerciseContent } from "@/lib/training/sentenceExerciseContent";
-import { loadSentenceExerciseContent, prepareSentenceExerciseTranslation } from "@/lib/training/sentenceExerciseLoader";
+import { loadSentenceExerciseContent } from "@/lib/training/sentenceExerciseLoader";
 import { fetchNextPlatformV2TranslationTrainingSessionExercise, markPlatformV2TranslationTrainingSessionMemberUnavailable, performPlatformV2TranslationExerciseAction } from "@/lib/platform/platformV2TranslationExerciseClient";
 import { buildSentenceCardPresentation } from "@/lib/training/sentenceCardPresentation";
 import { TrainingCompletion, type TrainingCompletionActions } from "../v2/TrainingCompletion";
@@ -54,6 +56,9 @@ export function TrainingSentenceSession(props: Props) {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [translationPending, setTranslationPending] = useState(false);
+  const pendingSince = useRef<number | null>(null);
+  const loadController = useRef<AbortController | null>(null);
   const [terminal, setTerminal] = useState<"complete" | "empty" | null>(session.plannedTotal === 0 ? "empty" : null);
   const eventId = useRef<string | null>(null);
   const generation = useRef(0);
@@ -61,21 +66,28 @@ export function TrainingSentenceSession(props: Props) {
   // Parent re-renders must not reload the member and hide its revealed answer.
   const supersededCallback = useRef(onSessionSuperseded);
   useEffect(() => { supersededCallback.current = onSessionSuperseded; }, [onSessionSuperseded]);
-  const preparedMembers = useRef(new Set<string>());
+  useLatchedTranslationBuffer({ ownerId: userId, sessionId: session.sessionId, generation: session.runGeneration, currentEntryId: candidate?.entryId, currentOrdinal: candidate?.ordinal, targetLanguageCode: translationTargetLanguageCode, members: session.members });
   const stats = useTranslationTrainingStats(session.sessionId, completed);
 
-  const loadNext = useCallback(async () => {
+  const loadNext = useCallback(async (force = false) => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
     const current = ++generation.current;
-    setLoading(true); setFailed(false); setTerminal(null); setCandidate(null); setContent(null); setRevealed(false);
+    setTranslationPending(false); setLoading(true); setFailed(false); setTerminal(null); setCandidate(null); setContent(null); setRevealed(false);
     try {
       for (let attempt = 0; attempt < 8; attempt++) {
         const next = await fetchNextPlatformV2TranslationTrainingSessionExercise(userId, session.sessionId);
         if (current !== generation.current) return;
         if (next.status === "ready") {
-          const loaded = await loadSentenceExerciseContent({ candidate: next, contentLanguageCode, translationTargetLanguageCode });
+          const loaded = await loadSentenceExerciseContent({ candidate: next, contentLanguageCode, translationTargetLanguageCode, signal: controller.signal, force });
           if (current !== generation.current) return;
-          if (loaded.state === "ready") { setCandidate(next); setContent(loaded.content); return; }
-          if (loaded.state === "translation-pending" || loaded.state === "translation-unavailable") { setFailed(true); return; }
+          if (loaded.state === "ready") { pendingSince.current = null; setCandidate(next); setContent(loaded.content); return; }
+          if (loaded.state === "translation-pending") {
+            pendingSince.current ??= Date.now();
+            setTranslationPending(true); return;
+          }
+          if (loaded.state === "translation-unavailable") { setFailed(true); return; }
           await markPlatformV2TranslationTrainingSessionMemberUnavailable(userId, session.sessionId, next.targetId, loaded.state);
           continue;
         }
@@ -94,39 +106,15 @@ export function TrainingSentenceSession(props: Props) {
   useEffect(() => {
     const generationRef = generation;
     void loadNext();
-    return () => { generationRef.current++; };
+    return () => { generationRef.current++; loadController.current?.abort(); };
   }, [loadNext]);
 
   useEffect(() => {
-    if (!candidate || !content || loading || terminal) return;
-    const nextMember = session.members.find(
-      (member) =>
-        member.ordinal > candidate.ordinal &&
-        member.consumedAt === null &&
-        member.unavailableAt === null,
-    );
-    if (!nextMember) return;
-    const key = [
-      session.sessionId,
-      session.runGeneration ?? "superseded",
-      nextMember.targetId,
-      translationTargetLanguageCode,
-    ].join(":");
-    if (preparedMembers.current.has(key)) return;
-    preparedMembers.current.add(key);
-    const controller = new AbortController();
-    void prepareSentenceExerciseTranslation({
-      entryId: nextMember.entryId,
-      contentNodeId: nextMember.contentNodeId,
-      contentLanguageCode,
-      translationTargetLanguageCode,
-      signal: controller.signal,
-    }).catch(() => {
-      // Speculative work never changes the visible card. A later authoritative
-      // load remains retryable, while this run avoids a background retry loop.
-    });
-    return () => controller.abort();
-  }, [candidate, content, loading, terminal, session.members, session.runGeneration, session.sessionId, contentLanguageCode, translationTargetLanguageCode]);
+    if (!translationPending || Date.now() - (pendingSince.current ?? 0) >= 300_000) return;
+    const timer = setTimeout(() => { void loadNext(); }, 3_000);
+    return () => clearTimeout(timer);
+  }, [translationPending, loadNext]);
+
 
   const exclusion = useTrainingExclusion({ userId, onSessionSuperseded: onSessionSuperseded ?? onExit, identity: candidate?.targetKey ?? "none", sessionId: session.sessionId, target: { kind: "exercise", targetId: candidate?.targetId ?? "" }, onAccepted: async () => { accept(); await loadNext(); } });
   useRecordedStudyTime({ ownerId: userId, sessionId: session.sessionId, family: "sentence", entryId: candidate?.entryId, targetId: candidate?.targetId,
@@ -143,13 +131,14 @@ export function TrainingSentenceSession(props: Props) {
   const preparationFailed = failed && !candidate && !loading && !terminal;
   const sessionPresentation = { kind: "planned" as const, position: Math.min(completed, session.requestedTotal), total: session.requestedTotal, fraction: session.requestedTotal ? Math.min(completed / session.requestedTotal, 1) : 0 };
   const presentation = content ? buildSentenceCardPresentation({ content, interfaceLanguage, translationTargetLanguageCode, repeatCount: candidate?.state?.seenCount ?? 0 }) : null;
-  return <TrainingSessionV2Layout approvedPresentation={true} phase={loading ? "loading" : failed && !candidate ? "failure" : "ready"}
+  return <TrainingSessionV2Layout approvedPresentation={true} phase={loading || translationPending ? "loading" : failed && !candidate ? "failure" : "ready"}
     chrome={<TrainingSessionChrome approvedPresentation={true} interfaceLanguage={interfaceLanguage} scenario="idiom" mode="word-to-definition" cardFilter="both" sessionName={props.sessionName || t.title} presentation={sessionPresentation} showProgress={!loading && !(failed && !candidate) && !terminal} onHistory={onHistory} onClose={onExit} disabled={submitting || exclusion.busy} />}
     notice={!preparationFailed && (failed || exclusion.failed) ? <TrainingSessionNotice notice={{ kind: "error", message: exclusion.failed ? trainingExclusionCopy[interfaceLanguage].failed : t.failed, retryLabel: t.retry, retryDisabled: submitting || loading, onRetry: () => exclusion.failed ? void exclusion.exclude() : void loadNext() }} /> : null}
     footer={<TrainingSessionStatsFooter {...stats} interfaceLanguage={interfaceLanguage} />}>
       {loading ? <TrainingSessionState loading title={t.loading} /> : null}
+      {!loading && translationPending ? <TrainingSessionState title={translationPendingCopy[interfaceLanguage]} action={{label:t.retry,onClick:()=>void loadNext()}} secondaryAction={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
       {preparationFailed ? <TrainingSessionState title={t.failed} announcement="alert"
-        action={{label:t.retry,onClick:()=>void loadNext()}}
+        action={{label:t.retry,onClick:()=>void loadNext(true)}}
         secondaryAction={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
       {!loading && terminal ? terminal === "complete" ? <TrainingCompletion ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completed} onExit={onExit} onRestart={props.onRestart} onEdit={props.onEdit} pending={props.pending} startFailed={props.startFailed} /> : <TrainingSessionState title={t.empty} action={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
     {!loading && !terminal && candidate && content && presentation ? <TrainingExerciseCard key={`${session.sessionId}:${candidate.targetKey}`} presentation={presentation} interfaceLanguage={interfaceLanguage} revealed={revealed} onReveal={() => setRevealed(true)} busy={submitting || exclusion.busy || exclusion.failed} onGrade={(result) => void grade(result)} onPlayAudio={content.group.header.audio && onPlayResolvedAudio ? () => { void resolvePlatformV2Audio({ cacheOwnerId: userId, capability: content.group.header.audio!, text: content.sentence.text }).then((url) => onPlayResolvedAudio(url, content.sentence.text)).catch(() => setFailed(true)); } : undefined} onOpenDetails={onOpenDetails ? () => onOpenDetails({ group: content.group, entry: content.entry }) : undefined} secondaryActions={<TrainingCardSecondaryActions>{content.entry.reportContentRevision && content.entry.capabilities?.some((cap) => cap.actionId === "report-content") ? <SenseCardReportAction appearance="training-text" snapshot={freezeSenseCardDiagnosticSnapshot({ route: "training", group: content.group, entry: content.entry, target: { kind: "content-node", entryId: content.entry.entryId, contentNodeId: content.sentence.contentNodeId, nodeKind: "example", sourceTextFingerprint: content.sentence.sourceTextFingerprint } })} interfaceLanguage={interfaceLanguage} disabled={submitting || exclusion.busy} /> : <span />}{candidate ? <TrainingExcludeAction language={interfaceLanguage} disabled={submitting || exclusion.busy} onClick={() => void exclusion.exclude()} /> : null}</TrainingCardSecondaryActions>} /> : null}

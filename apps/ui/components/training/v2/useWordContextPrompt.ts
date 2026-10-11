@@ -17,13 +17,15 @@ export function useWordContextPrompt({ cacheOwnerId, trainingSessionId, entryId,
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     let rechecks = 0;
+    let force = retry > 0;
     let failureRetries = 0;
     const retryFailure = () => {
       if (failureRetries++ < 2) timer = setTimeout(() => { void load(); }, 2000 * failureRetries);
     };
     const load = async () => {
       try {
-        const loaded = await loadWordContextPrompt({userId: cacheOwnerId, sessionId: trainingSessionId, entryId, contentLanguageCode, translationTargetLanguageCode, signal: controller.signal});
+        const loaded = await loadWordContextPrompt({userId: cacheOwnerId, sessionId: trainingSessionId, entryId, contentLanguageCode, translationTargetLanguageCode, signal: controller.signal, force});
+        force = false;
         if (controller.signal.aborted) return;
         setResult(loaded);
         if (loaded.state === "translation-pending" && rechecks++ < DICTIONARY_TRANSLATION_PENDING_MS / 2000) timer = setTimeout(() => { void load(); }, 2000);

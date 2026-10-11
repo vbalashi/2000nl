@@ -79,6 +79,7 @@ import {
   type TrainingSessionNoticeInput,
 } from "./v2/TrainingSessionSurface";
 import sessionStyles from "./v2/TrainingSessionLayout.module.css";
+import { useLatchedTranslationBuffer } from "./v2/useLatchedTranslationBuffer";
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import {
   classifyResumeSnapshot,
@@ -2453,6 +2454,14 @@ function TrainingScreenContent({
         disabled: navigationBlocked,
       }
     : null;
+  useLatchedTranslationBuffer({
+    ownerId: user.id,
+    sessionId: destination === "training" && (activeExerciseFamily === "meaning" || activeExerciseFamily === "word-in-context") ? trainingSessionId : null,
+    currentEntryId: currentWord?.id,
+    currentCardTypeId: currentMode,
+    targetLanguageCode: translationLang === "off" ? null : translationLang,
+  });
+
   const trainingSessionChrome = sessionChrome;
   const trainingSessionFooter: FooterStatsProps = {
     stats,

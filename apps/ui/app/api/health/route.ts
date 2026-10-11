@@ -4,6 +4,7 @@ import { rolloutProfileDiagnostics } from "@/lib/platform/platformV2Rollout";
 import { expectedDbContract } from "@/lib/deployment/dbContract";
 import { checkDatabaseContractHealth } from "@/lib/deployment/dbContractHealth";
 import { createHealthSupabaseClient } from "@/lib/server/healthSupabase";
+import { checkDictionaryTranslationWorkerHealth } from "@/lib/translation/dictionaryTranslationWorkerHealth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -221,6 +222,7 @@ export async function GET(req: Request) {
     checks.platformRpcContract = await checkPlatformRpcContract();
     checks.dictionarySearchIndex = await checkDictionarySearchIndex();
     checks.databaseContract = await checkDatabaseContractHealth();
+    checks.translationWorker = await checkDictionaryTranslationWorkerHealth();
   }
 
   const hasWarnings = Object.values(checks).some((check) => check.status === "warning");

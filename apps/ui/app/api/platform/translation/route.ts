@@ -8,7 +8,7 @@ import {
 } from "@/lib/platform/serverSupabase";
 import { asString } from "@/lib/platform/platformApi";
 import type { DictionaryLookupPayload } from "@/lib/platform/lookupService";
-import { coordinateDictionaryMeaningTranslation } from "@/lib/translation/dictionaryMeaningTranslationCoordinator";
+import { requestDictionaryMeaningTranslation } from "@/lib/translation/dictionaryMeaningTranslationRequestService";
 import {
   createTranslator,
   loadTranslationConfigFromEnv,
@@ -25,6 +25,8 @@ type TranslationRequestBody = {
   targetLang?: unknown;
   force?: unknown;
   debug?: unknown;
+  observeOnly?: unknown;
+  background?: unknown;
 };
 
 async function readJson(request: NextRequest): Promise<TranslationRequestBody | null> {
@@ -133,13 +135,15 @@ export async function POST(request: NextRequest) {
   );
   if (error) return reply({ entryId, targetLang, error: error.message }, 500);
   if (!entry?.raw) return reply({ entryId, targetLang, error: "word_entry_not_found" }, 404);
-  const result = await coordinateDictionaryMeaningTranslation({
+  const result = await requestDictionaryMeaningTranslation({
     wordEntryId: entryId,
     word: entry as DictionaryLookupPayload,
     targetLang,
     dbLang,
     force: boolParam(body?.force),
     debug: boolParam(body?.debug),
+    observeOnly: boolParam(body?.observeOnly),
+    priority: body?.background === true ? 0 : 10,
   });
   const response = reply({ entryId, targetLang, ...result.payload }, result.httpStatus);
   response.headers.set("X-Platform-Cache", result.cacheStatus);

@@ -30,7 +30,7 @@ ENV PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED=$PLATFORM_V2_TRANSLATION_EXERCISES
 COPY --from=deps /workspace/apps/ui/node_modules ./node_modules
 COPY apps/ui/ ./
 COPY packages/shared/ /workspace/packages/shared/
-RUN npm run build
+RUN npm run build && npm run build:translation-worker
 
 # Production image: Next standalone output
 FROM node:22-bookworm-slim AS runner
@@ -59,6 +59,7 @@ ENV PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED=$PLATFORM_V2_TRANSLATION_EXERCISES
 COPY --from=builder /workspace/apps/ui/public ./public
 COPY --from=builder /workspace/apps/ui/.next/standalone ./
 COPY --from=builder /workspace/apps/ui/.next/static ./.next/static
+COPY --from=builder /workspace/apps/ui/.next/dictionary-translation-worker.cjs ./dictionary-translation-worker.cjs
 # Translation prompts use dynamic runtime filenames and are not discovered by
 # Next's standalone file tracer. Keep them beside the server bundle explicitly.
 COPY --from=builder /workspace/apps/ui/lib/translation/prompts/*.txt ./lib/translation/prompts/

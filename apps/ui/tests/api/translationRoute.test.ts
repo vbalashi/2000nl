@@ -512,6 +512,7 @@ describe("/api/translation", () => {
           status: "ready",
           overlay: {
             headword: "house",
+            meanings: [{ definition: "dwelling" }],
             __meta: {
               providerUsed: "openai",
               usedFallback: true,

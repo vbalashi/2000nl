@@ -1,7 +1,7 @@
 import { LIBRARY_PAGE_SIZE } from "./libraryPagination";
 import type { LibrarySearchScope, LibrarySearchSummary } from "./librarySearchScope";
 import { requestPlatformV2Lookup } from "./platformV2LookupTransport";
-import { fetchDictionaryMeaningTranslation } from "@/lib/translation/translationApiClient";
+import { observeDictionaryMeaningTranslation } from "@/lib/translation/dictionaryTranslationObservation";
 import type { CardTypeId } from "../../../../packages/shared/types/platform";
 import type {
   PlatformHeadwordGroupV2,
@@ -176,12 +176,14 @@ export async function requestPlatformV2LibraryTranslation(input: {
   entryId: string;
   targetLanguageCode: string;
   force?: boolean;
+  background?: boolean;
   signal?: AbortSignal;
 }): Promise<"ready" | "pending" | "failed"> {
-  const response = await fetchDictionaryMeaningTranslation({
+  const response = await observeDictionaryMeaningTranslation({
     entryId: input.entryId,
     targetLanguageCode: input.targetLanguageCode,
     force: input.force,
+    background: input.background,
     signal: input.signal,
   });
   // A gateway timeout does not establish whether the origin finished writing

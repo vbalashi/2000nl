@@ -78,6 +78,7 @@ export async function loadWordContextPrompt(input: {
   contentLanguageCode: string;
   translationTargetLanguageCode: string;
   signal?: AbortSignal;
+  force?: boolean;
 }): Promise<WordContextLoadResult> {
   const source = await readSource(input.userId, input.sessionId, input.entryId);
   if (input.signal?.aborted) return { state: "source-unavailable" };
@@ -91,6 +92,7 @@ export async function loadWordContextPrompt(input: {
     contentLanguageCode: input.contentLanguageCode,
     translationTargetLanguageCode: input.translationTargetLanguageCode,
     signal: input.signal,
+    force: input.force,
   });
   if (loaded.state === "translation-pending") return loaded;
   if (loaded.state === "translation-unavailable") return loaded;

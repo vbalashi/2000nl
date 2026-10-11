@@ -1,3 +1,5 @@
+import { dictionaryMeaningTranslationIdentity } from "./dictionaryMeaningTranslationIdentity";
+import { dictionaryMeaningTranslationCoverage } from "./dictionaryMeaningTranslationReadiness";
 import type { TranslationOverlay, WordEntryTranslationStatus } from "@/lib/types";
 import { DICTIONARY_TRANSLATION_PENDING_MS } from "./dictionaryTranslationBudgets";
 import { withDictionaryTranslationDeadline } from "./dictionaryTranslationDeadline";
@@ -9,19 +11,8 @@ import {
 import type { ITranslator } from "@/lib/translation/ITranslator";
 import type { TranslationProviderName } from "@/lib/translation/types";
 import { getDictionaryMeaningPromptFingerprint } from "@/lib/translation/prompts/promptFingerprint";
-import {
-  translationPipelineVersion,
-  translationPolicyVersion,
-} from "@/lib/translation/translationPolicy";
 import type { DictionaryLookupPayload } from "@/lib/platform/lookupService";
 import {
-  contentFingerprint,
-  normalizeDictionaryContent,
-  verifyDictionaryContentAudioLinks,
-} from "@/lib/platform/projections/dictionaryContent";
-import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
-import {
-  dictionaryMeaningTranslationFingerprint,
   dictionaryMeaningTranslatedPaths,
   resolveDictionaryMeaningTranslation,
 } from "@/lib/translation/dictionaryMeaningTranslationService";
@@ -280,48 +271,18 @@ export async function coordinateDictionaryMeaningTranslation(input: {
     );
   }
 
-  const overlayHasEntryArtifact =
-    Boolean(existing?.overlay) &&
-    ("headword" in ((existing?.overlay ?? {}) as any) ||
-      "entryTranslation" in ((existing?.overlay ?? {}) as any));
-  // NOTE:
-  // We intentionally delay the "ready" fast-path until after we compute the
-  // current source_fingerprint, so cached overlays get refreshed when the
-  // translation input changes (e.g. when including "de/het" with headword).
-
-  // IMPORTANT:
-  // This endpoint is the "worker" that produces translations. If we *only*
-  // returned 'pending' here, a crashed/aborted request could leave rows stuck
-  // in 'pending' forever (no background job will fix it).
-  //
-  // We still avoid duplicate in-flight work by treating very recent 'pending'
-  // as fresh and returning it so the other request can finish.
-  const sourceContent = await verifyDictionaryContentAudioLinks(
-    normalizeDictionaryContent(word as DictionaryLookupPayload),
-  );
-  const sourceContentRevision = contentFingerprint(sourceContent);
-  const selectedProviderRevision =
-    getDictionaryMeaningPromptFingerprint(provider);
-  const meaningRequest = buildDictionaryMeaningTranslationRequest({
-    entryId: wordEntryId,
-    sourceContentFingerprint: sourceContentRevision,
-    sourceLanguageCode:
-      typeof (word as any)?.language_code === "string"
-        ? (word as any).language_code
-        : "nl",
-    targetLanguageCode: dbLang,
-    word,
-  });
-  const currentTranslationPolicyVersion = translationPolicyVersion(
-    provider,
-    meaningRequest,
-  );
-  const fingerprint = dictionaryMeaningTranslationFingerprint({
+  // Cache readiness is checked against the actual requested source fields,
+  // after computing the current source and policy identity below.
+  const {
     request: meaningRequest,
-    pipelineVersion: translationPipelineVersion(meaningRequest),
-    provider,
-    promptFingerprint: selectedProviderRevision,
-  });
+    sourceContentRevision,
+    providerRevision: selectedProviderRevision,
+    policyVersion: currentTranslationPolicyVersion,
+    fingerprint,
+  } = await dictionaryMeaningTranslationIdentity({wordEntryId,word,dbLang,provider});
+  const overlayComplete = dictionaryMeaningTranslationCoverage(
+    meaningRequest, sanitizeTranslationOverlay(existing?.overlay),
+  ).requestComplete;
   const pendingFreshForMs = DICTIONARY_TRANSLATION_PENDING_MS;
   if (
     existing?.status === "pending" &&
@@ -360,7 +321,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
     existing &&
     existing.status === "ready" &&
     existing.overlay &&
-    overlayHasEntryArtifact &&
+    overlayComplete &&
     existing.source_fingerprint &&
     existing.source_fingerprint === fingerprint &&
     existing.source_content_revision === sourceContentRevision &&
@@ -521,7 +482,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
     const needsWork =
       force ||
       existing.status !== "ready" ||
-      (existing.status === "ready" && !overlayHasEntryArtifact) ||
+      (existing.status === "ready" && !overlayComplete) ||
       !existing.source_fingerprint ||
       existing.source_fingerprint !== fingerprint ||
       existing.source_content_revision !== sourceContentRevision ||
@@ -592,6 +553,9 @@ export async function coordinateDictionaryMeaningTranslation(input: {
   try {
     const { overlay, note, meta } =
       await withDictionaryTranslationDeadline(() => resolveDictionaryMeaningTranslation(translator, meaningRequest));
+    if (!dictionaryMeaningTranslationCoverage(meaningRequest, overlay).requestComplete) {
+      throw new Error("Incomplete dictionary translation artifact");
+    }
     const providerUsed = meta.providerUsed ?? null;
     const usedFallback = meta.usedFallback ?? false;
     const primaryFailure = meta.primaryFailure ?? null;

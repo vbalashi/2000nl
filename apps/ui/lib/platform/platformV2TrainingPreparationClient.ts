@@ -21,7 +21,7 @@ export type PlatformV2TrainingPreparationInput =
 
 export type PlatformV2TrainingPreparationResult =
   | (PlatformV2TrainingEntryResult & {
-      translation: "cached" | "generated" | "not-requested" | "failed";
+      translation: "cached" | "generated" | "not-requested" | "pending" | "failed";
       audio: "ready" | "unavailable" | "failed";
     })
   | Exclude<PlatformV2TrainingLookupResult, PlatformV2TrainingEntryResult>;
@@ -37,7 +37,7 @@ export async function preparePlatformV2TrainingEntry(
     input.transitionId,
   );
   let lookup = initialLookup;
-  let translation: "cached" | "generated" | "not-requested" | "failed" =
+  let translation: "cached" | "generated" | "not-requested" | "pending" | "failed" =
     lookup.entry.translation?.status === "ready"
       ? "cached"
       : "not-requested";
@@ -58,9 +58,10 @@ export async function preparePlatformV2TrainingEntry(
     );
     if (capability?.actionId === "request-translation") {
       try {
-        await requestPlatformV2Translation(capability, {
+        const status = await requestPlatformV2Translation(capability, {
           transitionId: input.transitionId,
           signal: input.signal,
+          background: true,
         });
         const refreshed = await prefetchPlatformV2TrainingEntry({
           ...input,
@@ -71,7 +72,7 @@ export async function preparePlatformV2TrainingEntry(
           translation =
             refreshed.entry.translation?.status === "ready"
               ? "generated"
-              : "failed";
+              : status === "pending" ? "pending" : "failed";
         } else {
           translation = "failed";
         }

@@ -329,7 +329,7 @@ test("header actions use the selected content and do not consume a review", asyn
     content,
   } as never);
   vi.mocked(resolvePlatformV2Audio).mockResolvedValue("/audio/klaar.mp3");
-  vi.mocked(requestPlatformV2Translation).mockResolvedValue();
+  vi.mocked(requestPlatformV2Translation).mockResolvedValue("ready");
   const play = vi.fn(),
     details = vi.fn();
   render(
@@ -369,6 +369,7 @@ test("header actions use the selected content and do not consume a review", asyn
   );
   expect(requestPlatformV2Translation).toHaveBeenCalledWith(
     content.entry.capabilities[0],
+    { force: true },
   );
   expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
   expect(fetchNextPlatformV2IdiomTrainingSessionExercise).toHaveBeenCalledTimes(

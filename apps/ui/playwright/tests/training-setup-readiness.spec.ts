@@ -241,6 +241,7 @@ test("projection starts after Start and keeps the setup visible until the card i
   const eventByRequest = new WeakMap<object, ProjectionRequestEvent>();
   const identityRequestsInFlight = new Map<string, number>();
   const translationRequestTimes: number[] = [];
+  const translationRequests: Record<string, unknown>[] = [];
   let projectionRequestsInFlight = 0;
   let maxConcurrentProjectionRequests = 0;
   let maxConcurrentSameIdentityProjectionRequests = 0;
@@ -262,6 +263,7 @@ test("projection starts after Start and keeps the setup visible until the card i
     const path = new URL(request.url()).pathname;
     if (path === "/api/platform/translation") {
       translationRequestTimes.push(Date.now());
+      translationRequests.push(request.postDataJSON() as Record<string, unknown>);
       return;
     }
     if (path !== "/api/platform/v2/lookup") return;
@@ -367,7 +369,13 @@ test("projection starts after Start and keeps the setup visible until the card i
   // A distinct next-member projection may overlap the displayed card's refresh.
   expect(maxConcurrentProjectionRequests).toBeLessThanOrEqual(2);
   expect(maxConcurrentSameIdentityProjectionRequests).toBeLessThanOrEqual(1);
-  expect(translationRequestTimes).toHaveLength(0);
+  // The latched-member buffer prepares only the next entry after Start.
+  await expect.poll(() => translationRequests.length).toBe(1);
+  expect(translationRequests[0]).toMatchObject({
+    entryId: "attribution-word-2", background: true,
+  });
+  expect(translationRequests[0]?.force).not.toBe(true);
+  expect(translationRequestTimes[0]).toBeGreaterThanOrEqual(startClickedAt);
   const projectionIdentitySummary = summarizeRequestIdentities(
     harness.requests.projectionLookups,
   );

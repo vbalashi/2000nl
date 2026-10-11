@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserSupabase } from "@/lib/platform/serverSupabase";
 import type { DictionaryLookupPayload } from "@/lib/platform/lookupService";
-import { coordinateDictionaryMeaningTranslation } from "@/lib/translation/dictionaryMeaningTranslationCoordinator";
+import { requestDictionaryMeaningTranslation } from "@/lib/translation/dictionaryMeaningTranslationRequestService";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,13 +57,14 @@ export async function GET(req: NextRequest) {
   if (error) return json({ error: error.message }, 500);
   if (!word?.raw) return json({ error: "word_entry_not_found" }, 404);
 
-  const result = await coordinateDictionaryMeaningTranslation({
+  const result = await requestDictionaryMeaningTranslation({
     wordEntryId,
     word: word as DictionaryLookupPayload,
     targetLang: lang.trim(),
     dbLang,
     force,
     debug,
+    observeOnly: url.searchParams.get("observe") === "1",
   });
   return json(result.payload, result.httpStatus, result.cacheStatus);
 }
