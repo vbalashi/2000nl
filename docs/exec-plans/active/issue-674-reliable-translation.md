@@ -50,3 +50,5 @@ Use local disposable Supabase/Postgres for migration iteration. Explicitly revok
 Queue fairness and cost admission; old pending cache ownership during transition; source/policy changes while a job runs; delayed old provider writes; stable partition identity and context budget; actual deployed worker lifecycle and rollback; product capability coordination. Defaults and failure behavior must be explicit and tested before enabling the worker.
 
 CI initially caught the missing bootstrap include; it is now present without enabling production migration 223. The release-boundary declaration describes independent deployment of the cache-readiness foundation only; the PR remains draft and #674 remains in progress.
+
+Further boundary regression: at the current maximum 128 content fields, translatedPaths contains 129 entries including headword. The safety filter previously dropped all coverage metadata at this boundary. It now preserves the legitimate 129 paths and still rejects oversized metadata; an artifact integration regression covers this case.

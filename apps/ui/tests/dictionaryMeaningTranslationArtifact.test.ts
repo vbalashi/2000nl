@@ -1,3 +1,6 @@
+import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
+import { dictionaryMeaningTranslatedPaths } from "@/lib/translation/dictionaryMeaningTranslationService";
+import { sanitizeTranslationOverlay } from "@/lib/translation/translationArtifactSafety";
 import { describe, expect, test } from "vitest";
 import { buildDictionaryMeaningTranslationArtifact } from "@/lib/translation/dictionaryMeaningTranslationArtifact";
 
@@ -66,9 +69,42 @@ describe("dictionary meaning translation artifact", () => {
       }),
     ).toEqual({
       entryTranslation: null,
-      meanings: [
-        { idioms: [{ expression: "полакомиться чем-либо" }] },
-      ],
+      meanings: [{ idioms: [{ expression: "полакомиться чем-либо" }] }],
     });
   });
+});
+
+test("maximum-sized request retains coverage metadata including the extra headword path", () => {
+  const request = buildDictionaryMeaningTranslationRequest({
+    entryId: "entry",
+    sourceContentFingerprint: "revision",
+    sourceLanguageCode: "nl",
+    targetLanguageCode: "ru",
+    word: {
+      headword: "oog",
+      raw: {
+        meanings: [
+          {
+            definition: "een zintuig",
+            examples: Array.from({ length: 127 }, (_, i) => `voorbeeld ${i}`),
+          },
+        ],
+      },
+    },
+  });
+  expect(request.content).toHaveLength(128);
+  const translatedPaths = dictionaryMeaningTranslatedPaths(request);
+  expect(translatedPaths).toHaveLength(129);
+  expect(
+    sanitizeTranslationOverlay({
+      headword: "глаз",
+      __meta: { translatedPaths },
+    })?.__meta?.translatedPaths,
+  ).toEqual(translatedPaths);
+  expect(
+    sanitizeTranslationOverlay({
+      headword: "глаз",
+      __meta: { translatedPaths: [...translatedPaths, ["excess"]] },
+    })?.__meta?.translatedPaths,
+  ).toBeUndefined();
 });

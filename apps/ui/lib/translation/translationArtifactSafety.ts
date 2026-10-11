@@ -1,3 +1,4 @@
+import { DICTIONARY_MEANING_TRANSLATION_LIMITS } from "./dictionaryMeaningTranslationContract";
 import type { TranslationOverlay } from "../types";
 import {
   normalizeTranslationProviderError,
@@ -9,9 +10,7 @@ const SAFE_ERROR_MESSAGE = new RegExp(
   `^(?:${TRANSLATION_PROVIDER_FAILURE_CODES.join("|")}):[a-f0-9]{24}$`,
 );
 
-export function sanitizeStoredTranslationError(
-  value: unknown,
-): string | null {
+export function sanitizeStoredTranslationError(value: unknown): string | null {
   if (typeof value !== "string" || !value) return null;
   if (SAFE_ERROR_MESSAGE.test(value)) return value;
   return normalizeTranslationProviderError(value).message;
@@ -63,8 +62,15 @@ function safePrimaryFailure(value: unknown): TranslationProviderFailure | null {
   return { code: code as TranslationProviderFailure["code"], fingerprint };
 }
 
-function safeTranslatedPaths(value: unknown): Array<Array<string | number>> | null {
-  if (!Array.isArray(value) || value.length > 128) return null;
+function safeTranslatedPaths(
+  value: unknown,
+): Array<Array<string | number>> | null {
+  // The headword path is additional to the allowed content fields.
+  if (
+    !Array.isArray(value) ||
+    value.length > DICTIONARY_MEANING_TRANSLATION_LIMITS.contentItems + 1
+  )
+    return null;
   const paths: Array<Array<string | number>> = [];
   for (const candidate of value) {
     if (!Array.isArray(candidate) || candidate.length > 16) return null;
@@ -83,9 +89,7 @@ function safeTranslatedPaths(value: unknown): Array<Array<string | number>> | nu
   return paths;
 }
 
-function asProvider(
-  value: unknown,
-): "deepl" | "openai" | "gemini" | null {
+function asProvider(value: unknown): "deepl" | "openai" | "gemini" | null {
   return value === "deepl" || value === "openai" || value === "gemini"
     ? value
     : null;
