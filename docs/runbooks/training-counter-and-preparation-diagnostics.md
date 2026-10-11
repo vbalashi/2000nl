@@ -161,3 +161,31 @@ https://developers.cloudflare.com/support/troubleshooting/http-status-codes/clou
 A generic fallback already running at the outer deadline is not cancelled, but
 its late result cannot reach the coordinator cache write. No user grades,
 session members, or progress were edited. The patch is not yet deployed.
+
+### Completion evidence for the prepared patch
+
+- Full source delivery: exact-source live evidence for oog (three full calls)
+  and hand (two full calls), plus the source census above. Hand's second output
+  was also read against every requested field: no substantial meaning,
+  negation or participant error was found; this remains a nonblind sample review.
+- Slow recovery and identity: `useWordContextPrompt.test.ts` holds pending for
+  100s, then asserts the frozen node/fingerprint and unchanged owner/session/entry
+  throughout, and no polling after ready. It also checks cancellation and limits.
+- Ownership: `api/translationRoute.test.ts` refuses forced duplicate work at
+  ages45s/299s and reclaims an expired301s pending claim before storing the result.
+- Timing: `translationApiClient.test.ts` accepts a50s response;
+  `dictionaryExplanationRepair.test.ts` bounds primary retries and repair by
+  one240s deadline; `dictionaryTranslationDeadline.test.ts` rejects stalled
+  generic/fallback work and ignores its late result.
+- Recovery after a gateway interruption: `platformV2LibraryClient.test.ts`
+  treats504/524 as pending and retains502 as failure. `wordContextPrompt.test.ts`
+  prevents substitution of another frozen example when the source is unavailable.
+- Lazy regeneration: `platformV2TranslationService.test.ts` rejects the previous
+  policy's ready artifact; both ordinary and idiom-only policies are bumped.
+- Latest validation: runtime commit586e1443 passed2247 local tests (344 skipped);
+  the subsequent gateway suite passed38. Test-only commitfc6e5036 adds the100s
+  recovery assertion and301s expiry boundary; its two targeted files passed21
+  tests, and typecheck passed. CI forfc6e5036 is still running at this checkpoint.
+
+The deliverable is a reviewed candidate PR, not a claim that production is fixed.
+No release, user impersonation, or session/progress mutation was performed.
