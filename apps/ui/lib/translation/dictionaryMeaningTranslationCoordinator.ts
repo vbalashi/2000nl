@@ -1,3 +1,4 @@
+import { dictionaryMeaningTranslationCoverage } from "./dictionaryMeaningTranslationReadiness";
 import type { TranslationOverlay, WordEntryTranslationStatus } from "@/lib/types";
 import { DICTIONARY_TRANSLATION_PENDING_MS } from "./dictionaryTranslationBudgets";
 import { withDictionaryTranslationDeadline } from "./dictionaryTranslationDeadline";
@@ -280,22 +281,8 @@ export async function coordinateDictionaryMeaningTranslation(input: {
     );
   }
 
-  const overlayHasEntryArtifact =
-    Boolean(existing?.overlay) &&
-    ("headword" in ((existing?.overlay ?? {}) as any) ||
-      "entryTranslation" in ((existing?.overlay ?? {}) as any));
-  // NOTE:
-  // We intentionally delay the "ready" fast-path until after we compute the
-  // current source_fingerprint, so cached overlays get refreshed when the
-  // translation input changes (e.g. when including "de/het" with headword).
-
-  // IMPORTANT:
-  // This endpoint is the "worker" that produces translations. If we *only*
-  // returned 'pending' here, a crashed/aborted request could leave rows stuck
-  // in 'pending' forever (no background job will fix it).
-  //
-  // We still avoid duplicate in-flight work by treating very recent 'pending'
-  // as fresh and returning it so the other request can finish.
+  // Cache readiness is checked against the actual requested source fields,
+  // after computing the current source and policy identity below.
   const sourceContent = await verifyDictionaryContentAudioLinks(
     normalizeDictionaryContent(word as DictionaryLookupPayload),
   );
@@ -322,6 +309,9 @@ export async function coordinateDictionaryMeaningTranslation(input: {
     provider,
     promptFingerprint: selectedProviderRevision,
   });
+  const overlayComplete = dictionaryMeaningTranslationCoverage(
+    meaningRequest, sanitizeTranslationOverlay(existing?.overlay),
+  ).requestComplete;
   const pendingFreshForMs = DICTIONARY_TRANSLATION_PENDING_MS;
   if (
     existing?.status === "pending" &&
@@ -360,7 +350,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
     existing &&
     existing.status === "ready" &&
     existing.overlay &&
-    overlayHasEntryArtifact &&
+    overlayComplete &&
     existing.source_fingerprint &&
     existing.source_fingerprint === fingerprint &&
     existing.source_content_revision === sourceContentRevision &&
@@ -521,7 +511,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
     const needsWork =
       force ||
       existing.status !== "ready" ||
-      (existing.status === "ready" && !overlayHasEntryArtifact) ||
+      (existing.status === "ready" && !overlayComplete) ||
       !existing.source_fingerprint ||
       existing.source_fingerprint !== fingerprint ||
       existing.source_content_revision !== sourceContentRevision ||
@@ -592,6 +582,9 @@ export async function coordinateDictionaryMeaningTranslation(input: {
   try {
     const { overlay, note, meta } =
       await withDictionaryTranslationDeadline(() => resolveDictionaryMeaningTranslation(translator, meaningRequest));
+    if (!dictionaryMeaningTranslationCoverage(meaningRequest, overlay).requestComplete) {
+      throw new Error("Incomplete dictionary translation artifact");
+    }
     const providerUsed = meta.providerUsed ?? null;
     const usedFallback = meta.usedFallback ?? false;
     const primaryFailure = meta.primaryFailure ?? null;
