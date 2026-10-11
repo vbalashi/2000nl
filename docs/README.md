@@ -4,13 +4,17 @@ This folder is organized by document role rather than by creation date.
 
 ## Index
 
+- `marketing/` - media/audience/economics planning, website routes, and article bank; start at [marketing/README.md](marketing/README.md).
+- `research/` - source-backed findings and reproducible experiments; start at [research/README.md](research/README.md).
+- `discovery/` - exploratory evidence and working conclusions; start at [discovery/README.md](discovery/README.md).
+- `discussions/` - dated reasoning and decisions; start at [discussions/README.md](discussions/README.md).
 - `intent/` - product and runtime intent.
 - `runbooks/` - operational procedures, debugging guides, and manual test flows.
 - `features/` - feature behavior and implementation notes.
 - `architecture/` - evidence audits, engineering principles, and durable
   cross-module contract decisions.
 - `reference/` - reference material such as RPC/API docs and model catalogs.
-- `exec-plans/` - active and completed implementation plans.
+- `exec-plans/` - active and completed implementation plans; start at [exec-plans/README.md](exec-plans/README.md).
 - `tech-debt/` - debt tracking and longer-running cleanup plans.
 
 Human-facing daily overview:

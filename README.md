@@ -3,7 +3,8 @@
 This repository hosts the full stack for the 2000nl project. Scheduling for training uses an FSRS-6 implementation in Postgres (see `db/migrations/002_fsrs_engine.sql` and `db/migrations/bootstrap.sql`), with a 4-grade UI (again/hard/good/easy) and defaults of 10 new cards/day and 40 reviews/day on fresh settings rows.
 
 Canonical repo docs:
-- `AGENTS.md` - agent entrypoint, repo map, and validation commands
+- `AGENTS.md` - agent entrypoint, workstream routes, repo map, and validation commands
+- [docs/README.md](docs/README.md) - documentation router, including media, websites, articles, and research
 - `ARCHITECTURE.md` - system boundaries and safe change patterns
 - `docs/intent/index.md` - product/runtime intent
 - `docs/tech-debt/index.md` - structural debt tracker
