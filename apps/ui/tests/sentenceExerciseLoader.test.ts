@@ -79,6 +79,7 @@ test("sentence lookahead requests a missing translation for only that member ent
   expect(requestPlatformV2LibraryTranslation).toHaveBeenCalledWith({
     entryId,
     targetLanguageCode: "ru",
+    background: true,
   });
 });
 

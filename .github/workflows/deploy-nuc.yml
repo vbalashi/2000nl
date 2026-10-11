@@ -99,12 +99,22 @@ jobs:
 
             if [[ "${APP_SWITCHED:-0}" == "1" && "${ROLLBACK_READY:-0}" == "1" ]]; then
               export UI_IMAGE_TAG="${ROLLBACK_TAG}"
+              if [[ "${WORKER_ROLLBACK_READY:-0}" != "1" ]]; then
+                export DICTIONARY_TRANSLATION_JOBS_ENABLED=false
+              fi
+              if ! sg docker -c 'node scripts/start-translation-worker.mjs'; then
+                rollback_note="worker restore failed; operator action required"
+                sg docker -c 'docker compose stop ui' || true
+                send_telegram "❌ Deployment failed: ${rollback_note}"
+                exit "${status}"
+              fi
               if sg docker -c 'docker compose up -d --no-build ui'; then
                 rollback_note="previous app image restored; forward DB migrations retained"
               else
                 rollback_note="automatic app-image restore failed; operator action required"
               fi
             elif [[ "${APP_SWITCHED:-0}" == "1" ]]; then
+              sg docker -c 'docker compose --profile translation-jobs stop translation-worker' || true
               if sg docker -c 'docker compose stop ui'; then
                 rollback_note="no previous image existed; incompatible new app stopped"
               else
@@ -155,6 +165,11 @@ jobs:
           # advertised.
           APP_SWITCHED=0
           ROLLBACK_READY=0
+          WORKER_ROLLBACK_READY=0
+          CURRENT_WORKER=$(sg docker -c 'docker compose --profile translation-jobs ps -q translation-worker')
+          if [[ "${CURRENT_WORKER}" =~ ^[0-9a-f]+$ ]]; then
+            WORKER_ROLLBACK_READY=1
+          fi
           ROLLBACK_TAG="rollback-${COMMIT_FULL}"
           CURRENT_CONTAINER=$(sg docker -c 'docker compose ps -q ui')
           if [[ "${CURRENT_CONTAINER}" =~ ^[0-9a-f]+$ ]]; then
@@ -176,6 +191,7 @@ jobs:
           sg docker -c "node db/scripts/deploy_db_contract.mjs apply --psql-container-image '${DB_PSQL_IMAGE}' --env-file .env"
 
           APP_SWITCHED=1
+          sg docker -c 'node scripts/start-translation-worker.mjs'
           sg docker -c 'docker compose up -d --no-build ui'
           node scripts/verify-deploy-health.mjs \
             --expected-commit "${COMMIT_FULL}"

@@ -1,4 +1,5 @@
 "use client";
+import { translationPendingCopy } from "@/lib/training/translationPendingCopy";
 import React from "react";
 import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -55,11 +56,13 @@ export function TrainingIdiomCard({
   const [content, setContent] = React.useState(initialContent);
   const [actionBusy, setActionBusy] = React.useState(false);
   const [failed, setFailed] = React.useState(false);
+  const [translationPending, setTranslationPending] = React.useState(false);
   const pending = React.useRef<object | null>(null);
   const scope = React.useRef(0);
   React.useEffect(() => {
     scope.current += 1;
     setContent(initialContent);
+    setTranslationPending(false);
     setActionBusy(false);
     setFailed(false);
     pending.current = null;
@@ -141,7 +144,12 @@ export function TrainingIdiomCard({
           translation?.actionId === "request-translation"
             ? () =>
                 run(async () => {
-                  await requestPlatformV2Translation(translation);
+                  setTranslationPending(false);
+                  const status = await requestPlatformV2Translation(translation, { force: true });
+                  if (status === "pending") {
+                    return { pending: true, content: null };
+                  }
+                  if (status === "failed") throw new Error("translation_failed");
                   const loaded = await loadIdiomExerciseContent({
                     candidate,
                     contentLanguageCode,
@@ -149,12 +157,12 @@ export function TrainingIdiomCard({
                   });
                   if (loaded.state !== "ready")
                     throw new Error("translation_content_unavailable");
-                  return loaded.content;
-                }, setContent)
+                  return { pending: false, content: loaded.content };
+                }, (loaded) => { setTranslationPending(loaded.pending); if (loaded.content) setContent(loaded.content); })
             : undefined
         }
         notice={
-          failed ? (
+          translationPending ? <p role="status" className="shrink-0 text-sm">{translationPendingCopy[interfaceLanguage]}</p> : failed ? (
             <p
               role="alert"
               className="shrink-0 text-sm text-rose-600 dark:text-rose-300"

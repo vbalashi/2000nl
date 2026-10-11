@@ -146,6 +146,10 @@ BEGIN
     lease_expires_at = v_now + interval '60 seconds', started_at = v_now, updated_at = v_now
   WHERE id = (SELECT id FROM public.dictionary_translation_jobs
     WHERE status = 'queued' AND available_at <= v_now AND attempt < 3
+      -- Speculation must leave capacity for a later visible-card request.
+      AND (priority > 0 OR NOT EXISTS (
+        SELECT 1 FROM public.dictionary_translation_jobs active
+        WHERE active.status = 'running' AND active.priority = 0))
     ORDER BY priority DESC, available_at, created_at, id LIMIT 1 FOR UPDATE SKIP LOCKED)
   RETURNING *;
 END $$;

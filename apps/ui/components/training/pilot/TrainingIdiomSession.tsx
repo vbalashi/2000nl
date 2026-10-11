@@ -1,4 +1,5 @@
 "use client";
+import { useLatchedTranslationBuffer } from "../v2/useLatchedTranslationBuffer";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -95,6 +96,8 @@ export function TrainingIdiomSession({
   const actionClientEventIdRef = useRef<string | null>(null);
   const activeTransitionIdRef = useRef<string | null>(null);
   const loadGenerationRef = useRef(0);
+
+  useLatchedTranslationBuffer({ ownerId: userId, sessionId: session.sessionId, generation: session.runGeneration, currentEntryId: candidate?.entryId, currentOrdinal: session.members.find(member => member.targetId === candidate?.targetId)?.ordinal, targetLanguageCode: translationTargetLanguageCode, members: session.members });
 
   const loadNext = useCallback(async () => {
     const generation = ++loadGenerationRef.current;

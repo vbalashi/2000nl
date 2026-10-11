@@ -31,13 +31,41 @@ services:
       ADMIN_SITE_URL: ${ADMIN_SITE_URL:-https://2000.dilum.io}
       # Lets lookup verify audio links on the mounted volume instead of via HTTP HEAD.
       PLATFORM_AUDIO_PUBLIC_ROOT: ${PLATFORM_AUDIO_PUBLIC_ROOT:-/db}
+      DICTIONARY_TRANSLATION_JOBS_ENABLED: ${DICTIONARY_TRANSLATION_JOBS_ENABLED:-false}
+      DICTIONARY_TRANSLATION_WORKER_HEALTH_FILE: /worker-health/heartbeat.json
     restart: unless-stopped
     expose:
       - "3000"
     volumes:
       - /srv/2000nl-ui/db/audio:/db/audio
+      - translation-worker-health:/worker-health:ro
     networks:
       - nuc_default
+
+  translation-worker:
+    profiles: [translation-jobs]
+    image: 2000nl-ui:${UI_IMAGE_TAG:-local}
+    command: ["node", "dictionary-translation-worker.cjs"]
+    env_file: [.env]
+    environment:
+      DICTIONARY_TRANSLATION_JOBS_ENABLED: ${DICTIONARY_TRANSLATION_JOBS_ENABLED:-false}
+      DICTIONARY_TRANSLATION_WORKER_HEALTH_FILE: /worker-health/heartbeat.json
+      PLATFORM_AUDIO_PUBLIC_ROOT: ${PLATFORM_AUDIO_PUBLIC_ROOT:-/db}
+    restart: unless-stopped
+    stop_grace_period: 270s
+    volumes:
+      - /srv/2000nl-ui/db/audio:/db/audio:ro
+      - translation-worker-health:/worker-health
+    healthcheck:
+      test: ["CMD", "node", "dictionary-translation-worker.cjs", "--healthcheck"]
+      interval: 20s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    networks: [nuc_default]
+
+volumes:
+  translation-worker-health:
 
 networks:
   nuc_default:

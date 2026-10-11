@@ -3,6 +3,8 @@
 Date: 2026-10-11. Status: accepted architecture; integration and rollout pending #674.
 Source: [owner discussion](../discussions/2026-10-11-05-reliable-translation-preparation.md).
 
+Rollout order updated by the [owner follow-up](../discussions/2026-10-11-06-translation-rollout-order.md): retain full-context generation, ship pending/recovery, worker health and the bounded buffer first. Semantic partitioning and durable partial results are deferred, because the longest tested production cards now translate successfully with the released prompt and budgets. They remain possible follow-up architecture, not a prerequisite for this rollout.
+
 ## Context
 
 The current HTTP coordinator owns provider execution. A cache row marked pending deduplicates requests but cannot restart abandoned work. Proxy, browser and provider deadlines differ. A headword artifact is insufficient evidence that a frozen training example is translated. Existing next-member prefetch behavior varies between training families.

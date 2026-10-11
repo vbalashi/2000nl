@@ -22,6 +22,7 @@ export async function prepareSentenceExerciseTranslation(input: {
   contentLanguageCode: string;
   translationTargetLanguageCode: string;
   signal?: AbortSignal;
+  force?: boolean;
 }): Promise<SentenceTranslationPreparationResult> {
   try {
     const group = await fetchPlatformV2LibraryGroup({
@@ -62,6 +63,7 @@ export async function prepareSentenceExerciseTranslation(input: {
     const result = await requestPlatformV2LibraryTranslation({
       entryId: input.entryId,
       targetLanguageCode: input.translationTargetLanguageCode,
+      background: true,
       ...(input.signal ? {signal:input.signal} : {}),
     });
     return { state: result === "ready" ? "ready" : result === "failed" ? "translation-unavailable" : "translation-pending" };
@@ -81,6 +83,7 @@ export async function loadSentenceExerciseContent(input: {
   contentLanguageCode: string;
   translationTargetLanguageCode: string;
   signal?: AbortSignal;
+  force?: boolean;
 }): Promise<SentenceExerciseLoadResult> {
   try {
     let group = await fetchPlatformV2LibraryGroup({
@@ -98,7 +101,7 @@ export async function loadSentenceExerciseContent(input: {
         (item) => item.actionId === "request-translation" && item.target.entryId === input.candidate.entryId && item.targetLanguageCode === input.translationTargetLanguageCode,
       );
       if (!capability || capability.actionId !== "request-translation") return { state: "translation-unavailable" };
-      const result = await requestPlatformV2LibraryTranslation({ entryId: input.candidate.entryId, targetLanguageCode: input.translationTargetLanguageCode, ...(input.signal ? {signal:input.signal} : {}) });
+      const result = await requestPlatformV2LibraryTranslation({ entryId: input.candidate.entryId, targetLanguageCode: input.translationTargetLanguageCode, force: input.force, ...(input.signal ? {signal:input.signal} : {}) });
       if (result !== "ready") return { state: result === "failed" ? "translation-unavailable" : "translation-pending" };
       group = await fetchPlatformV2LibraryGroup({
         entryId: input.candidate.entryId,

@@ -37,8 +37,8 @@ export async function requestPlatformV2Translation(
     PlatformSenseCardCapabilityV2,
     { actionId: "request-translation" }
   >,
-  context: { transitionId?: string; signal?: AbortSignal } = {},
-): Promise<void> {
+  context: { transitionId?: string; signal?: AbortSignal; background?: boolean; force?: boolean } = {},
+): Promise<"ready" | "pending" | "failed"> {
   return requestPlatformV2TranslationUncached(capability, context);
 }
 
@@ -47,13 +47,15 @@ async function requestPlatformV2TranslationUncached(
     PlatformSenseCardCapabilityV2,
     { actionId: "request-translation" }
   >,
-  context: { transitionId?: string; signal?: AbortSignal },
-): Promise<void> {
+  context: { transitionId?: string; signal?: AbortSignal; background?: boolean; force?: boolean },
+): Promise<"ready" | "pending" | "failed"> {
   const startedAt = performance.now();
   const response = await observeDictionaryMeaningTranslation({
     entryId: capability.target.entryId,
     targetLanguageCode: capability.targetLanguageCode,
     signal: context.signal,
+    background: context.background,
+    force: context.force,
   });
   if (context.transitionId) {
     const cacheOutcome = response.headers.get("x-platform-cache");
@@ -73,12 +75,15 @@ async function requestPlatformV2TranslationUncached(
         : `http-${response.status}`,
     );
   }
+  if (response.status === 504 || response.status === 524) return "pending";
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as {
       error?: string;
     } | null;
     throw new Error(payload?.error ?? "translation_failed");
   }
+  const payload = await response.json().catch(() => null) as { status?: string } | null;
+  return payload?.status === "ready" || payload?.status === "pending" ? payload.status : "failed";
 }
 
 export async function resolvePlatformV2Audio(

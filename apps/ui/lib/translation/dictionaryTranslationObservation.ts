@@ -1,4 +1,5 @@
 import { fetchDictionaryMeaningTranslation } from "./translationApiClient";
+import { recordTranslationPreparationDuration } from "./translationPreparationTiming";
 
 type TranslationInput = Parameters<typeof fetchDictionaryMeaningTranslation>[0];
 
@@ -23,7 +24,9 @@ export async function observeDictionaryMeaningTranslation(
   input: TranslationInput,
   options: { observationMs?: number; pollMs?: number } = {},
 ): Promise<Response> {
-  const deadline = Date.now() + (options.observationMs ?? 90_000);
+  const deadline = Date.now() + (options.observationMs ?? 300_000);
+  const startedAt = Date.now();
+  let observedJob = false;
   let response = await fetchDictionaryMeaningTranslation(input);
   while (response.ok) {
     const payload = await response.clone().json().catch(() => null) as {
@@ -32,8 +35,11 @@ export async function observeDictionaryMeaningTranslation(
       needsEnqueue?: boolean;
     } | null;
     // Legacy synchronous responses retain their existing caller semantics.
+    if (payload?.status === "ready" && observedJob)
+      recordTranslationPreparationDuration(Date.now() - startedAt);
     if (payload?.status !== "pending" || !payload.job?.id || input.background)
       return response;
+    observedJob = true;
     const remaining = deadline - Date.now();
     if (remaining <= 0) return response;
     await pause(Math.min(options.pollMs ?? 1_000, remaining), input.signal);

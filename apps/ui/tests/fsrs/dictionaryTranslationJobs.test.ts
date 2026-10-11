@@ -37,6 +37,21 @@ describeIfDb("durable dictionary translation jobs", () => {
     await pool.end();
   });
 
+  test("speculative jobs reserve capacity for a foreground request", async () => {
+    await withTransaction(pool, async (client) => {
+      const first = await insertWord(client, `buffer-${randomUUID()}`);
+      const second = await insertWord(client, `buffer-${randomUUID()}`);
+      const visible = await insertWord(client, `visible-${randomUUID()}`);
+      await enqueue(client, first);
+      await enqueue(client, second);
+      expect((await claim(client)).word_entry_id).toBe(first);
+      expect(await claim(client)).toBeUndefined();
+      await enqueue(client, visible, "one", 10);
+      expect((await claim(client)).word_entry_id).toBe(visible);
+      expect(await claim(client)).toBeUndefined();
+    });
+  });
+
   test("duplicate observations preserve attempt/backoff and foreground requests promote priority", async () => {
     await withTransaction(pool, async (client) => {
       const entry = await insertWord(client, `job-${randomUUID()}`);
@@ -189,11 +204,11 @@ describeIfDb("durable dictionary translation jobs", () => {
           await insertWord(client, `concurrent-job-${randomUUID()}`),
         );
       const duplicates = await Promise.all(
-        clients.map((client) => enqueue(client, entries[0])),
+        clients.map((client) => enqueue(client, entries[0], "one", 10)),
       );
       expect(new Set(duplicates.map((job) => job.id)).size).toBe(1);
       await Promise.all(
-        clients.slice(1).map((client, i) => enqueue(client, entries[i + 1])),
+        clients.slice(1).map((client, i) => enqueue(client, entries[i + 1], "one", 10)),
       );
       const claims = (
         await Promise.all(clients.map((client) => claim(client)))

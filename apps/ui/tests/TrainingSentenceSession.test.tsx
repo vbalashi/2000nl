@@ -1,3 +1,5 @@
+import { requestPlatformV2LibraryTranslation } from "@/lib/platform/platformV2LibraryClient";
+vi.mock("@/lib/platform/platformV2LibraryClient", () => ({ requestPlatformV2LibraryTranslation: vi.fn() }));
 import { getUiMessages } from "@/lib/uiMessages";
 const recordedStudy = vi.hoisted(() => vi.fn());
 vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
@@ -37,6 +39,7 @@ const content = (() => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(requestPlatformV2LibraryTranslation).mockResolvedValue("pending");
   vi.mocked(readTranslationTrainingStats).mockResolvedValue({ contractVersion: "training-translation-stats-v1", newCardsToday: 1, reviewCardsDone: 0, reviewCardsDue: 0, totalCardsStarted: 1, totalCardsInScope: 1 });
   vi.mocked(performTrainingExclusion).mockResolvedValue({} as never);
   vi.mocked(prepareSentenceExerciseTranslation).mockResolvedValue({ state: "ready" });
@@ -63,14 +66,13 @@ test("prepares only the next latched sentence without advancing or grading", asy
   render(<TrainingSentenceSession userId="user-1" session={sessionWithLookahead} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} />);
 
   expect(await screen.findByText("Переведённый пример.")).toBeVisible();
-  await waitFor(() => expect(prepareSentenceExerciseTranslation).toHaveBeenCalledTimes(1));
-  expect(prepareSentenceExerciseTranslation).toHaveBeenCalledWith(expect.objectContaining({
+  await waitFor(() => expect(requestPlatformV2LibraryTranslation).toHaveBeenCalledTimes(1));
+  expect(requestPlatformV2LibraryTranslation).toHaveBeenCalledWith(expect.objectContaining({
     entryId: second.entryId,
-    contentNodeId: second.contentNodeId,
-    contentLanguageCode: "nl",
-    translationTargetLanguageCode: "ru",
+    targetLanguageCode: "ru",
+    background: true,
   }));
-  expect(prepareSentenceExerciseTranslation).not.toHaveBeenCalledWith(expect.objectContaining({ entryId: third.entryId }));
+  expect(requestPlatformV2LibraryTranslation).not.toHaveBeenCalledWith(expect.objectContaining({ entryId: third.entryId }));
   expect(performPlatformV2TranslationExerciseAction).not.toHaveBeenCalled();
   expect(markPlatformV2TranslationTrainingSessionMemberUnavailable).not.toHaveBeenCalled();
 });
@@ -100,6 +102,18 @@ test("a pending translation stays on the same session member and can be retried"
   render(<TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} />);
   fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
   expect(await screen.findByText("Переведённый пример.")).toBeVisible();
+  expect(markPlatformV2TranslationTrainingSessionMemberUnavailable).not.toHaveBeenCalled();
+  expect(performPlatformV2TranslationExerciseAction).not.toHaveBeenCalled();
+});
+
+test("pending preparation is announced as waiting and automatically recovers the same member", async () => {
+  vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValue(candidate);
+  vi.mocked(loadSentenceExerciseContent).mockResolvedValueOnce({ state: "translation-pending" }).mockResolvedValueOnce({ state: "ready", content } as never);
+  render(<TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} />);
+  expect(await screen.findByText("Translation is being prepared…")).toBeVisible();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  await waitFor(() => expect(screen.getByText("Переведённый пример.")).toBeVisible(), { timeout: 4_000 });
+  expect(loadSentenceExerciseContent).toHaveBeenLastCalledWith(expect.objectContaining({ candidate, force: false }));
   expect(markPlatformV2TranslationTrainingSessionMemberUnavailable).not.toHaveBeenCalled();
   expect(performPlatformV2TranslationExerciseAction).not.toHaveBeenCalled();
 });

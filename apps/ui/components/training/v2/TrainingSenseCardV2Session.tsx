@@ -1,4 +1,5 @@
 "use client";
+import { translationPendingCopy } from "@/lib/training/translationPendingCopy";
 import { useWordContextPrompt } from "./useWordContextPrompt";
 import { TrainingSessionState } from "./TrainingSessionState";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -393,7 +394,14 @@ export function TrainingSenseCardV2Session({
     let progressCompletion: string | null = "cancelled";
     try {
       if (capability.actionId === "request-translation") {
-        await requestPlatformV2Translation(capability);
+        const status = await requestPlatformV2Translation(capability, { force: true });
+        if (!actionIsCurrent()) return "rejected";
+        if (status === "pending") {
+          setNoticeTone("info");
+          setError(translationPendingCopy[interfaceLanguage]);
+          return "accepted";
+        }
+        if (status === "failed") throw new Error("translation_failed");
         if (!actionIsCurrent()) return "rejected";
         const refreshed = await load(undefined, {
           preserveCard: true,

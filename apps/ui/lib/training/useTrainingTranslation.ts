@@ -3,7 +3,7 @@ import type {
   TranslationOverlay,
   WordEntryTranslationStatus,
 } from "@/lib/types";
-import { fetchDictionaryMeaningTranslation } from "@/lib/translation/translationApiClient";
+import { observeDictionaryMeaningTranslation } from "@/lib/translation/dictionaryTranslationObservation";
 
 type TranslationKind =
   | "definition"
@@ -33,11 +33,14 @@ export function useTrainingTranslation(params: {
     null,
   );
   const translationLoadingRef = React.useRef(false);
+  const requestControllerRef = React.useRef<AbortController | null>(null);
   const translationPollTimeoutRef = React.useRef<number | null>(null);
   const translationLongPressTimeoutRef = React.useRef<number | null>(null);
   const translationLongPressFiredRef = React.useRef(false);
 
   React.useEffect(() => {
+    requestControllerRef.current?.abort();
+    requestControllerRef.current = null;
     translationLoadingRef.current = false;
     if (translationPollTimeoutRef.current != null) {
       window.clearTimeout(translationPollTimeoutRef.current);
@@ -51,6 +54,7 @@ export function useTrainingTranslation(params: {
     setTranslationStatus(null);
     setTranslationOverlay(null);
     setTranslationError(null);
+    return () => requestControllerRef.current?.abort();
   }, [wordId, translationLang]);
 
   const fetchTranslation = React.useCallback(
@@ -61,16 +65,20 @@ export function useTrainingTranslation(params: {
         return;
 
       translationLoadingRef.current = true;
+      const controller = new AbortController();
+      requestControllerRef.current = controller;
       try {
         setTranslationStatus("pending");
         setTranslationOverlay(null);
         setTranslationError(null);
 
-        const res = await fetchDictionaryMeaningTranslation({
+        const res = await observeDictionaryMeaningTranslation({
           entryId: wordId,
           targetLanguageCode: translationLang,
           force: opts?.force,
+          signal: controller.signal,
         });
+        if (controller.signal.aborted) return;
 
         if (!res.ok) {
           const text = await res.text().catch(() => "");
@@ -87,14 +95,19 @@ export function useTrainingTranslation(params: {
             }
           | null;
 
+        if (controller.signal.aborted) return;
         setTranslationStatus(data?.status ?? null);
         setTranslationOverlay(data?.overlay ?? null);
         setTranslationError(data?.error ?? null);
       } catch (e: any) {
+        if (controller.signal.aborted) return;
         setTranslationStatus("failed");
         setTranslationError(String(e?.message ?? e ?? "Unknown error"));
       } finally {
-        translationLoadingRef.current = false;
+        if (requestControllerRef.current === controller) {
+          requestControllerRef.current = null;
+          translationLoadingRef.current = false;
+        }
       }
     },
     [translationLang, translationOverlay, translationStatus, wordId],

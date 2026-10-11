@@ -2661,7 +2661,7 @@ describe("TrainingSenseCardV2Session", () => {
     expect(requestTranslation).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Translate" }));
     await waitFor(() =>
-      expect(requestTranslation).toHaveBeenCalledWith(requestCapability),
+      expect(requestTranslation).toHaveBeenCalledWith(requestCapability, { force: true }),
     );
 
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();

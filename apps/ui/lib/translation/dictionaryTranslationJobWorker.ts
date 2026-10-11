@@ -56,6 +56,7 @@ export async function executeClaimedDictionaryTranslationJob(input: {
   metric?: (event: JobMetric) => void;
   heartbeatMs?: number;
   rpcTimeoutMs?: number;
+  onLeaseRenewed?: () => Promise<void>;
 }): Promise<"ready" | "failed" | "lease_lost"> {
   const { client, job } = input;
   const rpc = async (name: string, args: Record<string, unknown>) => {
@@ -97,6 +98,7 @@ export async function executeClaimedDictionaryTranslationJob(input: {
             { p_job_id: job.id, p_lease_token: job.lease_token },
           );
           if (error || data !== true) leaseLost = true;
+          else await input.onLeaseRenewed?.();
         } catch {
           leaseLost = true;
         }
