@@ -29,6 +29,18 @@ test("source invalidation requests a replacement without resetting failures", as
   expect(request.mock.calls[1][0]).toMatchObject({ force: false, observeOnly: false });
 });
 
+test("a changed source without a matching job enqueues its replacement", async () => {
+  vi.useFakeTimers();
+  request.mockResolvedValueOnce(pending())
+    .mockResolvedValueOnce(new Response('{"status":"pending","needsEnqueue":true}'))
+    .mockResolvedValueOnce(new Response('{"status":"ready"}'));
+  const result = observeDictionaryMeaningTranslation(input);
+  await vi.advanceTimersByTimeAsync(2_000);
+  expect(await (await result).json()).toEqual({ status: "ready" });
+  expect(request.mock.calls[1][0]).toMatchObject({ force: false, observeOnly: true });
+  expect(request.mock.calls[2][0]).toMatchObject({ force: false, observeOnly: false });
+});
+
 test("observation expiry preserves pending server state", async () => {
   vi.useFakeTimers();
   request.mockResolvedValue(pending());

@@ -84,3 +84,7 @@ CI initially caught the missing bootstrap include; it is now present without ena
 Further boundary regression: at the current maximum 128 content fields, translatedPaths contains 129 entries including headword. The safety filter previously dropped all coverage metadata at this boundary. It now preserves the legitimate 129 paths and still rejects oversized metadata; an artifact integration regression covers this case.
 
 GitHub UI tests themselves passed; the subsequent standalone QA-wrapper suite caught four legacy fixtures that treated an unauthenticated Today label as success. Those fixtures now include an authenticated shell/session, and a new negative test preserves the auth gate. The complete standalone wrapper suite passes locally: 19/19. GitHub DB drift/bootstrap and FSRS passed on 9923f08d.
+
+## Release review — 2026-10-11
+
+Owner authorized production release. Standards/security/operational review found no blocking issue in bea5f621. Spec review identified pending source invalidation without a matching job: observation now re-enqueues needsEnqueue without force; six focused tests pass. CI's startup E2E assumed no translation request after Start; updated it to assert exactly the next frozen entry at background priority without force. Original scenario failed locally before the change and passes afterward. Production migration/activation remains separate from the default-off PR release.

@@ -37,7 +37,7 @@ export async function observeDictionaryMeaningTranslation(
     // Legacy synchronous responses retain their existing caller semantics.
     if (payload?.status === "ready" && observedJob)
       recordTranslationPreparationDuration(Date.now() - startedAt);
-    if (payload?.status !== "pending" || !payload.job?.id || input.background)
+    if (payload?.status !== "pending" || (!payload.job?.id && !payload.needsEnqueue) || input.background)
       return response;
     observedJob = true;
     const remaining = deadline - Date.now();
