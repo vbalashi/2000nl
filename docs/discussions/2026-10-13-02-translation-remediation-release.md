@@ -21,4 +21,4 @@ Lookup остаётся read-only; подготовка выполняется �
 сохраняя право не добавлять альтернативы и не смешивая значения идиом.
 
 Принято к реализации и выпуску; статус исполнения — в
-[плане](../exec-plans/active/issue-674-translation-remediation.md).
+[плане](../exec-plans/completed/issue-674-translation-remediation.md).
