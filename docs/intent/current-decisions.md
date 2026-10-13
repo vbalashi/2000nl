@@ -186,3 +186,11 @@ Production activation of durable translation jobs is accepted for #674: contract
 ## Полнота больших карточек и вкладки — принято 2026-10-13
 
 Приняты полный inventory, bounded semantic parts с persisted recovery и aggregate coverage перед ready; межвкладочные invalidation hints и серверная перепроверка видимых карточек. Выпущено в PR #687:0.18.1286 / f670d6b7 / contract224, здоровый согласованный worker; production-проверка hand подтвердила актуальный артефакт64/64. Ready требует полного inventory; синхронизация вкладок eventual, focus/visibility/60s. [Источник](../discussions/2026-10-13-03-full-translation-and-tab-sync.md), [план](../exec-plans/completed/issue-674-full-translation-and-tab-sync.md).
+## Дополнения к backlog развития (2026-10-13)
+
+Принято включить в план: оформление GitHub и определение границ публикации/лицензий
+(#680), сообщения о новой версии с refresh и анонсы функций (#299), общую обратную
+связь (#681) и операторский разбор существующих Report с переходом к задачам (#51).
+Генерируемые словари не предполагается публиковать с кодом; лицензия, политика
+промптов и real-time не выбраны. Приоритеты, сроки и реализация не утверждены.
+[Обсуждение](../discussions/2026-10-13-01-product-development-backlog.md).
