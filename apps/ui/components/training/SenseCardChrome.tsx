@@ -1,5 +1,6 @@
 import {useTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
 import React from "react";
+import translationFeedback from "@/components/practice/article/translationFeedback.module.css";
 import {useHeadwordFit} from "./useHeadwordFit";
 import { Repeat2 } from "lucide-react";
 import { HeadwordWithPronunciationBreaks } from "./HeadwordWithPronunciationBreaks";
@@ -139,6 +140,7 @@ export function SenseCardHeadwordLockup({
 export function SenseCardHeaderAction({
   label,
   accent = false,
+  pending = false,
   pressed,
   disabled = false,
   onClick,
@@ -146,6 +148,7 @@ export function SenseCardHeaderAction({
 }: {
   label: string;
   accent?: boolean;
+  pending?: boolean;
   pressed?: boolean;
   disabled?: boolean;
   onClick: () => void;
@@ -158,8 +161,9 @@ export function SenseCardHeaderAction({
       aria-label={label}
       title={label}
       aria-pressed={pressed}
+      aria-busy={pending || undefined}
       onClick={onClick}
-      className={chrome.headerAction}
+      className={`${chrome.headerAction} ${pending ? translationFeedback.shimmer : ""}`}
     >
       {children}
     </button>

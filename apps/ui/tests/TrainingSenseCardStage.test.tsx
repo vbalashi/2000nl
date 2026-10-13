@@ -40,6 +40,13 @@ function TrainingSenseCardStage(
 }
 
 describe("TrainingSenseCardStage", () => {
+  test("answer metadata omits repetition counters", () => {
+    const model = buildTrainingSenseCardModel({group: singleSenseGroup, entry: singleSenseEntry, interfaceLanguage: "en"});
+    model.repeatCount = 3;
+    render(<TrainingSenseCardStage model={model} mode="word-to-definition" interfaceLanguage="en" onAction={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", {name: "Show answer"}));
+    expect(screen.queryByLabelText("3×")).not.toBeInTheDocument();
+  });
   test("answer reading is keyboard reachable and Space does not turn it back over", () => {
     const model = buildTrainingSenseCardModel({ group: singleSenseGroup,
       entry: singleSenseEntry, interfaceLanguage: "en" });

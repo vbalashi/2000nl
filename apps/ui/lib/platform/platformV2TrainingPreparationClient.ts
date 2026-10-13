@@ -66,18 +66,20 @@ export async function preparePlatformV2TrainingEntry(
           signal: input.signal,
           background: true,
         });
-        const refreshed = await prefetchPlatformV2TrainingEntry({
-          ...input,
-          bypassCache: true,
-        });
-        if (refreshed.state === "ready") {
-          lookup = refreshed;
-          translation =
-            !needsPreparation(refreshed.entry) && status === "ready"
-              ? "generated"
-              : status === "pending" ? "pending" : "failed";
-        } else {
-          translation = "failed";
+        // Pending/failed jobs publish no new overlay. Retain the healthy DTO
+        // and prepare audio independently instead of doing a speculative lookup.
+        translation = status === "ready" ? "generated" : status;
+        if (status === "ready") {
+          const refreshed = await prefetchPlatformV2TrainingEntry({
+            ...input,
+            bypassCache: true,
+          });
+          if (refreshed.state === "ready") {
+            lookup = refreshed;
+            translation = !needsPreparation(refreshed.entry) ? "generated" : "failed";
+          } else {
+            translation = "failed";
+          }
         }
       } catch {
         translation = "failed";

@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useTrainingFaceFit } from "../useTrainingFaceFit";
 import { useTrainingInteractions } from "@/components/practice/ui/TrainingInteractionPreferences";
 import {
   ChevronDown,
@@ -10,6 +11,8 @@ import {
 } from "lucide-react";
 import approved from "../approvedTrainingCard.module.css";
 import chrome from "@/components/practice/article/senseChrome.module.css";
+import translationFeedback from "@/components/practice/article/translationFeedback.module.css";
+import {TranslationPlaceholder, TranslationFailure} from "@/components/practice/article/TranslationFeedback";
 import {ArticleContentNode,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
 import {ArticleSenseRelations} from "@/components/practice/article/ArticleWordDetails";
 import {lexicalRelationDetail} from "@/components/practice/article/wordDetailsPresentation";
@@ -17,7 +20,6 @@ import {ProductionArticleReading} from "@/components/practice/article/Production
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
-  ExposureBadge,
   SenseCardReveal,
   SenseCardHeadwordLockup,
 } from "../SenseCardChrome";
@@ -64,6 +66,10 @@ export function TrainingCardAnswerHeader({
   model,
   translationVisible,
   translationAvailable,
+  interfaceLanguage = "en",
+  translationPending = false,
+  translationFailed = false,
+  onRetryTranslation,
   translationLabel,
   audioLabel,
   moreLabel,
@@ -75,6 +81,10 @@ export function TrainingCardAnswerHeader({
   model: TrainingCardAnswer;
   translationVisible: boolean;
   translationAvailable: boolean;
+  interfaceLanguage?: OnboardingLanguage;
+  translationPending?: boolean;
+  translationFailed?: boolean;
+  onRetryTranslation?: () => void;
   translationLabel: string;
   audioLabel: string;
   moreLabel: string;
@@ -100,9 +110,6 @@ export function TrainingCardAnswerHeader({
               {model.coreVocabularyLabel}
             </span>
           ) : null}
-          {model.repeatCount > 0 ? (
-            <ExposureBadge count={model.repeatCount} tone="light" />
-          ) : null}
         </div>
         <div
           data-testid="training-answer-header-actions"
@@ -121,6 +128,7 @@ export function TrainingCardAnswerHeader({
             <TrainingCardIconButton
               label={translationLabel}
               active={translationVisible}
+              pending={translationVisible && translationPending}
               disabled={busy || !translationAvailable}
               onClick={onToggleTranslation}
             >
@@ -158,7 +166,7 @@ export function TrainingCardAnswerHeader({
             ].join(" · ")}
           </p>
         </SenseCardReveal>
-      ) : null}
+      ) : translationFailed && onRetryTranslation ? <SenseCardReveal open={translationVisible}><TranslationFailure language={interfaceLanguage} onRetry={onRetryTranslation}/></SenseCardReveal> : translationPending ? <SenseCardReveal open={translationVisible}><TranslationPlaceholder emphasis/></SenseCardReveal> : null}
     </header>
   );
 }
@@ -181,6 +189,7 @@ export function TrainingCardFace({
   hintVisible,
   hintLabel,
   contentLabel,
+  scrollMoreLabel,
 }: {
   prompt: TrainingCardPrompt;
   label?: string;
@@ -191,10 +200,19 @@ export function TrainingCardFace({
   hintVisible: boolean;
   hintLabel: string;
   contentLabel: string;
+  scrollMoreLabel?: string;
 }) {
   const { preferences } = useTrainingInteractions();
+  const fit = useTrainingFaceFit(JSON.stringify([prompt, recallTarget, hint, label, contextLabel, partOfSpeech]));
+  const maskImage = scrollMask(fit.scroll.top, fit.scroll.bottom);
   return (
+    <div className="relative min-h-0 flex-1">
     <div
+      ref={fit.viewport}
+      onScroll={fit.updateScroll}
+      style={{ maskImage, WebkitMaskImage: maskImage }}
+      data-scroll-top={fit.scroll.top ? "faded" : "clear"}
+      data-scroll-bottom={fit.scroll.bottom ? "faded" : "clear"}
       data-testid="training-face-scroll"
       role="region"
       aria-label={contentLabel}
@@ -203,9 +221,9 @@ export function TrainingCardFace({
         // Space scrolls a focused reading region; it must not reveal the answer.
         if (event.key === " ") event.stopPropagation();
       }}
-      className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:thin] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--practice-focus,#818cf8)]"
+      className="h-full min-h-0 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--practice-focus,#818cf8)]"
     >
-      <div className={approved.faceLayout}>
+      <div ref={fit.layout} className={approved.faceLayout}>
         <div className={approved.facePrelude}>
           {partOfSpeech ? (
             <span
@@ -223,13 +241,14 @@ export function TrainingCardFace({
               {label}
             </span>
           ) : null}
-          {recallTarget ? <p data-testid="training-face-recall-target" className={approved.recallTarget}>{recallTarget}</p> : null}
+          {recallTarget ? <p data-face-fit data-testid="training-face-recall-target" className={approved.recallTarget}>{recallTarget}</p> : null}
           {contextLabel ? <p className={approved.faceInstruction}>{contextLabel}</p> : null}
         </div>
         <div className={approved.facePrompt} data-testid="training-main-prompt">
           {prompt.kind === "explanation" ? (
             <>
               <p
+                data-face-fit
                 data-testid="reverse-prompt"
                 className={contextLabel ? approved.faceContext : "max-w-[34rem] text-center font-sense-serif text-[length:var(--reading-body-prompt-size,clamp(1.55rem,5cqi,2.4rem))] leading-[1.22] text-slate-900 dark:text-slate-50"}
               >
@@ -252,12 +271,19 @@ export function TrainingCardFace({
             <p className={approved.faceHintLabel}>
               {hintLabel}
             </p>
-            <p className={approved.faceHintText}>
+            <p data-face-fit className={approved.faceHintText}>
               {hint.text}
             </p>
           </aside>
         ) : <div />}
       </div>
+    </div>
+    {fit.scroll.bottom ? (
+      <button type="button" aria-label={scrollMoreLabel ?? contentLabel} className={chrome.scrollCue}
+        onClick={() => fit.viewport.current?.scrollBy({ top: Math.max(120, fit.viewport.current.clientHeight * 0.65), behavior: preferences.animation ? "smooth" : "auto" })}>
+        <ChevronDown aria-hidden="true" className="h-4 w-4" />
+      </button>
+    ) : null}
     </div>
   );
 }
@@ -265,6 +291,9 @@ export function TrainingCardFace({
 export function TrainingCardAnswerBody({
   model,
   translationVisible,
+  translationPending = false,
+  translationFailed = false,
+  onRetryTranslation,
   interfaceLanguage,
   contentLanguage,
   translationLanguage,
@@ -272,6 +301,9 @@ export function TrainingCardAnswerBody({
 }: {
   model: TrainingCardAnswer;
   translationVisible: boolean;
+  translationPending?: boolean;
+  translationFailed?: boolean;
+  onRetryTranslation?: () => void;
   interfaceLanguage: OnboardingLanguage;
   contentLanguage?: string;
   translationLanguage?: string;
@@ -341,9 +373,9 @@ export function TrainingCardAnswerBody({
         className={`h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${approved.answerScroll}`}
       >
         <ProductionArticleReading>
-          {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>)}
-          <ArticleSenseRelations relation={lexicalRelationDetail(model.wordDetails,translationLanguage)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>
-          <ArticleMeaningDetails definition={null} details={[...usagePatterns,...examples,...idioms,...notes]} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>
+          {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation}/>)}
+          <ArticleSenseRelations relation={lexicalRelationDetail(model.wordDetails,translationLanguage)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation}/>
+          <ArticleMeaningDetails definition={null} details={[...usagePatterns,...examples,...idioms,...notes]} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation}/>
         </ProductionArticleReading>
 
       </div>
@@ -457,12 +489,14 @@ function scrollMask(top: boolean, bottom: boolean) {
 export function TrainingCardIconButton({
   label,
   active = false,
+  pending = false,
   disabled = false,
   onClick,
   children,
 }: {
   label: string;
   active?: boolean;
+  pending?: boolean;
   disabled?: boolean;
   onClick: () => void;
   children: React.ReactNode;
@@ -473,9 +507,10 @@ export function TrainingCardIconButton({
       aria-label={label}
       title={label}
       aria-pressed={active}
+      aria-busy={pending || undefined}
       disabled={disabled}
       onClick={onClick}
-      className={chrome.iconAction}
+      className={`${chrome.iconAction} ${pending ? translationFeedback.shimmer : ""}`}
     >
       {children}
     </button>

@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { usePlatformV2TranslationPreparation } from "@/lib/platform/usePlatformV2TranslationPreparation";
 import { publishDictionaryTranslationReady } from "@/lib/translation/dictionaryTranslationEvents";
 import { singleSenseEntry } from "./platformV2TrainingFixture";
@@ -8,7 +8,8 @@ const request = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/platform/platformV2TrainingMediaClient", () => ({
   requestPlatformV2Translation: request,
 }));
-beforeEach(() => request.mockReset());
+beforeEach(() => { request.mockReset(); vi.stubGlobal("BroadcastChannel", undefined); });
+afterEach(() => { vi.unstubAllGlobals(); });
 const incomplete = {
   ...singleSenseEntry,
   capabilities: [
@@ -111,7 +112,7 @@ test("navigation cancels observation and ignores late completion without refresh
   view.unmount();
 });
 
-test("focus resumes deduplicated preparation after a settled request even when repair stays true", async () => {
+test("focus does not duplicate the scheduled pending observation", async () => {
   request.mockResolvedValueOnce("pending").mockResolvedValueOnce("ready");
   const refresh = vi
     .fn()
@@ -128,7 +129,7 @@ test("focus resumes deduplicated preparation after a settled request even when r
   await waitFor(() => expect(view.result.current.current).toBe(false));
   expect(request).toHaveBeenCalledOnce();
   await act(async () => window.dispatchEvent(new Event("focus")));
-  await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+  expect(request).toHaveBeenCalledOnce();
   expect(request.mock.calls.every(([, options]) => !options.force)).toBe(true);
   view.unmount();
 });
@@ -162,5 +163,41 @@ test("a policy rollout while repair stays true recovers a failed request on focu
   await act(async () => window.dispatchEvent(new Event("focus")));
   await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
   expect(request.mock.calls[1][1].force).not.toBe(true);
+  view.unmount();
+});
+
+test("keeps observing after a pending window, even beyond a minute", async () => {
+  let poll: (() => void) | undefined;
+  const original=setTimeout;
+  const timeout=vi.spyOn(globalThis,"setTimeout").mockImplementation(((callback: () => void, ms: number, ...args: unknown[]) => {
+    if(ms===3000){poll=callback;return 777;}
+    return original(callback,ms,...args);
+  }) as typeof setTimeout);
+  const now=vi.spyOn(Date,"now");
+  request.mockResolvedValueOnce("pending").mockReturnValue(new Promise(() => {}));
+  const onStatus=vi.fn();
+  const view=renderHook(()=>usePlatformV2TranslationPreparation({entry:incomplete,targetLanguageCode:"en",enabled:true,refresh:vi.fn(),onStatus}));
+  try {
+    await act(async()=>{});
+    expect(poll).toBeTypeOf("function");
+    now.mockReturnValue(Date.now()+65_000);
+    await act(async()=>poll?.());
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(view.result.current.current).toBe(true);
+    expect(view.result.current.status).toBe("pending");
+    expect(onStatus).not.toHaveBeenCalledWith("failed");
+  } finally {view.unmount();timeout.mockRestore();now.mockRestore();}
+});
+
+test("confirmed failure exposes retry; one explicit retry forces only the failed job", async () => {
+  request.mockResolvedValueOnce("failed").mockResolvedValueOnce("ready");
+  const refresh=vi.fn().mockResolvedValue(singleSenseEntry);
+  const view=renderHook(()=>usePlatformV2TranslationPreparation({entry:incomplete,targetLanguageCode:"en",enabled:true,refresh}));
+  await waitFor(()=>expect(view.result.current.status).toBe("failed"));
+  await act(async()=>view.result.current.retry());
+  await waitFor(()=>expect(refresh).toHaveBeenCalledOnce());
+  expect(request.mock.calls[0][1].force).not.toBe(true);
+  expect(request.mock.calls[1][1].force).toBe(true);
+  expect(view.result.current.status).toBeNull();
   view.unmount();
 });

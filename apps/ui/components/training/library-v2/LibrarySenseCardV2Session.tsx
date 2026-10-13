@@ -650,6 +650,7 @@ function SenseCardV2Session({
           meaning.entryId,
           meaning.cardTypeId,
         );
+        if (translationRequests.current.has(meaning.entryId)) continue;
         if (
           meaning.translationStatus === "pending" ||
           meaning.translationStatus === "failed"

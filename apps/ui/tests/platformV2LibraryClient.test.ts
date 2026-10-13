@@ -554,12 +554,12 @@ describe("Library transient initial read recovery", () => {
 });
 
 describe("translation gateway recovery", () => {
-  test.each([504, 524])("treats HTTP %s as an unknown outcome to poll", async (status) => {
+  test.each([429, 500, 502, 503, 504, 524])("treats HTTP %s as an unknown outcome to poll", async (status) => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("gateway timeout", { status })));
     await expect(requestPlatformV2LibraryTranslation({ entryId: "entry", targetLanguageCode: "ru" })).resolves.toBe("pending");
   });
   test("preserves explicit upstream failures", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("failed", { status: 502 })));
-    await expect(requestPlatformV2LibraryTranslation({ entryId: "entry", targetLanguageCode: "ru" })).rejects.toThrow("translation_failed");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({status:"failed",error:"provider_timeout"}), { status: 200 })));
+    await expect(requestPlatformV2LibraryTranslation({ entryId: "entry", targetLanguageCode: "ru" })).resolves.toBe("failed");
   });
 });

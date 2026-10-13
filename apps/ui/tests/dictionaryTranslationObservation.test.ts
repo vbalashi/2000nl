@@ -66,3 +66,21 @@ test("disconnect stops observation without a cancel-job request", async () => {
   await rejection;
   expect(request).toHaveBeenCalledTimes(1);
 });
+
+test("a timed-out initial observation is pending, never a failed job", async () => {
+  request.mockRejectedValueOnce(new Error("platform_request_timeout"));
+  expect(await (await observeDictionaryMeaningTranslation(input)).json()).toEqual({status:"pending"});
+});
+
+test("transport failure and retry backoff preserve the last pending job", async () => {
+  vi.useFakeTimers();
+  request.mockResolvedValueOnce(pending()).mockRejectedValueOnce(new TypeError("Failed to fetch"));
+  const result=observeDictionaryMeaningTranslation(input);
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(await (await result).json()).toMatchObject({status:"pending",job:{id:"job"}});
+});
+
+test.each([429,502,503,504,524])("HTTP %i is not evidence of a terminal translation error", async status => {
+  request.mockResolvedValueOnce(new Response("temporary",{status}));
+  expect(await (await observeDictionaryMeaningTranslation(input)).json()).toEqual({status:"pending"});
+});

@@ -588,3 +588,5 @@
 
 \i db/migrations/223_dictionary_translation_jobs.sql
 \i db/migrations/224_dictionary_translation_parts.sql
+
+\i db/migrations/225_reject_legacy_hide.sql

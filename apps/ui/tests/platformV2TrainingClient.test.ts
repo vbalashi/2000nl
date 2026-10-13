@@ -798,7 +798,7 @@ describe("preparePlatformV2TrainingEntry", () => {
     expect(transitionStages(dispatch)).not.toContain("translation.cache");
   });
 
-  test("keeps the healthy next-card DTO when optional translation preparation fails", async () => {
+  test.each(["failed", "pending"] as const)("keeps the healthy next-card DTO when optional translation is %s", async outcome => {
     vi.stubGlobal("Audio", class { preload = ""; load() {} });
     const requestTranslation = {
       actionId: "request-translation" as const,
@@ -832,8 +832,8 @@ describe("preparePlatformV2TrainingEntry", () => {
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify(payload), { status: 200 }))
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ error: "provider_unavailable" }), {
-          status: 502,
+        new Response(JSON.stringify(outcome === "failed" ? {status:"failed", error:"provider_timeout"} : {error:"provider_unavailable"}), {
+          status: outcome === "failed" ? 200 : 502,
         }),
       )
       .mockResolvedValueOnce(
@@ -851,7 +851,7 @@ describe("preparePlatformV2TrainingEntry", () => {
       }),
     ).resolves.toMatchObject({
       state: "ready",
-      translation: "failed",
+      translation: outcome,
       audio: "ready",
       entry: { entryId: singleSenseEntry.entryId, translation: null },
     });

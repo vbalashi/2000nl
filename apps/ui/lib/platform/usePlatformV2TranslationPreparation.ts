@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PlatformSenseCardEntryV2 } from "../../../../packages/shared/types/platformV2";
 import {
   onDictionaryTranslationReady,
@@ -16,6 +16,18 @@ export function usePlatformV2TranslationPreparation(input: {
   refresh: (signal: AbortSignal) => Promise<PlatformSenseCardEntryV2 | null>;
   onStatus?: (status: "pending" | "failed") => void;
 }) {
+  const scope = JSON.stringify([input.entry?.entryId, input.entry?.contentRevision, input.targetLanguageCode]);
+  const [feedback, setFeedback] = useState<{ scope: string; status: "pending" | "failed" | null }>({ scope: "", status: null });
+  const status = feedback.scope === scope ? feedback.status : null;
+  const [retry, setRetry] = useState(0);
+  const forceNext = useRef<string | null>(null);
+  const statusRef = useRef<"pending" | "failed" | null>(null);
+  const retryTranslation = () => {
+    if (preparing.current) return;
+    settledAttempt.current = null;
+    forceNext.current = JSON.stringify([input.entry?.entryId, input.entry?.contentRevision, input.targetLanguageCode]);
+    setRetry(value => value + 1);
+  };
   const callbacks = useRef(input);
   callbacks.current = input;
   const preparing = useRef(false),
@@ -46,6 +58,14 @@ export function usePlatformV2TranslationPreparation(input: {
     ]);
     if (!needsPreparation) settledAttempt.current = null;
     let refreshing = false;
+    let poll: ReturnType<typeof setTimeout> | undefined;
+    const reportStatus = (value: "pending" | "failed" | null) => {
+      if (controller.signal.aborted) return;
+      statusRef.current = value;
+      setFeedback({ scope: attemptKey, status: value });
+      if (value) callbacks.current.onStatus?.(value);
+    };
+    if (!needsPreparation) reportStatus(null);
     const isCurrent = () =>
       !controller.signal.aborted &&
       callbacks.current.enabled &&
@@ -60,7 +80,7 @@ export function usePlatformV2TranslationPreparation(input: {
         refreshing = false;
       }
     };
-    const prepare = async (entry: PlatformSenseCardEntryV2) => {
+    const prepare = async (entry: PlatformSenseCardEntryV2, force = false) => {
       const request = entry.capabilities.find(
         (item) =>
           item.actionId === "request-translation" &&
@@ -73,31 +93,48 @@ export function usePlatformV2TranslationPreparation(input: {
       )
         return;
       preparing.current = true;
+      reportStatus("pending");
+      let pending = false;
+      let ready = false;
       try {
         const status = await requestPlatformV2Translation(request, {
           signal: controller.signal,
+          ...(force ? { force: true } : {}),
         });
         if (!isCurrent()) return;
-        if (status === "ready") await refresh();
-        else callbacks.current.onStatus?.(status);
+        if (status === "ready") {
+          ready = true;
+          await refresh();
+          if (isCurrent()) reportStatus(null);
+        } else {
+          pending = status === "pending";
+          reportStatus(status);
+        }
       } catch {
-        if (isCurrent()) callbacks.current.onStatus?.("failed");
+        if (isCurrent()) {
+          // A ready job whose projection could not be refreshed is still ready
+          // on the server. Re-observe instead of attributing failure to translation.
+          pending = ready;
+          reportStatus(ready ? "pending" : "failed");
+        }
       } finally {
         if (!controller.signal.aborted) {
           preparing.current = false;
           settledAttempt.current = attemptKey;
+          if (pending) poll = setTimeout(() => {
+            poll = undefined;
+            if (isCurrent()) void prepare(callbacks.current.entry ?? entry);
+          }, 3000);
         }
       }
     };
     const detachRevalidation = onDictionaryTranslationRevalidate(() => {
-      if (preparing.current) return;
+      if (preparing.current || poll) return;
       void refresh()
         .then((entry) => {
           if (entry) void prepare(entry);
         })
-        .catch(() => {
-          if (isCurrent()) callbacks.current.onStatus?.("failed");
-        });
+        .catch(() => { /* Lookup recovery owns refresh failures; no job failure was observed. */ });
     });
     const detach = onDictionaryTranslationReady((event) => {
       if (
@@ -106,13 +143,15 @@ export function usePlatformV2TranslationPreparation(input: {
         preparing.current
       )
         return;
-      void refresh().catch(() => {
-        if (isCurrent()) callbacks.current.onStatus?.("failed");
-      });
+      void refresh().catch(() => { /* The ready hint is not evidence of a failed translation. */ });
     });
-    if (current.entry && settledAttempt.current !== attemptKey)
-      void prepare(current.entry);
+    if (current.entry && (settledAttempt.current !== attemptKey || statusRef.current === "pending")) {
+      const force = forceNext.current === attemptKey;
+      forceNext.current = null;
+      void prepare(current.entry, force);
+    }
     return () => {
+      clearTimeout(poll);
       controller.abort();
       detach();
       detachRevalidation();
@@ -124,6 +163,7 @@ export function usePlatformV2TranslationPreparation(input: {
     input.targetLanguageCode,
     needsPreparation,
     revision,
+    retry,
   ]);
-  return preparing;
+  return Object.assign(preparing, { status, retry: retryTranslation });
 }
