@@ -24,6 +24,8 @@ import type {
 } from "../../../packages/shared/types/platformV2";
 import type { EntryLearningListMembership } from "@/lib/types";
 
+import { publishDictionaryTranslationReady } from "@/lib/translation/dictionaryTranslationEvents";
+
 const fetchGroup = vi.fn();
 const fetchCrossReferenceTarget = vi.fn();
 const requestTranslation = vi.fn();
@@ -168,6 +170,16 @@ describe("LibrarySenseCardV2Session", () => {
     expect(requestTranslation).toHaveBeenCalledWith(expect.objectContaining({entryId:financeEntry.entryId,targetLanguageCode:"en",force:false,signal:expect.any(AbortSignal)}));
     expect(performAction).not.toHaveBeenCalled();
   });
+  test("completion refresh failure exposes retry instead of permanent loading", async () => {
+    fetchGroup.mockResolvedValueOnce(multiSenseBankGroup).mockRejectedValueOnce(new Error("offline")).mockResolvedValue(multiSenseBankGroup);
+    render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" />);
+    await screen.findByTestId("library-sense-card-group");
+    act(() => publishDictionaryTranslationReady({entryId:financeEntry.entryId,targetLanguageCode:"en"}));
+    fireEvent.click(await screen.findByRole("button", {name:"Retry"}));
+    await waitFor(() => expect(fetchGroup).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(screen.queryByRole("button", {name:"Retry"})).not.toBeInTheDocument());
+  });
+
   const groupWithFinanceReportRevision = () => ({
     ...multiSenseBankGroup,
     entries: multiSenseBankGroup.entries.map((entry) =>

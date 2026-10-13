@@ -194,6 +194,7 @@ function SenseCardV2Session({
       }
       const requestSequence = ++groupRequestSequence.current;
       setLoading(true);
+      try {
       const next = activeReferenceTarget
         ? await fetchPlatformV2CrossReferenceTarget({
             query: activeReferenceTarget.query,
@@ -226,6 +227,15 @@ function SenseCardV2Session({
       if (!next) setLookupError("unavailable");
       setLoading(false);
       return next;
+      } catch (error) {
+        if (!signal?.aborted && requestSequence === groupRequestSequence.current &&
+            (expectedTranslationSession == null || expectedTranslationSession === translationSession.current) &&
+            (!expectedDetailIdentity || expectedDetailIdentity === detailIdentityRef.current)) {
+          setLoading(false);
+          if (!(error && typeof error === "object" && "name" in error && error.name === "AbortError")) setLookupError("unavailable");
+        }
+        throw error;
+      }
     },
     [
       activeReferenceTarget,
@@ -615,7 +625,7 @@ function SenseCardV2Session({
     if (translationRequests.current.has(translation.entryId) || translation.targetLanguageCode !== translationLanguage || !group?.entries.some(
       entry => entry.kind === "sense-card" && entry.entryId === translation.entryId,
     )) return;
-    void load(undefined, undefined, detailIdentity).catch(() => { /* The owning request retains its retry/error state. */ });
+    void load(undefined, undefined, detailIdentity).catch(() => { /* load retains the visible card and exposes lookup retry. */ });
   }), [detailIdentity, group, load, translationLanguage]);
 
   React.useEffect(() => {

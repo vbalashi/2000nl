@@ -10,7 +10,7 @@ Branch: codex/674-translation-audit. Base: ffa3c0b3; audit: 47929cac.
 - [x] Compute actual requested-field completeness in the read-only server projection; expose existing repair capability for incomplete/stale artifacts, retaining usable partial display.
 - [x] Audit and repair ordinary, word-context, sentence, idiom, Library, initialGroup and prefetch paths; successful preparation invalidates stale browser lookups and visible cards revalidate before relying on an old snapshot.
 - [x] Promote context-aware equivalents prompt, retain an exact v8/high rollback profile, verify prompt/cache identity and targeted quality cases.
-- [ ] Run focused regressions, typecheck/lint, full unit suite once, relevant local browser coverage; perform standards/spec review and fix findings.
+- [x] Run focused regressions, typecheck/lint, full unit suite once, relevant local browser coverage; perform standards/spec review and fix findings.
 - [ ] Create reviewed PR, pass CI, merge and deploy through the established workflow; verify exact image/commit, DB compatibility and worker health; preserve rollback instructions.
 - [ ] Update logbook, sync reference main and retire the finished checkout after preserving evidence.
 
@@ -39,3 +39,5 @@ Implementation started. Audit regressions and small prompt experiment are preser
 under /Users/khrustal/adhoc/2000nl-research-archives/674-translation-audit-2026-10-13/.
 
 Validation checkpoint: 2313 unit tests passed (356 skipped); six relevant Playwright scenarios passed. Typecheck passed; lint has only the existing audio-effect dependency warning. Local QA health is ok/local with contract 223. A pre-existing local 222 receipt / 223 schema mismatch was repaired through the canonical migration gate after preserving a full dump and both ready queue jobs; local row counts were unchanged. Private repair evidence: /Users/khrustal/adhoc/2000nl-research-archives/674-local-qa-repair-2026-10-13/.
+
+Standards review: one loading-error recovery finding, corrected with a regression; no architectural breaches. Spec review: no outstanding implementation findings after that correction. Browser dev-login reaches authenticated local Training. Deployment and lifecycle checkpoints remain pending.
