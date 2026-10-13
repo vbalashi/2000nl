@@ -17,6 +17,22 @@ import {
 } from "@/lib/platform/fixtures/senseCardV1GateFixture";
 
 describe("LibrarySenseCardGroup", () => {
+  test("legacy statuses use shared typography without repetition counters", () => {
+    const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
+    model.meanings = model.meanings.slice(0, 1);
+    model.meanings[0].meaningProgress = undefined;
+    model.meanings[0].undoKnown = null;
+    model.meanings[0].schedulerPhase = "learning";
+    model.meanings[0].repeatCount = 3;
+    const view = render(<LibrarySenseCardGroup model={model} interfaceLanguage="en" onAction={vi.fn()} />);
+    expect(screen.queryByLabelText("3×")).not.toBeInTheDocument();
+    const learningClass = screen.getByText("Learning").className;
+    view.unmount();
+    model.meanings[0].schedulerPhase = "hidden";
+    render(<LibrarySenseCardGroup model={model} interfaceLanguage="en" onAction={vi.fn()} />);
+    expect(screen.getByText("Excluded").className).toBe(learningClass);
+  });
+
   test("clicking a definition opens and closes its meaning without affecting child actions", () => {
     const onAction = vi.fn();
     render(<LibrarySenseCardGroup model={buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en")}
@@ -231,9 +247,7 @@ describe("LibrarySenseCardGroup", () => {
     );
 
     expect(screen.queryByText("Meanings")).not.toBeInTheDocument();
-    const exposureBadge = screen.getByLabelText("3×");
-    expect(exposureBadge).toBeInTheDocument();
-    expect(exposureBadge).toHaveTextContent("3×");
+    expect(screen.queryByLabelText("3×")).not.toBeInTheDocument();
     expect(
       screen
         .getByText("Bij welke bank hebt u een rekening?")

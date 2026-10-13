@@ -21,9 +21,7 @@ import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   ChevronIcon,
-  ExposureBadge,
   IdiomIcon,
-  NewExposureBadge,
   LearningStateBadge,
   SenseCardHeaderAction,
   SenseCardReveal,
@@ -511,21 +509,16 @@ function MeaningCard({
   const [progressOpen,setProgressOpen]=React.useState(false);
   const actions=useMeaningLearningActions(meaning.entryId,userId,meaning.meaningProgress,onProgressChanged,{active:activeTraining,headword:headwordTrainingBlocked});
   const statusLabel=meaning.meaningProgress ? getUiMessages(interfaceLanguage).learningProgress[meaningLearningStatus(meaning.meaningProgress)] : null;
-  const exposure = statusLabel ? <LearningStateBadge label={statusLabel} tone="light"/> : meaning.undoKnown ? (
-    <span className={surfaces.known}>
-      {t("senseCard.known.marked")}
-    </span>
-  ) : meaning.schedulerPhase === "learning" || meaning.schedulerPhase === "reviewing" ? (
-    <span className="inline-flex items-center gap-1"><LearningStateBadge label={t("senseCard.state.learning")} tone="light" />{meaning.repeatCount > 0 ? <ExposureBadge count={meaning.repeatCount} tone="light" /> : null}</span>
-  ) : meaning.schedulerPhase === "hidden" || meaning.schedulerPhase === "frozen" ? (
-    <span>{t(`senseCard.state.${meaning.schedulerPhase}`)}</span>
-  ) : meaning.schedulerPhase === null ? (
-    <span>{t("senseCard.state.unavailable")}</span>
-  ) : meaning.repeatCount > 0 ? (
-    <ExposureBadge count={meaning.repeatCount} tone="light" />
-  ) : (
-    <NewExposureBadge label={t("senseCard.state.new")} tone="light" />
-  );
+  const fallbackStatusLabel = meaning.undoKnown
+    ? t("senseCard.known.marked")
+    : meaning.schedulerPhase === "learning" || meaning.schedulerPhase === "reviewing"
+      ? getUiMessages(interfaceLanguage).learningProgress[meaning.schedulerPhase]
+      : meaning.schedulerPhase === "hidden" || meaning.schedulerPhase === "frozen"
+        ? t(`senseCard.state.${meaning.schedulerPhase}`)
+        : meaning.schedulerPhase === null
+          ? t("senseCard.state.unavailable")
+          : t("senseCard.state.new");
+  const exposure = <LearningStateBadge label={statusLabel ?? fallbackStatusLabel} tone="light" />;
   const hasVisibleLeadTranslation =
     state.translationVisible &&
     Boolean(meaning.entryTranslation || meaning.definition?.translation);
