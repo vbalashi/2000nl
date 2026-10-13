@@ -173,3 +173,12 @@ v8/high, а не доказанное ухудшение языка готовы
 [Обсуждение](../discussions/2026-10-11-04-translation-recovery-budgets.md).
 
 Production activation of durable translation jobs is accepted for #674: contract 223 and matching healthy worker must precede the UI switch. Implemented and production-verified in PR #676: app 0.18.1282 at d253a831, contract 223, healthy matching worker; one queued translation completed on its first attempt. [Decision](../discussions/2026-10-11-07-activate-translation-jobs.md).
+
+## Дополнения к backlog развития (2026-10-13)
+
+Принято включить в план: оформление GitHub и определение границ публикации/лицензий
+(#680), сообщения о новой версии с refresh и анонсы функций (#299), общую обратную
+связь (#681) и операторский разбор существующих Report с переходом к задачам (#51).
+Генерируемые словари не предполагается публиковать с кодом; лицензия, политика
+промптов и real-time не выбраны. Приоритеты, сроки и реализация не утверждены.
+[Обсуждение](../discussions/2026-10-13-01-product-development-backlog.md).
