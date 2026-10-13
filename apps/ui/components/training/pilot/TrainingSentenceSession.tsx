@@ -110,10 +110,11 @@ export function TrainingSentenceSession(props: Props) {
   useDictionaryTranslationRecovery({entryId:pendingEntryId.current,targetLanguageCode:translationTargetLanguageCode,enabled:translationPending&&!loading&&!submitting,refresh:()=>void loadNext()});
   usePlatformV2TranslationPreparation({entry:content?.entry??null,targetLanguageCode:translationTargetLanguageCode,enabled:!loading&&!submitting,
     refresh:async signal=>{
-      if(!candidate)return;
+      if(!candidate)return null;
       const loaded=await loadSentenceExerciseContent({candidate,contentLanguageCode,translationTargetLanguageCode,signal});
-      if(signal.aborted)return;
-      if(loaded.state==="ready")setContent(loaded.content);
+      if(signal.aborted)return null;
+      if(loaded.state==="ready"){setContent(loaded.content);return loaded.content.entry;}
+      return null;
     },
   });
   useEffect(() => {

@@ -340,7 +340,11 @@ export function TrainingSenseCardV2Session({
     entry: result?.entry ?? null,
     targetLanguageCode: translationTargetLanguageCode,
     enabled: !busy && (!wordInContext || (contextResult?.state === "ready" && synchronizedContext === contextResult)),
-    refresh: signal => load(signal, { preserveCard: true, usePrefetch: false }),
+    refresh: async signal => {
+      const refreshed=await load(signal,{preserveCard:true,usePrefetch:false});
+      if(refreshed?.state!=="ready")throw new Error("translation_refresh_unavailable");
+      return refreshed.entry;
+    },
     onStatus: status => {
       if (error) return;
       setNoticeTone(status === "pending" ? "info" : "error");

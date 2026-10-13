@@ -221,7 +221,7 @@ function SenseCardV2Session({
         (expectedDetailIdentity &&
           expectedDetailIdentity !== detailIdentityRef.current)
       ) {
-        return next;
+        return null;
       }
       setGroup(next);
       if (!next) setLookupError("unavailable");
@@ -623,8 +623,13 @@ function SenseCardV2Session({
 
   React.useEffect(() => onDictionaryTranslationRevalidate(() => {
     if (!translationLanguage || translationRequests.current.size || loading) return;
-    void load(undefined, undefined, detailIdentity).catch(() => { /* load exposes retry. */ });
-  }), [detailIdentity, load, loading, translationLanguage]);
+    const expected=translationSession.current;
+    void load(undefined,expected,detailIdentity).then(next=>{
+      if(expected!==translationSession.current||detailIdentity!==detailIdentityRef.current)return;
+      const entry=next?.entries.find(item=>item.kind==="sense-card"&&item.entryId===activeMeaningId);
+      if(entry?.kind==="sense-card"&&entry.capabilities.some(cap=>cap.actionId==="request-translation"&&cap.targetLanguageCode===translationLanguage))void handleRequestTranslation(entry.entryId,entry.card?.cardTypeId??cardTypeId,false,expected);
+    }).catch(() => { /* load exposes retry. */ });
+  }), [activeMeaningId,cardTypeId,detailIdentity,handleRequestTranslation,load,loading,translationLanguage]);
 
   React.useEffect(() => onDictionaryTranslationReady(translation => {
     if (translationRequests.current.has(translation.entryId) || translation.targetLanguageCode !== translationLanguage || !group?.entries.some(

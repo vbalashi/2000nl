@@ -356,6 +356,8 @@ export function parseDictionaryMeaningTranslationResult(
 
   if (isIdiomOnly) {
     entryTranslation = null;
+  } else if (entryTranslation === null) {
+    throw new Error("entryTranslation is required for an ordinary meaning");
   }
 
   if (!Array.isArray(payload.contentTranslations)) {

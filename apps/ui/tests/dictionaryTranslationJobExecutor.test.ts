@@ -1,4 +1,5 @@
 import { expect, test, vi } from "vitest";
+import { planDictionaryTranslationParts } from "@/lib/translation/dictionaryTranslationParts";
 import { dictionaryMeaningTranslationIdentity } from "@/lib/translation/dictionaryMeaningTranslationIdentity";
 import { executeDictionaryTranslationJob } from "@/lib/translation/dictionaryTranslationJobExecutor";
 import { dictionaryMeaningTranslationCoverage } from "@/lib/translation/dictionaryMeaningTranslationReadiness";
@@ -176,4 +177,69 @@ test("coordinated emergency rollback retains v3 identity and bypasses the parts 
   } finally {
     vi.unstubAllEnvs();
   }
+});
+
+test("null ordinary headword is never persisted and a corrected retry can succeed", async () => {
+  const word = {
+    id: "entry",
+    headword: "woord",
+    language_code: "nl",
+    raw: { meanings: [{ definition: "definitie" }] },
+  };
+  const identity = await dictionaryMeaningTranslationIdentity({
+    wordEntryId: word.id,
+    word,
+    dbLang: "ru",
+    provider: "openai",
+  });
+  const job: any = {
+    id: "job",
+    word_entry_id: word.id,
+    target_lang: "ru",
+    provider: "openai",
+    source_fingerprint: identity.fingerprint,
+    source_content_revision: identity.sourceContentRevision,
+    source_row_revision: "row",
+    translation_policy_version: identity.policyVersion,
+    provider_revision: identity.providerRevision,
+    lease_token: "lease",
+  };
+  const saved: any[] = [];
+  const client: any = {
+    from: () => ({
+      select: () => ({ eq: async () => ({ data: saved, error: null }) }),
+    }),
+    rpc: vi.fn(async (name, args) =>
+      name === "dictionary_translation_source_v1"
+        ? { data: { word, revision: "row" }, error: null }
+        : { data: true, error: null },
+    ),
+  };
+  provider
+    .mockResolvedValueOnce({
+      entryTranslation: null,
+      contentTranslations: [{ fieldId: "definition", text: "определение" }],
+    })
+    .mockResolvedValueOnce({
+      entryTranslation: {
+        primaryText: "слово",
+        alternativeTexts: [],
+        baseText: null,
+        note: null,
+      },
+      contentTranslations: [{ fieldId: "definition", text: "определение" }],
+    });
+  await expect(executeDictionaryTranslationJob(client, job)).rejects.toThrow(
+    "entryTranslation is required",
+  );
+  expect(
+    client.rpc.mock.calls.some(
+      (call: unknown[]) =>
+        call[0] === "checkpoint_dictionary_translation_part_v1",
+    ),
+  ).toBe(false);
+  const part=planDictionaryTranslationParts(identity.request)[0];
+  saved.push({part_key:part.key,part_fingerprint:part.fingerprint,result:{output:{entryTranslation:null,contentTranslations:[{fieldId:"definition",text:"определение"}]}}});
+  const result = await executeDictionaryTranslationJob(client, job);
+  expect("overlay" in result && result.overlay?.headword).toBe("слово");
 });
