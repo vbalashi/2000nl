@@ -186,3 +186,9 @@ Production activation of durable translation jobs is accepted for #674: contract
 ## Полнота больших карточек и вкладки — принято 2026-10-13
 
 Приняты полный inventory, bounded semantic parts с persisted recovery и aggregate coverage перед ready; межвкладочные invalidation hints и серверная перепроверка видимых карточек. Выпущено в PR #687:0.18.1286 / f670d6b7 / contract224, здоровый согласованный worker; production-проверка hand подтвердила актуальный артефакт64/64. Ready требует полного inventory; синхронизация вкладок eventual, focus/visibility/60s. [Источник](../discussions/2026-10-13-03-full-translation-and-tab-sync.md), [план](../exec-plans/completed/issue-674-full-translation-and-tab-sync.md).
+
+## Переводы синонимов и антонимов (2026-10-13)
+
+Принято: пары «слово (перевод)» остаются в общем потоке через среднюю точку.
+Перевод — обычным UI-шрифтом, размером перевода примеров, приглушённым цветом.
+[Обсуждение](../discussions/2026-10-13-04-relation-translation-typography.md), #696.
