@@ -104,3 +104,7 @@ One bounded production smoke enqueued the trusted NT2 bank entry at foreground p
 Latest activation CI: 2,299 unit tests pass, DB drift/security/guidance/release boundary pass; browser suites 217 + 29 + 17 pass, with one retried flaky case. Local contract gate 19 tests and operational scripts four tests pass; full read-only local postflight and isolated negative checks pass. CI caught stale guidance range and coordination-issue fixture; both were corrected before merge.
 
 Remaining scope: semantic fallback/persisted partial results and whole-source aggregate completeness are explicitly deferred. Expanded coverage/quality metrics and product cost admission remain separate follow-up; this release does not claim every possible provider/source failure is eliminated. Evidence and retirement handoff: /Users/khrustal/adhoc/2000nl-research-archives/674-release-2026-10-11/. Branch refs for #675/#676 are retained; temporary QA artifacts are preserved before removing the completed checkout.
+
+## Full-source follow-up completed — 2026-10-13
+
+The deferred persisted semantic parts and whole-source coverage stage shipped in PR #687 (0.18.1286, f670d6b7, contract224). Cross-tab recovery shipped in the same release. See [verified complete plan](../completed/issue-674-full-translation-and-tab-sync.md); production hand64/64 ready on attempt1, oversized/resume fixtures verified locally. Expanded quality/cost observability remains separate from this structural readiness guarantee.

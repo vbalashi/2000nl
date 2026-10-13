@@ -33,8 +33,9 @@ unrelated senses and headword meanings inferred only from idioms. Model, setting
 and delivery budgets remain unchanged. Read-only lookup checks freshness and actual
 requested-field completeness; visible-card preparation reaches the existing queue,
 and completed translations invalidate reusable browser snapshots. No bulk backfill.
-Large-source partitioning remains the separately deferred ADR-0018 scope;
-bounded-request coverage does not claim whole-source coverage.
+At that release, large-source partitioning remained deferred ADR-0018 scope;
+bounded-request coverage did not claim whole-source coverage. The full-source
+pipeline v4 below supersedes this limit.
 
 Known limit: provider retries may outlast the existing client timeout and pending-claim lease. This release does not redesign those deadlines; inspect request IDs before manually repeating an apparently stalled translation. Retries address transport failures, not semantic mistakes.
 
