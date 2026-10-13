@@ -538,13 +538,12 @@ describe("LibrarySenseCardV2Session", () => {
       }),
     );
     expect(
-      await screen.findByText("Translation could not be loaded."),
+      (await screen.findAllByText("Translation could not be loaded."))[0],
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-    expect(
-      await screen.findByText("Translation is being prepared…"),
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "Retry" })[0]);
+    await waitFor(() => expect(document.querySelector('[data-translation-loading]')).not.toBeNull());
+    expect(screen.queryByText("Translation is being prepared…")).toBeNull();
     expect(requestTranslation).toHaveBeenCalledTimes(2);
     expect(requestTranslation).toHaveBeenLastCalledWith(
       expect.objectContaining({ force: true }),
@@ -1292,10 +1291,11 @@ describe("LibrarySenseCardV2Session", () => {
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );
+    fireEvent.click(screen.getByRole("button", { name: "Translate" }));
     expect(
-      await screen.findByText("Translation could not be loaded."),
+      (await screen.findAllByText("Translation could not be loaded."))[0],
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Retry" })[0]).toBeInTheDocument();
   });
 
   test("polls a pending translation until it becomes ready", async () => {

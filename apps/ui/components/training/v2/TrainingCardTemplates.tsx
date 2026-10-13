@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import approved from "../approvedTrainingCard.module.css";
 import chrome from "@/components/practice/article/senseChrome.module.css";
+import translationFeedback from "@/components/practice/article/translationFeedback.module.css";
+import {TranslationPlaceholder, TranslationFailure} from "@/components/practice/article/TranslationFeedback";
 import {ArticleContentNode,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
 import {ArticleSenseRelations} from "@/components/practice/article/ArticleWordDetails";
 import {lexicalRelationDetail} from "@/components/practice/article/wordDetailsPresentation";
@@ -64,6 +66,10 @@ export function TrainingCardAnswerHeader({
   model,
   translationVisible,
   translationAvailable,
+  interfaceLanguage = "en",
+  translationPending = false,
+  translationFailed = false,
+  onRetryTranslation,
   translationLabel,
   audioLabel,
   moreLabel,
@@ -75,6 +81,10 @@ export function TrainingCardAnswerHeader({
   model: TrainingCardAnswer;
   translationVisible: boolean;
   translationAvailable: boolean;
+  interfaceLanguage?: OnboardingLanguage;
+  translationPending?: boolean;
+  translationFailed?: boolean;
+  onRetryTranslation?: () => void;
   translationLabel: string;
   audioLabel: string;
   moreLabel: string;
@@ -121,6 +131,7 @@ export function TrainingCardAnswerHeader({
             <TrainingCardIconButton
               label={translationLabel}
               active={translationVisible}
+              pending={translationVisible && translationPending}
               disabled={busy || !translationAvailable}
               onClick={onToggleTranslation}
             >
@@ -158,7 +169,7 @@ export function TrainingCardAnswerHeader({
             ].join(" · ")}
           </p>
         </SenseCardReveal>
-      ) : null}
+      ) : translationFailed && onRetryTranslation ? <SenseCardReveal open={translationVisible}><TranslationFailure language={interfaceLanguage} onRetry={onRetryTranslation}/></SenseCardReveal> : translationPending ? <SenseCardReveal open={translationVisible}><TranslationPlaceholder emphasis/></SenseCardReveal> : null}
     </header>
   );
 }
@@ -265,6 +276,9 @@ export function TrainingCardFace({
 export function TrainingCardAnswerBody({
   model,
   translationVisible,
+  translationPending = false,
+  translationFailed = false,
+  onRetryTranslation,
   interfaceLanguage,
   contentLanguage,
   translationLanguage,
@@ -272,6 +286,9 @@ export function TrainingCardAnswerBody({
 }: {
   model: TrainingCardAnswer;
   translationVisible: boolean;
+  translationPending?: boolean;
+  translationFailed?: boolean;
+  onRetryTranslation?: () => void;
   interfaceLanguage: OnboardingLanguage;
   contentLanguage?: string;
   translationLanguage?: string;
@@ -341,9 +358,9 @@ export function TrainingCardAnswerBody({
         className={`h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${approved.answerScroll}`}
       >
         <ProductionArticleReading>
-          {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>)}
-          <ArticleSenseRelations relation={lexicalRelationDetail(model.wordDetails,translationLanguage)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>
-          <ArticleMeaningDetails definition={null} details={[...usagePatterns,...examples,...idioms,...notes]} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible}/>
+          {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation}/>)}
+          <ArticleSenseRelations relation={lexicalRelationDetail(model.wordDetails,translationLanguage)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation}/>
+          <ArticleMeaningDetails definition={null} details={[...usagePatterns,...examples,...idioms,...notes]} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation}/>
         </ProductionArticleReading>
 
       </div>
@@ -457,12 +474,14 @@ function scrollMask(top: boolean, bottom: boolean) {
 export function TrainingCardIconButton({
   label,
   active = false,
+  pending = false,
   disabled = false,
   onClick,
   children,
 }: {
   label: string;
   active?: boolean;
+  pending?: boolean;
   disabled?: boolean;
   onClick: () => void;
   children: React.ReactNode;
@@ -473,9 +492,10 @@ export function TrainingCardIconButton({
       aria-label={label}
       title={label}
       aria-pressed={active}
+      aria-busy={pending || undefined}
       disabled={disabled}
       onClick={onClick}
-      className={chrome.iconAction}
+      className={`${chrome.iconAction} ${pending ? translationFeedback.shimmer : ""}`}
     >
       {children}
     </button>

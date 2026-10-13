@@ -7,6 +7,7 @@ import type {PlatformV2SenseContentNode} from "@/lib/platform/projections/platfo
 import {getUiMessages} from "@/lib/uiMessages";
 import {SenseCardReveal} from "@/components/training/SenseCardChrome";
 import s from "./articleContent.module.css";
+import {TranslationPlaceholder, TranslationFailure} from "./TranslationFeedback";
 
 // Presentation consumes the normalized content tree, never provider raw or fixtures.
 export type ArticleContentClasses=Readonly<Record<string,string>>;
@@ -15,24 +16,27 @@ type Presentation={
  contentLanguage?:string;
  translationLanguage?:string;
  translationVisible?:boolean;
+ translationPending?:boolean;
+ translationFailed?:boolean;
+ onRetryTranslation?:()=>void;
  classes?:ArticleContentClasses;
 };
 
-export function ArticleTranslation({text,visible,emphasis=false,language,classes=s}:{text?:string|null;visible:boolean;emphasis?:boolean;language?:string;classes?:ArticleContentClasses}){
- return text?<SenseCardReveal open={visible}><p lang={language} data-content-translation="true" className={emphasis?classes.translationEmphasis:classes.translation}>{text}</p></SenseCardReveal>:null;
+export function ArticleTranslation({text,visible,pending=false,failed=false,onRetry,interfaceLanguage="en",emphasis=false,multiline=false,language,classes=s}:{text?:string|null;visible:boolean;pending?:boolean;failed?:boolean;onRetry?:()=>void;interfaceLanguage?:OnboardingLanguage;emphasis?:boolean;multiline?:boolean;language?:string;classes?:ArticleContentClasses}){
+ return text||pending||failed?<SenseCardReveal open={visible}>{text?<p lang={language} data-content-translation="true" className={emphasis?classes.translationEmphasis:classes.translation}>{text}</p>:failed&&onRetry?<TranslationFailure language={interfaceLanguage} onRetry={onRetry}/>:pending?<TranslationPlaceholder emphasis={emphasis} multiline={multiline}/>:null}</SenseCardReveal>:null;
 }
 
-export function ArticleContentNode({node,interfaceLanguage,contentLanguage,translationLanguage,translationVisible=false,classes=s,lead=false}:Presentation&{node:PlatformV2SenseContentNode;lead?:boolean}){
+export function ArticleContentNode({node,interfaceLanguage,contentLanguage,translationLanguage,translationVisible=false,translationPending=false,translationFailed=false,onRetryTranslation,classes=s,lead=false}:Presentation&{node:PlatformV2SenseContentNode;lead?:boolean}){
  const copy=getUiMessages(interfaceLanguage).article;
  const literary=node.kind==="example"||node.kind==="idiom";
  return <div className={classes.contentNode} data-kind={node.kind} data-content-kind={node.kind} data-content-node-id={node.contentNodeId} data-parent-content-node-id={node.parentContentNodeId??undefined}>
   <div className={classes.contentPair}>
    {!lead&&<span className={classes.nodeRole} data-role={node.kind==="example"?"example":"explanation"}>{node.kind==="example"?copy.example:node.kind==="idiom-explanation"||node.kind==="definition"?copy.explanation:copy.note}</span>}
    <p lang={contentLanguage} className={lead?classes.definitionText:literary?classes.literary:node.kind==="usage-pattern"?classes.usagePattern:classes.explanation}>{node.text}</p>
-   <ArticleTranslation text={node.translation} visible={translationVisible} language={translationLanguage} classes={classes}/>
+   <ArticleTranslation text={node.translation} pending={translationPending} failed={translationFailed} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} multiline={node.kind === "definition"} visible={translationVisible} language={translationLanguage} classes={classes}/>
    {node.kind === "idiom" && node.translation && node.literalTranslation && <SenseCardReveal open={translationVisible}><p lang={translationLanguage} data-content-translation="true" data-literal-translation="true" className={classes.translation}>(<span lang={interfaceLanguage}>{copy.literally}</span>: {node.literalTranslation})</p></SenseCardReveal>}
   </div>
-  {node.children.length>0&&<div className={classes.children}>{node.children.map(child=><ArticleContentNode key={child.contentNodeId} node={child} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} classes={classes}/>)}</div>}
+  {node.children.length>0&&<div className={classes.children}>{node.children.map(child=><ArticleContentNode key={child.contentNodeId} node={child} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation} classes={classes}/>)}</div>}
  </div>;
 }
 

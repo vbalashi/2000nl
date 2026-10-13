@@ -1,5 +1,4 @@
 "use client";
-import { translationPendingCopy } from "@/lib/training/translationPendingCopy";
 import { useWordContextPrompt } from "./useWordContextPrompt";
 import { TrainingSessionState } from "./TrainingSessionState";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -24,7 +23,6 @@ import {
   consumePrefetchedPlatformV2TrainingEntry,
   peekPrefetchedPlatformV2TrainingEntry,
   preloadPlatformV2Audio,
-  requestPlatformV2Translation,
   resolvePlatformV2Audio,
   type PlatformV2TrainingEntryResult,
   type PlatformV2TrainingLookupResult,
@@ -345,11 +343,6 @@ export function TrainingSenseCardV2Session({
       if(refreshed?.state!=="ready")throw new Error("translation_refresh_unavailable");
       return refreshed.entry;
     },
-    onStatus: status => {
-      if (error) return;
-      setNoticeTone(status === "pending" ? "info" : "error");
-      setError(status === "pending" ? translationPendingCopy[interfaceLanguage] : temporaryFailureMessage(interfaceLanguage));
-    },
   });
 
   const model = React.useMemo(
@@ -424,6 +417,10 @@ export function TrainingSenseCardV2Session({
   const handleAction = async (
     capability: PlatformSenseCardCapabilityV2,
   ): Promise<TrainingCardSwipeCommitOutcome> => {
+    if (capability.actionId === "request-translation") {
+      if (translationPreparing.status === "failed") translationPreparing.retry();
+      return "accepted";
+    }
     if (
       interactionDisabled ||
       acceptedActionRecoveryPending ||
@@ -444,32 +441,6 @@ export function TrainingSenseCardV2Session({
     let progressTransitionId: string | null = null;
     let progressCompletion: string | null = "cancelled";
     try {
-      if (capability.actionId === "request-translation") {
-        if (translationPreparing.current) {
-          setNoticeTone("info");
-          setError(translationPendingCopy[interfaceLanguage]);
-          return "accepted";
-        }
-        const status = await requestPlatformV2Translation(capability, { force: true });
-        if (!actionIsCurrent()) return "rejected";
-        if (status === "pending") {
-          setNoticeTone("info");
-          setError(translationPendingCopy[interfaceLanguage]);
-          return "accepted";
-        }
-        if (status === "failed") throw new Error("translation_failed");
-        if (!actionIsCurrent()) return "rejected";
-        const refreshed = await load(undefined, {
-          preserveCard: true,
-          usePrefetch: false,
-        });
-        if (!actionIsCurrent()) return "rejected";
-        if (refreshed?.state !== "ready") {
-          setNoticeTone("error");
-          setError(temporaryFailureMessage(interfaceLanguage));
-        }
-        return "accepted";
-      }
       if (capability.actionId === "report-content") {
         setNoticeTone("info");
         setError(
@@ -819,6 +790,8 @@ export function TrainingSenseCardV2Session({
           contentLanguage={contentLanguageCode}
           translationLanguage={translationTargetLanguageCode && translationTargetLanguageCode !== "off" ? translationTargetLanguageCode : undefined}
           model={model}
+          translationState={translationPreparing.status}
+          onRetryTranslation={translationPreparing.retry}
           contextPrompt={contextPrompt}
           onHintOpened={wordInContext && trainingSessionId ? () => {
             if (contextHintWriteRef.current) return;
