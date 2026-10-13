@@ -21,4 +21,4 @@
 
 .facts dd{font-size:var(--practice-reading-small)}
 
-.relationTranslation{color:var(--practice-text-muted)}
+.relationTranslation{font-family:var(--practice-font-ui);font-size:var(--practice-reading-small);font-style:normal;font-weight:400;line-height:var(--practice-translation-leading);color:var(--practice-text-muted)}
