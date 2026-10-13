@@ -40,7 +40,7 @@ export function mergeDictionaryExplanationRepair(
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || Object.keys(parsed).length !== 1 || !Object.hasOwn(parsed, "contentTranslations")) {
     throw new Error("Invalid explanation repair envelope");
   }
-  const validated = parseDictionaryMeaningTranslationResult(JSON.stringify({ entryTranslation: null, contentTranslations: parsed.contentTranslations }), { ...request, content: missing });
+  const validated = parseDictionaryMeaningTranslationResult(JSON.stringify({ entryTranslation: null, contentTranslations: parsed.contentTranslations }), { ...request, content: missing, entryTranslationRequired: false });
   const items = new Map([...payload.contentTranslations, ...validated.contentTranslations].map(item => [item.fieldId, item]));
   return parseDictionaryMeaningTranslationResult(JSON.stringify({ ...payload, contentTranslations: request.content.map(item => items.get(item.fieldId)) }), request);
 }

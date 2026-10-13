@@ -129,6 +129,8 @@ function SenseCardV2Session({
     null,
   );
   const [activeMeaningId, setActiveMeaningId] = React.useState<string>(entryId);
+  const visibleMeaningRef=React.useRef({activeMeaningId,revealActiveMeaning,translationLanguage});
+  visibleMeaningRef.current={activeMeaningId,revealActiveMeaning,translationLanguage};
   const translationPollTimers = React.useRef<Record<string, number>>({});
   const translationRequests = React.useRef(new Map<string, AbortController>());
   const translationSession = React.useRef(0);
@@ -626,6 +628,7 @@ function SenseCardV2Session({
     const expected=translationSession.current;
     void load(undefined,expected,detailIdentity).then(next=>{
       if(expected!==translationSession.current||detailIdentity!==detailIdentityRef.current)return;
+      if(!visibleMeaningRef.current.revealActiveMeaning||visibleMeaningRef.current.activeMeaningId!==activeMeaningId||visibleMeaningRef.current.translationLanguage!==translationLanguage)return;
       const entry=next?.entries.find(item=>item.kind==="sense-card"&&item.entryId===activeMeaningId);
       if(entry?.kind==="sense-card"&&entry.capabilities.some(cap=>cap.actionId==="request-translation"&&cap.targetLanguageCode===translationLanguage))void handleRequestTranslation(entry.entryId,entry.card?.cardTypeId??cardTypeId,false,expected);
     }).catch(() => { /* load exposes retry. */ });

@@ -195,6 +195,16 @@ describe("LibrarySenseCardV2Session", () => {
     expect(performAction).not.toHaveBeenCalled();
   });
 
+  test("focus refreshes a collapsed meaning without starting hidden translation preparation",async()=>{
+    const incomplete=structuredClone(multiSenseBankGroup),entry=incomplete.entries.find(item=>item.kind==="sense-card"&&item.entryId===financeEntry.entryId)!;
+    if(entry.kind!=="sense-card")throw Error("fixture");
+    entry.capabilities.push({actionId:"request-translation",elementId:"translate",messageKey:"senseCard.translation.request",target:{kind:"entry",entryId:entry.entryId,contentRevision:entry.contentRevision},targetLanguageCode:"en"});
+    fetchGroup.mockResolvedValue(incomplete);
+    render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} revealActiveMeaning={false} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en"/>);
+    await screen.findByTestId("library-sense-card-group");await act(async()=>window.dispatchEvent(new Event("focus")));
+    await waitFor(()=>expect(fetchGroup).toHaveBeenCalledTimes(2));expect(requestTranslation).not.toHaveBeenCalled();
+  });
+
   const groupWithFinanceReportRevision = () => ({
     ...multiSenseBankGroup,
     entries: multiSenseBankGroup.entries.map((entry) =>
