@@ -157,6 +157,30 @@ vi.mock("@/lib/trainingService", () => ({
 }));
 
 describe("LibrarySenseCardV2Session", () => {
+  test("translation completion preserves authoritative exclusion and never performs a learning action", async () => {
+    const group = structuredClone(multiSenseBankGroup);
+    const entry = group.entries.find(item => item.kind === "sense-card" && item.entryId === financeEntry.entryId)!;
+    if (entry.kind !== "sense-card" || !entry.card) throw new Error("fixture");
+    entry.card.meaningProgress = {
+      entryId: entry.entryId, headword: "bank", exclusionId: "excluded", revision: "a".repeat(64),
+      directions: ["word-to-definition", "definition-to-word"].map(cardTypeId => ({
+        cardTypeId: cardTypeId as "word-to-definition" | "definition-to-word", stateRevision: "untracked",
+        knownMarkId: null, knownMarkRevision: null, knownMarkedAt: null, phase: "learning" as const,
+        presentations: 5, gradedAttempts: 8, lastGrade: null, lastReviewedAt: null,
+        nextReviewAt: null, stability: null, difficulty: null,
+      })),
+    };
+    fetchGroup.mockResolvedValue(group);
+    render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} initialGroup={group} headword="bank"
+      contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" />);
+    await waitFor(() => expect(fetchGroup).toHaveBeenCalledOnce());
+    expect(within(screen.getByTestId(`library-sense-card-${financeEntry.entryId}`)).getByText("Not studied")).toBeInTheDocument();
+    act(() => publishDictionaryTranslationReady({entryId: financeEntry.entryId, targetLanguageCode: "en"}));
+    await waitFor(() => expect(fetchGroup).toHaveBeenCalledTimes(2));
+    expect(within(screen.getByTestId(`library-sense-card-${financeEntry.entryId}`)).getByText("Not studied")).toBeInTheDocument();
+    expect(performAction).not.toHaveBeenCalled();
+  });
+
   test("revalidates an initial group and prepares an incomplete visible meaning even with a ready headword", async () => {
     const incomplete = structuredClone(multiSenseBankGroup);
     const entry = incomplete.entries.find(item => item.kind === "sense-card" && item.entryId === financeEntry.entryId)!;

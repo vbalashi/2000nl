@@ -17,7 +17,6 @@ import {ProductionArticleReading} from "@/components/practice/article/Production
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
-  ExposureBadge,
   SenseCardReveal,
   SenseCardHeadwordLockup,
 } from "../SenseCardChrome";
@@ -99,9 +98,6 @@ export function TrainingCardAnswerHeader({
             <span className={chrome.badge}>
               {model.coreVocabularyLabel}
             </span>
-          ) : null}
-          {model.repeatCount > 0 ? (
-            <ExposureBadge count={model.repeatCount} tone="light" />
           ) : null}
         </div>
         <div

@@ -182,3 +182,7 @@ v8/high, а не доказанное ухудшение языка готовы
 [Обсуждение](../discussions/2026-10-11-04-translation-recovery-budgets.md).
 
 Production activation of durable translation jobs is accepted for #674: contract 223 and matching healthy worker must precede the UI switch. Implemented and production-verified in PR #676: app 0.18.1282 at d253a831, contract 223, healthy matching worker; one queued translation completed on its first attempt. [Decision](../discussions/2026-10-11-07-activate-translation-jobs.md).
+
+## Внешние счётчики обучения (2026-10-13)
+
+Принято убрать отдельные 1×/3× из Library и тренировочных карточек. Подробная статистика остаётся в Learning progress; общий статус по двум направлениям сохраняется. Смысл исторических счётчиков и окончательное представление статистики требуют отдельной проверки. [Обсуждение](../discussions/2026-10-13-03-meaning-status-counters.md), #688.
