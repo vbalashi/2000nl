@@ -360,6 +360,13 @@ export function TrainingSenseCardV2Session({
     [mode, result],
   );
 
+  const contextPrompt = wordInContext && contextResult?.state === "ready" ? (() => {
+    const prompt=contextResult.prompt;
+    const node=result?.entry.contentNodes.find(item=>item.contentNodeId===prompt.contentNodeId&&item.sourceTextFingerprint===prompt.sourceTextFingerprint);
+    const translated=node?.translations.find(item=>item.targetLanguageCode===translationTargetLanguageCode&&item.status==="ready"&&item.sourceTextFingerprint===prompt.sourceTextFingerprint)?.text;
+    return {...prompt,...(translated?{text:translated}:{}),...(model?.entryTranslation?{recallTarget:model.entryTranslation}:{})};
+  })() : undefined;
+
   const sessionState: TrainingV2SessionState = wordInContext &&
     (!translationTargetLanguageCode || contextResult?.state !== "ready" || synchronizedContext !== contextResult)
       ? "loading"
@@ -808,8 +815,7 @@ export function TrainingSenseCardV2Session({
           contentLanguage={contentLanguageCode}
           translationLanguage={translationTargetLanguageCode && translationTargetLanguageCode !== "off" ? translationTargetLanguageCode : undefined}
           model={model}
-          contextPrompt={wordInContext && contextResult?.state === "ready"
-            ? contextResult.prompt : undefined}
+          contextPrompt={contextPrompt}
           onHintOpened={wordInContext && trainingSessionId ? () => {
             if (contextHintWriteRef.current) return;
             contextHintWriteRef.current = markWordContextHintOpened({

@@ -587,3 +587,4 @@
 \i db/migrations/222_training_progress_animation.sql
 
 \i db/migrations/223_dictionary_translation_jobs.sql
+\i db/migrations/224_dictionary_translation_parts.sql

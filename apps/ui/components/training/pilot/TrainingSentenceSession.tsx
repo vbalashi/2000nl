@@ -1,5 +1,7 @@
 "use client";
 import { useLatchedTranslationBuffer } from "../v2/useLatchedTranslationBuffer";
+import { useDictionaryTranslationRecovery } from "@/lib/translation/useDictionaryTranslationRecovery";
+import { usePlatformV2TranslationPreparation } from "@/lib/platform/usePlatformV2TranslationPreparation";
 import { translationPendingCopy } from "@/lib/training/translationPendingCopy";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -69,6 +71,7 @@ export function TrainingSentenceSession(props: Props) {
   useLatchedTranslationBuffer({ ownerId: userId, sessionId: session.sessionId, generation: session.runGeneration, currentEntryId: candidate?.entryId, currentOrdinal: candidate?.ordinal, targetLanguageCode: translationTargetLanguageCode, members: session.members });
   const stats = useTranslationTrainingStats(session.sessionId, completed);
 
+  const pendingEntryId = useRef<string|null>(null);
   const loadNext = useCallback(async (force = false) => {
     loadController.current?.abort();
     const controller = new AbortController();
@@ -82,8 +85,9 @@ export function TrainingSentenceSession(props: Props) {
         if (next.status === "ready") {
           const loaded = await loadSentenceExerciseContent({ candidate: next, contentLanguageCode, translationTargetLanguageCode, signal: controller.signal, force });
           if (current !== generation.current) return;
-          if (loaded.state === "ready") { pendingSince.current = null; setCandidate(next); setContent(loaded.content); return; }
+          if (loaded.state === "ready") { pendingEntryId.current=null; pendingSince.current = null; setCandidate(next); setContent(loaded.content); return; }
           if (loaded.state === "translation-pending") {
+            pendingEntryId.current=next.entryId;
             pendingSince.current ??= Date.now();
             setTranslationPending(true); return;
           }
@@ -103,6 +107,15 @@ export function TrainingSentenceSession(props: Props) {
     } catch { if (current === generation.current) setFailed(true); }
     finally { if (current === generation.current) setLoading(false); }
   }, [userId, session.sessionId, contentLanguageCode, translationTargetLanguageCode, finish]);
+  useDictionaryTranslationRecovery({entryId:pendingEntryId.current,targetLanguageCode:translationTargetLanguageCode,enabled:translationPending&&!loading&&!submitting,refresh:()=>void loadNext()});
+  usePlatformV2TranslationPreparation({entry:content?.entry??null,targetLanguageCode:translationTargetLanguageCode,enabled:!loading&&!submitting,
+    refresh:async signal=>{
+      if(!candidate)return;
+      const loaded=await loadSentenceExerciseContent({candidate,contentLanguageCode,translationTargetLanguageCode,signal});
+      if(signal.aborted)return;
+      if(loaded.state==="ready")setContent(loaded.content);
+    },
+  });
   useEffect(() => {
     const generationRef = generation;
     void loadNext();

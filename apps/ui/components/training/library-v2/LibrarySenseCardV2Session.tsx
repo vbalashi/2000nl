@@ -3,7 +3,7 @@
 import React from "react";
 import { TrainingExclusionUndoNotice } from "../v2/TrainingExclusionUndoNotice";
 import { getUiMessages } from "@/lib/uiMessages";
-import { onDictionaryTranslationReady } from "@/lib/translation/dictionaryTranslationEvents";
+import { onDictionaryTranslationReady, onDictionaryTranslationRevalidate } from "@/lib/translation/dictionaryTranslationEvents";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -620,6 +620,11 @@ function SenseCardV2Session({
     if (automaticallyPrepared.current.size > 64) automaticallyPrepared.current.delete(automaticallyPrepared.current.values().next().value!);
     void handleRequestTranslation(entry.entryId, entry.card?.cardTypeId ?? cardTypeId);
   }, [activeMeaningId, cardTypeId, detailIdentity, group, handleRequestTranslation, loading, revealActiveMeaning, translationLanguage]);
+
+  React.useEffect(() => onDictionaryTranslationRevalidate(() => {
+    if (!translationLanguage || translationRequests.current.size || loading) return;
+    void load(undefined, undefined, detailIdentity).catch(() => { /* load exposes retry. */ });
+  }), [detailIdentity, load, loading, translationLanguage]);
 
   React.useEffect(() => onDictionaryTranslationReady(translation => {
     if (translationRequests.current.has(translation.entryId) || translation.targetLanguageCode !== translationLanguage || !group?.entries.some(

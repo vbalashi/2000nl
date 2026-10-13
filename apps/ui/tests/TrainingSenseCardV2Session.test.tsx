@@ -152,6 +152,20 @@ describe("TrainingSenseCardV2Session", () => {
     expect(fetchSingleSense).toHaveBeenLastCalledWith(expect.objectContaining({cardTypeId:"definition-to-word"}));
   });
 
+  test("focus refresh uses the authoritative translation instead of an older frozen-context display copy",async()=>{
+    const prompt={recallTarget:"old hand",text:"Old example translation",sourceText:singleSenseEntry.contentNodes[1].text,contentNodeId:"example-1",sourceTextFingerprint:"example-fingerprint"};
+    loadContextPrompt.mockResolvedValue({state:"ready",prompt});
+    render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext trainingSessionId="context-run" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()}/>);
+    await screen.findByRole("button",{name:"Show answer"});
+    const updated={...singleSenseEntry,translation:{...singleSenseEntry.translation!,text:"current hand"},contentNodes:singleSenseEntry.contentNodes.map(node=>({...node,translations:node.translations.map(value=>({...value,text:node.kind==="example"?"Current example translation":value.text}))}))};
+    fetchSingleSense.mockResolvedValue({state:"ready",group:{...singleSenseGroup,entries:[updated]},entry:updated});
+    await act(async()=>window.dispatchEvent(new Event("focus")));
+    expect(await screen.findByText("Current example translation")).toBeVisible();
+    expect(screen.queryByText("Old example translation")).not.toBeInTheDocument();
+    expect(performAction).not.toHaveBeenCalled();
+    expect(loadContextPrompt).toHaveBeenLastCalledWith(expect.objectContaining({entryId:word.id,sessionId:"context-run",force:false}));
+  });
+
   test("starts an immediate review transition even before next-card preparation publishes an id", async () => {
     const dispatch = vi.spyOn(window, "dispatchEvent");
     const accepted = vi.fn().mockResolvedValue("accepted-next-unavailable");

@@ -568,7 +568,7 @@ describe("/api/translation", () => {
       error: null,
     });
     rpc.mockResolvedValueOnce({ data: idiomOnlyWord, error: null });
-    translateDictionaryMeaning.mockImplementationOnce(async (meaningRequest) => ({
+    translateDictionaryMeaning.mockImplementation(async (meaningRequest) => ({
       entryTranslation: null,
       contentTranslations: meaningRequest.content.map((item: any) => ({
         fieldId: item.fieldId,
@@ -601,21 +601,13 @@ describe("/api/translation", () => {
     const response = await GET(request("token-1"));
 
     expect(response.status).toBe(200);
-    expect(translateDictionaryMeaning).toHaveBeenCalledWith(
-      expect.objectContaining({
-        content: expect.arrayContaining([
-          expect.objectContaining({ fieldId: "idiom:0", role: "idiom" }),
-          expect.objectContaining({
-            fieldId: "idiom:0:explanation",
-            role: "idiom-explanation",
-          }),
-          expect.objectContaining({
-            fieldId: "idiom:0:example:0",
-            role: "example",
-          }),
-        ]),
-      }),
-    );
+    const fields=translateDictionaryMeaning.mock.calls.flatMap(([value])=>value.content);
+    expect(fields).toEqual(expect.arrayContaining([
+      expect.objectContaining({fieldId:"idiom:0",role:"idiom"}),
+      expect.objectContaining({fieldId:"idiom:0:explanation",role:"idiom-explanation"}),
+      expect.objectContaining({fieldId:"idiom:0:example:0",role:"example"}),
+    ]));
+    expect(fields.some(item=>item.fieldId.startsWith("example:39"))).toBe(true);
     expect(claimChain.update).toHaveBeenCalledWith(
       expect.objectContaining({
         translation_policy_version: expect.stringContaining(

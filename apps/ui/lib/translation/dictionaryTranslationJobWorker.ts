@@ -40,6 +40,7 @@ export type JobMetric = {
   event:
     | "translation_job_started"
     | "translation_job_completed"
+    | "translation_job_continued"
     | "translation_job_failed"
     | "translation_job_lease_lost";
   jobId: string;
@@ -52,12 +53,12 @@ export type JobMetric = {
 export async function executeClaimedDictionaryTranslationJob(input: {
   client: RpcClient;
   job: DictionaryTranslationJob;
-  execute: (job: DictionaryTranslationJob) => Promise<ExecutionResult>;
+  execute: (job: DictionaryTranslationJob) => Promise<ExecutionResult | { continuation: true }>;
   metric?: (event: JobMetric) => void;
   heartbeatMs?: number;
   rpcTimeoutMs?: number;
   onLeaseRenewed?: () => Promise<void>;
-}): Promise<"ready" | "failed" | "lease_lost"> {
+}): Promise<"ready" | "failed" | "lease_lost" | "continued"> {
   const { client, job } = input;
   const rpc = async (name: string, args: Record<string, unknown>) => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -116,6 +117,11 @@ export async function executeClaimedDictionaryTranslationJob(input: {
     const result = await withDictionaryTranslationDeadline(() =>
       input.execute(job),
     );
+    if ("continuation" in result) {
+      await stopHeartbeat();
+      metric("translation_job_continued");
+      return "continued";
+    }
     if (
       result.request.entryId !== job.word_entry_id ||
       result.request.targetLanguageCode !== job.target_lang ||

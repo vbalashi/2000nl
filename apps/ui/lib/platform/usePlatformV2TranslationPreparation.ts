@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import type { PlatformSenseCardEntryV2 } from "../../../../packages/shared/types/platformV2";
-import { onDictionaryTranslationReady } from "../translation/dictionaryTranslationEvents";
+import { onDictionaryTranslationReady, onDictionaryTranslationRevalidate } from "../translation/dictionaryTranslationEvents";
 import { requestPlatformV2Translation } from "./platformV2TrainingMediaClient";
 
 /** A visible card prepares through the existing queue and refreshes only its own
@@ -37,6 +37,9 @@ export function usePlatformV2TranslationPreparation(input: {
       try { await callbacks.current.refresh(controller.signal); }
       finally { refreshing = false; }
     };
+    const detachRevalidation = onDictionaryTranslationRevalidate(() => {
+      if (!preparing.current) void refresh().catch(() => { /* Existing card remains usable; next focus/poll retries. */ });
+    });
     const detach = onDictionaryTranslationReady(translation => {
       if (translation.entryId !== entryId || translation.targetLanguageCode !== current.targetLanguageCode || preparing.current) return;
       void refresh().catch(() => { if (!controller.signal.aborted) callbacks.current.onStatus?.("failed"); });
@@ -54,7 +57,7 @@ export function usePlatformV2TranslationPreparation(input: {
         if (!controller.signal.aborted) { preparing.current = false; settledAttempt.current = attemptKey; }
       });
     }
-    return () => { controller.abort(); detach(); preparing.current = false; };
+    return () => { controller.abort(); detach(); detachRevalidation(); preparing.current = false; };
   }, [entryId, input.enabled, input.targetLanguageCode, needsPreparation, revision]);
   return preparing;
 }

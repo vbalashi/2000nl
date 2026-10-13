@@ -778,3 +778,9 @@ Training start and compare ordinary timings and outliers.
 ## Durable translation preparation (migration 223)
 
 Issue #674 activates the private translation-job contract after PR #675 shipped default-off. Contract 223 appends the exact migration checksum and a chained read-only postflight for private queue/function permissions, identity/lease constraints, global concurrency reservation, bounded attempts and fenced atomic publication. The deploy workflow explicitly enables dictionary translation jobs. It applies the DB contract first, starts the worker from the matching immutable image, requires worker health, then switches UI and verifies deep health. First-activation rollback disables jobs for the previous UI image if no prior worker existed; additive DB objects remain applied. No bulk regeneration or prompt-budget change is included.
+
+## Full-source translation parts (migration224 / #674)
+
+Migration224 adds private dictionary_translation_job_parts and checkpoint_dictionary_translation_part_v1. Source-row lock then job lock, live lease token/expiry and trusted source-row revision fence both persistence and continuation. Successful continuation requeues the existing job and refunds that successful claim attempt; failure attempts keep the existing three-attempt bound. Source/policy mismatches cannot reuse a part fingerprint. Existing final publication RPC is unchanged; the worker validates full aggregate inventory before calling it. No client grants or new queue. Full source pipeline v4 invalidates bounded v3 artifacts on demand.
+
+Exact-health caveat: old223 images cannot satisfy224 health even though the schema is additive. Use the current224 image with the coordinated emergency full-source switch for immediate previous-behavior recovery, or a reviewed revert retaining the224 manifest. Never lower receipts or drop parts to roll back.

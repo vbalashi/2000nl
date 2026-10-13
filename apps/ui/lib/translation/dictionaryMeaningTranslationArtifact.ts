@@ -13,9 +13,12 @@ export function buildDictionaryMeaningTranslationArtifact(
       : {}),
     meanings: [{}],
   };
-  const meaning = overlay.meanings![0];
-
-  for (const field of result.contentTranslations) {
+  for (const sourceField of result.contentTranslations) {
+    const scoped=sourceField.fieldId.match(/^meaning:(\d+):(.+)$/);
+    const meaningIndex=scoped?Number(scoped[1]):0;
+    overlay.meanings![meaningIndex]??={};
+    const meaning=overlay.meanings![meaningIndex];
+    const field=scoped?{...sourceField,fieldId:scoped[2]}:sourceField;
     if (field.fieldId === "definition") meaning.definition = field.text;
     if (field.fieldId === "usage-pattern") meaning.context = field.text;
     if (field.fieldId === "usage-note") meaning.note = field.text;
