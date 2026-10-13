@@ -1,4 +1,7 @@
 import type { AuthenticatedSupabase, ServiceSupabase } from "./serverSupabase";
+import type { DictionaryLookupPayload } from "./lookupService";
+import { dictionaryMeaningTranslationIdentity } from "../translation/dictionaryMeaningTranslationIdentity";
+import { dictionaryMeaningTranslationCoverage } from "../translation/dictionaryMeaningTranslationReadiness";
 import {
   sanitizeStoredTranslationError,
   sanitizeTranslationOverlay,
@@ -13,6 +16,8 @@ type TranslationCacheRow = {
   overlay: Record<string, unknown> | null;
   note?: string | null;
   source_fingerprint?: string | null;
+  source_content_revision?: string | null;
+  translation_policy_version?: string | null;
   error_message?: string | null;
 };
 
@@ -35,7 +40,7 @@ export type LookupTranslationArtifact = {
 export async function resolveLookupTranslationContext(
   auth: AuthenticatedSupabase,
   service: ServiceSupabase,
-  entryIds: string[],
+  entries: DictionaryLookupPayload[],
 ): Promise<
   | {
       ok: true;
@@ -44,6 +49,7 @@ export async function resolveLookupTranslationContext(
     }
   | { ok: false; payload: unknown; status: number }
 > {
+  const entryIds = entries.map(entry => entry.id);
   const { data: settings, error: settingsError } = await auth.supabase
     .from("user_settings")
     .select("translation_lang")
@@ -80,7 +86,7 @@ export async function resolveLookupTranslationContext(
   const { data: rows, error: translationError } = await service.supabase
     .from("word_entry_translations")
     .select(
-      "id,word_entry_id,target_lang,provider,status,overlay,note,source_fingerprint,error_message",
+      "id,word_entry_id,target_lang,provider,status,overlay,note,source_fingerprint,source_content_revision,translation_policy_version,error_message",
     )
     .in("word_entry_id", entryIds)
     .eq("target_lang", dbLang)
@@ -123,13 +129,22 @@ export async function resolveLookupTranslationContext(
         ? { translationPolicyVersion: row.source_fingerprint }
         : {}),
     };
-    if (row.status === "ready" && row.overlay) {
+    const entry = entries.find(entry => entry.id === entryId)!;
+    const identity = await dictionaryMeaningTranslationIdentity({ wordEntryId: entryId, word: entry, dbLang, provider });
+    const overlay = sanitizeTranslationOverlay(row.overlay);
+    if (row.source_content_revision !== identity.sourceContentRevision ||
+        row.translation_policy_version !== identity.policyVersion ||
+        (row.status === "ready" && !dictionaryMeaningTranslationCoverage(identity.request, overlay).requestComplete)) {
+      artifactsByEntryId.set(entryId, { metadata: { ...base, status: "not_available", error: { code: "translation_refresh_required" } } });
+      continue;
+    }
+    if (row.status === "ready" && overlay) {
       artifactsByEntryId.set(entryId, {
         metadata: {
           status: "ready",
           ...base,
         },
-        overlay: sanitizeTranslationOverlay(row.overlay),
+        overlay,
       });
       continue;
     }

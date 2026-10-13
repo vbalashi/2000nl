@@ -5,6 +5,32 @@ import { projectPlatformV2SenseContent } from "@/lib/platform/projections/platfo
 import { goedEntry } from "./platformV2IdiomHierarchyFixture";
 
 describe("Platform V2 SenseCard projection", () => {
+  test("complete idiom-only preparation does not require an invented headword or another paid request", () => {
+    const input = projectionInput({stateRevision:"idiom-complete",knownMark:null});
+    input.entries[0].allowMutationCapabilities = true;
+    input.entries[0].entryTranslation = null;
+    input.entries[0].translationRequestComplete = true;
+    const entry = projectPlatformLookupV2(input).groups[0].entries[0];
+    expect(entry.capabilities.some(capability => capability.actionId === "request-translation")).toBe(false);
+  });
+  test("offers translation repair for a ready headword with untranslated content", () => {
+    const input = projectionInput({ stateRevision: "state-incomplete", knownMark: null });
+    input.request.translationTargetLanguageCode = "ru";
+    input.entries[0].allowMutationCapabilities = true;
+    input.entries[0].entrySourceContentFingerprint = "content-known-1";
+    input.entries[0].entryTranslation = {
+      translationId: "11111111-1111-4111-8111-111111111111",
+      entryId: "entry-known", targetLanguageCode: "ru", status: "ready", text: "дом",
+      sourceContentFingerprint: "content-known-1", translationPolicyVersion: "policy:current", isFresh: true,
+    };
+    const entry = projectPlatformLookupV2(input).groups[0].entries[0];
+    expect(entry.kind).toBe("sense-card");
+    if (entry.kind !== "sense-card") throw new Error("Expected SenseCard");
+    expect(entry.contentNodes.length).toBeGreaterThan(0);
+    expect(entry.contentNodes.every(node => node.translations.length === 0)).toBe(true);
+    expect(entry.capabilities).toContainEqual(expect.objectContaining({ actionId: "request-translation" }));
+  });
+
   test("preserves the goed parent identities when bindings arrive reordered", () => {
     const input = projectionInput({
       stateRevision: "state-goed-hierarchy",

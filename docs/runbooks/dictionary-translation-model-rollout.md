@@ -4,7 +4,8 @@
 
 | Value | Model | Prompt | Cache |
 | --- | --- | --- | --- |
-| `luna6` (default) | gpt-6-luna, high reasoning | Luna v8 | Model/settings/prompt identity |
+| `luna6` (default), `luna6-v11` | gpt-6-luna, high reasoning | Luna v11, example-supported equivalents | Model/settings/prompt identity |
+| `luna6-v8-high` | gpt-6-luna, high reasoning | Exact previous Luna v8 | Exact previous identity |
 | `luna6-v5` | gpt-6-luna, low reasoning | Previous Luna v5 | Exact previous identity |
 | `luna6-v6`, `luna6-v7`, `luna6-v8`, `luna6-v9` | gpt-6-luna, low reasoning | Evaluation candidates | Version-specific identity |
 | `gpt41` | gpt-4.1, temperature 0 | Common v4 | Model/settings/prompt identity |
@@ -16,6 +17,25 @@ The NUC server reads `/srv/2000nl-ui/.env`. Change the profile there and recreat
 
 Provider diagnostics include stage, reason, model, HTTP status, request ID, duration, token usage and retry outcome, excluding raw source, translated text, headers and credentials. Temporary 429/5xx, timeout and network failures receive at most three retries after the initial attempt. Permanent HTTP errors, malformed JSON and incomplete contracts fail directly. First-attempt failure and recovered success remain distinct in logs.
 
+## Context-equivalents release (2026-10-13)
+
+Prompt-only rollback is `DICTIONARY_TRANSLATION_PROFILE=luna6-v8-high`.
+It restores the exact v8/high fingerprint
+`129be0a92c4890f99ea96b8c5c48335d9e39fafa130597d0b96c2f92d0ef2035`
+while retaining preparation fixes. Recreate **both UI and translation worker**
+from the same immutable image and resolved configuration, then verify matching
+health. Full application rollback uses the previous coordinated UI/worker image;
+DB contract 223 is unchanged. A rollback restores policy, not a historical cache
+snapshot: one artifact is retained per entry/language/provider slot.
+
+V11 includes useful ordinary example-supported equivalents, while excluding
+unrelated senses and headword meanings inferred only from idioms. Model, settings
+and delivery budgets remain unchanged. Read-only lookup checks freshness and actual
+requested-field completeness; visible-card preparation reaches the existing queue,
+and completed translations invalidate reusable browser snapshots. No bulk backfill.
+Large-source partitioning remains the separately deferred ADR-0018 scope;
+bounded-request coverage does not claim whole-source coverage.
+
 Known limit: provider retries may outlast the existing client timeout and pending-claim lease. This release does not redesign those deadlines; inspect request IDs before manually repeating an apparently stalled translation. Retries address transport failures, not semantic mistakes.
 
 New literal-enabled profiles explicitly request JSON-object response mode, matching the evaluated provider payload; v5 rollback settings stay unchanged.
@@ -26,4 +46,4 @@ Luna v8 adds optional `literalText` on idiom content translations in the same re
 
 Existing synonyms/antonyms are translated in the same dictionary request and stored by canonical per-kind position in the existing JSON overlay. Canonical source normalization trims, removes blanks and deduplicates before request, revision and public relation identity. Sparse omitted positions remain sparse through JSON; never compact the translated arrays. Public projections expose only source/policy-matching overlays and the requested target language. Library and Training use the shared translation switch.
 
-The default remains Luna 6 v8/high with the same prompt fingerprint. Relation-bearing source fingerprints change, making their old overlays stale under the existing refresh flow. Entries without related words retain their source/policy identity. No mass regeneration or schema migration. Explicit `luna6-v10` is experimental, not selected by default; `luna6-v8-high` is an exact alias for the current prompt/settings. The synthetic comparison had all 60 relation fields correct per profile; whole-card assessment was 52/56 v8 and 51/56 v10, nonblind agent review without human approval. Known optional literal-image errors remain tracked separately.
+At the #665 release the default remained Luna 6 v8/high with the same prompt fingerprint; the current default is documented above. Relation-bearing source fingerprints change, making their old overlays stale under the existing refresh flow. Entries without related words retain their source/policy identity. No mass regeneration or schema migration. Explicit `luna6-v10` is experimental, not selected by default; `luna6-v8-high` preserves the exact previous prompt/settings for rollback. The synthetic comparison had all 60 relation fields correct per profile; whole-card assessment was 52/56 v8 and 51/56 v10, nonblind agent review without human approval. Known optional literal-image errors remain tracked separately.

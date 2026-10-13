@@ -53,6 +53,7 @@ export type LibrarySenseCardModel = {
   definition: LibrarySenseContent | null;
   entryTranslation: string | null;
   entryTranslationAlternatives: string[];
+  translationNeedsPreparation?: boolean;
   translationStatus: PlatformSenseCardEntryV2["translation"] extends infer _State
     ? NonNullable<PlatformSenseCardEntryV2["translation"]>["status"] | null
     : never;
@@ -249,6 +250,7 @@ function buildMeaning(
         ? (entry.translation.alternativeTexts ?? [])
         : [],
     translationStatus: entry.translation?.status ?? null,
+    translationNeedsPreparation: entry.capabilities.some(capability => capability.actionId === "request-translation"),
     details: rootNodes.filter(
       (node) => node.contentNodeId !== definition?.contentNodeId,
     ),

@@ -22,6 +22,15 @@ const translationQuery = (data: unknown[]) => {
 };
 
 describe("Platform V2 translation projection", () => {
+  test("a current headword and example do not conceal a missing relation translation", async () => {
+    const entry = {id:"coverage-entry",language_code:"nl",headword:"huis",raw:{meanings:[{definition:"een gebouw",examples:["ik woon hier"],synonyms:["woning"]}]}};
+    const revision = contentFingerprint(normalizeDictionaryContent(entry as never));
+    const request = buildDictionaryMeaningTranslationRequest({entryId:entry.id,sourceContentFingerprint:revision,sourceLanguageCode:"nl",targetLanguageCode:"ru",word:entry});
+    const from = vi.fn(() => translationQuery([{id:"translation",word_entry_id:entry.id,status:"ready",overlay:{headword:"дом",meanings:[{definition:"здание",examples:["я живу здесь"]}]},source_content_revision:revision,translation_policy_version:translationPolicyVersion("openai",request)}]));
+    const result = await resolvePlatformV2Translations({supabase:{from}} as never,{entries:[entry],bindingsByEntryId:new Map(),targetLanguageCode:"ru"});
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(result.byEntryId.get(entry.id)).toMatchObject({requestComplete:false,entryTranslation:{status:"ready",isFresh:true,text:"дом"}});
+  });
   test("an old ready article missing its training example becomes stale and can be regenerated", async () => {
     const entry = {id:"oog",language_code:"nl",headword:"oog",part_of_speech:"zn",raw:{meanings:[{definition:"een lichaamsdeel",examples:["mijn dochters hebben blauwe ogen"]}]}};
     const revision = contentFingerprint(normalizeDictionaryContent(entry as any));

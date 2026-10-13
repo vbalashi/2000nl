@@ -481,6 +481,7 @@ export async function performPlatformV2Lookup(
                   : null,
               entryTranslation:
                 translations?.entryTranslation ?? null,
+              translationRequestComplete: translations?.requestComplete ?? false,
               entrySourceContentFingerprint:
                 translations?.currentSourceContentFingerprint ?? null,
               audioCapability,

@@ -7,6 +7,7 @@ import { useTrainingExclusion } from "./useTrainingExclusion";
 import { TrainingExcludeAction, trainingExclusionCopy } from "./TrainingExcludeAction";
 
 import React from "react";
+import { usePlatformV2TranslationPreparation } from "@/lib/platform/usePlatformV2TranslationPreparation";
 import { useRecordedStudyTime } from "../useRecordedStudyTime";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
@@ -245,7 +246,7 @@ export function TrainingSenseCardV2Session({
       options: { preserveCard?: boolean; usePrefetch?: boolean } = {},
     ) => {
       const generation = (loadGenerationRef.current += 1);
-      setError(null);
+      if (!options.preserveCard) setError(null);
       if (!options.preserveCard) {
         const prefetched = peekPrefetchedPlatformV2TrainingEntry(lookupInput);
         setLookup((current) =>
@@ -259,10 +260,16 @@ export function TrainingSenseCardV2Session({
         options.usePrefetch === false
           ? null
           : consumePrefetchedPlatformV2TrainingEntry(lookupInput);
-      const next = await (
+      let next = await (
         prefetchedRequest ??
         fetchPlatformV2TrainingEntry({ ...lookupInput, signal })
       );
+      if (prefetchedRequest && !signal?.aborted && generation === loadGenerationRef.current) {
+        setLookup(next);
+        // Keep the instant prepared display, then validate current server source
+        // and prompt identity before retaining it as this card's snapshot.
+        next = await fetchPlatformV2TrainingEntry({ ...lookupInput, signal });
+      }
       if (signal?.aborted || generation !== loadGenerationRef.current) {
         return null;
       }
@@ -274,6 +281,27 @@ export function TrainingSenseCardV2Session({
     },
     [lookupInput, word.id],
   );
+
+  const [synchronizedContext, setSynchronizedContext] = React.useState<typeof contextResult>(null);
+
+  // Context preparation reads a Library projection and may finish a translation
+  // after our initial lookup. Re-read this card's own direction/state rather
+  // than copying the Library word-to-definition review capabilities.
+  React.useEffect(() => {
+    if (!wordInContext || contextResult?.state !== "ready") return;
+    const controller = new AbortController();
+    void load(controller.signal, { preserveCard: true, usePrefetch: false }).then(next => {
+      if (controller.signal.aborted || !next) return;
+      if (next.state !== "ready") setLookup(next);
+      setSynchronizedContext(contextResult);
+    }).catch(cause => {
+      if (controller.signal.aborted) return;
+      setLookup({ state: "lookup-http-error", status: 0 });
+      setError(cause instanceof Error ? cause.message : "lookup_failed");
+      setSynchronizedContext(contextResult);
+    });
+    return () => controller.abort();
+  }, [contextResult, load, wordInContext]);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -308,6 +336,18 @@ export function TrainingSenseCardV2Session({
 
   const result = lookup?.state === "ready" ? lookup : null;
 
+  const translationPreparing = usePlatformV2TranslationPreparation({
+    entry: result?.entry ?? null,
+    targetLanguageCode: translationTargetLanguageCode,
+    enabled: !busy && (!wordInContext || (contextResult?.state === "ready" && synchronizedContext === contextResult)),
+    refresh: signal => load(signal, { preserveCard: true, usePrefetch: false }),
+    onStatus: status => {
+      if (error) return;
+      setNoticeTone(status === "pending" ? "info" : "error");
+      setError(status === "pending" ? translationPendingCopy[interfaceLanguage] : temporaryFailureMessage(interfaceLanguage));
+    },
+  });
+
   const model = React.useMemo(
     () =>
       result
@@ -321,7 +361,7 @@ export function TrainingSenseCardV2Session({
   );
 
   const sessionState: TrainingV2SessionState = wordInContext &&
-    (!translationTargetLanguageCode || contextResult?.state !== "ready")
+    (!translationTargetLanguageCode || contextResult?.state !== "ready" || synchronizedContext !== contextResult)
       ? "loading"
       : !lookup
       ? "loading"
@@ -394,6 +434,11 @@ export function TrainingSenseCardV2Session({
     let progressCompletion: string | null = "cancelled";
     try {
       if (capability.actionId === "request-translation") {
+        if (translationPreparing.current) {
+          setNoticeTone("info");
+          setError(translationPendingCopy[interfaceLanguage]);
+          return "accepted";
+        }
         const status = await requestPlatformV2Translation(capability, { force: true });
         if (!actionIsCurrent()) return "rejected";
         if (status === "pending") {

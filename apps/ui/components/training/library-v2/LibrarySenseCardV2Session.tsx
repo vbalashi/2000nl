@@ -3,6 +3,7 @@
 import React from "react";
 import { TrainingExclusionUndoNotice } from "../v2/TrainingExclusionUndoNotice";
 import { getUiMessages } from "@/lib/uiMessages";
+import { onDictionaryTranslationReady } from "@/lib/translation/dictionaryTranslationEvents";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -129,6 +130,7 @@ function SenseCardV2Session({
   );
   const [activeMeaningId, setActiveMeaningId] = React.useState<string>(entryId);
   const translationPollTimers = React.useRef<Record<string, number>>({});
+  const translationRequests = React.useRef(new Map<string, AbortController>());
   const translationSession = React.useRef(0);
   const groupRequestSequence = React.useRef(0);
   const actionGeneration = React.useRef(0);
@@ -165,12 +167,14 @@ function SenseCardV2Session({
 
   React.useEffect(() => {
     translationSession.current += 1;
+    for (const controller of translationRequests.current.values()) controller.abort();
+    translationRequests.current.clear();
     for (const timer of Object.values(translationPollTimers.current)) {
       window.clearTimeout(timer);
     }
     translationPollTimers.current = {};
     setTranslationStates({});
-  }, [cardTypeId, entryId, translationLanguage]);
+  }, [detailIdentity]);
 
   React.useEffect(() => {
     setActiveReferenceTarget(null);
@@ -190,6 +194,7 @@ function SenseCardV2Session({
       }
       const requestSequence = ++groupRequestSequence.current;
       setLoading(true);
+      try {
       const next = activeReferenceTarget
         ? await fetchPlatformV2CrossReferenceTarget({
             query: activeReferenceTarget.query,
@@ -222,6 +227,15 @@ function SenseCardV2Session({
       if (!next) setLookupError("unavailable");
       setLoading(false);
       return next;
+      } catch (error) {
+        if (!signal?.aborted && requestSequence === groupRequestSequence.current &&
+            (expectedTranslationSession == null || expectedTranslationSession === translationSession.current) &&
+            (!expectedDetailIdentity || expectedDetailIdentity === detailIdentityRef.current)) {
+          setLoading(false);
+          if (!(error && typeof error === "object" && "name" in error && error.name === "AbortError")) setLookupError("unavailable");
+        }
+        throw error;
+      }
     },
     [
       activeReferenceTarget,
@@ -237,10 +251,7 @@ function SenseCardV2Session({
     setGroup(compatibleInitialGroup);
     setError(null);
     setLookupError(null);
-    if (compatibleInitialGroup && !activeReferenceTarget) {
-      setLoading(false);
-      return () => controller.abort();
-    }
+    // initialGroup is a display seed, not evidence of the current server policy.
     void load(controller.signal)
       .catch((cause) => {
         const aborted =
@@ -535,6 +546,8 @@ function SenseCardV2Session({
       expectedTranslationSession = translationSession.current,
     ) => {
       if (!translationLanguage) return;
+      if (translationRequests.current.has(meaningEntryId)) return;
+      const controller = new AbortController();
       const identity = librarySenseCardIdentity(
         meaningEntryId,
         meaningCardTypeId,
@@ -547,13 +560,15 @@ function SenseCardV2Session({
         ...current,
         [identity]: "pending",
       }));
+      translationRequests.current.set(meaningEntryId, controller);
       try {
         const status = await requestPlatformV2LibraryTranslation({
           entryId: meaningEntryId,
           targetLanguageCode: translationLanguage,
           force,
+          signal: controller.signal,
         });
-        if (expectedTranslationSession !== translationSession.current) return;
+        if (controller.signal.aborted || expectedTranslationSession !== translationSession.current) return;
         if (status === "ready") {
           await load(undefined, expectedTranslationSession);
           if (expectedTranslationSession !== translationSession.current) return;
@@ -580,15 +595,38 @@ function SenseCardV2Session({
           }));
         }
       } catch {
-        if (expectedTranslationSession !== translationSession.current) return;
+        if (controller.signal.aborted || expectedTranslationSession !== translationSession.current) return;
         setTranslationStates((current) => ({
           ...current,
           [identity]: "failed",
         }));
+      } finally {
+        if (translationRequests.current.get(meaningEntryId) === controller) translationRequests.current.delete(meaningEntryId);
       }
     },
     [load, translationLanguage],
   );
+
+  const automaticallyPrepared = React.useRef(new Set<string>());
+  React.useEffect(() => {
+    if (!revealActiveMeaning || loading || !group || !translationLanguage) return;
+    const entry = group.entries.find(item => item.kind === "sense-card" && item.entryId === activeMeaningId);
+    if (!entry || entry.kind !== "sense-card") return;
+    const capability = entry.capabilities.find(item => item.actionId === "request-translation");
+    if (!capability) return;
+    const key = `${detailIdentity}:${entry.entryId}:${entry.contentRevision}`;
+    if (automaticallyPrepared.current.has(key)) return;
+    automaticallyPrepared.current.add(key);
+    if (automaticallyPrepared.current.size > 64) automaticallyPrepared.current.delete(automaticallyPrepared.current.values().next().value!);
+    void handleRequestTranslation(entry.entryId, entry.card?.cardTypeId ?? cardTypeId);
+  }, [activeMeaningId, cardTypeId, detailIdentity, group, handleRequestTranslation, loading, revealActiveMeaning, translationLanguage]);
+
+  React.useEffect(() => onDictionaryTranslationReady(translation => {
+    if (translationRequests.current.has(translation.entryId) || translation.targetLanguageCode !== translationLanguage || !group?.entries.some(
+      entry => entry.kind === "sense-card" && entry.entryId === translation.entryId,
+    )) return;
+    void load(undefined, undefined, detailIdentity).catch(() => { /* load retains the visible card and exposes lookup retry. */ });
+  }), [detailIdentity, group, load, translationLanguage]);
 
   React.useEffect(() => {
     if (!model) return;
@@ -604,7 +642,7 @@ function SenseCardV2Session({
           meaning.translationStatus === "failed"
         ) {
           next[identity] = meaning.translationStatus;
-        } else if (meaning.translationStatus === "ready") {
+        } else if (meaning.translationStatus === "ready" && !meaning.translationNeedsPreparation && !translationRequests.current.has(meaning.entryId)) {
           delete next[identity];
         }
       }
@@ -627,6 +665,9 @@ function SenseCardV2Session({
 
   React.useEffect(
     () => () => {
+      translationSession.current += 1;
+      for (const controller of translationRequests.current.values()) controller.abort();
+      translationRequests.current.clear();
       for (const timer of Object.values(translationPollTimers.current)) {
         window.clearTimeout(timer);
       }

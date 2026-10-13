@@ -16,6 +16,7 @@ import {
 } from "@/lib/platform/platformV2TrainingClient";
 import { preparePlatformV2TrainingEntry } from "@/lib/platform/platformV2TrainingPreparationClient";
 import { requestPlatformV2Translation } from "@/lib/platform/platformV2TrainingMediaClient";
+import { publishDictionaryTranslationReady } from "@/lib/translation/dictionaryTranslationEvents";
 import {
   PLATFORM_V2_PROGRESS_ACTION_LEASE_SAFETY_MARGIN_MS,
   PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS,
@@ -625,6 +626,21 @@ describe("preparePlatformV2TrainingEntry", () => {
     translationTargetLanguageCode: "en",
     transitionId: "transition-148",
   };
+
+  test("completed translation invalidates a reusable prefetch rather than leaving its old article cached", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({
+      contractVersion: "platform-lookup-v2", query: "hand",
+      request: { contentLanguageCode: "nl", translationTargetLanguageCode: "en", cardTypeId: "word-to-definition", intent: "training-review" },
+      groups: [singleSenseGroup], page: { selectedTierComplete: true, nextGroupCursor: null },
+    }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await prefetchPlatformV2TrainingEntry(input);
+    expect(peekPrefetchedPlatformV2TrainingEntry(input)?.state).toBe("ready");
+    publishDictionaryTranslationReady({ entryId: input.entryId, targetLanguageCode: "en" });
+    expect(peekPrefetchedPlatformV2TrainingEntry(input)).toBeNull();
+    await prefetchPlatformV2TrainingEntry(input);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 
   test("keeps cached translation and audio on provider-free fast paths", async () => {
     vi.stubGlobal("Audio", class { preload = ""; load() {} });
