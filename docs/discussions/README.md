@@ -34,6 +34,7 @@
 - [2026-10-13: zijn — проверка исключений и 3/5/8](2026-10-13-04-zijn-data-investigation.md) — #688; read-only проверка подтвердила старый directional hidden и legacy click в FSRS.
 
 - [2026-10-13: статусы и счётчики обучения](2026-10-13-03-meaning-status-counters.md) — #688; внешний × убираем, история и смена статуса требуют проверки.
+- [2026-10-13: адаптивный размер текста Training](2026-10-13-03-training-face-fit.md) — #690.
 
 - [2026-10-13: принято исправление и развёртывание Translation](2026-10-13-02-translation-remediation-release.md) — #674 / #655.
 
