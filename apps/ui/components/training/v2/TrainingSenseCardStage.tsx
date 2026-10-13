@@ -3,6 +3,7 @@ import { hasTrainingCardTranslation as hasTranslation } from "@/lib/training/exe
 import { selectTrainingReversePrompt } from "@/lib/training/trainingReversePrompt";
 
 import React from "react";
+import {type TranslationPreparationState} from "@/components/practice/article/TranslationFeedback";
 import { Check, Volume2 } from "lucide-react";
 import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -35,6 +36,8 @@ type Props = {
   interfaceLanguage: OnboardingLanguage;
   contentLanguage?: string;
   translationLanguage?: string;
+  translationState?: TranslationPreparationState;
+  onRetryTranslation?: () => void;
   busy?: boolean;
   focusOnMount?: boolean;
   onPlayAudio?: () => void;
@@ -54,6 +57,8 @@ export function TrainingSenseCardStage({
   interfaceLanguage,
   contentLanguage,
   translationLanguage,
+  translationState = null,
+  onRetryTranslation,
   busy = false,
   focusOnMount = false,
   onPlayAudio,
@@ -239,8 +244,12 @@ export function TrainingSenseCardStage({
         {answerVisible ? (
           <>
             <EntityHeader
+              interfaceLanguage={interfaceLanguage}
               model={answerModel}
               translationVisible={translationVisible}
+              translationPending={translationState === "pending"}
+              translationFailed={translationState === "failed"}
+              onRetryTranslation={onRetryTranslation}
               translationAvailable={
                 hasDisplayTranslation || translationActionAvailable
               }
@@ -257,6 +266,9 @@ export function TrainingSenseCardStage({
               translationLanguage={translationLanguage}
               model={answerModel}
               translationVisible={translationVisible}
+              translationPending={translationState === "pending"}
+              translationFailed={translationState === "failed"}
+              onRetryTranslation={onRetryTranslation}
               interfaceLanguage={interfaceLanguage}
               onReachEnd={() => primaryAnswerActionRef.current?.focus()}
             />

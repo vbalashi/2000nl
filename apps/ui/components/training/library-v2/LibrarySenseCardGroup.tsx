@@ -310,6 +310,7 @@ export function LibrarySenseCardGroup({
                     disabled={!translationEnabled}
                     accent
                     pressed={translationsVisible}
+                    pending={translationsVisible && Object.values(translationStates).some(status => status === "pending")}
                     onClick={toggleGroupTranslation}
                   >
                     <TranslateIcon />
@@ -549,9 +550,9 @@ function MeaningCard({
         >
           <div className="min-w-0">
             {<ProductionArticleReading>
-              <ArticleTranslation text={[meaning.entryTranslation,...meaning.entryTranslationAlternatives].filter(Boolean).join(" · ")} visible={state.translationVisible} emphasis language={translationLanguage}/>
+              <ArticleTranslation text={[meaning.entryTranslation,...meaning.entryTranslationAlternatives].filter(Boolean).join(" · ")} visible={state.translationVisible} pending={translationState === "pending"} failed={translationState === "failed"} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} emphasis language={translationLanguage}/>
               <p className={reading.definitionText} lang={contentLanguage}>{meaning.definition?.text??"—"}</p>
-              <ArticleTranslation text={meaning.definition?.translation} visible={state.translationVisible} language={translationLanguage}/>
+              <ArticleTranslation text={meaning.definition?.translation} pending={Boolean(meaning.definition) && translationState === "pending"} failed={Boolean(meaning.definition) && translationState === "failed"} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} multiline visible={state.translationVisible} language={translationLanguage}/>
             </ProductionArticleReading>}
 
           </div>
@@ -589,12 +590,13 @@ function MeaningCard({
           </div>
         ) : null}
 
+
         <SenseCardReveal
           open={state.expanded}
           expandedClassName={"mt-0"}
         >
           <div onClick={(event) => event.stopPropagation()}>
-            {<ProductionArticleReading><ArticleSenseRelations relation={lexicalRelationDetail(meaning.wordDetails,translationLanguage)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible}/>{showSenseForms&&senseForms&&<><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="summary" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="body" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></>}<ArticleMeaningDetails definition={meaning.definition} details={meaning.details} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible}/></ProductionArticleReading>}
+            {<ProductionArticleReading><ArticleSenseRelations relation={lexicalRelationDetail(meaning.wordDetails,translationLanguage)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible} translationPending={translationState === "pending"} translationFailed={translationState === "failed"} onRetryTranslation={onRetryTranslation}/>{showSenseForms&&senseForms&&<><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="summary" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="body" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></>}<ArticleMeaningDetails definition={meaning.definition} details={meaning.details} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible} translationPending={translationState === "pending"} translationFailed={translationState === "failed"} onRetryTranslation={onRetryTranslation}/></ProductionArticleReading>}
 
 
             {(
@@ -609,28 +611,7 @@ function MeaningCard({
               />
             )}
             {actions.failed&&<p role="alert">{getUiMessages(interfaceLanguage).trainingSession.exclusion.failed}</p>}
-            {translationState ? (
-              <div
-                role={translationState === "failed" ? "alert" : "status"}
-                className="mt-2 text-sm text-slate-500 dark:text-slate-400"
-              >
-                {translationState === "pending"
-                  ? t("senseCard.translation.pending")
-                  : t("senseCard.translation.failed")}
-                {translationState === "failed" ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onActiveMeaningChange?.(meaning.entryId);
-                      onRetryTranslation();
-                    }}
-                    className="ml-2 font-semibold text-indigo-600 underline-offset-4 hover:underline dark:text-indigo-300"
-                  >
-                    {t("senseCard.translation.retry")}
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
+
           </div>
         </SenseCardReveal>
       </div>

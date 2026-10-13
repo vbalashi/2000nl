@@ -199,3 +199,19 @@ describe("queued dictionary translation request boundary", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+// Characterize the current API: provider checkpoints are private, not streamed fields.
+test("queued parts and retry backoff expose pending, then only terminal job failure", async () => {
+  cache={status:"ready",source_fingerprint:identity.fingerprint,source_content_revision:identity.sourceContentRevision,translation_policy_version:identity.policyVersion,overlay:{headword:"глаз"}};
+  job={id:"job",status:"queued",attempt:2,error_code:"provider_timeout"};
+  const pending=await request({...input,observeOnly:true});
+  expect(pending.payload).toMatchObject({status:"pending",job:{status:"queued",attempt:2}});
+  expect(pending.payload).not.toHaveProperty("overlay");
+  expect(pending.payload).not.toHaveProperty("failedFieldIds");
+  job={...job,status:"failed",attempt:3};
+  const failed=await request({...input,observeOnly:true});
+  expect(failed.payload).toMatchObject({status:"failed",job:{status:"failed",attempt:3}});
+  expect(failed.payload).not.toHaveProperty("overlay");
+  expect(failed.payload).not.toHaveProperty("failedFieldIds");
+  expect(rpc).not.toHaveBeenCalled();
+});
