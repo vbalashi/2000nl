@@ -29,6 +29,8 @@
 
 ## Архив
 
+- [2026-10-13: Translation — полнота, отображение и альтернативы по примерам](2026-10-13-01-translation-completeness.md) — аудит #674 / качество #655.
+
 - [2026-10-10: необязательные эквиваленты и дословность](2026-10-10-02-translation-equivalents-literal.md) — #655.
 - [2026-10-10: сравнение reasoning effort](2026-10-10-03-translation-reasoning-effort.md) — #655.
 

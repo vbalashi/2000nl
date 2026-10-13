@@ -124,6 +124,30 @@ const word: TrainingWord = {
 };
 
 describe("TrainingSenseCardV2Session", () => {
+  // Audit #674: expected failure until context readiness refreshes the answer snapshot.
+  test.fails("refreshes answer translations when context preparation completes a newer article lookup", async () => {
+    const untranslatedEntry = {
+      ...singleSenseEntry,
+      translation: null,
+      contentNodes: singleSenseEntry.contentNodes.map(node => ({ ...node, translations: [] })),
+    };
+    fetchSingleSense.mockResolvedValueOnce({ state: "ready", group: { ...singleSenseGroup, entries: [untranslatedEntry] }, entry: untranslatedEntry });
+    fetchSingleSense.mockResolvedValue({ state: "ready", group: singleSenseGroup, entry: singleSenseEntry });
+    let finishContext!: (value: unknown) => void;
+    loadContextPrompt.mockImplementation(() => new Promise(resolve => { finishContext = resolve; }));
+    render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext trainingSessionId="session-context"
+      contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()} />);
+    await waitFor(() => expect(fetchSingleSense).toHaveBeenCalledOnce());
+    await act(async () => { finishContext({ state: "ready", prompt: {
+      recallTarget: "hand", text: "She held the letter firmly in her hand.",
+      sourceText: singleSenseEntry.contentNodes[1].text,
+      contentNodeId: "example-1", sourceTextFingerprint: "example-fingerprint",
+    } }); });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    expect(screen.getByText("She held the letter firmly in her hand.")).toBeVisible();
+    expect(await screen.findByText("the end of your arm, where your fingers are attached")).toBeVisible();
+  });
+
   test("starts an immediate review transition even before next-card preparation publishes an id", async () => {
     const dispatch = vi.spyOn(window, "dispatchEvent");
     const accepted = vi.fn().mockResolvedValue("accepted-next-unavailable");
