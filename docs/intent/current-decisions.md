@@ -209,3 +209,7 @@ Production activation of durable translation jobs is accepted for #674: contract
 Принято: пары «слово (перевод)» остаются в общем потоке через среднюю точку.
 Перевод — обычным UI-шрифтом, размером перевода примеров, приглушённым цветом.
 [Обсуждение](../discussions/2026-10-13-04-relation-translation-typography.md), #696.
+
+## Запрет старого hide (2026-10-13)
+
+Принято запретить result=hide на старом API и в handle_card_review, сохранив обычные оценки, freeze и схему/данные. Полный retirement V1 не согласован: 2000NL, AudioFilms и Pontix имеют действующие зависимости от V1. Реализация/выпуск — #693. [Обсуждение и аудит](../discussions/2026-10-13-06-retire-legacy-hide.md).

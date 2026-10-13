@@ -784,3 +784,9 @@ Issue #674 activates the private translation-job contract after PR #675 shipped 
 Migration224 adds private dictionary_translation_job_parts and checkpoint_dictionary_translation_part_v1. Source-row lock then job lock, live lease token/expiry and trusted source-row revision fence both persistence and continuation. Successful continuation requeues the existing job and refunds that successful claim attempt; failure attempts keep the existing three-attempt bound. Source/policy mismatches cannot reuse a part fingerprint. Existing final publication RPC is unchanged; the worker validates full aggregate inventory before calling it. No client grants or new queue. Full source pipeline v4 invalidates bounded v3 artifacts on demand.
 
 Exact-health caveat: old223 images cannot satisfy224 health even though the schema is additive. Use the current224 image with the coordinated emergency full-source switch for immediate previous-behavior recovery, or a reviewed revert retaining the224 manifest. Never lower receipts or drop parts to roll back.
+
+## Legacy hide retirement (migration225 / #693)
+
+Migration225 patches the exact current handle_card_review definition, preserving auth, dictionary access, Known guard, pair/meaning exclusions, clocks, rating behavior, grants and freeze. It removes only the legacy hide write and rejects it before consumed-turn idempotency returns. The manifest pins the migration SHA and a read-only postflight chained from224. Deploy through the managed contract gate; never run an ad-hoc production function replacement.
+
+An older app image remains compatible for ordinary reviews, but its hide requests are deliberately rejected after225. Rollback retains the forward DB225 guard; do not restore the old function or lower contract receipts. Verify exact app health/contract and the read-only function/grant checks after rollout. No production smoke should send a successful hide or rewrite a real user's state.

@@ -1705,3 +1705,9 @@ policy or language mismatch suppresses both texts together. Consumers show the
 natural translation first and localize the literal label independently of the
 translation language. Older payloads remain valid. Stored overlays use
 `meanings[i].idioms[j].literalText`; `baseText` retains its headword meaning.
+
+## Legacy hide retirement (contract225, #693)
+
+`review-card` with `result: "hide"` is retired in `/api/platform/v1/actions` and its unversioned alias: HTTP400 `missing_or_invalid_result`, without a mutation. The direct `handle_card_review` RPC rejects `p_result='hide'` with SQLSTATE22023 / `legacy_hide_disabled`, including requests using an already-consumed turn. Four ratings and the existing `freeze` result remain supported. Use current explicit Known/exclusion actions for supported pause behavior. The `hidden` field is retained for compatibility; this change does not rewrite state or history.
+
+V1 still serves first-party dictionary management/search and audio, AudioFilms translation/media/generated-entry/session and legacy dictionary flows, and Pontix lookup/actions. See the [consumer audit](../discussions/2026-10-13-06-retire-legacy-hide.md). V2 is the preferred card presentation/action path; it is not a complete replacement for every V1 endpoint.

@@ -32,7 +32,6 @@ const REVIEW_RESULTS = new Set<ReviewResult>([
   "success",
   "easy",
   "freeze",
-  "hide",
 ]);
 
 function asTrainingMode(value: unknown): TrainingMode | null {
