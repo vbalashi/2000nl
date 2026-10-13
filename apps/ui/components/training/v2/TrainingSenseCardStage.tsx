@@ -271,6 +271,7 @@ export function TrainingSenseCardStage({
           />
         ) : (
           <TrainingCardFace
+            scrollMoreLabel={t("senseCard.scroll.more")}
             prompt={
               mode === "definition-to-word"
                 ? { kind: "explanation", text: contextPrompt?.text ?? reversePrompt?.text ?? "" }

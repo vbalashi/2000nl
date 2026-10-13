@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useTrainingFaceFit } from "../useTrainingFaceFit";
 import { useTrainingInteractions } from "@/components/practice/ui/TrainingInteractionPreferences";
 import {
   ChevronDown,
@@ -181,6 +182,7 @@ export function TrainingCardFace({
   hintVisible,
   hintLabel,
   contentLabel,
+  scrollMoreLabel,
 }: {
   prompt: TrainingCardPrompt;
   label?: string;
@@ -191,10 +193,19 @@ export function TrainingCardFace({
   hintVisible: boolean;
   hintLabel: string;
   contentLabel: string;
+  scrollMoreLabel?: string;
 }) {
   const { preferences } = useTrainingInteractions();
+  const fit = useTrainingFaceFit(JSON.stringify([prompt, recallTarget, hint, label, contextLabel, partOfSpeech]));
+  const maskImage = scrollMask(fit.scroll.top, fit.scroll.bottom);
   return (
+    <div className="relative min-h-0 flex-1">
     <div
+      ref={fit.viewport}
+      onScroll={fit.updateScroll}
+      style={{ maskImage, WebkitMaskImage: maskImage }}
+      data-scroll-top={fit.scroll.top ? "faded" : "clear"}
+      data-scroll-bottom={fit.scroll.bottom ? "faded" : "clear"}
       data-testid="training-face-scroll"
       role="region"
       aria-label={contentLabel}
@@ -203,9 +214,9 @@ export function TrainingCardFace({
         // Space scrolls a focused reading region; it must not reveal the answer.
         if (event.key === " ") event.stopPropagation();
       }}
-      className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:thin] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--practice-focus,#818cf8)]"
+      className="h-full min-h-0 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--practice-focus,#818cf8)]"
     >
-      <div className={approved.faceLayout}>
+      <div ref={fit.layout} className={approved.faceLayout}>
         <div className={approved.facePrelude}>
           {partOfSpeech ? (
             <span
@@ -223,13 +234,14 @@ export function TrainingCardFace({
               {label}
             </span>
           ) : null}
-          {recallTarget ? <p data-testid="training-face-recall-target" className={approved.recallTarget}>{recallTarget}</p> : null}
+          {recallTarget ? <p data-face-fit data-testid="training-face-recall-target" className={approved.recallTarget}>{recallTarget}</p> : null}
           {contextLabel ? <p className={approved.faceInstruction}>{contextLabel}</p> : null}
         </div>
         <div className={approved.facePrompt} data-testid="training-main-prompt">
           {prompt.kind === "explanation" ? (
             <>
               <p
+                data-face-fit
                 data-testid="reverse-prompt"
                 className={contextLabel ? approved.faceContext : "max-w-[34rem] text-center font-sense-serif text-[length:var(--reading-body-prompt-size,clamp(1.55rem,5cqi,2.4rem))] leading-[1.22] text-slate-900 dark:text-slate-50"}
               >
@@ -252,12 +264,19 @@ export function TrainingCardFace({
             <p className={approved.faceHintLabel}>
               {hintLabel}
             </p>
-            <p className={approved.faceHintText}>
+            <p data-face-fit className={approved.faceHintText}>
               {hint.text}
             </p>
           </aside>
         ) : <div />}
       </div>
+    </div>
+    {fit.scroll.bottom ? (
+      <button type="button" aria-label={scrollMoreLabel ?? contentLabel} className={chrome.scrollCue}
+        onClick={() => fit.viewport.current?.scrollBy({ top: Math.max(120, fit.viewport.current.clientHeight * 0.65), behavior: preferences.animation ? "smooth" : "auto" })}>
+        <ChevronDown aria-hidden="true" className="h-4 w-4" />
+      </button>
+    ) : null}
     </div>
   );
 }

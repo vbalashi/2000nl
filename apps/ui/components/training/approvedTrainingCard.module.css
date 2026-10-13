@@ -236,7 +236,7 @@
 
 .faceInstruction {
   margin: 0;
-  max-width: 34rem;
+  max-width: min(34rem, 100%);
   font-family: var(--practice-font-ui);
   font-size: var(--practice-text-body);
   font-weight: 400;
@@ -245,7 +245,7 @@
 }
 .recallTarget, .faceContext {
   margin: 0;
-  max-width: 34rem;
+  max-width: min(34rem, 100%);
   overflow-wrap: anywhere;
   font-family: var(--practice-font-reading);
   font-weight: 400;
@@ -322,3 +322,6 @@
   overflow-wrap: anywhere;
   color: var(--practice-text-secondary);
 }
+
+/* Let the fitter measure overflowing whole words within the actual prompt width. */
+.facePrompt > p { min-width: 0; }
