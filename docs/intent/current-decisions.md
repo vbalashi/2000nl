@@ -186,3 +186,7 @@ Production activation of durable translation jobs is accepted for #674: contract
 ## Полнота больших карточек и вкладки — принято 2026-10-13
 
 Приняты полный inventory, bounded semantic parts с persisted recovery и aggregate coverage перед ready; межвкладочные invalidation hints и серверная перепроверка видимых карточек. До выпуска это принятое поведение, не текущая гарантия. [Источник](../discussions/2026-10-13-03-full-translation-and-tab-sync.md), [план](../exec-plans/active/issue-674-full-translation-and-tab-sync.md).
+
+## Запрет старого hide (2026-10-13)
+
+Принято запретить result=hide на старом API и в handle_card_review, сохранив обычные оценки, freeze и схему/данные. Полный retirement V1 не согласован: 2000NL, AudioFilms и Pontix имеют действующие зависимости от V1. Реализация/выпуск — #693. [Обсуждение и аудит](../discussions/2026-10-13-06-retire-legacy-hide.md).

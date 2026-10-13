@@ -103,6 +103,17 @@ describe("/api/platform/actions", () => {
     from.mockReset();
   });
 
+  test.each([undefined,"00000000-0000-4000-8000-000000000693"])("rejects hide without a write (clientEventId=%s)", async (clientEventId) => {
+    const { POST } = await import("@/app/api/platform/v1/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValue({data: null, error: null});
+    const response = await POST(request({action: "review-card", entryId: "entry-1", cardTypeId: "word-to-definition", result: "hide", ...(clientEventId ? {clientEventId} : {})}));
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({error: "missing_or_invalid_result"});
+    expect(rpc.mock.calls.some(([name]) => name === "handle_card_review" || name === "perform_platform_card_action")).toBe(false);
+  });
+
   test("records explicit review-card actions", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();
