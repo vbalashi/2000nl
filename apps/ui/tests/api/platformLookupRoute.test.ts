@@ -1,5 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { contentFingerprint, normalizeDictionaryContent } from "@/lib/platform/projections/dictionaryContent";
+import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
+import { translationPolicyVersion } from "@/lib/translation/translationPolicy";
+
+function currentTranslationIdentity(entry: {id:string;headword:string;raw:unknown;part_of_speech?:string;meaning_id?:number|null}) {
+  const word = { ...entry, language_code: "nl", meaning_id: entry.meaning_id === undefined ? 1 : entry.meaning_id };
+  const revision = contentFingerprint(normalizeDictionaryContent(word as never));
+  const request = buildDictionaryMeaningTranslationRequest({ entryId: entry.id, sourceContentFingerprint: revision, sourceLanguageCode: "nl", targetLanguageCode: "ru", word });
+  return { source_content_revision: revision, translation_policy_version: translationPolicyVersion("openai", request) };
+}
 
 const rpc = vi.fn();
 const from = vi.fn();
@@ -723,6 +733,7 @@ describe("/api/platform/lookup", () => {
           data: [
             {
               id: "translation-1",
+              ...currentTranslationIdentity({id:"entry-1",headword:"huis",raw:{meanings:[{definition:"gebouw",examples:["Ik woon in een huis.","Het huis is oud."]}]}}),
               word_entry_id: "entry-1",
               target_lang: "ru",
               provider: "openai",
@@ -732,7 +743,7 @@ describe("/api/platform/lookup", () => {
                 meanings: [
                   {
                     definition: "здание",
-                    examples: ["Я живу в доме."],
+                    examples: ["Я живу в доме.", "Дом старый."],
                   },
                 ],
               },
@@ -796,6 +807,7 @@ describe("/api/platform/lookup", () => {
         sourcePath: "raw.meanings[0].examples[1]",
         kind: "example",
         text: "Het huis is oud.",
+        translation: "Дом старый.",
       },
     ]);
   });
@@ -844,15 +856,18 @@ describe("/api/platform/lookup", () => {
           data: [
             {
               id: "translation-idiom",
+              ...currentTranslationIdentity({id:"entry-idiom",headword:"knoop",raw:{meanings:[{definition:"verbinding",examples:["de knoop zit los","zij hakte de knoop door"],idioms:[{expression:"de knoop doorhakken",explanation:"een beslissing nemen"}]}]}}),
               word_entry_id: "entry-idiom",
               target_lang: "ru",
               provider: "openai",
               status: "ready",
               overlay: {
+                headword: "узел",
                 meanings: [
                   {
                     definition: "связь",
-                    idioms: [{ expression: "принять решение" }],
+                    examples: ["узел развязался", "она приняла решение"],
+                    idioms: [{ expression: "принять решение", explanation: "решить" }],
                   },
                 ],
               },
@@ -892,6 +907,7 @@ describe("/api/platform/lookup", () => {
         sourcePath: "raw.meanings[0].examples[0]",
         kind: "example",
         text: "de knoop zit los",
+        translation: "узел развязался",
       },
       {
         id: "idiom-1-1",
@@ -906,6 +922,7 @@ describe("/api/platform/lookup", () => {
         sourcePath: "raw.meanings[0].examples[1]",
         kind: "example",
         text: "zij hakte de knoop door",
+        translation: "она приняла решение",
       },
     ]);
   });
@@ -978,7 +995,7 @@ describe("/api/platform/lookup", () => {
         return chain({ data: { translation_lang: "ru" }, error: null });
       }
       if (table === "word_entry_translations") {
-        return chain({ data: [row], error: null });
+        return chain({ data: [{...row, ...currentTranslationIdentity({id:"entry-1",headword:"huis",raw:{meanings:[{definition:"gebouw"}]}})}], error: null });
       }
       if (table === "connected_client_sessions") {
         return chain({ data: null, error: null });
@@ -1139,6 +1156,7 @@ describe("/api/platform/lookup", () => {
           data: [
             {
               id: "translation-generated",
+              ...currentTranslationIdentity({id:"entry-generated",headword:"astronomen",meaning_id:null,part_of_speech:"zn",raw:{headword:"astronomen",languageCode:"nl",definition:"Mensen die het heelal bestuderen.",example:{source:"Astronomen gebruiken telescopen."},notes:"Meervoud van astronoom."}}),
               word_entry_id: "entry-generated",
               target_lang: "ru",
               provider: "openai",

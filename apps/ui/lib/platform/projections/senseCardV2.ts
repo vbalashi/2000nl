@@ -77,6 +77,8 @@ export type PlatformLookupV2ProjectionEntry = {
   crossReferenceTarget?: ResolvedPlatformV2CrossReferenceTarget | null;
   cardState?: ProjectionCardState | null;
   entryTranslation?: PlatformEntryTranslationStateV2 | null;
+  /** Server coverage of the bounded request, including relations; not just the headword. */
+  translationRequestComplete?: boolean;
   audioCapability?: PlatformAudioCapabilityV2;
   wordDetails?: PlatformWordDetailsV2;
   allowWordDetailsCapability?: boolean;
@@ -306,6 +308,7 @@ function projectSenseCard(
       entryTarget,
       contentNodes,
       entryTranslation: item.entryTranslation ?? null,
+      translationRequestComplete: item.translationRequestComplete,
       entrySourceContentFingerprint:
         item.entrySourceContentFingerprint ?? null,
       audioCapability: item.audioCapability,
@@ -393,6 +396,7 @@ function capabilitiesFor(params: {
   };
   contentNodes: PlatformContentNodeV2[];
   entryTranslation: PlatformEntryTranslationStateV2 | null;
+  translationRequestComplete?: boolean;
   entrySourceContentFingerprint: string | null;
   audioCapability?: PlatformAudioCapabilityV2;
   translationTargetLanguageCode: string | null;
@@ -465,7 +469,10 @@ function capabilitiesFor(params: {
   if (params.allowMutations) {
     if (
       params.entryTarget.contentRevision &&
-      params.entryTranslation?.status !== "ready" &&
+      !(params.translationRequestComplete ?? (
+        params.entryTranslation?.status === "ready" && params.entryTranslation.isFresh &&
+        params.contentNodes.every(node => Boolean(firstExactRenderableNodeTranslationV1(node.translations, node.sourceTextFingerprint)))
+      )) &&
       params.translationTargetLanguageCode
     ) {
       capabilities.push({

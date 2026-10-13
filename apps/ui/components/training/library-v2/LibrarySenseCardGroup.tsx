@@ -268,12 +268,7 @@ export function LibrarySenseCardGroup({
     );
     if (!nextVisible) return;
     for (const meaning of model.meanings) {
-      const hasCachedTranslation = Boolean(
-        meaning.entryTranslation ||
-        meaning.definition?.translation ||
-        meaning.details.some((item) => item.translation),
-      );
-      if (!hasCachedTranslation) {
+      if (meaning.translationNeedsPreparation) {
         onRequestTranslation?.(meaning.entryId, meaning.cardTypeId);
       }
     }

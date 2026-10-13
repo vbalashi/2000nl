@@ -129,6 +129,7 @@ const content = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(requestPlatformV2Translation).mockReset().mockResolvedValue("pending");
   rememberExclusionUndo(null);
   vi.mocked(readIdiomTrainingStats).mockResolvedValue({contractVersion: "training-idiom-stats-v1", newCardsToday: 2, reviewCardsDone: 3, reviewCardsDue: 4, totalCardsStarted: 12, totalCardsInScope: 30});
 });
@@ -324,10 +325,11 @@ test("header actions use the selected content and do not consume a review", asyn
   vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(
     candidate,
   );
-  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({
-    state: "ready",
-    content,
-  } as never);
+  const prepared = { ...content,
+    entry: { ...content.entry, capabilities: content.entry.capabilities.filter(cap => cap.actionId !== "request-translation") },
+    expression: { ...content.expression, translations: [{translationId:"ready",targetLanguageCode:"ru",status:"ready",text:"с меня хватит",sourceTextFingerprint:content.expression.sourceTextFingerprint,translationPolicyVersion:"current"}] },
+  };
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValueOnce({state:"ready",content} as never).mockResolvedValue({state:"ready",content:prepared} as never);
   vi.mocked(resolvePlatformV2Audio).mockResolvedValue("/audio/klaar.mp3");
   vi.mocked(requestPlatformV2Translation).mockResolvedValue("ready");
   const play = vi.fn(),
@@ -359,7 +361,7 @@ test("header actions use the selected content and do not consume a review", asyn
   );
   expect(details).toHaveBeenCalledWith({
     group: content.group,
-    entry: content.entry,
+    entry: prepared.entry,
   });
   fireEvent.click(
     screen.getByRole("button", { name: t("senseCard.translation.request") }),
@@ -369,7 +371,7 @@ test("header actions use the selected content and do not consume a review", asyn
   );
   expect(requestPlatformV2Translation).toHaveBeenCalledWith(
     content.entry.capabilities[0],
-    { force: true },
+    { signal: expect.any(AbortSignal) },
   );
   expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
   expect(fetchNextPlatformV2IdiomTrainingSessionExercise).toHaveBeenCalledTimes(
@@ -509,7 +511,7 @@ test.each(["audio", "translation"] as const)("failed %s stays inside the shared 
   if (action === "audio") {
     vi.mocked(resolvePlatformV2Audio).mockRejectedValueOnce(new Error("offline"));
   } else {
-    vi.mocked(requestPlatformV2Translation).mockRejectedValueOnce(new Error("offline"));
+    vi.mocked(requestPlatformV2Translation).mockRejectedValue(new Error("offline"));
   }
   render(<TrainingIdiomSession userId="user-1" session={session}
     contentLanguageCode="nl" translationTargetLanguageCode="ru"

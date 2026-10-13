@@ -37,8 +37,11 @@ export async function preparePlatformV2TrainingEntry(
     input.transitionId,
   );
   let lookup = initialLookup;
+  const needsPreparation = (entry: PlatformV2TrainingEntryResult["entry"]) => entry.capabilities.some(
+    candidate => candidate.actionId === "request-translation" && candidate.targetLanguageCode === input.translationTargetLanguageCode,
+  );
   let translation: "cached" | "generated" | "not-requested" | "pending" | "failed" =
-    lookup.entry.translation?.status === "ready"
+    !needsPreparation(lookup.entry) && lookup.entry.translation?.status === "ready" && lookup.entry.translation.isFresh
       ? "cached"
       : "not-requested";
   if (translation === "cached") {
@@ -70,7 +73,7 @@ export async function preparePlatformV2TrainingEntry(
         if (refreshed.state === "ready") {
           lookup = refreshed;
           translation =
-            refreshed.entry.translation?.status === "ready"
+            !needsPreparation(refreshed.entry) && status === "ready"
               ? "generated"
               : status === "pending" ? "pending" : "failed";
         } else {

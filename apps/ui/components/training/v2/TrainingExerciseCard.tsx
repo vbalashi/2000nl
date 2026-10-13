@@ -65,7 +65,7 @@ export function TrainingExerciseCard({
   const translationAvailable = hasTranslation || Boolean(onRequestTranslation);
   const toggleTranslation = async () => {
     if (actionBusy) return;
-    if (!hasTranslation && onRequestTranslation) {
+    if (!translationVisible && onRequestTranslation) {
       try {
         await onRequestTranslation();
         setTranslationVisible(true);

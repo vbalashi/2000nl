@@ -1,6 +1,7 @@
 "use client";
 import { translationPendingCopy } from "@/lib/training/translationPendingCopy";
 import React from "react";
+import { usePlatformV2TranslationPreparation } from "@/lib/platform/usePlatformV2TranslationPreparation";
 import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type {
@@ -86,6 +87,19 @@ export function TrainingIdiomCard({
       cap.actionId === "request-translation" &&
       cap.targetLanguageCode === translationTargetLanguageCode,
   );
+  const translationPreparing = usePlatformV2TranslationPreparation({
+    entry: content.entry,
+    targetLanguageCode: translationTargetLanguageCode,
+    enabled: !busy && !actionBusy,
+    refresh: async signal => {
+      const loaded = await loadIdiomExerciseContent({ candidate, contentLanguageCode, translationTargetLanguageCode, signal });
+      if (signal.aborted) return;
+      if (loaded.state !== "ready") throw new Error("translation_content_unavailable");
+      setContent(loaded.content);
+      setTranslationPending(false);
+    },
+    onStatus: status => { setTranslationPending(status === "pending"); if (status === "failed") setFailed(true); },
+  });
   async function run<T>(
     operation: () => Promise<T>,
     accept: (value: T) => void,
@@ -144,6 +158,7 @@ export function TrainingIdiomCard({
           translation?.actionId === "request-translation"
             ? () =>
                 run(async () => {
+                  if (translationPreparing.current) return { pending: true, content: null };
                   setTranslationPending(false);
                   const status = await requestPlatformV2Translation(translation, { force: true });
                   if (status === "pending") {
@@ -162,14 +177,14 @@ export function TrainingIdiomCard({
             : undefined
         }
         notice={
-          translationPending ? <p role="status" className="shrink-0 text-sm">{translationPendingCopy[interfaceLanguage]}</p> : failed ? (
+          failed ? (
             <p
               role="alert"
               className="shrink-0 text-sm text-rose-600 dark:text-rose-300"
             >
               {getUiMessages(interfaceLanguage).trainingSession.exclusion.failed}
             </p>
-          ) : null
+          ) : translationPending ? <p role="status" className="shrink-0 text-sm">{translationPendingCopy[interfaceLanguage]}</p> : null
         }
         secondaryActions={
           <TrainingCardSecondaryActions>

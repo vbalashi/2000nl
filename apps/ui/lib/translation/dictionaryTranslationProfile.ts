@@ -1,8 +1,8 @@
 export type DictionaryTranslationProfileName =
-  | "luna6" | "luna6-v5" | "luna6-v6" | "luna6-v7" | "luna6-v8" | "luna6-v9" | "luna6-v10" | "luna6-v8-high"
+  | "luna6" | "luna6-v5" | "luna6-v6" | "luna6-v7" | "luna6-v8" | "luna6-v9" | "luna6-v10" | "luna6-v11" | "luna6-v8-high"
   | "gpt41" | "legacy";
 const lunaPrompts = {
-  luna6: "luna6_v8", "luna6-v5": "luna6_v5", "luna6-v6": "luna6_v6",
+  luna6: "luna6_v11", "luna6-v11": "luna6_v11", "luna6-v5": "luna6_v5", "luna6-v6": "luna6_v6",
   "luna6-v7": "luna6_v7", "luna6-v8": "luna6_v8", "luna6-v9": "luna6_v9", "luna6-v10": "luna6_v10", "luna6-v8-high": "luna6_v8",
 } as const;
 /** A single profile selects model, prompt and cache identity; rollback is explicit. */
@@ -23,7 +23,7 @@ export function dictionaryTranslationProfile() {
     systemFile: id === "legacy" ? "openai_dictionary_meaning_system_v1.txt" : `openai_dictionary_meaning_${prompt}_system.txt`,
     userFile: id === "legacy" ? "openai_dictionary_meaning_user_v1.txt" : `openai_dictionary_meaning_${prompt}_user.txt`,
     requestSettings: luna
-      ? { reasoning_effort: (id === "luna6" || id === "luna6-v10" || id === "luna6-v8-high") ? "high" as const : "low" as const, max_completion_tokens: 32768, ...(id !== "luna6-v5" ? { response_format: { type: "json_object" as const } } : {}) }
+      ? { reasoning_effort: (id === "luna6" || id === "luna6-v11" || id === "luna6-v10" || id === "luna6-v8-high") ? "high" as const : "low" as const, max_completion_tokens: 32768, ...(id !== "luna6-v5" ? { response_format: { type: "json_object" as const } } : {}) }
       : { temperature: 0, max_tokens: 2200 },
   };
 }

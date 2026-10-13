@@ -50,13 +50,13 @@ export async function prepareSentenceExerciseTranslation(input: {
         Boolean(translation.text?.trim()) &&
         translation.sourceTextFingerprint === sentence.sourceTextFingerprint,
     );
-    if (ready) return { state: "ready" };
     const capability = entry.capabilities?.find(
       (item) =>
         item.actionId === "request-translation" &&
         item.target.entryId === input.entryId &&
         item.targetLanguageCode === input.translationTargetLanguageCode,
     );
+    if (ready && !capability) return { state: "ready" };
     if (!capability || capability.actionId !== "request-translation") {
       return { state: "translation-unavailable" };
     }
@@ -96,10 +96,10 @@ export async function loadSentenceExerciseContent(input: {
     if (!group) return { state: "entry-not-found" };
     let content = resolveSentenceExerciseContent(input.candidate, group);
     if (!content) return { state: "projection-missing" };
-    if (resolveSentencePrompt(content, input.translationTargetLanguageCode).status !== "ready") {
-      const capability = content.entry.capabilities?.find(
+    const capability = content.entry.capabilities?.find(
         (item) => item.actionId === "request-translation" && item.target.entryId === input.candidate.entryId && item.targetLanguageCode === input.translationTargetLanguageCode,
       );
+    if (resolveSentencePrompt(content, input.translationTargetLanguageCode).status !== "ready" || capability) {
       if (!capability || capability.actionId !== "request-translation") return { state: "translation-unavailable" };
       const result = await requestPlatformV2LibraryTranslation({ entryId: input.candidate.entryId, targetLanguageCode: input.translationTargetLanguageCode, force: input.force, ...(input.signal ? {signal:input.signal} : {}) });
       if (result !== "ready") return { state: result === "failed" ? "translation-unavailable" : "translation-pending" };
@@ -113,7 +113,9 @@ export async function loadSentenceExerciseContent(input: {
       if (!group) return { state: "entry-not-found" };
       content = resolveSentenceExerciseContent(input.candidate, group);
       if (!content) return { state: "projection-missing" };
-      if (resolveSentencePrompt(content, input.translationTargetLanguageCode).status !== "ready") return { state: "translation-pending" };
+      if (resolveSentencePrompt(content, input.translationTargetLanguageCode).status !== "ready" || content.entry.capabilities.some(
+        item => item.actionId === "request-translation" && item.targetLanguageCode === input.translationTargetLanguageCode,
+      )) return { state: "translation-pending" };
     }
     return { state: "ready", content };
   } catch (error) {

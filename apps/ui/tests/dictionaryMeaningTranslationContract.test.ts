@@ -35,6 +35,17 @@ const request: DictionaryMeaningTranslationRequestV1 = {
 };
 
 describe("dictionary meaning translation contract", () => {
+  test("legacy entries and definition text aliases request the fields displayed by the article", () => {
+    const input = {entryId:"generated",sourceContentFingerprint:"revision",sourceLanguageCode:"nl",targetLanguageCode:"ru"};
+    const legacy = buildDictionaryMeaningTranslationRequest({...input,word:{headword:"huis",raw:{definition:"een gebouw",notes:"een toelichting",example:{source:"ik woon hier"}}}});
+    expect(legacy.content).toEqual([
+      {fieldId:"definition",role:"definition",text:"een gebouw"},
+      {fieldId:"usage-pattern",role:"usage-pattern",text:"een toelichting"},
+      {fieldId:"example:0",role:"example",text:"ik woon hier"},
+    ]);
+    const alias = buildDictionaryMeaningTranslationRequest({...input,word:{headword:"huis",raw:{meanings:[{text:"een gebouw"}]}}});
+    expect(alias.content).toEqual([{fieldId:"definition",role:"definition",text:"een gebouw"}]);
+  });
   test("translates all content of a hand-sized article without sacrificing its training example", () => {
     const built = buildDictionaryMeaningTranslationRequest({entryId:"hand-budget",sourceContentFingerprint:"revision",sourceLanguageCode:"nl",targetLanguageCode:"ru",word:{headword:"hand",raw:{meanings:[{definition:"een lichaamsdeel",examples:["ik geef je een hand"],idioms:Array.from({length:26},(_,index)=>({expression:`uitdrukking ${index}`,explanation:`uitleg ${index}`,examples:index<10?[`voorbeeld ${index}`]:[]}))}]}}});
     expect(built.content).toHaveLength(64);

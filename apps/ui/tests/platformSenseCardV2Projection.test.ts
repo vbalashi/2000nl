@@ -5,8 +5,15 @@ import { projectPlatformV2SenseContent } from "@/lib/platform/projections/platfo
 import { goedEntry } from "./platformV2IdiomHierarchyFixture";
 
 describe("Platform V2 SenseCard projection", () => {
-  // Audit #674: expected failure until repair eligibility includes content coverage.
-  test.fails("offers translation repair for a ready headword with untranslated content", () => {
+  test("complete idiom-only preparation does not require an invented headword or another paid request", () => {
+    const input = projectionInput({stateRevision:"idiom-complete",knownMark:null});
+    input.entries[0].allowMutationCapabilities = true;
+    input.entries[0].entryTranslation = null;
+    input.entries[0].translationRequestComplete = true;
+    const entry = projectPlatformLookupV2(input).groups[0].entries[0];
+    expect(entry.capabilities.some(capability => capability.actionId === "request-translation")).toBe(false);
+  });
+  test("offers translation repair for a ready headword with untranslated content", () => {
     const input = projectionInput({ stateRevision: "state-incomplete", knownMark: null });
     input.request.translationTargetLanguageCode = "ru";
     input.entries[0].allowMutationCapabilities = true;

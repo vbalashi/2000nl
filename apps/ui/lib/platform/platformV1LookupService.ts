@@ -135,7 +135,7 @@ export async function performPlatformLookup(
         resolveLookupTranslationContext(
           auth,
           translationService,
-          entries.map((entry) => entry.id),
+          entries,
         ),
       )
     : Promise.resolve(null);

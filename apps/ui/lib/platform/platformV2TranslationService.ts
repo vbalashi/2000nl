@@ -15,6 +15,8 @@ import { translationPolicyVersion } from "../translation/translationPolicy";
 import { buildDictionaryMeaningTranslationRequest } from "../translation/dictionaryMeaningTranslationContract";
 import type { TranslationProviderName } from "../translation/types";
 import { projectLexicalRelationTranslations, type LexicalRelationTranslations } from "./platformV2LexicalRelationTranslations";
+import { dictionaryMeaningTranslationCoverage } from "../translation/dictionaryMeaningTranslationReadiness";
+import { sanitizeTranslationOverlay } from "../translation/translationArtifactSafety";
 
 type TranslationRow = {
   id: string;
@@ -30,6 +32,7 @@ type TranslationRow = {
 };
 
 export type PlatformV2TranslationProjection = {
+  requestComplete: boolean;
   relationTranslationsById?: LexicalRelationTranslations;
   currentSourceContentFingerprint: string | null;
   entryTranslation: PlatformEntryTranslationStateV2 | null;
@@ -93,6 +96,7 @@ export async function resolvePlatformV2Translations(
     >();
     if (!row) {
       byEntryId.set(entry.id, {
+        requestComplete: false,
         currentSourceContentFingerprint: null,
         entryTranslation: null,
         nodeTranslationsById,
@@ -122,6 +126,7 @@ export async function resolvePlatformV2Translations(
 
     if (!isFresh) {
       byEntryId.set(entry.id, {
+        requestComplete: false,
         currentSourceContentFingerprint: currentContentRevision,
         entryTranslation: {
           translationId: row.id,
@@ -214,6 +219,9 @@ export async function resolvePlatformV2Translations(
     }
 
     byEntryId.set(entry.id, {
+      requestComplete: row.status === "ready" && dictionaryMeaningTranslationCoverage(
+        meaningRequest, sanitizeTranslationOverlay(row.overlay),
+      ).requestComplete,
       currentSourceContentFingerprint: currentContentRevision,
       entryTranslation,
       nodeTranslationsById,
@@ -242,7 +250,7 @@ function translatedTextAtSourcePath(
 ): string | null {
   if (!overlay) return null;
   if (sourcePath === "raw.headword") {
-    return asString(overlay.headword);
+    return asString(asRecord(overlay.entryTranslation).primaryText) ?? asString(overlay.headword);
   }
   let path = sourcePath;
   if (path === "raw.definition") path = "raw.meanings[0].definition";

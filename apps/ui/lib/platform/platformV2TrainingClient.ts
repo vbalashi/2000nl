@@ -3,6 +3,7 @@ import {
 } from "./platformFetchWithTimeout";
 import { requestPlatformV2Lookup } from "./platformV2LookupTransport";
 import { onPlatformV2CardStateChanged } from "./platformV2CardStateChanges";
+import { onDictionaryTranslationReady } from "../translation/dictionaryTranslationEvents";
 import {
   clearPlatformV2TrainingMediaCache,
 } from "./platformV2TrainingMediaClient";
@@ -94,6 +95,15 @@ const PREFETCH_TTL_MS = 30_000;
 export const PREPARED_CARD_MAX_REUSE_AGE_MS = 5 * 60_000;
 const MAX_PREFETCHED_LOOKUPS = 24;
 const prefetchedLookups = new Map<string, PrefetchedLookup>();
+
+onDictionaryTranslationReady(({ entryId }) => {
+  for (const [key, record] of prefetchedLookups) {
+    if (record.entryId !== entryId) continue;
+    // An already consumed read may finish for its caller, but cannot remain a
+    // reusable snapshot after a newer translation has been published.
+    prefetchedLookups.delete(key);
+  }
+});
 
 onPlatformV2CardStateChanged((entryId) => {
   // Invalidate every direction/language projection of the changed meaning.

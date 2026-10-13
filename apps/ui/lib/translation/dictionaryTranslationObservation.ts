@@ -1,5 +1,6 @@
 import { fetchDictionaryMeaningTranslation } from "./translationApiClient";
 import { recordTranslationPreparationDuration } from "./translationPreparationTiming";
+import { publishDictionaryTranslationReady } from "./dictionaryTranslationEvents";
 
 type TranslationInput = Parameters<typeof fetchDictionaryMeaningTranslation>[0];
 
@@ -37,6 +38,9 @@ export async function observeDictionaryMeaningTranslation(
     // Legacy synchronous responses retain their existing caller semantics.
     if (payload?.status === "ready" && observedJob)
       recordTranslationPreparationDuration(Date.now() - startedAt);
+    if (payload?.status === "ready") publishDictionaryTranslationReady({
+      entryId: input.entryId, targetLanguageCode: input.targetLanguageCode,
+    });
     if (payload?.status !== "pending" || (!payload.job?.id && !payload.needsEnqueue) || input.background)
       return response;
     observedJob = true;

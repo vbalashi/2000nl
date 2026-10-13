@@ -29,9 +29,10 @@ describe("one coherent dictionary translation profile",()=>{
   expect(getOpenAiDictionaryMeaningPromptFingerprint()).toBe(previous);
   vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6");expect(getOpenAiDictionaryMeaningPromptFingerprint()).not.toBe(previous);
  });
- test("experimental relation prompt never replaces the default v8/high identity",()=>{
+ test("context-aware default retains the exact prior v8/high rollback identity",()=>{
   vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6");const baseline=getOpenAiDictionaryMeaningPromptFingerprint();
-  vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6-v8-high");expect(getOpenAiDictionaryMeaningPromptFingerprint()).toBe(baseline);
+  vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6-v11");expect(getOpenAiDictionaryMeaningPromptFingerprint()).toBe(baseline);
+  vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6-v8-high");expect(getOpenAiDictionaryMeaningPromptFingerprint()).toBe("129be0a92c4890f99ea96b8c5c48335d9e39fafa130597d0b96c2f92d0ef2035");expect(getOpenAiDictionaryMeaningPromptFingerprint()).not.toBe(baseline);
   vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6-v10");expect(getOpenAiDictionaryMeaningPromptFingerprint()).not.toBe(baseline);
  });
  test("unknown or incomplete profile fails closed instead of silently choosing another provider",()=>{
@@ -41,7 +42,7 @@ describe("one coherent dictionary translation profile",()=>{
  test("runtime prompt bytes and Luna request settings match the frozen research candidate",async()=>{
   azure();vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE","luna6");
   const profile=dictionaryTranslationProfile();const system=loadPromptText(profile.systemFile),user=loadPromptText(profile.userFile);
-  expect(crypto.createHash("sha256").update(system+"\n---\n"+user).digest("hex")).toBe("7d1ec722669b566a87e8c7ddfd8bc09272572685edf21b4417c53d8b4ff73340");
+  expect(crypto.createHash("sha256").update(system+"\n---\n"+user).digest("hex")).toBe("5d1b8b83727549e781d6320a554f160abe74ee7fc5093eea65c40cb1a36f03bc");
   const messages=buildDictionaryMeaningTranslationMessages(request);expect(messages[0].content).toBe(system.trim());expect(JSON.parse(messages[1].content).instructions).toBe(user.trim());
   const mock=vi.fn(async(_url: unknown, _init?: RequestInit)=>new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify({entryTranslation:{primaryText:"проверка",alternativeTexts:[],baseText:"проверка",note:null},contentTranslations:[{fieldId:"definition",text:"проверка"}]})}}],usage:{prompt_tokens:10,completion_tokens:20}}),{status:200}));vi.stubGlobal("fetch",mock);vi.spyOn(console,"info").mockImplementation(()=>{});
   const {translator}=createTranslator(loadTranslationConfigFromEnv({purpose:"dictionary"}));await translator.translateDictionaryMeaning!(request);const body=JSON.parse(mock.mock.calls[0][1]!.body as string);

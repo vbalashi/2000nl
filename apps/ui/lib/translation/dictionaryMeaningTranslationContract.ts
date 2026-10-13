@@ -80,7 +80,11 @@ export function buildDictionaryMeaningTranslationRequest(params: {
   const word = asRecord(params.word);
   const raw = asRecord(word.raw);
   const meanings = Array.isArray(raw.meanings) ? raw.meanings : [];
-  const meaning = asRecord(meanings[0]);
+  const meaning = meanings.length ? asRecord(meanings[0]) : {
+    definition: raw.definition ?? raw.notes,
+    context: raw.definition && raw.notes !== raw.definition ? raw.notes : undefined,
+    examples: typeof asRecord(raw.example).source === "string" ? [asRecord(raw.example).source] : [],
+  };
   const partOfSpeechCode =
     typeof word.part_of_speech === "string" ? word.part_of_speech : null;
   const context = dictionaryTranslationContext(partOfSpeechCode);
@@ -177,7 +181,7 @@ export function buildDictionaryMeaningTranslationRequest(params: {
   };
   // Ordinary reverse training freezes a standalone example before translation.
   // Reserve these prompts before optional idiom examples can exhaust the budget.
-  push("definition", "definition", meaning.definition);
+  push("definition", "definition", meaning.definition ?? meaning.text);
   push("usage-pattern", "usage-pattern", meaning.context);
   const hasStandaloneMeaning = content.some(item => item.role === "definition" || item.role === "usage-pattern");
   const pushStandaloneExamples = () => {

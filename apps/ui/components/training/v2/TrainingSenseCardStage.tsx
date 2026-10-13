@@ -117,11 +117,11 @@ export function TrainingSenseCardStage({
   const revealAnswer = React.useCallback(() => { capture(); onSideChange("answer"); }, [capture, onSideChange]);
   const toggleTranslation = React.useCallback(() => {
     if (busy || moving) return;
-    if (!hasDisplayTranslation && model.requestTranslationCapability) {
+    if (!translationVisible && model.requestTranslationCapability) {
       setTranslationVisible(true); onAction(model.requestTranslationCapability); return;
     }
     setTranslationVisible(visible => !visible);
-  }, [busy, moving, model, onAction, hasDisplayTranslation]);
+  }, [busy, moving, model, onAction, translationVisible]);
   useCardVerticalSwipe({ root: stageRef, audioEnabled: !busy && !moving && Boolean(model.audioCapability && onPlayAudio), onPlayAudio, enabled: answerVisible && !busy && !moving && (hasDisplayTranslation || translationActionAvailable), onToggle: toggleTranslation });
 
 
@@ -179,9 +179,9 @@ export function TrainingSenseCardStage({
         toggleHint();
         return;
       }
-      if (key === "t" && answerVisible && hasDisplayTranslation) {
+      if (key === "t" && answerVisible && (hasDisplayTranslation || translationActionAvailable)) {
         event.preventDefault();
-        setTranslationVisible((visible) => !visible);
+        toggleTranslation();
         return;
       }
       if (!answerVisible) return;
@@ -202,7 +202,7 @@ export function TrainingSenseCardStage({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [answerVisible, busy, moving, hint, hasDisplayTranslation, model, onAction, onSideChange, revealAnswer, toggleHint]);
+  }, [answerVisible, busy, moving, hint, hasDisplayTranslation, translationActionAvailable, toggleTranslation, model, onAction, onSideChange, revealAnswer, toggleHint]);
 
   return (
     <section

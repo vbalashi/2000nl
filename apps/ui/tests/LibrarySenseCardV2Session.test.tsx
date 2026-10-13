@@ -155,6 +155,19 @@ vi.mock("@/lib/trainingService", () => ({
 }));
 
 describe("LibrarySenseCardV2Session", () => {
+  test("revalidates an initial group and prepares an incomplete visible meaning even with a ready headword", async () => {
+    const incomplete = structuredClone(multiSenseBankGroup);
+    const entry = incomplete.entries.find(item => item.kind === "sense-card" && item.entryId === financeEntry.entryId)!;
+    if (entry.kind !== "sense-card") throw new Error("fixture");
+    entry.capabilities.push({actionId:"request-translation",elementId:"translate",messageKey:"senseCard.translation.request",target:{kind:"entry",entryId:entry.entryId,contentRevision:entry.contentRevision},targetLanguageCode:"en"});
+    fetchGroup.mockResolvedValueOnce(incomplete).mockResolvedValue(multiSenseBankGroup);
+    requestTranslation.mockResolvedValue("ready");
+    render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} initialGroup={multiSenseBankGroup} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" />);
+    await waitFor(() => expect(requestTranslation).toHaveBeenCalledOnce());
+    await waitFor(() => expect(fetchGroup).toHaveBeenCalledTimes(2));
+    expect(requestTranslation).toHaveBeenCalledWith(expect.objectContaining({entryId:financeEntry.entryId,targetLanguageCode:"en",force:false,signal:expect.any(AbortSignal)}));
+    expect(performAction).not.toHaveBeenCalled();
+  });
   const groupWithFinanceReportRevision = () => ({
     ...multiSenseBankGroup,
     entries: multiSenseBankGroup.entries.map((entry) =>
@@ -348,6 +361,7 @@ describe("LibrarySenseCardV2Session", () => {
 
   test("keeps Training More details free of global footer actions", async () => {
     const trainingGroup = groupWithFinanceReportRevision();
+    fetchGroup.mockResolvedValue(trainingGroup);
     const trainNext = vi.fn();
 
     render(
@@ -457,7 +471,10 @@ describe("LibrarySenseCardV2Session", () => {
       ...multiSenseBankGroup,
       entries: multiSenseBankGroup.entries.map((entry) =>
         entry.kind === "sense-card" && entry.entryId === financeEntry.entryId
-          ? { ...entry, translation: null }
+          ? { ...entry, translation: null, capabilities: [...entry.capabilities, {
+              actionId: "request-translation" as const, elementId: "translate", messageKey: "senseCard.translation.request",
+              target: { kind: "entry" as const, entryId: entry.entryId, contentRevision: entry.contentRevision }, targetLanguageCode: "en",
+            }] }
           : entry,
       ),
     });
@@ -465,7 +482,7 @@ describe("LibrarySenseCardV2Session", () => {
     requestTranslation.mockResolvedValueOnce("pending");
 
     render(
-      <LibrarySenseCardV2Session
+      <LibrarySenseCardV2Session revealActiveMeaning={false}
         entryId={financeEntry.entryId}
         headword="bank"
         contentLanguageCode="nl"
@@ -1249,7 +1266,10 @@ describe("LibrarySenseCardV2Session", () => {
       ...multiSenseBankGroup,
       entries: multiSenseBankGroup.entries.map((entry) =>
         entry.kind === "sense-card" && entry.entryId === financeEntry.entryId
-          ? { ...entry, translation: null }
+          ? { ...entry, translation: null, capabilities: [...entry.capabilities, {
+              actionId: "request-translation" as const, elementId: "translate", messageKey: "senseCard.translation.request",
+              target: { kind: "entry" as const, entryId: entry.entryId, contentRevision: entry.contentRevision }, targetLanguageCode: "en",
+            }] }
           : entry,
       ),
     });
@@ -1257,7 +1277,7 @@ describe("LibrarySenseCardV2Session", () => {
       .mockResolvedValueOnce("pending")
       .mockResolvedValueOnce("ready");
     render(
-      <LibrarySenseCardV2Session
+      <LibrarySenseCardV2Session revealActiveMeaning={false}
         entryId={financeEntry.entryId}
         headword="bank"
         contentLanguageCode="nl"
@@ -1300,13 +1320,16 @@ describe("LibrarySenseCardV2Session", () => {
       ...multiSenseBankGroup,
       entries: multiSenseBankGroup.entries.map((entry) =>
         entry.kind === "sense-card" && entry.entryId === financeEntry.entryId
-          ? { ...entry, translation: null }
+          ? { ...entry, translation: null, capabilities: [...entry.capabilities, {
+              actionId: "request-translation" as const, elementId: "translate", messageKey: "senseCard.translation.request",
+              target: { kind: "entry" as const, entryId: entry.entryId, contentRevision: entry.contentRevision }, targetLanguageCode: "en",
+            }] }
           : entry,
       ),
     });
     requestTranslation.mockResolvedValue("pending");
     const { rerender } = render(
-      <LibrarySenseCardV2Session
+      <LibrarySenseCardV2Session revealActiveMeaning={false}
         entryId={financeEntry.entryId}
         headword="bank"
         contentLanguageCode="nl"
@@ -1331,7 +1354,7 @@ describe("LibrarySenseCardV2Session", () => {
 
     await act(async () => {
       rerender(
-        <LibrarySenseCardV2Session
+        <LibrarySenseCardV2Session revealActiveMeaning={false}
           entryId="entry-next"
           headword="next"
           contentLanguageCode="nl"
@@ -1353,7 +1376,10 @@ describe("LibrarySenseCardV2Session", () => {
       ...multiSenseBankGroup,
       entries: multiSenseBankGroup.entries.map((entry) =>
         entry.kind === "sense-card" && entry.entryId === financeEntry.entryId
-          ? { ...entry, translation: null }
+          ? { ...entry, translation: null, capabilities: [...entry.capabilities, {
+              actionId: "request-translation" as const, elementId: "translate", messageKey: "senseCard.translation.request",
+              target: { kind: "entry" as const, entryId: entry.entryId, contentRevision: entry.contentRevision }, targetLanguageCode: "en",
+            }] }
           : entry,
       ),
     });
@@ -1364,7 +1390,7 @@ describe("LibrarySenseCardV2Session", () => {
       }),
     );
     const { rerender } = render(
-      <LibrarySenseCardV2Session
+      <LibrarySenseCardV2Session revealActiveMeaning={false}
         entryId={financeEntry.entryId}
         headword="bank"
         contentLanguageCode="nl"
@@ -1384,7 +1410,7 @@ describe("LibrarySenseCardV2Session", () => {
     expect(requestTranslation).toHaveBeenCalledTimes(1);
 
     rerender(
-      <LibrarySenseCardV2Session
+      <LibrarySenseCardV2Session revealActiveMeaning={false}
         entryId="entry-next"
         headword="next"
         contentLanguageCode="nl"
