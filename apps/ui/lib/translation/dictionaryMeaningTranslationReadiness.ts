@@ -42,7 +42,9 @@ function translatedField(
   overlay: TranslationOverlay | null | undefined,
   fieldId: string,
 ): boolean {
-  const meaning = overlay?.meanings?.[0];
+  const scoped = fieldId.match(/^meaning:(\d+):(.+)$/);
+  const meaning = overlay?.meanings?.[scoped ? Number(scoped[1]) : 0];
+  if (scoped) fieldId = scoped[2];
   if (fieldId === "definition") return nonempty(meaning?.definition);
   if (fieldId === "usage-pattern") return nonempty(meaning?.context);
   if (fieldId === "usage-note") return nonempty(meaning?.note);

@@ -1,3 +1,4 @@
+import { TranslationTabSyncGate } from "./TranslationTabSyncGate";
 import {RelatedWordGate} from "./RelatedWordGate";
 import { TrainingSessionStateGate } from "./TrainingSessionStateGate";
 import { ExerciseCardGate } from "./ExerciseCardGate";
@@ -29,6 +30,7 @@ export default async function SenseCardGatePage({
   if (process.env.NODE_ENV === "production") {
     return <main className="p-8">Not available in production.</main>;
   }
+  if (searchParams?.prototype === "translation-tab-sync") return <TranslationTabSyncGate/>;
   if (searchParams?.prototype === "session-states") return <TrainingSessionStateGate
     language={searchParams.language === "ru" || searchParams.language === "nl" ? searchParams.language : "en"}
     family={searchParams.family === "sentence" ? "sentence" : "idiom"}

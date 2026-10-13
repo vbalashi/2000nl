@@ -12,7 +12,8 @@ import type { PlatformContentNodeBindingV2Input } from "./projections/senseCardV
 import type { ServiceSupabase } from "./serverSupabase";
 import type { DictionaryLookupPayload } from "./lookupService";
 import { translationPolicyVersion } from "../translation/translationPolicy";
-import { buildDictionaryMeaningTranslationRequest } from "../translation/dictionaryMeaningTranslationContract";
+import { fullSourceDictionaryTranslationEnabled } from "../translation/dictionaryTranslationExecutionPolicy";
+import { buildDictionaryMeaningTranslationInventory, buildDictionaryMeaningTranslationRequest } from "../translation/dictionaryMeaningTranslationContract";
 import type { TranslationProviderName } from "../translation/types";
 import { projectLexicalRelationTranslations, type LexicalRelationTranslations } from "./platformV2LexicalRelationTranslations";
 import { dictionaryMeaningTranslationCoverage } from "../translation/dictionaryMeaningTranslationReadiness";
@@ -108,7 +109,7 @@ export async function resolvePlatformV2Translations(
       normalizeDictionaryContent(entry),
     );
     const currentContentRevision = contentFingerprint(content);
-    const meaningRequest = buildDictionaryMeaningTranslationRequest({
+    const meaningRequest = (fullSourceDictionaryTranslationEnabled()?buildDictionaryMeaningTranslationInventory:buildDictionaryMeaningTranslationRequest)({
       entryId: entry.id,
       sourceContentFingerprint: currentContentRevision,
       sourceLanguageCode: entry.language_code ?? "nl",

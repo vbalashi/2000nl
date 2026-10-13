@@ -4,7 +4,8 @@ import {
   normalizeDictionaryContent,
   verifyDictionaryContentAudioLinks,
 } from "../platform/projections/dictionaryContent";
-import { buildDictionaryMeaningTranslationRequest } from "./dictionaryMeaningTranslationContract";
+import { fullSourceDictionaryTranslationEnabled } from "./dictionaryTranslationExecutionPolicy";
+import { buildDictionaryMeaningTranslationInventory, buildDictionaryMeaningTranslationRequest } from "./dictionaryMeaningTranslationContract";
 import { dictionaryMeaningTranslationFingerprint } from "./dictionaryMeaningTranslationService";
 import { getDictionaryMeaningPromptFingerprint } from "./prompts/promptFingerprint";
 import {
@@ -26,7 +27,7 @@ export async function dictionaryMeaningTranslationIdentity(input: {
   const providerRevision = getDictionaryMeaningPromptFingerprint(
     input.provider,
   );
-  const request = buildDictionaryMeaningTranslationRequest({
+  const request = (fullSourceDictionaryTranslationEnabled()?buildDictionaryMeaningTranslationInventory:buildDictionaryMeaningTranslationRequest)({
     entryId: input.wordEntryId,
     sourceContentFingerprint: sourceContentRevision,
     sourceLanguageCode:

@@ -93,10 +93,11 @@ export function TrainingIdiomCard({
     enabled: !busy && !actionBusy,
     refresh: async signal => {
       const loaded = await loadIdiomExerciseContent({ candidate, contentLanguageCode, translationTargetLanguageCode, signal });
-      if (signal.aborted) return;
+      if (signal.aborted) return null;
       if (loaded.state !== "ready") throw new Error("translation_content_unavailable");
       setContent(loaded.content);
       setTranslationPending(false);
+      return loaded.content.entry;
     },
     onStatus: status => { setTranslationPending(status === "pending"); if (status === "failed") setFailed(true); },
   });

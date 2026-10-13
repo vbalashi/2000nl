@@ -93,6 +93,8 @@ describe("standalone translation worker process", () => {
       }
       if (req.url === "/rest/v1/rpc/dictionary_translation_source_v1")
         return reply({ word, revision: job.source_row_revision });
+      if (req.url?.startsWith("/rest/v1/dictionary_translation_job_parts")) return reply([]);
+      if (req.url === "/rest/v1/rpc/checkpoint_dictionary_translation_part_v1") return reply(JSON.parse(raw).p_lease_token===token);
       if (req.url?.includes("/chat/completions")) {
         modelCalls++;
         if (modelCalls === 1) {

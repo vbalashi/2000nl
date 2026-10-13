@@ -3,7 +3,7 @@
 import React from "react";
 import { TrainingExclusionUndoNotice } from "../v2/TrainingExclusionUndoNotice";
 import { getUiMessages } from "@/lib/uiMessages";
-import { onDictionaryTranslationReady } from "@/lib/translation/dictionaryTranslationEvents";
+import { onDictionaryTranslationReady, onDictionaryTranslationRevalidate } from "@/lib/translation/dictionaryTranslationEvents";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -129,6 +129,8 @@ function SenseCardV2Session({
     null,
   );
   const [activeMeaningId, setActiveMeaningId] = React.useState<string>(entryId);
+  const visibleMeaningRef=React.useRef({activeMeaningId,revealActiveMeaning,translationLanguage});
+  visibleMeaningRef.current={activeMeaningId,revealActiveMeaning,translationLanguage};
   const translationPollTimers = React.useRef<Record<string, number>>({});
   const translationRequests = React.useRef(new Map<string, AbortController>());
   const translationSession = React.useRef(0);
@@ -221,7 +223,7 @@ function SenseCardV2Session({
         (expectedDetailIdentity &&
           expectedDetailIdentity !== detailIdentityRef.current)
       ) {
-        return next;
+        return null;
       }
       setGroup(next);
       if (!next) setLookupError("unavailable");
@@ -620,6 +622,17 @@ function SenseCardV2Session({
     if (automaticallyPrepared.current.size > 64) automaticallyPrepared.current.delete(automaticallyPrepared.current.values().next().value!);
     void handleRequestTranslation(entry.entryId, entry.card?.cardTypeId ?? cardTypeId);
   }, [activeMeaningId, cardTypeId, detailIdentity, group, handleRequestTranslation, loading, revealActiveMeaning, translationLanguage]);
+
+  React.useEffect(() => onDictionaryTranslationRevalidate(() => {
+    if (!translationLanguage || translationRequests.current.size || loading) return;
+    const expected=translationSession.current;
+    void load(undefined,expected,detailIdentity).then(next=>{
+      if(expected!==translationSession.current||detailIdentity!==detailIdentityRef.current)return;
+      if(!visibleMeaningRef.current.revealActiveMeaning||visibleMeaningRef.current.activeMeaningId!==activeMeaningId||visibleMeaningRef.current.translationLanguage!==translationLanguage)return;
+      const entry=next?.entries.find(item=>item.kind==="sense-card"&&item.entryId===activeMeaningId);
+      if(entry?.kind==="sense-card"&&entry.capabilities.some(cap=>cap.actionId==="request-translation"&&cap.targetLanguageCode===translationLanguage))void handleRequestTranslation(entry.entryId,entry.card?.cardTypeId??cardTypeId,false,expected);
+    }).catch(() => { /* load exposes retry. */ });
+  }), [activeMeaningId,cardTypeId,detailIdentity,handleRequestTranslation,load,loading,translationLanguage]);
 
   React.useEffect(() => onDictionaryTranslationReady(translation => {
     if (translationRequests.current.has(translation.entryId) || translation.targetLanguageCode !== translationLanguage || !group?.entries.some(

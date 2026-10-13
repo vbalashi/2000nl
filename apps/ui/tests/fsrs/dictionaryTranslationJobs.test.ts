@@ -37,6 +37,24 @@ describeIfDb("durable dictionary translation jobs", () => {
     await pool.end();
   });
 
+  test("successful parts survive continuation and stale/expired/source-changed owners cannot save", async () => {
+    await withTransaction(pool, async client => {
+      const entry=await insertWord(client, `parts-${randomUUID()}`);await enqueue(client,entry,"parts",10);
+      const job=await claim(client);
+      const save=async(token:string,key:string,continuing=true)=>(await client.query("select checkpoint_dictionary_translation_part_v1($1,$2,$3,$4,$5,$6) as saved",[job.id,token,key,"a".repeat(64),JSON.stringify({entryTranslation:null,contentTranslations:[]}),continuing])).rows[0].saved;
+      expect(await save(randomUUID(),"stale")).toBe(false);
+      expect(await save(job.lease_token,"part:0")).toBe(true);
+      const resumed=await claim(client);expect(resumed.id).toBe(job.id);expect(resumed.attempt).toBe(1);
+      expect((await client.query("select count(*)::int as n from dictionary_translation_job_parts where job_id=$1",[job.id])).rows[0].n).toBe(1);
+      expect(await save(job.lease_token,"old")).toBe(false);
+      await client.query("update dictionary_translation_jobs set lease_expires_at=clock_timestamp()-interval '1 second' where id=$1",[job.id]);
+      expect(await save(resumed.lease_token,"expired")).toBe(false);
+      await client.query("update dictionary_translation_jobs set lease_expires_at=clock_timestamp()+interval '1 minute' where id=$1",[job.id]);
+      await client.query("update word_entries set headword=headword||'-changed' where id=$1",[entry]);
+      expect(await save(resumed.lease_token,"changed")).toBe(false);
+      expect((await client.query("select count(*)::int as n from dictionary_translation_job_parts where job_id=$1",[job.id])).rows[0].n).toBe(1);
+    });
+  });
   test("speculative jobs reserve capacity for a foreground request", async () => {
     await withTransaction(pool, async (client) => {
       const first = await insertWord(client, `buffer-${randomUUID()}`);
@@ -342,7 +360,9 @@ describeIfDb("durable dictionary translation jobs", () => {
         `select has_table_privilege($1,'public.dictionary_translation_jobs','select') table_read,
         has_function_privilege($1,'public.claim_dictionary_translation_job_v1()','execute') claim,
         has_function_privilege($1,'public.dictionary_translation_source_v1(uuid)','execute') source,
-        has_function_privilege($1,'public.enqueue_dictionary_translation_job_v1(uuid,text,text,text,text,text,text,integer,boolean,boolean,timestamptz)','execute') enqueue`,
+        has_function_privilege($1,'public.enqueue_dictionary_translation_job_v1(uuid,text,text,text,text,text,text,integer,boolean,boolean,timestamptz)','execute') enqueue,
+        has_table_privilege($1,'public.dictionary_translation_job_parts','select') parts_read,
+        has_function_privilege($1,'public.checkpoint_dictionary_translation_part_v1(uuid,uuid,text,text,jsonb,boolean)','execute') checkpoint`,
         [role],
       );
       expect(rows[0]).toEqual({
@@ -350,6 +370,8 @@ describeIfDb("durable dictionary translation jobs", () => {
         claim: false,
         source: false,
         enqueue: false,
+        parts_read: false,
+        checkpoint: false,
       });
     }
   });

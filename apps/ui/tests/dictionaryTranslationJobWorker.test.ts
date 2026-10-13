@@ -37,6 +37,9 @@ afterEach(() => {
   vi.useRealTimers();
 });
 describe("translation worker execution lifetime", () => {
+  test("successful continuation never publishes an incomplete cache or consumes a failure",async()=>{
+    const rpc=vi.fn();expect(await run({client:{rpc},job,execute:async()=>({continuation:true})})).toBe("continued");expect(rpc).not.toHaveBeenCalled();
+  });
   test("publishes only through the fenced completion RPC", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
     expect(

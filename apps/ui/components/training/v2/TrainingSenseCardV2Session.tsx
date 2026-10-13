@@ -340,7 +340,11 @@ export function TrainingSenseCardV2Session({
     entry: result?.entry ?? null,
     targetLanguageCode: translationTargetLanguageCode,
     enabled: !busy && (!wordInContext || (contextResult?.state === "ready" && synchronizedContext === contextResult)),
-    refresh: signal => load(signal, { preserveCard: true, usePrefetch: false }),
+    refresh: async signal => {
+      const refreshed=await load(signal,{preserveCard:true,usePrefetch:false});
+      if(refreshed?.state!=="ready")throw new Error("translation_refresh_unavailable");
+      return refreshed.entry;
+    },
     onStatus: status => {
       if (error) return;
       setNoticeTone(status === "pending" ? "info" : "error");
@@ -359,6 +363,13 @@ export function TrainingSenseCardV2Session({
     () => (result ? evaluateTrainingCardRenderability(result.entry, mode) : null),
     [mode, result],
   );
+
+  const contextPrompt = wordInContext && contextResult?.state === "ready" ? (() => {
+    const prompt=contextResult.prompt;
+    const node=result?.entry.contentNodes.find(item=>item.contentNodeId===prompt.contentNodeId&&item.sourceTextFingerprint===prompt.sourceTextFingerprint);
+    const translated=node?.translations.find(item=>item.targetLanguageCode===translationTargetLanguageCode&&item.status==="ready"&&item.sourceTextFingerprint===prompt.sourceTextFingerprint)?.text;
+    return {...prompt,...(translated?{text:translated}:{}),...(model?.entryTranslation?{recallTarget:model.entryTranslation}:{})};
+  })() : undefined;
 
   const sessionState: TrainingV2SessionState = wordInContext &&
     (!translationTargetLanguageCode || contextResult?.state !== "ready" || synchronizedContext !== contextResult)
@@ -808,8 +819,7 @@ export function TrainingSenseCardV2Session({
           contentLanguage={contentLanguageCode}
           translationLanguage={translationTargetLanguageCode && translationTargetLanguageCode !== "off" ? translationTargetLanguageCode : undefined}
           model={model}
-          contextPrompt={wordInContext && contextResult?.state === "ready"
-            ? contextResult.prompt : undefined}
+          contextPrompt={contextPrompt}
           onHintOpened={wordInContext && trainingSessionId ? () => {
             if (contextHintWriteRef.current) return;
             contextHintWriteRef.current = markWordContextHintOpened({

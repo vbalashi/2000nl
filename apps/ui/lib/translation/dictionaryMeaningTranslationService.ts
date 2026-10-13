@@ -7,7 +7,10 @@ import {
   parseDictionaryMeaningTranslationResult,
   type DictionaryMeaningTranslationRequestV1,
 } from "./dictionaryMeaningTranslationContract";
-import { buildDictionaryMeaningTranslationArtifact } from "./dictionaryMeaningTranslationArtifact";
+import {
+  planDictionaryTranslationParts,
+  aggregateDictionaryTranslationParts,
+} from "./dictionaryTranslationParts";
 
 export function dictionaryMeaningTranslationFingerprint(params: {
   request: DictionaryMeaningTranslationRequestV1;
@@ -15,7 +18,10 @@ export function dictionaryMeaningTranslationFingerprint(params: {
   provider: string;
   promptFingerprint: string;
 }) {
-  return crypto.createHash("sha256").update(JSON.stringify(params)).digest("hex");
+  return crypto
+    .createHash("sha256")
+    .update(JSON.stringify(params))
+    .digest("hex");
 }
 
 export function dictionaryMeaningTranslatedPaths(
@@ -24,30 +30,57 @@ export function dictionaryMeaningTranslatedPaths(
   return [
     ["headword"],
     ...request.content.map((item) => {
-      if (item.fieldId === "definition") return ["meanings", 0, "definition"];
-      if (item.fieldId === "usage-pattern") return ["meanings", 0, "context"];
-      if (item.fieldId === "usage-note") return ["meanings", 0, "note"];
+      const scoped = item.fieldId.match(/^meaning:(\d+):(.+)$/);
+      const meaningIndex = scoped ? Number(scoped[1]) : 0;
+      if (scoped) item = { ...item, fieldId: scoped[2] };
+      if (item.fieldId === "definition")
+        return ["meanings", meaningIndex, "definition"];
+      if (item.fieldId === "usage-pattern")
+        return ["meanings", meaningIndex, "context"];
+      if (item.fieldId === "usage-note")
+        return ["meanings", meaningIndex, "note"];
       const example = item.fieldId.match(/^example:(\d+)$/);
-      if (example) return ["meanings", 0, "examples", Number(example[1])];
+      if (example)
+        return ["meanings", meaningIndex, "examples", Number(example[1])];
       const idiom = item.fieldId.match(/^idiom:(\d+)$/);
       if (idiom) {
-        return ["meanings", 0, "idioms", Number(idiom[1]), "expression"];
+        return [
+          "meanings",
+          meaningIndex,
+          "idioms",
+          Number(idiom[1]),
+          "expression",
+        ];
       }
       const explanation = item.fieldId.match(/^idiom:(\d+):explanation$/);
       if (explanation) {
-        return ["meanings", 0, "idioms", Number(explanation[1]), "explanation"];
+        return [
+          "meanings",
+          meaningIndex,
+          "idioms",
+          Number(explanation[1]),
+          "explanation",
+        ];
       }
       const idiomExample = item.fieldId.match(/^idiom:(\d+):example:(\d+)$/);
       if (idiomExample) {
         return [
           "meanings",
-          0,
+          meaningIndex,
           "idioms",
           Number(idiomExample[1]),
           "examples",
           Number(idiomExample[2]),
         ];
       }
+      const relation = item.fieldId.match(/^(synonym|antonym):(\d+)$/);
+      if (relation)
+        return [
+          "meanings",
+          meaningIndex,
+          relation[1] === "synonym" ? "synonyms" : "antonyms",
+          Number(relation[2]),
+        ];
       return ["content", item.fieldId];
     }),
   ];
@@ -81,7 +114,9 @@ export async function translateDictionaryMeaningWithGenericProvider(
   const translated = providerResult.translations;
   const values = Array.isArray(translated) ? translated : [translated];
   if (values.length !== request.content.length + 1) {
-    throw new Error("Generic provider returned an unaligned meaning translation");
+    throw new Error(
+      "Generic provider returned an unaligned meaning translation",
+    );
   }
   const result = {
     entryTranslation: {
@@ -108,10 +143,14 @@ export async function resolveDictionaryMeaningTranslation(
   translator: ITranslator,
   request: DictionaryMeaningTranslationRequestV1,
 ) {
-  const result = await translateDictionaryMeaning(translator, request);
-  return {
-    overlay: buildDictionaryMeaningTranslationArtifact(result),
-    note: result.entryTranslation?.note ?? null,
-    meta: result.meta ?? {},
-  };
+  const parts = planDictionaryTranslationParts(request);
+  const results: DictionaryMeaningTranslationProviderResult[] = [];
+  for (const part of parts)
+    results.push(await translateDictionaryMeaning(translator, part.request));
+  const aggregate = aggregateDictionaryTranslationParts(
+    request,
+    parts,
+    results,
+  );
+  return { ...aggregate, meta: results[0]?.meta ?? {} };
 }
