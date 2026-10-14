@@ -19,5 +19,5 @@ material or unfinished features into public promises. New substantive reasoning
 belongs in a dated discussion; update current summaries with source links.
 
 This folder contains planning and internal article briefs, not a deployed CMS.
-Engine/editor choice remains open. Do not copy experiments into public content
+A first Astro + Pages CMS implementation lives in the separate dilum-landing repo; read its editorial workflow. CMS account authorization/roundtrip remains pending. Do not copy experiments into public content
 or treat economic scenarios as actual invoices or personal financial quotes.
