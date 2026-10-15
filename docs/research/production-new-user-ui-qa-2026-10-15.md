@@ -121,6 +121,48 @@ session was then quit through the wrapper, which exited 0 and revoked the
 server-side QA session. No product conclusion is drawn from the earlier
 cross-session browser closure.
 
+## Issue #705 follow-up — final scoped journey
+
+The same dedicated QA identity was reauthenticated through the fail-closed
+wrapper. On initial load the page briefly showed “Preparing training”; it then
+rendered the VanDale 2k training home with Due now 0, Total reviews 0, Still
+new 2333, and an enabled Start training button. No visible alert or page error
+appeared. The first-load trace recorded one
+`/api/training/availability` response, HTTP 200 in 945 ms. Available word-list,
+setup, settings, language, scope, and source reads also returned 200. Request
+bodies were not retained, so the `draft.listValue` could not be compared with
+the separate #704 race observation.
+
+In Library, search for `fiets` returned one article. Its card displayed
+`Collections · 1`. The fresh semantic click on that control left the Library
+view unchanged: no Collections dialog appeared, and no membership write was
+observed. The existing `QA705 Goed fiets` collection was therefore not given
+the second card. This confirms a reproducible open-picker blocker for this
+meaning on this run; it does not establish a general failure for all cards.
+
+The builder opened from Create training. Its Source control remained at
+VanDale 2k; the semantic source locator did not resolve. The Exercises panel
+opened with a fresh semantic `Exercises` locator. Selecting the visible
+`Idioms` option did not change the exercise summary (`Words · Direct` stayed
+selected); instead, the Filters panel opened. I stopped without retrying that
+control. This matches the previously reported navigation-misdirection symptom
+and prevented starting a collection-backed exercise in this pass.
+
+To inspect answer state, I started the currently selected default Words
+training. The first card (`thuis`) appeared at 0 / 10, and Show answer revealed
+the definition and examples. The resulting card showed Learn disabled and
+Report/Exclude actions; no self-rating choices were offered. The trace showed
+the availability, session start, card, snapshot, lookup, translation, and
+study-time requests returning 200. No page or unhandled errors were recorded.
+
+The visible route remained `/`. The sanitized trace had no DOM observer
+batches, so it does not establish whether any short-lived visual flashing
+occurred. Collection membership persistence after reload could not be tested
+for `fiets` because the picker never opened; the prior `goed` membership
+remains the only confirmed collection write. No second browser session was
+started. The wrapper exited 0, the dedicated session was revoked, and its
+temporary environment, wrapper, and trace script were removed.
+
 Focused local regression baseline: 136 tests passed across
 `TrainingScreen.test.tsx`, `TrainingScreenTransition.test.tsx`,
 `TrainingTodaySetup.test.tsx`, `TrainingStartupGate.test.tsx`, and
