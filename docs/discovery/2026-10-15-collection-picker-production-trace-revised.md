@@ -1,7 +1,7 @@
 # Library collection picker production trace (revised)
 
-Date: 2026-10-15 (UTC)  
-Surface: `https://2000.dilum.io/`, authenticated Library flow  
+Date: 2026-10-15 (UTC)
+Surface: `https://2000.dilum.io/`, authenticated Library flow
 Account: isolated issue-scoped QA user; no collection was created and no membership was changed.
 
 ## Controlled observation
