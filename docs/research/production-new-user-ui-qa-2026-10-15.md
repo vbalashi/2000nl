@@ -106,6 +106,15 @@ observer emitted no batches, this run cannot correlate the create flow with
 request timing or rule out flicker. No flashing was noticed during the brief
 create flow, but this is not a measured no-flicker result.
 
+Related #704 evidence from a separate production builder pass found
+`/api/training/availability` returning 400 when `draft.listValue` was
+`invalid-or-unrecognized`, followed by 200 when `draft.listValue` was
+`curated`, with the same draft shape. The error body was not parsed. This
+suggests a possible pre-hydration list-catalog race, but does not establish
+that a user saw an error or that it caused the reported first-load problem.
+The clean-account trace above showed only a 200 availability response and did
+not retain its request parameters.
+
 The unsupported wait command in the temporary driver consumed its 15-second
 bound and delayed later trace collection; direct snapshots still worked. The
 session was then quit through the wrapper, which exited 0 and revoked the
