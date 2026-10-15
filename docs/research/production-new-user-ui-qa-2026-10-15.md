@@ -1,8 +1,8 @@
 # Production new-user UI QA — 2026-10-15
 
-**Status:** exploratory pass, findings not yet reproduced independently  
-**Environment:** production UI at https://2000.dilum.io/  
-**Account:** isolated dedicated QA account `test-new-user-20261015@2000nl.test`; clean at start. Existing test account was left untouched.  
+**Status:** exploratory pass, findings not yet reproduced independently
+**Environment:** production UI at https://2000.dilum.io/
+**Account:** isolated dedicated QA account `test-new-user-20261015@2000nl.test`; clean at start. Existing test account was left untouched.
 **Scope:** first visit, training launch/exit, Library lookup and card collection membership, session builder, exercise switching, answering a card. No production dictionary imports or changes to other users' data.
 
 **Speech-recognition correction:** The owner's earlier words were `goed` and `fiets`; the transcript's `hood` and `fits` were recognition errors. The initial exploratory search of `fits`/`hood` is not product evidence and is excluded from findings.
@@ -186,4 +186,3 @@ untouched.
 - [#704](https://github.com/vbalashi/2000nl/issues/704) — reproduce the Session Builder transition to `about:blank`.
 - [#705](https://github.com/vbalashi/2000nl/issues/705) — recheck first-use loading, Start, collection persistence/membership, and training selection from a clean account. Exercise switching and reveal/rating checks were added in a comment.
 - [#440](https://github.com/vbalashi/2000nl/issues/440#issuecomment-6201311699) — added the uncalibrated 15–20-second collection-training launch observation for controlled latency correlation.
-
