@@ -766,7 +766,10 @@ function SenseCardV2Session({
           translationStates={translationStates}
           collectionCounts={Object.fromEntries(
             Object.entries(membershipsByEntryId).map(
-              ([meaningEntryId, lists]) => [meaningEntryId, lists.length],
+              ([meaningEntryId, lists]) => [
+                meaningEntryId,
+                lists.filter((list) => list.listType === "user").length,
+              ],
             ),
           )}
           activeMeaningId={activeMeaningId}
