@@ -186,3 +186,17 @@ untouched.
 - [#704](https://github.com/vbalashi/2000nl/issues/704) — reproduce the Session Builder transition to `about:blank`.
 - [#705](https://github.com/vbalashi/2000nl/issues/705) — recheck first-use loading, Start, collection persistence/membership, and training selection from a clean account. Exercise switching and reveal/rating checks were added in a comment.
 - [#440](https://github.com/vbalashi/2000nl/issues/440#issuecomment-6201311699) — added the uncalibrated 15–20-second collection-training launch observation for controlled latency correlation.
+
+
+## Issue #705 follow-up — direct Playwright picker recheck
+
+On the existing QA account and collection, direct Playwright connected to the
+wrapper-authenticated production browser and resolved exactly one accessible
+button matching `getByRole('button', { name: /^Collections ·/ })`. Its single
+bounded click attempt timed out before dispatch: Playwright continued waiting
+for the resolved element to become visible, enabled, and stable. Therefore this
+attempt provides no evidence about the picker click handler or whether a dialog
+would open. The screenshot command did not create an output file, so there is
+no before/after screenshot for visual inspection. The wrapper exited 0; the
+temporary QA session artifacts were removed and no `qa-session-*` recovery
+directory remained.
