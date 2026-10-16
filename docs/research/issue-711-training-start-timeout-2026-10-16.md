@@ -6,17 +6,19 @@ Sanitized aggregated logs for the two new-user reports showed `start_training_se
 
 ## Local falsifiable test
 
-A disposable local FSRS database held an 18,000-row source-bound corpus in the canonical dictionary, word-entry, source-binding, and content-node tables. The fixture verified 4,500 first meanings, 13,500 later meanings, 18,000 active examples, and zero unrenderable entries. All fixture writes ran in a transaction and rolled back; the disposable database was dropped. The durable manual harness is `apps/ui/scripts/manual/issue-711-scheduler-bench.test.ts`; `apps/ui/scripts/manual/issue-711-scheduler-benchmark.md` gives the exact guarded command. It is outside the routine test tree and rejects non-loopback or non-disposable DB URLs.
+An exact rerun of the durable manual harness used a disposable local FSRS database with an 18,000-row source-bound corpus in canonical dictionary, word-entry, source-binding, and content-node tables. The fixture verified 4,500 first meanings, 13,500 later meanings, 18,000 active examples, and zero unrenderable entries. All fixture writes ran in a transaction and rolled back; the disposable database was dropped. The harness is `apps/ui/scripts/manual/issue-711-scheduler-bench.test.ts`; `apps/ui/scripts/manual/issue-711-scheduler-benchmark.md` gives the exact command, including its dedicated Vitest config. It is outside the routine test tree and rejects non-loopback or non-disposable DB URLs. It resets migration 227's function-level planner setting inside the rollback transaction and asserts the caller's baseline/candidate setting before each scheduler call.
 
 The test exercised the installed `private.training_scheduler_candidates_v2` function, changing only `enable_nestloop`:
 
 | Scope | Baseline | `enable_nestloop=off` preference | Selected result parity |
 | --- | ---: | ---: | --- |
-| 18k New | 7.209 s | 0.303 s | Same 4,500 identities and `new` category |
-| 100-entry curated list | 71 ms | 78 ms | Same 25 identities and `new` category |
-| 18k Review | 11.288 s | 0.277 s | Same 4,500 identities and `learning` category |
+| 18k New | 7.504 s | 0.291 s | Same 4,500 identities and `new` category |
+| 100-entry curated list | 70 ms | 81 ms | Same 25 identities and `new` category |
+| 18k Review | 11.386 s | 0.279 s | Same 4,500 identities and `learning` category |
 
 This supports the scheduler’s materialized first-meaning relation as a measured hot path. It does not prove the production cause by itself or substitute for post-release production validation.
+
+The README command was run with the dedicated config: one file and one benchmark test passed in 25.49 s. The 45 s per-query timeout applies only inside the local benchmark transaction, so the baseline can finish; it does not alter production role or function timeouts. The disposable database cleanup trap ran on exit.
 
 ## Proposed database change and rollout gate
 

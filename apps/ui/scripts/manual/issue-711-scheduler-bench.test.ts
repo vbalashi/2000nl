@@ -37,9 +37,10 @@ const dbUrl = getDbUrl();
       await client.query("ALTER TABLE private.platform_v2_content_nodes DISABLE TRIGGER USER");
       for (const kind of ["definition","example"] as const) {
         const locator = kind === "definition" ? "raw.meanings[0].definition" : "raw.meanings[0].examples[0]";
+        const sourceOrder = kind === "definition" ? 1 : 2;
         await client.query(`insert into private.platform_v2_content_nodes
           (entry_id,kind,binding_state,first_source_revision,last_source_revision,source_native_key,source_text_fingerprint,diagnostic_locator,canonical_source_text,source_order)
-          select id,$1,'active','qa711-v1','qa711-v1',$1||'-1','fp-'||$1||'-'||n,$2,'Fixture '||n,1 from qa711_entries`,[kind,locator]);
+          select id,$1,'active','qa711-v1','qa711-v1',$1||'-1','fp-'||$1||'-'||n,$2,'Fixture '||n,$3 from qa711_entries`,[kind,locator,sourceOrder]);
       }
       await client.query("ALTER TABLE private.platform_v2_content_nodes ENABLE TRIGGER USER");
       await client.query("DELETE FROM private.unrenderable_ordinary_direct_entries_v1 WHERE entry_id IN (SELECT id FROM qa711_entries)");
@@ -72,10 +73,25 @@ const dbUrl = getDbUrl();
         can_access_dictionary($2,$1,'read') readable`,[dictionaryId,userId]);
       expect(fixtureDiagnostics.rows[0]).toEqual({entries:18000,bindings:18000,readable:true});
 
+      // runMigrations installs migration 227, which sets enable_nestloop=off at
+      // function scope. Remove that setting transaction-locally so the baseline
+      // below really uses the caller's SET LOCAL enable_nestloop=on. ROLLBACK
+      // restores the installed function configuration after this benchmark.
+      await client.query(`ALTER FUNCTION private.training_scheduler_candidates_v2(
+        uuid, text[], uuid, text, text, text, uuid[], text[], jsonb, boolean, boolean
+      ) RESET enable_nestloop`);
+      const { rows: [schedulerConfig] } = await client.query(`select proconfig from pg_proc
+        where oid='private.training_scheduler_candidates_v2(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean,boolean)'::regprocedure`);
+      expect(schedulerConfig.proconfig ?? []).not.toContain("enable_nestloop=off");
+
       const dictionaryFilter = {dictionaryScope:{mode:"selected",languageCode:"nl",dictionaryIds:[dictionaryId]}};
       const execute = async (name:string,nestloop:boolean,cardFilter="new",listId:string|null=null,filter:unknown=dictionaryFilter) => {
-        await client.query("SET LOCAL statement_timeout='12000ms'");
+        // Permit the intentionally slow baseline to finish on this disposable
+        // local corpus; this does not change any production timeout.
+        await client.query("SET LOCAL statement_timeout='45000ms'");
         await client.query(`SET LOCAL enable_nestloop=${nestloop ? "on":"off"}`);
+        const { rows: [plannerSetting] } = await client.query("show enable_nestloop");
+        expect(plannerSetting.enable_nestloop).toBe(nestloop ? "on" : "off");
         await client.query("select set_config('request.jwt.claim.sub',$1,true)",[userId]);
         await client.query("SAVEPOINT qa711_scheduler_measure");
         const start=Date.now();
@@ -94,13 +110,13 @@ const dbUrl = getDbUrl();
         }
       };
       await execute("baseline-18k-new",true);
-      await execute("hash-18k-new",false);
+      await execute("nestloop-off-18k-new",false);
       await execute("baseline-small-list-new",true,"new",smallList.id,{});
-      await execute("hash-small-list-new",false,"new",smallList.id,{});
+      await execute("nestloop-off-small-list-new",false,"new",smallList.id,{});
       await client.query(`insert into user_card_status(user_id,entry_id,card_type_id,fsrs_enabled,fsrs_reps,next_review_at)
         select $1,id,'word-to-definition',true,1,now()-interval '1 hour' from qa711_entries where sense=1`,[userId]);
       await execute("baseline-18k-review",true,"review");
-      await execute("hash-18k-review",false,"review");
+      await execute("nestloop-off-18k-review",false,"review");
       for(const [baseline,candidate] of [[0,1],[2,3],[4,5]]) {
         expect(results[baseline]).toMatchObject({count:results[candidate].count,categoryCounts:results[candidate].categoryCounts,identityHash:results[candidate].identityHash});
       }
