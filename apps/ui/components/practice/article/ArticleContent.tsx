@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import {useAdditionalCardTranslation,additionalTranslationText} from "./AdditionalCardTranslation";
 import {List,Quote} from "lucide-react";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import type {PlatformV2SenseContentNode} from "@/lib/platform/projections/platformV2SenseContent";
@@ -22,8 +23,11 @@ type Presentation={
  classes?:ArticleContentClasses;
 };
 
-export function ArticleTranslation({text,visible,pending=false,failed=false,onRetry,interfaceLanguage="en",emphasis=false,multiline=false,language,classes=s}:{text?:string|null;visible:boolean;pending?:boolean;failed?:boolean;onRetry?:()=>void;interfaceLanguage?:OnboardingLanguage;emphasis?:boolean;multiline?:boolean;language?:string;classes?:ArticleContentClasses}){
- return text||pending||failed?<SenseCardReveal open={visible}>{text?<p lang={language} data-content-translation="true" className={emphasis?classes.translationEmphasis:classes.translation}>{text}</p>:failed&&onRetry?<TranslationFailure language={interfaceLanguage} onRetry={onRetry}/>:pending?<TranslationPlaceholder emphasis={emphasis} multiline={multiline}/>:null}</SenseCardReveal>:null;
+export function ArticleTranslation({text,visible,pending=false,failed=false,onRetry,interfaceLanguage="en",emphasis=false,multiline=false,language,classes=s,translationKey,sourceTextFingerprint,literal=false,testId,markContentTranslation=true}:{text?:string|null;visible:boolean;pending?:boolean;failed?:boolean;onRetry?:()=>void;interfaceLanguage?:OnboardingLanguage;emphasis?:boolean;multiline?:boolean;language?:string;classes?:ArticleContentClasses;translationKey?:string;sourceTextFingerprint?:string;literal?:boolean;testId?:string;markContentTranslation?:boolean}){
+ const additional=useAdditionalCardTranslation();
+ const secondary=additionalTranslationText(additional,translationKey,sourceTextFingerprint,literal);
+ const row=(value:string|null|undefined,code:string|undefined,loading:boolean,error:boolean,retry:(()=>void)|undefined,label:boolean)=>value||loading||error?<SenseCardReveal open={visible}>{value?<p lang={code} data-testid={code === language ? testId : undefined} data-content-translation={markContentTranslation ? "true" : undefined} data-literal-translation={literal ? "true" : undefined} data-translation-language={code} className={emphasis?classes.translationEmphasis:classes.translation}>{label&&<span className={s.languageLabel}>{code?.toUpperCase()}</span>}{literal&&"("}{literal&&<span lang={interfaceLanguage}>{getUiMessages(interfaceLanguage).article.literally}: </span>}{value}{literal&&")"}</p>:<div data-translation-language={code}>{label&&<span className={s.languageLabel}>{code?.toUpperCase()}</span>}{error&&retry?<TranslationFailure language={interfaceLanguage} onRetry={retry}/>:loading?<TranslationPlaceholder emphasis={emphasis} multiline={multiline}/>:null}</div>}</SenseCardReveal>:null;
+ return <>{row(text,language,pending,failed,onRetry,Boolean(additional?.labelPrimary))}{additional&&translationKey&&row(secondary,additional.language,!literal&&additional.status==="pending",!literal&&additional.status==="failed",additional.retry,true)}</>;
 }
 
 export function ArticleContentNode({node,interfaceLanguage,contentLanguage,translationLanguage,translationVisible=false,translationPending=false,translationFailed=false,onRetryTranslation,classes=s,lead=false}:Presentation&{node:PlatformV2SenseContentNode;lead?:boolean}){
@@ -33,8 +37,8 @@ export function ArticleContentNode({node,interfaceLanguage,contentLanguage,trans
   <div className={classes.contentPair}>
    {!lead&&<span className={classes.nodeRole} data-role={node.kind==="example"?"example":"explanation"}>{node.kind==="example"?copy.example:node.kind==="idiom-explanation"||node.kind==="definition"?copy.explanation:copy.note}</span>}
    <p lang={contentLanguage} className={lead?classes.definitionText:literary?classes.literary:node.kind==="usage-pattern"?classes.usagePattern:classes.explanation}>{node.text}</p>
-   <ArticleTranslation text={node.translation} pending={translationPending} failed={translationFailed} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} multiline={node.kind === "definition"} visible={translationVisible} language={translationLanguage} classes={classes}/>
-   {node.kind === "idiom" && node.translation && node.literalTranslation && <SenseCardReveal open={translationVisible}><p lang={translationLanguage} data-content-translation="true" data-literal-translation="true" className={classes.translation}>(<span lang={interfaceLanguage}>{copy.literally}</span>: {node.literalTranslation})</p></SenseCardReveal>}
+   <ArticleTranslation translationKey={node.contentNodeId} sourceTextFingerprint={node.sourceTextFingerprint} text={node.translation} pending={translationPending} failed={translationFailed} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} multiline={node.kind === "definition"} visible={translationVisible} language={translationLanguage} classes={classes}/>
+   {node.kind === "idiom" && <ArticleTranslation translationKey={node.contentNodeId} sourceTextFingerprint={node.sourceTextFingerprint} literal text={node.translation ? node.literalTranslation : undefined} visible={translationVisible} language={translationLanguage} interfaceLanguage={interfaceLanguage} classes={classes}/> }
   </div>
   {node.children.length>0&&<div className={classes.children}>{node.children.map(child=><ArticleContentNode key={child.contentNodeId} node={child} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation} classes={classes}/>)}</div>}
  </div>;

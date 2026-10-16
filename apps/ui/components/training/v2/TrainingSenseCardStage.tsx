@@ -2,6 +2,7 @@
 import { hasTrainingCardTranslation as hasTranslation } from "@/lib/training/exerciseCardPresentation";
 import { selectTrainingReversePrompt } from "@/lib/training/trainingReversePrompt";
 
+import {AdditionalCardTranslationProvider,useAdditionalTranslationLanguage} from "@/components/practice/article/AdditionalCardTranslation";
 import React from "react";
 import {type TranslationPreparationState} from "@/components/practice/article/TranslationFeedback";
 import { Check, Volume2 } from "lucide-react";
@@ -69,6 +70,7 @@ export function TrainingSenseCardStage({
   onSideChange,
   onAction,
 }: Props) {
+  const additionalLanguage = useAdditionalTranslationLanguage();
   const answerVisible = side === "answer";
   const [hintVisible, setHintVisible] = React.useState(false);
   const toggleHint = React.useCallback(() => {
@@ -127,7 +129,7 @@ export function TrainingSenseCardStage({
     }
     setTranslationVisible(visible => !visible);
   }, [busy, moving, model, onAction, translationVisible]);
-  useCardVerticalSwipe({ root: stageRef, audioEnabled: !busy && !moving && Boolean(model.audioCapability && onPlayAudio), onPlayAudio, enabled: answerVisible && !busy && !moving && (hasDisplayTranslation || translationActionAvailable), onToggle: toggleTranslation });
+  useCardVerticalSwipe({ root: stageRef, audioEnabled: !busy && !moving && Boolean(model.audioCapability && onPlayAudio), onPlayAudio, enabled: answerVisible && !busy && !moving && (hasDisplayTranslation || translationActionAvailable || Boolean(additionalLanguage)), onToggle: toggleTranslation });
 
 
   React.useEffect(() => {
@@ -184,7 +186,7 @@ export function TrainingSenseCardStage({
         toggleHint();
         return;
       }
-      if (key === "t" && answerVisible && (hasDisplayTranslation || translationActionAvailable)) {
+      if (key === "t" && answerVisible && (hasDisplayTranslation || translationActionAvailable || Boolean(additionalLanguage))) {
         event.preventDefault();
         toggleTranslation();
         return;
@@ -207,7 +209,7 @@ export function TrainingSenseCardStage({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [answerVisible, busy, moving, hint, hasDisplayTranslation, translationActionAvailable, toggleTranslation, model, onAction, onSideChange, revealAnswer, toggleHint]);
+  }, [additionalLanguage, answerVisible, busy, moving, hint, hasDisplayTranslation, translationActionAvailable, toggleTranslation, model, onAction, onSideChange, revealAnswer, toggleHint]);
 
   return (
     <section
@@ -242,18 +244,19 @@ export function TrainingSenseCardStage({
           </div>
         ) : null}
         {answerVisible ? (
-          <>
+          <AdditionalCardTranslationProvider entryId={model.entryId} contentLanguage={contentLanguage} visible={translationVisible}>
             <EntityHeader
               interfaceLanguage={interfaceLanguage}
               model={answerModel}
+              translationLanguage={translationLanguage}
               translationVisible={translationVisible}
               translationPending={translationState === "pending"}
               translationFailed={translationState === "failed"}
               onRetryTranslation={onRetryTranslation}
               translationAvailable={
-                hasDisplayTranslation || translationActionAvailable
+                hasDisplayTranslation || translationActionAvailable || Boolean(additionalLanguage)
               }
-              translationLabel={t(hasDisplayTranslation || translationActionAvailable ? "senseCard.translation.request" : "senseCard.translation.disabled")}
+              translationLabel={t(hasDisplayTranslation || translationActionAvailable || Boolean(additionalLanguage) ? "senseCard.translation.request" : "senseCard.translation.disabled")}
               audioLabel={t("senseCard.audio.play")}
               busy={busy || moving}
               moreLabel={t("senseCard.wordDetails.open")}
@@ -272,7 +275,7 @@ export function TrainingSenseCardStage({
               interfaceLanguage={interfaceLanguage}
               onReachEnd={() => primaryAnswerActionRef.current?.focus()}
             />
-          </>
+          </AdditionalCardTranslationProvider>
         ) : mode === "listen-recognize" ? (
           <ListeningFaceBody
             mode={mode}

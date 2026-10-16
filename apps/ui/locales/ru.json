@@ -509,6 +509,7 @@
       "interfaceLanguage": "Язык интерфейса",
       "availableInterfaces": "Доступные языки интерфейса",
       "translationLanguage": "Язык перевода",
+      "secondaryTranslationLanguage": "Дополнительный язык перевода",
       "translationHint": "Выберите язык из каталога или отключите переводы.",
       "off": "Выключено",
       "chooseLanguage": "Выбрать язык",

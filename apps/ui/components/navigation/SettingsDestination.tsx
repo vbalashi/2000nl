@@ -11,6 +11,8 @@ export type SettingsDestinationProps = {
   interfaceLanguage: OnboardingLanguage;
   themePreference: ThemePreference;
   translationLanguage: string | null;
+  secondaryTranslationLanguage?: string | null;
+  onSecondaryTranslationLanguageChange?: (language: string | null) => void;
   onThemeChange: (theme: ThemePreference) => void;
   onInterfaceLanguageChange: (
     language: OnboardingLanguage,

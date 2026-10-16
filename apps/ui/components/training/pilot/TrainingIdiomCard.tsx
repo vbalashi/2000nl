@@ -128,6 +128,9 @@ export function TrainingIdiomCard({
   return (
     <>
       <TrainingExerciseCard
+        entryId={content.entry.entryId}
+        contentLanguage={contentLanguageCode}
+        translationLanguage={translationTargetLanguageCode ?? undefined}
         presentation={presentation}
         interfaceLanguage={interfaceLanguage}
         revealed={revealed}

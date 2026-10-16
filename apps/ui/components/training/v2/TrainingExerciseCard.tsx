@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import {AdditionalCardTranslationProvider,useAdditionalTranslationLanguage} from "@/components/practice/article/AdditionalCardTranslation";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -25,6 +26,9 @@ const ratingGrades: Record<Rating, Grade> = { Again: "fail", Hard: "hard", Good:
 
 /** Presentation only: the session owns target identity, retries, and grade persistence. */
 export function TrainingExerciseCard({
+  entryId,
+  contentLanguage,
+  translationLanguage,
   presentation,
   interfaceLanguage,
   revealed,
@@ -37,6 +41,9 @@ export function TrainingExerciseCard({
   secondaryActions,
   notice,
 }: {
+  entryId?: string;
+  contentLanguage?: string;
+  translationLanguage?: string;
   presentation: TrainingExercisePresentation;
   interfaceLanguage: OnboardingLanguage;
   revealed: boolean;
@@ -61,10 +68,17 @@ export function TrainingExerciseCard({
   const reveal = () => { capture(); onReveal(); };
   const actionBusy = busy || moving;
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
+  const additionalLanguage = useAdditionalTranslationLanguage();
   const hasTranslation = hasTrainingCardTranslation(presentation.answer);
-  const translationAvailable = hasTranslation || Boolean(onRequestTranslation);
+  const translationAvailable = hasTranslation || Boolean(onRequestTranslation) || Boolean(additionalLanguage && entryId);
   const toggleTranslation = async () => {
     if (actionBusy) return;
+    if (!translationVisible && additionalLanguage && entryId) {
+      setTranslationVisible(true);
+      // One language must not hold the other behind its provider request.
+      if (onRequestTranslation) void onRequestTranslation().catch(() => {});
+      return;
+    }
     if (!translationVisible && onRequestTranslation) {
       try {
         await onRequestTranslation();
@@ -144,9 +158,11 @@ export function TrainingExerciseCard({
       {notice}
       <TrainingCardShell answerVisible={revealed}>
         {revealed ? (
-          <>
+          <AdditionalCardTranslationProvider entryId={entryId ?? ""} contentLanguage={contentLanguage} visible={Boolean(entryId) && translationVisible}>
             <TrainingCardAnswerHeader
+              interfaceLanguage={interfaceLanguage}
               model={presentation.answer}
+              translationLanguage={translationLanguage}
               translationVisible={translationVisible}
               translationAvailable={translationAvailable}
               translationLabel={t(translationAvailable ? "senseCard.translation.request" : "senseCard.translation.disabled")}
@@ -159,11 +175,13 @@ export function TrainingExerciseCard({
             />
             <TrainingCardAnswerBody
               model={presentation.answer}
+              contentLanguage={contentLanguage}
+              translationLanguage={translationLanguage}
               translationVisible={translationVisible}
               interfaceLanguage={interfaceLanguage}
               onReachEnd={() => firstGradeRef.current?.focus()}
             />
-          </>
+          </AdditionalCardTranslationProvider>
         ) : (
           <TrainingCardFace
             prompt={presentation.prompt}
