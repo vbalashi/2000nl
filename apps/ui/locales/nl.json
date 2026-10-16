@@ -509,6 +509,7 @@
       "interfaceLanguage": "Interfacetaal",
       "availableInterfaces": "Beschikbare interfacetalen",
       "translationLanguage": "Vertaaltaal",
+      "secondaryTranslationLanguage": "Extra vertaaltaal",
       "translationHint": "Kies een taal uit de catalogus of schakel vertalingen uit.",
       "off": "Uit",
       "chooseLanguage": "Kies een taal",

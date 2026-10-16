@@ -790,3 +790,23 @@ Exact-health caveat: old223 images cannot satisfy224 health even though the sche
 Migration225 patches the exact current handle_card_review definition, preserving auth, dictionary access, Known guard, pair/meaning exclusions, clocks, rating behavior, grants and freeze. It removes only the legacy hide write and rejects it before consumed-turn idempotency returns. The manifest pins the migration SHA and a read-only postflight chained from224. Deploy through the managed contract gate; never run an ad-hoc production function replacement.
 
 An older app image remains compatible for ordinary reviews, but its hide requests are deliberately rejected after225. Rollback retains the forward DB225 guard; do not restore the old function or lower contract receipts. Verify exact app health/contract and the read-only function/grant checks after rollout. No production smoke should send a successful hide or rewrite a real user's state.
+
+## Coordinated translation/scheduler release (226–227 / #721)
+
+The integration contains #717/#718/#719/#720 and must ship as one PR. Migration
+226 adds nullable independent secondary-card translation preferences under existing
+account RLS. Migration 227 adds only function-local `enable_nestloop=off` to the
+current ordinary scheduler. It does not change result identity, eligibility,
+ordering or global planner configuration. Both immutable checksums are in contract
+227; read-only postflight 227 chains 226 and all earlier checks. The original #720
+branch's dependency hold remains intact; deploy the complete integration only.
+
+After deployment verify exact app SHA/DB227/worker health, start an ordinary run
+on the dedicated QA account, reveal a card with Russian and English translations,
+and remeasure first-card startup separately from translation generation. Library
+membership focus and manual start recovery are covered by integration tests.
+
+Rollback must retain forward DB227 objects/receipts. An application revert must
+also retain the 227 manifest and probes so exact health remains truthful. If the
+function-local planner preference itself causes a regression, remove it only
+through a new reviewed forward migration, never by lowering the DB contract.

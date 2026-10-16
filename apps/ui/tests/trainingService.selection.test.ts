@@ -229,6 +229,36 @@ describe("trainingService next-word selection", () => {
       .rejects.toThrow("training_material_unavailable");
   });
 
+  test("session-start timeout is surfaced as a safe retryable error class", async () => {
+    const { startTrainingSession } = await importService();
+    rpc.mockResolvedValueOnce({ data: null, error: {
+      code: "57014",
+      message: "statement timeout; sensitive details omitted",
+      details: "private query details",
+      hint: "private hint",
+    } });
+    await expect(startTrainingSession("user-1", ["word-to-definition"], {
+      listId: null,
+      cardFilter: "new",
+      trainingFilter: { dateWindow: "all" },
+    }, "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed001"))
+      .rejects.toThrow("training_session_start_timeout");
+  });
+
+  test("non-timeout SQLSTATE 57014 remains a generic start failure", async () => {
+    const { startTrainingSession } = await importService();
+    rpc.mockResolvedValueOnce({ data: null, error: {
+      code: "57014",
+      message: "canceling statement due to administrator command",
+    } });
+    await expect(startTrainingSession("user-1", ["word-to-definition"], {
+      listId: null,
+      cardFilter: "new",
+      trainingFilter: { dateWindow: "all" },
+    }, "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed001"))
+      .rejects.toThrow("training_session_start_failed");
+  });
+
   test("starts a server-latched session and returns its opaque id", async () => {
     const { startTrainingSession } = await importService();
     rpc.mockResolvedValueOnce({

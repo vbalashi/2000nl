@@ -48,6 +48,11 @@ export function LibraryCollectionsPicker({
   const editingBlocked = busyListId !== null || membershipState !== "ready";
   const titleId = React.useId();
   const searchRef = React.useRef<HTMLInputElement>(null);
+  const collectionRegionRef = React.useRef<HTMLDivElement>(null);
+  const pendingCheckboxFocus = React.useRef<{
+    listId: string;
+    handedOff: boolean;
+  } | null>(null);
   const [query, setQuery] = React.useState("");
   const [creating, setCreating] = React.useState(false);
   const copy = getUiMessages(interfaceLanguage).collections;
@@ -59,6 +64,44 @@ export function LibraryCollectionsPicker({
     setCreating(false);
     setQuery("");
     setNewListName("");
+  }, [open]);
+
+  React.useLayoutEffect(() => {
+    const pending = pendingCheckboxFocus.current;
+    if (!pending) return;
+
+    if (editingBlocked && !pending.handedOff) {
+      const checkbox = document.getElementById(
+        `library-collection-${pending.listId}`,
+      );
+      if (
+        checkbox &&
+        document.activeElement !== checkbox &&
+        document.activeElement !== document.body
+      ) {
+        pendingCheckboxFocus.current = null;
+        return;
+      }
+      pending.handedOff = true;
+      collectionRegionRef.current?.focus({ preventScroll: true });
+      return;
+    }
+
+    if (!editingBlocked && pending.handedOff) {
+      const region = collectionRegionRef.current;
+      if (region && document.activeElement === region) {
+        document
+          .getElementById(`library-collection-${pending.listId}`)
+          ?.focus({ preventScroll: true });
+        pending.handedOff = false;
+      } else {
+        pendingCheckboxFocus.current = null;
+      }
+    }
+  }, [editingBlocked, memberships, userLists]);
+
+  React.useEffect(() => {
+    if (!open) pendingCheckboxFocus.current = null;
   }, [open]);
 
   if (!open) return null;
@@ -148,7 +191,7 @@ export function LibraryCollectionsPicker({
           </label>
         </div>
 
-        <div data-dialog-part="body" role="region" aria-label={t("senseCard.collections.title")} tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+        <div ref={collectionRegionRef} data-dialog-part="body" role="region" aria-label={t("senseCard.collections.title")} tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
           {membershipState === "loading" ? <p role="status">{t("senseCard.collections.loadingMembership")}</p> : null}
           {membershipState === "failed" ? <div>
             <p role="alert">{t("senseCard.collections.membershipFailed")}</p>
@@ -168,7 +211,16 @@ export function LibraryCollectionsPicker({
                       type="checkbox"
                       checked={included}
                       disabled={editingBlocked}
-                      onChange={() => onToggleList(list, included)}
+                      onChange={(event) => {
+                        if (document.activeElement === event.currentTarget) {
+                          pendingCheckboxFocus.current = {
+                            listId: list.id,
+                            handedOff: true,
+                          };
+                          collectionRegionRef.current?.focus({ preventScroll: true });
+                        }
+                        onToggleList(list, included);
+                      }}
                       className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
                     <label

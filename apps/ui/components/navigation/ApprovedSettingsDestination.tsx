@@ -45,8 +45,12 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
     setInterfaceAnchor(anchor => { anchor?.focus(); return null; });
   }, []);
   const [pickerOpen, setPickerOpen] = React.useState(false);
+  const [secondaryPickerOpen, setSecondaryPickerOpen] = React.useState(false);
+  const [rememberedSecondary, setRememberedSecondary] = React.useState<string | null>(props.secondaryTranslationLanguage && props.secondaryTranslationLanguage !== "off" ? props.secondaryTranslationLanguage : null);
+  React.useEffect(() => { if (props.secondaryTranslationLanguage && props.secondaryTranslationLanguage !== "off") setRememberedSecondary(props.secondaryTranslationLanguage); }, [props.secondaryTranslationLanguage]);
+  const secondaryOff = !props.secondaryTranslationLanguage || props.secondaryTranslationLanguage === "off";
   React.useEffect(() => {
-    if (!props.open) setPickerOpen(false);
+    if (!props.open) { setPickerOpen(false); setSecondaryPickerOpen(false); }
   }, [props.open]);
   const [rememberedTranslation,setRememberedTranslation]=React.useState<string | null>(props.translationLanguage && props.translationLanguage!=="off" ? props.translationLanguage : null);
   React.useEffect(()=>{if(props.translationLanguage && props.translationLanguage!=="off")setRememberedTranslation(props.translationLanguage);},[props.translationLanguage]);
@@ -89,7 +93,15 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
                     <button type="button" aria-label={copy.translationLanguage} aria-haspopup="dialog" aria-expanded={pickerOpen} onClick={()=>setPickerOpen(true)}><ChevronDown size={14} aria-hidden="true"/></button>
                   </SegmentedControl>
                 </SettingsRow>
+                <SettingsRow title={copy.secondaryTranslationLanguage}>
+                  <SegmentedControl standard label={copy.secondaryTranslationLanguage}>
+                    <button type="button" aria-pressed={secondaryOff} onClick={() => props.onSecondaryTranslationLanguageChange?.(null)}>{copy.off}</button>
+                    <button type="button" aria-pressed={!secondaryOff} onClick={() => rememberedSecondary ? props.onSecondaryTranslationLanguageChange?.(rememberedSecondary) : setSecondaryPickerOpen(true)}>{rememberedSecondary ? languageDisplayName(props.interfaceLanguage, rememberedSecondary) : copy.chooseLanguage}</button>
+                    <button type="button" aria-label={copy.secondaryTranslationLanguage} aria-haspopup="dialog" aria-expanded={secondaryPickerOpen} onClick={() => setSecondaryPickerOpen(true)}><ChevronDown size={14} aria-hidden="true"/></button>
+                  </SegmentedControl>
+                </SettingsRow>
               </SettingsPanel>
+              {secondaryPickerOpen && <React.Suspense fallback={<p role="status">{getUiMessages(props.interfaceLanguage).languagePicker.loading}</p>}><TranslationLanguagePicker title={copy.secondaryTranslationLanguage} language={props.interfaceLanguage} selectedCode={secondaryOff ? null : props.secondaryTranslationLanguage} onChoose={item => {setRememberedSecondary(item.code);props.onSecondaryTranslationLanguageChange?.(item.code);}} onClose={() => setSecondaryPickerOpen(false)}/></React.Suspense>}
               <LearningMaterialSettings language={props.interfaceLanguage} />
               {pickerOpen && (
                 <React.Suspense

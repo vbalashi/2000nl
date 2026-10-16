@@ -106,8 +106,12 @@ BEGIN
        WHERE procedure_state.oid = candidate_fn::oid
          AND procedure_state.prosecdef
          AND procedure_state.provolatile = 'v'
-         AND procedure_state.proconfig IS NOT DISTINCT FROM
+         -- 227 adds one function-local planner preference; the exact security
+         -- search path and all other function settings remain constrained.
+         AND (procedure_state.proconfig IS NOT DISTINCT FROM
            ARRAY['search_path=public, private, pg_temp']::text[]
+           OR procedure_state.proconfig IS NOT DISTINCT FROM
+           ARRAY['search_path=public, private, pg_temp', 'enable_nestloop=off']::text[])
      )
      OR has_function_privilege('service_role', candidate_fn, 'EXECUTE')
      OR has_function_privilege('authenticated', candidate_fn, 'EXECUTE')

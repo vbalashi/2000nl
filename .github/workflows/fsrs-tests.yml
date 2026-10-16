@@ -55,6 +55,16 @@ jobs:
         run: npm ci
         working-directory: apps/ui
 
+      - name: Match production scheduler planner settings
+        # Production Supabase has JIT disabled. With nested loops discouraged,
+        # PostgreSQL's artificial plan cost otherwise triggers expensive JIT
+        # compilation even for the tiny RPC fixtures in this plain-PG service.
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d fsrs_test -v ON_ERROR_STOP=1 -c 'ALTER SYSTEM SET jit = off'
+          psql -h localhost -U postgres -d fsrs_test -v ON_ERROR_STOP=1 -c 'SELECT pg_reload_conf()'
+
       - name: Run FSRS parity and RPC tests
         run: npm test -- tests/fsrs/*.test.ts
         working-directory: apps/ui

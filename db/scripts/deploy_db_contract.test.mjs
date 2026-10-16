@@ -454,7 +454,7 @@ test("the repository contract enables the reviewed translation-worker rollout", 
   assert.equal(result.status, 0, result.stderr);
   assert.equal(
     result.stdout.trim(),
-    "enabled 225 693",
+    "enabled 227 721",
   );
 });
 

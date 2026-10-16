@@ -1,4 +1,5 @@
 "use client";
+import {CardTranslationLanguagesProvider} from "@/components/practice/article/AdditionalCardTranslation";
 import { useTrainingSessionLifecycle } from "./useTrainingSessionLifecycle";
 import type { TrainingSessionProgress } from "@/lib/training/sessionLifecycle";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -348,12 +349,14 @@ function TrainingScreenContent({
     newReviewRatio,
     themePreference,
     translationLang,
+    secondaryTranslationLang,
     setActiveScenario,
     setCardFilter: setCardFilterPreference,
     setEnabledModes,
     setNewReviewRatio,
     setTheme,
     setTranslationLang,
+    setSecondaryTranslationLang,
   } = useTrainingPreferences(user?.id, initialTransitionId, initialPreferences);
   const [currentTrainingLanguage, setCurrentTrainingLanguage] =
     useState(language);
@@ -2503,6 +2506,7 @@ function TrainingScreenContent({
         : null;
   const studyTimeEnabled = destination === "training" && !detailsOpen && !showHotkeys && !showLanguageSelection && !navigationBlocked && !loadingWord && !sessionAuthorityChecking;
   return (
+    <CardTranslationLanguagesProvider ownerId={user.id} primary={translationLang} secondary={secondaryTranslationLang}>
     <TrainingStartupGate
       pending={trainingTodaySetupEnabled && destination === "training" && trainingPilot.surface !== "session" && !openTrainingEditor &&
         (!homeStartupSettled || trainingPilot.status === "preparing")}
@@ -2861,6 +2865,8 @@ function TrainingScreenContent({
         open={destination === "settings"}
         interfaceLanguage={onboardingLang}
         themePreference={themePreference}
+        secondaryTranslationLanguage={secondaryTranslationLang}
+        onSecondaryTranslationLanguageChange={setSecondaryTranslationLang}
         translationLanguage={translationLang}
         onThemeChange={setTheme}
         onInterfaceLanguageChange={saveOnboardingLanguageChoice}
@@ -2870,5 +2876,6 @@ function TrainingScreenContent({
       />
     </AppFrame>
     </TrainingStartupGate>
+    </CardTranslationLanguagesProvider>
   );
 }

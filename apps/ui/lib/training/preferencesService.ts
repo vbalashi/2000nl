@@ -13,6 +13,7 @@ export type UserPreferences = {
   activeScenario: string;
   /** Target language for dictionary tooltips (null = disabled) */
   translationLang: string | null;
+  secondaryTranslationLang?: string | null;
   /** Flexible JSON preferences for features that don't need dedicated columns */
   preferences: {
     onboardingCompleted?: boolean;
@@ -33,7 +34,7 @@ export async function fetchUserPreferences(
     supabase
       .from("user_settings")
       .select(
-          "theme_preference, audio_quality, translation_lang, preferences",
+          "theme_preference, audio_quality, translation_lang, secondary_translation_lang, preferences",
       )
       .eq("user_id", userId)
       .maybeSingle(),
@@ -86,6 +87,7 @@ export async function fetchUserPreferences(
     newReviewRatio: learningData?.new_review_ratio ?? 2,
     activeScenario: learningData?.active_scenario ?? "understanding",
     translationLang,
+    secondaryTranslationLang: appData?.secondary_translation_lang ?? null,
     preferences,
     trainingMode: modesEnabled[0],
   };
@@ -101,6 +103,7 @@ export async function updateUserPreferences(params: {
   newReviewRatio?: number;
   activeScenario?: string;
   translationLang?: string | null;
+  secondaryTranslationLang?: string | null;
   preferences?: Record<string, any>;
   /** @deprecated Use modesEnabled instead */
   trainingMode?: TrainingMode;
@@ -137,6 +140,9 @@ export async function updateUserPreferences(params: {
   if (params.translationLang !== undefined) {
     // NULL remains the legacy/unset default on reads; explicit Off must survive reload.
     updates.translation_lang = params.translationLang ?? "off";
+  }
+  if (params.secondaryTranslationLang !== undefined) {
+    updates.secondary_translation_lang = params.secondaryTranslationLang === "off" ? null : params.secondaryTranslationLang;
   }
   // Handle preferences JSONB field
   if (params.preferences !== undefined) {

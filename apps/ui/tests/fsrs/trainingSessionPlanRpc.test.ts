@@ -78,6 +78,16 @@ describeDb("authoritative training session plan RPC", () => {
     await pool.end();
   });
 
+  test("scopes the hash-join planner preference to the ordinary scheduler", async () => {
+    await withTransaction(pool, async (client) => {
+      const { rows } = await client.query(
+        `select proconfig from pg_proc
+         where oid = 'private.training_scheduler_candidates_v2(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean,boolean)'::regprocedure`,
+      );
+      expect(rows[0]?.proconfig).toContain("enable_nestloop=off");
+    });
+  });
+
   test("uses the pointer-only index instead of reparsing every trainable raw entry", async () => {
     await withTransaction(pool, async (client) => {
       const { rows: functionRows } = await client.query(

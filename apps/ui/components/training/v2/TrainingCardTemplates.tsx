@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import {useAdditionalCardTranslation} from "@/components/practice/article/AdditionalCardTranslation";
 import { useTrainingFaceFit } from "../useTrainingFaceFit";
 import { useTrainingInteractions } from "@/components/practice/ui/TrainingInteractionPreferences";
 import {
@@ -13,7 +14,7 @@ import approved from "../approvedTrainingCard.module.css";
 import chrome from "@/components/practice/article/senseChrome.module.css";
 import translationFeedback from "@/components/practice/article/translationFeedback.module.css";
 import {TranslationPlaceholder, TranslationFailure} from "@/components/practice/article/TranslationFeedback";
-import {ArticleContentNode,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
+import {ArticleTranslation,ArticleContentNode,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
 import {ArticleSenseRelations} from "@/components/practice/article/ArticleWordDetails";
 import {lexicalRelationDetail} from "@/components/practice/article/wordDetailsPresentation";
 import {ProductionArticleReading} from "@/components/practice/article/ProductionArticleReading";
@@ -66,6 +67,7 @@ export function TrainingCardAnswerHeader({
   model,
   translationVisible,
   translationAvailable,
+  translationLanguage,
   interfaceLanguage = "en",
   translationPending = false,
   translationFailed = false,
@@ -81,6 +83,7 @@ export function TrainingCardAnswerHeader({
   model: TrainingCardAnswer;
   translationVisible: boolean;
   translationAvailable: boolean;
+  translationLanguage?: string;
   interfaceLanguage?: OnboardingLanguage;
   translationPending?: boolean;
   translationFailed?: boolean;
@@ -93,6 +96,7 @@ export function TrainingCardAnswerHeader({
   onToggleTranslation: () => void;
   onOpenDetails?: () => void;
 }) {
+  const additional = useAdditionalCardTranslation();
   return (
     <header className="relative z-10 flex shrink-0 flex-col gap-0">
       <div className={approved.headerRow}>
@@ -128,7 +132,7 @@ export function TrainingCardAnswerHeader({
             <TrainingCardIconButton
               label={translationLabel}
               active={translationVisible}
-              pending={translationVisible && translationPending}
+              pending={translationVisible && (translationPending || additional?.status === "pending")}
               disabled={busy || !translationAvailable}
               onClick={onToggleTranslation}
             >
@@ -154,19 +158,7 @@ export function TrainingCardAnswerHeader({
         showMetadata={false}
         variant="training-answer"
       />
-      {model.entryTranslation ? (
-        <SenseCardReveal open={translationVisible}>
-          <p
-            data-testid="entry-translation"
-            className="mt-0 text-[length:var(--reading-translation-emphasis-size,15px)] font-bold text-amber-700 dark:text-[#E9C46A]"
-          >
-            {[
-              model.entryTranslation,
-              ...(model.entryTranslationAlternatives ?? []),
-            ].join(" · ")}
-          </p>
-        </SenseCardReveal>
-      ) : translationFailed && onRetryTranslation ? <SenseCardReveal open={translationVisible}><TranslationFailure language={interfaceLanguage} onRetry={onRetryTranslation}/></SenseCardReveal> : translationPending ? <SenseCardReveal open={translationVisible}><TranslationPlaceholder emphasis/></SenseCardReveal> : null}
+      <ArticleTranslation testId="entry-translation" classes={{translationEmphasis:"mt-0 text-[length:var(--reading-translation-emphasis-size,15px)] font-bold text-amber-700 dark:text-[#E9C46A]"}} markContentTranslation={false} translationKey="entry" text={[model.entryTranslation,...(model.entryTranslationAlternatives??[])].filter(Boolean).join(" · ")} visible={translationVisible} pending={translationPending} failed={translationFailed} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} emphasis language={translationLanguage}/>
     </header>
   );
 }

@@ -1000,6 +1000,7 @@ describe("trainingService list and preference characterization", () => {
       newReviewRatio: 2,
       activeScenario: "understanding",
       translationLang: "off",
+      secondaryTranslationLang: null,
       preferences: { onboardingCompleted: true },
       trainingMode: "definition-to-word",
     });
@@ -1024,6 +1025,15 @@ describe("trainingService list and preference characterization", () => {
       expect(rpc).not.toHaveBeenCalled();
     },
   );
+
+  test.each([null,"en","ru"])("additional translation preference %s leaves the primary language and learning preferences untouched",async secondaryTranslationLang=>{
+    const {updateUserPreferences}=await importService();
+    queueFrom("user_settings",{data:{user_id:"user-1"},error:null});
+    queueFrom("user_settings",{data:null,error:null});
+    await expect(updateUserPreferences({userId:"user-1",secondaryTranslationLang})).resolves.toEqual({error:null});
+    expect(queries[1].upsert).toHaveBeenCalledWith({user_id:"user-1",secondary_translation_lang:secondaryTranslationLang},{onConflict:"user_id"});
+    expect(rpc).not.toHaveBeenCalled();
+  });
 
   test("updateUserPreferences seeds audio quality default for new settings rows", async () => {
     const { updateUserPreferences } = await importService();

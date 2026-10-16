@@ -165,3 +165,5 @@
 /* The article owns source/translation rhythm across examples, usage and nested explanations. */
 .detail .contentNode>.contentPair>p:not([data-content-translation]){line-height:var(--practice-source-leading)}
 .detail .translation{line-height:var(--practice-translation-leading)}
+
+.languageLabel { display: inline-block; margin-inline-end: 8px; font-family: var(--font-sense-sans, sans-serif); font-size: 10px; font-weight: 600; letter-spacing: .06em; opacity: .65; vertical-align: middle; }

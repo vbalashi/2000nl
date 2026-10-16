@@ -590,3 +590,7 @@
 \i db/migrations/224_dictionary_translation_parts.sql
 
 \i db/migrations/225_reject_legacy_hide.sql
+
+\i db/migrations/226_secondary_card_translation_language.sql
+
+\i db/migrations/227_training_scheduler_hash_join_plans.sql

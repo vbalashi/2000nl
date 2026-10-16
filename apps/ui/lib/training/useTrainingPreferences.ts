@@ -41,6 +41,7 @@ export function useTrainingPreferences(
   const [translationLang, setTranslationLangState] = useState<string | null>(
     initialPreferences?.translationLang ?? null,
   );
+  const [secondaryTranslationLang, setSecondaryTranslationLangState] = useState<string | null>(initialPreferences?.secondaryTranslationLang ?? null);
   const initialTransitionIdRef = useRef(initialTransitionId);
   const initialPreferencesRef = useRef(initialPreferences);
 
@@ -71,6 +72,7 @@ export function useTrainingPreferences(
       setNewReviewRatioState(prefs.newReviewRatio);
       setActiveScenarioState(prefs.activeScenario);
       setTranslationLangState(prefs.translationLang);
+      setSecondaryTranslationLangState(prefs.secondaryTranslationLang ?? null);
     };
 
     void loadPreferences();
@@ -171,6 +173,11 @@ export function useTrainingPreferences(
     [userId],
   );
 
+  const setSecondaryTranslationLang = useCallback((newLang: string | null) => {
+    setSecondaryTranslationLangState(newLang);
+    if (userId) void updateUserPreferences({ userId, secondaryTranslationLang: newLang });
+  }, [userId]);
+
   const setActiveScenario = useCallback(
     (newScenario: string, options: PersistOptions = {}) => {
       trainingDebug.log(
@@ -197,6 +204,7 @@ export function useTrainingPreferences(
     newReviewRatio,
     themePreference,
     translationLang,
+    secondaryTranslationLang,
     setActiveScenario,
     setAudioQuality,
     setCardFilter,
@@ -205,5 +213,6 @@ export function useTrainingPreferences(
     setNewReviewRatio,
     setTheme,
     setTranslationLang,
+    setSecondaryTranslationLang,
   };
 }

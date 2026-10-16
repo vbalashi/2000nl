@@ -408,11 +408,15 @@ export async function startTrainingSession(
     p_request_id: requestId,
   });
   if (error) {
-    console.error("Error starting training session:", error);
     if (error.message?.includes("training_material_unavailable")) {
       throw new Error("training_material_unavailable");
     }
-    return null;
+    // PostgREST forwards PostgreSQL's SQLSTATE. Keep only the safe error class
+    // in the UI; the server message/details may contain query or user data.
+    const failure = normalizeTrainingSelectionFailure(error);
+    throw new Error(failure.kind === "statement-timeout"
+      ? "training_session_start_timeout"
+      : "training_session_start_failed");
   }
   return mapTrainingSession(data);
 }

@@ -57,8 +57,7 @@ for (const locale of ["en", "nl", "ru"]) {
       await expect.poll(() => page.getByTestId("training-card-frame").evaluate(node =>
         node.getAnimations().filter(animation => animation.playState === "running").length
       )).toBe(0);
-      const spacedBody = await scroll.boundingBox();
-      expect(spacedBody!.height).toBeGreaterThan(48);
+      await expect.poll(async () => (await scroll.boundingBox())?.height ?? 0).toBeGreaterThan(48);
       if (locale === "nl" && viewport.width === 640) {
         const ratingHeights = await ratings.getByRole("button").evaluateAll(buttons =>
           buttons.map(button => button.getBoundingClientRect().height)
