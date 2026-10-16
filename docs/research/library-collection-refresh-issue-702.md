@@ -59,3 +59,12 @@ No production QA session was opened for this patch: the production bundle does
 not include it, and the existing baseline trace already captures the original
 behavior. The local browser test exercises the actual picker implementation
 without modifying production data.
+
+## Review checkpoint
+
+PR [#717](https://github.com/vbalashi/2000nl/pull/717) is pushed and marked
+release-ready. Independent review reran the focused suite (38/38) and typecheck
+successfully, with no scope or implementation blocker reported. CI is still
+rerunning the UI boundary checks; production verification remains pending
+because this patch has not been released. Keep the worktree available for PR
+review and CI follow-up. No merge or deployment has been performed.
