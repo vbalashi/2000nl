@@ -6,11 +6,11 @@ Sanitized aggregated logs for the two new-user reports showed `start_training_se
 
 ## Local falsifiable test
 
-A disposable local FSRS database held an 18,000-row source-bound corpus in the canonical dictionary, word-entry, source-binding, and content-node tables. The fixture verified 4,500 first meanings, 13,500 later meanings, 18,000 active examples, and zero unrenderable entries. All fixture writes ran in a transaction and rolled back; the disposable database was dropped. The ignored reproduction script is in `apps/ui/tmp/issue711-actual-scheduler-bench.test.ts`; `apps/ui/tmp/issue711-benchmark-README.md` gives the exact guarded command.
+A disposable local FSRS database held an 18,000-row source-bound corpus in the canonical dictionary, word-entry, source-binding, and content-node tables. The fixture verified 4,500 first meanings, 13,500 later meanings, 18,000 active examples, and zero unrenderable entries. All fixture writes ran in a transaction and rolled back; the disposable database was dropped. The durable manual harness is `apps/ui/scripts/manual/issue-711-scheduler-bench.test.ts`; `apps/ui/scripts/manual/issue-711-scheduler-benchmark.md` gives the exact guarded command. It is outside the routine test tree and rejects non-loopback or non-disposable DB URLs.
 
 The test exercised the installed `private.training_scheduler_candidates_v2` function, changing only `enable_nestloop`:
 
-| Scope | Baseline | Hash-join preference | Selected result parity |
+| Scope | Baseline | `enable_nestloop=off` preference | Selected result parity |
 | --- | ---: | ---: | --- |
 | 18k New | 7.209 s | 0.303 s | Same 4,500 identities and `new` category |
 | 100-entry curated list | 71 ms | 78 ms | Same 25 identities and `new` category |
@@ -20,8 +20,8 @@ This supports the scheduler’s materialized first-meaning relation as a measure
 
 ## Proposed database change and rollout gate
 
-Migration 227 adds only `enable_nestloop=off` to the scheduler function configuration. It leaves global planner settings unchanged and does not increase the timeout or add retries. The setting mirrors the already-existing availability projection, which uses the same eligibility prefix to avoid the one-row estimate / quadratic nested-loop behavior.
+Migration 227 adds only `enable_nestloop=off` to the scheduler function configuration. This discourages nested-loop plans; it does not force a hash join. It leaves global planner settings unchanged and does not increase the timeout or add retries. The setting mirrors the already-existing availability projection, which uses the same eligibility prefix to avoid the one-row estimate / quadratic nested-loop behavior.
 
 PR #718 separately adds truthful manual retry UI and binds retry context to its original user and language. That UI does not correct the scheduler timeout.
 
-Migration 226 is owned by PR #719 and is not in this branch’s base. Therefore this work is a held draft: migration 227 is not appended to the managed contract manifest, not added to bootstrap, and not eligible for rollout until 226 is merged and the contiguous manifest/checksum/postflight contract can be constructed from that state. There is no production migration or deployment in this report.
+Migration 226 is owned by PR #719 and is not in this branch’s base. Therefore this work is a held draft: migration 227 is not appended to the managed contract manifest, not added to bootstrap, and not eligible for rollout until 226 is merged and the contiguous manifest/checksum/postflight contract can be constructed from that state. The database drift check is expected to reject the gap (it expects 226, finds 227, and does not find 227 in bootstrap); release-boundary validation is also expected to reject deployment while the manifest remains unchanged. These are intentional blocking checks; `Release-Ready: no` remains in effect. The local FSRS test helper discovers migration files directly, so its migration-227 assertion does not establish that bootstrap or the release contract is complete. There is no production migration or deployment in this report.
