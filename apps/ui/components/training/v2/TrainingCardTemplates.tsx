@@ -158,7 +158,7 @@ export function TrainingCardAnswerHeader({
         showMetadata={false}
         variant="training-answer"
       />
-      <ArticleTranslation testId="entry-translation" markContentTranslation={false} translationKey="entry" text={[model.entryTranslation,...(model.entryTranslationAlternatives??[])].filter(Boolean).join(" · ")} visible={translationVisible} pending={translationPending} failed={translationFailed} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} emphasis language={translationLanguage}/>
+      <ArticleTranslation testId="entry-translation" classes={{translationEmphasis:"mt-0 text-[length:var(--reading-translation-emphasis-size,15px)] font-bold text-amber-700 dark:text-[#E9C46A]"}} markContentTranslation={false} translationKey="entry" text={[model.entryTranslation,...(model.entryTranslationAlternatives??[])].filter(Boolean).join(" · ")} visible={translationVisible} pending={translationPending} failed={translationFailed} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} emphasis language={translationLanguage}/>
     </header>
   );
 }

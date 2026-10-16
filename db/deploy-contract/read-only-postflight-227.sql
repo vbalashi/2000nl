@@ -1,3 +1,4 @@
+\i db/deploy-contract/read-only-postflight-226.sql
 DO $postflight$
 DECLARE
   config text[];
