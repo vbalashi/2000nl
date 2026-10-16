@@ -239,6 +239,8 @@ export function TrainingTodaySetup({
     sessionName?: string;
     scopeLabel: string;
     options?: import("./useTrainingPilotController").TrainingStartOptions;
+    ownerId?: string;
+    languageCode?: string;
   } | null>(null);
   const [draft, setDraft] = useState({
     ...initialDraft,
@@ -256,6 +258,11 @@ export function TrainingTodaySetup({
   const selectedTrainingId = resolveHighlightedTraining(account.snapshot.document.trainings,
     highlighted.ownerId === userId ? highlighted.id : readLastSelectedTraining(userId), account.snapshot.document.mainTrainingId);
   const selectedTraining = account.snapshot.document.trainings.find(training=>training.id===selectedTrainingId);
+  const failedStartContextMatches = Boolean(failedStart &&
+    failedStart.ownerId === userId && failedStart.languageCode === trainingLanguageCode);
+  useEffect(() => {
+    if (failedStart && !failedStartContextMatches) setFailedStart(null);
+  }, [failedStart, failedStartContextMatches]);
   const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
   const accountMaterial = useAccountMaterial();
   const availabilityRecipe = selectedTraining ?? (!account.snapshot.document.trainings.length ? {languageCode:trainingLanguageCode??"nl",draft:initialDraft} : null);
@@ -389,10 +396,11 @@ export function TrainingTodaySetup({
         : nextDraft.materialMode === "selected-dictionaries"
           ? (nextDraft.dictionaryIds ?? []).map(id => dictionaries.find(source => source.value === id)?.label).filter(Boolean).join(", ") || t.materialUnavailable
           : lists.find(option => option.value === nextDraft.listValue)?.label ?? t.selectedMaterial;
-      setFailedStart({draft: {...nextDraft}, sessionName, scopeLabel, options});
+      setFailedStart({draft: {...nextDraft}, sessionName, scopeLabel, options,
+        ownerId: userId, languageCode: trainingLanguageCode});
       setScreen("today");
     }
-  }, [trainingLanguageLoading, pendingLanguage, startBlocked, material.currentLanguageAllowed, lists, dictionaries, translationTargetLanguageCode, onStart, t]);
+  }, [trainingLanguageLoading, pendingLanguage, startBlocked, material.currentLanguageAllowed, lists, dictionaries, translationTargetLanguageCode, onStart, t, userId, trainingLanguageCode]);
   const startErrorCopy = startError === "training_session_start_timeout"
     ? t.startTimeout
     : startError === "training_session_start_failed"
@@ -476,7 +484,7 @@ export function TrainingTodaySetup({
       }}>
       {materialNotice}
       {presetMessage&&<p role="status">{presetMessage}</p>}
-      {startErrorCopy && failedStart && <p role="alert">{startErrorCopy} <strong>{failedStart.sessionName || failedStart.scopeLabel}</strong>{!startPending && <button type="button" onClick={() => void requestStart(failedStart.draft, failedStart.sessionName, failedStart.options)}>{t.retryStart}</button>}</p>}
+      {startErrorCopy && failedStart && failedStartContextMatches && <p role="alert">{startErrorCopy} <strong>{failedStart.sessionName || failedStart.scopeLabel}</strong>{!startPending && <button type="button" onClick={() => void requestStart(failedStart.draft, failedStart.sessionName, failedStart.options)}>{t.retryStart}</button>}</p>}
       {sessionResumeStatus!=="ready"&&<p role={sessionResumeStatus==="error"?"alert":"status"}>{sessionResumeStatus==="pending"?t.resumePending:t.resumeError}{sessionResumeStatus==="error"&&<button onClick={onRetryResume}>{t.retryResume}</button>}</p>}
       {cardPreparationStatus==="error"&&<p role="alert">{t.cardError}<button onClick={onRetryCard}>{t.retryCard}</button></p>}
     </AccountTrainingOverview></TrainingScreenTransition>;

@@ -216,6 +216,27 @@ test("a failed selected setup shows the server error and retries the same draft"
   expect(onStart.mock.calls[1]).toEqual(onStart.mock.calls[0]);
 });
 
+test.each(["language", "account"] as const)("a failed start retry is cleared when its %s context changes", async (changedContext) => {
+  const onStart = vi.fn().mockResolvedValue(false);
+  const props = { ...baseProps, userId: "stale-retry-owner", trainingLanguageCode: "nl",
+    hasOwnedSession: false, initialView: "setup" as const, onStart };
+  const view = render(<TrainingTodaySetup {...props} />);
+  fireEvent.click(await screen.findByRole("button", { name: "Start training" }));
+  await screen.findByRole("button", { name: "Create training" });
+  view.rerender(<TrainingTodaySetup {...props} startError="training_session_start_timeout" />);
+  expect(await screen.findByRole("button", { name: "Retry starting this training" })).toBeInTheDocument();
+
+  const changedProps = changedContext === "language"
+    ? { ...props, trainingLanguageCode: "en" }
+    : { ...props, userId: "different-account" };
+  view.rerender(<TrainingTodaySetup {...changedProps} startError="training_session_start_timeout" />);
+  await waitFor(() => {
+    expect(screen.queryByRole("button", { name: "Retry starting this training" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+  expect(onStart).toHaveBeenCalledTimes(1);
+});
+
 test("a failed Translation start keeps the paused Idioms session and retries the selected draft", async () => {
   const idiomDraft: TrainingSetupDraft = {
     ...initialDraft,
