@@ -97,6 +97,7 @@ describe("useTrainingPreferences", () => {
     expect(loaded.result.current.secondaryTranslationLang).toBeNull();
     act(()=>loaded.result.current.setTranslationLang("en"));
     expect(loaded.result.current.secondaryTranslationLang).toBeNull();
+    expect(updateUserPreferences).toHaveBeenLastCalledWith({userId:"user-1",translationLang:"en",secondaryTranslationLang:null});
   });
 
   test("setters update local state before persistence resolves", async () => {

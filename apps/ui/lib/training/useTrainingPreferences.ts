@@ -173,11 +173,11 @@ export function useTrainingPreferences(
         void updateUserPreferences({
           userId,
           translationLang: newLang,
-          ...(disabled ? {secondaryTranslationLang: null} : {}),
+          secondaryTranslationLang: disabled ? null : secondaryTranslationLang,
         });
       }
     },
-    [userId],
+    [userId, secondaryTranslationLang],
   );
 
   const setSecondaryTranslationLang = useCallback((newLang: string | null) => {
