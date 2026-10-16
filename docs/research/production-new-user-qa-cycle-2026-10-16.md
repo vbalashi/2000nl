@@ -24,10 +24,6 @@ busy/alert, and control changes rather than relying on frame video.
 
 ## Scenario log
 
-## Cleanup
-
-Official wrapper exited 0 after `REVOKE`. Server-side session revocation succeeded; temporary secret env, wrapper/probe helpers, token artifacts, isolated profiles and exact browser sessions/processes were removed. Fresh QA identity and labeled collection data remain for reproducibility. Personal/reference users were untouched.
-
 ### Observation 1 — session start failed while a paused session exists
 
 After starting default training, revealing/learning one meaning, closing it,
@@ -92,7 +88,7 @@ These failures are excluded from product findings. The first viewport was
 | [#702](https://github.com/vbalashi/2000nl/issues/702#issuecomment-6221166296) | Medium | Successful collection mutations cause repeated disabled/enabled states and focus loss. Dialog stays mounted/opacity 1. Correlated trace below; React cause unknown. |
 | [#712](https://github.com/vbalashi/2000nl/issues/712) | Medium | Empty collection or zero eligible Translation targets yields zero counters / Edit-only home with no reason or next action. Observed on two routes. |
 | [#713](https://github.com/vbalashi/2000nl/issues/713) | Review | New account sees synthetic test dictionary/list; publication intent needs verification. No private-data exposure claimed. |
-| [#714](https://github.com/vbalashi/2000nl/issues/714) | Low | Short complete session shows 2/10 beside Session complete/2 cards. Full AX state captured; completed-screen screenshot and repeat visual confirmation missing. |
+| [#714](https://github.com/vbalashi/2000nl/issues/714) | Low | Short complete session shows 2/10 beside Session complete / 2 cards. Full AX state captured; completed-screen screenshot and repeat visual confirmation missing. |
 
 Minor copy observation: Russian picker labels `1 элементов` and `2 элементов`
 use the same plural form; should be checked with Russian pluralization. The
@@ -167,3 +163,7 @@ remain actionable. No fix, merge or production deployment was performed in this
 QA-only cycle. Billing/payment, destructive account operations, cross-device
 sessions, full keyboard-only journey, all grades and all filter combinations
 were not exercised. Report/feedback submit was not sent.
+
+## Cleanup
+
+Official wrapper exited 0 after `REVOKE`. Server-side session revocation succeeded; temporary secret env, wrapper/probe helpers, token artifacts, isolated profiles and exact browser sessions/processes were removed. Fresh QA identity and labeled collection data remain for reproducibility. Personal/reference users were untouched.
