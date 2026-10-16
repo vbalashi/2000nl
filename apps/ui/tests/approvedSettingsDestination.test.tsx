@@ -41,7 +41,7 @@ test("approved settings keep production callback ownership and an existing extra
   const p = props();
   render(<SettingsDestination {...p} />);
   expect(screen.getByRole("button",{name:"German"})).toHaveAttribute("aria-pressed","true");
-  fireEvent.click(screen.getByRole("button", { name: "Off" }));
+  fireEvent.click(within(screen.getByRole("group", {name:"Translation language"})).getByRole("button", { name: "Off" }));
   expect(p.onTranslationLanguageChange).toHaveBeenCalledWith(null);
   fireEvent.click(screen.getByLabelText("Interface language"));
   fireEvent.click(await screen.findByRole("menuitem", {name:"Русский"}));
@@ -182,10 +182,29 @@ test("searching another translation language emits its canonical code and restor
 
 test("translation Off remembers the previous language and its label re-enables it",()=>{
  const p=props();const view=render(<SettingsDestination {...p}/>);
- fireEvent.click(screen.getByRole("button",{name:"Off"}));
+ fireEvent.click(within(screen.getByRole("group", {name:"Translation language"})).getByRole("button",{name:"Off"}));
  view.rerender(<SettingsDestination {...p} translationLanguage={null}/>);
- expect(screen.getByRole("button",{name:"Off"})).toHaveAttribute("aria-pressed","true");
+ expect(within(screen.getByRole("group", {name:"Translation language"})).getByRole("button",{name:"Off"})).toHaveAttribute("aria-pressed","true");
  fireEvent.click(screen.getByRole("button",{name:"German"}));
  expect(p.onTranslationLanguageChange).toHaveBeenLastCalledWith("de");
  expect(screen.getByRole("button",{name:"Translation language"})).toHaveAttribute("aria-haspopup","dialog");
+});
+
+
+test("additional translation can be enabled alone, selected and switched off independently", async () => {
+ const p={...props(),translationLanguage:null,secondaryTranslationLanguage:"en",onSecondaryTranslationLanguageChange:vi.fn()};
+ const view=render(<SettingsDestination {...p}/>);
+ const primary=()=>within(screen.getByRole("group",{name:"Translation language"}));
+ const secondary=()=>within(screen.getByRole("group",{name:"Additional translation language"}));
+ expect(primary().getByRole("button",{name:"Off"})).toHaveAttribute("aria-pressed","true");
+ expect(secondary().getByRole("button",{name:"English"})).toHaveAttribute("aria-pressed","true");
+ fireEvent.click(secondary().getByRole("button",{name:"Off"}));
+ expect(p.onSecondaryTranslationLanguageChange).toHaveBeenLastCalledWith(null);
+ expect(p.onTranslationLanguageChange).not.toHaveBeenCalled();
+ view.rerender(<SettingsDestination {...p} secondaryTranslationLanguage={null}/>);
+ expect(secondary().getByRole("button",{name:"Off"})).toHaveAttribute("aria-pressed","true");
+ fireEvent.click(secondary().getByRole("button",{name:"English"}));
+ expect(p.onSecondaryTranslationLanguageChange).toHaveBeenLastCalledWith("en");
+ fireEvent.click(screen.getByRole("button",{name:"Additional translation language"}));
+ expect(await screen.findByRole("dialog")).toBeInTheDocument();
 });

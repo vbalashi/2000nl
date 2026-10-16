@@ -22,6 +22,7 @@ const loadedPreferences = {
   newReviewRatio: 4,
   activeScenario: "listening",
   translationLang: "en",
+  secondaryTranslationLang: "ru",
   preferences: {},
 };
 
@@ -51,6 +52,7 @@ describe("useTrainingPreferences", () => {
         newReviewRatio: 4,
         themePreference: "dark",
         translationLang: "en",
+        secondaryTranslationLang: "ru",
       }),
     );
     expect(trainingTimingEvents(dispatch)).toContainEqual(
@@ -80,6 +82,7 @@ describe("useTrainingPreferences", () => {
         enabledModes: ["word-to-definition", "definition-to-word"],
         themePreference: "dark",
         translationLang: "en",
+        secondaryTranslationLang: "ru",
       }),
     );
   });
@@ -99,10 +102,13 @@ describe("useTrainingPreferences", () => {
     act(() => {
       result.current.setCardFilter("both");
       result.current.setTranslationLang(null);
+      result.current.setSecondaryTranslationLang("de");
     });
 
     expect(result.current.cardFilter).toBe("both");
     expect(result.current.translationLang).toBeNull();
+    expect(result.current.secondaryTranslationLang).toBe("de");
+    expect(updateUserPreferences).toHaveBeenCalledWith({userId:"user-1",secondaryTranslationLang:"de"});
     expect(updateUserPreferences).toHaveBeenCalledWith({
       userId: "user-1",
       cardFilter: "both",

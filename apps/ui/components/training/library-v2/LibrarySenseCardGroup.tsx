@@ -1,4 +1,5 @@
 "use client";
+import {AdditionalCardTranslationProvider,useAdditionalTranslationLanguage} from "@/components/practice/article/AdditionalCardTranslation";
 import {useMeaningLearningActions} from './useMeaningLearningActions';
 import {MeaningLearningProgress} from '@/components/practice/MeaningLearningProgress';
 import {meaningLearningStatus} from '../../../../../packages/shared/types/meaningLearningProgress';
@@ -112,6 +113,8 @@ export function LibrarySenseCardGroup({
   onAction,
   bottomOverlayReserve = false,
 }: Props) {
+  const additionalLanguage = useAdditionalTranslationLanguage();
+  translationEnabled = translationEnabled || Boolean(additionalLanguage);
   const [viewState, setViewState] = React.useState<LibrarySenseCardViewState>(
     () => initialViewState(model, activeMeaningId, revealActiveMeaning),
   );
@@ -439,7 +442,11 @@ export function LibrarySenseCardGroup({
   );
 }
 
-function MeaningCard({
+function MeaningCard(props: React.ComponentProps<typeof MeaningCardBody>) {
+  return <AdditionalCardTranslationProvider entryId={props.meaning.entryId} contentLanguage={props.contentLanguage} visible={props.state.translationVisible}><MeaningCardBody {...props}/></AdditionalCardTranslationProvider>;
+}
+
+function MeaningCardBody({
   meaning,
   userId,
   showSenseForms,
@@ -550,9 +557,9 @@ function MeaningCard({
         >
           <div className="min-w-0">
             {<ProductionArticleReading>
-              <ArticleTranslation text={[meaning.entryTranslation,...meaning.entryTranslationAlternatives].filter(Boolean).join(" · ")} visible={state.translationVisible} pending={translationState === "pending"} failed={translationState === "failed"} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} emphasis language={translationLanguage}/>
+              <ArticleTranslation translationKey="entry" text={[meaning.entryTranslation,...meaning.entryTranslationAlternatives].filter(Boolean).join(" · ")} visible={state.translationVisible} pending={translationState === "pending"} failed={translationState === "failed"} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} emphasis language={translationLanguage}/>
               <p className={reading.definitionText} lang={contentLanguage}>{meaning.definition?.text??"—"}</p>
-              <ArticleTranslation text={meaning.definition?.translation} pending={Boolean(meaning.definition) && translationState === "pending"} failed={Boolean(meaning.definition) && translationState === "failed"} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} multiline visible={state.translationVisible} language={translationLanguage}/>
+              <ArticleTranslation translationKey={meaning.definition?.contentNodeId} sourceTextFingerprint={meaning.definition?.sourceTextFingerprint} text={meaning.definition?.translation} pending={Boolean(meaning.definition) && translationState === "pending"} failed={Boolean(meaning.definition) && translationState === "failed"} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} multiline visible={state.translationVisible} language={translationLanguage}/>
             </ProductionArticleReading>}
 
           </div>

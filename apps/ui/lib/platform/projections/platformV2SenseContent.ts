@@ -15,6 +15,7 @@ export type PlatformV2NodeReportCapability = Extract<
 
 export type PlatformV2SenseContentNode = {
   contentNodeId: string;
+  sourceTextFingerprint?: string;
   parentContentNodeId: string | null;
   kind: PlatformContentNodeKindV2;
   text: string;
@@ -51,6 +52,7 @@ export function projectPlatformV2SenseContent(
       const reportCapability = reportByContentNodeId.get(node.contentNodeId);
       return {
         contentNodeId: node.contentNodeId,
+        sourceTextFingerprint: node.sourceTextFingerprint,
         parentContentNodeId: node.parentContentNodeId,
         kind: node.kind,
         text: node.text,

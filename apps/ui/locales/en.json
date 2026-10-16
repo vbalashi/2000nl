@@ -509,6 +509,7 @@
       "interfaceLanguage": "Interface language",
       "availableInterfaces": "Available interface languages",
       "translationLanguage": "Translation language",
+      "secondaryTranslationLanguage": "Additional translation language",
       "translationHint": "Choose any language in the catalogue, or turn translations off.",
       "off": "Off",
       "chooseLanguage": "Choose language",

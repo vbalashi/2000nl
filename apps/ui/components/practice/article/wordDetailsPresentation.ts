@@ -29,11 +29,11 @@ export function wordFormDetail(details:PlatformWordDetailsV2|undefined, pos:stri
  return {forms:forms.filter((form,i)=>forms.findIndex(f=>f.label===form.label&&f.value===form.value)===i),conjugation,pos:presentationPos};
 }
 
-export type LexicalRelationDisplayItem = {relationId:string;text:string;translation?:string};
+export type LexicalRelationDisplayItem = {relationId:string;text:string;translation?:string;sourceTextFingerprint?:string};
 export function lexicalRelationDetail(details?:PlatformWordDetailsV2,targetLanguageCode?:string){
  const values=(kind:"synonym"|"antonym"):LexicalRelationDisplayItem[]=>details?.lexicalRelations.filter(r=>r.kind===kind).map(r=>{
   const translation=r.sourceTextFingerprint&&targetLanguageCode ? firstExactRenderableNodeTranslationV1((r.translations??[]).filter(t=>t.targetLanguageCode===targetLanguageCode),r.sourceTextFingerprint)?.text : undefined;
-  return {relationId:r.relationId,text:r.text,...(translation?{translation}:{})};
+  return {relationId:r.relationId,text:r.text,sourceTextFingerprint:r.sourceTextFingerprint,...(translation?{translation}:{})};
  })??[];
  return {synonyms:values("synonym"),antonyms:values("antonym")};
 }
