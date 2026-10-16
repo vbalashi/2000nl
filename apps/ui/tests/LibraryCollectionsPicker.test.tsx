@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 import { LibraryCollectionsPicker } from "@/components/training/library-v2/LibraryCollectionsPicker";
 
@@ -103,4 +103,110 @@ test("approved picker opens creation on demand and keeps its existing callback",
   fireEvent.submit(screen.getByPlaceholderText("New collection name").closest("form")!);
   expect(create).toHaveBeenCalledWith("Verbs");
   vi.unstubAllEnvs();
+});
+
+test("membership refresh keeps focus in the dialog and restores the toggled checkbox unless focus moved", () => {
+  const list = { id: "book-1", name: "Book 1", type: "user" as const };
+  const savedMembership = {
+    listId: list.id,
+    listType: "user" as const,
+    name: list.name,
+    editable: true,
+    isActiveTrainingList: false,
+  };
+  const props = {
+    open: true,
+    headword: "huis",
+    definition: "a house",
+    interfaceLanguage: "en" as const,
+    userLists: [list],
+    onClose: vi.fn(),
+    onToggleList: vi.fn(),
+    onCreateList: vi.fn(),
+  };
+  const view = render(
+    <LibraryCollectionsPicker
+      {...props}
+      memberships={[]}
+      busyListId={null}
+      status={null}
+      membershipState="ready"
+    />,
+  );
+
+  const checkbox = screen.getByRole("checkbox", { name: "Book 1" });
+  checkbox.focus();
+  fireEvent.click(checkbox);
+  view.rerender(
+    <LibraryCollectionsPicker
+      {...props}
+      memberships={[]}
+      busyListId={list.id}
+      status={null}
+      membershipState="loading"
+    />,
+  );
+  const dialog = screen.getByRole("dialog", { name: "Collections" });
+  const collectionRegion = dialog.querySelector('[role="region"]') as HTMLElement;
+  expect(checkbox).toBeDisabled();
+  expect(collectionRegion).toHaveFocus();
+
+  view.rerender(
+    <LibraryCollectionsPicker
+      {...props}
+      memberships={[savedMembership]}
+      busyListId={null}
+      status={null}
+      membershipState="ready"
+    />,
+  );
+  expect(checkbox).toBeChecked();
+  expect(checkbox).toBeEnabled();
+  expect(checkbox).toHaveFocus();
+
+  view.rerender(
+    <LibraryCollectionsPicker
+      {...props}
+      memberships={[savedMembership]}
+      busyListId={list.id}
+      status={null}
+      membershipState="loading"
+    />,
+  );
+  expect(collectionRegion).toHaveFocus();
+  view.rerender(
+    <LibraryCollectionsPicker
+      {...props}
+      memberships={[savedMembership]}
+      busyListId={null}
+      status={null}
+      membershipState="ready"
+    />,
+  );
+  expect(checkbox).toHaveFocus();
+
+  fireEvent.click(checkbox);
+  view.rerender(
+    <LibraryCollectionsPicker
+      {...props}
+      memberships={[savedMembership]}
+      busyListId={list.id}
+      status={null}
+      membershipState="loading"
+    />,
+  );
+  expect(collectionRegion).toHaveFocus();
+  const done = within(dialog).getByRole("button", { name: "Done" });
+  done.focus();
+  view.rerender(
+    <LibraryCollectionsPicker
+      {...props}
+      memberships={[]}
+      busyListId={null}
+      status={null}
+      membershipState="ready"
+    />,
+  );
+  expect(checkbox).not.toBeChecked();
+  expect(done).toHaveFocus();
 });

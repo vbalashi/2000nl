@@ -832,11 +832,9 @@ export function DictionarySearchTab({
                   userId={userId}
                   userLists={userLists}
                   onListsUpdated={async () => {
-                    invalidateFreshness();
+                    if (useViewedListFilter) invalidateFreshness();
                     await reloadLists();
-                    if (useViewedListFilter || query.trim() || (materialEnabled)) {
-                      void runSearch(true);
-                    }
+                    if (useViewedListFilter) void runSearch(true);
                     notifyListsUpdated();
                   }}
                   onOpenListMembership={onOpenListMembership}
@@ -866,11 +864,9 @@ export function DictionarySearchTab({
           interfaceLanguage={interfaceLanguage}
           userLists={userLists}
           onListsUpdated={async () => {
-            invalidateFreshness();
+            if (useViewedListFilter) invalidateFreshness();
             await reloadLists();
-            if (useViewedListFilter || query.trim() || (materialEnabled)) {
-              void runSearch(true);
-            }
+            if (useViewedListFilter) void runSearch(true);
             notifyListsUpdated();
           }}
           onOpenListMembership={onOpenListMembership}

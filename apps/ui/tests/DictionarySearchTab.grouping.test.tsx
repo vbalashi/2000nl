@@ -23,17 +23,23 @@ vi.mock("@/components/training/library-v2/LibraryWordDetail", () => ({
   LibraryWordDetail: ({
     initialGroup,
     viewport,
+    onListsUpdated,
   }: {
     initialGroup?: PlatformHeadwordGroupV2;
     viewport?: string;
-  }) =>
-    initialGroup ? (
-      <div
-        data-testid={`library-detail-${viewport ?? "all"}`}
-        data-group-id={initialGroup.headwordGroupId}
-        data-entry-count={initialGroup.entries.length}
-      />
-    ) : null,
+    onListsUpdated?: () => Promise<void> | void;
+  }) => (
+      <div>
+        <div
+          data-testid={`library-detail-${viewport ?? "all"}`}
+          data-group-id={initialGroup?.headwordGroupId}
+          data-entry-count={initialGroup?.entries.length}
+        />
+        {onListsUpdated ? <button type="button" onClick={() => void onListsUpdated()}>
+          Simulate saved collection membership
+        </button> : null}
+      </div>
+  ),
 }));
 
 vi.mock("@/lib/trainingService", () => ({
@@ -150,7 +156,7 @@ const deferred = <T,>() => {
   return { promise, resolve, reject };
 };
 
-function Harness({preload=false,open=true,initial = {},locale="nl",translationLang="en",collection=false,unavailableSourceCount=0}: {preload?:boolean;open?:boolean;collection?:boolean;unavailableSourceCount?:number;initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru";translationLang?:string|null} = {}) {
+function Harness({preload=false,open=true,initial = {},locale="nl",translationLang="en",collection=false,unavailableSourceCount=0,reloadLists=async()=>{},notifyListsUpdated=()=>{}}: {preload?:boolean;open?:boolean;collection?:boolean;unavailableSourceCount?:number;initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru";translationLang?:string|null;reloadLists?:()=>Promise<void>;notifyListsUpdated?:()=>void} = {}) {
   const [state, setState] = React.useState<DictionarySearchTabState>(() => ({
     ...createDictionarySearchTabState(),
     query: "goed",
@@ -169,8 +175,8 @@ function Harness({preload=false,open=true,initial = {},locale="nl",translationLa
       viewedListId={collection ? "owned-list" : null}
       viewedList={collection ? {id:"owned-list",name:"My collection",type:"user",language_code:"nl",unavailable_source_count:unavailableSourceCount} : null}
       viewedListName="Van Dale"
-      reloadLists={async () => {}}
-      notifyListsUpdated={() => {}}
+      reloadLists={reloadLists}
+      notifyListsUpdated={notifyListsUpdated}
       searchState={state}
       onSearchStateChange={setState}
     />
@@ -215,6 +221,37 @@ describe("DictionarySearchTab Headword Group results", () => {
     expect(fetchGroupPage).toHaveBeenLastCalledWith(
       expect.objectContaining({ cursor: "cursor-page-2", query: "goed" }),
     );
+  });
+
+  test("a membership save refreshes search only when the active list filter depends on it", async () => {
+    fetchGroupPage.mockReset().mockResolvedValue({
+      groups: [firstGroup],
+      selectedTierComplete: true,
+      nextGroupCursor: null,
+    });
+    const reloadLists = vi.fn().mockResolvedValue(undefined);
+    const notifyListsUpdated = vi.fn();
+    render(
+      <Harness reloadLists={reloadLists} notifyListsUpdated={notifyListsUpdated} />,
+    );
+
+    const result = await screen.findByTestId(
+      "library-headword-group-group-goed-main",
+    );
+    fireEvent.click(result);
+    expect(await screen.findByTestId("library-detail-desktop")).toBeInTheDocument();
+    const searchCallsBeforeMembershipSave = fetchGroupPage.mock.calls.length;
+
+    fireEvent.click(
+      within(screen.getByTestId("library-detail-desktop").parentElement!).getByRole(
+        "button",
+        { name: "Simulate saved collection membership" },
+      ),
+    );
+
+    await waitFor(() => expect(reloadLists).toHaveBeenCalledOnce());
+    expect(notifyListsUpdated).toHaveBeenCalledOnce();
+    expect(fetchGroupPage).toHaveBeenCalledTimes(searchCallsBeforeMembershipSave);
   });
 
   test("mobile selection opens the complete server group instead of one meaning", async () => {
@@ -510,6 +547,58 @@ test("owned collection entries use shared Library rows while retaining entry sel
   fireEvent.click(row);
   await waitFor(() => expect(service.fetchDictionaryEntryById).toHaveBeenCalledWith("owned-entry","user-1"));
   expect(service.fetchWordsForList).toHaveBeenCalledWith("owned-list","user",expect.objectContaining({query:"goed",page:1}));
+});
+
+test("a viewed-collection membership save refreshes the result membership", async () => {
+  const service = await import("@/lib/trainingService");
+  const entry = {
+    id: "owned-entry",
+    headword: "huis",
+    gender: "het",
+    language_code: "nl",
+    dictionary_name: "Personal",
+    part_of_speech: "zn",
+    raw: { meanings: [{ definition: "een gebouw" }] },
+  } as DictionaryEntry;
+  vi.mocked(service.fetchWordsForList)
+    .mockClear()
+    .mockResolvedValueOnce({ items: [entry], total: 1 })
+    .mockResolvedValueOnce({ items: [], total: 0 });
+  const reloadLists = vi.fn().mockResolvedValue(undefined);
+  const notifyListsUpdated = vi.fn();
+  render(
+    <Harness
+      locale="en"
+      collection
+      initial={{ applyListFilter: true }}
+      reloadLists={reloadLists}
+      notifyListsUpdated={notifyListsUpdated}
+    />,
+  );
+
+  fireEvent.click(await screen.findByRole("button", { name: /het huis/ }));
+  await waitFor(() =>
+    expect(service.fetchDictionaryEntryById).toHaveBeenCalledWith(
+      "owned-entry",
+      "user-1",
+    ),
+  );
+  const detail = await screen.findByTestId("library-detail-desktop");
+  fireEvent.click(
+    within(detail.parentElement!).getByRole("button", {
+      name: "Simulate saved collection membership",
+    }),
+  );
+
+  await waitFor(() => expect(service.fetchWordsForList).toHaveBeenCalledTimes(2));
+  expect(service.fetchWordsForList).toHaveBeenLastCalledWith(
+    "owned-list",
+    "user",
+    expect.objectContaining({ query: "goed", page: 1 }),
+  );
+  expect(reloadLists).toHaveBeenCalledOnce();
+  expect(notifyListsUpdated).toHaveBeenCalledOnce();
+  expect(screen.queryByRole("button", { name: /het huis/ })).not.toBeInTheDocument();
 });
 
 test("switching from a pending collection read to dictionary search fences the old collection response", async () => {
