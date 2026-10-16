@@ -1,0 +1,230 @@
+# Production new-user UI QA — 2026-10-15
+
+**Status:** exploratory pass, findings not yet reproduced independently
+**Environment:** production UI at https://2000.dilum.io/
+**Account:** isolated dedicated QA account `test-new-user-20261015@2000nl.test`; clean at start. Existing test account was left untouched.
+**Scope:** first visit, training launch/exit, Library lookup and card collection membership, session builder, exercise switching, answering a card. No production dictionary imports or changes to other users' data.
+
+**Speech-recognition correction:** The owner's earlier words were `goed` and `fiets`; the transcript's `hood` and `fits` were recognition errors. The initial exploratory search of `fits`/`hood` is not product evidence and is excluded from findings.
+
+## Observations
+
+1. **Clean account has a populated VanDale 2k default training.** Initial Training screen showed Due now 0, Total reviews 0, Still new 2333. Starting the default training worked on the first click in this pass and displayed card 1 / 10. The earlier report of initial loading errors on the family account was not reproduced here.
+
+2. **Closing an in-progress training preserves it.** After starting and closing before answering, Training showed the same VanDale 2k session as IN PROGRESS, 0 done / 10 remaining, with Continue training. This was coherent in the UI.
+
+3. **Library membership count and collection list disagree before creation (needs confirmation).** In Library, a meaning for `goed` showed “Collections · 1”. Opening its Collections dialog showed “No collections found”. Creating a new collection succeeded; returning to the Library card then showed “Collections · 2”. The training source menu subsequently contained the new QA collection. This suggests a baseline collection is counted but unavailable in the dialog/list, or the count is stale. The account started clean (no user collections), so investigate whether the count refers to a system/default collection.
+
+4. **New collection creation worked from a dictionary meaning.** The flow was Collections → New collection → enter name → Create. Create closed the dialog and the card count increased. No visible error was shown. I did not finish verifying adding a second distinct card or persistence after reload.
+
+5. **Exercise type interaction was automation-ambiguous.** In the session builder, opening Exercises exposed Words, Idioms, Translation. The automation reported that an attempted click on the “Idioms” ref was followed by the Filters panel opening, while the exercise summary still read “Words · Direct”. Ref IDs were regenerated between snapshots, and the intended option was not verified as the actual click target. This is not confirmed as a product navigation defect; retest with a fresh accessible-name locator and immediate state verification.
+
+6. **Starting a collection training was slow but succeeded.** Choosing the new QA collection and starting showed “Starting…” with other controls disabled for roughly 15–20 seconds, then loaded a card successfully. This is a noticeable wait; no error appeared.
+
+7. **Answer reveal worked.** Show answer revealed the definition and example. “Learn” was disabled on this new card; no self-rating options appeared in this first revealed state. The interface might require another action/state, so self-rating was not completed.
+
+8. **An automation run reported `about:blank`; this is not confirmed as product navigation.** In the training builder flow, after closing/reopening sections and attempting Save training, the automation reported that it could not locate the Save training button and the page became `about:blank`. The #702 agent later confirmed it ran `agent-browser close --all` in the shared browser runtime around 20:22–20:23 UTC, overlapping this attempt, so browser-session closure is a plausible explanation. The independent #704 builder pass stayed on production route `/` and did not reproduce `about:blank`. Treat this historical event as harness-interrupted, not a product defect. The session was revoked; browser localStorage cleanup was not confirmed after the tab disappeared. Temporary driver and secret env files were removed, and no QA recovery artifact remained.
+
+## Flicker and render/network trace requirements
+
+I used production browser automation accessibility snapshots. They do not record render causes or network timing, so this pass cannot confirm or rule out flicker. The builder regenerated accessibility refs between state changes; that is an automation limitation and should not be described as UI flicker. No visual evidence was captured.
+
+For the next pass, correlate each owner-marked flicker with a single monotonic timeline:
+
+- Record the exact user action and timestamp, active route, selected collection/card, and visibility/focus state.
+- Observe network request start/end/status and initiator for the relevant API/RPC calls (including retries, polling, and refreshes). Sanitize headers, tokens, bodies, user IDs, and card content from saved evidence.
+- Instrument DOM mutations and React commit boundaries for the affected page/controls. At each commit sample node identity/mount lifetime, loading/empty/error state, disabled state, opacity/visibility, dimensions, and focus. A render count alone is not a diagnosis.
+- Compare the UI changes against request/response intervals and separate server-driven state updates, local optimistic updates, retries, polling, and unrelated requests.
+- Reproduce the owner-marked create/add-collection flow and at least one training transition on a production build with no source edits. Preserve a sanitized trace; don't rely on video alone.
+
+The existing #519/#638 evidence concerns periodic Training authority checks/menu presentation. The reported flashing while creating collections is a different interaction surface and needs its own correlated trace before linking causes.
+
+## Next pass
+
+- Re-enter with the isolated QA account and verify if “Collections · 1” / “No collections found” reproduces on several meanings.
+- Add a second card to a second collection, reload, and verify collection counts and membership.
+- Retest Words / Idioms / Translation with fresh accessible selectors and capture screenshots/video if the browser surface permits.
+- Save a named training, return to Training, edit it, start another mode, reveal and rate at least one card.
+- Capture sanitized network + DOM/React commit traces as described above; also record console/page errors for the flicker and blank-page navigation.
+- Compare production timings and visible errors with a local UI run only after the production flow is stable.
+
+## Issue #705 follow-up — controlled first-use pass
+
+On a fresh wrapper-authenticated session for the isolated #705 QA account, the
+Training home rendered VanDale 2k with Due now 0, Total reviews 0, Still new
+2333, and an enabled Start training button. The stale `hood`/`fits` terms are
+not involved. No empty 0/0 training state or startup error appeared.
+
+Before Start, the captured production network list showed HTTP 200 for the page,
+the user settings and learning preferences reads, `/api/training/setups`,
+`/api/settings/material`, and the available-language, filter-source,
+dictionary-source, active-scope, word-list, training-scenario, word-list-summary,
+and training-availability reads. The trace is summarized by endpoint class;
+request IDs, user identifiers, headers, and bodies were not retained.
+
+The first Start click disabled the control while preparing; a subsequent
+snapshot showed the first card (`schaal`) at 0 / 10. The card appeared within
+roughly 20 seconds of the click. This is a slow successful launch, not a failed
+Start. No grade or review action was made.
+
+The earlier `about:blank` observation is harness-interrupted: the #702 browser
+agent confirmed it ran `agent-browser close --all` in the shared runtime around
+20:22–20:23 UTC, overlapping that attempt. The independent #704 builder pass
+remained on route `/` and did not reproduce the blank page. No product conclusion
+is drawn from the historical page loss.
+
+The subsequent controlled run used a separate clean account. Start returned a
+card (`bevatten`) at 0 / 10. The sanitized trace recorded
+`/api/training/availability` 200 (3404 ms),
+`update_active_training_scope` 200 (162 ms), `start_training_session` 200
+(762 ms), and `get_next_training_session_card` 200 (363 ms). Follow-up card,
+snapshot, plan, lookup, translation, and study-time requests were also 200. No
+`invalid_training_recipe` 400 appeared. Request bodies were not retained, so
+the list identifier used by the availability request cannot be verified.
+
+After closing the active session, Training showed VanDale 2k IN PROGRESS,
+0 done / 10 remaining, and Continue training. Reload returned to the same
+active card/session. Continue was briefly disabled while the page loaded; a
+bounded text wait timed out after the app had already returned to the card
+view. This is not evidence of a broken resume.
+
+The same account's Library initially showed `Collections · 1` for `goed`,
+while the fresh semantic Collections button opened a dialog saying “No
+collections found”. Creating `QA705 Goed fiets` succeeded; the picker showed
+it selected and “Collection membership updated”. The Library badge then read
+`Collections · 2`; reopening the picker showed the collection selected. This
+confirms the #703 count/list discrepancy and one-card membership write on the
+current production build. Searching `fiets` returned one dictionary entry,
+but adding that second card and launching training from the collection were
+not completed in this run.
+
+Page-wide DOM and React instrumentation was installed before page scripts.
+Persisted sanitized trace dumps covered initial load and Start, not the later
+collection click/create. The dumps contain 38 and 54 React commits; the hook
+exposed only minified top-level names (`x`, `A`, `L`, `i`). No MutationObserver
+batches were recorded. Since no collection-action trace was persisted and the
+observer emitted no batches, this run cannot correlate the create flow with
+request timing or rule out flicker. No flashing was noticed during the brief
+create flow, but this is not a measured no-flicker result.
+
+Related #704 evidence from a separate production builder pass found
+`/api/training/availability` returning 400 when `draft.listValue` was
+`invalid-or-unrecognized`, followed by 200 when `draft.listValue` was
+`curated`, with the same draft shape. The error body was not parsed. This
+suggests a possible pre-hydration list-catalog race, but does not establish
+that a user saw an error or that it caused the reported first-load problem.
+The clean-account trace above showed only a 200 availability response and did
+not retain its request parameters.
+
+The unsupported wait command in the temporary driver consumed its 15-second
+bound and delayed later trace collection; direct snapshots still worked. The
+session was then quit through the wrapper, which exited 0 and revoked the
+server-side QA session. No product conclusion is drawn from the earlier
+cross-session browser closure.
+
+## Issue #705 follow-up — final scoped journey
+
+The same dedicated QA identity was reauthenticated through the fail-closed
+wrapper. On initial load the page briefly showed “Preparing training”; it then
+rendered the VanDale 2k training home with Due now 0, Total reviews 0, Still
+new 2333, and an enabled Start training button. No visible alert or page error
+appeared. The first-load trace recorded one
+`/api/training/availability` response, HTTP 200 in 945 ms. Available word-list,
+setup, settings, language, scope, and source reads also returned 200. Request
+bodies were not retained, so the `draft.listValue` could not be compared with
+the separate #704 race observation.
+
+In Library, search for `fiets` returned one article. Its card displayed
+`Collections · 1`. The automation reported that the semantic click left the
+Library view unchanged, but that observation is automation-ambiguous: it did
+not establish that the intended control received a pointer event, and no
+screenshot was captured. The existing `QA705 Goed fiets` collection was not
+verified to receive a second card. A later direct Playwright recheck resolved
+one matching accessible button but timed out before dispatching its click while
+waiting for actionability. Neither attempt establishes whether the product
+handler opens a dialog; no picker handler defect is confirmed.
+
+The builder opened from Create training. Its Source control remained at
+VanDale 2k; the semantic source locator did not resolve. The Exercises panel
+opened with a fresh semantic `Exercises` locator. The automation then reported
+that selecting the visible `Idioms` option left `Words · Direct` selected and
+opened Filters. Because the actual click target/dispatch was not independently
+verified and the earlier refs were regenerated between snapshots, this remains
+automation-ambiguous and does not confirm a product navigation defect. I stopped
+without retrying that control, so collection-backed training was not tested.
+
+To inspect answer state, I started the currently selected default Words
+training. The first card (`thuis`) appeared at 0 / 10, and Show answer revealed
+the definition and examples. The resulting card showed Learn disabled and
+Report/Exclude actions; no self-rating choices were offered. The trace showed
+the availability, session start, card, snapshot, lookup, translation, and
+study-time requests returning 200. No page or unhandled errors were recorded.
+
+The visible route remained `/`. The sanitized trace had no DOM observer
+batches, so it does not establish whether any short-lived visual flashing
+occurred. Collection membership persistence after reload could not be tested
+for `fiets` because the picker never opened; the prior `goed` membership
+remains the only confirmed collection write. No second browser session was
+started. The wrapper exited 0, the dedicated session was revoked, and its
+temporary environment, wrapper, and trace script were removed.
+
+Focused local regression baseline: 136 tests passed across
+`TrainingScreen.test.tsx`, `TrainingScreenTransition.test.tsx`,
+`TrainingTodaySetup.test.tsx`, `TrainingStartupGate.test.tsx`, and
+`trainingSessionLifecycle.test.tsx`. `npm run typecheck` passed. No confirmed
+issue #705 code defect has been reproduced yet, so no behavior change is
+proposed from this pass.
+
+## Cleanup
+
+The controlled #705 session exited through its wrapper with exit code 0;
+server-side QA session revocation succeeded and no `qa-session-*` recovery
+directory remained. Temporary QA driver, trace script/log, environment file,
+and wrapper are removed after saving the sanitized findings here. Existing
+generated change in `apps/ui/next-env.d.ts` predated this pass and was left
+untouched.
+
+## Follow-up issues
+
+- [#702](https://github.com/vbalashi/2000nl/issues/702) — correlate reported Library/collection flashing with network activity and DOM/React render changes.
+- [#703](https://github.com/vbalashi/2000nl/issues/703) — investigate `Collections · 1` while the picker says `No collections found`.
+- [#704](https://github.com/vbalashi/2000nl/issues/704) — reproduce the Session Builder transition to `about:blank`.
+- [#705](https://github.com/vbalashi/2000nl/issues/705) — recheck first-use loading, Start, collection persistence/membership, and training selection from a clean account. Exercise switching and reveal/rating checks were added in a comment.
+- [#440](https://github.com/vbalashi/2000nl/issues/440#issuecomment-6201311699) — added the uncalibrated 15–20-second collection-training launch observation for controlled latency correlation.
+
+## Issue #705 follow-up — direct Playwright picker recheck
+
+On the existing QA account and collection, direct Playwright connected to the
+wrapper-authenticated production browser and resolved exactly one accessible
+button matching `getByRole('button', { name: /^Collections ·/ })`. Its single
+bounded click attempt timed out before dispatch: Playwright continued waiting
+for the resolved element to become visible, enabled, and stable. Therefore this
+attempt provides no evidence about the picker click handler or whether a dialog
+would open. The screenshot command did not create an output file, so there is
+no before/after screenshot for visual inspection. The wrapper exited 0; the
+temporary QA session artifacts were removed and no `qa-session-*` recovery
+directory remained.
+
+## Safe post-release production QA readiness
+
+The supported auth entrypoint is `scripts/ab-auth-prod.sh`; the canonical
+reference checkout has a restricted `.env.local` containing the required
+configuration keys. Values were not read into this report. The wrapper validates
+the dedicated QA identity against its allowlist/reference exclusions and checks
+its server-side QA marker before minting; these checks must remain enabled. A
+post-release session should be started from the repository root with:
+
+```bash
+scripts/ab-auth-prod.sh --session qa705-postrelease --env-file .env.local
+```
+
+The wrapper currently gates completion on the legacy Today surface, while the
+current production root renders the authenticated Training/Create training
+shell. Therefore this command may end in an "App surface failure" even when
+authentication succeeded; do not interpret that stale gate as a product outage
+or bypass it with direct token injection. Before interactive post-release QA,
+update the bounded surface probe to verify the current primary shell while
+preserving the wrapper's exact-origin, identity, token revocation, and artifact
+cleanup checks. Then run the approved first-use journey on the dedicated QA
+identity only, record sanitized route/request/error evidence, and exit through
+the wrapper so server-side revocation and local cleanup complete.
