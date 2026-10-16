@@ -174,6 +174,13 @@ try:
             sql('', file=file)
             missing.append(entry['migrationId'])
     print(json.dumps({'stage':'selected schema','contract':manifest['contractId'],'explicit_fixture_forward_migrations':missing}),flush=True)
+    # Fresh bootstrap must satisfy the complete deployment chain, including
+    # function-local settings introduced after the catalog optimization.
+    probe = manifest['readOnlyPostflightProbe']['file']
+    if not re.fullmatch(r'db/deploy-contract/read-only-postflight-[0-9]+\.sql', probe):
+        raise ValueError('Unexpected current postflight path')
+    sql('BEGIN READ ONLY;\n\\i ' + probe + '\nROLLBACK;')
+    print(json.dumps({'stage':'complete read-only postflight','contract':manifest['contractId']}),flush=True)
     # Pin the pre-change catalog independently of the current bootstrap version.
     previous = (SCHEMA_ROOT / "db/migrations/203_collection_source_availability.sql").read_text()
     previous = previous[previous.index("CREATE OR REPLACE FUNCTION get_available_word_lists("):previous.rindex("COMMIT;")]
