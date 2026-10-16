@@ -55,6 +55,17 @@ function membership(listId: string): EntryLearningListMembership {
   };
 }
 
+function curatedMembership(listId: string): EntryLearningListMembership {
+  return {
+    listId,
+    listType: "curated",
+    name: listId,
+    editable: false,
+    readOnlyReason: "curated",
+    isActiveTrainingList: false,
+  };
+}
+
 function remapCapabilityEntryId(
   capability: PlatformSenseCardCapabilityV2,
   entryId: string,
@@ -1099,6 +1110,30 @@ describe("LibrarySenseCardV2Session", () => {
     expect(
       screen.getByRole("button", { name: "Collections · 1" }),
     ).toBeInTheDocument();
+  });
+
+  test("does not count curated memberships in the user collections picker count", async () => {
+    fetchMemberships.mockResolvedValue(
+      new Map([[financeEntry.entryId, [curatedMembership("VanDale 2k")]]]),
+    );
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId={financeEntry.entryId}
+        initialGroup={multiSenseBankGroup}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        userId="user-membership"
+      />,
+    );
+
+    await screen.findByTestId("library-sense-card-group");
+    const card = screen.getByTestId(`library-sense-card-${financeEntry.entryId}`);
+    await waitFor(() => expect(fetchMemberships).toHaveBeenCalledOnce());
+    expect(within(card).getByRole("button", { name: "Collections" })).toBeInTheDocument();
+    expect(within(card).queryByRole("button", { name: /^Collections ·/ })).not.toBeInTheDocument();
   });
 
   test("does not refresh an old lookup dimension after translation changes", async () => {
