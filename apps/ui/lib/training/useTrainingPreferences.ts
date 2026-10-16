@@ -41,7 +41,9 @@ export function useTrainingPreferences(
   const [translationLang, setTranslationLangState] = useState<string | null>(
     initialPreferences?.translationLang ?? null,
   );
-  const [secondaryTranslationLang, setSecondaryTranslationLangState] = useState<string | null>(initialPreferences?.secondaryTranslationLang ?? null);
+  const translationLangRef = useRef(translationLang);
+  translationLangRef.current = translationLang;
+  const [secondaryTranslationLang, setSecondaryTranslationLangState] = useState<string | null>(initialPreferences?.translationLang && initialPreferences.translationLang !== "off" ? initialPreferences.secondaryTranslationLang ?? null : null);
   const initialTransitionIdRef = useRef(initialTransitionId);
   const initialPreferencesRef = useRef(initialPreferences);
 
@@ -72,7 +74,8 @@ export function useTrainingPreferences(
       setNewReviewRatioState(prefs.newReviewRatio);
       setActiveScenarioState(prefs.activeScenario);
       setTranslationLangState(prefs.translationLang);
-      setSecondaryTranslationLangState(prefs.secondaryTranslationLang ?? null);
+      translationLangRef.current = prefs.translationLang;
+      setSecondaryTranslationLangState(prefs.translationLang && prefs.translationLang !== "off" ? prefs.secondaryTranslationLang ?? null : null);
     };
 
     void loadPreferences();
@@ -163,10 +166,14 @@ export function useTrainingPreferences(
         newLang,
       );
       setTranslationLangState(newLang);
+      translationLangRef.current = newLang;
+      const disabled = !newLang || newLang === "off";
+      if (disabled) setSecondaryTranslationLangState(null);
       if (userId) {
         void updateUserPreferences({
           userId,
           translationLang: newLang,
+          ...(disabled ? {secondaryTranslationLang: null} : {}),
         });
       }
     },
@@ -174,6 +181,7 @@ export function useTrainingPreferences(
   );
 
   const setSecondaryTranslationLang = useCallback((newLang: string | null) => {
+    if (!translationLangRef.current || translationLangRef.current === "off") return;
     setSecondaryTranslationLangState(newLang);
     if (userId) void updateUserPreferences({ userId, secondaryTranslationLang: newLang });
   }, [userId]);

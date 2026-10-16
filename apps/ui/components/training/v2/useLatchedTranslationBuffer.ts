@@ -26,7 +26,7 @@ export function useLatchedTranslationBuffer(input: {
     const activeLanguage = (language?: string | null) => language && language !== "off" ? language : null;
     const primary = activeLanguage(input.targetLanguageCode);
     const secondary = activeLanguage(input.additionalTargetLanguageCode);
-    const additional = secondary !== primary ? secondary : null;
+    const additional = primary && secondary !== primary ? secondary : null;
     if (!sessionId || !input.currentEntryId || (!primary && !additional)) return;
     const scope = JSON.stringify([ownerId, sessionId, input.generation ?? "legacy", primary, additional]);
     const now = Date.now();
