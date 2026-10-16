@@ -2463,6 +2463,7 @@ function TrainingScreenContent({
     currentEntryId: currentWord?.id,
     currentCardTypeId: currentMode,
     targetLanguageCode: translationLang === "off" ? null : translationLang,
+    additionalTargetLanguageCode: secondaryTranslationLang,
   });
 
   const trainingSessionChrome = sessionChrome;

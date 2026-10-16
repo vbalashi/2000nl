@@ -1,3 +1,4 @@
+import {CardTranslationLanguagesProvider} from "@/components/practice/article/AdditionalCardTranslation";
 import { requestPlatformV2LibraryTranslation } from "@/lib/platform/platformV2LibraryClient";
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({ requestPlatformV2LibraryTranslation: vi.fn() }));
 import { getUiMessages } from "@/lib/uiMessages";
@@ -45,7 +46,7 @@ beforeEach(() => {
   vi.mocked(prepareSentenceExerciseTranslation).mockResolvedValue({ state: "ready" });
 });
 
-test("prepares only the next latched sentence without advancing or grading", async () => {
+test.each([null, "en"])("prepares the next latched sentence with additional %s without advancing or grading", async (additional) => {
   const second = {
     ordinal: 2, targetId: "target-next", queueSource: "new" as const,
     consumedAt: null, unavailableAt: null, unavailableReason: null,
@@ -63,10 +64,11 @@ test("prepares only the next latched sentence without advancing or grading", asy
   };
   vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValue(candidate);
   vi.mocked(loadSentenceExerciseContent).mockResolvedValue({ state: "ready", content } as never);
-  render(<TrainingSentenceSession userId="user-1" session={sessionWithLookahead} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} />);
+  render(<CardTranslationLanguagesProvider primary="ru" secondary={additional}><TrainingSentenceSession userId="user-1" session={sessionWithLookahead} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} /></CardTranslationLanguagesProvider>);
 
   expect(await screen.findByText("Переведённый пример.")).toBeVisible();
-  await waitFor(() => expect(requestPlatformV2LibraryTranslation).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(requestPlatformV2LibraryTranslation).toHaveBeenCalledTimes(additional ? 2 : 1));
+  if (additional) expect(requestPlatformV2LibraryTranslation).toHaveBeenCalledWith(expect.objectContaining({entryId: second.entryId,targetLanguageCode: additional,background: true}));
   expect(requestPlatformV2LibraryTranslation).toHaveBeenCalledWith(expect.objectContaining({
     entryId: second.entryId,
     targetLanguageCode: "ru",

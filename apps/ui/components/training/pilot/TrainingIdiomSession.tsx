@@ -1,4 +1,5 @@
 "use client";
+import { useAdditionalTranslationLanguage } from "@/components/practice/article/AdditionalCardTranslation";
 import { useLatchedTranslationBuffer } from "../v2/useLatchedTranslationBuffer";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -97,7 +98,8 @@ export function TrainingIdiomSession({
   const activeTransitionIdRef = useRef<string | null>(null);
   const loadGenerationRef = useRef(0);
 
-  useLatchedTranslationBuffer({ ownerId: userId, sessionId: session.sessionId, generation: session.runGeneration, currentEntryId: candidate?.entryId, currentOrdinal: session.members.find(member => member.targetId === candidate?.targetId)?.ordinal, targetLanguageCode: translationTargetLanguageCode, members: session.members });
+  const additionalTranslationLanguage = useAdditionalTranslationLanguage();
+  useLatchedTranslationBuffer({ ownerId: userId, sessionId: session.sessionId, generation: session.runGeneration, currentEntryId: candidate?.entryId, currentOrdinal: session.members.find(member => member.targetId === candidate?.targetId)?.ordinal, targetLanguageCode: translationTargetLanguageCode, additionalTargetLanguageCode: additionalTranslationLanguage, members: session.members });
 
   const loadNext = useCallback(async () => {
     const generation = ++loadGenerationRef.current;

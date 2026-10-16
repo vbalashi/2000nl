@@ -191,17 +191,20 @@ test("translation Off remembers the previous language and its label re-enables i
 });
 
 
-test("additional translation can be enabled alone, selected and switched off independently", async () => {
+test("additional translation is disabled with primary Off and available after primary selection", async () => {
  const p={...props(),translationLanguage:null,secondaryTranslationLanguage:"en",onSecondaryTranslationLanguageChange:vi.fn()};
  const view=render(<SettingsDestination {...p}/>);
  const primary=()=>within(screen.getByRole("group",{name:"Translation language"}));
  const secondary=()=>within(screen.getByRole("group",{name:"Additional translation language"}));
  expect(primary().getByRole("button",{name:"Off"})).toHaveAttribute("aria-pressed","true");
- expect(secondary().getByRole("button",{name:"English"})).toHaveAttribute("aria-pressed","true");
+ expect(secondary().getByRole("button",{name:"Off"})).toHaveAttribute("aria-pressed","true");
+ expect(secondary().getByRole("button",{name:"English"})).toBeDisabled();
+ expect(secondary().getByRole("button",{name:"Additional translation language"})).toBeDisabled();
+ view.rerender(<SettingsDestination {...p} translationLanguage="ru"/>);
  fireEvent.click(secondary().getByRole("button",{name:"Off"}));
  expect(p.onSecondaryTranslationLanguageChange).toHaveBeenLastCalledWith(null);
  expect(p.onTranslationLanguageChange).not.toHaveBeenCalled();
- view.rerender(<SettingsDestination {...p} secondaryTranslationLanguage={null}/>);
+ view.rerender(<SettingsDestination {...p} translationLanguage="ru" secondaryTranslationLanguage={null}/>);
  expect(secondary().getByRole("button",{name:"Off"})).toHaveAttribute("aria-pressed","true");
  fireEvent.click(secondary().getByRole("button",{name:"English"}));
  expect(p.onSecondaryTranslationLanguageChange).toHaveBeenLastCalledWith("en");

@@ -87,6 +87,19 @@ describe("useTrainingPreferences", () => {
     );
   });
 
+  test("old primary-Off settings keep the additional language inactive on load and bootstrap", async () => {
+    const old = {...loadedPreferences,translationLang:null,secondaryTranslationLang:"de"} as UserPreferences;
+    const boot = renderHook(()=>useTrainingPreferences("user-1",undefined,old));
+    expect(boot.result.current.secondaryTranslationLang).toBeNull();boot.unmount();
+    fetchUserPreferences.mockResolvedValue(old);
+    const loaded = renderHook(()=>useTrainingPreferences("user-1"));
+    await waitFor(()=>expect(loaded.result.current.activeScenario).toBe("listening"));
+    expect(loaded.result.current.secondaryTranslationLang).toBeNull();
+    act(()=>loaded.result.current.setTranslationLang("en"));
+    expect(loaded.result.current.secondaryTranslationLang).toBeNull();
+    expect(updateUserPreferences).toHaveBeenLastCalledWith({userId:"user-1",translationLang:"en",secondaryTranslationLang:null});
+  });
+
   test("setters update local state before persistence resolves", async () => {
     let resolveUpdate!: (value: { error: null }) => void;
     updateUserPreferences.mockImplementation(
@@ -107,8 +120,8 @@ describe("useTrainingPreferences", () => {
 
     expect(result.current.cardFilter).toBe("both");
     expect(result.current.translationLang).toBeNull();
-    expect(result.current.secondaryTranslationLang).toBe("de");
-    expect(updateUserPreferences).toHaveBeenCalledWith({userId:"user-1",secondaryTranslationLang:"de"});
+    expect(result.current.secondaryTranslationLang).toBeNull();
+    expect(updateUserPreferences).not.toHaveBeenCalledWith({userId:"user-1",secondaryTranslationLang:"de"});
     expect(updateUserPreferences).toHaveBeenCalledWith({
       userId: "user-1",
       cardFilter: "both",
@@ -116,6 +129,7 @@ describe("useTrainingPreferences", () => {
     expect(updateUserPreferences).toHaveBeenCalledWith({
       userId: "user-1",
       translationLang: null,
+      secondaryTranslationLang: null,
     });
 
     resolveUpdate({ error: null });

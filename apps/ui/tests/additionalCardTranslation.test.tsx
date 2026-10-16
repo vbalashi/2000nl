@@ -22,7 +22,7 @@ function Article({primary="en",secondary="ru",visible=true}:{primary?:string|nul
  return <CardTranslationLanguagesProvider primary={primary} secondary={secondary}><AdditionalCardTranslationProvider entryId={singleSenseEntry.entryId} contentLanguage="nl" visible={visible}><ArticleTranslation translationKey="entry" text={primary&&primary!=="off"?"hand":undefined} language={primary??undefined} visible={visible}/><ArticleContentNode node={{...singleSenseEntry.contentNodes[0],translation:primary&&primary!=="off"?"the end of your arm":undefined,children:[]}} interfaceLanguage="en" contentLanguage="nl" translationLanguage={primary??undefined} translationVisible={visible}/></AdditionalCardTranslationProvider></CardTranslationLanguagesProvider>;
 }
 
-test.each([["en",null],[null,null],["off",null],["ru","ru"]])("no additional lookup for primary %s and secondary %s",async(primary,secondary)=>{
+test.each([["en",null],[null,null],["off",null],["ru","ru"],[null,"ru"],["off","ru"]])("no additional lookup for primary %s and secondary %s",async(primary,secondary)=>{
  render(<Article primary={primary} secondary={secondary}/>);
  await act(async()=>{});
  expect(lookup).not.toHaveBeenCalled();expect(request).not.toHaveBeenCalled();
@@ -36,12 +36,6 @@ test("shows two languages in order without replacing source or primary translati
  expect(screen.getByText("конец руки с пальцами",{exact:false})).toBeInTheDocument();
  expect(lookup).toHaveBeenCalledWith(expect.objectContaining({translationTargetLanguageCode:"ru",cardTypeId:"word-to-definition"}));
  expect(request).not.toHaveBeenCalled();
-});
-test("secondary alone works and neither fetches nor displays a default primary language",async()=>{
- const {container}=render(<Article primary={null}/>);
- await screen.findByText("рука",{exact:false});
- expect(container.querySelector('[data-translation-language="en"]')).toBeNull();
- expect(lookup.mock.calls.every(([input])=>input.translationTargetLanguageCode==="ru")).toBe(true);
 });
 test("waits for explicit card translation reveal",async()=>{
  const view=render(<Article visible={false}/>);
@@ -89,12 +83,12 @@ test("reverse face and hint stay unchanged; secondary reads start only on the an
  rerender(view("face"));expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(singleSenseEntry.contentNodes[0].text);
  expect(screen.queryByText("рука",{exact:false})).toBeNull();
 });
-test("Library enables translation with only a secondary language configured",async()=>{
+test("Library disables translation when only a secondary language is stored",async()=>{
  const group={...singleSenseGroup,entries:[{...singleSenseEntry,translation:null,contentNodes:singleSenseEntry.contentNodes.map(node=>({...node,translations:[]}))}]};
  const model=buildLibrarySenseCardGroupModel(group,"en");
  render(<CardTranslationLanguagesProvider primary={null} secondary="ru"><LibrarySenseCardGroup model={model} interfaceLanguage="en" contentLanguage="nl" translationEnabled={false} onAction={vi.fn()}/></CardTranslationLanguagesProvider>);
- const button=screen.getByRole("button",{name:"Translate"});expect(button).not.toBeDisabled();
- fireEvent.click(button);await screen.findByText("рука",{exact:false});
+ expect(screen.queryByRole("button",{name:"Translate"})).toBeNull();
+ await act(async()=>{});expect(lookup).not.toHaveBeenCalled();
 });
 
 

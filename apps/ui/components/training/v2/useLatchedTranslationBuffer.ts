@@ -17,14 +17,18 @@ export function selectTranslationBufferMembers(members: readonly Member[], curre
 export function useLatchedTranslationBuffer(input: {
   ownerId: string; sessionId: string | null; generation?: number | null;
   currentEntryId?: string; currentOrdinal?: number; currentCardTypeId?: string;
-  targetLanguageCode: string | null; members?: readonly Member[];
+  targetLanguageCode: string | null; additionalTargetLanguageCode?: string | null; members?: readonly Member[];
 }) {
   const state = useRef({ scope: "", current: "", changedAt: 0, paceMs: 30_000, attempted: new Set<string>() });
   const membersKey = JSON.stringify(input.members ?? null);
   useEffect(() => {
-    const { ownerId, sessionId, targetLanguageCode } = input;
-    if (!sessionId || !input.currentEntryId || !targetLanguageCode || targetLanguageCode === "off") return;
-    const scope = `${ownerId}:${sessionId}:${input.generation ?? "legacy"}:${targetLanguageCode}`;
+    const { ownerId, sessionId } = input;
+    const activeLanguage = (language?: string | null) => language && language !== "off" ? language : null;
+    const primary = activeLanguage(input.targetLanguageCode);
+    const secondary = activeLanguage(input.additionalTargetLanguageCode);
+    const additional = primary && secondary !== primary ? secondary : null;
+    if (!sessionId || !input.currentEntryId || (!primary && !additional)) return;
+    const scope = JSON.stringify([ownerId, sessionId, input.generation ?? "legacy", primary, additional]);
     const now = Date.now();
     if (state.current.scope !== scope) state.current = { scope, current: "", changedAt: now, paceMs: 30_000, attempted: new Set() };
     const current = `${input.currentEntryId}:${input.currentCardTypeId ?? input.currentOrdinal ?? ""}`;
@@ -40,19 +44,28 @@ export function useLatchedTranslationBuffer(input: {
       const members = input.members ?? snapshot?.members ?? [];
       const ordinal = input.currentOrdinal ?? members.find(member => member.entryId === input.currentEntryId && (!input.currentCardTypeId || member.cardTypeId === input.currentCardTypeId))?.ordinal;
       if (ordinal === undefined) return;
-      const selected = selectTranslationBufferMembers(members, ordinal, translationBufferDepth(state.current.paceMs));
-      for (const member of selected) {
-        if (controller.signal.aborted) return;
-        if (state.current.attempted.has(member.entryId)) continue;
-        state.current.attempted.add(member.entryId);
-        if (state.current.attempted.size > 64) state.current.attempted.delete(state.current.attempted.values().next().value!);
-        try {
-          await requestPlatformV2LibraryTranslation({ entryId: member.entryId, targetLanguageCode, background: true, signal: controller.signal });
-        } catch { /* Speculation never changes the visible card or learning state. */ }
-      }
+      const prepareLanguage = async (targetLanguageCode: string, depth: number) => {
+        const selected = selectTranslationBufferMembers(members, ordinal, depth);
+        for (const member of selected) {
+          if (controller.signal.aborted || state.current.scope !== scope) return;
+          const key = JSON.stringify([targetLanguageCode, member.entryId]);
+          if (state.current.attempted.has(key)) continue;
+          state.current.attempted.add(key);
+          if (state.current.attempted.size > 64) state.current.attempted.delete(state.current.attempted.values().next().value!);
+          try {
+            await requestPlatformV2LibraryTranslation({ entryId: member.entryId, targetLanguageCode, background: true, signal: controller.signal });
+          } catch { /* Speculation never changes the visible card or learning state. */ }
+        }
+      };
+      // Independent lanes: a slow primary must not postpone the next answer's
+      // additional translation. Only the primary retains its adaptive buffer.
+      await Promise.all([
+        ...(primary ? [prepareLanguage(primary, translationBufferDepth(state.current.paceMs))] : []),
+        ...(additional ? [prepareLanguage(additional, 1)] : []),
+      ]);
     })().catch(() => undefined);
     return () => controller.abort();
     // Serialized membership avoids restarting on unrelated parent renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [input.ownerId, input.sessionId, input.generation, input.currentEntryId, input.currentOrdinal, input.currentCardTypeId, input.targetLanguageCode, membersKey]);
+  }, [input.ownerId, input.sessionId, input.generation, input.currentEntryId, input.currentOrdinal, input.currentCardTypeId, input.targetLanguageCode, input.additionalTargetLanguageCode, membersKey]);
 }

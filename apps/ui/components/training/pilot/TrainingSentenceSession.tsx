@@ -1,4 +1,5 @@
 "use client";
+import { useAdditionalTranslationLanguage } from "@/components/practice/article/AdditionalCardTranslation";
 import { useLatchedTranslationBuffer } from "../v2/useLatchedTranslationBuffer";
 import { useDictionaryTranslationRecovery } from "@/lib/translation/useDictionaryTranslationRecovery";
 import { usePlatformV2TranslationPreparation } from "@/lib/platform/usePlatformV2TranslationPreparation";
@@ -68,7 +69,8 @@ export function TrainingSentenceSession(props: Props) {
   // Parent re-renders must not reload the member and hide its revealed answer.
   const supersededCallback = useRef(onSessionSuperseded);
   useEffect(() => { supersededCallback.current = onSessionSuperseded; }, [onSessionSuperseded]);
-  useLatchedTranslationBuffer({ ownerId: userId, sessionId: session.sessionId, generation: session.runGeneration, currentEntryId: candidate?.entryId, currentOrdinal: candidate?.ordinal, targetLanguageCode: translationTargetLanguageCode, members: session.members });
+  const additionalTranslationLanguage = useAdditionalTranslationLanguage();
+  useLatchedTranslationBuffer({ ownerId: userId, sessionId: session.sessionId, generation: session.runGeneration, currentEntryId: candidate?.entryId, currentOrdinal: candidate?.ordinal, targetLanguageCode: translationTargetLanguageCode, additionalTargetLanguageCode: additionalTranslationLanguage, members: session.members });
   const stats = useTranslationTrainingStats(session.sessionId, completed);
 
   const pendingEntryId = useRef<string|null>(null);

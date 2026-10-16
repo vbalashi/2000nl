@@ -9,7 +9,7 @@ import { firstExactRenderableNodeTranslationV1 } from "../../../../../packages/s
 const LanguagesContext = React.createContext<{primary: string | null; secondary: string | null; ownerId?:string}>({primary:null,secondary:null});
 export function CardTranslationLanguagesProvider({primary,secondary,ownerId,children}:{primary:string|null;secondary:string|null;ownerId?:string;children:React.ReactNode}) {
   const active = (value:string|null) => value && value !== "off" ? value : null;
-  return <LanguagesContext.Provider value={{primary:active(primary),secondary:active(secondary),ownerId}}>{children}</LanguagesContext.Provider>;
+  return <LanguagesContext.Provider value={{primary:active(primary),secondary:active(primary) ? active(secondary) : null,ownerId}}>{children}</LanguagesContext.Provider>;
 }
 export function useAdditionalTranslationLanguage() {
   const {primary,secondary} = React.useContext(LanguagesContext);
