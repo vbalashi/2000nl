@@ -198,6 +198,24 @@ test("a failed start returns to the overview with a retry for card preparation",
   expect(onRetryCard).toHaveBeenCalledOnce();
 });
 
+test("a failed selected setup shows the server error and retries the same draft", async () => {
+  const selectedDraft: TrainingSetupDraft = { ...initialDraft, cardFilter: "review", newReviewRatio: 4 };
+  const onStart = vi.fn().mockResolvedValue(false);
+  const props = { ...baseProps, userId: "retry-selected-start", trainingLanguageCode: "nl", hasOwnedSession: false,
+    initialView: "setup" as const, initialDraft: selectedDraft, onStart };
+  const view = render(<TrainingTodaySetup {...props} />);
+  fireEvent.click(await screen.findByRole("button", { name: "Start training" }));
+  await screen.findByRole("button", { name: "Create training" });
+  view.rerender(<TrainingTodaySetup {...props} startError="training_session_start_timeout" />);
+
+  expect(screen.getByRole("alert")).toHaveTextContent("The selected training did not start because the server took too long.");
+  expect(screen.getByRole("alert")).toHaveTextContent("NT2 2000");
+  fireEvent.click(screen.getByRole("button", { name: "Retry starting this training" }));
+  await waitFor(() => expect(onStart).toHaveBeenCalledTimes(2));
+  expect(onStart.mock.calls[0]?.[0]).toEqual(expect.objectContaining(selectedDraft));
+  expect(onStart.mock.calls[1]).toEqual(onStart.mock.calls[0]);
+});
+
 test("a missing collection stays selected and blocked until replaced", async () => {
   const userId = "missing-collection";
   seedAccount(userId, [{ id: "missing", name: "Missing collection", draft: { ...initialDraft, listValue: "user:missing" } }]);

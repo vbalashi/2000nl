@@ -347,6 +347,10 @@ export function useCommitTrainingPilotDraft({
           reportError("training_material_unavailable");
           return false;
         }
+        if (error instanceof Error && (error.message === "training_session_start_timeout" || error.message === "training_session_start_failed")) {
+          reportError(error.message);
+          return false;
+        }
         throw error;
       }
       if (!session) {
