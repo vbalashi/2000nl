@@ -216,6 +216,45 @@ test("a failed selected setup shows the server error and retries the same draft"
   expect(onStart.mock.calls[1]).toEqual(onStart.mock.calls[0]);
 });
 
+test("a failed Translation start keeps the paused Idioms session and retries the selected draft", async () => {
+  const idiomDraft: TrainingSetupDraft = {
+    ...initialDraft,
+    family: "idiom",
+    scenarioId: "idiom",
+    modes: ["word-to-definition"],
+  };
+  const onStart = vi.fn().mockResolvedValue(false);
+  const props = {
+    ...baseProps,
+    userId: "retry-translation-start",
+    trainingLanguageCode: "nl",
+    hasOwnedSession: true,
+    ownedSession: { id: "paused-idiom-run", completed: 2, total: 10, draft: idiomDraft },
+    activeSessionLabel: "Van Dale Idioms",
+    translationTargetLanguageCode: "en",
+    scenarios: [...baseProps.scenarios,
+      { value: "idiom", label: "Idioms", modes: ["word-to-definition" as const] },
+      { value: "sentences", label: "Translation", modes: ["word-to-definition" as const] }],
+    onStart,
+  };
+  const view = render(<TrainingTodaySetup {...props} />);
+  expect(await screen.findByText("Van Dale Idioms")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Create training" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Exercises / }));
+  fireEvent.click(screen.getByRole("button", { name: "Translation" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  await screen.findByRole("button", { name: "Create training" });
+  view.rerender(<TrainingTodaySetup {...props} startError="training_session_start_timeout" />);
+
+  expect(screen.getByRole("alert")).toHaveTextContent("NT2 2000");
+  expect(screen.getByText("Van Dale Idioms")).toBeInTheDocument();
+  const selectedTranslationDraft = onStart.mock.calls[0]?.[0];
+  expect(selectedTranslationDraft).toEqual(expect.objectContaining({ family: "word-in-context", scenarioId: "understanding" }));
+  fireEvent.click(screen.getByRole("button", { name: "Retry starting this training" }));
+  await waitFor(() => expect(onStart).toHaveBeenCalledTimes(2));
+  expect(onStart.mock.calls[1]?.[0]).toEqual(selectedTranslationDraft);
+});
+
 test("a missing collection stays selected and blocked until replaced", async () => {
   const userId = "missing-collection";
   seedAccount(userId, [{ id: "missing", name: "Missing collection", draft: { ...initialDraft, listValue: "user:missing" } }]);

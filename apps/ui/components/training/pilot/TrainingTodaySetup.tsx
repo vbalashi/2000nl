@@ -133,6 +133,7 @@ const copy = {
     startTimeout: "The selected training did not start because the server took too long. Your selection is saved here; you can retry it.",
     startFailed: "The selected training could not be started. Your selection is saved here; you can retry it.",
     retryStart: "Retry starting this training",
+    selectedMaterial: "Selected material",
   },
   nl: {
     contextLanguageNeeded: "Kies een vertaaltaal in Instellingen voor deze oefening.",
@@ -152,6 +153,7 @@ const copy = {
     startTimeout: "De gekozen training is niet gestart omdat de server te lang nodig had. Je selectie is hier bewaard; je kunt het opnieuw proberen.",
     startFailed: "De gekozen training kon niet worden gestart. Je selectie is hier bewaard; je kunt het opnieuw proberen.",
     retryStart: "Deze training opnieuw starten",
+    selectedMaterial: "Gekozen materiaal",
   },
   ru: {
     contextLanguageNeeded: "Для этого упражнения выберите язык перевода в настройках.",
@@ -171,6 +173,7 @@ const copy = {
     startTimeout: "Тренировка не запустилась: сервер слишком долго отвечал. Выбранные настройки сохранены, можно попробовать ещё раз.",
     startFailed: "Не удалось запустить выбранную тренировку. Настройки сохранены, можно попробовать ещё раз.",
     retryStart: "Повторить запуск этой тренировки",
+    selectedMaterial: "Выбранный материал",
   },
 } satisfies Record<OnboardingLanguage, Record<string, unknown>>;
 
@@ -385,7 +388,7 @@ export function TrainingTodaySetup({
         ? t.allDictionaries
         : nextDraft.materialMode === "selected-dictionaries"
           ? (nextDraft.dictionaryIds ?? []).map(id => dictionaries.find(source => source.value === id)?.label).filter(Boolean).join(", ") || t.materialUnavailable
-          : lists.find(option => option.value === nextDraft.listValue)?.label ?? nextDraft.listValue;
+          : lists.find(option => option.value === nextDraft.listValue)?.label ?? t.selectedMaterial;
       setFailedStart({draft: {...nextDraft}, sessionName, scopeLabel, options});
       setScreen("today");
     }
