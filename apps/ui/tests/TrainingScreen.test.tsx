@@ -1590,7 +1590,46 @@ test("a failed run claim leaves the foreign-owner tab on Today without an action
   expect(screen.queryByRole("button", {
     name: /Continue session|Sessie doorgaan/,
   })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Retry starting this training" })).not.toBeInTheDocument();
   expect(mockV2ProgressAction).not.toHaveBeenCalled();
+});
+
+test("a start timeout reaches Today with the chosen collection and retries idempotently", async () => {
+  window.localStorage.setItem(
+    "2000nl:training-session:user-1",
+    JSON.stringify({
+      sessionId: "session-other-tab",
+      userId: "user-1",
+      ownerId: "other-tab-owner",
+      languageCode: "nl",
+      listId: null,
+      listType: null,
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 10,
+    }),
+  );
+  startTrainingSession.mockRejectedValueOnce(new Error("training_session_start_timeout"));
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+  const startButton = await screen.findByRole("button", {
+    name: /Start training|Training starten|Начать тренировку/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  fireEvent.click(startButton);
+
+  const retryButton = await screen.findByRole("button", { name: "Retry starting this training" });
+  expect(screen.getByRole("alert")).toHaveTextContent("Test list");
+  const failedRequestId = startTrainingSession.mock.calls[0]?.[3];
+  fireEvent.click(retryButton);
+
+  await screen.findByTestId("mock-training-sense-card-v2");
+  expect(startTrainingSession).toHaveBeenCalledTimes(2);
+  expect(startTrainingSession.mock.calls[1]?.[3]).toBe(failedRequestId);
 });
 
 test("first pilot selection starts only after Start and belongs to its run", async () => {

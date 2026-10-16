@@ -142,6 +142,26 @@ test("a failed session RPC closes Start timing without changing its request UUID
   }));
 });
 
+test("a statement timeout stays actionable and retry keeps the server idempotency key", async () => {
+  updateActiveTrainingScope.mockReset().mockResolvedValue({ error: null });
+  startTrainingSession.mockReset().mockRejectedValue(new Error("training_session_start_timeout"));
+  const reportError = vi.fn();
+  const { result } = renderHook(() => useCommitTrainingPilotDraft({
+    userId: "user-1", languageCode: "nl", resolveList: () => null,
+    applyListLocally: vi.fn(), applyPreferences: vi.fn(), applyFocusFilter: vi.fn(),
+    resetQueue: vi.fn(), loadStats: vi.fn(), loadWord: vi.fn(), reportError,
+  }));
+  const selectedDraft = { ...draft, materialMode: "all-dictionaries" as const };
+  await act(async () => { expect(await result.current(selectedDraft)).toBe(false); });
+  const requestId = startTrainingSession.mock.calls[0]?.[3];
+  expect(requestId).toEqual(expect.any(String));
+  expect(reportError).toHaveBeenCalledWith("training_session_start_timeout");
+
+  await act(async () => { expect(await result.current(selectedDraft)).toBe(false); });
+  expect(startTrainingSession).toHaveBeenCalledTimes(2);
+  expect(startTrainingSession.mock.calls[1]?.[3]).toBe(requestId);
+});
+
 test("accepted Start blocks a duplicate and unmount closes its diagnostic once", async () => {
   const dispatch = vi.spyOn(window, "dispatchEvent");
   let resolveCommit!: (committed: boolean) => void;
