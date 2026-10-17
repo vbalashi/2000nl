@@ -13,11 +13,13 @@ export function dictionaryTranslationProfile() {
   }
   const id = selected as DictionaryTranslationProfileName;
   const luna = id !== "gpt41" && id !== "legacy";
+  const modelVariable = luna ? "AZURE_OPENAI_GPT6_LUNA_MODEL" : "AZURE_OPENAI_GPT41_MODEL";
+  const model = process.env[modelVariable]?.trim();
   const prompt = luna ? lunaPrompts[id as keyof typeof lunaPrompts] : "gpt41_v4";
   return {
     id,
-    model: luna ? "gpt-6-luna" : "gpt-4.1",
-    envPrefix: luna ? "AZURE_OPENAI_GPT6_LUNA" : "AZURE_OPENAI",
+    model: model || undefined,
+    envPrefix: luna ? "AZURE_OPENAI_GPT6_LUNA" : "AZURE_OPENAI_GPT41",
     timeoutMs: luna ? 180_000 : 15_000,
     literalIdioms: luna && id !== "luna6-v5",
     systemFile: id === "legacy" ? "openai_dictionary_meaning_system_v1.txt" : `openai_dictionary_meaning_${prompt}_system.txt`,
