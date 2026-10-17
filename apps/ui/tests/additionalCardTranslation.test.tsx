@@ -71,16 +71,17 @@ test("does not render a node translation from a different source revision",async
  lookup.mockResolvedValue(group);render(<Article/>);await screen.findByText("рука",{exact:false});
  expect(screen.queryByText("конец руки с пальцами",{exact:false})).toBeNull();
 });
-test("reverse face and hint stay unchanged; secondary reads start only on the answer translation",async()=>{
+test.each(["word-to-definition", "definition-to-word", "listen-recognize", "listen-type"] as const)("%s face prepares the secondary while keeping translations hidden",async(mode)=>{
  const model=buildTrainingSenseCardModel({group:singleSenseGroup,entry:singleSenseEntry,interfaceLanguage:"en"});
- const view=(side:"face"|"answer")=><CardTranslationLanguagesProvider primary="en" secondary="ru"><TrainingSenseCardStage model={model} mode="definition-to-word" contentLanguage="nl" translationLanguage="en" interfaceLanguage="en" side={side} onSideChange={vi.fn()} onAction={vi.fn()}/></CardTranslationLanguagesProvider>;
+ const view=(side:"face"|"answer")=><CardTranslationLanguagesProvider primary="en" secondary="ru"><TrainingSenseCardStage model={model} mode={mode} contentLanguage="nl" translationLanguage="en" interfaceLanguage="en" side={side} onSideChange={vi.fn()} onAction={vi.fn()}/></CardTranslationLanguagesProvider>;
  const {rerender}=render(view("face"));
- expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(singleSenseEntry.contentNodes[0].text);
- expect(lookup).not.toHaveBeenCalled();
- rerender(view("answer"));expect(lookup).not.toHaveBeenCalled();
+ if(mode === "definition-to-word") expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(singleSenseEntry.contentNodes[0].text);
+ await waitFor(()=>expect(lookup).toHaveBeenCalledOnce());
+ expect(screen.queryByText("рука",{exact:false})).toBeNull();
+ rerender(view("answer"));expect(lookup).toHaveBeenCalledOnce();
  fireEvent.click(screen.getByRole("button",{name:"Translate"}));
  await screen.findByText("рука",{exact:false});
- rerender(view("face"));expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(singleSenseEntry.contentNodes[0].text);
+ rerender(view("face"));if(mode === "definition-to-word") expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(singleSenseEntry.contentNodes[0].text);
  expect(screen.queryByText("рука",{exact:false})).toBeNull();
 });
 test("Library disables translation when only a secondary language is stored",async()=>{
@@ -100,20 +101,20 @@ test("exercise answer reveals the secondary without waiting for a pending primar
 });
 
 
-test("context card prepares and retains the additional projection before revealing its answer", async () => {
+test.each([false,true])("card with context=%s prepares and retains the additional projection before revealing its answer", async (context) => {
  const ready=secondaryGroup("en");
  const entry=ready.entries[0] as PlatformSenseCardEntryV2;
  const incomplete={...ready,entries:[{...entry,translation:null,contentNodes:entry.contentNodes.map(node=>({...node,translations:[]})),capabilities:[{actionId:"request-translation" as const,elementId:"translate",messageKey:"senseCard.translation.request",target:{kind:"entry" as const,entryId:entry.entryId,contentRevision:entry.contentRevision},targetLanguageCode:"en"}]}]};
  lookup.mockResolvedValueOnce(incomplete).mockResolvedValue(ready);
  request.mockResolvedValue("ready");
  const model=buildTrainingSenseCardModel({group:singleSenseGroup,entry:singleSenseEntry,interfaceLanguage:"en"});
- const view=(side:"face"|"answer")=><CardTranslationLanguagesProvider primary="ru" secondary="en" ownerId="owner"><TrainingSenseCardStage model={model} mode="definition-to-word" contentLanguage="nl" translationLanguage="ru" interfaceLanguage="en" side={side} onSideChange={vi.fn()} onAction={vi.fn()} contextPrompt={{text:"Русский вопрос",sourceText:singleSenseEntry.contentNodes[1].text,contentNodeId:singleSenseEntry.contentNodes[1].contentNodeId,sourceTextFingerprint:singleSenseEntry.contentNodes[1].sourceTextFingerprint}}/></CardTranslationLanguagesProvider>;
+ const view=(side:"face"|"answer")=><CardTranslationLanguagesProvider primary="ru" secondary="en" ownerId="owner"><TrainingSenseCardStage model={model} mode="definition-to-word" contentLanguage="nl" translationLanguage="ru" interfaceLanguage="en" side={side} onSideChange={vi.fn()} onAction={vi.fn()} contextPrompt={context ? {text:"Русский вопрос",sourceText:singleSenseEntry.contentNodes[1].text,contentNodeId:singleSenseEntry.contentNodes[1].contentNodeId,sourceTextFingerprint:singleSenseEntry.contentNodes[1].sourceTextFingerprint} : undefined}/></CardTranslationLanguagesProvider>;
  const rendered=render(view("face"));
  await waitFor(()=>expect(lookup).toHaveBeenCalledTimes(2));
  expect(request).toHaveBeenCalledOnce();
  expect(request).toHaveBeenCalledWith(expect.objectContaining({targetLanguageCode:"en"}),expect.anything());
  expect(rendered.container.querySelector('[data-translation-language="en"]')).toBeNull();
- expect(screen.getByTestId("reverse-prompt")).toHaveTextContent("Русский вопрос");
+ expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(context ? "Русский вопрос" : singleSenseEntry.contentNodes[0].text);
  const count=lookup.mock.calls.length;
  // Any lookup on reveal remains unresolved, proving the ready projection was retained.
  lookup.mockImplementation(()=>new Promise(()=>{}));
@@ -130,4 +131,17 @@ test.each([["off","en"],[null,"en"],["en","en"]])("context preload suppresses se
  await act(async()=>{});
  expect(lookup).not.toHaveBeenCalled();
  expect(request).not.toHaveBeenCalled();
+});
+
+test("exercise face prepares the secondary before reveal and retains its projection",async()=>{
+ const model=buildTrainingSenseCardModel({group:singleSenseGroup,entry:singleSenseEntry,interfaceLanguage:"en"});
+ const view=(revealed:boolean)=><CardTranslationLanguagesProvider primary="en" secondary="ru"><TrainingExerciseCard entryId={singleSenseEntry.entryId} contentLanguage="nl" translationLanguage="en" presentation={{label:"Recall",prompt:{kind:"explanation",text:"primary question"},promptTarget:{kind:"text",contentNodeId:"definition-1"},answer:model}} interfaceLanguage="en" revealed={revealed} onReveal={vi.fn()} busy={false} onGrade={vi.fn()}/></CardTranslationLanguagesProvider>;
+ const rendered=render(view(false));
+ await waitFor(()=>expect(lookup).toHaveBeenCalledOnce());
+ expect(screen.queryByText("рука",{exact:false})).toBeNull();
+ lookup.mockImplementation(()=>new Promise(()=>{}));
+ rendered.rerender(view(true));
+ fireEvent.click(screen.getByRole("button",{name:"Translate"}));
+ expect(screen.getByText("рука",{exact:false})).toBeInTheDocument();
+ expect(lookup).toHaveBeenCalledOnce();
 });

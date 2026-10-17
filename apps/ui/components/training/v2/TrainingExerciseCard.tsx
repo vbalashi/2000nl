@@ -1,6 +1,7 @@
 "use client";
+import { TrainingAnswerTranslationProvider } from "./TrainingAnswerTranslation";
 import React from "react";
-import {AdditionalCardTranslationProvider,useAdditionalTranslationLanguage} from "@/components/practice/article/AdditionalCardTranslation";
+import {useAdditionalTranslationLanguage} from "@/components/practice/article/AdditionalCardTranslation";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -156,9 +157,10 @@ export function TrainingExerciseCard({
       className={trainingStageClassName()}
     >
       {notice}
+      <TrainingAnswerTranslationProvider entryId={entryId} contentLanguage={contentLanguage}>
       <TrainingCardShell answerVisible={revealed}>
         {revealed ? (
-          <AdditionalCardTranslationProvider entryId={entryId ?? ""} contentLanguage={contentLanguage} visible={Boolean(entryId) && translationVisible}>
+          <>
             <TrainingCardAnswerHeader
               interfaceLanguage={interfaceLanguage}
               model={presentation.answer}
@@ -181,7 +183,7 @@ export function TrainingExerciseCard({
               interfaceLanguage={interfaceLanguage}
               onReachEnd={() => firstGradeRef.current?.focus()}
             />
-          </AdditionalCardTranslationProvider>
+          </>
         ) : (
           <TrainingCardFace
             prompt={presentation.prompt}
@@ -193,6 +195,7 @@ export function TrainingExerciseCard({
           />
         )}
       </TrainingCardShell>
+      </TrainingAnswerTranslationProvider>
       <footer className="shrink-0 flex flex-col gap-2">
         {revealed ? (
           <RatingControls language={interfaceLanguage} height="adaptive" disabled={actionBusy}

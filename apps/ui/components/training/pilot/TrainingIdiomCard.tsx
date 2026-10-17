@@ -1,7 +1,7 @@
 "use client";
 import { translationPendingCopy } from "@/lib/training/translationPendingCopy";
 import React from "react";
-import { usePlatformV2TranslationPreparation } from "@/lib/platform/usePlatformV2TranslationPreparation";
+import { useTrainingAnswerTranslationPreparation } from "@/components/training/v2/TrainingAnswerTranslation";
 import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type {
@@ -87,10 +87,10 @@ export function TrainingIdiomCard({
       cap.actionId === "request-translation" &&
       cap.targetLanguageCode === translationTargetLanguageCode,
   );
-  const translationPreparing = usePlatformV2TranslationPreparation({
+  const translationPreparing = useTrainingAnswerTranslationPreparation({
     entry: content.entry,
     targetLanguageCode: translationTargetLanguageCode,
-    enabled: !busy && !actionBusy,
+    paused: busy || actionBusy,
     refresh: async signal => {
       const loaded = await loadIdiomExerciseContent({ candidate, contentLanguageCode, translationTargetLanguageCode, signal });
       if (signal.aborted) return null;

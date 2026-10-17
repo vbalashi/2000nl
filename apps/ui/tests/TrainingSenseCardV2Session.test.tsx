@@ -2721,6 +2721,26 @@ describe("TrainingSenseCardV2Session", () => {
     }
   });
 
+  test.each(["word-to-definition", "definition-to-word", "listen-recognize", "listen-type"] as const)("prepares the primary full answer before reveal in %s", async mode => {
+    const capability = {
+      actionId: "request-translation" as const,
+      elementId: "sense-card.translation.request",
+      messageKey: "senseCard.translation.request",
+      target: { kind: "entry" as const, entryId: singleSenseEntry.entryId, contentRevision: singleSenseEntry.contentRevision },
+      targetLanguageCode: "en",
+    };
+    const entry = { ...singleSenseEntry, translation: null,
+      contentNodes: singleSenseEntry.contentNodes.map(node => ({ ...node, translations: [] })),
+      capabilities: [...singleSenseEntry.capabilities, capability] };
+    fetchSingleSense.mockResolvedValue({ state: "ready", group: { ...singleSenseGroup, entries: [entry] }, entry });
+    requestTranslation.mockReturnValue(new Promise(() => {}));
+    render(<TestTrainingSenseCardV2Session word={word} mode={mode} contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()} />);
+    await waitFor(() => expect(requestTranslation).toHaveBeenCalledOnce());
+    expect(requestTranslation).toHaveBeenCalledWith(capability, { signal: expect.any(AbortSignal) });
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute("data-side", "face");
+    expect(screen.queryByText("the end of your arm", {exact:false})).toBeNull();
+  });
+
   test("keeps the current card mounted while translation refreshes", async () => {
     let resolveRefresh!: (value: unknown) => void;
     const requestCapability = {

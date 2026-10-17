@@ -6,7 +6,7 @@ import { useTrainingExclusion } from "./useTrainingExclusion";
 import { TrainingExcludeAction, trainingExclusionCopy } from "./TrainingExcludeAction";
 
 import React from "react";
-import { usePlatformV2TranslationPreparation } from "@/lib/platform/usePlatformV2TranslationPreparation";
+import { useTrainingAnswerTranslationPreparation } from "@/components/training/v2/TrainingAnswerTranslation";
 import { useRecordedStudyTime } from "../useRecordedStudyTime";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
@@ -343,10 +343,10 @@ export function TrainingSenseCardV2Session({
 
   const result = lookup?.state === "ready" ? lookup : null;
 
-  const translationPreparing = usePlatformV2TranslationPreparation({
+  const translationPreparing = useTrainingAnswerTranslationPreparation({
     entry: result?.entry ?? null,
     targetLanguageCode: translationTargetLanguageCode,
-    enabled: !busy && (!wordInContext || (contextResult?.state === "ready" && contextSynchronized)),
+    paused: busy || (wordInContext && (contextResult?.state !== "ready" || !contextSynchronized)),
     refresh: async signal => {
       const refreshed=await load(signal,{preserveCard:true,usePrefetch:false});
       if(refreshed?.state!=="ready")throw new Error("translation_refresh_unavailable");
