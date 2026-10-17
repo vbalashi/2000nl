@@ -1845,6 +1845,8 @@ test("the first Start stats baseline survives a later scoped session read", asyn
     .mockResolvedValueOnce({ ...defaultTrainingStats, reviewCardsDue: 15 });
   try {
     render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    // The stats contract begins after the startup surface becomes interactive.
+    await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ }, { timeout: 5000 });
     const start = await screen.findByRole("button", { name: /Start training|Training starten|Начать тренировку/ });
     await waitFor(() => expect(start).toBeEnabled());
     expect(fetchStats).not.toHaveBeenCalled();
