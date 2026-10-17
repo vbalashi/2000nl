@@ -169,12 +169,16 @@ export function loadTranslationConfigFromEnv(options: { purpose?: "dictionary" }
     const profile = dictionaryTranslationProfile();
     if (profile.id !== "legacy") {
       const prefix = profile.envPrefix;
-      const endpoint = process.env[`${prefix}_ENDPOINT`]?.trim();
-      const key = process.env[`${prefix}_API_KEY_PRIMARY`]?.trim() || process.env[`${prefix}_API_KEY`]?.trim();
+      const legacyAzureProfile = profile.id === "gpt41";
+      const endpoint = process.env[`${prefix}_ENDPOINT`]?.trim() ||
+        (legacyAzureProfile ? azureEndpoint : "");
+      const key = process.env[`${prefix}_API_KEY_PRIMARY`]?.trim() ||
+        process.env[`${prefix}_API_KEY`]?.trim() ||
+        (legacyAzureProfile ? process.env.AZURE_OPENAI_API_KEY_PRIMARY?.trim() || azureApiKey : "");
       // Missing primary configuration must not silently turn the default into DeepL.
-      if (!endpoint || !key) return { provider, apiKeys: {} };
+      if (!endpoint || !key || !profile.model) return { provider, apiKeys: {} };
       return { provider, fallback, apiKeys: { openai: key, deepl: process.env.DEEPL_API_KEY },
-        apiUrls: { openai: buildAzureOpenAiUrl({endpoint, deployment: profile.model, apiVersion: ""}), deepl: process.env.DEEPL_API_URL },
+        apiUrls: { openai: buildAzureOpenAiUrl({endpoint, deployment: profile.model ?? "", apiVersion: ""}), deepl: process.env.DEEPL_API_URL },
         models: { openai: profile.model } };
     }
   }
