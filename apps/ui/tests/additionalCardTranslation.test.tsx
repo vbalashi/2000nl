@@ -98,3 +98,36 @@ test("exercise answer reveals the secondary without waiting for a pending primar
  fireEvent.click(screen.getByRole("button",{name:"Translate"}));
  await screen.findByText("рука",{exact:false});
 });
+
+
+test("context card prepares and retains the additional projection before revealing its answer", async () => {
+ const ready=secondaryGroup("en");
+ const entry=ready.entries[0] as PlatformSenseCardEntryV2;
+ const incomplete={...ready,entries:[{...entry,translation:null,contentNodes:entry.contentNodes.map(node=>({...node,translations:[]})),capabilities:[{actionId:"request-translation" as const,elementId:"translate",messageKey:"senseCard.translation.request",target:{kind:"entry" as const,entryId:entry.entryId,contentRevision:entry.contentRevision},targetLanguageCode:"en"}]}]};
+ lookup.mockResolvedValueOnce(incomplete).mockResolvedValue(ready);
+ request.mockResolvedValue("ready");
+ const model=buildTrainingSenseCardModel({group:singleSenseGroup,entry:singleSenseEntry,interfaceLanguage:"en"});
+ const view=(side:"face"|"answer")=><CardTranslationLanguagesProvider primary="ru" secondary="en" ownerId="owner"><TrainingSenseCardStage model={model} mode="definition-to-word" contentLanguage="nl" translationLanguage="ru" interfaceLanguage="en" side={side} onSideChange={vi.fn()} onAction={vi.fn()} contextPrompt={{text:"Русский вопрос",sourceText:singleSenseEntry.contentNodes[1].text,contentNodeId:singleSenseEntry.contentNodes[1].contentNodeId,sourceTextFingerprint:singleSenseEntry.contentNodes[1].sourceTextFingerprint}}/></CardTranslationLanguagesProvider>;
+ const rendered=render(view("face"));
+ await waitFor(()=>expect(lookup).toHaveBeenCalledTimes(2));
+ expect(request).toHaveBeenCalledOnce();
+ expect(request).toHaveBeenCalledWith(expect.objectContaining({targetLanguageCode:"en"}),expect.anything());
+ expect(rendered.container.querySelector('[data-translation-language="en"]')).toBeNull();
+ expect(screen.getByTestId("reverse-prompt")).toHaveTextContent("Русский вопрос");
+ const count=lookup.mock.calls.length;
+ // Any lookup on reveal remains unresolved, proving the ready projection was retained.
+ lookup.mockImplementation(()=>new Promise(()=>{}));
+ rendered.rerender(view("answer"));
+ expect(rendered.container.querySelector('[data-translation-language="en"]')).toHaveTextContent("Hand");
+ await act(async()=>{});
+ expect(lookup).toHaveBeenCalledTimes(count);
+ expect(request).toHaveBeenCalledOnce();
+});
+
+
+test.each([["off","en"],[null,"en"],["en","en"]])("context preload suppresses secondary when primary=%s and secondary=%s", async (primary,secondary) => {
+ render(<CardTranslationLanguagesProvider primary={primary} secondary={secondary}><AdditionalCardTranslationProvider entryId={singleSenseEntry.entryId} contentLanguage="nl" visible={false} preload><span>Question</span></AdditionalCardTranslationProvider></CardTranslationLanguagesProvider>);
+ await act(async()=>{});
+ expect(lookup).not.toHaveBeenCalled();
+ expect(request).not.toHaveBeenCalled();
+});

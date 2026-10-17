@@ -38,6 +38,8 @@ export function useLatchedTranslationBuffer(input: {
     }
     state.current.current = current;
     const controller = new AbortController();
+    const scopeState = state.current;
+    const inFlightAttempts = new Set<string>();
     void (async () => {
       const snapshot = input.members ? null : await fetchTrainingSessionSnapshot(ownerId, sessionId);
       if (controller.signal.aborted || (!input.members && (!snapshot || snapshot.sessionId !== sessionId || snapshot.runStatus === "superseded"))) return;
@@ -51,10 +53,17 @@ export function useLatchedTranslationBuffer(input: {
           const key = JSON.stringify([targetLanguageCode, member.entryId]);
           if (state.current.attempted.has(key)) continue;
           state.current.attempted.add(key);
+          inFlightAttempts.add(key);
           if (state.current.attempted.size > 64) state.current.attempted.delete(state.current.attempted.values().next().value!);
           try {
             await requestPlatformV2LibraryTranslation({ entryId: member.entryId, targetLanguageCode, background: true, signal: controller.signal });
-          } catch { /* Speculation never changes the visible card or learning state. */ }
+          } catch {
+            // An unconfirmed enqueue may be retried on a later relevant render.
+            // Cleanup removes ownership before another effect can reuse the key.
+            if (inFlightAttempts.has(key)) scopeState.attempted.delete(key);
+          } finally {
+            inFlightAttempts.delete(key);
+          }
         }
       };
       // Independent lanes: a slow primary must not postpone the next answer's
@@ -64,7 +73,11 @@ export function useLatchedTranslationBuffer(input: {
         ...(additional ? [prepareLanguage(additional, 1)] : []),
       ]);
     })().catch(() => undefined);
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      for (const key of inFlightAttempts) scopeState.attempted.delete(key);
+      inFlightAttempts.clear();
+    };
     // Serialized membership avoids restarting on unrelated parent renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input.ownerId, input.sessionId, input.generation, input.currentEntryId, input.currentOrdinal, input.currentCardTypeId, input.targetLanguageCode, input.additionalTargetLanguageCode, membersKey]);

@@ -225,6 +225,8 @@ export function TrainingSenseCardStage({
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
       </span>
+      <AdditionalCardTranslationProvider entryId={model.entryId} contentLanguage={contentLanguage}
+        visible={answerVisible && translationVisible} preload={wordInContext}>
       <TrainingCardShell answerVisible={answerVisible}>
         {model.audioCapability &&
         onPlayAudio &&
@@ -244,7 +246,7 @@ export function TrainingSenseCardStage({
           </div>
         ) : null}
         {answerVisible ? (
-          <AdditionalCardTranslationProvider entryId={model.entryId} contentLanguage={contentLanguage} visible={translationVisible}>
+          <>
             <EntityHeader
               interfaceLanguage={interfaceLanguage}
               model={answerModel}
@@ -275,7 +277,7 @@ export function TrainingSenseCardStage({
               interfaceLanguage={interfaceLanguage}
               onReachEnd={() => primaryAnswerActionRef.current?.focus()}
             />
-          </AdditionalCardTranslationProvider>
+          </>
         ) : mode === "listen-recognize" ? (
           <ListeningFaceBody
             mode={mode}
@@ -314,6 +316,7 @@ export function TrainingSenseCardStage({
           />
         )}
       </TrainingCardShell>
+      </AdditionalCardTranslationProvider>
 
       <footer
         data-testid="training-sense-card-dock"

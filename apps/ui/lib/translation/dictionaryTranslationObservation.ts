@@ -28,6 +28,7 @@ export async function observeDictionaryMeaningTranslation(
   const deadline = Date.now() + (options.observationMs ?? 300_000);
   const startedAt = Date.now();
   let observedJob = false;
+  let pollDelayMs = options.pollMs ?? 1_000;
   let response: Response;
   try { response = await fetchDictionaryMeaningTranslation(input); }
   catch (error) {
@@ -53,7 +54,10 @@ export async function observeDictionaryMeaningTranslation(
     observedJob = true;
     const remaining = deadline - Date.now();
     if (remaining <= 0) return response;
-    await pause(Math.min(options.pollMs ?? 1_000, remaining), input.signal);
+    // Keep first readiness feedback prompt, then reduce repeated reads while
+    // durable work runs. An explicit interval remains fixed for callers.
+    await pause(Math.min(pollDelayMs, remaining), input.signal);
+    if (options.pollMs === undefined) pollDelayMs = Math.min(pollDelayMs * 2, 5_000);
     const requestRemaining = deadline - Date.now();
     if (requestRemaining <= 0) return response;
     try {
