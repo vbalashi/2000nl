@@ -62,3 +62,6 @@ reports/*-package-*/
 reports/ux-audit-*-source/
 reports/ui-ideas-*/
 review-packages/
+
+# Separate local production builds for release update A/B browser QA
+apps/ui/.next-release-*/

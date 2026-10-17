@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { ReleaseBanner } from "@/components/releases/ReleaseUpdates";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AppDestinationNav, appDestinationLabel } from "./AppDestinationNav";
 import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
@@ -102,6 +103,7 @@ export function AppFrame({
         {...headerProps}
         onNavigate={onNavigate}
       />
+      <ReleaseBanner language={headerProps.interfaceLanguage} />
       <main className={styles.content}>{children}</main>
       <div className={styles.tabBar} data-app-mobile-navigation="tabs">
         <AppDestinationNav

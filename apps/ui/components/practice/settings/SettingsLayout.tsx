@@ -11,6 +11,7 @@ export type SettingsItem<Key extends string> = {
   id: Key;
   label: string;
   Icon: LucideIcon;
+  badge?: React.ReactNode;
 };
 /** Shared navigation and spacing; preference data stays with the caller. */
 export function SettingsLayout<Key extends string>({
@@ -26,11 +27,20 @@ export function SettingsLayout<Key extends string>({
   items: SettingsItem<Key>[];
   onExit: () => void;
   className?: string;
-  children: (section: Key) => React.ReactNode;
+  children: (section: Key, visible: boolean) => React.ReactNode;
 }) {
   const copy = getUiMessages(language).settings;
   const [section, setSection] = useState<Key>(items[0].id),
     [mobileDetail, setMobileDetail] = useState(false);
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia?.("(max-width: 700px)");
+    if (!query) return;
+    const changed = () => setPhone(query.matches);
+    changed();
+    query.addEventListener?.("change", changed);
+    return () => query.removeEventListener?.("change", changed);
+  }, []);
   const scroll = useRef<HTMLElement>(null),
     heading = useRef<HTMLHeadingElement>(null),
     mobileButtons = useRef(new Map<Key, HTMLButtonElement>());
@@ -77,7 +87,7 @@ export function SettingsLayout<Key extends string>({
           </h2>
         </header>
         <nav className={s.mobileMenu} aria-label={copy.mobileSections}>
-          {items.map(({ id, label, Icon }) => (
+          {items.map(({ id, label, Icon, badge }) => (
             <button
               type="button"
               ref={(element) => {
@@ -89,13 +99,14 @@ export function SettingsLayout<Key extends string>({
             >
               <Icon size={20} />
               <span>{label}</span>
+              {badge}
               <ChevronRight size={17} />
             </button>
           ))}
         </nav>
         <div className={s.layout}>
           <nav className={s.sections} aria-label={copy.sections}>
-            {items.map(({ id, label, Icon }) => (
+            {items.map(({ id, label, Icon, badge }) => (
               <button
                 type="button"
                 key={id}
@@ -104,11 +115,12 @@ export function SettingsLayout<Key extends string>({
               >
                 <Icon size={16} />
                 <span>{label}</span>
+                {badge}
               </button>
             ))}
           </nav>
           <div className={s.content} key={section}>
-            {children(section)}
+            {children(section, active && (!phone || mobileDetail))}
           </div>
         </div>
       </div>
