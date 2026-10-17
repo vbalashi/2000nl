@@ -18,6 +18,12 @@ export default defineConfig({
     command:
       "NEXT_FONT_GOOGLE_MOCKED_RESPONSES=$PWD/playwright/fixtures/next-font-google-mocked-responses.cjs NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=test-anon npm run dev -- --hostname 0.0.0.0 --port 3100",
     url: "http://127.0.0.1:3100",
+    // Version-update tests need deterministic build metadata, not the unknown dev identity.
+    env: {
+      NEXT_PUBLIC_APP_VERSION: "0.0.0-e2e",
+      NEXT_PUBLIC_APP_COMMIT: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      NEXT_PUBLIC_BUILD_TIMESTAMP: "2026-10-17T08:00:00Z",
+    },
     reuseExistingServer: false
   }
 });

@@ -84,3 +84,8 @@ code; those tabs need one manual reload. Confirm detection with a later release.
 Check public root and release API headers and identity after deployment; do not
 claim CDN behavior merely from localhost checks. Roll back image and its
 metadata together. No mandatory-client-version protocol is introduced here.
+
+The ordinary Playwright-managed dev server has fixed test build metadata in
+playwright.config.ts. This lets version-update tests exercise a known loaded
+identity in CI; ordinary developer/production configuration is unaffected.
+An externally supplied PLAYWRIGHT_BASE_URL keeps that server's own metadata.
