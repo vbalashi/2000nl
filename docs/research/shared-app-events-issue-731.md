@@ -95,3 +95,20 @@ Release publisher additionally accepts either existing server credential name,
 SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY, matching the application and
 worker's configuration choices. Publisher unit tests2/2PASS (including a synthetic
 self-hosted URL); credentials are never included in logs or this report.
+
+## Real browser boundary correction
+
+An additional unmocked local browser probe found a real transport defect:
+`realtime.send` adds a UUID `id` to the payload. The closed domain parser rejected
+that extra field, although private joins and raw WebSocket delivery succeeded.
+The adapter now strips only that valid transport metadata; unknown domain fields
+and malformed metadata remain rejected. The CI model now reproduces Supabase's
+metadata, including preservation of an explicitly supplied id. Migration228 and
+its checksum remain unchanged. Transport12/12, SQL1/1, real WS1/1 and FSRS377/377
+passed after correction. Actual browser DB→Broadcast→preference read→UI update
+passed through one socket, no document navigation, original palette restored.
+Observed27ms on this local run is a diagnostic observation, not a production SLA.
+The first temporary probe used an invalid palette (DB correctly rejected it),
+and an early probe read the default palette before initial preference readiness;
+these setup issues were corrected before the confirmed transport failure above.
+A reproducible browser integration test now preserves the full successful path.

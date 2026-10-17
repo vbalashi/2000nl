@@ -18,7 +18,15 @@ const registry = createAppEventRegistry({
         return;
       }
       const channel = supabase.channel(topic, { config: { private: true } })
-        .on('broadcast', { event: 'app-event' }, message => event(message.payload))
+        .on('broadcast', { event: 'app-event' }, message => {
+          const payload: unknown = message.payload;
+          if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return;
+          // realtime.send adds its transport message identity to the JSON payload.
+          // Strip only that transport field; the domain parser remains closed.
+          const { id, ...domainEvent } = payload as Record<string, unknown>;
+          if (id !== undefined && (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))) return;
+          event(domainEvent);
+        })
         .subscribe(status => {
           if (cancelled) return;
           if (status === 'SUBSCRIBED') state('connected');

@@ -24,8 +24,8 @@ test('shared app events preserve writes, coalesce hints and reject foreign/forge
       COMMIT;`);
     assert.equal(sql(db,"SELECT count(*) FROM realtime.messages WHERE payload->>'kind'='account.changed'"),'1');
     const message=JSON.parse(sql(db,'SELECT payload FROM realtime.messages LIMIT 1'));
-    assert.equal(message.resourceId,'user_settings');assert.equal(message.version,1);assert.ok(message.eventId);assert.ok(message.occurredAt);
-    assert.deepEqual(Object.keys(message).sort(),['eventId','kind','occurredAt','resourceId','revision','version']);
+    assert.equal(message.resourceId,'user_settings');assert.equal(message.version,1);assert.ok(message.eventId);assert.ok(message.occurredAt);assert.match(message.id,/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    assert.deepEqual(Object.keys(message).sort(),['eventId','id','kind','occurredAt','resourceId','revision','version']);
     sql(db,`INSERT INTO public.dictionaries(id,language_code,slug,name,kind,visibility,owner_user_id,publication_state)
       VALUES('${dictionary}','nl','events-integration','Event integration','user','private','${user}','unpublished');
       INSERT INTO public.word_entries(id,dictionary_id,language_code,headword,raw) VALUES('${entry}','${dictionary}','nl','testwoord','{}');
@@ -57,6 +57,10 @@ test('shared app events preserve writes, coalesce hints and reject foreign/forge
     assert.equal(sql(db,asPrincipal('app:releases',"SELECT private.can_receive_app_event_v1(realtime.topic())")),'t');
     const forged=spawnSync('psql',[db,'-X','-v','ON_ERROR_STOP=1','-c',asUser(`app:user:${user}`,`INSERT INTO realtime.messages(topic,payload) VALUES('app:user:${user}','{}')`)],{encoding:'utf8'});
     assert.notEqual(forged.status,0);assert.match(forged.stderr,/row-level security/);
+    // Supabase adds transport metadata without replacing an explicit provider id.
+    const suppliedId=randomUUID();
+    sql(db,`SELECT realtime.send(jsonb_build_object('id','${suppliedId}'),'metadata-test','test:transport',true);`);
+    assert.equal(sql(db,"SELECT payload->>'id' FROM realtime.messages WHERE event='metadata-test'"),suppliedId);
     // Rollback never leaks a committed event.
     sql(db,`TRUNCATE realtime.messages; BEGIN; UPDATE public.user_settings SET translation_lang='de' WHERE user_id='${user}'; ROLLBACK;`);
     assert.equal(sql(db,'SELECT count(*) FROM realtime.messages'),'0');

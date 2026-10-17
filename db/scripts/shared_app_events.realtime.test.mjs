@@ -40,7 +40,7 @@ test('local Supabase WebSocket private topics deliver real DB broadcasts and den
     SELECT public.publish_app_release_v1(repeat('a',40));`);
   for(let n=0;n<25 && new Set(events.map(e=>e.kind)).size<3;n++)await pause(200);
   assert.deepEqual(new Set(events.map(e=>e.kind)),new Set(['account.changed','translation.ready','release.available']));
-  for(const event of events){assert.equal(event.version,1);assert.ok(event.eventId);assert.ok(!('overlay'in event));assert.ok(!('user_id'in event));}
+  for(const event of events){assert.equal(event.version,1);assert.ok(event.eventId);assert.match(event.id,/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);assert.ok(!('overlay'in event));assert.ok(!('user_id'in event));}
   console.log('Real WS: owner receives account + private translation + release; second user and anon denied');
  }finally{
   for(const client of [...clients,admin]){await client.removeAllChannels();client.realtime.disconnect();}

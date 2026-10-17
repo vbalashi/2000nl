@@ -112,5 +112,8 @@ CREATE OR REPLACE FUNCTION realtime.topic() RETURNS text LANGUAGE sql STABLE AS 
 $$;
 CREATE OR REPLACE FUNCTION realtime.send(payload jsonb, event text, topic text, private boolean DEFAULT true)
 RETURNS void LANGUAGE sql AS $$
-  INSERT INTO realtime.messages(payload,event,topic,private) VALUES(payload,event,topic,private);
+  -- Supabase Broadcast adds payload.id transport metadata unless supplied.
+  INSERT INTO realtime.messages(payload,event,topic,private)
+    VALUES(CASE WHEN payload ? 'id' THEN payload
+      ELSE jsonb_set(payload, '{id}', to_jsonb(gen_random_uuid())) END,event,topic,private);
 $$;

@@ -12,6 +12,19 @@ describe('browser event transport', () => {
     expect(mocks.channel).toHaveBeenCalledWith(appUserTopic(user), { config: { private: true } }); expect(channel.on).toHaveBeenCalledWith('broadcast', { event: 'app-event' }, expect.any(Function));
     mocks.auth?.('SIGNED_OUT', null); expect(mocks.remove).toHaveBeenCalledWith(channel); unsubscribe(); expect(mocks.remove).toHaveBeenCalledOnce();
   });
+  it('accepts realtime.send message identity without relaxing the domain payload schema', async () => {
+    const channel = { on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() }; mocks.channel.mockReturnValue(channel);
+    const { subscribeAppEvents, appUserTopic } = await import('@/lib/events/appEvents'); const listener = vi.fn();
+    subscribeAppEvents({ topic: appUserTopic(user) }, listener); mocks.auth?.('INITIAL_SESSION', { user: { id: user } });
+    await vi.waitFor(() => expect(mocks.channel).toHaveBeenCalledOnce());
+    const receive = channel.on.mock.calls[0][2];
+    const domain = { version: 1, eventId: user, kind: 'account.changed', resourceId: 'user_settings', occurredAt: '2026-10-17T12:00:00Z' };
+    receive({ payload: { ...domain, id: 'invalid' } });
+    receive({ payload: { ...domain, id: user, unexpected: true } });
+    expect(listener).not.toHaveBeenCalled();
+    receive({ payload: { ...domain, id: user } }); receive({ payload: { ...domain, id: user } });
+    expect(listener).toHaveBeenCalledOnce(); expect(listener).toHaveBeenCalledWith(domain);
+  });
   it('rejoins on token refresh outside the auth callback and requests reconciliation', async () => {
     const channel = { on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() }; mocks.channel.mockReturnValue(channel);
     const { subscribeAppEvents, appUserTopic } = await import('@/lib/events/appEvents'); const reconcile = vi.fn();

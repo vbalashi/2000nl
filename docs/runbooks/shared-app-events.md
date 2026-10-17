@@ -71,3 +71,13 @@ against production or an owner's learning data.
 The smoke runner uses Node’s force-exit-after-tests option because rejected
 Realtime channel retries can retain SDK timers after all assertions and cleanup.
 It does not skip awaiting resource cleanup or permit non-local targets.
+
+To test the actual browser consumer too, start the issue preview through
+`scripts/ui-local-dev.sh` and use its local URL with the wrapper environment:
+`APP_EVENTS_REALTIME_SMOKE=1 APP_EVENTS_REALTIME_UI_URL=http://127.0.0.1:3101 node --test db/scripts/shared_app_events.browser.test.mjs`.
+The test requires healthy local preview and real dev-login, changes only the
+QA account's palette, checks receipt through exactly one socket and no document
+navigation, and restores the original value in `finally`. It rejects remote
+targets and is skipped unless explicitly enabled. Unlike fixture browser tests,
+this path exercises the actual publisher, Supabase payload metadata, adapter,
+consumer and authoritative preference read together.
