@@ -595,3 +595,8 @@
 
 \i db/migrations/227_training_scheduler_hash_join_plans.sql
 \i db/migrations/228_shared_app_events.sql
+
+-- #737 fresh-schema coverage only. Reserved Connect migration229 is absent on
+-- this held branch; integrate its real include before enabling release230.
+-- This include does not advance the deployment manifest/app contract from228.
+\i db/migrations/230_training_stats_totals_projection.sql

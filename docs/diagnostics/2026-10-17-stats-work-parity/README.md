@@ -88,3 +88,36 @@ rollback remains compatible with both unchanged public signatures.
   state/scheduling mutation beyond synthetic disposable fixtures.
 
 Owned disposable DB removed after validation; source/evidence retained here.
+
+## Fresh-bootstrap coverage correction (PR #739)
+
+CI found a real missing230 include in `bootstrap.sql`, separately from the
+intentional reserved229 numbering gap. Added only230's include, with a truthful
+comment that229 and the release gate still require curator integration. No229
+placeholder, manifest advance, CI weakening or rollout bypass was introduced.
+
+Validation used two new owned disposable databases on the existing local server:
+
+1. Applied real `plain_postgres_supabase_compat.sql` then full `bootstrap.sql`.
+   Ran `db/scripts/training_stats_bootstrap_parity.sql`: passed. It installs only
+   the independent pre230 oracle and fixtures transactionally, then checks both
+   already-bootstrap-installed public overloads, defaults, exact JSON and explicit
+   metrics, plus the standalone230 catalog/ACL probe. It does not install230.
+2. Captured the catalog definitions of bootstrap-installed totals+wrapper,
+   explicitly reapplied immutable230, and compared catalog hashes: identical.
+   This verifies the fresh-schema path installed the same executable definitions.
+3. In a separate fresh DB, full FSRS re-run passed43 files/385 tests (18.23s),
+   including targeted parity and study-day tests. Earlier FSRS runs already scanned
+   all migration files through `runMigrations`, including230; this correction adds
+   independent coverage of the previously missed psql bootstrap path.
+4. Exact230 include coverage and `git diff --check` passed. The sole missing
+   numeric migration ID remains229, intentionally held until Connect integration.
+
+Both owned DBs were removed after validation. Reproduce step1 from repository root
+using a fresh owned `2000nl_fsrs_*` DB only:
+
+```
+psql "$FSRS_TEST_DB_URL" -X -v ON_ERROR_STOP=1 -f db/scripts/plain_postgres_supabase_compat.sql -f db/migrations/bootstrap.sql -f db/scripts/training_stats_bootstrap_parity.sql
+```
+
+The complete230 deployment postflight still requires real229 and its postflight.
