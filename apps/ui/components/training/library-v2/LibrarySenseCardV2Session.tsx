@@ -648,15 +648,35 @@ function SenseCardV2Session({
     }).catch(() => { /* load exposes retry. */ });
   }, activeMeaningId && translationLanguage && translationLanguage !== "off" ? { entryId: activeMeaningId, targetLanguageCode: translationLanguage } : undefined), [activeMeaningId,cardTypeId,detailIdentity,handleRequestTranslation,load,loading,translationLanguage]);
 
+  const translationEntryIdsKey = JSON.stringify(group?.entries.filter(entry => entry.kind === "sense-card").map(entry => entry.entryId).sort() ?? []);
   React.useEffect(() => {
     if (!translationLanguage || translationLanguage === "off") return;
-    const entryIds = group?.entries.filter(entry => entry.kind === "sense-card").map(entry => entry.entryId) ?? [];
+    const entryIds = JSON.parse(translationEntryIdsKey) as string[];
+    const controller = new AbortController();
+    let reading = false, dirty = false;
+    const refresh = async () => {
+      if (controller.signal.aborted) return;
+      dirty = true;
+      if (reading) return;
+      reading = true;
+      // First-join hints for several meanings share one group projection read.
+      await Promise.resolve();
+      try {
+        if (controller.signal.aborted) return;
+        do {
+          dirty = false;
+          try { await load(controller.signal, undefined, detailIdentity); }
+          catch { /* A newer hint still gets its follow-up after a failed read. */ }
+        } while (dirty && !controller.signal.aborted);
+      } catch { /* load retains the visible card and exposes lookup retry. */ }
+      finally { reading = false; }
+    };
     const stops = entryIds.map(entryId => onDictionaryTranslationReady(translation => {
-      if (translation.entryId !== entryId || translationRequests.current.has(translation.entryId) || translation.targetLanguageCode !== translationLanguage) return;
-      void load(undefined, undefined, detailIdentity).catch(() => { /* load retains the visible card and exposes lookup retry. */ });
+      if (translation.entryId !== entryId || translation.targetLanguageCode !== translationLanguage) return;
+      void refresh();
     }, { entryId, targetLanguageCode: translationLanguage }));
-    return () => stops.forEach(stop => stop());
-  }, [detailIdentity, group, load, translationLanguage]);
+    return () => { controller.abort(); stops.forEach(stop => stop()); };
+  }, [detailIdentity, translationEntryIdsKey, load, translationLanguage]);
 
   React.useEffect(() => {
     if (!model) return;

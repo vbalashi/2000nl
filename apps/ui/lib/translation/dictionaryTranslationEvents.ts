@@ -95,7 +95,14 @@ export function onDictionaryTranslationReady(
 ) {
   listeners.add(listener);
   initialize();
-  const stopRemote = scope ? watchDictionaryTranslation(scope, () => listener(scope), state => { if (state.reconnect) listener(scope); }) : undefined;
+  let connected = false;
+  const stopRemote = scope ? watchDictionaryTranslation(scope, () => listener(scope), state => {
+    const nextConnected = state.status === "connected";
+    const joined = nextConnected && !connected;
+    connected = nextConnected;
+    // Join before re-reading: a completion may precede the first subscription.
+    if (joined) listener(scope);
+  }) : undefined;
   return () => {
     stopRemote?.();
     listeners.delete(listener);

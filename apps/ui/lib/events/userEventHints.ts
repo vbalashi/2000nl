@@ -29,11 +29,26 @@ export function subscribeUserEventHints(userId: string | undefined, kinds: reado
     try { topic = appUserTopic(userId); } catch {}
     if (topic) {
       const events = subscribeAppEvents({ topic, kinds }, event => {
-      if (event.kind === "account.changed" && event.resourceId && event.resourceId !== "user_settings") return;
-      hint();
+        if (event.kind === "account.changed" && event.resourceId && event.resourceId !== "user_settings") return;
+        hint();
       });
-      const connection = subscribeAppEventConnection(topic, state => { if (state.status === "connected") hint(); });
-      detach = () => { events(); connection(); };
+      let connected = false, safetyTicks = 0;
+      const connection = subscribeAppEventConnection(topic, state => {
+        connected = state.status === "connected";
+        safetyTicks = 0;
+        if (connected) hint();
+      });
+      // Broadcast is best effort even on a healthy connection. A sparse visible
+      // reconcile bounds missed hints without reviving frequent healthy polling.
+      const safety = setInterval(() => {
+        safetyTicks++;
+        if (document.visibilityState === "hidden") return;
+        if (!connected || safetyTicks >= 15) {
+          safetyTicks = 0;
+          hint();
+        }
+      }, 60_000);
+      detach = () => { clearInterval(safety); events(); connection(); };
     }
   }
   return { flush, dispose: () => { disposed = true; if (timer) clearTimeout(timer); detach(); } };

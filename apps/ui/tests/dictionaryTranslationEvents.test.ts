@@ -77,14 +77,16 @@ test("scoped remote hints trigger targeted authoritative readers without local e
  detach();detachOther();expect(stopEvent).toHaveBeenCalledOnce();expect(stopConnection).toHaveBeenCalledOnce();
 });
 
-test("scoped readers recover on reconnect without treating first subscription as a change", async () => {
+test("scoped readers recover once on first connection and once per reconnect", async () => {
  let state!: (value:{status:string;reconnect:boolean})=>void;
  remote.mockReturnValue(vi.fn());
  connection.mockImplementation((_topic,listener)=>{state=listener;return vi.fn();});
  const bus=await import("@/lib/translation/dictionaryTranslationEvents");const listener=vi.fn();
  const detach=bus.onDictionaryTranslationReady(listener,{entryId:"entry",targetLanguageCode:"ru"});
- state({status:"connected",reconnect:false});expect(listener).not.toHaveBeenCalled();
- state({status:"connected",reconnect:true});expect(listener).toHaveBeenCalledOnce();
+ state({status:"connected",reconnect:false});expect(listener).toHaveBeenCalledOnce();
+ state({status:"connected",reconnect:false});expect(listener).toHaveBeenCalledOnce();
+ state({status:"degraded",reconnect:false});
+ state({status:"connected",reconnect:true});expect(listener).toHaveBeenCalledTimes(2);
  detach();
 });
 

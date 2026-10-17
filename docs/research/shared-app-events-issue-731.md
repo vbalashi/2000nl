@@ -66,3 +66,18 @@ The harness now reuses the existing CI-only Broadcast model, restricted to
 recognized disposable databases; existing Supabase objects are left untouched.
 `scripts/db-local-supabase.sh test-fsrs`: **377/377 tests,42files passed**, wrapper
 removed the disposable database. CI is rerun on this correction.
+
+Full local unit run after test-fixture corrections: **2459 passed,365 DB-dependent
+skipped**,279 passing files and39 skipped files. FSRS tests are separately377/377
+passing, so DB-dependent skips in the unit command are intentional. The original
+fixture lacked auth lifecycle methods; its85-test TrainingScreen rerun passed.
+The second stale fixture expected coordination issue721; it now tracks731.
+
+Final recovery audit additionally closed ready-translation first-join races,
+coalesced initial joins for multiple Library meanings, and queued hints received
+during an older in-flight projection read. Library subscriptions now depend on
+semantic entry IDs rather than each freshly returned group object, preventing
+read/resubscribe loops. User-domain hints gained visible15-minute healthy /
+1-minute degraded safety reconciliation for a dropped Broadcast with no socket
+failure. New regressions cover these cases; focused translation64/64 and
+helper/settings14/14 passed, plus typecheck.
