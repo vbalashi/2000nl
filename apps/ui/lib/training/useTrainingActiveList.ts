@@ -1,3 +1,4 @@
+import { useUserEventHints } from "@/lib/events/userEventHints";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ActiveTrainingScope, WordListSummary, WordListType } from "@/lib/types";
 import {
@@ -118,6 +119,7 @@ export function useTrainingActiveList(params: {
     }
   }, [language, userId]);
 
+  useUserEventHints(userId, ["collections.changed"], refreshAvailableLists);
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;

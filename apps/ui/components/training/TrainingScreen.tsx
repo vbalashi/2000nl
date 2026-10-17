@@ -1,4 +1,6 @@
 "use client";
+import { useUserEventHints } from "@/lib/events/userEventHints";
+import { publishPlatformV2CardStateChanged } from "@/lib/platform/platformV2CardStateChanges";
 import {CardTranslationLanguagesProvider} from "@/components/practice/article/AdditionalCardTranslation";
 import { useTrainingSessionLifecycle } from "./useTrainingSessionLifecycle";
 import type { TrainingSessionProgress } from "@/lib/training/sessionLifecycle";
@@ -2221,6 +2223,13 @@ function TrainingScreenContent({
     resetFocusQueueState,
     user?.id,
   ]);
+  useUserEventHints(user?.id, ["training.changed"], async () => {
+    if (trainingSessionIdRef.current) await validateTrainingSessionAuthority();
+  });
+  useUserEventHints(user?.id, ["learning.changed"], () => {
+    // A domain hint can cover several changed entries in one transaction.
+    publishPlatformV2CardStateChanged();
+  });
   const handleContinueTrainingSession = useCallback(() => {
     if (activeExerciseFamily === "sentence" && sentenceSession && user?.id) {
       void fetchPlatformV2TranslationTrainingSessionSnapshot(user.id, sentenceSession.sessionId).then((snapshot) => {

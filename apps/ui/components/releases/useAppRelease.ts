@@ -1,5 +1,10 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  APP_RELEASES_TOPIC,
+  subscribeAppEvents,
+  subscribeAppEventConnection,
+} from "@/lib/events/appEvents";
 import { appVersionInfo } from "@/lib/appVersion";
 import {
   buildIdentity,
@@ -128,6 +133,34 @@ export function useAppRelease(ownerId: string, unsafe: boolean) {
     window.addEventListener("focus", focused);
     document.addEventListener("visibilitychange", focused);
     window.addEventListener("online", online);
+    let connected = false;
+    let disposed = false;
+    let dirty = false;
+    let reconciling = false;
+    const reconcile = () => {
+      dirty = true;
+      if (reconciling) return;
+      reconciling = true;
+      void (async () => {
+        while (dirty && !disposed) {
+          dirty = false;
+          // A preexisting read may have sampled the previous deployment.
+          const prior = request.current;
+          if (prior) await prior;
+          dirty = false;
+          if (!disposed) await check(true);
+        }
+      })().finally(() => { reconciling = false; });
+    };
+    const unsubscribe = subscribeAppEvents(
+      { topic: APP_RELEASES_TOPIC, kinds: ["release.available"] },
+      reconcile,
+    );
+    const unsubscribeConnection = subscribeAppEventConnection(APP_RELEASES_TOPIC, (state) => {
+      const wasConnected = connected;
+      connected = state.status === "connected";
+      if (connected && !wasConnected) reconcile();
+    });
     let timer: number;
     const tick = () => {
       timer = window.setTimeout(
@@ -135,18 +168,23 @@ export function useAppRelease(ownerId: string, unsafe: boolean) {
           if (document.visibilityState !== "hidden") void check();
           tick();
         },
-        Math.min(900_000, 300_000 * 2 ** Math.min(failures.current, 2)) +
+        // Broadcast is primary. A sparse check repairs a missed deployment event;
+        // disconnected clients retain the bounded existing fallback.
+        Math.min(900_000, (connected ? 900_000 : 300_000) * 2 ** Math.min(failures.current, 2)) +
           Math.random() * 15_000,
       );
     };
     tick();
     return () => {
+      disposed = true;
       clearTimeout(timer);
+      unsubscribe();
+      unsubscribeConnection();
       window.removeEventListener("focus", focused);
       document.removeEventListener("visibilitychange", focused);
       window.removeEventListener("online", online);
     };
-  }, [check]);
+  }, [check, ownerId]);
   const targetId = release && buildIdentity(release.build);
   const updateAvailable = Boolean(
     installedId && targetId && installedId !== targetId,

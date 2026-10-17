@@ -89,8 +89,8 @@ export function useWordContextPrompt({
         event.targetLanguageCode === translationTargetLanguageCode
       )
         void load();
-    });
-    const detachRecovery = onDictionaryTranslationRevalidate(() => void load());
+    }, { entryId, targetLanguageCode: translationTargetLanguageCode });
+    const detachRecovery = onDictionaryTranslationRevalidate(() => void load(), { entryId, targetLanguageCode: translationTargetLanguageCode });
     void load();
     return () => {
       detach();

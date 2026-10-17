@@ -199,6 +199,9 @@ jobs:
             --expected-commit "${COMMIT_FULL}"
           APP_SWITCHED=0
 
+          # Optional hint only after verified healthy release; never interrupt training.
+          node scripts/publish-app-release.mjs "${COMMIT_FULL}" .env
+
           if [[ "${ROLLBACK_READY}" == "1" ]]; then
             sg docker -c "docker image rm 2000nl-ui:${ROLLBACK_TAG}" >/dev/null || true
           fi

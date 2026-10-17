@@ -13,6 +13,15 @@ vi.mock("@/lib/trainingService", () => ({
   updateUserPreferences,
 }));
 
+const eventTransport = vi.hoisted(() => ({ listeners: [] as ((event: unknown) => void)[], connections: [] as ((state: unknown) => void)[] }));
+vi.mock("@/lib/events/appEvents", async importOriginal => {
+  const original = await importOriginal<typeof import("@/lib/events/appEvents")>();
+  return { ...original,
+    subscribeAppEvents: (_options: unknown, listener: (event: unknown) => void) => { eventTransport.listeners.push(listener); return () => {}; },
+    subscribeAppEventConnection: (_topic: string, listener: (state: unknown) => void) => { eventTransport.connections.push(listener); return () => {}; },
+  };
+});
+
 const loadedPreferences = {
   themePreference: "dark",
   audioQuality: "premium",
@@ -28,6 +37,8 @@ const loadedPreferences = {
 
 describe("useTrainingPreferences", () => {
   beforeEach(() => {
+    eventTransport.listeners.length = 0;
+    eventTransport.connections.length = 0;
     fetchUserPreferences.mockReset();
     updateUserPreferences.mockReset();
     fetchUserPreferences.mockResolvedValue(loadedPreferences);
@@ -144,3 +155,45 @@ function trainingTimingEvents(dispatch: { mock: { calls: [Event][] } }) {
       : [],
   );
 }
+
+
+beforeEach(() => {
+  eventTransport.listeners.length = 0;
+  eventTransport.connections.length = 0;
+  fetchUserPreferences.mockReset().mockResolvedValue(loadedPreferences);
+  updateUserPreferences.mockReset().mockResolvedValue({ error: null });
+});
+
+test("account hints defer reads until optimistic settings writes settle and reconcile first join", async () => {
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const initial = { ...loadedPreferences, themePreference: "dark" } as UserPreferences;
+  const { result } = renderHook(() => useTrainingPreferences(userId, undefined, initial));
+  expect(fetchUserPreferences).not.toHaveBeenCalled();
+  let finish!: (value: unknown) => void;
+  updateUserPreferences.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+  act(() => result.current.setTheme("light"));
+  act(() => {
+    eventTransport.connections[0]({ status: "connected", reconnect: false });
+    eventTransport.listeners[0]({ kind: "account.changed", resourceId: "user_settings" });
+  });
+  await act(async () => {});
+  expect(fetchUserPreferences).not.toHaveBeenCalled();
+  expect(result.current.themePreference).toBe("light");
+  fetchUserPreferences.mockResolvedValue({ ...initial, themePreference: "light", translationLang: "ru" });
+  await act(async () => finish({ error: null }));
+  await waitFor(() => expect(result.current.translationLang).toBe("ru"));
+  expect(fetchUserPreferences).toHaveBeenCalledOnce();
+  expect(result.current.themePreference).toBe("light");
+});
+
+test("a stale event refresh cannot overwrite a newer optimistic settings write", async () => {
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const { result } = renderHook(() => useTrainingPreferences(userId, undefined, loadedPreferences as UserPreferences));
+  let finishRead!: (value: unknown) => void;
+  fetchUserPreferences.mockReturnValueOnce(new Promise(resolve => { finishRead = resolve; }));
+  act(() => eventTransport.listeners[0]({ kind: "account.changed" }));
+  await waitFor(() => expect(fetchUserPreferences).toHaveBeenCalledOnce());
+  act(() => result.current.setTheme("light"));
+  await act(async () => finishRead(loadedPreferences));
+  expect(result.current.themePreference).toBe("light");
+});

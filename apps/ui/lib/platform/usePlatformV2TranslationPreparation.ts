@@ -135,7 +135,7 @@ export function usePlatformV2TranslationPreparation(input: {
           if (entry) void prepare(entry);
         })
         .catch(() => { /* Lookup recovery owns refresh failures; no job failure was observed. */ });
-    });
+    }, { entryId, targetLanguageCode: current.targetLanguageCode! });
     const detach = onDictionaryTranslationReady((event) => {
       if (
         event.entryId !== entryId ||
@@ -144,7 +144,7 @@ export function usePlatformV2TranslationPreparation(input: {
       )
         return;
       void refresh().catch(() => { /* The ready hint is not evidence of a failed translation. */ });
-    });
+    }, { entryId, targetLanguageCode: current.targetLanguageCode! });
     if (current.entry && (settledAttempt.current !== attemptKey || statusRef.current === "pending")) {
       const force = forceNext.current === attemptKey;
       forceNext.current = null;

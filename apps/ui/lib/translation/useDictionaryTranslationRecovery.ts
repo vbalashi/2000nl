@@ -29,8 +29,8 @@ export function useDictionaryTranslationRecovery(input: {
         event.targetLanguageCode === input.targetLanguageCode
       )
         refresh();
-    });
-    const detachRecovery = onDictionaryTranslationRevalidate(refresh);
+    }, { entryId: input.entryId, targetLanguageCode: input.targetLanguageCode });
+    const detachRecovery = onDictionaryTranslationRevalidate(refresh, { entryId: input.entryId, targetLanguageCode: input.targetLanguageCode });
     return () => {
       detach();
       detachRecovery();

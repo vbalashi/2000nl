@@ -1,5 +1,8 @@
 import { afterEach, expect, test, vi } from "vitest";
-const { request } = vi.hoisted(() => ({ request: vi.fn() }));
+const { request, watch } = vi.hoisted(() => ({ request: vi.fn(), watch: vi.fn() }));
+vi.mock("@/lib/translation/dictionaryTranslationEvents", () => ({
+  publishDictionaryTranslationReady: vi.fn(), watchDictionaryTranslation: watch,
+}));
 vi.mock("@/lib/translation/translationApiClient", () => ({
   fetchDictionaryMeaningTranslation: request,
 }));
@@ -8,7 +11,7 @@ const input = { entryId: "entry", targetLanguageCode: "ru", force: true };
 const pending = (needsEnqueue = false) => new Response(JSON.stringify({
   status: "pending", job: { id: "job" }, needsEnqueue,
 }));
-afterEach(() => { vi.useRealTimers(); request.mockReset(); });
+afterEach(() => { vi.useRealTimers(); request.mockReset(); watch.mockReset(); });
 
 test("polls read-only and never repeats an explicit failed-job retry", async () => {
   vi.useFakeTimers();
@@ -125,5 +128,68 @@ test("observation deadline interrupts a longer backoff without another request",
   const result = observeDictionaryMeaningTranslation(input, { observationMs: 2500 });
   await vi.advanceTimersByTimeAsync(2500);
   expect((await (await result).json()).status).toBe("pending");
+  expect(request).toHaveBeenCalledTimes(2);
+});
+
+
+test("healthy realtime waits for a targeted hint and coalesces duplicate hints", async () => {
+  vi.useFakeTimers();
+  let hint!: () => void;
+  const stop = vi.fn();
+  watch.mockImplementation((_scope, onUpdate, connection) => {
+    hint = onUpdate;
+    connection({status:"connected",reconnect:false});
+    return stop;
+  });
+  request.mockResolvedValueOnce(pending()).mockResolvedValueOnce(pending()).mockResolvedValueOnce(new Response('{"status":"ready"}'));
+  const result = observeDictionaryMeaningTranslation(input);
+  await vi.advanceTimersByTimeAsync(20_000);
+  expect(request).toHaveBeenCalledTimes(2);
+  hint(); hint(); hint();
+  await vi.advanceTimersByTimeAsync(0);
+  expect((await (await result).json()).status).toBe("ready");
+  expect(request).toHaveBeenCalledTimes(3);
+  expect(request.mock.calls[1][0]).toMatchObject({observeOnly:true,force:false});
+  expect(stop).toHaveBeenCalledOnce();
+});
+
+test("healthy realtime makes a final authoritative probe when a completion hint is lost", async () => {
+  vi.useFakeTimers();
+  watch.mockImplementation((_scope,_onUpdate,connection) => { connection({status:"connected",reconnect:false});return vi.fn(); });
+  request.mockResolvedValueOnce(pending()).mockResolvedValueOnce(pending()).mockResolvedValueOnce(new Response('{"status":"ready"}'));
+  const result = observeDictionaryMeaningTranslation(input,{observationMs:10_000});
+  await vi.advanceTimersByTimeAsync(8999);
+  expect(request).toHaveBeenCalledTimes(2);
+  await vi.advanceTimersByTimeAsync(1);
+  expect((await (await result).json()).status).toBe("ready");
+});
+
+test("connection degradation interrupts sparse waiting and resumes bounded recovery", async () => {
+  vi.useFakeTimers();
+  let connection!: (value:{status:string;reconnect:boolean})=>void;
+  watch.mockImplementation((_scope,_onUpdate,onConnection) => { connection=onConnection;connection({status:"connected",reconnect:false});return vi.fn(); });
+  request.mockResolvedValueOnce(pending()).mockResolvedValueOnce(pending()).mockResolvedValueOnce(new Response('{"status":"failed"}'));
+  const result=observeDictionaryMeaningTranslation(input);
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(request).toHaveBeenCalledTimes(2);
+  connection({status:"degraded",reconnect:false});
+  await vi.advanceTimersByTimeAsync(0);
+  expect((await (await result).json()).status).toBe("failed");
+  expect(request).toHaveBeenCalledTimes(3);
+});
+
+test("abort detaches a healthy pending subscription without cancelling durable work", async () => {
+  vi.useFakeTimers();
+  const stop=vi.fn();
+  watch.mockImplementation((_scope,_onUpdate,connection) => { connection({status:"connected",reconnect:false});return stop; });
+  request.mockImplementation(async()=>pending());
+  const controller=new AbortController();
+  const result=observeDictionaryMeaningTranslation({...input,signal:controller.signal});
+  const rejection=expect(result).rejects.toMatchObject({name:"AbortError"});
+  await vi.advanceTimersByTimeAsync(0);
+  expect(request).toHaveBeenCalledTimes(2);
+  controller.abort();await rejection;
+  expect(stop).toHaveBeenCalledOnce();
+  await vi.advanceTimersByTimeAsync(60_000);
   expect(request).toHaveBeenCalledTimes(2);
 });

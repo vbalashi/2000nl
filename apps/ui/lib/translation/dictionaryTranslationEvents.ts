@@ -1,6 +1,9 @@
+import { appTranslationTopic, subscribeAppEvents, subscribeAppEventConnection, type AppEventConnection } from "@/lib/events/appEvents";
+
 type ReadyTranslation = { entryId: string; targetLanguageCode: string };
 const listeners = new Set<(translation: ReadyTranslation) => void>();
 const revalidators = new Set<() => void>();
+const healthyRevalidators = new Set<() => void>();
 const channelName = "2000nl.dictionary-translation.v1";
 const storageKey = "2000nl.dictionary-translation.invalidation.v1";
 const seen = new Set<string>();
@@ -55,24 +58,28 @@ function initialize() {
       } catch {}
     }
   };
-  const revalidate = () => {
+  let recoveryTicks = 0;
+  const revalidate = (periodic = false) => {
+    if (periodic) recoveryTicks++;
     if (document.visibilityState !== "hidden")
       for (const listener of [...revalidators]) {
-        try {
-          listener();
-        } catch {}
+        // Healthy scoped readers use events. A sparse 15-minute safety check
+        // covers lost messages; degraded/unscoped readers recover each minute.
+        if (periodic && healthyRevalidators.has(listener) && recoveryTicks % 15 !== 0) continue;
+        try { listener(); } catch {}
       }
   };
+  const focusRevalidate = () => revalidate();
   window.addEventListener("storage", storage);
-  window.addEventListener("focus", revalidate);
-  document.addEventListener("visibilitychange", revalidate);
-  const timer = window.setInterval(revalidate, 60_000);
+  window.addEventListener("focus", focusRevalidate);
+  document.addEventListener("visibilitychange", focusRevalidate);
+  const timer = window.setInterval(() => revalidate(true), 60_000);
   cleanup = () => {
     channel?.close();
     channel = null;
     window.removeEventListener("storage", storage);
-    window.removeEventListener("focus", revalidate);
-    document.removeEventListener("visibilitychange", revalidate);
+    window.removeEventListener("focus", focusRevalidate);
+    document.removeEventListener("visibilitychange", focusRevalidate);
     window.clearInterval(timer);
     cleanup = null;
     seen.clear();
@@ -84,18 +91,27 @@ function release() {
 /** Public dictionary identity only. No text, learner state, or authority to publish ready. */
 export function onDictionaryTranslationReady(
   listener: (translation: ReadyTranslation) => void,
+  scope?: ReadyTranslation,
 ) {
   listeners.add(listener);
   initialize();
+  const stopRemote = scope ? watchDictionaryTranslation(scope, () => listener(scope), state => { if (state.reconnect) listener(scope); }) : undefined;
   return () => {
+    stopRemote?.();
     listeners.delete(listener);
     release();
   };
 }
-export function onDictionaryTranslationRevalidate(listener: () => void) {
+export function onDictionaryTranslationRevalidate(listener: () => void, scope?: ReadyTranslation) {
   revalidators.add(listener);
   initialize();
+  const stopRemote = scope ? watchDictionaryTranslation(scope, () => {}, state => {
+    if (state.status === "connected") healthyRevalidators.add(listener);
+    else healthyRevalidators.delete(listener);
+  }) : undefined;
   return () => {
+    stopRemote?.();
+    healthyRevalidators.delete(listener);
     revalidators.delete(listener);
     release();
   };
@@ -128,4 +144,30 @@ export function publishDictionaryTranslationReady(
     /* Storage-disabled browsers still have channel/focus recovery. */
   }
   release();
+}
+
+
+/** Remote messages are hints only; consumers re-read authorized state. Never echo
+ * them onto localStorage/BroadcastChannel or publish a ready cache themselves. */
+export function watchDictionaryTranslation(
+  scope: ReadyTranslation,
+  onUpdate: () => void,
+  onConnection?: (state: AppEventConnection) => void,
+): () => void {
+  let stopEvents: (() => void) | undefined;
+  try {
+    const topic = appTranslationTopic(scope.entryId, scope.targetLanguageCode);
+    stopEvents = subscribeAppEvents({ topic, kinds: ["translation.ready", "translation.failed"] }, event => {
+      if (event.resourceId === scope.entryId && event.language === scope.targetLanguageCode) onUpdate();
+    });
+    const stopConnection = subscribeAppEventConnection(topic, state => {
+      onConnection?.(state);
+
+    });
+    return () => { stopConnection(); stopEvents?.(); };
+  } catch {
+    stopEvents?.();
+    onConnection?.({ status: "degraded", reconnect: false });
+    return () => {};
+  }
 }
