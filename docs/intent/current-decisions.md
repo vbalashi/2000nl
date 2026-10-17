@@ -249,3 +249,8 @@ Production activation of durable translation jobs is accepted for #674: contract
 тексты дорабатывать в работающем приложении; предварительная отдельная
 Pen-приёмка всех состояний не требуется.
 [Основание](../discussions/2026-10-17-03-release-updates-implementation.md).
+
+Первая визуальная реализация #299 отклонена владельцем. Функциональный флоу
+сохраняется; новая композиция плашки и Updates подготовлена для просмотра,
+без статуса визуально принятой.
+[Обратная связь](../discussions/2026-10-17-04-release-updates-visual-revision.md).

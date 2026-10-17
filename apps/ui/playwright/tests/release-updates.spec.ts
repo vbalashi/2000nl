@@ -4,9 +4,9 @@ const announcement = {
   id: "two-languages",
   publishedAt: "2026-10-17T09:00:00Z",
   locale: "en",
-  title: "Translations in two languages",
+  title: "Two languages on each card",
   summary:
-    "Read complete cards in Russian and English. Additional translations are prepared ahead of your next card.",
+    "Choose a second translation language for dictionary entries and training answers.",
   detailsUrl: "https://example.org/blog/two-languages",
 };
 for (const profile of [
@@ -64,7 +64,7 @@ for (const profile of [
     });
     await menu.getByRole("button", { name: "Updates", exact: true }).click();
     await expect(
-      page.getByRole("heading", { name: "Translations in two languages" }),
+      page.getByRole("heading", { name: "Two languages on each card" }),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Update app" }),

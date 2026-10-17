@@ -1,7 +1,12 @@
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 const en = {
   updates: "Updates",
-  available: "A new version is ready",
+  whatsNew: "What’s new",
+  updateHint:
+    "Reload 2000nl to apply the latest improvements. Your progress and settings will be kept.",
+  currentHint: "2000nl checks for updates automatically.",
+  version: "Version",
+  available: "An update is available",
   summary: "Update the app to get the latest improvements.",
   update: "Update app",
   later: "Later",
@@ -25,6 +30,11 @@ const en = {
 };
 const ru: typeof en = {
   updates: "Обновления",
+  whatsNew: "Что нового",
+  updateHint:
+    "Перезапустите 2000nl, чтобы применить обновления. Ваш прогресс и настройки сохранятся.",
+  currentHint: "2000nl проверяет обновления автоматически.",
+  version: "Версия",
   available: "Доступна новая версия",
   summary: "Обновите приложение, чтобы получить последние улучшения.",
   update: "Обновить приложение",
@@ -50,6 +60,11 @@ const ru: typeof en = {
 };
 const nl: typeof en = {
   updates: "Updates",
+  whatsNew: "Wat is er nieuw",
+  updateHint:
+    "Herlaad 2000nl om de verbeteringen toe te passen. Je voortgang en instellingen blijven behouden.",
+  currentHint: "2000nl controleert automatisch op updates.",
+  version: "Versie",
   available: "Er staat een nieuwe versie klaar",
   summary: "Werk de app bij voor de nieuwste verbeteringen.",
   update: "App bijwerken",
