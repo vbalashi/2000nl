@@ -1,11 +1,12 @@
 import {CardTranslationLanguagesProvider} from "@/components/practice/article/AdditionalCardTranslation";
 import { requestPlatformV2LibraryTranslation } from "@/lib/platform/platformV2LibraryClient";
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({ requestPlatformV2LibraryTranslation: vi.fn() }));
+import { publishDictionaryTranslationReady } from "@/lib/translation/dictionaryTranslationEvents";
 import { getUiMessages } from "@/lib/uiMessages";
 const recordedStudy = vi.hoisted(() => vi.fn());
 vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TrainingSentenceSession } from "@/components/training/pilot/TrainingSentenceSession";
 import { fetchNextPlatformV2TranslationTrainingSessionExercise, markPlatformV2TranslationTrainingSessionMemberUnavailable, performPlatformV2TranslationExerciseAction } from "@/lib/platform/platformV2TranslationExerciseClient";
@@ -114,7 +115,8 @@ test("pending preparation is announced as waiting and automatically recovers the
   render(<TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} />);
   expect(await screen.findByText("Translation is being prepared…")).toBeVisible();
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  await waitFor(() => expect(screen.getByText("Переведённый пример.")).toBeVisible(), { timeout: 4_000 });
+  await act(async () => publishDictionaryTranslationReady({ entryId: candidate.entryId, targetLanguageCode: "ru" }));
+  await waitFor(() => expect(screen.getByText("Переведённый пример.")).toBeVisible());
   expect(loadSentenceExerciseContent).toHaveBeenLastCalledWith(expect.objectContaining({ candidate, force: false }));
   expect(markPlatformV2TranslationTrainingSessionMemberUnavailable).not.toHaveBeenCalled();
   expect(performPlatformV2TranslationExerciseAction).not.toHaveBeenCalled();
