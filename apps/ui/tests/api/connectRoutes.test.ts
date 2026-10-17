@@ -1,3 +1,4 @@
+import { encryptNativeSession, decryptNativeSession } from "@/lib/connect/sessionCredentials";
 import crypto from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
@@ -20,14 +21,18 @@ function queryChain(result: { data?: unknown; error?: unknown }) {
   const query: any = {
     select: vi.fn(() => query),
     eq: vi.fn(() => query),
+    is: vi.fn(() => query),
+    gt: vi.fn(() => query),
     maybeSingle: vi.fn(async () => result),
   };
   return query;
 }
 
-function mutationChain(result: { data?: unknown; error?: unknown } = { error: null }) {
+function mutationChain(result: { data?: unknown; error?: unknown } = { data: { id: "session-1", code_hash: "claimed" }, error: null }) {
   const query: any = {
     eq: vi.fn(() => query),
+    is: vi.fn(() => query),
+    gt: vi.fn(() => query),
     select: vi.fn(() => query),
     maybeSingle: vi.fn(async () => result),
     then: (resolve: any, reject: any) => Promise.resolve(result).then(resolve, reject),
@@ -42,6 +47,8 @@ describe("2000NL Connect API", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
+    process.env.CONNECT_SESSION_ENCRYPTION_KEY = "11".repeat(32);
+    delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
     process.env.CONNECT_API_ALLOWED_ORIGINS = "chrome-extension://abc";
   });
 
@@ -276,8 +283,8 @@ describe("2000NL Connect API", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      access_token: "access-1",
-      refresh_token: "refresh-1",
+      access_token: expect.stringMatching(/^nlc_a_/),
+      refresh_token: expect.stringMatching(/^nlc_r_/),
       expires_at: 1781619999,
       expires_in: 3600,
       token_type: "bearer",
@@ -287,13 +294,17 @@ describe("2000NL Connect API", () => {
     expect(inserts[0]).toMatchObject({
       table: "connected_client_sessions",
       row: {
-        access_token_hash: sha256Hex("access-1"),
+        access_token_hash: expect.any(String),
         access_token_expires_at: new Date(1781619999 * 1000).toISOString(),
-        refresh_token_hash: sha256Hex("refresh-1"),
+        refresh_token_hash: expect.any(String),
+        credential_version: 2,
+        native_session_ciphertext: expect.any(String),
         client_id: "audiofilms_chrome",
         user_id: "user-1",
       },
     });
+    const encrypted = inserts[0].row;
+    expect(decryptNativeSession(encrypted.native_session_ciphertext, encrypted.id, "user-1", "audiofilms_chrome")).toEqual({ access_token: "access-1", refresh_token: "refresh-1" });
     expect(updates.some((item) => item.table === "connect_authorization_codes")).toBe(
       true,
     );
@@ -331,7 +342,12 @@ describe("2000NL Connect API", () => {
           select: vi.fn(() =>
             queryChain({
               data: {
-                refresh_token_hash: sha256Hex("refresh-1"),
+                id: "session-1",
+                credential_version: 2,
+                native_session_ciphertext: encryptNativeSession({ access_token: "access-1", refresh_token: "refresh-1" }, "session-1", "user-1", "audiofilms_chrome"),
+                refresh_token_expires_at: new Date(Date.now() + 60_000).toISOString(),
+                refresh_claim_id: null,
+                refresh_token_hash: sha256Hex("nlc_r_refresh-1"),
                 client_id: "audiofilms_chrome",
                 user_id: "user-1",
                 scopes: ["platform:read", "platform:write", "offline_access"],
@@ -387,15 +403,15 @@ describe("2000NL Connect API", () => {
         body: JSON.stringify({
           grant_type: "refresh_token",
           client_id: "audiofilms_chrome",
-          refresh_token: "refresh-1",
+          refresh_token: "nlc_r_refresh-1",
         }),
       }),
     );
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
-      access_token: "access-2",
-      refresh_token: "refresh-2",
+      access_token: expect.stringMatching(/^nlc_a_/),
+      refresh_token: expect.stringMatching(/^nlc_r_/),
       scope: "platform:read platform:write offline_access",
     });
     expect(updates).toEqual(
@@ -403,9 +419,9 @@ describe("2000NL Connect API", () => {
         expect.objectContaining({
           table: "connected_client_sessions",
           row: expect.objectContaining({
-            access_token_hash: sha256Hex("access-2"),
+            access_token_hash: expect.any(String),
             access_token_expires_at: new Date(1781620000 * 1000).toISOString(),
-            refresh_token_hash: sha256Hex("refresh-2"),
+            refresh_token_hash: expect.any(String),
           }),
         }),
       ]),

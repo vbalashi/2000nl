@@ -595,3 +595,6 @@
 
 \i db/migrations/227_training_scheduler_hash_join_plans.sql
 \i db/migrations/228_shared_app_events.sql
+
+-- Opaque Connected Client credentials (release requires legacy retirement).
+\i db/migrations/229_connect_opaque_credentials.sql
