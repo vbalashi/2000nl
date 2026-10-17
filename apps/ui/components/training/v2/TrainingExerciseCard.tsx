@@ -1,6 +1,7 @@
 "use client";
+import { TrainingAnswerTranslationProvider } from "./TrainingAnswerTranslation";
 import React from "react";
-import {AdditionalCardTranslationProvider,useAdditionalTranslationLanguage} from "@/components/practice/article/AdditionalCardTranslation";
+import {useAdditionalTranslationLanguage} from "@/components/practice/article/AdditionalCardTranslation";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -156,8 +157,7 @@ export function TrainingExerciseCard({
       className={trainingStageClassName()}
     >
       {notice}
-      <AdditionalCardTranslationProvider entryId={entryId ?? ""} contentLanguage={contentLanguage}
-        visible={Boolean(entryId) && revealed && translationVisible} preload={Boolean(entryId)}>
+      <TrainingAnswerTranslationProvider entryId={entryId} contentLanguage={contentLanguage}>
       <TrainingCardShell answerVisible={revealed}>
         {revealed ? (
           <>
@@ -195,7 +195,7 @@ export function TrainingExerciseCard({
           />
         )}
       </TrainingCardShell>
-      </AdditionalCardTranslationProvider>
+      </TrainingAnswerTranslationProvider>
       <footer className="shrink-0 flex flex-col gap-2">
         {revealed ? (
           <RatingControls language={interfaceLanguage} height="adaptive" disabled={actionBusy}

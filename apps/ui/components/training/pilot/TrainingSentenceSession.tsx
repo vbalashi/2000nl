@@ -2,7 +2,7 @@
 import { useAdditionalTranslationLanguage } from "@/components/practice/article/AdditionalCardTranslation";
 import { useLatchedTranslationBuffer } from "../v2/useLatchedTranslationBuffer";
 import { useDictionaryTranslationRecovery } from "@/lib/translation/useDictionaryTranslationRecovery";
-import { usePlatformV2TranslationPreparation } from "@/lib/platform/usePlatformV2TranslationPreparation";
+import { useTrainingAnswerTranslationPreparation } from "@/components/training/v2/TrainingAnswerTranslation";
 import { translationPendingCopy } from "@/lib/training/translationPendingCopy";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -110,7 +110,7 @@ export function TrainingSentenceSession(props: Props) {
     finally { if (current === generation.current) setLoading(false); }
   }, [userId, session.sessionId, contentLanguageCode, translationTargetLanguageCode, finish]);
   useDictionaryTranslationRecovery({entryId:pendingEntryId.current,targetLanguageCode:translationTargetLanguageCode,enabled:translationPending&&!loading&&!submitting,refresh:()=>void loadNext()});
-  usePlatformV2TranslationPreparation({entry:content?.entry??null,targetLanguageCode:translationTargetLanguageCode,enabled:!loading&&!submitting,
+  useTrainingAnswerTranslationPreparation({entry:content?.entry??null,targetLanguageCode:translationTargetLanguageCode,paused:loading||submitting,
     refresh:async signal=>{
       if(!candidate)return null;
       const loaded=await loadSentenceExerciseContent({candidate,contentLanguageCode,translationTargetLanguageCode,signal});

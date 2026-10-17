@@ -1,8 +1,9 @@
 "use client";
+import { TrainingAnswerTranslationProvider } from "./TrainingAnswerTranslation";
 import { hasTrainingCardTranslation as hasTranslation } from "@/lib/training/exerciseCardPresentation";
 import { selectTrainingReversePrompt } from "@/lib/training/trainingReversePrompt";
 
-import {AdditionalCardTranslationProvider,useAdditionalTranslationLanguage} from "@/components/practice/article/AdditionalCardTranslation";
+import {useAdditionalTranslationLanguage} from "@/components/practice/article/AdditionalCardTranslation";
 import React from "react";
 import {type TranslationPreparationState} from "@/components/practice/article/TranslationFeedback";
 import { Check, Volume2 } from "lucide-react";
@@ -225,8 +226,7 @@ export function TrainingSenseCardStage({
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
       </span>
-      <AdditionalCardTranslationProvider entryId={model.entryId} contentLanguage={contentLanguage}
-        visible={answerVisible && translationVisible} preload>
+      <TrainingAnswerTranslationProvider entryId={model.entryId} contentLanguage={contentLanguage}>
       <TrainingCardShell answerVisible={answerVisible}>
         {model.audioCapability &&
         onPlayAudio &&
@@ -316,7 +316,7 @@ export function TrainingSenseCardStage({
           />
         )}
       </TrainingCardShell>
-      </AdditionalCardTranslationProvider>
+      </TrainingAnswerTranslationProvider>
 
       <footer
         data-testid="training-sense-card-dock"

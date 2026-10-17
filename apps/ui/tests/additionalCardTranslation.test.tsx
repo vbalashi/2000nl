@@ -71,17 +71,17 @@ test("does not render a node translation from a different source revision",async
  lookup.mockResolvedValue(group);render(<Article/>);await screen.findByText("рука",{exact:false});
  expect(screen.queryByText("конец руки с пальцами",{exact:false})).toBeNull();
 });
-test("ordinary face prepares the secondary while keeping the prompt and translations hidden",async()=>{
+test.each(["word-to-definition", "definition-to-word", "listen-recognize", "listen-type"] as const)("%s face prepares the secondary while keeping translations hidden",async(mode)=>{
  const model=buildTrainingSenseCardModel({group:singleSenseGroup,entry:singleSenseEntry,interfaceLanguage:"en"});
- const view=(side:"face"|"answer")=><CardTranslationLanguagesProvider primary="en" secondary="ru"><TrainingSenseCardStage model={model} mode="definition-to-word" contentLanguage="nl" translationLanguage="en" interfaceLanguage="en" side={side} onSideChange={vi.fn()} onAction={vi.fn()}/></CardTranslationLanguagesProvider>;
+ const view=(side:"face"|"answer")=><CardTranslationLanguagesProvider primary="en" secondary="ru"><TrainingSenseCardStage model={model} mode={mode} contentLanguage="nl" translationLanguage="en" interfaceLanguage="en" side={side} onSideChange={vi.fn()} onAction={vi.fn()}/></CardTranslationLanguagesProvider>;
  const {rerender}=render(view("face"));
- expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(singleSenseEntry.contentNodes[0].text);
+ if(mode === "definition-to-word") expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(singleSenseEntry.contentNodes[0].text);
  await waitFor(()=>expect(lookup).toHaveBeenCalledOnce());
  expect(screen.queryByText("рука",{exact:false})).toBeNull();
  rerender(view("answer"));expect(lookup).toHaveBeenCalledOnce();
  fireEvent.click(screen.getByRole("button",{name:"Translate"}));
  await screen.findByText("рука",{exact:false});
- rerender(view("face"));expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(singleSenseEntry.contentNodes[0].text);
+ rerender(view("face"));if(mode === "definition-to-word") expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(singleSenseEntry.contentNodes[0].text);
  expect(screen.queryByText("рука",{exact:false})).toBeNull();
 });
 test("Library disables translation when only a secondary language is stored",async()=>{
