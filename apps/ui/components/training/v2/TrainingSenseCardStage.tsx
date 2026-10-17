@@ -226,7 +226,7 @@ export function TrainingSenseCardStage({
         {announcement}
       </span>
       <AdditionalCardTranslationProvider entryId={model.entryId} contentLanguage={contentLanguage}
-        visible={answerVisible && translationVisible} preload={wordInContext}>
+        visible={answerVisible && translationVisible} preload>
       <TrainingCardShell answerVisible={answerVisible}>
         {model.audioCapability &&
         onPlayAudio &&
