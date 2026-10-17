@@ -60,3 +60,16 @@ retirement: that reopens the boundary. A safe application rollback must keep
 Connect disabled or preserve the opaque issuer/resolver. Key loss requires
 reconnection. A failed claim/finalize cannot return unrecorded credentials;
 consumed refresh returns invalid_refresh_token and requires reconnection.
+
+## Prepared postflight chain (local only)
+
+`read-only-postflight-229.sql` chains the existing 228 read-only contract and the
+opaque credential storage probe. `postflight-229.sql` delegates to that read-only
+wrapper. This prepares the ordered 228 → 229 → 230 integration without enabling
+migration229 in the deployment manifest or changing the application contract.
+Migration229 checksum remains
+`71ee1d7fd07c0f1859e2d15da9e19464dc07648f49289c2fd2e0fb50489c2848`.
+The stats workstream validates the combined chain on its owned disposable local
+DB; wrapper availability alone is not evidence of a production rollout. Passing
+this schema/storage chain does **not** establish legacy Auth retirement, maximum
+JWT expiry, key provisioning or client reconnection, and does not clear HOLD.
