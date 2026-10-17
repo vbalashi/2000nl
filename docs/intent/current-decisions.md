@@ -283,3 +283,16 @@ recovery (#736), SQL parity/measurement и обоснованная оптими
 по приоритету выпуска. Это не принятие технического дизайна или production rollout.
 Общий рефакторинг и необязательные чистки не включены.
 [Поручение и границы](../discussions/2026-10-17-10-audit-remediation-coordination.md).
+
+### Connect: локально подготовленная граница credentials (#735)
+
+Техническое предложение и локальная реализация: внешним клиентам выдаются opaque
+access/refresh credentials; native Supabase credentials хранятся зашифрованно
+только на сервере. Consent требует first-party principal, code/refresh потребляются
+атомарно, refresh требует offline_access. Это не отдельное принятие владельцем
+технического дизайна и не разрешение выпуска. **Статус: LOCAL prepared; legacy
+HOLD.** Исторические native sessions/refresh descendants ещё требуют доказуемого
+полного retirement и ожидания максимального JWT horizon; production, provisioning
+ключа и reconnect не проверены. [Техническое предложение, локальные проверки и
+границы](../discussions/2026-10-17-10-connect-credential-boundary.md),
+[удержанный rollout](../runbooks/connect-credential-rollout.md).

@@ -29,6 +29,8 @@
 
 ## Архив
 
+- [2026-10-17: Connect credential boundary](2026-10-17-10-connect-credential-boundary.md) — #735, техническое предложение и LOCAL prepared; legacy HOLD, production/reconnect не проверены.
+
 - [2026-10-17: три направления исправлений после аудита](2026-10-17-10-audit-remediation-coordination.md) — начало #735/#736/#737 принято; реализация и выпуск отдельно.
 
 - [2026-10-17: единое правило подготовки полной обратной стороны](2026-10-17-09-unified-training-answer-preparation.md) — принято, #733 / PR #734.
