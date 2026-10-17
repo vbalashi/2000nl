@@ -1,6 +1,9 @@
 "use client";
 
 import React from "react";
+import { useReleaseUpdates } from "@/components/releases/AppReleaseContext";
+import { ReleaseDot } from "@/components/releases/ReleaseUpdates";
+import { releaseCopy } from "@/lib/releases/releaseCopy";
 import { Monitor, Moon, Settings, Sun } from "lucide-react";
 import { Tooltip } from "@/components/Tooltip";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -46,19 +49,23 @@ function UtilityButton({
   children,
   tour,
   disabled = false,
+  description,
 }: {
   label: string;
+  description?: string;
   current?: boolean;
   onClick: () => void;
   children: React.ReactNode;
   tour?: string;
   disabled?: boolean;
 }) {
+  const descriptionId = React.useId();
   return (
     <Tooltip content={label} side="bottom" showOnFocus={false}>
       <button
         type="button"
         aria-label={label}
+        aria-describedby={description ? descriptionId : undefined}
         aria-current={current ? "page" : undefined}
         aria-pressed={current}
         disabled={disabled}
@@ -67,6 +74,7 @@ function UtilityButton({
         className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-slate-600 outline-none hover:bg-slate-400/10 focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-50 dark:text-[#BFC7D4] md:h-10 md:w-10"
       >
         {children}
+        {description && <span id={descriptionId} className="sr-only">{description}</span>}
       </button>
     </Tooltip>
   );
@@ -80,6 +88,7 @@ export function AppUtilityNav({
   onCycleTheme,
   onOpenSettings,
 }: AppUtilityNavProps) {
+  const updates = useReleaseUpdates();
   const text = copy[interfaceLanguage];
   const themeLabel = `${text.theme}: ${text[themePreference]}`;
   const ThemeIcon = { light: Sun, dark: Moon, system: Monitor }[themePreference];
@@ -99,11 +108,13 @@ export function AppUtilityNav({
       </UtilityButton>
       <UtilityButton
         label={text.settings}
+        description={updates?.attention ? releaseCopy(interfaceLanguage).unread : undefined}
         current={settingsActive}
         onClick={onOpenSettings}
         disabled={disabled}
         tour="settings-button"
       >
+        {updates?.attention && <ReleaseDot gear />}
         <Settings
           aria-hidden="true"
           className="h-[18px] w-[18px]"

@@ -101,6 +101,8 @@ import { areTrainingHotkeysSuspended } from "./trainingHotkeys";
 import { LanguageSelectionModal } from "./LanguageSelectionModal";
 import { AppFrame } from "@/components/navigation/AppFrame";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
+import { AppReleaseContext } from "@/components/releases/AppReleaseContext";
+import { useAppRelease } from "@/components/releases/useAppRelease";
 import { SettingsDestination } from "@/components/navigation/SettingsDestination";
 import { ReadingPreferencesProvider } from "@/components/reading/ReadingPreferencesProvider";
 import { TrainingHistoryDestination } from "@/components/navigation/TrainingHistoryDestination";
@@ -2505,6 +2507,7 @@ function TrainingScreenContent({
       : nextCardOverrideNotice
         ? { kind: "status", message: nextCardOverrideNotice }
         : null;
+  const appRelease = useAppRelease(user.id, navigationBlocked || (hasResumableSession && v2SessionLayoutVisible) || trainingPilot.status === "preparing");
   const studyTimeEnabled = destination === "training" && !detailsOpen && !showHotkeys && !showLanguageSelection && !navigationBlocked && !loadingWord && !sessionAuthorityChecking;
   return (
     <CardTranslationLanguagesProvider ownerId={user.id} primary={translationLang} secondary={secondaryTranslationLang}>
@@ -2515,6 +2518,7 @@ function TrainingScreenContent({
         ? { onRetry: () => void trainingPilot.retry() } : undefined}
       interfaceLanguage={onboardingLang}
     >
+    <AppReleaseContext.Provider value={appRelease}>
     <AppFrame
       activeDestination={destination}
       interfaceLanguage={onboardingLang}
@@ -2876,6 +2880,7 @@ function TrainingScreenContent({
         onSignOut={handleSignOut}
       />
     </AppFrame>
+    </AppReleaseContext.Provider>
     </TrainingStartupGate>
     </CardTranslationLanguagesProvider>
   );

@@ -1,6 +1,6 @@
 # #299 — Обнаружение обновлений, безопасное обновление и новости
 
-Дата: 2026-10-17. Статус: product flow accepted / technical plan proposed / runtime not implemented.
+Дата: 2026-10-17. Статус: implemented in issue worktree / validation and owner review.
 Owning issue: https://github.com/vbalashi/2000nl/issues/299
 Ветка: codex/299-release-update-plan; база: e05074df.
 [Обсуждение](../../discussions/2026-10-17-01-release-updates-and-news.md).
@@ -204,6 +204,40 @@ mandatory update/minimum version без отдельного backward-compatibil
 
 ## Контрольная точка
 
-Только документация, runtime не реализован. Продуктовый флоу принят; нужны визуальная доработка и проверки
+Продуктовый флоу принят, runtime реализован в worktree. Нужны визуальная проверка владельцем и проверки
 из срезов выше; существующий production и активные worktrees не меняются.
 Checkout сохраняется для дальнейшего планирования/дизайна, не retirement candidate.
+
+## Реализация 2026-10-17
+
+Владелец разрешил начать и дорабатывать детали на работающем интерфейсе, без
+отдельной предварительной Pen-приёмки: [решение](../../discussions/2026-10-17-03-release-updates-implementation.md).
+Добавлены release API/domain/coordinator, точка, плашка, Updates и локализованные
+контролы. Новости по умолчанию null; формат для редакционной публикации готов.
+Корневая страница получила server force-dynamic wrapper: production B проверена
+с no-store HTML. Реальная пара сборок A→B→A прошла; auth/учебные данные в этом
+тесте mocked. Desktop и phone light/dark проверены browser tests; отдельно
+проверен запрет обновления при активной тренировке.
+
+Отклонение от предложения receipt: используется только публичный URL marker,
+без sessionStorage; после reload проверяется обслуживаемая сервером identity.
+SW не вводится; неизвестный historical SW вызывает понятную ошибку, без
+удаления кэшей/регистраций. UI дата сборки отделена от редакционной даты выпуска.
+[Runbook и QA](../../runbooks/app-release-updates.md).
+Production не менялся. Реальные Android/iOS standalone проверки остаются открыты.
+
+### Проверки checkpoint
+
+- Полный UI Vitest: 2415 passed, 365 DB/environment skipped (276 files passed).
+- Browser: 4 passed (desktop, phone light/dark, active training); fixture auth/data.
+- Реальные production-mode documents A→B→A: 1 passed, mock только auth/data.
+- Production build, typecheck: PASS. Lint: только прежнее предупреждение
+  handlePlayAudio в TrainingSenseCardV2Session.
+- Первый полный Vitest выявил 7 failures нового тестового файла из-за глобального
+  restoreAllMocks после fake timers. Заменён на восстановление только локального
+  spy; весь suite повторён успешно.
+- Local QA: штатно применена существующая миграция227 (без reset), health ok /
+  database local / contract227. Настоящий local dev-login открыл Updates.
+- Evidence: tmp/299-release-evidence в issue checkout; source files tracked,
+  generated screenshots/logs локальные. Один preview3100, временные3101+ не запускались.
+- Production deploy и реальные Android/iOS standalone не проверялись.

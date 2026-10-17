@@ -1,0 +1,135 @@
+.banner {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 20px;
+  margin: 8px 24px 12px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--practice-surface-subtle, #eeebfa);
+  color: var(--practice-text, #303a50);
+  font-size: 14px;
+}
+.message {
+  flex: 1;
+  min-width: 0;
+}
+.message h2,
+.news h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 0 6px;
+}
+.message p,
+.news p {
+  margin: 0;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.banner .actions {
+  margin: 0;
+  flex-shrink: 0;
+}
+.actions button,
+.actions a {
+  font: inherit;
+  cursor: pointer;
+}
+.primary {
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 16px;
+  min-height: 44px;
+  background: var(--practice-accent, #7066d8);
+  color: var(--practice-on-accent, #fff);
+}
+.secondary,
+.link {
+  border: 0;
+  background: none;
+  color: var(--practice-text-secondary, #555064);
+  padding: 8px 0;
+  min-height: 44px;
+  text-decoration: none;
+}
+.link {
+  color: var(--practice-accent, #7066d8);
+}
+.actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.actions :focus-visible {
+  outline: 2px solid var(--practice-focus, #8b89f6);
+  outline-offset: 3px;
+}
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--practice-accent, #7066d8);
+  flex-shrink: 0;
+}
+.gearDot {
+  position: absolute;
+  right: 5px;
+  top: 4px;
+}
+.status {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--practice-text-muted, #6c6079);
+  margin: 0 0 20px;
+}
+.news {
+  margin: 24px 0;
+}
+.date {
+  margin-top: 8px;
+  color: var(--practice-text-muted, #6c6079);
+  font-size: 13px;
+}
+@media (max-width: 700px) {
+  .banner {
+    margin: 4px 12px 8px;
+    padding: 12px 14px;
+    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    max-height: 40dvh;
+    overflow-y: auto;
+  }
+  .banner .actions {
+    gap: 16px;
+  }
+  .banner .primary {
+    margin-left: auto;
+  }
+}
+
+.metadata.metadata {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+.metadata.metadata > div {
+  width: auto;
+}
+.metadata.metadata > div:last-child {
+  text-align: right;
+}
+.banner .message p {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

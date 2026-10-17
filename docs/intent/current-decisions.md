@@ -244,3 +244,8 @@ Production activation of durable translation jobs is accepted for #674: contract
 необходимость обновиться. Отдельный колокольчик/About не вводим.
 [Принятый флоу](../discussions/2026-10-17-02-release-updates-flow-approved.md).
 Реализация ещё не начата; точная визуальная спецификация требует доработки.
+
+Уточнение владельца: реализацию #299 начать сейчас, desktop/mobile и точные
+тексты дорабатывать в работающем приложении; предварительная отдельная
+Pen-приёмка всех состояний не требуется.
+[Основание](../discussions/2026-10-17-03-release-updates-implementation.md).

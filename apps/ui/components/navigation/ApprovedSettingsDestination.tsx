@@ -1,11 +1,14 @@
 "use client";
 import React from "react";
+import { useReleaseUpdates } from "@/components/releases/AppReleaseContext";
+import { ReleaseDot, ReleaseUpdatesSection } from "@/components/releases/ReleaseUpdates";
+import { releaseCopy } from "@/lib/releases/releaseCopy";
 import {
   LearningMaterialSettings,
   DictionaryMaterialSettings,
 } from "@/components/practice/material/MaterialSettings";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
-import { Languages, Palette, Keyboard, UserRound, Library, CreditCard, ChevronDown, Check } from "lucide-react";
+import { Languages, Palette, Keyboard, UserRound, Library, CreditCard, RefreshCw, ChevronDown, Check } from "lucide-react";
 import { getUiMessages } from "@/lib/uiMessages";
 import { getTrainingHotkeys } from "@/components/training/trainingHotkeys";
 import {
@@ -32,11 +35,13 @@ const TranslationLanguagePicker = React.lazy(() =>
 /** Account preference callbacks remain owned by the production controller. */
 export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
   const copy = getUiMessages(props.interfaceLanguage).settings;
+  const updates = useReleaseUpdates();
   const sections = [
     { id: "languages", label: copy.languages, Icon: Languages },
     { id: "dictionaries", label: copy.dictionaries, Icon: Library },
     { id: "appearance", label: copy.appearance, Icon: Palette },
     { id: "shortcuts", label: copy.shortcuts, Icon: Keyboard },
+    { id: "updates", label: releaseCopy(props.interfaceLanguage).updates, Icon: RefreshCw, badge: updates?.attention ? <ReleaseDot /> : undefined },
     { id: "billing", label: copy.billing, Icon: CreditCard },
     { id: "account", label: copy.account, Icon: UserRound },
   ] as const;
@@ -63,7 +68,8 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
       items={[...sections]}
       onExit={props.onExit}
     >
-      {(section) => {
+      {(section, visible) => {
+        if (section === "updates") return <ReleaseUpdatesSection language={props.interfaceLanguage} visible={visible} />;
         if (section === "languages")
           return (
             <>
