@@ -1,4 +1,5 @@
 "use client";
+import { useUserEventHints } from "@/lib/events/userEventHints";
 import React from "react";
 import { cacheStartupAppearance } from "@/lib/preferences/startupAppearance";
 import { StartupStatus } from "@/components/training/pilot/StartupStatus";
@@ -53,6 +54,7 @@ function AccountAppearanceSession({
   const [attempt, setAttempt] = React.useState(0);
   const alive = React.useRef(false),
     pending = React.useRef(false);
+  const refreshRevision = React.useRef(0);
   React.useEffect(() => {
     alive.current = true;
     return () => {
@@ -61,25 +63,36 @@ function AccountAppearanceSession({
   }, []);
   React.useEffect(() => {
     let cancelled = false;
+    const version = ++refreshRevision.current;
     setLoadStatus("loading");
     void repository
       .load(userId)
       .then((value) => {
-        if (!cancelled) {
+        if (!cancelled && version === refreshRevision.current) {
           setPalette(value);
           cacheStartupAppearance(value);
           setLoadStatus("ready");
         }
       })
       .catch(() => {
-        if (!cancelled) setLoadStatus("error");
+        if (!cancelled && version === refreshRevision.current) setLoadStatus("error");
       });
     return () => {
       cancelled = true;
     };
   }, [repository, userId, attempt]);
+  const flushHints = useUserEventHints(userId, ["account.changed"], async () => {
+    const version = ++refreshRevision.current;
+    const value = await repository.load(userId);
+    if (!alive.current || version !== refreshRevision.current || pending.current) return;
+    setPalette(value);
+    cacheStartupAppearance(value);
+    setLoadStatus("ready");
+  }, () => pending.current);
+
   const save = async (value: PracticePalette) => {
     if (loadStatus !== "ready" || pending.current) return;
+    refreshRevision.current++;
     pending.current = true;
     setPalette(value);
     setSaveStatus("saving");
@@ -90,6 +103,7 @@ function AccountAppearanceSession({
       if (alive.current) setSaveStatus("error");
     } finally {
       pending.current = false;
+      flushHints();
     }
   };
   if (requireReady && loadStatus !== "ready") {

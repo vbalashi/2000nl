@@ -57,7 +57,8 @@ export function usePlatformV2TranslationPreparation(input: {
       current.targetLanguageCode,
     ]);
     if (!needsPreparation) settledAttempt.current = null;
-    let refreshing = false;
+    let refreshPromise: Promise<PlatformSenseCardEntryV2 | null> | null = null;
+    let refreshDirty = false;
     let poll: ReturnType<typeof setTimeout> | undefined;
     const reportStatus = (value: "pending" | "failed" | null) => {
       if (controller.signal.aborted) return;
@@ -71,14 +72,24 @@ export function usePlatformV2TranslationPreparation(input: {
       callbacks.current.enabled &&
       callbacks.current.entry?.entryId === entryId &&
       callbacks.current.targetLanguageCode === current.targetLanguageCode;
-    const refresh = async () => {
-      if (!isCurrent() || refreshing) return null;
-      refreshing = true;
-      try {
-        return await callbacks.current.refresh(controller.signal);
-      } finally {
-        refreshing = false;
-      }
+    const refresh = (): Promise<PlatformSenseCardEntryV2 | null> => {
+      if (!isCurrent()) return Promise.resolve(null);
+      refreshDirty = true;
+      if (refreshPromise) return refreshPromise;
+      refreshPromise = (async () => {
+        let entry: PlatformSenseCardEntryV2 | null = null;
+        await Promise.resolve();
+        try {
+          if (!isCurrent()) return null;
+          do {
+            refreshDirty = false;
+            try { entry = await callbacks.current.refresh(controller.signal); }
+            catch (error) { if (!refreshDirty || !isCurrent()) throw error; }
+          } while (refreshDirty && isCurrent());
+          return entry;
+        } finally { refreshPromise = null; }
+      })();
+      return refreshPromise;
     };
     const prepare = async (entry: PlatformSenseCardEntryV2, force = false) => {
       const request = entry.capabilities.find(
@@ -135,16 +146,16 @@ export function usePlatformV2TranslationPreparation(input: {
           if (entry) void prepare(entry);
         })
         .catch(() => { /* Lookup recovery owns refresh failures; no job failure was observed. */ });
-    });
+    }, { entryId, targetLanguageCode: current.targetLanguageCode! });
     const detach = onDictionaryTranslationReady((event) => {
       if (
         event.entryId !== entryId ||
         event.targetLanguageCode !== current.targetLanguageCode ||
-        preparing.current
+        (preparing.current && !refreshPromise)
       )
         return;
       void refresh().catch(() => { /* The ready hint is not evidence of a failed translation. */ });
-    });
+    }, { entryId, targetLanguageCode: current.targetLanguageCode! });
     if (current.entry && (settledAttempt.current !== attemptKey || statusRef.current === "pending")) {
       const force = forceNext.current === attemptKey;
       forceNext.current = null;

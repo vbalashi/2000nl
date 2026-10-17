@@ -170,3 +170,19 @@ test("focus refreshes a ready context without forcing regeneration or clearing t
   });
   expect(vi.mocked(loadWordContextPrompt).mock.lastCall?.[0].force).toBe(false);
 });
+
+test("a ready hint during prompt lookup is retained for one follow-up", async () => {
+  const {publishDictionaryTranslationReady}=await import("@/lib/translation/dictionaryTranslationEvents");
+  let finish!: (value: {state:"translation-pending"})=>void;
+  vi.mocked(loadWordContextPrompt).mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;})).mockResolvedValue({state:"source-unavailable"});
+  const view=renderHook(()=>useWordContextPrompt(input));
+  await act(async()=>{
+    publishDictionaryTranslationReady({entryId:input.entryId,targetLanguageCode:"ru"});
+    publishDictionaryTranslationReady({entryId:input.entryId,targetLanguageCode:"ru"});
+  });
+  expect(loadWordContextPrompt).toHaveBeenCalledOnce();
+  await act(async()=>finish({state:"translation-pending"}));
+  expect(loadWordContextPrompt).toHaveBeenCalledTimes(2);
+  expect(view.result.current?.state).toBe("source-unavailable");
+  view.unmount();
+});

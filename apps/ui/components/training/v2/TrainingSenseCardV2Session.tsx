@@ -280,7 +280,16 @@ export function TrainingSenseCardV2Session({
     [lookupInput, word.id],
   );
 
-  const [synchronizedContext, setSynchronizedContext] = React.useState<typeof contextResult>(null);
+  // Background translation reads return new objects even when the latched
+  // exercise is unchanged. Preserve its presentation while refreshing, but never
+  // carry readiness across an owner, run, language, or source identity change.
+  const contextScope = contextResult?.state === "ready" ? JSON.stringify([
+    cacheOwnerId, trainingSessionId, presentationIdentity, word.id, mode, contentLanguageCode,
+    translationTargetLanguageCode, contextResult.prompt.contentNodeId,
+    contextResult.prompt.sourceTextFingerprint,
+  ]) : null;
+  const [synchronizedContextScope, setSynchronizedContextScope] = React.useState<string | null>(null);
+  const contextSynchronized = contextScope !== null && synchronizedContextScope === contextScope;
 
   // Context preparation reads a Library projection and may finish a translation
   // after our initial lookup. Re-read this card's own direction/state rather
@@ -291,15 +300,15 @@ export function TrainingSenseCardV2Session({
     void load(controller.signal, { preserveCard: true, usePrefetch: false }).then(next => {
       if (controller.signal.aborted || !next) return;
       if (next.state !== "ready") setLookup(next);
-      setSynchronizedContext(contextResult);
+      setSynchronizedContextScope(contextScope);
     }).catch(cause => {
       if (controller.signal.aborted) return;
       setLookup({ state: "lookup-http-error", status: 0 });
       setError(cause instanceof Error ? cause.message : "lookup_failed");
-      setSynchronizedContext(contextResult);
+      setSynchronizedContextScope(contextScope);
     });
     return () => controller.abort();
-  }, [contextResult, load, wordInContext]);
+  }, [contextResult, contextScope, load, wordInContext]);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -337,7 +346,7 @@ export function TrainingSenseCardV2Session({
   const translationPreparing = usePlatformV2TranslationPreparation({
     entry: result?.entry ?? null,
     targetLanguageCode: translationTargetLanguageCode,
-    enabled: !busy && (!wordInContext || (contextResult?.state === "ready" && synchronizedContext === contextResult)),
+    enabled: !busy && (!wordInContext || (contextResult?.state === "ready" && contextSynchronized)),
     refresh: async signal => {
       const refreshed=await load(signal,{preserveCard:true,usePrefetch:false});
       if(refreshed?.state!=="ready")throw new Error("translation_refresh_unavailable");
@@ -365,7 +374,7 @@ export function TrainingSenseCardV2Session({
   })() : undefined;
 
   const sessionState: TrainingV2SessionState = wordInContext &&
-    (!translationTargetLanguageCode || contextResult?.state !== "ready" || synchronizedContext !== contextResult)
+    (!translationTargetLanguageCode || contextResult?.state !== "ready" || !contextSynchronized)
       ? "loading"
       : !lookup
       ? "loading"

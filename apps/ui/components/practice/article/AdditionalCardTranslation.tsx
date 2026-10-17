@@ -27,8 +27,9 @@ const AdditionalContext = React.createContext<AdditionalTranslation | null>(null
 export function useAdditionalCardTranslation() { return React.useContext(AdditionalContext); }
 
 /** A read-only dictionary projection. It never replaces the training question or capabilities. */
-export function AdditionalCardTranslationProvider({entryId,contentLanguage,visible,children}:{entryId:string;contentLanguage?:string;visible:boolean;children:React.ReactNode}) {
+export function AdditionalCardTranslationProvider({entryId,contentLanguage,visible,preload=false,children}:{entryId:string;contentLanguage?:string;visible:boolean;preload?:boolean;children:React.ReactNode}) {
   const language = useAdditionalTranslationLanguage();
+  const active = visible || preload;
   const {primary,ownerId} = React.useContext(LanguagesContext);
   const scope = JSON.stringify([ownerId,entryId,contentLanguage,language]);
   const [snapshot,setSnapshot] = React.useState<{scope:string;entry:PlatformSenseCardEntryV2|null;failed:boolean} | null>(null);
@@ -43,20 +44,20 @@ export function AdditionalCardTranslationProvider({entryId,contentLanguage,visib
     return entry;
   }, [contentLanguage,entryId,language,scope]);
   React.useEffect(() => {
-    if (!visible || !language) return;
+    if (!active || !language) return;
     const controller = new AbortController();
     void load(controller.signal).catch(() => {
       if (!controller.signal.aborted) setSnapshot(previous => ({scope,entry:previous?.scope === scope ? previous.entry : null,failed:true}));
     });
     return () => controller.abort();
-  }, [visible,language,load,lookupRetry,scope]);
-  const preparation = usePlatformV2TranslationPreparation({entry:current?.entry ?? null,targetLanguageCode:language,enabled:visible && !current?.failed,refresh:load});
+  }, [active,language,load,lookupRetry,scope]);
+  const preparation = usePlatformV2TranslationPreparation({entry:current?.entry ?? null,targetLanguageCode:language,enabled:active && !current?.failed,refresh:load});
   const retry = () => {
     if (current?.failed || !current?.entry) setLookupRetry(value => value + 1);
     else preparation.retry();
   };
   const needsPreparation = current?.entry?.capabilities.some(item => item.actionId === "request-translation" && item.targetLanguageCode === language);
-  const status = current?.failed ? "failed" : preparation.status ?? (visible && (!current?.entry || needsPreparation) ? "pending" : null);
+  const status = current?.failed ? "failed" : preparation.status ?? (active && (!current?.entry || needsPreparation) ? "pending" : null);
   return <AdditionalContext.Provider value={language ? {language,labelPrimary:Boolean(primary),entry:current?.entry ?? null,status,retry} : null}>{children}</AdditionalContext.Provider>;
 }
 

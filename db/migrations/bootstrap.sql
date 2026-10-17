@@ -594,3 +594,4 @@
 \i db/migrations/226_secondary_card_translation_language.sql
 
 \i db/migrations/227_training_scheduler_hash_join_plans.sql
+\i db/migrations/228_shared_app_events.sql

@@ -1022,6 +1022,20 @@ describe("fetchPlatformV2TrainingEntry", () => {
     expect(consumePrefetchedPlatformV2TrainingEntry(input)).toBeNull();
   });
 
+  test("a domain-wide learning hint discards every retained projection", async () => {
+    const { publishPlatformV2CardStateChanged } = await import("@/lib/platform/platformV2CardStateChanges");
+    const input = { cacheOwnerId:"test-user",entryId:singleSenseEntry.entryId,cardTypeId:"definition-to-word" as const,contentLanguageCode:"nl",translationTargetLanguageCode:"en" };
+    const payload={contractVersion:"platform-lookup-v2",query:"hand",request:{contentLanguageCode:"nl",translationTargetLanguageCode:"en",cardTypeId:"definition-to-word",intent:"training-review"},groups:[singleSenseGroup],page:{selectedTierComplete:true,nextGroupCursor:null}};
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => new Response(JSON.stringify(payload))));
+    await prefetchPlatformV2TrainingEntry(input);
+    await prefetchPlatformV2TrainingEntry({ ...input, cacheOwnerId: "other-owner" });
+    expect(peekPrefetchedPlatformV2TrainingEntry(input)).not.toBeNull();
+    expect(peekPrefetchedPlatformV2TrainingEntry({ ...input, cacheOwnerId: "other-owner" })).not.toBeNull();
+    publishPlatformV2CardStateChanged();
+    expect(peekPrefetchedPlatformV2TrainingEntry(input)).toBeNull();
+    expect(peekPrefetchedPlatformV2TrainingEntry({ ...input, cacheOwnerId: "other-owner" })).toBeNull();
+  });
+
   test("accepted Library actions also invalidate prepared state across directions", async () => {
     const input = { cacheOwnerId:"test-user",entryId:singleSenseEntry.entryId,cardTypeId:"definition-to-word" as const,contentLanguageCode:"nl",translationTargetLanguageCode:"en" };
     const payload={contractVersion:"platform-lookup-v2",query:"hand",request:{contentLanguageCode:"nl",translationTargetLanguageCode:"en",cardTypeId:"definition-to-word",intent:"training-review"},groups:[singleSenseGroup],page:{selectedTierComplete:true,nextGroupCursor:null}};

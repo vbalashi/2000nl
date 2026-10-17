@@ -201,3 +201,19 @@ test("confirmed failure exposes retry; one explicit retry forces only the failed
   expect(view.result.current.status).toBeNull();
   view.unmount();
 });
+
+
+test("ready hints during an authoritative read coalesce into one follow-up", async () => {
+ let finish!: (entry: typeof singleSenseEntry) => void;
+ const refresh=vi.fn().mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;})).mockResolvedValue(singleSenseEntry);
+ const view=renderHook(()=>usePlatformV2TranslationPreparation({entry:singleSenseEntry,targetLanguageCode:"en",enabled:true,refresh}));
+ await act(async()=>publishDictionaryTranslationReady({entryId:singleSenseEntry.entryId,targetLanguageCode:"en"}));
+ expect(refresh).toHaveBeenCalledOnce();
+ await act(async()=>{
+  publishDictionaryTranslationReady({entryId:singleSenseEntry.entryId,targetLanguageCode:"en"});
+  publishDictionaryTranslationReady({entryId:singleSenseEntry.entryId,targetLanguageCode:"en"});
+ });
+ await act(async()=>finish(singleSenseEntry));
+ expect(refresh).toHaveBeenCalledTimes(2);
+ view.unmount();
+});

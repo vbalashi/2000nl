@@ -1,3 +1,4 @@
+import { useUserEventHints } from "@/lib/events/userEventHints";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AudioQuality } from "@/lib/audio/types";
 import { trainingDebug } from "@/lib/trainingDebug";
@@ -47,25 +48,10 @@ export function useTrainingPreferences(
   const initialTransitionIdRef = useRef(initialTransitionId);
   const initialPreferencesRef = useRef(initialPreferences);
 
-  useEffect(() => {
-    if (!userId) return;
-    if (initialPreferencesRef.current) {
-      initialPreferencesRef.current = undefined;
-      initialTransitionIdRef.current = undefined;
-      return;
-    }
-
-    const loadPreferences = async () => {
-      const transitionId = initialTransitionIdRef.current;
-      initialTransitionIdRef.current = undefined;
-      const prefs = transitionId
-        ? await measureTrainingTransitionStage(
-            transitionId,
-            "training.preferences",
-            () => fetchUserPreferences(userId),
-          )
-        : await fetchUserPreferences(userId);
-      trainingDebug.log("[Settings] Loaded preferences from Supabase:", prefs);
+  const readGeneration = useRef(0);
+  const pendingWrites = useRef(0);
+  const invalidateReads = useCallback(() => ++readGeneration.current, []);
+  const applyPreferences = useCallback((prefs: UserPreferences) => {
       setThemePreference(prefs.themePreference);
       setAudioQualityState(prefs.audioQuality);
       setEnabledModesState(prefs.modesEnabled);
@@ -76,20 +62,47 @@ export function useTrainingPreferences(
       setTranslationLangState(prefs.translationLang);
       translationLangRef.current = prefs.translationLang;
       setSecondaryTranslationLangState(prefs.translationLang && prefs.translationLang !== "off" ? prefs.secondaryTranslationLang ?? null : null);
-    };
-
-    void loadPreferences();
-  }, [userId]);
+  }, []);
+  const refreshPreferences = useCallback(async () => {
+    if (!userId || pendingWrites.current) return;
+    const generation = ++readGeneration.current;
+    const prefs = await fetchUserPreferences(userId);
+    if (generation === readGeneration.current && !pendingWrites.current) applyPreferences(prefs);
+  }, [userId, applyPreferences]);
+  const flushHints = useUserEventHints(userId, ["account.changed"], refreshPreferences, () => pendingWrites.current > 0);
+  const persistPreferences = useCallback((input: Parameters<typeof updateUserPreferences>[0]) => {
+    readGeneration.current++;
+    pendingWrites.current++;
+    return updateUserPreferences(input).finally(() => { pendingWrites.current--; flushHints(); });
+  }, [flushHints]);
+  useEffect(() => {
+    if (!userId) return;
+    const generation = ++readGeneration.current;
+    if (initialPreferencesRef.current) {
+      initialPreferencesRef.current = undefined;
+      initialTransitionIdRef.current = undefined;
+      return () => { invalidateReads(); };
+    }
+    const transitionId = initialTransitionIdRef.current;
+    initialTransitionIdRef.current = undefined;
+    const request = transitionId
+      ? measureTrainingTransitionStage(transitionId, "training.preferences", () => fetchUserPreferences(userId))
+      : fetchUserPreferences(userId);
+    void request.then(prefs => {
+      if (generation === readGeneration.current && !pendingWrites.current) applyPreferences(prefs);
+    }).catch(() => { /* Existing settings remain available on a failed read. */ });
+    return () => { invalidateReads(); };
+  }, [userId, applyPreferences, invalidateReads]);
 
   const setEnabledModes = useCallback(
     (newModes: TrainingMode[], options: PersistOptions = {}) => {
       trainingDebug.log("[Settings] Saving modes to Supabase:", newModes);
       setEnabledModesState(newModes);
       if (userId && options.persist !== false) {
-        void updateUserPreferences({ userId, modesEnabled: newModes });
+        void persistPreferences({ userId, modesEnabled: newModes });
       }
     },
-    [userId],
+    [userId, persistPreferences],
   );
 
   const setCardFilter = useCallback(
@@ -97,10 +110,10 @@ export function useTrainingPreferences(
       trainingDebug.log("[Settings] Saving card filter to Supabase:", newFilter);
       setCardFilterState(newFilter);
       if (userId && options.persist !== false) {
-        void updateUserPreferences({ userId, cardFilter: newFilter });
+        void persistPreferences({ userId, cardFilter: newFilter });
       }
     },
-    [userId],
+    [userId, persistPreferences],
   );
 
   const setLanguage = useCallback(
@@ -108,13 +121,13 @@ export function useTrainingPreferences(
       trainingDebug.log("[Settings] Saving language to Supabase:", newLanguage);
       setLanguageState(newLanguage);
       if (userId) {
-        void updateUserPreferences({
+        void persistPreferences({
           userId,
           languageCode: newLanguage,
         });
       }
     },
-    [userId],
+    [userId, persistPreferences],
   );
 
   const setTheme = useCallback(
@@ -122,13 +135,13 @@ export function useTrainingPreferences(
       trainingDebug.log("[Settings] Saving theme to Supabase:", newTheme);
       setThemePreference(newTheme);
       if (userId) {
-        void updateUserPreferences({
+        void persistPreferences({
           userId,
           themePreference: newTheme,
         });
       }
     },
-    [userId],
+    [userId, persistPreferences],
   );
 
   const setAudioQuality = useCallback(
@@ -136,13 +149,13 @@ export function useTrainingPreferences(
       trainingDebug.log("[Settings] Saving audio quality to Supabase:", quality);
       setAudioQualityState(quality);
       if (userId) {
-        void updateUserPreferences({
+        void persistPreferences({
           userId,
           audioQuality: quality,
         });
       }
     },
-    [userId],
+    [userId, persistPreferences],
   );
 
   const setNewReviewRatio = useCallback(
@@ -150,13 +163,13 @@ export function useTrainingPreferences(
       trainingDebug.log("[Settings] Saving new/review ratio to Supabase:", newRatio);
       setNewReviewRatioState(newRatio);
       if (userId && options.persist !== false) {
-        void updateUserPreferences({
+        void persistPreferences({
           userId,
           newReviewRatio: newRatio,
         });
       }
     },
-    [userId],
+    [userId, persistPreferences],
   );
 
   const setTranslationLang = useCallback(
@@ -170,21 +183,21 @@ export function useTrainingPreferences(
       const disabled = !newLang || newLang === "off";
       if (disabled) setSecondaryTranslationLangState(null);
       if (userId) {
-        void updateUserPreferences({
+        void persistPreferences({
           userId,
           translationLang: newLang,
           secondaryTranslationLang: disabled ? null : secondaryTranslationLang,
         });
       }
     },
-    [userId, secondaryTranslationLang],
+    [userId, secondaryTranslationLang, persistPreferences],
   );
 
   const setSecondaryTranslationLang = useCallback((newLang: string | null) => {
     if (!translationLangRef.current || translationLangRef.current === "off") return;
     setSecondaryTranslationLangState(newLang);
-    if (userId) void updateUserPreferences({ userId, secondaryTranslationLang: newLang });
-  }, [userId]);
+    if (userId) void persistPreferences({ userId, secondaryTranslationLang: newLang });
+  }, [userId, persistPreferences]);
 
   const setActiveScenario = useCallback(
     (newScenario: string, options: PersistOptions = {}) => {
@@ -194,13 +207,13 @@ export function useTrainingPreferences(
       );
       setActiveScenarioState(newScenario);
       if (userId && options.persist !== false) {
-        void updateUserPreferences({
+        void persistPreferences({
           userId,
           activeScenario: newScenario,
         });
       }
     },
-    [userId],
+    [userId, persistPreferences],
   );
 
   return {

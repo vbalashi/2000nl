@@ -130,3 +130,23 @@ Docker Supabase URL. For local DB/RPC checks, prefer
 
 - Historical reports and archived migrations may describe older normalized-table or `apps/api` assumptions. Treat live docs plus `db/migrations` as current, and treat `reports/` / `db/migrations/archive/` as snapshots.
 - Operational knowledge is still split between root docs, `docs/`, and `packages/docs/`; root `AGENTS.md` and `ARCHITECTURE.md` are the canonical starting points.
+
+## Server event hints
+
+The shared browser event registry lives in `apps/ui/lib/events`. It multiplexes
+private logical topics on the existing Supabase browser client's WebSocket;
+feature consumers never construct another Supabase client. The registry and
+its injected transport boundary keep consumer contracts independent of managed
+hosting. See [the accepted decision](docs/discussions/2026-10-17-07-shared-realtime-accepted.md).
+
+Database triggers publish minimal Broadcast hints at the write origin. Release
+publication runs after deployment health verification. Events request targeted,
+authoritative reads; commands, receipts, authorization and training owner fencing
+remain HTTP/RPC. Reconnect/initial join reconciliation and sparse fallback reads
+recover missed hints without replacing an already ready training surface.
+
+Self-hosting requires Supabase Realtime v2 with database Broadcast functions,
+JWT/RLS and a WebSocket-capable proxy. PostgreSQL alone is insufficient. Private
+channel authorization is checked on join, so clients rejoin on token refresh;
+protected reads remain authoritative after access revocation. This is not a
+durable event log or a shared-collection membership model.

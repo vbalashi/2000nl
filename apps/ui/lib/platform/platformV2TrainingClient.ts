@@ -98,7 +98,7 @@ const prefetchedLookups = new Map<string, PrefetchedLookup>();
 
 onDictionaryTranslationReady(({ entryId }) => {
   for (const [key, record] of prefetchedLookups) {
-    if (record.entryId !== entryId) continue;
+    if (entryId && record.entryId !== entryId) continue;
     // An already consumed read may finish for its caller, but cannot remain a
     // reusable snapshot after a newer translation has been published.
     prefetchedLookups.delete(key);
@@ -109,7 +109,7 @@ onPlatformV2CardStateChanged((entryId) => {
   // Invalidate every direction/language projection of the changed meaning.
   // Browser owners partition reads; invalidation carries no private card state.
   for (const [key, record] of prefetchedLookups) {
-    if (record.entryId !== entryId) continue;
+    if (entryId && record.entryId !== entryId) continue;
     prefetchedLookups.delete(key);
     recordTerminalPrefetchOutcome(record, "cancelled");
     record.controller.abort();

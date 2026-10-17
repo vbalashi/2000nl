@@ -1,6 +1,19 @@
 import React from "react";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+const events = vi.hoisted(() => ({ listener: null as null | (() => void), reconnect: null as null | (() => void), unsubscribe: vi.fn() }));
+vi.mock("@/lib/events/appEvents", () => ({
+  APP_RELEASES_TOPIC: "app:releases",
+  subscribeAppEvents: (options: {onReconnect?: () => void}, listener: () => void) => {
+    events.listener = listener;
+    events.reconnect = options.onReconnect ?? null;
+    return events.unsubscribe;
+  },
+  subscribeAppEventConnection: (_topic: string, listener: (state: {status: string}) => void) => {
+    events.reconnect = () => { listener({status: "degraded"}); listener({status: "connected"}); };
+    return () => {};
+  },
+}));
 vi.mock("@/lib/appVersion", () => ({
   appVersionInfo: () => ({
     version: "1.0",
@@ -207,4 +220,30 @@ test("historical service workers do not trigger blind deletion or reload", async
   } finally {
     Reflect.deleteProperty(navigator, "serviceWorker");
   }
+});
+
+test("release hints and reconnect reconcile immediately without navigating or clearing training", async () => {
+  const hook = renderHook(() => useAppRelease("owner", true));
+  await waitFor(() => expect(hook.result.current.release).toBeTruthy());
+  await act(async () => { events.listener?.(); });
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(hook.result.current.banner).toBe(false);
+  await act(async () => { events.reconnect?.(); });
+  expect(fetch).toHaveBeenCalledTimes(3);
+  expect(hook.result.current.updateAvailable).toBe(true);
+  hook.unmount();
+  expect(events.unsubscribe).toHaveBeenCalled();
+});
+
+test("a release hint during an older read queues a fresh authoritative read", async () => {
+  let resolve!: (value: Response) => void;
+  vi.mocked(fetch).mockReturnValueOnce(new Promise(r => { resolve = r; }));
+  const hook = renderHook(() => useAppRelease("owner", false));
+  act(() => { events.listener?.(); events.listener?.(); });
+  expect(fetch).toHaveBeenCalledTimes(1);
+  await act(async () => {
+    resolve({ok: true, json: async () => ({...release, announcement: null})} as Response);
+  });
+  await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(hook.result.current.release?.announcement?.id).toBe(news.id));
 });

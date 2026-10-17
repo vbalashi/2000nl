@@ -45,9 +45,10 @@ export function useWordContextPrompt({
           void load();
         }, 2000 * failureRetries);
     };
-    let inFlight = false;
-    const load = async () => {
-      if (inFlight || controller.signal.aborted) return;
+    let inFlight = false, dirty = false;
+    const load = async (invalidate = false) => {
+      if (controller.signal.aborted) return;
+      if (inFlight) { if (invalidate) dirty = true; return; }
       inFlight = true;
       if (timer !== undefined) {
         clearTimeout(timer);
@@ -81,6 +82,7 @@ export function useWordContextPrompt({
         }
       } finally {
         inFlight = false;
+        if (dirty && !controller.signal.aborted) { dirty = false; void load(); }
       }
     };
     const detach = onDictionaryTranslationReady((event) => {
@@ -88,9 +90,9 @@ export function useWordContextPrompt({
         event.entryId === entryId &&
         event.targetLanguageCode === translationTargetLanguageCode
       )
-        void load();
-    });
-    const detachRecovery = onDictionaryTranslationRevalidate(() => void load());
+        void load(true);
+    }, { entryId, targetLanguageCode: translationTargetLanguageCode });
+    const detachRecovery = onDictionaryTranslationRevalidate(() => void load(true), { entryId, targetLanguageCode: translationTargetLanguageCode });
     void load();
     return () => {
       detach();

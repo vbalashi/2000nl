@@ -1,4 +1,5 @@
 "use client";
+import { useUserEventHints } from "@/lib/events/userEventHints";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchAccountTrainingSetups, saveAccountTrainingSetups } from "./client";
 import { emptyTrainingSetups, parseTrainingSetupsDocument, type SavedTraining, type TrainingSetupsDocument, type TrainingSetupsSnapshot } from "./model";
@@ -51,6 +52,7 @@ export function useAccountTrainingSetups(userId?: string) {
     };
   }, [load]);
 
+  const flushHints = useUserEventHints(userId, ["account.changed"], () => load(), () => mutationRef.current);
   const mutate = useCallback(async (change: (document: TrainingSetupsDocument) => TrainingSetupsDocument | null): Promise<TrainingSetupsMutationResult> => {
     const current = stateRef.current;
     if (!userId || current.userId !== userId || current.status !== "ready" || mutationRef.current) return "unavailable";
@@ -75,9 +77,10 @@ export function useAccountTrainingSetups(userId?: string) {
       if (ownerRef.current === userId && generation === readGeneration.current) {
         mutationRef.current = false;
         setPending(false);
+        flushHints();
       }
     }
-  }, [userId, invalidateReads]);
+  }, [userId, invalidateReads, flushHints]);
   const save = useCallback((training: SavedTraining, create: boolean) => mutate(document => {
     const exists = document.trainings.some(item => item.id === training.id);
     if (create === exists) return null; // Never resurrect a concurrently deleted setup.

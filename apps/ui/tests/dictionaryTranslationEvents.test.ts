@@ -1,3 +1,8 @@
+const { remote, connection } = vi.hoisted(() => ({ remote: vi.fn(), connection: vi.fn() }));
+vi.mock("@/lib/events/appEvents", () => ({
+ appTranslationTopic: (entryId: string, language: string) => `app:translation:${entryId}:${language}`,
+ subscribeAppEvents: remote, subscribeAppEventConnection: connection,
+}));
 import { afterEach, expect, test, vi } from "vitest";
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -53,4 +58,53 @@ test("focus, visibility and periodic recovery revalidate only a visible document
  Object.defineProperty(document,"visibilityState",{value:"hidden",configurable:true});window.dispatchEvent(new Event("focus"));vi.advanceTimersByTime(60_000);expect(listener).not.toHaveBeenCalled();
  Object.defineProperty(document,"visibilityState",{value:"visible",configurable:true});document.dispatchEvent(new Event("visibilitychange"));expect(listener).toHaveBeenCalledOnce();vi.advanceTimersByTime(60_000);expect(listener).toHaveBeenCalledTimes(2);
  detach();window.dispatchEvent(new Event("focus"));expect(listener).toHaveBeenCalledTimes(2);vi.useRealTimers();
+});
+
+
+test("scoped remote hints trigger targeted authoritative readers without local echo", async () => {
+ const stopEvent=vi.fn(),stopConnection=vi.fn();
+ let receive!: (event: {resourceId:string;language:string})=>void;
+ remote.mockImplementation((_options,listener)=>{receive=listener;return stopEvent;});
+ connection.mockReturnValue(stopConnection);
+ const bus=await import("@/lib/translation/dictionaryTranslationEvents");
+ const scoped=vi.fn(),other=vi.fn();
+ const detachOther=bus.onDictionaryTranslationReady(other);
+ const detach=bus.onDictionaryTranslationReady(scoped,{entryId:"entry",targetLanguageCode:"ru"});
+ expect(remote).toHaveBeenCalledWith(expect.objectContaining({topic:"app:translation:entry:ru",kinds:["translation.ready","translation.failed"]}),expect.any(Function));
+ receive({resourceId:"different",language:"ru"});expect(scoped).not.toHaveBeenCalled();
+ receive({resourceId:"entry",language:"ru"});expect(scoped).toHaveBeenCalledOnce();
+ expect(other).not.toHaveBeenCalled();
+ detach();detachOther();expect(stopEvent).toHaveBeenCalledOnce();expect(stopConnection).toHaveBeenCalledOnce();
+});
+
+test("scoped readers recover once on first connection and once per reconnect", async () => {
+ let state!: (value:{status:string;reconnect:boolean})=>void;
+ remote.mockReturnValue(vi.fn());
+ connection.mockImplementation((_topic,listener)=>{state=listener;return vi.fn();});
+ const bus=await import("@/lib/translation/dictionaryTranslationEvents");const listener=vi.fn();
+ const detach=bus.onDictionaryTranslationReady(listener,{entryId:"entry",targetLanguageCode:"ru"});
+ state({status:"connected",reconnect:false});expect(listener).toHaveBeenCalledOnce();
+ state({status:"connected",reconnect:false});expect(listener).toHaveBeenCalledOnce();
+ state({status:"degraded",reconnect:false});
+ state({status:"connected",reconnect:true});expect(listener).toHaveBeenCalledTimes(2);
+ detach();
+});
+
+test("healthy scopes avoid minute lookups while degraded scopes keep recovery", async () => {
+ vi.useFakeTimers();
+ Object.defineProperty(document,"visibilityState",{value:"visible",configurable:true});
+ const states = new Map<string,(value:{status:string;reconnect:boolean})=>void>();
+ remote.mockReturnValue(vi.fn());
+ connection.mockImplementation((topic,listener)=>{states.set(topic,listener);listener({status:"connected",reconnect:false});return vi.fn();});
+ const bus=await import("@/lib/translation/dictionaryTranslationEvents");
+ const healthy=vi.fn(),degraded=vi.fn();
+ const stopA=bus.onDictionaryTranslationRevalidate(healthy,{entryId:"healthy",targetLanguageCode:"ru"});
+ const stopB=bus.onDictionaryTranslationRevalidate(degraded,{entryId:"degraded",targetLanguageCode:"ru"});
+ states.get("app:translation:degraded:ru")!({status:"degraded",reconnect:false});
+ vi.advanceTimersByTime(60_000);
+ expect(healthy).not.toHaveBeenCalled();expect(degraded).toHaveBeenCalledOnce();
+ vi.advanceTimersByTime(14*60_000);
+ expect(healthy).toHaveBeenCalledOnce();expect(degraded).toHaveBeenCalledTimes(15);
+ window.dispatchEvent(new Event("focus"));expect(healthy).toHaveBeenCalledTimes(2);
+ stopA();stopB();vi.useRealTimers();
 });

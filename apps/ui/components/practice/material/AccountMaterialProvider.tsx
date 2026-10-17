@@ -1,4 +1,5 @@
 "use client";
+import { useUserEventHints } from "@/lib/events/userEventHints";
 import React from "react";
 import {
   fetchAccountMaterialPreferences,
@@ -103,6 +104,7 @@ function AccountMaterialSession({
       document.removeEventListener("visibilitychange", refresh);
     };
   }, [load, invalidateReads]);
+  const flushHints = useUserEventHints(userId, ["account.changed", "collections.changed"], load, () => pending.current);
   const change: AccountMaterial["change"] = async (update) => {
     const stored = current.current;
     if (status !== "ready" || !stored || pending.current) return "unavailable";
@@ -126,6 +128,7 @@ function AccountMaterialSession({
       return "error";
     } finally {
       pending.current = false;
+      flushHints();
     }
   };
   return (

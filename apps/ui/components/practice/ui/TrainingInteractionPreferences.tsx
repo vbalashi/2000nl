@@ -1,4 +1,5 @@
 "use client";
+import { useUserEventHints } from "@/lib/events/userEventHints";
 import React from "react";
 import {defaultTrainingInteractions, type TrainingInteractions} from "@/lib/preferences/trainingInteractions";
 import {trainingInteractionRepository, type TrainingInteractionRepository} from "@/lib/preferences/trainingInteractionRepository";
@@ -33,7 +34,7 @@ function InteractionSession({userId,children,initial,repository}: {
   let cancelled=false;
   const load=async()=>{
    if(pending.current)return;
-   const version=revision.current;
+   const version=++revision.current;
    try {
     const value=await repository.load(userId);
     if(!cancelled&&version===revision.current){confirmed.current=value;setPreferences(value);setLoadStatus("ready");}
@@ -44,6 +45,11 @@ function InteractionSession({userId,children,initial,repository}: {
   window.addEventListener("focus",focus);document.addEventListener("visibilitychange",focus);
   return()=>{cancelled=true;window.removeEventListener("focus",focus);document.removeEventListener("visibilitychange",focus);};
  },[userId,repository,initial,attempt]);
+ const flushHints=useUserEventHints(userId,["account.changed"],async()=>{
+  const version=++revision.current;
+  const value=await repository.load(userId);
+  if(alive.current&&version===revision.current&&!pending.current){confirmed.current=value;setPreferences(value);setLoadStatus("ready");}
+ },()=>pending.current>0);
  const save=async(value:TrainingInteractions)=>{
   if(loadStatus!=="ready")return;
   pending.current++;const version=++revision.current;
@@ -55,7 +61,7 @@ function InteractionSession({userId,children,initial,repository}: {
     if(alive.current&&version===revision.current)setSaveStatus("idle");
    } catch {
     if(alive.current&&version===revision.current){setPreferences(confirmed.current);setSaveStatus("error");}
-   } finally {pending.current--;}
+   } finally {pending.current--;flushHints();}
   });
   queue.current=operation;
   await operation;

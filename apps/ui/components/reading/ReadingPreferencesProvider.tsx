@@ -1,5 +1,6 @@
 "use client";
 
+import { useUserEventHints } from "@/lib/events/userEventHints";
 import React from "react";
 import {accountTextSize,accountTextSizeStyles} from "@/lib/reading/textScale";
 import { defaultReadingPreferences, detectReadingDevice, readingSizeStyles, type ReadingDevice, type ReadingPreferences, type ReadingSize } from "@/lib/reading/readingSize";
@@ -39,6 +40,7 @@ function ReadingSession({ userId, repository = readingPreferencesRepository, chi
   const alive = React.useRef(false);
   const pending = React.useRef({ phone: false, desktop: false });
 
+  const refreshRevision = React.useRef(0);
   React.useEffect(() => {
     let selected = detectReadingDevice(navigator);
     updateDevice(selected);
@@ -51,17 +53,28 @@ function ReadingSession({ userId, repository = readingPreferencesRepository, chi
 
   React.useEffect(() => {
     let cancelled = false;
+    const version = ++refreshRevision.current;
     setLoadStatus("loading");
     void repository.load(userId).then((loaded) => {
-      if (cancelled) return;
+      if (cancelled || version !== refreshRevision.current) return;
       setPreferences(loaded);
       setLoadStatus("ready");
-    }).catch(() => { if (!cancelled) setLoadStatus("error"); });
+    }).catch(() => { if (!cancelled && version === refreshRevision.current) setLoadStatus("error"); });
     return () => { cancelled = true; };
   }, [userId, repository, loadAttempt]);
 
+  const flushHints = useUserEventHints(userId, ["account.changed"], async () => {
+    const version = ++refreshRevision.current;
+    const value = await repository.load(userId);
+    if (!alive.current || version !== refreshRevision.current || pending.current.phone || pending.current.desktop) return;
+    setPreferences(value);
+
+    setLoadStatus("ready");
+  }, () => pending.current.phone || pending.current.desktop);
+
   const save = async (profile: ReadingDevice, size: ReadingSize) => {
     if (loadStatus !== "ready" || pending.current[profile]) return;
+    refreshRevision.current++;
     pending.current[profile] = true;
     setPreferences((current) => ({ ...current, [profile]: size }));
     setSaveStatus((current) => ({ ...current, [profile]: "saving" }));
@@ -70,7 +83,7 @@ function ReadingSession({ userId, repository = readingPreferencesRepository, chi
       if (alive.current) setSaveStatus((current) => ({ ...current, [profile]: "saved" }));
     } catch {
       if (alive.current) setSaveStatus((current) => ({ ...current, [profile]: "error" }));
-    } finally { pending.current[profile] = false; }
+    } finally { pending.current[profile] = false; flushHints(); }
   };
 
   return <Context.Provider value={{ preferences, device, loadStatus, saveStatus, save, reload: () => setLoadAttempt((n) => n + 1) }}>

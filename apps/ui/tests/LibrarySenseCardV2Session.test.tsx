@@ -26,6 +26,16 @@ import type { EntryLearningListMembership } from "@/lib/types";
 
 import { publishDictionaryTranslationReady } from "@/lib/translation/dictionaryTranslationEvents";
 
+const firstJoin = vi.hoisted(() => ({ enabled: false, subscriptions: 0 }));
+vi.mock("@/lib/translation/dictionaryTranslationEvents", async importOriginal => {
+  const actual = await importOriginal<typeof import("@/lib/translation/dictionaryTranslationEvents")>();
+  return {...actual, onDictionaryTranslationReady: (listener: Parameters<typeof actual.onDictionaryTranslationReady>[0], scope?: Parameters<typeof actual.onDictionaryTranslationReady>[1]) => {
+    const stop = actual.onDictionaryTranslationReady(listener, scope);
+    if (firstJoin.enabled && scope) { firstJoin.subscriptions++; listener(scope); }
+    return stop;
+  }};
+});
+
 const fetchGroup = vi.fn();
 const fetchCrossReferenceTarget = vi.fn();
 const requestTranslation = vi.fn();
@@ -1546,4 +1556,43 @@ describe("LibrarySenseCardV2Session", () => {
     );
     await waitFor(() => expect(fetchGroup).toHaveBeenCalledTimes(2));
   });
+});
+
+
+test("first-join hints for all meanings share one read without resubscribing on fresh group objects", async () => {
+  firstJoin.enabled = true; firstJoin.subscriptions = 0;
+  fetchGroup.mockReset();
+  fetchGroup.mockImplementation(async () => structuredClone(multiSenseBankGroup));
+  const view = render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} initialGroup={multiSenseBankGroup} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" />);
+  try {
+    await waitFor(() => expect(fetchGroup).toHaveBeenCalledTimes(2));
+    await act(async () => {});
+    const entryCount = multiSenseBankGroup.entries.filter(entry => entry.kind === "sense-card").length;
+    expect(firstJoin.subscriptions).toBe(entryCount);
+    await act(async () => {
+      publishDictionaryTranslationReady({entryId:financeEntry.entryId,targetLanguageCode:"en"});
+      publishDictionaryTranslationReady({entryId:furnitureEntry.entryId,targetLanguageCode:"en"});
+    });
+    expect(fetchGroup).toHaveBeenCalledTimes(3);
+    expect(firstJoin.subscriptions).toBe(entryCount);
+  } finally { view.unmount(); firstJoin.enabled = false; }
+});
+
+test("a ready hint during a group read schedules one newer authoritative read", async () => {
+  fetchGroup.mockReset().mockResolvedValue(structuredClone(multiSenseBankGroup));
+  const view = render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} initialGroup={multiSenseBankGroup} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" />);
+  try {
+    await waitFor(() => expect(fetchGroup).toHaveBeenCalledOnce());
+    const oldRead=deferred<PlatformHeadwordGroupV2>();
+    fetchGroup.mockImplementationOnce(()=>oldRead.promise);
+    await act(async()=>publishDictionaryTranslationReady({entryId:financeEntry.entryId,targetLanguageCode:"en"}));
+    expect(fetchGroup).toHaveBeenCalledTimes(2);
+    await act(async()=>{
+      publishDictionaryTranslationReady({entryId:financeEntry.entryId,targetLanguageCode:"en"});
+      publishDictionaryTranslationReady({entryId:furnitureEntry.entryId,targetLanguageCode:"en"});
+    });
+    expect(fetchGroup).toHaveBeenCalledTimes(2);
+    await act(async()=>oldRead.resolve(structuredClone(multiSenseBankGroup)));
+    expect(fetchGroup).toHaveBeenCalledTimes(3);
+  } finally { view.unmount(); }
 });

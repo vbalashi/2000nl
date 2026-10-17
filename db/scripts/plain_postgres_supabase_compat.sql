@@ -96,3 +96,24 @@ STABLE
 AS $$
   SELECT nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
 $$;
+
+-- CI-only Broadcast transport model. Production uses Supabase-owned Realtime
+-- objects; this shim must never be applied to an actual Supabase database.
+CREATE SCHEMA IF NOT EXISTS realtime;
+CREATE TABLE IF NOT EXISTS realtime.messages (
+  id uuid DEFAULT gen_random_uuid(), topic text NOT NULL, extension text NOT NULL DEFAULT 'broadcast',
+  event text, payload jsonb, private boolean NOT NULL DEFAULT true
+);
+ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
+GRANT USAGE ON SCHEMA realtime TO authenticated, service_role;
+GRANT SELECT, INSERT ON realtime.messages TO authenticated;
+CREATE OR REPLACE FUNCTION realtime.topic() RETURNS text LANGUAGE sql STABLE AS $$
+  SELECT current_setting('realtime.topic', true);
+$$;
+CREATE OR REPLACE FUNCTION realtime.send(payload jsonb, event text, topic text, private boolean DEFAULT true)
+RETURNS void LANGUAGE sql AS $$
+  -- Supabase Broadcast adds payload.id transport metadata unless supplied.
+  INSERT INTO realtime.messages(payload,event,topic,private)
+    VALUES(CASE WHEN payload ? 'id' THEN payload
+      ELSE jsonb_set(payload, '{id}', to_jsonb(gen_random_uuid())) END,event,topic,private);
+$$;

@@ -1,4 +1,5 @@
 "use client";
+import { useUserEventHints } from "@/lib/events/userEventHints";
 import React from "react";
 import {
   cardSpacingRepository,
@@ -41,6 +42,7 @@ function AccountSpacingSession({
   const [attempt, setAttempt] = React.useState(0);
   const alive = React.useRef(false),
     pending = React.useRef(false);
+  const refreshRevision = React.useRef(0);
   React.useEffect(() => {
     alive.current = true;
     return () => {
@@ -49,24 +51,35 @@ function AccountSpacingSession({
   }, []);
   React.useEffect(() => {
     let cancelled = false;
+    const version = ++refreshRevision.current;
     setLoadStatus("loading");
     void repository
       .load(userId)
       .then((value) => {
-        if (!cancelled) {
+        if (!cancelled && version === refreshRevision.current) {
           setSpacing(value);
           setLoadStatus("ready");
         }
       })
       .catch(() => {
-        if (!cancelled) setLoadStatus("error");
+        if (!cancelled && version === refreshRevision.current) setLoadStatus("error");
       });
     return () => {
       cancelled = true;
     };
   }, [repository, userId, attempt]);
+  const flushHints = useUserEventHints(userId, ["account.changed"], async () => {
+    const version = ++refreshRevision.current;
+    const value = await repository.load(userId);
+    if (!alive.current || version !== refreshRevision.current || pending.current) return;
+    setSpacing(value);
+
+    setLoadStatus("ready");
+  }, () => pending.current);
+
   const save = async (value: CardSpacing) => {
     if (loadStatus !== "ready" || pending.current) return;
+    refreshRevision.current++;
     pending.current = true;
     setSpacing(value);
     setSaveStatus("saving");
@@ -77,6 +90,7 @@ function AccountSpacingSession({
       if (alive.current) setSaveStatus("error");
     } finally {
       pending.current = false;
+      flushHints();
     }
   };
   return (

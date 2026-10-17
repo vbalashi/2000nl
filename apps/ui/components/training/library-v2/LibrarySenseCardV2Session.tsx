@@ -1,5 +1,6 @@
 "use client";
 
+import { useUserEventHints } from "@/lib/events/userEventHints";
 import React from "react";
 import { TrainingExclusionUndoNotice } from "../v2/TrainingExclusionUndoNotice";
 import { getUiMessages } from "@/lib/uiMessages";
@@ -138,6 +139,7 @@ function SenseCardV2Session({
   const actionGeneration = React.useRef(0);
   const pendingActions = React.useRef(new Set<string>());
   const membershipGeneration = React.useRef(0);
+  const pendingCollectionWrites = React.useRef(0);
   const detailIdentity = JSON.stringify([
     entryId,
     userId ?? null,
@@ -346,6 +348,7 @@ function SenseCardV2Session({
     async (
       entryIds: string[],
       expectedDetailIdentity: string,
+      preserveReady = false,
     ) => {
       if (expectedDetailIdentity !== detailIdentityRef.current) return false;
       const expectedMembershipGeneration = ++membershipGeneration.current;
@@ -356,7 +359,7 @@ function SenseCardV2Session({
         if (isCurrent()) { setMembershipsByEntryId({}); setMembershipState("ready"); }
         return isCurrent();
       }
-      setMembershipState("loading");
+      setMembershipState(previous => preserveReady && previous === "ready" ? "ready" : "loading");
       try {
         const memberships = await fetchEntryListMemberships(entryIds);
         if (!isCurrent()) return false;
@@ -390,6 +393,10 @@ function SenseCardV2Session({
       detailIdentity,
     );
   }, [detailIdentity, loadMemberships, model]);
+
+  const flushCollectionHints = useUserEventHints(userId, ["collections.changed"], async () => {
+    if (model) await loadMemberships(model.meanings.map(meaning => meaning.entryId), detailIdentity, true);
+  }, () => pendingCollectionWrites.current > 0 || pendingActions.current.has(detailIdentityRef.current));
 
   const handleAction = async (capability: LibraryMutationCapability) => {
     const expectedDetailIdentity = detailIdentityRef.current;
@@ -428,6 +435,7 @@ function SenseCardV2Session({
       }
     } finally {
       pendingActions.current.delete(pendingKey);
+      flushCollectionHints();
       if (isCurrentAction()) setBusyIdentity(null);
     }
   };
@@ -482,6 +490,7 @@ function SenseCardV2Session({
   const handleToggleList = async (list: WordListSummary, included: boolean) => {
     if (!collectionsEntryId) return;
     const isCurrent = () => detailIdentity === detailIdentityRef.current;
+    pendingCollectionWrites.current++;
     setCollectionBusyListId(list.id);
     setCollectionStatus(null);
     try {
@@ -504,13 +513,16 @@ function SenseCardV2Session({
         );
       }
     } finally {
+      pendingCollectionWrites.current--;
       if (isCurrent()) setCollectionBusyListId(null);
+      flushCollectionHints();
     }
   };
 
   const handleCreateList = async (name: string) => {
     if (!userId || !collectionsEntryId) return;
     const isCurrent = () => detailIdentity === detailIdentityRef.current;
+    pendingCollectionWrites.current++;
     setCollectionBusyListId("__new__");
     setCollectionStatus(null);
     try {
@@ -536,7 +548,9 @@ function SenseCardV2Session({
         );
       }
     } finally {
+      pendingCollectionWrites.current--;
       if (isCurrent()) setCollectionBusyListId(null);
+      flushCollectionHints();
     }
   };
 
@@ -632,14 +646,37 @@ function SenseCardV2Session({
       const entry=next?.entries.find(item=>item.kind==="sense-card"&&item.entryId===activeMeaningId);
       if(entry?.kind==="sense-card"&&entry.capabilities.some(cap=>cap.actionId==="request-translation"&&cap.targetLanguageCode===translationLanguage))void handleRequestTranslation(entry.entryId,entry.card?.cardTypeId??cardTypeId,false,expected);
     }).catch(() => { /* load exposes retry. */ });
-  }), [activeMeaningId,cardTypeId,detailIdentity,handleRequestTranslation,load,loading,translationLanguage]);
+  }, activeMeaningId && translationLanguage && translationLanguage !== "off" ? { entryId: activeMeaningId, targetLanguageCode: translationLanguage } : undefined), [activeMeaningId,cardTypeId,detailIdentity,handleRequestTranslation,load,loading,translationLanguage]);
 
-  React.useEffect(() => onDictionaryTranslationReady(translation => {
-    if (translationRequests.current.has(translation.entryId) || translation.targetLanguageCode !== translationLanguage || !group?.entries.some(
-      entry => entry.kind === "sense-card" && entry.entryId === translation.entryId,
-    )) return;
-    void load(undefined, undefined, detailIdentity).catch(() => { /* load retains the visible card and exposes lookup retry. */ });
-  }), [detailIdentity, group, load, translationLanguage]);
+  const translationEntryIdsKey = JSON.stringify(group?.entries.filter(entry => entry.kind === "sense-card").map(entry => entry.entryId).sort() ?? []);
+  React.useEffect(() => {
+    if (!translationLanguage || translationLanguage === "off") return;
+    const entryIds = JSON.parse(translationEntryIdsKey) as string[];
+    const controller = new AbortController();
+    let reading = false, dirty = false;
+    const refresh = async () => {
+      if (controller.signal.aborted) return;
+      dirty = true;
+      if (reading) return;
+      reading = true;
+      // First-join hints for several meanings share one group projection read.
+      await Promise.resolve();
+      try {
+        if (controller.signal.aborted) return;
+        do {
+          dirty = false;
+          try { await load(controller.signal, undefined, detailIdentity); }
+          catch { /* A newer hint still gets its follow-up after a failed read. */ }
+        } while (dirty && !controller.signal.aborted);
+      } catch { /* load retains the visible card and exposes lookup retry. */ }
+      finally { reading = false; }
+    };
+    const stops = entryIds.map(entryId => onDictionaryTranslationReady(translation => {
+      if (translation.entryId !== entryId || translation.targetLanguageCode !== translationLanguage) return;
+      void refresh();
+    }, { entryId, targetLanguageCode: translationLanguage }));
+    return () => { controller.abort(); stops.forEach(stop => stop()); };
+  }, [detailIdentity, translationEntryIdsKey, load, translationLanguage]);
 
   React.useEffect(() => {
     if (!model) return;

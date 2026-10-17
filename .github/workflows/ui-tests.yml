@@ -77,6 +77,9 @@ jobs:
       - name: Test deploy health verifier
         run: node --test scripts/verify-deploy-health.test.mjs
 
+      - name: Test release event publication
+        run: node --test scripts/publish-app-release.test.mjs
+
       - name: Test bounded production QA wrapper
         run: node --test scripts/ab-auth-prod.test.mjs
 
