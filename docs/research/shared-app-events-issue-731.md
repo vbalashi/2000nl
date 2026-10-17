@@ -56,3 +56,13 @@ At this checkpoint production remains c9d880f; implementation awaits review, CI 
 The active issue 731 checkout is retained for review. Issue 728 checkout remains
 pending its open PR #730; production debugging captures remain ignored in reference
 `reports/qa/production-post-migration/joint-blink-2026-10-17/`.
+
+## Follow-up validation
+
+Production Next.js build passed on local Supabase configuration (existing route
+re-export warnings and the same baseline lint warning). Initial CI FSRS run
+failed because its separate plain-Postgres harness lacked realtime schema.
+The harness now reuses the existing CI-only Broadcast model, restricted to
+recognized disposable databases; existing Supabase objects are left untouched.
+`scripts/db-local-supabase.sh test-fsrs`: **377/377 tests,42files passed**, wrapper
+removed the disposable database. CI is rerun on this correction.

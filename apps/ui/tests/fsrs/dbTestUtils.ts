@@ -69,6 +69,28 @@ async function ensureCronTestApi(pool: Pool) {
   `);
 }
 
+async function ensureRealtimeTestApi(pool: Pool) {
+  const { rows } = await pool.query(
+    "select current_database() as database_name, to_regclass('realtime.messages') as messages_table",
+  );
+  // Leave Supabase-owned Realtime objects entirely untouched when present.
+  if (rows[0]?.messages_table) return;
+  const database = rows[0]?.database_name ?? "";
+  if (database !== "fsrs_test" && !/^2000nl_fsrs_[a-z0-9_]+$/.test(database)) {
+    throw new Error("unsafe_fsrs_realtime_shim_database");
+  }
+  // Share the plain-Postgres Broadcast model with DB integration tests. This
+  // section has ordinary SQL only; the file's initial psql directive is excluded.
+  const compatibility = fs.readFileSync(
+    path.resolve(process.cwd(), "..", "..", "db", "scripts", "plain_postgres_supabase_compat.sql"),
+    "utf8",
+  );
+  const marker = "-- CI-only Broadcast transport model.";
+  const start = compatibility.indexOf(marker);
+  if (start < 0) throw new Error("missing_fsrs_realtime_compatibility_sql");
+  await pool.query(compatibility.slice(start));
+}
+
 export async function ensureAuthSchema(pool: Pool) {
   const { rowCount: hasSupabaseAuth } = await pool.query(`
     select 1
@@ -176,6 +198,7 @@ export async function runMigrations(pool: Pool) {
   await pool.query(`select pg_advisory_lock(hashtext('2000nl_fsrs_test_migrations'))`);
   try {
     await ensureAuthSchema(pool);
+    await ensureRealtimeTestApi(pool);
 
     await pool.query(`
       create table if not exists public.__fsrs_test_migrations (
