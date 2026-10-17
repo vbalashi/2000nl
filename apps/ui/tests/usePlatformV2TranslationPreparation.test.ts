@@ -1,3 +1,5 @@
+import { createElement } from "react";
+import { renderToString } from "react-dom/server";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { usePlatformV2TranslationPreparation } from "@/lib/platform/usePlatformV2TranslationPreparation";
@@ -216,4 +218,28 @@ test("ready hints during an authoritative read coalesce into one follow-up", asy
  await act(async()=>finish(singleSenseEntry));
  expect(refresh).toHaveBeenCalledTimes(2);
  view.unmount();
+});
+
+test("translation preparation can render on the server before client effects start", () => {
+  function ServerPreparedCard() {
+    const preparation = usePlatformV2TranslationPreparation({ entry: singleSenseEntry, targetLanguageCode: "en", enabled: true, refresh: vi.fn() });
+    return createElement("span", null, preparation.current ? "preparing" : "idle");
+  }
+  expect(renderToString(createElement(ServerPreparedCard))).toBe("<span>idle</span>");
+  expect(request).not.toHaveBeenCalled();
+});
+
+test("preparation feedback keeps its public identity and live current across renders", async () => {
+  let finish!: (status: "ready") => void;
+  request.mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+  const view = renderHook(() => usePlatformV2TranslationPreparation({ entry: incomplete, targetLanguageCode: "en", enabled: true, refresh: vi.fn().mockResolvedValue(null) }));
+  const feedback = view.result.current;
+  expect(feedback.current).toBe(true);
+  view.rerender();
+  expect(view.result.current).toBe(feedback);
+  await act(async () => finish("ready"));
+  expect(view.result.current).toBe(feedback);
+  expect(feedback.current).toBe(false);
+  expect(feedback.status).toBe(null);
+  view.unmount();
 });
