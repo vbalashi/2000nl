@@ -16,3 +16,14 @@ test('release hint uses verified exact commit and server RPC without exposing cr
   await assert.rejects(publishAppRelease({commit:'b'.repeat(40),envFile,environment:{},request:async()=>({ok:false,status:503})}),/HTTP 503/);
  }finally{await rm(directory,{recursive:true,force:true});}
 });
+
+test('release hint supports the server secret-key configuration used by the application',async()=>{
+ const directory=await mkdtemp(path.join(tmpdir(),'app-release-secret-'));const envFile=path.join(directory,'.env');
+ try{
+  await writeFile(envFile,'SUPABASE_URL=https://self-hosted.example.test\nSUPABASE_SECRET_KEY=sb_secret_test\n');
+  let headers;
+  await publishAppRelease({commit:'c'.repeat(40),envFile,environment:{},request:async(_url,options)=>{headers=options.headers;return{ok:true};}});
+  assert.equal(headers.apikey,'sb_secret_test');
+  assert.equal(headers.Authorization,'Bearer sb_secret_test');
+ }finally{await rm(directory,{recursive:true,force:true});}
+});

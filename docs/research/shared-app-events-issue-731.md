@@ -81,3 +81,17 @@ read/resubscribe loops. User-domain hints gained visible15-minute healthy /
 1-minute degraded safety reconciliation for a dropped Broadcast with no socket
 failure. New regressions cover these cases; focused translation64/64 and
 helper/settings14/14 passed, plus typecheck.
+
+Local browser checkpoint on698add9a: `training-idle-continuity.spec.ts`3/3PASS
+with real dev-login and fixture training projections. It checks mounted-card
+continuity across two real authority polls, six distinct accepted targets and
+offline fencing without dimming. Temporary preview3101 had health ok/local/DB228
+and was stopped; owner's3100/#299 preview was retained. This is not a live
+provider generation test: the local runtime lacks translation provider setup and
+unmocked translation preparation requests returned500. Actual DB-to-WebSocket
+translation ready delivery was tested separately as recorded above.
+
+Release publisher additionally accepts either existing server credential name,
+SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY, matching the application and
+worker's configuration choices. Publisher unit tests2/2PASS (including a synthetic
+self-hosted URL); credentials are never included in logs or this report.

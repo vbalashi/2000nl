@@ -14,7 +14,7 @@ export async function publishAppRelease({ commit, envFile = '.env', request = fe
     values[match[1]] = value;
   }
   const endpoint = environment.NEXT_PUBLIC_SUPABASE_URL || values.NEXT_PUBLIC_SUPABASE_URL || environment.SUPABASE_URL || values.SUPABASE_URL;
-  const key = environment.SUPABASE_SERVICE_ROLE_KEY || values.SUPABASE_SERVICE_ROLE_KEY;
+  const key = environment.SUPABASE_SERVICE_ROLE_KEY || environment.SUPABASE_SECRET_KEY || values.SUPABASE_SERVICE_ROLE_KEY || values.SUPABASE_SECRET_KEY;
   if (!endpoint || !key) throw new Error('Release publication requires Supabase server credentials');
   const response = await request(`${endpoint.replace(/\/$/, '')}/rest/v1/rpc/publish_app_release_v1`, {
     method: 'POST', headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
