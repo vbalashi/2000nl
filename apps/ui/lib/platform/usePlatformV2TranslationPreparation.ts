@@ -176,5 +176,10 @@ export function usePlatformV2TranslationPreparation(input: {
     revision,
     retry,
   ]);
-  return Object.assign(preparing, { status, retry: retryTranslation });
+  // React seals refs during server rendering. Keep public feedback separate
+  // from the ref while preserving live reads of in-flight preparation.
+  const feedbackHandle = useRef({ get current() { return preparing.current; }, status, retry: retryTranslation });
+  feedbackHandle.current.status = status;
+  feedbackHandle.current.retry = retryTranslation;
+  return feedbackHandle.current;
 }
