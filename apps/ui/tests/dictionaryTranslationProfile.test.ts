@@ -7,6 +7,7 @@ import { loadPromptText } from "@/lib/translation/prompts/promptLoader";
 import { buildDictionaryMeaningTranslationMessages, type DictionaryMeaningTranslationRequestV1 } from "@/lib/translation/dictionaryMeaningTranslationContract";
 const request:DictionaryMeaningTranslationRequestV1={contractVersion:"dictionary-meaning-translation-v1",entryId:"synthetic",sourceContentFingerprint:"synthetic-v1",sourceLanguageCode:"nl",targetLanguageCode:"ru",headword:{text:"test",article:null,partOfSpeech:null,partOfSpeechCode:null},content:[{fieldId:"definition",role:"definition",text:"een proef"}]};
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();vi.restoreAllMocks();});
+beforeEach(()=>{vi.stubEnv("AZURE_OPENAI_GPT6_LUNA_MODEL","gpt-6-luna");vi.stubEnv("AZURE_OPENAI_GPT41_MODEL","gpt-4.1");});
 function azure(){vi.stubEnv("AZURE_OPENAI_ENDPOINT","https://legacy.openai.azure.com");vi.stubEnv("AZURE_OPENAI_API_KEY","legacy-secret");vi.stubEnv("AZURE_OPENAI_DEPLOYMENT","gpt-4.1");vi.stubEnv("AZURE_OPENAI_GPT41_MODEL","gpt-4.1");vi.stubEnv("AZURE_OPENAI_GPT6_LUNA_MODEL","gpt-6-luna");vi.stubEnv("AZURE_OPENAI_GPT6_LUNA_ENDPOINT","https://luna.openai.azure.com");vi.stubEnv("AZURE_OPENAI_GPT6_LUNA_API_KEY_PRIMARY","luna-secret");vi.stubEnv("TRANSLATION_PROVIDER","openai");}
 describe("one coherent dictionary translation profile",()=>{
  test("defaults dictionary to Luna without switching generic phrase translation",()=>{

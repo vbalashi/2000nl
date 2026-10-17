@@ -44,6 +44,7 @@ function exit(child: ChildProcess) {
 describe("standalone translation worker process", () => {
   test("a killed worker is replaceable; the new process publishes with its new lease and drains on SIGTERM", async () => {
     vi.stubEnv("DICTIONARY_TRANSLATION_PROFILE", "luna6");
+    vi.stubEnv("AZURE_OPENAI_GPT6_LUNA_MODEL", "gpt-6-luna");
     const word = {
       id: randomUUID(),
       language_code: "nl",
@@ -157,6 +158,7 @@ describe("standalone translation worker process", () => {
           TRANSLATION_PROVIDER: "openai",
           SUPABASE_URL: origin,
           SUPABASE_SECRET_KEY: "worker-test-key",
+          AZURE_OPENAI_GPT6_LUNA_MODEL: "gpt-6-luna",
           AZURE_OPENAI_GPT6_LUNA_ENDPOINT: origin,
           AZURE_OPENAI_GPT6_LUNA_API_KEY_PRIMARY: "provider-test-key",
         },

@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { planDictionaryExplanationRepair, mergeDictionaryExplanationRepair } from "@/lib/translation/dictionaryExplanationRepair";
 import { OpenAITranslator } from "@/lib/translation/openaiTranslator";
 import type { DictionaryMeaningTranslationRequestV1 } from "@/lib/translation/dictionaryMeaningTranslationContract";
@@ -7,6 +7,7 @@ const original = { entryTranslation: { primaryText: "покой", alternativeTex
 const patch = { contentTranslations: [{ fieldId: "idiom:0:explanation", text: "снова стать спокойным" }] };
 const full = { ...original, contentTranslations: [...original.contentTranslations, ...patch.contentTranslations] };
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
+beforeEach(() => { vi.stubEnv("AZURE_OPENAI_GPT6_LUNA_MODEL", "gpt-6-luna"); });
 test("repairs only missing explanations preserving existing translations", () => {
  const plan=planDictionaryExplanationRepair(JSON.stringify(original),request)!;
  expect(plan.missing.map(i=>i.fieldId)).toEqual(["idiom:0:explanation"]);
