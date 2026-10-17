@@ -1,6 +1,6 @@
 # #299 — Обнаружение обновлений, безопасное обновление и новости
 
-Дата: 2026-10-17. Статус: proposed technical plan / design pending.
+Дата: 2026-10-17. Статус: product flow accepted / technical plan proposed / runtime not implemented.
 Owning issue: https://github.com/vbalashi/2000nl/issues/299
 Ветка: codex/299-release-update-plan; база: e05074df.
 [Обсуждение](../../discussions/2026-10-17-01-release-updates-and-news.md).
@@ -139,16 +139,30 @@ reload(true) работает как cache bypass только в Firefox. Не 
 Clear-Site-Data как обычное обновление: оно может затронуть авторизацию/данные.
 Обновление JS не гарантирует немедленную замену установленной иконки/OS splash.
 
-## Визуальная спецификация — следующий этап
+## Принятый продуктовый флоу и визуальная доработка
 
-В общем app frame подготовить Pen phone/desktop: current/empty, update + news,
-update без новости, unread/read, deferred active training, updating, offline,
-failed/retry, post-update news. Краткий текст + «Подробнее» + «Обновить»
-в одном месте; никаких длинных статей. Подробнее открывается отдельно с
-noopener/noreferrer, не уводит активную тренировку. Предусмотреть клавиатуру,
-focus, aria-live polite и отсутствие повторных объявлений при каждом polling.
-Согласовать место, компактность и тексты до runtime. Не добавлять новую
-постоянную кнопку в header без проверки phone layout.
+[Согласование владельца](../../discussions/2026-10-17-02-release-updates-flow-approved.md).
+Без третьей кнопки в шапке. Точка на настройках, временная плашка на любой
+странице и постоянный раздел Updates. Показ плашки откладывается до завершения
+активной тренировки. «Позже» сохраняется по target build identity локально:
+повторные polling/navigation не открывают её снова для той же цели; новый
+релиз может показать новую плашку. Недоступность storage не блокирует интерфейс,
+в пределах текущего mount dismissal сохраняется в памяти.
+
+Точка = updateAvailable OR unreadAnnouncement. Открытие Updates отмечает
+показанный announcement id прочитанным; устаревший клиент сохраняет точку.
+После успешного обновления проверить обе причины независимо. «Подробнее»
+открывается отдельно с noopener/noreferrer. Updates показывает короткую новость,
+кнопку обновления, версии, дату и ручную проверку. Отдельный About не добавлять.
+При актуальной сборке нет кнопки обновления; unread news может оставлять точку.
+
+Концепт с боковым Settings при активной Library — ошибка генерации, не требование.
+Активная навигация всегда соответствует destination. В общем app frame доработать
+phone/desktop: current/empty, update + news, update без новости, unread/read,
+deferred active training, updating, offline, failed/retry, post-update news.
+Предусмотреть клавиатуру, focus, aria-live polite и отсутствие повторных
+объявлений при каждом polling. Композиция утверждена словами; точные размеры,
+responsive layout и ошибочные состояния ещё не финализированы.
 
 ## Срезы реализации и критерии
 
@@ -190,6 +204,6 @@ mandatory update/minimum version без отдельного backward-compatibil
 
 ## Контрольная точка
 
-Только документация, runtime не реализован. Нужны визуальная приёмка и проверки
+Только документация, runtime не реализован. Продуктовый флоу принят; нужны визуальная доработка и проверки
 из срезов выше; существующий production и активные worktrees не меняются.
 Checkout сохраняется для дальнейшего планирования/дизайна, не retirement candidate.
