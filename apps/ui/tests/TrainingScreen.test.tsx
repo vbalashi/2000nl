@@ -620,6 +620,8 @@ vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
 vi.mock("@/lib/supabaseClient", () => ({
   supabase: {
     auth: {
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
       signOut: vi.fn(),
     },
   },
