@@ -35,7 +35,7 @@ test("a changed source without a matching job enqueues its replacement", async (
     .mockResolvedValueOnce(new Response('{"status":"pending","needsEnqueue":true}'))
     .mockResolvedValueOnce(new Response('{"status":"ready"}'));
   const result = observeDictionaryMeaningTranslation(input);
-  await vi.advanceTimersByTimeAsync(2_000);
+  await vi.advanceTimersByTimeAsync(3_000);
   expect(await (await result).json()).toEqual({ status: "ready" });
   expect(request.mock.calls[1][0]).toMatchObject({ force: false, observeOnly: true });
   expect(request.mock.calls[2][0]).toMatchObject({ force: false, observeOnly: false });
@@ -83,4 +83,47 @@ test("transport failure and retry backoff preserve the last pending job", async 
 test.each([429,502,503,504,524])("HTTP %i is not evidence of a terminal translation error", async status => {
   request.mockResolvedValueOnce(new Response("temporary",{status}));
   expect(await (await observeDictionaryMeaningTranslation(input)).json()).toEqual({status:"pending"});
+});
+
+
+test("pending observations back off to five seconds without repeating generation", async () => {
+  vi.useFakeTimers();
+  request.mockImplementation(async () => pending());
+  const controller = new AbortController();
+  const result = observeDictionaryMeaningTranslation({ ...input, signal: controller.signal });
+  const rejection = expect(result).rejects.toMatchObject({ name: "AbortError" });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(request).toHaveBeenCalledTimes(1);
+  for (const [index, delay] of [1000, 2000, 4000, 5000, 5000].entries()) {
+    await vi.advanceTimersByTimeAsync(delay - 1);
+    expect(request).toHaveBeenCalledTimes(index + 1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(request).toHaveBeenCalledTimes(index + 2);
+  }
+  expect(request.mock.calls.slice(1).every(([value]) =>
+    value.force === false && value.observeOnly === true)).toBe(true);
+  controller.abort();
+  await rejection;
+  await vi.advanceTimersByTimeAsync(10000);
+  expect(request).toHaveBeenCalledTimes(6);
+});
+
+test("an explicit poll interval stays fixed and stops immediately on ready", async () => {
+  vi.useFakeTimers();
+  request.mockResolvedValueOnce(pending()).mockResolvedValueOnce(pending())
+    .mockResolvedValueOnce(new Response('{"status":"ready"}'));
+  const result = observeDictionaryMeaningTranslation(input, { pollMs: 250 });
+  await vi.advanceTimersByTimeAsync(500);
+  expect((await (await result).json()).status).toBe("ready");
+  await vi.advanceTimersByTimeAsync(10000);
+  expect(request).toHaveBeenCalledTimes(3);
+});
+
+test("observation deadline interrupts a longer backoff without another request", async () => {
+  vi.useFakeTimers();
+  request.mockImplementation(async () => pending());
+  const result = observeDictionaryMeaningTranslation(input, { observationMs: 2500 });
+  await vi.advanceTimersByTimeAsync(2500);
+  expect((await (await result).json()).status).toBe("pending");
+  expect(request).toHaveBeenCalledTimes(2);
 });

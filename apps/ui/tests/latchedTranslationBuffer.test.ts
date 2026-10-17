@@ -84,3 +84,32 @@ test("additional-only stored settings do not read or prepare a session", async (
   renderHook(() => useLatchedTranslationBuffer({ownerId: "user", sessionId: "session", currentEntryId: "entry-1", targetLanguageCode: null, additionalTargetLanguageCode: "en"}));
   await Promise.resolve();expect(request).not.toHaveBeenCalled();expect(snapshot).not.toHaveBeenCalled();
 });
+
+
+test("aborted future preparation retries on membership refresh without a late rejection erasing its replacement", async () => {
+  let rejectOld!: (reason: Error) => void;
+  request.mockImplementationOnce(() => new Promise((_resolve,reject) => { rejectOld = reject; }));
+  const view = renderHook(({members}) => useLatchedTranslationBuffer({ownerId:"user",sessionId:"session",currentEntryId:"entry-1",currentOrdinal:1,targetLanguageCode:"ru",members}), {initialProps:{members:[member(1),member(2)]}});
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+  const first = request.mock.calls[0][0];
+  view.rerender({members:[member(1),member(2),member(3)]});
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(3));
+  expect(first.signal.aborted).toBe(true);
+  rejectOld(new Error("aborted"));
+  await Promise.resolve(); await Promise.resolve();
+  view.rerender({members:[member(1),member(2),member(3),member(4)]});
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(4));
+  expect(request.mock.calls.filter(([i]) => i.entryId === "entry-2")).toHaveLength(2);
+});
+
+test("successful future preparation stays deduplicated and is isolated by owner", async () => {
+  const view = renderHook(({ownerId,members}) => useLatchedTranslationBuffer({ownerId,sessionId:"session",currentEntryId:"entry-1",currentOrdinal:1,targetLanguageCode:"ru",additionalTargetLanguageCode:"en",members}), {initialProps:{ownerId:"first",members:[member(1),member(2)]}});
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+  await Promise.resolve();
+  view.rerender({ownerId:"first",members:[member(1),member(2),member(3)]});
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(3));
+  expect(request.mock.calls.filter(([i])=>i.entryId === "entry-2")).toHaveLength(2);
+  view.rerender({ownerId:"second",members:[member(1),member(2)]});
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(5));
+  expect(request.mock.calls.filter(([i])=>i.entryId === "entry-1")).toHaveLength(0);
+});

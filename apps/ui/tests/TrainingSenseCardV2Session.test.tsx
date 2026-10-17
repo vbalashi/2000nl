@@ -166,6 +166,72 @@ describe("TrainingSenseCardV2Session", () => {
     expect(loadContextPrompt).toHaveBeenLastCalledWith(expect.objectContaining({entryId:word.id,sessionId:"context-run",force:false}));
   });
 
+  test.each([
+    ["focus", false], ["minute", false], ["focus", true], ["minute", true],
+  ] as const)("keeps the ready context card mounted during %s revalidation (answer=%s)", async (trigger, revealed) => {
+    let revalidateMinute: (() => void) | undefined;
+    const originalInterval = window.setInterval.bind(window);
+    const interval = vi.spyOn(window, "setInterval").mockImplementation((handler, delay, ...args) => {
+      if (delay === 60_000 && typeof handler === "function") revalidateMinute = handler as () => void;
+      return originalInterval(handler, delay, ...args) as unknown as ReturnType<typeof window.setInterval>;
+    });
+    try {
+      const prompt = { text: "Example", sourceText: singleSenseEntry.contentNodes[1].text,
+        contentNodeId: "example-1", sourceTextFingerprint: "example-fingerprint" };
+      loadContextPrompt.mockImplementation(async () => ({ state: "ready", prompt: { ...prompt } }));
+      render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext
+        trainingSessionId="continuity-run" contentLanguageCode="nl" translationTargetLanguageCode="en"
+        interfaceLanguage="en" onProgressActionAccepted={vi.fn()} />);
+      const showAnswer = await screen.findByRole("button", { name: "Show answer" });
+      if (revealed) fireEvent.click(showAnswer);
+      const originalControl = revealed ? screen.getByRole("button", { name: "Good" }) : showAnswer;
+      let finishLookup!: (value: unknown) => void;
+      fetchSingleSense.mockImplementation(() => new Promise(resolve => { finishLookup = resolve; }));
+      const calls = fetchSingleSense.mock.calls.length;
+      await act(async () => {
+        if (trigger === "focus") window.dispatchEvent(new Event("focus"));
+        else { expect(revalidateMinute).toBeDefined(); revalidateMinute!(); }
+      });
+      await waitFor(() => expect(fetchSingleSense.mock.calls.length).toBeGreaterThan(calls));
+      expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: revealed ? "Good" : "Show answer" })).toBe(originalControl);
+      if (!revealed) fireEvent.click(showAnswer);
+      expect(screen.getByRole("button", { name: "Good" })).toBeVisible();
+      await act(async () => finishLookup({ state: "ready", group: singleSenseGroup, entry: singleSenseEntry }));
+      expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Good" })).toBeVisible();
+      expect(performAction).not.toHaveBeenCalled();
+    } finally { interval.mockRestore(); }
+  });
+
+  test.each(["run", "presentation", "language", "node", "fingerprint"])("waits for authoritative synchronization after context %s changes", async change => {
+    const prompt = { text: "Example", sourceText: singleSenseEntry.contentNodes[1].text,
+      contentNodeId: "example-1", sourceTextFingerprint: "example-fingerprint" };
+    loadContextPrompt.mockImplementation(async () => ({ state: "ready", prompt: { ...prompt } }));
+    const props = { word, mode: "definition-to-word" as const, wordInContext: true,
+      trainingSessionId: "initial-run", contentLanguageCode: "nl", translationTargetLanguageCode: "en",
+      interfaceLanguage: "en" as const, onProgressActionAccepted: vi.fn() };
+    const view = render(<TestTrainingSenseCardV2Session {...props} />);
+    await screen.findByRole("button", { name: "Show answer" });
+    let finishLookup!: (value: unknown) => void;
+    fetchSingleSense.mockImplementation(() => new Promise(resolve => { finishLookup = resolve; }));
+    await act(async () => {
+      if (change === "run") view.rerender(<TestTrainingSenseCardV2Session {...props} trainingSessionId="new-run" />);
+      else if (change === "presentation") view.rerender(<TestTrainingSenseCardV2Session {...props} presentationIdentity="new-presentation" />);
+      else if (change === "language") view.rerender(<TestTrainingSenseCardV2Session {...props} translationTargetLanguageCode="ru" />);
+      else {
+        if (change === "node") prompt.contentNodeId = "new-node";
+        else prompt.sourceTextFingerprint = "new-fingerprint";
+        window.dispatchEvent(new Event("focus"));
+      }
+    });
+    expect(screen.getByTestId("training-v2-loading")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Show answer" })).not.toBeInTheDocument();
+    await act(async () => finishLookup({ state: "ready", group: singleSenseGroup, entry: singleSenseEntry }));
+    expect(await screen.findByRole("button", { name: "Show answer" })).toBeVisible();
+    expect(performAction).not.toHaveBeenCalled();
+  });
+
   test("starts an immediate review transition even before next-card preparation publishes an id", async () => {
     const dispatch = vi.spyOn(window, "dispatchEvent");
     const accepted = vi.fn().mockResolvedValue("accepted-next-unavailable");
