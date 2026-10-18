@@ -326,8 +326,8 @@
       "today": "Vandaag",
       "yesterday": "Gisteren",
       "daysAgo": "Dagen geleden",
-      "allDueToday": "Alles wat moet",
-      "allDueHelp": "Dit schakelt over naar alleen herhalingen; nieuwe kaarten tellen niet mee.",
+      "allDueToday": "Alle beschikbare kaarten",
+      "allDueHelp": "De gekozen samenstelling bepaalt welke kaarten meedoen. De sessie eindigt na één ronde.",
       "mixHelp": "Streepritme; de verhouding hangt af van beschikbare kaarten."
     },
     "accountTrainingSetups": {
@@ -351,6 +351,11 @@
       "history": "Geschiedenis"
     },
     "trainingOverview": {
+      "nothingDue": "Er is nu niets te herhalen.",
+      "reviewsOnlyNew": "Er zijn nu geen herhalingen. Nieuwe kaarten staan uit.",
+      "noMatchingCards": "Er passen geen kaarten bij deze training. Voeg materiaal toe of pas de bron, oefeningen of filters aan.",
+      "noNewCards": "Er passen geen nieuwe kaarten bij deze training. Kies ook herhalingen of pas de bron, oefeningen of filters aan.",
+      "adjustMix": "Samenstelling aanpassen",
       "editTraining": "Training aanpassen",
       "dueToday": "Nu te herhalen",
       "totalReviews": "In herhaling",
@@ -368,7 +373,7 @@
       "pausedSentenceLabel": "Zinnen vertalen (gepauzeerd)",
       "sentencePaused": "Zinnen vertalen is gepauzeerd. Kies een andere oefening om een nieuwe sessie te starten.",
       "allDictionaries": "Alle beschikbare woordenboeken",
-      "allDue": "Alles verschuldigd",
+      "allDue": "Alle beschikbare kaarten",
       "loading": "Trainingen laden…",
       "retry": "Opnieuw proberen",
       "currentTraining": "Huidige training",

@@ -44,6 +44,7 @@ import { TrainingSessionSizePicker } from "@/components/training/pilot/TrainingS
 import s from "@/components/training/pilot/approvedTrainingBuilder.module.css";
 
 type Props = {
+  initialSection?: "session";
   interfaceLanguage: OnboardingLanguage;
   draft: TrainingSetupDraft & { sessionSize: TrainingSessionSize };
   languageCode: string;
@@ -182,7 +183,12 @@ export function ApprovedTrainingBuilder(p: Props) {
       cancelled = true;
     };
   }, [p.saveLabel, p.startLabel]);
-  const [open, setOpen] = useState<string[]>([]);
+  const [open, setOpen] = useState<string[]>(p.initialSection?[p.initialSection]:[]);
+  useLayoutEffect(() => {
+    if (p.initialSection !== "session") return;
+    const frame=requestAnimationFrame(() => builderRef.current?.querySelector<HTMLElement>(`#${CSS.escape(uid+"-session-body")}`)?.parentElement?.scrollIntoView({block:"nearest"}));
+    return () => cancelAnimationFrame(frame);
+  }, [p.initialSection,uid]);
   const [nounAnchor, setNounAnchor] = useState<React.CSSProperties>({});
   const [nounOpen, setNounOpen] = useState(false),
     [saveOpen, setSaveOpen] = useState(false),
@@ -655,7 +661,7 @@ export function ApprovedTrainingBuilder(p: Props) {
             {section(
               "session",
               b.session,
-              `${size === "all-due-today" ? c.allDueToday : formatExerciseCount(p.interfaceLanguage, size)} · ${balance}`,
+              <span className={s.sessionSummary}>{`${size === "all-due-today" ? c.allDueToday : formatExerciseCount(p.interfaceLanguage, size)} · ${balance}`}</span>,
               <div className={s.sessionFields}>
                 <TrainingSessionSizePicker
                   approved
@@ -664,9 +670,6 @@ export function ApprovedTrainingBuilder(p: Props) {
                     p.onDraftChange((current) => ({
                       ...current,
                       sessionSize,
-                      ...(sessionSize === "all-due-today"
-                        ? { cardFilter: "review" as const }
-                        : {}),
                     }))
                   }
                   label={b.sessionSize}
@@ -674,6 +677,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                     formatExerciseCount(p.interfaceLanguage, count)
                   }
                   allDueLabel={c.allDueToday}
+                  allAvailableTick={{en:"All",nl:"Alle",ru:"Все"}[p.interfaceLanguage]}
                   allDueHelp={c.allDueHelp}
                   allowAllDueToday={family === "meaning"}
                 />
