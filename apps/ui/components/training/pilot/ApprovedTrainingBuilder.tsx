@@ -44,6 +44,9 @@ import { TrainingSessionSizePicker } from "@/components/training/pilot/TrainingS
 import s from "@/components/training/pilot/approvedTrainingBuilder.module.css";
 
 type Props = {
+  initialSection?: "session";
+  availability?: {status:"loading"|"ready"|"error";dueToday:number|null;totalReviews:number|null;stillNew:number|null};
+  emptyState?: {message:string;includeNew:boolean}|null;
   interfaceLanguage: OnboardingLanguage;
   draft: TrainingSetupDraft & { sessionSize: TrainingSessionSize };
   languageCode: string;
@@ -182,7 +185,20 @@ export function ApprovedTrainingBuilder(p: Props) {
       cancelled = true;
     };
   }, [p.saveLabel, p.startLabel]);
-  const [open, setOpen] = useState<string[]>([]);
+  const [open, setOpen] = useState<string[]>(p.initialSection?[p.initialSection]:[]);
+  const showSession = () => {
+    setOpen(current => current.includes("session") ? current : [...current,"session"]);
+    requestAnimationFrame(() => {
+      const section = builderRef.current?.querySelector<HTMLElement>(`#${CSS.escape(uid+"-session-body")}`)?.parentElement;
+      section?.scrollIntoView({block:"nearest"});
+      section?.querySelector<HTMLInputElement>("input")?.focus({preventScroll:true});
+    });
+  };
+  useLayoutEffect(() => {
+    if (p.initialSection !== "session") return;
+    const frame=requestAnimationFrame(() => builderRef.current?.querySelector<HTMLElement>(`#${CSS.escape(uid+"-session-body")}`)?.parentElement?.scrollIntoView({block:"nearest"}));
+    return () => cancelAnimationFrame(frame);
+  }, [p.initialSection,uid]);
   const [nounAnchor, setNounAnchor] = useState<React.CSSProperties>({});
   const [nounOpen, setNounOpen] = useState(false),
     [saveOpen, setSaveOpen] = useState(false),
@@ -257,6 +273,13 @@ export function ApprovedTrainingBuilder(p: Props) {
     .filter(Boolean)
     .join(" · ");
   const size = p.draft.sessionSize ?? 10;
+  const sessionAvailability = (p.availability || p.emptyState) && <div className={s.sessionAvailability}>
+    {p.availability && <dl aria-label={o.availableCards} aria-busy={p.availability.status==="loading"}>
+      {[[o.dueToday,p.availability.dueToday],[o.totalReviews,p.availability.totalReviews],[o.stillNew,p.availability.stillNew]].map(([label,count])=><div key={label}><dt>{label}</dt><dd>{p.availability?.status==="ready"?count??"—":"—"}</dd></div>)}
+    </dl>}
+    {p.availability?.status==="error"&&<p role="status">{o.availabilityFailed}</p>}
+    {p.emptyState && <p role="status">{p.emptyState.includeNew?o.includeNewHint:p.draft.cardFilter==="review"?o.nothingDue:p.draft.cardFilter==="new"?o.noNewSelection:o.emptySelection}</p>}
+  </div>;
   const section = (
     key: string,
     title: string,
@@ -267,6 +290,7 @@ export function ApprovedTrainingBuilder(p: Props) {
       id={`${uid}-${key}`}
       title={title}
       summary={summary}
+      notice={key==="session"?sessionAvailability:undefined}
       open={open.includes(key)}
       onToggle={() => toggle(key)}
     >
@@ -710,10 +734,10 @@ export function ApprovedTrainingBuilder(p: Props) {
           <button
             type="button"
             className={s.primary}
-            disabled={p.startDisabled}
-            onClick={p.onStart}
+            disabled={p.startDisabled||Boolean(p.emptyState&&!p.emptyState.includeNew)}
+            onClick={p.emptyState?.includeNew?showSession:p.onStart}
           >
-            {p.startLabel}
+            {p.emptyState?.includeNew?o.includeNew:p.startLabel}
           </button>
           {p.canSave && (
             <div className={s.saveActions}>

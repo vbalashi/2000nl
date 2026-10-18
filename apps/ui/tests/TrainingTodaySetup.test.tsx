@@ -6,8 +6,8 @@ import {
   type TrainingSetupDraft,
 } from "@/components/training/pilot/TrainingTodaySetup";
 import type { TrainingSetupsDocument, TrainingSetupsSnapshot } from "@/lib/training/setups/model";
-const { availabilityRequests } = vi.hoisted(() => ({ availabilityRequests: vi.fn() }));
-vi.mock("@/lib/training/availability/useTrainingAvailability",()=>({useTrainingAvailability:(input: { enabled: boolean })=>{availabilityRequests(input);return {status:"ready",value:{dueToday:8,totalReviews:120,newCards:20,studyDay:"2026-10-03",timezone:"Europe/Amsterdam",asOf:"2026-10-03T10:00:00Z"},refreshing:false,refreshFailed:false,reload:vi.fn()};}}));
+const { availabilityRequests, availabilityCounts } = vi.hoisted(() => ({ availabilityRequests: vi.fn(), availabilityCounts: {dueToday:8,totalReviews:120,newCards:20} }));
+vi.mock("@/lib/training/availability/useTrainingAvailability",()=>({useTrainingAvailability:(input: { enabled: boolean })=>{availabilityRequests(input);return {status:"ready",value:{...availabilityCounts,studyDay:"2026-10-03",timezone:"Europe/Amsterdam",asOf:"2026-10-03T10:00:00Z"},refreshing:false,refreshFailed:false,reload:vi.fn()};}}));
 const { accounts } = vi.hoisted(() => ({ accounts: new Map<string, TrainingSetupsSnapshot>() }));
 vi.mock("@/lib/training/setups/client", () => ({
   fetchAccountTrainingSetups: async (userId: string) => accounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } },
@@ -23,7 +23,7 @@ const dialogPrototype=HTMLDialogElement.prototype;
 const showModalDescriptor=Object.getOwnPropertyDescriptor(dialogPrototype,"showModal"),closeDescriptor=Object.getOwnPropertyDescriptor(dialogPrototype,"close");
 beforeAll(()=>{Object.defineProperties(dialogPrototype,{showModal:{configurable:true,value(){this.setAttribute("open","");}},close:{configurable:true,value(){this.removeAttribute("open");}}});});
 afterAll(()=>{if(showModalDescriptor)Object.defineProperty(dialogPrototype,"showModal",showModalDescriptor);else Reflect.deleteProperty(dialogPrototype,"showModal");if(closeDescriptor)Object.defineProperty(dialogPrototype,"close",closeDescriptor);else Reflect.deleteProperty(dialogPrototype,"close");});
-beforeEach(() => {accounts.clear();availabilityRequests.mockClear();vi.stubGlobal("matchMedia",vi.fn(()=>({matches:true,addEventListener:vi.fn(),removeEventListener:vi.fn()})));});
+beforeEach(() => {HTMLElement.prototype.scrollIntoView=vi.fn();accounts.clear();Object.assign(availabilityCounts,{dueToday:8,totalReviews:120,newCards:20});availabilityRequests.mockClear();vi.stubGlobal("matchMedia",vi.fn(()=>({matches:true,addEventListener:vi.fn(),removeEventListener:vi.fn()})));});
 const seedAccount = (userId: string, trainings: unknown[]) => accounts.set(userId, { revision: 0, document: { schemaVersion: 1, trainings: trainings.map((item: any) => ({ ...item, languageCode: "nl" })), mainTrainingId: null } });
 
 const initialDraft: TrainingSetupDraft = {
@@ -738,4 +738,44 @@ test("failed startup retry keeps one branded waiting surface until ready", async
   view.rerender(<TrainingTodaySetup {...baseProps} userId="retry-surface" />);
   await screen.findByRole("button", {name: "Create training"});
   expect(screen.queryByTestId("startup-logo-screen")).not.toBeInTheDocument();
+});
+
+
+test("Include new opens Session, preserves saved settings until explicit save, and starts corrected recipe",async()=>{
+ Object.assign(availabilityCounts,{dueToday:0,totalReviews:0,newCards:109});
+ const reviewDraft={...initialDraft,cardFilter:"review" as const,sessionSize:"all-due-today" as const};
+ seedAccount("empty-review",[{id:"empty",name:"Practice",draft:reviewDraft}]);
+ const onStart=vi.fn(async()=>true);
+ render(<TrainingTodaySetup {...baseProps} userId="empty-review" trainingLanguageCode="nl" onStart={onStart}/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Include new cards"}));
+ await screen.findByRole("heading",{name:"Session builder"});
+ expect(screen.getByRole("button",{name:/^Session /})).toHaveAttribute("aria-expanded","true");
+ expect(screen.getByRole("slider",{name:"Session size"})).toHaveValue("6");
+ expect(screen.getByLabelText("Available cards")).toHaveTextContent("109");
+ fireEvent.click(screen.getByRole("button",{name:"Include new cards"}));
+ expect(onStart).not.toHaveBeenCalled();
+ expect(accounts.get("empty-review")!.document.trainings[0].draft.cardFilter).toBe("review");
+ fireEvent.change(screen.getByRole("slider",{name:"Session size"}),{target:{value:"1"}});
+ fireEvent.change(screen.getByRole("slider",{name:"New / review balance"}),{target:{value:"3"}});
+ fireEvent.click(screen.getByRole("button",{name:"Save changes"}));
+ await waitFor(()=>expect(accounts.get("empty-review")!.document.trainings[0].draft).toMatchObject({sessionSize:10,cardFilter:"both"}));
+ fireEvent.click(screen.getByRole("button",{name:"Back to Training"}));
+ fireEvent.click(await screen.findByRole("button",{name:"Start training"}));
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(expect.objectContaining({sessionSize:10,cardFilter:"both"}),"Practice",{trainingId:"empty"}));
+});
+test("empty builder disables Start without suggesting nonexistent new cards",async()=>{
+ Object.assign(availabilityCounts,{dueToday:0,totalReviews:0,newCards:0});
+ render(<TrainingTodaySetup {...baseProps} userId="empty-both" trainingLanguageCode="nl"/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Create training"}));
+ expect(screen.getByRole("button",{name:"Start training"})).toBeDisabled();
+ expect(screen.getByText(/No cards match the selected settings/)).toBeVisible();
+ expect(screen.queryByRole("button",{name:"Include new cards"})).toBeNull();
+});
+
+
+test("unsaved current setup also opens Session for the new-card restriction",async()=>{
+ Object.assign(availabilityCounts,{dueToday:0,totalReviews:0,newCards:9});
+ render(<TrainingTodaySetup {...baseProps} initialDraft={{...initialDraft,cardFilter:"review",sessionSize:"all-due-today"}} userId="unsaved-empty" trainingLanguageCode="nl"/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Include new cards"}));
+ expect(await screen.findByRole("button",{name:/^Session /})).toHaveAttribute("aria-expanded","true");
 });

@@ -1,4 +1,5 @@
 "use client";
+import {canonicalDraft as canonicalEmptyTrainingDraft} from "@/lib/training/setups/model";
 import { useUserEventHints } from "@/lib/events/userEventHints";
 import { publishPlatformV2CardStateChanged } from "@/lib/platform/platformV2CardStateChanges";
 import {CardTranslationLanguagesProvider} from "@/components/practice/article/AdditionalCardTranslation";
@@ -305,7 +306,7 @@ function TrainingScreenContent({
   const sessionAuthorityGenerationRef = useRef(0);
   const trainingSessionIdRef = useRef<string | null>(null);
   const [sessionTrainingId, setSessionTrainingId] = useState<string | undefined>();
-  const [emptyTraining,setEmptyTraining]=useState<{trainingId:string;message:string;canReviewAhead?:boolean}|undefined>();
+  const [emptyTraining,setEmptyTraining]=useState<{trainingId:string;message:string;canReviewAhead?:boolean;draftKey?:string}|undefined>();
   const completionDraftRef = useRef<TrainingSetupDraft | null>(null);
   const replaceTrainingSessionId = useCallback((sessionId: string | null) => {
     sessionAuthorityGenerationRef.current += 1;
@@ -1409,7 +1410,7 @@ function TrainingScreenContent({
     onEmptyPlan: (draft,options) => {
       setIdiomSession(null);setSentenceSession(null);replaceTrainingSessionId(null);setLatchedSessionPlan(null);setCurrentWord(null);setSessionPlannedTotal(null);setSessionCompletedActions(0);
       if(user?.id)void clearTrainingSessionResume(user.id);
-      if(options?.trainingId)setEmptyTraining({trainingId:options.trainingId,canReviewAhead:draft.cardFilter==="review"&&!options.reviewTiming,message:options.reviewTiming?{en:"No review cards match this training.",nl:"Geen herhalingskaarten passen bij deze training.",ru:"Нет подходящих изучаемых карточек для этой тренировки."}[onboardingLang]:draft.cardFilter==="review"?{en:"No cards are due for review now.",nl:"Er hoeven nu geen kaarten herhaald te worden.",ru:"Сейчас нет карточек для повторения."}[onboardingLang]:{en:"No cards match this training.",nl:"Geen kaarten passen bij deze training.",ru:"Нет подходящих карточек для этой тренировки."}[onboardingLang]});
+      if(options?.trainingId)setEmptyTraining({draftKey:JSON.stringify([currentTrainingLanguage,canonicalEmptyTrainingDraft(draft)]),trainingId:options.trainingId,canReviewAhead:draft.cardFilter==="review"&&!options.reviewTiming,message:options.reviewTiming?{en:"No review cards match this training.",nl:"Geen herhalingskaarten passen bij deze training.",ru:"Нет подходящих изучаемых карточек для этой тренировки."}[onboardingLang]:draft.cardFilter==="review"?{en:"No cards are due for review now.",nl:"Er hoeven nu geen kaarten herhaald te worden.",ru:"Сейчас нет карточек для повторения."}[onboardingLang]:{en:"No cards match this training.",nl:"Geen kaarten passen bij deze training.",ru:"Нет подходящих карточек для этой тренировки."}[onboardingLang]});
     },
     onPlanReady: (plan) => {
       setSessionConsumedCardKeys([]);

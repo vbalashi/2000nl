@@ -1,5 +1,6 @@
 "use client";
 import {useAccountMaterial} from "@/components/practice/material/AccountMaterialProvider";
+import {trainingEmptyState} from "@/lib/training/availability/emptyState";
 import {useTrainingAvailability} from "@/lib/training/availability/useTrainingAvailability";
 import { useNewTrainingMaterial } from "@/components/practice/material/useNewTrainingMaterial";
 
@@ -67,7 +68,7 @@ const familyForDraft = (draft: Pick<TrainingSetupDraft, "family">): TrainingExer
   draft.family ?? "meaning";
 
 type Props = {
-  emptyTraining?:{trainingId:string;message:string;canReviewAhead?:boolean};
+  emptyTraining?:{trainingId:string;message:string;canReviewAhead?:boolean;draftKey?:string};
   userId?: string;
   trainingLanguageCode?: string;
   trainingLanguageOptions?: TrainingSetupOption[];
@@ -233,6 +234,7 @@ export function TrainingTodaySetup({
       {material.status === "error" && <button type="button" onClick={material.reload}>{materialCopy.retry}</button>}
     </p>;
   const t = copy[interfaceLanguage];
+  const [editorSection,setEditorSection]=useState<"session"|undefined>();
   const [screen, setScreen] = useState<"today" | "setup">(initialView);
   const [failedStart, setFailedStart] = useState<{
     draft: TrainingSetupDraft;
@@ -265,9 +267,9 @@ export function TrainingTodaySetup({
   }, [failedStart, failedStartContextMatches]);
   const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
   const accountMaterial = useAccountMaterial();
-  const availabilityRecipe = selectedTraining ?? (!account.snapshot.document.trainings.length ? {languageCode:trainingLanguageCode??"nl",draft:initialDraft} : null);
+  const availabilityRecipe = screen === "setup" ? {languageCode:trainingLanguageCode??"nl",draft} : selectedTraining ?? (!account.snapshot.document.trainings.length ? {languageCode:trainingLanguageCode??"nl",draft:initialDraft} : null);
   const availabilityResult = useTrainingAvailability({ownerId:userId??null,recipe:availabilityRecipe,
-    enabled:screen === "today" && !startPending && account.status === "ready" && material.status === "ready" &&
+    enabled:!startPending && account.status === "ready" && material.status === "ready" &&
       Boolean(availabilityRecipe && availabilityRecipe.languageCode === trainingLanguageCode && !pendingLanguage && !isTrainingSetupPaused(availabilityRecipe.draft)),
     refresh:JSON.stringify([account.snapshot.revision,accountMaterial?.snapshot?.revision,ownedSession?.id,ownedSession?.completed,stats.reviewCardsDone,stats.newCardsToday,translationTargetLanguageCode])});
   const availability = availabilityRecipe ? {trainingId:selectedTrainingId??"current-setup",status:availabilityResult.status === "ready"?"ready" as const:availabilityResult.status === "error"?"error" as const:"loading" as const,
@@ -278,7 +280,7 @@ export function TrainingTodaySetup({
   const editingTraining = presets.find(item => item.id === editingPresetId);
   const [trainingName, setTrainingName] = useState<string|null>(null);
   const [presetMessage, setPresetMessage] = useState("");
-  const [selectedIntent, setSelectedIntent] = useState<{id:string;userId:string|undefined;language:string;action:"edit"|"load"|"launch"}|null>(null);
+  const [selectedIntent, setSelectedIntent] = useState<{id:string;userId:string|undefined;language:string;action:"edit"|"edit-session"|"load"|"launch"}|null>(null);
 
 
   const editorOwner=useRef(userId);
@@ -347,6 +349,7 @@ export function TrainingTodaySetup({
           .join(", ") || t.materialUnavailable
       : lists.find((option) => option.value === draft.listValue)?.label;
   const openSetup = () => {
+    setEditorSection(undefined);
     setSelectedIntent(null);
     setTrainingName(null);
     setEditingPresetId(null);
@@ -412,7 +415,8 @@ export function TrainingTodaySetup({
     const selected = account.snapshot.document.trainings.find(item => item.id === selectedIntent.id && item.languageCode === trainingLanguageCode);
     setSelectedIntent(null);
     if (!selected) { setPresetMessage(accountCopy.conflict); return; }
-    if (selectedIntent.action === "edit") {
+    if (selectedIntent.action === "edit" || selectedIntent.action === "edit-session") {
+      setEditorSection(selectedIntent.action === "edit-session" ? "session" : undefined);
       setDraft({...selected.draft,sessionSize:selected.draft.sessionSize??DEFAULT_SESSION_SIZE});
       setTrainingName(selected.name);
       setEditingPresetId(selected.id); setPresetMessage(""); setScreen("setup");
@@ -472,7 +476,7 @@ export function TrainingTodaySetup({
       launchPending={startPending} pending={startPending||scenarioLoading||Boolean(selectedIntent)} ready={!startBlocked&&!trainingLanguageLoading}
       continueDisabled={continueDisabled} materialUnavailable={t.materialUnavailable} partialMaterialNotice={t.partialDictionaryAccess} setupUnavailable={t.chooseGoal}
       translationUnavailable={t.contextLanguageNeeded} translationLanguage={translationTargetLanguageCode}
-      onCreate={openSetup} onDefaultLaunch={()=>void requestStart(initialDraft)} onContinue={onContinue}
+      onCreate={openSetup} onEditCurrentSession={()=>{openSetup();setEditorSection("session");}} onDefaultLaunch={()=>void requestStart(initialDraft)} onContinue={onContinue}
       onRetry={()=>void account.reload()} onSelect={(training,action)=>{
         if (!(action === "launch" ? trainingLanguageOptions : readableLanguageOptions).some(option=>option.value===training.languageCode)) { setPresetMessage(t.materialUnavailable); return; }
         if(action==="load" || action==="launch") {
@@ -542,7 +546,11 @@ export function TrainingTodaySetup({
       };
     });
 
+  const draftEmpty=availabilityResult.status === "ready" ? trainingEmptyState(interfaceLanguage,draft.cardFilter,{
+    dueToday:availabilityResult.value.dueToday,totalReviews:availabilityResult.value.totalReviews,stillNew:availabilityResult.value.newCards,
+  }) : null;
   return <TrainingScreenTransition screen="setup"><ApprovedTrainingBuilder
+    initialSection={editorSection} emptyState={draftEmpty} availability={availability}
     interfaceLanguage={interfaceLanguage} draft={draft} languageCode={trainingLanguageCode??"nl"} languageOptions={trainingLanguageOptions}
     lists={lists} dictionaries={dictionaries} sources={sources} scenarios={scenarios}
     languagePending={trainingLanguageLoading||Boolean(pendingLanguage)||startPending} dictionariesLoading={dictionariesLoading} translationLanguage={translationTargetLanguageCode}

@@ -326,7 +326,7 @@
       "today": "Vandaag",
       "yesterday": "Gisteren",
       "daysAgo": "Dagen geleden",
-      "allDueToday": "Alles wat moet",
+      "allDueToday": "Alle herhalingen die nu klaarstaan",
       "allDueHelp": "Dit schakelt over naar alleen herhalingen; nieuwe kaarten tellen niet mee.",
       "mixHelp": "Streepritme; de verhouding hangt af van beschikbare kaarten."
     },
@@ -351,6 +351,15 @@
       "history": "Geschiedenis"
     },
     "trainingOverview": {
+      "availableCards": "Beschikbare kaarten",
+      "includeNewHint": "Niets te herhalen. Kies een vast aantal en neem nieuwe kaarten op in de verhouding.",
+      "emptySelection": "Geen kaarten passen bij deze instellingen.",
+      "noNewSelection": "Geen nieuwe kaarten passen bij deze instellingen.",
+      "nothingDue": "Er is nu niets te herhalen.",
+      "reviewsOnlyNew": "Alleen herhalingen zijn geselecteerd. Beschikbare nieuwe kaarten: {count}.",
+      "noMatchingCards": "Er passen geen kaarten bij deze training. Voeg materiaal toe of pas de bron, oefeningen of filters aan.",
+      "noNewCards": "Er passen geen nieuwe kaarten bij deze training. Kies ook herhalingen of pas de bron, oefeningen of filters aan.",
+      "includeNew": "Nieuwe kaarten opnemen",
       "editTraining": "Training aanpassen",
       "dueToday": "Nu te herhalen",
       "totalReviews": "In herhaling",

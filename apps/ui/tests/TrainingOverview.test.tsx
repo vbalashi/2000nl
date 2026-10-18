@@ -45,7 +45,7 @@ test('empty due-only hero replaces Start with early review before Adjust',()=>{
  render(<TrainingOverview state={{status:'ready',trainings:items,mainId:'a',emptyTraining:{trainingId:'a',message:'No cards are due for review now.',canReviewAhead:true}}} onEarlyReview={onEarlyReview} onLaunch={onLaunch} onResume={vi.fn()} onEdit={vi.fn()} onCreate={vi.fn()} onRetry={vi.fn()}/>);
  expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();
  const action=screen.getByRole('button',{name:'Review ahead'});
- expect(screen.getByRole('status').compareDocumentPosition(action)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ expect(action.parentElement).toContainElement(screen.getByRole('status'));
  fireEvent.click(action);expect(onEarlyReview).toHaveBeenCalledWith('a');expect(onLaunch).not.toHaveBeenCalled();
  expect(screen.getByRole('button',{name:'Load Words'})).toBeEnabled();
 });
@@ -63,11 +63,11 @@ test('stale availability from another selection is never shown',()=>{setup({stat
 test('all100recipes remain selectable in an independent list',()=>{const all=Array.from({length:100},(_,i)=>({...items[0],id:`saved-${i}`,name:`Saved ${i}`}));setup({status:'ready',trainings:all,mainId:'saved-0'});expect(screen.getAllByRole('button',{name:/^Load Saved /})).toHaveLength(100);expect(screen.getByRole('region',{name:'Saved Trainings'})).toBeVisible();});
 test('no saved recipes shows short create guidance, not fake rows',()=>{setup({status:'ready',trainings:[{...items[0],saved:false}],mainId:'a'});expect(screen.getByText(/No saved trainings yet/)).toBeVisible();expect(screen.queryByRole('button',{name:/^Load /})).toBeNull();});
 
-test('ready zero-due reviews offer early review without an expanding empty paragraph',()=>{const early=vi.fn();render(<TrainingOverview state={{status:'ready',trainings:[{...items[0],cardFilter:'review'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:12,stillNew:3}}} onEarlyReview={early} onLaunch={vi.fn()} onResume={vi.fn()} onEdit={vi.fn()} onCreate={vi.fn()} onRetry={vi.fn()}/>);fireEvent.click(screen.getByRole('button',{name:'Review ahead'}));expect(early).toHaveBeenCalledWith('a');expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();expect(screen.queryByRole('status')).toBeNull();});
-test('no eligible reviews offer editing rather than an empty start',()=>{setup({status:'ready',trainings:[{...items[0],cardFilter:'review'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:0,stillNew:3}});expect(screen.getByRole('button',{name:'Edit training'})).toBeEnabled();expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();});
+test('ready zero-due reviews offer early review without an expanding empty paragraph',()=>{const early=vi.fn();render(<TrainingOverview state={{status:'ready',trainings:[{...items[0],cardFilter:'review'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:12,stillNew:3}}} onEarlyReview={early} onLaunch={vi.fn()} onResume={vi.fn()} onEdit={vi.fn()} onCreate={vi.fn()} onRetry={vi.fn()}/>);fireEvent.click(screen.getByRole('button',{name:'Review ahead'}));expect(early).toHaveBeenCalledWith('a');expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();expect(screen.getByRole('status')).toHaveTextContent('Nothing to review right now.');});
+test('no eligible reviews offer editing rather than an empty start',()=>{setup({status:'ready',trainings:[{...items[0],cardFilter:'review'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:0,stillNew:3}});expect(screen.getByRole('button',{name:'Include new cards'})).toBeEnabled();expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();});
 test('new-only selection ignores review availability when deciding whether to start',()=>{setup({status:'ready',trainings:[{...items[0],cardFilter:'new'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:12,stillNew:3}});expect(screen.getByRole('button',{name:'Start training'})).toBeEnabled();expect(screen.queryByRole('button',{name:'Review ahead'})).toBeNull();});
 
-test('authoritative empty plan overrides stale positive availability without expanding hero',()=>{render(<TrainingOverview state={{status:'ready',trainings:[{...items[0],cardFilter:'review'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:4,totalReviews:12,stillNew:3},emptyTraining:{trainingId:'a',message:'No cards due now.',canReviewAhead:true}}} onEarlyReview={vi.fn()} onLaunch={vi.fn()} onResume={vi.fn()} onEdit={vi.fn()} onCreate={vi.fn()} onRetry={vi.fn()}/>);expect(screen.getByRole('button',{name:'Review ahead'})).toBeEnabled();expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();expect(screen.queryByText('No cards due now.')).toBeNull();});
+test('authoritative empty plan overrides stale positive availability without expanding hero',()=>{render(<TrainingOverview state={{status:'ready',trainings:[{...items[0],cardFilter:'review'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:4,totalReviews:12,stillNew:3},emptyTraining:{trainingId:'a',message:'No cards due now.',canReviewAhead:true}}} onEarlyReview={vi.fn()} onLaunch={vi.fn()} onResume={vi.fn()} onEdit={vi.fn()} onCreate={vi.fn()} onRetry={vi.fn()}/>);expect(screen.getByRole('button',{name:'Review ahead'})).toBeEnabled();expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();expect(screen.getByRole('status')).toHaveTextContent('No cards due now.');});
 
 test('resumed hero retains accepted session metadata while Saved shows edited recipe',()=>{setup({status:'ready',trainings:[{...items[0],name:'Edited recipe',description:'Words · Reverse'}],mainId:'a',resume:{sessionId:'accepted',trainingId:'a',completed:1,total:5,training:{...items[0],name:'Accepted session',description:'Words · Direct'}}});expect(screen.getByRole('heading',{name:'Accepted session',level:2})).toBeVisible();expect(screen.getByRole('heading',{name:'Edited recipe',level:3})).toBeVisible();expect(screen.getByText('Words · Direct')).toBeVisible();});
 
@@ -114,4 +114,39 @@ test('launch holds the start hero; returning shows accepted progress',()=>{
  view.rerender(<TrainingOverview state={{...accepted,resume:{...accepted.resume!,completed:2}}} {...callbacks}/>);
  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow','2');
  expect(screen.queryByRole('button',{name:'Start training'})).toBeNull();
+});
+
+test('reviews-only with new material explains the restriction and opens Session',()=>{
+ const c=setup({status:'ready',trainings:[{...items[0],cardFilter:'review'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:0,stillNew:109}});
+ expect(screen.getByRole('status')).toHaveTextContent('Only reviews are selected. New cards available: 109.');
+ fireEvent.click(screen.getByRole('button',{name:'Include new cards'}));
+ expect(c.onEdit).toHaveBeenCalledWith('a','session');
+ expect(c.onLaunch).not.toHaveBeenCalled();
+});
+test('zero material does not suggest including unavailable new cards',()=>{
+ setup({status:'ready',trainings:[{...items[0],cardFilter:'both'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:0,stillNew:0}});
+ expect(screen.getByRole('status')).toHaveTextContent('No cards match this training.');
+ expect(screen.queryByRole('button',{name:'Include new cards'})).toBeNull();
+ expect(screen.getByRole('button',{name:'Edit training'})).toBeEnabled();
+});
+
+
+test('an empty launch result stays visible even after positive counts settle',()=>{
+ setup({status:'ready',trainings:[{...items[0],cardFilter:'both'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:2,totalReviews:12,stillNew:3},emptyTraining:{trainingId:'a',message:'No cards match this training.',canReviewAhead:false}});
+ expect(screen.getByRole('status')).toHaveTextContent('No cards match this training.');
+ expect(screen.getByRole('button',{name:'Edit training'})).toBeEnabled();
+});
+test('an empty result for the old draft cannot block a saved correction',()=>{
+ setup({status:'ready',trainings:[{...items[0],cardFilter:'both',draftKey:'corrected'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:0,stillNew:109},emptyTraining:{trainingId:'a',draftKey:'old',message:'Old empty result',canReviewAhead:true}});
+ expect(screen.getByRole('button',{name:'Start training'})).toBeEnabled();
+ expect(screen.queryByText('Old empty result')).toBeNull();
+});
+
+
+test('failed availability cannot hide authoritative empty guidance or its edit action',()=>{
+ const c=setup({status:'ready',trainings:items,mainId:'a',availability:{trainingId:'a',status:'error',dueToday:null,totalReviews:null,stillNew:null},emptyTraining:{trainingId:'a',message:'No matching cards after start.',canReviewAhead:false}});
+ expect(screen.getByText('No matching cards after start.')).toBeVisible();
+ fireEvent.click(screen.getByRole('button',{name:'Edit training'}));
+ expect(c.onEdit).toHaveBeenCalledWith('a');
+ expect(c.onLaunch).not.toHaveBeenCalled();
 });

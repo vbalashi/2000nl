@@ -68,3 +68,14 @@ test('unsaved indicator is accessible and clears when parent reports the saved b
  view.rerender(<ApprovedTrainingBuilder {...p} hasUnsavedChanges={false}/>);
  expect(screen.queryByRole('status',{name:'Unsaved changes'})).not.toBeInTheDocument();
 });
+
+test('Session retains count slots during loading and offers start when counts fail',()=>{
+ const p=props();const view=render(<ApprovedTrainingBuilder {...p} availability={{status:'loading',dueToday:null,totalReviews:null,stillNew:null}}/>);
+ const counts=screen.getByLabelText('Available cards');
+ expect(counts).toHaveAttribute('aria-busy','true');
+ expect(within(counts).getAllByText('—')).toHaveLength(3);
+ view.rerender(<ApprovedTrainingBuilder {...p} availability={{status:'error',dueToday:null,totalReviews:null,stillNew:null}}/>);
+ expect(screen.getByText('Could not load card counts.')).toBeVisible();
+ expect(screen.getByRole('button',{name:'Start training'})).toBeEnabled();
+ expect(within(screen.getByLabelText('Available cards')).queryByText('0')).toBeNull();
+});
