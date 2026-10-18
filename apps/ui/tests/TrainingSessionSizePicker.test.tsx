@@ -91,11 +91,11 @@ test("approved slider never inserts a paragraph when reaching the last stop",()=
 });
 
 
-test("approved size scale labels every stop, including 40 and infinity",()=>{
- render(<TrainingSessionSizePicker {...labels} approved value={40} onChange={vi.fn()}/>);
+test("approved size scale labels every stop, including 40 and all available cards",()=>{
+ render(<TrainingSessionSizePicker {...labels} approved allAvailableTick="All" value={40} onChange={vi.fn()}/>);
  expect(screen.getByRole("slider",{name:"Session size"})).toHaveValue("4");
  expect(screen.getByText("40")).toBeVisible();
- expect(screen.getByText("∞")).toBeVisible();
+ expect(screen.getByText("All")).toBeVisible();
 });
 test("a saved 15 remains a selectable numeric value",()=>{
  const onChange=vi.fn();render(<ControlledPicker initialValue={15} onChange={onChange}/>);

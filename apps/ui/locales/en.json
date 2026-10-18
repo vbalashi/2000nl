@@ -326,8 +326,8 @@
       "today": "Today",
       "yesterday": "Yesterday",
       "daysAgo": "Days ago",
-      "allDueToday": "Unlimited",
-      "allDueHelp": "Selecting this switches the mix to Reviews only; new cards are not included.",
+      "allDueToday": "All available cards",
+      "allDueHelp": "The selected mix determines which cards are included. The session ends after one pass.",
       "mixHelp": "Target rhythm; the actual mix depends on available cards."
     },
     "accountTrainingSetups": {
@@ -373,7 +373,7 @@
       "pausedSentenceLabel": "Sentence translation (paused)",
       "sentencePaused": "Sentence translation is paused. Choose another exercise to start a new session.",
       "allDictionaries": "All accessible dictionaries",
-      "allDue": "All due",
+      "allDue": "All available cards",
       "loading": "Loading training…",
       "retry": "Try again",
       "currentTraining": "Current training",

@@ -546,10 +546,6 @@ export function TrainingTodaySetup({
       return {
         ...current,
         ...selection,
-        sessionSize:
-          selection.cardFilter !== "review" && current.sessionSize === "all-due-today"
-            ? DEFAULT_SESSION_SIZE
-            : current.sessionSize,
       };
     });
 

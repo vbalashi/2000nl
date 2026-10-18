@@ -143,18 +143,18 @@ test("an existing one-to-four mix remains representable and is sent to Start", a
   expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ newReviewRatio: 4 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
 });
 
-test("all due is reviews only, and changing the mix returns to a finite session", async () => {
+test("all available cards preserves the mix, and changing the mix preserves all available size", async () => {
   const onStart = vi.fn();
   render(<TrainingTodaySetup {...baseProps} userId="all-due" trainingLanguageCode="nl" onStart={onStart} />);
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Session / }));
   fireEvent.change(screen.getByRole("slider", { name: "Session size" }), { target: { value: "6" } });
   await calculateAndStart();
-  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "review", sessionSize: "all-due-today" }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", sessionSize: "all-due-today" }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
   await reopenCalculatedTraining();
   fireEvent.change(screen.getByRole("slider", { name: "New / review balance" }), { target: { value: "4" } });
   await calculateAndStart();
-  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", sessionSize: 10 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", sessionSize: "all-due-today" }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
 });
 
 test("a blocked start leaves the builder usable and never launches", async () => {

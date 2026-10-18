@@ -41,9 +41,14 @@ vi.mock("@/lib/preferences/cardSpacingRepository", () => ({
 vi.mock("@/lib/training/availability/useTrainingAvailability", () => ({
   useTrainingAvailability: () => ({ status: "ready", value: { dueToday: 8, totalReviews: 120, newCards: 20, studyDay: "2026-10-18", timezone: "Europe/Amsterdam", asOf: "2026-10-18T20:00:00Z" }, refreshing: false, refreshFailed: false, reload: vi.fn() }),
 }));
+const { savedSetupAccounts } = vi.hoisted(() => ({ savedSetupAccounts: new Map<string, { revision: number; document: unknown }>() }));
 vi.mock("@/lib/training/setups/client", () => ({
-  fetchAccountTrainingSetups: vi.fn().mockResolvedValue({ revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } }),
-  saveAccountTrainingSetups: vi.fn(async (_userId, revision, document) => ({ kind: "saved", snapshot: { revision: revision + 1, document } })),
+  fetchAccountTrainingSetups: vi.fn(async (userId: string) => savedSetupAccounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } }),
+  saveAccountTrainingSetups: vi.fn(async (userId: string, revision: number, document: unknown) => {
+    const snapshot = { revision: revision + 1, document };
+    savedSetupAccounts.set(userId, snapshot);
+    return { kind: "saved", snapshot };
+  }),
 }));
 vi.mock("@/lib/training/material/client", () => ({
   fetchAccountMaterialPreferences: vi.fn().mockResolvedValue({ revision: 0, document: { schemaVersion: 1, learningLanguages: [], disabledDictionaryIds: [] } }),
@@ -860,6 +865,7 @@ class DeterministicBrowserLocks {
 }
 
 beforeEach(() => {
+  savedSetupAccounts.clear();
   vi.clearAllMocks();
   libraryLearning.clear();
   performLibraryAction.mockReset().mockImplementation(async capability => {
@@ -2788,7 +2794,7 @@ test("superseded resume restores every still-permitted setup setting before Star
     "true",
   );
   expect(screen.getByRole("button", { name: /Source My saved words/ })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /Session ∞ · Reviews only/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Session All available cards · Reviews only/ })).toBeInTheDocument();
 
   updateActiveTrainingScope.mockClear();
   startTrainingSession.mockClear();

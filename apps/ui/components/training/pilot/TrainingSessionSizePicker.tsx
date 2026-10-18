@@ -30,6 +30,7 @@ export function TrainingSessionSizePicker({
   exercisesLabel,
   allDueLabel,
   allDueHelp,
+  allAvailableTick = allDueLabel,
   allowAllDueToday = true,
 }: {
   approved?:boolean;
@@ -39,6 +40,7 @@ export function TrainingSessionSizePicker({
   exercisesLabel: (count: number) => string;
   allDueLabel: string;
   allDueHelp: string;
+  allAvailableTick?: string;
   allowAllDueToday?: boolean;
 }) {
   // Preserve older saved sizes as explicit stops without changing their meaning.
@@ -78,7 +80,7 @@ export function TrainingSessionSizePicker({
         aria-valuetext={selectedLabel}
         className={approved?s.range:"mt-4 h-8 w-full cursor-pointer accent-indigo-500"}
       />
-      {approved?<div className={s.sizeTicks} aria-hidden="true">{steps.map((step,index)=><span key={step} style={{left:`${index/(steps.length-1)*100}%`}}>{step==="all-due-today"?"∞":step}</span>)}</div>:<>
+      {approved?<div className={s.sizeTicks} aria-hidden="true">{steps.map((step,index)=><span key={step} style={{left:`${index/(steps.length-1)*100}%`}}>{step==="all-due-today"?allAvailableTick:step}</span>)}</div>:<>
       <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
         {steps.map((step) => (
           <span key={step} className="w-7 text-center first:text-left last:w-auto last:text-right">

@@ -661,7 +661,7 @@ export function ApprovedTrainingBuilder(p: Props) {
             {section(
               "session",
               b.session,
-              <span className={s.sessionSummary}>{`${size === "all-due-today" ? "∞" : formatExerciseCount(p.interfaceLanguage, size)} · ${balance}`}</span>,
+              <span className={s.sessionSummary}>{`${size === "all-due-today" ? c.allDueToday : formatExerciseCount(p.interfaceLanguage, size)} · ${balance}`}</span>,
               <div className={s.sessionFields}>
                 <TrainingSessionSizePicker
                   approved
@@ -670,9 +670,6 @@ export function ApprovedTrainingBuilder(p: Props) {
                     p.onDraftChange((current) => ({
                       ...current,
                       sessionSize,
-                      ...(sessionSize === "all-due-today"
-                        ? { cardFilter: "review" as const }
-                        : {}),
                     }))
                   }
                   label={b.sessionSize}
@@ -680,6 +677,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                     formatExerciseCount(p.interfaceLanguage, count)
                   }
                   allDueLabel={c.allDueToday}
+                  allAvailableTick={{en:"All",nl:"Alle",ru:"Все"}[p.interfaceLanguage]}
                   allDueHelp={c.allDueHelp}
                   allowAllDueToday={family === "meaning"}
                 />
