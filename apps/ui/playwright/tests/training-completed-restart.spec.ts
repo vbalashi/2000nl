@@ -79,7 +79,7 @@ for (const action of ["restart", "edit"] as const) test(`@pilot finite completio
   if (action === "edit") {
     await page.getByRole("button", {name: /Modify training|Изменить тренировку|Training aanpassen/i}).click();
     await expect(page.getByRole("heading", {name: /Session builder|Настройка тренировки|Training samenstellen/i})).toBeVisible();
-    await expect(page.getByRole("button", {name: /^(Start training|Начать тренировку|Training starten)$/i})).toBeVisible();
+    await expect(page.getByRole("button", {name: /^(Calculate training|Рассчитать тренировку|Training berekenen)$/i})).toBeVisible();
     expect(fixture.requests.sessionStarts).toHaveLength(1);
     return;
   }

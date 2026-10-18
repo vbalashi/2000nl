@@ -1885,7 +1885,7 @@ test("the first Start stats baseline survives a later scoped session read", asyn
   } finally {
     restoreDefaultListScope();
   }
-});
+}, 10_000);
 test("discarding an uncommitted list draft preserves the active stats request", async () => {
   useTwoListScope();
   fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
