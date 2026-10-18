@@ -598,3 +598,6 @@
 
 -- Opaque Connected Client credentials (release requires legacy retirement).
 \i db/migrations/229_connect_opaque_credentials.sql
+-- Ordinary stats projection follows the real Connect229 migration.
+-- Release remains held until the Connect legacy-credential closure gate clears.
+\i db/migrations/230_training_stats_totals_projection.sql
