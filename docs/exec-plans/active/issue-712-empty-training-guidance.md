@@ -16,7 +16,9 @@ Owner explicitly requested deployment, then confirmed finite sessions with separ
 
 Local Supabase on 3100, contract 228. Browser confirmed mixed all-available keeps the mix, calculates 0/0/1 and offers separate Start. No personal production progress or grading. Evidence: `/tmp/2000nl-712-qa/all-available-cards.png`.
 
-52 TrainingTodaySetup and 11 size-picker tests passed. Disposable local FSRS database: 377 tests in 42 files passed, including existing all-available new-card planning and early-review coverage. Typecheck passed. Screen navigation and hosted CI remain required before merge; checks must be green, no bypass.
+52 TrainingTodaySetup and 11 size-picker tests passed. Disposable local FSRS database: 377 tests in 42 files passed, including existing all-available new-card planning and early-review coverage. Typecheck passed. Full hosted unit run on fbf444f7: 2527 passed. Full browser run: 223 passed, 3 passed on retry, 4 skipped; one reproducible 320×568 home overflow failed. That overflow is fixed in the final short-phone spacing CSS. The exact desktop/mobile failing file passes locally (2/2), and the builder footer and completion/restart files pass (8/8). 320/390 manual geometry checks show less than 0.02px movement between finite/all-available sizes after reserving narrow summary height.
+
+The final followups only change responsive CSS, validated against the exact affected browser scenarios; no repeat of unrelated suites is needed for those CSS edits. Required branch checks (production dependency security and release-boundary) must pass on the merge head, without bypass. The automatic full workflow may continue in parallel; report its actual state rather than claiming a green workflow from scoped results.
 
 ## Lifecycle
 
