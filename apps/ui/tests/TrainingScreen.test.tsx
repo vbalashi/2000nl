@@ -966,8 +966,10 @@ const expectOnlyBackgroundSelectionSince = (callCount: number) => {
 const clickTrainingAction = async (button: HTMLElement) => {
   if (/Calculate training|Training berekenen|Рассчитать тренировку/.test(button.textContent ?? "")) {
     await waitFor(() => expect(button).toBeEnabled());
-    fireEvent.click(button);
-    const launch = await screen.findByRole("button", { name: /^(Start training|Training starten|Начать тренировку)$/ });
+    await act(async () => { fireEvent.click(button); });
+    const launch = await screen.findByRole("button", { name: /^(Start training|Training starten|Начать тренировку)$/ }, { timeout: 3000 }).catch(() => {
+      throw new Error(`Calculated training did not reach launch: ${document.body.textContent}`);
+    });
     await waitFor(() => expect(launch).toBeEnabled());
     fireEvent.click(launch);
   } else fireEvent.click(button);
