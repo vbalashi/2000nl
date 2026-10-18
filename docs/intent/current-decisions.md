@@ -296,3 +296,6 @@ HOLD.** Исторические native sessions/refresh descendants ещё тр
 ключа и reconnect не проверены. [Техническое предложение, локальные проверки и
 границы](../discussions/2026-10-17-10-connect-credential-boundary.md),
 [удержанный rollout](../runbooks/connect-credential-rollout.md).
+## Восстановление ожидающего sentence-перевода (2026-10-17)
+
+В #736 принято сохранять scoped pending-подписку во время фонового чтения и объединять конкурентные уведомления в одно последующее чтение. Initial join/reconnect reconciliation сохраняется; отдельный трёхсекундный опрос заменён существующим visibility-aware recovery (degraded раз в минуту, healthy раз в 15 минут). Подготовлено и проверено локально; review и выпуск отдельно. [Основание](../discussions/2026-10-17-11-sentence-recovery-bounds.md).

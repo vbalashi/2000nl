@@ -60,7 +60,6 @@ export function TrainingSentenceSession(props: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [failed, setFailed] = useState(false);
   const [translationPending, setTranslationPending] = useState(false);
-  const pendingSince = useRef<number | null>(null);
   const loadController = useRef<AbortController | null>(null);
   const [terminal, setTerminal] = useState<"complete" | "empty" | null>(session.plannedTotal === 0 ? "empty" : null);
   const eventId = useRef<string | null>(null);
@@ -73,13 +72,27 @@ export function TrainingSentenceSession(props: Props) {
   useLatchedTranslationBuffer({ ownerId: userId, sessionId: session.sessionId, generation: session.runGeneration, currentEntryId: candidate?.entryId, currentOrdinal: candidate?.ordinal, targetLanguageCode: translationTargetLanguageCode, additionalTargetLanguageCode: additionalTranslationLanguage, members: session.members });
   const stats = useTranslationTrainingStats(session.sessionId, completed);
 
-  const pendingEntryId = useRef<string|null>(null);
-  const loadNext = useCallback(async (force = false) => {
+  const pendingEntryId = useRef<string | null>(null);
+  const pendingScope = useRef<string | null>(null);
+  const recoveryScope = JSON.stringify([userId, session.sessionId, session.runGeneration, contentLanguageCode, translationTargetLanguageCode]);
+  const activeLoad = useRef<number | null>(null);
+  const recoveryRequested = useRef(false);
+  const loadNext = useCallback(async (force = false, recovery = false) => {
+    if (recovery && activeLoad.current !== null) {
+      recoveryRequested.current = true;
+      return;
+    }
+    recoveryRequested.current = false;
     loadController.current?.abort();
     const controller = new AbortController();
     loadController.current = controller;
     const current = ++generation.current;
-    setTranslationPending(false); setLoading(true); setFailed(false); setTerminal(null); setCandidate(null); setContent(null); setRevealed(false);
+    activeLoad.current = current;
+    let remainsPending = false;
+    if (!recovery) {
+      pendingEntryId.current = null; pendingScope.current = null; setTranslationPending(false);
+    }
+    setLoading(true); setFailed(false); setTerminal(null); setCandidate(null); setContent(null); setRevealed(false);
     try {
       for (let attempt = 0; attempt < 8; attempt++) {
         const next = await fetchNextPlatformV2TranslationTrainingSessionExercise(userId, session.sessionId);
@@ -87,10 +100,11 @@ export function TrainingSentenceSession(props: Props) {
         if (next.status === "ready") {
           const loaded = await loadSentenceExerciseContent({ candidate: next, contentLanguageCode, translationTargetLanguageCode, signal: controller.signal, force });
           if (current !== generation.current) return;
-          if (loaded.state === "ready") { pendingEntryId.current=null; pendingSince.current = null; setCandidate(next); setContent(loaded.content); return; }
+          if (loaded.state === "ready") { pendingEntryId.current=null; setCandidate(next); setContent(loaded.content); return; }
           if (loaded.state === "translation-pending") {
             pendingEntryId.current=next.entryId;
-            pendingSince.current ??= Date.now();
+            pendingScope.current = recoveryScope;
+            remainsPending = true;
             setTranslationPending(true); return;
           }
           if (loaded.state === "translation-unavailable") { setFailed(true); return; }
@@ -107,9 +121,20 @@ export function TrainingSentenceSession(props: Props) {
       }
       setFailed(true);
     } catch { if (current === generation.current) setFailed(true); }
-    finally { if (current === generation.current) setLoading(false); }
-  }, [userId, session.sessionId, contentLanguageCode, translationTargetLanguageCode, finish]);
-  useDictionaryTranslationRecovery({entryId:pendingEntryId.current,targetLanguageCode:translationTargetLanguageCode,enabled:translationPending&&!loading&&!submitting,refresh:()=>void loadNext()});
+    finally {
+      if (current === generation.current) {
+        activeLoad.current = null;
+        setLoading(false);
+        if (!remainsPending) {
+          pendingEntryId.current = null; pendingScope.current = null; setTranslationPending(false);
+        }
+        // A hint may arrive while the authoritative read is in flight. Retain
+        // one trailing read, without aborting that read or rejoining the topic.
+        if (remainsPending && recoveryRequested.current) void loadNext(false, true);
+      }
+    }
+  }, [userId, session.sessionId, contentLanguageCode, translationTargetLanguageCode, finish, recoveryScope]);
+  useDictionaryTranslationRecovery({entryId:pendingEntryId.current,targetLanguageCode:translationTargetLanguageCode,enabled:translationPending&&pendingScope.current===recoveryScope&&!submitting,refresh:()=>void loadNext(false, true)});
   useTrainingAnswerTranslationPreparation({entry:content?.entry??null,targetLanguageCode:translationTargetLanguageCode,paused:loading||submitting,
     refresh:async signal=>{
       if(!candidate)return null;
@@ -122,15 +147,8 @@ export function TrainingSentenceSession(props: Props) {
   useEffect(() => {
     const generationRef = generation;
     void loadNext();
-    return () => { generationRef.current++; loadController.current?.abort(); };
+    return () => { generationRef.current++; activeLoad.current = null; recoveryRequested.current = false; loadController.current?.abort(); };
   }, [loadNext]);
-
-  useEffect(() => {
-    if (!translationPending || Date.now() - (pendingSince.current ?? 0) >= 300_000) return;
-    const timer = setTimeout(() => { void loadNext(); }, 3_000);
-    return () => clearTimeout(timer);
-  }, [translationPending, loadNext]);
-
 
   const exclusion = useTrainingExclusion({ userId, onSessionSuperseded: onSessionSuperseded ?? onExit, identity: candidate?.targetKey ?? "none", sessionId: session.sessionId, target: { kind: "exercise", targetId: candidate?.targetId ?? "" }, onAccepted: async () => { accept(); await loadNext(); } });
   useRecordedStudyTime({ ownerId: userId, sessionId: session.sessionId, family: "sentence", entryId: candidate?.entryId, targetId: candidate?.targetId,
