@@ -82,3 +82,6 @@
 /* Two stable text lines keep the tracks in place across every slider value. */
 :global(.session-builder-standard) .labelRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;line-height:1.5;min-block-size:3em}
 :global(.session-builder-standard) .selection{line-height:1.5;overflow-wrap:anywhere}
+
+.sizeTicks{position:relative;height:1.5em;margin-inline:8px;font-size:var(--practice-text-label);line-height:1.5;color:var(--practice-text-muted)}
+.sizeTicks>span{position:absolute;transform:translateX(-50%);white-space:nowrap}

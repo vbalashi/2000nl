@@ -2780,7 +2780,7 @@ test("superseded resume restores every still-permitted setup setting before Star
     "true",
   );
   expect(screen.getByRole("button", { name: /Source My saved words/ })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /Session All due · Reviews only/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Session Unlimited · Reviews only/ })).toBeInTheDocument();
 
   updateActiveTrainingScope.mockClear();
   startTrainingSession.mockClear();

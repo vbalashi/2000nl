@@ -5,7 +5,7 @@ import s from "@/components/practice/builder/builderControls.module.css";
 import type { TrainingSessionSize } from "@/lib/types";
 
 const BASE_STEPS: TrainingSessionSize[] = [
-  5, 10, 15, 20, 30, 50, "all-due-today",
+  5, 10, 20, 30, 40, 50, "all-due-today",
 ];
 
 const nearestStepIndex = (steps: TrainingSessionSize[], value: number) => {
@@ -41,11 +41,11 @@ export function TrainingSessionSizePicker({
   allDueHelp: string;
   allowAllDueToday?: boolean;
 }) {
-  // Keep a saved 100-exercise choice selectable until the learner moves the
-  // slider. New selections use the shorter scale ending at All due.
+  // Preserve older saved sizes as explicit stops without changing their meaning.
   const finiteSteps = BASE_STEPS.filter((step) => allowAllDueToday || step !== "all-due-today");
-  const steps = value === 100
-    ? [...finiteSteps.filter((step) => step !== "all-due-today"), 100, ...(allowAllDueToday ? ["all-due-today" as const] : [])]
+  const savedSize = typeof value === "number" && !finiteSteps.includes(value);
+  const steps: TrainingSessionSize[] = savedSize
+    ? [...[...finiteSteps.filter((step):step is number => typeof step === "number"),value].sort((a,b)=>a-b),...(allowAllDueToday?["all-due-today" as const]:[])]
     : finiteSteps;
   const selectedIndex = value === "all-due-today"
     ? steps.length - 1
@@ -78,7 +78,7 @@ export function TrainingSessionSizePicker({
         aria-valuetext={selectedLabel}
         className={approved?s.range:"mt-4 h-8 w-full cursor-pointer accent-indigo-500"}
       />
-      {approved?<div className={s.ends}><span>{steps[0]}</span><span>{steps.at(-1)==="all-due-today"?allDueLabel:steps.at(-1)}</span></div>:<>
+      {approved?<div className={s.sizeTicks} aria-hidden="true">{steps.map((step,index)=><span key={step} style={{left:`${index/(steps.length-1)*100}%`}}>{step==="all-due-today"?"∞":step}</span>)}</div>:<>
       <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
         {steps.map((step) => (
           <span key={step} className="w-7 text-center first:text-left last:w-auto last:text-right">
