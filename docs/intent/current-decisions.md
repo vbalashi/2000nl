@@ -304,3 +304,13 @@ Known не исключает membership: коллекция хранит мат
 batch contracts, качество/ресурсы/время/стоимость измеряются. Планирование
 не разрешает production mutations или массовые paid runs.
 [Основание и план](../discussions/2026-10-18-03-external-youtube-pilot.md).
+
+
+## Разрешённый pilot: новая коллекция видео (2026-10-18)
+
+Владелец разрешил выполнить внешний pilot на author-provided NL captions и создать
+отдельную новую коллекцию в своём аккаунте; вложенные collections отложены.
+Выполнено246 existing exact memberships, подтверждено DB/UI; learning state и
+история не изменены. Это разрешение конкретного user operation, не rollout нового
+agent API/генерации/схемы.
+[Разрешение и результат](../discussions/2026-10-18-04-youtube-pilot-execution.md).

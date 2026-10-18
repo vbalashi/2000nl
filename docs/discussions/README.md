@@ -29,6 +29,8 @@
 
 ## Архив
 
+- [2026-10-18: выполнен внешний YouTube pilot](2026-10-18-04-youtube-pilot-execution.md) — owner разрешил отдельную новую коллекцию;246 targets verified, progress unchanged; app integration отдельно.
+
 - [2026-10-18: внешний YouTube pilot](2026-10-18-03-external-youtube-pilot.md) — #742/#747; staged измерения до интеграции, Known остаются в коллекции, structured extraction перед lookup.
 
 - [2026-10-18: значения, personal drafts и масштаб YouTube](2026-10-18-02-agent-import-resolution-and-scale.md) — уточнения #742; первое значение без контекста, перевод как смысловая подсказка, лёгкая генерация предложена, server jobs и измерения.
