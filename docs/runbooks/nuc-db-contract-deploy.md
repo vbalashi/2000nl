@@ -810,3 +810,22 @@ Rollback must retain forward DB227 objects/receipts. An application revert must
 also retain the 227 manifest and probes so exact health remains truthful. If the
 function-local planner preference itself causes a regression, remove it only
 through a new reviewed forward migration, never by lowering the DB contract.
+
+
+## Prepared Connect/statistics release (229–230 / #735, 2026-10-18)
+
+The owner approved release. The local integration registers the actual229 opaque
+credentials migration followed by230 ordinary-statistics totals projection with
+exact immutable checksums, contract230 and a full230→229→228 postflight chain.
+Both public stats signatures and the authoritative local study day are unchanged.
+Connect private storage grants and atomic credential consumption remain reviewed.
+
+The manifest stays `rollout.status: hold`, requiredMigrationId230,
+coordinationIssue735. Operational legacy credential retirement, descendant/session
+coverage, maximum JWT horizon and client reconnection are not established by SQL
+probe success. The owner-approved authorization records server-key provisioning;
+that alone does not establish legacy closure. The curator must clear the documented
+[Connect closure gate](connect-credential-rollout.md) before enabling deployment.
+Never fabricate229, skip the hold, lower the contract, or restore native Connect
+credential issuance as rollback. Release approval and operational closure are
+separate states. No production deployment is claimed by this preparation.

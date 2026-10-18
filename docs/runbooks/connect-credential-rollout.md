@@ -1,8 +1,12 @@
 # Connect opaque credentials — held rollout (#735)
 
-Status: local implementation only. No remote publication, deployment, Auth
-revocation or migration-manifest enablement is authorized by this runbook.
-The curator coordinates review and final operator authorization.
+Status (2026-10-18): the owner explicitly approved release. The local integration
+now prepares the reviewed 229→230 contract, but `rollout.status` remains **hold**
+until the curator confirms the operational legacy-credential closure gate below.
+The [release authorization](../discussions/2026-10-18-01-audit-release-authorization.md)
+records server-key provisioning without exposing its value. Release authorization
+does not establish retirement coverage, JWT expiry or reconnection. No production closure is claimed here. The curator
+coordinates the remaining operator actions; this runbook does not clear the hold.
 
 ## New session configuration
 
@@ -65,10 +69,17 @@ consumed refresh returns invalid_refresh_token and requires reconnection.
 
 `read-only-postflight-229.sql` chains the existing 228 read-only contract and the
 opaque credential storage probe. `postflight-229.sql` delegates to that read-only
-wrapper. This prepares the ordered 228 → 229 → 230 integration without enabling
-migration229 in the deployment manifest or changing the application contract.
+wrapper. The local release integration now registers the real ordered 228 → 229 → 230
+migrations with exact checksums and expected app contract230, while keeping the
+deployment manifest on HOLD. It does not enable rollout.
 Migration229 checksum remains
-`71ee1d7fd07c0f1859e2d15da9e19464dc07648f49289c2fd2e0fb50489c2848`.
+`82a7ae382d8f703fdffc0d25a5b2dbadce6a49374847e8faaae386f14d287dc2`.
+The earlier private/pre-release digest
+`71ee1d7fd07c0f1859e2d15da9e19464dc07648f49289c2fd2e0fb50489c2848`
+was superseded before registration/publication: managed gate validation required
+one standalone BEGIN/COMMIT wrapper. The correction adds only that transaction
+framing; schema/grants semantics are unchanged. Do not use the superseded digest
+for release receipts.
 The stats workstream validates the combined chain on its owned disposable local
 DB; wrapper availability alone is not evidence of a production rollout. Passing
 this schema/storage chain does **not** establish legacy Auth retirement, maximum

@@ -1,3 +1,5 @@
+BEGIN;
+
 -- Additive storage only. Legacy native-session retirement is a held release
 -- prerequisite; this migration intentionally does not revoke Auth sessions.
 ALTER TABLE public.connected_client_sessions
@@ -16,3 +18,5 @@ ALTER TABLE public.connected_client_sessions
 -- Explicit defense in depth; no browser/client role may see native ciphertext.
 REVOKE ALL ON public.connected_client_sessions FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.connected_client_sessions TO service_role;
+
+COMMIT;
