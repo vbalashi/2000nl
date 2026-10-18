@@ -7,6 +7,7 @@ Read the specific study's README/report; do not load every experiment by default
 | --- | --- |
 | Scheduler studies and simulations | [fsrs-learning/README.md](fsrs-learning/README.md) |
 | Dictionary identity / translation | [Sense-aware translation](issue-149-sense-aware-translation.md); ingestion in [../../packages/ingestion/README.md](../../packages/ingestion/README.md) |
+| Editorial design references, 18 October | [Author observations and synthesis](../marketing/website/reference-review-2026-10-18/README.md), [source notes](2026-10-18-editorial-reference-source-notes.md) |
 | Blog navigation references | [Blog study](2026-10-10-dilumio-blog-navigation.md) |
 | Competitor features / prices | [Competitors](2026-10-10-vocabulary-competitors.md) — preliminary, region/checkout limitations apply |
 | Family-income tax / insurance inputs | [Inputs](2026-10-10-family-income-tax-insurance-inputs.md); accepted planning model in [../marketing/family-income-model.md](../marketing/family-income-model.md) |
