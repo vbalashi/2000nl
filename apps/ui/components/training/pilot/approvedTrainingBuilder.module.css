@@ -428,3 +428,8 @@
 :global(.session-builder-standard) .viewport{overscroll-behavior-y:contain}
 
 .sessionSummary{display:block;line-height:1.6;min-block-size:3.2em}
+
+/* The full all-available label and mix occupy up to four lines on narrow phones. */
+@media (max-width: 360px) {
+  .sessionSummary { min-block-size: 6.4em; }
+}
