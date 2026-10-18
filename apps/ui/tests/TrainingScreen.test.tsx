@@ -37,6 +37,10 @@ vi.mock("@/lib/preferences/practicePaletteRepository", () => ({
 vi.mock("@/lib/preferences/cardSpacingRepository", () => ({
   cardSpacingRepository: { load: vi.fn().mockResolvedValue("balanced"), save: vi.fn() },
 }));
+// Availability has dedicated client/hook tests; controller navigation uses a stable read model.
+vi.mock("@/lib/training/availability/useTrainingAvailability", () => ({
+  useTrainingAvailability: () => ({ status: "ready", value: { dueToday: 8, totalReviews: 120, newCards: 20, studyDay: "2026-10-18", timezone: "Europe/Amsterdam", asOf: "2026-10-18T20:00:00Z" }, refreshing: false, refreshFailed: false, reload: vi.fn() }),
+}));
 vi.mock("@/lib/training/setups/client", () => ({
   fetchAccountTrainingSetups: vi.fn().mockResolvedValue({ revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } }),
   saveAccountTrainingSetups: vi.fn(async (_userId, revision, document) => ({ kind: "saved", snapshot: { revision: revision + 1, document } })),
