@@ -1,5 +1,5 @@
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { formatUiMessage, getUiMessages } from "@/lib/uiMessages";
+import { getUiMessages } from "@/lib/uiMessages";
 
 export type EmptyTrainingCounts = { dueToday: number | null; totalReviews: number | null; stillNew: number | null };
 /** Display-only guidance. Unknown counts never prove an empty selection. */
@@ -9,7 +9,7 @@ export function trainingEmptyState(language: OnboardingLanguage, filter: "new" |
   if (filter === "new") return stillNew === 0 ? { message: copy.noNewCards, includeNew: false } : null;
   if (dueToday !== 0 || (filter === "both" && stillNew !== 0)) return null;
   if (filter === "review" && stillNew !== null && stillNew > 0) return {
-    message: `${copy.nothingDue} ${formatUiMessage(copy.reviewsOnlyNew, { count: stillNew })}`, includeNew: true,
+    message: copy.reviewsOnlyNew, includeNew: true,
   };
   if (totalReviews === null || stillNew === null) return null;
   return { message: totalReviews > 0 ? copy.nothingDue : copy.noMatchingCards, includeNew: false };

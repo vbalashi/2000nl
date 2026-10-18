@@ -741,19 +741,19 @@ test("failed startup retry keeps one branded waiting surface until ready", async
 });
 
 
-test("Include new opens Session, preserves saved settings until explicit save, and starts corrected recipe",async()=>{
+test("Change mix opens Session, preserves saved settings until explicit save, and starts corrected recipe",async()=>{
  Object.assign(availabilityCounts,{dueToday:0,totalReviews:0,newCards:109});
  const reviewDraft={...initialDraft,cardFilter:"review" as const,sessionSize:"all-due-today" as const};
  seedAccount("empty-review",[{id:"empty",name:"Practice",draft:reviewDraft}]);
  const onStart=vi.fn(async()=>true);
  render(<TrainingTodaySetup {...baseProps} userId="empty-review" trainingLanguageCode="nl" onStart={onStart}/>);
- fireEvent.click(await screen.findByRole("button",{name:"Include new cards"}));
+ fireEvent.click(await screen.findByRole("button",{name:"Change mix"}));
  await screen.findByRole("heading",{name:"Session builder"});
  expect(screen.getByRole("button",{name:/^Session /})).toHaveAttribute("aria-expanded","true");
  expect(screen.getByRole("slider",{name:"Session size"})).toHaveValue("6");
  expect(screen.queryByLabelText("Available cards")).toBeNull();
  expect(availabilityRequests).toHaveBeenLastCalledWith(expect.objectContaining({enabled:false}));
- fireEvent.click(screen.getByRole("button",{name:"Include new cards"}));
+ expect(screen.getByRole("button",{name:"Start training"})).toBeEnabled();
  expect(onStart).not.toHaveBeenCalled();
  expect(accounts.get("empty-review")!.document.trainings[0].draft.cardFilter).toBe("review");
  fireEvent.change(screen.getByRole("slider",{name:"Session size"}),{target:{value:"1"}});
@@ -764,20 +764,10 @@ test("Include new opens Session, preserves saved settings until explicit save, a
  fireEvent.click(await screen.findByRole("button",{name:"Start training"}));
  await waitFor(()=>expect(onStart).toHaveBeenCalledWith(expect.objectContaining({sessionSize:10,cardFilter:"both"}),"Practice",{trainingId:"empty"}));
 });
-test("empty builder disables Start without suggesting nonexistent new cards",async()=>{
- Object.assign(availabilityCounts,{dueToday:0,totalReviews:0,newCards:0});
- render(<TrainingTodaySetup {...baseProps} userId="empty-both" trainingLanguageCode="nl"/>);
- fireEvent.click(await screen.findByRole("button",{name:"Create training"}));
- expect(screen.getByRole("button",{name:"Start training"})).toBeDisabled();
- expect(screen.getByText(/No cards match the selected settings/)).toBeVisible();
- expect(screen.queryByRole("button",{name:"Include new cards"})).toBeNull();
-});
-
-
 test("unsaved current setup also opens Session for the new-card restriction",async()=>{
  Object.assign(availabilityCounts,{dueToday:0,totalReviews:0,newCards:9});
  render(<TrainingTodaySetup {...baseProps} initialDraft={{...initialDraft,cardFilter:"review",sessionSize:"all-due-today"}} userId="unsaved-empty" trainingLanguageCode="nl"/>);
- fireEvent.click(await screen.findByRole("button",{name:"Include new cards"}));
+ fireEvent.click(await screen.findByRole("button",{name:"Change mix"}));
  expect(await screen.findByRole("button",{name:/^Session /})).toHaveAttribute("aria-expanded","true");
 });
 

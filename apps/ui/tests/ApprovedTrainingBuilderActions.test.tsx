@@ -68,13 +68,3 @@ test('unsaved indicator is accessible and clears when parent reports the saved b
  view.rerender(<ApprovedTrainingBuilder {...p} hasUnsavedChanges={false}/>);
  expect(screen.queryByRole('status',{name:'Unsaved changes'})).not.toBeInTheDocument();
 });
-
-
-test('empty guidance stays in Session and never adds paragraphs to the action footer',()=>{
- const p=props();render(<ApprovedTrainingBuilder {...p} emptyState={{message:'known empty',includeNew:true}}/>);
- const guidance=screen.getByRole('status');
- expect(guidance).toHaveTextContent('Nothing to review. Choose a finite size');
- expect(guidance.closest('section')).not.toBeNull();
- expect(guidance.closest('footer')).toBeNull();
- expect(screen.getByRole('button',{name:'Include new cards'})).toBeEnabled();
-});

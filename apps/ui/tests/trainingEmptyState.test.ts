@@ -2,8 +2,8 @@ import {expect,test} from 'vitest';
 import {trainingEmptyState} from '@/lib/training/availability/emptyState';
 
 test.each([
- ['review',0,0,109,true,'Only reviews are selected'],
- ['review',0,12,109,true,'Only reviews are selected'],
+ ['review',0,0,109,true,'New cards are turned off'],
+ ['review',0,12,109,true,'New cards are turned off'],
  ['review',0,12,0,false,'Nothing to review'],
  ['review',0,0,0,false,'No cards match'],
  ['both',0,0,0,false,'No cards match'],
@@ -18,6 +18,6 @@ test.each([
 ] as const)('%s with due %s, reviews %s, new %s does not claim empty',(filter,dueToday,totalReviews,stillNew)=>{
  expect(trainingEmptyState('en',filter,{dueToday,totalReviews,stillNew})).toBeNull();
 });
-test.each(['en','nl','ru'] as const)('localized review restriction in %s retains available count',language=>{
- expect(trainingEmptyState(language,'review',{dueToday:0,totalReviews:0,stillNew:109})).toMatchObject({includeNew:true,message:expect.stringContaining('109')});
+test.each(['en','nl','ru'] as const)('localized review restriction in %s stays concise',language=>{
+ expect(trainingEmptyState(language,'review',{dueToday:0,totalReviews:0,stillNew:109})).toMatchObject({includeNew:true,message:expect.any(String)});
 });

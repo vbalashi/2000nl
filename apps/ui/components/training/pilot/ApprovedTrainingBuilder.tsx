@@ -45,7 +45,6 @@ import s from "@/components/training/pilot/approvedTrainingBuilder.module.css";
 
 type Props = {
   initialSection?: "session";
-  emptyState?: {message:string;includeNew:boolean}|null;
   interfaceLanguage: OnboardingLanguage;
   draft: TrainingSetupDraft & { sessionSize: TrainingSessionSize };
   languageCode: string;
@@ -185,14 +184,6 @@ export function ApprovedTrainingBuilder(p: Props) {
     };
   }, [p.saveLabel, p.startLabel]);
   const [open, setOpen] = useState<string[]>(p.initialSection?[p.initialSection]:[]);
-  const showSession = () => {
-    setOpen(current => current.includes("session") ? current : [...current,"session"]);
-    requestAnimationFrame(() => {
-      const section = builderRef.current?.querySelector<HTMLElement>(`#${CSS.escape(uid+"-session-body")}`)?.parentElement;
-      section?.scrollIntoView({block:"nearest"});
-      section?.querySelector<HTMLInputElement>("input")?.focus({preventScroll:true});
-    });
-  };
   useLayoutEffect(() => {
     if (p.initialSection !== "session") return;
     const frame=requestAnimationFrame(() => builderRef.current?.querySelector<HTMLElement>(`#${CSS.escape(uid+"-session-body")}`)?.parentElement?.scrollIntoView({block:"nearest"}));
@@ -272,7 +263,6 @@ export function ApprovedTrainingBuilder(p: Props) {
     .filter(Boolean)
     .join(" · ");
   const size = p.draft.sessionSize ?? 10;
-  const sessionGuidance = p.emptyState && <p className={s.sessionGuidance} role="status">{p.emptyState.includeNew?o.includeNewHint:p.draft.cardFilter==="review"?o.nothingDue:p.draft.cardFilter==="new"?o.noNewSelection:o.emptySelection}</p>;
   const section = (
     key: string,
     title: string,
@@ -283,7 +273,6 @@ export function ApprovedTrainingBuilder(p: Props) {
       id={`${uid}-${key}`}
       title={title}
       summary={summary}
-      notice={key==="session"?sessionGuidance:undefined}
       open={open.includes(key)}
       onToggle={() => toggle(key)}
     >
@@ -727,10 +716,10 @@ export function ApprovedTrainingBuilder(p: Props) {
           <button
             type="button"
             className={s.primary}
-            disabled={p.startDisabled||Boolean(p.emptyState&&!p.emptyState.includeNew)}
-            onClick={p.emptyState?.includeNew?showSession:p.onStart}
+            disabled={p.startDisabled}
+            onClick={p.onStart}
           >
-            {p.emptyState?.includeNew?o.includeNew:p.startLabel}
+            {p.startLabel}
           </button>
           {p.canSave && (
             <div className={s.saveActions}>

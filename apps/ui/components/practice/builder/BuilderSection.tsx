@@ -10,7 +10,6 @@ export function BuilderSection({
   open,
   onToggle,
   children,
-  notice,
 }: {
   id?: string;
   title: string;
@@ -18,7 +17,6 @@ export function BuilderSection({
   open: boolean;
   onToggle: () => void;
   children: React.ReactNode;
-  notice?: React.ReactNode;
 }) {
   const generated = useId();
   const bodyId = `${id ?? generated}-body`;
@@ -44,7 +42,6 @@ export function BuilderSection({
           className={open ? s.rotated : s.chevron}
         />
       </button>
-      {notice}
       <div
         id={bodyId}
         className={`${s.reveal} ${open ? s.open : ""}`}

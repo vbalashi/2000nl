@@ -426,7 +426,3 @@
 
 :global(.session-builder-standard).builder{overflow:hidden}
 :global(.session-builder-standard) .viewport{overscroll-behavior-y:contain}
-
-
-.sessionGuidance{margin:0;padding:0 18px 12px;color:var(--practice-text-secondary);font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui);overflow-wrap:anywhere}
-@media(max-width:700px){.sessionGuidance{padding:0 12px 12px;font-size:var(--practice-text-label)}}
