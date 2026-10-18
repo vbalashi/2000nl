@@ -84,3 +84,19 @@ The stats workstream validates the combined chain on its owned disposable local
 DB; wrapper availability alone is not evidence of a production rollout. Passing
 this schema/storage chain does **not** establish legacy Auth retirement, maximum
 JWT expiry, key provisioning or client reconnection, and does not clear HOLD.
+
+
+## Automatic rollback boundary
+
+Every opaque-v2 production runner carries image label
+`io.2000nl.connect-credentials=opaque-v2`. Before making a rollback image ready,
+the deployment workflow inspects the immutable previous image's marker. Missing,
+empty or unrecognized markers prohibit restoration: the first opaque cutover must
+never automatically revive the old native credential issuer. If that cutover
+fails after switching, the existing failure branch stops the new UI and worker
+and reports that operator action is required; forward DB migrations remain.
+
+Future failures may restore a previous image only when it already carries the
+opaque-v2 marker. The marker is compatibility metadata, not evidence of legacy
+retirement or a release-hold override. A failure before switching leaves the
+currently running app untouched. The manifest remains HOLD pending curator go.

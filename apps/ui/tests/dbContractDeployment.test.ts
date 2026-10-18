@@ -73,7 +73,8 @@ describe("NUC database contract deployment", () => {
     expect(switchApp).toBeGreaterThan(gate);
     expect(health).toBeGreaterThan(switchApp);
     expect(workflow).toContain("previous app image restored; forward DB migrations retained");
-    expect(workflow).toContain("no previous image existed; incompatible new app stopped");
+    expect(workflow).toContain("native issuer rollback prohibited");
+    expect(workflow).toContain("incompatible new app stopped; operator action required");
     expect(workflow).not.toContain("psql \"$SUPABASE_DB_URL\"");
     expect(workflow).toContain(
       "postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94",
