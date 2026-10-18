@@ -35,3 +35,20 @@ are retained with the run. This code does not claim an autonomous semantic resol
 LLM cost measurement, generated-entry flow, production job queue or general idiom
 recognizer. Collection writes used existing owner-checked RPCs with dry-run rollback,
 then a single approved transaction; no write script is exposed as an agent tool.
+
+## Azure model-loop experiment
+
+`make_agent_fixture.py` freezes12same-video cases from private pilot evidence; labels
+remain local and are never model input. `agent_tools.py` implements4bounded snapshot
+read tools plus strict outcome/ID checks. `agent_compare.py` compares one-shot,
+manual Responses loop and local OpenAI Agents SDK against one explicitly selected
+Azure deployment using existing in-memory Entra authentication. It makes real paid
+inference calls; do not run without task authorization. Use `--prior-ledger` for
+authorized continuation; the18request total includes prior attempts. Fail closed on
+changed config, unauthorized URLs/model/storage, invented IDs and exhausted caps.
+
+`agent-requirements.lock` pins the actual experiment environment. SDK trace export
+is disabled; request bodies/results remain in ignored restricted evidence. Do not
+print tokens, upload raw journals or expose operator lookup as a model SQL tool.
+Read the [complete result and failures](../../../docs/research/agent-import-742/agent-flow/RESULT-AZURE-20261018.md) before reusing code. Historical outputs retain
+their original validator failures; offline revalidation is labeled separately.

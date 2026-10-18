@@ -1,0 +1,151 @@
+{
+  "date": "2026-10-18",
+  "provider": "existing Azure OpenAI resource /openai/v1/responses",
+  "deployment": "gpt-6-luna",
+  "deploymentVersion": "2026-09-22",
+  "region": "swedencentral",
+  "subscriptionOffer": "Microsoft Azure Sponsorship",
+  "sdkVersions": {
+    "openai": "3.35.1",
+    "openai-agents": "0.24.0"
+  },
+  "fixtureCases": 12,
+  "fixtureSha256": "75884727c48051ceaff4087479e539b656a68f1139173025bfdbdcdaaae1e9d9",
+  "totalHttpRequests": 17,
+  "totalHttpResponses": 17,
+  "httpStatuses": [
+    200
+  ],
+  "firstRequestStartUtc": "2026-10-18T19:29:52.361568+00:00",
+  "lastRequestStartUtc": "2026-10-18T19:34:15.853801+00:00",
+  "usage": {
+    "input_tokens": 163624,
+    "output_tokens": 7002,
+    "total_tokens": 170626
+  },
+  "cachedInputSubset": 43445,
+  "observedCacheWriteField": 120128,
+  "reasoningOutputSubset": 528,
+  "unknownUsageResponses": 0,
+  "unansweredRequests": 0,
+  "currencyCost": null,
+  "priceStatus": "No verified effective Azure rate/discount/cache-meter semantics or attributed invoice; usage is measured, currency is unknown.",
+  "initialRunOfflineValidatedReferenceAgreements": {
+    "baseline": 8,
+    "direct": 12,
+    "sdk": {
+      "validBatch1Agreements": 5,
+      "validBatch1Cases": 6,
+      "batch2": "rejected: not_found with nonempty selectedEntryIds"
+    }
+  },
+  "iterations": {
+    "v1": {
+      "liveSummary": {
+        "baseline": {
+          "tasks": 2,
+          "taskErrors": 2,
+          "referenceAgreements": 0,
+          "evaluatedCases": 0,
+          "modelHttpRequests": 2,
+          "toolCalls": 0,
+          "wallSeconds": 8.438166208565235,
+          "inputTokens": 17235,
+          "outputTokens": 1178,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 181,
+          "unknownUsageResponses": 0
+        },
+        "direct": {
+          "tasks": 2,
+          "taskErrors": 2,
+          "referenceAgreements": 0,
+          "evaluatedCases": 0,
+          "modelHttpRequests": 4,
+          "toolCalls": 5,
+          "wallSeconds": 11.617123250849545,
+          "inputTokens": 40147,
+          "outputTokens": 1412,
+          "cachedInputTokens": 17725,
+          "reasoningOutputTokens": 56,
+          "unknownUsageResponses": 0
+        },
+        "sdk": {
+          "tasks": 2,
+          "taskErrors": 1,
+          "referenceAgreements": 5,
+          "evaluatedCases": 6,
+          "modelHttpRequests": 3,
+          "toolCalls": 4,
+          "wallSeconds": 9.086636124178767,
+          "inputTokens": 28925,
+          "outputTokens": 1214,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 57,
+          "unknownUsageResponses": 0
+        }
+      },
+      "offlineRevalidation": "Original live model outputs unchanged; corrected validator now recognizes genuine initial entry/content evidence IDs. This is offline revalidation, not a new autonomous live pass."
+    },
+    "v2": {
+      "liveSummary": {
+        "direct": {
+          "tasks": 2,
+          "taskErrors": 1,
+          "referenceAgreements": 6,
+          "evaluatedCases": 6,
+          "modelHttpRequests": 4,
+          "toolCalls": 7,
+          "wallSeconds": 12.769197791349143,
+          "inputTokens": 41055,
+          "outputTokens": 1580,
+          "cachedInputTokens": 17857,
+          "reasoningOutputTokens": 234,
+          "unknownUsageResponses": 0
+        },
+        "sdk": {
+          "tasks": 2,
+          "taskErrors": 1,
+          "referenceAgreements": 3,
+          "evaluatedCases": 6,
+          "modelHttpRequests": 2,
+          "toolCalls": 0,
+          "wallSeconds": 6.964929040521383,
+          "inputTokens": 17863,
+          "outputTokens": 1121,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0,
+          "unknownUsageResponses": 0
+        }
+      }
+    },
+    "v3": {
+      "liveSummary": {
+        "sdk": {
+          "tasks": 1,
+          "taskErrors": 0,
+          "referenceAgreements": 5,
+          "evaluatedCases": 6,
+          "modelHttpRequests": 2,
+          "toolCalls": 3,
+          "wallSeconds": 5.038328708149493,
+          "inputTokens": 18399,
+          "outputTokens": 497,
+          "cachedInputTokens": 7863,
+          "reasoningOutputTokens": 0,
+          "unknownUsageResponses": 0
+        }
+      }
+    }
+  },
+  "limitations": [
+    "same-video supervised labels, not independent gold",
+    "no randomized replicated framework comparison",
+    "prompt v0/v1/v2 differ; v3 subset6 only",
+    "SDK wire differs mainly output format name, not model capability",
+    "tools local finite snapshot; not deployed live dictionary API",
+    "all model-chosen tool executions were dictionary_search; other3handlers locally smoke-tested",
+    "no production collection writes",
+    "no foundry resource deployment"
+  ]
+}

@@ -29,6 +29,8 @@
 
 ## Архив
 
+- [2026-10-18: Azure agent-loop pilot](2026-10-18-06-azure-agent-loop-pilot.md) — #742/#745;17real calls, Responses и SDK, tools работают, quality/output failures сохранены.
+
 - [2026-10-18: bounded agent flow](2026-10-18-05-bounded-agent-flow-design.md) — #742/#745; proposed4read tools, роли/loop/routing и автономный dry-run experiment.
 
 - [2026-10-18: выполнен внешний YouTube pilot](2026-10-18-04-youtube-pilot-execution.md) — owner разрешил отдельную новую коллекцию;246 targets verified, progress unchanged; app integration отдельно.

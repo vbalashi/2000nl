@@ -13,6 +13,13 @@ draft предложен как отдельный маршрут. YouTube пр�
 стоимость требуют измерения. Историческое предложение полного quality path ниже
 сохранено как опция повышенной проверки, не обязательный personal MVP.
 
+## Выполненный Azure agent-flow experiment
+
+[Реальный Responses / Agents SDK результат](agent-flow/RESULT-AZURE-20261018.md):
+17model calls через Azure,4local read tools,12same-video cases. Самостоятельные
+search calls работают; validation/semantic failures сохранены, autonomous readiness
+ещё не подтверждена. Live collection и приложение не менялись.
+
 ## Следующий agent-flow experiment
 
 [Дизайн bounded resolver с4tools и role prompts](agent-flow/README.md) — proposed,

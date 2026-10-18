@@ -5,6 +5,14 @@
 самостоятельным выбором дополнительных tools, а не одиночный LLM JSON ответ.
 [Первый supervised pilot](../pilot/RESULT-20261018.md) не проверял эту автономность.
 
+## Реальный experiment checkpoint
+
+[Azure Responses / Agents SDK результат](RESULT-AZURE-20261018.md):17real requests,
+четыре read handlers, same-video12cases. Model tool calls работают; output/reference
+и incomplete-search failures сохранены. Это partial prototype, не готовый production
+resolver. Исходный proposed design ниже сохраняется; фактические ограничения и
+prompt iterations в отчёте.
+
 ## Что запускаем первым
 
 Один resolver agent, четыре read tools, ограниченный loop, source/lookup fixtures
