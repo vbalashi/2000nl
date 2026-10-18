@@ -4,6 +4,8 @@
 в [реестре решений](../intent/current-decisions.md) и связанных ADR.
 Это дополняет issues, планы реализации и журнал работ, не заменяя их.
 
+- [2026-10-18: staged Connect cutover](2026-10-18-02-connect-staged-cutover.md) — deployment phase authorized; historical JWT closure open.
+
 ## Правила ведения
 
 - Перед возвращением к теме найти её в реестре, ADR и архиве по ключевым словам.

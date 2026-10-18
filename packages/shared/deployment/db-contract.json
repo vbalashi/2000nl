@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "contractId": "2000nl-db-230",
   "rollout": {
-    "status": "hold",
+    "status": "enabled",
     "requiredMigrationId": 230,
     "coordinationIssue": 735,
     "compatibilityPhase": "legacy-first-party-compatible",

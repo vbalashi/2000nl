@@ -1,12 +1,23 @@
-# Connect opaque credentials — held rollout (#735)
+# Connect opaque credentials — staged rollout (#735)
 
-Status (2026-10-18): the owner explicitly approved release. The local integration
-now prepares the reviewed 229→230 contract, but `rollout.status` remains **hold**
-until the curator confirms the operational legacy-credential closure gate below.
-The [release authorization](../discussions/2026-10-18-01-audit-release-authorization.md)
-records server-key provisioning without exposing its value. Release authorization
-does not establish retirement coverage, JWT expiry or reconnection. No production closure is claimed here. The curator
-coordinates the remaining operator actions; this runbook does not clear the hold.
+Status (2026-10-18): owner release authorization is recorded. The curator enables
+the reviewed 229→230 **deployment phase**, under the explicit
+[staged-cutover decision](../discussions/2026-10-18-02-connect-staged-cutover.md).
+This supersedes the prior deployment HOLD, not the historical-boundary closure
+hold. Key provisioning, the actual managed SQL chain and the supported Auth
+retirement procedure have been verified for this phase. New issuer deployment
+must precede retirement, so it establishes the cutoff rather than presupposing it.
+
+After exact new-SHA/DB230/worker health, run the private reviewed Auth operator
+procedure for the complete 19-user cohort, then independently verify zero
+pre-cutoff native sessions. It uses a temporary purpose-bound session and global
+logout; no password/metadata/user deletion or SMTP email. It updates Auth sign-in
+audit/time, may replace outstanding magic links, and requires reconnection.
+A private credential-free journal supports cleanup/resume on partial failure.
+
+Historical JWT maximum lifetime remains UNKNOWN. This staged release does not
+claim all previously issued access JWTs are rejected. Refresh-session retirement,
+new-issuer correctness and final historical-token closure are separate receipts.
 
 ## New session configuration
 
@@ -19,7 +30,7 @@ rotation currently requires revoking/reconnecting opaque sessions, not silent
 fallback to a native token. Do not log tokens, ciphertext, request bodies or keys.
 
 Migration 229 is additive, service-role only, and needs exact checksum/postflight
-review under the NUC DB deployment contract. Do not bypass its current hold.
+review under the NUC DB deployment contract. The staged authorization does not bypass its exact validation.
 Postflight: columns/constraints present; anon/authenticated cannot read/update
 session rows, service_role can; claimed code/refresh has one winner; revoke racing
 refresh cannot revive access. Disposable validation:
@@ -71,7 +82,7 @@ consumed refresh returns invalid_refresh_token and requires reconnection.
 opaque credential storage probe. `postflight-229.sql` delegates to that read-only
 wrapper. The local release integration now registers the real ordered 228 → 229 → 230
 migrations with exact checksums and expected app contract230, while keeping the
-deployment manifest on HOLD. It does not enable rollout.
+deployment manifest enabled for the staged cutoff/retirement phase. Historical closure remains open.
 Migration229 checksum remains
 `82a7ae382d8f703fdffc0d25a5b2dbadce6a49374847e8faaae386f14d287dc2`.
 The earlier private/pre-release digest
@@ -83,7 +94,7 @@ for release receipts.
 The stats workstream validates the combined chain on its owned disposable local
 DB; wrapper availability alone is not evidence of a production rollout. Passing
 this schema/storage chain does **not** establish legacy Auth retirement, maximum
-JWT expiry, key provisioning or client reconnection, and does not clear HOLD.
+JWT expiry, key provisioning or client reconnection, and does not clear the historical-boundary closure hold.
 
 
 ## Automatic rollback boundary
@@ -99,4 +110,4 @@ and reports that operator action is required; forward DB migrations remain.
 Future failures may restore a previous image only when it already carries the
 opaque-v2 marker. The marker is compatibility metadata, not evidence of legacy
 retirement or a release-hold override. A failure before switching leaves the
-currently running app untouched. The manifest remains HOLD pending curator go.
+currently running app untouched. The manifest is enabled only for the documented staged cutoff/retirement phase.

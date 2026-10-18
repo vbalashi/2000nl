@@ -17,7 +17,7 @@ describe("NUC database contract deployment", () => {
     const ids = contract.migrations.map((migration) => migration.migrationId);
     const latest = ids[ids.length - 1];
     expect(contract.rollout).toEqual({
-      status: "hold",
+      status: "enabled",
       requiredMigrationId: latest,
       coordinationIssue: 735,
       compatibilityPhase: "legacy-first-party-compatible",

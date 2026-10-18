@@ -284,40 +284,23 @@ recovery (#736), SQL parity/measurement и обоснованная оптими
 Общий рефакторинг и необязательные чистки не включены.
 [Поручение и границы](../discussions/2026-10-17-10-audit-remediation-coordination.md).
 
-### Connect: локально подготовленная граница credentials (#735)
+### Connect и SQL230: поэтапный выпуск (2026-10-18)
 
-Техническое предложение и локальная реализация: внешним клиентам выдаются opaque
-access/refresh credentials; native Supabase credentials хранятся зашифрованно
-только на сервере. Consent требует first-party principal, code/refresh потребляются
-атомарно, refresh требует offline_access. Это не отдельное принятие владельцем
-технического дизайна и не разрешение выпуска. **Статус: LOCAL prepared; legacy
-HOLD.** Исторические native sessions/refresh descendants ещё требуют доказуемого
-полного retirement и ожидания максимального JWT horizon; production, provisioning
-ключа и reconnect не проверены. [Техническое предложение, локальные проверки и
-границы](../discussions/2026-10-17-10-connect-credential-boundary.md),
-[удержанный rollout](../runbooks/connect-credential-rollout.md).
-## Восстановление ожидающего sentence-перевода (2026-10-17)
+[Владелец разрешил выпуск](../discussions/2026-10-18-01-audit-release-authorization.md).
+Куратор принимает [поэтапное выполнение](../discussions/2026-10-18-02-connect-staged-cutover.md):
+новый opaque issuer и SQL230 → проверенный cutoff → supported global retirement
+native-сессий полного cohort → независимая проверка БД. Manifest230 enabled
+относится только к этому этапу; неизвестный исторический JWT horizon остаётся
+OPEN, полного закрытия прежних access JWT не заявляем. Новый ключ provisioned;
+процедура проверена на matching GoTrue2.197.0, включая ошибки/cleanup/resume.
+Rollback к native issuer запрещён проверкой immutable image marker.
 
-В #736 принято сохранять scoped pending-подписку во время фонового чтения и объединять конкурентные уведомления в одно последующее чтение. Initial join/reconnect reconciliation сохраняется; отдельный трёхсекундный опрос заменён существующим visibility-aware recovery (degraded раз в минуту, healthy раз в 15 минут). Подготовлено и проверено локально; review и выпуск отдельно. [Основание](../discussions/2026-10-17-11-sentence-recovery-bounds.md).
+Sentence recovery #736 выпущен отдельным PR738: e068e559e71d2743cf4091cb5f5a28dcfadc842d,
+версия0.18.1341, deep health DB228 и worker подтверждены. Stable scoped subscription
+и coalesced trailing read сохраняют initial/reconnect recovery.
 
-## Ordinary stats: сокращение отброшенной работы (2026-10-17)
-
-Принято исследование #737 с независимой проверкой эквивалентности обоих RPC overload
-и измерением работы в одноразовой локальной БД. Миграция230 подготовлена: сохраняет
-три totals/settings и действующие local daily counters, исключает пять отброшенных
-UTC daily SQL-агрегатов. Тесты и локальные pgss-дельты подтверждают эквивалентность
-и сокращение работы; production-задержка не измерена, шумный локальный timing
-не считается обещанием ускорения. Реализация подготовлена, не выпущена. 2026-10-18 владелец разрешил выпуск;
-локальная интеграция содержит реальные229→230 и manifest/app contract230 на HOLD
-до подтверждения операционного закрытия legacy credentials в #735. [Основание](../discussions/2026-10-17-11-stats-work-parity.md),
-[проверки и ограничения](../diagnostics/2026-10-17-stats-work-parity/README.md).
-
-
-### Выпуск исправлений аудита: разрешён, операционный gate не закрыт (2026-10-18)
-
-[Владелец явно разрешил выпуск](../discussions/2026-10-18-01-audit-release-authorization.md). Локально объединены принятые исправления #735/#737
-с текущим main; manifest230 регистрирует настоящие229 и230 и остаётся на HOLD.
-Это заменяет прежний статус отсутствия разрешения выпуска, но не подтверждает
-legacy Auth retirement/refresh descendants, максимальный JWT horizon,
-reconnect или production rollout. Серверный ключ provisioned без раскрытия значения. Куратор должен подтвердить
-[операционный gate](../runbooks/connect-credential-rollout.md) перед включением.
+SQL230 сохраняет totals/settings и текущие local-day counters, исключает пять
+отброшенных UTC daily aggregates; parity и уменьшение SQL work подтверждены
+локально, улучшение production latency не обещается. Реальные229→230 включены
+в checksummed manifest и обе probe chains; выпуск и legacy retirement ещё должны
+получить отдельные фактические receipts. [Основание](../discussions/2026-10-17-11-stats-work-parity.md).

@@ -439,7 +439,7 @@ test("container client requires a digest and forwards DB settings by name, never
   assert.doesNotMatch(args, /topsecret|postgresql:\/\/|db\.example/);
 });
 
-test("the repository contract holds the authorized Connect/stats release pending operational closure", () => {
+test("the repository contract enables the authorized staged Connect/stats cutover", () => {
   const result = spawnSync(
     process.execPath,
     [
@@ -454,7 +454,7 @@ test("the repository contract holds the authorized Connect/stats release pending
   assert.equal(result.status, 0, result.stderr);
   assert.equal(
     result.stdout.trim(),
-    "hold 230 735",
+    "enabled 230 735",
   );
 });
 
