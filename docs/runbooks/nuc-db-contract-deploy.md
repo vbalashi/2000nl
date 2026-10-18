@@ -812,20 +812,29 @@ function-local planner preference itself causes a regression, remove it only
 through a new reviewed forward migration, never by lowering the DB contract.
 
 
-## Prepared Connect/statistics release (229–230 / #735, 2026-10-18)
+## Staged Connect/statistics release (229–230 / #735, 2026-10-18)
 
-The owner approved release. The local integration registers the actual229 opaque
-credentials migration followed by230 ordinary-statistics totals projection with
-exact immutable checksums, contract230 and a full230→229→228 postflight chain.
-Both public stats signatures and the authoritative local study day are unchanged.
-Connect private storage grants and atomic credential consumption remain reviewed.
+The owner approved release. The integration registers actual229 opaque credential
+storage followed by230 ordinary-statistics totals projection with exact immutable
+checksums, contract230 and the full230→229→228 postflight chain. Both public stats
+signatures and the authoritative local study day are unchanged.
 
-The manifest stays `rollout.status: hold`, requiredMigrationId230,
-coordinationIssue735. Operational legacy credential retirement, descendant/session
-coverage, maximum JWT horizon and client reconnection are not established by SQL
-probe success. The owner-approved authorization records server-key provisioning;
-that alone does not establish legacy closure. The curator must clear the documented
-[Connect closure gate](connect-credential-rollout.md) before enabling deployment.
-Never fabricate229, skip the hold, lower the contract, or restore native Connect
-credential issuance as rollback. Release approval and operational closure are
-separate states. No production deployment is claimed by this preparation.
+The curator explicitly enables the [staged-cutover phase](../discussions/2026-10-18-02-connect-staged-cutover.md),
+requiredMigrationId230, coordinationIssue735. This supersedes the prior deployment
+HOLD; it does not clear historical-token closure. Prerequisites include the
+provisioned server-only key, managed SQL validation, matching-GoTrue synthetic
+operator tests, reviewed all19-user cohort, and opaque-only rollback guard.
+
+The workflow must first establish exact-SHA/DB230/worker health and the new-issuer
+cutoff. The curator then performs the separately reviewed supported global Auth
+retirement, requires its private journal and classified refresh rejection, and
+independently verifies no pre-cutoff native sessions in a read-only transaction.
+No Auth retirement is an incidental migration or deployment-workflow side effect.
+
+Historical maximum JWT lifetime remains UNKNOWN and security closure OPEN. SQL
+probes or current expiry do not establish rejection of every old access JWT.
+[Connect rollout](connect-credential-rollout.md) owns those separate receipts.
+Never fabricate229, lower the contract, bypass validation, or restore the native
+issuer. The first cutover cannot automatically restore an unmarked legacy image;
+a switched failure stops UI/worker and requires operator recovery. Planning here
+is not a claim of executed deployment or completed session retirement.
