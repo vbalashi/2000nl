@@ -323,3 +323,13 @@ agent API/генерации/схемы.
 остаётся открытой, independent held-out и full-video measurement ещё не выполнены.
 27calls оценены ~$0.02483 по published Azure rate, billing не сверен. Цена полного
 видео пока условный прогноз. [Источник обсуждения](../discussions/2026-10-18-07-agent-loop-cost-and-repair.md).
+
+## Новые видео и private draft agent (2026-10-18)
+
+Внешняя проверка разрешена: bounded transfer slice и отдельный generator agent для
+выражений, closed draft schema без save. На новом NOS получены4unreviewed proposals;
+semantic ошибки и turn exhaustion означают, что autonomous production готовность
+не доказана. Existing generated draft/save services не равны готовому import flow;
+component-reference persistence и save→collection contract отдельно. Для двух видео
+без manual captions выбор auto/ASR pending. [Обсуждение](../discussions/2026-10-18-08-multivideo-and-personal-draft-pilot.md),
+[результат](../research/agent-import-742/multivideo/RESULT-20261018.md).

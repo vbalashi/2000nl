@@ -358,3 +358,10 @@ runtime тесты не запускались; выполняются hash, lin
 
 [Измерения v4 и прогноз стоимости видео](agent-flow/RESULT-AZURE-V4-20261018.md): SDK12/12, Responses11/12;
 27cumulative calls ~$0.02483 по опубликованному тарифу. Не invoice и не полный video pass.
+
+## Новые видео и минимальные personal drafts
+
+[Transfer pilot](multivideo/RESULT-20261018.md): один новый manual-NL источник,
+12case slice,4generated drafts, реальный resolver→generator tool call.18new calls
+~$0.00519; turn exhaustion и semantic failures сохранены. Два источника без manual
+caption ждут выбора fallback; save/collection integration не выполнялась.

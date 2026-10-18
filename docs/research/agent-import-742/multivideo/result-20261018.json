@@ -1,0 +1,221 @@
+{
+  "date": "2026-10-18",
+  "resource": "dilumio-01-resource",
+  "region": "swedencentral",
+  "subscriptionOffer": "Microsoft Azure Sponsorship",
+  "deployment": "gpt-6-luna",
+  "endpoint": "https://dilumio-01-resource.openai.azure.com/openai/v1/responses",
+  "firstRequestUtc": "2026-10-18T20:03:42.836717+00:00",
+  "lastRequestUtc": "2026-10-18T20:07:48.517544+00:00",
+  "timezone": "Europe/Amsterdam",
+  "priorExperimentRequests": 27,
+  "thisPhase": {
+    "requests": 18,
+    "responses": 18,
+    "unknownUsageResponses": 0,
+    "tokens": {
+      "input": 66482,
+      "ordinaryInput": 2317,
+      "cacheRead": 40497,
+      "cacheWrite": 23668,
+      "output": 3186
+    },
+    "estimatedPublishedUsd": 0.00518817
+  },
+  "totalExperimentRequests": 45,
+  "byStage": {
+    "video--lf71hdWm5E/discovery": {
+      "requests": 1,
+      "responses": 1,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 7233,
+        "ordinaryInput": 3,
+        "cacheRead": 0,
+        "cacheWrite": 7230,
+        "output": 260
+      },
+      "estimatedPublishedUsd": 0.00103405
+    },
+    "video--lf71hdWm5E/draft/p1": {
+      "requests": 1,
+      "responses": 1,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 557,
+        "ordinaryInput": 557,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "output": 238
+      },
+      "estimatedPublishedUsd": 0.0001747
+    },
+    "video--lf71hdWm5E/draft/p2": {
+      "requests": 1,
+      "responses": 1,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 595,
+        "ordinaryInput": 595,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "output": 255
+      },
+      "estimatedPublishedUsd": 0.000187
+    },
+    "video--lf71hdWm5E/draft/p3": {
+      "requests": 1,
+      "responses": 1,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 559,
+        "ordinaryInput": 559,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "output": 193
+      },
+      "estimatedPublishedUsd": 0.00015240000000000002
+    },
+    "video--lf71hdWm5E/draft/p4": {
+      "requests": 1,
+      "responses": 1,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 564,
+        "ordinaryInput": 564,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "output": 227
+      },
+      "estimatedPublishedUsd": 0.0001699
+    },
+    "video--lf71hdWm5E/finalize": {
+      "requests": 1,
+      "responses": 1,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 3374,
+        "ordinaryInput": 3,
+        "cacheRead": 0,
+        "cacheWrite": 3371,
+        "output": 370
+      },
+      "estimatedPublishedUsd": 0.000606675
+    },
+    "video--lf71hdWm5E/resolver-1": {
+      "requests": 3,
+      "responses": 3,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 32598,
+        "ordinaryInput": 9,
+        "cacheRead": 21515,
+        "cacheWrite": 11074,
+        "output": 554
+      },
+      "estimatedPublishedUsd": 0.0018773
+    },
+    "video--lf71hdWm5E/resolver-2": {
+      "requests": 9,
+      "responses": 9,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 21002,
+        "ordinaryInput": 27,
+        "cacheRead": 18982,
+        "cacheWrite": 1993,
+        "output": 1089
+      },
+      "estimatedPublishedUsd": 0.000986145
+    }
+  },
+  "ratesPerMillionUsd": {
+    "ordinaryInput": 0.1,
+    "cacheRead": 0.01,
+    "cacheWrite": 0.125,
+    "output": 0.5
+  },
+  "priceSource": "https://azure.microsoft.com/en-us/blog/gpt-6-astra-sol-and-luna-for-production-agents-in-microsoft-foundry/",
+  "billingStatus": "published list estimate; no attributed invoice reconciliation",
+  "httpStatuses": [
+    200
+  ],
+  "scope": "one new video manual NL; full preparation/lookup, selected12resolver cases and4phrase drafts; two further sources await fallback policy",
+  "fixtureSha256": "50aaac3e4706c8d9cc09354205621c273a5cc46dc92283eedb83bf9d17c8a211",
+  "preparation": {
+    "model": "nl_core_news_sm",
+    "spacy": "3.8.11",
+    "loadSeconds": 0.569639875087887,
+    "parseSeconds": 0.1714406660757959,
+    "totalSeconds": 0.7439125408418477,
+    "tokens": 1233,
+    "alphaTokens": 1090,
+    "sentences": 112,
+    "candidates": 278,
+    "expressionProposals": 91,
+    "peakRssBytes": 166707200
+  },
+  "lookupQueries": 485,
+  "lookupChunkCalls": 32,
+  "lookupWallSeconds": 37.60069191688672,
+  "lookupCandidateCounts": {
+    "empty": 26,
+    "single": 115,
+    "multi": 137
+  },
+  "resolverSample": {
+    "cases": 12,
+    "outcomes": {
+      "resolved": 4,
+      "not_found": 5,
+      "needs_user": 0,
+      "deferred_budget": 3
+    },
+    "accuracy": null,
+    "firstBatchWallSeconds": 9.455437916796654,
+    "secondBatchAttempts": "3turns then6turns exhausted; saved draft receipts; final one no-tools SDK response",
+    "semanticReviewFlags": [
+      "c10: gaan1 literal movement accepted for topic expression gaat over; wrong target",
+      "c16: goed3 suited to purpose chosen for manner context; questionable sense",
+      "c103: parser-tagged Trump passed content filter; name remains unresolved, no draft"
+    ]
+  },
+  "draftsGenerated": 4,
+  "generatorCalledBy": "resolver tool calls,4new model generations; later cache reuse",
+  "relatedLinksSelected": 0,
+  "productionWrites": 0,
+  "videos": [
+    {
+      "id": "-lf71hdWm5E",
+      "title": "Problemen verdediging Oekraïne, wielerploeg geen fijne werkplek, extra aandacht voor blinden",
+      "duration": 494,
+      "language": "nl",
+      "channel": "NOS Journaal in Makkelijke Taal",
+      "manualLanguages": [
+        "nl"
+      ],
+      "hasAutoNl": true,
+      "status": "processed_bounded_slice"
+    },
+    {
+      "id": "IoTEYzkKF0M",
+      "title": "COMPLIMENTS Vocabulary | Street Interview",
+      "duration": 878,
+      "language": "nl",
+      "channel": "Easy Dutch",
+      "manualLanguages": [],
+      "hasAutoNl": true,
+      "status": "awaiting_explicit_source_fallback_choice"
+    },
+    {
+      "id": "9ZQaqL7K-rE",
+      "title": "Q&Arjen: Heb je ooit iets moeten doen tijdens de uitzending wat buiten je comfortzone lag?",
+      "duration": 667,
+      "language": null,
+      "channel": "LUBACH",
+      "manualLanguages": [],
+      "hasAutoNl": false,
+      "status": "awaiting_explicit_source_fallback_choice"
+    }
+  ]
+}

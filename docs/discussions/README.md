@@ -29,6 +29,8 @@
 
 ## Архив
 
+- [2026-10-18: новые видео и personal drafts](2026-10-18-08-multivideo-and-personal-draft-pilot.md) — внешний transfer slice и закрытая схема генерации; save отдельно.
+
 - [2026-10-18: agent loop, repair и стоимость](2026-10-18-07-agent-loop-cost-and-repair.md) — v4 SDK12/12, Responses11/12, published rate estimates; full-video price remains forecast.
 
 - [2026-10-18: Azure agent-loop pilot](2026-10-18-06-azure-agent-loop-pilot.md) — #742/#745;17real calls, Responses и SDK, tools работают, quality/output failures сохранены.

@@ -63,3 +63,21 @@ Per-item accepted outputs survive mechanical failures in task receipts; this is
 not server job durability. `summarize_cost.py LEDGER... --output REPORT` applies
 dated published Luna rates, partitions input cache fields and never claims invoice
 reconciliation. See RESULT-AZURE-V4-20261018.md for observed results/limitations.
+
+## New-video / private draft transfer slice
+
+`transfer_run.py discover VIDEO_DIR PHASE_DIR` discovers at most4anchored phrase
+proposals. Populate separate `phrase-lookup.json` through the existing operator
+lookup, then `transfer_run.py resolve VIDEO_DIR PHASE_DIR` freezes first4ambiguous
++first4missing word candidates +discovered phrases. No oracle labels. This is a
+bounded sample, not all-video semantic processing. A fifth function tool calls a
+separate minimal private draft Agent; no save tool exists.
+
+Phase cap48new HTTP requests,96KiB/request,768KiB cumulative,20min from first request,
+4096output tokens/request,no retries. Counts include nested generators and failed
+attempts. The first live run exposed turn exhaustion at3and6turns; preserve failures.
+`finalize` is a deliberately narrow recovery for this recorded second batch when
+its last pending calls are completed draft requests. It makes one no-tools model
+call from saved receipts. It is not a general production resume implementation.
+Do not use it for arbitrary pending reads or claim the failed loop was uninterrupted.
+See `multivideo/RESULT-20261018.md` for actual scope, errors, costs and pending sources.
