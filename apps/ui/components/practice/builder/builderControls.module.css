@@ -78,3 +78,7 @@
 :global(.session-builder-standard) .choice:hover{background:transparent}
 :global(.session-builder-standard) .choice[aria-pressed=true]:hover{background:var(--practice-surface-hover)}
 :global(.session-builder-standard) .label{font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui);color:var(--practice-text-muted)}
+
+/* Two stable text lines keep the tracks in place across every slider value. */
+:global(.session-builder-standard) .labelRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;line-height:1.5;min-block-size:3em}
+:global(.session-builder-standard) .selection{line-height:1.5;overflow-wrap:anywhere}

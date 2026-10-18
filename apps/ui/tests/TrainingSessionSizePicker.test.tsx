@@ -80,3 +80,12 @@ test("a saved 100 remains selected and is never relabeled as All due", () => {
   expect(onChange).toHaveBeenCalledWith("all-due-today");
   expect(slider).toHaveAttribute("aria-valuetext", "All due");
 });
+
+
+test("approved slider never inserts a paragraph when reaching the last stop",()=>{
+ const view=render(<TrainingSessionSizePicker {...labels} approved value={10} onChange={vi.fn()}/>);
+ expect(screen.queryByText(labels.allDueHelp)).not.toBeInTheDocument();
+ view.rerender(<TrainingSessionSizePicker {...labels} approved value="all-due-today" onChange={vi.fn()}/>);
+ expect(screen.getByRole("slider",{name:"Session size"})).toHaveAttribute("aria-valuetext","All due");
+ expect(screen.queryByText(labels.allDueHelp)).not.toBeInTheDocument();
+});

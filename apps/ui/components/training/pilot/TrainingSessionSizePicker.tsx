@@ -87,7 +87,7 @@ export function TrainingSessionSizePicker({
         ))}
       </div>
       </>}
-      {value === "all-due-today" ? (
+      {!approved && value === "all-due-today" ? (
         <p className={approved?s.help:"mt-1 text-xs leading-4 text-slate-500 dark:text-slate-400"}>
           {allDueHelp}
         </p>

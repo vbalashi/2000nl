@@ -426,3 +426,5 @@
 
 :global(.session-builder-standard).builder{overflow:hidden}
 :global(.session-builder-standard) .viewport{overscroll-behavior-y:contain}
+
+.sessionSummary{display:block;line-height:1.6;min-block-size:3.2em}
