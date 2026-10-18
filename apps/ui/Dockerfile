@@ -34,6 +34,8 @@ RUN npm run build && npm run build:translation-worker
 
 # Production image: Next standalone output
 FROM node:22-bookworm-slim AS runner
+# Rollback may restore only images preserving the opaque Connect boundary.
+LABEL io.2000nl.connect-credentials="opaque-v2"
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

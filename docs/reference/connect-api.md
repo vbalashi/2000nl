@@ -103,10 +103,13 @@ issued it. Platform API routes derive `client_id`, scopes, and session/grant
 status from that binding, not from request JSON, CORS origin, `Referer`, or a
 client-provided source context.
 
-Sessions minted before access-token hash binding do not have a trusted
-Connected Client actor attached to already-issued short-lived access tokens.
-Those tokens expire naturally; clients should refresh or reconnect to obtain a
-new access token that can resolve to a Connected Client principal.
+New sessions use opaque 2000NL credentials. They are not Supabase JWTs and must
+not be sent to Supabase Auth, REST, RPC or Realtime. Native credentials stay on
+the 2000NL server. Consent approval requires a first-party web login; a connected
+client cannot approve or expand its own grant.
+
+Legacy native credentials require reconnection after the coordinated retirement
+rollout. See [the held rollout runbook](../runbooks/connect-credential-rollout.md).
 
 ## Refresh
 
@@ -119,7 +122,14 @@ new access token that can resolve to a Connected Client principal.
 ```
 
 The response has the same shape as token exchange. Refresh tokens rotate; replace
-the stored refresh token with the new value from every successful refresh.
+the stored access and refresh tokens with the new values from every successful refresh.
+The old access token immediately stops authorizing new requests. Refresh expires
+30 days after the original session issuance; rotation does not extend this limit.
+Without `offline_access`, no refresh token is returned and refresh is rejected.
+A failed exchange after an atomic claim, including a lost successful response,
+requires reconnection; consumed refresh credentials return `invalid_refresh_token`.
+Authorization codes are consumed before Auth issuance and are never reusable,
+even if issuance fails.
 
 Refresh works across browser restarts and extension updates as long as the
 extension ID, `client_id`, redirect URI, and extension storage survive.
@@ -155,7 +165,7 @@ Connected Client scope enforcement:
   session, and analyze-selection.
 - `platform:write` allows Platform mutation endpoints such as actions and
   translation artifact writes.
-- `offline_access` controls refresh-token issuance only. It does not imply
+- `offline_access` controls refresh-token issuance and acceptance. It does not imply
   Platform read or write access.
 
 ## CORS

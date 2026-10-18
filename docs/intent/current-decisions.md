@@ -275,6 +275,32 @@ Read more в плашке и Updates ведёт в одну внешнюю ст�
 
 Унификация #733: правило подготовки полного ответа принадлежит общему Training-модулю `TrainingAnswerTranslation`; primary использует запись сессии, secondary сохраняет проекцию вокруг обеих сторон. Подготовка вопроса и будущих карточек остаётся отдельной. [Решение и границы](../discussions/2026-10-17-09-unified-training-answer-preparation.md).
 
-## Восстановление ожидающего sentence-перевода (2026-10-17)
+## Исправления после независимого аудита (2026-10-17)
 
-В #736 принято сохранять scoped pending-подписку во время фонового чтения и объединять конкурентные уведомления в одно последующее чтение. Initial join/reconnect reconciliation сохраняется; отдельный трёхсекундный опрос заменён существующим visibility-aware recovery (degraded раз в минуту, healthy раз в 15 минут). Подготовлено и проверено локально; review и выпуск отдельно. [Основание](../discussions/2026-10-17-11-sentence-recovery-bounds.md).
+Владелец разрешил начать три направления параллельно: Connect (#735), sentence
+recovery (#736), SQL parity/measurement и обоснованная оптимизация (#737).
+Куратор координирует границы, независимое ревью и проверки; Connect первым
+по приоритету выпуска. Это не принятие технического дизайна или production rollout.
+Общий рефакторинг и необязательные чистки не включены.
+[Поручение и границы](../discussions/2026-10-17-10-audit-remediation-coordination.md).
+
+### Connect и SQL230: поэтапный выпуск (2026-10-18)
+
+[Владелец разрешил выпуск](../discussions/2026-10-18-01-audit-release-authorization.md).
+Куратор принимает [поэтапное выполнение](../discussions/2026-10-18-02-connect-staged-cutover.md):
+новый opaque issuer и SQL230 → проверенный cutoff → supported global retirement
+native-сессий полного cohort → независимая проверка БД. Manifest230 enabled
+относится только к этому этапу; неизвестный исторический JWT horizon остаётся
+OPEN, полного закрытия прежних access JWT не заявляем. Новый ключ provisioned;
+процедура проверена на matching GoTrue2.197.0, включая ошибки/cleanup/resume.
+Rollback к native issuer запрещён проверкой immutable image marker.
+
+Sentence recovery #736 выпущен отдельным PR738: e068e559e71d2743cf4091cb5f5a28dcfadc842d,
+версия0.18.1341, deep health DB228 и worker подтверждены. Stable scoped subscription
+и coalesced trailing read сохраняют initial/reconnect recovery.
+
+SQL230 сохраняет totals/settings и текущие local-day counters, исключает пять
+отброшенных UTC daily aggregates; parity и уменьшение SQL work подтверждены
+локально, улучшение production latency не обещается. Реальные229→230 включены
+в checksummed manifest и обе probe chains; выпуск и legacy retirement ещё должны
+получить отдельные фактические receipts. [Основание](../discussions/2026-10-17-11-stats-work-parity.md).

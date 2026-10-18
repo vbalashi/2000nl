@@ -264,7 +264,7 @@ scheduler definition, and the exact pre-switch read runs before
 the new app image is switched. A failed gate leaves the previous image live;
 the forward migration remains installed for a corrected follow-up release.
 
-An enabled deployment must apply or verify migrations 123 through 227 in order
+An enabled deployment must apply or verify migrations 123 through 230 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -810,3 +810,31 @@ Rollback must retain forward DB227 objects/receipts. An application revert must
 also retain the 227 manifest and probes so exact health remains truthful. If the
 function-local planner preference itself causes a regression, remove it only
 through a new reviewed forward migration, never by lowering the DB contract.
+
+
+## Staged Connect/statistics release (229–230 / #735, 2026-10-18)
+
+The owner approved release. The integration registers actual229 opaque credential
+storage followed by230 ordinary-statistics totals projection with exact immutable
+checksums, contract230 and the full230→229→228 postflight chain. Both public stats
+signatures and the authoritative local study day are unchanged.
+
+The curator explicitly enables the [staged-cutover phase](../discussions/2026-10-18-02-connect-staged-cutover.md),
+requiredMigrationId230, coordinationIssue735. This supersedes the prior deployment
+HOLD; it does not clear historical-token closure. Prerequisites include the
+provisioned server-only key, managed SQL validation, matching-GoTrue synthetic
+operator tests, reviewed all19-user cohort, and opaque-only rollback guard.
+
+The workflow must first establish exact-SHA/DB230/worker health and the new-issuer
+cutoff. The curator then performs the separately reviewed supported global Auth
+retirement, requires its private journal and classified refresh rejection, and
+independently verifies no pre-cutoff native sessions in a read-only transaction.
+No Auth retirement is an incidental migration or deployment-workflow side effect.
+
+Historical maximum JWT lifetime remains UNKNOWN and security closure OPEN. SQL
+probes or current expiry do not establish rejection of every old access JWT.
+[Connect rollout](connect-credential-rollout.md) owns those separate receipts.
+Never fabricate229, lower the contract, bypass validation, or restore the native
+issuer. The first cutover cannot automatically restore an unmarked legacy image;
+a switched failure stops UI/worker and requires operator recovery. Planning here
+is not a claim of executed deployment or completed session retirement.

@@ -3,8 +3,11 @@ import { createClient, type SupabaseClient, type User } from "@supabase/supabase
 import { NextResponse } from "next/server";
 import {
   getBearerToken,
+  getAuthenticatedSupabase,
   jsonNoStore,
 } from "@/lib/platform/serverSupabase";
+
+import { isConnectCredential } from "./sessionCredentials";
 
 export const CONNECT_SCOPES = {
   "platform:read": "Read your 2000NL dictionary and learning state",
@@ -144,15 +147,15 @@ export async function getWebUser(request: Request): Promise<User | NextResponse>
     return jsonNoStore({ error: "missing_bearer_token" }, 401);
   }
 
-  const publicClient = createPublicAuthClient();
-  if (publicClient instanceof NextResponse) return publicClient;
-
-  const { data, error } = await publicClient.auth.getUser(token);
-  if (error || !data.user) {
-    return jsonNoStore({ error: "invalid_bearer_token" }, 401);
+  if (isConnectCredential(token)) {
+    return jsonNoStore({ error: "first_party_required" }, 403);
   }
-
-  return data.user;
+  const auth = await getAuthenticatedSupabase(request);
+  if (auth instanceof Response) return auth as NextResponse;
+  if (auth.principal.authKind !== "first_party") {
+    return jsonNoStore({ error: "first_party_required" }, 403);
+  }
+  return auth.user;
 }
 
 export function normalizeRedirectUri(value: unknown): string | null {
@@ -356,37 +359,10 @@ export async function refreshSupabaseSession(params: {
   return refreshRes.data.session as SupabaseSession;
 }
 
-export async function recordConnectedClientSession(params: {
-  supabase: SupabaseClient;
-  accessToken: string;
-  accessTokenExpiresAt?: number | null;
-  refreshToken: string;
-  clientId: string;
-  userId: string;
-  scopes: string[];
-}): Promise<NextResponse | null> {
-  const { error } = await params.supabase.from("connected_client_sessions").insert({
-    access_token_hash: sha256Hex(params.accessToken),
-    access_token_expires_at: params.accessTokenExpiresAt
-      ? new Date(params.accessTokenExpiresAt * 1000).toISOString()
-      : null,
-    refresh_token_hash: sha256Hex(params.refreshToken),
-    client_id: params.clientId,
-    user_id: params.userId,
-    scopes: params.scopes,
-  });
-
-  if (error) {
-    return jsonNoStore({ error: "session_record_failed", detail: error.message }, 500);
-  }
-
-  return null;
-}
-
 export function publicSessionPayload(session: SupabaseSession, scopes: string[]) {
   return {
     access_token: session.access_token,
-    refresh_token: session.refresh_token,
+    ...(scopes.includes("offline_access") ? { refresh_token: session.refresh_token } : {}),
     expires_at: session.expires_at ?? null,
     expires_in: session.expires_in ?? null,
     token_type: session.token_type ?? "bearer",

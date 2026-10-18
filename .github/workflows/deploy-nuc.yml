@@ -118,7 +118,7 @@ jobs:
             elif [[ "${APP_SWITCHED:-0}" == "1" ]]; then
               sg docker -c 'docker compose --profile translation-jobs stop translation-worker' || true
               if sg docker -c 'docker compose stop ui'; then
-                rollback_note="no previous image existed; incompatible new app stopped"
+                rollback_note="${ROLLBACK_BLOCKED_REASON:-no previous image existed}; incompatible new app stopped; operator action required"
               else
                 rollback_note="new app stop failed; operator action required"
               fi
@@ -167,6 +167,7 @@ jobs:
           # advertised.
           APP_SWITCHED=0
           ROLLBACK_READY=0
+          ROLLBACK_BLOCKED_REASON="no previous image existed"
           WORKER_ROLLBACK_READY=0
           CURRENT_WORKER=$(sg docker -c 'docker compose --profile translation-jobs ps -q translation-worker')
           if [[ "${CURRENT_WORKER}" =~ ^[0-9a-f]+$ ]]; then
@@ -177,8 +178,15 @@ jobs:
           if [[ "${CURRENT_CONTAINER}" =~ ^[0-9a-f]+$ ]]; then
             CURRENT_IMAGE=$(sg docker -c "docker inspect --format='{{.Image}}' ${CURRENT_CONTAINER}")
             if [[ "${CURRENT_IMAGE}" =~ ^sha256:[0-9a-f]+$ ]]; then
-              sg docker -c "docker tag ${CURRENT_IMAGE} 2000nl-ui:${ROLLBACK_TAG}"
-              ROLLBACK_READY=1
+              # Native-issuer images must never return after opaque cutover.
+              CURRENT_CONNECT_CREDENTIALS=$(sg docker -c "docker image inspect --format='{{ index .Config.Labels \"io.2000nl.connect-credentials\" }}' ${CURRENT_IMAGE}")
+              if [[ "${CURRENT_CONNECT_CREDENTIALS}" == "opaque-v2" ]]; then
+                sg docker -c "docker tag ${CURRENT_IMAGE} 2000nl-ui:${ROLLBACK_TAG}"
+                ROLLBACK_READY=1
+              else
+                ROLLBACK_BLOCKED_REASON="previous image lacks opaque-v2 credentials; native issuer rollback prohibited"
+                echo "${ROLLBACK_BLOCKED_REASON}" >&2
+              fi
             fi
           fi
 

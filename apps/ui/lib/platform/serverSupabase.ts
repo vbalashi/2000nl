@@ -1,3 +1,4 @@
+import { decryptNativeSession, isConnectCredential, CONNECT_ACCESS_PREFIX } from "@/lib/connect/sessionCredentials";
 import crypto from "node:crypto";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
@@ -287,6 +288,8 @@ async function getAuthenticatedUserSupabase(
     return jsonNoStore({ error: "missing_bearer_token" }, 401);
   }
 
+  if (isConnectCredential(token)) return jsonNoStore({ error: "first_party_required" }, 403);
+
   const supabase = createAuthenticatedBearerClient(token);
   if (supabase instanceof NextResponse) return supabase;
 
@@ -312,6 +315,9 @@ export async function getAuthenticatedSupabase(
   if (!token) {
     return jsonNoStore({ error: "missing_bearer_token" }, 401);
   }
+
+  // Opaque sessions always consult revocable state, never the native JWT cache.
+  if (isConnectCredential(token)) return resolveOpaqueConnectSupabase(token, instrumentation);
 
   const cached = readPlatformAuthCache(token);
   if (cached) {
@@ -358,6 +364,33 @@ export async function getAuthenticatedSupabase(
     });
   }
   return resolution;
+}
+
+async function resolveOpaqueConnectSupabase(
+  token: string,
+  instrumentation?: TimingEntrySink,
+): Promise<AuthenticatedSupabase | NextResponse> {
+  if (!token.startsWith(CONNECT_ACCESS_PREFIX)) return jsonNoStore({ error: "invalid_bearer_token" }, 401);
+  const service = platformServiceClient();
+  if (!service) return jsonNoStore({ error: "platform_principal_not_configured" }, 503);
+  const { data: row, error } = await service.from("connected_client_sessions")
+    .select("id, client_id, user_id, credential_version, native_session_ciphertext, revoked_at, access_token_expires_at")
+    .eq("access_token_hash", sha256Hex(token)).maybeSingle();
+  if (error) return jsonNoStore({ error: "platform_principal_lookup_failed" }, 500);
+  if (!row || row.credential_version !== 2 || row.revoked_at || !row.access_token_expires_at || Date.parse(row.access_token_expires_at) <= Date.now()) {
+    return jsonNoStore({ error: "invalid_bearer_token" }, 401);
+  }
+  const principal = await resolvePlatformPrincipal({ token, userId: row.user_id }, instrumentation);
+  if (principal instanceof NextResponse) return principal;
+  if (principal.authKind !== "connected_client") return jsonNoStore({ error: "invalid_bearer_token" }, 401);
+  let native;
+  try { native = decryptNativeSession(row.native_session_ciphertext, row.id, row.user_id, row.client_id); }
+  catch { return jsonNoStore({ error: "connect_session_unavailable" }, 503); }
+  const supabase = createAuthenticatedBearerClient(native.access_token);
+  if (supabase instanceof NextResponse) return supabase;
+  const { data, error: userError } = await supabase.auth.getUser(native.access_token);
+  if (userError || !data.user || data.user.id !== row.user_id) return jsonNoStore({ error: "invalid_bearer_token" }, 401);
+  return { supabase, user: data.user, principal };
 }
 
 async function resolveAuthenticatedSupabase(
@@ -415,18 +448,17 @@ async function resolvePlatformPrincipal(
   }
 
   const service = platformServiceClient();
-  if (!service) return firstParty;
-  if (typeof service.from !== "function") return firstParty;
+  if (!service) return jsonNoStore({ error: "platform_principal_not_configured" }, 503);
+  if (typeof service.from !== "function") return jsonNoStore({ error: "platform_principal_not_configured" }, 503);
 
   let sessionQuery: any;
   try {
     sessionQuery = service.from("connected_client_sessions");
   } catch (error) {
-    if (process.env.NODE_ENV === "test") return firstParty;
-    throw error;
+    return jsonNoStore({ error: "platform_principal_lookup_failed" }, 500);
   }
   if (!sessionQuery || typeof sessionQuery.select !== "function") {
-    return firstParty;
+    return jsonNoStore({ error: "platform_principal_not_configured" }, 503);
   }
 
   const { data: session, error: sessionError } = await measureAuthTiming<{

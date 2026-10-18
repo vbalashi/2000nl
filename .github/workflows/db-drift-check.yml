@@ -6,6 +6,9 @@ on:
       - 'scripts/db-local-supabase*'
       - 'scripts/bootstrap-worktree.sh'
       - 'scripts/create-worktree.sh'
+      - 'scripts/connect-rollback-policy.test.mjs'
+      - '.github/workflows/deploy-nuc.yml'
+      - 'apps/ui/Dockerfile'
       - 'scripts/lib/local-db-check.mjs'
       - 'db/migrations/**'
       - 'db/deploy-contract/**'
@@ -39,6 +42,9 @@ on:
       - 'scripts/db-local-supabase*'
       - 'scripts/bootstrap-worktree.sh'
       - 'scripts/create-worktree.sh'
+      - 'scripts/connect-rollback-policy.test.mjs'
+      - '.github/workflows/deploy-nuc.yml'
+      - 'apps/ui/Dockerfile'
       - 'scripts/lib/local-db-check.mjs'
       - 'db/migrations/**'
       - 'db/deploy-contract/**'
@@ -225,6 +231,7 @@ jobs:
           DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_NETWORK: host
         run: |
           node --test db/scripts/deploy_db_contract.test.mjs
+          node --test scripts/connect-rollback-policy.test.mjs
           node --test db/scripts/deploy_db_contract.integration.test.mjs
           node db/scripts/deploy_db_contract.mjs validate
           node db/scripts/deploy_db_contract.mjs rollout-status
