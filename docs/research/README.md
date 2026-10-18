@@ -5,6 +5,7 @@ Read the specific study's README/report; do not load every experiment by default
 
 | Question | Entry |
 | --- | --- |
+| Встроенный импорт учебных материалов | [Discovery #742](agent-import-742/README.md) — proposed design, code audit, pinned runbook2.2 |
 | Scheduler studies and simulations | [fsrs-learning/README.md](fsrs-learning/README.md) |
 | Dictionary identity / translation | [Sense-aware translation](issue-149-sense-aware-translation.md); ingestion in [../../packages/ingestion/README.md](../../packages/ingestion/README.md) |
 | Blog navigation references | [Blog study](2026-10-10-dilumio-blog-navigation.md) |
