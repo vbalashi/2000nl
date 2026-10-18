@@ -751,7 +751,8 @@ test("Include new opens Session, preserves saved settings until explicit save, a
  await screen.findByRole("heading",{name:"Session builder"});
  expect(screen.getByRole("button",{name:/^Session /})).toHaveAttribute("aria-expanded","true");
  expect(screen.getByRole("slider",{name:"Session size"})).toHaveValue("6");
- expect(screen.getByLabelText("Available cards")).toHaveTextContent("109");
+ expect(screen.queryByLabelText("Available cards")).toBeNull();
+ expect(availabilityRequests).toHaveBeenLastCalledWith(expect.objectContaining({enabled:false}));
  fireEvent.click(screen.getByRole("button",{name:"Include new cards"}));
  expect(onStart).not.toHaveBeenCalled();
  expect(accounts.get("empty-review")!.document.trainings[0].draft.cardFilter).toBe("review");
@@ -778,4 +779,19 @@ test("unsaved current setup also opens Session for the new-card restriction",asy
  render(<TrainingTodaySetup {...baseProps} initialDraft={{...initialDraft,cardFilter:"review",sessionSize:"all-due-today"}} userId="unsaved-empty" trainingLanguageCode="nl"/>);
  fireEvent.click(await screen.findByRole("button",{name:"Include new cards"}));
  expect(await screen.findByRole("button",{name:/^Session /})).toHaveAttribute("aria-expanded","true");
+});
+
+
+test("editing source and session controls never enables availability requests",async()=>{
+ render(<TrainingTodaySetup {...baseProps} userId="no-live-builder-counts" trainingLanguageCode="nl"/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Create training"}));
+ availabilityRequests.mockClear();
+ fireEvent.click(screen.getByRole("button",{name:/^Session /}));
+ fireEvent.change(screen.getByRole("slider",{name:"Session size"}),{target:{value:"2"}});
+ fireEvent.change(screen.getByRole("slider",{name:"New / review balance"}),{target:{value:"6"}});
+ fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
+ fireEvent.click(screen.getByRole("button",{name:"Verbs"}));
+ expect(availabilityRequests.mock.calls.length).toBeGreaterThan(0);
+ expect(availabilityRequests.mock.calls.every(([input])=>input.enabled===false)).toBe(true);
+ expect(screen.queryByLabelText("Available cards")).toBeNull();
 });

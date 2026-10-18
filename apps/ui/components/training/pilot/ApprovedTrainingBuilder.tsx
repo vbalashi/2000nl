@@ -45,7 +45,6 @@ import s from "@/components/training/pilot/approvedTrainingBuilder.module.css";
 
 type Props = {
   initialSection?: "session";
-  availability?: {status:"loading"|"ready"|"error";dueToday:number|null;totalReviews:number|null;stillNew:number|null};
   emptyState?: {message:string;includeNew:boolean}|null;
   interfaceLanguage: OnboardingLanguage;
   draft: TrainingSetupDraft & { sessionSize: TrainingSessionSize };
@@ -273,13 +272,7 @@ export function ApprovedTrainingBuilder(p: Props) {
     .filter(Boolean)
     .join(" · ");
   const size = p.draft.sessionSize ?? 10;
-  const sessionAvailability = (p.availability || p.emptyState) && <div className={s.sessionAvailability}>
-    {p.availability && <dl aria-label={o.availableCards} aria-busy={p.availability.status==="loading"}>
-      {[[o.dueToday,p.availability.dueToday],[o.totalReviews,p.availability.totalReviews],[o.stillNew,p.availability.stillNew]].map(([label,count])=><div key={label}><dt>{label}</dt><dd>{p.availability?.status==="ready"?count??"—":"—"}</dd></div>)}
-    </dl>}
-    {p.availability?.status==="error"&&<p role="status">{o.availabilityFailed}</p>}
-    {p.emptyState && <p role="status">{p.emptyState.includeNew?o.includeNewHint:p.draft.cardFilter==="review"?o.nothingDue:p.draft.cardFilter==="new"?o.noNewSelection:o.emptySelection}</p>}
-  </div>;
+  const sessionGuidance = p.emptyState && <p className={s.sessionGuidance} role="status">{p.emptyState.includeNew?o.includeNewHint:p.draft.cardFilter==="review"?o.nothingDue:p.draft.cardFilter==="new"?o.noNewSelection:o.emptySelection}</p>;
   const section = (
     key: string,
     title: string,
@@ -290,7 +283,7 @@ export function ApprovedTrainingBuilder(p: Props) {
       id={`${uid}-${key}`}
       title={title}
       summary={summary}
-      notice={key==="session"?sessionAvailability:undefined}
+      notice={key==="session"?sessionGuidance:undefined}
       open={open.includes(key)}
       onToggle={() => toggle(key)}
     >

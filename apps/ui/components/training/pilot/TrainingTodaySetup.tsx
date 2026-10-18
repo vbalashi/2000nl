@@ -1,5 +1,6 @@
 "use client";
 import {useAccountMaterial} from "@/components/practice/material/AccountMaterialProvider";
+import {availabilityRecipeKey,type TrainingAvailability} from "@/lib/training/availability/model";
 import {trainingEmptyState} from "@/lib/training/availability/emptyState";
 import {useTrainingAvailability} from "@/lib/training/availability/useTrainingAvailability";
 import { useNewTrainingMaterial } from "@/components/practice/material/useNewTrainingMaterial";
@@ -267,11 +268,16 @@ export function TrainingTodaySetup({
   }, [failedStart, failedStartContextMatches]);
   const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
   const accountMaterial = useAccountMaterial();
-  const availabilityRecipe = screen === "setup" ? {languageCode:trainingLanguageCode??"nl",draft} : selectedTraining ?? (!account.snapshot.document.trainings.length ? {languageCode:trainingLanguageCode??"nl",draft:initialDraft} : null);
+  const availabilityRecipe = selectedTraining ?? (!account.snapshot.document.trainings.length ? {languageCode:trainingLanguageCode??"nl",draft:initialDraft} : null);
   const availabilityResult = useTrainingAvailability({ownerId:userId??null,recipe:availabilityRecipe,
-    enabled:!startPending && account.status === "ready" && material.status === "ready" &&
+    enabled:screen === "today" && !startPending && account.status === "ready" && material.status === "ready" &&
       Boolean(availabilityRecipe && availabilityRecipe.languageCode === trainingLanguageCode && !pendingLanguage && !isTrainingSetupPaused(availabilityRecipe.draft)),
     refresh:JSON.stringify([account.snapshot.revision,accountMaterial?.snapshot?.revision,ownedSession?.id,ownedSession?.completed,stats.reviewCardsDone,stats.newCardsToday,translationTargetLanguageCode])});
+  // Reuse only the settled home snapshot; editing must never trigger availability reads.
+  const homeAvailability = useRef<{ownerId:string|undefined;scope:string;value:TrainingAvailability}|null>(null);
+  if(screen==="today"&&!startPending&&availabilityRecipe&&availabilityResult.status==="ready") {
+    homeAvailability.current={ownerId:userId,scope:availabilityRecipeKey(availabilityRecipe),value:availabilityResult.value};
+  }
   const availability = availabilityRecipe ? {trainingId:selectedTrainingId??"current-setup",status:availabilityResult.status === "ready"?"ready" as const:availabilityResult.status === "error"?"error" as const:"loading" as const,
     dueToday:availabilityResult.status === "ready"?availabilityResult.value.dueToday:null,
     totalReviews:availabilityResult.status === "ready"?availabilityResult.value.totalReviews:null,
@@ -546,11 +552,12 @@ export function TrainingTodaySetup({
       };
     });
 
-  const draftEmpty=availabilityResult.status === "ready" ? trainingEmptyState(interfaceLanguage,draft.cardFilter,{
-    dueToday:availabilityResult.value.dueToday,totalReviews:availabilityResult.value.totalReviews,stillNew:availabilityResult.value.newCards,
+  const draftSnapshot=homeAvailability.current&&homeAvailability.current.ownerId===userId&&homeAvailability.current.scope===availabilityRecipeKey({languageCode:trainingLanguageCode??"nl",draft})?homeAvailability.current.value:null;
+  const draftEmpty=draftSnapshot ? trainingEmptyState(interfaceLanguage,draft.cardFilter,{
+    dueToday:draftSnapshot.dueToday,totalReviews:draftSnapshot.totalReviews,stillNew:draftSnapshot.newCards,
   }) : null;
   return <TrainingScreenTransition screen="setup"><ApprovedTrainingBuilder
-    initialSection={editorSection} emptyState={draftEmpty} availability={availability}
+    initialSection={editorSection} emptyState={draftEmpty}
     interfaceLanguage={interfaceLanguage} draft={draft} languageCode={trainingLanguageCode??"nl"} languageOptions={trainingLanguageOptions}
     lists={lists} dictionaries={dictionaries} sources={sources} scenarios={scenarios}
     languagePending={trainingLanguageLoading||Boolean(pendingLanguage)||startPending} dictionariesLoading={dictionariesLoading} translationLanguage={translationTargetLanguageCode}
