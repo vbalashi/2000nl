@@ -23,6 +23,6 @@ if __name__=='__main__':
     groups={};allrows=[]
     for ledger in args.ledgers:
         rows=[json.loads(s) for s in ledger.read_text().splitlines()];allrows.extend(rows)
-        for mode in sorted({r['label'].split('-')[0] for r in rows}):groups[f'{ledger.parent.name}/{mode}']=estimate([r for r in rows if r['label'].startswith(mode+'-')])
+        for mode in sorted({r['label'].split('-')[0] for r in rows}):groups[f'{ledger.parent.as_posix()}/{mode}']=estimate([r for r in rows if r['label'].startswith(mode+'-')])
     out={'rateCheckedDate':'2026-10-18','currency':'USD','ratesPerMillion':RATES,'source':SOURCE,'assumptions':['gpt-6-luna Global Standard short context','cache read and cache write are disjoint input subsets; remainder charged ordinary input','output includes reasoning; no extra reasoning charge','published list estimate only; effective Sponsorship billing not reconciled','excludes hosting, lookup infrastructure, subtitle retrieval, transcription, article generation and managed sandbox/tools'], 'groups':groups,'total':estimate(allrows)}
     args.output.write_text(json.dumps(out,indent=2)+'\n');print(json.dumps(out,indent=2))

@@ -348,3 +348,16 @@ ASR continuation выполнен на обоих источниках: [рез�
 completion или сохранённые articles. Existing source audio-language guard соблюдён
 с реальным probe; all-dictionary coverage/headword normalization/save integration
 остаются отдельными задачами.
+
+## Три YouTube-коллекции и quality audit (2026-10-18)
+
+Владелец разрешил три новые коллекции и продолжение внешних экспериментов.
+Выполнены полный content-candidate shortlist pass, отдельная проверка выбранных
+значений, дополнительный поиск выражений и review десяти generated drafts.
+Три коллекции созданы через existing owner-checked RPC, итоговое членство
+201/285/232 проверено; learning state и история действий не изменены.
+Проверяющий выявляет полезные ошибки, но также даёт ложные veto и пропускает
+ошибки первого выбора; операторские исправления сохранены отдельно. Это не
+готовый autonomous import flow или exhaustive semantic completion. Generated
+articles не сохранялись. [Решение](../discussions/2026-10-18-10-collections-and-quality-audit.md),
+[результат](../research/agent-import-742/multivideo/QUALITY-RESULT-20261018.md).

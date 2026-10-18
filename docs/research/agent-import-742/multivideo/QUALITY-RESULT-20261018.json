@@ -1,0 +1,143 @@
+{
+  "date": "2026-10-18",
+  "scope": "three user-authorized external pilot collections; full extracted content-POS shortlist pass, sampled contexts; no production import feature",
+  "model": "gpt-6-luna",
+  "resource": "dilumio-01-resource",
+  "region": "swedencentral",
+  "subscriptionOffer": "Microsoft Azure Sponsorship",
+  "firstRequestUtc": "2026-10-18T21:02:22.866262+00:00",
+  "lastRequestUtc": "2026-10-18T21:06:09.056108+00:00",
+  "timezone": "Europe/Amsterdam",
+  "videos": [
+    {
+      "videoId": "-lf71hdWm5E",
+      "collection": "YouTube — NOS: Oekraïne, wielrennen en blinden",
+      "finalMembers": 201,
+      "initialModelCoverage": {
+        "sourceCandidates": 278,
+        "reviewedCandidates": 258,
+        "excludedByPos": 24,
+        "selectedTargets": 237,
+        "acceptedTargets": 207,
+        "uniqueMembers": 201,
+        "rejectedTargets": 26,
+        "uncertainTargets": 4,
+        "unresolvedCandidates": 28,
+        "noiseCandidates": 2,
+        "modelOnlyUniqueMembers": 201
+      },
+      "mechanicalRejectedCandidates": 1,
+      "modelCalls": 24,
+      "anchoredAdditionalExpressionProposals": 9,
+      "unanchoredAdditionalExpressionProposals": 0,
+      "gapLookupQueries": 16,
+      "exactFinalMembershipVerified": true
+    },
+    {
+      "videoId": "9ZQaqL7K-rE",
+      "collection": "YouTube — LUBACH: Buiten je comfortzone",
+      "finalMembers": 232,
+      "initialModelCoverage": {
+        "sourceCandidates": 328,
+        "reviewedCandidates": 310,
+        "excludedByPos": 22,
+        "selectedTargets": 258,
+        "acceptedTargets": 239,
+        "uniqueMembers": 231,
+        "rejectedTargets": 11,
+        "uncertainTargets": 8,
+        "unresolvedCandidates": 60,
+        "noiseCandidates": 9
+      },
+      "mechanicalRejectedCandidates": 1,
+      "modelCalls": 28,
+      "anchoredAdditionalExpressionProposals": 6,
+      "unanchoredAdditionalExpressionProposals": 0,
+      "gapLookupQueries": 10,
+      "exactFinalMembershipVerified": true
+    },
+    {
+      "videoId": "IoTEYzkKF0M",
+      "collection": "YouTube — Easy Dutch: Complimenten",
+      "finalMembers": 285,
+      "initialModelCoverage": {
+        "sourceCandidates": 399,
+        "reviewedCandidates": 385,
+        "excludedByPos": 18,
+        "selectedTargets": 320,
+        "acceptedTargets": 295,
+        "uniqueMembers": 284,
+        "rejectedTargets": 21,
+        "uncertainTargets": 4,
+        "unresolvedCandidates": 77,
+        "noiseCandidates": 8
+      },
+      "mechanicalRejectedCandidates": 0,
+      "modelCalls": 35,
+      "anchoredAdditionalExpressionProposals": 10,
+      "unanchoredAdditionalExpressionProposals": 2,
+      "gapLookupQueries": 20,
+      "exactFinalMembershipVerified": true
+    }
+  ],
+  "modelUsage": {
+    "requests": 88,
+    "responses": 88,
+    "unknownUsageResponses": 0,
+    "tokens": {
+      "input": 387288,
+      "ordinaryInput": 948,
+      "cacheRead": 0,
+      "cacheWrite": 386340,
+      "output": 82687
+    },
+    "estimatedPublishedUsd": 0.0897308
+  },
+  "ratesPerMillionUsd": {
+    "ordinaryInput": 0.1,
+    "cacheRead": 0.01,
+    "cacheWrite": 0.125,
+    "output": 0.5
+  },
+  "priceSource": "https://azure.microsoft.com/en-us/blog/gpt-6-astra-sol-and-luna-for-production-agents-in-microsoft-foundry/",
+  "costStatus": "published token list estimate, no invoice reconciliation; excludes own CPU ASR/storage/lookup costs",
+  "priorRequests": 66,
+  "cumulativeRequests": 154,
+  "cumulativePublishedUsd": 0.126051325,
+  "verifierRejectedTargets": 58,
+  "verifierUncertainTargets": 16,
+  "additionalAnchoredExpressionProposals": 25,
+  "draftReview": {
+    "total": 10,
+    "acceptableModelDrafts": 8,
+    "needsRevision": 2,
+    "persisted": 0
+  },
+  "productionEffects": {
+    "newCollections": 3,
+    "finalCollectionMembersSum": 718,
+    "newDictionaryArticles": 0,
+    "learningStateUnchanged": true,
+    "actionEventCountUnchanged": true
+  },
+  "operatorAudit": {
+    "initialNOSRemovedAcceptedTargets": 3,
+    "initialNOSRestoredFalseVetoes": 3,
+    "gapAddedTargets": 3,
+    "gapRemovedBroadLiteralTarget": 1,
+    "scope": "targeted audit, not exhaustive gold"
+  },
+  "limits": [
+    "same model and snapshot for both roles; independent request does not mean independent failure modes",
+    "first3 distinct sentence contexts; all occurrences retained privately but not all resolved",
+    "snapshot shortlists filter nl-vandale; not exhaustive across all accessible dictionaries",
+    "only initial4 expression proposals enter first selection; gap proposals are separate and not all persisted",
+    "operator corrections were necessary; no unattended accuracy claim",
+    "private-card saving and related-entry persistence remain unimplemented",
+    "gap queries with no result do not establish global absence"
+  ],
+  "usageTotalDiscrepancies": [],
+  "httpStatuses": [
+    200
+  ]
+}

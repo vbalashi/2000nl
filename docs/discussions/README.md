@@ -29,6 +29,8 @@
 
 ## Архив
 
+- [2026-10-18: три коллекции и quality audit](2026-10-18-10-collections-and-quality-audit.md) — разрешён импорт существующих значений и продолжение внешнего пилота.
+
 - [2026-10-18: разрешён AudioFilms ASR](2026-10-18-09-authorized-audiofilms-asr-continuation.md) — собственная транскрипция двух оставшихся источников, existing endpoint без deployment changes.
 
 - [2026-10-18: новые видео и personal drafts](2026-10-18-08-multivideo-and-personal-draft-pilot.md) — внешний transfer slice и закрытая схема генерации; save отдельно.

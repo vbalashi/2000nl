@@ -106,3 +106,24 @@ Source-casing-only proposal corrections require a unique match and retain a rece
 other unanchored phrases still fail. See multivideo/ASR-RESULT-20261018.md for actual
 execution, observed failures, bounded coverage and costs. The nl-vandale fixture
 scope is not an all-accessible/private-dictionaries search guarantee.
+
+### Expanded collection review (external pilot)
+
+`collection_review.py VIDEO_DIR` consumes frozen `prepared.json` and
+`transfer-fixture.json`, runs no-tool SDK selection and separate blind veto,
+then additional phrase discovery. It writes local manifests only, never DB.
+Each source has a cumulative 48-call/768-KiB ledger; no retry of completed
+hash-bound task files. Candidate-local alias validation and whole-response
+coverage validation precede use; mechanically rejected candidates remain
+unresolved. Context is first3 distinct sentences, not all occurrences.
+
+`lookup_gap_proposals.py ROOT --email ACCOUNT --reference REFERENCE` performs
+operator read-only lookup of source-anchored canonical/surface proposals.
+`review_drafts.py ROOT` performs one bounded SDK critique of existing drafts,
+without changing/saving them. A model review is not human approval.
+
+Operator DB application is intentionally not exposed as an agent tool. Current
+private source manifests/receipts include targeted corrections and a separate
+repair on existing collection IDs; initial membership manifests are superseded
+by final verification receipts. Do not rerun an initial importer after repair.
+See `QUALITY-RESULT-20261018.md` for the actual accepted scope and limitations.

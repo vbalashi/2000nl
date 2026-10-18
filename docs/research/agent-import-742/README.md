@@ -372,3 +372,10 @@ caption ждут выбора fallback; save/collection integration не вып�
 получены через existing ASR jobs;24selected resolver cases и6new unreviewed drafts.
 21model calls ~$0.00631, ASR compute отдельно и не оценён в валюте. Source-casing
 recovery отмечен как offline; full semantic coverage/save/UI ещё не реализованы.
+
+## Три коллекции и дополнительная проверка
+
+[Quality report 2026-10-18](multivideo/QUALITY-RESULT-20261018.md): три
+пользовательские коллекции 201/285/232, expanded candidate pass и независимый
+запрос-проверка, gap discovery/lookup, review drafts; ограничения и operator
+corrections сохранены. Это внешний пилот, runtime приложения не интегрирован.
