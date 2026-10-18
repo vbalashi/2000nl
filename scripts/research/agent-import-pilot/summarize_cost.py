@@ -5,7 +5,8 @@ import argparse,json
 from pathlib import Path
 RATES={'ordinaryInput':0.10,'cacheRead':0.01,'cacheWrite':0.125,'output':0.50}
 SOURCE='https://azure.microsoft.com/en-us/blog/gpt-6-astra-sol-and-luna-for-production-agents-in-microsoft-foundry/'
-def estimate(rows):
+def estimate(rows,rates=None):
+    rates=RATES if rates is None else rates
     responses=[r for r in rows if r['event']=='response']
     result={'requests':sum(r['event']=='request' for r in rows),'responses':len(responses),'unknownUsageResponses':sum(not r.get('usage') for r in responses)}
     counts=dict.fromkeys(['input','ordinaryInput','cacheRead','cacheWrite','output'],0)
@@ -16,7 +17,7 @@ def estimate(rows):
         if min(i,read,write)<0 or read+write>i:raise ValueError('inconsistent_cache_partition')
         for key,n in [('input',i),('ordinaryInput',i-read-write),('cacheRead',read),('cacheWrite',write),('output',u['output_tokens'])]:counts[key]+=n
     result['tokens']=counts
-    result['estimatedPublishedUsd']=sum(counts[k]*v for k,v in RATES.items())/1e6
+    result['estimatedPublishedUsd']=sum(counts[k]*v for k,v in rates.items())/1e6
     return result
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('ledgers',type=Path,nargs='+');p.add_argument('--output',type=Path,required=True);args=p.parse_args()

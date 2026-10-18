@@ -29,6 +29,8 @@
 
 ## Архив
 
+- [2026-10-18: сравнение методов выражений](2026-10-18-11-mwe-methods-experiments.md) — внешний research matrix, разные parsers/models/reasoning и verification; production не изменён.
+
 - [2026-10-18: три коллекции и quality audit](2026-10-18-10-collections-and-quality-audit.md) — разрешён импорт существующих значений и продолжение внешнего пилота.
 
 - [2026-10-18: разрешён AudioFilms ASR](2026-10-18-09-authorized-audiofilms-asr-continuation.md) — собственная транскрипция двух оставшихся источников, existing endpoint без deployment changes.
@@ -260,3 +262,4 @@
 - [2026-10-13: GitHub, уведомления и обратная связь](2026-10-13-01-product-development-backlog.md) — #680, #299, #681, #51.
 
 - [2026-10-13: переводы отношений в общем потоке](2026-10-13-04-relation-translation-typography.md) — #696.
+

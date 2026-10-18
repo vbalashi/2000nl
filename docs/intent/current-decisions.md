@@ -361,3 +361,15 @@ completion или сохранённые articles. Existing source audio-languag
 готовый autonomous import flow или exhaustive semantic completion. Generated
 articles не сохранялись. [Решение](../discussions/2026-10-18-10-collections-and-quality-audit.md),
 [результат](../research/agent-import-742/multivideo/QUALITY-RESULT-20261018.md).
+
+## Эксперименты с выражениями и леммами (2026-10-18)
+
+Владелец разрешил внешнее исследование методов и сравнительные модельные запуски.
+Выполнены32case MWE study,12case lemma challenge и12case sense regression;
+model effort/size и дополнительные агенты не считаются гарантией качества.
+На development set полезно code overlap grouping с адресным исправлением
+границ; проверка только veto не заменяет reconciliation. Следующий transfer
+требует новых источников и независимой разметки; runtime/коллекции не менялись.
+[Обсуждение](../discussions/2026-10-18-11-mwe-methods-experiments.md),
+[исследование](../research/agent-import-742/multivideo/MWE-METHODS-RESEARCH-20261018.md),
+[результат](../research/agent-import-742/multivideo/MWE-STUDY-RESULT-20261018.md).

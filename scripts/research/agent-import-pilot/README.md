@@ -127,3 +127,39 @@ private source manifests/receipts include targeted corrections and a separate
 repair on existing collection IDs; initial membership manifests are superseded
 by final verification receipts. Do not rerun an initial importer after repair.
 See `QUALITY-RESULT-20261018.md` for the actual accepted scope and limitations.
+
+### MWE methods study (no production writes)
+
+Reconstruct frozen references with `mwe_benchmark_data.py SOURCES STUDY/reference.json`,
+`lemma_benchmark_data.py SOURCES STUDY/lemma-reference.json` and
+`sense_audit_data.py SOURCES STUDY/sense-reference.json`. Raw text/answers remain
+ignored; reference scripts contain source IDs and lexical-core annotations only.
+These are operator development references, not an independent benchmark.
+
+`parser_benchmark.py STUDY --engine spacy --model nl_core_news_sm` (or
+`nl_core_news_md`) writes aligned parser hints and two-rule candidates. For
+Stanza use a separate Python3.12 venv with `stanza==1.15.0 torch==2.14.1`, download
+Dutch `alpino` with processors `tokenize,pos,lemma,depparse` into a temporary
+model directory, then use `--engine stanza --model alpino --model-dir DIR`.
+For lemma analysis add `--reference-file lemma-reference.json --output-prefix lemma-`.
+Medium spaCy pipeline used the official nl_core_news_md3.8.0 wheel, while base
+SDK dependencies remain pinned in agent-requirements.lock.
+
+`mwe_study.py STUDY --stage extract` runs six controlled conditions. Other stages:
+`specialists`, `repeat`, `lemma`, `verify`; original study's partial verifier
+response is preserved and continued with `verify-repair`. This recovery stage
+specifically consumes the saved partial receipt; it is not a general scheduler.
+`sense` runs prior sense regressions, `reconcile` runs post-hoc overlap grouping
+and bounded boundary repair. All stages share one persisted64-call,1.5-MiB,
+30-minute phase budget; do not reset it by moving/renaming ledgers. No transport
+retries. Unit cardinality/IDs are checked; structured output is not semantic gold.
+
+`mwe_score.py STUDY`, `lemma_score.py STUDY --sources SOURCES` and
+`mwe_report.py STUDY OUTPUT.json` are offline/read-only summaries. Multi-model
+costs require explicit verified per-deployment rates in STUDY/rates.json; the
+report must not apply Luna prices to Sol. The committed report links rate sources.
+A Pydantic register-field alias repair retains the original strict wire schema
+and legacy checkpoint compatibility; no historical response is rewritten.
+
+See docs/research/agent-import-742/multivideo/MWE-STUDY-RESULT-20261018.md for
+actual variants, recovery, costs, human/reference limitations and next experiments.

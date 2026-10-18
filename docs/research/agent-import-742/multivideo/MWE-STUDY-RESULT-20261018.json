@@ -1,0 +1,1690 @@
+{
+  "date": "2026-10-18",
+  "referenceStatus": "operator-labelled frozen challenge/extra, not independent human gold or random sample",
+  "referenceSha256": "e2a366cc7ac42bbddc287f71a6688f09a5f65bfc1ba1d3e794b5d05391497b13",
+  "cases": 32,
+  "requiredUnits": 23,
+  "optionalUnits": 7,
+  "lemmaReferenceSha256": "9f711fa04fe760c03051582aa6d84a6be36735d252e73cd2eba5be0cbda2b21f",
+  "senseReferenceSha256": "0fdd653a16a7a8ecffaa4a9facc4033284907221f52e03148f9b2a47095dd9bf",
+  "sourceKinds": {
+    "nos": "author captions",
+    "easy": "own AudioFilms ASR",
+    "lubach": "own AudioFilms ASR"
+  },
+  "resource": "dilumio-01-resource",
+  "region": "swedencentral",
+  "subscriptionOffer": "Microsoft Azure Sponsorship",
+  "deployments": {
+    "gpt-6-luna": {
+      "version": "2026-09-22",
+      "sku": "GlobalStandard"
+    },
+    "gpt-6.1-sol": {
+      "version": "2026-09-29",
+      "sku": "GlobalStandard"
+    }
+  },
+  "firstModelRequestUtc": "2026-10-18T21:32:17.368011+00:00",
+  "lastModelRequestUtc": "2026-10-18T21:43:29.982697+00:00",
+  "timezone": "Europe/Amsterdam",
+  "observedResponseModels": [
+    "gpt-6-luna",
+    "gpt-6.1-sol"
+  ],
+  "modelUsage": {
+    "requests": 62,
+    "responses": 62,
+    "unknownUsageResponses": 0,
+    "estimatedPublishedUsd": 0.24076728,
+    "tokens": {
+      "input": 115002,
+      "ordinaryInput": 3512,
+      "cacheRead": 5888,
+      "cacheWrite": 105602,
+      "output": 46002
+    }
+  },
+  "byModel": {
+    "gpt-6-luna": {
+      "requests": 38,
+      "responses": 38,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 70824,
+        "ordinaryInput": 1824,
+        "cacheRead": 5888,
+        "cacheWrite": 63112,
+        "output": 35472
+      },
+      "estimatedPublishedUsd": 0.02586628
+    },
+    "gpt-6.1-sol": {
+      "requests": 24,
+      "responses": 24,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 44178,
+        "ordinaryInput": 1688,
+        "cacheRead": 0,
+        "cacheWrite": 42490,
+        "output": 10530
+      },
+      "estimatedPublishedUsd": 0.214901
+    }
+  },
+  "byCondition": {
+    "luna-generic": {
+      "requests": 4,
+      "responses": 4,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 5592,
+        "ordinaryInput": 12,
+        "cacheRead": 0,
+        "cacheWrite": 5580,
+        "output": 3148
+      },
+      "estimatedPublishedUsd": 0.0022727,
+      "model": "gpt-6-luna",
+      "medianHttpSeconds": 5.594171020668,
+      "sumHttpSeconds": 22.391004959121346
+    },
+    "luna-taxonomy": {
+      "requests": 4,
+      "responses": 4,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 5900,
+        "ordinaryInput": 12,
+        "cacheRead": 0,
+        "cacheWrite": 5888,
+        "output": 3282
+      },
+      "estimatedPublishedUsd": 0.0023782,
+      "model": "gpt-6-luna",
+      "medianHttpSeconds": 6.4556089791003615,
+      "sumHttpSeconds": 25.541820499114692
+    },
+    "luna-high": {
+      "requests": 4,
+      "responses": 4,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 5900,
+        "ordinaryInput": 12,
+        "cacheRead": 0,
+        "cacheWrite": 5888,
+        "output": 10343
+      },
+      "estimatedPublishedUsd": 0.0059087,
+      "model": "gpt-6-luna",
+      "medianHttpSeconds": 16.77226549992338,
+      "sumHttpSeconds": 69.33348824968562
+    },
+    "sol-taxonomy": {
+      "requests": 4,
+      "responses": 4,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 5900,
+        "ordinaryInput": 12,
+        "cacheRead": 0,
+        "cacheWrite": 5888,
+        "output": 2197
+      },
+      "estimatedPublishedUsd": 0.036714,
+      "model": "gpt-6.1-sol",
+      "medianHttpSeconds": 11.799502375535667,
+      "sumHttpSeconds": 49.58271662564948
+    },
+    "luna-context": {
+      "requests": 4,
+      "responses": 4,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 7153,
+        "ordinaryInput": 12,
+        "cacheRead": 0,
+        "cacheWrite": 7141,
+        "output": 3051
+      },
+      "estimatedPublishedUsd": 0.002419325,
+      "model": "gpt-6-luna",
+      "medianHttpSeconds": 6.754935125121847,
+      "sumHttpSeconds": 25.02990649919957
+    },
+    "luna-hints": {
+      "requests": 4,
+      "responses": 4,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 20465,
+        "ordinaryInput": 12,
+        "cacheRead": 0,
+        "cacheWrite": 20453,
+        "output": 2951
+      },
+      "estimatedPublishedUsd": 0.004033325,
+      "model": "gpt-6-luna",
+      "medianHttpSeconds": 4.994337979704142,
+      "sumHttpSeconds": 20.62182433437556
+    },
+    "specialist-grammar": {
+      "requests": 4,
+      "responses": 4,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 6024,
+        "ordinaryInput": 12,
+        "cacheRead": 0,
+        "cacheWrite": 6012,
+        "output": 2537
+      },
+      "estimatedPublishedUsd": 0.0020212,
+      "model": "gpt-6-luna",
+      "medianHttpSeconds": 4.9346484371926636,
+      "sumHttpSeconds": 19.992337292060256
+    },
+    "specialist-lexical": {
+      "requests": 4,
+      "responses": 4,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 6024,
+        "ordinaryInput": 12,
+        "cacheRead": 0,
+        "cacheWrite": 6012,
+        "output": 3090
+      },
+      "estimatedPublishedUsd": 0.0022976999999999997,
+      "model": "gpt-6-luna",
+      "medianHttpSeconds": 5.200716166757047,
+      "sumHttpSeconds": 22.7255942504853
+    },
+    "luna-taxonomy-repeat": {
+      "requests": 4,
+      "responses": 4,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 5900,
+        "ordinaryInput": 12,
+        "cacheRead": 5888,
+        "cacheWrite": 0,
+        "output": 3250
+      },
+      "estimatedPublishedUsd": 0.0016850799999999998,
+      "model": "gpt-6-luna",
+      "medianHttpSeconds": 5.682909645605832,
+      "sumHttpSeconds": 22.764710790012032
+    },
+    "lemma-luna-low": {
+      "requests": 1,
+      "responses": 1,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 1902,
+        "ordinaryInput": 3,
+        "cacheRead": 0,
+        "cacheWrite": 1899,
+        "output": 404
+      },
+      "estimatedPublishedUsd": 0.000439675,
+      "model": "gpt-6-luna",
+      "medianHttpSeconds": 6.082129915710539,
+      "sumHttpSeconds": 6.082129915710539
+    },
+    "lemma-luna-high": {
+      "requests": 1,
+      "responses": 1,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 1902,
+        "ordinaryInput": 3,
+        "cacheRead": 0,
+        "cacheWrite": 1899,
+        "output": 892
+      },
+      "estimatedPublishedUsd": 0.0006836749999999999,
+      "model": "gpt-6-luna",
+      "medianHttpSeconds": 5.849356584250927,
+      "sumHttpSeconds": 5.849356584250927
+    },
+    "lemma-sol-low": {
+      "requests": 1,
+      "responses": 1,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 1902,
+        "ordinaryInput": 3,
+        "cacheRead": 0,
+        "cacheWrite": 1899,
+        "output": 228
+      },
+      "estimatedPublishedUsd": 0.0070335,
+      "model": "gpt-6.1-sol",
+      "medianHttpSeconds": 3.3051249589771032,
+      "sumHttpSeconds": 3.3051249589771032
+    },
+    "sol-union-review": {
+      "requests": 1,
+      "responses": 1,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 3219,
+        "ordinaryInput": 3,
+        "cacheRead": 0,
+        "cacheWrite": 3216,
+        "output": 229
+      },
+      "estimatedPublishedUsd": 0.010336,
+      "model": "gpt-6.1-sol",
+      "medianHttpSeconds": 5.577188374940306,
+      "sumHttpSeconds": 5.577188374940306
+    },
+    "sol-union-review-repair": {
+      "requests": 8,
+      "responses": 8,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 14807,
+        "ordinaryInput": 24,
+        "cacheRead": 0,
+        "cacheWrite": 14783,
+        "output": 3843
+      },
+      "estimatedPublishedUsd": 0.0754355,
+      "model": "gpt-6.1-sol",
+      "medianHttpSeconds": 10.110761228716001,
+      "sumHttpSeconds": 81.44246495654806
+    },
+    "sense-luna-low": {
+      "requests": 2,
+      "responses": 2,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 2031,
+        "ordinaryInput": 861,
+        "cacheRead": 0,
+        "cacheWrite": 1170,
+        "output": 1173
+      },
+      "estimatedPublishedUsd": 0.00081885,
+      "model": "gpt-6-luna",
+      "medianHttpSeconds": 4.796477478928864,
+      "sumHttpSeconds": 9.592954957857728
+    },
+    "sense-luna-high": {
+      "requests": 2,
+      "responses": 2,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 2031,
+        "ordinaryInput": 861,
+        "cacheRead": 0,
+        "cacheWrite": 1170,
+        "output": 1351
+      },
+      "estimatedPublishedUsd": 0.00090785,
+      "model": "gpt-6-luna",
+      "medianHttpSeconds": 4.692590520950034,
+      "sumHttpSeconds": 9.385181041900069
+    },
+    "sense-sol-veto": {
+      "requests": 2,
+      "responses": 2,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 2031,
+        "ordinaryInput": 861,
+        "cacheRead": 0,
+        "cacheWrite": 1170,
+        "output": 608
+      },
+      "estimatedPublishedUsd": 0.010727,
+      "model": "gpt-6.1-sol",
+      "medianHttpSeconds": 6.775660333456472,
+      "sumHttpSeconds": 13.551320666912943
+    },
+    "sense-sol-contrast": {
+      "requests": 2,
+      "responses": 2,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 5188,
+        "ordinaryInput": 6,
+        "cacheRead": 0,
+        "cacheWrite": 5182,
+        "output": 643
+      },
+      "estimatedPublishedUsd": 0.019397,
+      "model": "gpt-6.1-sol",
+      "medianHttpSeconds": 6.210517291678116,
+      "sumHttpSeconds": 12.421034583356231
+    },
+    "sol-reconcile": {
+      "requests": 6,
+      "responses": 6,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 11131,
+        "ordinaryInput": 779,
+        "cacheRead": 0,
+        "cacheWrite": 10352,
+        "output": 2782
+      },
+      "estimatedPublishedUsd": 0.055258,
+      "model": "gpt-6.1-sol",
+      "medianHttpSeconds": 10.61281002103351,
+      "sumHttpSeconds": 59.17449141666293
+    }
+  },
+  "rates": {
+    "checkedDate": "2026-10-18",
+    "currency": "USD",
+    "sku": "GlobalStandard short context",
+    "ratesPerMillion": {
+      "gpt-6-luna": {
+        "ordinaryInput": 0.1,
+        "cacheRead": 0.01,
+        "cacheWrite": 0.125,
+        "output": 0.5
+      },
+      "gpt-6.1-sol": {
+        "ordinaryInput": 2,
+        "cacheRead": 0.1,
+        "cacheWrite": 2.5,
+        "output": 10
+      }
+    },
+    "sources": {
+      "gpt-6-luna": "https://azure.microsoft.com/en-us/blog/gpt-6-astra-sol-and-luna-for-production-agents-in-microsoft-foundry/",
+      "gpt-6.1-sol": "https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/introducing-gpt-6-1-sol-in-microsoft-foundry-advanced-intelligence-optimized-for/4560811"
+    },
+    "evidence": "Sol official article table fetched in embedded public page body via urllib because web reader returned empty; live pricing page renders dash placeholders. Rates are published estimates, not actual effective Sponsorship invoice."
+  },
+  "requestBytesTotal": 475859,
+  "peakRequestBytes": 21387,
+  "usageTotalDiscrepancies": [],
+  "httpStatuses": [
+    200
+  ],
+  "extractionScores": {
+    "spacy-nl_core_news_sm": {
+      "all": {
+        "canonicalExactRecall": 0.043478260869565216,
+        "canonicalExactHits": 1,
+        "exactCore": {
+          "tp": 7,
+          "fp": 25,
+          "fn": 16,
+          "precision": 0.21875,
+          "recall": 0.30434782608695654,
+          "f1": 0.2545454545454546
+        },
+        "relaxedIoU50": {
+          "tp": 14,
+          "fp": 18,
+          "fn": 9,
+          "precision": 0.4375,
+          "recall": 0.6086956521739131,
+          "f1": 0.5090909090909091
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.058823529411764705,
+        "canonicalExactHits": 1,
+        "exactCore": {
+          "tp": 4,
+          "fp": 18,
+          "fn": 13,
+          "precision": 0.18181818181818182,
+          "recall": 0.23529411764705882,
+          "f1": 0.20512820512820512
+        },
+        "relaxedIoU50": {
+          "tp": 10,
+          "fp": 12,
+          "fn": 7,
+          "precision": 0.45454545454545453,
+          "recall": 0.5882352941176471,
+          "f1": 0.5128205128205129
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.0,
+        "canonicalExactHits": 0,
+        "exactCore": {
+          "tp": 3,
+          "fp": 7,
+          "fn": 3,
+          "precision": 0.3,
+          "recall": 0.5,
+          "f1": 0.37499999999999994
+        },
+        "relaxedIoU50": {
+          "tp": 4,
+          "fp": 6,
+          "fn": 2,
+          "precision": 0.4,
+          "recall": 0.6666666666666666,
+          "f1": 0.5
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "spacy-nl_core_news_md": {
+      "all": {
+        "canonicalExactRecall": 0.08695652173913043,
+        "canonicalExactHits": 2,
+        "exactCore": {
+          "tp": 6,
+          "fp": 27,
+          "fn": 17,
+          "precision": 0.18181818181818182,
+          "recall": 0.2608695652173913,
+          "f1": 0.21428571428571427
+        },
+        "relaxedIoU50": {
+          "tp": 13,
+          "fp": 20,
+          "fn": 10,
+          "precision": 0.3939393939393939,
+          "recall": 0.5652173913043478,
+          "f1": 0.4642857142857143
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.11764705882352941,
+        "canonicalExactHits": 2,
+        "exactCore": {
+          "tp": 3,
+          "fp": 18,
+          "fn": 14,
+          "precision": 0.14285714285714285,
+          "recall": 0.17647058823529413,
+          "f1": 0.15789473684210528
+        },
+        "relaxedIoU50": {
+          "tp": 9,
+          "fp": 12,
+          "fn": 8,
+          "precision": 0.42857142857142855,
+          "recall": 0.5294117647058824,
+          "f1": 0.4736842105263158
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.0,
+        "canonicalExactHits": 0,
+        "exactCore": {
+          "tp": 3,
+          "fp": 9,
+          "fn": 3,
+          "precision": 0.25,
+          "recall": 0.5,
+          "f1": 0.3333333333333333
+        },
+        "relaxedIoU50": {
+          "tp": 4,
+          "fp": 8,
+          "fn": 2,
+          "precision": 0.3333333333333333,
+          "recall": 0.6666666666666666,
+          "f1": 0.4444444444444444
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "stanza-alpino": {
+      "all": {
+        "canonicalExactRecall": 0.08695652173913043,
+        "canonicalExactHits": 2,
+        "exactCore": {
+          "tp": 5,
+          "fp": 28,
+          "fn": 18,
+          "precision": 0.15151515151515152,
+          "recall": 0.21739130434782608,
+          "f1": 0.17857142857142858
+        },
+        "relaxedIoU50": {
+          "tp": 12,
+          "fp": 21,
+          "fn": 11,
+          "precision": 0.36363636363636365,
+          "recall": 0.5217391304347826,
+          "f1": 0.42857142857142855
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.058823529411764705,
+        "canonicalExactHits": 1,
+        "exactCore": {
+          "tp": 3,
+          "fp": 19,
+          "fn": 14,
+          "precision": 0.13636363636363635,
+          "recall": 0.17647058823529413,
+          "f1": 0.15384615384615383
+        },
+        "relaxedIoU50": {
+          "tp": 9,
+          "fp": 13,
+          "fn": 8,
+          "precision": 0.4090909090909091,
+          "recall": 0.5294117647058824,
+          "f1": 0.46153846153846156
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.16666666666666666,
+        "canonicalExactHits": 1,
+        "exactCore": {
+          "tp": 2,
+          "fp": 9,
+          "fn": 4,
+          "precision": 0.18181818181818182,
+          "recall": 0.3333333333333333,
+          "f1": 0.23529411764705885
+        },
+        "relaxedIoU50": {
+          "tp": 3,
+          "fp": 8,
+          "fn": 3,
+          "precision": 0.2727272727272727,
+          "recall": 0.5,
+          "f1": 0.3529411764705882
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "luna-generic-validated": {
+      "all": {
+        "canonicalExactRecall": 0.391304347826087,
+        "canonicalExactHits": 9,
+        "exactCore": {
+          "tp": 17,
+          "fp": 10,
+          "fn": 6,
+          "precision": 0.6296296296296297,
+          "recall": 0.7391304347826086,
+          "f1": 0.68
+        },
+        "relaxedIoU50": {
+          "tp": 23,
+          "fp": 4,
+          "fn": 0,
+          "precision": 0.8518518518518519,
+          "recall": 1.0,
+          "f1": 0.92
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.4117647058823529,
+        "canonicalExactHits": 7,
+        "exactCore": {
+          "tp": 12,
+          "fp": 7,
+          "fn": 5,
+          "precision": 0.631578947368421,
+          "recall": 0.7058823529411765,
+          "f1": 0.6666666666666667
+        },
+        "relaxedIoU50": {
+          "tp": 17,
+          "fp": 2,
+          "fn": 0,
+          "precision": 0.8947368421052632,
+          "recall": 1.0,
+          "f1": 0.9444444444444444
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.3333333333333333,
+        "canonicalExactHits": 2,
+        "exactCore": {
+          "tp": 5,
+          "fp": 3,
+          "fn": 1,
+          "precision": 0.625,
+          "recall": 0.8333333333333334,
+          "f1": 0.7142857142857143
+        },
+        "relaxedIoU50": {
+          "tp": 6,
+          "fp": 2,
+          "fn": 0,
+          "precision": 0.75,
+          "recall": 1.0,
+          "f1": 0.8571428571428571
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "luna-taxonomy-validated": {
+      "all": {
+        "canonicalExactRecall": 0.43478260869565216,
+        "canonicalExactHits": 10,
+        "exactCore": {
+          "tp": 17,
+          "fp": 10,
+          "fn": 6,
+          "precision": 0.6296296296296297,
+          "recall": 0.7391304347826086,
+          "f1": 0.68
+        },
+        "relaxedIoU50": {
+          "tp": 22,
+          "fp": 5,
+          "fn": 1,
+          "precision": 0.8148148148148148,
+          "recall": 0.9565217391304348,
+          "f1": 0.8800000000000001
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.5294117647058824,
+        "canonicalExactHits": 9,
+        "exactCore": {
+          "tp": 11,
+          "fp": 7,
+          "fn": 6,
+          "precision": 0.6111111111111112,
+          "recall": 0.6470588235294118,
+          "f1": 0.6285714285714287
+        },
+        "relaxedIoU50": {
+          "tp": 16,
+          "fp": 2,
+          "fn": 1,
+          "precision": 0.8888888888888888,
+          "recall": 0.9411764705882353,
+          "f1": 0.9142857142857143
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.16666666666666666,
+        "canonicalExactHits": 1,
+        "exactCore": {
+          "tp": 6,
+          "fp": 3,
+          "fn": 0,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8
+        },
+        "relaxedIoU50": {
+          "tp": 6,
+          "fp": 3,
+          "fn": 0,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "luna-high-validated": {
+      "all": {
+        "canonicalExactRecall": 0.5217391304347826,
+        "canonicalExactHits": 12,
+        "exactCore": {
+          "tp": 20,
+          "fp": 7,
+          "fn": 3,
+          "precision": 0.7407407407407407,
+          "recall": 0.8695652173913043,
+          "f1": 0.7999999999999999
+        },
+        "relaxedIoU50": {
+          "tp": 23,
+          "fp": 4,
+          "fn": 0,
+          "precision": 0.8518518518518519,
+          "recall": 1.0,
+          "f1": 0.92
+        },
+        "optionalNeutralMatches": 2,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.5882352941176471,
+        "canonicalExactHits": 10,
+        "exactCore": {
+          "tp": 15,
+          "fp": 3,
+          "fn": 2,
+          "precision": 0.8333333333333334,
+          "recall": 0.8823529411764706,
+          "f1": 0.8571428571428571
+        },
+        "relaxedIoU50": {
+          "tp": 17,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.9444444444444444,
+          "recall": 1.0,
+          "f1": 0.9714285714285714
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.3333333333333333,
+        "canonicalExactHits": 2,
+        "exactCore": {
+          "tp": 5,
+          "fp": 4,
+          "fn": 1,
+          "precision": 0.5555555555555556,
+          "recall": 0.8333333333333334,
+          "f1": 0.6666666666666667
+        },
+        "relaxedIoU50": {
+          "tp": 6,
+          "fp": 3,
+          "fn": 0,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8
+        },
+        "optionalNeutralMatches": 2,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "sol-taxonomy-validated": {
+      "all": {
+        "canonicalExactRecall": 0.4782608695652174,
+        "canonicalExactHits": 11,
+        "exactCore": {
+          "tp": 21,
+          "fp": 10,
+          "fn": 2,
+          "precision": 0.6774193548387096,
+          "recall": 0.9130434782608695,
+          "f1": 0.7777777777777777
+        },
+        "relaxedIoU50": {
+          "tp": 23,
+          "fp": 8,
+          "fn": 0,
+          "precision": 0.7419354838709677,
+          "recall": 1.0,
+          "f1": 0.8518518518518519
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.5294117647058824,
+        "canonicalExactHits": 9,
+        "exactCore": {
+          "tp": 15,
+          "fp": 6,
+          "fn": 2,
+          "precision": 0.7142857142857143,
+          "recall": 0.8823529411764706,
+          "f1": 0.7894736842105262
+        },
+        "relaxedIoU50": {
+          "tp": 17,
+          "fp": 4,
+          "fn": 0,
+          "precision": 0.8095238095238095,
+          "recall": 1.0,
+          "f1": 0.8947368421052632
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.3333333333333333,
+        "canonicalExactHits": 2,
+        "exactCore": {
+          "tp": 6,
+          "fp": 4,
+          "fn": 0,
+          "precision": 0.6,
+          "recall": 1.0,
+          "f1": 0.7499999999999999
+        },
+        "relaxedIoU50": {
+          "tp": 6,
+          "fp": 4,
+          "fn": 0,
+          "precision": 0.6,
+          "recall": 1.0,
+          "f1": 0.7499999999999999
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "luna-context-validated": {
+      "all": {
+        "canonicalExactRecall": 0.391304347826087,
+        "canonicalExactHits": 9,
+        "exactCore": {
+          "tp": 17,
+          "fp": 12,
+          "fn": 6,
+          "precision": 0.5862068965517241,
+          "recall": 0.7391304347826086,
+          "f1": 0.6538461538461539
+        },
+        "relaxedIoU50": {
+          "tp": 22,
+          "fp": 7,
+          "fn": 1,
+          "precision": 0.7586206896551724,
+          "recall": 0.9565217391304348,
+          "f1": 0.8461538461538461
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.47058823529411764,
+        "canonicalExactHits": 8,
+        "exactCore": {
+          "tp": 12,
+          "fp": 6,
+          "fn": 5,
+          "precision": 0.6666666666666666,
+          "recall": 0.7058823529411765,
+          "f1": 0.6857142857142857
+        },
+        "relaxedIoU50": {
+          "tp": 17,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.9444444444444444,
+          "recall": 1.0,
+          "f1": 0.9714285714285714
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.16666666666666666,
+        "canonicalExactHits": 1,
+        "exactCore": {
+          "tp": 5,
+          "fp": 6,
+          "fn": 1,
+          "precision": 0.45454545454545453,
+          "recall": 0.8333333333333334,
+          "f1": 0.5882352941176471
+        },
+        "relaxedIoU50": {
+          "tp": 5,
+          "fp": 6,
+          "fn": 1,
+          "precision": 0.45454545454545453,
+          "recall": 0.8333333333333334,
+          "f1": 0.5882352941176471
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "luna-hints-validated": {
+      "all": {
+        "canonicalExactRecall": 0.43478260869565216,
+        "canonicalExactHits": 10,
+        "exactCore": {
+          "tp": 17,
+          "fp": 11,
+          "fn": 6,
+          "precision": 0.6071428571428571,
+          "recall": 0.7391304347826086,
+          "f1": 0.6666666666666666
+        },
+        "relaxedIoU50": {
+          "tp": 23,
+          "fp": 5,
+          "fn": 0,
+          "precision": 0.8214285714285714,
+          "recall": 1.0,
+          "f1": 0.9019607843137255
+        },
+        "optionalNeutralMatches": 2,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.4117647058823529,
+        "canonicalExactHits": 7,
+        "exactCore": {
+          "tp": 12,
+          "fp": 8,
+          "fn": 5,
+          "precision": 0.6,
+          "recall": 0.7058823529411765,
+          "f1": 0.6486486486486486
+        },
+        "relaxedIoU50": {
+          "tp": 17,
+          "fp": 3,
+          "fn": 0,
+          "precision": 0.85,
+          "recall": 1.0,
+          "f1": 0.9189189189189189
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.5,
+        "canonicalExactHits": 3,
+        "exactCore": {
+          "tp": 5,
+          "fp": 3,
+          "fn": 1,
+          "precision": 0.625,
+          "recall": 0.8333333333333334,
+          "f1": 0.7142857142857143
+        },
+        "relaxedIoU50": {
+          "tp": 6,
+          "fp": 2,
+          "fn": 0,
+          "precision": 0.75,
+          "recall": 1.0,
+          "f1": 0.8571428571428571
+        },
+        "optionalNeutralMatches": 2,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "luna-taxonomy-repeat-validated": {
+      "all": {
+        "canonicalExactRecall": 0.43478260869565216,
+        "canonicalExactHits": 10,
+        "exactCore": {
+          "tp": 17,
+          "fp": 10,
+          "fn": 6,
+          "precision": 0.6296296296296297,
+          "recall": 0.7391304347826086,
+          "f1": 0.68
+        },
+        "relaxedIoU50": {
+          "tp": 23,
+          "fp": 4,
+          "fn": 0,
+          "precision": 0.8518518518518519,
+          "recall": 1.0,
+          "f1": 0.92
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.47058823529411764,
+        "canonicalExactHits": 8,
+        "exactCore": {
+          "tp": 13,
+          "fp": 5,
+          "fn": 4,
+          "precision": 0.7222222222222222,
+          "recall": 0.7647058823529411,
+          "f1": 0.7428571428571428
+        },
+        "relaxedIoU50": {
+          "tp": 17,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.9444444444444444,
+          "recall": 1.0,
+          "f1": 0.9714285714285714
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.3333333333333333,
+        "canonicalExactHits": 2,
+        "exactCore": {
+          "tp": 4,
+          "fp": 5,
+          "fn": 2,
+          "precision": 0.4444444444444444,
+          "recall": 0.6666666666666666,
+          "f1": 0.5333333333333333
+        },
+        "relaxedIoU50": {
+          "tp": 6,
+          "fp": 3,
+          "fn": 0,
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "specialist-grammar-validated": {
+      "all": {
+        "canonicalExactRecall": 0.13043478260869565,
+        "canonicalExactHits": 3,
+        "exactCore": {
+          "tp": 9,
+          "fp": 6,
+          "fn": 14,
+          "precision": 0.6,
+          "recall": 0.391304347826087,
+          "f1": 0.47368421052631576
+        },
+        "relaxedIoU50": {
+          "tp": 11,
+          "fp": 4,
+          "fn": 12,
+          "precision": 0.7333333333333333,
+          "recall": 0.4782608695652174,
+          "f1": 0.5789473684210527
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.058823529411764705,
+        "canonicalExactHits": 1,
+        "exactCore": {
+          "tp": 6,
+          "fp": 3,
+          "fn": 11,
+          "precision": 0.6666666666666666,
+          "recall": 0.35294117647058826,
+          "f1": 0.46153846153846156
+        },
+        "relaxedIoU50": {
+          "tp": 7,
+          "fp": 2,
+          "fn": 10,
+          "precision": 0.7777777777777778,
+          "recall": 0.4117647058823529,
+          "f1": 0.5384615384615384
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.3333333333333333,
+        "canonicalExactHits": 2,
+        "exactCore": {
+          "tp": 3,
+          "fp": 3,
+          "fn": 3,
+          "precision": 0.5,
+          "recall": 0.5,
+          "f1": 0.5
+        },
+        "relaxedIoU50": {
+          "tp": 4,
+          "fp": 2,
+          "fn": 2,
+          "precision": 0.6666666666666666,
+          "recall": 0.6666666666666666,
+          "f1": 0.6666666666666666
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "specialist-lexical-validated": {
+      "all": {
+        "canonicalExactRecall": 0.391304347826087,
+        "canonicalExactHits": 9,
+        "exactCore": {
+          "tp": 12,
+          "fp": 10,
+          "fn": 11,
+          "precision": 0.5454545454545454,
+          "recall": 0.5217391304347826,
+          "f1": 0.5333333333333332
+        },
+        "relaxedIoU50": {
+          "tp": 16,
+          "fp": 6,
+          "fn": 7,
+          "precision": 0.7272727272727273,
+          "recall": 0.6956521739130435,
+          "f1": 0.711111111111111
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.47058823529411764,
+        "canonicalExactHits": 8,
+        "exactCore": {
+          "tp": 8,
+          "fp": 6,
+          "fn": 9,
+          "precision": 0.5714285714285714,
+          "recall": 0.47058823529411764,
+          "f1": 0.5161290322580646
+        },
+        "relaxedIoU50": {
+          "tp": 12,
+          "fp": 2,
+          "fn": 5,
+          "precision": 0.8571428571428571,
+          "recall": 0.7058823529411765,
+          "f1": 0.7741935483870968
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.16666666666666666,
+        "canonicalExactHits": 1,
+        "exactCore": {
+          "tp": 4,
+          "fp": 4,
+          "fn": 2,
+          "precision": 0.5,
+          "recall": 0.6666666666666666,
+          "f1": 0.5714285714285715
+        },
+        "relaxedIoU50": {
+          "tp": 4,
+          "fp": 4,
+          "fn": 2,
+          "precision": 0.5,
+          "recall": 0.6666666666666666,
+          "f1": 0.5714285714285715
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "specialists-union-validated": {
+      "all": {
+        "canonicalExactRecall": 0.5217391304347826,
+        "canonicalExactHits": 12,
+        "exactCore": {
+          "tp": 19,
+          "fp": 15,
+          "fn": 4,
+          "precision": 0.5588235294117647,
+          "recall": 0.8260869565217391,
+          "f1": 0.6666666666666667
+        },
+        "relaxedIoU50": {
+          "tp": 22,
+          "fp": 12,
+          "fn": 1,
+          "precision": 0.6470588235294118,
+          "recall": 0.9565217391304348,
+          "f1": 0.7719298245614036
+        },
+        "optionalNeutralMatches": 2,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.5294117647058824,
+        "canonicalExactHits": 9,
+        "exactCore": {
+          "tp": 13,
+          "fp": 8,
+          "fn": 4,
+          "precision": 0.6190476190476191,
+          "recall": 0.7647058823529411,
+          "f1": 0.6842105263157895
+        },
+        "relaxedIoU50": {
+          "tp": 16,
+          "fp": 5,
+          "fn": 1,
+          "precision": 0.7619047619047619,
+          "recall": 0.9411764705882353,
+          "f1": 0.8421052631578947
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.5,
+        "canonicalExactHits": 3,
+        "exactCore": {
+          "tp": 6,
+          "fp": 7,
+          "fn": 0,
+          "precision": 0.46153846153846156,
+          "recall": 1.0,
+          "f1": 0.631578947368421
+        },
+        "relaxedIoU50": {
+          "tp": 6,
+          "fp": 7,
+          "fn": 0,
+          "precision": 0.46153846153846156,
+          "recall": 1.0,
+          "f1": 0.631578947368421
+        },
+        "optionalNeutralMatches": 2,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "union-validated": {
+      "all": {
+        "canonicalExactRecall": 0.5652173913043478,
+        "canonicalExactHits": 13,
+        "exactCore": {
+          "tp": 23,
+          "fp": 37,
+          "fn": 0,
+          "precision": 0.38333333333333336,
+          "recall": 1.0,
+          "f1": 0.5542168674698795
+        },
+        "relaxedIoU50": {
+          "tp": 23,
+          "fp": 37,
+          "fn": 0,
+          "precision": 0.38333333333333336,
+          "recall": 1.0,
+          "f1": 0.5542168674698795
+        },
+        "optionalNeutralMatches": 2,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.5882352941176471,
+        "canonicalExactHits": 10,
+        "exactCore": {
+          "tp": 17,
+          "fp": 19,
+          "fn": 0,
+          "precision": 0.4722222222222222,
+          "recall": 1.0,
+          "f1": 0.6415094339622641
+        },
+        "relaxedIoU50": {
+          "tp": 17,
+          "fp": 19,
+          "fn": 0,
+          "precision": 0.4722222222222222,
+          "recall": 1.0,
+          "f1": 0.6415094339622641
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.5,
+        "canonicalExactHits": 3,
+        "exactCore": {
+          "tp": 6,
+          "fp": 18,
+          "fn": 0,
+          "precision": 0.25,
+          "recall": 1.0,
+          "f1": 0.4
+        },
+        "relaxedIoU50": {
+          "tp": 6,
+          "fp": 18,
+          "fn": 0,
+          "precision": 0.25,
+          "recall": 1.0,
+          "f1": 0.4
+        },
+        "optionalNeutralMatches": 2,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "union-veto-validated": {
+      "all": {
+        "canonicalExactRecall": 0.5217391304347826,
+        "canonicalExactHits": 12,
+        "exactCore": {
+          "tp": 23,
+          "fp": 23,
+          "fn": 0,
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6666666666666666
+        },
+        "relaxedIoU50": {
+          "tp": 23,
+          "fp": 23,
+          "fn": 0,
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6666666666666666
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.5882352941176471,
+        "canonicalExactHits": 10,
+        "exactCore": {
+          "tp": 17,
+          "fp": 14,
+          "fn": 0,
+          "precision": 0.5483870967741935,
+          "recall": 1.0,
+          "f1": 0.7083333333333333
+        },
+        "relaxedIoU50": {
+          "tp": 17,
+          "fp": 14,
+          "fn": 0,
+          "precision": 0.5483870967741935,
+          "recall": 1.0,
+          "f1": 0.7083333333333333
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.3333333333333333,
+        "canonicalExactHits": 2,
+        "exactCore": {
+          "tp": 6,
+          "fp": 9,
+          "fn": 0,
+          "precision": 0.4,
+          "recall": 1.0,
+          "f1": 0.5714285714285715
+        },
+        "relaxedIoU50": {
+          "tp": 6,
+          "fp": 9,
+          "fn": 0,
+          "precision": 0.4,
+          "recall": 1.0,
+          "f1": 0.5714285714285715
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 6
+      }
+    },
+    "reconcile-validated": {
+      "all": {
+        "canonicalExactRecall": 0.43478260869565216,
+        "canonicalExactHits": 10,
+        "exactCore": {
+          "tp": 23,
+          "fp": 5,
+          "fn": 0,
+          "precision": 0.8214285714285714,
+          "recall": 1.0,
+          "f1": 0.9019607843137255
+        },
+        "relaxedIoU50": {
+          "tp": 23,
+          "fp": 5,
+          "fn": 0,
+          "precision": 0.8214285714285714,
+          "recall": 1.0,
+          "f1": 0.9019607843137255
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 23
+      },
+      "challenge": {
+        "canonicalExactRecall": 0.5882352941176471,
+        "canonicalExactHits": 10,
+        "exactCore": {
+          "tp": 17,
+          "fp": 3,
+          "fn": 0,
+          "precision": 0.85,
+          "recall": 1.0,
+          "f1": 0.9189189189189189
+        },
+        "relaxedIoU50": {
+          "tp": 17,
+          "fp": 3,
+          "fn": 0,
+          "precision": 0.85,
+          "recall": 1.0,
+          "f1": 0.9189189189189189
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 17
+      },
+      "extra": {
+        "canonicalExactRecall": 0.0,
+        "canonicalExactHits": 0,
+        "exactCore": {
+          "tp": 6,
+          "fp": 2,
+          "fn": 0,
+          "precision": 0.75,
+          "recall": 1.0,
+          "f1": 0.8571428571428571
+        },
+        "relaxedIoU50": {
+          "tp": 6,
+          "fp": 2,
+          "fn": 0,
+          "precision": 0.75,
+          "recall": 1.0,
+          "f1": 0.8571428571428571
+        },
+        "optionalNeutralMatches": 1,
+        "invalid": 0,
+        "required": 6
+      }
+    }
+  },
+  "lemmaScores": {
+    "spacy-sm-original-full-source": {
+      "cases": 12,
+      "lemmaCorrect": 3,
+      "posAcceptable": 1,
+      "both": 0
+    },
+    "spacy-nl_core_news_sm": {
+      "cases": 12,
+      "lemmaCorrect": 3,
+      "posAcceptable": 1,
+      "both": 0
+    },
+    "spacy-nl_core_news_md": {
+      "cases": 12,
+      "lemmaCorrect": 7,
+      "posAcceptable": 8,
+      "both": 7
+    },
+    "stanza-alpino": {
+      "cases": 12,
+      "lemmaCorrect": 8,
+      "posAcceptable": 9,
+      "both": 8
+    },
+    "lemma-luna-low": {
+      "cases": 12,
+      "lemmaCorrect": 12,
+      "posAcceptable": 12,
+      "both": 12
+    },
+    "lemma-luna-high": {
+      "cases": 12,
+      "lemmaCorrect": 11,
+      "posAcceptable": 12,
+      "both": 11
+    },
+    "lemma-sol-low": {
+      "cases": 12,
+      "lemmaCorrect": 12,
+      "posAcceptable": 12,
+      "both": 12
+    }
+  },
+  "senseScores": {
+    "sense-sol-veto": {
+      "certainCases": 11,
+      "agreesWithOperatorReference": 11,
+      "falseVetoes": 0,
+      "wrongAccepts": 0,
+      "uncertainOnCertain": 0,
+      "disagreements": []
+    },
+    "sense-sol-contrast": {
+      "certainCases": 11,
+      "agreesWithOperatorReference": 11,
+      "falseVetoes": 0,
+      "wrongAccepts": 0,
+      "uncertainOnCertain": 0,
+      "disagreements": []
+    },
+    "sense-luna-low": {
+      "certainCases": 11,
+      "agreesWithOperatorReference": 10,
+      "falseVetoes": 1,
+      "wrongAccepts": 0,
+      "uncertainOnCertain": 0,
+      "disagreements": [
+        {
+          "caseId": "t03",
+          "expected": "accept",
+          "actual": "reject"
+        }
+      ]
+    },
+    "sense-luna-high": {
+      "certainCases": 11,
+      "agreesWithOperatorReference": 11,
+      "falseVetoes": 0,
+      "wrongAccepts": 0,
+      "uncertainOnCertain": 0,
+      "disagreements": []
+    }
+  },
+  "localParserMetrics": {
+    "spacy-nl_core_news_sm": {
+      "loadSeconds": 0.9315096666105092,
+      "parseSeconds": 0.05477404221892357,
+      "totalSeconds": 0.9864366250112653,
+      "peakRssBytes": 156418048,
+      "sourceCases": 32,
+      "proposals": 33
+    },
+    "spacy-nl_core_news_md": {
+      "loadSeconds": 1.0779817081056535,
+      "parseSeconds": 0.0539297079667449,
+      "totalSeconds": 1.132071791216731,
+      "peakRssBytes": 402472960,
+      "sourceCases": 32,
+      "proposals": 34
+    },
+    "stanza-alpino": {
+      "loadSeconds": 5.39690012531355,
+      "parseSeconds": 0.5379678327590227,
+      "totalSeconds": 5.935072374995798,
+      "peakRssBytes": 992575488,
+      "sourceCases": 32,
+      "proposals": 34
+    }
+  },
+  "repeatability": {
+    "firstUnitCores": 28,
+    "secondUnitCores": 28,
+    "commonCores": 19,
+    "symmetricDifference": 18
+  },
+  "verificationRecovery": {
+    "originalRequested": 16,
+    "originalReturned": 3,
+    "missingReviewedSeparately": 59,
+    "repairedBatchMax": 8,
+    "reviewedUnionCores": 62,
+    "transportRetries": 0
+  },
+  "productionWrites": 0,
+  "newDictionaryArticles": 0,
+  "priorModelRequests": 154,
+  "cumulativeModelRequests": 216,
+  "priorPublishedEstimateUsd": 0.126051325,
+  "cumulativePublishedEstimateUsd": 0.36681860499999996,
+  "limits": [
+    "small operator challenge set, sources already inspected; not held-out independent gold",
+    "rule baselines are two dependency heuristics, not specialized trained MWE detectors",
+    "exact lexical-core policy is product-specific; partial IoU is not official PARSEME partial score",
+    "optional labels neutral; unlabelled plausible collocations need human adjudication",
+    "canonical exact-string scores are naming consistency, not semantic correctness",
+    "sense set intentionally selects known disagreements; not full-video accuracy",
+    "same sources reused, no audio quality evaluation or production integration",
+    "published token prices, no invoice reconciliation or local CPU monetization"
+  ]
+}

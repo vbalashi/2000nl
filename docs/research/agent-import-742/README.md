@@ -379,3 +379,13 @@ recovery отмечен как offline; full semantic coverage/save/UI ещё н
 пользовательские коллекции 201/285/232, expanded candidate pass и независимый
 запрос-проверка, gap discovery/lookup, review drafts; ограничения и operator
 corrections сохранены. Это внешний пилот, runtime приложения не интегрирован.
+
+## Сравнение методов выражений и лемм
+
+- [Первичные исследования и инструменты](multivideo/MWE-METHODS-RESEARCH-20261018.md).
+- [Протокол и ограничения reference](multivideo/MWE-STUDY-PROTOCOL-20261018.md).
+- [Результат](multivideo/MWE-STUDY-RESULT-20261018.md):62новых model calls,
+  два spaCy pipelines/Stanza, models/reasoning/context/hints/specialists,
+  cross-model veto и overlap reconciliation. Все результаты — external research,
+  no new production writes. Original frozen reference сохранён; post-hoc
+  proposals и repair receipts не подменяют gold.

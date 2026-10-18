@@ -5,6 +5,9 @@ class CostTests(unittest.TestCase):
     def test_cache_partition_and_reasoning_not_double_counted(self):
         r=estimate([{'event':'response','usage':{'input_tokens':100,'input_tokens_details':{'cached_tokens':20,'cache_write_tokens':70},'output_tokens':10,'output_tokens_details':{'reasoning_tokens':5}}}])
         self.assertAlmostEqual(r['estimatedPublishedUsd'],(10*.1+20*.01+70*.125+10*.5)/1e6)
+    def test_explicit_other_model_rates_do_not_use_luna_prices(self):
+        r=estimate([{'event':'response','usage':{'input_tokens':100,'output_tokens':10}}],{'ordinaryInput':2,'cacheRead':.1,'cacheWrite':2.5,'output':10})
+        self.assertAlmostEqual(r['estimatedPublishedUsd'],.0003)
     def test_unknown_is_not_free_usage(self):
         self.assertEqual(estimate([{'event':'response','usage':None}])['unknownUsageResponses'],1)
     def test_overlapping_cache_partition_rejected(self):
