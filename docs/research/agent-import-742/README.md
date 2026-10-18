@@ -13,6 +13,13 @@ draft предложен как отдельный маршрут. YouTube пр�
 стоимость требуют измерения. Историческое предложение полного quality path ниже
 сохранено как опция повышенной проверки, не обязательный personal MVP.
 
+## Следующий agent-flow experiment
+
+[Дизайн bounded resolver с4tools и role prompts](agent-flow/README.md) — proposed,
+после supervised pilot. Агент сам выбирает дополнительный поиск/контекст внутри
+лимитов; code coordinator хранит очередь, проверяет IDs и применяет collection plan.
+Реализация/paid run этого loop ещё не выполнялись.
+
 ## Первый выполненный pilot
 
 [Результат на авторских субтитрах видео владельца](pilot/RESULT-20261018.md):
