@@ -661,7 +661,7 @@ export function ApprovedTrainingBuilder(p: Props) {
             {section(
               "session",
               b.session,
-              <span className={s.sessionSummary}>{`${size === "all-due-today" ? c.allDueToday : formatExerciseCount(p.interfaceLanguage, size)} · ${balance}`}</span>,
+              <span className={s.sessionSummary}>{`${size === "all-due-today" ? "∞" : formatExerciseCount(p.interfaceLanguage, size)} · ${balance}`}</span>,
               <div className={s.sessionFields}>
                 <TrainingSessionSizePicker
                   approved

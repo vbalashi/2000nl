@@ -2612,8 +2612,8 @@ function TrainingScreenContent({
                   ? undefined
                   : wordListLabel || undefined)
             }
-            onLoadTraining={training => {
-              if (training.id === sessionTrainingId) return;
+            onLoadTraining={(training, options) => {
+              if (training.id === sessionTrainingId && !options?.recalculate) return;
               beginSessionScopeChange();
               setIdiomSession(null); setSentenceSession(null); setCurrentWord(null);
               setEmptyTraining(undefined); completionDraftRef.current = null;

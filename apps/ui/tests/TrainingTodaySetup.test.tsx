@@ -8,10 +8,11 @@ import {
 import type { TrainingSetupsDocument, TrainingSetupsSnapshot } from "@/lib/training/setups/model";
 const { availabilityRequests, availabilityCounts } = vi.hoisted(() => ({ availabilityRequests: vi.fn(), availabilityCounts: {dueToday:8,totalReviews:120,newCards:20} }));
 vi.mock("@/lib/training/availability/useTrainingAvailability",()=>({useTrainingAvailability:(input: { enabled: boolean })=>{availabilityRequests(input);return {status:"ready",value:{...availabilityCounts,studyDay:"2026-10-03",timezone:"Europe/Amsterdam",asOf:"2026-10-03T10:00:00Z"},refreshing:false,refreshFailed:false,reload:vi.fn()};}}));
-const { accounts } = vi.hoisted(() => ({ accounts: new Map<string, TrainingSetupsSnapshot>() }));
+const { accounts, saveFailure } = vi.hoisted(() => ({ accounts: new Map<string, TrainingSetupsSnapshot>(), saveFailure: { enabled: false } }));
 vi.mock("@/lib/training/setups/client", () => ({
   fetchAccountTrainingSetups: async (userId: string) => accounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } },
   saveAccountTrainingSetups: async (userId: string, revision: number, document: TrainingSetupsDocument) => {
+    if (saveFailure.enabled) return { kind: "error" };
     const current = accounts.get(userId);
     if (current && current.revision !== revision) return { kind: "conflict", snapshot: current };
     const snapshot = { revision: revision + 1, document };
@@ -23,7 +24,7 @@ const dialogPrototype=HTMLDialogElement.prototype;
 const showModalDescriptor=Object.getOwnPropertyDescriptor(dialogPrototype,"showModal"),closeDescriptor=Object.getOwnPropertyDescriptor(dialogPrototype,"close");
 beforeAll(()=>{Object.defineProperties(dialogPrototype,{showModal:{configurable:true,value(){this.setAttribute("open","");}},close:{configurable:true,value(){this.removeAttribute("open");}}});});
 afterAll(()=>{if(showModalDescriptor)Object.defineProperty(dialogPrototype,"showModal",showModalDescriptor);else Reflect.deleteProperty(dialogPrototype,"showModal");if(closeDescriptor)Object.defineProperty(dialogPrototype,"close",closeDescriptor);else Reflect.deleteProperty(dialogPrototype,"close");});
-beforeEach(() => {HTMLElement.prototype.scrollIntoView=vi.fn();accounts.clear();Object.assign(availabilityCounts,{dueToday:8,totalReviews:120,newCards:20});availabilityRequests.mockClear();vi.stubGlobal("matchMedia",vi.fn(()=>({matches:true,addEventListener:vi.fn(),removeEventListener:vi.fn()})));});
+beforeEach(() => {HTMLElement.prototype.scrollIntoView=vi.fn();accounts.clear();saveFailure.enabled=false;Object.assign(availabilityCounts,{dueToday:8,totalReviews:120,newCards:20});availabilityRequests.mockClear();vi.stubGlobal("matchMedia",vi.fn(()=>({matches:true,addEventListener:vi.fn(),removeEventListener:vi.fn()})));});
 const seedAccount = (userId: string, trainings: unknown[]) => accounts.set(userId, { revision: 0, document: { schemaVersion: 1, trainings: trainings.map((item: any) => ({ ...item, languageCode: "nl" })), mainTrainingId: null } });
 
 const initialDraft: TrainingSetupDraft = {
@@ -75,6 +76,21 @@ const baseProps = {
   onRetry: vi.fn(),
 };
 
+// Calculation applies the editor recipe; only the overview may launch cards.
+const calculateAndStart = async () => {
+  const calculate = screen.queryByRole("button", { name: "Calculate training" });
+  if (calculate) {
+    await waitFor(() => expect(calculate).toBeEnabled());
+    fireEvent.click(calculate);
+    await screen.findByRole("button", { name: "Create training" });
+  }
+  fireEvent.click(await screen.findByRole("button", { name: "Start training" }));
+};
+const reopenCalculatedTraining = async () => {
+  fireEvent.click(screen.getAllByRole("button", { name: /^Edit / })[0]);
+  fireEvent.click(screen.getByRole("button", { name: /^Session / }));
+};
+
 test("the approved builder filters Dutch word families and passes them to Start", async () => {
   const onStart = vi.fn();
   render(<TrainingTodaySetup {...baseProps} userId="filters" trainingLanguageCode="nl" onStart={onStart} />);
@@ -86,8 +102,8 @@ test("the approved builder filters Dutch word families and passes them to Start"
   fireEvent.click(screen.getByRole("button", { name: "Noun subfilters" }));
   fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "de" }));
   fireEvent.click(screen.getByRole("button", { name: "Close noun subfilters" }));
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ partOfSpeech: ["ww", "zn"], nounArticles: ["de"] }));
+  await calculateAndStart();
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ partOfSpeech: ["ww", "zn"], nounArticles: ["de"] }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
 });
 
 test("the approved builder sends the selected mode and a custom finite session size", async () => {
@@ -98,8 +114,8 @@ test("the approved builder sends the selected mode and a custom finite session s
   fireEvent.click(screen.getByRole("button", { name: /^Reverse / }));
   fireEvent.click(screen.getByRole("button", { name: /^Session / }));
   fireEvent.change(screen.getByRole("slider", { name: "Session size" }), { target: { value: "0" } });
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ modes: ["word-to-definition", "definition-to-word"], sessionSize: 5 }));
+  await calculateAndStart();
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ modes: ["word-to-definition", "definition-to-word"], sessionSize: 5 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
 });
 
 test("the mix slider preserves its endpoints and middle ratios", async () => {
@@ -109,11 +125,12 @@ test("the mix slider preserves its endpoints and middle ratios", async () => {
   fireEvent.click(screen.getByRole("button", { name: /^Session / }));
   const mix = screen.getByRole("slider", { name: "New / review balance" });
   fireEvent.change(mix, { target: { value: "6" } });
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
-  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "new", newReviewRatio: 2 }));
-  fireEvent.change(mix, { target: { value: "1" } });
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
-  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", newReviewRatio: 5 }));
+  await calculateAndStart();
+  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "new", newReviewRatio: 2 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  await reopenCalculatedTraining();
+  fireEvent.change(screen.getByRole("slider", { name: "New / review balance" }), { target: { value: "1" } });
+  await calculateAndStart();
+  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", newReviewRatio: 5 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
 });
 
 test("an existing one-to-four mix remains representable and is sent to Start", async () => {
@@ -122,8 +139,8 @@ test("an existing one-to-four mix remains representable and is sent to Start", a
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Session / }));
   expect(screen.getByRole("slider", { name: "New / review balance" })).toHaveValue("2");
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ newReviewRatio: 4 }));
+  await calculateAndStart();
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ newReviewRatio: 4 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
 });
 
 test("all due is reviews only, and changing the mix returns to a finite session", async () => {
@@ -132,11 +149,12 @@ test("all due is reviews only, and changing the mix returns to a finite session"
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Session / }));
   fireEvent.change(screen.getByRole("slider", { name: "Session size" }), { target: { value: "6" } });
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
-  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "review", sessionSize: "all-due-today" }));
+  await calculateAndStart();
+  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "review", sessionSize: "all-due-today" }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  await reopenCalculatedTraining();
   fireEvent.change(screen.getByRole("slider", { name: "New / review balance" }), { target: { value: "4" } });
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
-  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", sessionSize: 10 }));
+  await calculateAndStart();
+  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", sessionSize: 10 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
 });
 
 test("a blocked start leaves the builder usable and never launches", async () => {
@@ -145,8 +163,8 @@ test("a blocked start leaves the builder usable and never launches", async () =>
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
   expect(screen.getByRole("button", { name: "Verbs" })).toBeEnabled();
-  expect(screen.getByRole("button", { name: "Start training" })).toBeDisabled();
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  expect(screen.getByRole("button", { name: "Calculate training" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Calculate training" }));
   expect(onStart).not.toHaveBeenCalled();
 });
 
@@ -155,7 +173,7 @@ test("a pending Start stays disabled until its first request completes", async (
   seedAccount(userId, []);
   const onStart = vi.fn();
   render(<TrainingTodaySetup {...baseProps} userId={userId} trainingLanguageCode="nl" initialView="setup" startPending onStart={onStart} />);
-  const start = await screen.findByRole("button", { name: "Starting…" });
+  const start = await screen.findByRole("button", { name: "Calculate training" });
   expect(start).toBeDisabled();
   fireEvent.click(start);
   expect(onStart).not.toHaveBeenCalled();
@@ -191,7 +209,7 @@ test("a failed start returns to the overview with a retry for card preparation",
   render(<TrainingTodaySetup {...baseProps} userId="failed-start" trainingLanguageCode="nl" hasOwnedSession={false}
     cardPreparationStatus="error" onRetryCard={onRetryCard} onStart={onStart} />);
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  await calculateAndStart();
   expect(await screen.findByRole("button", { name: "Create training" })).toBeInTheDocument();
   expect(screen.getByRole("alert")).toHaveTextContent("The next card could not be prepared.");
   fireEvent.click(screen.getByRole("button", { name: "Retry card preparation" }));
@@ -204,7 +222,7 @@ test("a failed selected setup shows the server error and retries the same draft"
   const props = { ...baseProps, userId: "retry-selected-start", trainingLanguageCode: "nl", hasOwnedSession: false,
     initialView: "setup" as const, initialDraft: selectedDraft, onStart };
   const view = render(<TrainingTodaySetup {...props} />);
-  fireEvent.click(await screen.findByRole("button", { name: "Start training" }));
+  await calculateAndStart();
   await screen.findByRole("button", { name: "Create training" });
   view.rerender(<TrainingTodaySetup {...props} startError="training_session_start_timeout" />);
 
@@ -221,7 +239,7 @@ test.each(["language", "account"] as const)("a failed start retry is cleared whe
   const props = { ...baseProps, userId: "stale-retry-owner", trainingLanguageCode: "nl",
     hasOwnedSession: false, initialView: "setup" as const, onStart };
   const view = render(<TrainingTodaySetup {...props} />);
-  fireEvent.click(await screen.findByRole("button", { name: "Start training" }));
+  await calculateAndStart();
   await screen.findByRole("button", { name: "Create training" });
   view.rerender(<TrainingTodaySetup {...props} startError="training_session_start_timeout" />);
   expect(await screen.findByRole("button", { name: "Retry starting this training" })).toBeInTheDocument();
@@ -263,7 +281,11 @@ test("a failed Translation start keeps the paused Idioms session and retries the
   fireEvent.click(screen.getByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Exercises / }));
   fireEvent.click(screen.getByRole("button", { name: "Translation" }));
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  fireEvent.click(screen.getByRole("button", { name: "Calculate training" }));
+  await screen.findByRole("button", { name: "Create training" });
+  expect(onStart).not.toHaveBeenCalled();
+  view.rerender(<TrainingTodaySetup {...props} hasOwnedSession={false} />);
+  await calculateAndStart();
   await screen.findByRole("button", { name: "Create training" });
   view.rerender(<TrainingTodaySetup {...props} startError="training_session_start_timeout" />);
 
@@ -290,7 +312,7 @@ test("a missing collection stays selected and blocked until replaced", async () 
   expect(accounts.get(userId)?.document.trainings[0].draft.listValue).toBe("user:missing");
   fireEvent.click(screen.getByRole("button", { name: /^Source / }));
   fireEvent.click(screen.getByRole("button", { name: "NT2 2000" }));
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  await calculateAndStart();
   expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ listValue: "curated:nt2" }), "Missing collection", { trainingId: "missing" });
 });
 
@@ -301,8 +323,8 @@ test("an idiom recipe starts with its own family and finite size", async () => {
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Exercises / }));
   fireEvent.click(screen.getByRole("button", { name: "Idioms" }));
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ family: "idiom", scenarioId: "idiom", sessionSize: 10 }));
+  await calculateAndStart();
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ family: "idiom", scenarioId: "idiom", sessionSize: 10 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
 });
 
 test("an idiom recipe keeps its family and selected modes after saving and reopening", async () => {
@@ -325,7 +347,7 @@ test("an idiom recipe keeps its family and selected modes after saving and reope
   fireEvent.click(screen.getByRole("button", { name: /^Exercises / }));
   expect(screen.getByRole("button", { name: "Idioms" })).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByRole("button", { name: /^Reverse / })).toHaveAttribute("aria-pressed", "true");
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  await calculateAndStart();
   await waitFor(() => expect(onStart).toHaveBeenCalledWith(saved.draft, saved.name, { trainingId: saved.id }));
 });
 
@@ -344,7 +366,7 @@ test("a selected dictionary recipe is saved to the account and launched from the
   const saved = accounts.get(userId)!.document.trainings[0];
   expect(saved.draft).toMatchObject({ materialMode: "selected-dictionaries", dictionaryIds: [dictionaryA] });
   fireEvent.click(screen.getByRole("button", { name: "Back to Training" }));
-  fireEvent.click(await screen.findByRole("button", { name: "Start training" }));
+  await calculateAndStart();
   await waitFor(() => expect(onStart).toHaveBeenCalledWith(saved.draft, saved.name, { trainingId: saved.id }));
 });
 
@@ -354,7 +376,7 @@ test("approved overview launches the account main training rather than the curre
  const onStart=vi.fn();
  render(<TrainingTodaySetup {...baseProps} userId="overview-main" trainingLanguageCode="nl" hasOwnedSession={false} onStart={onStart}/>);
  await screen.findByRole("heading",{name:"My five words",level:2});
- fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ await calculateAndStart();
  await waitFor(()=>expect(onStart).toHaveBeenCalledWith(savedDraft, "My five words",{trainingId:"main"}));
 });
 
@@ -365,7 +387,7 @@ test("approved overview waits for the saved language catalog before launching", 
  const props={...baseProps,userId:"multilingual",trainingLanguageCode:"nl",hasOwnedSession:false,onStart,onTrainingLanguageChange,trainingLanguageOptions:[{value:"nl",label:"Dutch"},{value:"en",label:"English"}]};
  const view=render(<TrainingTodaySetup {...props}/>);
  await screen.findByRole("heading",{name:"English words",level:2});
- fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ await calculateAndStart();
  expect(onTrainingLanguageChange).toHaveBeenCalledWith("en");expect(onStart).not.toHaveBeenCalled();
  view.rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" trainingLanguageLoading lists={[]}/>);
  expect(onStart).not.toHaveBeenCalled();
@@ -388,8 +410,8 @@ test("changing builder language waits for its catalog and launches only English 
   view.rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" lists={[{ value: "user:english", label: "English collection" }]} initialDraft={{ ...initialDraft, listValue: "user:english" }} />);
   fireEvent.click(screen.getByRole("button", { name: /^Source / }));
   expect(screen.getByRole("button", { name: "English collection" })).toBeEnabled();
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ listValue: "user:english" }));
+  await calculateAndStart();
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ listValue: "user:english" }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
 });
 
 test("approved overview resumes an owned session independently of edited presets",async()=>{
@@ -439,7 +461,7 @@ test("a queued language switch cannot launch a previous account's training",asyn
  const props={...baseProps,userId:"old-owner",trainingLanguageCode:"nl",hasOwnedSession:false,onStart,onTrainingLanguageChange,trainingLanguageOptions:[{value:"nl",label:"Dutch"},{value:"en",label:"English"}]};
  const view=render(<TrainingTodaySetup {...props}/>);
  await screen.findByRole("heading",{name:"Old owner's training",level:2});
- fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ await calculateAndStart();
  view.rerender(<TrainingTodaySetup {...props} userId="new-owner" trainingLanguageCode="en" lists={[{value:"english-list",label:"English source"}]}/>);
  await screen.findByRole("button",{name:"Create training"});
  expect(onStart).not.toHaveBeenCalled();
@@ -464,16 +486,16 @@ test("approved lexical chips and noun subfilters preserve the canonical launch p
  await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
  fireEvent.click(screen.getByRole("button",{name:"Verbs"}));fireEvent.click(screen.getByRole("button",{name:"Noun subfilters"}));
  fireEvent.click(within(screen.getByRole("dialog")).getByRole("button",{name:"de"}));fireEvent.click(screen.getByRole("button",{name:"Close noun subfilters"}));
- fireEvent.click(screen.getByRole("button",{name:"Start training"}));
- expect(onStart).toHaveBeenCalledWith(expect.objectContaining({partOfSpeech:["ww","zn"],nounArticles:["de"]}));
+ await calculateAndStart();
+ expect(onStart).toHaveBeenCalledWith(expect.objectContaining({partOfSpeech:["ww","zn"],nounArticles:["de"]}), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
 });
 
 test("approved source picker selects dictionaries on the same screen",async()=>{
  const onStart=vi.fn();
  render(<TrainingTodaySetup {...baseProps} userId="builder-source" trainingLanguageCode="nl" hasOwnedSession={false} dictionaries={[{value:dictionaryA,label:"Dictionary A"}]} onStart={onStart}/>);
  await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));fireEvent.click(screen.getByRole("button",{name:/^Source /}));
- fireEvent.click(screen.getByRole("button",{name:"Dictionary A"}));fireEvent.click(screen.getByRole("button",{name:"Start training"}));
- expect(onStart).toHaveBeenCalledWith(expect.objectContaining({materialMode:"selected-dictionaries",dictionaryIds:[dictionaryA]}));
+ fireEvent.click(screen.getByRole("button",{name:"Dictionary A"}));await calculateAndStart();
+ expect(onStart).toHaveBeenCalledWith(expect.objectContaining({materialMode:"selected-dictionaries",dictionaryIds:[dictionaryA]}), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
 });
 
 
@@ -487,10 +509,10 @@ test("a Statistics material opens the builder in its language without starting a
  expect(onMaterialIntentConsumed).not.toHaveBeenCalled();
  view.rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" materialIntent={intent}/>);
  await waitFor(()=>expect(onMaterialIntentConsumed).toHaveBeenCalledOnce());
- await screen.findByRole("button",{name:"Start training"});
+ await screen.findByRole("button",{name:"Calculate training"});
  expect(onStart).not.toHaveBeenCalled();
- fireEvent.click(screen.getByRole("button",{name:"Start training"}));
- expect(onStart).toHaveBeenCalledWith(expect.objectContaining({materialMode:"selected-dictionaries",dictionaryIds:[dictionaryA]}));
+ await calculateAndStart();
+ expect(onStart).toHaveBeenCalledWith(expect.objectContaining({materialMode:"selected-dictionaries",dictionaryIds:[dictionaryA]}), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
 });
 
 test("a Statistics material for another account is ignored",async()=>{
@@ -514,10 +536,10 @@ test("switching accounts discards an open builder draft", async () => {
   await screen.findByRole("button", { name: "Create training" });
   expect(screen.queryByRole("heading", { name: "Build training" })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Create training" }));
-  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+  await calculateAndStart();
   expect(onStart).toHaveBeenCalledOnce();
   expect(onStart.mock.calls[0][0].partOfSpeech).toEqual(baseProps.initialDraft.partOfSpeech);
-  expect(accounts.get("next-builder-owner")).toBeUndefined();
+  expect(accounts.get("next-builder-owner")?.document.trainings).toHaveLength(1);
 });
 
 test("paused material blocks fresh runs while an owned session still resumes", async () => {
@@ -544,7 +566,7 @@ test("paused material blocks fresh runs while an owned session still resumes", a
 
 test("a disabled dictionary is omitted from source choices without modifying the saved setup", async () => {
    const { AccountMaterialProvider } = await import("@/components/practice/material/AccountMaterialProvider");
-  const saved = { id:"saved-disabled",name:"Saved disabled source",languageCode:"nl",draft:{...initialDraft,materialMode:"selected-dictionaries" as const,dictionaryIds:[dictionaryA]} };
+  const saved = { id:"saved-disabled",name:"Saved disabled source",languageCode:"nl",draft:{...initialDraft,sessionSize:10,materialMode:"selected-dictionaries" as const,dictionaryIds:[dictionaryA]} };
   accounts.set("disabled-source", {revision:0,document:{schemaVersion:1,mainTrainingId:saved.id,trainings:[saved]}});
   const onStart = vi.fn();
   const repository = {
@@ -561,9 +583,9 @@ test("a disabled dictionary is omitted from source choices without modifying the
   fireEvent.click(screen.getByRole("button",{name:/^Source /}));
   expect(screen.queryByRole("button",{name:"Dictionary A"})).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"Dictionary B"}));
-  fireEvent.click(screen.getByRole("button",{name:"Start training"}));
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({dictionaryIds:[dictionaryB]}));
-  expect(accounts.get("disabled-source")?.document.trainings[0]).toEqual(saved);
+  await calculateAndStart();
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({dictionaryIds:[dictionaryB]}), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(accounts.get("disabled-source")?.document.trainings.find(item=>item.id===saved.id)).toEqual(saved);
 });
 
 test("material preference load failure blocks fresh launches but leaves resume available", async () => {
@@ -639,8 +661,8 @@ test("approved Translation is a single contextual reverse choice with a keyword 
  expect(screen.getByText("Я езжу на работу на велосипеде.")).toBeInTheDocument();
  expect(screen.getByText("de fiets")).toBeInTheDocument();
  expect(screen.queryByRole("button", {name:/^Example translation → word/})).not.toBeInTheDocument();
- fireEvent.click(screen.getByRole("button", {name:"Start training"}));
- await waitFor(()=>expect(onStart).toHaveBeenCalledWith(expect.objectContaining({family:"word-in-context",modes:["definition-to-word"]})));
+ await calculateAndStart();
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(expect.objectContaining({family:"word-in-context",modes:["definition-to-word"]}),expect.any(String),expect.objectContaining({trainingId:expect.any(String)})));
 });
 
 test("paused sentence recipe stays editable and never silently becomes a context session", async () => {
@@ -678,7 +700,7 @@ test("contextual Translation saves and restores its exact reverse recipe after r
  expect(screen.getByRole("button",{name:"Translation"})).toHaveAttribute("aria-pressed","true");
  expect(screen.getByText("Example translation → word")).toBeInTheDocument();
  expect(accounts.get(props.userId)!.document.trainings[0]).toEqual(saved);
- fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ await calculateAndStart();
  await waitFor(()=>expect(onStart).toHaveBeenCalledWith(saved.draft, "Context practice", {trainingId:saved.id}));
 });
 
@@ -694,7 +716,7 @@ test("saved recipe Load selects without launching, then hero Start launches the 
  expect(screen.getByRole("heading",{name:"Second",level:2})).toBeInTheDocument();
  expect(screen.getByRole("heading",{name:"First",level:3})).toBeInTheDocument();
  expect(screen.getByRole("heading",{name:"Second",level:3})).toBeInTheDocument();
- fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ await calculateAndStart();
  await waitFor(()=>expect(onStart).toHaveBeenCalledWith(b.draft,b.name,{trainingId:b.id}));
 });
 
@@ -753,7 +775,7 @@ test("Change mix opens Session, preserves saved settings until explicit save, an
  expect(screen.getByRole("slider",{name:"Session size"})).toHaveValue("6");
  expect(screen.queryByLabelText("Available cards")).toBeNull();
  expect(availabilityRequests).toHaveBeenLastCalledWith(expect.objectContaining({enabled:false}));
- expect(screen.getByRole("button",{name:"Start training"})).toBeEnabled();
+ expect(screen.getByRole("button",{name:"Calculate training"})).toBeEnabled();
  expect(onStart).not.toHaveBeenCalled();
  expect(accounts.get("empty-review")!.document.trainings[0].draft.cardFilter).toBe("review");
  fireEvent.change(screen.getByRole("slider",{name:"Session size"}),{target:{value:"1"}});
@@ -784,4 +806,33 @@ test("editing source and session controls never enables availability requests",a
  expect(availabilityRequests.mock.calls.length).toBeGreaterThan(0);
  expect(availabilityRequests.mock.calls.every(([input])=>input.enabled===false)).toBe(true);
  expect(screen.queryByLabelText("Available cards")).toBeNull();
+});
+
+
+test.each([0, 8])("calculate applies the edited recipe and returns to availability without starting (%i due)", async (dueToday) => {
+  availabilityCounts.dueToday = dueToday;
+  const userId = `calculate-${dueToday}`;
+  const onStart = vi.fn();
+  seedAccount(userId, [{ id: "recipe", name: "My recipe", draft: initialDraft }]);
+  render(<TrainingTodaySetup {...baseProps} userId={userId} trainingLanguageCode="nl" hasOwnedSession={false} onStart={onStart} />);
+  fireEvent.click((await screen.findAllByRole("button", { name: "Edit My recipe" }))[0]);
+  fireEvent.click(screen.getByRole("button", { name: /^Session / }));
+  fireEvent.change(screen.getByRole("slider", { name: "Session size" }), { target: { value: "4" } });
+  fireEvent.click(screen.getByRole("button", { name: "Calculate training" }));
+  await screen.findByRole("button", { name: "Create training" });
+  expect(onStart).not.toHaveBeenCalled();
+  expect(accounts.get(userId)?.document.trainings[0].draft.sessionSize).toBe(40);
+  expect(availabilityRequests.mock.calls.at(-1)?.[0]).toMatchObject({ enabled: true, recipe: { draft: { sessionSize: 40 } } });
+});
+
+test("a failed calculation save leaves the edited recipe open without starting", async () => {
+  const onStart = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} userId="calculate-save-error" trainingLanguageCode="nl" onStart={onStart} />);
+  fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
+  saveFailure.enabled = true;
+  fireEvent.click(screen.getByRole("button", { name: "Calculate training" }));
+  await screen.findAllByText("Could not save. Try again.");
+  expect(screen.getByRole("button", { name: "Calculate training" })).toBeEnabled();
+  expect(onStart).not.toHaveBeenCalled();
+  expect(accounts.get("calculate-save-error")).toBeUndefined();
 });

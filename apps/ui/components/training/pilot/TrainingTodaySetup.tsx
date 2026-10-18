@@ -103,7 +103,7 @@ type Props = {
   activeSessionLabel?: string;
   ownedSession?: OwnedTrainingOverviewSession;
   onContinue: () => void;
-  onLoadTraining?: (training: SavedTraining) => void;
+  onLoadTraining?: (training: SavedTraining, options?: { recalculate: boolean }) => void;
   materialIntent?: TrainingMaterialIntent | null;
   onMaterialIntentConsumed?: () => void;
   onStart: (
@@ -360,7 +360,7 @@ export function TrainingTodaySetup({
     setScreen("setup");
   };
 
-  const savePreset = async (copyName?: string) => {
+  const savePreset = async (copyName?: string, showCalculation = false) => {
     if (!canSaveAccount || !trainingLanguageCode || account.status !== "ready" || account.pending || !draftScenarioSupported || !draftMaterialAvailable || trainingLanguageLoading || pendingLanguage) return false;
     const preset: SavedTraining = {
       id: copyName !== undefined ? crypto.randomUUID() : editingPresetId ?? crypto.randomUUID(),
@@ -374,6 +374,14 @@ export function TrainingTodaySetup({
       setEditingPresetId(preset.id);
       setTrainingName(preset.name);
       setPresetMessage("");
+      if (showCalculation) {
+        setHighlighted({ ownerId: userId, id: preset.id });
+        writeLastSelectedTraining(userId, preset.id);
+        onLoadTraining?.(preset, { recalculate: true });
+        setFailedStart(null);
+        availabilityResult.reload();
+        setScreen("today");
+      }
     } else {
       setPresetMessage(result === "conflict" ? accountCopy.conflict : accountCopy.saveFailed);
     }
@@ -556,10 +564,10 @@ export function TrainingTodaySetup({
     editing={Boolean(editingPresetId)} onSave={()=>savePreset()} onSaveAs={name=>savePreset(name)}
     onDelete={editingTraining?async()=>{const removed=await accountAction(()=>account.remove(editingTraining.id));if(removed){setEditingPresetId(null);setScreen("today");}return removed;}:undefined}
     deletionChangesMain={Boolean(editingTraining && account.snapshot.document.mainTrainingId===editingTraining.id && account.snapshot.document.trainings.length>1)} deleteDisabled={account.pending||account.status!=="ready"}
-    onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft, trainingName?.trim() || undefined, editingPresetId?{trainingId:editingPresetId}:undefined)} canSave={canSaveAccount}
+    onBeginSave={()=>setPresetMessage("")} onStart={()=>void savePreset(undefined, true)} canSave={canSaveAccount}
     saveDisabled={account.status!=="ready"||account.pending||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
-    startDisabled={startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
-    saveLabel={editingPresetId?({en:"Save changes",nl:"Wijzigingen opslaan",ru:"Сохранить изменения"})[interfaceLanguage]:accountCopy.save} startLabel={startPending?t.starting:scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable?t.materialUnavailable:t.start}
+    startDisabled={!canSaveAccount||account.status!=="ready"||account.pending||isTrainingSetupPaused(draft)||startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
+    saveLabel={editingPresetId?({en:"Save changes",nl:"Wijzigingen opslaan",ru:"Сохранить изменения"})[interfaceLanguage]:accountCopy.save} startLabel={account.pending?({en:"Calculating…",nl:"Berekenen…",ru:"Рассчитываем…"})[interfaceLanguage]:scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable?t.materialUnavailable:({en:"Calculate training",nl:"Training berekenen",ru:"Рассчитать тренировку"})[interfaceLanguage]}
     saveNotice={presetMessage} notice={<>
       {materialNotice}
       {presetMessage&&<p role="status">{presetMessage}</p>}
