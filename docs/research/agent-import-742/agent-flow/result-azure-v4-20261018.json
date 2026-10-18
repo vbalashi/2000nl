@@ -1,0 +1,47 @@
+{
+  "direct": {
+    "tasks": 2,
+    "taskErrors": 0,
+    "referenceAgreements": 11,
+    "evaluatedCases": 12,
+    "modelHttpRequests": 6,
+    "toolCalls": 7,
+    "wallSeconds": 10.80573070794344,
+    "inputTokens": 52113,
+    "outputTokens": 932,
+    "cachedInputTokens": 34249,
+    "reasoningOutputTokens": 0,
+    "unknownUsageResponses": 0
+  },
+  "sdk": {
+    "tasks": 2,
+    "taskErrors": 0,
+    "referenceAgreements": 12,
+    "evaluatedCases": 12,
+    "modelHttpRequests": 4,
+    "toolCalls": 6,
+    "wallSeconds": 10.285441708751023,
+    "inputTokens": 33336,
+    "outputTokens": 968,
+    "cachedInputTokens": 15846,
+    "reasoningOutputTokens": 82,
+    "unknownUsageResponses": 0
+  },
+  "phase": "v4; separate continuation authorized by owner, cap12 new HTTP requests; prior17 remain accounted",
+  "fixtureSha256": "75884727c48051ceaff4087479e539b656a68f1139173025bfdbdcdaaae1e9d9",
+  "limits": {
+    "newHttpRequests": 12,
+    "priorHttpRequests": 17,
+    "actualNewHttpRequests": 10,
+    "sdkModelResponsesPerTask": 6,
+    "directModelResponsesPerTask": 4,
+    "toolsPerTask": 12,
+    "retries": 0
+  },
+  "repairFeedbackLiveTriggered": false,
+  "referenceStatus": "12 same-video supervised development cases; no held-out or replicated comparison",
+  "directMismatch": {
+    "candidateId": "c206",
+    "reason": "physical inbreken meaning selected for computer intrusion context; valid identity but semantic mismatch"
+  }
+}

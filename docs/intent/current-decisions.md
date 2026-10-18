@@ -278,3 +278,73 @@ Read more в плашке и Updates ведёт в одну внешнюю ст�
 ## Восстановление ожидающего sentence-перевода (2026-10-17)
 
 В #736 принято сохранять scoped pending-подписку во время фонового чтения и объединять конкурентные уведомления в одно последующее чтение. Initial join/reconnect reconciliation сохраняется; отдельный трёхсекундный опрос заменён существующим visibility-aware recovery (degraded раз в минуту, healthy раз в 15 минут). Подготовлено и проверено локально; review и выпуск отдельно. [Основание](../discussions/2026-10-17-11-sentence-recovery-bounds.md).
+
+
+## Агент импорта: подбор значений и YouTube (2026-10-18)
+
+Без контекста — первое значение в словарном порядке с явным указанием выбора;
+с контекстом/переводом — подходящее одно или несколько. Английский не включать
+в коллекцию, но разрешено использовать как смысловую подсказку. Сначала existing
+entries, затем очередь отсутствующих personal drafts; обязательность полного
+редакторского pipeline для личных черновиков снята, one-shot вариант предложен
+для пилота с будущим редактированием. Union отложен, доступный остаток можно
+тренировать без сброса progress. YouTube — первый adapter; нужны durable server
+jobs и измерения быстрого extraction/search пути и LLM остатка. Ни качество,
+ни цена, ни новая edit capability пока не подтверждены реализацией.
+[Уточнения и принятые границы](../discussions/2026-10-18-02-agent-import-resolution-and-scale.md), #742.
+
+
+## Внешний пилот импорта видео (2026-10-18)
+
+До интеграции в app подготовить и совместно пройти внешний staged pilot на
+видео `8_WR5b2FJfY`. Structured extraction (surface/lemma proposals/source context)
+отделено от lookup/sense selection. Language goal не ограничен NL/EN input pair.
+Known не исключает membership: коллекция хранит материал источника независимо
+от личного progress; noise rules и training eligibility отдельны. Libraries,
+batch contracts, качество/ресурсы/время/стоимость измеряются. Планирование
+не разрешает production mutations или массовые paid runs.
+[Основание и план](../discussions/2026-10-18-03-external-youtube-pilot.md).
+
+
+## Разрешённый pilot: новая коллекция видео (2026-10-18)
+
+Владелец разрешил выполнить внешний pilot на author-provided NL captions и создать
+отдельную новую коллекцию в своём аккаунте; вложенные collections отложены.
+Выполнено246 existing exact memberships, подтверждено DB/UI; learning state и
+история не изменены. Это разрешение конкретного user operation, не rollout нового
+agent API/генерации/схемы.
+[Разрешение и результат](../discussions/2026-10-18-04-youtube-pilot-execution.md).
+
+## Agent import: внешний эксперимент и стоимость (2026-10-18)
+
+Продолжение внешнего research pilot разрешено; app integration отдельно. В harness
+реализованы short reference aliases, per-item mechanical acceptance и bounded repair.
+На том же12case development fixture SDK12/12, Responses11/12; semantic quality
+остаётся открытой, independent held-out и full-video measurement ещё не выполнены.
+27calls оценены ~$0.02483 по published Azure rate, billing не сверен. Цена полного
+видео пока условный прогноз. [Источник обсуждения](../discussions/2026-10-18-07-agent-loop-cost-and-repair.md).
+
+## Новые видео и private draft agent (2026-10-18)
+
+Внешняя проверка разрешена: bounded transfer slice и отдельный generator agent для
+выражений, closed draft schema без save. На новом NOS получены4unreviewed proposals;
+semantic ошибки и turn exhaustion означают, что autonomous production готовность
+не доказана. Existing generated draft/save services не равны готовому import flow;
+component-reference persistence и save→collection contract отдельно. Для двух видео
+без manual captions владелец разрешил собственный AudioFilms ASR; см.
+[продолжение](../discussions/2026-10-18-09-authorized-audiofilms-asr-continuation.md). [Обсуждение](../discussions/2026-10-18-08-multivideo-and-personal-draft-pilot.md),
+[результат](../research/agent-import-742/multivideo/RESULT-20261018.md).
+
+## AudioFilms ASR continuation (2026-10-18)
+
+Владелец разрешил извлечение аудио/транскрипцию через existing AudioFilms endpoint
+для Easy Dutch и LUBACH; предпочтение собственной транскрипции не является
+измеренным утверждением о качестве. Existing API/worker вызывается через внутреннее
+соединение, без изменения runtime/deployment/auth. ASR provenance сохраняется отдельно
+от author captions, модельный расход включает prior ledger. [Источник](../discussions/2026-10-18-09-authorized-audiofilms-asr-continuation.md).
+
+ASR continuation выполнен на обоих источниках: [результат](../research/agent-import-742/multivideo/ASR-RESULT-20261018.md).
+Это24case research slice и6unreviewed draft proposals, не full-video semantic
+completion или сохранённые articles. Existing source audio-language guard соблюдён
+с реальным probe; all-dictionary coverage/headword normalization/save integration
+остаются отдельными задачами.

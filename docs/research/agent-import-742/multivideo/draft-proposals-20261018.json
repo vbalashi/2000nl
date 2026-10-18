@@ -1,0 +1,56 @@
+{
+  "status": "unreviewed_private_draft_proposals",
+  "saved": false,
+  "source": "https://www.youtube.com/watch?v=-lf71hdWm5E",
+  "sourceRevision": "d536b92236b42255f60b077cab557ae81ba0b617928c5cbe32cf416fefe9c94a",
+  "drafts": [
+    {
+      "candidateId": "p1",
+      "headword": "gebruikmaken van",
+      "definition": "Iets inzetten of benutten om een doel te bereiken.",
+      "example": "Voor de routebeschrijving maken we gebruik van een kaart.",
+      "grammar": "Scheidbaar werkwoord: in een hoofdzin staat ‘gebruik’ doorgaans los van ‘maken’, bijvoorbeeld ‘zij maken gebruik van’.",
+      "generated": true,
+      "reviewStatus": "unreviewed",
+      "saved": false,
+      "linkStatus": "proposed_only",
+      "relatedEntryRefs": []
+    },
+    {
+      "candidateId": "p2",
+      "headword": "niet lekker in zijn vel zitten",
+      "definition": "Zich lichamelijk of geestelijk niet goed voelen; niet tevreden of op zijn gemak zijn.",
+      "example": "Sinds de verhuizing zit Noor niet lekker in haar vel.",
+      "grammar": "Vaste uitdrukking; het werkwoord zitten vervoegt gewoon. Pas het bezittelijk voornaamwoord aan: in zijn/haar/jouw vel zitten.",
+      "generated": true,
+      "reviewStatus": "unreviewed",
+      "saved": false,
+      "linkStatus": "proposed_only",
+      "relatedEntryRefs": []
+    },
+    {
+      "candidateId": "p3",
+      "headword": "ja en amen zeggen",
+      "definition": "Overal mee instemmen zonder bezwaar te maken of kritisch te reageren.",
+      "example": "Tijdens de vergadering zei hij overal ja en amen op.",
+      "grammar": "Vaste uitdrukking; vervoeg ‘zeggen’ (bijvoorbeeld: ‘zei ja en amen’).",
+      "generated": true,
+      "reviewStatus": "unreviewed",
+      "saved": false,
+      "linkStatus": "proposed_only",
+      "relatedEntryRefs": []
+    },
+    {
+      "candidateId": "p4",
+      "headword": "in de weg liggen",
+      "definition": "Een hindernis vormen of op een plek liggen waar iemand langs wil.",
+      "example": "De doos ligt in de weg; zet haar even aan de kant.",
+      "grammar": "Vaste uitdrukking; het onderwerp kan iets zijn dat de doorgang hindert.",
+      "generated": true,
+      "reviewStatus": "unreviewed",
+      "saved": false,
+      "linkStatus": "proposed_only",
+      "relatedEntryRefs": []
+    }
+  ]
+}

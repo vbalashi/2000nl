@@ -1,0 +1,51 @@
+{
+  "videoId": "8_WR5b2FJfY",
+  "durationSeconds": 469,
+  "sourceKind": "manual",
+  "actualLanguage": "nl",
+  "cues": 141,
+  "captureSeconds": 1.68812725,
+  "nlp": {
+    "model": "nl_core_news_sm",
+    "spacy": "3.8.11",
+    "loadSeconds": 0.5501535828225315,
+    "parseSeconds": 0.17145362496376038,
+    "totalSeconds": 0.7246459578163922,
+    "tokens": 1245,
+    "alphaTokens": 1100,
+    "sentences": 118,
+    "candidates": 298,
+    "expressionProposals": 83,
+    "peakRssBytes": 175013888
+  },
+  "sourceHash": "b254bbb9909f7393a18e2871e8a91666e3b62a1b694fe30aef3894f46e81eff2",
+  "lookupQueries": 470,
+  "lookupBatches": 30,
+  "lookupBatchWallSeconds": 30.98967441311106,
+  "extraQueries": 29,
+  "extraBatchWallSeconds": 3.080010457895696,
+  "collectionMemberships": 246,
+  "idiomOnlyMemberships": 2,
+  "standaloneCandidateOutcomes": {
+    "selected": 246,
+    "excluded": 34,
+    "unresolvedBeforeExpressionReconciliation": 18
+  },
+  "remainingCandidateQuestions": 17,
+  "externalPaidProviderCalls": 0,
+  "standaloneLlmApiCalls": 0,
+  "inSessionAgentCost": "not separately metered",
+  "hardware": {
+    "architecture": "arm64",
+    "os": "Darwin",
+    "cpu": "Apple M2 Max"
+  },
+  "limitations": [
+    "one video",
+    "no held-out accuracy estimate",
+    "direct RPC adapter not deployed endpoint",
+    "in-session semantic review not autonomous worker",
+    "no private article generation",
+    "no full training run started"
+  ]
+}

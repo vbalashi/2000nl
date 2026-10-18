@@ -29,6 +29,24 @@
 
 ## Архив
 
+- [2026-10-18: разрешён AudioFilms ASR](2026-10-18-09-authorized-audiofilms-asr-continuation.md) — собственная транскрипция двух оставшихся источников, existing endpoint без deployment changes.
+
+- [2026-10-18: новые видео и personal drafts](2026-10-18-08-multivideo-and-personal-draft-pilot.md) — внешний transfer slice и закрытая схема генерации; save отдельно.
+
+- [2026-10-18: agent loop, repair и стоимость](2026-10-18-07-agent-loop-cost-and-repair.md) — v4 SDK12/12, Responses11/12, published rate estimates; full-video price remains forecast.
+
+- [2026-10-18: Azure agent-loop pilot](2026-10-18-06-azure-agent-loop-pilot.md) — #742/#745;17real calls, Responses и SDK, tools работают, quality/output failures сохранены.
+
+- [2026-10-18: bounded agent flow](2026-10-18-05-bounded-agent-flow-design.md) — #742/#745; proposed4read tools, роли/loop/routing и автономный dry-run experiment.
+
+- [2026-10-18: выполнен внешний YouTube pilot](2026-10-18-04-youtube-pilot-execution.md) — owner разрешил отдельную новую коллекцию;246 targets verified, progress unchanged; app integration отдельно.
+
+- [2026-10-18: внешний YouTube pilot](2026-10-18-03-external-youtube-pilot.md) — #742/#747; staged измерения до интеграции, Known остаются в коллекции, structured extraction перед lookup.
+
+- [2026-10-18: значения, personal drafts и масштаб YouTube](2026-10-18-02-agent-import-resolution-and-scale.md) — уточнения #742; первое значение без контекста, перевод как смысловая подсказка, лёгкая генерация предложена, server jobs и измерения.
+
+- [2026-10-18: агент добавления учебных материалов](2026-10-18-01-agent-material-import.md) — #742/#685; требования владельца сохранены, дизайн предложен, runtime не начат.
+
 - [2026-10-17: ограниченное восстановление ожидающего sentence-перевода](2026-10-17-11-sentence-recovery-bounds.md) — принято, #736; подготовлено и проверено локально, выпуск отдельно.
 
 - [2026-10-17: единое правило подготовки полной обратной стороны](2026-10-17-09-unified-training-answer-preparation.md) — принято, #733 / PR #734.

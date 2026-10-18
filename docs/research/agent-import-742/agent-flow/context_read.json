@@ -1,0 +1,15 @@
+{
+  "type": "function",
+  "name": "context_read",
+  "description": "Read the original sentence or bounded neighbouring sentences for a candidate in this task. Use when the supplied context is too short to distinguish a meaning. Returns source occurrence references; never invents context or changes dictionary content.",
+  "strict": true,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "candidateId": {"type": "string", "description": "Candidate identifier from the current authorized task."},
+      "window": {"type": "string", "enum": ["sentence", "neighbours"]}
+    },
+    "required": ["candidateId", "window"],
+    "additionalProperties": false
+  }
+}
