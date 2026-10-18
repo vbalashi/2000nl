@@ -29,6 +29,8 @@
 
 ## Архив
 
+- [2026-10-18: разрешён AudioFilms ASR](2026-10-18-09-authorized-audiofilms-asr-continuation.md) — собственная транскрипция двух оставшихся источников, existing endpoint без deployment changes.
+
 - [2026-10-18: новые видео и personal drafts](2026-10-18-08-multivideo-and-personal-draft-pilot.md) — внешний transfer slice и закрытая схема генерации; save отдельно.
 
 - [2026-10-18: agent loop, repair и стоимость](2026-10-18-07-agent-loop-cost-and-repair.md) — v4 SDK12/12, Responses11/12, published rate estimates; full-video price remains forecast.

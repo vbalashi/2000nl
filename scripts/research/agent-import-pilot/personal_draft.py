@@ -1,5 +1,5 @@
 """Research-only bounded phrase proposals and private drafts; no save operations."""
-import json
+import json,re
 from typing import Literal
 from pydantic import BaseModel,ConfigDict,Field
 class Closed(BaseModel):model_config=ConfigDict(extra='forbid')
@@ -20,14 +20,21 @@ class PersonalDraft(Closed):
     reason:str=Field(max_length=500)
 
 def validate_phrases(batch,sentences):
-    known={s['sentenceId']:s['text'] for s in sentences};seen=set()
-    for p in batch.proposals:
-        if p.sentenceId not in known or not p.surface.strip() or p.surface not in known[p.sentenceId]:raise ValueError('unanchored_expression')
+    known={s['sentenceId']:s['text'] for s in sentences};seen=set();corrections=[];result=batch.model_dump()
+    for index,p in enumerate(batch.proposals):
+        if p.sentenceId not in known or not p.surface.strip():raise ValueError('unanchored_expression')
+        if p.surface not in known[p.sentenceId]:
+            matches=list(re.finditer(re.escape(p.surface),known[p.sentenceId],flags=re.IGNORECASE))
+            if len(matches)!=1:raise ValueError('unanchored_expression')
+            actual=matches[0].group(0)
+            corrections.append({'proposalIndex':index,'modelSurface':p.surface,'sourceSurface':actual,'reason':'unique_case_only_source_match'})
+            result['proposals'][index]['surface']=actual
         if not p.canonicalForm.strip() or len(p.canonicalForm)>160:raise ValueError('invalid_expression_headword')
         key=(p.canonicalForm.lower(),p.sentenceId)
         if key in seen:raise ValueError('duplicate_expression')
         seen.add(key)
-    return batch.model_dump()
+    if corrections:result['anchorCorrections']=corrections
+    return result
 
 def validate_draft(draft,cid,allowed_refs):
     if draft.candidateId!=cid:raise ValueError('wrong_draft_candidate')

@@ -81,3 +81,28 @@ its last pending calls are completed draft requests. It makes one no-tools model
 call from saved receipts. It is not a general production resume implementation.
 Do not use it for arbitrary pending reads or claim the failed loop was uninterrupted.
 See `multivideo/RESULT-20261018.md` for actual scope, errors, costs and pending sources.
+
+## Authorized own-ASR continuation
+
+`asr_capture.py create|status|result VIDEO_DIR [--full-audio]` calls the existing
+AudioFilms HTTP API via an existing SSH connection (default Dell). It reuses saved
+job receipts, never refreshes, honors the endpoint's validation and keeps ASR source
+metadata. `audio_language_probe.py VIDEO_DIR` is an operator preflight for an unnamed
+default audio family: existing worker Whisper detects language without iterating
+transcript segments; it is not a replacement ASR service. No credentials or runtime
+configuration changes. Clean only the task's temporary probe audio after use.
+
+`prepare.py --allow-asr` requires an ASR receipt and retrieval path. Longer sources
+use `lookup_transfer.py VIDEO_DIR --email AUTHORIZED_OWNER --reference REFERENCE`:
+500query cap, priority lemmas and explicit deferred-query list. All source candidates
+remain; unqueried is distinct from empty. Do not expose this operator lookup as a
+model SQL/principal tool.
+
+For the model continuation pass `--prior-ledger PRIOR_WIRE --lean-wire` to
+transfer_run.py using a fresh phase directory: cap48 includes the previous18calls,
+leaving at most30new requests. New20min window, cumulative byte budget includes the
+prior ledger. Lean projection omits internal bindings, not definitions/examples.
+Source-casing-only proposal corrections require a unique match and retain a receipt;
+other unanchored phrases still fail. See multivideo/ASR-RESULT-20261018.md for actual
+execution, observed failures, bounded coverage and costs. The nl-vandale fixture
+scope is not an all-accessible/private-dictionaries search guarantee.

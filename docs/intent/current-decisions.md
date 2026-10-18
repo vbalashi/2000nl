@@ -331,5 +331,20 @@ agent API/генерации/схемы.
 semantic ошибки и turn exhaustion означают, что autonomous production готовность
 не доказана. Existing generated draft/save services не равны готовому import flow;
 component-reference persistence и save→collection contract отдельно. Для двух видео
-без manual captions выбор auto/ASR pending. [Обсуждение](../discussions/2026-10-18-08-multivideo-and-personal-draft-pilot.md),
+без manual captions владелец разрешил собственный AudioFilms ASR; см.
+[продолжение](../discussions/2026-10-18-09-authorized-audiofilms-asr-continuation.md). [Обсуждение](../discussions/2026-10-18-08-multivideo-and-personal-draft-pilot.md),
 [результат](../research/agent-import-742/multivideo/RESULT-20261018.md).
+
+## AudioFilms ASR continuation (2026-10-18)
+
+Владелец разрешил извлечение аудио/транскрипцию через existing AudioFilms endpoint
+для Easy Dutch и LUBACH; предпочтение собственной транскрипции не является
+измеренным утверждением о качестве. Existing API/worker вызывается через внутреннее
+соединение, без изменения runtime/deployment/auth. ASR provenance сохраняется отдельно
+от author captions, модельный расход включает prior ledger. [Источник](../discussions/2026-10-18-09-authorized-audiofilms-asr-continuation.md).
+
+ASR continuation выполнен на обоих источниках: [результат](../research/agent-import-742/multivideo/ASR-RESULT-20261018.md).
+Это24case research slice и6unreviewed draft proposals, не full-video semantic
+completion или сохранённые articles. Existing source audio-language guard соблюдён
+с реальным probe; all-dictionary coverage/headword normalization/save integration
+остаются отдельными задачами.

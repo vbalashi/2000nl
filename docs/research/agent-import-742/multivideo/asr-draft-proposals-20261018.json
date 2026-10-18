@@ -1,0 +1,83 @@
+{
+  "status": "generated_unreviewed_unsaved",
+  "drafts": [
+    {
+      "videoId": "IoTEYzkKF0M",
+      "candidateId": "p1",
+      "headword": "iets op de rit krijgen",
+      "definition": "Ervoor zorgen dat iets weer goed en volgens plan verloopt.",
+      "example": "Na een moeilijke periode kreeg ze haar werk en dagelijkse routine weer op de rit.",
+      "grammar": "Vaste uitdrukking; meestal met iets of een concrete zaak als lijdend voorwerp.",
+      "generated": true,
+      "reviewStatus": "unreviewed",
+      "saved": false,
+      "linkStatus": "proposed_only",
+      "relatedEntryRefs": []
+    },
+    {
+      "videoId": "IoTEYzkKF0M",
+      "candidateId": "p2",
+      "headword": "trots als een pauw",
+      "definition": "Heel trots zijn.",
+      "example": "Na haar eerste optreden was ze trots als een pauw.",
+      "grammar": "Vaste vergelijking; meestal gebruikt als naamwoordelijk deel bij ‘zijn’.",
+      "generated": true,
+      "reviewStatus": "unreviewed",
+      "saved": false,
+      "linkStatus": "proposed_only",
+      "relatedEntryRefs": []
+    },
+    {
+      "videoId": "IoTEYzkKF0M",
+      "candidateId": "p3",
+      "headword": "op eigen benen staan",
+      "definition": "Zelfstandig zijn en voor jezelf kunnen zorgen, zonder afhankelijk te zijn van anderen.",
+      "example": "Sinds ze haar eigen bedrijf heeft, staat ze helemaal op eigen benen.",
+      "grammar": "Vaste uitdrukking; vervoeg staan: staat, stond, heeft gestaan.",
+      "generated": true,
+      "reviewStatus": "unreviewed",
+      "saved": false,
+      "linkStatus": "proposed_only",
+      "relatedEntryRefs": []
+    },
+    {
+      "videoId": "IoTEYzkKF0M",
+      "candidateId": "p4",
+      "headword": "er dan ook iets achter zoeken",
+      "definition": "Denken dat iets een verborgen bedoeling of extra betekenis heeft.",
+      "example": "Ze maakte maar een grapje; je hoeft daar niets achter te zoeken.",
+      "grammar": "In deze uitdrukking verwijst ‘er’ naar iets dat eerder is genoemd; ‘dan ook’ is een toevoeging die de nadruk legt.",
+      "generated": true,
+      "reviewStatus": "unreviewed",
+      "saved": false,
+      "linkStatus": "proposed_only",
+      "relatedEntryRefs": []
+    },
+    {
+      "videoId": "9ZQaqL7K-rE",
+      "candidateId": "p1",
+      "headword": "bij machte zijn",
+      "definition": "In staat zijn om iets te doen.",
+      "example": "Met deze app ben je bij machte om je eigen muziek te maken.",
+      "grammar": "Vaste uitdrukking: bij machte zijn om + te + infinitief.",
+      "generated": true,
+      "reviewStatus": "unreviewed",
+      "saved": false,
+      "linkStatus": "proposed_only",
+      "relatedEntryRefs": []
+    },
+    {
+      "videoId": "9ZQaqL7K-rE",
+      "candidateId": "p3",
+      "headword": "buiten m'n comfort zone",
+      "definition": "In een situatie zijn die onbekend of spannend is en waarin je je niet op je gemak voelt.",
+      "example": "Voor het eerst alleen presenteren is voor mij buiten m'n comfort zone.",
+      "grammar": "Vaste uitdrukking; vaak gebruikt met ‘zijn’. ‘M’n’ is informeel voor ‘mijn’.",
+      "generated": true,
+      "reviewStatus": "unreviewed",
+      "saved": false,
+      "linkStatus": "proposed_only",
+      "relatedEntryRefs": []
+    }
+  ]
+}

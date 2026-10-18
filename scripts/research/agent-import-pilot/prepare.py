@@ -4,6 +4,11 @@ from pathlib import Path
 import spacy
 
 
+def validate_source(capture,allow_asr=False):
+    if capture.get('language')!='nl':raise ValueError('target_language_mismatch')
+    if capture.get('sourceKind')=='manual':return
+    if not (allow_asr and capture.get('sourceKind')=='provider' and capture.get('asrJobId') and capture.get('retrievalPath','').startswith('asr-job:')):raise ValueError('unapproved_source_kind')
+
 def prepare(capture, model='nl_core_news_sm'):
     start=time.perf_counter(); nlp=spacy.load(model); loaded=time.perf_counter()
     cues=capture['phrases']; parts=[]; ranges=[]; offset=0
@@ -48,8 +53,8 @@ def prepare(capture, model='nl_core_news_sm'):
                        'peakRssBytes':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss}}
 
 if __name__=='__main__':
-    ap=argparse.ArgumentParser();ap.add_argument('capture',type=Path);ap.add_argument('output',type=Path);args=ap.parse_args()
-    capture=json.loads(args.capture.read_text());assert capture['language']=='nl' and capture['sourceKind']=='manual'
+    ap=argparse.ArgumentParser();ap.add_argument('capture',type=Path);ap.add_argument('output',type=Path);ap.add_argument('--allow-asr',action='store_true');args=ap.parse_args()
+    capture=json.loads(args.capture.read_text());validate_source(capture,args.allow_asr)
     result=prepare(capture)
     for p in result['candidates']:
         for o in p['occurrences']:assert result['text'][o['start']:o['end']]==o['surface']

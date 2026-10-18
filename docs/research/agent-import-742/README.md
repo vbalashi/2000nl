@@ -365,3 +365,10 @@ runtime тесты не запускались; выполняются hash, lin
 12case slice,4generated drafts, реальный resolver→generator tool call.18new calls
 ~$0.00519; turn exhaustion и semantic failures сохранены. Два источника без manual
 caption ждут выбора fallback; save/collection integration не выполнялась.
+
+## Собственная транскрипция оставшихся видео
+
+[AudioFilms ASR continuation](multivideo/ASR-RESULT-20261018.md): оба источника
+получены через existing ASR jobs;24selected resolver cases и6new unreviewed drafts.
+21model calls ~$0.00631, ASR compute отдельно и не оценён в валюте. Source-casing
+recovery отмечен как offline; full semantic coverage/save/UI ещё не реализованы.

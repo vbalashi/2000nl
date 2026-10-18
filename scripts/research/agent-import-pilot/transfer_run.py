@@ -27,7 +27,9 @@ def fixture(root):
         entries.update({i['id']:compact(i) for i in items});queries[norm(row['query'])]={'entryIds':[i['id'] for i in items],'complete':not row['result'].get('page',{}).get('nextGroupCursor')}
     groups={'multi':[],'empty':[]};counts={'empty':0,'single':0,'multi':0};cases=[]
     for c in data['candidates']:
-        n=len(queries.get(norm(c['lemma']),{}).get('entryIds',[]));counts['empty' if n==0 else 'single' if n==1 else 'multi']+=1
+        row=queries.get(norm(c['lemma']))
+        if row is None:counts['unqueried']=counts.get('unqueried',0)+1;continue
+        n=len(row.get('entryIds',[]));counts['empty' if n==0 else 'single' if n==1 else 'multi']+=1
         if c['pos'] not in ['NOUN','VERB','ADJ','ADV']:continue
         if n==0:groups['empty'].append(c)
         if n>1:groups['multi'].append(c)
@@ -42,6 +44,16 @@ def fixture(root):
     checkpoint=root/'transfer-fixture.json'
     if checkpoint.exists() and json.loads(checkpoint.read_text())!=result:raise RuntimeError('frozen_fixture_changed')
     dump(checkpoint,result);return result
+
+def lean_projection(value):
+    if isinstance(value,list):return [lean_projection(v) for v in value]
+    if isinstance(value,dict):
+        return {k:lean_projection(v) for k,v in value.items() if not ('entryId' in value and 'headword' in value and k in ['contentBindings','headwordGroupId'])}
+    return value
+
+class LeanTransferToolBox(HardenedToolBox):
+    def input(self):return lean_projection(super().input())
+    def invoke(self,name,args):return lean_projection(super().invoke(name,args))
 
 class PhaseLedger(WireLedger):
     def __init__(self,*args,**kwargs):
@@ -58,10 +70,10 @@ class PhaseLedger(WireLedger):
 
 async def main(args):
     args.phase.mkdir(parents=True,exist_ok=True);os.chmod(args.phase,0o700);set_tracing_disabled(True)
-    ledger=PhaseLedger(args.phase,BASE,MODEL,max_requests=48)
+    ledger=PhaseLedger(args.phase,BASE,MODEL,max_requests=48,prior_ledger=args.prior_ledger)
     token=json.loads(subprocess.check_output(['az','account','get-access-token','--resource','https://cognitiveservices.azure.com/','--output','json'],text=True))['accessToken']
     root=args.video;video=root.name;data=json.loads((root/'prepared.json').read_text());t=time.monotonic()
-    phase_config={'phase':'transfer-v1','model':MODEL,'baseUrl':BASE,'maxNewHttpRequests':48,'maxPhaseSeconds':1200,'maxRequestBytes':98304,'maxCumulativeRequestBytes':786432,'maxOutputTokens':4096,'retries':0,'traceExport':False,'productionWrites':False}
+    phase_config={'phase':'transfer-v1','model':MODEL,'baseUrl':BASE,'maxHttpRequestsIncludingPrior':48,'priorLedgerSha256':hashlib.sha256(args.prior_ledger.read_bytes()).hexdigest() if args.prior_ledger else None,'maxPhaseSeconds':1200,'maxRequestBytes':98304,'maxCumulativeRequestBytes':786432,'maxOutputTokens':4096,'retries':0,'traceExport':False,'productionWrites':False,'leanWireProjection':args.lean_wire}
     dump(args.phase/'phase-config.json',phase_config)
     async with httpx2.AsyncClient(event_hooks={'request':[ledger.request],'response':[ledger.response]},timeout=60,follow_redirects=False) as http:
         client=AsyncOpenAI(base_url=BASE+'/',api_key=token,http_client=http,max_retries=0,timeout=60)
@@ -88,7 +100,7 @@ async def main(args):
             out=root/'phrases.json'
             if out.exists():print('Using frozen phrase proposals');return
             ledger.label=video+'/discovery'
-            r=await Runner.run(agent(client,'PhraseDiscovery',PHRASE_PROMPT,PhraseBatch),json.dumps({'language':'nl','sentences':data['sentences']},ensure_ascii=False),max_turns=1,run_config=RC)
+            r=await Runner.run(agent(client,'PhraseDiscovery',PHRASE_PROMPT,PhraseBatch),json.dumps({'language':'nl','sentences':[{k:s[k] for k in ['sentenceId','text']} for s in data['sentences']]},ensure_ascii=False),max_turns=1,run_config=RC)
             value=validate_phrases(r.final_output,data['sentences']);value['sourceRevision']=data['sourceHash'];value['wallSeconds']=time.monotonic()-t;dump(out,value)
             print(json.dumps({'video':video,'phrases':len(value['proposals']),'wallSeconds':value['wallSeconds']}));return
         f=fixture(root);saved_drafts=json.loads((root/'drafts.json').read_text()) if (root/'drafts.json').exists() else {'drafts':{},'events':[]};drafts=saved_drafts['drafts'];results=[];draft_events=saved_drafts['events']
@@ -101,7 +113,7 @@ async def main(args):
                 archive=root/f'resolver-{b//6+1}-attempt1.json'
                 if archive.exists():raise RuntimeError('failed_task_already_retried_once')
                 out.rename(archive)
-            box=HardenedToolBox(f,[c['candidateId'] for c in f['cases'][b:b+6]],root/f'resolver-{b//6+1}-tools.jsonl');tools=[]
+            box=(LeanTransferToolBox if args.lean_wire else HardenedToolBox)(f,[c['candidateId'] for c in f['cases'][b:b+6]],root/f'resolver-{b//6+1}-tools.jsonl');tools=[]
             async def propose(cid,caller):
                 if cid not in box.cases:return {'error':'candidate_outside_task'}
                 if cid in drafts:return drafts[cid]
@@ -111,6 +123,7 @@ async def main(args):
                 searches=[r for r in box.calls if r['tool']=='dictionary_search' and r['arguments']['candidateId']==cid and not r['result'].get('error')]
                 if not searches:return {'error':'search_before_draft_required'}
                 refs=sorted(box.allowed[cid]);payload={'candidateId':cid,'surface':c['surface'],'canonicalForm':c['initialQuery'],'context':c['context'],'sourceRevision':f['sourceRevision'],'allowedRelatedEntryRefs':[box.encode.get(x,x) for x in refs],'existingEntries':[box.translate(box.entries[x],box.encode) for x in refs[:10]],'searchReceipts':[box.translate(r['result'],box.encode) for r in searches[-2:]]}
+                if args.lean_wire:payload=lean_projection(payload)
                 previous=ledger.label;ledger.label=video+'/draft/'+cid
                 try:
                     r=await Runner.run(agent(client,'PersonalDraftGenerator',DRAFT_PROMPT,PersonalDraft),json.dumps(payload,ensure_ascii=False),max_turns=1,run_config=RC)
@@ -150,4 +163,4 @@ async def main(args):
             dump(out,record);results.append(record);print(json.dumps({k:v for k,v in record.items() if k not in ['result','acceptedDecisions']}),flush=True)
         dump(root/'transfer-result.json',{'sourceRevision':f['sourceRevision'],'selectionPolicy':f['selectionPolicy'],'lookupCandidateCounts':f['lookupCandidateCounts'],'remainingCandidateCount':f['remainingCandidateCount'],'cases':len(f['cases']),'tasks':results,'drafts':drafts,'draftEvents':draft_events,'wallSeconds':time.monotonic()-t,'referenceAccuracy':None})
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('stage',choices=['discover','resolve','finalize']);p.add_argument('video',type=Path);p.add_argument('phase',type=Path);p.add_argument('--prompt',default='docs/research/agent-import-742/agent-flow/prompts/resolver-v3.txt');asyncio.run(main(p.parse_args()))
+    p=argparse.ArgumentParser();p.add_argument('stage',choices=['discover','resolve','finalize']);p.add_argument('video',type=Path);p.add_argument('phase',type=Path);p.add_argument('--prior-ledger',type=Path);p.add_argument('--lean-wire',action='store_true');p.add_argument('--prompt',default='docs/research/agent-import-742/agent-flow/prompts/resolver-v3.txt');asyncio.run(main(p.parse_args()))

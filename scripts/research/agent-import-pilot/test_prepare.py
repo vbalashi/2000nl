@@ -1,7 +1,14 @@
 import unittest
-from prepare import prepare
+from prepare import prepare,validate_source
 
 class PreparationTests(unittest.TestCase):
+    def test_asr_requires_explicit_policy_and_receipt(self):
+        capture={'language':'nl','sourceKind':'provider','asrJobId':'job1','retrievalPath':'asr-job:faster-whisper:model:asr'}
+        with self.assertRaises(ValueError):validate_source(capture)
+        validate_source(capture,True)
+        capture.pop('asrJobId')
+        with self.assertRaises(ValueError):validate_source(capture,True)
+
     def test_offsets_context_and_title(self):
         text='Dit is het NOS Journaal in Makkelijke Taal. Ik vertrouw op je.'
         out=prepare({'language':'nl','sourceKind':'manual','phrases':[{'id':0,'startSec':0,'endSec':4,'text':text}]})
