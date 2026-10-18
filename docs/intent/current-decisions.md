@@ -292,3 +292,15 @@ entries, затем очередь отсутствующих personal drafts; �
 jobs и измерения быстрого extraction/search пути и LLM остатка. Ни качество,
 ни цена, ни новая edit capability пока не подтверждены реализацией.
 [Уточнения и принятые границы](../discussions/2026-10-18-02-agent-import-resolution-and-scale.md), #742.
+
+
+## Внешний пилот импорта видео (2026-10-18)
+
+До интеграции в app подготовить и совместно пройти внешний staged pilot на
+видео `8_WR5b2FJfY`. Structured extraction (surface/lemma proposals/source context)
+отделено от lookup/sense selection. Language goal не ограничен NL/EN input pair.
+Known не исключает membership: коллекция хранит материал источника независимо
+от личного progress; noise rules и training eligibility отдельны. Libraries,
+batch contracts, качество/ресурсы/время/стоимость измеряются. Планирование
+не разрешает production mutations или массовые paid runs.
+[Основание и план](../discussions/2026-10-18-03-external-youtube-pilot.md).
