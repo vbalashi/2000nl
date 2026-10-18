@@ -8,6 +8,7 @@ from openai import AsyncOpenAI
 from agents import Agent,Runner,RunConfig,ModelSettings,FunctionTool,OpenAIResponsesModel,set_tracing_disabled
 from agents.model_settings import ModelRetrySettings
 from agent_tools import ToolBox,DecisionBatch,specs
+from hardened_tools import HardenedToolBox,RepairRequired
 
 class WireLedger:
     def __init__(self,root,base,model,max_requests=18,prior_ledger=None):
@@ -51,7 +52,9 @@ async def run_direct(client,model,prompt,box,baseline=False):
                 try:result=box.invoke(call.name,json.loads(call.arguments))
                 except Exception as e:result={'error':'invalid_tool_arguments','detail':type(e).__name__}
                 history.append({'type':'function_call_output','call_id':call.call_id,'output':json.dumps(result,ensure_ascii=False)})
-        elif resp.status=='completed':return box.validate(DecisionBatch.model_validate_json(resp.output_text))
+        elif resp.status=='completed':
+            try:return box.validate(DecisionBatch.model_validate_json(resp.output_text))
+            except RepairRequired as e:history.append({'role':'user','content':str(e)})
         else:raise RuntimeError('incomplete_or_failed_response:'+str(resp.status))
     raise RuntimeError('turn_cap_exhausted')
 
@@ -65,20 +68,25 @@ async def run_sdk(client,model,prompt,box):
     agent=Agent(name='DutchImportResolver',instructions=prompt,model=OpenAIResponsesModel(model,client),tools=tools,
         output_type=DecisionBatch,model_settings=ModelSettings(max_tokens=4096,reasoning={'effort':'low'},store=False,
         parallel_tool_calls=True,response_include=['reasoning.encrypted_content'],retry=ModelRetrySettings(max_retries=0)))
-    result=await Runner.run(agent,json.dumps(box.input(),ensure_ascii=False),max_turns=4,
-        run_config=RunConfig(tracing_disabled=True,trace_include_sensitive_data=False))
-    return box.validate(result.final_output)
+    history=json.dumps(box.input(),ensure_ascii=False)
+    for attempt in range(2 if isinstance(box,HardenedToolBox) else 1):
+        result=await Runner.run(agent,history,max_turns=3 if isinstance(box,HardenedToolBox) else 4,
+            run_config=RunConfig(tracing_disabled=True,trace_include_sensitive_data=False))
+        try:return box.validate(result.final_output)
+        except RepairRequired as e:history=result.to_input_list()+[{'role':'user','content':str(e)}]
+    raise RuntimeError('validation_repair_cap_exhausted')
 
 async def main(args):
     args.output.mkdir(parents=True,exist_ok=True);os.chmod(args.output,0o700)
     fixture=json.loads(args.fixture.read_text());prompt=args.prompt.read_text()
-    config={'model':args.model,'baseUrl':args.base_url,'maxHttpRequests':18,'maxModelResponsesPerTask':4,'maxOutputTokensPerRequest':4096,'maxRequestBytes':98304,'maxCumulativeRequestBytes':786432,'timeoutSeconds':600,'retries':0,'sdkTraceExport':False,'storeResponses':False,'readOnlyFrozenTools':True,'fixtureSha256':hashlib.sha256(args.fixture.read_bytes()).hexdigest(),'promptSha256':hashlib.sha256(args.prompt.read_bytes()).hexdigest(),'batchIndices':args.batch_indices,'priorLedgerSha256':hashlib.sha256(args.prior_ledger.read_bytes()).hexdigest() if args.prior_ledger else None,'priceStatus':'not verified; hard call/byte/output limits, not a claimed currency cap'}
+    config={'model':args.model,'baseUrl':args.base_url,'maxHttpRequests':12 if args.hardened else 18,'maxModelResponsesPerTask':6 if args.hardened else 4,'maxOutputTokensPerRequest':4096,'maxRequestBytes':98304,'maxCumulativeRequestBytes':786432,'timeoutSeconds':600,'retries':0,'sdkTraceExport':False,'storeResponses':False,'readOnlyFrozenTools':True,'fixtureSha256':hashlib.sha256(args.fixture.read_bytes()).hexdigest(),'promptSha256':hashlib.sha256(args.prompt.read_bytes()).hexdigest(),'batchIndices':args.batch_indices,'priorLedgerSha256':hashlib.sha256(args.prior_ledger.read_bytes()).hexdigest() if args.prior_ledger else None,'priceStatus':'not verified; hard call/byte/output limits, not a claimed currency cap'}
+    if args.hardened:config['hardened']=True
     cp=args.output/'run-config.json'
     if cp.exists() and json.loads(cp.read_text())!=config:raise RuntimeError('resume_config_mismatch')
     cp.write_text(json.dumps(config,indent=2));set_tracing_disabled(True)
     # Retrieve existing Entra credential in memory; never persist or print it.
     token=json.loads(subprocess.check_output(['az','account','get-access-token','--resource','https://cognitiveservices.azure.com/','--output','json'],text=True))['accessToken']
-    ledger=WireLedger(args.output,args.base_url,args.model,prior_ledger=args.prior_ledger)
+    ledger=WireLedger(args.output,args.base_url,args.model,max_requests=12 if args.hardened else 18,prior_ledger=args.prior_ledger)
     async with httpx2.AsyncClient(event_hooks={'request':[ledger.request],'response':[ledger.response]},timeout=60,follow_redirects=False) as http:
         client=AsyncOpenAI(base_url=args.base_url.rstrip('/')+'/',api_key=token,http_client=http,max_retries=0,timeout=60)
         # Same fixture, prompt, model and output contract for each condition.
@@ -87,17 +95,17 @@ async def main(args):
                 label=f'{mode}-batch{b+1}';out=args.output/f'{label}.json'
                 if out.exists():print(json.dumps({'cachedTask':label}),flush=True);continue
                 ids=[c['candidateId'] for c in fixture['cases'][b*6:(b+1)*6]]
-                box=ToolBox(fixture,ids,args.output/f'{label}-tools.jsonl');ledger.label=label;t=time.monotonic()
+                box=(HardenedToolBox if args.hardened else ToolBox)(fixture,ids,args.output/f'{label}-tools.jsonl');ledger.label=label;t=time.monotonic()
                 try:
                     result=await asyncio.wait_for(run_sdk(client,args.model,prompt,box) if mode=='sdk' else run_direct(client,args.model,prompt,box,mode=='baseline'),timeout=180)
                     byid={d['candidateId']:d for d in result['decisions']};evaluation=[]
                     for c in fixture['cases'][b*6:(b+1)*6]:
                         d=byid[c['candidateId']];expected=c['expectedEntryIds']
                         evaluation.append({'candidateId':c['candidateId'],'agreesWithSupervisedReference':set(d['selectedEntryIds'])==set(expected) and ((d['outcome']=='resolved')==bool(expected)),'outcome':d['outcome']})
-                    value={'label':label,'wallSeconds':time.monotonic()-t,'toolCalls':len(box.calls),'result':result,'evaluation':evaluation}
+                    value={'label':label,'wallSeconds':time.monotonic()-t,'toolCalls':len(box.calls),'result':result,'evaluation':evaluation,'repairRejections':getattr(box,'rejections',[])}
                 except Exception as e:
-                    value={'label':label,'wallSeconds':time.monotonic()-t,'toolCalls':len(box.calls),'errorType':type(e).__name__,'error':str(e)[:1400]}
-                out.write_text(json.dumps(value,ensure_ascii=False,indent=2));print(json.dumps({k:v for k,v in value.items() if k not in ['result','evaluation']},ensure_ascii=False),flush=True)
+                    value={'label':label,'wallSeconds':time.monotonic()-t,'toolCalls':len(box.calls),'errorType':type(e).__name__,'error':str(e)[:1400],'acceptedDecisions':list(getattr(box,'accepted',{}).values()),'repairRejections':getattr(box,'rejections',[])}
+                out.write_text(json.dumps(value,ensure_ascii=False,indent=2));print(json.dumps({k:v for k,v in value.items() if k not in ['result','evaluation','acceptedDecisions']},ensure_ascii=False),flush=True)
                 # Do not repeatedly spend after a routing/compatibility failure.
                 if value.get('error') and any(s in value['error'] for s in ['Unauthorized','authentication','404','not supported','model_or_storage','unapproved_network']):return
     summary={}
@@ -108,4 +116,4 @@ async def main(args):
     (args.output/'summary.json').write_text(json.dumps(summary,indent=2));print(json.dumps(summary),flush=True)
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('fixture',type=Path);p.add_argument('output',type=Path);p.add_argument('--prompt',type=Path,required=True);p.add_argument('--model',required=True);p.add_argument('--base-url',required=True);p.add_argument('--batch-indices',default='1,2');p.add_argument('--prior-ledger',type=Path);p.add_argument('--modes',default='baseline,direct,sdk');args=p.parse_args();asyncio.run(main(args))
+    p=argparse.ArgumentParser();p.add_argument('fixture',type=Path);p.add_argument('output',type=Path);p.add_argument('--prompt',type=Path,required=True);p.add_argument('--model',required=True);p.add_argument('--base-url',required=True);p.add_argument('--batch-indices',default='1,2');p.add_argument('--prior-ledger',type=Path);p.add_argument('--hardened',action='store_true');p.add_argument('--modes',default='baseline,direct,sdk');args=p.parse_args();asyncio.run(main(args))

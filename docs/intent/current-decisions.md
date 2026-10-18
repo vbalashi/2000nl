@@ -314,3 +314,12 @@ batch contracts, качество/ресурсы/время/стоимость �
 история не изменены. Это разрешение конкретного user operation, не rollout нового
 agent API/генерации/схемы.
 [Разрешение и результат](../discussions/2026-10-18-04-youtube-pilot-execution.md).
+
+## Agent import: внешний эксперимент и стоимость (2026-10-18)
+
+Продолжение внешнего research pilot разрешено; app integration отдельно. В harness
+реализованы short reference aliases, per-item mechanical acceptance и bounded repair.
+На том же12case development fixture SDK12/12, Responses11/12; semantic quality
+остаётся открытой, independent held-out и full-video measurement ещё не выполнены.
+27calls оценены ~$0.02483 по published Azure rate, billing не сверен. Цена полного
+видео пока условный прогноз. [Источник обсуждения](../discussions/2026-10-18-07-agent-loop-cost-and-repair.md).

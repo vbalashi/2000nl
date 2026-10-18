@@ -353,3 +353,8 @@ payload, crash-after-commit, lease loss, cancel/late response, partial retry и 
 и локальные DB/RPC integration fixtures плюс один UI end-to-end text→collection→Setup;
 смотреть #742 audit для актуальных owning modules. В этом docs-only исследовании
 runtime тесты не запускались; выполняются hash, link/path и diff checks.
+
+## Продолжение: короткие ссылки, repair, стоимость
+
+[Измерения v4 и прогноз стоимости видео](agent-flow/RESULT-AZURE-V4-20261018.md): SDK12/12, Responses11/12;
+27cumulative calls ~$0.02483 по опубликованному тарифу. Не invoice и не полный video pass.

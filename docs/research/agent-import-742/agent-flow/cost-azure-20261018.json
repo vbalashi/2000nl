@@ -1,0 +1,137 @@
+{
+  "rateCheckedDate": "2026-10-18",
+  "currency": "USD",
+  "ratesPerMillion": {
+    "ordinaryInput": 0.1,
+    "cacheRead": 0.01,
+    "cacheWrite": 0.125,
+    "output": 0.5
+  },
+  "source": "https://azure.microsoft.com/en-us/blog/gpt-6-astra-sol-and-luna-for-production-agents-in-microsoft-foundry/",
+  "assumptions": [
+    "gpt-6-luna Global Standard short context",
+    "cache read and cache write are disjoint input subsets; remainder charged ordinary input",
+    "output includes reasoning; no extra reasoning charge",
+    "published list estimate only; effective Sponsorship billing not reconciled",
+    "excludes hosting, lookup infrastructure, subtitle retrieval, transcription, article generation and managed sandbox/tools"
+  ],
+  "groups": {
+    "agent-run-v1/baseline": {
+      "requests": 2,
+      "responses": 2,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 17235,
+        "ordinaryInput": 6,
+        "cacheRead": 0,
+        "cacheWrite": 17229,
+        "output": 1178
+      },
+      "estimatedPublishedUsd": 0.0027432249999999997
+    },
+    "agent-run-v1/direct": {
+      "requests": 4,
+      "responses": 4,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 40147,
+        "ordinaryInput": 12,
+        "cacheRead": 17725,
+        "cacheWrite": 22410,
+        "output": 1412
+      },
+      "estimatedPublishedUsd": 0.0036856999999999997
+    },
+    "agent-run-v1/sdk": {
+      "requests": 3,
+      "responses": 3,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 28925,
+        "ordinaryInput": 9,
+        "cacheRead": 0,
+        "cacheWrite": 28916,
+        "output": 1214
+      },
+      "estimatedPublishedUsd": 0.004222399999999999
+    },
+    "agent-run-v2/direct": {
+      "requests": 4,
+      "responses": 4,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 41055,
+        "ordinaryInput": 12,
+        "cacheRead": 17857,
+        "cacheWrite": 23186,
+        "output": 1580
+      },
+      "estimatedPublishedUsd": 0.00386802
+    },
+    "agent-run-v2/sdk": {
+      "requests": 2,
+      "responses": 2,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 17863,
+        "ordinaryInput": 6,
+        "cacheRead": 0,
+        "cacheWrite": 17857,
+        "output": 1121
+      },
+      "estimatedPublishedUsd": 0.002793225
+    },
+    "agent-run-v3/sdk": {
+      "requests": 2,
+      "responses": 2,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 18399,
+        "ordinaryInput": 6,
+        "cacheRead": 7863,
+        "cacheWrite": 10530,
+        "output": 497
+      },
+      "estimatedPublishedUsd": 0.00164398
+    },
+    "agent-run-v4/direct": {
+      "requests": 6,
+      "responses": 6,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 52113,
+        "ordinaryInput": 18,
+        "cacheRead": 34249,
+        "cacheWrite": 17846,
+        "output": 932
+      },
+      "estimatedPublishedUsd": 0.00304104
+    },
+    "agent-run-v4/sdk": {
+      "requests": 4,
+      "responses": 4,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 33336,
+        "ordinaryInput": 12,
+        "cacheRead": 15846,
+        "cacheWrite": 17478,
+        "output": 968
+      },
+      "estimatedPublishedUsd": 0.00282841
+    }
+  },
+  "total": {
+    "requests": 27,
+    "responses": 27,
+    "unknownUsageResponses": 0,
+    "tokens": {
+      "input": 249073,
+      "ordinaryInput": 81,
+      "cacheRead": 93540,
+      "cacheWrite": 155452,
+      "output": 8902
+    },
+    "estimatedPublishedUsd": 0.024826
+  }
+}

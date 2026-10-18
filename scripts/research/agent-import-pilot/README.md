@@ -52,3 +52,14 @@ is disabled; request bodies/results remain in ignored restricted evidence. Do no
 print tokens, upload raw journals or expose operator lookup as a model SQL tool.
 Read the [complete result and failures](../../../docs/research/agent-import-742/agent-flow/RESULT-AZURE-20261018.md) before reusing code. Historical outputs retain
 their original validator failures; offline revalidation is labeled separately.
+
+### V4 optional hardened resolver
+
+Use `agent_compare.py ... --hardened --modes direct,sdk` with resolver-v3.txt.
+New phase cap12 HTTP requests, direct4responses/task, SDK2x3turns/task. Preserve
+prior ledgers separately and report cumulative spend; this is no implicit renewal
+of the original18request budget. Short transport aliases decode before validation.
+Per-item accepted outputs survive mechanical failures in task receipts; this is
+not server job durability. `summarize_cost.py LEDGER... --output REPORT` applies
+dated published Luna rates, partitions input cache fields and never claims invoice
+reconciliation. See RESULT-AZURE-V4-20261018.md for observed results/limitations.
