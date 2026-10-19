@@ -35,7 +35,7 @@ def run(args):
     if args.mode=='create':
         if created.exists() and json.loads(created.read_text()).get('body',{}).get('jobId'):print('Reusing existing ASR job receipt');return
         duration=meta['duration']
-        if not isinstance(duration,(int,float)) or not 0<duration<=900:raise ValueError('bounded_asr_duration_exceeded')
+        if not isinstance(duration,(int,float)) or not 0<duration<=getattr(args,'max_video_seconds',900):raise ValueError('bounded_asr_duration_exceeded')
         payload={'videoId':vid,'lang':'nl','textSource':'asr','sourceKind':'auto','durationSec':int(duration),'fullAudio':args.full_audio,'refresh':False}
         evidence=json.loads((root/'audio-track-evidence.json').read_text())
         langs={f['language'] for f in evidence['audioFormats'] if f.get('acodec') not in [None,'none'] and f.get('language')}
@@ -57,4 +57,4 @@ def run(args):
     with (root/'asr-receipts.jsonl').open('a') as f:f.write(json.dumps({'utc':datetime.now(timezone.utc).isoformat(),'mode':args.mode,'httpStatus':result['status'],'status':result['body'].get('status'),'jobId':result['body'].get('jobId'),'error':result['body'].get('error')})+'\n')
     print(json.dumps({'video':vid,'httpStatus':result['status'],'status':result['body'].get('status'),'error':result['body'].get('error'),'phrases':len(result['body'].get('phrases',[]))}))
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('mode',choices=['create','status','result']);p.add_argument('video',type=Path);p.add_argument('--ssh-host',default='dell');p.add_argument('--full-audio',action='store_true');run(p.parse_args())
+    p=argparse.ArgumentParser();p.add_argument('mode',choices=['create','status','result']);p.add_argument('video',type=Path);p.add_argument('--ssh-host',default='dell');p.add_argument('--full-audio',action='store_true');p.add_argument('--max-video-seconds',type=int,choices=[900,1200],default=900);run(p.parse_args())

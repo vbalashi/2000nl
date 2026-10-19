@@ -379,3 +379,5 @@ model effort/size и дополнительные агенты не считаю
 - 2026-10-19 — Автоматический DUCAME shortlist проверяется только как внешний baseline; более свободные границы и near-miss не дают права на автоматическое добавление карточек. [Обсуждение](../discussions/2026-10-19-02-automatic-ducame-shortlist.md).
 
 - 2026-10-19 — На fresh12 сравнительной выборке DUCAME не добавил strict hints к blind Sol; обязательный словарный review не принят. Эффект hint review не измерен: дополнительные кандидаты отсутствовали. [Протокол](../discussions/2026-10-19-03-fresh-ducame-hint-test.md).
+
+- 2026-10-19 — Для внешнего Luna-пилота владелец выбрал20model turns без принудительного завершения после2tools, чтобы измерить фактическую длину и стоимость. Production turn limit не принят; no collection writes. [Решение](../discussions/2026-10-19-05-measure-agent-steps-before-limits.md).

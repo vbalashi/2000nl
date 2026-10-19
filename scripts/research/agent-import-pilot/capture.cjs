@@ -12,7 +12,7 @@ const jiti = createJiti(__filename, { alias: { '@': path.join(appDirectory, 'src
   const start = performance.now();
   const result = await new YtDlpProvider(process.env.YT_DLP_PATH || '/opt/homebrew/bin/yt-dlp')
     .fetchSubtitles(videoId, { language: 'nl', sourceKind: 'manual' });
-  if (result.sourceKind !== 'manual' || result.language !== 'nl') throw new Error('Unexpected subtitle source');
-  fs.writeFileSync(output, JSON.stringify({ captureMs: performance.now() - start, ...result }, null, 2));
+  if (result.sourceKind !== 'manual' || !['nl', 'nl-NL'].includes(result.language)) throw new Error('Unexpected subtitle source');
+  fs.writeFileSync(output, JSON.stringify({ captureMs: performance.now() - start, ...result, providerLanguage: result.language, language: 'nl' }, null, 2));
   console.log(JSON.stringify({ cues: result.phrases.length, language: result.language, sourceKind: result.sourceKind }));
 })().catch(error => { console.error(error.message); process.exitCode = 1; });

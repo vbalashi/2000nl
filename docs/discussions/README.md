@@ -268,3 +268,5 @@
 - 2026-10-19: [Автоматический DUCAME shortlist](2026-10-19-02-automatic-ducame-shortlist.md).
 
 - 2026-10-19: [Свежие предложения и дополнительные DUCAME-подсказки](2026-10-19-03-fresh-ducame-hint-test.md).
+
+- 2026-10-19: [Luna на двух новых видео](2026-10-19-04-new-video-luna-agent-loop.md), [измерение естественной длины до выбора лимитов](2026-10-19-05-measure-agent-steps-before-limits.md).

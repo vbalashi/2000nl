@@ -1,0 +1,511 @@
+{
+  "collectedAtUtc": "2026-10-19T08:10:39.494563+00:00",
+  "model": "gpt-6-luna",
+  "reasoning": "high",
+  "productionWrites": 0,
+  "videos": {
+    "video--mOpU9Wf-wg": {
+      "title": "De afgelopen jaren is het aantal Nederlanders dat een huis in Spanje koopt geëxplodeerd | LUBACH",
+      "videoId": "-mOpU9Wf-wg",
+      "durationSeconds": 692,
+      "sourceRevision": "6918331450e302d92bf73ce16f40e2ff6ba2f003645bf0a0662a0dafd7af66cb",
+      "sourceSentences": 135,
+      "wordCandidates": 411,
+      "firstPassComplete": true,
+      "targetedReviewComplete": true,
+      "sourceKind": "author captions",
+      "providerLanguage": "nl-NL",
+      "firstUnits": 106,
+      "reviewedSentences": 27,
+      "delta": {
+        "before": 106,
+        "after": 107,
+        "unchangedCore": 104,
+        "addedCores": 3,
+        "removedCores": 2,
+        "overlapChanges": [
+          {
+            "caseId": "s20",
+            "oldCanonical": "het aantal explodeert",
+            "newCanonical": "het aantal explodeert",
+            "oldTokenIds": [
+              6,
+              14
+            ],
+            "newTokenIds": [
+              5,
+              6,
+              14
+            ]
+          }
+        ],
+        "added": [
+          {
+            "caseId": "s20",
+            "canonical": "het aantal explodeert",
+            "tokenIds": [
+              5,
+              6,
+              14
+            ]
+          },
+          {
+            "caseId": "s29",
+            "canonical": "wegpesten",
+            "tokenIds": [
+              7
+            ]
+          },
+          {
+            "caseId": "s8",
+            "canonical": "of niet",
+            "tokenIds": [
+              12,
+              13
+            ]
+          }
+        ],
+        "removed": [
+          {
+            "caseId": "s18",
+            "canonical": "het mag wat kosten",
+            "tokenIds": [
+              2,
+              3,
+              5,
+              6
+            ]
+          },
+          {
+            "caseId": "s20",
+            "canonical": "het aantal explodeert",
+            "tokenIds": [
+              6,
+              14
+            ]
+          }
+        ],
+        "sameCoreCanonicalChanges": []
+      },
+      "toolErrors": []
+    },
+    "video-_XskmnKYQRs": {
+      "title": "WEDDING Vocabulary | Street Interview",
+      "videoId": "_XskmnKYQRs",
+      "durationSeconds": 948,
+      "sourceRevision": "db794d21b87c0660b4fb37b2f78edb72dfc27ea1533390331123e9043be1b72b",
+      "sourceSentences": 343,
+      "wordCandidates": 440,
+      "firstPassComplete": true,
+      "targetedReviewComplete": true,
+      "sourceKind": "own AudioFilms ASR",
+      "asrStartedUtc": "2026-10-19T07:50:18.027Z",
+      "asrCompletedUtc": "2026-10-19T07:55:41.207Z",
+      "firstUnits": 181,
+      "reviewedSentences": 32,
+      "delta": {
+        "before": 181,
+        "after": 183,
+        "unchangedCore": 179,
+        "addedCores": 4,
+        "removedCores": 2,
+        "overlapChanges": [
+          {
+            "caseId": "s0",
+            "oldCanonical": "omhebben",
+            "newCanonical": "iets omhebben",
+            "oldTokenIds": [
+              7,
+              8,
+              9
+            ],
+            "newTokenIds": [
+              8,
+              9
+            ]
+          },
+          {
+            "caseId": "s263",
+            "oldCanonical": "dicht bij iemand staan",
+            "newCanonical": "dicht bij iemand staan",
+            "oldTokenIds": [
+              5,
+              7,
+              8,
+              9
+            ],
+            "newTokenIds": [
+              5,
+              7,
+              9
+            ]
+          }
+        ],
+        "added": [
+          {
+            "caseId": "s0",
+            "canonical": "iets omhebben",
+            "tokenIds": [
+              8,
+              9
+            ]
+          },
+          {
+            "caseId": "s263",
+            "canonical": "dicht bij iemand staan",
+            "tokenIds": [
+              5,
+              7,
+              9
+            ]
+          },
+          {
+            "caseId": "s269",
+            "canonical": "ver weg staan",
+            "tokenIds": [
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "caseId": "s284",
+            "canonical": "best wel",
+            "tokenIds": [
+              2,
+              3
+            ]
+          }
+        ],
+        "removed": [
+          {
+            "caseId": "s0",
+            "canonical": "omhebben",
+            "tokenIds": [
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "caseId": "s263",
+            "canonical": "dicht bij iemand staan",
+            "tokenIds": [
+              5,
+              7,
+              8,
+              9
+            ]
+          }
+        ],
+        "sameCoreCanonicalChanges": [
+          {
+            "caseId": "s129",
+            "before": "klikken op iets",
+            "after": "op iets klikken"
+          },
+          {
+            "caseId": "s201",
+            "before": "’s middags",
+            "after": "'s middags"
+          },
+          {
+            "caseId": "s313",
+            "before": "het jawoord geven",
+            "after": "iemand het jawoord geven"
+          },
+          {
+            "caseId": "s64",
+            "before": "’s ochtends vroeg",
+            "after": "'s ochtends vroeg"
+          }
+        ]
+      },
+      "toolErrors": []
+    }
+  },
+  "phases": {
+    "model-phase": {
+      "requests": 84,
+      "responses": 83,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 178761,
+        "ordinaryInput": 1254,
+        "cacheRead": 34245,
+        "cacheWrite": 143262,
+        "output": 132351
+      },
+      "estimatedPublishedUsd": 0.0845511,
+      "firstRequestUtc": "2026-10-19T07:52:56.558868+00:00",
+      "lastRequestUtc": "2026-10-19T08:07:14.328218+00:00",
+      "lastResponseEndUtc": "2026-10-19T08:07:29.173200+00:00",
+      "requestsWithoutRecordedResponse": 1,
+      "unpricedUnknownAttempts": 1
+    },
+    "model-phase-20": {
+      "requests": 81,
+      "responses": 81,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 366776,
+        "ordinaryInput": 243,
+        "cacheRead": 271926,
+        "cacheWrite": 94607,
+        "output": 32803
+      },
+      "estimatedPublishedUsd": 0.030970935,
+      "firstRequestUtc": "2026-10-19T08:01:46.488139+00:00",
+      "lastRequestUtc": "2026-10-19T08:09:44.092052+00:00",
+      "lastResponseEndUtc": "2026-10-19T08:09:48.534940+00:00",
+      "requestsWithoutRecordedResponse": 0,
+      "unpricedUnknownAttempts": 0
+    }
+  },
+  "natural20TurnTasks": [
+    {
+      "task": "video--mOpU9Wf-wg/review-01",
+      "modelRequests": 4,
+      "modelResponses": 4,
+      "toolCalls": 3,
+      "toolNames": {
+        "context_read": 2,
+        "dictionary_search": 1
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 24.664751335512847,
+      "outputTokens": 2558
+    },
+    {
+      "task": "video--mOpU9Wf-wg/review-02",
+      "modelRequests": 8,
+      "modelResponses": 8,
+      "toolCalls": 7,
+      "toolNames": {
+        "context_read": 4,
+        "dictionary_search": 3
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 45.30925687775016,
+      "outputTokens": 4259
+    },
+    {
+      "task": "video--mOpU9Wf-wg/review-03",
+      "modelRequests": 5,
+      "modelResponses": 5,
+      "toolCalls": 4,
+      "toolNames": {
+        "dictionary_search": 1,
+        "context_read": 3
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 26.948573000729084,
+      "outputTokens": 2126
+    },
+    {
+      "task": "video--mOpU9Wf-wg/review-04",
+      "modelRequests": 7,
+      "modelResponses": 7,
+      "toolCalls": 6,
+      "toolNames": {
+        "context_read": 3,
+        "dictionary_search": 3
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 22.35615854104981,
+      "outputTokens": 1816
+    },
+    {
+      "task": "video--mOpU9Wf-wg/review-05",
+      "modelRequests": 6,
+      "modelResponses": 6,
+      "toolCalls": 5,
+      "toolNames": {
+        "context_read": 4,
+        "dictionary_search": 1
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 12.532524125650525,
+      "outputTokens": 933
+    },
+    {
+      "task": "video--mOpU9Wf-wg/review-06",
+      "modelRequests": 3,
+      "modelResponses": 3,
+      "toolCalls": 2,
+      "toolNames": {
+        "context_read": 1,
+        "dictionary_search": 1
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 18.116943791043013,
+      "outputTokens": 1421
+    },
+    {
+      "task": "video--mOpU9Wf-wg/review-07",
+      "modelRequests": 5,
+      "modelResponses": 5,
+      "toolCalls": 4,
+      "toolNames": {
+        "context_read": 3,
+        "dictionary_search": 1
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 27.997529124841094,
+      "outputTokens": 2566
+    },
+    {
+      "task": "video-_XskmnKYQRs/review-01",
+      "modelRequests": 7,
+      "modelResponses": 7,
+      "toolCalls": 6,
+      "toolNames": {
+        "context_read": 4,
+        "dictionary_search": 2
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 25.793987413868308,
+      "outputTokens": 1775
+    },
+    {
+      "task": "video-_XskmnKYQRs/review-02",
+      "modelRequests": 4,
+      "modelResponses": 4,
+      "toolCalls": 3,
+      "toolNames": {
+        "context_read": 2,
+        "dictionary_search": 1
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 13.509505541529506,
+      "outputTokens": 1095
+    },
+    {
+      "task": "video-_XskmnKYQRs/review-03",
+      "modelRequests": 3,
+      "modelResponses": 3,
+      "toolCalls": 2,
+      "toolNames": {
+        "dictionary_search": 1,
+        "context_read": 1
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 19.449637999292463,
+      "outputTokens": 1709
+    },
+    {
+      "task": "video-_XskmnKYQRs/review-04",
+      "modelRequests": 4,
+      "modelResponses": 4,
+      "toolCalls": 3,
+      "toolNames": {
+        "context_read": 2,
+        "dictionary_search": 1
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 19.37552791601047,
+      "outputTokens": 1651
+    },
+    {
+      "task": "video-_XskmnKYQRs/review-05",
+      "modelRequests": 4,
+      "modelResponses": 4,
+      "toolCalls": 3,
+      "toolNames": {
+        "dictionary_search": 1,
+        "context_read": 2
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 18.944161501247436,
+      "outputTokens": 1505
+    },
+    {
+      "task": "video-_XskmnKYQRs/review-06",
+      "modelRequests": 7,
+      "modelResponses": 7,
+      "toolCalls": 6,
+      "toolNames": {
+        "dictionary_search": 2,
+        "context_read": 4
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 49.672303625848144,
+      "outputTokens": 5147
+    },
+    {
+      "task": "video-_XskmnKYQRs/review-07",
+      "modelRequests": 8,
+      "modelResponses": 8,
+      "toolCalls": 7,
+      "toolNames": {
+        "context_read": 4,
+        "dictionary_search": 3
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 38.11913121026009,
+      "outputTokens": 3027
+    },
+    {
+      "task": "video-_XskmnKYQRs/review-08",
+      "modelRequests": 6,
+      "modelResponses": 6,
+      "toolCalls": 5,
+      "toolNames": {
+        "context_read": 2,
+        "dictionary_search": 3
+      },
+      "repeatedIdenticalToolCalls": 0,
+      "httpSeconds": 15.784670667722821,
+      "outputTokens": 1215
+    }
+  ],
+  "observedNaturalRequestRange": [
+    3,
+    8
+  ],
+  "observedNaturalRequestMedian": 5,
+  "intendedFirstPlusNaturalReviewCost": {
+    "requests": 141,
+    "responses": 141,
+    "unknownUsageResponses": 0,
+    "tokens": {
+      "input": 471226,
+      "ordinaryInput": 423,
+      "cacheRead": 271926,
+      "cacheWrite": 198877,
+      "output": 152922
+    },
+    "estimatedPublishedUsd": 0.104082185
+  },
+  "modelRequests": 165,
+  "modelResponses": 164,
+  "estimatedPublishedUsdKnownUsage": 0.11552203500000001,
+  "unknownUnpricedAttempts": 1,
+  "observedResponseModels": [
+    "gpt-6-luna"
+  ],
+  "httpStatuses": [
+    200
+  ],
+  "firstModelRequestUtc": "2026-10-19T07:52:56.558868+00:00",
+  "lastModelRequestUtc": "2026-10-19T08:09:44.092052+00:00",
+  "usageTotalDiscrepancies": 0,
+  "priceCheckedDate": "2026-10-19",
+  "rateUnit": "USD per million tokens",
+  "rates": {
+    "ordinaryInput": 0.1,
+    "cacheRead": 0.01,
+    "cacheWrite": 0.125,
+    "output": 0.5
+  },
+  "priceStatus": "published Global Standard short context estimate; no invoice reconciliation, unknown requests excluded not free",
+  "source": "https://azure.microsoft.com/en-us/blog/gpt-6-astra-sol-and-luna-for-production-agents-in-microsoft-foundry/",
+  "limits": [
+    "no independent human gold",
+    "added/removed cores are changes, not correctness labels",
+    "second pass targets at most32 sentences per video",
+    "first run4/recovery costs included separately from natural20",
+    "word candidates extracted deterministically, not all independently sense-resolved",
+    "no collection or personal article writes"
+  ]
+}
