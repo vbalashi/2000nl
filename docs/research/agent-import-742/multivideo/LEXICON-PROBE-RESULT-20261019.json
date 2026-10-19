@@ -1,0 +1,456 @@
+{
+  "nativeScore": {
+    "canonicalExactRecall": 0.0,
+    "canonicalExactHits": 0,
+    "exactCore": {
+      "tp": 5,
+      "fp": 8,
+      "fn": 18,
+      "precision": 0.38461538461538464,
+      "recall": 0.21739130434782608,
+      "f1": 0.27777777777777773
+    },
+    "relaxedIoU50": {
+      "tp": 6,
+      "fp": 7,
+      "fn": 17,
+      "precision": 0.46153846153846156,
+      "recall": 0.2608695652173913,
+      "f1": 0.33333333333333337
+    },
+    "optionalNeutralMatches": 0,
+    "invalid": 0,
+    "required": 23,
+    "caseDetails": [
+      {
+        "caseId": "x00",
+        "required": 1,
+        "predictions": 1,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 1,
+        "missedCanonical": [
+          "gebruikmaken van"
+        ]
+      },
+      {
+        "caseId": "x01",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "lekker in zijn vel zitten"
+        ]
+      },
+      {
+        "caseId": "x02",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "ja en amen zeggen"
+        ]
+      },
+      {
+        "caseId": "x03",
+        "required": 1,
+        "predictions": 2,
+        "exactTp": 1,
+        "relaxedTp": 1,
+        "exactFp": 1,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x04",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "in de weg liggen"
+        ]
+      },
+      {
+        "caseId": "x05",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "iets op de rit krijgen"
+        ]
+      },
+      {
+        "caseId": "x06",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "meevallen"
+        ]
+      },
+      {
+        "caseId": "x07",
+        "required": 1,
+        "predictions": 2,
+        "exactTp": 1,
+        "relaxedTp": 1,
+        "exactFp": 1,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x08",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "trots als een pauw"
+        ]
+      },
+      {
+        "caseId": "x09",
+        "required": 1,
+        "predictions": 1,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 1,
+        "missedCanonical": [
+          "op eigen benen staan"
+        ]
+      },
+      {
+        "caseId": "x10",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "er iets achter zoeken"
+        ]
+      },
+      {
+        "caseId": "x11",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "scheutig zijn met"
+        ]
+      },
+      {
+        "caseId": "x12",
+        "required": 2,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "af en toe",
+          "behoefte hebben aan"
+        ]
+      },
+      {
+        "caseId": "x13",
+        "required": 1,
+        "predictions": 1,
+        "exactTp": 0,
+        "relaxedTp": 1,
+        "exactFp": 1,
+        "missedCanonical": [
+          "op zijn bek gaan"
+        ]
+      },
+      {
+        "caseId": "x14",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "buiten zijn comfortzone zijn"
+        ]
+      },
+      {
+        "caseId": "x15",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "in eerste instantie"
+        ]
+      },
+      {
+        "caseId": "x16",
+        "required": 0,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x17",
+        "required": 0,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x18",
+        "required": 0,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x19",
+        "required": 0,
+        "predictions": 1,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 1,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x20",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "gek zijn op"
+        ]
+      },
+      {
+        "caseId": "x21",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "te horen krijgen"
+        ]
+      },
+      {
+        "caseId": "x22",
+        "required": 1,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": [
+          "de moeite waard"
+        ]
+      },
+      {
+        "caseId": "x23",
+        "required": 1,
+        "predictions": 2,
+        "exactTp": 1,
+        "relaxedTp": 1,
+        "exactFp": 1,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x24",
+        "required": 0,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x25",
+        "required": 0,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x26",
+        "required": 0,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x27",
+        "required": 0,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x28",
+        "required": 0,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x29",
+        "required": 0,
+        "predictions": 0,
+        "exactTp": 0,
+        "relaxedTp": 0,
+        "exactFp": 0,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x30",
+        "required": 1,
+        "predictions": 1,
+        "exactTp": 1,
+        "relaxedTp": 1,
+        "exactFp": 0,
+        "missedCanonical": []
+      },
+      {
+        "caseId": "x31",
+        "required": 1,
+        "predictions": 2,
+        "exactTp": 1,
+        "relaxedTp": 1,
+        "exactFp": 1,
+        "missedCanonical": []
+      }
+    ]
+  },
+  "ducame": {
+    "id": "DCM04075",
+    "raw": "iemand zal L:rekening CIA:met iets|iemand DO:houden",
+    "clean": "iemand zal rekening met iets houden",
+    "smoke": [
+      {
+        "sentence": "Hij houdt rekening met de kosten.",
+        "hits": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "sentence": "Met de kosten heeft hij gisteren rekening gehouden.",
+        "hits": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "sentence": "Hij betaalt de rekening met zijn bankpas.",
+        "hits": [
+          0,
+          1,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "smoke": [
+    {
+      "sentence": "Hij houdt rekening met de kosten.",
+      "queries": [
+        {
+          "rank": 1,
+          "description": "multi-word expression",
+          "hits": 1
+        },
+        {
+          "rank": 2,
+          "description": "near miss",
+          "hits": 1
+        },
+        {
+          "rank": 3,
+          "description": "superset",
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "sentence": "Met de kosten heeft hij gisteren rekening gehouden.",
+      "queries": [
+        {
+          "rank": 1,
+          "description": "multi-word expression",
+          "hits": 0
+        },
+        {
+          "rank": 2,
+          "description": "near miss",
+          "hits": 1
+        },
+        {
+          "rank": 3,
+          "description": "superset",
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "sentence": "Hij betaalt de rekening met zijn bankpas.",
+      "queries": [
+        {
+          "rank": 1,
+          "description": "multi-word expression",
+          "hits": 0
+        },
+        {
+          "rank": 2,
+          "description": "near miss",
+          "hits": 0
+        },
+        {
+          "rank": 3,
+          "description": "superset",
+          "hits": 0
+        }
+      ]
+    }
+  ],
+  "cachedParseCount": 37,
+  "wallSeconds": 0.019349750131368637,
+  "paidLlmCalls": 0,
+  "scope": "32 targeted existing sentences; one DUCAME entry smoke, not full lexicon benchmark",
+  "packageSource": {
+    "version": "0.2.0a2",
+    "sdistUrl": "https://files.pythonhosted.org/packages/73/cf/04fd7181acd5732da8801f68648d1df006412ab5e4ace410f6dbe2d74b3b/mwe_query-0.2.0a2.tar.gz",
+    "sha256": "68766096899220bb4b5e9fd953c58e7187f8ee216d2bd77d2abac21d1b565edf",
+    "bytes": 5034059
+  }
+}

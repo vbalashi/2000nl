@@ -373,3 +373,5 @@ model effort/size и дополнительные агенты не считаю
 [Обсуждение](../discussions/2026-10-18-11-mwe-methods-experiments.md),
 [исследование](../research/agent-import-742/multivideo/MWE-METHODS-RESEARCH-20261018.md),
 [результат](../research/agent-import-742/multivideo/MWE-STUDY-RESULT-20261018.md).
+
+- 2026-10-19 — DUCAME/MWE-Finder разрешён как внешний ограниченный эксперимент; production adoption и права на данные не приняты. [Обсуждение](../discussions/2026-10-19-01-ducame-mwefinder-pilot.md).

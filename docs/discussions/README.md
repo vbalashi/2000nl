@@ -262,3 +262,5 @@
 - [2026-10-13: GitHub, уведомления и обратная связь](2026-10-13-01-product-development-backlog.md) — #680, #299, #681, #51.
 
 - [2026-10-13: переводы отношений в общем потоке](2026-10-13-04-relation-translation-typography.md) — #696.
+
+- 2026-10-19: [DUCAME / MWE-Finder: внешний пилот](2026-10-19-01-ducame-mwefinder-pilot.md).
