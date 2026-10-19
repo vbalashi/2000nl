@@ -377,3 +377,5 @@ model effort/size и дополнительные агенты не считаю
 - 2026-10-19 — DUCAME/MWE-Finder разрешён как внешний ограниченный эксперимент; production adoption и права на данные не приняты. [Обсуждение](../discussions/2026-10-19-01-ducame-mwefinder-pilot.md).
 
 - 2026-10-19 — Автоматический DUCAME shortlist проверяется только как внешний baseline; более свободные границы и near-miss не дают права на автоматическое добавление карточек. [Обсуждение](../discussions/2026-10-19-02-automatic-ducame-shortlist.md).
+
+- 2026-10-19 — На fresh12 сравнительной выборке DUCAME не добавил strict hints к blind Sol; обязательный словарный review не принят. Эффект hint review не измерен: дополнительные кандидаты отсутствовали. [Протокол](../discussions/2026-10-19-03-fresh-ducame-hint-test.md).

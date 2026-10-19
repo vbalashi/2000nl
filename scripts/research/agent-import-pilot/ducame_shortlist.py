@@ -82,7 +82,7 @@ def main(a):
                             if identity in seen:continue
                             seen.add(identity);output['units'].append({'caseId':cid,'tokenIds':tokenids,'canonical':clean,'lexiconId':key})
         except Exception as e:errors.append({'id':key,'error':str(e),'type':type(e).__name__})
-    result={'shortlist':shortlist,'uniqueCanonicalCount':len(unique),'sourceCases':len(reference['cases']),'strictOutput':output,'score':score(reference,output),'hits':hits,'errors':errors,'requests':receipts,'sourceRequests':source_requests,'retokenized':a.retokenize,'wallSeconds':time.monotonic()-started,'paidLlmCalls':0}
+    result={'shortlist':shortlist,'uniqueCanonicalCount':len(unique),'sourceCases':len(reference['cases']),'strictOutput':output,'score':score(reference,output) if any(c['required'] or c['optional'] for c in reference['cases']) else None,'hits':hits,'errors':errors,'requests':receipts,'sourceRequests':source_requests,'retokenized':a.retokenize,'wallSeconds':time.monotonic()-started,'paidLlmCalls':0}
     (a.out/'result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2));print(json.dumps({k:result[k] for k in ['uniqueCanonicalCount','score','errors','wallSeconds']},ensure_ascii=False))
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--alpha',type=Path,required=True);p.add_argument('--reference',type=Path,required=True);p.add_argument('--source-cache',type=Path,required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--cap',type=int,default=96);p.add_argument('--retokenize',action='store_true');main(p.parse_args())

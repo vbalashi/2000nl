@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-19",
+  "selection": {
+    "referenceSha256": "8c241a406ebb463da7a8f13a69f2641dd705c496e3c5023fa23d48adf36deb10",
+    "selectionSeed": "742-fresh-ducame-20261019-v1",
+    "eligiblePools": {
+      "nos": 27,
+      "easy": 47,
+      "lubach": 25
+    },
+    "referenceStatus": "no gold labels; fresh relative to prior32 and their neighbours, same videos previously processed"
+  },
+  "selected": [
+    {
+      "caseId": "f00",
+      "video": "nos",
+      "sentenceId": "s64"
+    },
+    {
+      "caseId": "f01",
+      "video": "nos",
+      "sentenceId": "s33"
+    },
+    {
+      "caseId": "f02",
+      "video": "nos",
+      "sentenceId": "s107"
+    },
+    {
+      "caseId": "f03",
+      "video": "nos",
+      "sentenceId": "s13"
+    },
+    {
+      "caseId": "f04",
+      "video": "easy",
+      "sentenceId": "s288"
+    },
+    {
+      "caseId": "f05",
+      "video": "easy",
+      "sentenceId": "s273"
+    },
+    {
+      "caseId": "f06",
+      "video": "easy",
+      "sentenceId": "s47"
+    },
+    {
+      "caseId": "f07",
+      "video": "easy",
+      "sentenceId": "s157"
+    },
+    {
+      "caseId": "f08",
+      "video": "lubach",
+      "sentenceId": "s49"
+    },
+    {
+      "caseId": "f09",
+      "video": "lubach",
+      "sentenceId": "s5"
+    },
+    {
+      "caseId": "f10",
+      "video": "lubach",
+      "sentenceId": "s237"
+    },
+    {
+      "caseId": "f11",
+      "video": "lubach",
+      "sentenceId": "s230"
+    }
+  ],
+  "cases": 12,
+  "baselineUnits": 10,
+  "baselineInvalid": 0,
+  "dictionary": {
+    "canonicalCandidates": 41,
+    "strictUnits": 1,
+    "invalid": 0,
+    "errors": [],
+    "newCanonicalParses": 28,
+    "newSourceParses": 12,
+    "wallSecondsCanonicalStage": 7.273694166913629,
+    "units": [
+      {
+        "caseId": "f09",
+        "tokenIds": [
+          1,
+          2,
+          5
+        ],
+        "canonical": "iemand zal het over iets hebben",
+        "lexiconId": "DCM14090"
+      }
+    ]
+  },
+  "additionalHints": 0,
+  "reviewCalls": 0,
+  "reviewSkipReason": "no additional dictionary candidates after blind baseline; no treatment to test",
+  "usage": {
+    "requests": 2,
+    "responses": 2,
+    "unknownUsageResponses": 0,
+    "tokens": {
+      "input": 4244,
+      "ordinaryInput": 6,
+      "cacheRead": 0,
+      "cacheWrite": 4238,
+      "output": 770
+    },
+    "estimatedPublishedUsd": 0.018307
+  },
+  "rateAssumption": "Published GPT-6 Sol Global Standard short-context rates applied to gpt-6.1-sol deployment; estimate, not invoice",
+  "priceSource": "https://azure.microsoft.com/en-us/blog/gpt-6-astra-sol-and-luna-for-production-agents-in-microsoft-foundry/",
+  "priceChecked": "2026-10-19",
+  "configuredEndpoint": "https://dilumio-01-resource.openai.azure.com/openai/v1",
+  "configuredDeployment": "gpt-6.1-sol",
+  "firstRequestUtc": "2026-10-19T07:37:39.625865+00:00",
+  "lastRequestUtc": "2026-10-19T07:37:50.455575+00:00",
+  "observedResponseModels": [
+    "gpt-6.1-sol"
+  ],
+  "statuses": [
+    200
+  ],
+  "productionWrites": 0,
+  "limits": [
+    "fresh relative to prior32 and neighbours, not new video sources",
+    "no independent human gold",
+    "no additional strict proposals; does not measure hint acceptance or precision gain",
+    "near-miss not passed to agent",
+    "small preselected-length sample; no population inference"
+  ],
+  "collectedAtUtc": "2026-10-19T07:41:16.478168+00:00",
+  "lastResponseEndUtc": "2026-10-19T07:37:58.671006+00:00",
+  "usageTotalDiscrepancies": 0
+}
