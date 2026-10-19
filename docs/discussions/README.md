@@ -264,3 +264,5 @@
 - [2026-10-13: переводы отношений в общем потоке](2026-10-13-04-relation-translation-typography.md) — #696.
 
 - 2026-10-19: [DUCAME / MWE-Finder: внешний пилот](2026-10-19-01-ducame-mwefinder-pilot.md).
+
+- 2026-10-19: [Автоматический DUCAME shortlist](2026-10-19-02-automatic-ducame-shortlist.md).

@@ -1,0 +1,1095 @@
+{
+  "referenceSha256": "dc70f366ecfba5ba520979fe66f926e751e09cab8c91fa19e8fae1b44d6bfef2",
+  "paidLlmCalls": 0,
+  "methods": {
+    "rawLemmaOnlyCold": {
+      "sourceCases": 32,
+      "uniqueCanonicalCount": 82,
+      "score": {
+        "canonicalExactRecall": 0.043478260869565216,
+        "canonicalExactHits": 1,
+        "exactCore": {
+          "tp": 3,
+          "fp": 6,
+          "fn": 20,
+          "precision": 0.3333333333333333,
+          "recall": 0.13043478260869565,
+          "f1": 0.18750000000000003
+        },
+        "relaxedIoU50": {
+          "tp": 8,
+          "fp": 1,
+          "fn": 15,
+          "precision": 0.8888888888888888,
+          "recall": 0.34782608695652173,
+          "f1": 0.5
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 23,
+        "caseDetails": [
+          {
+            "caseId": "x00",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 1,
+            "relaxedTp": 1,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x01",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 0,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": [
+              "lekker in zijn vel zitten"
+            ]
+          },
+          {
+            "caseId": "x02",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 0,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": [
+              "ja en amen zeggen"
+            ]
+          },
+          {
+            "caseId": "x03",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "opkomen voor"
+            ]
+          },
+          {
+            "caseId": "x04",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "in de weg liggen"
+            ]
+          },
+          {
+            "caseId": "x05",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "iets op de rit krijgen"
+            ]
+          },
+          {
+            "caseId": "x06",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "meevallen"
+            ]
+          },
+          {
+            "caseId": "x07",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "afhangen van"
+            ]
+          },
+          {
+            "caseId": "x08",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 0,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": [
+              "trots als een pauw"
+            ]
+          },
+          {
+            "caseId": "x09",
+            "required": 1,
+            "predictions": 2,
+            "exactTp": 1,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x10",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "er iets achter zoeken"
+            ]
+          },
+          {
+            "caseId": "x11",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "scheutig zijn met"
+            ]
+          },
+          {
+            "caseId": "x12",
+            "required": 2,
+            "predictions": 2,
+            "exactTp": 1,
+            "relaxedTp": 2,
+            "exactFp": 1,
+            "missedCanonical": [
+              "behoefte hebben aan"
+            ]
+          },
+          {
+            "caseId": "x13",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 0,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": [
+              "op zijn bek gaan"
+            ]
+          },
+          {
+            "caseId": "x14",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "buiten zijn comfortzone zijn"
+            ]
+          },
+          {
+            "caseId": "x15",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "in eerste instantie"
+            ]
+          },
+          {
+            "caseId": "x16",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x17",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x18",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x19",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x20",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "gek zijn op"
+            ]
+          },
+          {
+            "caseId": "x21",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "te horen krijgen"
+            ]
+          },
+          {
+            "caseId": "x22",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "de moeite waard"
+            ]
+          },
+          {
+            "caseId": "x23",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "omgaan met"
+            ]
+          },
+          {
+            "caseId": "x24",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x25",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x26",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x27",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x28",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x29",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x30",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "doorhebben"
+            ]
+          },
+          {
+            "caseId": "x31",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "zich afvragen"
+            ]
+          }
+        ]
+      },
+      "errors": [],
+      "wallSeconds": 22.252755042165518,
+      "retokenized": null,
+      "newCanonicalRequests": 81,
+      "newSourceRequests": 0,
+      "strictCandidates": 9
+    },
+    "threeLemmaViewsWarm": {
+      "sourceCases": 32,
+      "uniqueCanonicalCount": 82,
+      "score": {
+        "canonicalExactRecall": 0.043478260869565216,
+        "canonicalExactHits": 1,
+        "exactCore": {
+          "tp": 3,
+          "fp": 6,
+          "fn": 20,
+          "precision": 0.3333333333333333,
+          "recall": 0.13043478260869565,
+          "f1": 0.18750000000000003
+        },
+        "relaxedIoU50": {
+          "tp": 8,
+          "fp": 1,
+          "fn": 15,
+          "precision": 0.8888888888888888,
+          "recall": 0.34782608695652173,
+          "f1": 0.5
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 23,
+        "caseDetails": [
+          {
+            "caseId": "x00",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 1,
+            "relaxedTp": 1,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x01",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 0,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": [
+              "lekker in zijn vel zitten"
+            ]
+          },
+          {
+            "caseId": "x02",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 0,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": [
+              "ja en amen zeggen"
+            ]
+          },
+          {
+            "caseId": "x03",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "opkomen voor"
+            ]
+          },
+          {
+            "caseId": "x04",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "in de weg liggen"
+            ]
+          },
+          {
+            "caseId": "x05",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "iets op de rit krijgen"
+            ]
+          },
+          {
+            "caseId": "x06",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "meevallen"
+            ]
+          },
+          {
+            "caseId": "x07",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "afhangen van"
+            ]
+          },
+          {
+            "caseId": "x08",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 0,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": [
+              "trots als een pauw"
+            ]
+          },
+          {
+            "caseId": "x09",
+            "required": 1,
+            "predictions": 2,
+            "exactTp": 1,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x10",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "er iets achter zoeken"
+            ]
+          },
+          {
+            "caseId": "x11",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "scheutig zijn met"
+            ]
+          },
+          {
+            "caseId": "x12",
+            "required": 2,
+            "predictions": 2,
+            "exactTp": 1,
+            "relaxedTp": 2,
+            "exactFp": 1,
+            "missedCanonical": [
+              "behoefte hebben aan"
+            ]
+          },
+          {
+            "caseId": "x13",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 0,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": [
+              "op zijn bek gaan"
+            ]
+          },
+          {
+            "caseId": "x14",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "buiten zijn comfortzone zijn"
+            ]
+          },
+          {
+            "caseId": "x15",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "in eerste instantie"
+            ]
+          },
+          {
+            "caseId": "x16",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x17",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x18",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x19",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x20",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "gek zijn op"
+            ]
+          },
+          {
+            "caseId": "x21",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "te horen krijgen"
+            ]
+          },
+          {
+            "caseId": "x22",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "de moeite waard"
+            ]
+          },
+          {
+            "caseId": "x23",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "omgaan met"
+            ]
+          },
+          {
+            "caseId": "x24",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x25",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x26",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x27",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x28",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x29",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x30",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "doorhebben"
+            ]
+          },
+          {
+            "caseId": "x31",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "zich afvragen"
+            ]
+          }
+        ]
+      },
+      "errors": [],
+      "wallSeconds": 2.6331328749656677,
+      "retokenized": null,
+      "newCanonicalRequests": 0,
+      "newSourceRequests": 0,
+      "strictCandidates": 9
+    },
+    "tokenizedSourceCold": {
+      "sourceCases": 32,
+      "uniqueCanonicalCount": 83,
+      "score": {
+        "canonicalExactRecall": 0.043478260869565216,
+        "canonicalExactHits": 1,
+        "exactCore": {
+          "tp": 3,
+          "fp": 5,
+          "fn": 20,
+          "precision": 0.375,
+          "recall": 0.13043478260869565,
+          "f1": 0.19354838709677416
+        },
+        "relaxedIoU50": {
+          "tp": 7,
+          "fp": 1,
+          "fn": 16,
+          "precision": 0.875,
+          "recall": 0.30434782608695654,
+          "f1": 0.4516129032258065
+        },
+        "optionalNeutralMatches": 0,
+        "invalid": 0,
+        "required": 23,
+        "caseDetails": [
+          {
+            "caseId": "x00",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 1,
+            "relaxedTp": 1,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x01",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 0,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": [
+              "lekker in zijn vel zitten"
+            ]
+          },
+          {
+            "caseId": "x02",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 0,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": [
+              "ja en amen zeggen"
+            ]
+          },
+          {
+            "caseId": "x03",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "opkomen voor"
+            ]
+          },
+          {
+            "caseId": "x04",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "in de weg liggen"
+            ]
+          },
+          {
+            "caseId": "x05",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "iets op de rit krijgen"
+            ]
+          },
+          {
+            "caseId": "x06",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "meevallen"
+            ]
+          },
+          {
+            "caseId": "x07",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "afhangen van"
+            ]
+          },
+          {
+            "caseId": "x08",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 0,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": [
+              "trots als een pauw"
+            ]
+          },
+          {
+            "caseId": "x09",
+            "required": 1,
+            "predictions": 2,
+            "exactTp": 1,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x10",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "er iets achter zoeken"
+            ]
+          },
+          {
+            "caseId": "x11",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "scheutig zijn met"
+            ]
+          },
+          {
+            "caseId": "x12",
+            "required": 2,
+            "predictions": 1,
+            "exactTp": 1,
+            "relaxedTp": 1,
+            "exactFp": 0,
+            "missedCanonical": [
+              "behoefte hebben aan"
+            ]
+          },
+          {
+            "caseId": "x13",
+            "required": 1,
+            "predictions": 1,
+            "exactTp": 0,
+            "relaxedTp": 1,
+            "exactFp": 1,
+            "missedCanonical": [
+              "op zijn bek gaan"
+            ]
+          },
+          {
+            "caseId": "x14",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "buiten zijn comfortzone zijn"
+            ]
+          },
+          {
+            "caseId": "x15",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "in eerste instantie"
+            ]
+          },
+          {
+            "caseId": "x16",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x17",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x18",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x19",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x20",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "gek zijn op"
+            ]
+          },
+          {
+            "caseId": "x21",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "te horen krijgen"
+            ]
+          },
+          {
+            "caseId": "x22",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "de moeite waard"
+            ]
+          },
+          {
+            "caseId": "x23",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "omgaan met"
+            ]
+          },
+          {
+            "caseId": "x24",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x25",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x26",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x27",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x28",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x29",
+            "required": 0,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": []
+          },
+          {
+            "caseId": "x30",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "doorhebben"
+            ]
+          },
+          {
+            "caseId": "x31",
+            "required": 1,
+            "predictions": 0,
+            "exactTp": 0,
+            "relaxedTp": 0,
+            "exactFp": 0,
+            "missedCanonical": [
+              "zich afvragen"
+            ]
+          }
+        ]
+      },
+      "errors": [],
+      "wallSeconds": 20.55358524993062,
+      "retokenized": true,
+      "newCanonicalRequests": 2,
+      "newSourceRequests": 32,
+      "strictCandidates": 8
+    }
+  }
+}

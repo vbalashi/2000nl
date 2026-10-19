@@ -375,3 +375,5 @@ model effort/size и дополнительные агенты не считаю
 [результат](../research/agent-import-742/multivideo/MWE-STUDY-RESULT-20261018.md).
 
 - 2026-10-19 — DUCAME/MWE-Finder разрешён как внешний ограниченный эксперимент; production adoption и права на данные не приняты. [Обсуждение](../discussions/2026-10-19-01-ducame-mwefinder-pilot.md).
+
+- 2026-10-19 — Автоматический DUCAME shortlist проверяется только как внешний baseline; более свободные границы и near-miss не дают права на автоматическое добавление карточек. [Обсуждение](../discussions/2026-10-19-02-automatic-ducame-shortlist.md).
