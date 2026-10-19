@@ -1,0 +1,124 @@
+{
+  "date": "2026-10-19",
+  "collections": [
+    {
+      "videoId": "-mOpU9Wf-wg",
+      "name": "YouTube — LUBACH: Huizen in Spanje",
+      "members": 284,
+      "personalMembers": 12
+    },
+    {
+      "videoId": "_XskmnKYQRs",
+      "name": "YouTube — Easy Dutch: Wedding Vocabulary",
+      "members": 321,
+      "personalMembers": 12
+    }
+  ],
+  "createdPersonalArticles": 23,
+  "privateAndApplicationReadable": true,
+  "exactCollectionMembershipVerified": true,
+  "learningStateUnchanged": true,
+  "actionEventsUnchanged": true,
+  "modelUsage": {
+    "requests": 119,
+    "responses": 119,
+    "unknownUsageResponses": 0,
+    "tokens": {
+      "input": 396738,
+      "ordinaryInput": 10319,
+      "cacheRead": 0,
+      "cacheWrite": 386419,
+      "output": 123175
+    },
+    "estimatedPublishedUsd": 0.110921775
+  },
+  "phaseUsage": {
+    "video--mOpU9Wf-wg/collection-review": {
+      "requests": 38,
+      "responses": 38,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 154167,
+        "ordinaryInput": 569,
+        "cacheRead": 0,
+        "cacheWrite": 153598,
+        "output": 36110
+      },
+      "estimatedPublishedUsd": 0.03731165
+    },
+    "video--mOpU9Wf-wg/expression-review": {
+      "requests": 7,
+      "responses": 7,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 12205,
+        "ordinaryInput": 499,
+        "cacheRead": 0,
+        "cacheWrite": 11706,
+        "output": 4667
+      },
+      "estimatedPublishedUsd": 0.00384665
+    },
+    "video--mOpU9Wf-wg/personal-generation": {
+      "requests": 10,
+      "responses": 10,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 14481,
+        "ordinaryInput": 4589,
+        "cacheRead": 0,
+        "cacheWrite": 9892,
+        "output": 17518
+      },
+      "estimatedPublishedUsd": 0.010454399999999999
+    },
+    "video-_XskmnKYQRs/collection-review": {
+      "requests": 47,
+      "responses": 47,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 184121,
+        "ordinaryInput": 1134,
+        "cacheRead": 0,
+        "cacheWrite": 182987,
+        "output": 43483
+      },
+      "estimatedPublishedUsd": 0.044728275000000005
+    },
+    "video-_XskmnKYQRs/expression-review": {
+      "requests": 9,
+      "responses": 9,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 16829,
+        "ordinaryInput": 27,
+        "cacheRead": 0,
+        "cacheWrite": 16802,
+        "output": 6169
+      },
+      "estimatedPublishedUsd": 0.00518745
+    },
+    "video-_XskmnKYQRs/personal-generation": {
+      "requests": 8,
+      "responses": 8,
+      "unknownUsageResponses": 0,
+      "tokens": {
+        "input": 14935,
+        "ordinaryInput": 3501,
+        "cacheRead": 0,
+        "cacheWrite": 11434,
+        "output": 15228
+      },
+      "estimatedPublishedUsd": 0.00939335
+    }
+  },
+  "status": "owner-authorized account write completed; app AI runtime not implemented",
+  "generationScope": "up to12 curated missing dedicated targets per source; original drafts reviewed, one repair pass; one needs_resolution not saved; one personal article reused in both collections",
+  "limitations": [
+    "model reviews and operator spotcheck, not independent native-speaker gold",
+    "finite lookup scope/top results; no global absence proof",
+    "new filters/folders not implemented; current source/channel in flat collection name/description",
+    "no new learning enrollment; source generation metadata in private entries",
+    "previous experimental RESULT.json remains pre-account-write historical record"
+  ]
+}

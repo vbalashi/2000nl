@@ -45,11 +45,11 @@ DISCOVER='''Find up to twelve useful Dutch fixed expressions, idioms, separable 
 def short_entry(e,ref):
     return {'ref':ref,'headword':e['headword'],'pos':e.get('partOfSpeech'),'ordinal':e.get('meaningOrdinal'),'meanings':[{'definition':m.get('definition','')[:500],'examples':m.get('examples',[])[:2],'idioms':m.get('idioms',[])[:4]} for m in e['meanings'][:2]],'projectionTruncated':len(e['meanings'])>2 or any(len(m.get('definition',''))>500 or len(m.get('idioms',[]))>4 for m in e['meanings'])}
 
-def prepare(root):
-    d=json.loads((root/'prepared.json').read_text());f=json.loads((root/'transfer-fixture.json').read_text())
+def prepare(root,fixture_path=None,expressions_only=False):
+    d=json.loads((root/'prepared.json').read_text());f=json.loads((fixture_path or root/'transfer-fixture.json').read_text())
     aliases={eid:f'R{i:04}' for i,eid in enumerate(sorted(f['entries']))};entries={aliases[k]:short_entry(v,aliases[k]) for k,v in f['entries'].items()}
     cases=[];excluded=[]
-    for c in d['candidates']:
+    for c in ([] if expressions_only else d['candidates']):
         if c['pos'] not in ['NOUN','VERB','ADJ','ADV']:
             excluded.append({'candidateId':c['candidateId'],'reason':'outside_content_pos','pos':c['pos']});continue
         ids=[];receipts=[]
@@ -82,10 +82,10 @@ def validate_checks(result,items):
     return rows
 
 async def main(args):
-    root=args.video;out=root/'collection-review';out.mkdir(exist_ok=True);os.chmod(out,0o700)
-    d,f,aliases,cases,excluded=prepare(root);reverse={v:k for k,v in aliases.items()};byid={c['candidateId']:c for c in cases}
+    root=args.video;out=root/('expression-review' if getattr(args,'expressions_only',False) else 'collection-review');out.mkdir(exist_ok=True);os.chmod(out,0o700)
+    d,f,aliases,cases,excluded=prepare(root,getattr(args,'fixture',None),getattr(args,'expressions_only',False));reverse={v:k for k,v in aliases.items()};byid={c['candidateId']:c for c in cases}
     dump(out/'input.json',{'sourceRevision':d['sourceHash'],'cases':cases,'excluded':excluded,'aliases':reverse})
-    phase=out/'model-phase';phase.mkdir(exist_ok=True);ledger=WireLedger(phase,BASE,MODEL,max_requests=48);set_tracing_disabled(True)
+    phase=out/'model-phase';phase.mkdir(exist_ok=True);ledger=(__import__('mwe_study').StudyLedger(phase) if getattr(args,'extended',False) else WireLedger(phase,BASE,MODEL,max_requests=48));set_tracing_disabled(True)
     token=json.loads(subprocess.check_output(['az','account','get-access-token','--resource','https://cognitiveservices.azure.com/','--output','json'],text=True))['accessToken']
     from openai import AsyncOpenAI
     async with httpx2.AsyncClient(event_hooks={'request':[ledger.request],'response':[ledger.response]},timeout=60,follow_redirects=False) as http:
@@ -126,8 +126,10 @@ async def main(args):
         for eid in dict.fromkeys(reverse[i['entry']['ref']] for i in accepted):
             members.append({'entry':{'id':eid,'headword':f['entries'][eid]['headword'],'meaningOrdinal':f['entries'][eid]['meaningOrdinal']},'evidence':[{'candidateId':i['candidateId'],'contexts':i['contexts']} for i in accepted if reverse[i['entry']['ref']]==eid]})
         names={'video--lf71hdWm5E':'YouTube — NOS: Oekraïne, wielrennen en blinden','video-IoTEYzkKF0M':'YouTube — Easy Dutch: Complimenten','video-9ZQaqL7K-rE':'YouTube — LUBACH: Buiten je comfortzone'}
-        manifest={'name':names[root.name],'sourceUrl':'https://www.youtube.com/watch?v='+root.name[6:],'sourceRevision':d['sourceHash'],'members':members,'status':'external-pilot-existing-entries-two-model-passes','scope':'content POS candidates, first3 distinct source sentences; unresolved excluded; generated drafts not saved; Known not filtered','coverage':{'sourceCandidates':len(d['candidates']),'reviewedCandidates':len(cases),'excludedByPos':len(excluded),'selectedTargets':len(items),'acceptedTargets':len(accepted),'uniqueMembers':len(members),'rejectedTargets':sum(r['verdict']=='reject' for r in checks),'uncertainTargets':sum(r['verdict']=='uncertain' for r in checks),'unresolvedCandidates':sum(r['outcome']=='unresolved' for r in picks),'noiseCandidates':sum(r['outcome']=='noise' for r in picks)}}
+        manifest={'name':names.get(root.name,'YouTube — '+json.loads((root/'metadata.json').read_text())['title']),'sourceUrl':'https://www.youtube.com/watch?v='+root.name[6:],'sourceRevision':d['sourceHash'],'members':members,'status':'external-pilot-existing-entries-two-model-passes','scope':'content POS candidates, first3 distinct source sentences; unresolved excluded; generated drafts not saved; Known not filtered','coverage':{'sourceCandidates':len(d['candidates']),'reviewedCandidates':len(cases),'excludedByPos':len(excluded),'selectedTargets':len(items),'acceptedTargets':len(accepted),'uniqueMembers':len(members),'rejectedTargets':sum(r['verdict']=='reject' for r in checks),'uncertainTargets':sum(r['verdict']=='uncertain' for r in checks),'unresolvedCandidates':sum(r['outcome']=='unresolved' for r in picks),'noiseCandidates':sum(r['outcome']=='noise' for r in picks)}}
         dump(out/'decisions.json',{'selection':picks,'verification':checks,'rejectedItems':[i for i in items if verdict[i['itemId']]['verdict']!='accept']});dump(out/'collection-manifest.json',manifest)
+        if getattr(args,'skip_gap_audit',False):
+            print(json.dumps({'video':root.name,'coverage':manifest['coverage']}),flush=True);return
         gaps=await task('gap-audit',DISCOVER,Gaps,{'sentences':[{'sentenceId':s['sentenceId'],'text':s['text']} for s in d['sentences']],'alreadyProposed':[c['lemma'] for c in cases if c['pos']=='EXPRESSION']})
         if len(gaps['proposals'])>12:raise ValueError('gap_proposal_limit')
         sentences={s['sentenceId']:s['text'] for s in d['sentences']};valid=[];rejected=[]
@@ -137,4 +139,4 @@ async def main(args):
         dump(out/'gap-audit-validated.json',{'proposals':valid,'rejectedUnanchored':rejected,'status':'proposals requiring dictionary search, not established omissions'})
         print(json.dumps({'video':root.name,'coverage':manifest['coverage'],'newGapProposals':len(valid)}),flush=True)
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('video',type=Path);asyncio.run(main(p.parse_args()))
+    p=argparse.ArgumentParser();p.add_argument('video',type=Path);p.add_argument('--fixture',type=Path);p.add_argument('--expressions-only',action='store_true');p.add_argument('--skip-gap-audit',action='store_true');p.add_argument('--extended',action='store_true',help='Use bounded64call/1.5MiB study ledger for larger new-video reviewed expressions');asyncio.run(main(p.parse_args()))

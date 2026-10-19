@@ -381,3 +381,5 @@ model effort/size и дополнительные агенты не считаю
 - 2026-10-19 — На fresh12 сравнительной выборке DUCAME не добавил strict hints к blind Sol; обязательный словарный review не принят. Эффект hint review не измерен: дополнительные кандидаты отсутствовали. [Протокол](../discussions/2026-10-19-03-fresh-ducame-hint-test.md).
 
 - 2026-10-19 — Для внешнего Luna-пилота владелец выбрал20model turns без принудительного завершения после2tools, чтобы измерить фактическую длину и стоимость. Production turn limit не принят; no collection writes. [Решение](../discussions/2026-10-19-05-measure-agent-steps-before-limits.md).
+
+- 2026-10-19 — Владелец хочет общий AI conversation surface для YouTube/text import и context-bound вопросов/личных заметок; AI как пункт меню пока идея. Разрешена текущая запись двух коллекций и reviewed personal articles, не автоматическая реализация нового UI/schema. Folder/sharing contracts остаются #684. [Обсуждение](../discussions/2026-10-19-06-ai-workspace-and-context-dialog.md).

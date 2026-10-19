@@ -11,3 +11,5 @@
 Команды: caption capture → prepare → `luna_video_run.py extract VIDEO_DIR PHASE_DIR` → `luna_video_run.py review VIDEO_DIR PHASE_DIR --email AUTHORIZED_OWNER --reference REFERENCE_CHECKOUT`. ASR sources требуют `prepare.py --allow-asr`; new948s source использует `asr_capture.py --full-audio --max-video-seconds 1200`, сохраняющий старый default900.
 
 Уточнение владельца: рабочий turn limit заранее не подбирать; выполнен отдельный review20 с natural tool choice, без forced finish после2tools. [Решение](../../../discussions/2026-10-19-05-measure-agent-steps-before-limits.md). Первоначальный review4 сохранён отдельно, включая turn exhaustion и interrupted sibling.
+
+2026-10-19: по последующему прямому поручению владельца [сохранены две коллекции и23личные статьи](ACCOUNT-SAVE-20261019.md). Это последующее изменение аккаунта, не часть исторического no-write RESULT.
