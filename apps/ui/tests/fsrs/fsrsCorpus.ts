@@ -1,0 +1,140 @@
+export type FsrsGrade = 1 | 2 | 3 | 4;
+
+export type FsrsHistoryEntry = {
+  grade: FsrsGrade;
+  elapsedDays: number; // Days since previous review (for first review this is ignored)
+};
+
+export type FsrsCorpusCase = {
+  name: string;
+  history: FsrsHistoryEntry[];
+};
+
+// Shared corpus covering the main FSRS-6 paths we care about.
+export const fsrsCorpus: FsrsCorpusCase[] = [
+  {
+    name: "new-card-good",
+    history: [{ grade: 3, elapsedDays: 0 }],
+  },
+  {
+    name: "new-card-again",
+    history: [{ grade: 1, elapsedDays: 0 }],
+  },
+  {
+    name: "new-card-hard",
+    history: [{ grade: 2, elapsedDays: 0 }],
+  },
+  {
+    name: "new-card-easy",
+    history: [{ grade: 4, elapsedDays: 0 }],
+  },
+  {
+    name: "learning-good-good-easy",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 3, elapsedDays: 1 },
+      { grade: 4, elapsedDays: 3 },
+    ],
+  },
+  {
+    name: "lapse-then-recover",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 1, elapsedDays: 4 }, // lapse
+      { grade: 3, elapsedDays: 1 }, // recover
+    ],
+  },
+  {
+    name: "existing-memory-again-interday",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 1, elapsedDays: 1 },
+    ],
+  },
+  {
+    name: "existing-memory-again-interday-recover",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 1, elapsedDays: 1 },
+      { grade: 3, elapsedDays: 1 },
+    ],
+  },
+  {
+    name: "existing-memory-hard-interday-day1",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 2, elapsedDays: 1 },
+    ],
+  },
+  {
+    name: "existing-memory-good-interday-day1",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 3, elapsedDays: 1 },
+    ],
+  },
+  {
+    name: "existing-memory-easy-interday-day1",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 4, elapsedDays: 1 },
+    ],
+  },
+  {
+    name: "existing-memory-hard-interday-day5",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 2, elapsedDays: 5 },
+    ],
+  },
+  {
+    name: "existing-memory-good-interday-day5",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 3, elapsedDays: 5 },
+    ],
+  },
+  {
+    name: "existing-memory-easy-interday-day5",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 4, elapsedDays: 5 },
+    ],
+  },
+  {
+    name: "overdue-capped",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 3, elapsedDays: 5 },
+      { grade: 3, elapsedDays: 30 }, // overdue to exercise cap logic
+    ],
+  },
+  {
+    name: "same-day-good-good",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 3, elapsedDays: 0 },
+    ],
+  },
+  {
+    name: "same-day-good-hard",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 2, elapsedDays: 0 },
+    ],
+  },
+  {
+    name: "same-day-good-again",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 1, elapsedDays: 0 },
+    ],
+  },
+  {
+    name: "again-good-same-day",
+    history: [
+      { grade: 1, elapsedDays: 0 },
+      { grade: 3, elapsedDays: 0 },
+    ],
+  },
+];

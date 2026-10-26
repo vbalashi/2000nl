@@ -1,0 +1,92 @@
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { describe, expect, test } from "vitest";
+import profiles from "../config/rollout-profiles.json";
+
+const uiRoot = path.resolve(__dirname, "..");
+
+function readDistDir(nextDistDir?: string) {
+  const env = { ...process.env };
+  if (nextDistDir) env.NEXT_DIST_DIR = nextDistDir;
+  else delete env.NEXT_DIST_DIR;
+
+  return execFileSync(
+    process.execPath,
+    ["-e", "process.stdout.write(require('./next.config.js').distDir)"],
+    { cwd: uiRoot, env, encoding: "utf8" },
+  );
+}
+
+function readRolloutEnv(profile?: string, translationExercises?: string) {
+  const env = { ...process.env };
+  if (profile) env.APP_ROLLOUT_PROFILE = profile;
+  else delete env.APP_ROLLOUT_PROFILE;
+  if (translationExercises) env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED = translationExercises;
+  else delete env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED;
+  return JSON.parse(
+    execFileSync(
+      process.execPath,
+      ["-e", "process.stdout.write(JSON.stringify(require('./next.config.js').env))"],
+      { cwd: uiRoot, env, encoding: "utf8" },
+    ),
+  );
+}
+
+describe("Next build directory isolation", () => {
+  test("keeps production on .next by default", () => {
+    expect(readDistDir()).toBe(".next");
+  });
+
+  test("allows the local dev wrapper to use an isolated directory", () => {
+    expect(readDistDir(".next-dev")).toBe(".next-dev");
+  });
+});
+
+describe("rollout profile compilation", () => {
+  test("registers only the current profile", () => {
+    expect(Object.keys(profiles)).toEqual(["pilot"]);
+  });
+
+  test("uses the current profile by default", () => {
+    const env = readRolloutEnv();
+
+    expect(env.NEXT_PUBLIC_APP_ROLLOUT_PROFILE).toBe("pilot");
+    expect(env.NEXT_PUBLIC_COLLECTION_ORGANIZATION_ENABLED).toBe("true");
+    expect(env.NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED).toBe("true");
+    expect(env.NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI).toBe("true");
+    expect(env.NEXT_PUBLIC_PLATFORM_V2_LIBRARY_UI).toBeUndefined();
+    expect(env.NEXT_PUBLIC_DICTIONARY_SEARCH_V2).toBeUndefined();
+  });
+
+  test("rejects the retired legacy profile", () => {
+    expect(() => readRolloutEnv("legacy")).toThrow(/Unknown APP_ROLLOUT_PROFILE/);
+  });
+
+  test("compiles every approved pilot flag from one profile", () => {
+    const env = readRolloutEnv("pilot");
+    const flags = Object.entries(env).filter(
+      ([name]) =>
+        name !== "PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED" &&
+        (name.includes("PLATFORM_V2") || name.includes("TRAINING_TODAY_SETUP")),
+    );
+
+    expect(env.NEXT_PUBLIC_APP_ROLLOUT_PROFILE).toBe("pilot");
+    expect(env.NEXT_PUBLIC_COLLECTION_ORGANIZATION_ENABLED).toBe("true");
+    expect(env.NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED).toBe("true");
+    expect(env.PLATFORM_V2_IDIOM_EXERCISES_ENABLED).toBe("true");
+    expect(env.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED).toBe("false");
+    expect(env.NEXT_PUBLIC_DICTIONARY_SEARCH_V2).toBeUndefined();
+    expect(flags).toHaveLength(5);
+    expect(flags.every(([, value]) => value === "true")).toBe(true);
+  });
+
+  test("allows the sentence release to opt in independently", () => {
+    expect(readRolloutEnv("pilot", "true").PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED).toBe("true");
+    expect(readRolloutEnv("pilot", "false").PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED).toBe("false");
+  });
+
+  test("does not compile retired presentation switches", () => {
+    const env = readRolloutEnv("pilot");
+    expect(Object.keys(env).filter((name) => name.includes("PRESENTATION"))).toEqual([]);
+  });
+});

@@ -1,0 +1,225 @@
+"use client";
+import type { CurrentTrainingCardContext } from "@/lib/platform/trainingCurrentCardClient";
+import { TrainingAnswerTranslationProvider } from "./TrainingAnswerTranslation";
+import React from "react";
+import {useAdditionalTranslationLanguage} from "@/components/practice/article/AdditionalCardTranslation";
+import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import {
+  hasTrainingCardTranslation,
+  type TrainingExercisePresentation,
+} from "@/lib/training/exerciseCardPresentation";
+import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
+import { useTranslationSwipe } from "@/components/practice/ui/useTranslationSwipe";
+import { useTrainingPromptReveal } from "@/components/practice/ui/useTrainingPromptReveal";
+import { RatingControls, type Rating } from "@/components/practice/RatingControls";
+import {
+  TrainingCardShell,
+  TrainingCardFace,
+  TrainingCardAnswerHeader,
+  TrainingCardAnswerBody,
+  TrainingCardFaceControls,
+  trainingStageClassName,
+} from "./TrainingCardTemplates";
+
+type Grade = "fail" | "hard" | "success" | "easy";
+const gradeKeys = { h: "fail", j: "hard", k: "success", l: "easy" } as const;
+const ratingGrades: Record<Rating, Grade> = { Again: "fail", Hard: "hard", Good: "success", Easy: "easy" };
+
+/** Presentation only: the session owns target identity, retries, and grade persistence. */
+export function TrainingExerciseCard({
+  currentCard,
+  entryId,
+  contentLanguage,
+  translationLanguage,
+  presentation,
+  interfaceLanguage,
+  revealed,
+  onReveal,
+  busy,
+  onGrade,
+  onPlayAudio,
+  onOpenDetails,
+  onRequestTranslation,
+  secondaryActions,
+  notice,
+}: {
+  currentCard?: CurrentTrainingCardContext;
+  entryId?: string;
+  contentLanguage?: string;
+  translationLanguage?: string;
+  presentation: TrainingExercisePresentation;
+  interfaceLanguage: OnboardingLanguage;
+  revealed: boolean;
+  onReveal: () => void;
+  busy: boolean;
+  onGrade: (grade: Grade) => void;
+  onPlayAudio?: () => void;
+  onOpenDetails?: () => void;
+  onRequestTranslation?: () => Promise<void>;
+  secondaryActions?: React.ReactNode;
+  notice?: React.ReactNode;
+}) {
+  const [hintVisible, setHintVisible] = React.useState(false);
+  const [translationVisible, setTranslationVisible] = React.useState(
+    presentation.answerTranslationInitiallyVisible ?? false,
+  );
+  const stageRef = React.useRef<HTMLElement>(null);
+  const revealRef = React.useRef<HTMLButtonElement>(null);
+  const firstGradeRef = React.useRef<HTMLButtonElement>(null);
+  const { capture, moving } = useTrainingPromptReveal({ root: stageRef, revealed,
+    enabled: true, identity: presentation.promptTarget.contentNodeId });
+  const reveal = () => { capture(); onReveal(); };
+  const actionBusy = busy || moving;
+  const t = (key: string) => platformV2Message(interfaceLanguage, key);
+  const additionalLanguage = useAdditionalTranslationLanguage();
+  const hasTranslation = hasTrainingCardTranslation(presentation.answer);
+  const translationAvailable = hasTranslation || Boolean(onRequestTranslation) || Boolean(additionalLanguage && entryId);
+  const toggleTranslation = async () => {
+    if (actionBusy) return;
+    if (!translationVisible && additionalLanguage && entryId) {
+      setTranslationVisible(true);
+      // One language must not hold the other behind its provider request.
+      if (onRequestTranslation) void onRequestTranslation().catch(() => {});
+      return;
+    }
+    if (!translationVisible && onRequestTranslation) {
+      try {
+        await onRequestTranslation();
+        setTranslationVisible(true);
+      } catch {
+        /* The session action boundary owns error/retry UI. */
+      }
+      return;
+    }
+    setTranslationVisible((v) => !v);
+  };
+
+  useTranslationSwipe({root: stageRef, enabled: revealed && !actionBusy && translationAvailable, onToggle: () => void toggleTranslation()});
+
+  React.useEffect(() => {
+    stageRef.current?.focus();
+  }, []);
+
+  React.useEffect(() => {
+    if (revealed && !moving) firstGradeRef.current?.focus();
+  }, [revealed, moving]);
+
+  function onKeyDown(event: React.KeyboardEvent) {
+    if (
+      actionBusy ||
+      areTrainingHotkeysSuspended() ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.shiftKey
+    )
+      return;
+    if (
+      event.target instanceof HTMLElement &&
+      event.target.closest(
+        "input,textarea,select,[contenteditable='true'],[role='textbox']",
+      )
+    )
+      return;
+    const key = event.key.toLowerCase();
+    // Native button Space/Enter activation must remain intact. Letter shortcuts
+    // still work after reveal moves focus to the first grade button.
+    const interactive =
+      event.target instanceof HTMLElement &&
+      event.target.closest("button,a,[role='button']");
+    if ((key === " " || key === "enter") && interactive) return;
+    if (key === " " && !revealed) {
+      event.preventDefault();
+      reveal();
+    }
+    if (key === "i" && !revealed && presentation.hint) {
+      event.preventDefault();
+      setHintVisible((v) => !v);
+    }
+    if (key === "t" && revealed && translationAvailable) {
+      event.preventDefault();
+      void toggleTranslation();
+    }
+    const grade = gradeKeys[key as keyof typeof gradeKeys];
+    if (revealed && grade) {
+      event.preventDefault();
+      onGrade(grade);
+    }
+  }
+
+  return (
+    <section
+      ref={stageRef}
+      tabIndex={-1}
+      onKeyDown={onKeyDown}
+      aria-label={t("senseCard.training.cardChanged")}
+      data-testid="training-exercise-card"
+      data-side={revealed ? "answer" : "face"}
+      data-reveal-moving={moving ? "true" : undefined}
+      className={trainingStageClassName()}
+    >
+      {notice}
+      <TrainingAnswerTranslationProvider currentCard={currentCard} entryId={entryId} contentLanguage={contentLanguage}>
+      <TrainingCardShell answerVisible={revealed}>
+        {revealed ? (
+          <>
+            <TrainingCardAnswerHeader
+              interfaceLanguage={interfaceLanguage}
+              model={presentation.answer}
+              translationLanguage={translationLanguage}
+              translationVisible={translationVisible}
+              translationAvailable={translationAvailable}
+              translationLabel={t(translationAvailable ? "senseCard.translation.request" : "senseCard.translation.disabled")}
+              audioLabel={t("senseCard.audio.play")}
+              moreLabel={t("senseCard.wordDetails.open")}
+              busy={actionBusy}
+              onToggleTranslation={() => void toggleTranslation()}
+              onPlayAudio={onPlayAudio}
+              onOpenDetails={onOpenDetails}
+            />
+            <TrainingCardAnswerBody
+              model={presentation.answer}
+              contentLanguage={contentLanguage}
+              translationLanguage={translationLanguage}
+              translationVisible={translationVisible}
+              interfaceLanguage={interfaceLanguage}
+              onReachEnd={() => firstGradeRef.current?.focus()}
+            />
+          </>
+        ) : (
+          <TrainingCardFace
+            prompt={presentation.prompt}
+            label={presentation.label}
+            hint={presentation.hint}
+            hintVisible={hintVisible}
+            hintLabel={presentation.hint?.label ?? ""}
+            contentLabel={t("senseCard.training.content")}
+          />
+        )}
+      </TrainingCardShell>
+      </TrainingAnswerTranslationProvider>
+      <footer className="shrink-0 flex flex-col gap-2">
+        {revealed ? (
+          <RatingControls language={interfaceLanguage} height="adaptive" disabled={actionBusy}
+            label={t("senseCard.sections.reviewPrompt")} firstRef={firstGradeRef}
+            options={(Object.keys(ratingGrades) as Rating[]).map(rating => ({ rating, label: t(`senseCard.review.${ratingGrades[rating]}`) }))}
+            onRate={rating => onGrade(ratingGrades[rating])} />
+        ) : (
+          <TrainingCardFaceControls
+            busy={actionBusy}
+            hintAvailable={Boolean(presentation.hint)}
+            hintVisible={hintVisible}
+            showHintLabel={t("senseCard.hint.show")}
+            hideHintLabel={t("senseCard.hint.hide")}
+            showAnswerLabel={t("senseCard.answer.show")}
+            onToggleHint={() => setHintVisible((v) => !v)}
+            onShowAnswer={reveal}
+            showAnswerRef={revealRef}
+          />
+        )}
+        {secondaryActions}
+      </footer>
+    </section>
+  );
+}

@@ -1,0 +1,520 @@
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { randomUUID } from "node:crypto";
+import { Pool, type PoolClient } from "pg";
+import {
+  ensureUserWithSettings,
+  getDbUrl,
+  insertWord,
+  runMigrations,
+  withTransaction,
+} from "./dbTestUtils";
+
+const dbUrl = getDbUrl();
+
+async function sourceEntries(
+  client: PoolClient,
+  userId: string,
+  filter: Record<string, unknown>,
+  listId: string | null = null,
+  listType: "curated" | "user" = "curated",
+) {
+  const { rows } = await client.query(
+    `select entry_id from private.training_extra_source_entries_v1(
+       $1::uuid, $2::uuid, $3::text, $4::jsonb
+     ) order by entry_id`,
+    [userId, listId, listType, JSON.stringify(filter)],
+  );
+  return rows.map((row) => row.entry_id as string);
+}
+
+(dbUrl ? describe : describe.skip)("extra-exercise source scope", () => {
+  const pool = new Pool({ connectionString: dbUrl });
+
+  beforeAll(async () => {
+    await runMigrations(pool);
+  });
+
+  afterAll(async () => {
+    await pool.end();
+  });
+
+  test("keeps material, lexical and activity filters exact for both exercise families", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const defaultEntry = await insertWord(client, `extra-default-${randomUUID()}`);
+      const { rows: dictionaryRows } = await client.query(
+        `insert into dictionaries (
+           language_code, slug, name, kind, visibility,
+           minimum_subscription_tier, schema_key, schema_version
+         ) values
+           ('nl', $1, 'Accessible', 'curated', 'shared', 'free', (public.dictionary_source_settings_v1()->>'schemaKeyV1'), 1),
+           ('nl', $2, 'Unavailable', 'curated', 'private', 'free', (public.dictionary_source_settings_v1()->>'schemaKeyV1'), 1)
+         returning id`,
+        [`extra-accessible-${userId}`, `extra-unavailable-${userId}`],
+      );
+      const accessibleDictionary = dictionaryRows[0].id as string;
+      const unavailableDictionary = dictionaryRows[1].id as string;
+      await client.query(
+        `insert into dictionary_entitlements (
+           dictionary_id, subject_type, subject_key, permission
+         ) values ($1, 'user', $2, 'read')`,
+        [accessibleDictionary, userId],
+      );
+      const { rows: entryRows } = await client.query(
+        `insert into word_entries (
+           dictionary_id, language_code, headword, part_of_speech,
+           is_nt2_2000, raw
+         ) values
+           ($1, 'nl', $3, 'bn', false, '{}'::jsonb),
+           ($1, 'nl', $4, 'ww', false, '{}'::jsonb),
+           ($2, 'nl', $5, 'bn', false, '{}'::jsonb)
+         returning id, dictionary_id, part_of_speech`,
+        [accessibleDictionary, unavailableDictionary,
+          `extra-adjective-${userId}`, `extra-verb-${userId}`,
+          `extra-hidden-${userId}`],
+      );
+      const adjective = entryRows.find(
+        (row) => row.dictionary_id === accessibleDictionary && row.part_of_speech === "bn",
+      )?.id as string;
+      const verb = entryRows.find(
+        (row) => row.dictionary_id === accessibleDictionary && row.part_of_speech === "ww",
+      )?.id as string;
+      const inaccessible = entryRows.find(
+        (row) => row.dictionary_id === unavailableDictionary,
+      )?.id as string;
+      const selected = {
+        dictionaryScope: {
+          mode: "selected", languageCode: "nl",
+          dictionaryIds: [accessibleDictionary, unavailableDictionary],
+        },
+      };
+      expect(await sourceEntries(client, userId, {})).toContain(defaultEntry);
+      expect(await sourceEntries(client, userId, {})).not.toContain(adjective);
+      expect(await sourceEntries(client, userId, selected)).toEqual([adjective, verb].sort());
+      expect(await sourceEntries(client, userId, {
+        ...selected, partOfSpeech: ["bn"],
+      })).toEqual([adjective]);
+      expect(await sourceEntries(client, userId, {
+        ...selected, partOfSpeech: ["zn"],
+      })).toEqual([]);
+
+      const idiomNodeIds = new Map<string, string>();
+      const exampleNodeIds = new Map<string, string>();
+      for (const entryId of [adjective, verb]) {
+        const idiomId = randomUUID();
+        idiomNodeIds.set(entryId, idiomId);
+        const exampleId = randomUUID();
+        exampleNodeIds.set(entryId, exampleId);
+        await client.query(
+          `insert into private.platform_v2_content_nodes (
+             id, entry_id, parent_content_node_id, kind, binding_state,
+             first_source_revision, last_source_revision,
+             source_text_fingerprint, diagnostic_locator
+           ) values
+             ($1, $2, null, 'idiom', 'active', 'extra-v1', 'extra-v1', $3, $4),
+             ($5, $2, $1, 'idiom-explanation', 'active', 'extra-v1',
+              'extra-v1', $6, $7)`,
+          [idiomId, entryId, `fingerprint-${idiomId}`, `idiom-${idiomId}`,
+            randomUUID(), `explanation-${idiomId}`, `explanation-${idiomId}`],
+        );
+        await client.query(
+          `insert into private.platform_v2_content_nodes (
+             id, entry_id, parent_content_node_id, kind, binding_state,
+             first_source_revision, last_source_revision,
+             source_text_fingerprint, diagnostic_locator
+           ) values ($1, $2, null, 'example', 'active', 'extra-v1',
+             'extra-v1', $3, 'raw.meanings[0].examples[0]')`,
+          [exampleId, entryId, `example-${exampleId}`],
+        );
+      }
+      const inaccessibleExampleId = randomUUID();
+      await client.query(
+        `insert into private.platform_v2_content_nodes (
+           id, entry_id, parent_content_node_id, kind, binding_state,
+           first_source_revision, last_source_revision,
+           source_text_fingerprint, diagnostic_locator
+         ) values ($1, $2, null, 'example', 'active', 'extra-v1',
+           'extra-v1', $3, 'raw.meanings[0].examples[0]')`,
+        [inaccessibleExampleId, inaccessible, `example-${inaccessibleExampleId}`],
+      );
+      const identityVersion = `extra-source-${randomUUID()}`;
+      const { rows: importRows } = await client.query(
+        `insert into private.dictionary_import_runs (
+           dictionary_id, identity_scheme_version, artifact_format_version,
+           manifest_checksum, input_checksum, source_record_count,
+           artifact_count, status
+         ) values ($1, $2, 'test-v1', $3, $4, 2, 2, 'completed')
+         returning id`,
+        [accessibleDictionary, identityVersion, randomUUID(), randomUUID()],
+      );
+      for (const [index, entryId] of [adjective, verb].entries()) {
+        await client.query(
+          `insert into private.source_entry_bindings (
+             dictionary_id, identity_scheme_version, source_entry_key,
+             source_group_key, sense_ordinal, word_entry_id, binding_state,
+             first_seen_run_id, last_seen_run_id, manifest_checksum,
+             content_fingerprint_version, content_fingerprint,
+             identity_evidence, reconciliation_decision
+           ) values (
+             $1, $2, $3, 'extra-source-group', $4, $5, 'active',
+             $6, $6, 'test-manifest', 'test-v1', $7,
+             '{"kind":"test"}'::jsonb, '{"decision":"create"}'::jsonb
+           )`,
+          [accessibleDictionary, identityVersion, `extra-entry-${index}-${randomUUID()}`,
+            index + 1, entryId, importRows[0].id, `fingerprint-${entryId}`],
+        );
+      }
+      // The learner knows one ordinary meaning; idioms attached to its sibling
+      // meaning in the same source group must be eligible too.
+      await client.query(
+        `insert into user_card_status (
+           user_id, entry_id, card_type_id, fsrs_enabled, in_learning, next_review_at
+         ) values ($1, $2, 'word-to-definition', true, true, now()),
+                  ($1, $3, 'word-to-definition', true, true, now())`,
+        [userId, adjective, inaccessible],
+      );
+      const { rows: eligibilityRows } = await client.query(
+        `select private.platform_v2_training_ordinary_meaning_eligible_v1(
+           $1::uuid, $2::uuid
+         ) as learned_source,
+         private.platform_v2_training_ordinary_meaning_eligible_v1(
+           $1::uuid, $3::uuid
+         ) as sibling_source,
+         private.platform_v2_training_ordinary_meaning_eligible_v1(
+           $1::uuid, $4::uuid
+         ) as inaccessible_source,
+         private.platform_v2_training_ordinary_meaning_eligible_v1(
+           $1::uuid, $5::uuid
+         ) as untouched_source`,
+        [userId, adjective, verb, inaccessible, defaultEntry],
+      );
+      expect(eligibilityRows[0]).toEqual({
+        learned_source: true,
+        sibling_source: true,
+        inaccessible_source: false,
+        untouched_source: false,
+      });
+      const { rows: sentenceSiblingRows } = await client.query(
+        `select content_node_id, entry_id
+           from private.training_translation_source_nodes_v1(
+             $1::uuid, null::uuid, 'curated', $2::jsonb
+           ) order by content_node_id`,
+        [userId, JSON.stringify({ ...selected, partOfSpeech: ["ww"] })],
+      );
+      expect(sentenceSiblingRows).toEqual([{
+        content_node_id: exampleNodeIds.get(verb),
+        entry_id: verb,
+      }]);
+      const { rows: idiomRows } = await client.query(
+        `select item from private.platform_v2_idiom_exercise_candidates_v2(
+           $1::uuid, 'direct', 20, 0, null::uuid, 'curated', 'new', $2::jsonb
+         ) as item`,
+        [userId, JSON.stringify({ ...selected, partOfSpeech: ["bn"] })],
+      );
+      expect(idiomRows.map((row) => row.item.entryId)).toEqual([adjective]);
+      const { rows: siblingRows } = await client.query(
+        `select item from private.platform_v2_idiom_exercise_candidates_v2(
+           $1::uuid, 'direct', 20, 0, null::uuid, 'curated', 'new', $2::jsonb
+         ) as item`,
+        [userId, JSON.stringify({ ...selected, partOfSpeech: ["ww"] })],
+      );
+      expect(siblingRows.map((row) => row.item.entryId)).toEqual([verb]);
+
+      const startFilter = { ...selected, partOfSpeech: ["bn", "zn"] };
+      const requestId = randomUUID();
+      const start = async (filter = startFilter, ratio = 3) => {
+        await client.query("set local role authenticated");
+        try {
+          return await client.query(
+            `select public.start_platform_v2_idiom_training_session(
+               $1::uuid, 'direct', '5', $2::uuid, null::uuid, 'curated',
+               'new', $3::jsonb, $4::integer
+             ) as session`,
+            [userId, requestId, JSON.stringify(filter), ratio],
+          );
+        } finally {
+          await client.query("reset role");
+        }
+      };
+      const { rows: startedRows } = await start();
+      const sessionId = startedRows[0].session.sessionId as string;
+      expect(startedRows[0].session).toMatchObject({
+        exerciseFamily: "idiom", plannedTotal: 1, plannedNew: 1,
+      });
+      const { rows: retryRows } = await start();
+      expect(retryRows[0].session.sessionId).toBe(sessionId);
+      const { rows: equivalentRatioRetryRows } = await start(startFilter, 5);
+      expect(equivalentRatioRetryRows[0].session.sessionId).toBe(sessionId);
+      const { rows: reorderedRetryRows } = await start({
+        dictionaryScope: {
+          ...selected.dictionaryScope,
+          dictionaryIds: [...selected.dictionaryScope.dictionaryIds].reverse(),
+        },
+        partOfSpeech: ["zn", "bn", "bn"],
+      });
+      expect(reorderedRetryRows[0].session.sessionId).toBe(sessionId);
+      const { rows: memberRows } = await client.query(
+        `select target.entry_id from training_session_exercise_members member
+         join private.platform_v2_training_exercise_targets target
+           on target.id = member.target_id
+         where member.session_id = $1`,
+        [sessionId],
+      );
+      expect(memberRows.map((row) => row.entry_id)).toEqual([adjective]);
+      const { rows: storedRows } = await client.query(
+        `select training_filter, new_review_ratio, card_filter
+         from training_sessions where id = $1`,
+        [sessionId],
+      );
+      expect(storedRows[0]).toEqual({
+        training_filter: {
+          ...startFilter,
+          materialSelection: {
+            schemaVersion: 1,
+            allowedLanguageCodes: null,
+            disabledDictionaryIds: [],
+          },
+          dictionaryScope: {
+            ...startFilter.dictionaryScope,
+            dictionaryIds: [...startFilter.dictionaryScope.dictionaryIds].sort(),
+          },
+        },
+        new_review_ratio: 2,
+        card_filter: "new",
+      });
+      const { rows: targetRows } = await client.query(
+        `select id from private.platform_v2_training_exercise_targets
+         where entry_id = $1 and family = 'idiom' and direction = 'direct'`,
+        [adjective],
+      );
+      await client.query(
+        `insert into public.user_training_exercise_state (
+           user_id, target_id, fsrs_enabled, fsrs_reps,
+           fsrs_last_interval, next_review_at
+         ) values ($1, $2, true, 1, 2, now() - interval '1 minute')`,
+        [userId, targetRows[0].id],
+      );
+      // A mixed reader selects its own budget from each queue in one call.
+      // The single new idiom must not crowd out the due idiom.
+      const { rows: mixedCandidates } = await client.query(
+        `select item from private.platform_v2_idiom_exercise_candidates_v2(
+           $1::uuid, 'direct', 1, 0, null::uuid, 'curated', 'both', $2::jsonb
+         ) as item`,
+        [userId, JSON.stringify(selected)],
+      );
+      expect(mixedCandidates.map((row) => row.item.queueSource).sort())
+        .toEqual(["new", "review"]);
+      await client.query("set local role authenticated");
+      const { rows: mixedStartRows } = await client.query(
+        `select public.start_platform_v2_idiom_training_session(
+           $1::uuid, 'direct', '2', $2::uuid, null::uuid, 'curated',
+           'both', $3::jsonb, 3
+         ) as session`,
+        [userId, randomUUID(), JSON.stringify(selected)],
+      );
+      await client.query("reset role");
+      expect(mixedStartRows[0].session).toMatchObject({
+        plannedTotal: 2, plannedNew: 1, plannedReview: 1,
+      });
+      await client.query("savepoint changed_idiom_start_request");
+      await client.query("set local role authenticated");
+      await expect(client.query(
+        `select public.start_platform_v2_idiom_training_session(
+           $1::uuid, 'direct', '5', $2::uuid, null::uuid, 'curated',
+           'new', $3::jsonb, 3
+         )`,
+        [userId, requestId, JSON.stringify({ ...selected, partOfSpeech: ["ww"] })],
+      ))
+        .rejects.toThrow("idiom_training_session_start_idempotency_conflict");
+      await client.query("rollback to savepoint changed_idiom_start_request");
+      await client.query("reset role");
+
+      const adjectiveIdiom = idiomNodeIds.get(adjective);
+      if (!adjectiveIdiom) throw new Error("missing adjective idiom fixture");
+      await client.query(
+        `insert into private.platform_v2_content_nodes (
+           id, entry_id, parent_content_node_id, kind, binding_state,
+           first_source_revision, last_source_revision,
+           source_text_fingerprint, diagnostic_locator
+         ) values ($1, $2, $3, 'idiom-explanation', 'active',
+           'extra-v1', 'extra-v1', $4, ' ')`,
+        [randomUUID(), adjective, adjectiveIdiom, `blank-${randomUUID()}`],
+      );
+      const { rows: ambiguousRows } = await client.query(
+        `select item from private.platform_v2_idiom_exercise_candidates_v2(
+           $1::uuid, 'direct', 20, 0, null::uuid, 'curated', 'new', $2::jsonb
+         ) as item`,
+        [userId, JSON.stringify(startFilter)],
+      );
+      expect(ambiguousRows).toEqual([]);
+
+      const { rows: listRows } = await client.query(
+        `insert into word_lists (language_code, slug, name)
+         values ('nl', $1, 'Extra exercise list') returning id`,
+        [`extra-list-${userId}`],
+      );
+      const listId = listRows[0].id as string;
+      await client.query(
+        `insert into word_list_items (list_id, word_id) values ($1, $2)`,
+        [listId, adjective],
+      );
+      expect(await sourceEntries(client, userId, {}, listId)).toEqual([adjective]);
+      expect(await sourceEntries(client, userId, { partOfSpeech: ["ww"] }, listId)).toEqual([]);
+
+      const { rows: userListRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, name)
+         values ($1, 'nl', $2) returning id`,
+        [userId, `Extra user list ${userId}`],
+      );
+      const userListId = userListRows[0].id as string;
+      await client.query(
+        `insert into user_word_list_items (list_id, word_id) values ($1, $2)`,
+        [userListId, defaultEntry],
+      );
+      expect(await sourceEntries(client, userId, {}, userListId, "user"))
+        .toEqual([defaultEntry]);
+      const otherUserId = randomUUID();
+      await ensureUserWithSettings(client, otherUserId);
+      expect(await sourceEntries(client, otherUserId, {}, userListId, "user"))
+        .toEqual([]);
+      await client.query(
+        `insert into dictionary_entitlements (
+           dictionary_id, subject_type, subject_key, permission
+         ) values ($1, 'user', $2, 'read')`,
+        [accessibleDictionary, otherUserId],
+      );
+      const { rows: siblingKnownEvents } = await client.query(
+        `insert into user_card_action_events (
+           user_id, entry_id, card_type_id, action, client_event_id,
+           action_payload_hash
+         ) values ($1, $2, 'word-to-definition', 'mark-known', $3, 'sibling-known')
+         returning id`,
+        [otherUserId, adjective, randomUUID()],
+      );
+      const { rows: siblingKnownMarks } = await client.query(
+        `insert into user_card_known_marks (
+           user_id, entry_id, card_type_id, mark_event_id
+         ) values ($1, $2, 'word-to-definition', $3) returning id`,
+        [otherUserId, adjective, siblingKnownEvents[0].id],
+      );
+      const siblingKnownEligibility = async () => {
+        const { rows } = await client.query(
+          `select private.platform_v2_training_ordinary_meaning_eligible_v1(
+             $1::uuid, $2::uuid
+           ) as eligible`,
+          [otherUserId, verb],
+        );
+        return rows[0].eligible as boolean;
+      };
+      expect(await siblingKnownEligibility()).toBe(true);
+      const { rows: siblingUndoEvents } = await client.query(
+        `insert into user_card_action_events (
+           user_id, entry_id, card_type_id, action, client_event_id,
+           action_payload_hash
+         ) values ($1, $2, 'word-to-definition', 'undo-known', $3, 'sibling-undo')
+         returning id`,
+        [otherUserId, adjective, randomUUID()],
+      );
+      await client.query(
+        `update user_card_known_marks
+         set cleared_at = now(), undo_event_id = $2
+         where id = $1`,
+        [siblingKnownMarks[0].id, siblingUndoEvents[0].id],
+      );
+      expect(await siblingKnownEligibility()).toBe(true);
+
+      const { rows: sourceRows } = await client.query(
+        `insert into learning_sources (
+           source_identity_key, kind, provider, external_id, canonical_url,
+           title, language_code, metadata
+         ) values ($1, 'youtube_video', 'youtube', 'extra-video',
+           'https://www.youtube.com/watch?v=extra-video', 'Extra video', 'nl', '{}'::jsonb)
+         returning id`,
+        [`extra-source-${userId}`],
+      );
+      const sourceId = sourceRows[0].id as string;
+      await client.query(
+        `insert into user_card_action_events (
+           user_id, entry_id, card_type_id, action, client_event_id,
+           source_id, action_payload_hash
+         ) values ($1, $2, 'word-to-definition', 'record-view', $3, $4, 'extra-scope')`,
+        [userId, adjective, randomUUID(), sourceId],
+      );
+      expect(await sourceEntries(client, userId, {
+        ...selected, sourceId,
+      })).toEqual([adjective]);
+      expect(await sourceEntries(client, userId, {
+        ...selected, sourceId, dateWindow: "today",
+      })).toEqual([adjective]);
+      expect(await sourceEntries(client, userId, {
+        ...selected, sourceId, dateWindow: "yesterday",
+      })).toEqual([]);
+      expect(await sourceEntries(client, userId, {
+        ...selected, sourceKind: "youtube", partOfSpeech: ["ww"],
+      })).toEqual([]);
+      expect(await sourceEntries(client, userId, {
+        ...selected, sourceId: randomUUID(),
+      })).toEqual([]);
+
+      const { rows: knownEventRows } = await client.query(
+        `insert into user_card_action_events (
+           user_id, entry_id, card_type_id, action, client_event_id,
+           action_payload_hash
+         ) values ($1, $2, 'word-to-definition', 'mark-known', $3, 'known')
+         returning id`,
+        [userId, defaultEntry, randomUUID()],
+      );
+      const { rows: knownRows } = await client.query(
+        `insert into user_card_known_marks (
+           user_id, entry_id, card_type_id, mark_event_id
+         ) values ($1, $2, 'word-to-definition', $3) returning id`,
+        [userId, defaultEntry, knownEventRows[0].id],
+      );
+      const knownEligibility = async () => {
+        const { rows } = await client.query(
+          `select private.platform_v2_training_ordinary_meaning_eligible_v1(
+             $1::uuid, $2::uuid
+           ) as eligible`,
+          [userId, defaultEntry],
+        );
+        return rows[0].eligible as boolean;
+      };
+      expect(await knownEligibility()).toBe(true);
+      const { rows: undoEventRows } = await client.query(
+        `insert into user_card_action_events (
+           user_id, entry_id, card_type_id, action, client_event_id,
+           action_payload_hash
+         ) values ($1, $2, 'word-to-definition', 'undo-known', $3, 'undo')
+         returning id`,
+        [userId, defaultEntry, randomUUID()],
+      );
+      await client.query(
+        `update user_card_known_marks
+         set cleared_at = now(), undo_event_id = $2
+         where id = $1`,
+        [knownRows[0].id, undoEventRows[0].id],
+      );
+      // Undo retains familiarity; the ungraded reverse is ready to study.
+      expect(await knownEligibility()).toBe(true);
+
+      await client.query("savepoint malformed_extra_scope");
+      await expect(sourceEntries(client, userId, {
+        dictionaryScope: { mode: "selected", languageCode: "nl", dictionaryIds: [] },
+      })).rejects.toThrow("training_material_unavailable");
+      await client.query("rollback to savepoint malformed_extra_scope");
+
+      await client.query("savepoint malformed_activity_scope");
+      await expect(sourceEntries(client, userId, {
+        ...selected, sourceId: "not-a-uuid",
+      })).rejects.toThrow("invalid_training_source_id");
+      await client.query("rollback to savepoint malformed_activity_scope");
+
+      await client.query("savepoint malformed_date_scope");
+      await expect(sourceEntries(client, userId, {
+        ...selected, dateWindow: "unknown",
+      })).rejects.toThrow("invalid_training_date_window");
+      await client.query("rollback to savepoint malformed_date_scope");
+    }, userId);
+  });
+});

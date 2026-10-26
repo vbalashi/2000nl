@@ -1,0 +1,160 @@
+import "server-only";
+
+import { createClient } from "@supabase/supabase-js";
+import {
+  projectDictionaryMetadata,
+  projectDictionaryRegistryPage,
+  type DictionaryMetadata,
+  type DictionaryRecord,
+  type DictionaryRegistryFilters,
+  type DictionaryRegistryPage,
+} from "./dictionaryContract";
+
+const DICTIONARY_COLUMNS =
+  "id,slug,name,language_code,kind,visibility,publication_state,owner_user_id,source_provider,source_version,schema_key,schema_version,is_editable,minimum_subscription_tier,description,created_at,updated_at,dictionary_schemas(title,retired_at)";
+
+function createAdminReadClient() {
+  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey =
+    process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) throw new Error("Admin dictionary source is not configured");
+
+  return createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }) },
+  });
+}
+
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
+function quotePostgrestValue(value: string): string {
+  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
+function buildDictionarySearchFilter(query: string): string {
+  const pattern = `*${escapeLike(query)}*`;
+  const safe = quotePostgrestValue(pattern);
+  return `name.ilike.${safe},slug.ilike.${safe}`;
+}
+
+export async function listAdminDictionaries(
+  filters: DictionaryRegistryFilters,
+): Promise<DictionaryRegistryPage> {
+  const client = createAdminReadClient();
+  const start = (filters.page - 1) * filters.pageSize;
+  let query = client
+    .from("dictionaries")
+    .select(DICTIONARY_COLUMNS)
+    .order("name", { ascending: true, nullsFirst: false })
+    .order("id", { ascending: true })
+    .range(start, start + filters.pageSize);
+
+  if (filters.q) query = query.or(buildDictionarySearchFilter(filters.q));
+  if (filters.language) query = query.eq("language_code", filters.language);
+  if (filters.kind) query = query.eq("kind", filters.kind);
+
+  const { data, error } = await query;
+  if (error) throw new Error("Admin dictionary registry read failed");
+
+  const records = (data ?? []) as unknown as DictionaryRecord[];
+  return projectDictionaryRegistryPage(records, filters);
+}
+
+export async function getAdminDictionaryMetadata(
+  id: string,
+): Promise<DictionaryMetadata | null> {
+  const client = createAdminReadClient();
+  const { data, error } = await client
+    .from("dictionaries")
+    .select(DICTIONARY_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error("Admin dictionary metadata read failed");
+  if (!data) return null;
+  const metadata = projectDictionaryMetadata(data as unknown as DictionaryRecord);
+  const audience = await client.from("dictionary_entitlements")
+    .select("subject_type,subject_key").eq("dictionary_id", id).eq("permission", "read");
+  if (audience.error) throw new Error("Admin dictionary audience read failed");
+  return {
+    ...metadata,
+    audienceGroupKeys: (audience.data ?? []).filter((row) => row.subject_type === "group").map((row) => row.subject_key),
+    audienceUserIds: (audience.data ?? []).filter((row) => row.subject_type === "user").map((row) => row.subject_key),
+  };
+}
+
+export type AdminDictionaryContentEntry = {
+  id: string;
+  headword: string;
+  languageCode: string;
+  partOfSpeech: string | null;
+  meaningId: number | null;
+  definition: string | null;
+};
+
+export type AdminDictionaryContentPage = {
+  items: AdminDictionaryContentEntry[];
+  page: number;
+  pageSize: number;
+  total: number;
+  hasNext: boolean;
+};
+
+function projectAdminDictionaryContentEntry(record: Record<string, unknown>): AdminDictionaryContentEntry | null {
+  if (typeof record.id !== "string" || typeof record.headword !== "string") return null;
+  const raw = record.raw && typeof record.raw === "object" ? record.raw as Record<string, unknown> : {};
+  const meanings = Array.isArray(raw.meanings) ? raw.meanings : [];
+  const matchingMeaning = meanings.find((meaning) =>
+    meaning && typeof meaning === "object" &&
+    (meaning as Record<string, unknown>).meaningId === record.meaning_id,
+  );
+  const meaning = matchingMeaning && typeof matchingMeaning === "object"
+    ? matchingMeaning as Record<string, unknown>
+    : meanings[0] && typeof meanings[0] === "object"
+      ? meanings[0] as Record<string, unknown>
+      : {};
+  const definition = typeof meaning.definition === "string"
+    ? meaning.definition
+    : typeof raw.definition === "string"
+      ? raw.definition
+      : null;
+  return {
+    id: record.id,
+    headword: record.headword,
+    languageCode: typeof record.language_code === "string" ? record.language_code : "",
+    partOfSpeech: typeof record.part_of_speech === "string" ? record.part_of_speech : null,
+    meaningId: typeof record.meaning_id === "number" ? record.meaning_id : null,
+    definition,
+  };
+}
+
+export async function listAdminDictionaryContent(input: {
+  dictionaryId: string;
+  page: number;
+  pageSize: number;
+}): Promise<AdminDictionaryContentPage> {
+  const client = createAdminReadClient();
+  const start = (input.page - 1) * input.pageSize;
+  const { data, error, count } = await client
+    .from("word_entries")
+    .select("id,headword,language_code,part_of_speech,meaning_id,raw", { count: "exact" })
+    .eq("dictionary_id", input.dictionaryId)
+    .order("headword", { ascending: true })
+    .order("meaning_id", { ascending: true })
+    .order("id", { ascending: true })
+    .range(start, start + input.pageSize - 1);
+  if (error) throw new Error("Admin dictionary content read failed");
+
+  const items = ((data ?? []) as unknown as Record<string, unknown>[])
+    .map(projectAdminDictionaryContentEntry)
+    .filter((entry): entry is AdminDictionaryContentEntry => entry !== null);
+  const total = count ?? 0;
+  return {
+    items,
+    page: input.page,
+    pageSize: input.pageSize,
+    total,
+    hasNext: start + items.length < total,
+  };
+}

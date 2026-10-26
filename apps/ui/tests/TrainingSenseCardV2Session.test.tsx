@@ -1,0 +1,3029 @@
+const recordedStudy = vi.hoisted(() => vi.fn());
+vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
+const noteHintRead=vi.hoisted(()=>({read:vi.fn(),refresh:undefined as undefined|(()=>void|Promise<unknown>),blocked:undefined as undefined|(()=>boolean)}));
+vi.mock("@/lib/platform/entryNoteMaterialClient",()=>({readEntryNoteMaterial:noteHintRead.read}));
+vi.mock("@/lib/events/userEventHints",async importOriginal=>{
+ const actual=await importOriginal<typeof import("@/lib/events/userEventHints")>();
+ return {...actual,useUserEventHints:(...args:Parameters<typeof actual.useUserEventHints>)=>{
+  noteHintRead.refresh=args[2];noteHintRead.blocked=args[3];return actual.useUserEventHints(...args);
+ }};
+});
+import React from "react";
+import { getUiMessages } from "@/lib/uiMessages";
+import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import { act, fireEvent, render as testingRender, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  TrainingKnownUndoNotice,
+  TrainingSenseCardV2Session,
+} from "@/components/training/v2/TrainingSenseCardV2Session";
+import type { TrainingWord } from "@/lib/types";
+import type { FooterStatsProps } from "@/components/training/FooterStats";
+import {
+  readPendingKnownUndo,
+  rememberPendingKnownUndo,
+} from "@/components/training/v2/pendingKnownUndoStore";
+import {
+  projectedTrainingAudioResult,
+  singleSenseEntry,
+  singleSenseGroup,
+} from "./platformV2TrainingFixture";
+
+import {TrainingInteractionPreferencesProvider,defaultTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
+const render = (ui:React.ReactElement, options?:Parameters<typeof testingRender>[1]) => testingRender(ui,{...options,wrapper:({children})=><TrainingInteractionPreferencesProvider userId="swipe-tests" initial={{...defaultTrainingInteractions,gradeSwipe:true}}>{children}</TrainingInteractionPreferencesProvider>});
+
+const acknowledgeCurrent = vi.fn();
+const readCurrent = vi.fn();
+vi.mock("@/lib/platform/trainingCurrentCardClient",()=>({
+  acknowledgeCurrentTrainingCard:(...args:unknown[])=>acknowledgeCurrent(...args),
+  readCurrentTrainingCard:(...args:unknown[])=>readCurrent(...args),
+}));
+const fetchSingleSense = vi.fn();
+const performAction = vi.fn();
+const resolveAudio = vi.fn();
+const requestTranslation = vi.fn();
+const peekPrefetched = vi.fn();
+const consumePrefetched = vi.fn();
+const preloadAudio = vi.fn();
+const queueDiagnosticReport = vi.fn();
+const buildDiagnosticReport = vi.fn();
+const loadContextPrompt = vi.fn();
+
+vi.mock("@/lib/platform/platformV2TrainingMediaClient", () => ({
+  requestPlatformV2Translation: (...args: unknown[]) => requestTranslation(...args),
+}));
+
+vi.mock("@/lib/training/wordContextPrompt", () => ({
+  loadWordContextPrompt: (...args: unknown[]) => loadContextPrompt(...args),
+  prepareNextWordContextTranslation: vi.fn().mockResolvedValue(undefined),
+  markWordContextHintOpened: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
+  fetchPlatformV2TrainingEntry: (...args: unknown[]) => fetchSingleSense(...args),
+  peekPrefetchedPlatformV2TrainingEntry: (...args: unknown[]) => peekPrefetched(...args),
+  consumePrefetchedPlatformV2TrainingEntry: (...args: unknown[]) => consumePrefetched(...args),
+  resolvePlatformV2Audio: (...args: unknown[]) => resolveAudio(...args),
+  preloadPlatformV2Audio: (...args: unknown[]) => preloadAudio(...args),
+  requestPlatformV2Translation: (...args: unknown[]) => requestTranslation(...args),
+}));
+
+vi.mock("@/lib/platform/platformV2TrainingActionClient", () => ({
+  isPlatformV2TrainingActionCapability: (capability: { actionId: string }) =>
+    ["start-learning", "mark-known", "undo-known", "review-card"].includes(
+      capability.actionId,
+    ),
+  performPlatformV2TrainingAction: (...args: unknown[]) =>
+    performAction(...args),
+}));
+
+vi.mock("@/lib/feedback/diagnosticReportClient", () => ({
+  freezeSenseCardDiagnosticSnapshot: (input: unknown) => input,
+  buildSenseCardDiagnosticReport: (...args: unknown[]) =>
+    buildDiagnosticReport(...args),
+  queuePreparedSenseCardDiagnosticReport: (...args: unknown[]) =>
+    queueDiagnosticReport(...args),
+}));
+
+function TestTrainingSenseCardV2Session(
+  props: Omit<
+    React.ComponentProps<typeof TrainingSenseCardV2Session>,
+    "cacheOwnerId" | "presentationIdentity" | "sessionChrome" | "sessionFooter"
+  > & { presentationIdentity?: string },
+) {
+  const sessionFooter: FooterStatsProps = {
+    stats: {
+      newWordsToday: 0,
+      newCardsToday: 0,
+      learningStartedToday: 0,
+      graduatedNewWordsToday: 0,
+      dailyNewLimit: 10,
+      reviewWordsDone: 0,
+      reviewCardsDone: 0,
+      reviewWordsDue: 0,
+      reviewCardsDue: 0,
+      totalWordsLearned: 0,
+      totalWordsInList: 0,
+    },
+    cardFilter: "both",
+    onCardFilterChange: vi.fn(),
+    language: "nl",
+    onLanguageChange: vi.fn(),
+    compact: true,
+    interfaceLanguage: "nl",
+  };
+  return (
+    <TrainingSenseCardV2Session
+      cacheOwnerId="test-user"
+      presentationIdentity={
+        props.presentationIdentity ??
+        `test-presentation:${props.word.id}:${props.mode}`
+      }
+      sessionChrome={null}
+      sessionFooter={sessionFooter}
+      {...props}
+    />
+  );
+}
+
+function testPresentationIdentity(
+  nextWord: TrainingWord,
+  mode: "word-to-definition" | "definition-to-word" | "listen-recognize" | "listen-type",
+) {
+  return `test-presentation:${nextWord.id}:${mode}`;
+}
+
+const word: TrainingWord = {
+  id: singleSenseEntry.entryId,
+  headword: "hand",
+  raw: {},
+  isFirstEncounter: false,
+  mode: "word-to-definition",
+};
+
+describe("TrainingSenseCardV2Session", () => {
+  test("refreshes answer translations when context preparation completes a newer article lookup", async () => {
+    const untranslatedEntry = {
+      ...singleSenseEntry,
+      translation: null,
+      contentNodes: singleSenseEntry.contentNodes.map(node => ({ ...node, translations: [] })),
+    };
+    fetchSingleSense.mockResolvedValueOnce({ state: "ready", group: { ...singleSenseGroup, entries: [untranslatedEntry] }, entry: untranslatedEntry });
+    fetchSingleSense.mockResolvedValue({ state: "ready", group: singleSenseGroup, entry: singleSenseEntry });
+    let finishContext!: (value: unknown) => void;
+    loadContextPrompt.mockImplementation(() => new Promise(resolve => { finishContext = resolve; }));
+    render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext trainingSessionId="session-context"
+      contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()} />);
+    await waitFor(() => expect(fetchSingleSense).toHaveBeenCalledOnce());
+    await act(async () => { finishContext({ state: "ready", prompt: {
+      recallTarget: "hand", text: "She held the letter firmly in her hand.",
+      sourceText: singleSenseEntry.contentNodes[1].text,
+      contentNodeId: "example-1", sourceTextFingerprint: "example-fingerprint",
+    } }); });
+    fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
+    expect(screen.getByText("She held the letter firmly in her hand.")).toBeVisible();
+    expect(await screen.findByText("the end of your arm, where your fingers are attached")).toBeVisible();
+    expect(fetchSingleSense).toHaveBeenLastCalledWith(expect.objectContaining({cardTypeId:"definition-to-word"}));
+  });
+
+  test("focus refresh uses the authoritative translation instead of an older frozen-context display copy",async()=>{
+    const prompt={recallTarget:"old hand",text:"Old example translation",sourceText:singleSenseEntry.contentNodes[1].text,contentNodeId:"example-1",sourceTextFingerprint:"example-fingerprint"};
+    loadContextPrompt.mockResolvedValue({state:"ready",prompt});
+    render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext trainingSessionId="context-run" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()}/>);
+    await screen.findByRole("button",{name:"Show answer"});
+    const updated={...singleSenseEntry,translation:{...singleSenseEntry.translation!,text:"current hand"},contentNodes:singleSenseEntry.contentNodes.map(node=>({...node,translations:node.translations.map(value=>({...value,text:node.kind==="example"?"Current example translation":value.text}))}))};
+    fetchSingleSense.mockResolvedValue({state:"ready",group:{...singleSenseGroup,entries:[updated]},entry:updated});
+    await act(async()=>window.dispatchEvent(new Event("focus")));
+    expect(await screen.findByText("Current example translation")).toBeVisible();
+    expect(screen.queryByText("Old example translation")).not.toBeInTheDocument();
+    expect(performAction).not.toHaveBeenCalled();
+    expect(loadContextPrompt).toHaveBeenLastCalledWith(expect.objectContaining({entryId:word.id,sessionId:"context-run",force:false}));
+  });
+
+  test.each([
+    ["focus", false], ["minute", false], ["focus", true], ["minute", true],
+  ] as const)("keeps the ready context card mounted during %s revalidation (answer=%s)", async (trigger, revealed) => {
+    let revalidateMinute: (() => void) | undefined;
+    const originalInterval = window.setInterval.bind(window);
+    const interval = vi.spyOn(window, "setInterval").mockImplementation((handler, delay, ...args) => {
+      if (delay === 60_000 && typeof handler === "function") revalidateMinute = handler as () => void;
+      return originalInterval(handler, delay, ...args) as unknown as ReturnType<typeof window.setInterval>;
+    });
+    try {
+      const prompt = { text: "Example", sourceText: singleSenseEntry.contentNodes[1].text,
+        contentNodeId: "example-1", sourceTextFingerprint: "example-fingerprint" };
+      loadContextPrompt.mockImplementation(async () => ({ state: "ready", prompt: { ...prompt } }));
+      render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext
+        trainingSessionId="continuity-run" contentLanguageCode="nl" translationTargetLanguageCode="en"
+        interfaceLanguage="en" onProgressActionAccepted={vi.fn()} />);
+      const showAnswer = await screen.findByRole("button", { name: "Show answer" });
+      if (revealed) fireEvent.click(showAnswer);
+      const originalControl = revealed ? screen.getByRole("button", { name: "Good" }) : showAnswer;
+      let finishLookup!: (value: unknown) => void;
+      fetchSingleSense.mockImplementation(() => new Promise(resolve => { finishLookup = resolve; }));
+      const calls = fetchSingleSense.mock.calls.length;
+      await act(async () => {
+        if (trigger === "focus") window.dispatchEvent(new Event("focus"));
+        else { expect(revalidateMinute).toBeDefined(); revalidateMinute!(); }
+      });
+      await waitFor(() => expect(fetchSingleSense.mock.calls.length).toBeGreaterThan(calls));
+      expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: revealed ? "Good" : "Show answer" })).toBe(originalControl);
+      if (!revealed) fireEvent.click(showAnswer);
+      expect(screen.getByRole("button", { name: "Good" })).toBeVisible();
+      await act(async () => finishLookup({ state: "ready", group: singleSenseGroup, entry: singleSenseEntry }));
+      expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Good" })).toBeVisible();
+      expect(performAction).not.toHaveBeenCalled();
+    } finally { interval.mockRestore(); }
+  });
+
+  test.each(["run", "presentation", "language", "node", "fingerprint"])("waits for authoritative synchronization after context %s changes", async change => {
+    const prompt = { text: "Example", sourceText: singleSenseEntry.contentNodes[1].text,
+      contentNodeId: "example-1", sourceTextFingerprint: "example-fingerprint" };
+    loadContextPrompt.mockImplementation(async () => ({ state: "ready", prompt: { ...prompt } }));
+    const props = { word, mode: "definition-to-word" as const, wordInContext: true,
+      trainingSessionId: "initial-run", contentLanguageCode: "nl", translationTargetLanguageCode: "en",
+      interfaceLanguage: "en" as const, onProgressActionAccepted: vi.fn() };
+    const view = render(<TestTrainingSenseCardV2Session {...props} />);
+    await screen.findByRole("button", { name: "Show answer" });
+    let finishLookup!: (value: unknown) => void;
+    fetchSingleSense.mockImplementation(() => new Promise(resolve => { finishLookup = resolve; }));
+    await act(async () => {
+      if (change === "run") view.rerender(<TestTrainingSenseCardV2Session {...props} trainingSessionId="new-run" />);
+      else if (change === "presentation") view.rerender(<TestTrainingSenseCardV2Session {...props} presentationIdentity="new-presentation" />);
+      else if (change === "language") view.rerender(<TestTrainingSenseCardV2Session {...props} translationTargetLanguageCode="ru" />);
+      else {
+        if (change === "node") prompt.contentNodeId = "new-node";
+        else prompt.sourceTextFingerprint = "new-fingerprint";
+        window.dispatchEvent(new Event("focus"));
+      }
+    });
+    expect(screen.getByTestId("training-v2-loading")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Show answer" })).not.toBeInTheDocument();
+    await act(async () => finishLookup({ state: "ready", group: singleSenseGroup, entry: singleSenseEntry }));
+    expect(await screen.findByRole("button", { name: "Show answer" })).toBeVisible();
+    expect(performAction).not.toHaveBeenCalled();
+  });
+
+  test("starts an immediate review transition even before next-card preparation publishes an id", async () => {
+    const dispatch = vi.spyOn(window, "dispatchEvent");
+    const accepted = vi.fn().mockResolvedValue("accepted-next-unavailable");
+    render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition"
+      contentLanguageCode="nl" translationTargetLanguageCode="en"
+      interfaceLanguage="en" onProgressActionAccepted={accepted} />);
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+    await waitFor(() => expect(accepted).toHaveBeenCalledOnce());
+    const timings = dispatch.mock.calls.flatMap(([event]) =>
+      event instanceof CustomEvent && event.type === "2000nl:training-transition-timing"
+        ? [event.detail] : []);
+    const start = timings.find(event => event.stage === "transition.start");
+    expect(start).toMatchObject({ outcome: "review", transitionId: expect.any(String) });
+    expect(timings).toContainEqual(expect.objectContaining({
+      stage: "review.mutation", transitionId: start.transitionId,
+    }));
+    expect(performAction.mock.calls[0]?.[1]).toMatchObject({ transitionId: start.transitionId });
+    expect(accepted).toHaveBeenCalledWith(expect.any(Object), start.transitionId);
+    dispatch.mockRestore();
+  });
+
+  test("prefetched notes are hidden until live read and note hints preserve the revealed question",async()=>{
+    const notes=(text:string)=>[{noteId:"teacher-note",ownerUserId:"teacher",text,revision:"1",isOwn:false}];
+    const lookup=(text?:string)=>{const entry={...singleSenseEntry,noteMaterial:text?notes(text):[]};return {state:"ready" as const,group:{...singleSenseGroup,entries:[entry]},entry};};
+    peekPrefetched.mockReturnValue(lookup("Cached note"));let first!:(value:unknown)=>void;let firstNotes!:(value:unknown)=>void;
+    noteHintRead.read.mockImplementationOnce(()=>new Promise(resolve=>{firstNotes=resolve;}));
+    fetchSingleSense.mockImplementationOnce(()=>new Promise(resolve=>{first=resolve;}));
+    render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onProgressActionAccepted={vi.fn()}/>);
+    fireEvent.click(await screen.findByRole("button",{name:"Show answer"}));expect(screen.queryByText("Cached note")).not.toBeInTheDocument();
+    await act(async()=>{first(lookup("Live note"));firstNotes(notes("Live note"));});await screen.findByText("Live note");expect(screen.getByRole("button",{name:"Good"})).toBeInTheDocument();
+    let finish!:(value:unknown)=>void;noteHintRead.read.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));let pending:Promise<unknown>;
+    act(()=>{pending=Promise.resolve(noteHintRead.refresh!());});expect(screen.queryByText("Live note")).not.toBeInTheDocument();
+    expect(screen.getByRole("button",{name:"Good"})).toBeInTheDocument();
+    await act(async()=>{finish([]);await pending;});expect(screen.queryByText("Live note")).not.toBeInTheDocument();expect(screen.getByRole("button",{name:"Good"})).toBeInTheDocument();expect(performAction).not.toHaveBeenCalled();
+  });
+  beforeEach(() => {
+    noteHintRead.read.mockReset().mockResolvedValue([]);
+    rememberPendingKnownUndo(null);
+    window.sessionStorage.clear();
+    fetchSingleSense.mockReset();
+    loadContextPrompt.mockReset();
+    performAction.mockReset();
+    resolveAudio.mockReset();
+    requestTranslation.mockReset();
+    peekPrefetched.mockReset();
+    consumePrefetched.mockReset();
+    preloadAudio.mockReset();
+    queueDiagnosticReport.mockReset();
+    buildDiagnosticReport.mockReset();
+    peekPrefetched.mockReturnValue(null);
+    consumePrefetched.mockReturnValue(null);
+    requestTranslation.mockResolvedValue("ready");
+    preloadAudio.mockResolvedValue(undefined);
+    resolveAudio.mockResolvedValue("/audio/hand.mp3");
+    queueDiagnosticReport.mockResolvedValue({ state: "sent" });
+    buildDiagnosticReport.mockImplementation(async (input) => ({
+      ...(input as object),
+      reportId: "55555555-5555-4555-8555-555555555555",
+    }));
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+    });
+    performAction.mockResolvedValue({
+      contractVersion: "platform-action-v2",
+      actionId: "review-card",
+      clientEventId: "event-1",
+      accepted: true,
+      card: singleSenseEntry.card,
+    });
+  });
+
+  test("current-card display acknowledgement waits for the selected pane and blocks actions until accepted", async()=>{
+    vi.stubEnv("NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED","true");
+    try {
+      let release!:(value:unknown)=>void;
+      acknowledgeCurrent.mockReset().mockImplementation(()=>new Promise(resolve=>{release=resolve;}));
+      fetchSingleSense.mockResolvedValue({state:"ready",group:singleSenseGroup,entry:{...singleSenseEntry,sourceVersion:1}});
+      const view=(active:boolean)=><TestTrainingSenseCardV2Session presentationActive={active} word={word} mode="word-to-definition" trainingSessionId="current-run" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onProgressActionAccepted={vi.fn()}/>;
+      const rendered=render(view(false));
+      await waitFor(()=>expect(fetchSingleSense).toHaveBeenCalled());
+      expect(acknowledgeCurrent).not.toHaveBeenCalled();expect(screen.queryByRole("button",{name:"Show answer"})).not.toBeInTheDocument();
+      rendered.rerender(view(true));await waitFor(()=>expect(acknowledgeCurrent).toHaveBeenCalledOnce());
+      expect(acknowledgeCurrent.mock.calls[0][1]).toMatchObject({sessionId:"current-run",entryId:word.id,sourceVersion:1,cardTypeId:"word-to-definition"});
+      expect(screen.queryByRole("button",{name:"Show answer"})).not.toBeInTheDocument();expect(performAction).not.toHaveBeenCalled();
+      await act(async()=>release({permitId:"75300000-0000-4000-8000-000000000001",expiresAt:new Date(Date.now()+60_000).toISOString(),runGeneration:1}));
+      await screen.findByRole("button",{name:"Show answer"});
+    } finally {vi.unstubAllEnvs();}
+  });
+  test("a failed display acknowledgement retries that target without dropping it or invoking alternative selection",async()=>{
+    vi.stubEnv("NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED","true");
+    try {
+      acknowledgeCurrent.mockReset().mockRejectedValueOnce(new Error("offline")).mockResolvedValue({permitId:"75300000-0000-4000-8000-000000000001",expiresAt:new Date(Date.now()+60_000).toISOString(),runGeneration:1});
+      fetchSingleSense.mockResolvedValue({state:"ready",group:singleSenseGroup,entry:{...singleSenseEntry,sourceVersion:1}});
+      const alternative=vi.fn(),failure=vi.fn();
+      render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition" trainingSessionId="current-run" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onProgressActionAccepted={vi.fn()} onRetryAlternative={alternative} onLoadFailure={failure}/>);
+      await screen.findByTestId("training-v2-failure");expect(failure).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole("button",{name:platformV2Message("en","senseCard.training.retry")}));
+      await screen.findByRole("button",{name:"Show answer"});expect(acknowledgeCurrent).toHaveBeenCalledTimes(2);expect(alternative).not.toHaveBeenCalled();
+    } finally {vi.unstubAllEnvs();}
+  });
+  test("measures only the prepared owned card while its enclosing training surface is available", async () => {
+    const view = (enabled: boolean) => <TestTrainingSenseCardV2Session word={word} mode="word-to-definition" studyTimeEnabled={enabled}
+      trainingSessionId="owned-session" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()} />;
+    const { rerender } = render(view(true));
+    expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
+    await waitFor(() => expect(recordedStudy.mock.lastCall?.[0]).toMatchObject({ family:"meaning",sessionId:"owned-session",entryId:word.id,cardTypeId:"word-to-definition",enabled:true }));
+    fireEvent.click(screen.getByRole("button",{name:"Show answer"}));
+    expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(true);
+    rerender(view(false)); expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
+  });
+
+  test("approved exclusion menu forwards the existing known capability without excluding", async () => {
+    try {
+      const onProgressActionAccepted = vi.fn();
+      const markKnown = singleSenseEntry.capabilities.find(capability => capability.actionId === "mark-known")!;
+      performAction.mockResolvedValueOnce({contractVersion:"platform-action-v2", actionId:"mark-known",
+        clientEventId:"known-menu-event", accepted:true, card:singleSenseEntry.card});
+      render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition"
+        trainingSessionId="existing-session" contentLanguageCode="nl"
+        translationTargetLanguageCode="en" interfaceLanguage="en"
+        onProgressActionAccepted={onProgressActionAccepted} />);
+      await screen.findByRole("heading", {name:"hand"});
+      const exclusion = getUiMessages("en").trainingSession.exclusion;
+      fireEvent.click(screen.getByRole("button", {name:exclusion.headwordHelp}));
+      expect(performAction).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole("menuitem", {name:platformV2Message("en",markKnown.messageKey)}));
+      await waitFor(() => expect(onProgressActionAccepted).toHaveBeenCalledWith(markKnown));
+      expect(performAction).toHaveBeenCalledOnce();
+      expect(fetchSingleSense).toHaveBeenCalledOnce();
+    } finally { vi.unstubAllEnvs(); }
+  });
+
+  test("approved failed lookup keeps retry and exit separate without a review", async () => {
+    try {
+      fetchSingleSense.mockResolvedValue({state:"lookup-http-error",status:503});
+      const onRetryAlternative = vi.fn(), onExit = vi.fn();
+      render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition"
+        contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="ru" onProgressActionAccepted={vi.fn()}
+        onRetryAlternative={onRetryAlternative} onExit={onExit} />);
+      await screen.findByTestId("training-v2-failure");
+      expect(screen.getByRole("alert")).toHaveTextContent(platformV2Message("ru","senseCard.training.loadFailed"));
+      fireEvent.click(screen.getByRole("button",{name:platformV2Message("ru","senseCard.training.retry")}));
+      expect(onRetryAlternative).toHaveBeenCalledOnce(); expect(onExit).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole("button",{name:getUiMessages("ru").trainingSession.back}));
+      expect(onExit).toHaveBeenCalledOnce(); expect(performAction).not.toHaveBeenCalled();
+    } finally { vi.unstubAllEnvs(); }
+  });
+
+  test.each(["en", "nl", "ru"] as const)("pending context preparation follows %s without grading", async interfaceLanguage => {
+    try {
+      loadContextPrompt.mockResolvedValue({ state: "translation-pending" });
+      render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext
+        trainingSessionId="session-context" contentLanguageCode="nl" translationTargetLanguageCode="ru"
+        interfaceLanguage={interfaceLanguage} onProgressActionAccepted={vi.fn()} />);
+      const text = getUiMessages(interfaceLanguage).trainingSession.contextPreparation;
+      await screen.findByText(text.pending);
+      const before = loadContextPrompt.mock.calls.length;
+      fireEvent.click(screen.getByRole("button",{name:platformV2Message(interfaceLanguage,"senseCard.training.retry")}));
+      await waitFor(() => expect(loadContextPrompt.mock.calls.length).toBeGreaterThan(before));
+      expect(performAction).not.toHaveBeenCalled();
+    } finally { vi.unstubAllEnvs(); }
+  });
+
+  test("context mode waits for its exact translation before allowing a review", async () => {
+    loadContextPrompt.mockResolvedValue({ state: "translation-pending" });
+    const onProgressActionAccepted = vi.fn();
+    render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word"
+      wordInContext trainingSessionId="session-context"
+      contentLanguageCode="nl" translationTargetLanguageCode="ru"
+      interfaceLanguage="en" onProgressActionAccepted={onProgressActionAccepted} />);
+    await screen.findByTestId("training-word-context-preparation");
+    expect(screen.queryByRole("button", { name: "Good" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Show answer" })).not.toBeInTheDocument();
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
+  });
+
+  test("a retired context source enters the ordinary unavailable replacement path", async () => {
+    loadContextPrompt.mockResolvedValue({ state: "source-unavailable" });
+    const onLoadFailure = vi.fn();
+    render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word"
+      wordInContext trainingSessionId="session-context"
+      contentLanguageCode="nl" translationTargetLanguageCode="ru"
+      interfaceLanguage="en" onProgressActionAccepted={vi.fn()}
+      onLoadFailure={onLoadFailure} />);
+    await waitFor(() => expect(onLoadFailure).toHaveBeenCalledWith("projection-missing"));
+    expect(screen.queryByRole("button", { name: "Good" })).not.toBeInTheDocument();
+  });
+
+  test("uses the V2 listening face and reveals the same answer surface", async () => {
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, mode: "listen-recognize" }}
+        mode="listen-recognize"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onPlayResolvedAudio={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByTestId("training-listening-face");
+    expect(screen.getByRole("button", { name: "Play audio" })).toBeVisible();
+    await waitFor(() => expect(resolveAudio).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole("heading", { name: "hand" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    expect(await screen.findByRole("heading", { name: "hand" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Not recognized" })).toBeVisible();
+    // Audio busy state and revealing the answer must not replay this card.
+    expect(resolveAudio).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Recognized" })).toBeVisible();
+  });
+
+  test("an unowned Training card cannot send a session-less progress action", async () => {
+    const onProgressActionAccepted = vi.fn();
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        trainingSessionId={null}
+        interactionDisabled
+        onProgressActionAccepted={onProgressActionAccepted}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    const reveal = screen.getByRole("button", { name: "Antwoord tonen" });
+    expect(reveal).toBeDisabled();
+    fireEvent.click(reveal);
+    expect(screen.queryByRole("button", { name: "Goed" })).not.toBeInTheDocument();
+    expect(performAction).not.toHaveBeenCalled();
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
+  });
+
+  test("grading swipes are disabled until the account enables them", async () => {
+    testingRender(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="nl" onProgressActionAccepted={vi.fn()} />);
+    await screen.findByRole("heading",{name:"hand"});
+    fireEvent.click(screen.getByRole("button",{name:"Antwoord tonen"}));
+    const wrapper=screen.getByTestId("training-card-swipe-wrapper");
+    fireEvent.touchStart(wrapper,{touches:[{clientX:0,clientY:0}]});
+    fireEvent.touchMove(wrapper,{touches:[{clientX:500,clientY:0}]});
+    fireEvent.touchEnd(wrapper);
+    expect(performAction).not.toHaveBeenCalled();
+    expect(wrapper.style.transform).toContain("translateX(0px)");
+  });
+
+  test("reviews an answer past the swipe threshold and resets a cancelled swipe", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    const onProgressActionAccepted = vi.fn();
+
+    try {
+      render(
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={onProgressActionAccepted}
+        />,
+      );
+
+      await screen.findByRole("heading", { name: "hand" });
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+      expect(wrapper).toHaveClass("motion-reduce:transition-none");
+
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+      expect(performAction).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 200, clientY: 0 }],
+      });
+      expect(wrapper.getAttribute("style")).toContain("translateX(200px)");
+      fireEvent.touchCancel(wrapper);
+      expect(wrapper.getAttribute("style")).toContain("translateX(0px)");
+      expect(performAction).not.toHaveBeenCalled();
+
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+
+      const success = singleSenseEntry.capabilities.find(
+        (candidate) =>
+          candidate.actionId === "review-card" &&
+          candidate.reviewResult === "success",
+      );
+      await waitFor(() =>
+        expect(performAction).toHaveBeenCalledWith(
+          success,
+          expect.objectContaining({ onRequestFrozen: expect.any(Function) }),
+        ),
+      );
+      expect(onProgressActionAccepted).toHaveBeenCalledWith(success, expect.any(String));
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
+  test("ignores answer swipes while a review action is busy", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    let resolveAction!: (value: unknown) => void;
+    performAction.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveAction = resolve;
+        }),
+    );
+
+    try {
+      render(
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+      const swipeRight = () => {
+        fireEvent.touchStart(wrapper, {
+          touches: [{ clientX: 0, clientY: 0 }],
+        });
+        fireEvent.touchMove(wrapper, {
+          touches: [{ clientX: 500, clientY: 0 }],
+        });
+        fireEvent.touchEnd(wrapper);
+      };
+
+      swipeRight();
+      await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+      swipeRight();
+      expect(performAction).toHaveBeenCalledOnce();
+      await act(async () =>
+        resolveAction({
+          contractVersion: "platform-action-v2",
+          actionId: "review-card",
+          clientEventId: "event-1",
+          accepted: true,
+          card: singleSenseEntry.card,
+        }),
+      );
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
+  test("returns a rejected swipe to rest, shows the error, and allows retry", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    performAction
+      .mockRejectedValueOnce(new Error("platform_request_timeout"))
+      .mockResolvedValueOnce({
+        contractVersion: "platform-action-v2",
+        actionId: "review-card",
+        clientEventId: "event-retry",
+        accepted: true,
+        card: singleSenseEntry.card,
+      });
+
+    try {
+      render(
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+      const swipeRight = () => {
+        fireEvent.touchStart(wrapper, {
+          touches: [{ clientX: 0, clientY: 0 }],
+        });
+        fireEvent.touchMove(wrapper, {
+          touches: [{ clientX: 500, clientY: 0 }],
+        });
+        fireEvent.touchEnd(wrapper);
+      };
+
+      swipeRight();
+      expect(await screen.findByRole("alert")).toBeVisible();
+      await waitFor(() =>
+        expect(wrapper.getAttribute("style")).toContain("translateX(0px)"),
+      );
+      expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+        "data-side",
+        "answer",
+      );
+
+      swipeRight();
+      await waitFor(() => expect(performAction).toHaveBeenCalledTimes(2));
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
+  test("returns an accepted but stalled transition to rest and retries only loading", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    const retryLoad = vi.fn();
+
+    function StalledHarness() {
+      const [stalled, setStalled] = React.useState(false);
+      return (
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          sessionNotice={
+            stalled
+              ? {
+                  kind: "error",
+                  message: "Next card failed to load",
+                  retryLabel: "Retry loading",
+                  onRetry: retryLoad,
+                }
+              : null
+          }
+          interactionDisabled={stalled}
+          onProgressActionAccepted={
+            (async () => {
+              setStalled(true);
+              return "stalled";
+            }) as never
+          }
+        />
+      );
+    }
+
+    try {
+      render(<StalledHarness />);
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+
+      expect(await screen.findByText("Next card failed to load")).toBeVisible();
+      expect(screen.getByRole("button", { name: "Goed" })).toBeDisabled();
+      await waitFor(() =>
+        expect(wrapper.getAttribute("style")).toContain("translateX(0px)"),
+      );
+      expect(performAction).toHaveBeenCalledOnce();
+      fireEvent.click(screen.getByRole("button", { name: "Retry loading" }));
+      expect(retryLoad).toHaveBeenCalledOnce();
+      expect(performAction).toHaveBeenCalledOnce();
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
+  test("does not make an accepted action retryable when next-card handling throws", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    const onProgressActionAccepted = vi.fn().mockRejectedValue(
+      new Error("presentation_failed"),
+    );
+
+    try {
+      render(
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="en"
+          onProgressActionAccepted={onProgressActionAccepted}
+        />,
+      );
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+
+      await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+      expect(onProgressActionAccepted).toHaveBeenCalledOnce();
+      expect(await screen.findByText("presentation_failed")).toBeVisible();
+      await waitFor(() =>
+        expect(wrapper.getAttribute("style")).toContain("translateX(0px)"),
+      );
+
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      expect(performAction).toHaveBeenCalledOnce();
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
+  test("replaces an answer with the next identity on its face in the same render", async () => {
+    const props = {
+      mode: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      interfaceLanguage: "nl" as const,
+      onProgressActionAccepted: vi.fn(),
+    };
+    const { rerender } = render(
+      <TestTrainingSenseCardV2Session word={word} {...props} />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "answer",
+    );
+
+    const replacementWord = { ...word, id: "entry-next" };
+    fetchSingleSense.mockResolvedValueOnce({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: { ...singleSenseEntry, entryId: replacementWord.id },
+    });
+    rerender(
+      <TestTrainingSenseCardV2Session word={replacementWord} {...props} />,
+    );
+
+    expect(await screen.findByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "face",
+    );
+  });
+
+  test("resets the same word to face for a new presentation identity", async () => {
+    const props = {
+      word,
+      mode: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      interfaceLanguage: "nl" as const,
+      onProgressActionAccepted: vi.fn().mockResolvedValue("accepted" as const),
+    };
+    const { rerender } = render(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        presentationIdentity="presentation-1"
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "answer",
+    );
+
+    rerender(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        presentationIdentity="presentation-2"
+      />,
+    );
+
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "face",
+    );
+  });
+
+  test("offers one global report action on face and answer and sends without advancing", async () => {
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: "11111111-1111-4111-8111-111111111111",
+        contentRevision: "a".repeat(64),
+      },
+    };
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        entryId: reportCapability.target.entryId,
+        reportContentRevision: reportCapability.target.contentRevision,
+        capabilities: [...singleSenseEntry.capabilities, reportCapability],
+      },
+    });
+    const onProgressActionAccepted = vi.fn();
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: reportCapability.target.entryId }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={onProgressActionAccepted}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    expect(screen.getAllByRole("button", { name: "Melden" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /Melden:/ })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Melden" }));
+    expect(await screen.findByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
+    expect(document.querySelector("#sense-card-report-context")).toHaveTextContent(
+      "Kaartcontext en sessiegegevens worden automatisch meegestuurd.",
+    );
+    expect(screen.getAllByRole("radio")).toHaveLength(6);
+    const reportAction = screen.getByRole("button", { name: "Melden" });
+    fireEvent.click(screen.getByRole("radio", { name: "Vertaling" }));
+    fireEvent.change(screen.getByPlaceholderText("Optionele opmerking (niet verplicht)"), {
+      target: { value: "wordt niet bewaard" },
+    });
+    const back = screen.getByRole("button", { name: "Terug" });
+    fireEvent.pointerDown(back, {
+      button: 0,
+      isPrimary: true,
+    });
+    fireEvent.pointerCancel(back, { button: 0, isPrimary: true });
+    expect(screen.getByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Vertaling" })).toBeChecked();
+    expect(screen.getByPlaceholderText("Optionele opmerking (niet verplicht)")).toHaveValue(
+      "wordt niet bewaard",
+    );
+    fireEvent.click(back);
+    expect(screen.queryByRole("dialog", { name: "Wat klopt er niet?" })).not.toBeInTheDocument();
+    await waitFor(() => expect(reportAction).toHaveFocus());
+
+    fireEvent.click(reportAction);
+    expect(await screen.findByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Vertaling" })).not.toBeChecked();
+    expect(screen.getByPlaceholderText("Optionele opmerking (niet verplicht)")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "Terug" }));
+    expect(screen.queryByRole("dialog", { name: "Wat klopt er niet?" })).not.toBeInTheDocument();
+    await waitFor(() => expect(reportAction).toHaveFocus());
+
+    fireEvent.click(reportAction);
+    const reopenedDialog = await screen.findByRole("dialog", { name: "Wat klopt er niet?" });
+    const backdrop = reopenedDialog;
+    fireEvent.pointerDown(backdrop, { button: 0, isPrimary: true });
+    fireEvent.pointerCancel(backdrop, { button: 0, isPrimary: true });
+    expect(screen.getByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
+    // Native dialog backdrops target the dialog outside its bounding rectangle.
+    fireEvent.click(backdrop, { clientX: -1, clientY: -1 });
+    expect(screen.queryByRole("dialog", { name: "Wat klopt er niet?" })).not.toBeInTheDocument();
+    await waitFor(() => expect(reportAction).toHaveFocus());
+
+    fireEvent.click(reportAction);
+    expect(await screen.findByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
+    const stage = screen.getByTestId("training-sense-card-stage");
+    for (const control of [
+      screen.getByRole("button", { name: "Terug" }),
+      screen.getByRole("button", { name: "Versturen" }),
+      screen.getByRole("radio", { name: "Vertaling" }),
+      screen.getByPlaceholderText("Optionele opmerking (niet verplicht)"),
+    ]) {
+      fireEvent.keyDown(control, { key: " " });
+      expect(stage).toHaveAttribute("data-side", "face");
+    }
+    fireEvent.click(screen.getByRole("radio", { name: "Vertaling" }));
+    fireEvent.click(screen.getByRole("button", { name: "Versturen" }));
+    await screen.findByText("Verzonden");
+    expect(queueDiagnosticReport).toHaveBeenCalledOnce();
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
+    expect(performAction).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Sluiten" }).at(-1)!);
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(screen.getAllByRole("button", { name: "Melden" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /Melden:/ })).not.toBeInTheDocument();
+  });
+
+  test("retries the exact same frozen report identity and payload", async () => {
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: "11111111-1111-4111-8111-111111111111",
+        contentRevision: "a".repeat(64),
+      },
+    };
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        entryId: reportCapability.target.entryId,
+        reportContentRevision: reportCapability.target.contentRevision,
+        capabilities: [...singleSenseEntry.capabilities, reportCapability],
+      },
+    });
+    queueDiagnosticReport
+      .mockRejectedValueOnce(new Error("diagnostic_outbox_failed"))
+      .mockResolvedValueOnce({ state: "sent" });
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: reportCapability.target.entryId }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Melden" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Iets anders" }));
+    fireEvent.change(screen.getByPlaceholderText("Optionele opmerking (niet verplicht)"), {
+      target: { value: "zelfde melding" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Versturen" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Probeer opnieuw");
+    fireEvent.click(screen.getByRole("button", { name: "Opnieuw proberen" }));
+    await screen.findByText("Verzonden");
+
+    expect(buildDiagnosticReport).toHaveBeenCalledOnce();
+    expect(queueDiagnosticReport).toHaveBeenCalledTimes(2);
+    expect(queueDiagnosticReport.mock.calls[1][0]).toBe(
+      queueDiagnosticReport.mock.calls[0][0],
+    );
+    expect(queueDiagnosticReport.mock.calls[1][0]).toMatchObject({
+      reportId: "55555555-5555-4555-8555-555555555555",
+      kind: "other",
+      comment: "zelfde melding",
+    });
+  });
+
+  test("announces sending and terminal delivery on one stable live region", async () => {
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: "11111111-1111-4111-8111-111111111111",
+        contentRevision: "a".repeat(64),
+      },
+    };
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        entryId: reportCapability.target.entryId,
+        reportContentRevision: reportCapability.target.contentRevision,
+        capabilities: [...singleSenseEntry.capabilities, reportCapability],
+      },
+    });
+    let resolveDelivery!: (value: { state: "sent" }) => void;
+    queueDiagnosticReport.mockImplementationOnce(
+      () => new Promise((resolve) => { resolveDelivery = resolve; }),
+    );
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: reportCapability.target.entryId }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Melden" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Iets anders" }));
+    const dialog = screen.getByRole("dialog", { name: "Wat klopt er niet?" });
+    const announcement = screen.getByTestId("report-delivery-announcement");
+    fireEvent.click(screen.getByRole("button", { name: "Versturen" }));
+    await waitFor(() => expect(dialog).toHaveAttribute("aria-busy", "true"));
+    expect(announcement).toHaveTextContent("Versturen");
+    await act(async () => resolveDelivery({ state: "sent" }));
+    await waitFor(() => expect(dialog).toHaveAttribute("aria-busy", "false"));
+    expect(screen.getByTestId("report-delivery-announcement")).toBe(announcement);
+    expect(announcement).toHaveTextContent("Verzonden");
+    expect(screen.getByRole("button", { name: "Sluiten" })).toHaveFocus();
+    expect(dialog).toHaveAttribute("aria-describedby", "sense-card-report-delivery-description");
+  });
+
+  test("uses the exact server capability, then asks the session owner to advance", async () => {
+    const onProgressActionAccepted = vi.fn();
+    const onProgressActionStarting = vi.fn();
+    const onProgressActionPendingChange = vi.fn();
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionStarting={onProgressActionStarting}
+        onProgressActionPendingChange={onProgressActionPendingChange}
+        onProgressActionAccepted={onProgressActionAccepted}
+      />,
+    );
+
+    expect(screen.getByTestId("training-v2-loading")).toHaveAttribute(
+      "data-training-v2-state",
+      "loading",
+    );
+    expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
+    await screen.findByRole("heading", { name: "hand" });
+    expect(screen.getByTestId("training-sense-card-v2")).toHaveAttribute(
+      "data-training-v2-state",
+      "ready",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Goed" }));
+
+    const capability = singleSenseEntry.capabilities.find(
+      (candidate) =>
+        candidate.actionId === "review-card" &&
+        candidate.reviewResult === "success",
+    );
+    await waitFor(() =>
+      expect(performAction).toHaveBeenCalledWith(
+        capability,
+        expect.objectContaining({ onRequestFrozen: expect.any(Function) }),
+      ),
+    );
+    expect(onProgressActionStarting).toHaveBeenCalledOnce();
+    expect(onProgressActionStarting.mock.invocationCallOrder[0]).toBeLessThan(
+      performAction.mock.invocationCallOrder[0]!,
+    );
+    expect(onProgressActionPendingChange).toHaveBeenNthCalledWith(
+      1,
+      true,
+      expect.any(Object),
+    );
+    const pendingToken = onProgressActionPendingChange.mock.calls[0]?.[1];
+    expect(onProgressActionPendingChange).toHaveBeenLastCalledWith(
+      false,
+      pendingToken,
+    );
+    expect(onProgressActionAccepted).toHaveBeenCalledWith(capability, expect.any(String));
+  });
+
+  test("offers the server-provided Mark Known capability on the card face", async () => {
+    const onProgressActionAccepted = vi.fn();
+    const markKnown = singleSenseEntry.capabilities.find(
+      (candidate) => candidate.actionId === "mark-known",
+    )!;
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={onProgressActionAccepted}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "face",
+    );
+    const markKnownButton = screen.getByRole("button", {
+      name: "Markeer als bekend",
+    });
+    fireEvent.keyDown(markKnownButton, { key: " " });
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "face",
+    );
+    fireEvent.click(markKnownButton);
+    await waitFor(() =>
+      expect(performAction).toHaveBeenCalledWith(
+        markKnown,
+        expect.objectContaining({ onRequestFrozen: expect.any(Function) }),
+      ),
+    );
+    expect(onProgressActionAccepted).toHaveBeenCalledWith(markKnown);
+  });
+
+  test("does not invent Mark Known on the face when the server omits the capability", async () => {
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        capabilities: singleSenseEntry.capabilities.filter(
+          (candidate) => candidate.actionId !== "mark-known",
+        ),
+      },
+    });
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    expect(
+      screen.queryByRole("button", { name: "Markeer als bekend" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("freezes the exact failed training operation for a later global report", async () => {
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: "11111111-1111-4111-8111-111111111111",
+        contentRevision: "a".repeat(64),
+      },
+    };
+    const entry = {
+      ...singleSenseEntry,
+      entryId: reportCapability.target.entryId,
+      reportContentRevision: reportCapability.target.contentRevision,
+      capabilities: [...singleSenseEntry.capabilities, reportCapability],
+    };
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry,
+    });
+    performAction.mockImplementationOnce(
+      (capability: typeof singleSenseEntry.capabilities[number], context: {
+        onRequestFrozen?: (request: unknown) => void;
+      }) => {
+        context.onRequestFrozen?.({
+          actionId: capability.actionId,
+          clientEventId: "33333333-3333-4333-8333-333333333333",
+          target: capability.target,
+          ...("reviewResult" in capability
+            ? { reviewResult: capability.reviewResult }
+            : {}),
+        });
+        return Promise.reject(new Error("platform_request_timeout"));
+      },
+    );
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: entry.entryId }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Goed" }));
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", { name: "Melden" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Trainingsactie" }));
+    fireEvent.click(screen.getByRole("button", { name: "Versturen" }));
+
+    await waitFor(() => expect(queueDiagnosticReport).toHaveBeenCalledOnce());
+    expect(queueDiagnosticReport.mock.calls[0][0]).toMatchObject({
+      kind: "training-action",
+      snapshot: {
+        operation: {
+          request: {
+            actionId: "review-card",
+            clientEventId: "33333333-3333-4333-8333-333333333333",
+            reviewResult: "success",
+          },
+          observedOutcome: "timeout",
+        },
+      },
+    });
+  });
+
+  test("keeps a failed action attached across state-conflict refresh of the same turn", async () => {
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: "11111111-1111-4111-8111-111111111111",
+        contentRevision: "a".repeat(64),
+      },
+    };
+    const entry = {
+      ...singleSenseEntry,
+      entryId: reportCapability.target.entryId,
+      reportContentRevision: reportCapability.target.contentRevision,
+      capabilities: [...singleSenseEntry.capabilities, reportCapability],
+    };
+    fetchSingleSense
+      .mockResolvedValueOnce({ state: "ready", group: singleSenseGroup, entry })
+      .mockResolvedValueOnce({
+        state: "ready",
+        group: singleSenseGroup,
+        entry: {
+          ...entry,
+          card: {
+            ...entry.card!,
+            stateRevision: "44444444-4444-4444-8444-444444444444",
+          },
+        },
+      });
+    performAction.mockImplementationOnce(
+      (capability: typeof singleSenseEntry.capabilities[number], context: {
+        onRequestFrozen?: (request: unknown) => void;
+      }) => {
+        context.onRequestFrozen?.({
+          actionId: capability.actionId,
+          clientEventId: "33333333-3333-4333-8333-333333333333",
+          target: capability.target,
+          ...("reviewResult" in capability
+            ? { reviewResult: capability.reviewResult }
+            : {}),
+        });
+        return Promise.reject(new Error("state_conflict"));
+      },
+    );
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: entry.entryId }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Goed" }));
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", { name: "Melden" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Trainingsactie" }));
+    fireEvent.click(screen.getByRole("button", { name: "Versturen" }));
+
+    await waitFor(() => expect(queueDiagnosticReport).toHaveBeenCalledOnce());
+    expect(queueDiagnosticReport.mock.calls[0][0]).toMatchObject({
+      snapshot: {
+        operation: {
+          observedOutcome: "state-conflict",
+          request: {
+            clientEventId: "33333333-3333-4333-8333-333333333333",
+          },
+        },
+      },
+    });
+  });
+
+  test("shows an explicit V2 error instead of the legacy card when lookup returns HTTP 500", async () => {
+    fetchSingleSense.mockResolvedValue({
+      state: "lookup-http-error",
+      status: 500,
+    });
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    const errorState = await screen.findByTestId("training-v2-failure");
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(errorState).toHaveAttribute("data-training-renderer", "v2");
+    expect(errorState).toHaveAttribute(
+      "data-training-v2-state",
+      "lookup-http-error",
+    );
+    expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Opnieuw proberen" })).toBeInTheDocument();
+  });
+
+  test.each(["contract-mismatch", "entry-not-found"] as const)(
+    "shows retryable V2 state %s without legacy content",
+    async (state) => {
+      fetchSingleSense.mockResolvedValue({ state });
+      render(
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="en"
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+
+      expect(await screen.findByTestId("training-v2-failure")).toHaveAttribute(
+        "data-training-v2-state",
+        state,
+      );
+      expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    },
+  );
+
+  test("retries a failed V2 lookup", async () => {
+    fetchSingleSense
+      .mockResolvedValueOnce({ state: "entry-not-found" })
+      .mockResolvedValueOnce({
+        state: "ready",
+        group: singleSenseGroup,
+        entry: singleSenseEntry,
+      });
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("heading", { name: "hand" })).toBeInTheDocument();
+    expect(fetchSingleSense).toHaveBeenCalledTimes(2);
+  });
+
+  test.each([false, true])("renders the klaar idiom explanation in reverse mode (prefetched=%s)", async (prefetched) => {
+    // Production #325: the selected sense has an explanation, not a definition.
+    const lookup = {
+      state: "ready" as const,
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        contentNodes: [
+          { ...singleSenseEntry.contentNodes[0], contentNodeId: "klaar-idiom", kind: "idiom" as const, parentContentNodeId: null, order: 0, text: "ergens echt genoeg van hebben" },
+          { ...singleSenseEntry.contentNodes[0], contentNodeId: "klaar-explanation", kind: "idiom-explanation" as const, parentContentNodeId: "klaar-idiom", order: 1, text: "iets willen stoppen omdat het je tegenstaat" },
+          { ...singleSenseEntry.contentNodes[0], contentNodeId: "klaar-example", kind: "example" as const, parentContentNodeId: "klaar-idiom", order: 2, text: "ik heb genoeg van dat eindeloze geklaag" },
+        ],
+      },
+    };
+    fetchSingleSense.mockResolvedValue(lookup);
+    if (prefetched) {
+      peekPrefetched.mockReturnValue(lookup);
+      consumePrefetched.mockReturnValue(lookup);
+    }
+    const onLoadFailure = vi.fn();
+    const onProgressActionAccepted = vi.fn();
+    render(<TestTrainingSenseCardV2Session
+      word={{ ...word, mode: "definition-to-word" }}
+      mode="definition-to-word"
+      contentLanguageCode="nl"
+      translationTargetLanguageCode="ru"
+      interfaceLanguage="en"
+      onLoadFailure={onLoadFailure}
+      onProgressActionAccepted={onProgressActionAccepted}
+    />);
+    expect(await screen.findByTestId("reverse-prompt")).toHaveTextContent("iets willen stoppen omdat het je tegenstaat");
+    expect(screen.queryByTestId("training-v2-failure")).not.toBeInTheDocument();
+    expect(onLoadFailure).not.toHaveBeenCalled();
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    expect(await screen.findByText("ergens echt genoeg van hebben")).toBeVisible();
+    expect(screen.getByText("ik heb genoeg van dat eindeloze geklaag")).toBeVisible();
+  });
+
+  test("classifies a structurally invalid card and asks the session owner for a fresh candidate", async () => {
+    const onLoadFailure = vi.fn();
+    const onRetryAlternative = vi.fn();
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: { ...singleSenseEntry, contentNodes: [] },
+    });
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="definition-to-word"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+        onLoadFailure={onLoadFailure}
+        onRetryAlternative={onRetryAlternative}
+      />,
+    );
+
+    expect(await screen.findByTestId("training-v2-failure")).toHaveAttribute(
+      "data-training-v2-state",
+      "reverse-definition-missing",
+    );
+    expect(onLoadFailure).toHaveBeenCalledWith("reverse-definition-missing");
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(onRetryAlternative).toHaveBeenCalledWith(
+      "reverse-definition-missing",
+    );
+    expect(fetchSingleSense).toHaveBeenCalledTimes(1);
+  });
+
+  test("keeps a rejected retry recoverable instead of getting stuck loading", async () => {
+    fetchSingleSense
+      .mockResolvedValueOnce({ state: "entry-not-found" })
+      .mockRejectedValueOnce(new Error("Failed to fetch"));
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByTestId("training-v2-failure")).toHaveAttribute(
+      "data-training-v2-state",
+      "lookup-http-error",
+    );
+    expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
+  });
+
+  test("opens the durable report sheet from the existing global action", async () => {
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: singleSenseEntry.entryId,
+        contentRevision: singleSenseEntry.contentRevision,
+      },
+    };
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        reportContentRevision: "a".repeat(64),
+        capabilities: [...singleSenseEntry.capabilities, reportCapability],
+      },
+    });
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Melden" }));
+    expect(await screen.findByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
+    expect(performAction).not.toHaveBeenCalled();
+  });
+
+  test("announces and focuses the replacement card after the queue advances", async () => {
+    const nextEntry = {
+      ...singleSenseEntry,
+      entryId: "entry-bank-1",
+      contentRevision: "content-bank-1",
+    };
+    const nextGroup = {
+      ...singleSenseGroup,
+      headwordGroupId: "group-bank",
+      header: {
+        ...singleSenseGroup.header,
+        text: "bank",
+        displayPronunciation: "bank",
+      },
+      entries: [nextEntry],
+    };
+    fetchSingleSense
+      .mockResolvedValueOnce({ state: "ready", group: singleSenseGroup, entry: singleSenseEntry })
+      .mockResolvedValueOnce({ state: "ready", group: nextGroup, entry: nextEntry });
+    const view = render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    const liveRegion = view.container.querySelector('[aria-live="polite"]');
+    expect(liveRegion).toBeInTheDocument();
+    view.rerender(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: nextEntry.entryId, headword: "bank" }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        focusOnPresentation
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "bank" });
+    await waitFor(() =>
+      expect(view.container.querySelector('[aria-live="polite"]')).toHaveTextContent(
+        "Volgende trainingskaart",
+      ),
+    );
+    expect(screen.getByText("Volgende trainingskaart")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId("training-sense-card-stage")).toHaveFocus(),
+    );
+
+    const settingsControl = document.createElement("button");
+    settingsControl.textContent = "Settings control";
+    document.body.append(settingsControl);
+    settingsControl.focus();
+    fetchSingleSense.mockResolvedValueOnce({
+      state: "lookup-http-error",
+      status: 503,
+    });
+    view.rerender(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: nextEntry.entryId, headword: "bank" }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="ru"
+        interfaceLanguage="en"
+        focusOnPresentation
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(fetchSingleSense).toHaveBeenCalledTimes(3));
+    await screen.findByRole("alert");
+    expect(view.container.querySelector('[aria-live="polite"]')).toBe(liveRegion);
+    expect(liveRegion).toHaveTextContent("Volgende trainingskaart");
+    expect(settingsControl).toHaveFocus();
+
+    fetchSingleSense.mockResolvedValueOnce({
+      state: "ready",
+      group: nextGroup,
+      entry: nextEntry,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    await waitFor(() => expect(fetchSingleSense).toHaveBeenCalledTimes(4));
+    await screen.findByRole("heading", { name: "bank" });
+    expect(view.container.querySelector('[aria-live="polite"]')).toBe(liveRegion);
+    expect(liveRegion).toHaveTextContent("Volgende trainingskaart");
+    expect(settingsControl).toHaveFocus();
+    settingsControl.remove();
+  });
+
+  test("keeps undo available across a same-card remount", async () => {
+    const onProgressActionAccepted = vi.fn();
+    const markKnown = singleSenseEntry.capabilities.find(
+      (candidate) => candidate.actionId === "mark-known",
+    )!;
+    const undoKnown = {
+      actionId: "undo-known" as const,
+      elementId: "sense-card.known.undo",
+      messageKey: "senseCard.known.undo",
+      target: {
+        ...markKnown.target,
+        stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+        activeKnownMarkId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+        knownMarkRevision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+      },
+    };
+    const knownEntry = {
+      ...singleSenseEntry,
+      card: {
+        cardTypeId: "word-to-definition" as const,
+        scheduler: { phase: "hidden" as const, repeatCount: 3 },
+        knownMark: {
+          markId: undoKnown.target.activeKnownMarkId,
+          revision: undoKnown.target.knownMarkRevision,
+          markedAt: "2026-08-05T10:00:00.000Z",
+        },
+        stateRevision: undoKnown.target.stateRevision,
+      },
+      capabilities: [undoKnown],
+    };
+    fetchSingleSense
+      .mockResolvedValueOnce({ state: "ready", group: singleSenseGroup, entry: singleSenseEntry })
+      .mockResolvedValueOnce({ state: "ready", group: singleSenseGroup, entry: knownEntry });
+    performAction
+      .mockResolvedValueOnce({
+        contractVersion: "platform-action-v2",
+        actionId: "mark-known",
+        clientEventId: "event-known",
+        accepted: true,
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "hidden", repeatCount: 3 },
+          knownMark: {
+            markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+            revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+            markedAt: "2026-08-05T10:00:00.000Z",
+          },
+          stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+        },
+      })
+      .mockResolvedValueOnce({
+        contractVersion: "platform-action-v2",
+        actionId: "undo-known",
+        clientEventId: "event-undo",
+        accepted: true,
+        card: {
+          ...singleSenseEntry.card!,
+          stateRevision: "d1459359-7bed-40e0-a360-243b8329aad0",
+        },
+      });
+
+    const firstRender = render(
+      <>
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={onProgressActionAccepted}
+        />
+        <TrainingKnownUndoNotice
+          interfaceLanguage="nl"
+          currentPresentationIdentity={testPresentationIdentity(
+            word,
+            "word-to-definition",
+          )}
+        />
+      </>,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Markeer als bekend" }));
+
+    await waitFor(() => expect(onProgressActionAccepted).toHaveBeenCalled());
+    firstRender.unmount();
+    render(
+      <>
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={onProgressActionAccepted}
+        />
+        <TrainingKnownUndoNotice
+          interfaceLanguage="nl"
+          currentPresentationIdentity={testPresentationIdentity(
+            word,
+            "word-to-definition",
+          )}
+        />
+      </>,
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Markering ongedaan maken" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Melding sluiten" }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Markering ongedaan maken" }),
+    );
+
+    await waitFor(() => expect(performAction).toHaveBeenCalledTimes(2));
+    expect(performAction.mock.calls[1][0]).toEqual(undoKnown);
+    expect(performAction.mock.calls[1][1]).toEqual({
+      trainingSessionId: undefined,
+    });
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Markering ongedaan maken" }),
+      ).not.toBeInTheDocument(),
+    );
+
+  });
+
+  test("drops a legacy sessionless undo notice in session-bound training", async () => {
+    rememberPendingKnownUndo({
+      capability: {
+        actionId: "undo-known",
+        elementId: "sense-card.known.undo",
+        messageKey: "senseCard.known.undo",
+        target: {
+          kind: "sense-card",
+          entryId: singleSenseEntry.entryId,
+          cardTypeId: "word-to-definition",
+          stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+          activeKnownMarkId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          knownMarkRevision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+        },
+      },
+      presentationIdentity: testPresentationIdentity(word, "word-to-definition"),
+    });
+
+    render(
+      <TrainingKnownUndoNotice
+        interfaceLanguage="nl"
+        currentPresentationIdentity={testPresentationIdentity(
+          word,
+          "word-to-definition",
+        )}
+        requireTrainingSessionId
+      />,
+    );
+
+    await waitFor(() => expect(readPendingKnownUndo()).toBeNull());
+    expect(
+      screen.queryByRole("button", { name: "Markering ongedaan maken" }),
+    ).not.toBeInTheDocument();
+    expect(performAction).not.toHaveBeenCalled();
+  });
+
+  test("keeps same-presentation undo available when session storage is unavailable", async () => {
+    const onProgressActionAccepted = vi.fn();
+    const sessionStorageDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      "sessionStorage",
+    );
+    const unavailableStorage = {
+      getItem: vi.fn(() => {
+        throw new Error("storage_unavailable");
+      }),
+      setItem: vi.fn(() => {
+        throw new Error("storage_unavailable");
+      }),
+      removeItem: vi.fn(() => {
+        throw new Error("storage_unavailable");
+      }),
+    };
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      value: unavailableStorage,
+    });
+    performAction.mockResolvedValueOnce({
+      contractVersion: "platform-action-v2",
+      actionId: "mark-known",
+      clientEventId: "event-known-memory-fallback",
+      accepted: true,
+      card: {
+        cardTypeId: "word-to-definition",
+        scheduler: { phase: "hidden", repeatCount: 3 },
+        knownMark: {
+          markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+          markedAt: "2026-08-05T10:00:00.000Z",
+        },
+        stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+      },
+    });
+
+    try {
+      render(
+        <>
+          <TestTrainingSenseCardV2Session
+            word={word}
+            mode="word-to-definition"
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage="nl"
+            onProgressActionAccepted={onProgressActionAccepted}
+          />
+          <TrainingKnownUndoNotice
+            interfaceLanguage="nl"
+            currentPresentationIdentity={testPresentationIdentity(
+              word,
+              "word-to-definition",
+            )}
+          />
+        </>,
+      );
+
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Markeer als bekend" }),
+      );
+
+      const undo = await screen.findByRole("button", {
+        name: "Markering ongedaan maken",
+      });
+      fireEvent.click(undo);
+      await waitFor(() => expect(performAction).toHaveBeenCalledTimes(2));
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("button", {
+            name: "Markering ongedaan maken",
+          }),
+        ).not.toBeInTheDocument(),
+      );
+    } finally {
+      if (sessionStorageDescriptor) {
+        Object.defineProperty(
+          window,
+          "sessionStorage",
+          sessionStorageDescriptor,
+        );
+      } else {
+        delete (window as { sessionStorage?: Storage }).sessionStorage;
+      }
+    }
+  });
+
+  test("advances after mark-known without depending on a post-action lookup", async () => {
+    const onProgressActionAccepted = vi.fn();
+    const markKnown = singleSenseEntry.capabilities.find(
+      (candidate) => candidate.actionId === "mark-known",
+    )!;
+    performAction.mockResolvedValueOnce({
+      contractVersion: "platform-action-v2",
+      actionId: "mark-known",
+      clientEventId: "event-known",
+      accepted: true,
+      card: {
+        cardTypeId: "word-to-definition",
+        scheduler: { phase: "hidden", repeatCount: 3 },
+        knownMark: {
+          markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+          markedAt: "2026-08-05T10:00:00.000Z",
+        },
+        stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+      },
+    });
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={onProgressActionAccepted}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Markeer als bekend" }));
+
+    await waitFor(() =>
+      expect(onProgressActionAccepted).toHaveBeenCalledWith(markKnown),
+    );
+    expect(fetchSingleSense).toHaveBeenCalledTimes(1);
+  });
+
+  test("dismisses the Mark Known success notice when the next card is presented", async () => {
+    const markKnown = singleSenseEntry.capabilities.find(
+      (candidate) => candidate.actionId === "mark-known",
+    )!;
+    const nextEntry = {
+      ...singleSenseEntry,
+      entryId: "entry-bank-after-known",
+      contentRevision: "content-bank-after-known",
+    };
+    const nextGroup = {
+      ...singleSenseGroup,
+      headwordGroupId: "group-bank-after-known",
+      header: {
+        ...singleSenseGroup.header,
+        text: "bank",
+        displayPronunciation: "bank",
+      },
+      entries: [nextEntry],
+    };
+    fetchSingleSense
+      .mockResolvedValueOnce({
+        state: "ready",
+        group: singleSenseGroup,
+        entry: singleSenseEntry,
+      })
+      .mockResolvedValueOnce({
+        state: "ready",
+        group: nextGroup,
+        entry: nextEntry,
+      });
+    performAction.mockResolvedValueOnce({
+      contractVersion: "platform-action-v2",
+      actionId: "mark-known",
+      clientEventId: "event-known-next-card",
+      accepted: true,
+      card: {
+        cardTypeId: "word-to-definition",
+        scheduler: { phase: "hidden", repeatCount: 3 },
+        knownMark: {
+          markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+          markedAt: "2026-08-05T10:00:00.000Z",
+        },
+        stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+      },
+    });
+
+    const renderSession = (nextWord: TrainingWord) => (
+      <>
+        <TestTrainingSenseCardV2Session
+          word={nextWord}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={vi.fn()}
+        />
+        <TrainingKnownUndoNotice
+          interfaceLanguage="nl"
+          currentPresentationIdentity={testPresentationIdentity(
+            nextWord,
+            "word-to-definition",
+          )}
+        />
+      </>
+    );
+    const view = render(renderSession(word));
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Markeer als bekend" }));
+    expect(
+      await screen.findByRole("button", { name: "Markering ongedaan maken" }),
+    ).toBeInTheDocument();
+
+    view.rerender(
+      renderSession({ ...word, id: nextEntry.entryId, headword: "bank" }),
+    );
+    await screen.findByRole("heading", { name: "bank" });
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Markering ongedaan maken" }),
+      ).not.toBeInTheDocument(),
+    );
+
+    expect(performAction).toHaveBeenCalledWith(
+      markKnown,
+      expect.objectContaining({ onRequestFrozen: expect.any(Function) }),
+    );
+  });
+
+  test("does not resurrect a Known notice when the same entry gets a new presentation", async () => {
+    performAction.mockResolvedValueOnce({
+      contractVersion: "platform-action-v2",
+      actionId: "mark-known",
+      clientEventId: "event-known-repeated-entry",
+      accepted: true,
+      card: {
+        cardTypeId: "word-to-definition",
+        scheduler: { phase: "hidden", repeatCount: 3 },
+        knownMark: {
+          markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+          markedAt: "2026-08-05T10:00:00.000Z",
+        },
+        stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+      },
+    });
+    const renderPresentation = (
+      presentationIdentity: string,
+      mode: "word-to-definition" | "definition-to-word",
+    ) => (
+      <>
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode={mode}
+          presentationIdentity={presentationIdentity}
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={vi.fn()}
+        />
+        <TrainingKnownUndoNotice
+          interfaceLanguage="nl"
+          currentPresentationIdentity={presentationIdentity}
+        />
+      </>
+    );
+    const view = render(
+      renderPresentation("repeated-entry-presentation-1", "word-to-definition"),
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Markeer als bekend" }));
+    expect(
+      await screen.findByRole("button", { name: "Markering ongedaan maken" }),
+    ).toBeInTheDocument();
+
+    view.rerender(
+      renderPresentation("repeated-entry-presentation-2", "word-to-definition"),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Markering ongedaan maken" }),
+      ).not.toBeInTheDocument(),
+    );
+
+    view.rerender(
+      renderPresentation("repeated-entry-presentation-3", "definition-to-word"),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Markering ongedaan maken" }),
+      ).not.toBeInTheDocument(),
+    );
+
+    view.rerender(
+      renderPresentation("repeated-entry-presentation-1", "word-to-definition"),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Markering ongedaan maken" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  test("discards an Undo failure that settles after the presentation changes", async () => {
+    performAction.mockResolvedValueOnce({
+      contractVersion: "platform-action-v2",
+      actionId: "mark-known",
+      clientEventId: "event-known-pending-undo",
+      accepted: true,
+      card: {
+        cardTypeId: "word-to-definition",
+        scheduler: { phase: "hidden", repeatCount: 3 },
+        knownMark: {
+          markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+          markedAt: "2026-08-05T10:00:00.000Z",
+        },
+        stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+      },
+    });
+    let rejectUndo!: (cause: Error) => void;
+    const renderPresentation = (presentationIdentity: string) => (
+      <>
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          presentationIdentity={presentationIdentity}
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={vi.fn()}
+        />
+        <TrainingKnownUndoNotice
+          interfaceLanguage="nl"
+          currentPresentationIdentity={presentationIdentity}
+        />
+      </>
+    );
+    const view = render(renderPresentation("pending-undo-presentation-1"));
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Markeer als bekend" }));
+    const undo = await screen.findByRole("button", {
+      name: "Markering ongedaan maken",
+    });
+    performAction.mockImplementationOnce(
+      () => new Promise((_, reject) => { rejectUndo = reject; }),
+    );
+    fireEvent.click(undo);
+    view.rerender(renderPresentation("pending-undo-presentation-2"));
+
+    await act(async () => rejectUndo(new Error("stale_undo_failure")));
+    await waitFor(() =>
+      expect(screen.queryByText("stale_undo_failure")).not.toBeInTheDocument(),
+    );
+  });
+
+  test.each([
+    {
+      interfaceLanguage: "en" as const,
+      markLabel: "Mark as known",
+      undoLabel: "Undo known",
+      failureMessage: "Could not undo the known mark. Please try again.",
+    },
+    {
+      interfaceLanguage: "nl" as const,
+      markLabel: "Markeer als bekend",
+      undoLabel: "Markering ongedaan maken",
+      failureMessage:
+        "De markering kon niet ongedaan worden gemaakt. Probeer het opnieuw.",
+    },
+    {
+      interfaceLanguage: "ru" as const,
+      markLabel: platformV2Message("ru", "senseCard.known.mark"),
+      undoLabel: "Отменить отметку",
+      failureMessage: "Не удалось отменить отметку. Попробуйте ещё раз.",
+    },
+  ])(
+    "localizes an active Undo failure in $interfaceLanguage without exposing its code",
+    async ({ interfaceLanguage, markLabel, undoLabel, failureMessage }) => {
+      performAction
+        .mockResolvedValueOnce({
+          contractVersion: "platform-action-v2",
+          actionId: "mark-known",
+          clientEventId: `event-known-undo-failure-${interfaceLanguage}`,
+          accepted: true,
+          card: {
+            cardTypeId: "word-to-definition",
+            scheduler: { phase: "hidden", repeatCount: 3 },
+            knownMark: {
+              markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+              revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+              markedAt: "2026-08-05T10:00:00.000Z",
+            },
+            stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+          },
+        })
+        .mockRejectedValueOnce(new Error("http_500"));
+      const presentationIdentity = `undo-failure-${interfaceLanguage}`;
+
+      render(
+        <>
+          <TestTrainingSenseCardV2Session
+            word={word}
+            mode="word-to-definition"
+            presentationIdentity={presentationIdentity}
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage={interfaceLanguage}
+            onProgressActionAccepted={vi.fn()}
+          />
+          <TrainingKnownUndoNotice
+            interfaceLanguage={interfaceLanguage}
+            currentPresentationIdentity={presentationIdentity}
+          />
+        </>,
+      );
+
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(screen.getByRole("button", { name: markLabel }));
+      fireEvent.click(await screen.findByRole("button", { name: undoLabel }));
+
+      expect(await screen.findByText(failureMessage)).toBeInTheDocument();
+      expect(screen.queryByText("http_500")).not.toBeInTheDocument();
+    },
+  );
+
+  test("resolves and plays audio from the DTO header capability", async () => {
+    const onPlayResolvedAudio = vi.fn();
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onPlayResolvedAudio={onPlayResolvedAudio}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    await waitFor(() =>
+      expect(preloadAudio).toHaveBeenCalledWith({
+        cacheOwnerId: "test-user",
+        capability: singleSenseGroup.header.audio,
+        entryId: singleSenseEntry.entryId,
+        text: "hand",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Afspelen" }));
+
+    await waitFor(() =>
+      expect(resolveAudio).toHaveBeenCalledWith({
+        cacheOwnerId: "test-user",
+        capability: singleSenseGroup.header.audio,
+        entryId: singleSenseEntry.entryId,
+        signal: expect.any(AbortSignal),
+        text: "hand",
+      }),
+    );
+    expect(onPlayResolvedAudio).toHaveBeenCalledWith(
+      "/audio/hand.mp3",
+      "hand",
+    );
+  });
+
+  test.each(["next-card","unmount","paused"])("delayed audio cannot play after %s",async transition=>{
+    let release!:(url:string)=>void;
+    resolveAudio.mockImplementation(()=>new Promise<string>(resolve=>{release=resolve;}));
+    const play=vi.fn();
+    const props={word,mode:"word-to-definition" as const,contentLanguageCode:"nl",translationTargetLanguageCode:"en",interfaceLanguage:"nl" as const,onPlayResolvedAudio:play,onProgressActionAccepted:vi.fn()};
+    const view=render(<TestTrainingSenseCardV2Session {...props} presentationIdentity="first"/>);
+    await screen.findByRole("heading",{name:"hand"});
+    fireEvent.click(screen.getByRole("button",{name:"Afspelen"}));
+    await waitFor(()=>expect(resolveAudio).toHaveBeenCalledOnce());
+    const signal=resolveAudio.mock.calls[0][0].signal as AbortSignal;
+    if(transition==="unmount")view.unmount();
+    else if(transition==="paused")view.rerender(<TestTrainingSenseCardV2Session {...props} presentationIdentity="first" presentationActive={false}/>);
+    else view.rerender(<TestTrainingSenseCardV2Session {...props} presentationIdentity="second"/>);
+    expect(signal.aborted).toBe(true);
+    await act(async()=>release("blob:late"));
+    expect(play).not.toHaveBeenCalled();
+    if(transition==="paused"){
+      view.rerender(<TestTrainingSenseCardV2Session {...props} presentationIdentity="first" presentationActive={true}/>);
+      await waitFor(()=>expect(screen.getByRole("button",{name:"Afspelen"})).not.toBeDisabled());
+    }
+  });
+
+  test.each([
+    { mode: "word-to-definition", faceAudioVisible: true },
+    { mode: "definition-to-word", faceAudioVisible: false },
+  ] as const)(
+    "renders projected audio safely for $mode",
+    async ({ mode, faceAudioVisible }) => {
+      const projected = projectedTrainingAudioResult(mode, true);
+      fetchSingleSense.mockResolvedValue(projected);
+
+      render(
+        <TestTrainingSenseCardV2Session
+          word={{ ...word, mode }}
+          mode={mode}
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onPlayResolvedAudio={vi.fn()}
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+
+      await screen.findByTestId("training-sense-card-v2");
+      const faceAudio = screen.queryByRole("button", { name: "Afspelen" });
+      if (faceAudioVisible) expect(faceAudio).toBeVisible();
+      else expect(faceAudio).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+        "data-side",
+        "answer",
+      );
+      expect(screen.getByRole("button", { name: "Afspelen" })).toBeVisible();
+    },
+  );
+
+  test("does not invent an audio action when projection has no capability", async () => {
+    fetchSingleSense.mockResolvedValue(
+      projectedTrainingAudioResult("word-to-definition", false),
+    );
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="en"
+        translationTargetLanguageCode="nl"
+        interfaceLanguage="nl"
+        onPlayResolvedAudio={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    expect(
+      screen.queryByRole("button", { name: "Afspelen" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(
+      screen.queryByRole("button", { name: "Afspelen" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("keeps revealed reverse audio visible while resolution is pending", async () => {
+    fetchSingleSense.mockResolvedValue(
+      projectedTrainingAudioResult("definition-to-word", true),
+    );
+    resolveAudio.mockImplementationOnce(() => new Promise(() => {}));
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, mode: "definition-to-word" }}
+        mode="definition-to-word"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onPlayResolvedAudio={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByTestId("training-sense-card-v2");
+    expect(
+      screen.queryByRole("button", { name: "Afspelen" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    const audioButton = screen.getByRole("button", { name: "Afspelen" });
+    fireEvent.click(audioButton);
+
+    await waitFor(() => expect(audioButton).toBeDisabled());
+    expect(audioButton).toBeVisible();
+  });
+
+  test("keeps revealed reverse audio visible after resolution fails", async () => {
+    fetchSingleSense.mockResolvedValue(
+      projectedTrainingAudioResult("definition-to-word", true),
+    );
+    resolveAudio.mockRejectedValueOnce(new Error("audio_failed"));
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, mode: "definition-to-word" }}
+        mode="definition-to-word"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onPlayResolvedAudio={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByTestId("training-sense-card-v2");
+    expect(
+      screen.queryByRole("button", { name: "Afspelen" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Afspelen" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("audio_failed");
+    expect(screen.getByRole("button", { name: "Afspelen" })).toBeVisible();
+  });
+
+  test("refreshes a genuinely newer remote state without advancing", async () => {
+    performAction.mockRejectedValueOnce(new Error("state_conflict"));
+    const onProgressActionAccepted = vi.fn();
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={onProgressActionAccepted}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The card changed elsewhere. Its latest state is now shown.",
+    );
+    expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+    expect(fetchSingleSense).toHaveBeenCalledTimes(2);
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
+  });
+
+  test("hands off a superseded queue without leaving an actionable stale card", async () => {
+    performAction.mockRejectedValueOnce(new Error("training_session_superseded"));
+    const onTrainingSessionSuperseded = vi.fn();
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+        onTrainingSessionSuperseded={onTrainingSessionSuperseded}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+
+    await waitFor(() => expect(onTrainingSessionSuperseded).toHaveBeenCalledOnce());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  test("ignores a late accepted action after the card generation changes", async () => {
+    const dispatch = vi.spyOn(window, "dispatchEvent");
+    let resolveAction!: (value: unknown) => void;
+    performAction.mockImplementationOnce(
+      () => new Promise((resolve) => { resolveAction = resolve; }),
+    );
+    const onProgressActionAccepted = vi.fn();
+    const onTrainingSessionSuperseded = vi.fn();
+    const props = {
+      word,
+      mode: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      interfaceLanguage: "en" as const,
+      onProgressActionAccepted,
+      onTrainingSessionSuperseded,
+    };
+    const { rerender } = render(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        trainingSessionId="session-old"
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+    await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+
+    rerender(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        trainingSessionId="session-new"
+      />,
+    );
+    await act(async () => {
+      resolveAction({
+        contractVersion: "platform-action-v2",
+        actionId: "review-card",
+        clientEventId: "event-late",
+        accepted: true,
+        card: singleSenseEntry.card,
+      });
+    });
+
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
+    expect(onTrainingSessionSuperseded).not.toHaveBeenCalled();
+    const events = dispatch.mock.calls.flatMap(([event]) =>
+      event instanceof CustomEvent && event.type === "2000nl:training-transition-timing"
+        ? [event.detail] : []);
+    const start = events.find((event) => event.stage === "transition.start" && event.outcome === "review");
+    expect(start).toBeDefined();
+    expect(events).toContainEqual(expect.objectContaining({
+      transitionId: start.transitionId, stage: "transition.total", outcome: "review-cancelled",
+    }));
+    expect(events).not.toContainEqual(expect.objectContaining({
+      transitionId: start.transitionId, stage: "transition.total", outcome: "review-ready",
+    }));
+    dispatch.mockRestore();
+  });
+
+  test("ignores a late superseded error after the card generation changes", async () => {
+    let rejectAction!: (reason: unknown) => void;
+    performAction.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectAction = reject;
+        }),
+    );
+    const onTrainingSessionSuperseded = vi.fn();
+    const props = {
+      word,
+      mode: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      interfaceLanguage: "en" as const,
+      onProgressActionAccepted: vi.fn(),
+      onTrainingSessionSuperseded,
+    };
+    const { rerender } = render(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        trainingSessionId="session-old"
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+    await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+
+    rerender(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        trainingSessionId="session-new"
+      />,
+    );
+    await act(async () => {
+      rejectAction(new Error("training_session_superseded"));
+    });
+
+    expect(onTrainingSessionSuperseded).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  test("does not publish late action callbacks after unmount", async () => {
+    let resolveAction!: (value: unknown) => void;
+    performAction.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveAction = resolve;
+        }),
+    );
+    const onProgressActionAccepted = vi.fn();
+    const onTrainingSessionSuperseded = vi.fn();
+    const { unmount } = render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        trainingSessionId="session-old"
+        onProgressActionAccepted={onProgressActionAccepted}
+        onTrainingSessionSuperseded={onTrainingSessionSuperseded}
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+    await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+    unmount();
+
+    await act(async () => {
+      resolveAction({
+        contractVersion: "platform-action-v2",
+        actionId: "review-card",
+        clientEventId: "event-unmounted",
+        accepted: true,
+        card: singleSenseEntry.card,
+      });
+    });
+
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
+    expect(onTrainingSessionSuperseded).not.toHaveBeenCalled();
+  });
+
+  test("keeps the card and reports a temporary failure when conflict refresh fails", async () => {
+    performAction.mockRejectedValueOnce(new Error("state_conflict"));
+    fetchSingleSense
+      .mockResolvedValueOnce({
+        state: "ready",
+        group: singleSenseGroup,
+        entry: singleSenseEntry,
+      })
+      .mockResolvedValueOnce({ state: "lookup-http-error", status: 503 });
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The connection was interrupted. Please try again.",
+    );
+    expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+    expect(screen.queryByTestId("training-v2-failure")).not.toBeInTheDocument();
+  });
+
+  test("keeps a no-receipt ambiguous review recoverable", async () => {
+    performAction.mockRejectedValueOnce(
+      new Error("action_receipt_not_found"),
+    );
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The connection was interrupted. Please try again.",
+    );
+    expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+  });
+
+  test.each(["clicks", "hotkeys"])("submits only one action for two immediate grade %s", async (input) => {
+    let resolveAction!: (value: unknown) => void;
+    performAction.mockImplementationOnce(
+      () => new Promise((resolve) => { resolveAction = resolve; }),
+    );
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    if (input === "clicks") {
+      fireEvent.click(screen.getByRole("button", { name: "Good" }));
+      fireEvent.click(screen.getByRole("button", { name: "Hard" }));
+    } else {
+      fireEvent.keyDown(window, { key: "k" });
+      fireEvent.keyDown(window, { key: "j" });
+    }
+
+    expect(performAction).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      resolveAction({
+        contractVersion: "platform-action-v2",
+        actionId: "review-card",
+        clientEventId: "event-1",
+        accepted: true,
+        card: singleSenseEntry.card,
+      });
+    });
+  });
+
+  test("clears a transient action error instead of leaving it forever", async () => {
+    performAction.mockRejectedValueOnce(new Error("state_conflict"));
+    try {
+      render(
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="en"
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+      await screen.findByRole("heading", { name: "hand" });
+      vi.useFakeTimers();
+      fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Good" }));
+      });
+      expect(
+        screen.getByText("The card changed elsewhere. Its latest state is now shown."),
+      ).toBeInTheDocument();
+
+      await act(async () => {
+        vi.advanceTimersByTime(6000);
+      });
+      expect(
+        screen.queryByText("The card changed elsewhere. Its latest state is now shown."),
+      ).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test.each(["word-to-definition", "definition-to-word", "listen-recognize", "listen-type"] as const)("prepares the primary full answer before reveal in %s", async mode => {
+    const capability = {
+      actionId: "request-translation" as const,
+      elementId: "sense-card.translation.request",
+      messageKey: "senseCard.translation.request",
+      target: { kind: "entry" as const, entryId: singleSenseEntry.entryId, contentRevision: singleSenseEntry.contentRevision },
+      targetLanguageCode: "en",
+    };
+    const entry = { ...singleSenseEntry, translation: null,
+      contentNodes: singleSenseEntry.contentNodes.map(node => ({ ...node, translations: [] })),
+      capabilities: [...singleSenseEntry.capabilities, capability] };
+    fetchSingleSense.mockResolvedValue({ state: "ready", group: { ...singleSenseGroup, entries: [entry] }, entry });
+    requestTranslation.mockReturnValue(new Promise(() => {}));
+    render(<TestTrainingSenseCardV2Session word={word} mode={mode} contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()} />);
+    await waitFor(() => expect(requestTranslation).toHaveBeenCalledOnce());
+    expect(requestTranslation).toHaveBeenCalledWith(capability, { signal: expect.any(AbortSignal) });
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute("data-side", "face");
+    expect(screen.queryByText("the end of your arm", {exact:false})).toBeNull();
+  });
+
+  test("keeps the current card mounted while translation refreshes", async () => {
+    let resolveRefresh!: (value: unknown) => void;
+    const requestCapability = {
+      actionId: "request-translation" as const,
+      elementId: "sense-card.translation.request",
+      messageKey: "senseCard.translation.request",
+      target: {
+        kind: "entry" as const,
+        entryId: singleSenseEntry.entryId,
+        contentRevision: singleSenseEntry.contentRevision,
+      },
+      targetLanguageCode: "en",
+    };
+    const untranslatedEntry = {
+      ...singleSenseEntry,
+      translation: null,
+      contentNodes: singleSenseEntry.contentNodes.map((node) => ({
+        ...node,
+        translations: [],
+      })),
+      capabilities: [...singleSenseEntry.capabilities, requestCapability],
+    };
+    fetchSingleSense
+      .mockResolvedValueOnce({
+        state: "ready",
+        group: { ...singleSenseGroup, entries: [untranslatedEntry] },
+        entry: untranslatedEntry,
+      })
+      .mockImplementationOnce(
+        () => new Promise((resolve) => { resolveRefresh = resolve; }),
+      );
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    await waitFor(() => expect(requestTranslation).toHaveBeenCalledOnce());
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    expect(requestTranslation).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Translate" }));
+    await waitFor(() =>
+      expect(requestTranslation).toHaveBeenCalledWith(requestCapability, { signal: expect.any(AbortSignal) }),
+    );
+    expect(requestTranslation).toHaveBeenCalledOnce();
+
+    expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+    expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveRefresh({
+        state: "ready",
+        group: singleSenseGroup,
+        entry: singleSenseEntry,
+      });
+    });
+  });
+
+  test("ignores a stale lookup that resolves after the card context changes", async () => {
+    let resolveOld!: (value: unknown) => void;
+    fetchSingleSense.mockImplementation(
+      (input: { translationTargetLanguageCode: string }) =>
+        input.translationTargetLanguageCode === "en"
+          ? new Promise((resolve) => {
+              resolveOld = resolve;
+            })
+          : Promise.resolve({
+              state: "ready",
+              group: {
+                ...singleSenseGroup,
+                header: {
+                  ...singleSenseGroup.header,
+                  text: "new-hand",
+                  displayPronunciation: "new-hand",
+                },
+              },
+              entry: singleSenseEntry,
+            }),
+    );
+
+    const view = render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+    await waitFor(() =>
+      expect(fetchSingleSense).toHaveBeenCalledWith(
+        expect.objectContaining({ translationTargetLanguageCode: "en" }),
+      ),
+    );
+    view.rerender(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="ru"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole("heading", { name: "new-hand" })).toBeInTheDocument();
+    await act(async () => {
+      resolveOld({
+        state: "ready",
+        group: singleSenseGroup,
+        entry: singleSenseEntry,
+      });
+    });
+    expect(screen.getByRole("heading", { name: "new-hand" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "hand" })).not.toBeInTheDocument();
+  });
+
+  test("shows an explicit error when reverse content has no definition", async () => {
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        contentNodes: singleSenseEntry.contentNodes.filter(
+          (node) => node.kind !== "definition",
+        ),
+      },
+    });
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, mode: "definition-to-word" }}
+        mode="definition-to-word"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByTestId("training-v2-failure")).toHaveAttribute(
+      "data-training-v2-state",
+      "reverse-definition-missing",
+    );
+    expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: singleSenseGroup.header.text }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("classifies an invalid V2 presentation model", async () => {
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: {
+        ...singleSenseGroup,
+        header: { ...singleSenseGroup.header, text: "", displayPronunciation: null },
+      },
+      entry: singleSenseEntry,
+    });
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByTestId("training-v2-failure")).toHaveAttribute(
+      "data-training-v2-state",
+      "model-invalid",
+    );
+    expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
+  });
+
+});
+
+
+test("a context translation finishing in another request resumes the card without a manual retry", async () => {
+  vi.clearAllMocks();
+  fetchSingleSense.mockResolvedValue({state:"ready",group:singleSenseGroup,entry:singleSenseEntry});
+  vi.useFakeTimers();
+  try {
+    loadContextPrompt.mockResolvedValueOnce({state:"translation-pending"}).mockResolvedValue({state:"ready",prompt:{text:"Позвонить маме",sourceText:"de moeder bellen",contentNodeId:"context-example",sourceTextFingerprint:"context-fingerprint"}});
+    render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext trainingSessionId="session-context" contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onProgressActionAccepted={vi.fn()} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(screen.getByText(getUiMessages("en").trainingSession.contextPreparation.pending)).toBeVisible();
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    expect(loadContextPrompt).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText(getUiMessages("en").trainingSession.contextPreparation.pending)).toBeNull();
+    expect(performAction).not.toHaveBeenCalled();
+  } finally {vi.useRealTimers();vi.unstubAllEnvs();}
+});

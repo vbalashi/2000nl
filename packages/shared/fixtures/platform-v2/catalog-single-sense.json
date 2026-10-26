@@ -1,0 +1,81 @@
+{
+  "contractVersion": "platform-lookup-v2",
+  "query": "huis",
+  "request": {
+    "contentLanguageCode": "nl",
+    "translationTargetLanguageCode": "ru",
+    "cardTypeId": "word-to-definition",
+    "intent": "external-click"
+  },
+  "groups": [
+    {
+      "headwordGroupId": "fixture-group-huis",
+      "dictionary": {
+        "dictionaryId": "fixture-dictionary-example",
+        "sourceLanguageCode": "nl",
+        "displayName": "Example Dictionary",
+        "messageKey": "dictionary.name"
+      },
+      "header": {
+        "text": "huis",
+        "article": "het",
+        "partOfSpeech": {
+          "termId": "part-of-speech.zn",
+          "messageKey": "partOfSpeech.zn",
+          "sourceValue": "zn"
+        }
+      },
+      "senseCount": 1,
+      "entryCount": 1,
+      "indicators": [],
+      "entries": [
+        {
+          "kind": "sense-card",
+          "entryId": "fixture-entry-huis-1",
+          "meaningOrdinal": 1,
+          "partOfSpeech": {
+            "termId": "part-of-speech.zn",
+            "messageKey": "partOfSpeech.zn",
+            "sourceValue": "zn"
+          },
+          "card": null,
+        "contentRevision": "fixture-content-revision-huis-1",
+        "reportContentRevision": null,
+          "summaryContentNodeId": "fixture-node-huis-definition",
+          "contentNodes": [
+            {
+              "contentNodeId": "fixture-node-huis-definition",
+              "parentContentNodeId": null,
+              "kind": "definition",
+              "order": 0,
+              "text": "een woning voor mensen",
+              "sourceTextFingerprint": "fixture-fingerprint-huis-definition",
+              "translations": []
+            }
+          ],
+          "translation": {
+            "translationId": "fixture-translation-huis-ru",
+            "entryId": "fixture-entry-huis-1",
+            "targetLanguageCode": "ru",
+            "status": "ready",
+            "text": "дом",
+            "alternativeTexts": [
+              "жилище"
+            ],
+            "baseText": "дом",
+            "note": null,
+            "sourceContentFingerprint": "fixture-content-revision-huis-1",
+            "translationPolicyVersion": "translation-policy-v1",
+            "providerRevision": "fixture-provider-revision",
+            "isFresh": true
+          },
+          "capabilities": []
+        }
+      ]
+    }
+  ],
+  "page": {
+    "selectedTierComplete": true,
+    "nextGroupCursor": null
+  }
+}

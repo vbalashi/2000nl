@@ -1,0 +1,857 @@
+import type { CurrentTrainingCardRead } from "./currentTrainingCardRequest";
+import { withLexicalRelationTranslations } from "./platformV2LexicalRelationTranslations";
+import {parseMeaningLearningProgress,type MeaningLearningProgress} from '../../../../packages/shared/types/meaningLearningProgress';
+import { LIBRARY_RPC_GROUP_LIMIT } from "./libraryPagination";
+import { libraryEntryMatchesFilters, type LibrarySearchScope } from "./librarySearchScope";
+import type {
+  CardTypeId,
+  DictionaryLookupResult,
+  DictionarySummary,
+  LookupIntent,
+} from "../../../../packages/shared/types/platform";
+import type {
+  PlatformLookupV2Request,
+  PlatformLookupV2Response,
+} from "../../../../packages/shared/types/platformV2";
+import {
+  normalizeDictionaryContent,
+  verifyDictionaryContentAudioLinks,
+} from "./projections/dictionaryContent";
+import {
+  projectPlatformLookupV2,
+  PlatformV2ProjectionError,
+  type PlatformContentNodeBindingV2Input,
+  type PlatformLookupV2ProjectionEntry,
+  type ProjectionCardState,
+} from "./projections/senseCardV2";
+import type {
+  AuthenticatedSupabase,
+  ServiceSupabase,
+} from "./serverSupabase";
+import { dictionaryCanBeEditedByUser, type DictionaryLookupPayload } from "./lookupService";
+import { resolvePlatformV2Translations } from "./platformV2TranslationService";
+import {
+  extractPlatformV2ContentSections,
+  platformV2ContentRevision,
+  platformV2CrossReferenceQuery,
+  platformV2HeaderEvidence,
+  projectPlatformV2WordDetails,
+} from "./platformV2RichContent";
+import { platformV2ActionsEnabled } from "./platformV2Rollout";
+import { resolvePlatformV2CrossReferenceTargets } from "./platformV2CrossReferenceResolver";
+
+const LOOKUP_GROUP_PAGE_SIZE = 10;
+const LOOKUP_GROUP_ENTRY_SAFETY_BOUND = 50;
+
+export type PlatformV2LookupOperationResult = {
+  payload: unknown;
+  status: number;
+  serverTiming?: string;
+};
+
+type PlatformV2IdentityEntry = {
+  entryId: string;
+  headwordGroupId: string;
+  meaningOrdinal: number | null;
+  reportContentRevision: string | null;
+  contentNodeBindings: PlatformContentNodeBindingV2Input[];
+};
+
+type PlatformV2LookupContext =
+  | {
+      kind: "authenticated";
+      auth: AuthenticatedSupabase;
+      service: ServiceSupabase;
+    }
+  | {
+      kind: "catalog";
+      service: ServiceSupabase;
+    };
+
+type RpcResult = {
+  data: unknown;
+  error: unknown;
+};
+
+export async function performPlatformV2Lookup(
+  context: PlatformV2LookupContext,
+  request: PlatformLookupV2Request,
+  libraryScope?: LibrarySearchScope,
+  currentCard?: CurrentTrainingCardRead,
+): Promise<PlatformV2LookupOperationResult> {
+  if (currentCard && (context.kind!=="authenticated" || context.auth.principal.authKind!=="first_party" || !request.entryId || request.intent!=="training-review" || libraryScope))
+    return { payload: { error: "current_training_card_forbidden" }, status: 403 };
+  if (libraryScope && (
+    context.kind !== "authenticated" ||
+    context.auth.principal.authKind !== "first_party" ||
+    request.entryId || request.intent !== "dictionary-lookup"
+  )) return { payload: { error: "library_query_required" }, status: 403 };
+  const timings: Array<{ name: string; durationMs: number }> = [];
+  const serverTiming = () =>
+    timings
+      .map(
+        (entry) =>
+          `${entry.name};dur=${Math.max(0, entry.durationMs).toFixed(1)}`,
+      )
+      .join(", ");
+  const query = request.query?.trim() ?? "";
+  const intent = validIntent(request.intent);
+
+  if (!request.entryId && !query && !libraryScope) {
+    return { payload: { error: "missing_query" }, status: 400 };
+  }
+  if (!request.cardTypeId.trim()) {
+    return { payload: { error: "missing_card_type_id" }, status: 400 };
+  }
+  const queryRpc = libraryScope?.material
+    ? "lookup_platform_v2_library_material_entries"
+    : libraryScope?.filters
+    ? "lookup_platform_v2_library_filtered_entries"
+    : libraryScope ? "lookup_platform_v2_library_entries" : "lookup_platform_v2_entries";
+  const lookupResolution = request.entryId
+    ? await resolveExactReadableGroup(context, request, timings, currentCard)
+      : {
+        ok: true as const,
+        query,
+        result: await measure<RpcResult>(timings, "lookup.db", async () =>
+          await context.service.supabase.rpc(queryRpc, {
+            p_user_id:
+              context.kind === "authenticated" ? context.auth.user.id : null,
+            ...(libraryScope ? {p_dictionary_ids:libraryScope.dictionaryIds} : {p_catalog:context.kind === "catalog"}),
+            ...(libraryScope?.filters ? { p_filters: libraryScope.filters } : {}),
+            ...(libraryScope?.material ? { p_material: libraryScope.material } : {}),
+            p_query: query,
+            p_language_code: request.contentLanguageCode ?? null,
+            p_cursor: request.cursor ?? null,
+            p_group_limit: libraryScope ? LIBRARY_RPC_GROUP_LIMIT : LOOKUP_GROUP_PAGE_SIZE,
+            p_group_entry_bound: LOOKUP_GROUP_ENTRY_SAFETY_BOUND,
+          }),
+        ),
+      };
+  if (!lookupResolution.ok) return lookupResolution.result;
+  const lookupResult = lookupResolution.result;
+  const responseQuery = lookupResolution.query;
+
+  if (lookupResult.error) {
+    // Only a classified read cancellation is retryable; never mask contract or auth errors.
+    if (libraryScope && asRecord(lookupResult.error).code === "57014") {
+      return { payload: { error: "library_search_timeout" }, status: 503, serverTiming: serverTiming() };
+    }
+    return {
+      payload: {
+        error:
+          context.kind === "authenticated"
+            ? "lookup_failed"
+            : "catalog_lookup_failed",
+      },
+      status: 500,
+      serverTiming: serverTiming(),
+    };
+  }
+
+  const lookupPayload = asRecord(lookupResult.data);
+  if (lookupPayload.error === "search_index_not_ready") {
+    return {
+      payload: lookupPayload,
+      status: 503,
+      serverTiming: serverTiming(),
+    };
+  }
+  if (["invalid_cursor", "invalid_library_filters", "invalid_dictionary_scope", "invalid_material_scope"].includes(String(lookupPayload.error))) {
+    return {
+      payload: { error: lookupPayload.error },
+      status: 400,
+      serverTiming: serverTiming(),
+    };
+  }
+  if (lookupPayload.error === "material_not_accessible")
+    return { payload: { error: "material_not_accessible" }, status: 404, serverTiming: serverTiming() };
+  if (lookupPayload.error === "group-too-large") {
+    return {
+      payload: lookupPayload,
+      status: 422,
+      serverTiming: serverTiming(),
+    };
+  }
+  if (lookupPayload.error === "presentation_identity_incomplete") {
+    return {
+      payload: lookupPayload,
+      status: 409,
+      serverTiming: serverTiming(),
+    };
+  }
+  if (lookupPayload.error) {
+    return {
+      payload: lookupPayload,
+      status: 500,
+      serverTiming: serverTiming(),
+    };
+  }
+  const entries = lookupEntries(lookupResult.data);
+  const page = lookupPage(lookupPayload);
+  const rawPage = asRecord(lookupPayload.page);
+  if ((libraryScope?.filters || libraryScope?.material) && (!Number.isSafeInteger(rawPage.totalGroups) || Number(rawPage.totalGroups) < 0))
+    return { payload: { error: "library_search_contract_invalid" }, status: 409 };
+  const materialMatches = rawPage.matchingEntryIds;
+  if (libraryScope?.material && (!Number.isSafeInteger(rawPage.unavailableEntryCount) || Number(rawPage.unavailableEntryCount) < 0))
+    return { payload: { error: "library_search_contract_invalid" }, status: 409 };
+  if (libraryScope?.material && (!Array.isArray(materialMatches) || materialMatches.some(
+    id => typeof id !== "string" || !entries.some(entry => entry.id === id),
+  ))) return { payload: { error: "library_search_contract_invalid" }, status: 409 };
+  const librarySearch = libraryScope?.filters || libraryScope?.material ? {
+    totalGroups: Number(rawPage.totalGroups),
+    ...(libraryScope.material ? { unavailableEntryCount: Number(rawPage.unavailableEntryCount) } : {}),
+    matchingEntryIds: libraryScope.material ? materialMatches as string[] : entries.filter(entry => libraryEntryMatchesFilters(
+      entry.part_of_speech, entry.gender, libraryScope.filters!,
+    )).map(entry => entry.id),
+  } : undefined;
+
+  const responseRequest: PlatformLookupV2Response["request"] = {
+    contentLanguageCode: request.contentLanguageCode ?? null,
+    translationTargetLanguageCode:
+      request.translationTargetLanguageCode ?? null,
+    cardTypeId: request.cardTypeId,
+    intent,
+  };
+  if (entries.length === 0) {
+    return {
+      payload: {
+        ...projectPlatformLookupV2({ query: responseQuery, request: responseRequest, entries: [], page }),
+        ...(librarySearch ? { librarySearch } : {}),
+      },
+      status: 200,
+      serverTiming: serverTiming(),
+    };
+  }
+
+  const entryIds = entries.map((entry) => entry.id);
+  const embeddedIdentities = embeddedIdentityEntries(entries);
+  const embeddedIdentityComplete = hasCompleteIdentity(
+    entries,
+    embeddedIdentities,
+  );
+  const identityPromise = embeddedIdentityComplete
+    ? Promise.resolve<RpcResult>({
+        data: { entries: embeddedIdentities },
+        error: null,
+      })
+    : measure<RpcResult>(timings, "lookup.identity", async () =>
+        await context.service.supabase.rpc(
+          "read_platform_v2_presentation_identity",
+          {
+            p_user_id:
+              context.kind === "authenticated" ? context.auth.user.id : null,
+            p_entry_ids: entryIds,
+            p_catalog: context.kind === "catalog",
+          },
+        ),
+      );
+  const embeddedBindingsByEntryId = new Map(
+    embeddedIdentities.map((identity) => [
+      identity.entryId,
+      identity.contentNodeBindings,
+    ]),
+  );
+  const eagerTranslationPromise =
+    embeddedIdentityComplete && request.translationTargetLanguageCode
+      ? measure(timings, "lookup.translations", () =>
+          resolvePlatformV2Translations(context.service, {
+            entries,
+            bindingsByEntryId: embeddedBindingsByEntryId,
+            targetLanguageCode: request.translationTargetLanguageCode!,
+          }),
+        )
+      : null;
+  const progressPromise = request.intent === "dictionary-lookup" && context.kind === "authenticated" && context.auth.principal.authKind === "first_party"
+    ? context.auth.supabase.rpc("get_meanings_learning_progress_v1", {p_entry_ids:entryIds})
+    : Promise.resolve({data:[],error:null});
+  const statePromise =
+    context.kind === "authenticated"
+      ? measure<RpcResult>(timings, "lookup.user-state", async () =>
+          await context.auth.supabase.rpc(
+            "get_platform_v2_card_states_for_entries",
+            {
+              p_user_id: context.auth.user.id,
+              p_entry_ids: entryIds,
+              p_card_type_ids: [request.cardTypeId],
+            },
+          ),
+        )
+      : Promise.resolve<RpcResult>({ data: [], error: null });
+  // Cross-reference targets depend only on the looked-up entries.
+  const crossReferencePromise = measure(
+    timings,
+    "lookup.cross-references",
+    () =>
+      resolvePlatformV2CrossReferenceTargets(context.service, {
+        sources: entries.flatMap((entry) => {
+          const query = platformV2CrossReferenceQuery(entry);
+          return query && entry.dictionary_id
+            ? [{
+                sourceEntryId: entry.id,
+                sourceDictionaryId: entry.dictionary_id,
+                query,
+              }]
+            : [];
+        }),
+        userId:
+          context.kind === "authenticated" ? context.auth.user.id : null,
+        catalog: context.kind === "catalog",
+        contentLanguageCode: request.contentLanguageCode ?? null,
+      }),
+  );
+  crossReferencePromise.catch(() => undefined);
+  const [identityResult, stateResult, eagerTranslationResult, progressResult] = await Promise.all([
+    identityPromise,
+    statePromise,
+    eagerTranslationPromise,
+    progressPromise,
+  ]);
+
+  if (identityResult.error) {
+    return {
+      payload: {
+        error: "presentation_identity_failed",
+      },
+      status: 500,
+      serverTiming: serverTiming(),
+    };
+  }
+  if (stateResult.error) {
+    return {
+      payload: {
+        error: "user_state_failed",
+      },
+      status: 500,
+      serverTiming: serverTiming(),
+    };
+  }
+
+  const identities = identityEntries(identityResult.data);
+  const identityByEntryId = new Map(
+    identities.map((identity) => [identity.entryId, identity]),
+  );
+  if (!hasCompleteIdentity(entries, identities)) {
+    return {
+      payload: { error: "presentation_identity_incomplete" },
+      status: 409,
+      serverTiming: serverTiming(),
+    };
+  }
+  if (progressResult.error) return {payload:{error:"meaning_progress_unavailable"},status:503,serverTiming:serverTiming()};
+  const progressByEntryId = new Map<string, MeaningLearningProgress>((Array.isArray(progressResult.data) ? progressResult.data : []).map((value:unknown) => {const progress=parseMeaningLearningProgress(value);return [progress.entryId,progress];}));
+  const stateByEntryId = new Map<string, Record<string, unknown>>();
+  for (const row of Array.isArray(stateResult.data) ? stateResult.data : []) {
+    const record = asRecord(row);
+    if (
+      typeof record.entry_id === "string" &&
+      record.card_type_id === request.cardTypeId
+    ) {
+      stateByEntryId.set(record.entry_id, record);
+    }
+  }
+  const bindingsByEntryId = new Map(
+    identities.map((identity) => [
+      identity.entryId,
+      identity.contentNodeBindings,
+    ]),
+  );
+  const translationResult = request.translationTargetLanguageCode
+    ? eagerTranslationResult ??
+      (await measure(timings, "lookup.translations", () =>
+        resolvePlatformV2Translations(context.service, {
+          entries,
+          bindingsByEntryId,
+          targetLanguageCode: request.translationTargetLanguageCode!,
+        }),
+      ))
+    : {
+        ok: true as const,
+        byEntryId: new Map(),
+      };
+  if (!translationResult.ok) {
+    return {
+      payload: {
+        error: "translation_cache_failed",
+        detail: translationResult.error,
+      },
+      status: 500,
+      serverTiming: serverTiming(),
+    };
+  }
+  const crossReferenceTargets = await crossReferencePromise;
+
+  try {
+    const projectionEntries = await measure(
+      timings,
+      "lookup.projection-input",
+      () =>
+        Promise.all(
+          entries.map(async (entry): Promise<PlatformLookupV2ProjectionEntry> => {
+            const identity = identityByEntryId.get(entry.id);
+            if (!identity) {
+              throw new Error("presentation_identity_incomplete");
+            }
+            const dictionary = dictionarySummary(entry);
+            if (!dictionary) {
+              throw new Error("presentation_dictionary_missing");
+            }
+            const content = await verifyDictionaryContentAudioLinks(
+              normalizeDictionaryContent(entry),
+            );
+            const audioLink = content.audioLinks?.[entry.language_code ?? ""];
+            const audioLanguage = entry.language_code?.trim().toLowerCase();
+            const isDutchAudio =
+              audioLanguage === "nl" || audioLanguage?.startsWith("nl-");
+            const audioCapability =
+              audioLink || isDutchAudio
+              ? {
+                  audioId: `${identity.headwordGroupId}:headword:${entry.language_code}`,
+                  actionId: "play-audio" as const,
+                  contentLanguageCode: entry.language_code ?? "",
+                }
+              : undefined;
+            const contentNodeBindings = identity.contentNodeBindings.map(
+              (binding) => ({
+                ...binding,
+                translations:
+                  translationResult.byEntryId
+                    .get(entry.id)
+                    ?.nodeTranslationsById.get(binding.contentNodeId) ?? [],
+              }),
+            );
+            const contentSections = extractPlatformV2ContentSections(entry);
+            const headerEvidence = platformV2HeaderEvidence(entry);
+            const crossReferenceQuery =
+              platformV2CrossReferenceQuery(entry);
+            const projectedWordDetails = !crossReferenceQuery
+              ? projectPlatformV2WordDetails(entry, contentNodeBindings)
+              : null;
+            const wordDetails =
+              context.kind === "authenticated"
+                ? withLexicalRelationTranslations(projectedWordDetails, translationResult.byEntryId.get(entry.id)?.relationTranslationsById)
+                : null;
+            const entryContentRevision = platformV2ContentRevision(
+              entry.id,
+              contentSections,
+              projectedWordDetails,
+              crossReferenceQuery,
+              headerEvidence,
+            );
+            const projectedEntry: DictionaryLookupResult["entry"] = {
+              id: entry.id,
+              ...(Number.isSafeInteger(Number(entry.content_version)) && Number(entry.content_version)>0
+                ? { sourceVersion: Number(entry.content_version) } : {}),
+              dictionaryId: entry.dictionary_id ?? null,
+              languageCode: entry.language_code ?? null,
+              headword: entry.headword,
+              meaningId: entry.meaning_id ?? null,
+              partOfSpeech: entry.part_of_speech ?? null,
+              gender: entry.gender ?? null,
+              content: {
+                ...content,
+                sourceMeta: {
+                  ...content.sourceMeta,
+                  ...(headerEvidence.displayPronunciation
+                    ? {
+                        pronunciation_with_stress:
+                          headerEvidence.displayPronunciation,
+                      }
+                    : {}),
+                  ...(headerEvidence.pronunciation
+                    ? { pronunciation: headerEvidence.pronunciation }
+                    : {}),
+                  ...(headerEvidence.homographNumber
+                    ? {
+                        homograph_number:
+                          headerEvidence.homographNumber,
+                      }
+                    : {}),
+                },
+              } as DictionaryLookupResult["entry"]["content"],
+              contentFingerprint: entryContentRevision,
+              raw: entry.raw,
+              isNt22000: entry.is_nt2_2000 ?? null,
+              meaningsCount: entry.meanings_count ?? null,
+            };
+            const translations = translationResult.byEntryId.get(entry.id);
+            return {
+              headwordGroupId: identity.headwordGroupId,
+              meaningOrdinal: identity.meaningOrdinal,
+              reportContentRevision: identity.reportContentRevision,
+              allowArchiveAuthorEntry: context.kind==="authenticated" && context.auth.principal.authKind==="first_party" &&
+                request.intent==="dictionary-lookup" && process.env.NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED==="true" &&
+                context.auth.principal.scopes.has("platform:write") && dictionaryCanBeEditedByUser(entry,context.auth.user.id) &&
+                entry.dictionary?.schema_key==="user-entry-v1" && entry.dictionary?.schema_version===1,
+              allowMutationCapabilities:
+                context.kind === "authenticated" &&
+                context.auth.principal.scopes.has("platform:write") &&
+                platformV2ActionsEnabled() && (!currentCard || asRecord(lookupPayload.currentTarget).cardTypeId===request.cardTypeId),
+              allowWordDetailsCapability:
+                context.kind === "authenticated",
+              entry: projectedEntry,
+              dictionary,
+              contentNodeBindings,
+              contentSections,
+              crossReferenceQuery,
+              crossReferenceTarget: crossReferenceTargets.get(entry.id),
+              cardState:
+                context.kind === "authenticated"
+                  ? projectionCardState(
+                      stateByEntryId.get(entry.id), progressByEntryId.get(entry.id),
+                    )
+                  : null,
+              entryTranslation:
+                translations?.entryTranslation ?? null,
+              translationRequestComplete: translations?.requestComplete ?? false,
+              entrySourceContentFingerprint:
+                translations?.currentSourceContentFingerprint ?? null,
+              audioCapability,
+              ...(entry.note_material!==undefined?{noteMaterial:entry.note_material}:{}),
+              ...(wordDetails ? { wordDetails } : {}),
+            };
+          }),
+        ),
+    );
+
+    return {
+      payload: {
+        ...projectPlatformLookupV2({ query: responseQuery, request: responseRequest, entries: projectionEntries, page }),
+        ...(librarySearch ? { librarySearch } : {}),
+      },
+      status: 200,
+      serverTiming: serverTiming(),
+    };
+  } catch (error) {
+    if (error instanceof PlatformV2ProjectionError) {
+      return {
+        payload: {
+          error: "presentation_contract_incomplete",
+          detail: error.code,
+        },
+        status: 409,
+        serverTiming: serverTiming(),
+      };
+    }
+    return {
+      payload: {
+        error: "presentation_projection_failed",
+      },
+      status: 500,
+      serverTiming: serverTiming(),
+    };
+  }
+}
+
+async function resolveExactReadableGroup(
+  context: PlatformV2LookupContext,
+  request: PlatformLookupV2Request,
+  timings: Array<{ name: string; durationMs: number }>,
+  currentCard?: CurrentTrainingCardRead,
+): Promise<
+  | { ok: true; result: RpcResult; query: string }
+  | { ok: false; result: PlatformV2LookupOperationResult }
+> {
+  if (
+    context.kind !== "authenticated" ||
+    (request.intent !== "training-review" &&
+      request.intent !== "dictionary-lookup") ||
+    !request.entryId
+  ) {
+    return {
+      ok: false,
+      result: { payload: { error: "entry_id_not_allowed" }, status: 400 },
+    };
+  }
+
+  const exactGroupResult = await measure<RpcResult>(
+    timings,
+    "lookup.exact-group",
+    async () =>
+      // Dictionary browsing and training retain distinct access policies.
+      // Both readers are read-only and create no enrollment.
+      currentCard ? await context.auth.supabase.rpc("read_current_training_entry_v1", {
+        p_user_id: context.auth.user.id, p_session_id: currentCard.sessionId, p_permit_id: currentCard.permitId,
+      }) : await context.service.supabase.rpc(request.intent === "dictionary-lookup" && context.auth.principal.authKind === "first_party"
+        ? "read_platform_v2_library_group" : "read_platform_v2_training_group", {
+        p_user_id: context.auth.user.id,
+        p_entry_id: request.entryId,
+        p_group_entry_bound: LOOKUP_GROUP_ENTRY_SAFETY_BOUND,
+      }),
+  );
+  if (exactGroupResult.error) {
+    if(currentCard && asRecord(exactGroupResult.error).code==="42501")
+      return {ok:false,result:{payload:{error:"current_training_permit_invalid"},status:403}};
+    return {
+      ok: false,
+      result: {
+        payload: { error: "exact_group_lookup_failed" },
+        status: 500,
+      },
+    };
+  }
+  const payload = asRecord(exactGroupResult.data);
+  if(currentCard){
+    const target=asRecord(payload.currentTarget);
+    const exercise=typeof target.targetId==="string";
+    if(payload.error==="current_training_permit_invalid" || (!payload.error && (
+      target.permitId!==currentCard.permitId || target.sessionId!==currentCard.sessionId || target.entryId!==request.entryId ||
+      (exercise ? request.cardTypeId!=="word-to-definition" : target.cardTypeId!==request.cardTypeId && request.cardTypeId!=="word-to-definition")
+    ))) return {ok:false,result:{payload:{error:"current_training_permit_invalid"},status:403}};
+  }
+
+  if (payload.error === "entry_not_accessible") {
+    return {
+      ok: false,
+      result: { payload: { error: "entry_not_accessible" }, status: 404 },
+    };
+  }
+  if (payload.error === "presentation_identity_incomplete") {
+    return {
+      ok: false,
+      result: {
+        payload: { error: "presentation_identity_incomplete" },
+        status: 409,
+      },
+    };
+  }
+  if (payload.error === "group-too-large") {
+    return {
+      ok: false,
+      result: { payload, status: 422 },
+    };
+  }
+  if (payload.error || lookupEntries(exactGroupResult.data).length === 0) {
+    return {
+      ok: false,
+      result: { payload: { error: "exact_group_contract_invalid" }, status: 409 },
+    };
+  }
+  const exactEntry = lookupEntries(exactGroupResult.data).find(
+    (entry) => entry.id === request.entryId,
+  );
+  if (!exactEntry || !exactEntry.headword.trim()) {
+    return {
+      ok: false,
+      result: { payload: { error: "exact_group_contract_invalid" }, status: 409 },
+    };
+  }
+  return {
+    ok: true,
+    query: exactEntry.headword,
+    result: exactGroupResult,
+  };
+}
+
+function validIntent(intent: LookupIntent | undefined): LookupIntent {
+  if (
+    intent === "training-review" ||
+    intent === "external-click" ||
+    intent === "dictionary-lookup"
+  ) {
+    return intent;
+  }
+  return "dictionary-lookup";
+}
+
+function lookupEntries(value: unknown): DictionaryLookupPayload[] {
+  const payload = asRecord(value);
+  const items = payload.items ?? value;
+  if (Array.isArray(items)) return items as DictionaryLookupPayload[];
+  return items ? [items as DictionaryLookupPayload] : [];
+}
+
+function lookupPage(
+  payload: Record<string, unknown>,
+): PlatformLookupV2Response["page"] {
+  const page = asRecord(payload.page);
+  return {
+    selectedTierComplete: page.selectedTierComplete === true,
+    nextGroupCursor:
+      typeof page.nextGroupCursor === "string"
+        ? page.nextGroupCursor
+        : null,
+  };
+}
+
+function identityEntries(value: unknown): PlatformV2IdentityEntry[] {
+  const entries = asRecord(value).entries;
+  if (!Array.isArray(entries)) return [];
+  return entries.flatMap((value) => {
+    const entry = asRecord(value);
+    if (
+      typeof entry.entryId !== "string" ||
+      typeof entry.headwordGroupId !== "string" ||
+      !Array.isArray(entry.contentNodeBindings)
+    ) {
+      return [];
+    }
+    return [
+      {
+        entryId: entry.entryId,
+        headwordGroupId: entry.headwordGroupId,
+        meaningOrdinal:
+          typeof entry.meaningOrdinal === "number"
+            ? entry.meaningOrdinal
+            : null,
+        reportContentRevision:
+          typeof entry.reportContentRevision === "string"
+            ? entry.reportContentRevision
+            : null,
+        contentNodeBindings:
+          entry.contentNodeBindings as PlatformContentNodeBindingV2Input[],
+      },
+    ];
+  });
+}
+
+function embeddedIdentityEntries(
+  entries: DictionaryLookupPayload[],
+): PlatformV2IdentityEntry[] {
+  return identityEntries({
+    entries: entries.map(
+      (entry) => asRecord(entry).platform_v2_identity,
+    ),
+  });
+}
+
+function hasCompleteIdentity(
+  entries: DictionaryLookupPayload[],
+  identities: PlatformV2IdentityEntry[],
+): boolean {
+  const identityEntryIds = new Set(
+    identities.map((identity) => identity.entryId),
+  );
+  return (
+    identities.length === entries.length &&
+    entries.every((entry) => identityEntryIds.has(entry.id))
+  );
+}
+
+function dictionarySummary(
+  entry: DictionaryLookupPayload,
+): DictionarySummary | null {
+  const rawDictionary = Array.isArray(entry.dictionary)
+    ? entry.dictionary[0]
+    : entry.dictionary;
+  const dictionary = asRecord(rawDictionary);
+  const id =
+    typeof dictionary.id === "string"
+      ? dictionary.id
+      : entry.dictionary_id;
+  const languageCode =
+    typeof dictionary.language_code === "string"
+      ? dictionary.language_code
+      : entry.language_code;
+  if (!id || !languageCode) return null;
+  const visibility = dictionary.visibility;
+  return {
+    id,
+    languageCode,
+    slug:
+      typeof dictionary.slug === "string" ? dictionary.slug : "",
+    name:
+      typeof dictionary.name === "string" ? dictionary.name : "",
+    kind: dictionary.kind === "user" ? "user" : "curated",
+    visibility:
+      visibility === "private" ||
+      visibility === "shared" ||
+      visibility === "public"
+        ? visibility
+        : "system",
+    ownerUserId:
+      typeof dictionary.owner_user_id === "string"
+        ? dictionary.owner_user_id
+        : null,
+    isEditable:
+      typeof dictionary.is_editable === "boolean"
+        ? dictionary.is_editable
+        : null,
+    schemaKey:
+      typeof dictionary.schema_key === "string"
+        ? dictionary.schema_key
+        : null,
+    schemaVersion:
+      typeof dictionary.schema_version === "number"
+        ? dictionary.schema_version
+        : null,
+  };
+}
+
+function projectionCardState(
+  row?: Record<string, unknown>,
+  meaningProgress?: MeaningLearningProgress,
+): ProjectionCardState {
+  const knownMarkId = stringOrNull(row?.known_mark_id);
+  const knownMarkRevision = stringOrNull(row?.known_mark_revision);
+  const knownMarkedAt = stringOrNull(row?.known_marked_at);
+  return {
+    ...(meaningProgress ? {meaningProgress} : {}),
+    stateRevision: stringOrNull(row?.state_revision) ?? "untracked",
+    knownMark:
+      knownMarkId && knownMarkRevision && knownMarkedAt
+        ? {
+            markId: knownMarkId,
+            revision: knownMarkRevision,
+            markedAt: knownMarkedAt,
+          }
+        : null,
+    clickCount: numberValue(row?.click_count),
+    seenCount: numberValue(row?.seen_count),
+    successCount: numberValue(row?.success_count),
+    lastSeenAt: stringOrNull(row?.last_seen_at),
+    lastReviewedAt: stringOrNull(row?.last_reviewed_at),
+    nextReviewAt: stringOrNull(row?.next_review_at),
+    hidden: row?.hidden === true,
+    frozenUntil: stringOrNull(row?.frozen_until),
+    inLearning: row?.in_learning === true,
+    learningDueAt: stringOrNull(row?.learning_due_at),
+    fsrs: {
+      stability: numberOrNull(row?.fsrs_stability),
+      difficulty: numberOrNull(row?.fsrs_difficulty),
+      reps: numberValue(row?.fsrs_reps),
+      lapses: numberValue(row?.fsrs_lapses),
+      lastGrade: numberOrNull(row?.fsrs_last_grade),
+      lastInterval: numberOrNull(row?.fsrs_last_interval),
+      paramsVersion: stringOrNull(row?.fsrs_params_version),
+    },
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function errorMessage(value: unknown) {
+  const record = asRecord(value);
+  return typeof record.message === "string"
+    ? record.message
+    : String(value);
+}
+
+function numberValue(value: unknown) {
+  return typeof value === "number" ? value : 0;
+}
+
+function numberOrNull(value: unknown) {
+  return typeof value === "number" ? value : null;
+}
+
+function stringOrNull(value: unknown) {
+  return typeof value === "string" ? value : null;
+}
+
+async function measure<T>(
+  timings: Array<{ name: string; durationMs: number }>,
+  name: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const startedAt = performance.now();
+  try {
+    return await fn();
+  } finally {
+    timings.push({ name, durationMs: performance.now() - startedAt });
+  }
+}

@@ -1,0 +1,24 @@
+import React from "react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, expect, test, vi } from "vitest";
+import { AuthorEntryArchiveDialog } from "@/components/training/library-v2/AuthorEntryArchiveDialog";
+const archive = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/platform/authorEntryArchiveClient", () => ({archiveAuthorEntry:archive}));
+beforeEach(()=>archive.mockReset());
+test("confirmation preserves uncertainty and blocks double submit",async()=>{
+  let resolve!: (value:string)=>void;
+  archive.mockReturnValueOnce(new Promise(r=>{resolve=r;}));
+  const done=vi.fn(),cancel=vi.fn();
+  render(<AuthorEntryArchiveDialog entryId="entry" headword="gedoe" userId="user" language="ru" onArchived={done} onCancel={cancel}/>);
+  expect(screen.getByRole("heading")).toHaveTextContent('Архивировать статью «gedoe»?');
+  const submit=screen.getByRole("button",{name:"Архивировать"});
+  fireEvent.click(submit);fireEvent.click(submit);
+  expect(archive).toHaveBeenCalledOnce();
+  expect(screen.getByRole("button",{name:"Отмена"})).toBeDisabled();
+  await act(async()=>resolve("uncertain"));
+  expect(done).not.toHaveBeenCalled();
+  expect(screen.getByRole("alert")).toHaveTextContent("Не удалось подтвердить");
+  archive.mockResolvedValueOnce("archived");
+  await act(async()=>fireEvent.click(screen.getByRole("button",{name:"Архивировать"})));
+  expect(done).toHaveBeenCalledOnce();
+});

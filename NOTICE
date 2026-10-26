@@ -1,0 +1,13 @@
+2000NL
+Copyright 2026 2000NL contributors
+
+This source distribution is licensed under the Apache License, Version 2.0,
+except for separately identified third-party components.
+
+The bundled test fonts retain their SIL Open Font License notices:
+  apps/ui/playwright/fixtures/fonts/Inter-OFL.txt
+  apps/ui/playwright/fixtures/fonts/Newsreader-OFL.txt
+
+Dependency packages retain their own licenses. Production dictionary content,
+proprietary translation templates and dictionary-generation workflows are not
+part of this distribution.

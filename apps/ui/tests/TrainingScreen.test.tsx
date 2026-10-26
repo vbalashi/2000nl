@@ -1,0 +1,4734 @@
+import { dictionarySourceProfile } from "@/lib/dictionary/sourceProfile";
+import {getUiMessages} from "@/lib/uiMessages";
+import React from "react";
+import { financeEntry, furnitureEntry } from "./platformV2LibraryFixture";
+import { supabase } from "@/lib/supabaseClient";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, vi } from "vitest";
+import type { User } from "@supabase/supabase-js";
+import type {
+  ActiveTrainingScope,
+  DictionaryEntry,
+  TrainingScenario,
+} from "@/lib/types";
+import type { TrainingSessionSnapshot } from "@/lib/trainingService";
+import type { AppDestination } from "@/components/navigation/appDestination";
+import { TrainingSessionSurface } from "@/components/training/v2/TrainingSessionSurface";
+import type { TrainingSessionNoticeInput } from "@/components/training/v2/TrainingSessionSurface";
+import type { TrainingSessionChromeProps } from "@/components/training/v2/TrainingSessionChrome";
+import type { FooterStatsProps } from "@/components/training/FooterStats";
+import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
+import {
+  readTrainingSessionResume,
+  releaseTrainingSessionOwner,
+  writeTrainingSessionResume,
+} from "@/lib/training/sessionResumeStore";
+
+vi.mock("@/lib/preferences/practicePaletteRepository", () => ({
+  practicePaletteRepository: { load: vi.fn().mockResolvedValue("lavender"), save: vi.fn() },
+}));
+vi.mock("@/lib/preferences/cardSpacingRepository", () => ({
+  cardSpacingRepository: { load: vi.fn().mockResolvedValue("balanced"), save: vi.fn() },
+}));
+// Availability has dedicated client/hook tests; controller navigation uses a stable read model.
+vi.mock("@/lib/training/availability/useTrainingAvailability", () => ({
+  useTrainingAvailability: () => ({ status: "ready", value: { dueToday: 8, totalReviews: 120, newCards: 20, studyDay: "2026-10-18", timezone: "Europe/Amsterdam", asOf: "2026-10-18T20:00:00Z" }, refreshing: false, refreshFailed: false, reload: vi.fn() }),
+}));
+const { savedSetupAccounts } = vi.hoisted(() => ({ savedSetupAccounts: new Map<string, { revision: number; document: unknown }>() }));
+vi.mock("@/lib/training/setups/client", () => ({
+  fetchAccountTrainingSetups: vi.fn(async (userId: string) => savedSetupAccounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } }),
+  saveAccountTrainingSetups: vi.fn(async (userId: string, revision: number, document: unknown) => {
+    const snapshot = { revision: revision + 1, document };
+    savedSetupAccounts.set(userId, snapshot);
+    return { kind: "saved", snapshot };
+  }),
+}));
+vi.mock("@/lib/training/material/client", () => ({
+  fetchAccountMaterialPreferences: vi.fn().mockResolvedValue({ revision: 0, document: { schemaVersion: 1, learningLanguages: [], disabledDictionaryIds: [] } }),
+  saveAccountMaterialPreferences: vi.fn(),
+}));
+vi.mock("@/lib/training/listService", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/training/listService")>(),
+  fetchAvailableDictionarySourcesStrict: vi
+    .fn()
+    .mockImplementation(({ languageCode }: { languageCode: string }) =>
+      Promise.resolve([
+        {
+          id: languageCode === "en" ? "dict-english" : "dict-example",
+          languageCode,
+          slug: languageCode === "en" ? "en-core" : "nl-example",
+          name:
+            languageCode === "en"
+              ? "English dictionary"
+              : "ExampleDictionary woordenboek",
+          kind: "curated",
+          visibility: "public",
+          isEditable: false,
+          entryCount: 2000,
+        },
+      ]),
+    ),
+  fetchAvailableLearningLanguages: vi.fn().mockResolvedValue([
+    { code: "nl", label: "Nederlands", dictionaryCount: 1, curatedListCount: 1, userListCount: 0, hasTrainingEligibleLists: true },
+    { code: "en", label: "English", dictionaryCount: 2, curatedListCount: 1, userListCount: 0, hasTrainingEligibleLists: true },
+  ]),
+}));
+
+vi.mock("@/lib/platform/platformV2IdiomExerciseClient", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/platform/platformV2IdiomExerciseClient")>(),
+  fetchPlatformV2IdiomTrainingSessionSnapshot: vi.fn(),
+  fetchNextPlatformV2IdiomTrainingSessionExercise: vi.fn(),
+}));
+
+const legacyTranslationSnapshot = vi.fn();
+const legacyTranslationStart = vi.fn();
+vi.mock("@/lib/platform/platformV2TranslationExerciseClient", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/platform/platformV2TranslationExerciseClient")>(),
+  fetchPlatformV2TranslationTrainingSessionSnapshot: (...args: unknown[]) => legacyTranslationSnapshot(...args),
+  startPlatformV2TranslationTrainingSession: (...args: unknown[]) => legacyTranslationStart(...args),
+}));
+vi.mock("@/components/training/pilot/TrainingSentenceSession", () => ({
+  TrainingSentenceSession: ({session, contentLanguageCode}: {session:{sessionId:string;completedActions:number};contentLanguageCode:string}) =>
+    <div data-testid="legacy-sentence-session" data-session-id={session.sessionId} data-language={contentLanguageCode} data-completed={session.completedActions}/>,
+}));
+
+// Screen integration tests exercise the real V2 transition owner. The card
+// stub models asynchronous acceptance; actual capabilities, keys, swipe and
+// content are covered by TrainingSenseCardV2Session/Stage tests.
+
+function getPrimaryNavigation() {
+  return screen.getAllByRole("navigation", { name: "Primary" })[0];
+}
+
+const mockWord = {
+  id: "word-1",
+  headword: "huis",
+  mode: "word-to-definition",
+  isFirstEncounter: false,
+  raw: {
+    meanings: [{ definition: "Een gebouw", links: [] }],
+  },
+};
+
+const overrideWord = {
+  ...mockWord,
+  id: "word-2",
+  headword: "boom",
+};
+
+const normalNextWord = {
+  ...mockWord,
+  id: "word-3",
+  headword: "fiets",
+};
+
+const defaultAvailableList = {
+  id: "list-1",
+  name: "Test list",
+  type: "curated" as const,
+  item_count: 1,
+};
+
+const activeList = {
+  id: "list-active",
+  name: "Active list",
+  type: "curated" as const,
+  item_count: 10,
+  card_policy: "restrict" as const,
+  card_type_ids: ["listen-recognize"],
+};
+
+const secondaryList = {
+  id: "list-secondary",
+  name: "Secondary list",
+  type: "curated" as const,
+  item_count: 2,
+  default_scenario_id: "listening",
+};
+
+const userOwnedList = {
+  id: "list-user",
+  name: "My saved words",
+  type: "user" as const,
+  item_count: 3,
+};
+
+const mixedUserList = {
+  id: "list-mixed",
+  name: "Travel mix",
+  type: "user" as const,
+  item_count: 4,
+  is_mixed_language: true,
+};
+
+const dictionarySourceList = {
+  id: "list-dictionary",
+  name: dictionarySourceProfile().fullListName,
+  type: "curated" as const,
+  item_count: 0,
+};
+
+const dictionaryHuis = {
+  id: "word-1",
+  headword: "huis",
+  part_of_speech: "zn",
+  raw: { meanings: [{ definition: "Een gebouw", links: [] }] },
+  is_nt2_2000: true,
+};
+
+const dictionaryBoom = {
+  id: "word-2",
+  headword: "boom",
+  part_of_speech: "zn",
+  raw: { meanings: [{ definition: "Een hoge plant", links: [] }] },
+  is_nt2_2000: false,
+};
+
+const dictionaryCompound = {
+  id: "word-3",
+  headword: "bejaardenhuis",
+  part_of_speech: "zn",
+  raw: { meanings: [{ definition: "Een tehuis voor ouderen", links: [] }] },
+  is_nt2_2000: false,
+};
+
+const dictionarySter = {
+  id: "word-ster",
+  headword: "ster",
+  part_of_speech: "zn",
+  raw: { meanings: [{ definition: "Een hemellichaam", links: [] }] },
+  is_nt2_2000: false,
+};
+
+const dictionaryStedelijk = {
+  id: "word-stedelijk",
+  headword: "stedelijk",
+  part_of_speech: "bn",
+  raw: { meanings: [{ definition: "Met een stad te maken", links: [] }] },
+  is_nt2_2000: false,
+};
+
+const userDictionaryGedoe = {
+  id: "user-entry-1",
+  dictionary_id: "dict-user",
+  dictionary_name: "My dictionary",
+  dictionary_slug: "user-user-1-nl",
+  dictionary_kind: "user",
+  language_code: "nl",
+  headword: "gedoe",
+  part_of_speech: "zn",
+  raw: {
+    headword: "gedoe",
+    languageCode: "nl",
+    definition: "lastige situatie",
+    translation: { languageCode: "ru", text: "суета" },
+  },
+  is_nt2_2000: false,
+};
+
+const fetchNextTrainingWordByScenario = vi.fn().mockResolvedValue(mockWord);
+const defaultTrainingStats = {
+  newWordsToday: 0,
+  newCardsToday: 0,
+  learningStartedToday: 0,
+  graduatedNewWordsToday: 0,
+  dailyNewLimit: 10,
+  reviewWordsDone: 0,
+  reviewCardsDone: 0,
+  reviewWordsDue: 0,
+  reviewCardsDue: 0,
+  totalWordsLearned: 0,
+  totalWordsInList: 2000,
+};
+const fetchStats = vi.fn().mockResolvedValue(defaultTrainingStats);
+const prefetchPlatformV2TrainingEntry = vi.fn().mockResolvedValue({
+  state: "ready",
+  group: { header: { audio: null, text: "huis" } },
+  entry: { entryId: mockWord.id },
+});
+const preparePlatformV2TrainingEntry = vi.fn().mockResolvedValue({
+  state: "ready",
+  translation: "cached",
+  audio: "ready",
+});
+const preloadPlatformV2Audio = vi.fn().mockResolvedValue(undefined);
+const clearPlatformV2TrainingClientCaches = vi.fn();
+const mockV2ProgressAction = vi.fn();
+const mockV2ProgressActionCompleted = vi.fn();
+let mockV2AcceptanceGate: Promise<void> | null = null;
+let mockV2SessionState: "ready" | "loading" = "ready";
+const defaultAvailableLearningLanguages = [
+  {
+    code: "nl",
+    label: "Nederlands",
+    dictionaryCount: 1,
+    curatedListCount: 1,
+    userListCount: 0,
+    hasTrainingEligibleLists: true,
+  },
+  {
+    code: "en",
+    label: "English",
+    dictionaryCount: 2,
+    curatedListCount: 1,
+    userListCount: 0,
+    hasTrainingEligibleLists: true,
+  },
+];
+const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
+const fetchAvailableLearningLanguages = vi
+  .fn()
+  .mockResolvedValue(defaultAvailableLearningLanguages);
+const fetchAvailableDictionarySources = vi.fn().mockResolvedValue([
+  {
+    id: "dict-example",
+    languageCode: "nl",
+    slug: "nl-example",
+    name: "ExampleDictionary woordenboek",
+    kind: "curated",
+    visibility: "public",
+    isEditable: false,
+    entryCount: 2000,
+  },
+]);
+const defaultActiveTrainingScope: ActiveTrainingScope = {
+  languageCode: "nl",
+  activeListId: null,
+  activeListType: null,
+  activeScenario: "understanding",
+  cardFilter: "both",
+  modesEnabled: ["word-to-definition"],
+  newReviewRatio: 2,
+  hasSavedScope: false,
+  isValid: true,
+};
+const fetchActiveTrainingScope = vi
+  .fn()
+  .mockResolvedValue(defaultActiveTrainingScope);
+const fetchListSummaryById = vi.fn().mockResolvedValue(null);
+const updateActiveTrainingScope = vi
+  .fn()
+  .mockResolvedValue({ scope: null, error: null });
+const searchWordEntries = vi.fn().mockResolvedValue({
+  items: [dictionaryHuis],
+  total: 1,
+});
+const searchDictionaryGroups = vi.fn().mockResolvedValue({
+  items: [dictionaryHuis],
+  total: 1,
+});
+// Server projection fixture: enrollment changes only after the explicit Library action.
+const libraryLearning = new Map<string, "new" | "learning">();
+const performLibraryAction = vi.fn();
+function libraryState(entryId: string) {
+  const state = libraryLearning.get(entryId);
+  if (!state) return { card: null, capabilities: [] };
+  const fixture = structuredClone(state === "new" ? financeEntry : furnitureEntry);
+  return {
+    card: { ...fixture.card!, scheduler: { phase: state === "new" ? "not-started" as const : "learning" as const, repeatCount: 0 } },
+    capabilities: fixture.capabilities.map(capability => ({ ...capability, target: { ...capability.target, entryId } })),
+  };
+}
+vi.mock("@/lib/platform/platformV2TrainingActionClient", () => ({
+  performPlatformV2LibraryAction: (...args: unknown[]) => performLibraryAction(...args),
+}));
+const fetchPlatformV2LibraryGroupPage = vi.fn(
+  async ({
+    query,
+    contentLanguageCode,
+  }: {
+    query: string;
+    contentLanguageCode: string;
+  }) => {
+    const result = await searchDictionaryGroups({
+      query,
+      languageCode: contentLanguageCode,
+      dictionaryIds: undefined,
+      limit: 6,
+    });
+    return {
+      groups: result.items.map((entry: DictionaryEntry) => ({
+        headwordGroupId: `group-${entry.id}`,
+        dictionary: {
+          dictionaryId: entry.dictionary_id ?? "dictionary-example",
+          sourceLanguageCode: entry.language_code ?? contentLanguageCode,
+          displayName: entry.dictionary_name ?? "Example Dictionary",
+          messageKey: "dictionary.source",
+        },
+        header: { text: entry.headword },
+        senseCount: 1,
+        entryCount: 1,
+        indicators: entry.is_nt2_2000
+          ? [
+              {
+                indicatorId: "nt2-2000",
+                value: "true",
+                messageKey: "indicator.nt2-2000",
+              },
+            ]
+          : [],
+        entries: [
+          {
+            kind: "sense-card" as const,
+            entryId: entry.id,
+            meaningOrdinal: 1,
+            partOfSpeech: entry.part_of_speech
+              ? {
+                  termId: `pos:${entry.part_of_speech}`,
+                  messageKey: `pos.${entry.part_of_speech}`,
+                  sourceValue: entry.part_of_speech,
+                }
+              : undefined,
+            contentRevision: `revision-${entry.id}`,
+            summaryContentNodeId: `definition-${entry.id}`,
+            contentNodes: [
+              {
+                contentNodeId: `definition-${entry.id}`,
+                parentContentNodeId: null,
+                kind: "definition" as const,
+                order: 0,
+                text:
+                  entry.raw.meanings?.[0]?.definition ??
+                  "Geen definitie beschikbaar.",
+                sourceTextFingerprint: `fingerprint-${entry.id}`,
+                translations: [],
+              },
+            ],
+            translation: null,
+            ...libraryState(entry.id),
+          },
+        ],
+      })),
+      selectedTierComplete: true,
+      nextGroupCursor: null,
+    };
+  },
+);
+const fetchWordsForList = vi.fn().mockResolvedValue({
+  items: [dictionaryHuis],
+  total: 1,
+});
+const fetchPlatformV2LibraryGroup = vi.fn(
+  async ({
+    query,
+    entryId,
+    contentLanguageCode,
+  }: {
+    query: string;
+    entryId: string;
+    contentLanguageCode: string;
+  }): Promise<PlatformHeadwordGroupV2 | null> => {
+    const page = await fetchPlatformV2LibraryGroupPage({
+      query,
+      contentLanguageCode,
+    });
+    const groups = page.groups as PlatformHeadwordGroupV2[];
+    const matchingGroup = groups.find((group) =>
+      group.entries.some(
+        (entry) =>
+          (entry.kind === "sense-card" && entry.entryId === entryId) ||
+          (entry.kind === "cross-reference" &&
+            entry.crossReferenceId === entryId),
+      ),
+    );
+    if (matchingGroup) return matchingGroup;
+    if (entryId !== userDictionaryGedoe.id) return null;
+    const baseEntry = groups[0]?.entries[0];
+    if (!baseEntry || baseEntry.kind !== "sense-card") return null;
+    return {
+      ...groups[0],
+      headwordGroupId: "group-user-entry-1",
+      header: { ...groups[0].header, text: userDictionaryGedoe.headword },
+      entries: [
+        {
+          ...baseEntry,
+          entryId,
+          contentRevision: "revision-user-entry-1",
+          contentNodes: baseEntry.contentNodes.map((node) => ({
+            ...node,
+            text: userDictionaryGedoe.raw.definition ?? node.text,
+          })),
+        },
+      ],
+    };
+  },
+);
+const fetchDictionaryEntry = vi.fn().mockResolvedValue(null);
+const fetchDictionaryEntryById = vi.fn().mockResolvedValue(null);
+const fetchTrainingWordByLookup = vi.fn().mockResolvedValue(overrideWord);
+const fetchEntryListMemberships = vi.fn().mockResolvedValue(new Map());
+const createUserDictionaryEntry = vi.fn().mockResolvedValue("user-entry-1");
+const copyEntryToUserDictionary = vi.fn().mockResolvedValue("user-entry-copy");
+const addWordsToUserList = vi.fn().mockResolvedValue({ error: null });
+const createUserList = vi.fn().mockResolvedValue(userOwnedList);
+const fetchUserListMembership = vi.fn().mockResolvedValue(new Set());
+const removeWordsFromUserList = vi.fn().mockResolvedValue({ error: null });
+const deleteUserList = vi.fn().mockResolvedValue({ error: null });
+const updateUserList = vi.fn().mockResolvedValue(userOwnedList);
+const fetchTrainingScenarios = vi.fn().mockResolvedValue([
+  {
+    id: "understanding",
+    enabled: true,
+    nameNl: "Begrip",
+    nameEn: "Understanding",
+    description: null,
+    cardModes: ["word-to-definition"],
+    graduationThreshold: 0,
+    sortOrder: 0,
+  },
+  {
+    id: "listening",
+    enabled: true,
+    nameNl: "Luisteren",
+    nameEn: "Listening",
+    description: null,
+    cardModes: ["listen-recognize"],
+    graduationThreshold: 0,
+    sortOrder: 1,
+  },
+]);
+const createTrainingScenarioCatalog = vi.fn(() => {
+  let request: ReturnType<typeof fetchTrainingScenarios> | null = null;
+  const fetch = vi.fn(() => {
+    request ??= fetchTrainingScenarios();
+    return request;
+  });
+  const invalidate = vi.fn(() => {
+    request = null;
+  });
+  return {
+    fetch,
+    invalidate,
+    resolveModes: async (scenarioId: string) => {
+      const scenarios = (await fetch()) as TrainingScenario[];
+      return (
+        scenarios.find((scenario) => scenario.id === scenarioId)?.cardModes ??
+        null
+      );
+    },
+  };
+});
+const fetchTrainingFilterSources = vi.fn().mockResolvedValue([
+  {
+    sourceId: "source-youtube-1",
+    kind: "youtube_video",
+    provider: "youtube",
+    externalId: "video-1",
+    title: "TRAPPIST-1",
+    label: "YouTube · TRAPPIST-1",
+    eventCount: 3,
+    lastSeenAt: "2026-06-23T10:00:00Z",
+  },
+]);
+const fetchTrainingSessionSnapshot = vi.fn().mockResolvedValue(null);
+const isTrainingFocusFilterActive = vi.fn((filter) =>
+  Boolean(
+    filter &&
+    (filter.dateWindow !== "all" ||
+      filter.sourceId ||
+      filter.sourceKind ||
+      filter.externalId),
+  ),
+);
+const fetchUserPreferences = vi.fn().mockResolvedValue({
+  themePreference: "system",
+  modesEnabled: ["word-to-definition"],
+  cardFilter: "both",
+  languageCode: "nl",
+  newReviewRatio: 2,
+  activeScenario: "understanding",
+  translationLang: null,
+});
+const updateUserPreferences = vi.fn().mockResolvedValue(undefined);
+const createTrainingSessionPlanKey = vi.fn(
+  (userId: string, modes: string[], scope: unknown) =>
+    JSON.stringify({ userId, modes, scope }),
+);
+const fetchTrainingSessionPlan = vi.fn().mockResolvedValue({
+  plannedNew: 1,
+  plannedReview: 1,
+  plannedPractice: 0,
+  plannedTotal: 2,
+  plannedAt: "2026-08-21T12:00:00.000Z",
+});
+const defaultStartedTrainingSession = {
+  sessionId: "00000000-0000-4000-8000-000000000901",
+  plannedNew: 1,
+  plannedReview: 1,
+  plannedPractice: 0,
+  plannedTotal: 2,
+  plannedAt: "2026-08-21T12:00:00.000Z",
+};
+const startTrainingSession = vi
+  .fn()
+  .mockResolvedValue(defaultStartedTrainingSession);
+const fetchRecentTrainingHistory = vi.fn().mockResolvedValue({
+  items: [],
+  hasMore: false,
+});
+
+vi.mock("@/lib/trainingService", () => ({
+  createTrainingScenarioCatalog,
+  createTrainingSessionPlanKey,
+  fetchDictionaryEntry,
+  fetchDictionaryEntryById,
+  createUserDictionaryEntry,
+  copyEntryToUserDictionary,
+  fetchNextTrainingWord: vi.fn().mockResolvedValue(mockWord),
+  fetchNextTrainingWordByScenario,
+  fetchTrainingFilterSources,
+  fetchTrainingSessionSnapshot,
+  fetchTrainingScenarios,
+  fetchTrainingSessionPlan,
+  startTrainingSession,
+  isTrainingFocusFilterActive,
+  fetchStats,
+  fetchActiveTrainingScope,
+  fetchListSummaryById,
+  fetchAvailableLists,
+  fetchAvailableLearningLanguages,
+  fetchAvailableDictionarySources,
+  fetchWordsForList,
+  searchDictionaryGroups,
+  searchWordEntries,
+  fetchEntryListMemberships,
+  addWordsToUserList,
+  createUserList,
+  fetchUserListMembership,
+  removeWordsFromUserList,
+  deleteUserList,
+  updateUserList,
+  updateActiveTrainingScope,
+  fetchTrainingWordByLookup,
+  fetchUserPreferences,
+  updateUserPreferences,
+}));
+
+vi.mock("@/lib/training/trainingHistoryService", () => ({
+  fetchRecentTrainingHistory: () => fetchRecentTrainingHistory(),
+}));
+
+vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
+  fetchPlatformV2LibraryGroupPage: (input: {
+    query: string;
+    contentLanguageCode: string;
+  }) => fetchPlatformV2LibraryGroupPage(input),
+  fetchPlatformV2LibraryGroup: (
+    input: Parameters<typeof fetchPlatformV2LibraryGroup>[0],
+  ) => fetchPlatformV2LibraryGroup(input),
+  requestPlatformV2LibraryTranslation: vi.fn().mockResolvedValue("failed"),
+}));
+
+vi.mock("@/lib/supabaseClient", () => ({
+  supabase: {
+    auth: {
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      signOut: vi.fn(),
+    },
+  },
+}));
+
+vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
+  prefetchPlatformV2TrainingEntry: (...args: unknown[]) =>
+    prefetchPlatformV2TrainingEntry(...args) ?? Promise.resolve({state: "ready", group: {header: {audio: null, text: "huis"}}, entry: {entryId: mockWord.id}}),
+  preloadPlatformV2Audio: (...args: unknown[]) =>
+    preloadPlatformV2Audio(...args),
+  clearPlatformV2TrainingClientCaches: (...args: unknown[]) =>
+    clearPlatformV2TrainingClientCaches(...args),
+}));
+
+vi.mock("@/lib/platform/platformV2TrainingPreparationClient", () => ({
+  preparePlatformV2TrainingEntry: (...args: unknown[]) =>
+    preparePlatformV2TrainingEntry(...args),
+}));
+
+vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
+  TrainingSenseCardV2Session: ({
+    word,
+    trainingSessionId,
+    presentationIdentity,
+    focusOnPresentation,
+    onOpenDetails,
+    onLoadFailure,
+    onRetryAlternative,
+    onProgressActionAccepted,
+    onProgressActionPendingChange,
+    sessionChrome,
+    sessionFooter,
+    sessionNotice,
+    interactionDisabled,
+  }: {
+    word: { headword: string };
+    trainingSessionId?: string | null;
+    presentationIdentity: string | null;
+    focusOnPresentation?: boolean;
+    onOpenDetails?: () => void;
+    onLoadFailure?: (failure: "model-invalid") => void;
+    onRetryAlternative?: (failure: "model-invalid") => void;
+    onProgressActionAccepted: (capability: {
+      actionId: string;
+    }) => Promise<unknown>;
+    onProgressActionPendingChange?: (pending: boolean) => void;
+    sessionChrome?: TrainingSessionChromeProps | null;
+    sessionFooter: FooterStatsProps;
+    sessionNotice?: TrainingSessionNoticeInput | null;
+    interactionDisabled?: boolean;
+  }) => {
+    const stageRef = React.useRef<HTMLDivElement>(null);
+    // Match the real V2 session: a grade stays busy until the accepted-action
+    // transition resolves, not merely until the next headword is rendered.
+    const [busy, setBusy] = React.useState(false);
+    const busyRef = React.useRef(false);
+    const failed = word.headword === "broken-card";
+    const loading = mockV2SessionState === "loading";
+    React.useEffect(() => {
+      if (focusOnPresentation) stageRef.current?.focus();
+    }, [focusOnPresentation]);
+    React.useEffect(() => {
+      if (failed) onLoadFailure?.("model-invalid");
+    }, [failed, onLoadFailure]);
+    if (failed) {
+      return (
+        <TrainingSessionSurface
+          phase="failure"
+          chrome={sessionChrome}
+          footer={sessionFooter}
+          notice={sessionNotice}
+        >
+          <div role="alert" data-training-v2-state="model-invalid">
+            This training card could not be loaded.
+            <button
+              type="button"
+              onClick={() => onRetryAlternative?.("model-invalid")}
+            >
+              Try again
+            </button>
+          </div>
+        </TrainingSessionSurface>
+      );
+    }
+    if (loading) {
+      return (
+        <TrainingSessionSurface
+          phase="loading"
+          chrome={sessionChrome}
+          footer={sessionFooter}
+          notice={sessionNotice}
+        >
+          <div
+            role="status"
+            data-testid="training-v2-loading"
+            data-training-v2-state="loading"
+          >
+            Loading training card
+          </div>
+        </TrainingSessionSurface>
+      );
+    }
+    return (
+      <TrainingSessionSurface
+        phase="ready"
+        chrome={sessionChrome}
+        footer={sessionFooter}
+        notice={sessionNotice}
+      >
+        <div
+          ref={stageRef}
+          tabIndex={-1}
+          data-testid="mock-training-sense-card-v2"
+          data-training-session-id={trainingSessionId ?? ""}
+          data-presentation-identity={presentationIdentity ?? ""}
+          data-initial-review-due={sessionFooter.initialReviewDue ?? ""}
+        >
+          <span aria-live="polite">
+            {focusOnPresentation ? "Next training card" : ""}
+          </span>
+          <h2>{word.headword}</h2>
+          {onOpenDetails ? (
+            <button type="button" onClick={onOpenDetails}>
+              Word details
+            </button>
+          ) : null}
+          <button
+            type="button"
+            disabled={busy || interactionDisabled}
+            onClick={async () => {
+              if (busyRef.current || interactionDisabled) return;
+              busyRef.current = true;
+              setBusy(true);
+              onProgressActionPendingChange?.(true);
+              try {
+                mockV2ProgressAction();
+                // The real session awaits the server mutation before invoking
+                // acceptance. Do not turn a click into a synchronous receipt.
+                await Promise.resolve();
+                const result = await onProgressActionAccepted({
+                  actionId: "review-card",
+                });
+                if (mockV2AcceptanceGate) await mockV2AcceptanceGate;
+                mockV2ProgressActionCompleted(result);
+              } finally {
+                onProgressActionPendingChange?.(false);
+                busyRef.current = false;
+                setBusy(false);
+              }
+            }}
+          >
+            Mock V2 grade
+          </button>
+        </div>
+      </TrainingSessionSurface>
+    );
+  },
+  TrainingKnownUndoNotice: () => null,
+}));
+
+const { TrainingScreen: ProductionTrainingScreen } =
+  await import("@/components/training/TrainingScreen");
+const { getOnboardingTranslation } = await import("@/lib/onboardingI18n");
+
+const defaultStartupSnapshot = {
+  transitionId: "test-startup",
+  interfaceLanguage: "en" as const,
+  preferences: {
+    themePreference: "system" as const,
+    audioQuality: "free" as const,
+    modesEnabled: ["word-to-definition" as const],
+    cardFilter: "both" as const,
+    languageCode: "nl",
+    newReviewRatio: 2,
+    activeScenario: "understanding",
+    translationLang: "ru",
+    preferences: { onboardingLanguage: "en" as const },
+  },
+};
+
+function TrainingScreen(
+  props: Omit<
+    React.ComponentProps<typeof ProductionTrainingScreen>,
+    "startupSnapshot" | "onRequestDestination"
+  > & {
+    onRequestDestination?: (destination: AppDestination) => void;
+  },
+) {
+  const [internalDestination, setInternalDestination] =
+    React.useState<AppDestination>(props.destination ?? "training");
+  return (
+    <ProductionTrainingScreen
+      {...props}
+      trainingTodaySetupEnabled={props.trainingTodaySetupEnabled ?? false}
+      destination={
+        props.onRequestDestination ? props.destination : internalDestination
+      }
+      onRequestDestination={
+        props.onRequestDestination ?? setInternalDestination
+      }
+      startupSnapshot={defaultStartupSnapshot}
+    />
+  );
+}
+
+const user: User = { id: "user-1", email: "user@test.com" } as User;
+
+const defaultMatchMedia = window.matchMedia;
+
+class DeterministicBrowserLocks {
+  private readonly held = new Set<string>();
+
+  request = <T,>(
+    name: string,
+    _options: LockOptions,
+    callback: (lock: Lock | null) => Promise<T> | T,
+  ): Promise<T> => {
+    if (this.held.has(name)) return Promise.resolve(callback(null));
+    this.held.add(name);
+    return Promise.resolve(
+      callback({ name, mode: "exclusive" } as Lock),
+    ).finally(() => this.held.delete(name));
+  };
+
+  holdExternally(name: string) {
+    this.held.add(name);
+  }
+
+  releaseExternal(name: string) {
+    this.held.delete(name);
+  }
+}
+
+beforeEach(() => {
+  savedSetupAccounts.clear();
+  vi.clearAllMocks();
+  libraryLearning.clear();
+  performLibraryAction.mockReset().mockImplementation(async capability => {
+    if (capability.actionId === "start-learning") libraryLearning.set(capability.target.entryId, "learning");
+    return { accepted: true };
+  });
+  releaseTrainingSessionOwner();
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+  fetchTrainingSessionSnapshot.mockReset().mockResolvedValue(null);
+  startTrainingSession
+    .mockReset()
+    .mockResolvedValue(defaultStartedTrainingSession);
+  fetchAvailableLists.mockReset().mockResolvedValue([defaultAvailableList]);
+  fetchAvailableLearningLanguages
+    .mockReset()
+    .mockResolvedValue(defaultAvailableLearningLanguages);
+  fetchNextTrainingWordByScenario.mockReset().mockResolvedValue(mockWord);
+  fetchStats.mockReset().mockResolvedValue(defaultTrainingStats);
+  mockV2SessionState = "ready";
+  mockV2AcceptanceGate = null;
+  prefetchPlatformV2TrainingEntry.mockReset().mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+  window.matchMedia = ((query: string) => ({
+    matches: query.includes("min-width"),
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  })) as typeof window.matchMedia;
+});
+afterEach(() => {
+  window.matchMedia = defaultMatchMedia;
+});
+
+const useTwoListScope = () => {
+  fetchActiveTrainingScope.mockResolvedValue({
+    ...defaultActiveTrainingScope,
+    activeListId: activeList.id,
+    activeListType: activeList.type,
+    hasSavedScope: true,
+  });
+  fetchListSummaryById.mockResolvedValue(activeList);
+  fetchAvailableLists.mockResolvedValue([
+    activeList,
+    secondaryList,
+    userOwnedList,
+  ]);
+};
+
+const restoreDefaultListScope = () => {
+  fetchActiveTrainingScope.mockResolvedValue(defaultActiveTrainingScope);
+  fetchListSummaryById.mockResolvedValue(null);
+  fetchAvailableLists.mockResolvedValue([defaultAvailableList]);
+};
+
+const restoreDefaultSearchResults = () => {
+  searchWordEntries.mockResolvedValue({
+    items: [dictionaryHuis],
+    total: 1,
+  });
+  searchDictionaryGroups.mockResolvedValue({
+    items: [dictionaryHuis],
+    total: 1,
+  });
+};
+
+const restoreDefaultListResults = () => {
+  fetchWordsForList.mockResolvedValue({
+    items: [dictionaryHuis],
+    total: 1,
+  });
+};
+
+const waitForInitialTrainingFetches = async () => {
+  await screen.findByRole("heading", { name: "huis" });
+  await waitFor(() =>
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.length,
+    ).toBeGreaterThanOrEqual(2),
+  );
+};
+
+const expectOnlyBackgroundSelectionSince = (callCount: number) => {
+  // Settings/hydration may refresh preparation. That may select ahead, but it
+  // must exclude the displayed card and must not replace its presentation.
+  for (const call of fetchNextTrainingWordByScenario.mock.calls.slice(callCount)) {
+    expect(call[6]).toContain("word-1:word-to-definition");
+  }
+};
+
+const clickTrainingAction = async (button: HTMLElement) => {
+  if (/Calculate training|Training berekenen|Рассчитать тренировку/.test(button.textContent ?? "")) {
+    await waitFor(() => expect(button).toBeEnabled());
+    await act(async () => { fireEvent.click(button); });
+    const launch = await screen.findByRole("button", { name: /^(Start training|Training starten|Начать тренировку)$/ }, { timeout: 3000 }).catch(() => {
+      throw new Error(`Calculated training did not reach launch: ${document.body.textContent}`);
+    });
+    await waitFor(() => expect(launch).toBeEnabled());
+    fireEvent.click(launch);
+  } else fireEvent.click(button);
+};
+
+test("search action opens the dedicated dictionary search surface", async () => {
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+
+  fireEvent.keyDown(window, { key: "s" });
+
+  await screen.findByTestId("library-workspace");
+  const search = await screen.findByRole("textbox",{name:"Search words"});
+  expect(screen.getByTestId("library-workspace")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Search filters" })).toBeEnabled();
+  expect(
+    screen.queryByRole("button", { name: "Zoeken" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Lijsten" }),
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText(/Alleen actieve lijst/i)).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /wis zoekopdracht/i }),
+  ).not.toBeInTheDocument();
+  expect(searchWordEntries).not.toHaveBeenCalled();
+  fireEvent.change(search, { target: { value: "huis" } });
+  await waitFor(() => expect(searchDictionaryGroups).toHaveBeenCalledWith(
+    expect.objectContaining({ query: "huis" }),
+  ));
+});
+
+test("onboarding copy matches the five reachable tour targets", () => {
+  for (const language of ["nl", "en", "ru"] as const) {
+    expect(getOnboardingTranslation(language).onboarding.steps).toHaveLength(5);
+  }
+});
+
+test("does not expose Recent through the global R shortcut", async () => {
+  fetchUserPreferences.mockResolvedValue({
+    themePreference: "system",
+    modesEnabled: ["word-to-definition"],
+    cardFilter: "both",
+    languageCode: "nl",
+    newReviewRatio: 2,
+    activeScenario: "understanding",
+    translationLang: null,
+    preferences: {
+      onboardingCompleted: true,
+      onboardingLanguage: "nl",
+    },
+  });
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+  expect(
+    document.querySelector("[data-tour='settings-button']"),
+  ).toBeInTheDocument();
+  expect(
+    document.querySelector("[data-tour='sidebar-toggle']"),
+  ).not.toBeInTheDocument();
+  expect(
+    document.querySelector("[data-tour='search-button']"),
+  ).not.toBeInTheDocument();
+  fireEvent.keyDown(window, { key: "r" });
+
+  expect(
+    screen.queryByRole("button", { name: "Recent" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Sluiten" }),
+  ).not.toBeInTheDocument();
+
+  fetchUserPreferences.mockResolvedValue({
+    themePreference: "system",
+    modesEnabled: ["word-to-definition"],
+    cardFilter: "both",
+    languageCode: "nl",
+    newReviewRatio: 2,
+    activeScenario: "understanding",
+    translationLang: null,
+  });
+});
+
+test("V2 answer-card overflow opens the retained details surface", async () => {
+  mockV2ProgressAction.mockClear();
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    const stageBefore = await screen.findByTestId(
+      "mock-training-sense-card-v2",
+    );
+    const presentationIdentity = stageBefore.getAttribute(
+      "data-presentation-identity",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Word details" }));
+
+    expect(
+      await screen.findByTestId("library-sense-card-group"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Recent" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("library-details-actions"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: /^(Close|Sluiten)$/ })[0]);
+    const stageAfter = await screen.findByTestId("mock-training-sense-card-v2");
+    expect(stageAfter).toHaveAttribute(
+      "data-presentation-identity",
+      presentationIdentity,
+    );
+    expect(
+      within(stageAfter).getByRole("heading", { name: "huis" }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      within(stageAfter).getByRole("button", { name: "Mock V2 grade" }),
+    );
+    expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
+  } finally {
+    prefetchPlatformV2TrainingEntry.mockReset();
+  }
+});
+
+test("global Details and shortcut help preserve the V2 turn and omit retired actions", async () => {
+  render(<TrainingScreen user={user} />);
+  await waitForInitialTrainingFetches();
+  const stage = screen.getByTestId("mock-training-sense-card-v2");
+  const identity = stage.getAttribute("data-presentation-identity");
+
+  fireEvent.keyDown(window, { key: "I", shiftKey: true });
+  expect(
+    await screen.findByTestId("library-sense-card-group"),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByTestId("library-details-actions"),
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getAllByRole("button", { name: /^(Close|Sluiten)$/ })[0]);
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog", { name: "Word details" })).not.toBeInTheDocument(),
+  );
+
+  fireEvent.keyDown(window, { key: "?", shiftKey: true });
+  expect(
+    await screen.findByRole("heading", { name: "Keyboard shortcuts" }),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Freeze until tomorrow")).not.toBeInTheDocument();
+  expect(screen.queryByText("Do not show again")).not.toBeInTheDocument();
+  fireEvent.keyDown(window, { key: "Escape" });
+  expect(
+    screen.queryByRole("heading", { name: "Keyboard shortcuts" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toBe(stage);
+  expect(stage).toHaveAttribute("data-presentation-identity", identity);
+});
+
+test("shell Library replaces the visible destination without remounting the current Training turn", async () => {
+  function Harness() {
+    const [destination, setDestination] =
+      React.useState<AppDestination>("training");
+    return (
+      <TrainingScreen
+        user={user}
+        destination={destination}
+        onRequestDestination={setDestination}
+      />
+    );
+  }
+
+  render(<Harness />);
+
+  await waitForInitialTrainingFetches();
+  const stageBefore = screen.getByTestId("mock-training-sense-card-v2");
+  const presentationBefore = stageBefore.getAttribute(
+    "data-presentation-identity",
+  );
+  const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
+  fireEvent.keyDown(window, { key: "s" });
+
+  expect(
+    await screen.findByRole("heading", { name: /Bibliotheek|Library/ }),
+  ).toBeInTheDocument();
+  expect(screen.getByTestId("library-workspace")).toBeInTheDocument();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expectOnlyBackgroundSelectionSince(trainingFetchCount);
+
+  fireEvent.click(
+    within(getPrimaryNavigation()).getByRole("button", {
+      name: "Training",
+    }),
+  );
+
+  expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toBe(stageBefore);
+  expect(stageBefore).toHaveAttribute(
+    "data-presentation-identity",
+    presentationBefore,
+  );
+  expectOnlyBackgroundSelectionSince(trainingFetchCount);
+});
+
+test("fences a retained card and checks authority when returning from Library", async () => {
+  const activeSnapshot = {
+    sessionId: "session-library-return",
+    runStatus: "active" as const,
+    runGeneration: 1,
+    sessionSize: 5 as const,
+    plannedNew: 1,
+    plannedReview: 0,
+    plannedPractice: 0,
+    plannedTotal: 1,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  };
+  let resolveReturnValidation!: (snapshot: TrainingSessionSnapshot) => void;
+  const returnValidation = new Promise<TrainingSessionSnapshot>((resolve) => {
+    resolveReturnValidation = resolve;
+  });
+  await writeTrainingSessionResume({
+    sessionId: activeSnapshot.sessionId,
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  fetchTrainingSessionSnapshot
+    .mockResolvedValueOnce(activeSnapshot)
+    .mockReturnValueOnce(returnValidation);
+
+  function Harness() {
+    const [destination, setDestination] =
+      React.useState<AppDestination>("training");
+    return (
+      <TrainingScreen
+        user={user}
+        destination={destination}
+        onRequestDestination={setDestination}
+        trainingTodaySetupEnabled
+      />
+    );
+  }
+
+  render(<Harness />);
+  await screen.findByTestId("mock-training-sense-card-v2");
+
+  fireEvent.click(
+    within(getPrimaryNavigation()).getByRole("button", {
+      name: "Library",
+    }),
+  );
+  await screen.findByTestId("library-workspace");
+
+  fireEvent.click(
+    within(getPrimaryNavigation()).getByRole("button", {
+      name: "Training",
+    }),
+  );
+  const answer = await screen.findByRole("button", { name: "Mock V2 grade" });
+
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2),
+  );
+  expect(answer).toBeDisabled();
+
+  await act(async () => {
+    resolveReturnValidation({
+      ...activeSnapshot,
+      runStatus: "superseded",
+      runGeneration: null,
+    });
+    await returnValidation;
+  });
+
+  // Query the current render atomically: async navigation may replace a node
+  // after findByRole resolves but before its caller asserts on that old node.
+  await waitFor(() => {
+    expect(screen.getByRole("button", { name: /Start training|Calculate training/ })).toBeInTheDocument();
+    expect(screen.queryByTestId("mock-training-sense-card-v2")).not.toBeInTheDocument();
+  });
+});
+
+test("preserves a resumable session when the language catalog fails transiently", async () => {
+  fetchAvailableLists.mockReset().mockResolvedValue([defaultAvailableList]);
+  fetchAvailableLearningLanguages
+    .mockReset()
+    .mockRejectedValueOnce(new Error("offline"))
+    .mockResolvedValue([
+      {
+        code: "nl",
+        label: "Nederlands",
+        dictionaryCount: 1,
+        curatedListCount: 1,
+        userListCount: 0,
+        hasTrainingEligibleLists: true,
+      },
+    ]);
+  const activeSnapshot = {
+    sessionId: "session-language-retry",
+    runStatus: "active" as const,
+    runGeneration: 1,
+    sessionSize: 5 as const,
+    plannedNew: 1,
+    plannedReview: 0,
+    plannedPractice: 0,
+    plannedTotal: 1,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  };
+  await writeTrainingSessionResume({
+    sessionId: activeSnapshot.sessionId,
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  fetchTrainingSessionSnapshot.mockResolvedValueOnce(activeSnapshot);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(await screen.findByRole("heading", { name: "Training could not be loaded" })).toBeInTheDocument();
+  expect(window.localStorage.getItem("2000nl:training-session:user-1")).not.toBeNull();
+  expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
+
+  expect(screen.getByTestId("startup-logo-screen")).toBeVisible();
+  expect(screen.queryByTestId("training-loading-indicator")).not.toBeInTheDocument();
+  let releaseLanguages!: () => void;
+  const retryPending = new Promise<void>(resolve => { releaseLanguages = resolve; });
+  fetchAvailableLearningLanguages.mockImplementationOnce(async () => {
+    await retryPending;
+    return [{code: "nl", label: "Nederlands", dictionaryCount: 1, curatedListCount: 1, userListCount: 0, hasTrainingEligibleLists: true}];
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  await waitFor(() => expect(screen.getByRole("status", {name:"Preparing training"})).toBeVisible());
+  expect(screen.getByTestId("startup-logo-screen")).toBeVisible();
+  expect(screen.queryByTestId("training-loading-indicator")).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", {name:"Preparing training"})).toHaveClass("sr-only");
+  await act(async () => { releaseLanguages(); });
+
+  expect(await screen.findByTestId("mock-training-sense-card-v2")).toBeInTheDocument();
+  expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
+    "user-1",
+    activeSnapshot.sessionId,
+  );
+  expect(window.localStorage.getItem("2000nl:training-session:user-1")).not.toBeNull();
+});
+
+test("discards a resume for a language removed from the catalog before list hydration", async () => {
+  fetchAvailableLearningLanguages
+    .mockReset()
+    .mockResolvedValue(
+      defaultAvailableLearningLanguages.filter(({ code }) => code === "en"),
+    );
+  fetchActiveTrainingScope.mockReturnValueOnce(
+    new Promise<ActiveTrainingScope>(() => undefined),
+  );
+  await writeTrainingSessionResume({
+    sessionId: "session-removed-language",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await waitFor(() =>
+    expect(
+      window.localStorage.getItem("2000nl:training-session:user-1"),
+    ).toBeNull(),
+  );
+  expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
+});
+
+test("does not fetch a saved run until its saved-language list catalogue is hydrated", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-saved-language-gate", userId: "user-1",
+    languageCode: "en", listId: "list-1", listType: "curated",
+    scenarioId: "understanding", modes: ["word-to-definition"],
+    cardFilter: "both", newReviewRatio: 2, focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  let resolveSavedLanguageLists!: (lists: typeof defaultAvailableList[]) => void;
+  fetchAvailableLists.mockImplementation((_userId: string, languageCode: string) =>
+    languageCode === "en"
+      ? new Promise((resolve) => { resolveSavedLanguageLists = resolve; })
+      : Promise.resolve([defaultAvailableList]),
+  );
+  fetchTrainingSessionSnapshot.mockResolvedValueOnce({
+    sessionId: "session-saved-language-gate", runStatus: "active", runGeneration: 1,
+    sessionSize: 5, plannedNew: 1, plannedReview: 0, plannedPractice: 0,
+    plannedTotal: 5, requestedTotal: 5, planRevision: 0, completedActions: 0,
+    plannedAt: "2026-09-10T12:00:00Z",
+    members: [{ ordinal: 1, entryId: "word-1", cardTypeId: "word-to-definition",
+      queueSource: "new", consumedAt: null, unavailableAt: null }],
+  });
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await waitFor(() => expect(fetchAvailableLists).toHaveBeenCalledWith("user-1", "en"));
+  expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
+  await act(async () => resolveSavedLanguageLists([defaultAvailableList]));
+  expect(await screen.findByTestId("mock-training-sense-card-v2")).toBeInTheDocument();
+  expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
+    "user-1", "session-saved-language-gate",
+  );
+});
+
+test("Statistics and Settings destinations preserve the current Training turn", async () => {
+  function Harness() {
+    const [destination, setDestination] =
+      React.useState<AppDestination>("training");
+    return (
+      <TrainingScreen
+        user={user}
+        destination={destination}
+        onRequestDestination={setDestination}
+      />
+    );
+  }
+
+  render(<Harness />);
+
+  await waitForInitialTrainingFetches();
+  const stageBefore = screen.getByTestId("mock-training-sense-card-v2");
+  const presentationBefore = stageBefore.getAttribute(
+    "data-presentation-identity",
+  );
+  const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
+
+  fireEvent.click(
+    within(getPrimaryNavigation()).getByRole("button", {
+      name: /Statistieken|Statistics/,
+    }),
+  );
+  expect(
+    await screen.findByRole("heading", { name: /Statistieken|Statistics/ }),
+  ).toBeInTheDocument();
+
+  fireEvent.click(
+    within(getPrimaryNavigation()).getByRole("button", {
+      name: "Training",
+    }),
+  );
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toBe(stageBefore);
+
+  fireEvent.click(screen.getAllByLabelText("Settings")[0]);
+  expect(
+    (await screen.findAllByRole("heading", { name: /Instellingen|Settings/ }))[0],
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/Audio kwaliteit/i)).not.toBeInTheDocument();
+
+  fireEvent.click(
+    within(getPrimaryNavigation()).getByRole("button", {
+      name: "Training",
+    }),
+  );
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toBe(stageBefore);
+  expect(stageBefore).toHaveAttribute(
+    "data-presentation-identity",
+    presentationBefore,
+  );
+  expectOnlyBackgroundSelectionSince(trainingFetchCount);
+});
+
+test("first-pilot Start reveals the mounted card and closing offers resume", async () => {
+  render(
+    <TrainingScreen
+      user={user}
+      trainingTodaySetupEnabled
+      onRequestDestination={vi.fn()}
+    />,
+  );
+
+  expect(
+    await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ }),
+  ).toBeInTheDocument();
+  expect(fetchStats).not.toHaveBeenCalled();
+  expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
+  expect(startTrainingSession).not.toHaveBeenCalled();
+  expect(fetchTrainingSessionPlan).not.toHaveBeenCalled();
+  expect(
+    screen.queryByRole("heading", { name: "huis" }),
+  ).not.toBeInTheDocument();
+
+  await waitFor(() => expect(screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ })).toBeEnabled());
+
+  await clickTrainingAction(screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ }));
+  expect(
+    await screen.findByRole("heading", { name: "huis" }),
+  ).toBeInTheDocument();
+  await waitFor(() =>
+    expect(fetchTrainingSessionPlan).toHaveBeenCalledWith(
+      "user-1",
+      ["word-to-definition"],
+      expect.objectContaining({
+        cardFilter: "both",
+        trainingFilter: expect.objectContaining({ dateWindow: "all" }),
+      }),
+    ),
+  );
+  expect(fetchTrainingSessionPlan).toHaveBeenCalledTimes(1);
+  expect(getPrimaryNavigation()).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /^Edit / }),
+  ).not.toBeInTheDocument();
+
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: /Sessie sluiten|Close session|Закрыть сессию/,
+    }),
+  );
+  expect(
+    screen.getByRole("heading", { name: /^(Training|Тренировка)$/ }),
+  ).toBeInTheDocument();
+
+  expect(await screen.findByRole("button", { name: /Continue training|Sessie doorgaan|Продолжить тренировку/ })).toBeInTheDocument();
+  expect(startTrainingSession).toHaveBeenCalledTimes(1);
+});
+
+test("a foreign-owner tab offers Start and claims a run before showing an actionable card", async () => {
+  window.localStorage.setItem(
+    "2000nl:training-session:user-1",
+    JSON.stringify({
+      sessionId: "session-other-tab",
+      userId: "user-1",
+      ownerId: "other-tab-owner",
+      languageCode: "nl",
+      listId: null,
+      listType: null,
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 10,
+    }),
+  );
+  let resolveStart!: (session: typeof defaultStartedTrainingSession) => void;
+  startTrainingSession.mockImplementationOnce(
+    () => new Promise((resolve) => { resolveStart = resolve; }),
+  );
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+  const startButton = await screen.findByRole("button", {
+    name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
+  expect(screen.queryByRole("button", {
+    name: /Continue session|Sessie doorgaan/,
+  })).not.toBeInTheDocument();
+
+  await clickTrainingAction(startButton);
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  expect(screen.queryByTestId("mock-training-sense-card-v2")).not.toBeInTheDocument();
+  expect(mockV2ProgressAction).not.toHaveBeenCalled();
+
+  await act(async () => resolveStart(defaultStartedTrainingSession));
+  const card = await screen.findByTestId("mock-training-sense-card-v2");
+  expect(card).toHaveAttribute(
+    "data-training-session-id",
+    defaultStartedTrainingSession.sessionId,
+  );
+});
+
+test("a failed run claim leaves the foreign-owner tab on Today without an actionable card", async () => {
+  window.localStorage.setItem(
+    "2000nl:training-session:user-1",
+    JSON.stringify({
+      sessionId: "session-other-tab",
+      userId: "user-1",
+      ownerId: "other-tab-owner",
+      languageCode: "nl",
+      listId: null,
+      listType: null,
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 10,
+    }),
+  );
+  startTrainingSession.mockResolvedValueOnce(null);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+  const startButton = await screen.findByRole("button", {
+    name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  await clickTrainingAction(startButton);
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  await waitFor(() => expect(startButton).toBeEnabled());
+  expect(screen.queryByTestId("mock-training-sense-card-v2")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", {
+    name: /Continue session|Sessie doorgaan/,
+  })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Retry starting this training" })).not.toBeInTheDocument();
+  expect(mockV2ProgressAction).not.toHaveBeenCalled();
+});
+
+test("a start timeout reaches Today with the chosen collection and retries idempotently", async () => {
+  window.localStorage.setItem(
+    "2000nl:training-session:user-1",
+    JSON.stringify({
+      sessionId: "session-other-tab",
+      userId: "user-1",
+      ownerId: "other-tab-owner",
+      languageCode: "nl",
+      listId: null,
+      listType: null,
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 10,
+    }),
+  );
+  startTrainingSession.mockRejectedValueOnce(new Error("training_session_start_timeout"));
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+  const startButton = await screen.findByRole("button", {
+    name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  await clickTrainingAction(startButton);
+
+  const retryButton = await screen.findByRole("button", { name: "Retry starting this training" });
+  expect(screen.getByRole("alert")).toHaveTextContent("Test list");
+  const failedRequestId = startTrainingSession.mock.calls[0]?.[3];
+  fireEvent.click(retryButton);
+
+  await screen.findByTestId("mock-training-sense-card-v2");
+  expect(startTrainingSession).toHaveBeenCalledTimes(2);
+  expect(startTrainingSession.mock.calls[1]?.[3]).toBe(failedRequestId);
+});
+
+test("first pilot selection starts only after Start and belongs to its run", async () => {
+  let resolveFirstCard!: (word: typeof mockWord) => void;
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveFirstCard = resolve;
+      }),
+  );
+  fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+
+  try {
+    render(
+      <TrainingScreen
+        user={user}
+        trainingTodaySetupEnabled
+        onRequestDestination={vi.fn()}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ }),
+    ).toBeInTheDocument();
+    const todayShell = document.querySelector<HTMLElement>(
+      '[data-training-pilot-surface="today"]',
+    );
+    expect(todayShell).toBeInTheDocument();
+    expect(screen.getByLabelText("2000nl")).toBeInTheDocument();
+    const startCurrentSetup = screen.getByRole("button", {
+      name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/,
+    });
+    await waitFor(() => expect(startCurrentSetup).toBeEnabled());
+    expect(
+      screen.queryByText(
+        /Preparing your next card|Je volgende kaart wordt voorbereid|Подготавливаем следующую карточку/,
+      ),
+    ).not.toBeInTheDocument();
+    expect(startCurrentSetup).toBeEnabled();
+    expect(fetchStats).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /Continue session|Sessie doorgaan/ })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("training-card-frame")).not.toBeInTheDocument();
+    expect(screen.queryByText("Laden…")).not.toBeInTheDocument();
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
+    expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /^Edit / }),
+    );
+    expect(screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ })).toBeEnabled();
+    expect(startTrainingSession).not.toHaveBeenCalled();
+    expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("heading", { name: "huis" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole("button", { name: /Back to Training|Terug naar Training/ }));
+    await clickTrainingAction(screen.getByRole("button", {
+        name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/,
+      }));
+    await waitFor(() => expect(resolveFirstCard).toEqual(expect.any(Function)));
+    expect(startTrainingSession).toHaveBeenCalledOnce();
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(1);
+    expect(fetchNextTrainingWordByScenario.mock.calls[0]?.[11]).toBe(
+      defaultStartedTrainingSession.sessionId,
+    );
+    expect(screen.queryByRole("heading", { name: "huis" })).not.toBeInTheDocument();
+    expect(fetchStats).not.toHaveBeenCalled();
+    await act(async () => resolveFirstCard(mockWord));
+    expect(
+      await screen.findByRole("heading", { name: "huis" }),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  } finally {
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("resume scope validation is visible and blocks stats for the pre-resume scope", async () => {
+  let resolveResume!: (snapshot: TrainingSessionSnapshot | null) => void;
+  await writeTrainingSessionResume({
+    sessionId: "session-pending-resume",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  fetchTrainingSessionSnapshot.mockReturnValueOnce(
+    new Promise((resolve) => {
+      resolveResume = resolve;
+    }),
+  );
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByText("Checking your saved session…"),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Preparing your next card…")).not.toBeInTheDocument();
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledOnce(),
+  );
+  expect(fetchStats).not.toHaveBeenCalled();
+
+  await act(async () => resolveResume(null));
+  await waitFor(() => expect(screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ })).toBeEnabled());
+  expect(fetchStats).not.toHaveBeenCalled();
+});
+
+test("resume errors expose an actionable retry instead of waiting forever", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-failed-resume",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  fetchTrainingSessionSnapshot
+    .mockRejectedValueOnce(new Error("offline"))
+    .mockResolvedValueOnce(null);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByText("Your saved session could not be checked."),
+  ).toHaveAttribute("role", "alert");
+  expect(screen.queryByText("Preparing your next card…")).not.toBeInTheDocument();
+  expect(fetchStats).not.toHaveBeenCalled();
+  fireEvent.click(await screen.findByRole("button", { name: "Retry session check" }));
+
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2),
+  );
+  await waitFor(() => expect(screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ })).toBeEnabled());
+  expect(fetchStats).not.toHaveBeenCalled();
+  expect(
+    screen.queryByText("Your saved session could not be checked."),
+  ).not.toBeInTheDocument();
+});
+
+test("starting loads stats after the first card and keeps counts unknown while pending", async () => {
+  let resolveStats!: (stats: Awaited<ReturnType<typeof fetchStats>>) => void;
+  fetchStats.mockImplementation(() => new Promise((resolve) => { resolveStats = resolve; }));
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  expect(await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ })).toBeInTheDocument();
+  expect(fetchStats).not.toHaveBeenCalled();
+  const startButton = await screen.findByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  expect(screen.queryByText(/0\/2000/)).not.toBeInTheDocument();
+  await clickTrainingAction(startButton);
+  expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+  expect(startTrainingSession).toHaveBeenCalledOnce();
+  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  // The approved session surface omits the old stats footer while the read is pending.
+  expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
+  expect(screen.queryByText(/0\/2000/)).not.toBeInTheDocument();
+  await act(async () => resolveStats(defaultTrainingStats));
+});
+test("a changed setup scope starts only the committed session stats read", async () => {
+  useTwoListScope();
+  fetchAvailableLists.mockResolvedValue([activeList, { ...secondaryList, default_scenario_id: "understanding" }, userOwnedList]);
+  const requests: Array<{ scope: unknown; resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void }> = [];
+  fetchStats.mockImplementation((_userId: string, _modes: string[], scope: unknown) => new Promise((resolve) => { requests.push({ scope, resolve }); }));
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+    expect(requests).toHaveLength(0);
+    fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Source / }));
+    fireEvent.click(screen.getByRole("button", { name: /secondary list/i }));
+    expect(requests).toHaveLength(0);
+    const startButton = screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ });
+    await waitFor(() => expect(startButton).toBeEnabled());
+    await clickTrainingAction(startButton);
+    expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]!.scope).toEqual(expect.objectContaining({ listId: secondaryList.id, listType: secondaryList.type }));
+    await act(async () => requests[0]!.resolve({ ...defaultTrainingStats, newCardsToday: 22 }));
+    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+    expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
+    expect(updateActiveTrainingScope).toHaveBeenCalledWith(expect.objectContaining({ listId: secondaryList.id, listType: secondaryList.type }));
+  } finally {
+    await act(async () => {
+      for (const request of requests) request.resolve(defaultTrainingStats);
+    });
+    restoreDefaultListScope();
+  }
+});
+test("the first Start stats baseline survives a later scoped session read", async () => {
+  useTwoListScope();
+  fetchAvailableLists.mockResolvedValue([activeList, { ...secondaryList, default_scenario_id: "understanding" }, userOwnedList]);
+  fetchStats
+    .mockResolvedValueOnce({ ...defaultTrainingStats, reviewCardsDue: 7 })
+    .mockResolvedValueOnce({ ...defaultTrainingStats, reviewCardsDue: 15 });
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    // The stats contract begins after the startup surface becomes interactive.
+    await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ }, { timeout: 5000 });
+    const start = await screen.findByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ });
+    await waitFor(() => expect(start).toBeEnabled());
+    expect(fetchStats).not.toHaveBeenCalled();
+    await clickTrainingAction(start);
+    const firstCard = await screen.findByTestId("mock-training-sense-card-v2");
+    await waitFor(() => expect(firstCard).toHaveAttribute("data-initial-review-due", "7"));
+    fireEvent.click(screen.getByRole("button", { name: /Sessie sluiten|Close session|Закрыть сессию/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Source / }));
+    fireEvent.click(screen.getByRole("button", { name: /secondary list/i }));
+    const nextStart = screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ });
+    await waitFor(() => expect(nextStart).toBeEnabled());
+    await clickTrainingAction(nextStart);
+    const nextCard = await screen.findByTestId("mock-training-sense-card-v2");
+    await waitFor(() => expect(fetchStats).toHaveBeenCalledTimes(2));
+    expect(nextCard).toHaveAttribute("data-initial-review-due", "7");
+    expect(fetchStats.mock.calls[1]?.[2]).toEqual(expect.objectContaining({ listId: secondaryList.id }));
+  } finally {
+    restoreDefaultListScope();
+  }
+}, 10_000);
+test("discarding an uncommitted list draft preserves the active stats request", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  const requests: Array<{ scope: unknown; resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void }> = [];
+  const priorMatchMedia = window.matchMedia;
+  fetchStats.mockImplementation((_userId: string, _modes: string[], scope: unknown) => new Promise((resolve) => { requests.push({ scope, resolve }); }));
+  try {
+    window.matchMedia = ((query: string) => {
+      const result = priorMatchMedia(query);
+      return query === "(prefers-reduced-motion: reduce)"
+        ? { ...result, matches: true }
+        : result;
+    }) as typeof window.matchMedia;
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+    expect(requests).toHaveLength(0);
+    fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Source / }));
+    fireEvent.click(screen.getByRole("button", { name: /secondary list/i }));
+    expect(requests).toHaveLength(0); // Draft edits do not start a stats read.
+    fireEvent.click(screen.getByRole("button", { name: "Back to Training" }));
+    await screen.findByRole("button", { name: "Create training" });
+    await clickTrainingAction(await screen.findByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ }));
+    expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]!.scope).toEqual(expect.objectContaining({ listId: activeList.id, listType: activeList.type }));
+  } finally {
+    try {
+      await act(async () => {
+        for (const request of requests) request.resolve(defaultTrainingStats);
+      });
+    } finally {
+      restoreDefaultListScope();
+      fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+      window.matchMedia = priorMatchMedia;
+    }
+  }
+});
+test("late stats for a previous list cannot replace visible no-chrome stats", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockImplementation(() => new Promise(() => undefined));
+  const requests: Array<{ scope: unknown; resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void }> = [];
+  fetchStats.mockImplementation((_userId: string, _modes: string[], scope: unknown) => new Promise((resolve) => { requests.push({ scope, resolve }); }));
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+    const footer = await screen.findByRole("button", { name: "Wijzigen" });
+    await waitFor(() => expect(requests).toHaveLength(1));
+    fireEvent.click(footer);
+    fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[0]!.scope).toEqual(expect.objectContaining({ listId: activeList.id, listType: activeList.type }));
+    expect(requests[1]!.scope).toEqual(expect.objectContaining({ listId: secondaryList.id, listType: secondaryList.type }));
+    const progress = screen.getByRole("contentinfo");
+    await act(async () => requests[1]!.resolve({ ...defaultTrainingStats, newCardsToday: 22 }));
+    await waitFor(() => expect(progress).toHaveTextContent("22"));
+    await act(async () => requests[0]!.resolve({ ...defaultTrainingStats, newCardsToday: 3 }));
+    expect(progress).toHaveTextContent("22");
+    expect(progress).not.toHaveTextContent("3");
+  } finally {
+    await act(async () => { for (const request of requests) request.resolve(defaultTrainingStats); });
+    restoreDefaultListScope();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+test("returning to a pending no-chrome stats scope adopts its original request", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockImplementation(() => new Promise(() => undefined));
+  const requests: Array<{ scope: unknown; resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void }> = [];
+  fetchStats.mockImplementation((_userId: string, _modes: string[], scope: unknown) => new Promise((resolve) => { requests.push({ scope, resolve }); }));
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Wijzigen" }));
+    await waitFor(() => expect(requests).toHaveLength(1));
+    fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
+    await waitFor(() => expect(requests).toHaveLength(2));
+    const progress = screen.getByRole("contentinfo");
+    await act(async () => requests[1]!.resolve({ ...defaultTrainingStats, newCardsToday: 29, reviewCardsDue: 9 }));
+    await waitFor(() => expect(progress).toHaveTextContent("29"));
+    expect(progress).toHaveTextContent("0/9");
+    fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[0]!.scope).toEqual(expect.objectContaining({ listId: activeList.id, listType: activeList.type }));
+    expect(requests[1]!.scope).toEqual(expect.objectContaining({ listId: secondaryList.id, listType: secondaryList.type }));
+    await act(async () => requests[0]!.resolve({ ...defaultTrainingStats, newCardsToday: 17, reviewCardsDue: 5 }));
+    await waitFor(() => expect(progress).toHaveTextContent("17"));
+    expect(progress).toHaveTextContent("0/9");
+    expect(progress).not.toHaveTextContent("0/5");
+    expect(progress).toHaveTextContent("17");
+    expect(progress).not.toHaveTextContent("29");
+  } finally {
+    await act(async () => { for (const request of requests) request.resolve(defaultTrainingStats); });
+    restoreDefaultListScope();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+test("a failed first stats read leaves the review baseline for the next successful scope", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockImplementation(() => new Promise(() => undefined));
+  fetchStats
+    .mockRejectedValueOnce(new Error("stats unavailable"))
+    .mockResolvedValueOnce({ ...defaultTrainingStats, newCardsToday: 12, reviewCardsDue: 7 });
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+    await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+    fireEvent.click(await screen.findByRole("button", { name: "Wijzigen" }));
+    fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
+    await waitFor(() => expect(fetchStats).toHaveBeenCalledTimes(2));
+    const progress = screen.getByRole("contentinfo");
+    await waitFor(() => expect(progress).toHaveTextContent("0/7"));
+    expect(fetchStats.mock.calls[0]?.[3]).toBe("INITIAL LOAD");
+    expect(fetchStats.mock.calls[1]?.[3]).toBe("SCOPE CHANGE");
+  } finally {
+    restoreDefaultListScope();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+test("setup and the prepared card stay usable while scoped stats are pending", async () => {
+  const statsRequests: Array<{ resolve: (stats: Awaited<ReturnType<typeof fetchStats>>) => void }> = [];
+  fetchStats.mockImplementation(() => new Promise((resolve) => { statsRequests.push({ resolve }); }));
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  expect(await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ })).toBeInTheDocument();
+  expect(statsRequests).toHaveLength(0);
+  fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
+  fireEvent.click(await screen.findByRole("button", { name: /^Filters / }));
+  expect(screen.getByRole("button", { name: "Verbs" })).toBeEnabled();
+  const startButton = screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  expect(startTrainingSession).not.toHaveBeenCalled();
+  expect(statsRequests).toHaveLength(0);
+  await clickTrainingAction(startButton);
+  expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+  await waitFor(() => expect(statsRequests).toHaveLength(1));
+  await act(async () => statsRequests[0]!.resolve(defaultTrainingStats));
+  expect(startTrainingSession).toHaveBeenCalledOnce();
+  expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+});
+test("resumes a still-active server session after refresh without starting another session", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-resume",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all", partOfSpeech: ["ww"], nounArticles: [] },
+    sessionSize: 5,
+  });
+  await expect(readTrainingSessionResume("user-1")).resolves.toMatchObject({
+    sessionId: "session-resume",
+    focusFilter: { dateWindow: "all", partOfSpeech: ["ww"], nounArticles: [] },
+  });
+  fetchTrainingSessionSnapshot.mockResolvedValueOnce({
+    sessionId: "session-resume",
+    sessionSize: 5,
+    plannedNew: 3,
+    plannedReview: 2,
+    plannedPractice: 0,
+    plannedTotal: 5,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: "2026-09-10T12:01:00.000Z",
+        unavailableAt: null,
+      },
+      {
+        ordinal: 2,
+        entryId: "word-2",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: "2026-09-10T12:02:30.000Z",
+      },
+      {
+        ordinal: 3,
+        entryId: "word-3",
+        cardTypeId: "word-to-definition",
+        queueSource: "review",
+        consumedAt: "2026-09-10T12:03:00.000Z",
+        unavailableAt: null,
+      },
+      {
+        ordinal: 4,
+        entryId: "word-4",
+        cardTypeId: "word-to-definition",
+        queueSource: "review",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+      {
+        ordinal: 5,
+        entryId: "word-5",
+        cardTypeId: "word-to-definition",
+        queueSource: "review",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  });
+
+  render(
+    <React.StrictMode>
+      <TrainingScreen user={user} trainingTodaySetupEnabled />
+    </React.StrictMode>,
+  );
+  await waitFor(() => expect(fetchTrainingSessionSnapshot).toHaveBeenCalled());
+  expect(
+    await screen.findByTestId("mock-training-sense-card-v2"),
+  ).toBeInTheDocument();
+  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  expect(fetchStats.mock.calls[0]?.[2]).toEqual(expect.objectContaining({
+    listId: "list-1",
+    listType: "curated",
+  }));
+  expect(await screen.findByTestId("training-session-position")).toHaveTextContent(
+    "2 / 5",
+  );
+  expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
+    "user-1",
+    "session-resume",
+  );
+  expect(startTrainingSession).not.toHaveBeenCalled();
+  expect(
+    fetchNextTrainingWordByScenario.mock.calls.some((args) =>
+      args.some((value: unknown) => value === "session-resume"),
+    ),
+  ).toBe(true);
+});
+
+test("superseded saved session clears its queue and returns to a deliberate local start", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-superseded",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  fetchTrainingSessionSnapshot.mockResolvedValueOnce({
+    sessionId: "session-superseded",
+    runStatus: "superseded",
+    runGeneration: null,
+    sessionSize: 5,
+    plannedNew: 3,
+    plannedReview: 2,
+    plannedPractice: 0,
+    plannedTotal: 5,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  });
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await waitFor(
+    () =>
+      expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
+        "user-1",
+        "session-superseded",
+      ),
+    { timeout: 5000 },
+  );
+  await waitFor(
+    () =>
+      expect(
+        window.localStorage.getItem("2000nl:training-session:user-1"),
+      ).toBeNull(),
+    { timeout: 5000 },
+  );
+
+  expect(await screen.findByRole("heading", { name: /Session builder|Training samenstellen/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ })).toBeInTheDocument();
+  expect(
+    screen.queryByTestId("mock-training-sense-card-v2"),
+  ).not.toBeInTheDocument();
+  expect(window.localStorage.getItem("2000nl:training-session:user-1")).toBeNull();
+});
+
+test.each(["focus", "visibilitychange"] as const)(
+  "%s fallback fences a superseded queue when the cross-tab notification was lost",
+  async (returnEvent) => {
+    await writeTrainingSessionResume({
+      sessionId: "session-visibility",
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "list-1",
+      listType: "curated",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 5,
+    });
+    const activeSnapshot = {
+      sessionId: "session-visibility",
+      runStatus: "active" as const,
+      runGeneration: 1,
+      sessionSize: 5,
+      plannedNew: 3,
+      plannedReview: 2,
+      plannedPractice: 0,
+      plannedTotal: 5,
+      plannedAt: "2026-09-10T12:00:00.000Z",
+      members: [
+        {
+          ordinal: 1,
+          entryId: "word-1",
+          cardTypeId: "word-to-definition",
+          queueSource: "new",
+          consumedAt: null,
+          unavailableAt: null,
+        },
+      ],
+    };
+    fetchTrainingSessionSnapshot
+      .mockResolvedValueOnce(activeSnapshot)
+      .mockResolvedValueOnce({
+        ...activeSnapshot,
+        runStatus: "superseded",
+        runGeneration: null,
+      });
+
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    await screen.findByTestId("mock-training-sense-card-v2");
+
+    act(() => {
+      if (returnEvent === "focus") {
+        window.dispatchEvent(new Event("focus"));
+      } else {
+        document.dispatchEvent(new Event("visibilitychange"));
+      }
+    });
+
+    expect(
+      await screen.findByRole("button", { name: /Start training|Calculate training/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("mock-training-sense-card-v2"),
+    ).not.toBeInTheDocument();
+  },
+);
+
+test("a foreign tab start promptly invalidates this tab's superseded card", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-tab-a",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  const activeSnapshot = {
+    sessionId: "session-tab-a",
+    runStatus: "active" as const,
+    runGeneration: 1,
+    sessionSize: 5 as const,
+    plannedNew: 1,
+    plannedReview: 0,
+    plannedPractice: 0,
+    plannedTotal: 1,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  };
+  fetchTrainingSessionSnapshot
+    .mockResolvedValueOnce(activeSnapshot)
+    .mockResolvedValueOnce({
+      ...activeSnapshot,
+      runStatus: "superseded",
+      runGeneration: null,
+    });
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByTestId("mock-training-sense-card-v2");
+
+  const foreignRecord = JSON.stringify({
+    sessionId: "session-tab-b",
+    userId: "user-1",
+    ownerId: "tab-b",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  window.localStorage.setItem("2000nl:training-session:user-1", foreignRecord);
+  act(() => {
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: "2000nl:training-session:user-1",
+        newValue: foreignRecord,
+      }),
+    );
+  });
+
+  expect(
+    await screen.findByRole("button", { name: /Start training|Calculate training/ }),
+  ).toBeInTheDocument();
+  expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2);
+  expect(window.localStorage.getItem("2000nl:training-session:user-1")).toBe(
+    foreignRecord,
+  );
+});
+
+test("visible authority polling invalidates a cross-device takeover without starting a queue", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  const hiddenDescriptor = Object.getOwnPropertyDescriptor(document, "hidden");
+  let documentHidden = false;
+  Object.defineProperty(document, "hidden", {
+    configurable: true,
+    get: () => documentHidden,
+  });
+
+  try {
+    await writeTrainingSessionResume({
+      sessionId: "session-phone",
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "list-1",
+      listType: "curated",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 5,
+    });
+    const activeSnapshot = {
+      sessionId: "session-phone",
+      runStatus: "active" as const,
+      runGeneration: 1,
+      sessionSize: 5 as const,
+      plannedNew: 1,
+      plannedReview: 0,
+      plannedPractice: 0,
+      plannedTotal: 1,
+      plannedAt: "2026-09-10T12:00:00.000Z",
+      members: [
+        {
+          ordinal: 1,
+          entryId: "word-1",
+          cardTypeId: "word-to-definition",
+          queueSource: "new",
+          consumedAt: null,
+          unavailableAt: null,
+        },
+      ],
+    };
+    fetchTrainingSessionSnapshot
+      .mockResolvedValueOnce(activeSnapshot)
+      .mockResolvedValueOnce({
+        ...activeSnapshot,
+        runStatus: "superseded",
+        runGeneration: null,
+      });
+
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    await screen.findByTestId("mock-training-sense-card-v2");
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(1);
+
+    documentHidden = true;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(1);
+
+    documentHidden = false;
+    await act(async () => {
+      // Bootstrap can reset the timer phase; a full visible interval must poll.
+      await vi.advanceTimersByTimeAsync(20_000);
+    });
+
+    expect(
+      await screen.findByRole("button", { name: /Start training|Calculate training/ }),
+    ).toBeInTheDocument();
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2);
+    expect(startTrainingSession).not.toHaveBeenCalled();
+    expect(
+      screen.queryByTestId("mock-training-sense-card-v2"),
+    ).not.toBeInTheDocument();
+  } finally {
+    if (hiddenDescriptor) {
+      Object.defineProperty(document, "hidden", hiddenDescriptor);
+    } else {
+      Reflect.deleteProperty(document, "hidden");
+    }
+    vi.useRealTimers();
+  }
+});
+
+test("a deferred authority result for session A cannot reset newly started session B", async () => {
+  let resolveSessionAValidation!: (snapshot: {
+    sessionId: string;
+    runStatus: "superseded";
+    runGeneration: null;
+    sessionSize: 5;
+    plannedNew: number;
+    plannedReview: number;
+    plannedPractice: number;
+    plannedTotal: number;
+    plannedAt: string;
+    members: Array<{
+      ordinal: number;
+      entryId: string;
+      cardTypeId: string;
+      queueSource: string;
+      consumedAt: null;
+      unavailableAt: null;
+    }>;
+  }) => void;
+  const deferredSessionAValidation = new Promise<Parameters<
+    typeof resolveSessionAValidation
+  >[0]>((resolve) => {
+    resolveSessionAValidation = resolve;
+  });
+  const sessionASnapshot = {
+    sessionId: "session-a",
+    runStatus: "active" as const,
+    runGeneration: 1,
+    sessionSize: 5 as const,
+    plannedNew: 1,
+    plannedReview: 0,
+    plannedPractice: 0,
+    plannedTotal: 1,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  };
+  await writeTrainingSessionResume({
+    sessionId: "session-a",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  fetchTrainingSessionSnapshot
+    .mockResolvedValueOnce(sessionASnapshot)
+    .mockReturnValueOnce(deferredSessionAValidation);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  const sessionACard = await screen.findByTestId(
+    "mock-training-sense-card-v2",
+  );
+  expect(sessionACard).toHaveAttribute("data-training-session-id", "session-a");
+
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2),
+  );
+
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: /Sessie sluiten|Close session|Закрыть сессию/,
+    }),
+  );
+  await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+  fireEvent.click(screen.getByRole("button", { name: "Create training" }));
+  const startCurrentSetup = await screen.findByRole("button", {
+    name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/,
+  });
+  await waitFor(() => expect(startCurrentSetup).toBeEnabled());
+  await clickTrainingAction(startCurrentSetup);
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  const sessionBCard = await screen.findByTestId(
+    "mock-training-sense-card-v2",
+  );
+  expect(sessionBCard).toHaveAttribute(
+    "data-training-session-id",
+    "00000000-0000-4000-8000-000000000901",
+  );
+
+  await act(async () => {
+    resolveSessionAValidation({
+      ...sessionASnapshot,
+      runStatus: "superseded",
+      runGeneration: null,
+    });
+    await deferredSessionAValidation;
+  });
+
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toHaveAttribute(
+    "data-training-session-id",
+    "00000000-0000-4000-8000-000000000901",
+  );
+  expect(
+    screen.queryByRole("button", { name: /Start training|Calculate training/ }),
+  ).not.toBeInTheDocument();
+  expect(startTrainingSession).toHaveBeenCalledTimes(1);
+});
+
+test("a fresh tab does not adopt another tab's resumable session", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-tab-a",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  releaseTrainingSessionOwner();
+  window.sessionStorage.clear();
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ }),
+  ).toBeInTheDocument();
+  expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
+  expect(
+    window.localStorage.getItem("2000nl:training-session:user-1"),
+  ).not.toBeNull();
+});
+
+test("BFCache restore drops the active queue when another tab acquired its owner lease", async () => {
+  const locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks");
+  const locks = new DeterministicBrowserLocks();
+  Object.defineProperty(navigator, "locks", {
+    configurable: true,
+    value: { request: locks.request },
+  });
+  let externallyHeldLock: string | null = null;
+
+  try {
+    await writeTrainingSessionResume({
+      sessionId: "session-bfcache",
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "list-1",
+      listType: "curated",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 5,
+    });
+    const ownerId = window.sessionStorage.getItem(
+      "2000nl:training-session-owner",
+    );
+    expect(ownerId).not.toBeNull();
+    externallyHeldLock = `2000nl:training-session-owner:${ownerId}`;
+    const activeSnapshot = {
+      sessionId: "session-bfcache",
+      runStatus: "active" as const,
+      runGeneration: 1,
+      sessionSize: 5 as const,
+      plannedNew: 1,
+      plannedReview: 0,
+      plannedPractice: 0,
+      plannedTotal: 1,
+      plannedAt: "2026-09-10T12:00:00.000Z",
+      members: [
+        {
+          ordinal: 1,
+          entryId: "word-1",
+          cardTypeId: "word-to-definition",
+          queueSource: "new",
+          consumedAt: null,
+          unavailableAt: null,
+        },
+      ],
+    };
+    fetchTrainingSessionSnapshot.mockResolvedValue(activeSnapshot);
+
+    // Flush the complete mocked startup before simulating a suspended page.
+    // The first card can render before scope hydration installs its listeners.
+    await act(async () => {
+      render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    });
+    await screen.findByTestId("mock-training-sense-card-v2");
+
+    await act(async () => {
+      const event = new Event("pagehide");
+      Object.defineProperty(event, "persisted", { value: true });
+      window.dispatchEvent(event);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    locks.holdExternally(externallyHeldLock);
+
+    await act(async () => {
+      const event = new Event("pageshow");
+      Object.defineProperty(event, "persisted", { value: true });
+      window.dispatchEvent(event);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(
+      await screen.findByRole("button", { name: /Start training|Calculate training/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("mock-training-sense-card-v2"),
+    ).not.toBeInTheDocument();
+    expect(startTrainingSession).not.toHaveBeenCalled();
+    expect(
+      window.localStorage.getItem("2000nl:training-session:user-1"),
+    ).not.toBeNull();
+  } finally {
+    if (externallyHeldLock) locks.releaseExternal(externallyHeldLock);
+    releaseTrainingSessionOwner();
+    if (locksDescriptor) {
+      Object.defineProperty(navigator, "locks", locksDescriptor);
+    } else {
+      Reflect.deleteProperty(navigator, "locks");
+    }
+  }
+});
+
+test("offline disables answers until reconnect authority validation succeeds", async () => {
+  let resolveReconnect!: (snapshot: TrainingSessionSnapshot) => void;
+  const reconnectSnapshot = new Promise<TrainingSessionSnapshot>((resolve) => {
+    resolveReconnect = resolve;
+  });
+  const activeSnapshot = {
+    sessionId: "session-offline",
+    runStatus: "active" as const,
+    runGeneration: 1,
+    sessionSize: 5 as const,
+    plannedNew: 1,
+    plannedReview: 0,
+    plannedPractice: 0,
+    plannedTotal: 1,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  };
+  await writeTrainingSessionResume({
+    sessionId: "session-offline",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  fetchTrainingSessionSnapshot
+    .mockResolvedValueOnce(activeSnapshot)
+    .mockReturnValueOnce(reconnectSnapshot);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  const answer = await screen.findByRole("button", { name: "Mock V2 grade" });
+  expect(answer).toBeEnabled();
+
+  act(() => window.dispatchEvent(new Event("offline")));
+  expect(answer).toBeDisabled();
+
+  act(() => window.dispatchEvent(new Event("online")));
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2),
+  );
+  expect(answer).toBeDisabled();
+
+  await act(async () => {
+    resolveReconnect(activeSnapshot);
+    await reconnectSnapshot;
+  });
+  expect(answer).toBeEnabled();
+  expect(startTrainingSession).not.toHaveBeenCalled();
+});
+
+test("superseded resume restores every still-permitted setup setting before Start here", async () => {
+  fetchTrainingScenarios.mockResolvedValueOnce([
+    {
+      id: "understanding",
+      enabled: true,
+      nameNl: "Begrip",
+      nameEn: "Understanding",
+      description: null,
+      cardModes: ["word-to-definition", "definition-to-word"],
+      graduationThreshold: 0,
+      sortOrder: 0,
+    },
+  ]);
+  fetchAvailableLists.mockImplementation(
+    async (_userId: string, languageCode: string) =>
+      languageCode === "en" ? [userOwnedList] : [defaultAvailableList],
+  );
+  await writeTrainingSessionResume({
+    sessionId: "session-superseded-settings",
+    userId: "user-1",
+    languageCode: "en",
+    listId: userOwnedList.id,
+    listType: userOwnedList.type,
+    scenarioId: "understanding",
+    modes: ["word-to-definition", "definition-to-word"],
+    cardFilter: "review",
+    newReviewRatio: 5,
+    focusFilter: {
+      dateWindow: "daysAgo",
+      daysAgo: 14,
+      sourceId: "source-youtube-1",
+    },
+    sessionSize: "all-due-today",
+  });
+  fetchTrainingSessionSnapshot.mockResolvedValueOnce({
+    sessionId: "session-superseded-settings",
+    runStatus: "superseded",
+    runGeneration: null,
+    sessionSize: "all-due-today",
+    plannedNew: 0,
+    plannedReview: 10,
+    plannedPractice: 0,
+    plannedTotal: 10,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "definition-to-word",
+        queueSource: "review",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  });
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await waitFor(() =>
+    expect(fetchAvailableLists).toHaveBeenCalledWith("user-1", "en"),
+  );
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
+      "user-1",
+      "session-superseded-settings",
+    ),
+  );
+  await screen.findByRole("button", {
+    name: /Start training|Calculate training/,
+  });
+  for (const section of ["Source", "Exercises", "Filters", "Session"]) {
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(section) }));
+  }
+  expect(screen.getByRole("button", { name: "Words" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.getByRole("button", { name: /^Reverse / })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.getByRole("button", { name: /Source My saved words/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Session All available cards · Reviews only/ })).toBeInTheDocument();
+
+  updateActiveTrainingScope.mockClear();
+  startTrainingSession.mockClear();
+  const startHere = screen.getByRole("button", { name: /Start training|Calculate training/ });
+  await waitFor(() => expect(startHere).toBeEnabled());
+  await clickTrainingAction(startHere);
+
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  expect(updateActiveTrainingScope).toHaveBeenCalledWith(
+    expect.objectContaining({
+      userId: "user-1",
+      languageCode: "en",
+      listId: userOwnedList.id,
+      listType: userOwnedList.type,
+      activeScenario: "understanding",
+      cardFilter: "review",
+      modesEnabled: ["word-to-definition", "definition-to-word"],
+      newReviewRatio: 5,
+    }),
+  );
+  expect(startTrainingSession).toHaveBeenCalledWith(
+    "user-1",
+    ["word-to-definition", "definition-to-word"],
+    expect.objectContaining({
+      listId: userOwnedList.id,
+      listType: userOwnedList.type,
+      cardFilter: "review",
+      trainingFilter: {
+        dateWindow: "daysAgo",
+        daysAgo: 14,
+        sourceId: "source-youtube-1",
+      },
+      sessionSize: "all-due-today",
+    }),
+    expect.any(String),
+  );
+});
+
+// Composite behavior check, not a latency assertion: its helper alone permits 3s.
+// Keep a bounded budget for the complete sequence on slower CI CPUs.
+test("pilot Start persists the complete selection in one scope update", async () => {
+  fetchTrainingScenarios.mockResolvedValueOnce([{ id:"understanding", enabled:true, nameNl:"Begrip", nameEn:"Understanding", description:null, cardModes:["word-to-definition","definition-to-word"], graduationThreshold:0, sortOrder:0 }]);
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+  updateActiveTrainingScope.mockClear();
+  fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
+  fireEvent.click(await screen.findByRole("button", { name: /^Exercises / }));
+  fireEvent.click(screen.getByRole("button", { name: /^Reverse / }));
+  fireEvent.click(screen.getByRole("button", { name: /^Session / }));
+  fireEvent.change(screen.getByRole("slider", { name: /New \/ review balance|Nieuw \/ herhaling balans/ }), { target:{value:"3"} });
+  const startButton = screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/ });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  await clickTrainingAction(startButton);
+  await waitFor(() => expect(updateActiveTrainingScope).toHaveBeenCalledOnce());
+  expect(updateActiveTrainingScope).toHaveBeenCalledWith({ userId:user.id, languageCode:"nl", listId:defaultAvailableList.id, listType:defaultAvailableList.type, activeScenario:"understanding", cardFilter:"both", modesEnabled:["word-to-definition","definition-to-word"], newReviewRatio:3 });
+}, 15_000);
+
+test("pilot Setup applies source and date filters only when Start commits the draft", async () => {
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+  await waitFor(() => expect(fetchTrainingFilterSources).toHaveBeenCalledWith(user.id));
+  fireEvent.click(await screen.findByRole("button", { name:"Create training" }));
+  fireEvent.click(await screen.findByRole("button", { name:/^Filters / }));
+  fireEvent.click(screen.getByText(/Activity|Activiteit/));
+  fireEvent.change(screen.getByLabelText("Time window"), { target:{value:"today"} });
+  fireEvent.change(screen.getByRole("combobox",{name:"Source"}), { target:{value:"source:source-youtube-1"} });
+  expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
+  expect(fetchTrainingSessionPlan).not.toHaveBeenCalled();
+  expect(startTrainingSession).not.toHaveBeenCalled();
+  const start = screen.getByRole("button", { name:/Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/ });
+  await waitFor(() => expect(start).toBeEnabled());
+  await clickTrainingAction(start);
+  await waitFor(() => expect(fetchNextTrainingWordByScenario.mock.calls.map(call=>call[8])).toContainEqual(expect.objectContaining({dateWindow:"today",sourceId:"source-youtube-1"})));
+});
+test("pilot Start keeps recovery visible when the replacement queue fails", async () => {
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+  fireEvent.click(
+    await screen.findByRole("button", { name: /^Edit / }),
+  );
+  await screen.findByRole("heading", { name: /Session builder|Training samenstellen/ });
+  fetchNextTrainingWordByScenario.mockRejectedValueOnce(
+    Object.assign(new Error("canceling statement due to statement timeout"), {
+      code: "57014",
+    }),
+  );
+  const startButton = screen.getByRole("button", {
+    name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  await clickTrainingAction(startButton);
+
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  expect(
+    await screen.findByText(
+      /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
+    ),
+  ).toHaveAttribute("role", "alert");
+  expect(screen.getByRole("heading", { name: /^(Training|Тренировка)$/ })).toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: "huis" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", {
+      name: /No cards match this setup|Geen kaarten voor deze selectie/,
+    }),
+  ).not.toBeInTheDocument();
+  expect(startTrainingSession).toHaveBeenCalledOnce();
+  fireEvent.click(
+    screen.getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ }),
+  );
+  await waitFor(() => expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(1));
+  expect(await screen.findByRole("button", { name: /Continue training|Sessie doorgaan/ })).toBeInTheDocument();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(startTrainingSession).toHaveBeenCalledOnce();
+  expect(mockV2ProgressAction).not.toHaveBeenCalled();
+});
+
+test("stats errors leave the prepared card usable after Start", async () => {
+  fetchStats.mockImplementation(async () => {
+    throw new Error("stats unavailable");
+  });
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ }),
+  ).toBeInTheDocument();
+  expect(fetchStats).not.toHaveBeenCalled();
+  expect(await screen.findByRole("button", { name: /^Edit / })).toBeEnabled();
+  expect(startTrainingSession).not.toHaveBeenCalled();
+  const startButton = screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  await clickTrainingAction(startButton);
+  expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+  await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
+  expect(startTrainingSession).toHaveBeenCalledOnce();
+});
+
+test("pilot Start returns to the overview when the replacement queue has no cards", async () => {
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+  fireEvent.click(
+    await screen.findByRole("button", { name: /^Edit / }),
+  );
+  await screen.findByRole("heading", { name: /Session builder|Training samenstellen/ });
+  const startButton = screen.getByRole("button", {
+    name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/,
+  });
+  await waitFor(() => expect(startButton).toBeEnabled());
+  fetchNextTrainingWordByScenario.mockResolvedValueOnce(null);
+  await clickTrainingAction(startButton);
+
+  expect(await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ })).toBeInTheDocument();
+  expect(screen.queryByTestId("mock-training-sense-card-v2")).not.toBeInTheDocument();
+  expect(startTrainingSession).toHaveBeenCalledOnce();
+  expect(
+    screen.queryByRole("heading", {
+      name: /Training could not be loaded|Training kon niet worden geladen/,
+    }),
+  ).not.toBeInTheDocument();
+});
+
+test("approved Setup does not enable Listening when the backend scenario is disabled", async () => {
+  fetchTrainingScenarios.mockResolvedValueOnce([
+    {id:"understanding",enabled:true,nameNl:"Begrip",nameEn:"Understanding",description:null,cardModes:["word-to-definition"],graduationThreshold:0,sortOrder:0},
+    {id:"listening",enabled:false,nameNl:"Luisteren",nameEn:"Listening",description:null,cardModes:["listen-recognize"],graduationThreshold:0,sortOrder:1},
+  ]);
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByRole("heading", { name:/^(Training|Тренировка)$/ });
+  fireEvent.click(await screen.findByRole("button", {name:"Create training"}));
+  fireEvent.click(await screen.findByRole("button", {name:/^Exercises /}));
+  expect(screen.queryByRole("button", {name:/Listening|Luisteren/})).not.toBeInTheDocument();
+  const start=screen.getByRole("button",{name:/Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/});
+  expect(start).toBeEnabled();
+  updateActiveTrainingScope.mockClear();
+  await clickTrainingAction(start);
+  await waitFor(()=>expect(updateActiveTrainingScope).toHaveBeenCalledWith(expect.objectContaining({modesEnabled:["word-to-definition"]})));
+});
+test("pilot cannot start a scenario before backend capabilities resolve", async () => {
+  let resolveScenarios:(value:Awaited<ReturnType<typeof fetchTrainingScenarios>>)=>void=()=>undefined;
+  fetchTrainingScenarios.mockImplementationOnce(()=>new Promise(resolve=>{resolveScenarios=resolve;}));
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByRole("heading",{name:/^(Training|Тренировка)$/});
+  fireEvent.click(await screen.findByRole("button",{name:"Create training"}));
+  const pendingStart=await screen.findByRole("button",{name:/Loading Training|Training laden/});
+  expect(pendingStart).toBeDisabled();
+  await act(async()=>resolveScenarios([{id:"understanding",enabled:true,nameNl:"Begrip",nameEn:"Understanding",description:null,cardModes:["word-to-definition"],graduationThreshold:0,sortOrder:0}]));
+  expect(await screen.findByRole("button",{name:/Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/})).toBeEnabled();
+});
+test("pilot cannot start when no authoritative scenario is available", async () => {
+  fetchTrainingScenarios.mockResolvedValueOnce([]);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+  fireEvent.click(
+    await screen.findByRole("button", { name: /^Edit / }),
+  );
+  const unavailableStart = await screen.findByRole("button", {
+    name: /Choose a training goal|Kies een trainingsdoel/,
+  });
+  expect(unavailableStart).toBeDisabled();
+  updateActiveTrainingScope.mockClear();
+  fireEvent.click(unavailableStart);
+  expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+});
+
+test("pilot normalizes a card mode omitted by the authoritative scenario", async () => {
+  fetchActiveTrainingScope.mockResolvedValueOnce({...defaultActiveTrainingScope,modesEnabled:["definition-to-word"],hasSavedScope:true});
+  fetchTrainingScenarios.mockResolvedValueOnce([{id:"understanding",enabled:true,nameNl:"Begrip",nameEn:"Understanding",description:null,cardModes:["word-to-definition"],graduationThreshold:0,sortOrder:0}]);
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByRole("heading",{name:/^(Training|Тренировка)$/});
+  fireEvent.click(await screen.findByRole("button",{name:"Create training"}));
+  fireEvent.click(await screen.findByRole("button",{name:/^Exercises /}));
+  expect(screen.queryByRole("button",{name:/^Reverse /})).not.toBeInTheDocument();
+  const normalizedStart=await screen.findByRole("button",{name:/Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/});
+  expect(normalizedStart).toBeEnabled();
+  updateActiveTrainingScope.mockClear();
+  await clickTrainingAction(normalizedStart);
+  await waitFor(()=>expect(updateActiveTrainingScope).toHaveBeenCalledWith(expect.objectContaining({modesEnabled:["word-to-definition"]})));
+});
+test("dictionary search scope changes lookup language without changing training", async () => {
+  updateActiveTrainingScope.mockClear();
+  searchDictionaryGroups.mockClear();
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+
+  fireEvent.keyDown(window, { key: "s" });
+  const queryInput = await screen.findByRole("textbox", { name: "Search words" });
+  fireEvent.change(queryInput, { target: { value: "bank" } });
+
+  const { getUiMessages } = await import("@/lib/uiMessages");
+  const copy = getUiMessages("en").library;
+  fireEvent.click(screen.getByRole("button", { name: copy.filters }));
+  fireEvent.click(screen.getByRole("button", { name: "English" }));
+  fireEvent.click(screen.getByRole("button", { name: copy.showResults }));
+
+  await waitFor(() =>
+    expect(fetchPlatformV2LibraryGroupPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: "bank",
+        contentLanguageCode: "en",
+      }),
+    ),
+  );
+  expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+});
+
+test("dictionary search omits the retired private entry editor", async () => {
+  createUserDictionaryEntry.mockClear();
+  render(<TrainingScreen user={user} />);
+
+  await waitForInitialTrainingFetches();
+  fireEvent.keyDown(window, { key: "s" });
+  expect(await screen.findByTestId("library-workspace")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Add entry" })).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Headword")).not.toBeInTheDocument();
+  expect(createUserDictionaryEntry).not.toHaveBeenCalled();
+});
+
+test("dictionary lookup preserves an open entry with an explicit stale-detail label", async () => {
+  searchDictionaryGroups.mockImplementation(
+    async ({ query }: { query?: string }) =>
+      query === "boom"
+        ? { items: [dictionaryBoom], total: 1 }
+        : { items: [dictionaryHuis], total: 1 },
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+    fireEvent.keyDown(window, { key: "s" });
+
+    const queryInput = await screen.findByRole("textbox",{name:"Search words"});
+    fireEvent.change(queryInput, { target: { value: "huis" } });
+    const huisRow = await screen.findByTestId("library-headword-group-group-word-1");
+    fireEvent.click(huisRow);
+    await screen.findByText("Details");
+
+    fireEvent.change(queryInput, { target: { value: "boom" } });
+
+    await screen.findByText("boom");
+    expect(
+      await screen.findByText(
+        "This entry stays open while search results change.",
+      ),
+    ).toBeInTheDocument();
+  } finally {
+    restoreDefaultSearchResults();
+  }
+});
+
+test("dictionary lookup ignores stale responses from older queries", async () => {
+  const deferred = <T,>() => {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((done) => {
+      resolve = done;
+    });
+    return { promise, resolve };
+  };
+  const steSearch = deferred<{
+    items: (typeof dictionaryStedelijk)[];
+    total: number;
+  }>();
+  const sterSearch = deferred<{
+    items: (typeof dictionarySter)[];
+    total: number;
+  }>();
+
+  searchDictionaryGroups.mockImplementation(({ query }: { query?: string }) => {
+    if (query === "ste") return steSearch.promise;
+    if (query === "ster") return sterSearch.promise;
+    return Promise.resolve({ items: [], total: 0 });
+  });
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+    fireEvent.keyDown(window, { key: "s" });
+
+    const queryInput = await screen.findByRole("textbox", { name: "Search words" });
+    fireEvent.change(queryInput, { target: { value: "ste" } });
+    await waitFor(() =>
+      expect(fetchPlatformV2LibraryGroupPage).toHaveBeenCalledWith(
+        expect.objectContaining({ query: "ste" }),
+      ),
+    );
+
+    fireEvent.change(queryInput, { target: { value: "ster" } });
+    await waitFor(() =>
+      expect(fetchPlatformV2LibraryGroupPage).toHaveBeenCalledWith(
+        expect.objectContaining({ query: "ster" }),
+      ),
+    );
+
+    await act(async () => {
+      sterSearch.resolve({ items: [dictionarySter], total: 1 });
+      await sterSearch.promise;
+    });
+
+    expect(
+      await screen.findByTestId("library-headword-group-group-word-ster"),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      steSearch.resolve({ items: [dictionaryStedelijk], total: 3964 });
+      await steSearch.promise;
+    });
+
+    expect(
+      screen.getByTestId("library-headword-group-group-word-ster"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("library-headword-group-group-word-stedelijk"),
+    ).not.toBeInTheDocument();
+  } finally {
+    restoreDefaultSearchResults();
+  }
+});
+
+test("dictionary lookup preserves server Headword Group order", async () => {
+  searchDictionaryGroups.mockResolvedValueOnce({
+    items: [
+      {
+        ...dictionaryHuis,
+        dictionary_name: "Example Dictionary NT2",
+        search_match_group: "exact-headword",
+        search_match_label: "Exacte match",
+        search_group_rank: 1,
+      },
+      {
+        ...dictionaryCompound,
+        dictionary_name: "Example Dictionary NT2",
+        search_match_group: "related-headword",
+        search_match_label: "Samenstelling",
+        search_group_rank: 3,
+      },
+    ],
+    total: 2,
+  });
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+  fireEvent.keyDown(window, { key: "s" });
+
+  const queryInput = await screen.findByRole("textbox", { name: "Search words" });
+  fireEvent.change(queryInput, { target: { value: "huis" } });
+
+  const exact = await screen.findByTestId("library-headword-group-group-word-1");
+  const compound = screen.getByTestId("library-headword-group-group-word-3");
+
+  expect(
+    exact.compareDocumentPosition(compound) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+});
+
+test("dictionary lookup empty state names the dictionary source search", async () => {
+  searchDictionaryGroups.mockResolvedValue({ items: [], total: 0 });
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+    fireEvent.keyDown(window, { key: "s" });
+    fireEvent.change(
+      await screen.findByRole("textbox",{name:"Search words"}),
+      {
+        target: { value: "zzzz" },
+      },
+    );
+
+    expect(
+      await screen.findByText("No matching words"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("No matches in All dictionaries."),
+    ).toBeInTheDocument();
+  } finally {
+    restoreDefaultSearchResults();
+  }
+});
+
+test("footer list selector still changes active training scope", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockClear();
+  updateActiveTrainingScope.mockClear();
+  fetchStats.mockClear();
+  let resolveOldSelection!: (word: typeof mockWord) => void;
+  const oldSelection = new Promise<typeof mockWord>((resolve) => {
+    resolveOldSelection = resolve;
+  });
+  let resolveSecondary!: (word: typeof overrideWord) => void;
+  const secondarySelection = new Promise<typeof overrideWord>((resolve) => {
+    resolveSecondary = resolve;
+  });
+  let resolvePersistence!: (result: {
+    scope: ActiveTrainingScope;
+    error: null;
+  }) => void;
+  const persistence = new Promise<{
+    scope: ActiveTrainingScope;
+    error: null;
+  }>((resolve) => {
+    resolvePersistence = resolve;
+  });
+  fetchNextTrainingWordByScenario.mockImplementation(
+    async (
+      _userId: string,
+      _scenarioId: string,
+      _excludeWordIds: string[],
+      scope: { listId?: string } = {},
+    ) =>
+      scope.listId === secondaryList.id ? secondarySelection : oldSelection,
+  );
+  updateActiveTrainingScope.mockReturnValue(persistence);
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario).toHaveBeenCalled(),
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /active list/i }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /active list/i }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: /secondary list/i }),
+    );
+
+    await waitFor(() =>
+      expect(updateActiveTrainingScope).toHaveBeenCalledWith({
+        userId: "user-1",
+        languageCode: "nl",
+        listId: "list-secondary",
+        listType: "curated",
+        activeScenario: "listening",
+      }),
+    );
+    await act(async () => resolveOldSelection(mockWord));
+    expect(
+      screen.queryByRole("heading", { name: "huis" }),
+    ).not.toBeInTheDocument();
+    await act(async () =>
+      resolvePersistence({
+        scope: {
+          ...defaultActiveTrainingScope,
+          activeListId: secondaryList.id,
+          activeListType: secondaryList.type,
+          activeScenario: "listening",
+          hasSavedScope: true,
+        },
+        error: null,
+      }),
+    );
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+        const scope = call[3] as { listId?: string; listType?: string };
+        return (
+          call[1] === "listening" &&
+          scope?.listId === "list-secondary" &&
+          scope?.listType === "curated"
+        );
+      }),
+    ).toBe(true);
+    await act(async () => resolveSecondary(overrideWord));
+    expect(
+      await screen.findByRole("heading", { name: "boom" }),
+    ).toBeInTheDocument();
+  } finally {
+    restoreDefaultListScope();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+    updateActiveTrainingScope.mockResolvedValue({ scope: null, error: null });
+  }
+});
+
+test("footer card-filter change reloads without the previous finite session", async () => {
+  fetchNextTrainingWordByScenario
+    .mockReset()
+    .mockImplementationOnce(() => new Promise(() => undefined))
+    .mockResolvedValue(mockWord);
+
+  render(<TrainingScreen user={user} />);
+  await screen.findByRole("button", { name: "Wijzigen" });
+
+  fetchNextTrainingWordByScenario.mockClear();
+  fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: /Nieuw \+ Herhaling/ }),
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: /Alleen nieuw/ }),
+  );
+
+  await waitFor(() =>
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some(
+        (call) => call[4] === "new",
+      ),
+    ).toBe(true),
+  );
+  const replacementCall = fetchNextTrainingWordByScenario.mock.calls.find(
+    (call) => call[4] === "new",
+  );
+  expect(replacementCall?.[11]).toBeUndefined();
+});
+
+test("initial load waits for an unsaved list default scenario", async () => {
+  fetchActiveTrainingScope.mockResolvedValue({
+    ...defaultActiveTrainingScope,
+    activeListId: secondaryList.id,
+    activeListType: secondaryList.type,
+    activeScenario: "understanding",
+    hasSavedScope: false,
+  });
+  fetchListSummaryById.mockResolvedValue(secondaryList);
+  fetchAvailableLists.mockResolvedValue([secondaryList]);
+  fetchNextTrainingWordByScenario.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalled();
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.every(
+        (call) => call[1] === "listening",
+      ),
+    ).toBe(true);
+  } finally {
+    restoreDefaultListScope();
+  }
+});
+
+test.each([false, true])("Library inline grade preserves scope and selection (failed=%s)", async failed => {
+  useTwoListScope();
+  libraryLearning.set(dictionaryBoom.id, failed ? "learning" : "new");
+  searchDictionaryGroups.mockResolvedValue({ items: [dictionaryBoom], total: 1 });
+  if (failed) performLibraryAction.mockRejectedValueOnce(new Error("library_grade_failed"));
+  try {
+    render(<TrainingScreen user={user} />);
+    await waitForInitialTrainingFetches();
+    updateActiveTrainingScope.mockClear();
+    fetchTrainingWordByLookup.mockClear();
+    fireEvent.keyDown(window, { key: "s" });
+    fireEvent.change(await screen.findByRole("textbox", { name: "Search words" }), { target: { value: "boom" } });
+    fireEvent.click(await screen.findByTestId("library-headword-group-group-word-2"));
+    const card = await screen.findByTestId(`library-sense-card-${dictionaryBoom.id}`);
+    expect(performLibraryAction).not.toHaveBeenCalled();
+    if (!failed) {
+      fireEvent.click(within(card).getByRole("button", { name: "Learn" }));
+      await within(card).findByRole("button", { name: "Good" });
+      expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
+        actionId: "start-learning", target: expect.objectContaining({ entryId: dictionaryBoom.id, cardTypeId: "word-to-definition" }),
+      }));
+      expect(within(card).getByText("Learning")).toBeInTheDocument();
+    }
+    fireEvent.click(within(card).getByRole("button", { name: "Good" }));
+    await waitFor(() => expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
+      actionId: "review-card", reviewResult: "success", target: expect.objectContaining({ entryId: dictionaryBoom.id, cardTypeId: "word-to-definition" }),
+    })));
+    if (failed) await waitFor(() => expect(screen.getByText(getUiMessages("en").trainingSession.exclusion.failed)).toBeVisible());
+    expect(screen.getByRole("textbox", { name: "Search words" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: /Train next/i })).not.toBeInTheDocument();
+    expect(fetchTrainingWordByLookup).not.toHaveBeenCalled();
+    expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
+  } finally { restoreDefaultSearchResults(); restoreDefaultListScope(); }
+});
+
+test("search detail copies a trusted entry into the user dictionary", async () => {
+  useTwoListScope();
+  searchDictionaryGroups.mockResolvedValue({
+    items: [dictionaryHuis],
+    total: 1,
+  });
+  updateActiveTrainingScope.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await waitForInitialTrainingFetches();
+    updateActiveTrainingScope.mockClear();
+
+    fireEvent.keyDown(window, { key: "s" });
+    fireEvent.change(
+      await screen.findByRole("textbox",{name:"Search words"}),
+      {
+        target: { value: "huis" },
+      },
+    );
+    fireEvent.click(await screen.findByTestId("library-headword-group-group-word-1"));
+    expect(await screen.findByTestId("library-sense-card-word-1")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /copy to my dictionary|kopieer naar mijn woordenboek/i }),
+    ).not.toBeInTheDocument();
+    expect(copyEntryToUserDictionary).not.toHaveBeenCalled();
+    expect(fetchDictionaryEntryById).not.toHaveBeenCalled();
+    expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+  } finally {
+    restoreDefaultSearchResults();
+    restoreDefaultListScope();
+  }
+});
+
+test("returning from an inline Library grade preserves the current training card", async () => {
+  libraryLearning.set(dictionaryBoom.id, "learning");
+  searchDictionaryGroups.mockResolvedValue({ items: [dictionaryBoom], total: 1 });
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+    fetchTrainingWordByLookup.mockClear();
+    fireEvent.keyDown(window, { key: "s" });
+    fireEvent.change(await screen.findByRole("textbox", { name: "Search words" }), { target: { value: "boom" } });
+    fireEvent.click(await screen.findByTestId("library-headword-group-group-word-2"));
+    const card = await screen.findByTestId(`library-sense-card-${dictionaryBoom.id}`);
+    fireEvent.click(within(card).getByRole("button", { name: "Easy" }));
+    await waitFor(() => expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
+      actionId: "review-card", reviewResult: "easy", target: expect.objectContaining({ entryId: dictionaryBoom.id, cardTypeId: "word-to-definition" }),
+    })));
+    fireEvent.click(within(getPrimaryNavigation()).getByRole("button", { name: /Training/ }));
+    expect(await screen.findByRole("heading", { name: "huis" })).toBeVisible();
+    expect(fetchTrainingWordByLookup).not.toHaveBeenCalled();
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
+    expect(screen.queryByText(/Daarna gaat normale training verder/i)).not.toBeInTheDocument();
+  } finally { restoreDefaultSearchResults(); }
+});
+
+test("V2 layout keeps its theme owner when Today setup is disabled", async () => {
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+    const card = await screen.findByTestId("mock-training-sense-card-v2");
+    const viewport = card.closest('[data-training-session-layout="v2"]');
+    expect(viewport).not.toBeNull();
+    expect(viewport?.className).toContain("viewport");
+    expect(
+      screen.queryByTestId("training-session-chrome"),
+    ).not.toBeInTheDocument();
+  } finally {
+    prefetchPlatformV2TrainingEntry.mockReset();
+  }
+});
+
+test("V2 card owns scrolling without a second legacy scroll region", async () => {
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+    await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+    const startSession = screen.getByRole("button", {
+      name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/,
+    });
+    await waitFor(() => expect(startSession).toBeEnabled());
+    fireEvent.click(startSession);
+
+    await screen.findByTestId("mock-training-sense-card-v2");
+    const scrollRegion = await screen.findByTestId(
+      "training-card-scroll-region",
+    );
+    expect(scrollRegion.className).toContain("overflow-clip");
+    expect(scrollRegion.className).not.toContain("overflow-y-auto");
+    const frame = screen.getByTestId("training-card-frame");
+    expect(frame.className).toContain("flex-1");
+    expect(frame.className).not.toContain("h-[580px]");
+    expect(
+      screen.queryByRole("button", { name: /Antwoord tonen|Show answer/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Opnieuw|Again/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
+    expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
+      /Test list0 \/ 2/,
+    );
+    expect(screen.getByTestId("training-session-position")).toHaveTextContent(
+      "0 / 2",
+    );
+    expect(
+      screen.getByTestId("training-session-progress-track"),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("app-header")).toBeInTheDocument();
+    expect(getPrimaryNavigation()).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Theme: System" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Settings" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Search" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Help" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "History" })).toHaveLength(1);
+    expect(
+      screen.queryByRole("button", { name: "Account" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: "Close session" }),
+    ).toHaveLength(1);
+    expect(document.querySelector('footer[data-compact="true"]')).not.toBeInTheDocument();
+    fireEvent.click(
+      within(screen.getByTestId("training-session-chrome")).getByRole(
+        "button",
+        { name: "Close session" },
+      ),
+    );
+    expect(
+      await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("training-session-chrome"),
+    ).not.toBeInTheDocument();
+  } finally {
+    prefetchPlatformV2TrainingEntry.mockReset();
+  }
+});
+
+test("approved Training History control requests the authoritative destination by keyboard", async () => {
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+  const onRequestDestination = vi.fn();
+  try {
+    render(
+      <TrainingScreen
+        user={user}
+        trainingTodaySetupEnabled
+        onRequestDestination={onRequestDestination}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+    const startSession = screen.getByRole("button", {
+      name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/,
+    });
+    await waitFor(() => expect(startSession).toBeEnabled());
+    fireEvent.click(startSession);
+    await screen.findByTestId("mock-training-sense-card-v2");
+
+    const history = screen.getByRole("button", { name: "History" });
+    history.focus();
+    await act(async () => userEvent.keyboard("{Enter}"));
+
+    expect(onRequestDestination).toHaveBeenCalledWith("history");
+  } finally {
+    prefetchPlatformV2TrainingEntry.mockReset();
+  }
+});
+
+test("keyboard return from History restores focus to its stable Training trigger", async () => {
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...defaultStartedTrainingSession,
+    runStatus: "active",
+    runGeneration: 1,
+    sessionSize: 10,
+    requestedTotal: 2,
+    members: [{
+      ordinal: 1,
+      entryId: mockWord.id,
+      cardTypeId: "word-to-definition",
+      queueSource: "new",
+      consumedAt: null,
+      unavailableAt: null,
+    }],
+  });
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+
+  function Harness() {
+    const [destination, setDestination] =
+      React.useState<AppDestination>("training");
+    return (
+      <TrainingScreen
+        user={user}
+        destination={destination}
+        trainingTodaySetupEnabled
+        onRequestDestination={setDestination}
+        onReturnFromHistory={() => setDestination("training")}
+      />
+    );
+  }
+
+  try {
+    render(<Harness />);
+    await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ }),
+      ).toBeEnabled(),
+    );
+    await clickTrainingAction(screen.getByRole("button", {
+        name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/,
+      }));
+    await screen.findByTestId("mock-training-sense-card-v2");
+
+    const history = screen.getByRole("button", { name: "History" });
+    history.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(
+      await screen.findByRole("heading", { name: "History" }),
+    ).toBeInTheDocument();
+
+    const back = screen.getByRole("button", { name: "Close history" });
+    back.focus();
+    await act(async () => userEvent.keyboard("{Enter}"));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "History" })).toHaveFocus(),
+    );
+  } finally {
+    prefetchPlatformV2TrainingEntry.mockReset();
+  }
+});
+
+test("V2 loading retains the existing session chrome", async () => {
+  mockV2SessionState = "loading";
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
+    const startSession = screen.getByRole("button", {
+      name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/,
+    });
+    await waitFor(() => expect(startSession).toBeEnabled());
+    fireEvent.click(startSession);
+
+    expect(
+      await screen.findByTestId("training-v2-loading"),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
+    expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
+  } finally {
+    mockV2SessionState = "ready";
+    prefetchPlatformV2TrainingEntry.mockReset();
+  }
+});
+
+test("routes listening mode through the V2 renderer without a legacy marker", async () => {
+  fetchActiveTrainingScope.mockReset();
+  fetchActiveTrainingScope.mockResolvedValue({
+    ...defaultActiveTrainingScope,
+    activeScenario: "listening",
+    modesEnabled: ["listen-recognize"],
+  });
+  fetchUserPreferences.mockReset();
+  fetchUserPreferences.mockResolvedValue({
+    themePreference: "system",
+    modesEnabled: ["listen-recognize"],
+    cardFilter: "both",
+    languageCode: "nl",
+    newReviewRatio: 2,
+    activeScenario: "listening",
+    translationLang: null,
+  });
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockResolvedValue({
+    ...mockWord,
+    mode: "listen-recognize",
+  });
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+
+  try {
+    const { container } = render(
+      <TrainingScreen user={user} trainingTodaySetupEnabled={false} />,
+    );
+
+    await waitFor(() =>
+      expect(
+        container.querySelector('[data-testid="mock-training-sense-card-v2"]'),
+      ).not.toBeNull(),
+    );
+    expect(
+      container.querySelector('[data-training-renderer="legacy"]'),
+    ).not.toBeInTheDocument();
+  } finally {
+    fetchActiveTrainingScope.mockReset();
+    fetchActiveTrainingScope.mockResolvedValue(defaultActiveTrainingScope);
+    fetchUserPreferences.mockReset();
+    fetchUserPreferences.mockResolvedValue({
+      themePreference: "system",
+      modesEnabled: ["word-to-definition"],
+      cardFilter: "both",
+      languageCode: "nl",
+      newReviewRatio: 2,
+      activeScenario: "understanding",
+      translationLang: null,
+    });
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+    prefetchPlatformV2TrainingEntry.mockReset();
+  }
+});
+
+test("keeps the V2 loading surface when the pilot has no current card yet", async () => {
+  fetchNextTrainingWordByScenario.mockImplementationOnce(
+    () => new Promise(() => undefined),
+  );
+
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+
+    expect(
+      await screen.findByTestId("training-v2-loading"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("training-card-scroll-region"),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-training-renderer="legacy"]'),
+    ).not.toBeInTheDocument();
+  } finally {
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("renders an explicit V2 state instead of falling back for unsupported listen-type", async () => {
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockResolvedValue({
+    ...mockWord,
+    mode: "listen-type",
+  });
+
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+
+    expect(
+      await screen.findByTestId("training-v2-unsupported-mode"),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-training-renderer="legacy"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("mock-training-sense-card-v2"),
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Back|Terug|Назад/i,
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("training-v2-unsupported-mode"),
+      ).not.toBeInTheDocument(),
+    );
+  } finally {
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("keeps the current V2 card visible until the prefetched DTO is ready", async () => {
+  let resolveNextLookup!: (value: unknown) => void;
+  // The real V2 client shares one in-flight lookup for an exact card target.
+  const nextLookup = new Promise((resolve) => {
+    resolveNextLookup = resolve;
+  });
+  const word1 = { ...mockWord, id: "word-1", headword: "huis" };
+  const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+  const readyLookup = {
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: "word-1" },
+  };
+
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario
+    .mockResolvedValueOnce(word1)
+    .mockResolvedValue(word2);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockImplementation(
+    (input: { entryId: string }) =>
+      input.entryId === word2.id
+        ? nextLookup
+        : Promise.resolve(readyLookup),
+  );
+
+  try {
+    await act(async () => {
+      render(<TrainingScreen user={user} />);
+    });
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(prefetchPlatformV2TrainingEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ entryId: word2.id }),
+      ),
+    );
+    const schedulerCallsBeforeGrade =
+      fetchNextTrainingWordByScenario.mock.calls.length;
+
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "boom" }),
+    ).not.toBeInTheDocument();
+    await act(async () => Promise.resolve());
+    expectOnlyBackgroundSelectionSince(schedulerCallsBeforeGrade);
+
+    await act(async () => {
+      resolveNextLookup({
+        ...readyLookup,
+        group: { header: { audio: null, text: "boom" } },
+        entry: { entryId: word2.id },
+      });
+    });
+    expect(
+      await screen.findByRole("heading", { name: "boom" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Next training card")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-training-sense-card-v2")).toHaveFocus();
+  } finally {
+    prefetchPlatformV2TrainingEntry.mockReset();
+    prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("publishes a new presentation identity when the same V2 word is presented again", async () => {
+  const repeatedWord = { ...mockWord, id: "word-repeat", headword: "huis" };
+  const readyLookup = {
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: repeatedWord.id },
+  };
+
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockResolvedValue(repeatedWord);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(
+        1,
+      ),
+    );
+
+    const firstIdentity = screen
+      .getByTestId("mock-training-sense-card-v2")
+      .getAttribute("data-presentation-identity");
+    expect(firstIdentity).toEqual(expect.any(String));
+    expect(firstIdentity).not.toBe("");
+
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+
+    await waitFor(() =>
+      expect(
+        screen
+          .getByTestId("mock-training-sense-card-v2")
+          .getAttribute("data-presentation-identity"),
+      ).not.toBe(firstIdentity),
+    );
+  } finally {
+    prefetchPlatformV2TrainingEntry.mockReset();
+    prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("uses only the on-demand fallback when grading before next-turn selection resolves", async () => {
+  const resolveStaleSelections: Array<(value: typeof mockWord | null) => void> =
+    [];
+  let selectionCall = 0;
+  let allowFallback = false;
+  const word1 = { ...mockWord, id: "word-1", headword: "huis" };
+  const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+  const readyLookup = {
+    state: "ready",
+    group: { header: { audio: null, text: "boom" } },
+    entry: { entryId: word2.id },
+  };
+
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockImplementation(() => {
+    selectionCall += 1;
+    if (selectionCall === 1) return Promise.resolve(word1);
+    if (allowFallback) return Promise.resolve(word2);
+    return new Promise((resolve) => {
+      resolveStaleSelections.push(resolve);
+    });
+  });
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(
+        1,
+      ),
+    );
+    // Let the initial selection effect and its replacement request settle
+    // before recording the baseline; otherwise a slower runner can classify
+    // that replacement as a post-grade fallback.
+    await act(async () => Promise.resolve());
+    const callsBeforeGrade = fetchNextTrainingWordByScenario.mock.calls.length;
+
+    allowFallback = true;
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "boom" }),
+    ).toBeInTheDocument();
+    await act(async () => Promise.resolve());
+    const callsAfterGrade =
+      fetchNextTrainingWordByScenario.mock.calls.slice(callsBeforeGrade);
+    expect(
+      callsAfterGrade.filter((call) => {
+        const excludedCardKeys = call[6] as string[];
+        return (
+          excludedCardKeys.includes("word-1:word-to-definition") &&
+          !excludedCardKeys.includes("word-2:word-to-definition")
+        );
+      }),
+    ).toHaveLength(1);
+    const callsAfterPresentation =
+      fetchNextTrainingWordByScenario.mock.calls.length;
+
+    await act(async () => {
+      resolveStaleSelections.forEach((resolve) => resolve(word2));
+    });
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
+      callsAfterPresentation,
+    );
+  } finally {
+    prefetchPlatformV2TrainingEntry.mockReset();
+    prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("shows load-only recovery and blocks a repeated V2 grade after an accepted action", async () => {
+  const word1 = { ...mockWord, id: "word-1", headword: "huis" };
+  const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+  let word2Ready = false;
+
+  mockV2ProgressAction.mockClear();
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario
+    .mockResolvedValueOnce(word1)
+    .mockResolvedValueOnce(null)
+    .mockResolvedValue(word2);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockImplementation(
+    (input: { entryId: string }) =>
+      Promise.resolve(
+        input.entryId === word2.id
+          ? word2Ready
+            ? {
+                state: "ready",
+                group: { header: { audio: null, text: "boom" } },
+                entry: { entryId: word2.id },
+              }
+            : { state: "lookup-http-error", status: 503 }
+          : {
+              state: "ready",
+              group: { header: { audio: null, text: "huis" } },
+              entry: { entryId: word1.id },
+            },
+      ),
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(
+        fetchNextTrainingWordByScenario.mock.calls.length,
+      ).toBeGreaterThanOrEqual(2),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    await waitFor(() =>
+      expect(prefetchPlatformV2TrainingEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ entryId: word2.id }),
+      ),
+    );
+
+    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "boom" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /Training could not be loaded/i }),
+    ).not.toBeInTheDocument();
+    const recovery = await screen.findByRole("alert");
+    expect(recovery).toHaveTextContent(
+      /verbinding werd onderbroken|connection was interrupted|соединение прервалось/i,
+    );
+    expect(
+      screen.getByRole("button", { name: "Mock V2 grade" }),
+    ).toBeDisabled();
+    expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
+
+    word2Ready = true;
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Opnieuw proberen|Try again|Повторить/i,
+      }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "boom" }),
+    ).toBeInTheDocument();
+    expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
+    const retryCall = fetchNextTrainingWordByScenario.mock.calls.at(-1);
+    expect(retryCall?.[6]).toEqual(
+      expect.arrayContaining(["word-1:word-to-definition"]),
+    );
+  } finally {
+    prefetchPlatformV2TrainingEntry.mockReset();
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("a rejected prepared card retries through the scheduler and reaches an available due review", async () => {
+  const firstWord = { ...mockWord, id: "word-new", headword: "new-card" };
+  const brokenWord = {
+    ...mockWord,
+    id: "word-broken",
+    headword: "broken-card",
+  };
+  const dueWord = { ...mockWord, id: "word-due", headword: "due-review" };
+  let initialSelected = false;
+
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockImplementation(
+    async (
+      _userId: string,
+      _scenarioId: string,
+      _excludeWordIds: string[],
+      _scope: unknown,
+      _cardFilter: string,
+      _queueTurn: string,
+      excludeCardKeys: string[] = [],
+    ) => {
+      if (!initialSelected) {
+        initialSelected = true;
+        return firstWord;
+      }
+      if (excludeCardKeys.includes("word-broken:word-to-definition")) {
+        return dueWord;
+      }
+      return brokenWord;
+    },
+  );
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockImplementation(
+    async (input: { entryId: string }) => ({
+      state: "ready",
+      group: { header: { audio: null, text: input.entryId } },
+      entry: { entryId: input.entryId },
+    }),
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "new-card" });
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(
+        1,
+      ),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "This training card could not be loaded.",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(
+      await screen.findByRole("heading", { name: "due-review" }),
+    ).toBeInTheDocument();
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) =>
+        (call[6] as string[]).includes("word-broken:word-to-definition"),
+      ),
+    ).toBe(true);
+  } finally {
+    prefetchPlatformV2TrainingEntry.mockReset();
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("US-094.3: after grading a card, the next prefetch exclude list includes the graded card key", async () => {
+  const words = [
+    { ...mockWord, id: "word-1", headword: "huis" },
+    { ...mockWord, id: "word-2", headword: "boom" },
+    { ...mockWord, id: "word-3", headword: "fiets" },
+  ];
+
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockImplementation(
+    async (
+      _userId: string,
+      _scenarioId: string,
+      _excludeWordIds: string[],
+      _scope: unknown,
+      _cardFilter: unknown,
+      _queueTurn: unknown,
+      excludeCardKeys: string[] = [],
+    ) => {
+      return (
+        words.find((w) => !excludeCardKeys.includes(`${w.id}:${w.mode}`)) ??
+        null
+      );
+    },
+  );
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+
+  // Wait for background prefetch to run at least once.
+  await waitFor(() =>
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.length,
+    ).toBeGreaterThanOrEqual(2),
+  );
+
+  // The V2 card owns the answer/review action in one control.
+  fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+
+  // Should advance to next card (prefetched or on-demand).
+  await screen.findByRole("heading", { name: "boom" });
+
+  // While viewing word-2, next prefetch should exclude both word-2's current
+  // card and the previously graded word-1 card.
+  await waitFor(() => {
+    const hasExclude = fetchNextTrainingWordByScenario.mock.calls.some((c) => {
+      const exclude = c[6] as string[];
+      return (
+        exclude.includes("word-1:word-to-definition") &&
+        exclude.includes("word-2:word-to-definition")
+      );
+    });
+    expect(hasExclude).toBe(true);
+  });
+});
+
+test("keeps a newly keyed card disabled until its predecessor acceptance settles", async () => {
+  const word1 = { ...mockWord, id: "word-1", headword: "huis" };
+  const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+  let releaseAcceptance = () => {};
+  mockV2AcceptanceGate = new Promise((resolve) => {
+    releaseAcceptance = resolve;
+  });
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario
+    .mockResolvedValueOnce(word1)
+    .mockResolvedValue(word2);
+
+  try {
+    await act(async () => {
+      render(<TrainingScreen user={user} />);
+    });
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThanOrEqual(2),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    await screen.findByRole("heading", { name: "boom" });
+
+    expect(screen.getByRole("button", { name: "Mock V2 grade" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
+
+    await act(async () => releaseAcceptance());
+    await waitFor(() =>
+      expect(mockV2ProgressActionCompleted).toHaveBeenCalledWith(
+        "accepted-next-presented",
+      ),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Mock V2 grade" })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    await waitFor(() => expect(mockV2ProgressAction).toHaveBeenCalledTimes(2));
+  } finally {
+    releaseAcceptance();
+    mockV2AcceptanceGate = null;
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("US-094.3: after grading multiple cards, all graded card keys are in the exclude list", async () => {
+  const words = [
+    { ...mockWord, id: "word-1", headword: "huis" },
+    { ...mockWord, id: "word-2", headword: "boom" },
+    { ...mockWord, id: "word-3", headword: "fiets" },
+    { ...mockWord, id: "word-4", headword: "kat" },
+  ];
+
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockImplementation(
+    async (
+      _userId: string,
+      _scenarioId: string,
+      _excludeWordIds: string[],
+      _scope: unknown,
+      _cardFilter: unknown,
+      _queueTurn: unknown,
+      excludeCardKeys: string[] = [],
+    ) => {
+      return (
+        words.find((w) => !excludeCardKeys.includes(`${w.id}:${w.mode}`)) ??
+        null
+      );
+    },
+  );
+
+  // Complete mocked startup hydration before exercising sequential grades.
+  // First heading paint is not a receipt that all initial scope effects ran.
+  await act(async () => {
+    render(<TrainingScreen user={user} />);
+  });
+
+  await screen.findByRole("heading", { name: "huis" });
+
+  // Grade word-1.
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+  });
+  await waitFor(() => {
+    expect(mockV2ProgressActionCompleted).toHaveBeenNthCalledWith(
+      1,
+      "accepted-next-presented",
+    );
+  });
+  await screen.findByRole("heading", { name: "boom" });
+
+  // This test exercises two completed transitions, not overlapping actions.
+  // A new keyed card can mount before its predecessor's acceptance settles.
+  // The real V2 session's duplicate-input boundary is tested separately.
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Mock V2 grade" })).toBeEnabled(),
+  );
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+  });
+  await waitFor(() => {
+    expect(mockV2ProgressActionCompleted).toHaveBeenNthCalledWith(
+      2,
+      "accepted-next-presented",
+    );
+  });
+  await waitFor(() => {
+    const observed = {
+      heading: screen.queryByTestId("mock-training-sense-card-v2")?.textContent,
+      actions: mockV2ProgressAction.mock.calls.length,
+      selections: fetchNextTrainingWordByScenario.mock.calls.map((call) => ({
+        turn: call[5],
+        excluded: call[6],
+      })),
+    };
+    expect(
+      Boolean(screen.queryByRole("heading", { name: "fiets" })),
+      JSON.stringify(observed),
+    ).toBe(true);
+  });
+
+  // While viewing word-3, next prefetch should exclude both graded IDs.
+  await waitFor(() => {
+    const hasExclude = fetchNextTrainingWordByScenario.mock.calls.some((c) => {
+      const exclude = c[6] as string[];
+      return (
+        exclude.includes("word-1:word-to-definition") &&
+        exclude.includes("word-2:word-to-definition") &&
+        exclude.includes("word-3:word-to-definition")
+      );
+    });
+    expect(hasExclude).toBe(true);
+  });
+});
+
+
+test("learner logout preserves the same user's separate admin session", async () => {
+  vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null });
+  window.localStorage.setItem("sb-example-auth-token", "learner-session");
+  window.localStorage.setItem("unrelated-setting", "keep");
+  document.cookie = "2000nl-admin-auth=admin-session; path=/";
+  render(<TrainingScreen user={user} destination="settings" />);
+  fireEvent.click(within(await screen.findByRole("navigation", { name: "Settings sections" })).getByRole("button", { name: "Account" }));
+  fireEvent.click(await screen.findByRole("button", { name: /Uitloggen|Sign out|Выйти/ }));
+  await waitFor(() => expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: "local" }));
+  expect(supabase.auth.signOut).not.toHaveBeenCalledWith({ scope: "global" });
+  await waitFor(() => expect(window.localStorage.getItem("sb-example-auth-token")).toBeNull());
+  expect(window.localStorage.getItem("unrelated-setting")).toBe("keep");
+  expect(document.cookie).toContain("2000nl-admin-auth=admin-session");
+  document.cookie = "2000nl-admin-auth=; max-age=0; path=/";
+});
+
+test.each(["focus", "return"] as const)(
+  "%s reconciles an externally revised remainder without grading",
+  async (trigger) => {
+    await writeTrainingSessionResume({
+      sessionId: "session-replan",
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "list-1",
+      listType: "curated",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 5,
+    });
+    const member = {
+      ordinal: 1,
+      entryId: "word-1",
+      cardTypeId: "word-to-definition",
+      queueSource: "new",
+      consumedAt: null,
+      unavailableAt: null,
+    };
+    const original = {
+      sessionId: "session-replan",
+      runStatus: "active",
+      runGeneration: 1,
+      sessionSize: 5,
+      plannedNew: 1,
+      plannedReview: 0,
+      plannedPractice: 0,
+      plannedTotal: 1,
+      requestedTotal: 5,
+      plannedAt: "2026-09-10T12:00:00Z",
+      planRevision: 0,
+      completedActions: 0,
+      members: [member],
+    };
+    fetchTrainingSessionSnapshot.mockResolvedValue(original);
+    const view = render(
+      <TrainingScreen
+        user={user}
+        trainingTodaySetupEnabled
+        onRequestDestination={vi.fn()}
+      />,
+    );
+    await screen.findByTestId("mock-training-sense-card-v2");
+    const initialReads = fetchNextTrainingWordByScenario.mock.calls.length;
+    fetchTrainingSessionSnapshot.mockResolvedValue({
+      ...original,
+      planRevision: 1,
+      members: [{ ...member, entryId: overrideWord.id }],
+    });
+    fetchNextTrainingWordByScenario.mockResolvedValue(overrideWord);
+    if (trigger === "focus")
+      act(() => window.dispatchEvent(new Event("focus")));
+    else {
+      view.rerender(
+        <TrainingScreen
+          user={user}
+          trainingTodaySetupEnabled
+          onRequestDestination={vi.fn()}
+          destination="library"
+        />,
+      );
+      await act(async () => {
+        await Promise.resolve();
+      });
+      view.rerender(
+        <TrainingScreen
+          user={user}
+          trainingTodaySetupEnabled
+          onRequestDestination={vi.fn()}
+          destination="training"
+        />,
+      );
+    }
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(
+        initialReads,
+      ),
+    );
+    expect(fetchNextTrainingWordByScenario.mock.calls.at(-1)?.[11]).toBe(
+      "session-replan",
+    );
+    expect(mockV2ProgressAction).not.toHaveBeenCalled();
+    const revisedReads = fetchNextTrainingWordByScenario.mock.calls.length;
+    act(() => window.dispatchEvent(new Event("focus")));
+    await waitFor(() =>
+      expect(
+        fetchTrainingSessionSnapshot.mock.calls.length,
+      ).toBeGreaterThanOrEqual(3),
+    );
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+      revisedReads,
+    );
+  },
+);
+
+test("a same-run revision keeps the accepted-card position and server counts", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-replan-count", userId: "user-1", languageCode: "nl",
+    listId: "list-1", listType: "curated", scenarioId: "understanding",
+    modes: ["word-to-definition"], cardFilter: "both", newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" }, sessionSize: 5,
+  });
+  const firstMember = {
+    ordinal: 1, entryId: "word-1", cardTypeId: "word-to-definition",
+    queueSource: "new", consumedAt: null, unavailableAt: null,
+  };
+  const initial = {
+    sessionId: "session-replan-count", runStatus: "active" as const,
+    runGeneration: 1, sessionSize: 5 as const, plannedNew: 2, plannedReview: 3,
+    plannedPractice: 0, plannedTotal: 5, requestedTotal: 5,
+    plannedAt: "2026-09-10T12:00:00Z", planRevision: 0, completedActions: 0,
+    members: [firstMember],
+  };
+  fetchTrainingSessionSnapshot.mockResolvedValue(initial);
+  fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByTestId("mock-training-sense-card-v2");
+  await waitFor(() => expect(screen.getByTestId("training-session-position")).toHaveTextContent("0 / 5"));
+
+  fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+  await waitFor(() => expect(mockV2ProgressActionCompleted).toHaveBeenCalledWith("accepted-next-presented"));
+  await waitFor(() => expect(screen.getByTestId("training-session-position")).toHaveTextContent("1 / 5"));
+
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...initial, planRevision: 1, completedActions: 1,
+    members: [
+      { ...firstMember, consumedAt: "2026-09-10T12:01:00Z" },
+      { ...firstMember, ordinal: 2, entryId: overrideWord.id },
+    ],
+  });
+  fetchNextTrainingWordByScenario.mockResolvedValue(overrideWord);
+  act(() => window.dispatchEvent(new Event("focus")));
+  await screen.findByRole("heading", { name: "boom" });
+  await waitFor(() => expect(screen.getByTestId("training-session-position")).toHaveTextContent("1 / 5"));
+  expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
+});
+
+test("replan coalesces overlapping checks, retries failed reads, and fences late takeover", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-replan",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  const member = {
+    ordinal: 1,
+    entryId: "word-1",
+    cardTypeId: "word-to-definition",
+    queueSource: "new",
+    consumedAt: null,
+    unavailableAt: null,
+  };
+  const original = {
+    sessionId: "session-replan",
+    runStatus: "active",
+    runGeneration: 1,
+    sessionSize: 5,
+    plannedNew: 1,
+    plannedReview: 0,
+    plannedPractice: 0,
+    plannedTotal: 1,
+    requestedTotal: 5,
+    plannedAt: "2026-09-10T12:00:00Z",
+    planRevision: 0,
+    completedActions: 0,
+    members: [member],
+  };
+  fetchTrainingSessionSnapshot.mockResolvedValue(original);
+  // Card DOM alone does not mean startup scope effects/background selections
+  // have settled. Finish those before counting authority-triggered reads.
+  await act(async () => {
+    render(
+      <TrainingScreen
+        user={user}
+        trainingTodaySetupEnabled
+        onRequestDestination={vi.fn()}
+      />,
+    );
+  });
+  await screen.findByTestId("mock-training-sense-card-v2");
+  const initialReads = fetchNextTrainingWordByScenario.mock.calls.length;
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...original,
+    planRevision: 1,
+    members: [{ ...member, entryId: overrideWord.id }],
+  });
+  fetchNextTrainingWordByScenario.mockResolvedValue(overrideWord);
+
+  let deliver: (value: typeof overrideWord) => void = () => undefined;
+  fetchNextTrainingWordByScenario.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        deliver = resolve;
+      }),
+  );
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+      initialReads + 1,
+    ),
+  );
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot.mock.calls.length).toBe(3),
+  );
+  expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+    initialReads + 1,
+  );
+  await act(async () => {
+    deliver(overrideWord);
+  });
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...original,
+    planRevision: 2,
+    members: [{ ...member, entryId: overrideWord.id }],
+  });
+  fetchNextTrainingWordByScenario.mockRejectedValueOnce(
+    new Error("network lost"),
+  );
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+      initialReads + 2,
+    ),
+  );
+  await act(async () => {
+    await Promise.resolve();
+  });
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
+      initialReads + 3,
+    ),
+  );
+  await act(async () => {
+    await Promise.resolve();
+  });
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...original,
+    planRevision: 3,
+    members: [{ ...member, entryId: overrideWord.id }],
+  });
+  fetchNextTrainingWordByScenario.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        deliver = resolve;
+      }),
+  );
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.length,
+    ).toBeGreaterThanOrEqual(initialReads + 4),
+  );
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...original,
+    runStatus: "superseded",
+    runGeneration: null,
+  });
+  act(() => window.dispatchEvent(new Event("focus")));
+  await screen.findByRole("button", { name: /Start training|Calculate training/ });
+  await act(async () => {
+    deliver(overrideWord);
+  });
+  expect(
+    screen.queryByTestId("mock-training-sense-card-v2"),
+  ).not.toBeInTheDocument();
+  expect(mockV2ProgressAction).not.toHaveBeenCalled();
+});
+
+for (const languageCode of ["nl", "en"]) test(`owned legacy sentence session resumes in its saved ${languageCode} language without a new start`, async()=>{
+ const sessionId=`legacy-sentence-${languageCode}`;
+ const snapshot={contractVersion:"platform-translation-exercise-session-v1",sessionId,exerciseFamily:"translation",direction:"recall",sessionSize:"5",requestedTotal:5,plannedNew:3,plannedReview:2,plannedPractice:0,plannedTotal:5,plannedAt:"2026-10-03T09:00:00Z",runStatus:"active",runGeneration:4,completedActions:1,completionReason:null,members:[{ordinal:1,consumedAt:"2026-10-03T09:01:00Z",unavailableAt:null},{ordinal:2,consumedAt:null,unavailableAt:null}]};
+ legacyTranslationSnapshot.mockResolvedValue(snapshot);
+ await writeTrainingSessionResume({sessionId,userId:user.id,family:"sentence",languageCode,listId:"list-1",listType:"curated",scenarioId:"sentences",modes:["word-to-definition"],cardFilter:"both",newReviewRatio:2,focusFilter:{dateWindow:"all"},sessionSize:5});
+ render(<TrainingScreen user={user} trainingTodaySetupEnabled/>);
+ const session=await screen.findByTestId("legacy-sentence-session");
+ expect(session).toHaveAttribute("data-session-id",sessionId);
+ expect(session).toHaveAttribute("data-language",languageCode);
+ expect(session).toHaveAttribute("data-completed","1");
+ expect(legacyTranslationSnapshot).toHaveBeenCalledWith(user.id,sessionId);
+ expect(legacyTranslationStart).not.toHaveBeenCalled();expect(startTrainingSession).not.toHaveBeenCalled();
+ expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
+ expect((await readTrainingSessionResume(user.id))?.family).toBe("sentence");
+});
+test("another account cannot resume the owned legacy sentence record",async()=>{
+ await writeTrainingSessionResume({sessionId:"foreign-legacy",userId:"another-owner",family:"sentence",languageCode:"nl",listId:"list-1",listType:"curated",scenarioId:"sentences",modes:["word-to-definition"],cardFilter:"both",newReviewRatio:2,focusFilter:{dateWindow:"all"},sessionSize:5});
+ render(<TrainingScreen user={user} trainingTodaySetupEnabled/>);
+ await screen.findByRole("heading",{name:/^(Training|Тренировка)$/});
+ expect(screen.queryByTestId("legacy-sentence-session")).toBeNull();
+ expect(legacyTranslationSnapshot).not.toHaveBeenCalled();expect(legacyTranslationStart).not.toHaveBeenCalled();
+});
+
+test.each([["completed",5],["exhausted",2]] as const)("%s idiom run returns home without a stale Continue training", async (status, completedActions) => {
+  const {fetchAccountTrainingSetups} = await import("@/lib/training/setups/client");
+  vi.mocked(fetchAccountTrainingSetups).mockResolvedValueOnce({revision:1,document:{schemaVersion:1,mainTrainingId:"idioms",trainings:[{
+    id:"idioms",name:"Idioms",languageCode:"nl",draft:{family:"idiom",scenarioId:"idiom",modes:["word-to-definition"],cardFilter:"both",newReviewRatio:2,dateWindow:"all",listValue:"curated:list-1",sourceValue:"",sessionSize:5}
+  }]}});
+  const idioms = await import("@/lib/platform/platformV2IdiomExerciseClient");
+  vi.mocked(idioms.fetchPlatformV2IdiomTrainingSessionSnapshot).mockResolvedValue({
+    contractVersion: "platform-idiom-exercise-session-v2", sessionId: "idiom-finished",
+    exerciseFamily: "idiom", direction: "direct", sessionSize: "5", requestedTotal: 5,
+    plannedNew: 5, plannedReview: 0, plannedPractice: 0, plannedTotal: 5,
+    plannedAt: "2026-10-09T20:00:00Z", runStatus: "active", runGeneration: 1,
+    completedActions: 0, completionReason: null,
+    members: [{ordinal:1, consumedAt:null, unavailableAt:null}],
+  } as never);
+  vi.mocked(idioms.fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({
+    status, completedActions, requestedTotal: 5,
+  } as never);
+  await writeTrainingSessionResume({
+    trainingId:"idioms", sessionId: "idiom-finished", userId: user.id, family: "idiom", languageCode: "nl",
+    listId: "list-1", listType: "curated", scenarioId: "understanding",
+    modes: ["word-to-definition"], cardFilter: "both", newReviewRatio: 2,
+    focusFilter: {dateWindow:"all"}, sessionSize:5,
+  });
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  fireEvent.click(await screen.findByRole("button", {name:"Back to home"}));
+  await screen.findByRole("button", {name:/^(Start|Continue) training$/});
+  expect(screen.queryByRole("button", {name:"Continue training"})).toBeNull();
+  expect(screen.queryByText("IN PROGRESS")).toBeNull();
+  await waitFor(async () => expect(await readTrainingSessionResume(user.id)).toBeNull());
+  expect(screen.getByRole("button", {name:"Start training"})).toBeInTheDocument();
+});
+
+test('saved-source read failure reaches visible Retry and rereads the scope without choosing another source',async()=>{
+ fetchActiveTrainingScope.mockRejectedValueOnce(Error('scope temporarily unavailable'));
+ render(<TrainingScreen user={user} trainingTodaySetupEnabled/>);
+ const recovery=await screen.findByTestId('training-startup-gate');
+ fireEvent.click(await within(recovery).findByRole('button'));
+ await waitFor(()=>expect(fetchActiveTrainingScope.mock.calls.length).toBeGreaterThanOrEqual(2));
+ await waitFor(()=>expect(screen.queryByTestId('training-startup-gate')).not.toBeInTheDocument());
+ expect(updateActiveTrainingScope.mock.calls.some(call=>call[0]?.listId===null)).toBe(false);
+});

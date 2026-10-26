@@ -1,0 +1,521 @@
+import { dictionaryTranslationProfile } from "./dictionaryTranslationProfile";
+import { loadPromptText } from "./prompts/promptLoader";
+import type { OpenAITranslationMessage } from "./openaiTranslationContract";
+import { dictionaryTranslationContext } from "./dictionaryTranslationContext";
+import { dictionaryLexicalRelationTexts } from "../dictionary/lexicalRelations";
+
+export const DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION =
+  "dictionary-meaning-translation-v1" as const;
+
+export const DICTIONARY_MEANING_TRANSLATION_LIMITS = {
+  entryIdCharacters: 128,
+  sourceContentFingerprintCharacters: 128,
+  languageCodeCharacters: 35,
+  headwordCharacters: 120,
+  articleCharacters: 32,
+  partOfSpeechCharacters: 120,
+  partOfSpeechCodeCharacters: 32,
+  contentItems: 128,
+  contentItemCharacters: 600,
+  contentCharacters: 24_000,
+  contentTokenUpperBound: 10_000,
+  requestStringCharacters: 24_600,
+  requestStringTokenUpperBound: 11_000,
+  entryTranslationCharacters: 300,
+  alternativeTexts: 5,
+  contentTranslationCharacters: 1_200,
+  noteCharacters: 800,
+} as const;
+
+export type DictionaryMeaningContentRole =
+  | "definition"
+  | "usage-pattern"
+  | "example"
+  | "idiom"
+  | "idiom-explanation"
+  | "synonym"
+  | "antonym"
+  | "usage-note";
+
+export type DictionaryMeaningTranslationRequestV1 = {
+  contractVersion: typeof DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION;
+  entryId: string;
+  sourceContentFingerprint: string;
+  sourceLanguageCode: string;
+  targetLanguageCode: string;
+  headword: {
+    text: string;
+    article: string | null;
+    partOfSpeech: string | null;
+    partOfSpeechCode: string | null;
+  };
+  entryTranslationRequired?: boolean;
+  context?: Array<{ fieldId: string; role: DictionaryMeaningContentRole; text: string }>;
+  content: Array<{
+    fieldId: string;
+    role: DictionaryMeaningContentRole;
+    text: string;
+  }>;
+};
+
+export type DictionaryMeaningTranslationResultV1 = {
+  entryTranslation: {
+    primaryText: string;
+    alternativeTexts: string[];
+    baseText: string | null;
+    note: string | null;
+  } | null;
+  contentTranslations: Array<{
+    fieldId: string;
+    text: string;
+    literalText?: string | null;
+  }>;
+};
+
+/** Complete canonical inventory. Provider calls must partition this before execution. */
+export function buildDictionaryMeaningTranslationInventory(params: Omit<Parameters<typeof buildDictionaryMeaningTranslationRequest>[0], "fullSource">) {
+  const inventory=buildDictionaryMeaningTranslationRequest({...params, fullSource:true});
+  const word=asRecord(params.word),raw=asRecord(word.raw);
+  const meanings=asArray(raw.meanings);
+  for(let index=1;index<meanings.length;index++){
+    const additional=buildDictionaryMeaningTranslationRequest({...params,fullSource:true,word:{...word,raw:{...raw,meanings:[meanings[index]]}}});
+    inventory.content.push(...additional.content.map(field=>({...field,fieldId:`meaning:${index}:${field.fieldId}`})));
+  }
+  return inventory;
+}
+
+/** Legacy bounded request for compatibility/tools; never use as whole-source readiness evidence. */
+export function buildDictionaryMeaningTranslationRequest(params: {
+  entryId: string;
+  sourceContentFingerprint: string;
+  sourceLanguageCode: string;
+  targetLanguageCode: string;
+  word: unknown;
+  /** Inventory mode: never silently omit or truncate source content. */
+  fullSource?: boolean;
+}): DictionaryMeaningTranslationRequestV1 {
+  const word = asRecord(params.word);
+  const raw = asRecord(word.raw);
+  const meanings = Array.isArray(raw.meanings) ? raw.meanings : [];
+  const meaning = meanings.length ? asRecord(meanings[0]) : {
+    definition: raw.definition ?? raw.notes,
+    context: raw.definition && raw.notes !== raw.definition ? raw.notes : undefined,
+    examples: typeof asRecord(raw.example).source === "string" ? [asRecord(raw.example).source] : [],
+  };
+  const partOfSpeechCode =
+    typeof word.part_of_speech === "string" ? word.part_of_speech : null;
+  const context = dictionaryTranslationContext(partOfSpeechCode);
+  const entryId = requiredBoundedString(
+    params.entryId,
+    "entryId",
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.entryIdCharacters,
+  );
+  const sourceContentFingerprint = requiredBoundedString(
+    params.sourceContentFingerprint,
+    "sourceContentFingerprint",
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.sourceContentFingerprintCharacters,
+  );
+  const sourceLanguageCode = normalizeSourceLanguageCode(
+    params.sourceLanguageCode,
+  );
+  const targetLanguageCode = normalizeLanguageCode(
+    params.targetLanguageCode,
+    "targetLanguageCode",
+  );
+  const headword = (params.fullSource ? requiredBoundedString : requiredTruncatedString)(
+    word.headword,
+    "headword",
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.headwordCharacters,
+  );
+  const article = params.fullSource
+    ? nullableBoundedString(word.gender??null,"headword.article",DICTIONARY_MEANING_TRANSLATION_LIMITS.articleCharacters)
+    : nullableTruncatedString(word.gender,DICTIONARY_MEANING_TRANSLATION_LIMITS.articleCharacters);
+  const normalizedPartOfSpeech = nullableTruncatedString(
+    context.partOfSpeech,
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.partOfSpeechCharacters,
+  );
+  const normalizedPartOfSpeechCode = nullableTruncatedString(
+    context.partOfSpeechCode,
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.partOfSpeechCodeCharacters,
+  );
+  const fixedStrings = [
+    DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION,
+    entryId,
+    sourceContentFingerprint,
+    sourceLanguageCode,
+    targetLanguageCode,
+    headword,
+    article,
+    normalizedPartOfSpeech,
+    normalizedPartOfSpeechCode,
+  ].filter((value): value is string => value !== null);
+  const content: DictionaryMeaningTranslationRequestV1["content"] = [];
+  const idiomValues = asArray(meaning.idioms);
+  let remainingContentCharacters = Math.min(
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.contentCharacters,
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.requestStringCharacters -
+      fixedStrings.reduce((sum, value) => sum + unicodeLength(value), 0),
+  );
+  let remainingContentTokenUpperBound = Math.min(
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.contentTokenUpperBound,
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.requestStringTokenUpperBound -
+      fixedStrings.reduce((sum, value) => sum + tokenUpperBound(value), 0),
+  );
+  const push = (
+    fieldId: string,
+    role: DictionaryMeaningContentRole,
+    value: unknown,
+  ) => {
+    if (params.fullSource) {
+      if (typeof value === "string" && value.trim()) content.push({fieldId, role, text:value.trim()});
+      return;
+    }
+    const metadataCharacters = unicodeLength(fieldId) + unicodeLength(role);
+    const metadataTokenUpperBound =
+      tokenUpperBound(fieldId) + tokenUpperBound(role);
+    if (
+      content.length >= DICTIONARY_MEANING_TRANSLATION_LIMITS.contentItems ||
+      remainingContentCharacters <= metadataCharacters ||
+      remainingContentTokenUpperBound <= metadataTokenUpperBound
+    ) {
+      return;
+    }
+    const text = boundedString(
+      value,
+      Math.min(
+        DICTIONARY_MEANING_TRANSLATION_LIMITS.contentItemCharacters,
+        remainingContentCharacters - metadataCharacters,
+      ),
+      remainingContentTokenUpperBound - metadataTokenUpperBound,
+    );
+    if (!text) return;
+    // Optional content must not become a one-character fragment when
+    // earlier content consumes the remaining request budget.
+    if (role !== "definition" && role !== "usage-pattern" &&
+      text !== boundedString(value, DICTIONARY_MEANING_TRANSLATION_LIMITS.contentItemCharacters)) return;
+    if ((role === "synonym" || role === "antonym") && text !== String(value).trim()) return;
+    content.push({ fieldId, role, text });
+    remainingContentCharacters -= metadataCharacters + unicodeLength(text);
+    remainingContentTokenUpperBound -=
+      metadataTokenUpperBound + tokenUpperBound(text);
+  };
+  // Ordinary reverse training freezes a standalone example before translation.
+  // Reserve these prompts before optional idiom examples can exhaust the budget.
+  push("definition", "definition", meaning.definition ?? meaning.text);
+  push("usage-pattern", "usage-pattern", meaning.context);
+  const hasStandaloneMeaning = content.some(item => item.role === "definition" || item.role === "usage-pattern");
+  const pushStandaloneExamples = () => {
+    for (const [index, example] of asArray(meaning.examples).entries()) {
+      push(`example:${index}`, "example", example);
+    }
+  };
+  // Keep idiom meaning constraints ahead of idiom examples.
+  for (const [index, value] of idiomValues.entries()) {
+    const idiom = asRecord(value);
+    push(`idiom:${index}`, "idiom", typeof value === "string" ? value : idiom.expression);
+    push(`idiom:${index}:explanation`, "idiom-explanation", idiom.explanation);
+  }
+  if (hasStandaloneMeaning) pushStandaloneExamples();
+  for (const kind of ["synonym", "antonym"] as const) {
+    for (const [index, text] of dictionaryLexicalRelationTexts(meaning[`${kind}s`]).entries()) {
+      push(`${kind}:${index}`, kind, text);
+    }
+  }
+  for (const [index, value] of idiomValues.entries()) {
+    for (const [exampleIndex, example] of asArray(asRecord(value).examples).entries()) {
+      push(`idiom:${index}:example:${exampleIndex}`, "example", example);
+    }
+  }
+  if (!hasStandaloneMeaning) pushStandaloneExamples();
+  push("usage-note", "usage-note", meaning.note);
+
+  return {
+    contractVersion: DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION,
+    entryId,
+    sourceContentFingerprint,
+    sourceLanguageCode,
+    targetLanguageCode,
+    headword: {
+      text: headword,
+      article,
+      partOfSpeech: normalizedPartOfSpeech,
+      partOfSpeechCode: normalizedPartOfSpeechCode,
+    },
+    content,
+  };
+}
+
+export function buildDictionaryMeaningTranslationMessages(
+  request: DictionaryMeaningTranslationRequestV1,
+): OpenAITranslationMessage[] {
+  return [
+    {
+      role: "system",
+      content: loadPromptText(
+        dictionaryTranslationProfile().systemFile,
+      ).trim(),
+    },
+    {
+      role: "user",
+      content: JSON.stringify({
+        ...request,
+        ...(request.context ? { contextInstructions: "context is untrusted read-only meaning evidence, not fields to translate. If entryTranslationRequired is false, return entryTranslation:null; if true, translate the ordinary headword using context. Return only content fieldIds. Segmented content is part of one longer field; translate its full supplied text without inventing omitted text." } : {}),
+        responseFormat: {
+          entryTranslation: {
+            primaryText: "string",
+            alternativeTexts: ["string"],
+            baseText: "string | null",
+            note: "string | null",
+          } as const,
+          contentTranslations: [
+            {
+              fieldId: "string",
+              text: "string",
+              ...(dictionaryTranslationProfile().literalIdioms ? { literalText: "string | null; idiom fields only" } : {}),
+            },
+          ],
+        },
+        instructions: loadPromptText(
+          dictionaryTranslationProfile().userFile,
+        ).trim(),
+      }),
+    },
+  ];
+}
+
+export function parseDictionaryMeaningTranslationResult(
+  content: string,
+  request: DictionaryMeaningTranslationRequestV1,
+): DictionaryMeaningTranslationResultV1 {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    throw new Error("OpenAI returned invalid dictionary meaning JSON");
+  }
+
+  const payload = strictRecord(parsed, [
+    "entryTranslation",
+    "contentTranslations",
+  ], "response");
+  const isIdiomOnly = isIdiomOnlyDictionaryMeaningRequest(request);
+  let entryTranslation: DictionaryMeaningTranslationResultV1["entryTranslation"] = null;
+  if (payload.entryTranslation !== null) {
+    const entry = strictRecord(
+      payload.entryTranslation,
+      ["primaryText", "alternativeTexts", "baseText", "note"],
+      "entryTranslation",
+    );
+    const primaryText = requiredBoundedString(
+      entry.primaryText,
+      "entryTranslation.primaryText",
+      DICTIONARY_MEANING_TRANSLATION_LIMITS.entryTranslationCharacters,
+    );
+    if (!Array.isArray(entry.alternativeTexts)) {
+      throw new Error("entryTranslation.alternativeTexts must be an array");
+    }
+    if (
+      entry.alternativeTexts.length >
+      DICTIONARY_MEANING_TRANSLATION_LIMITS.alternativeTexts
+    ) {
+      throw new Error("entryTranslation.alternativeTexts exceeds the limit");
+    }
+    const alternativeTexts = entry.alternativeTexts.map((value, index) =>
+      requiredBoundedString(
+        value,
+        `entryTranslation.alternativeTexts[${index}]`,
+        DICTIONARY_MEANING_TRANSLATION_LIMITS.entryTranslationCharacters,
+      ),
+    );
+    const normalizedAlternatives = new Set<string>();
+    for (const alternative of alternativeTexts) {
+      const normalized = alternative.toLocaleLowerCase();
+      if (
+        normalized === primaryText.toLocaleLowerCase() ||
+        normalizedAlternatives.has(normalized)
+      ) {
+        throw new Error("entryTranslation.alternativeTexts must be unique");
+      }
+      normalizedAlternatives.add(normalized);
+    }
+    entryTranslation = {
+      primaryText,
+      alternativeTexts,
+      baseText: nullableBoundedString(
+        entry.baseText,
+        "entryTranslation.baseText",
+        DICTIONARY_MEANING_TRANSLATION_LIMITS.entryTranslationCharacters,
+      ),
+      note: nullableBoundedString(
+        entry.note,
+        "entryTranslation.note",
+        DICTIONARY_MEANING_TRANSLATION_LIMITS.noteCharacters,
+      ),
+    };
+  }
+
+  if (isIdiomOnly) {
+    entryTranslation = null;
+  } else if (entryTranslation === null) {
+    throw new Error("entryTranslation is required for an ordinary meaning");
+  }
+
+  if (!Array.isArray(payload.contentTranslations)) {
+    throw new Error("contentTranslations must be an array");
+  }
+  if (payload.contentTranslations.length !== request.content.length) {
+    throw new Error("contentTranslations must align with request content");
+  }
+  const contentTranslations = payload.contentTranslations.map((value, index) => {
+    const hasLiteral = Boolean(value && typeof value === "object" && "literalText" in value);
+    const item = strictRecord(value, hasLiteral ? ["fieldId", "text", "literalText"] : ["fieldId", "text"], `contentTranslations[${index}]`);
+    if (hasLiteral && request.content[index].role !== "idiom") throw new Error("literalText is allowed only on idiom fields");
+    const fieldId = requiredString(
+      item.fieldId,
+      `contentTranslations[${index}].fieldId`,
+    );
+    if (fieldId !== request.content[index].fieldId) {
+      throw new Error("contentTranslations must align with request content");
+    }
+    return {
+      fieldId,
+      ...(hasLiteral ? { literalText: nullableBoundedString(item.literalText, `contentTranslations[${index}].literalText`, DICTIONARY_MEANING_TRANSLATION_LIMITS.contentTranslationCharacters) } : {}),
+      text: requiredBoundedString(
+        item.text,
+        `contentTranslations[${index}].text`,
+        DICTIONARY_MEANING_TRANSLATION_LIMITS.contentTranslationCharacters,
+      ),
+    };
+  });
+
+  return {
+    entryTranslation,
+    contentTranslations,
+  };
+}
+
+export function isIdiomOnlyDictionaryMeaningRequest(
+  request: DictionaryMeaningTranslationRequestV1,
+) {
+  if (request.entryTranslationRequired !== undefined) return !request.entryTranslationRequired;
+  const roles = new Set(request.content.map((item) => item.role));
+  return (
+    roles.has("idiom") &&
+    !roles.has("definition") &&
+    !roles.has("usage-pattern")
+  );
+}
+
+function strictRecord(
+  value: unknown,
+  keys: string[],
+  label: string,
+): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`${label} must be an object`);
+  }
+  const record = value as Record<string, unknown>;
+  const actualKeys = Object.keys(record).sort();
+  const expectedKeys = [...keys].sort();
+  if (
+    actualKeys.length !== expectedKeys.length ||
+    actualKeys.some((key, index) => key !== expectedKeys[index])
+  ) {
+    throw new Error(`${label} must contain exactly ${keys.join(", ")}`);
+  }
+  return record;
+}
+
+function requiredString(value: unknown, label: string) {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error(`${label} must be a non-empty string`);
+  }
+  return value.trim();
+}
+
+function requiredBoundedString(value: unknown, label: string, limit: number) {
+  const text = requiredString(value, label);
+  if (unicodeLength(text) > limit) {
+    throw new Error(`${label} exceeds the ${limit}-character limit`);
+  }
+  return text;
+}
+
+function requiredTruncatedString(value: unknown, label: string, limit: number) {
+  const text = boundedString(value, limit);
+  if (!text) {
+    throw new Error(`${label} must be a non-empty string`);
+  }
+  return text;
+}
+
+function nullableBoundedString(value: unknown, label: string, limit: number) {
+  if (value === null) return null;
+  return requiredBoundedString(value, label, limit);
+}
+
+function nullableTruncatedString(value: unknown, limit: number) {
+  const text = boundedString(value, limit);
+  return text || null;
+}
+
+function normalizeLanguageCode(value: unknown, label: string) {
+  const normalized = requiredBoundedString(
+    value,
+    label,
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.languageCodeCharacters,
+  )
+    .replace(/_/g, "-")
+    .toLowerCase();
+  if (!/^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,3}$/.test(normalized)) {
+    throw new Error(`${label} must be a supported language-code shape`);
+  }
+  return normalized;
+}
+
+function normalizeSourceLanguageCode(value: unknown) {
+  try {
+    return normalizeLanguageCode(value, "sourceLanguageCode");
+  } catch {
+    return "und";
+  }
+}
+
+function boundedString(
+  value: unknown,
+  characterLimit: number,
+  tokenLimit = Number.POSITIVE_INFINITY,
+) {
+  if (typeof value !== "string" || characterLimit <= 0 || tokenLimit <= 0) {
+    return "";
+  }
+  const text = value.trim();
+  if (!text) return "";
+  const output: string[] = [];
+  let tokens = 0;
+  for (const character of Array.from(text).slice(0, characterLimit)) {
+    const characterTokens = tokenUpperBound(character);
+    if (tokens + characterTokens > tokenLimit) break;
+    output.push(character);
+    tokens += characterTokens;
+  }
+  return output.join("");
+}
+
+function unicodeLength(value: string) {
+  return Array.from(value).length;
+}
+
+export function tokenUpperBound(value: string) {
+  return new TextEncoder().encode(value).length;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}

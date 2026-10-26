@@ -1,0 +1,156 @@
+import { expect, test } from "@playwright/test";
+import {
+  installTrainingAttributionCollector,
+  readTrainingAttributionCapture,
+  setupAuthenticatedTrainingAttributionPage,
+} from "../support/trainingAttributionHarness";
+
+test("a failed prepared card recovers after closing and continuing on desktop and mobile", async ({
+  browser,
+}) => {
+  const profiles = [
+    { name: "desktop", width: 1440, height: 900 },
+    { name: "mobile", width: 390, height: 844 },
+  ] as const;
+
+  for (const profile of profiles) {
+    const page = await browser.newPage({
+      viewport: { width: profile.width, height: profile.height },
+    });
+    await installTrainingAttributionCollector(page);
+    const fixture = await setupAuthenticatedTrainingAttributionPage(page, 0, {
+      invalidEntryIds: ["attribution-word-4"],
+    });
+
+    await page
+      .getByRole("button", {
+        name: /^(?:Start training|Training starten|Начать тренировку)$/,
+      })
+      .click();
+    await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+    await page
+      .getByRole("button", {
+        name: /Antwoord Tonen|Показать ответ|Show answer/i,
+      })
+      .click();
+    await page
+      .getByRole("button", {
+        name: /Begin met leren|Учить|Start learning/i,
+      })
+      .click();
+
+    const failure = page.getByTestId("training-v2-failure");
+    await expect(failure).toHaveAttribute(
+      "data-training-v2-state",
+      "model-invalid",
+    );
+    await page
+      .getByRole("button", {
+        name: /^(?:Back to training|Terug naar training|Вернуться к тренировкам)$/i,
+      })
+      .click();
+    const currentTraining = page.getByRole("region", {
+      name: /Current training|Huidige training|Текущая тренировка/i,
+    });
+    await expect(currentTraining).toBeVisible();
+    await expect(currentTraining.getByText("49", { exact: true })).toBeVisible();
+    await page
+      .getByRole("button", {
+        name: /^(?:Continue training|Training hervatten|Продолжить тренировку)$/i,
+      })
+      .click();
+    await expect(failure).toBeVisible();
+    await page
+      .getByRole("button", {
+        name: /Opnieuw proberen|Повторить|Try again/i,
+      })
+      .click();
+
+    await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+    await expect(failure).not.toBeVisible();
+    expect(fixture.requests.stats).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          p_user_id: "training-attribution-user",
+          p_modes: ["word-to-definition"],
+          p_list_id: "list-attribution",
+          p_list_type: "curated",
+        }),
+      ]),
+    );
+    expect(fixture.requests.session.length).toBeGreaterThanOrEqual(3);
+    expect(fixture.requests.session[0]).toMatchObject({
+      p_user_id: "training-attribution-user",
+      p_session_id: "training-session-fixture",
+    });
+    const capture = await readTrainingAttributionCapture(page);
+    expect(
+      capture.timings.some(
+        (event) =>
+          event.stage === "transition.total" &&
+          event.outcome === "learn-error-model-invalid",
+      ),
+    ).toBe(true);
+    expect(
+      capture.timings.some(
+        (event) =>
+          event.stage === "transition.total" &&
+          event.outcome === "continue-error-model-invalid",
+      ),
+    ).toBe(true);
+    expect(
+      capture.timings.some(
+        (event) =>
+          event.stage === "transition.total" &&
+          event.outcome === "retry-ready",
+      ),
+    ).toBe(true);
+    await page.close();
+  }
+});
+
+test("a missing Platform presentation identity is retired before the next session card", async ({
+  browser,
+}) => {
+  const page = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+  });
+  await installTrainingAttributionCollector(page);
+  const fixture = await setupAuthenticatedTrainingAttributionPage(page, 0, {
+    projectionMissingEntryIds: ["attribution-word-5"],
+  });
+
+  await page
+    .getByRole("button", {
+      name: /^(?:Start training|Training starten|Начать тренировку)$/,
+    })
+    .click();
+  await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+  await expect
+    .poll(() => fixture.requests.projectionLookups.length)
+    .toBeGreaterThan(0);
+  await page
+    .getByRole("button", {
+      name: /Antwoord Tonen|Показать ответ|Show answer/i,
+    })
+    .click();
+  await page
+    .getByRole("button", {
+      name: /Begin met leren|Учить|Start learning/i,
+    })
+    .click();
+
+  // The permanent projection failure is detected while the next card is
+  // prefetched. It is retired and replaced before the user sees a failure
+  // screen, so the accepted Learn action lands directly on the next card.
+  await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+  await expect
+    .poll(() => fixture.requests.unavailable.length)
+    .toBeGreaterThan(0);
+  expect(fixture.requests.unavailable[0]).toMatchObject({
+    p_entry_id: "attribution-word-5",
+    p_reason: "projection-missing",
+  });
+
+  await page.close();
+});

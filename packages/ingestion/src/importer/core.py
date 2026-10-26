@@ -1,0 +1,65 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Optional
+
+from importer.source_profile import source_profile_value
+
+from importer.source_import import (
+    SourceImportStats,
+    import_source_manifest,
+)
+
+
+ImportStats = SourceImportStats
+
+
+def import_entries(
+    data_dir: Path | str,
+    database_url: str,
+    language_code: str = "nl",
+    language_name: str = "Dutch",
+    nt2_slug: str = "nt2-2000",
+    nt2_name: str = source_profile_value("coreListName"),
+    nt2_description: Optional[str] = "Core 2000 woorden voor NT2",
+    dictionary_slug: str = source_profile_value("catalogKey"),
+    dictionary_name: str = source_profile_value("dictionaryName"),
+    dictionary_description: Optional[str] = source_profile_value("dictionaryDescription"),
+    dictionary_schema_key: str = source_profile_value("schemaKeyV2"),
+    dictionary_schema_version: int = 1,
+    dictionary_source_provider: str = source_profile_value("sourceProvider"),
+    dictionary_source_version: str | None = None,
+    list_is_primary: bool = True,
+    include_all_in_list: bool = False,
+    refresh_search_documents: bool = False,
+    reconciliation_plan: Path | str | None = None,
+) -> SourceImportStats:
+    path = Path(data_dir)
+    if not path.exists():
+        raise FileNotFoundError(f"{path} does not exist")
+    if not (path / "_manifest.jsonl").is_file():
+        raise RuntimeError(
+            "Source-managed imports require a versioned _manifest.jsonl; "
+            "legacy natural-key writes are not supported"
+        )
+
+    return import_source_manifest(
+        data_dir=path,
+        database_url=database_url,
+        reconciliation_plan=reconciliation_plan,
+        language_code=language_code,
+        language_name=language_name,
+        nt2_slug=nt2_slug,
+        nt2_name=nt2_name,
+        nt2_description=nt2_description,
+        dictionary_slug=dictionary_slug,
+        dictionary_name=dictionary_name,
+        dictionary_description=dictionary_description,
+        dictionary_schema_key=dictionary_schema_key,
+        dictionary_schema_version=dictionary_schema_version,
+        dictionary_source_provider=dictionary_source_provider,
+        dictionary_source_version=dictionary_source_version,
+        list_is_primary=list_is_primary,
+        include_all_in_list=include_all_in_list,
+        refresh_search_documents=refresh_search_documents,
+    )

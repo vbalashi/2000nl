@@ -1,0 +1,18 @@
+{
+  "displayName": "Dictionary",
+  "dictionaryName": "Example Dutch dictionary",
+  "dictionaryDescription": "A small demonstration dictionary for exploring the application.",
+  "catalogKey": "nl-demo",
+  "fullListSlug": "dictionary-all",
+  "fullListName": "Dictionary",
+  "coreListName": "Core vocabulary",
+  "schemaKeyV1": "nl-entry-v1",
+  "schemaKeyV2": "nl-entry-v2",
+  "sourceProvider": "custom",
+  "sourceRankColumn": "source_rank",
+  "sourceRankKey": "sourceRank",
+  "fingerprintVersion": "dictionary-semantic-v1",
+  "localizedName": "Dictionary",
+  "settingsName": "Dictionary",
+  "importActor": "dictionary-source-importer"
+}

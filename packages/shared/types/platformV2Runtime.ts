@@ -1,0 +1,191 @@
+import type {
+  PlatformContentNodeV2,
+  PlatformEntryNoteMaterialV2,
+  PlatformEntryPresentationV2,
+  PlatformHeadwordGroupV2,
+  PlatformLookupV2Response,
+  PlatformSemanticTermV2,
+  PlatformSenseCardCapabilityV2,
+  PlatformWordDetailsV2,
+} from "./platformV2";
+import { PLATFORM_V2_CARD_TYPE_IDS } from "./platformV2";
+import { isDisplayedTranslationArtifactIdentityV1 } from "../platform-v2/displayedTranslationArtifactIdentityV1";
+
+export function platformNoteMaterialWithinBudgetV2(materials:readonly (readonly PlatformEntryNoteMaterialV2[])[]):boolean{
+  let count=0,bytes=0;
+  const encoder=new TextEncoder();
+  for(const material of materials){
+    count+=material.length;
+    if(count>1000)return false;
+    bytes+=encoder.encode(JSON.stringify(material)).byteLength;
+    if(bytes>1048576)return false;
+  }
+  return true;
+}
+
+export function isPlatformEntryNoteMaterialV2(value:unknown):value is PlatformEntryNoteMaterialV2[]{
+  return Array.isArray(value)&&value.length<=1000
+    &&new Set(value.map(item=>item?.noteId)).size===value.length
+    &&value.reduce((total,item)=>total+(typeof item?.text==="string"?item.text.length:0),0)<=1048576
+    &&value.every(item=>
+    Boolean(item&&typeof item==="object"&&!Array.isArray(item))
+    &&Object.keys(item).every(key=>["noteId","ownerUserId","text","revision","isOwn"].includes(key))
+    &&typeof item.noteId==="string"&&item.noteId.length>0&&item.noteId.length<=160
+    &&typeof item.ownerUserId==="string"&&item.ownerUserId.length>0&&item.ownerUserId.length<=160
+    &&typeof item.text==="string"&&item.text.length>0&&item.text.length<=65536
+    &&typeof item.revision==="string"&&/^[1-9][0-9]{0,18}$/.test(item.revision)
+    &&typeof item.isOwn==="boolean");
+}
+
+const CARD_TYPES = new Set<string>(PLATFORM_V2_CARD_TYPE_IDS);
+const INTENTS = new Set(["dictionary-lookup", "training-review", "external-click"]);
+const NODE_KINDS = new Set([
+  "definition", "usage-pattern", "example", "idiom", "idiom-explanation", "usage-note",
+]);
+const TRANSLATION_STATES = new Set(["ready", "pending", "failed", "not-available"]);
+const CARD_PHASES = new Set(["not-started", "encountered", "learning", "reviewing", "hidden", "frozen"]);
+const REVIEW_RESULTS = new Set(["fail", "hard", "success", "easy"]);
+
+const record = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value && typeof value === "object" && !Array.isArray(value));
+const string = (value: unknown): value is string => typeof value === "string";
+const optionalString = (value: unknown) => value === undefined || string(value);
+const nullableString = (value: unknown) => value === null || string(value);
+const finiteNumber = (value: unknown) => typeof value === "number" && Number.isFinite(value);
+const optionalFiniteNumber = (value: unknown) => value === undefined || finiteNumber(value);
+const arrayOf = <T>(value: unknown, guard: (item: unknown) => item is T): value is T[] =>
+  Array.isArray(value) && value.every(guard);
+
+function semanticTerm(value: unknown): value is PlatformSemanticTermV2 {
+  return record(value) && string(value.termId) && string(value.messageKey) &&
+    optionalString(value.sourceValue);
+}
+
+function translation(value: unknown, entryId?: string) {
+  if (!record(value) || !string(value.translationId) ||
+      !string(value.targetLanguageCode) || !TRANSLATION_STATES.has(String(value.status)) ||
+      !optionalString(value.text) || !string(value.translationPolicyVersion) ||
+      !optionalString(value.providerRevision) || !optionalString(value.errorCode)) return false;
+  if (entryId === undefined) return string(value.sourceTextFingerprint);
+  return value.entryId === entryId && string(value.sourceContentFingerprint) &&
+    (value.alternativeTexts === undefined || arrayOf(value.alternativeTexts, string)) &&
+    (value.baseText === undefined || nullableString(value.baseText)) &&
+    (value.note === undefined || nullableString(value.note)) && typeof value.isFresh === "boolean";
+}
+
+function target(value: unknown, kind: string) {
+  if (!record(value) || value.kind !== kind || !string(value.entryId)) return false;
+  if (kind === "sense-card") return CARD_TYPES.has(String(value.cardTypeId)) && string(value.stateRevision);
+  if (kind === "entry") return string(value.contentRevision);
+  if (kind === "content-node") return string(value.contentNodeId) && string(value.sourceTextFingerprint);
+  if (kind !== "translation") return false;
+  const { kind: _kind, ...artifact } = value;
+  return isDisplayedTranslationArtifactIdentityV1(artifact);
+}
+
+function capability(value: unknown): value is PlatformSenseCardCapabilityV2 {
+  if (!record(value) || !string(value.elementId) || !string(value.messageKey)) return false;
+  switch (value.actionId) {
+    case "start-learning":
+    case "mark-known":
+      return target(value.target, "sense-card");
+    case "undo-known":
+      return target(value.target, "sense-card") && record(value.target) &&
+        string(value.target.activeKnownMarkId) && string(value.target.knownMarkRevision);
+    case "review-card":
+      return target(value.target, "sense-card") && REVIEW_RESULTS.has(String(value.reviewResult));
+    case "request-translation":
+      return target(value.target, "entry") && string(value.targetLanguageCode);
+    case "report-content":
+      return target(value.target, "entry") || target(value.target, "content-node") ||
+        target(value.target, "translation");
+    case "open-word-details":
+      return target(value.target, "entry");
+    default:
+      return false;
+  }
+}
+
+function contentNode(value: unknown): value is PlatformContentNodeV2 {
+  return record(value) && string(value.contentNodeId) && nullableString(value.parentContentNodeId) &&
+    NODE_KINDS.has(String(value.kind)) && finiteNumber(value.order) && string(value.text) &&
+    string(value.sourceTextFingerprint) && arrayOf(value.translations, (item): item is never => translation(item));
+}
+
+function detailText(value: unknown) {
+  return record(value) && string(value.detailId) && string(value.text) && optionalString(value.contentNodeId);
+}
+
+function wordDetails(value: unknown, entryId: string): value is PlatformWordDetailsV2 {
+  return record(value) && value.entryId === entryId &&
+    arrayOf(value.lexicalRelations, (item): item is never => record(item) &&
+      string(item.relationId) && (item.kind === "synonym" || item.kind === "antonym") &&
+      string(item.text) && optionalString(item.targetEntryId)) &&
+    arrayOf(value.labels, semanticTerm) && arrayOf(value.grammarNotes, (item): item is never => detailText(item)) &&
+    arrayOf(value.usageNotes, (item): item is never => detailText(item)) &&
+    arrayOf(value.pronunciationNotes, (item): item is never => detailText(item)) &&
+    arrayOf(value.forms, (item): item is never => record(item) && string(item.formId) &&
+      semanticTerm(item.kind) && string(item.text) && arrayOf(item.features, semanticTerm)) &&
+    arrayOf(value.references, (item): item is never => record(item) && string(item.referenceId) &&
+      semanticTerm(item.kind) && string(item.text) && optionalString(item.targetEntryId));
+}
+
+function card(value: unknown) {
+  if (!record(value) || !record(value.scheduler)) return false;
+  const scheduler = value.scheduler;
+  return CARD_TYPES.has(String(value.cardTypeId)) &&
+    CARD_PHASES.has(String(scheduler.phase)) && optionalFiniteNumber(scheduler.repeatCount) &&
+    (scheduler.reviewCount === undefined || (Number.isInteger(scheduler.reviewCount) && Number(scheduler.reviewCount) >= 0)) &&
+    (scheduler.lastGrade === undefined || scheduler.lastGrade === null || [1,2,3,4].includes(Number(scheduler.lastGrade)) && typeof scheduler.lastGrade === "number") &&
+    ["lastReviewedAt", "nextReviewAt", "learningDueAt"].every(key => scheduler[key] === undefined || nullableString(scheduler[key])) &&
+    (scheduler.lastSeenAt === undefined || nullableString(scheduler.lastSeenAt)) &&
+    (scheduler.frozenUntil === undefined || nullableString(scheduler.frozenUntil)) &&
+    (value.knownMark === null || (record(value.knownMark) && string(value.knownMark.markId) &&
+      string(value.knownMark.revision) && string(value.knownMark.markedAt))) && string(value.stateRevision);
+}
+
+function entry(value: unknown): value is PlatformEntryPresentationV2 {
+  if (!record(value)) return false;
+  if (value.kind === "cross-reference") {
+    return string(value.crossReferenceId) && (value.meaningOrdinal === null || finiteNumber(value.meaningOrdinal)) &&
+      (value.label === null || semanticTerm(value.label)) && string(value.text) && record(value.target) &&
+      string(value.target.query) && optionalString(value.target.headwordGroupId) && optionalString(value.target.entryId) &&
+      arrayOf(value.capabilities, (item): item is never => record(item) &&
+        item.actionId === "follow-cross-reference" && string(item.elementId) && string(item.messageKey));
+  }
+  if (value.kind !== "sense-card" || !string(value.entryId)) return false;
+  if (value.authorActions !== undefined && (!record(value.authorActions) || typeof value.authorActions.canArchive!=="boolean")) return false;
+  if (value.noteMaterial !== undefined && !isPlatformEntryNoteMaterialV2(value.noteMaterial)) return false;
+  if (value.sourceVersion !== undefined && (!Number.isSafeInteger(value.sourceVersion) || Number(value.sourceVersion)<1)) return false;
+  return (value.meaningOrdinal === null || finiteNumber(value.meaningOrdinal)) &&
+    (value.partOfSpeech === undefined || semanticTerm(value.partOfSpeech)) &&
+    (value.card === null || card(value.card)) && string(value.contentRevision) &&
+    nullableString(value.summaryContentNodeId) && arrayOf(value.contentNodes, contentNode) &&
+    (value.translation === null || translation(value.translation, value.entryId)) &&
+    arrayOf(value.capabilities, capability) &&
+    (value.wordDetails === undefined || wordDetails(value.wordDetails, value.entryId));
+}
+
+function group(value: unknown): value is PlatformHeadwordGroupV2 {
+  return record(value) && string(value.headwordGroupId) && record(value.dictionary) &&
+    string(value.dictionary.dictionaryId) && string(value.dictionary.sourceLanguageCode) &&
+    string(value.dictionary.displayName) && string(value.dictionary.messageKey) &&
+    record(value.header) && string(value.header.text) && optionalFiniteNumber(value.header.homographNumber) &&
+    optionalString(value.header.displayPronunciation) && optionalString(value.header.pronunciation) &&
+    optionalString(value.header.article) &&
+    (value.header.partOfSpeech === undefined || semanticTerm(value.header.partOfSpeech)) &&
+    (value.header.audio === undefined || (record(value.header.audio) && string(value.header.audio.audioId) &&
+      value.header.audio.actionId === "play-audio" && string(value.header.audio.contentLanguageCode))) &&
+    Number.isInteger(value.senseCount) && Number.isInteger(value.entryCount) &&
+    arrayOf(value.indicators, (item): item is never => record(item) && string(item.indicatorId) &&
+      string(item.value) && string(item.messageKey)) && arrayOf(value.entries, entry);
+}
+
+export function isPlatformLookupV2Response(value: unknown): value is PlatformLookupV2Response {
+  return record(value) && value.contractVersion === "platform-lookup-v2" && string(value.query) &&
+    record(value.request) && nullableString(value.request.contentLanguageCode) &&
+    nullableString(value.request.translationTargetLanguageCode) && CARD_TYPES.has(String(value.request.cardTypeId)) &&
+    INTENTS.has(String(value.request.intent)) && arrayOf(value.groups, group)
+    && platformNoteMaterialWithinBudgetV2(value.groups.flatMap(group=>group.entries.flatMap(entry=>entry.kind==="sense-card"?[entry.noteMaterial??[]]:[]))) && record(value.page) &&
+    typeof value.page.selectedTierComplete === "boolean" && nullableString(value.page.nextGroupCursor);
+}

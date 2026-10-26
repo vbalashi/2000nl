@@ -1,0 +1,311 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { NextRequest } from "next/server";
+import contract from "../../../../packages/shared/deployment/db-contract.json";
+
+const forwardMigrations: ReadonlyArray<{migrationId: number}> = contract.migrations;
+const expectedMigration = forwardMigrations.at(-1)?.migrationId ?? contract.baseline.migrationId;
+
+const rpc = vi.fn();
+const from = vi.fn();
+const createClient = vi.fn();
+
+vi.mock("@supabase/supabase-js", () => ({
+  createClient,
+}));
+
+vi.mock("@/lib/appVersion", () => ({
+  appVersionInfo: vi.fn(() => ({
+    version: "0.0.0-test",
+    commit: "test-commit",
+  })),
+}));
+
+const request = (query = "") =>
+  new NextRequest(`http://localhost/api/health${query}`);
+
+const searchIndexFromMock = (options?: {
+  documentRowCount?: number;
+  fieldRowCount?: number;
+  activeExtractionVersion?: number | null;
+  staleDocumentCount?: number;
+}) => {
+  const {
+    documentRowCount = 10,
+    fieldRowCount = 40,
+    activeExtractionVersion = 2,
+    staleDocumentCount = 0,
+  } = options ?? {};
+
+  return vi.fn((table: string) => {
+    let staleCountQuery = false;
+    const query: any = {
+      select: vi.fn(() => query),
+      order: vi.fn(() => query),
+      limit: vi.fn(() => query),
+      lt: vi.fn(() => {
+        staleCountQuery = true;
+        return query;
+      }),
+      maybeSingle: vi.fn(async () => ({
+        data:
+          activeExtractionVersion === null
+            ? null
+            : { extraction_version: activeExtractionVersion },
+        error: null,
+      })),
+      then: (resolve: any, reject: any) => {
+        const count = staleCountQuery
+          ? staleDocumentCount
+          : table === "dictionary_search_documents"
+            ? documentRowCount
+            : fieldRowCount;
+        return Promise.resolve({ count, error: null }).then(resolve, reject);
+      },
+    };
+    return query;
+  });
+};
+
+const contractStateFromMock = (options?: {
+  contractId?: string;
+  migrationId?: number;
+  error?: string;
+}) =>
+  vi.fn(() => {
+    const query: any = {
+      select: vi.fn(() => query),
+      eq: vi.fn(() => query),
+      maybeSingle: vi.fn(async () => ({
+        data: options?.error
+          ? null
+          : {
+              contract_id: options?.contractId ?? contract.contractId,
+              migration_id: options?.migrationId ?? expectedMigration,
+            },
+        error: options?.error ? { message: options.error } : null,
+      })),
+    };
+    return query;
+  });
+
+describe("/api/health", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  beforeEach(() => {
+    vi.resetModules();
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:54321";
+    process.env.SUPABASE_SECRET_KEY = "service-key";
+    rpc.mockReset();
+    from.mockReset();
+    createClient.mockReset();
+  });
+
+  test("returns shallow health without touching Supabase", async () => {
+    const { GET } = await import("@/app/api/health/route");
+
+    const response = await GET(request());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.status).toBe("ok");
+    expect(body.checks).toBeUndefined();
+    expect(body.qaSource).toBeUndefined();
+    expect(body.rollout).toEqual({
+      collectionSharingWrites: false,
+      profile: "pilot",
+      approvedPilot: false,
+      flags: expect.any(Object),
+    });
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  test("reports the verified local QA source without probing Supabase", async () => {
+    vi.stubEnv("QA_SOURCE_MODE", "preview");
+    vi.stubEnv("QA_SOURCE_WORK_REF", "247");
+    vi.stubEnv("QA_SOURCE_CHECKOUT_PATH", "/tmp/2000nl-247");
+    vi.stubEnv("QA_SOURCE_COMMIT", "a".repeat(40));
+    vi.stubEnv("QA_SOURCE_BRANCH", "codex/247-qa-source-guard");
+    vi.stubEnv("QA_SOURCE_DIRTY", "true");
+    vi.stubEnv("QA_SOURCE_UPSTREAM", "origin/main");
+    vi.stubEnv("QA_SOURCE_AHEAD", "1");
+    vi.stubEnv("QA_SOURCE_BEHIND", "0");
+    vi.stubEnv("QA_SOURCE_ORIGIN_MAIN", "b".repeat(40));
+    vi.stubEnv("QA_SOURCE_REMOTE_REFS", "refs/remotes/origin/main,refs/remotes/origin/HEAD");
+    vi.stubEnv("QA_SOURCE_SQUASH_MERGED", "false");
+
+    const { GET } = await import("@/app/api/health/route");
+    const response = await GET(request());
+    const body = await response.json();
+
+    expect(body.qaSource).toEqual({
+      mode: "preview",
+      workRef: "247",
+      checkoutPath: "/tmp/2000nl-247",
+      commit: "a".repeat(40),
+      branch: "codex/247-qa-source-guard",
+      dirty: true,
+      upstream: "origin/main",
+      ahead: 1,
+      behind: 0,
+      originMain: "b".repeat(40),
+      remoteRefsContainingHead: ["refs/remotes/origin/main", "refs/remotes/origin/HEAD"],
+      squashMerged: false,
+    });
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  test("reports the active approved pilot profile and flags", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ROLLOUT_PROFILE", "pilot");
+    vi.stubEnv("PLATFORM_V2_LOOKUP_ENABLED", "true");
+    vi.stubEnv("PLATFORM_V2_ACTIONS_ENABLED", "true");
+    vi.stubEnv("PLATFORM_V2_IDIOM_EXERCISES_ENABLED", "true");
+    vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+    vi.stubEnv("NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1", "true");
+    vi.stubEnv("NEXT_PUBLIC_INDEPENDENT_ENTRY_COPY_ENABLED", "true");
+
+    const { GET } = await import("@/app/api/health/route");
+    const response = await GET(request());
+    const body = await response.json();
+
+    expect(body.rollout).toEqual({
+      collectionSharingWrites: false,
+      profile: "pilot",
+      approvedPilot: true,
+      flags: {
+        platformV2Lookup: true,
+        platformV2Actions: true,
+        platformV2IdiomExercises: true,
+        platformV2TranslationExercises: false,
+        platformV2TrainingUi: true,
+        trainingTodaySetupV1: true,
+        collectionOrganization: false,
+        collectionSharing: false,
+        authorEntryArchive: false,
+        independentEntryCopy: true,
+      },
+    });
+  });
+
+  test("warns when the platform RPC contract is missing", async () => {
+    createClient
+      .mockReturnValueOnce({ rpc })
+      .mockReturnValueOnce({ from: searchIndexFromMock() })
+      .mockReturnValueOnce({ from: contractStateFromMock() });
+    rpc.mockResolvedValue({ data: true, error: null });
+    rpc.mockResolvedValueOnce({data:null,error:{code:'PGRST202'}});
+
+
+    const { GET } = await import("@/app/api/health/route");
+
+    const response = await GET(request("?deep=1"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.status).toBe("warning");
+    expect(body.database.target).toBe("local");
+    expect(body.checks.platformRpcContract).toEqual({
+      status: "warning",
+      message: "Platform RPC metadata check failed.",
+    });
+    expect(body.checks.dictionarySearchIndex).toEqual({
+      status: "ok",
+      details: expect.objectContaining({
+        lookupAvailable: true,
+        groupedSearchIndexReady: true,
+        documentRowCount: 10,
+        fieldRowCount: 40,
+        activeExtractionVersion: 2,
+        staleDocumentCount: 0,
+        pendingBackfill: false,
+      }),
+    });
+    expect(body.checks.databaseContract).toEqual({
+      status: "ok",
+      details: {
+        expected: contract.contractId,
+        expectedMigration,
+        actual: contract.contractId,
+        actualMigration: expectedMigration,
+        compatible: true,
+      },
+    });
+  });
+
+  test("deep health warns when grouped dictionary search index is not ready", async () => {
+    createClient
+      .mockReturnValueOnce({ rpc })
+      .mockReturnValueOnce({
+        from: searchIndexFromMock({
+          documentRowCount: 0,
+          fieldRowCount: 0,
+          activeExtractionVersion: null,
+        }),
+      })
+      .mockReturnValueOnce({ from: contractStateFromMock() });
+    rpc.mockResolvedValue({ data: true, error: null });
+
+    const { GET } = await import("@/app/api/health/route");
+
+    const response = await GET(request("?deep=1"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.status).toBe("warning");
+    expect(body.checks.dictionarySearchIndex).toEqual({
+      status: "warning",
+      message: "Grouped dictionary search index is not ready.",
+      details: expect.objectContaining({
+        lookupAvailable: true,
+        groupedSearchIndexReady: false,
+        documentRowCount: 0,
+        fieldRowCount: 0,
+        activeExtractionVersion: null,
+        pendingBackfill: true,
+      }),
+    });
+  });
+
+  test("deep health exposes only a bounded incompatible DB contract signal", async () => {
+    createClient
+      .mockReturnValueOnce({ rpc })
+      .mockReturnValueOnce({ from: searchIndexFromMock() })
+      .mockReturnValueOnce({
+        from: contractStateFromMock({
+          contractId: "2000nl-db-125",
+          migrationId: 125,
+        }),
+      });
+    rpc.mockResolvedValue({ data: true, error: null });
+
+    const { GET } = await import("@/app/api/health/route");
+    const response = await GET(request("?deep=1"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.status).toBe("warning");
+    expect(body.checks.databaseContract).toEqual({
+      status: "warning",
+      message: "Application and database contracts are incompatible.",
+      details: {
+        expected: contract.contractId,
+        expectedMigration,
+        actual: "2000nl-db-125",
+        actualMigration: 125,
+        compatible: false,
+      },
+    });
+    expect(JSON.stringify(body.checks.databaseContract)).not.toContain(
+      "function",
+    );
+    expect(JSON.stringify(body.checks.databaseContract)).not.toContain(
+      "schema",
+    );
+  });
+  test.each([{data:true,error:null,expected:'ok'},{data:false,error:null,expected:'warning'},{data:null,error:{code:'42501'},expected:'warning'},{data:null,error:{code:'PGRST202'},expected:'warning'}])('metadata readiness never borrows service-role article access ($expected)',async({data,error,expected})=>{
+    createClient.mockReturnValueOnce({rpc}).mockReturnValueOnce({from:searchIndexFromMock()}).mockReturnValueOnce({from:contractStateFromMock()});
+    rpc.mockResolvedValue({data,error});const {GET}=await import('@/app/api/health/route');const body=await(await GET(request('?deep=1'))).json();
+    expect(body.checks.platformRpcContract.status).toBe(expected);expect(rpc).toHaveBeenCalledOnce();expect(rpc).toHaveBeenCalledWith('platform_rpc_contract_ready_v1');
+  });
+});

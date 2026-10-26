@@ -1,0 +1,87 @@
+.choice {
+  min-height: 28px;
+  padding: 4px 12px;
+  border: 1px solid var(--practice-border);
+  border-radius: 100px;
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+  font-family: var(--practice-font-ui);
+  font-size: var(--practice-text-small);
+  line-height: 1.4;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.choice[aria-pressed="true"] {
+  background: var(--practice-selected);
+  color: var(--practice-selected-text);
+  border-color: var(--practice-control-border);
+}
+.choice:hover {
+  background: var(--practice-surface-hover);
+}
+.choice:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.rangeGroup {
+  font-family: var(--practice-font-ui);
+  color: var(--practice-text-secondary);
+}
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--practice-text-small);
+}
+.label {
+  font-size: var(--practice-text-small);
+  color: var(--practice-text-secondary);
+}
+.selection {
+  font-size: var(--practice-text-small);
+  color: var(--practice-selected-text);
+  font-weight: 500;
+  text-align: right;
+}
+.range {
+  display: block;
+  width: 100%;
+  height: 32px;
+  margin: 12px 0 0;
+  accent-color: var(--practice-accent);
+  cursor: pointer;
+}
+.ends {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--practice-text-label);
+  color: var(--practice-text-muted);
+}
+.ends > span:last-child {
+  text-align: right;
+}
+.help {
+  font-size: var(--practice-text-caption);
+  color: var(--practice-text-muted);
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+
+/* Approved Session Builder controls */
+:global(.session-builder-standard) .help{font-family:var(--practice-font-ui);font-size:var(--practice-text-label);font-weight:400;line-height:1.5;color:color-mix(in srgb,var(--practice-text) 58%,var(--practice-canvas))}
+:global(.session-builder-standard) .help:empty{display:none}
+/* Multi-select filters use the same geometry as single-choice settings. */
+:global(.session-builder-standard) .choice{box-sizing:border-box;height:28px;min-height:28px;padding:0 10px;font:400 var(--practice-text-label)/18px var(--practice-font-ui);border:0;border-radius:11.2px;background:transparent;color:var(--practice-text-secondary)}
+:global(.session-builder-standard) .choice[aria-pressed=true]{background:var(--practice-surface-hover);color:var(--practice-text-secondary);border:0}
+:global(.session-builder-standard) .choice:hover{background:transparent}
+:global(.session-builder-standard) .choice[aria-pressed=true]:hover{background:var(--practice-surface-hover)}
+:global(.session-builder-standard) .label{font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui);color:var(--practice-text-muted)}
+
+/* Two stable text lines keep the tracks in place across every slider value. */
+:global(.session-builder-standard) .labelRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;line-height:1.5;min-block-size:3em}
+:global(.session-builder-standard) .selection{line-height:1.5;overflow-wrap:anywhere}
+
+.sizeTicks{position:relative;height:1.5em;margin-inline:8px;font-size:var(--practice-text-label);line-height:1.5;color:var(--practice-text-muted)}
+.sizeTicks>span{position:absolute;transform:translateX(-50%);white-space:nowrap}

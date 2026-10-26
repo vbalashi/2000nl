@@ -1,0 +1,666 @@
+const focusedNotes=vi.hoisted(()=>({read:vi.fn(),refresh:undefined as undefined|(()=>void|Promise<unknown>)}));
+vi.mock("@/lib/platform/entryNoteMaterialClient",()=>({readEntryNoteMaterial:focusedNotes.read}));
+vi.mock("@/lib/events/userEventHints",async importOriginal=>{
+ const actual=await importOriginal<typeof import("@/lib/events/userEventHints")>();
+ return {...actual,useUserEventHints:(...args:Parameters<typeof actual.useUserEventHints>)=>{
+  if(args[1].includes("notes.changed"))focusedNotes.refresh=args[2];return actual.useUserEventHints(...args);
+ }};
+});
+const currentAcknowledge = vi.hoisted(()=>vi.fn());
+vi.mock("@/lib/platform/trainingCurrentCardClient",()=>({acknowledgeCurrentTrainingCard:currentAcknowledge,readCurrentTrainingCard:vi.fn()}));
+import { getUiMessages } from "@/lib/uiMessages";
+const recordedStudy = vi.hoisted(() => vi.fn());
+vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
+import { performTrainingExclusion } from "@/lib/platform/trainingExclusionClient";
+import { TrainingExclusionUndoNotice } from "@/components/training/v2/TrainingExclusionUndoNotice";
+import { rememberExclusionUndo } from "@/components/training/v2/trainingExclusionUndoStore";
+vi.mock("@/lib/platform/trainingExclusionClient", () => ({ performTrainingExclusion: vi.fn() }));
+import * as reportClient from "@/lib/feedback/diagnosticReportClient";
+import React from "react";
+import { readIdiomTrainingStats } from "@/lib/training/idiomStatsClient";
+vi.mock("@/lib/training/idiomStatsClient", () => ({ readIdiomTrainingStats: vi.fn() }));
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { TrainingIdiomSession } from "@/components/training/pilot/TrainingIdiomSession";
+import {
+  fetchNextPlatformV2IdiomTrainingSessionExercise,
+  markPlatformV2IdiomTrainingSessionMemberUnavailable,
+  performPlatformV2IdiomExerciseAction,
+} from "@/lib/platform/platformV2IdiomExerciseClient";
+import {
+  singleSenseEntry,
+  singleSenseGroup,
+} from "./platformV2TrainingFixture";
+import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import {
+  requestPlatformV2Translation,
+  resolvePlatformV2Audio,
+} from "@/lib/platform/platformV2TrainingMediaClient";
+import { loadIdiomExerciseContent } from "@/lib/training/idiomExerciseLoader";
+
+vi.mock("@/lib/platform/platformV2IdiomExerciseClient", () => ({
+  fetchNextPlatformV2IdiomTrainingSessionExercise: vi.fn(),
+  markPlatformV2IdiomTrainingSessionMemberUnavailable: vi.fn(),
+  performPlatformV2IdiomExerciseAction: vi.fn(),
+}));
+vi.mock("@/lib/training/idiomExerciseLoader", () => ({
+  loadIdiomExerciseContent: vi.fn(),
+}));
+
+vi.mock("@/lib/platform/platformV2TrainingMediaClient", () => ({
+  requestPlatformV2Translation: vi.fn(),
+  resolvePlatformV2Audio: vi.fn(),
+}));
+
+const t = (key: string) => platformV2Message("en", key);
+const session = {
+  contractVersion: "platform-idiom-exercise-session-v2" as const,
+  sessionId: "session-1",
+  exerciseFamily: "idiom" as const,
+  direction: "direct" as const,
+  sessionSize: "1",
+  requestedTotal: 1,
+  plannedNew: 1,
+  plannedReview: 0,
+  plannedPractice: 0 as const,
+  plannedTotal: 1,
+  plannedAt: "2026-09-24T12:00:00Z",
+  runStatus: "active" as const,
+  runGeneration: 1,
+  completedActions: 0,
+  completionReason: null,
+  members: [],
+};
+const candidate = {
+  status: "ready" as const,
+  sessionId: "session-1",
+  ordinal: 1,
+  targetId: "target-1",
+  targetKey: "idiom:target-1:direct",
+  family: "idiom" as const,
+  direction: "direct" as const,
+  entryId: "entry-1",
+  contentNodeId: "node-1",
+  expressionSourcePath: "meanings[0].idioms[0].expression",
+  explanationSourcePath: "meanings[0].idioms[0].explanation",
+  exampleSourcePaths: [],
+  sourceRevision: "revision-1",
+  sourceTextFingerprint: "fingerprint-1",
+  queueSource: "new" as const,
+  state: null,
+};
+const content = {
+  headword: "klaar",
+  group: {
+    ...singleSenseGroup,
+    header: { ...singleSenseGroup.header, text: "klaar" },
+  },
+  entry: {
+    ...singleSenseEntry,
+    entryId: "entry-1",
+    contentNodes: [],
+    reportContentRevision: "a".repeat(64),
+    capabilities: [
+      {
+        actionId: "request-translation" as const,
+        elementId: "translate",
+        messageKey: "senseCard.translation.request",
+        target: { kind: "entry" as const, entryId: "entry-1" },
+        targetLanguageCode: "ru",
+      },
+      {
+        actionId: "report-content" as const,
+        elementId: "report",
+        messageKey: "senseCard.report",
+        target: { kind: "entry" as const, entryId: "entry-1" },
+      },
+    ],
+  },
+  expression: {
+    contentNodeId: "node-1",
+    parentContentNodeId: null,
+    kind: "idiom" as const,
+    order: 1,
+    text: "ergens echt genoeg van hebben",
+    sourceTextFingerprint: "fingerprint-1",
+    translations: [],
+  },
+  explanation: {
+    contentNodeId: "node-2",
+    parentContentNodeId: "node-1",
+    kind: "idiom-explanation" as const,
+    order: 2,
+    text: "iets niet meer willen",
+    sourceTextFingerprint: "explanation-1",
+    translations: [],
+  },
+  examples: [],
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  focusedNotes.read.mockReset().mockResolvedValue([]);focusedNotes.refresh=undefined;
+  vi.mocked(requestPlatformV2Translation).mockReset().mockResolvedValue("pending");
+  rememberExclusionUndo(null);
+  vi.mocked(readIdiomTrainingStats).mockResolvedValue({contractVersion: "training-idiom-stats-v1", newCardsToday: 2, reviewCardsDone: 3, reviewCardsDue: 4, totalCardsStarted: 12, totalCardsInScope: 30});
+});
+
+test("direct idiom reveals complete content and records the self-assessment", async () => {
+  const onProgress = vi.fn();
+  const dispatch = vi.spyOn(window, "dispatchEvent");
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise)
+    .mockResolvedValueOnce(candidate)
+    .mockResolvedValueOnce({
+      status: "completed",
+      sessionId: "session-1",
+      completedActions: 1,
+      requestedTotal: 1,
+    });
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({
+    state: "ready",
+    content,
+  } as never);
+  vi.mocked(performPlatformV2IdiomExerciseAction).mockResolvedValue(
+    {} as never,
+  );
+
+  render(
+    <TrainingIdiomSession
+      userId="user-1"
+      session={session}
+      contentLanguageCode="nl"
+      translationTargetLanguageCode={null}
+      interfaceLanguage="en"
+      onProgress={onProgress}
+      onExit={vi.fn()}
+    />,
+  );
+  expect(
+    await screen.findByText("ergens echt genoeg van hebben"),
+  ).toBeInTheDocument();
+  const timingDetails = dispatch.mock.calls
+    .map(([event]) => event)
+    .filter(
+      (event): event is CustomEvent =>
+        event instanceof CustomEvent &&
+        event.type === "2000nl:training-transition-timing",
+    )
+    .map((event) => event.detail);
+  expect(timingDetails).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        stage: "idiom.session-next",
+        outcome: "ready",
+      }),
+      expect.objectContaining({
+        stage: "idiom.content-lookup",
+        outcome: "ready",
+      }),
+      expect.objectContaining({
+        stage: "transition.total",
+        outcome: "continue-ready",
+      }),
+    ]),
+  );
+  expect(
+    screen.getByRole("button", { name: "Show answer" }),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+  expect(screen.getByText("iets niet meer willen")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Good" }));
+  await waitFor(() =>
+    expect(performPlatformV2IdiomExerciseAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        trainingSessionId: "session-1",
+        reviewResult: "success",
+      }),
+    ),
+  );
+  expect(await screen.findByText("Session complete")).toBeVisible();
+  expect(onProgress.mock.calls.map(([progress]) => progress)).toEqual([
+    {sessionId:session.sessionId,completedActions:1,completionReason:null},
+    {sessionId:session.sessionId,completedActions:1,completionReason:"completed"},
+  ]);
+});
+
+test("the idiom answer exposes the same header and secondary actions as word cards", async () => {
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(
+    candidate,
+  );
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({
+    state: "ready",
+    content,
+  } as never);
+  render(
+    <TrainingIdiomSession
+      userId="user-1"
+      session={session}
+      contentLanguageCode="nl"
+      translationTargetLanguageCode="ru"
+      interfaceLanguage="en"
+      onExit={vi.fn()}
+      onPlayResolvedAudio={vi.fn()}
+      onOpenDetails={vi.fn()}
+    />,
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
+  expect(
+    screen.getByRole("button", { name: t("senseCard.audio.play") }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: t("senseCard.translation.request") }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: t("senseCard.wordDetails.open") }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Report" })).toBeInTheDocument();
+});
+
+test("excludes the idiom pair, advances once, and keeps Undo available after completion", async () => {
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise)
+    .mockResolvedValueOnce(candidate)
+    .mockResolvedValueOnce({
+      status: "completed",
+      sessionId: session.sessionId,
+      completedActions: 1,
+      requestedTotal: 1,
+    });
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({
+    state: "ready",
+    content,
+  } as never);
+  vi.mocked(performTrainingExclusion)
+    .mockResolvedValueOnce({
+      status: "accepted",
+      actionId: "exclude-pair",
+      clientEventId: "event",
+      exclusionId: "mark",
+      excluded: true,
+      family: "idiom",
+    })
+    .mockResolvedValueOnce({
+      status: "accepted",
+      actionId: "restore-pair",
+      clientEventId: "undo",
+      exclusionId: "mark",
+      excluded: false,
+      family: "idiom",
+    });
+  render(
+    <>
+      <TrainingIdiomSession
+        userId="user-1"
+        session={session}
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onExit={() => {}}
+      />
+      <TrainingExclusionUndoNotice userId="user-1" language="en" />
+    </>,
+  );
+  fireEvent.click(
+    await screen.findByRole("button", {
+      name: getUiMessages("en").trainingSession.exclusion.help,
+    }),
+  );
+  expect(performTrainingExclusion).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("menuitem", { name: getUiMessages("en").trainingSession.exclusion.label }));
+  expect(await screen.findByText("Session complete")).toBeInTheDocument();
+  expect(performTrainingExclusion).toHaveBeenNthCalledWith(
+    1,
+    expect.objectContaining({
+      actionId: "exclude-pair",
+      trainingSessionId: "session-1",
+      target: { kind: "exercise", targetId: "target-1" },
+    }),
+  );
+  expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+  await waitFor(() =>
+    expect(performTrainingExclusion).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        actionId: "restore-pair",
+        exclusionId: "mark",
+        target: { kind: "exercise", targetId: "target-1" },
+      }),
+    ),
+  );
+  expect(fetchNextPlatformV2IdiomTrainingSessionExercise).toHaveBeenCalledTimes(
+    2,
+  );
+});
+
+test("header actions use the selected content and do not consume a review", async () => {
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(
+    candidate,
+  );
+  const prepared = { ...content,
+    entry: { ...content.entry, capabilities: content.entry.capabilities.filter(cap => cap.actionId !== "request-translation") },
+    expression: { ...content.expression, translations: [{translationId:"ready",targetLanguageCode:"ru",status:"ready",text:"с меня хватит",sourceTextFingerprint:content.expression.sourceTextFingerprint,translationPolicyVersion:"current"}] },
+  };
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValueOnce({state:"ready",content} as never).mockResolvedValue({state:"ready",content:prepared} as never);
+  vi.mocked(resolvePlatformV2Audio).mockResolvedValue("/audio/klaar.mp3");
+  vi.mocked(requestPlatformV2Translation).mockResolvedValue("ready");
+  const play = vi.fn(),
+    details = vi.fn();
+  render(
+    <TrainingIdiomSession
+      userId="user-1"
+      session={session}
+      contentLanguageCode="nl"
+      translationTargetLanguageCode="ru"
+      interfaceLanguage="en"
+      onExit={vi.fn()}
+      onPlayResolvedAudio={play}
+      onOpenDetails={details}
+    />,
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: t("senseCard.audio.play") }),
+  );
+  await waitFor(() =>
+    expect(play).toHaveBeenCalledWith("/audio/klaar.mp3", "klaar"),
+  );
+  expect(resolvePlatformV2Audio).toHaveBeenCalledWith(
+    expect.objectContaining({ text: "klaar", cacheOwnerId: "user-1" }),
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: t("senseCard.wordDetails.open") }),
+  );
+  expect(details).toHaveBeenCalledWith({
+    group: content.group,
+    entry: prepared.entry,
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: t("senseCard.translation.request") }),
+  );
+  await waitFor(() =>
+    expect(loadIdiomExerciseContent).toHaveBeenCalledTimes(2),
+  );
+  expect(requestPlatformV2Translation).toHaveBeenCalledWith(
+    content.entry.capabilities[0],
+    { signal: expect.any(AbortSignal) },
+  );
+  expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
+  expect(fetchNextPlatformV2IdiomTrainingSessionExercise).toHaveBeenCalledTimes(
+    1,
+  );
+  expect(screen.getByText("0 / 1")).toBeInTheDocument();
+});
+
+test("an audio response after leaving the card does not start playback", async () => {
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(
+    candidate,
+  );
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({
+    state: "ready",
+    content,
+  } as never);
+  let finish!: (url: string) => void;
+  vi.mocked(resolvePlatformV2Audio).mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  const play = vi.fn();
+  const view = render(
+    <TrainingIdiomSession
+      userId="user-1"
+      session={session}
+      contentLanguageCode="nl"
+      translationTargetLanguageCode={null}
+      interfaceLanguage="en"
+      onExit={vi.fn()}
+      onPlayResolvedAudio={play}
+    />,
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: t("senseCard.audio.play") }),
+  );
+  view.unmount();
+  finish("/audio/old.mp3");
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(play).not.toHaveBeenCalled();
+});
+
+test("report targets the selected idiom and keeps the canonical entry projection", async () => {
+  const snapshot = vi.spyOn(reportClient, "freezeSenseCardDiagnosticSnapshot");
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(
+    candidate,
+  );
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({
+    state: "ready",
+    content,
+  } as never);
+  render(
+    <TrainingIdiomSession
+      userId="user-1"
+      session={session}
+      contentLanguageCode="nl"
+      translationTargetLanguageCode={null}
+      interfaceLanguage="en"
+      onExit={vi.fn()}
+    />,
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
+  fireEvent.click(screen.getByRole("button", { name: "Report" }));
+  expect(screen.getByRole("dialog")).toBeVisible();
+  expect(snapshot).toHaveBeenCalledWith(
+    expect.objectContaining({
+      entry: expect.objectContaining({
+        contentNodes: content.entry.contentNodes,
+      }),
+      target: {
+        kind: "content-node",
+        entryId: content.entry.entryId,
+        contentNodeId: content.expression.contentNodeId,
+        nodeKind: "idiom",
+        sourceTextFingerprint: content.expression.sourceTextFingerprint,
+      },
+    }),
+  );
+  expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
+});
+
+
+test.each(["en", "nl", "ru"] as const)(
+  "uses the shared session frame, progress and utilities in %s",
+  async (interfaceLanguage) => {
+    vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+    vi.mocked(loadIdiomExerciseContent).mockResolvedValue({ state: "ready", content } as never);
+    const onHistory = vi.fn();
+    const onExit = vi.fn();
+    const { container } = render(
+      <TrainingIdiomSession
+        userId="user-1"
+        session={{ ...session, requestedTotal: 5, completedActions: 2 }}
+        contentLanguageCode="nl"
+        translationTargetLanguageCode={null}
+        interfaceLanguage={interfaceLanguage}
+        onHistory={onHistory}
+        onExit={onExit}
+      />,
+    );
+    await screen.findByText("ergens echt genoeg van hebben");
+    expect(container.querySelector("[data-training-session-main]")).toBeInTheDocument();
+    expect(screen.getByTestId("training-session-position")).toHaveTextContent("2 / 5");
+    expect(screen.getByTestId("training-session-progress-track")).toHaveAttribute("aria-valuemax", "5");
+    expect(screen.getByTestId("training-session-progress-track")).toHaveAttribute("aria-valuenow", "2");
+    const chrome = screen.getByTestId("training-session-chrome");
+    const utilities = chrome.querySelectorAll("button");
+    expect(utilities).toHaveLength(2);
+    fireEvent.click(utilities[0]!);
+    fireEvent.click(utilities[1]!);
+    expect(onHistory).toHaveBeenCalledOnce();
+    expect(onExit).toHaveBeenCalledOnce();
+  },
+);
+
+test("failed grading uses the shared notice outside the clipped card frame", async () => {
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({ state: "ready", content } as never);
+  vi.mocked(performPlatformV2IdiomExerciseAction).mockRejectedValueOnce(new Error("offline"));
+  render(<TrainingIdiomSession userId="user-1" session={session}
+    contentLanguageCode="nl" translationTargetLanguageCode={null}
+    interfaceLanguage="en" onExit={vi.fn()} />);
+  fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
+  fireEvent.click(screen.getByRole("button", { name: "Good" }));
+  const alert = await screen.findByRole("alert");
+  expect(alert.closest('[data-testid="training-card-frame"]')).toBeNull();
+  expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Good" })).toBeEnabled();
+});
+
+test.each(["audio", "translation"] as const)("failed %s stays inside the shared flex card layout", async (action) => {
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({ state: "ready", content } as never);
+  if (action === "audio") {
+    vi.mocked(resolvePlatformV2Audio).mockRejectedValueOnce(new Error("offline"));
+  } else {
+    vi.mocked(requestPlatformV2Translation).mockRejectedValue(new Error("offline"));
+  }
+  render(<TrainingIdiomSession userId="user-1" session={session}
+    contentLanguageCode="nl" translationTargetLanguageCode="ru"
+    interfaceLanguage="en" onExit={vi.fn()} onPlayResolvedAudio={vi.fn()} />);
+  fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
+  fireEvent.click(screen.getByRole("button", { name: t(action === "audio" ? "senseCard.audio.play" : "senseCard.translation.request") }));
+  const alert = await screen.findByRole("alert");
+  expect(alert.parentElement).toBe(screen.getByTestId("training-exercise-card"));
+  expect(alert).toHaveClass("shrink-0");
+  expect(screen.getByRole("button", { name: "Good" })).toBeEnabled();
+});
+
+test("authoritative counters refresh after a grade while the session uses approved chrome", async () => {
+  let resolveStats!: (value: Awaited<ReturnType<typeof readIdiomTrainingStats>>) => void;
+  vi.mocked(readIdiomTrainingStats).mockImplementationOnce(() => new Promise(resolve => { resolveStats = resolve; }));
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise)
+    .mockResolvedValueOnce(candidate)
+    .mockResolvedValueOnce({status:"completed",completedActions:1,requestedTotal:1});
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({ state:"ready",content } as never);
+  vi.mocked(performPlatformV2IdiomExerciseAction).mockResolvedValue({} as never);
+  render(<TrainingIdiomSession userId="user-1" session={session}
+    contentLanguageCode="nl" translationTargetLanguageCode={null}
+    interfaceLanguage="en" onExit={vi.fn()} />);
+  const reveal = await screen.findByRole("button",{name:"Show answer"});
+  expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
+  expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
+  resolveStats({contractVersion:"training-idiom-stats-v1",newCardsToday:2,
+    reviewCardsDone:3,reviewCardsDue:4,totalCardsStarted:12,totalCardsInScope:30});
+  await waitFor(() => expect(readIdiomTrainingStats).toHaveBeenCalledOnce());
+  vi.mocked(readIdiomTrainingStats).mockResolvedValueOnce({contractVersion:"training-idiom-stats-v1",
+    newCardsToday:3,reviewCardsDone:3,reviewCardsDue:5,totalCardsStarted:13,totalCardsInScope:30});
+  fireEvent.click(reveal);
+  fireEvent.click(screen.getByRole("button",{name:"Good"}));
+  await waitFor(() => expect(readIdiomTrainingStats).toHaveBeenCalledTimes(2));
+  expect(readIdiomTrainingStats).toHaveBeenCalledTimes(2);
+  expect(readIdiomTrainingStats).toHaveBeenLastCalledWith(session.sessionId);
+});
+
+
+test("active time waits for prepared idiom content and pauses with the enclosing surface", async () => {
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:"ready",content} as never);
+  const view = (enabled: boolean) => <TrainingIdiomSession studyTimeEnabled={enabled} userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onExit={vi.fn()} />;
+  const {rerender}=render(view(true));
+  expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
+  await waitFor(()=>expect(recordedStudy.mock.lastCall?.[0]).toMatchObject({family:"idiom",ownerId:"user-1",sessionId:session.sessionId,entryId:candidate.entryId,targetId:candidate.targetId,enabled:true}));
+  fireEvent.click(screen.getByRole("button",{name:"Show answer"}));
+  expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(true);
+  rerender(view(false)); expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
+});
+
+afterEach(() => { vi.unstubAllEnvs(); });
+
+test("idiom session uses the approved shared shell", async () => {
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({ state: "ready", content } as never);
+  render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} />);
+  await screen.findByRole("button", { name: "Show answer" });
+  expect(screen.getByTestId("training-session-chrome")).toHaveAttribute("data-visual-spec", "training-approved-v1");
+  expect(screen.queryByTestId("training-session-footer-progress")).not.toBeInTheDocument();
+});
+
+for (const language of ["en", "nl", "ru"] as const) {
+  test(`approved idiom preparation failure has separate retry and exit owners in ${language}`, async () => {
+    vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+    vi.mocked(loadIdiomExerciseContent).mockRejectedValue(new Error("lookup_unavailable"));
+    const onExit = vi.fn();
+    const labels = getUiMessages(language);
+    render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl"
+      translationTargetLanguageCode="ru" interfaceLanguage={language} onExit={onExit} />);
+    expect(await screen.findByRole("alert")).toHaveTextContent(labels.trainingExercises.idiom.failed);
+    fireEvent.click(screen.getByRole("button", {name:labels.trainingExercises.idiom.retry}));
+    await waitFor(()=>expect(loadIdiomExerciseContent).toHaveBeenCalledTimes(2));
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", {name:labels.trainingSession.back}));
+    expect(onExit).toHaveBeenCalledOnce();
+    expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
+    expect(markPlatformV2IdiomTrainingSessionMemberUnavailable).not.toHaveBeenCalled();
+  });
+}
+
+test('empty idiom plan uses shared terminal actions without suggesting another empty batch',async()=>{
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({status:'exhausted',completedActions:0,requestedTotal:5} as never);
+ const edit=vi.fn(),home=vi.fn(),restart=vi.fn();
+ render(<TrainingIdiomSession userId="user-1" session={{...session,requestedTotal:5,plannedNew:0,plannedReview:0,plannedTotal:0}} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={home} onEdit={edit} onRestart={restart}/>);
+ expect(await screen.findByText('No cards available for this training right now')).toBeVisible();
+ expect(screen.getByTestId('training-completion')).toBeInTheDocument();
+ expect(screen.queryByText('Session complete')).toBeNull();expect(screen.queryByRole('button',{name:'Another 10 cards'})).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Modify training'}));fireEvent.click(screen.getByRole('button',{name:'Back to home'}));expect(edit).toHaveBeenCalledOnce();expect(home).toHaveBeenCalledOnce();expect(restart).not.toHaveBeenCalled();
+});
+test('partially consumed idiom plan exhausted by unavailable remaining members shows honest completion count',async()=>{
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({status:'exhausted',completedActions:2,requestedTotal:5} as never);
+ render(<TrainingIdiomSession userId="user-1" session={{...session,requestedTotal:5,plannedTotal:3,completedActions:2}} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} onEdit={vi.fn()} onRestart={vi.fn()}/>);
+ expect(await screen.findByText('Session complete')).toBeVisible();expect(screen.getByText('2 cards')).toBeVisible();expect(screen.queryByText('No cards available for this training right now')).toBeNull();
+});
+test('review-only three completed then zero plan explains due availability without silently including new idioms',async()=>{
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({status:'exhausted',completedActions:3,requestedTotal:5} as never);
+ const view=(id:string,planned:number,completed:number)=><TrainingIdiomSession key={id} userId="user-1" session={{...session,sessionId:id,requestedTotal:5,plannedTotal:planned,plannedNew:0,plannedReview:planned,completedActions:completed}} cardFilter="review" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} onEdit={vi.fn()} onRestart={vi.fn()}/>;
+ const {rerender}=render(view('review-three',3,3));expect(await screen.findByText('3 cards')).toBeVisible();
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({status:'exhausted',completedActions:0,requestedTotal:5} as never);
+ rerender(view('review-zero',0,0));expect(await screen.findByText('No idioms are due now. Include new cards in training settings to start learning more.')).toBeVisible();
+ expect(screen.queryByRole('button',{name:'Another 10 cards'})).toBeNull();expect(screen.queryByText('0 cards')).toBeNull();expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
+});
+
+test('unavailable planned review members use generic empty copy rather than falsely asserting no idioms due',async()=>{
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({status:'exhausted',completedActions:0,requestedTotal:5} as never);
+ render(<TrainingIdiomSession userId="user-1" session={{...session,plannedTotal:3,plannedReview:3,plannedNew:0}} cardFilter="review" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} onEdit={vi.fn()}/>);
+ expect(await screen.findByText('No cards available for this training right now')).toBeVisible();expect(screen.queryByText(/No idioms are due now/)).toBeNull();
+});
+
+test("idiom display acknowledgement binds its exercise target before reveal",async()=>{
+ vi.stubEnv("NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED","true");
+ try{
+  let release!:(permit:unknown)=>void;currentAcknowledge.mockReset().mockImplementation(()=>new Promise(resolve=>{release=resolve;}));
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:"ready",content:{...content,entry:{...content.entry,sourceVersion:1}}} as never);
+  const openDetails=vi.fn();
+  render(<TrainingIdiomSession onOpenDetails={openDetails} userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()}/>);
+  await waitFor(()=>expect(currentAcknowledge).toHaveBeenCalledOnce());
+  expect(currentAcknowledge.mock.calls[0][1]).toMatchObject({sessionId:session.sessionId,targetId:candidate.targetId,entryId:candidate.entryId,cardTypeId:"idiom:direct",direction:"direct",sourceVersion:1,stateRevision:"untracked"});
+  expect(screen.queryByRole("button",{name:"Show answer"})).not.toBeInTheDocument();
+  release({permitId:"75300000-0000-4000-8000-000000000001",expiresAt:new Date(Date.now()+60_000).toISOString(),runGeneration:1});
+  await screen.findByRole("button",{name:"Show answer"});
+  fireEvent.click(screen.getByRole("button",{name:"Show answer"}));
+  fireEvent.click(screen.getByRole("button",{name:t("senseCard.wordDetails.open")}));
+  expect(openDetails).toHaveBeenCalledWith(expect.objectContaining({currentCard:{sessionId:session.sessionId,permitId:"75300000-0000-4000-8000-000000000001"}}));
+ }finally{vi.unstubAllEnvs();}
+});
+
+test("idiom notes clear on revoke hints without advancing, grading or hiding the revealed answer",async()=>{
+ const note={noteId:"teacher-note",ownerUserId:"teacher",text:"Live teaching note",revision:"1",isOwn:false};
+ focusedNotes.read.mockResolvedValueOnce([note]);
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+ vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:"ready",content:{...content,entry:{...content.entry,noteMaterial:[{...note,text:"Cached teaching note"}]}}} as never);
+ render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()}/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Show answer"}));await screen.findByText("Live teaching note");expect(screen.queryByText("Cached teaching note")).not.toBeInTheDocument();
+ let finish!:(notes:unknown)=>void;focusedNotes.read.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));let pending:Promise<unknown>;
+ act(()=>{pending=Promise.resolve(focusedNotes.refresh!());});expect(screen.queryByText("Live teaching note")).not.toBeInTheDocument();expect(screen.getByRole("button",{name:"Good"})).toBeInTheDocument();
+ await act(async()=>{finish([]);await pending;});expect(screen.queryByText("Live teaching note")).not.toBeInTheDocument();expect(screen.getByRole("button",{name:"Good"})).toBeInTheDocument();
+ expect(fetchNextPlatformV2IdiomTrainingSessionExercise).toHaveBeenCalledOnce();expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
+});

@@ -1,0 +1,106 @@
+"use client";
+import {TranslationPlaceholder,TranslationFailure} from "./TranslationFeedback";
+import {useAdditionalCardTranslation} from "./AdditionalCardTranslation";
+import {firstExactRenderableNodeTranslationV1} from "../../../../../packages/shared/platform-v2/displayedTranslationArtifactIdentityV1";
+import React, { useId, useState, type ReactNode } from "react";
+import { ArrowLeftRight, ChevronDown, Link2 } from "lucide-react";
+import { SenseCardReveal } from "@/components/training/SenseCardChrome";
+import {getUiMessages,formatUiMessage} from "@/lib/uiMessages";
+import type {OnboardingLanguage} from "@/lib/onboardingI18n";
+import s from "./wordDetails.module.css";
+import type {LexicalRelationDisplayItem} from "./wordDetailsPresentation";
+import {orderedConjugationPersons,orderedConjugationValues,conjugationPersonLabel} from "@/lib/dictionary/conjugationPresentation";
+
+export type WordFormDetail = {forms:{label:string;value:string}[];conjugation:Record<string,Record<string,string>>;pos:string};
+type Detail=WordFormDetail;
+function unique(values:string[]){return [...new Set(values.map(v=>v.trim()).filter(Boolean))];}
+function formValues(detail:Detail){
+ const groups=new Map<string,string[]>();
+ for(const form of detail.forms)groups.set(form.label,[...(groups.get(form.label)||[]),form.value]);
+ return Object.fromEntries([...groups].map(([label,values])=>[label,unique(values).join(", ")]));
+}
+function headline(detail:Detail, variant:"primary"|"complete",contentLanguage?:string):{values:string[];label?:string}{
+ const f=formValues(detail);let keys:string[];let fallback:string[]=[];
+ switch(detail.pos){
+  case "zn": keys=variant==="primary"?["Plural","Diminutive"]:["Plural","Diminutive","Alternate headword","Derivation"];fallback=["Diminutive"];break;
+  case "ww": keys=variant==="primary"?["Principal forms"]:["Principal forms","Derivation"];break;
+  case "bn": keys=variant==="primary"?(f.Comparative||f.Superlative?["Comparative","Superlative"]:["Inflected form"]):["Inflected form","Comparative","Superlative","Derivation"];break;
+  case "bw": case "tw": keys=["Comparative","Superlative"];break;
+  case "afk": keys=["Plural","Diminutive"];break;
+  default: keys=[];
+ }
+ let values=unique(keys.flatMap(key=>f[key]?[f[key]]:[]));
+ if(!values.length&&fallback.length)values=unique(fallback.flatMap(key=>f[key]?[f[key]]:[]));
+ if(detail.pos==="ww"&&!values.length){
+  // Defensive fallback when a future verb has only conjugation data.
+  const past=unique(orderedConjugationValues(detail.conjugation.past||{},contentLanguage));
+  const perfect=detail.conjugation.perfect;
+  values.push(...past.slice(0,1));
+  if(perfect){const phrase=[perfect.auxiliary,perfect.participle].filter(Boolean).join(" ");if(phrase)values.push(phrase);}
+  if(!values.length)values.push(...unique(orderedConjugationValues(detail.conjugation.present||{},contentLanguage)).slice(0,2));
+ }
+ let label:string|undefined;
+ if(!values.length&&["zn","ww","bn"].includes(detail.pos)){
+  values=unique([...(f.Derivation?[f.Derivation]:[]),...(f["Alternate headword"]?[f["Alternate headword"]]:[])]);
+  if(values.length)label="Related";
+ }
+ if(variant==="complete"&&label)values=unique(detail.forms.map(form=>form.value));
+ if(!values.length){values=unique(detail.forms.map(form=>form.value)).slice(0,1);}
+ return {values,label};
+}
+type FormsProps={detail:WordFormDetail|null;headword:string;interfaceLanguage:OnboardingLanguage;contentLanguage?:string;variant?:"primary"|"complete";part:"summary"|"body";open:boolean;onToggle:()=>void;id:string};
+export function ArticleWordForms({detail,headword,interfaceLanguage,contentLanguage,variant="primary",part,open,onToggle,id}:FormsProps){
+ const copy=getUiMessages(interfaceLanguage).wordDetails;
+ const labelOf=(label:string)=>copy.forms[label as keyof typeof copy.forms]??label;
+ if(!detail)return null;
+ const lead=headline(detail,variant,contentLanguage);const shown=lead.values;if(!shown.length)return null;
+ const f=formValues(detail);const covered=new Set(shown.flatMap(v=>v.split(/[,·]/).map(x=>x.trim())));
+ const extra=detail.forms.filter(form=>!form.value.split(/[,·]/).every(v=>covered.has(v.trim())));
+ const table=detail.conjugation||{};
+ const perfect=table.perfect?[table.perfect.auxiliary,table.perfect.participle].filter(Boolean).join(" "):"";
+ const perfectIsAlreadyShown=perfect&&[...covered].some(v=>v.toLocaleLowerCase()===perfect.toLocaleLowerCase());
+ const showPerfect=Boolean(perfect&&!perfectIsAlreadyShown);
+ const persons=orderedConjugationPersons([...Object.keys(table.present||{}),...Object.keys(table.past||{})],contentLanguage);
+ // Aggregate perfect is already in the verb's one-line preview; avoid repeating it below.
+ const hasDetails=extra.length>0||persons.length>0||showPerfect;
+ const named=shown.flatMap(value=>{
+  const form=detail.forms.find(item=>item.value===value||f[item.label]===value);
+  if(form?.label==="Principal forms"){
+   const parts=value.split(/,\s*/).filter(Boolean);
+   if(parts.length===2)return [{label:"Past",value:parts[0]},{label:"Perfect",value:parts[1]}];
+  }
+  const inferredVerbLabel=detail.pos==="ww"&&!form
+   ? Object.values(detail.conjugation.past||{}).includes(value)?"Past"
+    :[detail.conjugation.perfect?.auxiliary,detail.conjugation.perfect?.participle].filter(Boolean).join(" ")===value?"Perfect"
+    :Object.values(detail.conjugation.present||{}).includes(value)?"Present":undefined
+   :undefined;
+  const label=lead.label||form?.label||inferredVerbLabel||"Form";
+  return [{label:label==="Inflected form"?"Inflected":label,value}];
+ });
+ const line=<span className={s.formItems}>{named.map(({label,value},index)=><span className={s.formItem} key={`${label}-${index}`}><span className={s.formKind}>{labelOf(label)}</span><span className={s.formLine} lang={contentLanguage}>{value}</span></span>)}</span>;
+ if(part==="summary")return <div className={s.forms} aria-label={formatUiMessage(copy.formsOf,{word:headword})}>
+  {hasDetails?<button className={s.formToggle} aria-label={formatUiMessage(open?copy.hideForms:copy.showForms,{word:headword})} aria-expanded={open} aria-controls={id} onClick={onToggle}>{line}<ChevronDown size={16} className={open?s.rotated:undefined}/></button>:line}
+ </div>;
+ if(!hasDetails)return null;
+ return <SenseCardReveal open={open}><div id={id} inert={!open} aria-hidden={!open} className={s.expandedForms}>
+   {(extra.length>0||showPerfect)&&<dl className={s.facts}>{extra.map((f,index)=><div key={`${f.label}-${index}`}><dt>{labelOf(f.label)}</dt><dd lang={contentLanguage}>{f.value}</dd></div>)}{showPerfect&&<div><dt>{copy.forms.Perfect}</dt><dd lang={contentLanguage}>{perfect}</dd></div>}</dl>}
+   {persons.length>0&&<table className={s.table} aria-label={formatUiMessage(copy.verbForms,{word:headword})}><thead><tr><th scope="col">{copy.person}</th><th scope="col">{copy.forms.Present}</th><th scope="col">{copy.forms.Past}</th></tr></thead><tbody>{persons.map(person=><tr key={person}><th scope="row" lang={contentLanguage}>{conjugationPersonLabel(person)}</th><td lang={contentLanguage}>{table.present?.[person]||"—"}</td><td lang={contentLanguage}>{table.past?.[person]||"—"}</td></tr>)}</tbody></table>}
+  </div></SenseCardReveal>;
+}
+
+function Disclosure({label,children}:{label:string;children:ReactNode}) {
+ const [open,setOpen]=useState(false);const id=useId();
+ return <div className={s.disclosure} data-open={open}>
+  <button className={s.toggle} aria-expanded={open} aria-controls={id} onClick={()=>setOpen(!open)}><span>{label}</span><ChevronDown size={14} className={open?s.rotated:undefined}/></button>
+  <SenseCardReveal open={open}><div id={id} inert={!open} aria-hidden={!open} className={s.body}>{children}</div></SenseCardReveal>
+ </div>;
+}
+export function ArticleSenseRelations({relation,interfaceLanguage,contentLanguage,translationLanguage,translationVisible=false,translationPending=false,translationFailed=false,onRetryTranslation,compact=false}:{relation?:{synonyms?:LexicalRelationDisplayItem[];antonyms?:LexicalRelationDisplayItem[]};interfaceLanguage:OnboardingLanguage;contentLanguage?:string;translationLanguage?:string;translationVisible?:boolean;translationPending?:boolean;translationFailed?:boolean;onRetryTranslation?:()=>void;compact?:boolean}) {
+ const copy=getUiMessages(interfaceLanguage).wordDetails;
+ const additional=useAdditionalCardTranslation();
+ const secondaryText=(item:LexicalRelationDisplayItem)=>{const relation=additional?.entry?.wordDetails?.lexicalRelations.find(r=>r.relationId===item.relationId && (!item.sourceTextFingerprint || r.sourceTextFingerprint===item.sourceTextFingerprint));return relation?.sourceTextFingerprint ? firstExactRenderableNodeTranslationV1((relation.translations??[]).filter(t=>t.targetLanguageCode===additional?.language),relation.sourceTextFingerprint)?.text : undefined;};
+ const groups=[{id:"synonyms",label:copy.synonyms,values:relation?.synonyms||[]},{id:"antonyms",label:copy.antonyms,values:relation?.antonyms||[]}].filter(g=>g.values.length);
+ if(!groups.length)return null;
+ const content=<div className={s.relations}>{groups.map(g=><div className={s.relationGroup} data-kind={g.id} key={g.id}><h3>{g.id==="synonyms"?<Link2 size={12}/>:<ArrowLeftRight size={12}/>}<span>{g.label}</span></h3><p lang={contentLanguage}>{g.values.map((item,index)=><React.Fragment key={item.relationId}>{index>0&&" · "}<span lang={contentLanguage}>{item.text}</span>{item.translation?<span lang={translationLanguage} hidden={!translationVisible} aria-hidden={!translationVisible} data-content-translation="true" className={s.relationTranslation}> ({additional?.labelPrimary ? `${translationLanguage?.toUpperCase()}: ` : ""}{item.translation})</span>:translationVisible&&translationPending?<TranslationPlaceholder inline/>:translationVisible&&translationFailed&&onRetryTranslation?<TranslationFailure language={interfaceLanguage} onRetry={onRetryTranslation}/>:null}{additional&&translationVisible&&(secondaryText(item)?<span lang={additional.language} data-content-translation="true" className={s.relationTranslation}> ({additional.language.toUpperCase()}: {secondaryText(item)})</span>:additional.status==="pending"?<TranslationPlaceholder inline/>:additional.status==="failed"?<TranslationFailure language={interfaceLanguage} onRetry={additional.retry}/>:null)}</React.Fragment>)}</p></div>)}</div>;
+ return <section aria-label={copy.relations} className={s.sense}>{compact?<Disclosure label={groups.map(g=>g.label).join(" · ")}>{content}</Disclosure>:content}</section>;
+}

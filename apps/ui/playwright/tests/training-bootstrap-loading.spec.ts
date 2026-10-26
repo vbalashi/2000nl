@@ -1,0 +1,334 @@
+import { expect, test, type Page } from "@playwright/test";
+import {
+  buildFakeSupabaseSession,
+  installSupabaseSession,
+} from "../utils/supabaseTestSession";
+import {
+  installTrainingAttributionCollector,
+  readTrainingAttributionCapture,
+  setupAuthenticatedTrainingAttributionPage,
+} from "../support/trainingAttributionHarness";
+
+
+const profiles = [
+  {
+    name: "desktop-1280x900-light",
+    viewport: { width: 1280, height: 900 },
+    colorScheme: "light" as const,
+    language: "en" as const,
+  },
+  {
+    name: "desktop-1280x900-dark",
+    viewport: { width: 1280, height: 900 },
+    colorScheme: "dark" as const,
+    language: "nl" as const,
+  },
+  {
+    name: "mobile-320x568-dark",
+    viewport: { width: 320, height: 568 },
+    colorScheme: "dark" as const,
+    language: "ru" as const,
+  },
+  {
+    name: "mobile-375x812-dark",
+    viewport: { width: 375, height: 812 },
+    colorScheme: "dark" as const,
+    language: "ru" as const,
+  },
+  {
+    name: "mobile-390x844-dark",
+    viewport: { width: 390, height: 844 },
+    colorScheme: "dark" as const,
+    language: "nl" as const,
+  },
+  {
+    name: "mobile-402x874-light",
+    viewport: { width: 402, height: 874 },
+    colorScheme: "light" as const,
+    language: "en" as const,
+  },
+  {
+    name: "mobile-412x915-dark",
+    viewport: { width: 412, height: 915 },
+    colorScheme: "dark" as const,
+    language: "ru" as const,
+  },
+];
+
+const bootstrapHeading = {
+  en: "Preparing training",
+  nl: "Training voorbereiden",
+  ru: "Подготавливаем тренировку",
+};
+
+async function holdSessionRefresh(
+  page: Page,
+  language: keyof typeof bootstrapHeading,
+) {
+  // Startup also waits for account-owned setup/material and scope reads.
+  // Install the complete backend fixture, then override the gated preferences.
+  await setupAuthenticatedTrainingAttributionPage(page, 0, { deferNavigation: true });
+
+  // This scenario mocks the database/auth boundary. Keep its health response
+  // deterministic too: the real dev health warning otherwise mounts between
+  // frame/header measurements and shifts the header by the banner height.
+  await page.route("**/api/health?deep=1", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ status: "ok", checks: {} }),
+  }));
+
+  const validSession = buildFakeSupabaseSession({
+    id: "loading-qa-user",
+    email: "loading-qa@2000nl.test",
+  });
+  const expiredSession = {
+    ...validSession,
+    expires_at: Math.floor(Date.now() / 1000) - 60,
+    expires_in: 0,
+  };
+  let releaseRefresh: () => void = () => undefined;
+  const refreshGate = new Promise<void>((resolve) => {
+    releaseRefresh = resolve;
+  });
+  let refreshRequested = false;
+  let releasePreferences: () => void = () => undefined;
+  const preferencesGate = new Promise<void>((resolve) => {
+    releasePreferences = resolve;
+  });
+  const preferenceRequests = new Set<string>();
+
+  await page.route("**/auth/v1/token**", async (route) => {
+    refreshRequested = true;
+    await refreshGate;
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(validSession),
+    });
+  });
+  await page.route("**/rest/v1/user_settings?**", async (route) => {
+    preferenceRequests.add("app");
+    await preferencesGate;
+    await route.fulfill({
+      status: 200,
+      headers: {
+        "content-type": "application/json",
+        "content-range": "0-0/1",
+      },
+      body: JSON.stringify([
+        {
+          theme_preference: "system",
+          audio_quality: "free",
+          translation_lang: language,
+          preferences: { onboardingLanguage: language },
+        },
+      ]),
+    });
+  });
+  await page.route(
+    "**/rest/v1/rpc/get_learning_preferences",
+    async (route) => {
+      preferenceRequests.add("learning");
+      await preferencesGate;
+      await route.fulfill({
+        status: 200,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          modes_enabled: ["word-to-definition"],
+          card_filter: "both",
+          language_code: "nl",
+          new_review_ratio: 2,
+          active_scenario: "understanding",
+        }),
+      });
+    },
+  );
+  await page.addInitScript(() => {
+    const samples: {text:string; logoTop:number; statusTop:number; background:string}[] = [];
+    Object.assign(window, {startupRhythmSamples:samples});
+    const sample = () => {
+      for (const surface of document.querySelectorAll('[data-testid="startup-logo-screen"]')) {
+        if (getComputedStyle(surface).visibility === "hidden") continue;
+        const logo = surface.querySelector('[aria-label="2000nl"]');
+        const heading = surface.querySelector('h1');
+        if (logo && heading && getComputedStyle(heading).visibility !== "hidden") {
+          samples.push({text:heading.textContent ?? "", logoTop:logo.getBoundingClientRect().top,
+            statusTop:heading.getBoundingClientRect().top, background:getComputedStyle(surface).backgroundColor});
+        }
+      }
+      if (samples.length < 2000) requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  });
+  await installSupabaseSession(page, expiredSession);
+  await page.addInitScript((savedLanguage) => {
+    window.localStorage.setItem("onboarding_language", savedLanguage);
+  }, language);
+
+  return {
+    releaseRefresh,
+    refreshRequested: () => refreshRequested,
+    releasePreferences,
+    preferencesRequested: () => preferenceRequests.size === 2,
+  };
+}
+
+for (const profile of profiles) {
+  test(`auth bootstrap keeps one Training shell on ${profile.name}`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize(profile.viewport);
+    await page.emulateMedia({
+      colorScheme: profile.colorScheme,
+      reducedMotion: "reduce",
+    });
+    const refresh = await holdSessionRefresh(page, profile.language);
+
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect.poll(refresh.refreshRequested).toBe(true);
+
+    const shell = page.getByTestId("training-bootstrap-shell");
+    await expect(shell).toBeVisible();
+    await expect(
+      shell.getByRole("heading", {
+        name: bootstrapHeading[profile.language],
+      }),
+    ).toBeVisible();
+    await expect(shell.getByRole("status")).toHaveAttribute("aria-busy", "true");
+    for (const misleadingCopy of [
+      "Your navigation stays available",
+      "De navigatie blijft beschikbaar",
+      "Навигация остаётся доступной",
+    ]) {
+      await expect(shell).not.toContainText(misleadingCopy);
+    }
+    await expect(page.getByText("Laden…")).toHaveCount(0);
+    await expect.poll(async () =>
+      shell.evaluate((element) =>
+        element.getAnimations().filter((animation) => animation.playState === "running")
+          .length,
+      ),
+    ).toBe(0);
+    const shellBox = await shell.boundingBox();
+    expect(shellBox).not.toBeNull();
+    expect(shellBox!.x).toBe(0);
+    expect(shellBox!.y).toBe(0);
+    expect(shellBox!.width).toBe(profile.viewport.width);
+    expect(shellBox!.height).toBe(profile.viewport.height);
+    expect(
+      await shell.evaluate(
+        (element) => element.scrollWidth === element.clientWidth,
+      ),
+    ).toBe(true);
+    await expect(page.getByText("1 error", { exact: true })).toHaveCount(0);
+    await page.screenshot({
+      path: testInfo.outputPath(`${profile.name}.png`),
+      fullPage: true,
+    });
+
+    refresh.releaseRefresh();
+    await expect.poll(refresh.preferencesRequested).toBe(true);
+    await expect(shell).toBeVisible();
+    await expect(
+      shell.getByRole("heading", {
+        name: bootstrapHeading[profile.language],
+      }),
+    ).toBeVisible();
+    refresh.releasePreferences();
+    const destinationShell = page.locator("[data-training-pilot-surface]");
+    await expect(destinationShell).toBeVisible();
+    await expect(shell).toHaveCount(0);
+    // History stays mounted to retain its data; its hidden loading copy is not
+    // a bootstrap screen. A visible legacy loader must still fail this check.
+    await expect(page.getByText("Laden…").and(page.locator(":visible"))).toHaveCount(0);
+    const destinationFrame = page.locator('[data-app-frame="true"]');
+    const destinationBox = await destinationFrame.boundingBox();
+    const destinationHeaderBox = await page.getByTestId("app-header").boundingBox();
+    expect(destinationBox).not.toBeNull();
+    expect(destinationHeaderBox).not.toBeNull();
+    expect(destinationBox!.width).toBe(shellBox!.width);
+    expect(destinationBox!.height).toBe(shellBox!.height);
+    const samples = await page.evaluate(() => (window as unknown as {startupRhythmSamples:{text:string;logoTop:number;statusTop:number;background:string}[]}).startupRhythmSamples);
+    expect(samples.length).toBeGreaterThan(0);
+    expect(new Set(samples.map(s=>s.text))).toEqual(new Set([bootstrapHeading[profile.language]]));
+    expect(Math.max(...samples.map(s=>s.logoTop))-Math.min(...samples.map(s=>s.logoTop))).toBeLessThanOrEqual(1);
+    expect(Math.max(...samples.map(s=>s.statusTop))-Math.min(...samples.map(s=>s.statusTop))).toBeLessThanOrEqual(1);
+    expect(new Set(samples.map(s=>s.background)).size).toBe(1);
+  });
+}
+
+test("delayed list hydration and post-Start card selection are attributed separately @pilot", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  await installTrainingAttributionCollector(page);
+  const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
+    bootstrapReadDelayMs: 40,
+    activeScopeDelayMs: 600,
+    listSummaryDelayMs: 700,
+    sessionSelectionDelayMs: 1_200,
+  });
+
+  const authenticatedStatus = page.getByTestId("training-startup-gate").getByRole("status");
+  await expect(authenticatedStatus).toBeVisible();
+  await expect(authenticatedStatus).toHaveAttribute("aria-busy", "true");
+  await expect(
+    authenticatedStatus.getByRole("heading", {
+      name: /Preparing training|Training voorbereiden|Подготавливаем тренировку/i,
+    }),
+  ).toBeVisible();
+  await expect(page.getByText(/Loading Training/i)).toHaveCount(0);
+
+  const todayHeading = page.getByRole("heading", {
+    name: /^(Training|Тренировка)$/i,
+  });
+  await expect(todayHeading).toBeVisible();
+  const continueSession = page.getByRole("button", {
+    name: /Continue session|Sessie doorgaan|Продолжить сессию/i,
+  });
+  const startCurrentSetup = page.getByRole("button", {
+    name: /Start training|Training starten|Начать тренировку/i,
+  });
+  await expect(continueSession).toHaveCount(0);
+  await expect(startCurrentSetup).toBeEnabled();
+  expect(harness.requests.scheduler).toHaveLength(0);
+  expect(harness.requests.session).toHaveLength(0);
+  expect(harness.requests.sessionStarts).toHaveLength(0);
+
+  const beforeStart = await readTrainingAttributionCapture(page);
+  expect(beforeStart.timings.some((event) => event.stage === "next-card.selection")).toBe(false);
+  await startCurrentSetup.click();
+
+  await expect.poll(() => harness.requests.session.length).toBeGreaterThanOrEqual(1);
+  // Session selection must not reintroduce the startup screen. Its latency
+  // remains checked below through the real request attribution collector.
+  await expect(page.getByTestId("training-bootstrap-shell")).toHaveCount(0);
+  await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+  expect(harness.requests.sessionStarts).toHaveLength(1);
+  expect(harness.requests.session.length).toBeGreaterThanOrEqual(1);
+  expect(harness.requests.session.every(
+    (request) => request.p_session_id === "training-session-fixture",
+  )).toBe(true);
+
+  const capture = await readTrainingAttributionCapture(page);
+  const hydration = capture.timings.find(
+    (event) => event.stage === "training.active-scope-hydration",
+  );
+  expect(hydration).toMatchObject({ outcome: "ready" });
+  expect(hydration?.durationMs ?? 0).toBeGreaterThanOrEqual(550);
+
+  const postStartSelection = capture.timings.find(
+    (event) =>
+      event.stage === "next-card.selection" && event.outcome === "ready",
+  );
+  expect(postStartSelection).toBeDefined();
+  expect(postStartSelection?.durationMs ?? 0).toBeGreaterThanOrEqual(1_100);
+  expect(postStartSelection?.monotonicStartedAtMs ?? 0).toBeLessThan(
+    postStartSelection?.monotonicEndedAtMs ?? 0,
+  );
+  expect(postStartSelection?.monotonicStartedAtMs ?? 0).toBeGreaterThanOrEqual(
+    hydration?.monotonicEndedAtMs ?? 0,
+  );
+});

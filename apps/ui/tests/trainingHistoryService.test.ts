@@ -1,0 +1,203 @@
+import { beforeEach, describe, expect, test, vi } from "vitest";
+
+const rpc = vi.fn();
+
+vi.mock("@/lib/supabaseClient", () => ({
+  supabase: { rpc },
+}));
+
+const { fetchRecentTrainingHistory } = await import(
+  "@/lib/training/trainingHistoryService"
+);
+
+describe("recent Training history", () => {
+  beforeEach(() => {
+    rpc.mockReset();
+  });
+
+  test("reads the authenticated server-owned projection and returns cap metadata", async () => {
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          activity_id: "word-review:1",
+          exercise_family: "meaning", exercise_direction: null, target_id: null, exercise_text: null,
+          entry_id: "entry-1",
+          headword: "bank",
+          part_of_speech: "zn.",
+          review_result: "review_success",
+          card_type_id: "word-to-definition",
+          reviewed_at: "2026-08-21T11:59:00.000Z",
+          has_more: true,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(fetchRecentTrainingHistory()).resolves.toEqual({
+      items: [
+        {
+          activityId: "word-review:1",
+          entryId: "entry-1",
+          headword: "bank",
+          partOfSpeech: "zn.",
+          reviewResult: "review_success",
+          cardTypeId: "word-to-definition",
+          reviewedAt: "2026-08-21T11:59:00.000Z",
+        },
+      ],
+      hasMore: true,
+    });
+    expect(rpc).toHaveBeenCalledWith("get_recent_training_activity_v1", {
+      p_limit: 50,
+    });
+  });
+
+  test("projects an accepted Learn action as a distinct history activity", async () => {
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          activity_id: "word-review:1",
+          exercise_family: "meaning", exercise_direction: null, target_id: null, exercise_text: null,
+          entry_id: "entry-1",
+          headword: "bank",
+          part_of_speech: "zn.",
+          review_result: "learning_started",
+          card_type_id: "word-to-definition",
+          reviewed_at: "2026-08-21T11:59:00.000Z",
+          has_more: false,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(fetchRecentTrainingHistory()).resolves.toEqual({
+      items: [
+        expect.objectContaining({
+          reviewResult: "learning_started",
+        }),
+      ],
+      hasMore: false,
+    });
+  });
+
+  test("fails visibly instead of presenting a backend error as empty history", async () => {
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: "rpc unavailable" },
+    });
+
+    await expect(fetchRecentTrainingHistory()).rejects.toThrow(
+      "training_history_failed",
+    );
+  });
+
+  test("fails and diagnoses a malformed row instead of silently showing an empty history", async () => {
+    const diagnostic = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    rpc.mockResolvedValueOnce({
+      data: [{ activity_id: "word-review:1",
+          exercise_family: "meaning", exercise_direction: null, target_id: null, exercise_text: null,
+          entry_id: "entry-1", headword: "bank" }],
+      error: null,
+    });
+
+    await expect(fetchRecentTrainingHistory()).rejects.toThrow(
+      "training_history_contract_mismatch",
+    );
+    expect(diagnostic).toHaveBeenCalledWith(
+      "Invalid recent training history projection",
+      { index: 0 },
+    );
+    diagnostic.mockRestore();
+  });
+
+  test("rejects inconsistent truncation metadata", async () => {
+    const diagnostic = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const row = {
+      activity_id: "word-review:1",
+          exercise_family: "meaning", exercise_direction: null, target_id: null, exercise_text: null,
+          entry_id: "entry-1",
+      headword: "bank",
+      part_of_speech: null,
+      review_result: "review_success",
+      card_type_id: "word-to-definition",
+      reviewed_at: "2026-08-21T11:59:00.000Z",
+      has_more: false,
+    };
+    rpc.mockResolvedValueOnce({
+      data: [row, { ...row, entry_id: "entry-2", has_more: true }],
+      error: null,
+    });
+
+    await expect(fetchRecentTrainingHistory()).rejects.toThrow(
+      "training_history_contract_mismatch",
+    );
+    diagnostic.mockRestore();
+  });
+
+  test.each([
+    ["an unknown review result", { review_result: "definition_click" }],
+    ["an unsupported card mode", { card_type_id: "opaque-mode" }],
+    ["an invalid review timestamp", { reviewed_at: "not-a-date" }],
+  ])("rejects %s", async (_label, invalidField) => {
+    const diagnostic = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          activity_id: "word-review:1",
+          exercise_family: "meaning", exercise_direction: null, target_id: null, exercise_text: null,
+          entry_id: "entry-1",
+          headword: "bank",
+          part_of_speech: "zn.",
+          review_result: "review_success",
+          card_type_id: "word-to-definition",
+          reviewed_at: "2026-08-21T11:59:00.000Z",
+          has_more: false,
+          ...invalidField,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(fetchRecentTrainingHistory()).rejects.toThrow(
+      "training_history_contract_mismatch",
+    );
+    expect(diagnostic).toHaveBeenCalledWith(
+      "Invalid recent training history projection",
+      { index: 0 },
+    );
+    diagnostic.mockRestore();
+  });
+});
+
+const exerciseRow = {
+  activity_id: "exercise-review:1", entry_id: "entry-1", headword: "gaan", part_of_speech: "verb",
+  review_result: "review_success", card_type_id: null, exercise_family: "idiom", exercise_direction: "reverse",
+  target_id: "target-1", exercise_text: "ervoor gaan", reviewed_at: "2026-08-21T11:59:00.000Z", has_more: false,
+};
+test.each([ ["idiom", "direct"], ["idiom", "reverse"], ["translation", "recall"] ])("projects %s/%s without inventing a word mode", async (family, direction) => {
+  rpc.mockResolvedValueOnce({ data: [{ ...exerciseRow, exercise_family: family, exercise_direction: direction }], error: null });
+  const page = await fetchRecentTrainingHistory();
+  expect(page.items[0]).toMatchObject({ activityId: "exercise-review:1", cardTypeId: null,
+    exercise: { family, direction, targetId: "target-1", text: "ervoor gaan" } });
+});
+test("keeps an exercise whose historical text is no longer available", async () => {
+  rpc.mockResolvedValueOnce({ data: [{ ...exerciseRow, exercise_text: null }], error: null });
+  expect((await fetchRecentTrainingHistory()).items[0].exercise?.text).toBeNull();
+});
+test.each([
+  { exercise_family: "translation", exercise_direction: "direct" },
+  { card_type_id: "word-to-definition" }, { target_id: null }, { exercise_family: "unknown" },
+])("rejects inconsistent exercise identity %j", async invalid => {
+  const diagnostic = vi.spyOn(console,"error").mockImplementation(()=>undefined);
+  rpc.mockResolvedValueOnce({ data: [{ ...exerciseRow, ...invalid }], error: null });
+  await expect(fetchRecentTrainingHistory()).rejects.toThrow("training_history_contract_mismatch");
+  diagnostic.mockRestore();
+});
+
+test("forwards a history read cancellation signal to the RPC", async () => {
+  const abortSignal = vi.fn().mockResolvedValue({data:[],error:null});
+  rpc.mockReturnValueOnce({abortSignal});
+  const controller = new AbortController();
+  await fetchRecentTrainingHistory(controller.signal);
+  expect(abortSignal).toHaveBeenCalledWith(controller.signal);
+});

@@ -1,0 +1,20 @@
+/* One motion recipe for all requested translation fields and their control. */
+.shimmer {
+  background-image: linear-gradient(110deg,
+    color-mix(in srgb, var(--practice-accent, #818cf8) 12%, var(--practice-surface, #f5f6ff)) 20%,
+    color-mix(in srgb, var(--practice-accent, #818cf8) 38%, var(--practice-surface, #f5f6ff)) 46%,
+    color-mix(in srgb, var(--practice-accent, #818cf8) 12%, var(--practice-surface, #f5f6ff)) 70%);
+  background-size: 350% 100%;
+  animation: translation-flow 2.8s ease-in-out infinite;
+}
+.placeholder { display:flex; flex-direction:column; gap:.55em; padding:.3em 0; margin:var(--practice-space-article-pair,6px) 0 0; }
+.line { display:block; height:.85em; width:90%; border-radius:.35em; }
+.line:last-child:not(:first-child) { width:64%; }
+.emphasis { margin:0 0 5px; }
+.emphasis .line { width:56%; height:1em; }
+.error { display:inline-flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px; font-family:var(--practice-font-ui); font-size:var(--practice-reading-small,13px); color:var(--practice-danger, #b86868); }
+.error button { color:inherit; text-decoration:underline; text-underline-offset:3px; }
+@keyframes translation-flow { 0%,100% {background-position:100% 50%} 45%,55% {background-position:0% 50%} }
+@media(prefers-reduced-motion:reduce) { .shimmer {animation:none} }
+
+.inline { display:inline-flex; width:5em; margin:0 .3em; vertical-align:middle; padding:0; }

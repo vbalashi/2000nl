@@ -1,0 +1,85 @@
+name: Application checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  application:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: apps/ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/ui/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+  database:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fsrs_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s --health-timeout=5s --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: apps/ui
+      - name: Disable JIT for deterministic SQL tests
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d fsrs_test -v ON_ERROR_STOP=1 -c 'ALTER SYSTEM SET jit = off'
+          psql -h localhost -U postgres -d fsrs_test -v ON_ERROR_STOP=1 -c 'SELECT pg_reload_conf()'
+      - run: npm run test:database
+        working-directory: apps/ui
+        env:
+          FSRS_TEST_DB_URL: postgres://postgres:postgres@localhost:5432/fsrs_test
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: apps/ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/ui/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm run test:e2e:training-reliability
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure-diagnostics
+          path: apps/ui/test-results
+          retention-days: 7
+  importer:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r packages/ingestion/requirements.txt
+      - run: python -m pytest packages/ingestion/tests

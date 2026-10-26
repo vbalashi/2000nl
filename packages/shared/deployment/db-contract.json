@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "contractId": "2000nl-db-287",
+  "baseline": {
+    "migrationId": 287,
+    "file": "db/migrations/287_initial_schema.sql",
+    "sha256": "592f6b00f8867afffbe7d95899473a5b964a5f06f9f8198c85f458f2b10e6cd8",
+    "probe": "db/deploy-contract/read-only-postflight-287.sql"
+  },
+  "migrations": []
+}

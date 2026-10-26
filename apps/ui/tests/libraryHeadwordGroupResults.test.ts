@@ -1,0 +1,120 @@
+import { describe, expect, test } from "vitest";
+import { buildLibraryHeadwordGroupResults } from "@/components/training/wordlist/libraryHeadwordGroupResults";
+import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
+
+const sense = (entryId: string, partOfSpeech: string) => ({
+  kind: "sense-card" as const,
+  entryId,
+  meaningOrdinal: 1,
+  partOfSpeech: {
+    termId: `part-of-speech:${partOfSpeech}`,
+    messageKey: `partOfSpeech.${partOfSpeech}`,
+    sourceValue: partOfSpeech,
+  },
+  card: null,
+  contentRevision: `revision-${entryId}`,
+  reportContentRevision: null,
+  summaryContentNodeId: `definition-${entryId}`,
+  contentNodes: [
+    {
+      contentNodeId: `definition-${entryId}`,
+      parentContentNodeId: null,
+      kind: "definition" as const,
+      order: 0,
+      text: `definition for ${entryId}`,
+      sourceTextFingerprint: `fingerprint-${entryId}`,
+      translations: [],
+    },
+  ],
+  translation: null,
+  capabilities: [],
+});
+
+const group = (
+  headwordGroupId: string,
+  dictionaryId: string,
+  displayName: string,
+  homographNumber: number | undefined,
+  entries: ReturnType<typeof sense>[],
+): PlatformHeadwordGroupV2 => ({
+  headwordGroupId,
+  dictionary: {
+    dictionaryId,
+    sourceLanguageCode: "nl",
+    displayName,
+    messageKey: `dictionary.${dictionaryId}`,
+  },
+  header: {
+    text: "goed",
+    ...(homographNumber ? { homographNumber } : {}),
+  },
+  senseCount: entries.length,
+  entryCount: entries.length,
+  indicators: [],
+  entries,
+});
+
+describe("Library Headword Group results", () => {
+  test("returns one goed row per server group and never merges homographs or dictionaries by spelling", () => {
+    const exampleGoed = group(
+      "group-example-goed-1",
+      "dictionary-example",
+      "Example Dictionary",
+      1,
+      [sense("entry-goed-adjective", "bn"), sense("entry-goed-adverb", "bw")],
+    );
+    const exampleHomograph = group(
+      "group-example-goed-2",
+      "dictionary-example",
+      "Example Dictionary",
+      2,
+      [sense("entry-goed-noun", "zn")],
+    );
+    const userDictionaryGoed = group(
+      "group-user-goed",
+      "dictionary-user",
+      "Mijn woordenboek",
+      undefined,
+      [sense("entry-user-goed", "bn")],
+    );
+
+    const results = buildLibraryHeadwordGroupResults([
+      exampleGoed,
+      { ...exampleGoed },
+      exampleHomograph,
+      userDictionaryGoed,
+    ]);
+
+    expect(results.map((result) => result.headwordGroupId)).toEqual([
+      "group-example-goed-1",
+      "group-example-goed-2",
+      "group-user-goed",
+    ]);
+    expect(results[0]).toMatchObject({
+      headword: "goed",
+      dictionaryLabel: "Example Dictionary",
+      partOfSpeechLabels: ["bn", "bw"],
+      meaningCount: 2,
+      selectedEntryId: "entry-goed-adjective",
+    });
+    expect(results[1]).toMatchObject({ homographNumber: 2, meaningCount: 1 });
+    expect(results[2]).toMatchObject({
+      dictionaryLabel: "Mijn woordenboek",
+      meaningCount: 1,
+    });
+  });
+});
+
+test("filtered result chooses the matching sense and preserves the complete article",()=>{
+ const article=group("mixed","dictionary","Dictionary",undefined,[sense("adjective","bn"),sense("noun","zn")]);
+ const results=buildLibraryHeadwordGroupResults([article],["noun"]);
+ expect(results[0]).toMatchObject({selectedEntryId:"noun",partOfSpeechLabels:["bn","zn"],meaningCount:2});
+ expect(results[0].group).toBe(article);expect(buildLibraryHeadwordGroupResults([article],[])).toEqual([]);
+});
+
+test("cross-reference-only articles remain visible and open their exact identity",()=>{
+ const article=group("pointer-group","dictionary","Dictionary",undefined,[]);
+ article.entryCount=1;article.entries=[{kind:"cross-reference",crossReferenceId:"pointer",meaningOrdinal:1,label:null,text:"ander woord",target:{query:"ander woord"},capabilities:[]}];
+ const result=buildLibraryHeadwordGroupResults([article],["pointer"])[0];
+ expect(result).toMatchObject({selectedEntryId:"pointer",meaningCount:0,referenceCount:1});expect(result.group).toBe(article);
+});

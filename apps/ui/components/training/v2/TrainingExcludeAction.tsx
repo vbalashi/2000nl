@@ -1,0 +1,64 @@
+"use client";
+import React from "react";
+import { getUiMessages } from "@/lib/uiMessages";
+import { Check, ChevronDown, ChevronUp, EyeOff } from "lucide-react";
+import { ActionMenu } from "@/components/practice/ui/ActionMenu";
+import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { senseCardQuietAction } from "../SenseCardChrome";
+/** Compatibility adapter; exclusion and undo copy has one catalog owner. */
+export const trainingExclusionCopy = {
+  en: getUiMessages("en").trainingSession.exclusion,
+  nl: getUiMessages("nl").trainingSession.exclusion,
+  ru: getUiMessages("ru").trainingSession.exclusion,
+};
+export function TrainingExcludeAction({
+  language,
+  disabled,
+  onClick,
+  knownAction,
+  scope = "pair",
+}: {
+  scope?: "headword" | "pair";
+  language: OnboardingLanguage;
+  disabled: boolean;
+  onClick: () => void;
+  knownAction?: { label: string; onClick: () => void };
+}) {
+  const copy = trainingExclusionCopy[language];
+  const t = scope === "headword" ? {...copy,label:copy.headwordLabel,help:copy.headwordHelp} : copy;
+  const [anchor, setAnchor] = React.useState<HTMLButtonElement | null>(null);
+  const trigger = React.useRef<HTMLButtonElement>(null);
+  const close = React.useCallback(() => {
+    setAnchor(null);
+    trigger.current?.focus({ preventScroll: true });
+  }, []);
+  return (<>
+
+    <button
+      ref={trigger}
+      type="button"
+      className={`${senseCardQuietAction()} min-w-0 max-w-full whitespace-normal`}
+      disabled={disabled}
+      onClick={event => anchor ? close() : setAnchor(event.currentTarget)}
+      aria-haspopup="menu"
+      aria-expanded={Boolean(anchor)}
+      title={t.help}
+      aria-label={t.help}
+    >
+      <EyeOff size={16} className="shrink-0" aria-hidden="true" />
+      <span className="min-w-0 break-words text-left">{t.label}</span>
+      {(anchor
+        ? <ChevronUp size={14} className="shrink-0" aria-hidden="true" />
+        : <ChevronDown size={14} className="shrink-0" aria-hidden="true" />)}
+    </button>
+    {anchor ? <ActionMenu
+      anchor={anchor} language={language} title={getUiMessages(language).cardActions.title}
+      onClose={close} items={[
+        { id: "exclude", label: t.label, description: t.help, icon: <EyeOff size={15} aria-hidden="true" />,
+          disabled, onSelect: () => { close(); onClick(); } },
+        ...(knownAction ? [{ id: "known", label: knownAction.label, description: getUiMessages(language).cardActions.knownHelp, icon: <Check size={15} aria-hidden="true" />,
+          disabled, onSelect: () => { close(); knownAction.onClick(); } }] : []),
+      ]} /> : null}
+    </>);
+
+}

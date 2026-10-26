@@ -1,0 +1,92 @@
+import { expect, test } from "@playwright/test";
+import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
+
+test("@pilot statement timeout retries selection only and reaches a ready card", async ({
+  page,
+}) => {
+  const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
+    sessionOutcomes: ["statement-timeout", "card"],
+  });
+
+  const startCurrentSetup = page.getByRole("button", {
+    name: /^(?:Start training|Training starten|Начать тренировку)$/,
+  });
+  await expect(startCurrentSetup).toBeEnabled();
+  expect(harness.requests.scheduler).toHaveLength(0);
+  expect(harness.requests.session).toHaveLength(0);
+  await startCurrentSetup.click();
+
+  await expect(
+    page.getByText(
+      /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
+    ),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ })
+    .click();
+  const continueSession = page.getByRole("button", {
+    name: /^(?:Continue training|Training hervatten|Продолжить тренировку)$/i,
+  });
+  await expect(continueSession).toBeEnabled();
+  await continueSession.click();
+  await expect(page.getByRole("heading", { name: "huis" })).toBeVisible();
+  expect(harness.requests.sessionStarts).toHaveLength(1);
+  expect(harness.requests.session.length).toBeGreaterThanOrEqual(2);
+  expect(harness.requests.session.slice(0, 2)).toEqual([
+    expect.objectContaining({ p_session_id: "training-session-fixture" }),
+    expect.objectContaining({ p_session_id: "training-session-fixture" }),
+  ]);
+  expect(harness.requests.scheduler).toHaveLength(0);
+  await expect(
+    page.getByText(
+      /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
+    ),
+  ).toHaveCount(0);
+});
+
+test("@pilot statement timeout retry reports an honest no-match terminal outcome", async ({
+  page,
+}) => {
+  let sessionSelectionResponses = 0;
+  page.on("response", (response) => {
+    const path = new URL(response.url()).pathname;
+    if (path.endsWith("/rpc/get_next_training_session_card")) {
+      sessionSelectionResponses += 1;
+    }
+  });
+  const harness = await setupAuthenticatedTrainingAttributionPage(page, 0, {
+    sessionOutcomes: ["statement-timeout", "empty"],
+  });
+
+  const startCurrentSetup = page.getByRole("button", {
+    name: /^(?:Start training|Training starten|Начать тренировку)$/,
+  });
+  await expect(startCurrentSetup).toBeEnabled();
+  expect(harness.requests.session).toHaveLength(0);
+  await startCurrentSetup.click();
+
+  await expect(
+    page.getByText(
+      /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
+    ),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: /Retry card preparation|Kaart opnieuw voorbereiden|Повторить подготовку карточки/ })
+    .click();
+
+  await expect.poll(() => harness.requests.session.length).toBe(2);
+  await expect.poll(() => sessionSelectionResponses).toBe(2);
+  const currentSession = page.getByRole("region", {
+    name: /Current training|Huidige training|Текущая тренировка/i,
+  });
+  await expect(currentSession).toBeVisible();
+  await expect(
+    page.getByRole("button", {
+      name: /^(?:Continue training|Training hervatten|Продолжить тренировку)$/i,
+    }),
+  ).toBeDisabled();
+  expect(harness.requests.session).toHaveLength(2);
+  expect(harness.requests.sessionStarts).toHaveLength(1);
+  expect(harness.requests.scheduler).toHaveLength(0);
+  await expect(page.getByRole("heading", { name: "huis" })).toHaveCount(0);
+});

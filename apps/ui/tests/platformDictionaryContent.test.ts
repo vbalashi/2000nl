@@ -1,0 +1,173 @@
+import fs from "fs";
+import os from "os";
+import path from "path";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  localAudioAssetExists,
+  normalizeAudioLinks,
+  normalizeDictionaryContent,
+  verifyDictionaryContentAudioLinks,
+} from "@/lib/platform/projections/dictionaryContent";
+
+describe("platform dictionary content audio links", () => {
+  let publicRoot: string;
+
+  beforeEach(() => {
+    publicRoot = fs.mkdtempSync(path.join(os.tmpdir(), "2000nl-audio-public-"));
+    process.env.PLATFORM_AUDIO_PUBLIC_ROOT = publicRoot;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    fs.rmSync(publicRoot, { recursive: true, force: true });
+  });
+
+  // Default root is `${cwd}/public`; an app root without public/audio is not inspectable.
+  const useUninspectableDefaultAudioRoot = () => {
+    delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+    vi.spyOn(process, "cwd").mockReturnValue(publicRoot);
+  };
+
+  test("keeps local curated audio only when the file exists", () => {
+    const audioPath = path.join(publicRoot, "audio", "nl", "s");
+    fs.mkdirSync(audioPath, { recursive: true });
+    fs.writeFileSync(path.join(audioPath, "snuffelen.mp3"), "mp3");
+
+    expect(
+      normalizeAudioLinks({
+        nl: "/audio/nl/s/snuffelen.mp3",
+        be: "/audio/be/s/missing.mp3",
+        external: "https://cdn.example/audio.mp3",
+      }),
+    ).toEqual({
+      nl: "/audio/nl/s/snuffelen.mp3",
+      external: "https://cdn.example/audio.mp3",
+    });
+  });
+
+  test("omits local curated audio when the file is missing", () => {
+    const content = normalizeDictionaryContent({
+      id: "entry-1",
+      language_code: "nl",
+      headword: "snuffelen",
+      raw: {
+        meanings: [{ definition: "zoeken" }],
+        audio_links: {
+          nl: "/audio/nl/s/missing.mp3",
+        },
+      },
+    });
+
+    expect(content.audioLinks).toBeUndefined();
+  });
+
+  test("keeps learner-visible meaning notes in canonical content", () => {
+    const content = normalizeDictionaryContent({
+      id: "entry-1",
+      language_code: "nl",
+      headword: "huis",
+      raw: {
+        meanings: [
+          { definition: "een gebouw", note: "alleen figuurlijk gebruikt" },
+        ],
+      },
+    });
+
+    expect(content.meanings[0]).toMatchObject({
+      note: "alleen figuurlijk gebruikt",
+    });
+    expect(content.sections).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ sourcePath: "raw.meanings[0].note" }),
+      ]),
+    );
+  });
+
+  test("rejects encoded traversal in local audio links", () => {
+    expect(localAudioAssetExists("/audio/%2E%2E/secret.mp3")).toBe(false);
+  });
+
+  test("keeps local curated links when the default audio root is not inspectable", () => {
+    useUninspectableDefaultAudioRoot();
+
+    expect(
+      normalizeAudioLinks({
+        nl: "/audio/nl/f/bH0re-0SrLgbBageu45d-A.mp3",
+      }),
+    ).toEqual({
+      nl: "/audio/nl/f/bH0re-0SrLgbBageu45d-A.mp3",
+    });
+  });
+
+  test("removes publicly missing local curated links when the default audio root is not inspectable", async () => {
+    useUninspectableDefaultAudioRoot();
+    process.env.NEXT_PUBLIC_SITE_URL = "https://2000.dilum.io";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 404 })),
+    );
+
+    await expect(
+      verifyDictionaryContentAudioLinks({
+        audioLinks: {
+          nl: "/audio/nl/v/missing.mp3",
+        },
+      }),
+    ).resolves.toEqual({
+      audioLinks: undefined,
+    });
+  });
+
+  test("keeps publicly available local curated links when the default audio root is not inspectable", async () => {
+    useUninspectableDefaultAudioRoot();
+    process.env.NEXT_PUBLIC_SITE_URL = "https://2000.dilum.io";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 200 })),
+    );
+
+    await expect(
+      verifyDictionaryContentAudioLinks({
+        audioLinks: {
+          nl: "/audio/nl/f/bH0re-0SrLgbBageu45d-A.mp3",
+        },
+      }),
+    ).resolves.toEqual({
+      audioLinks: {
+        nl: "/audio/nl/f/bH0re-0SrLgbBageu45d-A.mp3",
+      },
+    });
+  });
+
+  test("does not let a slow public audio probe block dictionary content", async () => {
+    vi.useFakeTimers();
+    useUninspectableDefaultAudioRoot();
+    process.env.NEXT_PUBLIC_SITE_URL = "https://2000.dilum.io";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url, init) => new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+      })),
+    );
+
+    try {
+      const verification = verifyDictionaryContentAudioLinks({
+        audioLinks: {
+          nl: "/audio/nl/s/slow-probe.mp3",
+        },
+      });
+      await vi.advanceTimersByTimeAsync(1_200);
+
+      await expect(verification).resolves.toEqual({
+        audioLinks: {
+          nl: "/audio/nl/s/slow-probe.mp3",
+        },
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

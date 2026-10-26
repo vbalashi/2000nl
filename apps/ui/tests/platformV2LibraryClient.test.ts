@@ -1,0 +1,565 @@
+import { afterEach, describe, expect, test, vi } from "vitest";
+import {
+  fetchPlatformV2LibraryGroup,
+  fetchPlatformV2LibraryGroupPage,
+  fetchPlatformV2CrossReferenceTarget,
+  requestPlatformV2LibraryTranslation,
+  selectPlatformV2CrossReferenceTarget,
+  selectPlatformV2LibraryGroup,
+} from "@/lib/platform/platformV2LibraryClient";
+import {
+  financeEntry,
+  furnitureEntry,
+  multiSenseBankGroup,
+} from "./platformV2LibraryFixture";
+
+vi.mock("@/lib/supabaseClient", () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: "test-token" } },
+      }),
+    },
+  },
+}));
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+const payload = {
+  contractVersion: "platform-lookup-v2" as const,
+  query: "bank",
+  request: {
+    contentLanguageCode: "nl",
+    translationTargetLanguageCode: "en",
+    cardTypeId: "word-to-definition",
+    intent: "dictionary-lookup" as const,
+  },
+  groups: [multiSenseBankGroup],
+  page: { selectedTierComplete: true, nextGroupCursor: null },
+};
+
+describe("selectPlatformV2LibraryGroup", () => {
+  test("loads the selected entry even when ordinary search omits its dictionary tier", async () => {
+    const fetchMock = vi.fn(async (_url: unknown, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      return new Response(JSON.stringify({
+        ...payload,
+        groups: body.entryId === financeEntry.entryId ? [multiSenseBankGroup] : [],
+      }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const group = await fetchPlatformV2LibraryGroup({
+      entryId: financeEntry.entryId,
+      cardTypeId: "word-to-definition", contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    });
+    expect(group).toEqual(multiSenseBankGroup);
+    expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string)).toEqual({
+      entryId: financeEntry.entryId, intent: "dictionary-lookup",
+      cardTypeId: "word-to-definition", contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    });
+  });
+
+  test("selects the server group containing the exact selected entry", () => {
+    expect(selectPlatformV2LibraryGroup(payload, financeEntry.entryId)).toBe(
+      multiSenseBankGroup,
+    );
+  });
+
+  test("uses exact entry identity when following a resolved cross-reference", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2CrossReferenceTarget({
+      query: "bank", sourceDictionaryId: "example",
+      targetEntryId: financeEntry.entryId,
+      targetHeadwordGroupId: multiSenseBankGroup.headwordGroupId,
+      cardTypeId: "word-to-definition", contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    })).resolves.toEqual(multiSenseBankGroup);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      entryId: financeEntry.entryId, intent: "dictionary-lookup",
+      cardTypeId: "word-to-definition", contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    });
+  });
+
+  test("does not retry an inaccessible exact entry as a headword search", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 404 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroup({
+      entryId: financeEntry.entryId,
+      cardTypeId: "word-to-definition", contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    })).rejects.toMatchObject({ kind: "http-error", status: 404 });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  test("selects an exact single-sense group", () => {
+    expect(
+      selectPlatformV2LibraryGroup(
+        {
+          ...payload,
+          groups: [
+            {
+              ...multiSenseBankGroup,
+              senseCount: 1,
+              entryCount: 1,
+              entries: [furnitureEntry],
+            },
+          ],
+        },
+        furnitureEntry.entryId,
+      ),
+    ).toEqual(expect.objectContaining({ entries: [furnitureEntry] }));
+  });
+
+  test("never falls back to matching by ordinal or headword", () => {
+    expect(
+      selectPlatformV2LibraryGroup(payload, "missing-entry"),
+    ).toBeNull();
+  });
+
+  test("selects an exact pointer-only Library detail without making it a sense", () => {
+    const pointerGroup = {
+      ...multiSenseBankGroup,
+      senseCount: 1,
+      entryCount: 2,
+      entries: [
+        furnitureEntry,
+        {
+          kind: "cross-reference" as const,
+          crossReferenceId: "entry-daar-2",
+          meaningOrdinal: 2,
+          label: {
+            termId: "cross-reference.see",
+            messageKey: "crossReference.see",
+          },
+          text: "daar-",
+          target: { query: "daar-" },
+          capabilities: [
+            {
+              actionId: "follow-cross-reference" as const,
+              elementId: "cross-reference.follow",
+              messageKey: "crossReference.follow",
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(
+      selectPlatformV2LibraryGroup(
+        { ...payload, query: "daar", groups: [pointerGroup] },
+        "entry-daar-2",
+      ),
+    ).toBe(pointerGroup);
+  });
+
+  test("accepts a real single-sense group after following a cross-reference", () => {
+    const misleadingGroup = {
+      ...multiSenseBankGroup,
+      headwordGroupId: "group-daar-fuzzy",
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+      senseCount: 1,
+      entryCount: 1,
+      entries: [financeEntry],
+    };
+    const targetGroup = {
+      ...multiSenseBankGroup,
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+      senseCount: 1,
+      entryCount: 1,
+      entries: [furnitureEntry],
+    };
+
+    expect(
+      selectPlatformV2CrossReferenceTarget(
+        {
+          ...payload,
+          query: "daar-",
+          groups: [misleadingGroup, targetGroup],
+        },
+        "daar-",
+        "example",
+        targetGroup.headwordGroupId,
+      ),
+    ).toBe(targetGroup);
+  });
+
+  test("fails closed when an unresolved query matches multiple homograph groups", () => {
+    const first = {
+      ...multiSenseBankGroup,
+      headwordGroupId: "group-daar-a",
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+    };
+    const second = {
+      ...multiSenseBankGroup,
+      headwordGroupId: "group-daar-b",
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+    };
+
+    expect(
+      selectPlatformV2CrossReferenceTarget(
+        { ...payload, query: "daar-", groups: [first, second] },
+        "daar-",
+        "example",
+      ),
+    ).toBeNull();
+  });
+
+  test("uses the strict query fallback when it has one exact group", () => {
+    const targetGroup = {
+      ...multiSenseBankGroup,
+      headwordGroupId: "group-daar-only",
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+    };
+
+    expect(
+      selectPlatformV2CrossReferenceTarget(
+        { ...payload, query: "daar-", groups: [targetGroup] },
+        "daar-",
+        "example",
+      ),
+    ).toBe(targetGroup);
+  });
+
+  test("fails closed when the query fallback tier is incomplete", () => {
+    const visibleGroup = {
+      ...multiSenseBankGroup,
+      headwordGroupId: "group-daar-visible",
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+    };
+
+    expect(
+      selectPlatformV2CrossReferenceTarget(
+        {
+          ...payload,
+          query: "daar-",
+          groups: [visibleGroup],
+          page: {
+            selectedTierComplete: false,
+            nextGroupCursor: "hidden-homograph",
+          },
+        },
+        "daar-",
+        "example",
+      ),
+    ).toBeNull();
+  });
+
+  test("looks up the pointer query and returns the full target group", async () => {
+    const targetGroup = {
+      ...multiSenseBankGroup,
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+      senseCount: 1,
+      entryCount: 1,
+      entries: [furnitureEntry],
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...payload,
+          query: "daar-",
+          groups: [
+            {
+              ...multiSenseBankGroup,
+              headwordGroupId: "group-daar-fuzzy",
+              header: { ...multiSenseBankGroup.header, text: "daar-" },
+            },
+            targetGroup,
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      fetchPlatformV2CrossReferenceTarget({
+        query: "daar-",
+        sourceDictionaryId: "example",
+        targetHeadwordGroupId: targetGroup.headwordGroupId,
+        cardTypeId: "word-to-definition",
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+      }),
+    ).resolves.toEqual(targetGroup);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/platform/v2/lookup",
+      expect.objectContaining({
+        body: JSON.stringify({
+          query: "daar-",
+          cardTypeId: "word-to-definition",
+          contentLanguageCode: "nl",
+          translationTargetLanguageCode: "en",
+          intent: "dictionary-lookup",
+        }),
+      }),
+    );
+    expect(furnitureEntry.contentNodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: "definition" }),
+        expect.objectContaining({ kind: "example" }),
+      ]),
+    );
+  });
+
+  test("rejects a pointer lookup response from an incompatible contract", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            ...payload,
+            contractVersion: "platform-lookup-v1",
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    await expect(
+      fetchPlatformV2CrossReferenceTarget({
+        query: "daar-",
+        sourceDictionaryId: "example",
+        targetHeadwordGroupId: null,
+        cardTypeId: "word-to-definition",
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+      }),
+    ).rejects.toMatchObject({
+      name: "PlatformV2LibraryLookupError",
+      kind: "contract-mismatch",
+    });
+  });
+});
+
+describe("fetchPlatformV2LibraryGroupPage", () => {
+  test.each([403, 503])("preserves HTTP %s as a typed Library failure", async (status) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("{}", { status })),
+    );
+
+    await expect(
+      fetchPlatformV2LibraryGroupPage({
+        query: "goed",
+        cardTypeId: "word-to-definition",
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+      }),
+    ).rejects.toMatchObject({
+      name: "PlatformV2LibraryLookupError",
+      kind: "http-error",
+      status,
+    });
+  });
+
+  test("forwards caller cancellation instead of converting it to an empty page", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url, init) =>
+        new Promise((_resolve, reject) => {
+          const rejectAbort = () =>
+            reject(new DOMException("Aborted", "AbortError"));
+          if (init?.signal?.aborted) rejectAbort();
+          else init?.signal?.addEventListener("abort", rejectAbort);
+        }),
+      ),
+    );
+    const controller = new AbortController();
+    const request = fetchPlatformV2LibraryGroupPage({
+      query: "goed",
+      cardTypeId: "word-to-definition",
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      signal: controller.signal,
+    });
+    const rejection = expect(request).rejects.toMatchObject({
+      name: "AbortError",
+    });
+    controller.abort();
+    await rejection;
+  });
+
+  test("requests the next opaque group page without supplying an entry limit", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ...payload,
+        query: "goed",
+        page: {
+          selectedTierComplete: true,
+          nextGroupCursor: "next-group-page",
+        },
+      }),
+    } as Response);
+
+    try {
+      const page = await fetchPlatformV2LibraryGroupPage({
+        query: "goed",
+        cardTypeId: "word-to-definition",
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+        cursor: "current-group-page",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/platform/v2/lookup",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      );
+      expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string)).toEqual({
+        query: "goed",
+        cardTypeId: "word-to-definition",
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+        intent: "dictionary-lookup",
+        cursor: "current-group-page",
+      });
+      expect(page?.groups).toBe(payload.groups);
+      expect(page?.nextGroupCursor).toBe("next-group-page");
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+});
+
+test("scoped Library page uses the first-party endpoint, preserving scope and cursor",async()=>{
+ const fetchMock=vi.fn().mockResolvedValue(new Response(JSON.stringify(payload),{status:200}));vi.stubGlobal("fetch",fetchMock);
+ await fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,cursor:"scoped-cursor",libraryScope:{dictionaryIds:[]}});
+ expect(fetchMock.mock.calls[0][0]).toBe("/api/library/search");
+ expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual(expect.objectContaining({dictionaryIds:[],cursor:"scoped-cursor",intent:"dictionary-lookup"}));
+});
+test("an obsolete scoped cursor has a distinct recoverable error",async()=>{
+ vi.stubGlobal("fetch",vi.fn().mockResolvedValue(new Response(JSON.stringify({error:"invalid_cursor"}),{status:400})));
+ await expect(fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,cursor:"old",libraryScope:{dictionaryIds:null}})).rejects.toMatchObject({kind:"invalid-cursor",status:400});
+});
+
+test("filtered pages carry validated count/match metadata without trimming senses",async()=>{
+ const fetchMock=vi.fn().mockResolvedValue(new Response(JSON.stringify({...payload,librarySearch:{totalGroups:7,matchingEntryIds:[furnitureEntry.entryId]}}),{status:200}));vi.stubGlobal("fetch",fetchMock);
+ const filters={parts:["noun" as const],article:"de" as const};
+ const result=await fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null,filters}});
+ expect(fetchMock.mock.calls[0][0]).toBe("/api/library/search");expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({filters});
+ expect(result.librarySearch).toEqual({totalGroups:7,matchingEntryIds:[furnitureEntry.entryId]});expect(result.groups).toEqual([multiSenseBankGroup]);
+});
+test("filtered pages reject missing or unrelated count/match metadata",async()=>{
+ for(const librarySearch of [undefined,{totalGroups:-1,matchingEntryIds:[]},{totalGroups:"7",matchingEntryIds:[financeEntry.entryId]},{totalGroups:0,matchingEntryIds:[financeEntry.entryId]},{totalGroups:1,matchingEntryIds:["outside-this-page"]},{totalGroups:1,matchingEntryIds:[]},{totalGroups:1,matchingEntryIds:[financeEntry.entryId,financeEntry.entryId]}]){
+ vi.stubGlobal("fetch",vi.fn().mockResolvedValue(new Response(JSON.stringify({...payload,librarySearch}),{status:200})));
+ await expect(fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}})).rejects.toMatchObject({kind:"contract-mismatch"});
+ }
+});
+
+test("filtered summary accepts matched cross-reference identities without turning them into sense cards", async () => {
+  const pointer = {
+    kind: "cross-reference" as const, crossReferenceId: "pointer", meaningOrdinal: 1,
+    label: null, text: "daar-", target: {query: "daar-"}, capabilities: [],
+  };
+  const pointerGroup = {...multiSenseBankGroup, senseCount: 0, entryCount: 1, entries: [pointer]};
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+    ...payload, groups: [pointerGroup], librarySearch: {totalGroups: 1, matchingEntryIds: ["pointer"]},
+  }), {status: 200})));
+  const result = await fetchPlatformV2LibraryGroupPage({query: "daar", cardTypeId: "word-to-definition", contentLanguageCode: "nl",
+    translationTargetLanguageCode: null, libraryScope: {dictionaryIds: null, filters: {parts: [], article: null}},
+  });
+  expect(result.groups).toEqual([pointerGroup]);
+});
+
+ test("first-party Library combines cursor reads and their matching entry projections",async()=>{
+  const fetchMock=vi.fn().mockImplementation(async(_url,init)=>{
+    const body=JSON.parse(init.body);
+    return new Response(JSON.stringify({...payload,
+      page:{selectedTierComplete:true,nextGroupCursor:body.cursor ? null : "second"},
+      librarySearch:{totalGroups:2,matchingEntryIds:[body.cursor ? furnitureEntry.entryId : financeEntry.entryId]},
+    }),{status:200});
+  });
+  vi.stubGlobal("fetch",fetchMock);
+  const result=await fetchPlatformV2LibraryGroupPage({query:"bank",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}});
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(fetchMock.mock.calls[1][1].body).cursor).toBe("second");
+  expect(result.groups).toHaveLength(2);
+  expect(result.librarySearch?.matchingEntryIds).toEqual([financeEntry.entryId,furnitureEntry.entryId]);
+  expect(result.nextGroupCursor).toBeNull();
+ });
+
+describe("Library transient initial read recovery", () => {
+  const input = {
+    query: "", cardTypeId: "word-to-definition" as const,
+    contentLanguageCode: "nl", translationTargetLanguageCode: null,
+    libraryScope: { dictionaryIds: null },
+  };
+  test("recovers a cold 503 without requiring a manual Try again", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response("{}", {status:503}))
+      .mockResolvedValueOnce(new Response(JSON.stringify(payload), {status:200}));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage(input)).resolves.toMatchObject({groups:[multiSenseBankGroup]});
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+  test.each([400,401,403,404,429])("does not retry permanent or rate-limited status %s", async status => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response("{}", {status})));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage(input)).rejects.toMatchObject({status});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+  test("bounds recovery to one retry", async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response("{}", {status:503})));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage(input)).rejects.toMatchObject({status:503});
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+  test("does not retry invalid successful payloads", async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response("{}", {status:200})));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage(input)).rejects.toMatchObject({kind:"contract-mismatch"});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+  test("recovers a browser network failure", async () => {
+    const fetchMock = vi.fn().mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce(new Response(JSON.stringify(payload), {status:200}));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage(input)).resolves.toMatchObject({groups:[multiSenseBankGroup]});
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+  test("abort during retry backoff prevents the second request", async () => {
+    const controller = new AbortController();
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", {status:503}));
+    vi.stubGlobal("fetch", fetchMock);
+    const promise = fetchPlatformV2LibraryGroupPage({...input,signal:controller.signal});
+    setTimeout(() => controller.abort(), 20);
+    await expect(promise).rejects.toMatchObject({name:"AbortError"});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+  test("generic connected-client lookup does not gain automatic retries", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", {status:503}));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage({...input,libraryScope:undefined})).rejects.toMatchObject({status:503});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("a failed continuation retries its cursor without repeating the first page", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({...payload,page:{selectedTierComplete:false,nextGroupCursor:"page-two"}}), {status:200}))
+      .mockResolvedValueOnce(new Response("{}", {status:502}))
+      .mockResolvedValueOnce(new Response(JSON.stringify({...payload,groups:[]}), {status:200}));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroupPage(input)).resolves.toMatchObject({groups:[multiSenseBankGroup]});
+    expect(fetchMock.mock.calls.map(call => JSON.parse(call[1].body).cursor)).toEqual([null,"page-two","page-two"]);
+  });
+
+});
+
+describe("translation gateway recovery", () => {
+  test.each([429, 500, 502, 503, 504, 524])("treats HTTP %s as an unknown outcome to poll", async (status) => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("gateway timeout", { status })));
+    await expect(requestPlatformV2LibraryTranslation({ entryId: "entry", targetLanguageCode: "ru" })).resolves.toBe("pending");
+  });
+  test("preserves explicit upstream failures", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({status:"failed",error:"provider_timeout"}), { status: 200 })));
+    await expect(requestPlatformV2LibraryTranslation({ entryId: "entry", targetLanguageCode: "ru" })).resolves.toBe("failed");
+  });
+});

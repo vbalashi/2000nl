@@ -1,0 +1,410 @@
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { resolvePlatformV2Translations } from "@/lib/platform/platformV2TranslationService";
+import {
+  contentFingerprint,
+  normalizeDictionaryContent,
+} from "@/lib/platform/projections/dictionaryContent";
+import {
+  ordinaryTranslationPolicyVersion,
+  translationPolicyVersion,
+} from "@/lib/translation/translationPolicy";
+import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
+
+const translationQuery = (data: unknown[]) => {
+  const query: any = {
+    select: vi.fn(() => query),
+    in: vi.fn(() => query),
+    eq: vi.fn(() => query),
+    then: (resolve: any, reject: any) =>
+      Promise.resolve({ data, error: null }).then(resolve, reject),
+  };
+  return query;
+};
+
+describe("Platform V2 translation projection", () => {
+  test("a current headword and example do not conceal a missing relation translation", async () => {
+    const entry = {id:"coverage-entry",language_code:"nl",headword:"huis",raw:{meanings:[{definition:"een gebouw",examples:["ik woon hier"],synonyms:["woning"]}]}};
+    const revision = contentFingerprint(normalizeDictionaryContent(entry as never));
+    const request = buildDictionaryMeaningTranslationRequest({entryId:entry.id,sourceContentFingerprint:revision,sourceLanguageCode:"nl",targetLanguageCode:"ru",word:entry});
+    const from = vi.fn(() => translationQuery([{id:"translation",word_entry_id:entry.id,status:"ready",overlay:{headword:"дом",meanings:[{definition:"здание",examples:["я живу здесь"]}]},source_content_revision:revision,translation_policy_version:translationPolicyVersion("openai",request)}]));
+    const result = await resolvePlatformV2Translations({supabase:{from}} as never,{entries:[entry],bindingsByEntryId:new Map(),targetLanguageCode:"ru"});
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(result.byEntryId.get(entry.id)).toMatchObject({requestComplete:false,entryTranslation:{status:"ready",isFresh:true,text:"дом"}});
+  });
+  test("an old ready article missing its training example becomes stale and can be regenerated", async () => {
+    const entry = {id:"oog",language_code:"nl",headword:"oog",part_of_speech:"zn",raw:{meanings:[{definition:"een lichaamsdeel",examples:["onze dochters hebben blauwe ogen"]}]}};
+    const revision = contentFingerprint(normalizeDictionaryContent(entry as any));
+    const request = buildDictionaryMeaningTranslationRequest({entryId:entry.id,sourceContentFingerprint:revision,sourceLanguageCode:"nl",targetLanguageCode:"ru",word:entry});
+    const oldPolicy = "dictionary_meaning_v1:old";
+    const from = vi.fn(() => translationQuery([{id:"old-translation",word_entry_id:entry.id,target_lang:"ru",provider:"openai",status:"ready",overlay:{headword:"глаз",meanings:[{definition:"часть тела"}]},source_content_revision:revision,translation_policy_version:oldPolicy}]));
+    const result = await resolvePlatformV2Translations({supabase:{from}} as any,{entries:[entry],bindingsByEntryId:new Map(),targetLanguageCode:"ru"});
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.byEntryId.get(entry.id)?.entryTranslation).toMatchObject({status:"not-available",isFresh:false,errorCode:"stale-source"});
+  });
+  beforeEach(() => {
+    process.env.TRANSLATION_PROVIDER = "openai";
+  });
+
+  test("reloads exact idiom literals from stored overlays without leaking to explanation or siblings", async () => {
+    const entry = { id:"cow",language_code:"nl",headword:"koe",part_of_speech:"zn",raw:{meanings:[{definition:"een dier",idioms:[{expression:"over alledaagse dingen babbelen",explanation:"over onbelangrijke dingen praten"},{expression:"iets anders"}]}]}};
+    const revision=contentFingerprint(normalizeDictionaryContent(entry as any));
+    const request=buildDictionaryMeaningTranslationRequest({entryId:entry.id,sourceContentFingerprint:revision,sourceLanguageCode:"nl",targetLanguageCode:"ru",word:entry});
+    const overlay=JSON.parse(JSON.stringify({headword:"корова",entryTranslation:{primaryText:"корова",alternativeTexts:[],baseText:"корова",note:null},meanings:[{definition:"животное",idioms:[{expression:"говорить о пустяках",literalText:"говорить о коровках и телятах",explanation:"беседовать о неважном"},{expression:"другое"}]}]}));
+    const from=vi.fn(()=>translationQuery([{id:"translation-cow",word_entry_id:"cow",target_lang:"ru",provider:"openai",status:"ready",overlay,source_content_revision:revision,translation_policy_version:translationPolicyVersion("openai",request)}]));
+    const bindings=[{contentNodeId:"idiom-0",sourcePath:"raw.meanings[0].idioms[0].expression",kind:"idiom",sourceTextFingerprint:"i0"},{contentNodeId:"explanation",sourcePath:"raw.meanings[0].idioms[0].explanation",kind:"idiom-explanation",sourceTextFingerprint:"e0"},{contentNodeId:"idiom-1",sourcePath:"raw.meanings[0].idioms[1]",kind:"idiom",sourceTextFingerprint:"i1"}];
+    const result=await resolvePlatformV2Translations({supabase:{from}} as any,{entries:[entry],bindingsByEntryId:new Map([["cow",bindings]]) as any,targetLanguageCode:"ru"});
+    expect(result.ok).toBe(true);if(!result.ok)return;
+    const nodes=result.byEntryId.get("cow")!.nodeTranslationsById;
+    expect(nodes.get("idiom-0")![0]).toMatchObject({text:"говорить о пустяках",literalText:"говорить о коровках и телятах"});
+    expect(nodes.get("explanation")![0]).not.toHaveProperty("literalText");
+    expect(nodes.get("idiom-1")![0]).not.toHaveProperty("literalText");
+  });
+
+  test("fails closed when a cached overlay predates explicit content revision identity", async () => {
+    const from = vi.fn(() =>
+      translationQuery([
+        {
+          id: "translation-legacy-1",
+          word_entry_id: "entry-1",
+          target_lang: "ru",
+          provider: "openai",
+          status: "ready",
+          overlay: {
+            headword: "старый дом",
+            meanings: [{ definition: "устаревший перевод" }],
+          },
+          source_content_revision: null,
+          translation_policy_version: null,
+          provider_revision: null,
+          error_message: null,
+        },
+      ]),
+    );
+
+    const result = await resolvePlatformV2Translations(
+      { supabase: { from } } as any,
+      {
+        entries: [
+          {
+            id: "entry-1",
+            language_code: "nl",
+            headword: "huis",
+            part_of_speech: "zn",
+            raw: {
+              meanings: [{ definition: "een woning voor mensen" }],
+            },
+          },
+        ],
+        bindingsByEntryId: new Map([
+          [
+            "entry-1",
+            [
+              {
+                contentNodeId: "node-definition-1",
+                sourcePath: "raw.meanings[0].definition",
+                kind: "definition",
+                sourceTextFingerprint: "current-definition-fingerprint",
+              },
+            ],
+          ],
+        ]),
+        targetLanguageCode: "ru",
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.byEntryId.get("entry-1")?.entryTranslation).toEqual(
+      expect.objectContaining({
+        translationId: "translation-legacy-1",
+        status: "not-available",
+        errorCode: "stale-source",
+        isFresh: false,
+      }),
+    );
+    expect(
+      result.byEntryId.get("entry-1")?.nodeTranslationsById.size,
+    ).toBe(0);
+    expect(JSON.stringify(result)).not.toContain("устаревший перевод");
+  });
+
+  test("projects the same structured entry artifact for every V2 consumer", async () => {
+    const entry = {
+      id: "entry-1",
+      language_code: "nl",
+      headword: "goed",
+      part_of_speech: "zn",
+      raw: { meanings: [{ definition: "de stof; de kleren" }] },
+    };
+    const revision = contentFingerprint(normalizeDictionaryContent(entry as any));
+    const from = vi.fn(() =>
+      translationQuery([
+        {
+          id: "translation-1",
+          word_entry_id: "entry-1",
+          target_lang: "ru",
+          provider: "openai",
+          status: "ready",
+          overlay: {
+            headword: "бельё",
+            entryTranslation: {
+              primaryText: "бельё",
+              alternativeTexts: ["одежда", "текстиль"],
+              baseText: "товар",
+              note: "Здесь имеется в виду одежда для стирки.",
+            },
+            meanings: [{ definition: "ткань; одежда" }],
+          },
+          source_content_revision: revision,
+          translation_policy_version: ordinaryTranslationPolicyVersion("openai"),
+          provider_revision: "meaning-prompt-v1",
+          error_message: null,
+        },
+      ]),
+    );
+
+    const result = await resolvePlatformV2Translations(
+      { supabase: { from } } as any,
+      {
+        entries: [entry],
+        bindingsByEntryId: new Map(),
+        targetLanguageCode: "ru",
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.byEntryId.get("entry-1")?.entryTranslation).toMatchObject({
+      text: "бельё",
+      alternativeTexts: ["одежда", "текстиль"],
+      baseText: "товар",
+      note: "Здесь имеется в виду одежда для стирки.",
+    });
+  });
+
+  test("fails closed when only a learner-visible usage note changed", async () => {
+    const oldEntry = {
+      id: "entry-1",
+      language_code: "nl",
+      headword: "huis",
+      part_of_speech: "zn",
+      raw: {
+        meanings: [
+          { definition: "een gebouw", note: "oude gebruikstoelichting" },
+        ],
+      },
+    };
+    const changedEntry = {
+      ...oldEntry,
+      raw: {
+        meanings: [
+          { definition: "een gebouw", note: "nieuwe gebruikstoelichting" },
+        ],
+      },
+    };
+    const from = vi.fn(() =>
+      translationQuery([
+        {
+          id: "translation-note-1",
+          word_entry_id: "entry-1",
+          target_lang: "ru",
+          provider: "openai",
+          status: "ready",
+          overlay: { headword: "дом", meanings: [{ definition: "здание" }] },
+          source_content_revision: contentFingerprint(
+            normalizeDictionaryContent(oldEntry as any),
+          ),
+          translation_policy_version: ordinaryTranslationPolicyVersion("openai"),
+          provider_revision: "meaning-prompt-v1",
+          error_message: null,
+        },
+      ]),
+    );
+
+    const result = await resolvePlatformV2Translations(
+      { supabase: { from } } as any,
+      {
+        entries: [changedEntry],
+        bindingsByEntryId: new Map(),
+        targetLanguageCode: "ru",
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.byEntryId.get("entry-1")?.entryTranslation).toMatchObject({
+      status: "not-available",
+      errorCode: "stale-source",
+      isFresh: false,
+    });
+  });
+
+  test("invalidates a v1 idiom-only artifact without invalidating ordinary meanings", async () => {
+    const entry = {
+      id: "entry-idiom-only",
+      language_code: "nl",
+      headword: "goed",
+      part_of_speech: "zn",
+      raw: {
+        meanings: [
+          {
+            definition: "",
+            examples: Array.from({ length: 40 }, (_, index) =>
+              `standalone example ${index} ${"x".repeat(600)}`,
+            ),
+            idioms: [
+              {
+                expression: "volop genieten van iets lekkers",
+                explanation: "smullen van eten of drinken",
+                examples: ["de kat deed zich te goed aan de kaas"],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const revision = contentFingerprint(normalizeDictionaryContent(entry as any));
+    const from = vi.fn(() =>
+      translationQuery([
+        {
+          id: "translation-idiom-only",
+          word_entry_id: entry.id,
+          target_lang: "ru",
+          provider: "openai",
+          status: "ready",
+          overlay: {
+            entryTranslation: {
+              primaryText: "добро",
+              alternativeTexts: [],
+              baseText: null,
+              note: null,
+            },
+          },
+          source_content_revision: revision,
+          translation_policy_version: ordinaryTranslationPolicyVersion("openai"),
+          provider_revision: "meaning-prompt-v1",
+          error_message: null,
+        },
+      ]),
+    );
+
+    const result = await resolvePlatformV2Translations(
+      { supabase: { from } } as any,
+      {
+        entries: [entry],
+        bindingsByEntryId: new Map(),
+        targetLanguageCode: "ru",
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.byEntryId.get(entry.id)?.entryTranslation).toMatchObject({
+      status: "not-available",
+      errorCode: "stale-source",
+      isFresh: false,
+    });
+  });
+
+  test("projects a fresh bounded idiom subtree while suppressing its entry artifact", async () => {
+    const entry = {
+      id: "entry-idiom-current",
+      language_code: "nl",
+      headword: "goed",
+      part_of_speech: "zn",
+      raw: {
+        meanings: [
+          {
+            definition: "",
+            examples: Array.from({ length: 40 }, (_, index) =>
+              `standalone example ${index} ${"x".repeat(600)}`,
+            ),
+            idioms: [
+              {
+                expression: "volop genieten van iets lekkers",
+                explanation: "smullen van eten of drinken",
+                examples: ["de kat deed zich te goed aan de kaas"],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const revision = contentFingerprint(normalizeDictionaryContent(entry as any));
+    const request = buildDictionaryMeaningTranslationRequest({
+      entryId: entry.id,
+      sourceContentFingerprint: revision,
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "ru",
+      word: entry,
+    });
+    const from = vi.fn(() =>
+      translationQuery([
+        {
+          id: "translation-idiom-current",
+          word_entry_id: entry.id,
+          target_lang: "ru",
+          provider: "openai",
+          status: "ready",
+          overlay: {
+            entryTranslation: null,
+            meanings: [
+              {
+                idioms: [
+                  {
+                    expression: "полакомиться чем-либо",
+                    explanation: "с удовольствием съесть что-либо",
+                    examples: ["кошка полакомилась сыром"],
+                  },
+                ],
+              },
+            ],
+          },
+          source_content_revision: revision,
+          translation_policy_version: translationPolicyVersion(
+            "openai",
+            request,
+          ),
+          provider_revision: "meaning-prompt-v1",
+          error_message: null,
+        },
+      ]),
+    );
+    const bindings = [
+      ["idiom", "raw.meanings[0].idioms[0].expression"],
+      ["explanation", "raw.meanings[0].idioms[0].explanation"],
+      ["example", "raw.meanings[0].idioms[0].examples[0]"],
+    ].map(([contentNodeId, sourcePath]) => ({
+      contentNodeId,
+      sourcePath,
+      kind: "idiom" as const,
+      sourceTextFingerprint: `${contentNodeId}-fingerprint`,
+    }));
+
+    const result = await resolvePlatformV2Translations(
+      { supabase: { from } } as any,
+      {
+        entries: [entry],
+        bindingsByEntryId: new Map([[entry.id, bindings]]),
+        targetLanguageCode: "ru",
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.byEntryId.get(entry.id)?.entryTranslation).toMatchObject({
+      status: "not-available",
+      isFresh: true,
+    });
+    expect(
+      [...(result.byEntryId.get(entry.id)?.nodeTranslationsById.values() ?? [])]
+        .flat()
+        .map((translation) => translation.text),
+    ).toEqual([
+      "полакомиться чем-либо",
+      "с удовольствием съесть что-либо",
+      "кошка полакомилась сыром",
+    ]);
+  });
+});

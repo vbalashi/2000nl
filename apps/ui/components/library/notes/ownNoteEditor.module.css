@@ -1,0 +1,3 @@
+.label{display:flex;flex-direction:column;gap:8px;margin-top:20px;font-size:var(--practice-text-small);color:var(--practice-text-secondary)}
+.textarea{box-sizing:border-box;width:100%;min-height:160px;max-height:40dvh;resize:vertical;border:1px solid var(--practice-control-border);border-radius:9px;padding:12px;background:var(--practice-surface);color:var(--practice-text);font:inherit;line-height:1.5}
+.textarea:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}.current{max-height:25dvh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}.actions{flex-wrap:wrap}

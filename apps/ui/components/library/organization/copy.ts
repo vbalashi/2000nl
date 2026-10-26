@@ -1,0 +1,51 @@
+import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+const en = {
+  meaningOne:"{count} meaning", meaningFew:"{count} meanings", meaningMany:"{count} meanings", meaningOther:"{count} meanings",
+  words:"Words", collections:"Collections", labels:"Labels", all:"All collections", unlabelled:"Unlabelled",
+  searchLabels:"Search labels", search:"Search collections", recent:"Recent", alphabetic:"Name", count:"Meanings",
+  newCollection:"New collection", newLabel:"New label", editLabel:"Edit label", editCollection:"Edit collection",
+  name:"Name", parent:"Parent label", noParent:"No parent", save:"Save", cancel:"Cancel", close:"Close", more:"More actions",
+  open:"View words", rename:"Rename", remove:"Delete", assign:"Choose labels", addLabels:"Add labels", private:"Personal", shared:"Shared", sharingStatusError:"Could not load sharing status.",
+  empty:"No collections yet", noResults:"No matching collections", noLabels:"No labels yet", moreResults:"Show more",
+  loading:"Loading…", retry:"Refresh", error:"Could not load labels. Refresh to try again.",
+  conflict:"The library changed elsewhere. Your draft is kept. Review the current data before saving again.",
+  uncertain:"Could not confirm the change. Refresh and check the result before trying again.",
+  failed:"Could not save. Your draft is kept.", unavailable:"Collection organization is not available yet.",
+  deleteLabel:"Delete this label? Collections and meanings are kept. Child labels move one level up.",
+  deleteCollection:"Delete this collection? The words and your learning progress are kept.",
+  chooseScope:"Choose a label", manage:"Manage labels", back:"Back", saving:"Saving…", selected:"Selected", clear:"Clear selection",
+};
+type Copy = typeof en;
+const ru: Copy = {
+  meaningOne:"{count} значение", meaningFew:"{count} значения", meaningMany:"{count} значений", meaningOther:"{count} значения",
+  words:"Слова", collections:"Коллекции", labels:"Метки", all:"Все коллекции", unlabelled:"Без меток",
+  searchLabels:"Поиск меток", search:"Поиск коллекций", recent:"Недавние", alphabetic:"Название", count:"Значения",
+  newCollection:"Новая коллекция", newLabel:"Новая метка", editLabel:"Изменить метку", editCollection:"Изменить коллекцию",
+  name:"Название", parent:"Родительская метка", noParent:"Без родителя", save:"Сохранить", cancel:"Отмена", close:"Закрыть", more:"Действия",
+  open:"Посмотреть слова", rename:"Переименовать", remove:"Удалить", assign:"Выбрать метки", addLabels:"Добавьте метки", private:"Личная", shared:"Общая", sharingStatusError:"Не удалось узнать, какие коллекции открыты.",
+  empty:"Коллекций пока нет", noResults:"Коллекции не найдены", noLabels:"Меток пока нет", moreResults:"Показать ещё",
+  loading:"Загрузка…", retry:"Обновить", error:"Не удалось загрузить метки. Обновите, чтобы попробовать снова.",
+  conflict:"Библиотека изменилась в другом месте. Черновик сохранён. Проверьте актуальные данные перед повторным сохранением.",
+  uncertain:"Не удалось подтвердить изменение. Обновите и проверьте результат перед повторной попыткой.",
+  failed:"Не удалось сохранить. Черновик сохранён.", unavailable:"Организация коллекций пока недоступна.",
+  deleteLabel:"Удалить метку? Коллекции и значения сохранятся. Дочерние метки поднимутся на уровень выше.",
+  deleteCollection:"Удалить коллекцию? Слова и ваш прогресс обучения сохранятся.",
+  chooseScope:"Выбрать метку", manage:"Управлять метками", back:"Назад", saving:"Сохранение…", selected:"Выбрано", clear:"Снять выбор",
+};
+const nl: Copy = {
+  meaningOne:"{count} betekenis", meaningFew:"{count} betekenissen", meaningMany:"{count} betekenissen", meaningOther:"{count} betekenissen",
+  words:"Woorden", collections:"Collecties", labels:"Labels", all:"Alle collecties", unlabelled:"Zonder labels",
+  searchLabels:"Labels zoeken", search:"Collecties zoeken", recent:"Recent", alphabetic:"Naam", count:"Betekenissen",
+  newCollection:"Nieuwe collectie", newLabel:"Nieuw label", editLabel:"Label wijzigen", editCollection:"Collectie wijzigen",
+  name:"Naam", parent:"Bovenliggend label", noParent:"Geen bovenliggend label", save:"Opslaan", cancel:"Annuleren", close:"Sluiten", more:"Acties",
+  open:"Woorden bekijken", rename:"Naam wijzigen", remove:"Verwijderen", assign:"Labels kiezen", addLabels:"Labels toevoegen", private:"Persoonlijk", shared:"Gedeeld", sharingStatusError:"De deelstatus kon niet worden geladen.",
+  empty:"Nog geen collecties", noResults:"Geen collecties gevonden", noLabels:"Nog geen labels", moreResults:"Meer tonen",
+  loading:"Laden…", retry:"Vernieuwen", error:"Labels konden niet worden geladen. Vernieuw om opnieuw te proberen.",
+  conflict:"De bibliotheek is elders gewijzigd. Je concept blijft bewaard. Controleer de actuele gegevens voordat je opnieuw opslaat.",
+  uncertain:"De wijziging kon niet worden bevestigd. Vernieuw en controleer het resultaat voordat je het opnieuw probeert.",
+  failed:"Opslaan mislukt. Je concept blijft bewaard.", unavailable:"Collectie-organisatie is nog niet beschikbaar.",
+  deleteLabel:"Dit label verwijderen? Collecties en betekenissen blijven bewaard. Onderliggende labels schuiven één niveau omhoog.",
+  deleteCollection:"Deze collectie verwijderen? Woorden en je leervoortgang blijven bewaard.",
+  chooseScope:"Label kiezen", manage:"Labels beheren", back:"Terug", saving:"Opslaan…", selected:"Geselecteerd", clear:"Selectie wissen",
+};
+export const organizationCopy = (locale: OnboardingLanguage): Copy => ({en, ru, nl})[locale];

@@ -1,0 +1,408 @@
+export type TrainingMode =
+  | "word-to-definition"
+  | "definition-to-word"
+  | "listen-recognize"
+  | "listen-type";
+/** The content family selected for a self-contained Training session. */
+export type TrainingExerciseFamily = "meaning" | "idiom" | "sentence" | "word-in-context";
+export type CardFilter = "new" | "review" | "both";
+export type QueueTurn = "new" | "review" | "auto";
+
+/** User-selected bound for one Training session. */
+export type TrainingSessionSize =
+  | number
+  | "all-due-today";
+
+export type TrainingDateWindow = "all" | "today" | "yesterday" | "daysAgo";
+
+export type TrainingFocusFilter = {
+  dateWindow: TrainingDateWindow;
+  /** Explicit session-only review selection; never a saved recipe preference. */
+  reviewTiming?: "early";
+  /** Ordinary reverse queue, presented through a translated source example. */
+  presentationMode?: "word-in-context";
+  daysAgo?: number;
+  timezone?: string;
+  sourceKind?: string;
+  sourceId?: string;
+  externalId?: string;
+  /** Dutch dictionary POS codes selected for ordinary Training. Empty means all. */
+  partOfSpeech?: DutchTrainingPartOfSpeech[];
+  /** Restrict noun candidates by their de/het article; non-noun POS remain unaffected. */
+  nounArticles?: DutchNounArticle[];
+  /** Source scope for dictionary-based Training; absent preserves legacy list/default scope. */
+  dictionaryScope?: {
+    mode: "all" | "selected";
+    languageCode: string;
+    dictionaryIds?: string[];
+  };
+};
+
+export type DutchTrainingPartOfSpeech =
+  | "zn"
+  | "ww"
+  | "bn"
+  | "bw"
+  | "vz"
+  | "vnw"
+  | "vw"
+  | "tw"
+  | "lidw"
+  | "tsw"
+  | "afk";
+
+export type DutchNounArticle = "de" | "het";
+
+export type TrainingFilterSource = {
+  sourceId: string;
+  kind: string;
+  provider?: string | null;
+  externalId?: string | null;
+  title?: string | null;
+  label: string;
+  eventCount: number;
+  lastSeenAt?: string | null;
+};
+
+/** Server-authored snapshot of work planned when a Training session starts. */
+export type TrainingSessionPlan = {
+  /** Requested completed-action budget; old payloads fall back to plannedTotal. */
+  requestedTotal?: number;
+  plannedNew: number;
+  plannedReview: number;
+  plannedPractice: number;
+  plannedTotal: number;
+  plannedAt: string;
+};
+
+export type WordRaw = {
+  headword?: string;
+  languageCode?: string;
+  definition?: string;
+  translation?: {
+    languageCode?: string;
+    text?: string;
+  };
+  example?:
+    | string
+    | {
+        source?: string;
+        translation?: string;
+      };
+  notes?: string;
+  tags?: string[];
+  sourceEntryId?: string;
+  cross_reference?: string;
+  audio_links?: {
+    nl?: string | null;
+    be?: string | null;
+  };
+  meanings?: Array<{
+    definition?: string;
+    context?: string;
+    example?: string; // Legacy field, might still be populating
+    examples?: string[]; // New array field
+    idioms?: Array<{ expression: string; explanation: string }>;
+    links?: Array<{ label?: string; headword?: string }>;
+  }>;
+  links?: Array<{ label?: string; headword?: string }>;
+  meaning_id?: number;
+};
+
+export type DebugStats = {
+  /** Source queue: 'new' | 'learning' | 'review' | 'practice' | 'fallback' | 'click' */
+  source: string;
+  mode?: TrainingMode;
+  next_review?: string;
+  interval?: number;
+  reps?: number;
+  ef?: number;
+  clicks?: number;
+  overdue_count?: number;
+  reason?: string;
+  /** Number of new cards introduced during the learner's study day */
+  new_today?: number;
+  /** Legacy settings metadata; no longer a selection limit */
+  daily_new_limit?: number;
+  /** Number of unseen words available */
+  new_pool_size?: number;
+  /** Number of learning cards due now */
+  learning_due_count?: number;
+  /** Size of review pool (max 10) */
+  review_pool_size?: number;
+  /** Interval before the review (for displaying change) */
+  previousInterval?: number;
+  /** Stability before the review (for displaying change) */
+  previousStability?: number;
+};
+
+export type TrainingWord = {
+  id: string;
+  dictionary_id?: string | null;
+  language_code?: string;
+  headword: string;
+  part_of_speech?: string;
+  gender?: string;
+  raw: WordRaw;
+  sourceRank?: number;
+  debugStats?: DebugStats;
+  is_nt2_2000?: boolean;
+  meanings_count?: number;
+  isFirstEncounter: boolean;
+  /** The mode this card should be trained in (returned by RPC for multi-mode training) */
+  mode?: TrainingMode;
+};
+
+export type DictionaryEntry = {
+  id: string;
+  dictionary_id?: string | null;
+  dictionary_name?: string | null;
+  dictionary_slug?: string | null;
+  dictionary_kind?: string | null;
+  language_code?: string;
+  headword: string;
+  part_of_speech?: string;
+  gender?: string;
+  raw: WordRaw;
+  is_nt2_2000?: boolean;
+  meanings_count?: number;
+  search_match_group?:
+    | "exact-headword"
+    | "lemma-or-inflection"
+    | "related-headword"
+    | "example"
+    | "idiom"
+    | "definition"
+    | "fallback";
+  search_match_label?: string;
+  search_matched_text?: string | null;
+  search_matched_field?: string | null;
+  search_source_path?: string | null;
+  search_group_rank?: number;
+  search_group_id?: "headwords" | "examples" | "definitions" | "alphabetical";
+};
+
+export type UserDictionaryEntry = {
+  headword: string;
+  languageCode: string;
+  definition?: string;
+  translation?: {
+    languageCode?: string;
+    text: string;
+  };
+  example?: {
+    source: string;
+    translation?: string;
+  };
+  partOfSpeech?: string;
+  gender?: string;
+  notes?: string;
+  tags?: string[];
+  sourceEntryId?: string;
+};
+
+export type ReviewResult = "fail" | "hard" | "success" | "easy" | "freeze" | "hide";
+
+export type WordListType = "curated" | "user";
+export type ListCardPolicy = "inherit" | "prefer" | "restrict";
+
+export type AvailableLearningLanguage = {
+  code: string;
+  label: string;
+  dictionaryCount: number;
+  curatedListCount: number;
+  userListCount: number;
+  hasTrainingEligibleLists: boolean;
+};
+
+export type AvailableDictionarySource = {
+  id: string;
+  languageCode: string;
+  slug: string;
+  name: string;
+  kind: string;
+  visibility?: string | null;
+  isEditable: boolean;
+  entryCount: number;
+};
+
+export type ActiveTrainingScope = {
+  languageCode: string;
+  activeListId: string | null;
+  activeListType: WordListType | null;
+  activeScenario: string;
+  cardFilter: CardFilter;
+  modesEnabled: string[];
+  newReviewRatio: number;
+  activeListOwnership?: "received";
+  unavailableReason?: "shared_collection_unavailable";
+  hasSavedScope: boolean;
+  isValid: boolean;
+};
+
+export type EntryLearningListMembership = {
+  listId: string;
+  listType: WordListType;
+  name: string;
+  description?: string | null;
+  itemCount?: number;
+  primaryLanguageCode?: string | null;
+  editable: boolean;
+  readOnlyReason?: "curated" | "not-owner" | "unavailable";
+  isActiveTrainingList: boolean;
+};
+
+export type WordListSummary = {
+  ownership?: "owned" | "received";
+  id: string;
+  name: string;
+  type: WordListType;
+  description?: string | null;
+  language_code?: string | null;
+  primary_language_code?: string | null;
+  is_mixed_language?: boolean;
+  default_scenario_id?: string | null;
+  card_policy?: ListCardPolicy;
+  card_type_ids?: string[] | null;
+  item_count?: number;
+  available_item_count?: number;
+  unavailable_source_count?: number;
+  is_primary?: boolean;
+  created_at?: string;
+};
+
+export type WordEntrySearchResult = {
+  items: DictionaryEntry[];
+  total: number;
+  groupCounts?: Record<string, number>;
+  grouped?: boolean;
+  groups?: Array<{
+    id: "headwords" | "examples" | "definitions" | "alphabetical";
+    label: string;
+    total: number | null;
+    count?: {
+      value: number | null;
+      relation: "eq" | "unknown";
+    };
+    hasMore: boolean;
+    nextCursor: string | null;
+    itemCount: number;
+  }>;
+  queryNormalization?: {
+    query?: string | null;
+    normalized?: string | null;
+    normalized_unaccent?: string | null;
+  };
+  /** True if results are capped due to subscription tier (free = 100 words) */
+  isLocked?: boolean;
+  /** Maximum words allowed for current tier (null = unlimited) */
+  maxAllowed?: number | null;
+};
+
+export type DetailedStats = {
+  // New cards introduced during the learner's local 04:00 study day.
+  newWordsToday: number;      // Distinct entries introduced in the study day
+  newCardsToday: number;      // Distinct entry + card-type pairs in the study day
+  learningStartedToday: number; // Distinct pairs with an accepted Learn action in the study day
+  graduatedNewWordsToday: number; // Introduced entries whose new review graduated in the study day
+  /** Deprecated compatibility field; it is not a daily quota. */
+  dailyNewLimit: number;
+  
+  // Review progress during the local study day (done/scheduled format)
+  reviewWordsDone: number;    // Distinct words reviewed (non-new) in the study day
+  reviewCardsDone: number;    // Review card count in the study day
+  reviewWordsDue: number;     // Words due for review (including learning)
+  reviewCardsDue: number;     // Cards due for review (including learning)
+  
+  // Total progress
+  totalWordsLearned: number;  // Words with FSRS state
+  totalWordsInList: number;   // Total words in scope
+};
+
+/** Training scenario: aggregates multiple card modes into one user-facing concept */
+export type TrainingScenario = {
+  id: string;                     // 'understanding', 'listening', 'conjugation'
+  nameEn: string;                 // English display name
+  nameNl?: string;                // Dutch display name
+  description?: string;           // Description of what this scenario trains
+  cardModes: string[];            // Array of mode strings (internal)
+  graduationThreshold: number;    // MIN stability (days) to consider word "learned"
+  enabled: boolean;               // Whether this scenario is available
+  sortOrder: number;              // Display order
+};
+
+/** Scenario-level statistics for dashboard display */
+export type ScenarioStats = {
+  learned: number;      // Words with MIN(stability) >= threshold across all cards
+  inProgress: number;   // Words with at least one card started but not graduated
+  new: number;          // Words with no cards started
+  total: number;        // Total words in scope
+  scenarioId: string;   // Which scenario these stats are for
+  cardModes: string[];  // Card modes included in this scenario
+  graduationThreshold: number; // Threshold used for "learned" classification
+};
+
+export type TranslationOverlay = {
+  headword?: string;
+  entryTranslation?: {
+    primaryText: string;
+    alternativeTexts: string[];
+    baseText: string | null;
+    note: string | null;
+  } | null;
+  meanings?: Array<{
+    synonyms?: string[];
+    antonyms?: string[];
+    definition?: string;
+    context?: string;
+    note?: string;
+    examples?: string[];
+    idioms?: Array<
+      string | { expression?: string; literalText?: string; explanation?: string; examples?: string[] }
+    >;
+  }>;
+  // Optional provenance/debug metadata. Persisted in DB as part of `overlay` JSON.
+  // This is intentionally best-effort: older cached translations may not have it.
+  __meta?: {
+    providerSelected?: "deepl" | "openai" | "gemini";
+    providerUsed?: "deepl" | "openai" | "gemini";
+    usedFallback?: boolean | null;
+    primaryFailure?: {
+      code:
+        | "provider_http_error"
+        | "provider_response_error"
+        | "provider_empty_response"
+        | "provider_timeout"
+        | "provider_network_error"
+        | "provider_fallback_error"
+        | "provider_unknown_error";
+      fingerprint: string;
+    } | null;
+    promptFingerprint?: string | null;
+    translatedPaths?: Array<Array<string | number>>;
+  };
+};
+
+export type WordEntryTranslationStatus = "pending" | "ready" | "failed";
+
+export type WordEntryTranslation = {
+  word_entry_id: string;
+  target_lang: string;
+  provider: string;
+  status: WordEntryTranslationStatus;
+  overlay: TranslationOverlay | null;
+  note: string | null;
+  source_fingerprint: string | null;
+  error_message: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type UserWordNote = {
+  id?: string;
+  user_id: string;
+  word_entry_id: string;
+  notes: string;
+  created_at?: string;
+  updated_at?: string;
+};

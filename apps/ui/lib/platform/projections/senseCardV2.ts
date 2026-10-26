@@ -1,0 +1,647 @@
+import {isPlatformEntryNoteMaterialV2,platformNoteMaterialWithinBudgetV2} from "../../../../../packages/shared/types/platformV2Runtime";
+import type {MeaningLearningProgress} from '../../../../../packages/shared/types/meaningLearningProgress';
+import type {
+  DictionaryLookupResult,
+  DictionarySummary,
+} from "../../../../../packages/shared/types/platform";
+import type {
+  PlatformContentNodeKindV2,
+  PlatformContentNodeV2,
+  PlatformContentNodeTranslationV2,
+  PlatformEntryTranslationStateV2,
+  PlatformAudioCapabilityV2,
+  PlatformLookupV2Response,
+  PlatformSemanticTermV2,
+  PlatformSenseCardCapabilityV2,
+  PlatformSenseCardStateV2,
+  PlatformWordDetailsV2,
+} from "../../../../../packages/shared/types/platformV2";
+import {
+  firstExactRenderableNodeTranslationV1,
+  isExactRenderableEntryTranslationV1,
+} from "../../../../../packages/shared/platform-v2/displayedTranslationArtifactIdentityV1";
+import {
+  learnerDisplayPronunciation,
+  type PlatformV2ContentSectionInput,
+} from "../platformV2RichContent";
+import type { ResolvedPlatformV2CrossReferenceTarget } from "../platformV2CrossReferenceResolver";
+
+export type ProjectionCardState = {
+  meaningProgress?: MeaningLearningProgress;
+  stateRevision: string;
+  knownMark?: {
+    markId: string;
+    revision: string;
+    markedAt: string;
+  } | null;
+  clickCount: number;
+  seenCount: number;
+  successCount: number;
+  lastSeenAt: string | null;
+  lastReviewedAt: string | null;
+  nextReviewAt: string | null;
+  hidden: boolean;
+  frozenUntil: string | null;
+  inLearning: boolean;
+  learningDueAt: string | null;
+  fsrs: {
+    stability: number | null;
+    difficulty: number | null;
+    reps: number;
+    lapses: number;
+    lastGrade: number | null;
+    lastInterval: number | null;
+    paramsVersion: string | null;
+  };
+};
+
+export type PlatformContentNodeBindingV2Input = {
+  contentNodeId: string;
+  sourcePath: string;
+  kind: PlatformContentNodeKindV2;
+  parentContentNodeId?: string | null;
+  sourceTextFingerprint: string;
+  translations?: PlatformContentNodeTranslationV2[];
+};
+
+export type PlatformLookupV2ProjectionEntry = {
+  noteMaterial?: unknown;
+  allowArchiveAuthorEntry?: boolean;
+  headwordGroupId: string;
+  meaningOrdinal?: number | null;
+  reportContentRevision?: string | null;
+  entrySourceContentFingerprint?: string | null;
+  allowMutationCapabilities?: boolean;
+  entry: DictionaryLookupResult["entry"];
+  dictionary: DictionarySummary;
+  contentNodeBindings: PlatformContentNodeBindingV2Input[];
+  contentSections?: PlatformV2ContentSectionInput[];
+  crossReferenceQuery?: string | null;
+  crossReferenceTarget?: ResolvedPlatformV2CrossReferenceTarget | null;
+  cardState?: ProjectionCardState | null;
+  entryTranslation?: PlatformEntryTranslationStateV2 | null;
+  /** Server coverage of the bounded request, including relations; not just the headword. */
+  translationRequestComplete?: boolean;
+  audioCapability?: PlatformAudioCapabilityV2;
+  wordDetails?: PlatformWordDetailsV2;
+  allowWordDetailsCapability?: boolean;
+};
+
+export type PlatformLookupV2ProjectionInput = {
+  query: string;
+  request: PlatformLookupV2Response["request"];
+  entries: PlatformLookupV2ProjectionEntry[];
+  page: PlatformLookupV2Response["page"];
+};
+
+export class PlatformV2ProjectionError extends Error {
+  constructor(
+    public readonly code:
+      | "invalid_note_material"
+      | "missing_dictionary"
+      | "missing_content_node_binding"
+      | "duplicate_content_node_binding"
+      | "mixed_dictionary_group",
+    message: string,
+  ) {
+    super(message);
+    this.name = "PlatformV2ProjectionError";
+  }
+}
+
+export function projectPlatformLookupV2(
+  input: PlatformLookupV2ProjectionInput,
+): PlatformLookupV2Response {
+  const materials=[];
+  for(const item of input.entries)if(item.noteMaterial!==undefined){
+    if(!isPlatformEntryNoteMaterialV2(item.noteMaterial))throw new PlatformV2ProjectionError("invalid_note_material","Invalid instructional note material");
+    materials.push(item.noteMaterial);
+  }
+  if(!platformNoteMaterialWithinBudgetV2(materials))throw new PlatformV2ProjectionError("invalid_note_material","Instructional note material exceeds response budget");
+  const groups = new Map<string, PlatformLookupV2ProjectionEntry[]>();
+
+  for (const item of input.entries) {
+    const groupEntries = groups.get(item.headwordGroupId) ?? [];
+    groupEntries.push(item);
+    groups.set(item.headwordGroupId, groupEntries);
+  }
+
+  return {
+    contractVersion: "platform-lookup-v2",
+    query: input.query,
+    request: input.request,
+    groups: Array.from(groups, ([headwordGroupId, entries]) =>
+      projectHeadwordGroup(headwordGroupId, entries, input.request),
+    ),
+    page: input.page,
+  };
+}
+
+function projectHeadwordGroup(
+  headwordGroupId: string,
+  entries: PlatformLookupV2ProjectionEntry[],
+  request: PlatformLookupV2Response["request"],
+): PlatformLookupV2Response["groups"][number] {
+  const first = entries[0];
+  if (!first?.dictionary?.id || !first.dictionary.languageCode) {
+    throw new PlatformV2ProjectionError(
+      "missing_dictionary",
+      `Headword Group ${headwordGroupId} has no public dictionary owner`,
+    );
+  }
+  if (entries.some((item) => item.dictionary.id !== first.dictionary.id)) {
+    throw new PlatformV2ProjectionError(
+      "mixed_dictionary_group",
+      `Headword Group ${headwordGroupId} spans dictionaries`,
+    );
+  }
+
+  const uniformPartOfSpeech = uniformString(
+    entries.map((item) => item.entry.partOfSpeech ?? null),
+  );
+  const uniformArticle = uniformString(
+    entries.map((item) => item.entry.gender ?? null),
+  );
+  const displayPronunciation = uniformString(
+    entries.map((item) => {
+      const sourceMeta = asRecord(item.entry.content.sourceMeta);
+      return learnerDisplayPronunciation(
+        sourceMeta.pronunciation_with_stress ??
+          sourceMeta.displayPronunciation,
+      );
+    }),
+  );
+  const pronunciation = uniformString(
+    entries.map((item) => {
+      const sourceMeta = asRecord(item.entry.content.sourceMeta);
+      return asString(
+        sourceMeta.pronunciation ?? sourceMeta.pronunciation_ipa,
+      );
+    }),
+  );
+  const homographNumber = uniformPositiveInteger(
+    entries.map((item) => {
+      const sourceMeta = asRecord(item.entry.content.sourceMeta);
+      return asPositiveInteger(
+        sourceMeta.homograph_number ?? sourceMeta.homographNumber,
+      );
+    }),
+  );
+  const learnableEntries = entries.filter(
+    (item) => !item.crossReferenceQuery,
+  );
+  const groupAudio = uniformAudio(entries);
+
+  return {
+    headwordGroupId,
+    dictionary: {
+      dictionaryId: first.dictionary.id,
+      sourceLanguageCode: first.dictionary.languageCode,
+      displayName:
+        first.dictionary.name.trim() ||
+        first.dictionary.slug.trim() ||
+        first.dictionary.id,
+      messageKey: "dictionary.name",
+    },
+    header: {
+      text: first.entry.headword,
+      ...(homographNumber ? { homographNumber } : {}),
+      ...(displayPronunciation ? { displayPronunciation } : {}),
+      ...(pronunciation ? { pronunciation } : {}),
+      ...(uniformArticle ? { article: uniformArticle } : {}),
+      ...(uniformPartOfSpeech
+        ? { partOfSpeech: semanticTerm("part-of-speech", uniformPartOfSpeech) }
+        : {}),
+      ...(groupAudio ? { audio: groupAudio } : {}),
+    },
+    senseCount: learnableEntries.length,
+    entryCount: entries.length,
+    indicators:
+      learnableEntries.length > 0 &&
+      learnableEntries.every((item) => item.entry.isNt22000 === true)
+      ? [
+          {
+            indicatorId: "core-vocabulary",
+            value: "nt2-2000",
+            messageKey: "indicator.coreVocabulary.nt22000",
+          },
+        ]
+      : [],
+    entries: entries.map((item) =>
+      item.crossReferenceQuery
+        ? projectCrossReference(
+            item,
+            item.crossReferenceTarget ?? { query: item.crossReferenceQuery },
+          )
+        : projectSenseCard(item, request),
+    ),
+  };
+}
+
+function projectSenseCard(
+  item: PlatformLookupV2ProjectionEntry,
+  request: PlatformLookupV2Response["request"],
+): PlatformLookupV2Response["groups"][number]["entries"][number] {
+  const bindingsByPath = new Map<string, PlatformContentNodeBindingV2Input>();
+  for (const binding of item.contentNodeBindings) {
+    if (bindingsByPath.has(binding.sourcePath)) {
+      throw new PlatformV2ProjectionError(
+        "duplicate_content_node_binding",
+        `Entry ${item.entry.id} has duplicate binding for ${binding.sourcePath}`,
+      );
+    }
+    bindingsByPath.set(binding.sourcePath, binding);
+  }
+
+  const sections =
+    item.contentSections ??
+    item.entry.content.sections.flatMap((section) => {
+      const kind = publicContentKind(section.kind);
+      return kind
+        ? [{ sourcePath: section.sourcePath, kind, text: section.text }]
+        : [];
+    });
+  const contentNodes = sections.flatMap((section, order) => {
+    const kind = section.kind;
+    if (!kind) return [];
+    const binding = bindingsByPath.get(section.sourcePath);
+    if (!binding || binding.kind !== kind) {
+      throw new PlatformV2ProjectionError(
+        "missing_content_node_binding",
+        `Entry ${item.entry.id} has no ${kind} binding for ${section.sourcePath}`,
+      );
+    }
+    return [
+      {
+        contentNodeId: binding.contentNodeId,
+        parentContentNodeId: binding.parentContentNodeId ?? null,
+        kind,
+        order,
+        text: section.text,
+        sourceTextFingerprint: binding.sourceTextFingerprint,
+        translations: binding.translations ?? [],
+      },
+    ];
+  });
+  const card = item.cardState
+    ? projectCardState(item.cardState, item.entry.id, request.cardTypeId)
+    : null;
+  const entryTarget = {
+    kind: "entry" as const,
+    entryId: item.entry.id,
+    contentRevision: item.entry.contentFingerprint,
+  };
+
+  if(item.noteMaterial!==undefined&&!isPlatformEntryNoteMaterialV2(item.noteMaterial))
+    throw new PlatformV2ProjectionError("invalid_note_material","Invalid instructional note material");
+  return {
+    kind: "sense-card",
+    ...(item.noteMaterial!==undefined?{noteMaterial:item.noteMaterial}:{}),
+    ...(item.allowArchiveAuthorEntry ? { authorActions: { canArchive: true } } : {}),
+    ...(item.entry.sourceVersion ? { sourceVersion: item.entry.sourceVersion } : {}),
+    entryId: item.entry.id,
+    meaningOrdinal: item.meaningOrdinal ?? item.entry.meaningId ?? null,
+    ...(item.entry.partOfSpeech
+      ? {
+          partOfSpeech: semanticTerm(
+            "part-of-speech",
+            item.entry.partOfSpeech,
+          ),
+        }
+      : {}),
+    card,
+    contentRevision: item.entry.contentFingerprint,
+    reportContentRevision: item.reportContentRevision ?? null,
+    summaryContentNodeId:
+      contentNodes.find((node) => node.kind === "definition")?.contentNodeId ??
+      contentNodes[0]?.contentNodeId ??
+      null,
+    contentNodes,
+    translation: item.entryTranslation ?? null,
+    capabilities: capabilitiesFor({
+      card,
+      entryTarget,
+      contentNodes,
+      entryTranslation: item.entryTranslation ?? null,
+      translationRequestComplete: item.translationRequestComplete,
+      entrySourceContentFingerprint:
+        item.entrySourceContentFingerprint ?? null,
+      audioCapability: item.audioCapability,
+      translationTargetLanguageCode: request.translationTargetLanguageCode,
+      hasWordDetails: Boolean(item.wordDetails),
+      allowWordDetails:
+        item.allowWordDetailsCapability !== false,
+      allowMutations: item.allowMutationCapabilities !== false,
+    }),
+    ...(item.wordDetails ? { wordDetails: item.wordDetails } : {}),
+  };
+}
+
+function projectCrossReference(
+  item: PlatformLookupV2ProjectionEntry,
+  target: ResolvedPlatformV2CrossReferenceTarget,
+): PlatformLookupV2Response["groups"][number]["entries"][number] {
+  return {
+    kind: "cross-reference",
+    crossReferenceId: item.entry.id,
+    meaningOrdinal: item.meaningOrdinal ?? null,
+    label: {
+      termId: "cross-reference.see",
+      messageKey: "crossReference.see",
+    },
+    text: target.query,
+    target,
+    capabilities: [
+      {
+        actionId: "follow-cross-reference",
+        elementId: "cross-reference.follow",
+        messageKey: "crossReference.follow",
+      },
+    ],
+  };
+}
+
+function projectCardState(
+  state: ProjectionCardState,
+  entryId: string,
+  cardTypeId: string,
+): PlatformSenseCardStateV2 {
+  return {
+    cardTypeId,
+    ...(state.meaningProgress ? {meaningProgress: state.meaningProgress} : {}),
+    scheduler: {
+      phase: schedulerPhase(state),
+      repeatCount: state.clickCount,
+      reviewCount: state.fsrs.reps,
+      lastGrade: [1, 2, 3, 4].includes(state.fsrs.lastGrade ?? 0)
+        ? state.fsrs.lastGrade as 1 | 2 | 3 | 4 : null,
+      lastReviewedAt: state.lastReviewedAt,
+      nextReviewAt: state.nextReviewAt,
+      learningDueAt: state.learningDueAt,
+      lastSeenAt: state.lastSeenAt,
+      ...(state.frozenUntil ? { frozenUntil: state.frozenUntil } : {}),
+    },
+    knownMark: state.knownMark ?? null,
+    stateRevision: state.stateRevision,
+  };
+}
+
+function schedulerPhase(
+  state: ProjectionCardState,
+): PlatformSenseCardStateV2["scheduler"]["phase"] {
+  if (state.hidden) return "hidden";
+  if (
+    state.frozenUntil &&
+    Date.parse(state.frozenUntil) > Date.now()
+  ) {
+    return "frozen";
+  }
+  if (state.inLearning) return "learning";
+  if (state.fsrs.reps > 0 || state.lastReviewedAt) return "reviewing";
+  if (state.seenCount > 0 || state.clickCount > 0) return "encountered";
+  return "not-started";
+}
+
+function capabilitiesFor(params: {
+  card: PlatformSenseCardStateV2 | null;
+  entryTarget: {
+    kind: "entry";
+    entryId: string;
+    contentRevision: string;
+  };
+  contentNodes: PlatformContentNodeV2[];
+  entryTranslation: PlatformEntryTranslationStateV2 | null;
+  translationRequestComplete?: boolean;
+  entrySourceContentFingerprint: string | null;
+  audioCapability?: PlatformAudioCapabilityV2;
+  translationTargetLanguageCode: string | null;
+  hasWordDetails: boolean;
+  allowWordDetails: boolean;
+  allowMutations: boolean;
+}): PlatformSenseCardCapabilityV2[] {
+  const capabilities: PlatformSenseCardCapabilityV2[] = [];
+  const card = params.card;
+  if (params.allowMutations && card) {
+    const target = {
+      kind: "sense-card" as const,
+      entryId: params.entryTarget.entryId,
+      cardTypeId: card.cardTypeId,
+      stateRevision: card.stateRevision,
+    };
+    if (card.knownMark) {
+      capabilities.push({
+        actionId: "undo-known",
+        elementId: "sense-card.known.undo",
+        messageKey: "senseCard.known.undo",
+        target: {
+          ...target,
+          activeKnownMarkId: card.knownMark.markId,
+          knownMarkRevision: card.knownMark.revision,
+        },
+      });
+    } else if (
+      card.scheduler.phase === "learning" ||
+      card.scheduler.phase === "reviewing"
+    ) {
+      for (const reviewResult of [
+        "fail",
+        "hard",
+        "success",
+        "easy",
+      ] as const) {
+        capabilities.push({
+          actionId: "review-card",
+          elementId: `sense-card.review.${reviewResult}`,
+          messageKey: `senseCard.review.${reviewResult}`,
+          target,
+          reviewResult,
+        });
+      }
+      capabilities.push({
+        actionId: "mark-known",
+        elementId: "sense-card.known.mark",
+        messageKey: "senseCard.known.mark",
+        target,
+      });
+    } else if (
+      card.scheduler.phase === "not-started" ||
+      card.scheduler.phase === "encountered"
+    ) {
+      capabilities.push({
+        actionId: "start-learning",
+        elementId: "sense-card.learning.start",
+        messageKey: "senseCard.learning.start",
+        target,
+      });
+      capabilities.push({
+        actionId: "mark-known",
+        elementId: "sense-card.known.mark",
+        messageKey: "senseCard.known.mark",
+        target,
+      });
+    }
+  }
+  if (params.allowMutations) {
+    if (
+      params.entryTarget.contentRevision &&
+      !(params.translationRequestComplete ?? (
+        params.entryTranslation?.status === "ready" && params.entryTranslation.isFresh &&
+        params.contentNodes.every(node => Boolean(firstExactRenderableNodeTranslationV1(node.translations, node.sourceTextFingerprint)))
+      )) &&
+      params.translationTargetLanguageCode
+    ) {
+      capabilities.push({
+        actionId: "request-translation",
+        elementId: "sense-card.translation.request",
+        messageKey: "senseCard.translation.request",
+        target: params.entryTarget,
+        targetLanguageCode: params.translationTargetLanguageCode,
+      });
+    }
+    capabilities.push({
+      actionId: "report-content",
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: params.entryTarget,
+    });
+    for (const node of params.contentNodes) {
+      capabilities.push({
+        actionId: "report-content",
+        elementId: "sense-card.report.content-node",
+        messageKey: "senseCard.report",
+        target: {
+          kind: "content-node",
+          entryId: params.entryTarget.entryId,
+          contentNodeId: node.contentNodeId,
+          sourceTextFingerprint: node.sourceTextFingerprint,
+        },
+      });
+      const translation = firstExactRenderableNodeTranslationV1(
+        node.translations,
+        node.sourceTextFingerprint,
+      );
+      if (translation) {
+        capabilities.push({
+          actionId: "report-content",
+          elementId: "sense-card.report.translation",
+          messageKey: "senseCard.report",
+          target: {
+            kind: "translation",
+            targetKind: "content-node",
+            entryId: params.entryTarget.entryId,
+            translationId: translation.translationId,
+            contentNodeId: node.contentNodeId,
+            targetLanguageCode: translation.targetLanguageCode,
+            sourceTextFingerprint: translation.sourceTextFingerprint,
+            translationPolicyVersion: translation.translationPolicyVersion,
+            providerRevision: translation.providerRevision ?? null,
+          },
+        });
+      }
+    }
+    if (
+      isExactRenderableEntryTranslationV1(params.entryTranslation, {
+        entryId: params.entryTarget.entryId,
+        sourceContentFingerprint: params.entrySourceContentFingerprint,
+      })
+    ) {
+      capabilities.push({
+        actionId: "report-content",
+        elementId: "sense-card.report.translation",
+        messageKey: "senseCard.report",
+        target: {
+          kind: "translation",
+          targetKind: "entry",
+          entryId: params.entryTarget.entryId,
+          translationId: params.entryTranslation.translationId,
+          contentNodeId: null,
+          targetLanguageCode: params.entryTranslation.targetLanguageCode,
+          sourceContentFingerprint:
+            params.entryTranslation.sourceContentFingerprint,
+          translationPolicyVersion:
+            params.entryTranslation.translationPolicyVersion,
+          providerRevision: params.entryTranslation.providerRevision ?? null,
+        },
+      });
+    }
+  }
+  if (params.hasWordDetails && params.allowWordDetails) {
+    capabilities.push({
+      actionId: "open-word-details",
+      elementId: "sense-card.word-details.open",
+      messageKey: "senseCard.wordDetails.open",
+      target: params.entryTarget,
+    });
+  }
+  return capabilities;
+}
+
+function uniformAudio(
+  entries: PlatformLookupV2ProjectionEntry[],
+): PlatformAudioCapabilityV2 | null {
+  const capabilities = entries
+    .filter((entry) => !entry.crossReferenceQuery)
+    .map((entry) => entry.audioCapability)
+    .filter((capability): capability is PlatformAudioCapabilityV2 => Boolean(capability));
+  if (capabilities.length === 0) return null;
+  const first = capabilities[0];
+  return capabilities.every(
+    (capability) =>
+      capability.audioId === first.audioId &&
+      capability.actionId === first.actionId &&
+      capability.contentLanguageCode === first.contentLanguageCode,
+  )
+    ? first
+    : null;
+}
+
+function publicContentKind(
+  kind: DictionaryLookupResult["entry"]["content"]["sections"][number]["kind"],
+): PlatformContentNodeKindV2 | null {
+  if (kind === "meaning") return "definition";
+  if (kind === "context") return "usage-pattern";
+  if (kind === "example") return "example";
+  if (kind === "idiom") return "idiom";
+  if (kind === "note") return "usage-note";
+  return null;
+}
+
+function semanticTerm(namespace: string, value: string): PlatformSemanticTermV2 {
+  return {
+    termId: `${namespace}.${value}`,
+    messageKey:
+      namespace === "part-of-speech"
+        ? `partOfSpeech.${value}`
+        : `${namespace}.${value}`,
+    sourceValue: value,
+  };
+}
+
+function uniformString(values: Array<string | null>) {
+  const normalized = values.map((value) => value?.trim() || null);
+  const first = normalized[0] ?? null;
+  return first && normalized.every((value) => value === first) ? first : null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function asString(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function asPositiveInteger(value: unknown) {
+  return typeof value === "number" && Number.isInteger(value) && value > 0
+    ? value
+    : null;
+}
+
+function uniformPositiveInteger(values: Array<number | null>) {
+  const first = values[0] ?? null;
+  return first && values.every((value) => value === first)
+    ? first
+    : null;
+}

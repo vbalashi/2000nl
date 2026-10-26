@@ -1,0 +1,23 @@
+.dialog {
+  width: min(580px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--practice-border);
+  border-radius: var(--practice-radius-dialog);
+  background: var(--practice-surface);
+  color: var(--practice-text);
+  font-family: var(--practice-font-ui);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+.dialog::backdrop { background: var(--practice-backdrop); backdrop-filter: blur(4px); }
+.header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; }
+.header h2 { margin: 0; font-size: var(--practice-text-body); font-weight: 600; }
+.header button { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: var(--practice-text-muted); }
+.header button:hover { background: var(--practice-surface-hover); }
+.header button:focus-visible { outline: 2px solid var(--practice-focus); }
+.header button:disabled { opacity: .5; }
+.body { min-height: 0; display: grid; gap: 12px; overflow-y: auto; padding: 0 20px 20px; scrollbar-width: none; }
+.body::-webkit-scrollbar { display: none; }

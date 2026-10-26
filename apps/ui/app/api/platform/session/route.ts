@@ -1,0 +1,58 @@
+import { NextRequest } from "next/server";
+import {
+  getAuthenticatedSupabase,
+  jsonNoStore,
+  platformCorsPreflight,
+  requirePlatformScope,
+  withPlatformCors,
+} from "@/lib/platform/serverSupabase";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export function OPTIONS(request: NextRequest) {
+  return platformCorsPreflight(request);
+}
+
+export async function GET(request: NextRequest) {
+  const reply = (payload: unknown, status = 200) =>
+    withPlatformCors(request, jsonNoStore(payload, status));
+
+  const auth = await getAuthenticatedSupabase(request);
+  if (auth instanceof Response) {
+    return withPlatformCors(request, auth);
+  }
+  const scopeError = requirePlatformScope(auth, "platform:read");
+  if (scopeError) return withPlatformCors(request, scopeError);
+
+  const { data, error } = await auth.supabase
+    .from("user_settings")
+    .select("translation_lang, updated_at")
+    .eq("user_id", auth.user.id)
+    .maybeSingle();
+
+  if (error) {
+    return reply(
+      { error: "session_preferences_failed", detail: error.message },
+      500,
+    );
+  }
+
+  const hasUserSetting =
+    typeof data?.translation_lang === "string" && data.translation_lang.length > 0;
+  const translationLang =
+    data?.translation_lang === "off" ? null : data?.translation_lang ?? "en";
+
+  return reply({
+    user: {
+      id: auth.user.id,
+      email: auth.user.email ?? null,
+    },
+    preferences: {
+      translationTargetLanguageCode: translationLang,
+      source: hasUserSetting ? "user-setting" : "platform-default",
+      updatedAt: data?.updated_at ?? null,
+    },
+  });
+}

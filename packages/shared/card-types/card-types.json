@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Card Type Registry",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "label", "prompt", "reveal"],
+    "properties": {
+      "id": {"type": "string", "description": "Stable key, e.g., word-to-definition"},
+      "label": {"type": "string"},
+      "description": {"type": "string"},
+      "prompt": {
+        "type": "object",
+        "properties": {
+          "language": {"type": "string", "description": "Language code for template lookup"},
+          "fields": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Note fields shown on the front (e.g., headword, part_of_speech)"
+          },
+          "audio": {"type": ["string", "null"], "description": "Path in note to play for audio-first cards"}
+        },
+        "additionalProperties": true
+      },
+      "reveal": {
+        "type": "object",
+        "properties": {
+          "fields": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Fields shown on answer side (e.g., definition, examples)"
+          }
+        },
+        "additionalProperties": true
+      },
+      "input_mode": {
+        "type": "string",
+        "enum": ["multiple-choice", "type-in", "show-answer"],
+        "default": "show-answer"
+      }
+    },
+    "additionalProperties": true
+  },
+  "examples": [
+    {
+      "id": "word-to-definition",
+      "label": "Word → Definition",
+      "prompt": {"language": "nl", "fields": ["headword", "part_of_speech", "gender"]},
+      "reveal": {"fields": ["meanings[0].definition", "meanings[0].examples"]},
+      "input_mode": "show-answer"
+    },
+    {
+      "id": "definition-to-word",
+      "label": "Definition → Word",
+      "prompt": {"language": "nl", "fields": ["meanings[0].definition"]},
+      "reveal": {"fields": ["headword", "part_of_speech", "gender", "meanings[0].examples"]},
+      "input_mode": "type-in"
+    }
+  ]
+}

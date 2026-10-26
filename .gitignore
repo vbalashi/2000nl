@@ -1,0 +1,34 @@
+node_modules/
+.next/
+.next-*/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+coverage/
+playwright-report/
+test-results/
+artifacts/
+tmp/
+__pycache__/
+.pytest_cache/
+.venv/
+.DS_Store
+db/data/
+db/audio/
+packages/ingestion/data/
+/reports/
+.worktrees/
+.private/
+*-results.json
+audit-development.json
+
+# Proprietary translation templates and dictionary-generation pipelines do not
+# belong in this distribution, including when copied into a working checkout.
+apps/ui/lib/translation/prompts/*.txt
+packages/ingestion/src/lexicography_eval/
+packages/ingestion/lexicography_eval/
+
+# Local Supabase CLI state
+/supabase/.temp/
+/supabase/.branches/

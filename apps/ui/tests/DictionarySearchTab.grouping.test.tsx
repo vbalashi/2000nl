@@ -1,0 +1,902 @@
+import React from "react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  createDictionarySearchTabState,
+  DictionarySearchTab,
+  type DictionarySearchTabState,
+} from "@/components/training/wordlist/DictionarySearchTab";
+import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
+import type { DictionaryEntry } from "@/lib/types";
+
+const fetchGroupPage = vi.fn();
+const readableSources = vi.fn();
+vi.mock("@/lib/training/listService",()=>({fetchAvailableDictionarySourcesStrict:(...args:unknown[])=>readableSources(...args),fetchAvailableLearningLanguages:vi.fn()}));
+afterEach(()=>{vi.unstubAllEnvs();});
+
+vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
+  fetchPlatformV2LibraryGroupPage: (...args: unknown[]) =>
+    fetchGroupPage(...args),
+}));
+
+vi.mock("@/components/training/library-v2/LibraryWordDetail", () => ({
+  LibraryWordDetail: ({
+    initialGroup,
+    viewport,
+    onListsUpdated,
+    onArchived,
+  }: {
+    initialGroup?: PlatformHeadwordGroupV2;
+    viewport?: string;
+    onListsUpdated?: () => Promise<void> | void;
+    onArchived?: (entryId: string) => void;
+  }) => (
+      <div>
+        <div
+          data-testid={`library-detail-${viewport ?? "all"}`}
+          data-group-id={initialGroup?.headwordGroupId}
+          data-entry-count={initialGroup?.entries.length}
+        />
+        {onArchived ? <button onClick={() => onArchived(initialGroup?.entries[0]?.kind === "sense-card" ? initialGroup.entries[0].entryId : "entry")}>Simulate archived entry</button> : null}
+        {onListsUpdated ? <button type="button" onClick={() => void onListsUpdated()}>
+          Simulate saved collection membership
+        </button> : null}
+      </div>
+  ),
+}));
+
+vi.mock("@/lib/trainingService", () => ({
+  createUserDictionaryEntry: vi.fn(),
+  fetchAvailableDictionarySources: vi.fn().mockResolvedValue([
+    {
+      id: "dictionary-example",
+      languageCode: "nl",
+      name: "Example Dictionary",
+      slug: "example",
+      kind: "curated",
+      isEditable: false,
+      entryCount: 10,
+    },
+  ]),
+  fetchAvailableLearningLanguages: vi.fn().mockResolvedValue([
+    {
+      code: "nl",
+      label: "Nederlands",
+      dictionaryCount: 1,
+      curatedListCount: 0,
+      userListCount: 0,
+      hasTrainingEligibleLists: true,
+    },
+  ]),
+  fetchDictionaryEntryById: vi.fn().mockResolvedValue(null),
+  fetchWordsForList: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+  searchDictionaryGroups: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+  searchWordEntries: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+}));
+
+const sense = (entryId: string, partOfSpeech: string) => ({
+  kind: "sense-card" as const,
+  entryId,
+  meaningOrdinal: 1,
+  partOfSpeech: {
+    termId: `pos:${partOfSpeech}`,
+    messageKey: `pos.${partOfSpeech}`,
+    sourceValue: partOfSpeech,
+  },
+  card: null,
+  contentRevision: `revision-${entryId}`,
+  reportContentRevision: null,
+  summaryContentNodeId: `definition-${entryId}`,
+  contentNodes: [
+    {
+      contentNodeId: `definition-${entryId}`,
+      parentContentNodeId: null,
+      kind: "definition" as const,
+      order: 0,
+      text: `definition ${entryId}`,
+      sourceTextFingerprint: `fingerprint-${entryId}`,
+      translations: [],
+    },
+  ],
+  translation: null,
+  capabilities: [],
+});
+
+const goedGroup = (
+  headwordGroupId: string,
+  dictionaryId: string,
+  displayName: string,
+  entries: ReturnType<typeof sense>[],
+  homographNumber?: number,
+): PlatformHeadwordGroupV2 => ({
+  headwordGroupId,
+  dictionary: {
+    dictionaryId,
+    sourceLanguageCode: "nl",
+    displayName,
+    messageKey: `dictionary.${dictionaryId}`,
+  },
+  header: { text: "goed", ...(homographNumber ? { homographNumber } : {}) },
+  senseCount: entries.length,
+  entryCount: entries.length,
+  indicators: [],
+  entries,
+});
+
+const firstGroup = goedGroup(
+  "group-goed-main",
+  "dictionary-example",
+  "Example Dictionary",
+  [sense("entry-goed-bn", "bn"), sense("entry-goed-bw", "bw")],
+);
+const homographGroup = goedGroup(
+  "group-goed-homograph",
+  "dictionary-example",
+  "Example Dictionary",
+  [sense("entry-goed-zn", "zn")],
+  2,
+);
+const dictionaryGroup = goedGroup(
+  "group-goed-user-dictionary",
+  "dictionary-user",
+  "Mijn woordenboek",
+  [sense("entry-goed-user", "bn")],
+);
+const nextPageGroup = goedGroup(
+  "group-goed-next-page",
+  "dictionary-other",
+  "Ander woordenboek",
+  [sense("entry-goed-next", "bn")],
+);
+
+const deferred = <T,>() => {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((nextResolve, nextReject) => {
+    resolve = nextResolve;
+    reject = nextReject;
+  });
+  return { promise, resolve, reject };
+};
+
+function Harness({preload=false,open=true,initial = {},locale="nl",translationLang="en",collection=false,unavailableSourceCount=0,reloadLists=async()=>{},notifyListsUpdated=()=>{},sourceRead}: {preload?:boolean;open?:boolean;collection?:boolean;unavailableSourceCount?:number;initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru";translationLang?:string|null;reloadLists?:()=>Promise<void>;notifyListsUpdated?:()=>void;sourceRead?:React.ComponentProps<typeof DictionarySearchTab>['collectionSourceRead']} = {}) {
+  const [state, setState] = React.useState<DictionarySearchTabState>(() => ({
+    ...createDictionarySearchTabState(),
+    query: "goed",
+    languageCode: "nl",
+    ...initial,
+  }));
+  return (
+    <DictionarySearchTab
+      open={open}
+      preload={preload}
+      userId="user-1"
+      language="nl"
+      translationLang={translationLang}
+      interfaceLanguage={locale}
+      userLists={[]}
+      collectionSourceRead={sourceRead}
+      viewedListId={collection ? "owned-list" : null}
+      viewedList={collection ? {id:"owned-list",name:"My collection",type:"user",language_code:"nl",unavailable_source_count:unavailableSourceCount} : null}
+      viewedListName="Example Dictionary"
+      reloadLists={reloadLists}
+      notifyListsUpdated={notifyListsUpdated}
+      searchState={state}
+      onSearchStateChange={setState}
+    />
+  );
+}
+
+describe("DictionarySearchTab Headword Group results", () => {
+  beforeEach(() => {
+
+    fetchGroupPage.mockReset();
+    fetchGroupPage
+      .mockResolvedValueOnce({
+        groups: [firstGroup, { ...firstGroup }, homographGroup, dictionaryGroup],
+        selectedTierComplete: true,
+        nextGroupCursor: "cursor-page-2",
+      })
+      .mockResolvedValueOnce({
+        groups: [nextPageGroup],
+        selectedTierComplete: true,
+        nextGroupCursor: null,
+      });
+  });
+
+  test("desktop shows one goed row per headwordGroupId and paginates by opaque group cursor", async () => {
+    render(<Harness />);
+
+    expect(await screen.findAllByTestId("library-headword-group-row")).toHaveLength(3);
+    expect(screen.getByTestId("library-headword-group-group-goed-main")).toHaveTextContent("bijwoord");
+    expect(screen.getByTestId("library-headword-group-group-goed-main")).toHaveTextContent("Example Dictionary");
+    expect(screen.getByTestId("library-headword-group-group-goed-main")).toHaveTextContent("2 betekenissen");
+    expect(screen.getByTestId("library-headword-group-group-goed-homograph")).toHaveTextContent("zelfstandig naamwoord");
+    expect(screen.getByTestId("library-headword-group-group-goed-homograph")).toHaveTextContent("Example Dictionary");
+    expect(screen.getByTestId("library-headword-group-group-goed-homograph")).toHaveTextContent("1 betekenis");
+    expect(screen.getByTestId("library-headword-group-group-goed-user-dictionary")).toHaveTextContent(
+      "Mijn woordenboek",
+    );
+
+    const pagination = screen.getByTestId("library-group-pagination");
+    fireEvent.click(within(pagination).getByRole("button", { name: "Volgende" }));
+
+    expect(await screen.findByTestId("library-headword-group-group-goed-next-page")).toBeInTheDocument();
+    expect(fetchGroupPage).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cursor: "cursor-page-2", query: "goed" }),
+    );
+  });
+
+  test("a membership save refreshes search only when the active list filter depends on it", async () => {
+    fetchGroupPage.mockReset().mockResolvedValue({
+      groups: [firstGroup],
+      selectedTierComplete: true,
+      nextGroupCursor: null,
+    });
+    const reloadLists = vi.fn().mockResolvedValue(undefined);
+    const notifyListsUpdated = vi.fn();
+    render(
+      <Harness reloadLists={reloadLists} notifyListsUpdated={notifyListsUpdated} />,
+    );
+
+    const result = await screen.findByTestId(
+      "library-headword-group-group-goed-main",
+    );
+    fireEvent.click(result);
+    expect(await screen.findByTestId("library-detail-desktop")).toBeInTheDocument();
+    const searchCallsBeforeMembershipSave = fetchGroupPage.mock.calls.length;
+
+    fireEvent.click(
+      within(screen.getByTestId("library-detail-desktop").parentElement!).getByRole(
+        "button",
+        { name: "Simulate saved collection membership" },
+      ),
+    );
+
+    await waitFor(() => expect(reloadLists).toHaveBeenCalledOnce());
+    expect(notifyListsUpdated).toHaveBeenCalledOnce();
+    expect(fetchGroupPage).toHaveBeenCalledTimes(searchCallsBeforeMembershipSave);
+  });
+
+  test("mobile selection opens the complete server group instead of one meaning", async () => {
+    render(<Harness />);
+
+    const row = await screen.findByTestId("library-headword-group-group-goed-main");
+    fireEvent.click(row);
+
+    const mobileDetail = await screen.findByTestId("library-detail-mobile");
+    await waitFor(() => expect(mobileDetail).toHaveAttribute("data-group-id", "group-goed-main"));
+    expect(mobileDetail).toHaveAttribute("data-entry-count", "2");
+  });
+
+  test.each([
+    ["HTTP 403", new Error("lookup_http_403"), "tijdelijk niet beschikbaar"],
+    ["HTTP 503", new Error("lookup_http_503"), "tijdelijk niet beschikbaar"],
+    ["contract mismatch", new Error("contract-mismatch"), "tijdelijk niet beschikbaar"],
+    ["timeout", new Error("platform_request_timeout"), "duurde te lang"],
+  ])("shows a retryable Library error for %s", async (_label, error, message) => {
+    fetchGroupPage.mockReset();
+    fetchGroupPage
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce({
+        groups: [firstGroup],
+        selectedTierComplete: true,
+        nextGroupCursor: null,
+      });
+
+    render(<Harness />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    fireEvent.click(screen.getByRole("button", { name: "Opnieuw proberen" }));
+    expect(await screen.findByTestId("library-headword-group-group-goed-main")).toBeInTheDocument();
+  });
+
+  test("ignores a caller abort without presenting a failure", async () => {
+    fetchGroupPage.mockReset();
+    fetchGroupPage.mockRejectedValueOnce(new DOMException("Aborted", "AbortError"));
+
+    render(<Harness />);
+
+    await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+test("does not let a stale rejection replace newer successful results", async () => {
+    fetchGroupPage.mockReset();
+    const oldSearch = deferred<never>();
+    fetchGroupPage
+      .mockReturnValueOnce(oldSearch.promise)
+      .mockResolvedValueOnce({
+        groups: [nextPageGroup],
+        selectedTierComplete: true,
+        nextGroupCursor: null,
+      });
+
+    render(<Harness />);
+    fireEvent.change(screen.getByRole("textbox",{name:"Woorden zoeken"}), {
+      target: { value: "gracht" },
+    });
+
+    expect(await screen.findByTestId("library-headword-group-group-goed-next-page")).toBeInTheDocument();
+    oldSearch.reject(new Error("lookup_http_503"));
+  await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+});
+
+test("a grouped response arriving during query debounce cannot replace current results", async () => {
+  const oldRead = deferred<unknown>();
+  const newRead = deferred<unknown>();
+  fetchGroupPage.mockReset().mockReturnValueOnce(oldRead.promise).mockReturnValueOnce(newRead.promise);
+  render(<Harness />);
+  await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(1));
+
+  vi.useFakeTimers();
+  try {
+    fireEvent.change(screen.getByRole("textbox", { name: "Woorden zoeken" }), {
+      target: { value: "gracht" },
+    });
+    await act(async () => {
+      oldRead.resolve({ groups: [firstGroup], selectedTierComplete: true, nextGroupCursor: null });
+    });
+    expect(screen.queryByTestId("library-headword-group-group-goed-main")).not.toBeInTheDocument();
+    expect(fetchGroupPage).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(250);
+    });
+    expect(fetchGroupPage).toHaveBeenCalledTimes(2);
+    expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({ query: "gracht" }));
+    await act(async () => {
+      newRead.resolve({ groups: [nextPageGroup], selectedTierComplete: true, nextGroupCursor: null });
+    });
+    expect(screen.getByTestId("library-headword-group-group-goed-next-page")).toBeInTheDocument();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+  test("debounces typing into one lookup and aborts the superseded one", async () => {
+    fetchGroupPage.mockReset();
+    fetchGroupPage.mockResolvedValue({
+      groups: [nextPageGroup],
+      selectedTierComplete: true,
+      nextGroupCursor: null,
+    });
+
+    render(<Harness />);
+    await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(1));
+    const initialSignal = fetchGroupPage.mock.calls[0][0].signal as AbortSignal;
+    const input = screen.getByRole("textbox", { name: "Woorden zoeken" });
+    for (const value of ["h", "hu", "hui", "huis"]) {
+      fireEvent.change(input, { target: { value } });
+    }
+
+    await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(2));
+    expect(fetchGroupPage.mock.calls[1][0]).toMatchObject({ query: "huis" });
+    expect(initialSignal.aborted).toBe(true);
+  });
+});
+
+const scopeA="8746de41-779a-444d-be38-287efc416d8f",scopeB="8746de41-779a-444d-be38-287efc416d8a";
+const materialRepository=(paused=false)=>({
+ load:async()=>({revision:1,document:{schemaVersion:1 as const,learningLanguages:[{code:"nl",paused},{code:"en",paused:false}],disabledDictionaryIds:[scopeA]}}),
+ save:vi.fn(),languages:async()=>["nl","en"].map(code=>({code,label:code,dictionaryCount:2,curatedListCount:0,userListCount:0,hasTrainingEligibleLists:true})),
+});
+const source=(id:string,name:string)=>({id,name,languageCode:"nl",slug:name,kind:"curated",isEditable:false,entryCount:10});
+
+test("search filters exclude disabled material and changing source starts at the first scoped page",async()=>{
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([source(scopeA,"Disabled A"),source(scopeB,"Enabled B")]);
+ const group=goedGroup("enabled-b",scopeB,"Enabled B",[sense("entry-b","zn")]);
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[group],selectedTierComplete:true,nextGroupCursor:"next-scoped"});
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness/></AccountMaterialProvider>);
+ await screen.findByTestId("library-headword-group-enabled-b");
+ const {getUiMessages}=await import("@/lib/uiMessages");const labels=getUiMessages("nl");
+ fireEvent.click(screen.getByRole("button",{name:labels.library.filters}));
+ fireEvent.click(screen.getByRole("button",{name:new RegExp(`^${labels.builder.source}`)}));
+ expect(await screen.findByRole("button",{name:"Enabled B"})).toBeInTheDocument();
+ expect(screen.queryByRole("button",{name:"Disabled A"})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Enabled B"}));
+ fireEvent.click(screen.getByRole("button",{name:labels.library.showResults}));
+ expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:[scopeB],filters:{parts:[],article:null}},cursor:null}));
+ // Group rows can render before the completed search marks pagination ready.
+ // Await the control under test rather than assuming the first row implies it.
+ const pagination=await screen.findByTestId("library-group-pagination");
+ const next=within(pagination).getByRole("button",{name:"Volgende"});
+ await waitFor(()=>expect(next).toBeEnabled());
+ fireEvent.click(next);
+ await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor:"next-scoped"})));
+ fireEvent.click(screen.getByRole("button",{name:labels.library.filters}));
+ if (!screen.queryByRole("button",{name:"Alle woordenboeken"})) {
+   fireEvent.click(screen.getByRole("button",{name:new RegExp(`^${labels.builder.source}`)}));
+ }
+ fireEvent.click(await screen.findByRole("button",{name:"Alle woordenboeken"}));
+ fireEvent.click(screen.getByRole("button",{name:labels.library.showResults}));
+ await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}},cursor:null})));
+ expect(screen.getByTestId("library-headword-group-enabled-b")).toBeInTheDocument();
+});
+
+test("a server cursor invalidated by another device restarts scoped search once",async()=>{
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+ fetchGroupPage.mockReset().mockRejectedValueOnce(Object.assign(new Error("invalid-cursor"),{name:"PlatformV2LibraryLookupError",kind:"invalid-cursor"})).mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness initial={{page:2,groupPageCursors:[null,"stale"],groupScopeKey:JSON.stringify(["user-1",1,"nl",null,"goed",null,{parts:[],article:null}])}}/></AccountMaterialProvider>);
+ await screen.findByTestId("library-headword-group-group-goed-main");
+ expect(fetchGroupPage.mock.calls[0][0].cursor).toBe("stale");
+ expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor:null}));
+ expect(fetchGroupPage).toHaveBeenCalledTimes(2);
+ expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+test("Library picks an active local search language without changing the training scope",async()=>{
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([]);
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[],selectedTierComplete:true,nextGroupCursor:null});
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository(true)}><Harness/></AccountMaterialProvider>);
+ await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalled());
+ const {getUiMessages}=await import("@/lib/uiMessages");
+ fireEvent.click(screen.getByRole("button",{name:getUiMessages("nl").library.filters}));
+ expect(fetchGroupPage.mock.calls.every(call=>call[0].contentLanguageCode==="en")).toBe(true);
+ expect(fetchGroupPage.mock.calls.every(call=>call[0].contentLanguageCode==="en")).toBe(true);
+});
+
+
+test("approved Library copy and grouped rows follow interface locale without changing entry selection",async()=>{
+ fetchGroupPage.mockResolvedValue({groups:[homographGroup],nextGroupCursor:null});
+ const view=render(<Harness locale="en"/>);
+ const row=await screen.findByTestId("library-headword-group-group-goed-homograph");
+ expect(row).toHaveTextContent("noun");expect(row).toHaveTextContent("1 meaning");
+ expect(screen.getByRole("textbox",{name:"Search words"})).toHaveValue("goed");
+ view.rerender(<Harness locale="ru"/>);
+ expect(screen.getByRole("textbox",{name:"Поиск слов"})).toHaveValue("goed");
+ expect(await screen.findByTestId("library-headword-group-group-goed-homograph")).toHaveTextContent("существительное");
+ expect(row).toHaveTextContent("1 значение");expect(row).toHaveAttribute("aria-pressed","true");
+ expect(screen.queryByRole("button",{name:"Добавить запись"})).not.toBeInTheDocument();
+ expect(screen.getByRole("button",{name:"Далее"})).toBeDisabled();
+});
+
+test("approved chips panel excludes disabled sources, cancels drafts and applies filters on the first page",async()=>{
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ const {getUiMessages}=await import("@/lib/uiMessages");const copy=getUiMessages("nl");
+ readableSources.mockReset().mockResolvedValue([source(scopeA,"Disabled A"),source(scopeB,"Enabled B")]);
+ const group=goedGroup("enabled-b",scopeB,"Enabled B",[sense("entry-b","zn")]);
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[group],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,matchingEntryIds:["entry-b"]}});
+ const repository=materialRepository();render(<AccountMaterialProvider userId="user-1" repository={repository}><Harness/></AccountMaterialProvider>);
+ await screen.findByTestId("library-headword-group-enabled-b");
+ fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));
+ fireEvent.click(screen.getByRole("button",{name:new RegExp(`^${copy.builder.source}`)}));
+ await screen.findByRole("button",{name:"Enabled B"});expect(screen.queryByRole("button",{name:"Disabled A"})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Enabled B"}));
+ fireEvent.click(screen.getByRole("button",{name:copy.builder.cancel}));
+ expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).at(-1)?.[0].libraryScope.dictionaryIds).toBeNull();
+ fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));fireEvent.click(screen.getByRole("button",{name:copy.builder.parts.Nouns}));
+ await waitFor(()=>expect(screen.getByRole("button",{name:copy.library.showResults})).toBeEnabled());
+ fireEvent.click(screen.getByRole("button",{name:copy.library.showResults}));
+ await waitFor(()=>expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).at(-1)?.[0]).toMatchObject({cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:["noun"],article:null}}}));
+ expect(repository.save).not.toHaveBeenCalled();
+ const appliedRequestCount=fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).length;
+ expect(screen.getByTestId("library-headword-group-enabled-b")).toBeInTheDocument();
+
+ // Applying the already-selected filters clears the rows, so it must also
+ // trigger a fresh lookup even though the serialized search scope is unchanged.
+ fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));
+ await waitFor(()=>expect(screen.getByRole("button",{name:copy.library.showResults})).toBeEnabled());
+ fireEvent.click(screen.getByRole("button",{name:copy.library.showResults}));
+ await waitFor(()=>expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0])).toHaveLength(appliedRequestCount+1));
+ expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:["noun"],article:null}}}));
+ expect(await screen.findByTestId("library-headword-group-enabled-b")).toBeInTheDocument();
+});
+
+test("reapplying the same filters supersedes an in-flight lookup", async () => {
+  const { AccountMaterialProvider } = await import("@/components/practice/material/AccountMaterialProvider");
+  const { getUiMessages } = await import("@/lib/uiMessages");
+  const copy = getUiMessages("nl");
+  const oldRead = deferred<unknown>();
+  const refreshedRead = deferred<unknown>();
+  readableSources.mockReset().mockResolvedValue([source(scopeB, "Enabled B")]);
+  fetchGroupPage.mockReset().mockReturnValueOnce(oldRead.promise).mockReturnValueOnce(refreshedRead.promise);
+  const state = {
+    ...createDictionarySearchTabState(),
+    query: "goed",
+    languageCode: "nl",
+    entryFilters: { parts: ["noun" as const], article: null },
+  };
+
+  render(
+    <AccountMaterialProvider userId="user-1" repository={materialRepository()}>
+      <Harness initial={state} />
+    </AccountMaterialProvider>,
+  );
+  await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(1));
+  const initialSignal = fetchGroupPage.mock.calls[0][0].signal as AbortSignal;
+
+  fireEvent.click(screen.getByRole("button", { name: copy.library.filters }));
+  await waitFor(() => expect(screen.getByRole("button", { name: copy.library.showResults })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: copy.library.showResults }));
+  await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(2));
+  expect(initialSignal.aborted).toBe(true);
+
+  await act(async () => {
+    refreshedRead.resolve({
+      groups: [nextPageGroup],
+      selectedTierComplete: true,
+      nextGroupCursor: null,
+    });
+  });
+  expect(await screen.findByTestId("library-headword-group-group-goed-next-page")).toBeInTheDocument();
+
+  await act(async () => {
+    oldRead.resolve({
+      groups: [firstGroup],
+      selectedTierComplete: true,
+      nextGroupCursor: null,
+    });
+  });
+  expect(screen.getByTestId("library-headword-group-group-goed-next-page")).toBeInTheDocument();
+  expect(screen.queryByTestId("library-headword-group-group-goed-main")).not.toBeInTheDocument();
+});
+
+beforeEach(()=>{
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", {configurable:true,value:function(this:HTMLDialogElement){this.setAttribute("open","");}});
+  Object.defineProperty(HTMLDialogElement.prototype, "close", {configurable:true,value:function(this:HTMLDialogElement){this.removeAttribute("open");}});
+});
+
+
+test("owned collection entries use shared Library rows while retaining entry selection", async () => {
+  const service = await import("@/lib/trainingService");
+  vi.mocked(service.fetchWordsForList).mockResolvedValueOnce({items:[{id:"owned-entry",headword:"huis",gender:"het",language_code:"nl",dictionary_name:"Personal",part_of_speech:"zn",raw:{meanings:[{definition:"een gebouw"}]}}],total:1});
+  render(<Harness locale="en" collection initial={{applyListFilter:true}} />);
+  const row = await screen.findByRole("button", {name:/het huis/});
+  expect(row).toHaveTextContent("1 meaning");
+  expect(row).toHaveTextContent("een gebouw");
+  fireEvent.click(row);
+  await waitFor(() => expect(service.fetchDictionaryEntryById).toHaveBeenCalledWith("owned-entry","user-1"));
+  expect(service.fetchWordsForList).toHaveBeenCalledWith("owned-list","user",expect.objectContaining({query:"goed",page:1}));
+});
+
+test("collection results receive the same POS/article predicate as preview", async()=>{
+ const service=await import("@/lib/trainingService");
+ render(<Harness locale="en" collection initial={{applyListFilter:true,entryFilters:{parts:["noun","verb"],article:"de"}}} />);
+ await waitFor(()=>expect(service.fetchWordsForList).toHaveBeenCalledWith("owned-list","user",expect.objectContaining({languageCode:"nl",entryFilters:{parts:["noun","verb"],article:"de"}})));
+});
+
+test('failed received metadata preserves user scope and offers an explicit retry',async()=>{
+ const service=await import('@/lib/trainingService'),retry=vi.fn();
+ render(<Harness locale="en" initial={{applyListFilter:true,collectionId:'received-list'}} sourceRead={{collectionId:'received-list',type:'user',status:'error',onRetry:retry}}/>);
+ await waitFor(()=>expect(service.fetchWordsForList).toHaveBeenCalledWith('received-list','user',expect.anything()));
+ expect(screen.getByRole('alert')).toHaveTextContent('Could not load collection details.');
+ fireEvent.click(within(screen.getByRole('alert')).getByRole('button',{name:'Retry'}));expect(retry).toHaveBeenCalledOnce();
+ expect(screen.queryByText('No sources')).not.toBeInTheDocument();
+});
+
+test("a viewed-collection membership save refreshes the result membership", async () => {
+  const service = await import("@/lib/trainingService");
+  const entry = {
+    id: "owned-entry",
+    headword: "huis",
+    gender: "het",
+    language_code: "nl",
+    dictionary_name: "Personal",
+    part_of_speech: "zn",
+    raw: { meanings: [{ definition: "een gebouw" }] },
+  } as DictionaryEntry;
+  vi.mocked(service.fetchWordsForList)
+    .mockClear()
+    .mockResolvedValueOnce({ items: [entry], total: 1 })
+    .mockResolvedValueOnce({ items: [], total: 0 });
+  const reloadLists = vi.fn().mockResolvedValue(undefined);
+  const notifyListsUpdated = vi.fn();
+  render(
+    <Harness
+      locale="en"
+      collection
+      initial={{ applyListFilter: true }}
+      reloadLists={reloadLists}
+      notifyListsUpdated={notifyListsUpdated}
+    />,
+  );
+
+  fireEvent.click(await screen.findByRole("button", { name: /het huis/ }));
+  await waitFor(() =>
+    expect(service.fetchDictionaryEntryById).toHaveBeenCalledWith(
+      "owned-entry",
+      "user-1",
+    ),
+  );
+  const detail = await screen.findByTestId("library-detail-desktop");
+  fireEvent.click(
+    within(detail.parentElement!).getByRole("button", {
+      name: "Simulate saved collection membership",
+    }),
+  );
+
+  await waitFor(() => expect(service.fetchWordsForList).toHaveBeenCalledTimes(2));
+  expect(service.fetchWordsForList).toHaveBeenLastCalledWith(
+    "owned-list",
+    "user",
+    expect.objectContaining({ query: "goed", page: 1 }),
+  );
+  expect(reloadLists).toHaveBeenCalledOnce();
+  expect(notifyListsUpdated).toHaveBeenCalledOnce();
+  expect(screen.queryByRole("button", { name: /het huis/ })).not.toBeInTheDocument();
+});
+
+test("switching from a pending collection read to dictionary search fences the old collection response", async () => {
+  const service = await import("@/lib/trainingService");
+  const oldCollectionRead = deferred<{ items: DictionaryEntry[]; total: number }>();
+  vi.mocked(service.fetchWordsForList).mockClear().mockReturnValueOnce(oldCollectionRead.promise);
+  fetchGroupPage.mockReset().mockResolvedValue({
+    groups: [nextPageGroup],
+    selectedTierComplete: true,
+    nextGroupCursor: null,
+  });
+
+  const view = render(
+    <Harness locale="en" collection initial={{ applyListFilter: true }} />,
+  );
+  await waitFor(() => expect(service.fetchWordsForList).toHaveBeenCalledTimes(1));
+
+  view.rerender(<Harness locale="en" />);
+  expect(await screen.findByTestId("library-headword-group-group-goed-next-page")).toBeInTheDocument();
+
+  await act(async () => {
+    oldCollectionRead.resolve({
+      items: [{
+        id: "stale-collection-entry",
+        headword: "verouderd",
+        language_code: "nl",
+        dictionary_name: "My collection",
+        part_of_speech: "zn",
+        raw: { meanings: [{ definition: "stale collection result" }] },
+      } as DictionaryEntry],
+      total: 1,
+    });
+  });
+
+  expect(screen.queryByText("stale collection result")).not.toBeInTheDocument();
+  expect(screen.getByTestId("library-headword-group-group-goed-next-page")).toBeInTheDocument();
+});
+
+test("a collection response arriving during query debounce cannot replace current results", async () => {
+  const service = await import("@/lib/trainingService");
+  const oldRead = deferred<{ items: DictionaryEntry[]; total: number }>();
+  const newRead = deferred<{ items: DictionaryEntry[]; total: number }>();
+  vi.mocked(service.fetchWordsForList).mockClear().mockReturnValueOnce(oldRead.promise).mockReturnValueOnce(newRead.promise);
+  render(<Harness locale="en" collection initial={{ applyListFilter: true }} />);
+  await waitFor(() => expect(service.fetchWordsForList).toHaveBeenCalledTimes(1));
+
+  vi.useFakeTimers();
+  try {
+    fireEvent.change(screen.getByRole("textbox", { name: "Search words" }), {
+      target: { value: "gracht" },
+    });
+    await act(async () => {
+      oldRead.resolve({
+        items: [{
+          id: "stale-collection-entry",
+          headword: "verouderd",
+          language_code: "nl",
+          dictionary_name: "My collection",
+          part_of_speech: "zn",
+          raw: { meanings: [{ definition: "stale collection result" }] },
+        } as DictionaryEntry],
+        total: 1,
+      });
+    });
+    expect(screen.queryByText("stale collection result")).not.toBeInTheDocument();
+    expect(service.fetchWordsForList).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(250);
+    });
+    expect(service.fetchWordsForList).toHaveBeenCalledTimes(2);
+    expect(service.fetchWordsForList).toHaveBeenLastCalledWith("owned-list", "user", expect.objectContaining({ query: "gracht" }));
+    await act(async () => {
+      newRead.resolve({
+        items: [{
+          id: "fresh-collection-entry",
+          headword: "gracht",
+          language_code: "nl",
+          dictionary_name: "My collection",
+          part_of_speech: "zn",
+          raw: { meanings: [{ definition: "fresh collection result" }] },
+        } as DictionaryEntry],
+        total: 1,
+      });
+    });
+    expect(screen.getByText("fresh collection result")).toBeInTheDocument();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("a pending same-scope lookup is deduplicated across close and reopen", async () => {
+  const pending = deferred<unknown>();
+  fetchGroupPage.mockReset().mockReturnValueOnce(pending.promise);
+  const view = render(<Harness open />);
+
+  await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(1));
+  view.rerender(<Harness open={false} />);
+  view.rerender(<Harness open />);
+  await act(async () => {
+    pending.resolve({
+      groups: [firstGroup],
+      selectedTierComplete: true,
+      nextGroupCursor: null,
+    });
+  });
+
+  expect(fetchGroupPage).toHaveBeenCalledTimes(1);
+  expect(await screen.findByTestId("library-headword-group-group-goed-main")).toBeInTheDocument();
+});
+
+test("shows a generic availability notice for a collection with inaccessible source links", async () => {
+  render(<Harness locale="en" collection unavailableSourceCount={1} initial={{applyListFilter:true}} />);
+
+  const notice = await screen.findByText(/Some words are temporarily unavailable/);
+  expect(notice).toHaveAttribute("role", "status");
+  expect(notice).not.toHaveTextContent("dictionary-");
+});
+
+test("approved Library omits personal entry controls without calling the create API", async () => {
+  const service = await import("@/lib/trainingService");
+  vi.mocked(service.createUserDictionaryEntry).mockClear();
+  render(<Harness locale="en" />);
+  await waitFor(() => expect(fetchGroupPage).toHaveBeenCalled());
+  expect(screen.queryByText("My dictionary")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", {name:"Add entry"})).not.toBeInTheDocument();
+  expect(service.createUserDictionaryEntry).not.toHaveBeenCalled();
+});
+
+test.each(["en", "nl", "ru"] as const)("approved Library toolbar omits query instruction in %s", async (locale) => {
+  const {getUiMessages} = await import("@/lib/uiMessages");
+  await act(async () => { render(<Harness locale={locale} initial={{query:""}} />); });
+  expect(screen.queryByText(getUiMessages(locale).library.typeQuery)).not.toBeInTheDocument();
+});
+
+test("approved Library browses immediately with server totals and cursor paging", async () => {
+  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+  readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+  fetchGroupPage.mockReset().mockResolvedValue({groups:[homographGroup],selectedTierComplete:false,nextGroupCursor:"browse-next",librarySearch:{totalGroups:42,matchingEntryIds:["entry-goed-zn"]}});
+  render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider>);
+  await screen.findByTestId("library-headword-group-group-goed-homograph");
+  expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}}));
+  expect(screen.getByText("42 matching articles")).toBeInTheDocument();
+  expect(screen.getByText("1 / 1")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button",{name:"Next"}));
+  await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",cursor:"browse-next"})));
+});
+
+test("initial browse loading does not show an empty result and failure can retry", async () => {
+  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+  const pending=deferred<unknown>();
+  readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+  fetchGroupPage.mockReset().mockReturnValueOnce(pending.promise).mockResolvedValue({groups:[homographGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,matchingEntryIds:["entry-goed-zn"]}});
+  render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider>);
+  await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalled());
+  expect(screen.queryByText("No words found")).not.toBeInTheDocument();
+  expect(screen.queryByText("0 matching articles")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("library-group-pagination")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("library-headword-group-group-goed-homograph")).not.toBeInTheDocument();
+  await act(async()=>{pending.reject(new Error("lookup_http_503"));});
+  expect(await screen.findByRole("alert")).toBeInTheDocument();
+  expect(screen.queryByText("0 matching articles")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("library-group-pagination")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button",{name:"Try again"}));
+  await screen.findByTestId("library-headword-group-group-goed-homograph");
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+test("returning to Library within a second retains results without another list request",async () => {
+ fetchGroupPage.mockReset();
+ fetchGroupPage.mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
+ const view=render(<Harness open />);
+ await screen.findByTestId("library-headword-group-group-goed-main");
+ const firstReads=fetchGroupPage.mock.calls.length;
+ view.rerender(<Harness open={false}/>);
+ view.rerender(<Harness open/>);
+ await act(async()=>{await new Promise(resolve=>setTimeout(resolve,20));});
+ expect(screen.getByTestId("library-headword-group-group-goed-main")).toBeVisible();
+ expect(fetchGroupPage).toHaveBeenCalledTimes(firstReads);
+});
+
+
+test("preloaded results are reused on first visible entry", async () => {
+  fetchGroupPage.mockReset().mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
+  const view=render(<Harness open={false} preload />);
+  await screen.findByTestId("library-headword-group-group-goed-main");
+  const reads=fetchGroupPage.mock.calls.length;
+  view.rerender(<Harness open preload />);
+  await act(async()=>{await new Promise(resolve=>setTimeout(resolve,20));});
+  expect(fetchGroupPage).toHaveBeenCalledTimes(reads);
+});
+
+test("returning after freshness expires refreshes retained results", async () => {
+  fetchGroupPage.mockReset().mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
+  const view=render(<Harness open preload />);
+  await screen.findByTestId("library-headword-group-group-goed-main");
+  const reads=fetchGroupPage.mock.calls.length;
+  view.rerender(<Harness open={false} preload />);
+  const now=Date.now();
+  const clock=vi.spyOn(Date,"now").mockReturnValue(now+31000);
+  try {
+    view.rerender(<Harness open preload />);
+    await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalledTimes(reads+1));
+    expect(screen.getByTestId("library-headword-group-group-goed-main")).toBeVisible();
+  } finally { clock.mockRestore(); }
+});
+
+test("background refresh failure retains the usable Library list", async () => {
+  fetchGroupPage.mockReset().mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
+  const view=render(<Harness open preload />);
+  await screen.findByTestId("library-headword-group-group-goed-main");
+  view.rerender(<Harness open={false} preload />);
+  fetchGroupPage.mockRejectedValueOnce(new Error("lookup_http_503"));
+  const clock=vi.spyOn(Date,"now").mockReturnValue(Date.now()+31000);
+  try {
+    view.rerender(<Harness open preload />);
+    await screen.findByRole("alert");
+    expect(screen.getByTestId("library-headword-group-group-goed-main")).toBeVisible();
+  } finally { clock.mockRestore(); }
+});
+
+test.each([
+  {placement: "panel" as const, side: "left" as const},
+  {placement: "dialog" as const, side: "right" as const},
+])("one filter entry opens the complete $placement form without a second material picker", async ({placement, side}) => {
+  const {AccountMaterialProvider} = await import("@/components/practice/material/AccountMaterialProvider");
+  const {LibraryPresentationContext} = await import("@/components/practice/library/LibraryPresentationContext");
+  const {getUiMessages} = await import("@/lib/uiMessages");
+  const copy = getUiMessages("en");
+  readableSources.mockReset().mockResolvedValue([source(scopeB, "Enabled B")]);
+  const group = goedGroup("unified-filter", scopeB, "Enabled B", [sense("unified-entry", "zn")]);
+  fetchGroupPage.mockReset().mockResolvedValue({groups:[group], selectedTierComplete:true, nextGroupCursor:null, librarySearch:{totalGroups:1, matchingEntryIds:["unified-entry"]}});
+  render(<LibraryPresentationContext.Provider value={{
+    filterPlacement:placement,
+    filterButtonSide:side,
+    renderColumns:({defaultColumns,filters})=><>{defaultColumns}{filters}</>,
+  }}><AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en"/></AccountMaterialProvider></LibraryPresentationContext.Provider>);
+  await screen.findByTestId("library-headword-group-unified-filter");
+  expect(screen.getAllByRole("button",{name:copy.library.filters})).toHaveLength(1);
+  expect(screen.queryByRole("button",{name:/^Material$|^Материал$/})).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));
+  const form = screen.getByRole(placement === "panel" ? "region" : "dialog",{name:copy.library.filterTitle});
+  expect(within(form).getByRole("button",{name:new RegExp(`^${copy.builder.source}`)})).toBeInTheDocument();
+  expect(within(form).getByRole("button",{name:"Nouns"})).toBeInTheDocument();
+  fireEvent.click(within(form).getByRole("button",{name:"Nouns"}));
+  fireEvent.click(within(form).getByRole("button",{name:copy.builder.cancel}));
+  expect(screen.queryByRole(placement === "panel" ? "region" : "dialog",{name:copy.library.filterTitle})).not.toBeInTheDocument();
+  // Reopening proves that changing the shared form did not apply the draft.
+  fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));
+  const reopened = screen.getByRole(placement === "panel" ? "region" : "dialog",{name:copy.library.filterTitle});
+  expect(within(reopened).getByRole("button",{name:"Nouns"})).toHaveAttribute("aria-pressed","false");
+  expect(screen.getAllByRole("button",{name:copy.library.filters})).toHaveLength(1);
+});
+
+test("a vanished explicit collection keeps its scope and reports unavailable instead of browsing all words", async () => {
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+ fetchGroupPage.mockReset().mockRejectedValue(Object.assign(new Error("material-unavailable"),{name:"PlatformV2LibraryLookupError",kind:"material-unavailable"}));
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{applyListFilter:true,collectionId:"vanished"}}/></AccountMaterialProvider>);
+ await screen.findByText("This collection or label is no longer available.");
+ expect(fetchGroupPage.mock.calls.every(call=>call[0].libraryScope?.material?.id==="vanished")).toBe(true);
+});
+test("a label with unavailable sources shows its own scope and an availability warning", async () => {
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:0,matchingEntryIds:[],unavailableEntryCount:2}});
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:"",labelId:"youtube",labelName:"YouTube"}}/></AccountMaterialProvider>);
+ await screen.findByText(/Some words are temporarily unavailable/);
+ expect(screen.getAllByText(/YouTube/).length).toBeGreaterThan(0);
+});
+
+ test("archiving closes the article, refreshes counts and does not auto-open a remaining article",async()=>{
+   const reloadLists=vi.fn().mockResolvedValue(undefined),notify=vi.fn();
+   fetchGroupPage.mockReset().mockResolvedValue({groups:[firstGroup,homographGroup],selectedTierComplete:true,nextGroupCursor:null});
+   render(<Harness reloadLists={reloadLists} notifyListsUpdated={notify}/>);
+   await waitFor(()=>expect(screen.getByTestId("library-detail-desktop")).toBeInTheDocument());
+   const before=fetchGroupPage.mock.calls.length;
+   fireEvent.click(screen.getByRole("button",{name:"Simulate archived entry"}));
+   await waitFor(()=>expect(fetchGroupPage.mock.calls.length).toBeGreaterThan(before));
+   await waitFor(()=>expect(screen.queryByTestId("library-detail-desktop")).not.toBeInTheDocument());
+   expect(reloadLists).toHaveBeenCalled();expect(notify).toHaveBeenCalled();
+ });

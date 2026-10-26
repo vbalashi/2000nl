@@ -1,0 +1,151 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+
+type DevSessionResponse = {
+  // Supabase session (shape can evolve; treat as opaque).
+  session?: any;
+  error?: string;
+};
+
+type DevSessionResult = {
+  ok: boolean;
+  payload: DevSessionResponse;
+};
+
+// React Strict Mode remounts the page in development. Share only the in-flight
+// OTP exchange so concurrent effects cannot rotate the same QA account's
+// refresh token. A later page visit must always be able to request a fresh
+// session, especially after a local database reset.
+let devSessionRequest: Promise<DevSessionResult> | null = null;
+
+function requestDevSession() {
+  if (devSessionRequest) return devSessionRequest;
+
+  const request = fetch("/api/dev/test-session", {
+    method: "POST",
+    cache: "no-store",
+  }).then(async (response) => ({
+    ok: response.ok,
+    payload: (await response.json()) as DevSessionResponse,
+  }));
+  devSessionRequest = request;
+
+  const clearRequest = () => {
+    if (devSessionRequest === request) devSessionRequest = null;
+  };
+  void request.then(clearRequest, clearRequest);
+
+  return request;
+}
+
+export const dynamic = "force-dynamic";
+
+export default function DevTestLoginPage() {
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [message, setMessage] = useState<string>("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const run = async () => {
+      // This page exists to help local development and automation agents.
+      if (process.env.NODE_ENV === "production") {
+        setStatus("error");
+        setMessage("Not available in production.");
+        return;
+      }
+
+      setStatus("loading");
+      setMessage("Creating a dev session...");
+
+      const redirectTo =
+        (typeof window !== "undefined"
+          ? new URL(window.location.href).searchParams.get("redirectTo")
+          : null) ?? "/";
+
+      let result: DevSessionResult;
+      try {
+        result = await requestDevSession();
+      } catch (error) {
+        if (cancelled) return;
+        setStatus("error");
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Failed to create a dev session.",
+        );
+        return;
+      }
+      if (cancelled) return;
+
+      const { ok, payload: json } = result;
+      if (!ok || json.error || !json.session) {
+        setStatus("error");
+        setMessage(json.error ?? "Failed to create a dev session.");
+        return;
+      }
+
+      const resolveProjectRef = (supabaseUrl: string | null | undefined) => {
+        try {
+          const u = new URL(String(supabaseUrl || ""));
+          const host = u.hostname || "";
+          // Expected: <ref>.supabase.co
+          const ref = host.split(".")[0];
+          return ref || null;
+        } catch {
+          return null;
+        }
+      };
+
+      const projectRef = resolveProjectRef(process.env.NEXT_PUBLIC_SUPABASE_URL) || "lliwdcpuuzjmxyzrjtoz";
+      const storageKey = `sb-${projectRef}-auth-token`;
+      try {
+        for (const k of Object.keys(localStorage)) {
+          if (k.startsWith("sb-")) localStorage.removeItem(k);
+        }
+        localStorage.setItem(storageKey, JSON.stringify(json.session));
+      } catch (err: any) {
+        setStatus("error");
+        setMessage(String(err?.message ?? err ?? "Failed to write localStorage."));
+        return;
+      }
+
+      if (cancelled) return;
+
+      setStatus("success");
+      setMessage("Signed in. Redirecting...");
+      // Use a hard navigation so the root page bootstraps with the stored session.
+      window.location.replace(redirectTo);
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <main className="mx-auto flex min-h-[60vh] max-w-xl flex-col justify-center gap-4 px-6">
+      <h1 className="text-2xl font-semibold">Dev test login</h1>
+      <p className="text-sm text-neutral-600">
+        Uses a server-only Supabase Admin API call to mint an OTP for{" "}
+        <code>QA_TEST_USER_EMAIL</code>, then exchanges it for a session and stores
+        the session JSON in <code>localStorage</code> (Supabase format).
+      </p>
+
+      <div className="rounded-md border border-neutral-200 bg-white p-4">
+        <div className="text-sm">
+          <div className="font-medium">Status: {status}</div>
+          {message ? <div className="mt-1 text-neutral-700">{message}</div> : null}
+        </div>
+      </div>
+
+      <p className="text-xs text-neutral-500">
+        Endpoint: <code>/api/dev/test-session</code>
+      </p>
+    </main>
+  );
+}

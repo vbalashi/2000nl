@@ -1,0 +1,650 @@
+import { dictionarySourceProfile } from "@/lib/dictionary/sourceProfile";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { useTrainingActiveList } from "@/lib/training/useTrainingActiveList";
+import type { WordListSummary } from "@/lib/types";
+
+const {
+  fetchActiveTrainingScope,
+  fetchAvailableLists,
+  fetchListSummaryById,
+  updateActiveTrainingScope,
+} = vi.hoisted(() => ({
+  fetchActiveTrainingScope: vi.fn(),
+  fetchAvailableLists: vi.fn(),
+  fetchListSummaryById: vi.fn(),
+  updateActiveTrainingScope: vi.fn(),
+}));
+
+vi.mock("@/lib/trainingService", () => ({
+  fetchActiveTrainingScope,
+  fetchAvailableLists,
+  fetchListSummaryById,
+  updateActiveTrainingScope,
+}));
+
+const curatedList = {
+  id: "curated-1",
+  name: "Primary",
+  type: "curated" as const,
+  item_count: 10,
+};
+
+const userList = {
+  id: "user-1",
+  name: "Saved",
+  type: "user" as const,
+  item_count: 5,
+};
+
+const englishList = {
+  id: "en-1",
+  name: "English saved",
+  type: "curated" as const,
+  item_count: 10,
+  language_code: "en",
+};
+
+const dictionarySourceList = {
+  id: "source-1",
+  name: dictionarySourceProfile().fullListName,
+  type: "curated" as const,
+  item_count: 2000,
+};
+
+describe("useTrainingActiveList", () => {
+  test("never exposes the previous language catalogue as ready during a language switch", async () => {
+    let resolveEnglish!: (lists: WordListSummary[]) => void;
+    fetchAvailableLists.mockImplementation((_user: string, language: string) => language === "en" ? new Promise(resolve => { resolveEnglish = resolve; }) : Promise.resolve([curatedList]));
+    const observed: {language: string; status: string}[] = [];
+    const {result, rerender} = renderHook(({language}) => {
+      const state = useTrainingActiveList({userId: "user-1", language, showSettings: false});
+      observed.push({language, status: state.listCatalogStatus});
+      return state;
+    }, {initialProps: {language: "nl"}});
+    await waitFor(() => expect(result.current.listCatalogStatus).toBe("ready"));
+    rerender({language: "en"});
+    await waitFor(() => expect(result.current.hydratedLanguage).toBe("en"));
+    expect(observed.some(state => state.language === "en" && state.status === "ready")).toBe(false);
+    await act(async () => resolveEnglish([englishList]));
+    expect(result.current.listCatalogStatus).toBe("ready");
+  });
+
+  beforeEach(() => {
+    fetchActiveTrainingScope.mockReset();
+    fetchAvailableLists.mockReset();
+    fetchListSummaryById.mockReset();
+    updateActiveTrainingScope.mockReset();
+    fetchAvailableLists.mockResolvedValue([curatedList]);
+    fetchActiveTrainingScope.mockResolvedValue({
+      languageCode: "nl",
+      activeListId: null,
+      activeListType: null,
+      activeScenario: "understanding",
+      cardFilter: "both",
+      modesEnabled: ["word-to-definition"],
+      newReviewRatio: 2,
+      hasSavedScope: false,
+      isValid: false,
+    });
+    fetchListSummaryById.mockResolvedValue(null);
+    updateActiveTrainingScope.mockResolvedValue({ scope: null, error: null });
+  });
+
+  test("navigation refresh retains a ready catalog but still reports refresh failure", async () => {
+    const view = renderHook(({showSettings}) => useTrainingActiveList({userId: "owner", language: "nl", showSettings}), {initialProps: {showSettings: false}});
+    await waitFor(() => expect(view.result.current.listCatalogStatus).toBe("ready"));
+    let reject!: (error: Error) => void;
+    fetchAvailableLists.mockImplementationOnce(() => new Promise((_, fail) => { reject = fail; }));
+    view.rerender({showSettings: true});
+    expect(view.result.current.listCatalogStatus).toBe("ready");
+    expect(view.result.current.availableLists).toEqual([curatedList]);
+    await act(async () => reject(new Error("offline")));
+    expect(view.result.current.listCatalogStatus).toBe("error");
+    expect(view.result.current.availableLists).toEqual([curatedList]);
+  });
+
+  test.each(["owner", "language"])("catalog retention resets for a changed %s", async (change) => {
+    const view = renderHook(({userId, language}) => useTrainingActiveList({userId, language, showSettings: false}), {initialProps: {userId: "owner-a", language: "nl"}});
+    await waitFor(() => expect(view.result.current.listCatalogStatus).toBe("ready"));
+    fetchAvailableLists.mockImplementationOnce(() => new Promise(() => {}));
+    view.rerender({userId: change === "owner" ? "owner-b" : "owner-a", language: change === "language" ? "en" : "nl"});
+    expect(view.result.current.listCatalogStatus).toBe("loading");
+    expect(view.result.current.availableLists).toEqual([]);
+  });
+
+  test("hydrates a saved active list", async () => {
+    fetchActiveTrainingScope.mockResolvedValue({
+      languageCode: "nl",
+      activeListId: "user-1",
+      activeListType: "user",
+      activeScenario: "understanding",
+      cardFilter: "both",
+      modesEnabled: ["word-to-definition"],
+      newReviewRatio: 2,
+      hasSavedScope: true,
+      isValid: true,
+    });
+    fetchListSummaryById.mockResolvedValue(userList);
+
+    const dispatch = vi.spyOn(window, "dispatchEvent");
+    const { result } = renderHook(() =>
+      useTrainingActiveList({
+        userId: "user-1",
+        language: "nl",
+        showSettings: false,
+        initialTransitionId: "initial-entry-189",
+      }),
+    );
+
+    await waitFor(() => expect(result.current.listHydrated).toBe(true));
+
+    expect(fetchListSummaryById).toHaveBeenCalledWith({
+      userId: "user-1",
+      listId: "user-1",
+      listType: "user",
+    });
+    expect(result.current.wordListId).toBe("user-1");
+    expect(result.current.wordListType).toBe("user");
+    expect(result.current.wordListLabel).toBe("Saved");
+    expect(result.current.activeList).toBe(userList);
+    expect(trainingTimingEvents(dispatch)).toContainEqual(
+      expect.objectContaining({
+        transitionId: "initial-entry-189",
+        stage: "training.active-scope-hydration",
+        outcome: "ready",
+      }),
+    );
+  });
+
+  test("preserves the last successful catalog when a refresh fails", async () => {
+    fetchAvailableLists.mockResolvedValue([userList]);
+
+    const { result } = renderHook(() =>
+      useTrainingActiveList({
+        userId: "user-1",
+        language: "nl",
+        showSettings: false,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.listCatalogStatus).toBe("ready"));
+    expect(result.current.availableLists).toEqual([userList]);
+
+    fetchAvailableLists.mockRejectedValueOnce(new Error("offline"));
+    await act(async () => {
+      await result.current.refreshAvailableLists();
+    });
+
+    expect(result.current.availableLists).toEqual([userList]);
+    expect(result.current.listCatalogStatus).toBe("error");
+  });
+
+  test("restores the saved active list when switching nl -> en -> nl", async () => {
+    fetchAvailableLists.mockImplementation(async (_userId, language) =>
+      language === "en" ? [englishList] : [curatedList, userList],
+    );
+    fetchActiveTrainingScope.mockImplementation(async ({ languageCode }) =>
+      languageCode === "en"
+        ? {
+            languageCode: "en",
+            activeListId: "en-1",
+            activeListType: "curated",
+            activeScenario: "understanding",
+            cardFilter: "both",
+            modesEnabled: ["word-to-definition"],
+            newReviewRatio: 2,
+            hasSavedScope: true,
+            isValid: true,
+          }
+        : {
+            languageCode: "nl",
+            activeListId: "user-1",
+            activeListType: "user",
+            activeScenario: "understanding",
+            cardFilter: "both",
+            modesEnabled: ["word-to-definition"],
+            newReviewRatio: 2,
+            hasSavedScope: true,
+            isValid: true,
+          },
+    );
+    fetchListSummaryById.mockImplementation(async ({ listId }) =>
+      listId === "en-1" ? englishList : userList,
+    );
+
+    const { result, rerender } = renderHook(
+      ({ language }) =>
+        useTrainingActiveList({
+          userId: "user-1",
+          language,
+          showSettings: false,
+        }),
+      { initialProps: { language: "nl" } },
+    );
+
+    await waitFor(() => expect(result.current.wordListId).toBe("user-1"));
+
+    rerender({ language: "en" });
+    await waitFor(() => expect(result.current.wordListId).toBe("en-1"));
+    expect(result.current.wordListLabel).toBe("English saved");
+
+    rerender({ language: "nl" });
+    await waitFor(() => expect(result.current.wordListId).toBe("user-1"));
+    expect(result.current.wordListLabel).toBe("Saved");
+  });
+
+  test("clears a deleted saved list and then auto-selects primary", async () => {
+    fetchActiveTrainingScope.mockResolvedValue({
+      languageCode: "nl",
+      activeListId: "missing",
+      activeListType: "user",
+      activeScenario: "understanding",
+      cardFilter: "both",
+      modesEnabled: ["word-to-definition"],
+      newReviewRatio: 2,
+      hasSavedScope: true,
+      isValid: false,
+    });
+    fetchListSummaryById.mockResolvedValue(null);
+
+    const { result } = renderHook(() =>
+      useTrainingActiveList({
+        userId: "user-1",
+        language: "nl",
+        showSettings: false,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.listHydrated).toBe(true));
+    await waitFor(() => expect(result.current.wordListId).toBe("curated-1"));
+
+    expect(updateActiveTrainingScope).toHaveBeenCalledWith({
+      userId: "user-1",
+      languageCode: "nl",
+      listId: null,
+      listType: null,
+    });
+    expect(result.current.wordListType).toBe("curated");
+    expect(result.current.wordListLabel).toBe("Primary");
+  });
+
+  test("persists explicit list selection and exposes footer options", async () => {
+    fetchAvailableLists.mockResolvedValue([
+      dictionarySourceList,
+      curatedList,
+      userList,
+    ]);
+
+    const { result } = renderHook(() =>
+      useTrainingActiveList({
+        userId: "user-1",
+        language: "nl",
+        showSettings: false,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.listOptions).toHaveLength(2));
+
+    const selected = result.current.resolveListValue("user:user-1");
+    expect(selected).toBe(userList);
+    await result.current.persistListChange(selected!);
+
+    expect(updateActiveTrainingScope).toHaveBeenCalledWith({
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "user-1",
+      listType: "user",
+    });
+    await waitFor(() => expect(result.current.activeListValue).toBe("user:user-1"));
+    expect(result.current.activeList).toBe(userList);
+    expect(result.current.listOptions).toEqual([
+      { value: "curated:curated-1", label: "Primary" },
+      { value: "user:user-1", label: "Saved" },
+    ]);
+  });
+
+  test("does not expose dictionary source lists as training targets", async () => {
+    fetchAvailableLists.mockResolvedValue([dictionarySourceList, curatedList]);
+
+    const { result } = renderHook(() =>
+      useTrainingActiveList({
+        userId: "user-1",
+        language: "nl",
+        showSettings: false,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(result.current.listOptions).toEqual([
+        { value: "curated:curated-1", label: "Primary" },
+      ]),
+    );
+
+    const selected = result.current.resolveListValue("curated:source-1");
+    const scope = selected
+      ? await result.current.persistListChange(selected)
+      : null;
+
+    expect(scope).toBeNull();
+    expect(updateActiveTrainingScope).not.toHaveBeenCalledWith({
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "source-1",
+      listType: "curated",
+    });
+    expect(result.current.activeListValue).toBe("curated:curated-1");
+  });
+
+  test("list updates keep resolved active list or fall back to primary", async () => {
+    fetchAvailableLists.mockResolvedValue([curatedList, userList]);
+    fetchActiveTrainingScope
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: null,
+        activeListType: null,
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: false,
+        isValid: false,
+      })
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: "user-1",
+        activeListType: "user",
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: true,
+        isValid: true,
+      })
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: "missing",
+        activeListType: "user",
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: true,
+        isValid: false,
+      });
+    fetchListSummaryById
+      .mockResolvedValueOnce(userList)
+      .mockResolvedValueOnce(null);
+    const onResolvedActiveList = vi.fn();
+    const onPrimaryFallback = vi.fn();
+
+    const { result } = renderHook(() =>
+      useTrainingActiveList({
+        userId: "user-1",
+        language: "nl",
+        showSettings: false,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.listHydrated).toBe(true));
+
+    await result.current.handleListsUpdated({ onResolvedActiveList });
+    expect(onResolvedActiveList).toHaveBeenCalledWith(
+      userList,
+      expect.objectContaining({
+        activeListId: "user-1",
+        activeScenario: "understanding",
+      }),
+    );
+    await waitFor(() => expect(result.current.wordListId).toBe("user-1"));
+
+    await result.current.handleListsUpdated({ onPrimaryFallback });
+    expect(onPrimaryFallback).toHaveBeenCalledWith(
+      curatedList,
+      expect.objectContaining({
+        activeListId: "missing",
+        activeScenario: "understanding",
+      }),
+    );
+    expect(updateActiveTrainingScope).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        listId: "curated-1",
+        listType: "curated",
+      }),
+    );
+  });
+
+  test("discards a late list refresh after the language changes", async () => {
+    let resolveOldLists!: (lists: typeof curatedList[]) => void;
+    const oldLists = new Promise<typeof curatedList[]>((resolve) => {
+      resolveOldLists = resolve;
+    });
+    fetchAvailableLists.mockImplementation(async (_userId, language) =>
+      language === "nl" ? oldLists : [englishList],
+    );
+    fetchActiveTrainingScope.mockImplementation(async ({ languageCode }) => ({
+      languageCode,
+      activeListId: languageCode === "en" ? englishList.id : curatedList.id,
+      activeListType: "curated",
+      activeScenario: "understanding",
+      cardFilter: "both",
+      modesEnabled: ["word-to-definition"],
+      newReviewRatio: 2,
+      hasSavedScope: true,
+      isValid: true,
+    }));
+    fetchListSummaryById.mockImplementation(async ({ listId }) =>
+      listId === englishList.id ? englishList : curatedList,
+    );
+    const onResolvedActiveList = vi.fn();
+
+    const { result, rerender } = renderHook(
+      ({ language }) =>
+        useTrainingActiveList({
+          userId: "user-1",
+          language,
+          showSettings: false,
+        }),
+      { initialProps: { language: "nl" } },
+    );
+
+    const staleRefresh = result.current.handleListsUpdated({
+      onResolvedActiveList,
+    });
+    rerender({ language: "en" });
+    await waitFor(() => expect(result.current.wordListId).toBe(englishList.id));
+    resolveOldLists([curatedList]);
+    await staleRefresh;
+
+    expect(onResolvedActiveList).not.toHaveBeenCalled();
+    expect(result.current.wordListId).toBe(englishList.id);
+    expect(result.current.wordListLabel).toBe(englishList.name);
+  });
+
+  test("ordinary list refresh does not cancel authoritative scope refresh", async () => {
+    let resolveScopeLists!: (lists: WordListSummary[]) => void;
+    const scopeLists = new Promise<WordListSummary[]>((resolve) => {
+      resolveScopeLists = resolve;
+    });
+    fetchAvailableLists
+      .mockResolvedValueOnce([curatedList])
+      .mockReturnValueOnce(scopeLists)
+      .mockResolvedValueOnce([curatedList, userList]);
+    fetchActiveTrainingScope
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: null,
+        activeListType: null,
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: false,
+        isValid: false,
+      })
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: userList.id,
+        activeListType: userList.type,
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: true,
+        isValid: true,
+      });
+    fetchListSummaryById.mockResolvedValue(userList);
+    const onResolvedActiveList = vi.fn();
+
+    const { result } = renderHook(() =>
+      useTrainingActiveList({
+        userId: "user-1",
+        language: "nl",
+        showSettings: false,
+      }),
+    );
+    await waitFor(() => expect(result.current.listHydrated).toBe(true));
+
+    const scopeRefresh = result.current.handleListsUpdated({
+      onResolvedActiveList,
+    });
+    await result.current.refreshAvailableLists();
+    resolveScopeLists([curatedList, userList]);
+    await scopeRefresh;
+
+    expect(onResolvedActiveList).toHaveBeenCalledTimes(1);
+    expect(onResolvedActiveList).toHaveBeenCalledWith(
+      userList,
+      expect.objectContaining({ activeListId: userList.id }),
+    );
+    await waitFor(() => expect(result.current.wordListId).toBe(userList.id));
+  });
+
+  test("authoritative scope refresh supersedes an older list-only result", async () => {
+    let resolveOldLists!: (lists: WordListSummary[]) => void;
+    const oldLists = new Promise<WordListSummary[]>((resolve) => {
+      resolveOldLists = resolve;
+    });
+    fetchAvailableLists
+      .mockResolvedValueOnce([curatedList])
+      .mockReturnValueOnce(oldLists)
+      .mockResolvedValueOnce([curatedList, userList]);
+    fetchActiveTrainingScope
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: null,
+        activeListType: null,
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: false,
+        isValid: false,
+      })
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: userList.id,
+        activeListType: userList.type,
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: true,
+        isValid: true,
+      });
+    fetchListSummaryById.mockResolvedValue(userList);
+
+    const { result } = renderHook(() =>
+      useTrainingActiveList({
+        userId: "user-1",
+        language: "nl",
+        showSettings: false,
+      }),
+    );
+    await waitFor(() => expect(result.current.listHydrated).toBe(true));
+
+    const oldRefresh = result.current.refreshAvailableLists();
+    await result.current.handleListsUpdated();
+    await waitFor(() =>
+      expect(result.current.availableLists).toEqual([curatedList, userList]),
+    );
+
+    resolveOldLists([curatedList]);
+    await oldRefresh;
+    await waitFor(() =>
+      expect(result.current.availableLists).toEqual([curatedList, userList]),
+    );
+  });
+});
+
+function trainingTimingEvents(dispatch: { mock: { calls: [Event][] } }) {
+  return dispatch.mock.calls.flatMap(([event]) =>
+    event instanceof CustomEvent &&
+    event.type === "2000nl:training-transition-timing"
+      ? [event.detail as Record<string, unknown>]
+      : [],
+  );
+}
+
+describe('received source projection',()=>{
+ beforeEach(()=>{fetchAvailableLists.mockReset().mockResolvedValue([curatedList]);fetchListSummaryById.mockReset().mockResolvedValue(null);updateActiveTrainingScope.mockReset().mockResolvedValue({scope:null,error:null});fetchActiveTrainingScope.mockReset().mockResolvedValue({languageCode:'nl',activeListId:null,activeListType:null,activeScenario:'understanding',cardFilter:'both',modesEnabled:['word-to-definition'],newReviewRatio:2,hasSavedScope:false,isValid:false});});
+test('readable received sources stay separate from personal editing and persist only after server confirmation',async()=>{
+ vi.stubEnv('NEXT_PUBLIC_COLLECTION_SHARING_ENABLED','true');
+ try{
+  const received={id:'received',name:'Shared lesson',type:'user' as const,ownership:'received' as const};
+  const hook=renderHook(()=>useTrainingActiveList({userId:'user-1',language:'nl',showSettings:true}));
+  await waitFor(()=>expect(hook.result.current.listCatalogStatus).toBe('ready'));
+  act(()=>hook.result.current.rememberTrainingReferences([received.id],[received]));
+  expect(hook.result.current.readableLists.some(row=>row.id===received.id)).toBe(true);
+  expect(hook.result.current.availableLists.some(row=>row.id===received.id)).toBe(false);
+  updateActiveTrainingScope.mockResolvedValueOnce({scope:null,error:Error('offline')});
+  await act(async()=>{expect(await hook.result.current.persistListChange(received)).toBeNull();});expect(hook.result.current.wordListId).not.toBe(received.id);
+ }finally{vi.unstubAllEnvs();}
+});
+test('a saved revoked received source retains its identity without mutation or primary fallback',async()=>{
+ vi.stubEnv('NEXT_PUBLIC_COLLECTION_SHARING_ENABLED','true');
+ try{
+
+  fetchActiveTrainingScope.mockResolvedValue({...{languageCode:"nl",activeScenario:"understanding",cardFilter:"both",modesEnabled:["word-to-definition"],newReviewRatio:2},activeListId:'received',activeListType:'user',activeListOwnership:'received',hasSavedScope:true,isValid:false,unavailableReason:'shared_collection_unavailable'});
+  const hook=renderHook(()=>useTrainingActiveList({userId:'user-1',language:'nl',showSettings:true}));
+  await waitFor(()=>expect(hook.result.current.listHydrated).toBe(true));expect(hook.result.current.wordListId).toBe('received');expect(hook.result.current.activeList?.ownership).toBe('received');expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+  await act(async()=>{await hook.result.current.handleListsUpdated();});expect(hook.result.current.wordListId).toBe('received');expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+ }finally{vi.unstubAllEnvs();}
+});
+
+test('failed saved-scope read is not an empty selection and never persists a fallback',async()=>{
+ vi.stubEnv('NEXT_PUBLIC_COLLECTION_SHARING_ENABLED','true');
+ try{
+fetchActiveTrainingScope.mockRejectedValueOnce(Error('offline'));
+  const hook=renderHook(()=>useTrainingActiveList({userId:'user-1',language:'nl',showSettings:true}));await waitFor(()=>expect(hook.result.current.listCatalogStatus).toBe('error'));
+  expect(hook.result.current.wordListId).toBeNull();expect(hook.result.current.listHydrated).toBe(false);expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+  await act(async()=>{await hook.result.current.handleListsUpdated();});expect(hook.result.current.listHydrated).toBe(true);expect(hook.result.current.listCatalogStatus).toBe('ready');
+ }finally{vi.unstubAllEnvs();}
+});
+
+test('source persistence is single flight and correlates the server selection',async()=>{
+ vi.stubEnv('NEXT_PUBLIC_COLLECTION_SHARING_ENABLED','true');
+ try{
+  const a={id:'received-a',name:'A',type:'user' as const,ownership:'received' as const},b={...a,id:'received-b'};
+  const hook=renderHook(()=>useTrainingActiveList({userId:'viewer',language:'nl',showSettings:true}));await waitFor(()=>expect(hook.result.current.listCatalogStatus).toBe('ready'));
+  let settle!:(value:unknown)=>void;updateActiveTrainingScope.mockImplementationOnce(()=>new Promise(resolve=>settle=resolve));let pending!:Promise<unknown>;
+  act(()=>{pending=hook.result.current.persistListChange(a);});expect(hook.result.current.selectionSaving).toBe(true);
+  await act(async()=>{expect(await hook.result.current.persistListChange(b)).toBeNull();});expect(updateActiveTrainingScope).toHaveBeenCalledOnce();
+  await act(async()=>{settle({scope:{languageCode:'nl',activeListId:a.id,activeListType:'user',isValid:true},error:null});await pending;});expect(hook.result.current.wordListId).toBe(a.id);expect(hook.result.current.selectionSaving).toBe(false);
+  updateActiveTrainingScope.mockResolvedValueOnce({scope:{languageCode:'en',activeListId:b.id,activeListType:'user',isValid:true},error:null});await act(async()=>{expect(await hook.result.current.persistListChange(b)).toBeNull();});expect(hook.result.current.wordListId).toBe(a.id);
+ }finally{vi.unstubAllEnvs();}
+});
+
+test('a scope round trip cannot revive an old source response over a new selection',async()=>{
+ vi.stubEnv('NEXT_PUBLIC_COLLECTION_SHARING_ENABLED','true');
+ try{
+  const a={id:'received-a',name:'A',type:'user' as const,ownership:'received' as const},b={...a,id:'received-b'};
+  let old!:(value:unknown)=>void;updateActiveTrainingScope.mockImplementationOnce(()=>new Promise(resolve=>old=resolve));
+  const hook=renderHook(({language})=>useTrainingActiveList({userId:'viewer',language,showSettings:true}),{initialProps:{language:'nl'}});await waitFor(()=>expect(hook.result.current.listCatalogStatus).toBe('ready'));
+  let pending!:Promise<unknown>;act(()=>{pending=hook.result.current.persistListChange(a);});hook.rerender({language:'en'});hook.rerender({language:'nl'});await waitFor(()=>expect(hook.result.current.listCatalogStatus).toBe('ready'));
+  updateActiveTrainingScope.mockResolvedValueOnce({scope:{languageCode:'nl',activeListId:b.id,activeListType:'user',isValid:true},error:null});await act(async()=>{await hook.result.current.persistListChange(b);});
+  await act(async()=>{old({scope:{languageCode:'nl',activeListId:a.id,activeListType:'user',isValid:true},error:null});await pending;});expect(hook.result.current.wordListId).toBe(b.id);
+ }finally{vi.unstubAllEnvs();}
+});
+
+});

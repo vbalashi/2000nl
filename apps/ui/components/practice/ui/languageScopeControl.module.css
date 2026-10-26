@@ -1,0 +1,3 @@
+.scope{position:relative;min-width:0;width:100%}
+.measure{position:absolute;left:0;top:0;width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none;display:flex;white-space:nowrap;font:400 var(--practice-text-label)/1.35 var(--practice-font-ui)}
+.measure span{display:inline-block;flex:none}

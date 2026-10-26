@@ -1,0 +1,349 @@
+import fs from "fs";
+import path from "path";
+import { Pool, PoolClient } from "pg";
+
+export const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+export function getDbUrl() {
+  const value = process.env.FSRS_TEST_DB_URL?.trim();
+  if (!value) return undefined;
+
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("unsafe_fsrs_test_database_url");
+  }
+  const database = decodeURIComponent(url.pathname.replace(/^\//, ""));
+  const loopback = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+  const scopedDatabase =
+    database === "fsrs_test" || /^2000nl_fsrs_[a-z0-9_]+$/.test(database);
+  // node-postgres lets URI query parameters override the authority and
+  // database parsed above. Keep the test target contract explicit: only the
+  // non-routing SSL mode option is allowed through.
+  const allowedQueryParameters = new Set(["sslmode"]);
+  const hasUnsafeQueryParameter = [...url.searchParams.keys()].some(
+    (key) => !allowedQueryParameters.has(key.toLowerCase()),
+  );
+  if (
+    !["postgres:", "postgresql:"].includes(url.protocol) ||
+    !loopback.has(url.hostname) ||
+    !scopedDatabase ||
+    hasUnsafeQueryParameter
+  ) {
+    throw new Error("unsafe_fsrs_test_database_url");
+  }
+  return value;
+}
+
+async function ensureCronTestApi(pool: Pool) {
+  const { rows } = await pool.query("select current_database() as database_name, to_regclass('cron.job') as job_table");
+  if (rows[0]?.job_table) return;
+  // Supabase installs pg_cron in its configured `postgres` database. Leave
+  // that path to the real extension; only disposable FSRS test DBs get a stub.
+  if (rows[0]?.database_name === "postgres") return;
+
+  await pool.query(`
+    create schema cron;
+    create table cron.job (
+      jobid bigserial primary key,
+      schedule text not null,
+      command text not null,
+      jobname text unique not null
+    );
+    create function cron.schedule(p_jobname text, p_schedule text, p_command text)
+    returns bigint
+    language plpgsql
+    as $$
+    declare
+      v_jobid bigint;
+    begin
+      insert into cron.job (jobname, schedule, command)
+      values ($1, $2, $3)
+      on conflict (jobname) do update
+        set schedule = excluded.schedule, command = excluded.command
+      returning jobid into v_jobid;
+      return v_jobid;
+    end;
+    $$;
+  `);
+}
+
+async function ensureRealtimeTestApi(pool: Pool) {
+  const { rows } = await pool.query(
+    "select current_database() as database_name, to_regclass('realtime.messages') as messages_table",
+  );
+  // Leave Supabase-owned Realtime objects entirely untouched when present.
+  if (rows[0]?.messages_table) return;
+  const database = rows[0]?.database_name ?? "";
+  if (database !== "fsrs_test" && !/^2000nl_fsrs_[a-z0-9_]+$/.test(database)) {
+    throw new Error("unsafe_fsrs_realtime_shim_database");
+  }
+  // Share the plain-Postgres Broadcast model with DB integration tests. This
+  // section has ordinary SQL only; the file's initial psql directive is excluded.
+  const compatibility = fs.readFileSync(
+    path.resolve(process.cwd(), "..", "..", "db", "scripts", "plain_postgres_supabase_compat.sql"),
+    "utf8",
+  );
+  const marker = "-- CI-only Broadcast transport model.";
+  const start = compatibility.indexOf(marker);
+  if (start < 0) throw new Error("missing_fsrs_realtime_compatibility_sql");
+  await pool.query(compatibility.slice(start));
+}
+
+export async function ensureAuthSchema(pool: Pool) {
+  const { rowCount: hasSupabaseAuth } = await pool.query(`
+    select 1
+    from information_schema.tables
+    where table_schema = 'auth'
+      and table_name = 'users'
+  `);
+
+  await pool.query(`
+    do $$ begin
+      create role supabase_auth_admin nologin;
+    exception when duplicate_object then
+      null;
+    end $$;
+  `);
+
+  if (hasSupabaseAuth && hasSupabaseAuth > 0) {
+    await pool.query(supabaseCompatSql);
+    await pool.query(`alter table auth.users add column if not exists last_sign_in_at timestamptz; alter table auth.users add column if not exists email_confirmed_at timestamptz`);
+    await ensureCronTestApi(pool);
+    return;
+  }
+
+  await pool.query(`
+    -- Create Supabase-compatible roles
+    do $$ begin
+      create role anon nologin;
+    exception when duplicate_object then
+      null;
+    end $$;
+
+    do $$ begin
+      create role authenticated nologin;
+    exception when duplicate_object then
+      null;
+    end $$;
+
+    do $$ begin
+      -- Match Supabase: the server service role bypasses table RLS.
+      create role service_role nologin bypassrls;
+    exception when duplicate_object then
+      null;
+    end $$;
+
+    do $$ begin
+      create role supabase_auth_admin nologin;
+    exception when duplicate_object then
+      null;
+    end $$;
+
+    -- Create auth schema
+    create schema if not exists auth;
+    create table if not exists auth.users (
+      id uuid primary key,
+      email text,
+      created_at timestamptz default now(),
+      last_sign_in_at timestamptz,
+      email_confirmed_at timestamptz
+    );
+
+    -- Create private schema
+    ${supabaseCompatSql}
+
+    -- Supabase compatibility: many migrations reference auth.uid() in RLS policies.
+    -- In Supabase, this reads the user id from JWT claims; in tests we just need
+    -- the function to exist so migrations compile on plain Postgres.
+    create or replace function auth.uid()
+    returns uuid
+    language sql
+    stable
+    as $$
+      select coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''), nullif(current_setting('request.jwt.claims', true), '')::jsonb->>'sub')::uuid;
+    $$;
+  `);
+  await ensureCronTestApi(pool);
+}
+
+const supabaseCompatSql = `
+  create schema if not exists private;
+  create schema if not exists extensions;
+
+  create extension if not exists pgcrypto with schema extensions;
+
+  create or replace function public.digest(data text, type text)
+  returns bytea
+  language sql
+  immutable
+  parallel safe
+  as $$
+    select extensions.digest(data, type);
+  $$;
+
+  create or replace function public.digest(data bytea, type text)
+  returns bytea
+  language sql
+  immutable
+  parallel safe
+  as $$
+    select extensions.digest(data, type);
+  $$;
+`;
+
+export async function runMigrations(pool: Pool) {
+  // Vitest runs files in parallel in CI, but our workflow uses a single shared
+  // postgres DB service. Use a DB-level lock + migration table so migrations
+  // are applied exactly once and cannot race.
+  await pool.query(`select pg_advisory_lock(hashtext('2000nl_fsrs_test_migrations'))`);
+  try {
+    await ensureAuthSchema(pool);
+    await pool.query(`do $$ begin create role authenticator nologin; exception when duplicate_object then null; end $$;`);
+    await ensureRealtimeTestApi(pool);
+
+    await pool.query(`
+      create table if not exists public.__fsrs_test_migrations (
+        filename text primary key,
+        applied_at timestamptz not null default now()
+      );
+    `);
+
+    const migrationsDir = path.resolve(process.cwd(), "..", "..", "db", "migrations");
+    const migrationFiles = fs
+      .readdirSync(migrationsDir)
+      .filter((f) => f.endsWith(".sql"))
+      // bootstrap.sql contains psql meta-commands (\set, \i) and can't be run
+      // through the node pg driver.
+      .filter((f) => f !== "bootstrap.sql")
+      .sort();
+
+    const sharingGateExisted = Boolean((await pool.query("select to_regclass('private.collection_sharing_rollout') is not null as present")).rows[0].present);
+    for (const file of migrationFiles) {
+      const { rowCount } = await pool.query(
+        `select 1 from public.__fsrs_test_migrations where filename = $1`,
+        [file]
+      );
+      if (rowCount && rowCount > 0) continue;
+
+      const sql = fs.readFileSync(path.join(migrationsDir, file), "utf8");
+      await pool.query(sql);
+      await pool.query(`insert into public.__fsrs_test_migrations (filename) values ($1)`, [file]);
+    }
+
+    // Explicit disposable-fixture admission, never an operator/retained DB switch.
+    if ((await pool.query("select to_regclass('private.collection_sharing_rollout') is not null as present")).rows[0].present) {
+      const db = (await pool.query("select current_database() as name")).rows[0].name as string;
+      if (db !== "fsrs_test" && !/^2000nl_fsrs_[a-z0-9_]+$/.test(db)) throw new Error("unsafe_sharing_gate_test_database");
+      if (!sharingGateExisted && (await pool.query("select new_writes_enabled from private.collection_sharing_rollout where singleton")).rows[0]?.new_writes_enabled !== false)
+        throw new Error("sharing_gate_must_install_closed");
+      await pool.query("update private.collection_sharing_rollout set new_writes_enabled=true where singleton");
+    }
+
+    // Supabase grants authenticated access to public tables by default. Keep
+    // the plain-Postgres CI shim equivalent for app-local RLS storage tests.
+    await pool.query(
+      `grant select, insert, update on public.user_settings to authenticated`,
+    );
+  } finally {
+    await pool.query(`select pg_advisory_unlock(hashtext('2000nl_fsrs_test_migrations'))`);
+  }
+}
+
+export async function withTransaction<T>(
+  pool: Pool,
+  fn: (client: PoolClient) => Promise<T>,
+  userId?: string
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    // Set auth.uid() for the transaction if userId provided
+    if (userId) {
+      await client.query(`SELECT set_config('request.jwt.claim.sub', $1, true)`, [userId]);
+    }
+    const result = await fn(client);
+    await client.query("ROLLBACK"); // keep DB clean across tests
+    return result;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function ensureUserWithSettings(
+  client: PoolClient,
+  userId: string,
+  settings?: {
+    daily_new_limit?: number;
+    daily_review_limit?: number;
+    new_review_ratio?: number;
+    target_retention?: number;
+  }
+) {
+  await client.query(
+    `insert into auth.users (id, email) values ($1, $2)
+     on conflict (id) do nothing`,
+    [userId, `${userId}@test.local`]
+  );
+
+  await client.query(
+    `insert into user_settings (
+       user_id, daily_new_limit, daily_review_limit, new_review_ratio,
+       target_retention, mix_mode
+     ) values ($1, $2, $3, $4, coalesce($5, 0.9), 'mixed')
+     on conflict (user_id) do update
+       set daily_new_limit = excluded.daily_new_limit,
+           daily_review_limit = excluded.daily_review_limit,
+           new_review_ratio = excluded.new_review_ratio,
+           target_retention = excluded.target_retention`,
+    [
+      userId,
+      settings?.daily_new_limit ?? 10,
+      settings?.daily_review_limit ?? 40,
+      settings?.new_review_ratio ?? 2,
+      settings?.target_retention,
+    ]
+  );
+}
+
+export async function ensureLanguage(client: PoolClient, code = "nl") {
+  await client.query(
+    `insert into languages (code, name) values ($1, $2)
+     on conflict (code) do nothing`,
+    [code, "Dutch"]
+  );
+}
+
+export async function insertWord(
+  client: PoolClient,
+  headword: string,
+  opts?: { is_nt2_2000?: boolean }
+): Promise<string> {
+  await ensureLanguage(client);
+  const { rows } = await client.query(
+    `insert into word_entries (language_code, headword, part_of_speech, gender, is_nt2_2000, raw)
+     values ('nl', $1, 'noun', 'n', coalesce($2, true), '{}'::jsonb)
+     returning id`,
+    [headword, opts?.is_nt2_2000 ?? true]
+  );
+  return rows[0].id as string;
+}
+
+export async function callGetNextCard(
+  client: PoolClient,
+  userId: string,
+  mode: string,
+  exclude: string[] = []
+) {
+  const { rows } = await client.query(
+    `select get_next_card(
+      $1, ARRAY[$2]::text[], $3::uuid[], NULL, 'curated', 'both', 'auto', ARRAY[]::text[], false
+    ) as item`,
+    [userId, mode, exclude]
+  );
+  return rows[0]?.item as any | undefined;
+}
