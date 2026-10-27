@@ -1640,7 +1640,6 @@ function TrainingScreenContent({
         if (accountMaterial?.status === "error") accountMaterial.reload();
         setTrainingLoadError(null);
         setSessionResumeError(false);
-        sessionResumeAttemptedRef.current = false;
         setSessionResumeRecord(undefined);
         setTrainingLanguagesResolved(false);
         setTrainingLanguagesCatalogError(false);
@@ -1705,6 +1704,9 @@ function TrainingScreenContent({
     ) {
       return;
     }
+    // Re-arm only in the new read. A previous render's passive preflight can
+    // still run while the retry event's state updates are queued.
+    sessionResumeAttemptedRef.current = false;
     let cancelled = false;
     const resumeGeneration = sessionResumeGenerationRef.current;
     void readTrainingSessionResume(user.id).then((record) => {
