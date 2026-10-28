@@ -1,7 +1,7 @@
 import {NextRequest} from "next/server";
 import {afterEach,beforeEach,expect,test,vi} from "vitest";
-const {auth,rpc,resolve,scope,rate}=vi.hoisted(()=>({auth:vi.fn(),rpc:vi.fn(),resolve:vi.fn(),scope:vi.fn(),rate:vi.fn()}));
-vi.mock("@/lib/platform/serverSupabase",()=>({getAuthenticatedSupabase:auth,requirePlatformScope:scope,jsonNoStore:(body:unknown,status=200)=>Response.json(body,{status,headers:{"cache-control":"no-store"}})}));
+const {auth,rpc,serviceRpc,resolve,scope,rate}=vi.hoisted(()=>({auth:vi.fn(),rpc:vi.fn(),serviceRpc:vi.fn(),resolve:vi.fn(),scope:vi.fn(),rate:vi.fn()}));
+vi.mock("@/lib/platform/serverSupabase",()=>({getAuthenticatedSupabase:auth,getPlatformServiceSupabase:()=>({supabase:{rpc:serviceRpc}}),requirePlatformScope:scope,jsonNoStore:(body:unknown,status=200)=>Response.json(body,{status,headers:{"cache-control":"no-store"}})}));
 vi.mock("@/lib/audio/ttsCache",()=>({resolvePrivateEntryTtsAudio:resolve}));
 vi.mock("@/lib/audio/audioRateLimit",()=>({consumeAudioRateLimit:rate}));
 import {POST} from "@/app/api/platform/v2/audio/route";
@@ -15,6 +15,7 @@ beforeEach(()=>{
   vi.stubEnv("NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED","true");
   auth.mockResolvedValue({user:{id:"viewer"},principal:{authKind:"first_party"},supabase:{rpc}});
   rpc.mockResolvedValue({data:entry,error:null});
+  serviceRpc.mockResolvedValue({data:{items:[entry]},error:null});
   scope.mockReturnValue(null);rate.mockReturnValue({allowed:true});
   resolve.mockResolvedValue({audio:bytes,cached:false});
 });
@@ -28,19 +29,20 @@ test.each([false,true])("streams private audio after two live entry checks (cach
   expect(response.headers.get("content-type")).toBe("audio/mpeg");
   expect(response.headers.get("location")).toBeNull();
   expect(resolve).toHaveBeenCalledWith("huis",expect.any(Function));
-  expect(rpc.mock.calls).toEqual(Array(2).fill(["fetch_dictionary_entry_by_id_gated",{p_entry_id:id}]));
+  expect(serviceRpc.mock.calls).toEqual(Array(2).fill(["read_platform_v2_library_group",{p_user_id:"viewer",p_entry_id:id,p_group_entry_bound:100}]));
+  expect(rpc).not.toHaveBeenCalled();
 });
 test("preparation returns no bytes, key or reusable public URL",async()=>{
   const response=await POST(request({entryId:id,prepareOnly:true}));
   expect(await response.json()).toEqual({status:"ready"});
-  expect(rpc).toHaveBeenCalledTimes(2);
+  expect(serviceRpc).toHaveBeenCalledTimes(2);
 });
 test.each(["revoked","read-error","source-changed"])("denies audio if %s while generation waits",async kind=>{
   let release!:(v:unknown)=>void;
   resolve.mockImplementation(()=>new Promise(r=>{release=r;}));
   const pending=POST(request());
   await vi.waitFor(()=>expect(resolve).toHaveBeenCalledOnce());
-  rpc.mockResolvedValue(kind==="revoked"?{data:null,error:null}:kind==="read-error"?{data:null,error:{message:"secret"}}:{data:{...entry,content_version:8},error:null});
+  serviceRpc.mockResolvedValue(kind==="revoked"?{data:null,error:null}:kind==="read-error"?{data:null,error:{message:"secret"}}:{data:{items:[{...entry,content_version:8}]},error:null});
   release({audio:bytes,cached:false});
   const response=await pending;
   expect(response.status).toBe(404);
@@ -94,4 +96,15 @@ test.each([6,7])("presentation source version%s must match before generation",as
   const response=await POST(request({entryId:id,sourceVersion}));
   expect(response.status).toBe(sourceVersion===7?200:404);
   if(sourceVersion!==7)expect(resolve).not.toHaveBeenCalled();
+});
+
+// The legacy browse RPC omits content_version; library presentations include it.
+test("library audio reads the versioned library source used by its presentation",async()=>{
+  const {content_version: _version,...legacyEntry}=entry;
+  rpc.mockResolvedValue({data:legacyEntry,error:null});
+  serviceRpc.mockResolvedValue({data:{items:[entry]},error:null});
+  const response=await POST(request({entryId:id,sourceVersion:7}));
+  expect(response.status).toBe(200);
+  expect(Buffer.from(await response.arrayBuffer())).toEqual(bytes);
+  expect(rpc).not.toHaveBeenCalled();
 });
