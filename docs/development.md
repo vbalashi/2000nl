@@ -47,5 +47,12 @@ Before opening an installation to users, configure your domain, secure
 connections, account emails and backups. Decide which content people can access
 and provide appropriate service and privacy information.
 
+If the server reaches Supabase through an internal address, set
+`PUBLIC_SUPABASE_URL` to the browser-accessible HTTPS endpoint and
+`PUBLIC_SUPABASE_ANON_KEY` to its public key. Admin Google sign-in uses this
+public endpoint for the browser redirect; callback and service requests keep
+using the internal server endpoint. Portable builds require this explicit public
+URL rather than falling back to a build-time placeholder.
+
 Implementation details, available settings and automated checks live in the
 code. This guide describes the connections rather than a fixed deployment recipe.

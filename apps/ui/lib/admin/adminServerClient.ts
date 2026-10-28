@@ -3,19 +3,30 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { runtimeEnv, validPublicConfig } from "@/lib/runtime/publicConfig";
 
 export const ADMIN_AUTH_COOKIE = "2000nl-admin-auth";
 export const ADMIN_SESSION_MAX_AGE_SECONDS = 8 * 60 * 60;
 
-function supabaseConfig() {
+function supabaseConfig(browserRedirect: boolean) {
+  if (browserRedirect) {
+    const url = runtimeEnv("PUBLIC_SUPABASE_URL") ?? (runtimeEnv("NEXT_PUBLIC_RUNTIME_CONFIG_REQUIRED") === "true"
+      ? undefined : runtimeEnv("SUPABASE_URL") ?? runtimeEnv("NEXT_PUBLIC_SUPABASE_URL"));
+    const key = runtimeEnv("PUBLIC_SUPABASE_ANON_KEY") ?? runtimeEnv("SUPABASE_ANON_KEY") ?? runtimeEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    const config = { schemaVersion: 1, environment: runtimeEnv("DEPLOYMENT_ENV") ?? "legacy", supabaseUrl: url, supabaseAnonKey: key };
+    if (!validPublicConfig(config)) {
+      throw new Error("Public admin authentication is not configured");
+    }
+    return { url: config.supabaseUrl, key: config.supabaseAnonKey };
+  }
   const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) throw new Error("Admin authentication is not configured");
   return { url, key };
 }
 
-export async function createAdminAuthClient() {
-  const { url, key } = supabaseConfig();
+export async function createAdminAuthClient(options: { browserRedirect?: boolean } = {}) {
+  const { url, key } = supabaseConfig(options.browserRedirect === true);
   const cookieStore = await cookies();
   const secure = process.env.NODE_ENV === "production";
   return createServerClient(url, key, {

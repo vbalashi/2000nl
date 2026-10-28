@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
   // Authorize the verified Google identity in the callback, never a supplied email.
   try {
-    const auth = await createAdminAuthClient();
+    const auth = await createAdminAuthClient({ browserRedirect: true });
     const redirectTo = new URL("/api/admin/auth/callback", expectedOrigin).toString();
     const { data, error: oauthError } = await auth.auth.signInWithOAuth({
       provider: "google",
