@@ -13,21 +13,18 @@ export async function readEntryAudioSource(
   auth:AuthenticatedSupabase,entryId:string,current?:CurrentTrainingCardRead,node?:EntryAudioNode,
 ):Promise<EntryAudioSource|null>{
   try{
+    // Use the same versioned browse source as the library presentation. The
+    // legacy fetch_dictionary_entry_by_id_gated payload omits content_version.
+    const service=current?null:getPlatformServiceSupabase();
+    if(service instanceof Response)return null;
     const {data,error}=current
       ?await auth.supabase.rpc("read_current_training_entry_v1",{p_user_id:auth.user.id,p_session_id:current.sessionId,p_permit_id:current.permitId})
-      :await auth.supabase.rpc("fetch_dictionary_entry_by_id_gated",{p_entry_id:entryId});
+      :await service!.supabase.rpc("read_platform_v2_library_group",{p_user_id:auth.user.id,p_entry_id:entryId,p_group_entry_bound:100});
     if(error)return null;
-    const entry=current&&Array.isArray(data?.items)?data.items.find((item:{id?:string})=>item.id===entryId):data;
+    const entry=Array.isArray(data?.items)?data.items.find((item:{id?:string})=>item.id===entryId):null;
     if(entry?.id!==entryId||!entry.raw)return null;
     if(!node)return typeof entry.headword==="string"&&entry.headword.trim()&&entry.headword.length<=160?{entry,text:entry.headword}:null;
-    let identity=entry.platform_v2_identity;
-    if(!current){
-      const service=getPlatformServiceSupabase();
-      if(service instanceof Response)return null;
-      const response=await service.supabase.rpc("read_platform_v2_presentation_identity",{p_user_id:auth.user.id,p_entry_ids:[entryId],p_catalog:false});
-      if(response.error)return null;
-      identity=Array.isArray(response.data?.entries)?response.data.entries.find((item:{entryId?:string})=>item.entryId===entryId):null;
-    }
+    const identity=entry.platform_v2_identity;
     if(identity?.entryId!==entryId)return null;
     const bindings=Array.isArray(identity?.contentNodeBindings)?identity.contentNodeBindings:[];
     const matches=bindings.filter((binding:EntryAudioNode)=>binding.contentNodeId===node.contentNodeId&&binding.sourceTextFingerprint===node.sourceTextFingerprint);

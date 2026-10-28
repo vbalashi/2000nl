@@ -3,7 +3,7 @@ import {NextRequest} from "next/server";
 import {getAuthenticatedSupabase,jsonNoStore,requirePlatformScope} from "@/lib/platform/serverSupabase";
 import {parseCurrentTrainingCardRead} from "@/lib/platform/currentTrainingCardRequest";
 import {readEntryAudioSource} from "@/lib/audio/entryAudioSource";
-import {dictionaryEntrySourceStillReadable} from "@/lib/platform/dictionaryEntryReadAuthority";
+import {contentFingerprint,normalizeDictionaryContent} from "@/lib/platform/projections/dictionaryContent";
 import {resolvePrivateEntryTtsAudio} from "@/lib/audio/ttsCache";
 
 export const runtime="nodejs";
@@ -42,11 +42,11 @@ export async function POST(request:NextRequest) {
     const result=await resolvePrivateEntryTtsAudio(source.text,()=>{
       if(!consumeAudioRateLimit(auth.user.id).allowed)throw new Error("audio_rate_limited");
     });
-    const latest=current||body.node?await read():null;
-    const stillReadable=current||body.node
-      ?Boolean(latest&&latest.text===source.text&&String(latest.entry.content_version)===String(entry.content_version)
-        &&latest.entry.dictionary_id===entry.dictionary_id&&latest.entry.language_code===entry.language_code)
-      :await dictionaryEntrySourceStillReadable(auth,entry);
+    const latest=await read();
+    const stillReadable=Boolean(latest&&latest.text===source.text
+      &&String(latest.entry.content_version)===String(entry.content_version)
+      &&latest.entry.dictionary_id===entry.dictionary_id&&latest.entry.language_code===entry.language_code
+      &&contentFingerprint(normalizeDictionaryContent(latest.entry))===contentFingerprint(normalizeDictionaryContent(entry)));
     if(!stillReadable)return denied;
     if(body.prepareOnly){
       const response=jsonNoStore({status:"ready"});
