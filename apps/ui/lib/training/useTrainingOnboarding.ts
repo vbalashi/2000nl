@@ -47,6 +47,7 @@ export function useTrainingOnboarding(params: {
 
     const savedLanguage = preferences.onboardingLanguage;
     if (isOnboardingLanguage(savedLanguage)) {
+      setOnboardingLang(savedLanguage);
       setOnboardingLanguage(savedLanguage);
       return;
     }
@@ -132,29 +133,23 @@ export function useTrainingOnboarding(params: {
     setRunTour(true);
   }, [updateOnboardingPreferences, userId]);
 
-  const handleJoyrideCallback = useCallback(
-    async (data: EventData) => {
-      const { status } = data;
-      const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
+  const completeOnboarding = useCallback(async () => {
+    setRunTour(false);
+    setOnboardingCompleted(true);
+    if (!userId) return;
+    try {
+      await updateOnboardingPreferences({onboardingCompleted:true});
+      trainingDebug.log("[Onboarding] Marked as completed in DB");
+    } catch (e) { console.error("[Onboarding] Failed to save completion:",e); }
+  },[updateOnboardingPreferences,userId]);
 
-      if (finishedStatuses.includes(status) && userId) {
-        setRunTour(false);
-        setOnboardingCompleted(true);
-
-        try {
-          await updateOnboardingPreferences({
-            onboardingCompleted: true,
-          });
-          trainingDebug.log("[Onboarding] Marked as completed in DB");
-        } catch (e) {
-          console.error("[Onboarding] Failed to save completion:", e);
-        }
-      }
-    },
-    [updateOnboardingPreferences, userId],
-  );
+  const handleJoyrideCallback = useCallback(async (data:EventData) => {
+    if(data.status===STATUS.FINISHED) await completeOnboarding();
+    else if(data.status===STATUS.SKIPPED) setRunTour(false);
+  },[completeOnboarding]);
 
   return {
+    completeOnboarding,
     handleJoyrideCallback,
     handleLanguageSelect,
     isDarkMode,

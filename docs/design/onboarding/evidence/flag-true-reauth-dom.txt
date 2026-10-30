@@ -1,0 +1,22 @@
+- button "Open Next.js Dev Tools":
+- alert
+- main:
+  - generic "NL Testlexicon"
+  - generic: 1 / 5
+  - button "History":
+  - button "Close session":
+  - progressbar "Session progress"
+  - generic: Next training card
+  - region "Next training card" [active]:
+    - article:
+      - button "Play audio":
+      - region "Card content":
+        - generic: de
+        - heading "fiets" [level=2]
+    - button "Show hint":
+    - button "Show answer":
+      - generic: Show answer
+    - button "Report":
+      - text: Report
+    - button "Exclude from training in both directions":
+      - generic: Exclude

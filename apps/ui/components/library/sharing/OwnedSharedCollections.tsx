@@ -19,9 +19,10 @@ const copy={
  nl:{title:'Door mij gedeeld',empty:'Nog geen gedeelde collecties',error:'Gedeelde collecties konden niet worden geladen.',active:'Link actief',subscribers:'Abonnees',copy:'Link kopiëren',copied:'Link gekopieerd',copyFailed:'Open Link en code om de uitnodiging te kopiëren.',manage:'Link en code',stop:'Delen stoppen',sort:'Sorteren',owned:'van jou'},
 };
 type Dialog={ownerId:string;row:Pick<OwnedSharedCollection,'id'|'name'>;initialAction?:'close'};
-export function OwnedSharedCollections({userId,active,locale,onOpen,onChanged}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:OwnedSharedCollection)=>void;onChanged:()=>void}){
+export function OwnedSharedCollections({userId,active,locale,onOpen,onChanged,catalogOverride}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:OwnedSharedCollection)=>void;onChanged:()=>void;catalogOverride?:ReturnType<typeof useOwnedSharedCatalog>}){
  const [query,setQuery]=useState(''),[sort,setSort]=useState<OwnedCatalogQuery['sort']>('recent');
- const catalog=useOwnedSharedCatalog({userId,active,query:{query,sort,limit:50}});
+ const connectedCatalog=useOwnedSharedCatalog({userId,active:active&&!catalogOverride,query:{query,sort,limit:50}});
+ const catalog=catalogOverride??connectedCatalog;
  const [menu,setMenu]=useState<{ownerId:string;row:OwnedSharedCollection;anchor:HTMLButtonElement}|null>(null);
  const [dialog,setDialog]=useState<Dialog|null>(null),[notice,setNotice]=useState<{key:string;text:string}|null>(null);
  const dismissed=useRef(new Set<string>()),wasActive=useRef(false),copyRequest=useRef<AbortController|null>(null);

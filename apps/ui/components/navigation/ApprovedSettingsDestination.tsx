@@ -8,7 +8,7 @@ import {
   DictionaryMaterialSettings,
 } from "@/components/practice/material/MaterialSettings";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
-import { Languages, Palette, Keyboard, UserRound, Library, CreditCard, RefreshCw, ChevronDown, Check } from "lucide-react";
+import { Languages, Palette, Keyboard, UserRound, Library, CreditCard, RefreshCw, ChevronDown, Check, Compass } from "lucide-react";
 import { getUiMessages } from "@/lib/uiMessages";
 import { getTrainingHotkeys } from "@/components/training/trainingHotkeys";
 import {
@@ -37,6 +37,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
   const copy = getUiMessages(props.interfaceLanguage).settings;
   const updates = useReleaseUpdates();
   const sections = [
+    ...(props.onboarding ? [{ id: "onboarding" as const, label: props.onboarding.title, Icon: Compass }] : []),
     { id: "languages", label: copy.languages, Icon: Languages },
     { id: "dictionaries", label: copy.dictionaries, Icon: Library },
     { id: "appearance", label: copy.appearance, Icon: Palette },
@@ -67,15 +68,18 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
       language={props.interfaceLanguage}
       items={[...sections]}
       onExit={props.onExit}
+      initialSection={props.initialSection}
+      onSectionChange={props.onSectionChange}
     >
       {(section, visible) => {
+        if (section === "onboarding") return props.onboarding?.content;
         if (section === "updates") return <ReleaseUpdatesSection language={props.interfaceLanguage} visible={visible} />;
         if (section === "languages")
           return (
             <>
               <SettingsPanel title={copy.languages}>
                 <SettingsRow title={copy.interfaceLanguage}>
-                  <button type="button" className={s.select} aria-label={copy.interfaceLanguage}
+                  <button type="button" className={s.select} data-onboarding="interface" aria-label={copy.interfaceLanguage}
                     aria-haspopup="menu" aria-expanded={Boolean(interfaceAnchor)}
                     onClick={event => setInterfaceAnchor(event.currentTarget)}>
                     {interfaceLanguages.find(item => item.code === props.interfaceLanguage)?.name}
@@ -91,13 +95,13 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
                 <SettingsRow
                   title={copy.translationLanguage}
                 >
-                  <SegmentedControl standard label={copy.translationLanguage}>
+                  <div data-onboarding="translation"><SegmentedControl standard label={copy.translationLanguage}>
                     <button type="button" aria-pressed={translationOff} onClick={()=>props.onTranslationLanguageChange(null)}>{copy.off}</button>
                     <button type="button" aria-pressed={!translationOff} onClick={()=>rememberedTranslation ? props.onTranslationLanguageChange(rememberedTranslation) : setPickerOpen(true)}>
                       {rememberedTranslation ? languageDisplayName(props.interfaceLanguage,rememberedTranslation) : copy.chooseLanguage}
                     </button>
                     <button type="button" aria-label={copy.translationLanguage} aria-haspopup="dialog" aria-expanded={pickerOpen} onClick={()=>setPickerOpen(true)}><ChevronDown size={14} aria-hidden="true"/></button>
-                  </SegmentedControl>
+                  </SegmentedControl></div>
                 </SettingsRow>
                 <SettingsRow title={copy.secondaryTranslationLanguage}>
                   <SegmentedControl standard label={copy.secondaryTranslationLanguage}>
@@ -142,12 +146,12 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
         if (section === "appearance")
           return (
             <>
-              <ApprovedAppearanceSection
+              <div data-onboarding="appearance"><ApprovedAppearanceSection
                 language={props.interfaceLanguage}
                 mode={props.themePreference}
                 onModeChange={props.onThemeChange}
                 embedded
-              />
+              /></div>
               <ApprovedTextSizeSection
                 language={props.interfaceLanguage}
                 embedded

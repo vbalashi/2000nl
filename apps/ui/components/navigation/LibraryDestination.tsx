@@ -29,6 +29,7 @@ import type {
 export type LibraryMeaningIntent = {ownerId:string;key:string;entryId:string;headword:string;contentLanguageCode:string};
 
 type Props = {
+  onboardingSearch?:{key:string;query:string}|null;
   invitationCode?: string | null;
   onInvitationConsumed?:()=>void;
   meaningIntent?: LibraryMeaningIntent | null;
@@ -62,6 +63,7 @@ function LibraryDestinationSession({
   onOpenListMembership,
   onTrainWord,
   meaningIntent,
+  onboardingSearch,
 }: Props) {
   const [searchState, setSearchState] = useState<DictionarySearchTabState>(() =>
     createDictionarySearchTabState(),
@@ -89,6 +91,8 @@ function LibraryDestinationSession({
     setDestination("words");
     setSearchState(current=>({...current,query:meaningIntent.headword,applyListFilter:false,collectionId:null,labelId:null,labelName:null,selectedHeadwordGroupId:null,detailSelection:{entryId:meaningIntent.entryId,headword:meaningIntent.headword,contentLanguageCode:meaningIntent.contentLanguageCode},mobileDetailOpen:true}));
   },[meaningIntent,userId]);
+  const lastOnboardingSearch=React.useRef<string>();
+  useEffect(()=>{if(!onboardingSearch||lastOnboardingSearch.current===onboardingSearch.key)return;lastOnboardingSearch.current=onboardingSearch.key;setDestination('words');setSearchState({...createDictionarySearchTabState(),query:onboardingSearch.query});},[onboardingSearch]);
   const [hasOpened, setHasOpened] = useState(open);
   useEffect(() => {
     if (open) setHasOpened(true);
@@ -118,11 +122,7 @@ function LibraryDestinationSession({
         <h1 className="sr-only">
           {getUiMessages(interfaceLanguage).library.title}
         </h1>
-        {(organizationEnabled||sharingEnabled) && <nav className={organization.tabs} aria-label={getUiMessages(interfaceLanguage).library.title}>
-          <button type="button" aria-current={destination === "words" ? "page" : undefined} onClick={() => setDestination("words")}><List size={14}/>{copy.words}</button>
-          {organizationEnabled&&<button type="button" aria-current={destination === "collections" ? "page" : undefined} onClick={() => setDestination("collections")}><Folders size={14}/>{copy.collections}</button>}
-          {sharingEnabled&&<button type="button" aria-current={destination==='shared'?'page':undefined} onClick={()=>setDestination('shared')}><Share2 size={14}/>{interfaceLanguage==='ru'?'Общий доступ':interfaceLanguage==='nl'?'Gedeeld':'Shared'}</button>}
-        </nav>}
+        <LibraryDestinationTabs language={interfaceLanguage} destination={destination} organizationEnabled={organizationEnabled} sharingEnabled={sharingEnabled} onChange={setDestination}/>
         {pendingCode&&<div className={destination==='shared'?'min-h-0 flex-1 flex flex-col':'hidden'}><InvitationPreview onConfirmed={onInvitationConsumed} userId={userId} code={pendingCode} locale={interfaceLanguage} onClose={closeInvitation} onOpen={(id)=>{closeInvitation();setReceivedSourceId(id);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:id});setDestination('words');}}/></div>}
         {sharingEnabled&&!pendingCode&&<div className={destination==='shared'?'min-h-0 flex-1 flex flex-col':'hidden'}>{inputOpen?<InvitationInput locale={interfaceLanguage} onCancel={()=>setInputOpen(false)} onSubmit={code=>{setPendingCode(code);setInputOpen(false);}}/>:<SharedCollectionsWorkspace userId={userId} active={open&&destination==='shared'} locale={interfaceLanguage} view={sharedView} onViewChange={setSharedView} onAdd={()=>setInputOpen(true)} onOpenOwned={row=>{setReceivedSourceId(null);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:row.id});setDestination('words');}} onOpenReceived={row=>{setReceivedSourceId(row.id);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:row.id});setDestination('words');}}/>}</div>}
         {organizationEnabled && <div className={destination === "collections" ? "min-h-0 flex-1 overflow-hidden" : "hidden"}>
@@ -165,4 +165,14 @@ function LibraryDestinationSession({
     </section>
     </CollectionSelectionContext.Provider>
   );
+}
+
+export function LibraryDestinationTabs({language,destination,organizationEnabled,sharingEnabled,onChange}:{language:OnboardingLanguage;destination:"words"|"collections"|"shared";organizationEnabled:boolean;sharingEnabled:boolean;onChange:(destination:"words"|"collections"|"shared")=>void}) {
+ const copy=organizationCopy(language);
+ if(!organizationEnabled&&!sharingEnabled)return null;
+ return <nav className={organization.tabs} aria-label={getUiMessages(language).library.title}>
+  <button type="button" aria-current={destination==="words"?"page":undefined} onClick={()=>onChange("words")}><List size={14}/>{copy.words}</button>
+  {organizationEnabled&&<button type="button" data-onboarding="library-collections" aria-current={destination==="collections"?"page":undefined} onClick={()=>onChange("collections")}><Folders size={14}/>{copy.collections}</button>}
+  {sharingEnabled&&<button type="button" data-onboarding="library-shared" aria-current={destination==="shared"?"page":undefined} onClick={()=>onChange("shared")}><Share2 size={14}/>{language==="ru"?"Общий доступ":language==="nl"?"Gedeeld":"Shared"}</button>}
+ </nav>;
 }

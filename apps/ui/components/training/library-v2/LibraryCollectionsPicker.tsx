@@ -148,6 +148,7 @@ export function LibraryCollectionsPicker({
 
   const content = (
       <section
+        data-onboarding="membership-picker" data-assigned={membershipState === "ready" && !busyListId && membershipIds.size > 0 ? "true" : "false"}
         aria-labelledby={titleId}
         className={`${s.sheet} ${s.production}`}
       >
@@ -207,7 +208,7 @@ export function LibraryCollectionsPicker({
                     className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-slate-100 dark:hover:bg-slate-700/50"
                   >
                     <input
-                      id={`library-collection-${list.id}`}
+                      data-onboarding="member-option" value={list.id} id={`library-collection-${list.id}`}
                       type="checkbox"
                       checked={included}
                       disabled={editingBlocked}
@@ -275,7 +276,7 @@ export function LibraryCollectionsPicker({
           </p>
           <button
             type="button"
-            onClick={onClose}
+            data-onboarding="membership-done" onClick={onClose}
             className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
           >
             {t("common.done")}

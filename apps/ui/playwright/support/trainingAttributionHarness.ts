@@ -1011,12 +1011,15 @@ export async function setupAuthenticatedTrainingAttributionPage(
         route,
         method === "GET" || method === "HEAD"
           ? visualFixture
-            ? { ...visualFixture.settings, ...options.settingsOverrides }
+            ? { ...visualFixture.settings, ...options.settingsOverrides,
+                preferences: { ...visualFixture.settings.preferences,
+                  ...(options.settingsOverrides?.preferences as Record<string, unknown> | undefined) },
+              }
             : {
                 ...learningPreferences(accountLanguageCode),
                 theme_preference: "system",
                 translation_lang: "ru",
-                preferences: {},
+                preferences: { onboardingCompleted: true },
               }
           : [],
         "settings",

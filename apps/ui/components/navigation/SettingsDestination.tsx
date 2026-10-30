@@ -6,6 +6,9 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 
 export type SettingsDestinationProps = {
+  onboarding?: { title: string; content: React.ReactNode };
+  initialSection?: "languages" | "appearance" | "onboarding";
+  onSectionChange?: (section: string) => void;
   onExit: () => void;
   open: boolean;
   interfaceLanguage: OnboardingLanguage;

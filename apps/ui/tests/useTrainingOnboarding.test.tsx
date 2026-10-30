@@ -130,8 +130,9 @@ describe("useTrainingOnboarding", () => {
     });
 
     expect(result.current.runTour).toBe(false);
-    expect(result.current.onboardingCompleted).toBe(true);
-    expect(updateUserPreferences).toHaveBeenCalledWith({
+    expect(result.current.onboardingCompleted).toBe(status === "finished");
+    const completionExpectation = expect(updateUserPreferences);
+    if (status === "finished") completionExpectation.toHaveBeenCalledWith({
       userId: "user-1",
       preferences: {
         onboardingLanguage: "en",
@@ -139,6 +140,7 @@ describe("useTrainingOnboarding", () => {
         onboardingCompleted: true,
       },
     });
+    if (status === "skipped") expect(updateUserPreferences.mock.calls.some(([value])=>value.preferences?.onboardingCompleted===true)).toBe(false);
     expect(updateUserPreferences).toHaveBeenCalledWith({
       userId: "user-1",
       preferences: {

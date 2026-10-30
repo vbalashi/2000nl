@@ -97,6 +97,7 @@ export function AppUtilityNav({
     <div className="flex items-center gap-1 justify-self-end text-sm text-slate-500 md:gap-2 dark:text-slate-300">
       <UtilityButton
         label={themeLabel}
+        tour="theme-switch"
         onClick={onCycleTheme}
         disabled={disabled}
       >

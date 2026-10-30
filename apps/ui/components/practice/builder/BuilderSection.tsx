@@ -24,7 +24,7 @@ export function BuilderSection({
     <section className={s.section}>
       <button
         type="button"
-        className={s.heading}
+        data-builder-section={id?.replace(/^.*-/, "")} className={s.heading}
         onClick={onToggle}
         aria-expanded={open}
         aria-controls={bodyId}
@@ -43,7 +43,7 @@ export function BuilderSection({
         />
       </button>
       <div
-        id={bodyId}
+        data-builder-body={id?.replace(/^.*-/, "")} id={bodyId}
         className={`${s.reveal} ${open ? s.open : ""}`}
         ref={(node) => {
           if (node) node.toggleAttribute("inert", !open);

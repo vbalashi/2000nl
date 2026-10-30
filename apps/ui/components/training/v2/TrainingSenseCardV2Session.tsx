@@ -1,4 +1,5 @@
 "use client";
+import {signalOnboarding} from "@/lib/onboarding/signals";
 import {useEntryNoteMaterial} from "../useEntryNoteMaterial";
 import {clearPlatformNoteMaterial} from "@/lib/platform/noteMaterialPresentation";
 import { useCurrentTrainingCard, usePresentedTrainingCard, type PresentedTrainingCard } from "./useCurrentTrainingCard";
@@ -585,6 +586,7 @@ export function TrainingSenseCardV2Session({
         } else {
           rememberPendingKnownUndo(null);
         }
+        signalOnboarding("practice-accepted");
         try {
           const outcome = progressTransitionId
             ? await onProgressActionAccepted(capability, progressTransitionId)

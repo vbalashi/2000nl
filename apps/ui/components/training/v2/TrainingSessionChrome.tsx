@@ -82,7 +82,7 @@ export function TrainingSessionChrome({
         ) : null}
         <button
           type="button"
-          aria-label={text.close}
+          data-onboarding="session-close" aria-label={text.close}
           disabled={disabled}
           onClick={onClose}
         >

@@ -1,5 +1,6 @@
 "use client";
 
+import {ONBOARDING_PAUSE} from "@/lib/onboarding/signals";
 import React, {forwardRef, useEffect, useImperativeHandle, useRef, type DialogHTMLAttributes} from "react";
 
 let scrollLocks = 0;
@@ -10,6 +11,8 @@ export const DialogSurface = forwardRef<HTMLDialogElement, Omit<DialogHTMLAttrib
   onDismiss: () => void;
   initialFocusRef?: React.RefObject<HTMLElement>;
 }>(function DialogSurface({onDismiss, initialFocusRef, onCancel, onClick, children, ...props}, forwardedRef) {
+  const dismissRef=useRef(onDismiss);dismissRef.current=onDismiss;
+  useEffect(()=>{const dismiss=()=>dismissRef.current();window.addEventListener(ONBOARDING_PAUSE,dismiss);return()=>window.removeEventListener(ONBOARDING_PAUSE,dismiss);},[]);
   const ref = useRef<HTMLDialogElement>(null);
   const initialFocusOnMount = useRef(initialFocusRef);
   // Capture before descendant autoFocus runs during commit, not after it has

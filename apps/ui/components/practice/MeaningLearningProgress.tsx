@@ -27,9 +27,11 @@ export function MeaningLearningProgress({
   onChanged,
   learningActionsBlocked = false,
   headwordActionsBlocked = false,
+  initialProgress,
 }: {
   learningActionsBlocked?: boolean;
   headwordActionsBlocked?: boolean;
+  initialProgress?: Progress;
   entryId: string;
   language: OnboardingLanguage;
   onClose: () => void;
@@ -44,6 +46,7 @@ export function MeaningLearningProgress({
   const sheet = useResizableSheet(entryId, onClose);
   const titleId = React.useId();
   React.useEffect(() => {
+    if (initialProgress) { setProgress(initialProgress); setFailed(false); return; }
     const controller = new AbortController();
     setFailed(false);
     void fetchMeaningProgress(entryId, controller.signal)
@@ -52,7 +55,7 @@ export function MeaningLearningProgress({
         if (!controller.signal.aborted) setFailed(true);
       });
     return () => controller.abort();
-  }, [entryId, retry]);
+  }, [entryId, retry, initialProgress]);
   const mutationBlocked = learningActionsBlocked || (headwordActionsBlocked && Boolean(progress?.exclusionId));
   const protectionCopy = getUiMessages(language).activeTrainingCard;
   const protectionHint = learningActionsBlocked ? protectionCopy.actionHint : protectionCopy.headwordHint;
@@ -90,7 +93,7 @@ export function MeaningLearningProgress({
   return (
     <DialogSurface
       ref={sheet.ref as React.RefObject<HTMLDialogElement>}
-      className={s.panel}
+      data-onboarding="meaning-progress" className={s.panel}
       style={
         {
           "--sheet-height": sheet.height ? `${sheet.height}px` : undefined,
@@ -112,7 +115,7 @@ export function MeaningLearningProgress({
         <button
           type="button"
           className={s.close}
-          aria-label={t.close}
+          data-onboarding="progress-close" aria-label={t.close}
           onClick={onClose}
         >
           <X size={18} />

@@ -121,7 +121,7 @@ async function holdSessionRefresh(
           theme_preference: "system",
           audio_quality: "free",
           translation_lang: language,
-          preferences: { onboardingLanguage: language },
+          preferences: { onboardingCompleted: true, onboardingLanguage: language },
         },
       ]),
     });
