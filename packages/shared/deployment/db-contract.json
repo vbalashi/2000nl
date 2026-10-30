@@ -1,11 +1,18 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-287",
+  "contractId": "2000nl-db-288",
   "baseline": {
     "migrationId": 287,
     "file": "db/migrations/287_initial_schema.sql",
     "sha256": "592f6b00f8867afffbe7d95899473a5b964a5f06f9f8198c85f458f2b10e6cd8",
     "probe": "db/deploy-contract/read-only-postflight-287.sql"
   },
-  "migrations": []
+  "migrations": [
+    {
+      "migrationId": 288,
+      "file": "db/migrations/288_learner_dictionary_defaults.sql",
+      "sha256": "cde080aa473ee57830e7669e25c6a496b2878b13dc4ff01408a7ceaa3829f5fd",
+      "probe": "db/deploy-contract/read-only-postflight-288.sql"
+    }
+  ]
 }

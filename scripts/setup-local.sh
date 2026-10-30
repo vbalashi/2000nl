@@ -15,16 +15,18 @@ fi
 node - <<'JS'
 const fs=require('node:fs');const crypto=require('node:crypto');
 const c=JSON.parse(fs.readFileSync('packages/shared/deployment/db-contract.json','utf8'));
-const hash=crypto.createHash('sha256').update(fs.readFileSync(c.baseline.file)).digest('hex');
-if(hash!==c.baseline.sha256)throw new Error('Baseline checksum mismatch');
+for(const entry of [c.baseline,...c.migrations]) {
+  const hash=crypto.createHash('sha256').update(fs.readFileSync(entry.file)).digest('hex');
+  if(hash!==entry.sha256)throw new Error('Schema checksum mismatch: '+entry.file);
+}
 JS
 psql "$target" -X -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
 psql "$target" -X -v ON_ERROR_STOP=1 -f db/test-fixtures/search_multisource.sql
 psql "$target" -X -v ON_ERROR_STOP=1 -f db/test-fixtures/training_smoke.sql
 # Demo entries need the same derived search documents as imported entries.
 psql "$target" -X -v ON_ERROR_STOP=1 -c "SELECT public.refresh_dictionary_search_document(id, 2) FROM public.word_entries" >/dev/null
-psql "$target" -X -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-287.sql
-read -r contract_id migration_id < <(node -e 'const c=require("./packages/shared/deployment/db-contract.json");process.stdout.write(c.contractId+" "+c.baseline.migrationId+"\n")')
+psql "$target" -X -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-288.sql
+read -r contract_id migration_id < <(node -e 'const c=require("./packages/shared/deployment/db-contract.json");process.stdout.write(c.contractId+" "+(c.migrations.at(-1)?.migrationId??c.baseline.migrationId)+"\n")')
 [[ "$contract_id" =~ ^[a-z0-9-]+$ && "$migration_id" =~ ^[0-9]+$ ]]
 app_commit=0000000000000000000000000000000000000000
 if [[ -e .git ]]; then app_commit="$(git rev-parse --verify HEAD)"; fi

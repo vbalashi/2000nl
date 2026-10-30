@@ -29,6 +29,10 @@ Keep those values aligned with the database; changing a code license does not
 change dictionary identities. Dictionary content
 and access permissions are managed separately.
 
+[New learner defaults](new-learner-defaults.md) configure primary dictionaries,
+disabled sources and a named saved training once at account creation. Changes
+to the installation policy do not alter existing learners.
+
 ## Optional connections
 
 **Translation** needs your own compatible AI service credentials and prompt
