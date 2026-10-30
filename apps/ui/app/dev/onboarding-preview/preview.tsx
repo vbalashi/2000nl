@@ -6,9 +6,12 @@ import { X, RotateCcw } from "lucide-react";
 import { AppFrame } from "@/components/navigation/AppFrame";
 import { TrainingOverview } from "@/components/practice/TrainingOverview";
 import { SettingsPanel, SettingsRow } from "@/components/practice/settings/SettingsLayout";
+import { TrainingDetailsDrawer } from "@/components/training/TrainingDetailsDrawer";
+import { LibrarySenseCardGroup } from "@/components/training/library-v2/LibrarySenseCardGroup";
+import { buildLibrarySenseCardGroupModel } from "@/components/training/library-v2/librarySenseCardModel";
 import { TrainingSenseCardStage } from "@/components/training/v2/TrainingSenseCardStage";
 import { buildTrainingSenseCardModel, type TrainingSenseCardContent } from "@/components/training/v2/trainingSenseCardModel";
-import { gateBankGroup, gateFurnitureEntry, gateSingleSenseGroup } from "@/lib/platform/fixtures/senseCardV1GateFixture";
+import { gateBankGroup, gateFurnitureEntry } from "@/lib/platform/fixtures/senseCardV1GateFixture";
 import { getStoredOnboardingLanguage, type OnboardingLanguage } from "@/lib/onboardingI18n";
 import { getUiMessages } from "@/lib/uiMessages";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -45,6 +48,8 @@ export function OnboardingPreview() {
   const [ready, setReady] = useState(false);
   const [stage, setStage] = useState<PreviewStage>("interface");
   const [revealed, setRevealed] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [audioNotice, setAudioNotice] = useState(false);
   const [running, setRunning] = useState(true);
   const [notice, setNotice] = useState<keyof PreviewCopy | null>(null);
   const [saveError, setSaveError] = useState(false);
@@ -104,8 +109,8 @@ export function OnboardingPreview() {
     persist(next);
   };
   const confirm = (next: PreviewStage) => { if (persist(preferences)) { setStage(next); setNotice(null); } };
-  const replay = () => { setRunning(false); setStage("interface"); setRevealed(false); setNotice(null); setSelectedTrainingId("preview-dilum"); requestAnimationFrame(() => setRunning(true)); };
-  const start = (id = "preview-dilum") => { setSelectedTrainingId(id); setSessionCompleted(0); setStage("card"); setRevealed(false); setNotice(null); };
+  const replay = () => { setRunning(false); setStage("interface"); setDetailsOpen(false); setAudioNotice(false); setRevealed(false); setNotice(null); setSelectedTrainingId("preview-dilum"); requestAnimationFrame(() => setRunning(true)); };
+  const start = (id = "preview-dilum") => { setSelectedTrainingId(id); setSessionCompleted(0); setAudioNotice(false); setStage("card"); setRevealed(false); setNotice(null); };
   const spec = previewSteps.find(step => step.id === stage)!;
   const getTarget = () => {
     const b = ui.builder;
@@ -156,7 +161,7 @@ export function OnboardingPreview() {
   };
   const step = { target, title: copy[spec.title], content: copy[spec.body], placement: spec.placement,
     before: prepareTarget,
-    spotlightTarget: stage === "meaning" ? "#preview-meaning [data-testid=library-sense-card-scroll-region]" : undefined,
+    spotlightTarget: ["card", "answer"].includes(stage) ? "#preview-card" : stage === "meaning" ? "#preview-meaning [data-testid=library-sense-card-scroll-region]" : undefined,
     data: { copy, progress: progressLabel(language, stage), languageStep, secondary: stage === "translation", inputStep: ["search", "meaning", "new-collection", "collection-name", "training-name"].includes(stage), complete: stage === "complete" } satisfies MessageData };
   const training = {
     id: "preview-dilum", name: "Dilum NL", language: languageDisplayName(language, "nl"),
@@ -168,7 +173,7 @@ export function OnboardingPreview() {
   const sessionCollection = selectedTraining && journey.collections.find(c => `user:${c.id}` === selectedTraining.draft.listValue);
   const sessionEntry = gateBankGroup.entries.find(entry => entry.kind === "sense-card" && entry.entryId === sessionCollection?.entryIds[0]);
   const cardEntry = sessionEntry?.kind === "sense-card" ? sessionEntry : gateFurnitureEntry;
-  const initialModel = buildTrainingSenseCardModel({ group: gateSingleSenseGroup, entry: cardEntry, interfaceLanguage: language });
+  const initialModel = buildTrainingSenseCardModel({ group: gateBankGroup, entry: cardEntry, interfaceLanguage: language });
   // Synthetic content; no account repositories, training controller or learning writes.
   const model = { ...initialModel, repeatCount: 0, reviewCapabilities: [],
     entryTranslation: preferences.translationLanguage === "off" ? undefined : cardEntry.entryId === gateFurnitureEntry.entryId ? sampleWordTranslations[preferences.translationLanguage] : sampleFinanceTranslations[preferences.translationLanguage],
@@ -177,6 +182,17 @@ export function OnboardingPreview() {
     examples: preferences.translationLanguage === "ru" ? initialModel.examples : withoutTranslations(initialModel.examples),
     learnCapability: { actionId: "start-learning", elementId: "preview-learn", messageKey: "senseCard.learning.start",
       target: { kind: "sense-card", entryId: cardEntry.entryId, cardTypeId: "word-to-definition", stateRevision: "preview-state" } } as NonNullable<typeof initialModel.learnCapability> };
+
+  const playSampleAudio = () => {
+    setAudioNotice(true);
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const speech = new SpeechSynthesisUtterance(`de ${model.headword}`);
+    speech.lang = "nl-NL";
+    const voice = window.speechSynthesis.getVoices().find(item => item.lang.startsWith("nl") && item.localService);
+    if (voice) speech.voice = voice;
+    window.speechSynthesis.speak(speech);
+  };
 
   const savedItems = journey.trainings.map(saved => ({ ...training, id: saved.id, name: saved.name,
     description: `${journey.collections.find(c => `user:${c.id}` === saved.draft.listValue)?.name ?? ""} · ${saved.draft.modes.map(mode => mode === "word-to-definition" ? ui.trainingOverview.direction.Direct : ui.trainingOverview.direction.Reverse).join(" + ")}`,
@@ -241,18 +257,32 @@ export function OnboardingPreview() {
         <div className={styles.sessionHeader}><span>{sessionName}</span><span>{sessionCompleted} / {sessionCollection?.entryIds.length ?? 10}</span><button id="preview-session-close" aria-label={copy.closeSession} onClick={() => { setRevealed(false); setStage("go-library"); }}><X size={18}/></button></div>
         <div id="preview-card" className={styles.card}>
           <TrainingSenseCardStage model={model} mode={selectedTraining?.draft.modes[0] ?? "word-to-definition"} interfaceLanguage={language} side={revealed ? "answer" : "face"}
+            onPlayAudio={playSampleAudio} onOpenDetails={() => setDetailsOpen(true)}
             onSideChange={side => { setRevealed(side === "answer"); if (side === "answer") setStage("answer"); }}
-            onAction={() => { if (commitJourney(learnMeaning(journey, cardEntry.entryId))) { setSessionCompleted(1); setRevealed(false); setStage("exit"); } }}/>
+            onAction={() => { if (commitJourney(learnMeaning(journey, cardEntry.entryId))) { setSessionCompleted(1); setStage("exit"); } }}/>
         </div>
+        {audioNotice && <p role="status" className={styles.localOnly}>{copy.sampleAudio}</p>}
+        <TrainingDetailsDrawer open={detailsOpen} onClose={() => setDetailsOpen(false)} interfaceLanguage={language}>
+          <LibrarySenseCardGroup model={buildLibrarySenseCardGroupModel({ ...gateBankGroup,
+            dictionary: { ...gateBankGroup.dictionary, displayName: "Dilum Nederlands" },
+            entries: gateBankGroup.entries.map(entry => entry.kind === "sense-card" ? { ...entry,
+              card: entry.card ? { ...entry.card, scheduler: { ...entry.card.scheduler, phase: journey.learnedEntryIds.includes(entry.entryId) ? "learning" as const : "not-started" as const, repeatCount: 0 } } : entry.card,
+              translation: preferences.translationLanguage === "ru" ? entry.translation : null,
+              contentNodes: entry.contentNodes.map(node => ({ ...node, translations: node.translations.filter(t => t.targetLanguageCode === preferences.translationLanguage) })),
+            } : entry) }, language)}
+            interfaceLanguage={language} contentLanguage="nl" translationLanguage={preferences.translationLanguage === "off" ? undefined : preferences.translationLanguage}
+            translationEnabled={preferences.translationLanguage !== "off"} activeMeaningId={cardEntry.entryId} revealActiveMeaning
+            inlineGrading={false} onPlayAudio={playSampleAudio} onAction={() => {}}/>
+        </TrainingDetailsDrawer>
       </div>}
       {notice && <p role="status" className={styles.notice}>{copy[notice]}</p>}
       {saveError && !isPickerStage(stage) && stage !== "training-name" && <p role="alert" className={styles.error}>{copy.saveError}</p>}
     </AppFrame>
-    <Joyride key={`preview-${stage}:${language}:${Boolean(modalPortal)}`} portalElement={modalPortal ?? undefined} run={running} steps={[step]} tooltipComponent={TourMessage}
+    {!detailsOpen && <Joyride key={`preview-${stage}:${language}:${Boolean(modalPortal)}`} portalElement={modalPortal ?? undefined} run={running} steps={[step]} tooltipComponent={TourMessage}
       onEvent={data => { if (data.status === "skipped" || data.status === "finished") setRunning(false); }}
       options={{ skipBeacon: true, hideOverlay: isPickerStage(stage) || stage === "training-name", blockTargetInteraction: false, disableFocusTrap: true, overlayClickAction: false,
         dismissKeyAction: "close", closeButtonAction: "skip", overlayColor: "rgba(24, 19, 34, .52)",
         spotlightPadding: 8, spotlightRadius: 15, arrowColor: "#fff", arrowSize: 8, arrowBase: 16,
-        width: 340, zIndex: 10000, skipScroll: true, scrollDuration: 0, primaryColor: "#71608d" }}/>
+        width: 340, zIndex: 10000, skipScroll: true, scrollDuration: 0, primaryColor: "#71608d" }}/> }
   </div>;
 }

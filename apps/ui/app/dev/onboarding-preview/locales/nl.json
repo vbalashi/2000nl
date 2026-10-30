@@ -20,8 +20,8 @@
   "localOnly": "Keuzes in dit voorbeeld blijven in deze browser. Je accountinstellingen blijven ongewijzigd.",
   "startTitle": "Begin met je kant-en-klare training",
   "startBody": "Dilum NL gebruikt al materiaal uit Dilum Nederlands. Je kunt de instellingen later aanpassen. Start de training om een kaart te proberen.",
-  "revealTitle": "Denk aan de betekenis",
-  "revealBody": "Denk eerst na over de betekenis van het woord. Toon dan het antwoord om de betekenis en een voorbeeld te zien.",
+  "revealTitle": "Maak kennis met de woordkaart",
+  "revealBody": "Dit is de bank, het woord dat we gaan leren. Bekijk eerst het woord. Kies “Toon antwoord” om de kaart om te draaien en de definitie en een voorbeeld te zien.",
   "finish": "Dit is het einde van het voorbeeld. Hierna legt de introductie de betekenis en de actie Leren uit.",
   "noLearningWrite": "Dit is een voorbeeld: de leervoortgang wordt niet opgeslagen.",
   "scope": "Dit voorbeeld behandelt taalkeuzes en de eerste trainingskaart.",
@@ -29,10 +29,10 @@
   "editLater": "Het bewerken van een training komt later in de introductie aan bod.",
   "themeLater": "Weergave-instellingen vallen buiten dit voorbeeld.",
   "closeSession": "Sessie sluiten",
-  "learnTitle": "Begin deze betekenis te leren",
-  "learnBody": "Lees de definitie en het voorbeeld. Leren start het oefenen van deze betekenis, niet van alle betekenissen van het woord.",
+  "learnTitle": "Lees de definitie en het voorbeeld",
+  "learnBody": "De kaart toont één betekenis. Met de luidspreker hoor je de uitspraak; via de drie puntjes bekijk je alle betekenissen van bank en keer je hier terug. Kies daarna “Leren” om deze betekenis te gaan leren.",
   "exitTitle": "Terug naar de app",
-  "exitBody": "Je eerste leeractie is vastgelegd in dit voorbeeld. Sluit deze sessie om de Bibliotheek te bekijken.",
+  "exitBody": "Je bent begonnen met het leren van deze betekenis. De definitie blijft zichtbaar. Sluit de sessie; hierna zoeken we het woord in de Bibliotheek en voegen we een betekenis toe aan een collectie.",
   "libraryTitle": "Open de Bibliotheek",
   "libraryBody": "In de Bibliotheek zoek je woorden en kies je betekenissen om te oefenen.",
   "searchTitle": "Zoek een woord",
@@ -76,5 +76,6 @@
   "done": "Gereed",
   "collectionRequired": "Voeg eerst een betekenis aan een collectie toe.",
   "libraryTab": "Woorden",
-  "actionHint": "Ga verder in het gemarkeerde gebied."
+  "actionHint": "Ga verder in het gemarkeerde gebied.",
+  "sampleAudio": "Dit voorbeeld gebruikt de stem van je browser. De beschikbaarheid van een Nederlandse stem hangt af van je apparaat."
 }

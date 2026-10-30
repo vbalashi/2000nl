@@ -20,8 +20,8 @@
   "localOnly": "Preview choices stay in this browser. Your account settings are unchanged.",
   "startTitle": "Start with your ready training",
   "startBody": "Dilum NL already uses material from Dilum Nederlands. You can change its settings later. Start the training to try a card.",
-  "revealTitle": "Recall the meaning",
-  "revealBody": "First think about what the word means. Then reveal the answer to see the meaning and an example.",
+  "revealTitle": "Meet the word card",
+  "revealBody": "This is de bank, the word we will study. First, look at the word. Select “Show answer” to turn the card over and see its definition and an example.",
   "finish": "This is the end of the preview. Next, the introduction will explain the meaning and the Learn action.",
   "noLearningWrite": "This is a preview: learning progress is not recorded.",
   "scope": "This preview covers language choices and the first training card.",
@@ -29,10 +29,10 @@
   "editLater": "Editing a training will be covered later in the introduction.",
   "themeLater": "Appearance settings are outside this preview.",
   "closeSession": "Close session",
-  "learnTitle": "Start learning this meaning",
-  "learnBody": "Read the definition and example. Learn starts practice for this meaning, not every meaning of the word.",
+  "learnTitle": "Read the definition and example",
+  "learnBody": "The card shows one meaning. Use the speaker to hear pronunciation, or the three dots to see all meanings of bank and return here. Then choose “Learn” to start studying this meaning.",
   "exitTitle": "Return to the app",
-  "exitBody": "Your first learning action is recorded in this preview. Close this session to explore Library.",
+  "exitBody": "You have started studying this meaning. Its definition stays visible. Close the session; next we will find the word in Library and add a meaning to a collection.",
   "libraryTitle": "Open Library",
   "libraryBody": "Library lets you find words and choose the meanings you want to practise.",
   "searchTitle": "Find a word",
@@ -76,5 +76,6 @@
   "done": "Done",
   "collectionRequired": "Add a meaning to a collection first.",
   "libraryTab": "Words",
-  "actionHint": "Use the highlighted area to continue."
+  "actionHint": "Use the highlighted area to continue.",
+  "sampleAudio": "This preview uses your browser’s voice for pronunciation. Dutch voice availability depends on your device."
 }

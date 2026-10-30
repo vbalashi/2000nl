@@ -109,3 +109,31 @@ changed. The local server is left running for owner review.
 Screenshots 12–18 retain the earlier two-step/language-first samples for comparison.
 This document supersedes those limited route descriptions and the earlier audit's
 conditional dependency-removal advice.
+
+## Card review correction
+
+Owner feedback: introduce the word before asking for recall; preserve the answer
+when leaving, and expose audio plus the three-dot word details action. The card
+segment now highlights the entire card while anchoring the explanation to the
+reveal/Learn action. Both EN/NL/RU copies introduce the word and explain that the
+answer represents one meaning. Audio and word details handlers were previously
+omitted by the preview, which hid those shared-card controls.
+
+The preview now connects both handlers. The three dots open the shared
+TrainingDetailsDrawer with both bank meanings; closing returns to the same answer
+and resumes its guidance. The details model uses the preview's learned-meaning
+state and translation selection. Learn preserves the revealed answer at the exit
+step. No shared production card behavior changed.
+
+Pronunciation uses browser speech synthesis for this isolated sample, with a Dutch
+local voice when available. A note explains device voice availability. This does
+not test the production audio resolver or assert audio quality. Browser verification
+confirmed face/reveal, visible audio/details controls, opening/closing both-meaning
+details, invoking pronunciation, and retaining the definition after Learn. Focused
+18 tests, typecheck and touched-component lint passed again.
+
+![Introduce the word card](evidence/24-card-introduction.jpg)
+
+![All meanings from the three dots](evidence/25-card-all-meanings.jpg)
+
+![Answer with audio and details actions](evidence/26-card-answer-actions.jpg)
