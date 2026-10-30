@@ -39,3 +39,38 @@ export async function platformFetchWithTimeout(
     detachParentSignal();
   }
 }
+
+/** Bound the whole operation, including auth and body reads, even when a
+ * suspended dependency does not settle after its AbortSignal is cancelled. */
+export async function withPlatformRequestTimeout<T>(
+  operation: (signal: AbortSignal) => Promise<T>,
+  signal?: AbortSignal,
+  timeoutMs = DEFAULT_PLATFORM_FETCH_TIMEOUT_MS,
+): Promise<T> {
+  const controller = new AbortController();
+  const detach = forwardAbortSignal(signal, controller);
+  let timedOut = false;
+  let abort: (() => void) | undefined;
+  const timeout = globalThis.setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  try {
+    return await new Promise<T>((resolve, reject) => {
+      abort = () => reject(timedOut
+        ? new Error("platform_request_timeout")
+        : new DOMException("Aborted", "AbortError"));
+      if (controller.signal.aborted) { abort(); return; }
+      controller.signal.addEventListener("abort", abort, { once: true });
+      try {
+        operation(controller.signal).then(resolve, reject);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  } finally {
+    globalThis.clearTimeout(timeout);
+    if (abort) controller.signal.removeEventListener("abort", abort);
+    detach();
+  }
+}

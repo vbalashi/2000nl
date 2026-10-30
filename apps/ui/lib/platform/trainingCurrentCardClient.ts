@@ -1,5 +1,5 @@
 import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
-import { platformFetchWithTimeout } from "./platformFetchWithTimeout";
+import { platformFetchWithTimeout, withPlatformRequestTimeout } from "./platformFetchWithTimeout";
 import { isPlatformLookupV2Response } from "../../../../packages/shared/types/platformV2Runtime";
 import type { PlatformLookupV2Response } from "../../../../packages/shared/types/platformV2";
 
@@ -27,21 +27,23 @@ async function requestCurrentCard(
   body: object,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const headers = await platformV2AuthenticatedJsonHeaders(userId);
-  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-  const response = await platformFetchWithTimeout(
-    "/api/platform/v2/training/current-card",
-    {
-      method: "POST",
-      credentials: "same-origin",
-      cache: "no-store",
-      headers,
-      signal,
-      body: JSON.stringify(body),
-    },
-  );
-  if (!response.ok) throw new Error(`current_card_http_${response.status}`);
-  return response.json();
+  return withPlatformRequestTimeout(async requestSignal => {
+    const headers = await platformV2AuthenticatedJsonHeaders(userId);
+    if (requestSignal.aborted) throw new DOMException("Aborted", "AbortError");
+    const response = await platformFetchWithTimeout(
+      "/api/platform/v2/training/current-card",
+      {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers,
+        signal: requestSignal,
+        body: JSON.stringify(body),
+      },
+    );
+    if (!response.ok) throw new Error(`current_card_http_${response.status}`);
+    return response.json();
+  }, signal);
 }
 
 export async function acknowledgeCurrentTrainingCard(
