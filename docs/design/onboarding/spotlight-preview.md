@@ -1,182 +1,147 @@
-# Action-led spotlight onboarding — review preview
+# Action-led onboarding — current review preview
 
-2026-10-30 · #9 · local development preview for owner review.
+2026-10-30 · #9 · local development prototype, not an account onboarding release.
+Open `http://localhost:3100/dev/onboarding-preview`. The route requires development
+mode and `ONBOARDING_PREVIEW_9=true`; production returns not found.
 
-The owner accepted the spotlight format and requested the complete Library →
-meaning → collection → saved collection training path. It is implemented in the
-review preview at `http://localhost:3100/dev/onboarding-preview`, enabled only in
-development with `ONBOARDING_PREVIEW_9=true`. Production returns not found.
-This is a prototype, not an account onboarding release. The standalone HTML
-concept is superseded.
+## Short introduction and optional topics
 
-## Route to review
+Owner feedback replaced the long required route with four core sections:
 
-The surrounding interface dims, the control stays highlighted, and a nearby
-popover explains the action. Steps follow actual clicks or successful local
-saves; there is no separate Next button.
-
-1. Choose or confirm interface language.
-2. Independently choose translation language, including Off; mention a second
-   translation language as an option for later.
+1. Choose or confirm interface language. Explain how to pause/resume/restart.
+2. Independently choose translation language or Off. Mention a second language
+   as an option for later.
 3. Start the ready Dilum NL training.
-4. Reveal the answer, listen to the word, open all meanings, return to the card,
-   choose Learn and close the session.
-5. Open Library using the real navigation.
-6. Search for `bank` and open the result.
-7. Choose furniture or financial meaning; only the chosen meaning joins the collection.
-8. Open Collections, create/name a collection or check an existing one, confirm
-   membership and close the picker.
-9. Return to Training and choose Create training.
-10. Expand Source and choose the collection.
-11. Expand Exercises and choose Direct; explain word → meaning and the reverse option.
-12. Save training, enter its name and submit the actual save dialog.
-13. Highlight the saved training and finish. It can then be loaded, launched or
-    edited. Dilum NL remains primary.
+4. Introduce the visible word, reveal its definition/example, choose Learn and
+   close the session. The first learning action is the main tour's useful result.
 
-These 13 conceptual sections have 26 action states, followed by three optional
-extra states for known meanings, reporting and completion. Stable IDs, targets and keys
-are in `apps/ui/app/dev/onboarding-preview/content.ts`; all tour prose, progress
-and controls are in adjacent `locales/{en,nl,ru}.json`. Future languages need a
-locale registration plus the corresponding application UI messages.
+The main completion offers Done or Additional possibilities. Settings → Getting
+started contains the same topic catalog; select one or Explore all topics in order:
 
-## Components and state
+- **Library, collection and your own training:** find bank, choose furniture or
+  financial meaning, create/name a collection or use an existing one, return to
+  Training, choose the collection as Source, choose Direct, name and save training.
+- **More card actions:** speaker → three dots → all meanings → close details →
+  Mark as known explanation → Report form → completion. Mark as known is explained
+  without requiring a status mutation. Reporting never sends from this preview.
+- **Meaning statistics:** highlight the actual New/Learning status button beside
+  a meaning. Click opens a local overview for that meaning's definition/status.
+- **Collection sharing:** explain owner-managed access, invitation link/code,
+  viewing subscribers, closing access/replacing an invitation. A local open/closed
+  illustration creates no real link and publishes nothing.
+- **Languages:** change interface/translation language and mention the second one.
+- **Appearance:** switch actual preview light/dark theme.
 
-Shared real components: AppFrame, TrainingOverview, TrainingSenseCardStage,
-LibraryHeadwordGroupResultsList, LibrarySenseCardGroup, LibraryCollectionsPicker
-and ApprovedTrainingBuilder. Fixture content and availability are synthetic.
-There is no account identity or connected database; this does not validate #8
-seeding. Installed React Joyride 3.2.0 supplies the spotlight without a new
-dependency. Driver.js and Shepherd are alternatives; the accepted format does
-not require a library change.
+The catalog is ordered collections → card actions → statistics → sharing →
+languages → appearance for the all-topics option. Completion advances to the next
+queued topic, otherwise returns to the catalog. Statistics and sharing are clearly
+marked demonstration overviews, not the connected production dialogs. Account
+history/scheduling, invitations and publication remain outside this prototype.
 
-Startup uses a supported saved interface language, otherwise English. It reads
-its own preview preference, then an available saved app-language preference,
-and never writes the app-language key. Switching translates the tooltip and UI
-immediately; the learning language remains Dutch. Translation language is
-independent. SettingsPanel/SettingsRow styling is shared; selectors and explicit
-confirm buttons belong to this preview. Translation choices EN/NL/RU/DE/FR/ES
-and Off are a small sample, not the full application catalog. No translation
-provider is called.
+## Pause, resume and restart
 
-Separate versioned browser stores:
+The tooltip uses a text **Pause tour** button instead of an X, avoiding confusion
+with a card/panel's close button. The first tooltip explains Settings → Getting
+started → Resume or Start again. Pausing opens that settings destination and
+retains the task. Back to app leaves guidance paused and displays a resume banner.
+A Settings control also remains available in the preview bar during immersive
+practice. The normal settings gear opens this same destination.
+
+A versioned checkpoint retains the current stage, revealed card side, selected
+meaning/collection/training, editing training identity, session count, builder
+draft/name, theme, settings pane and remaining topic queue. Reload restores the
+checkpoint; a paused checkpoint opens settings. Resume restores details panels
+and anchors the tooltip inside their native dialog. Card/panel close controls
+continue their own action rather than ending onboarding.
+
+Shared editors own transient accordion/dialog state. After reload, Source-pick
+returns to the Source opener, Direction-pick to Exercises, training-name to Save,
+and collection-name/done to the collection picker. This retains the task and
+builder values, requiring a single reopen rather than targeting an absent control.
+An unsaved collection-name input is not preserved across a full reload. In-page
+pause preserves mounted editor state. Cancel in the training name dialog returns
+guidance to Save.
+
+Start again resets the guide/checkpoint draft and begins with languages; it keeps
+collections, learned meaning IDs and saved trainings. Reset sample data separately
+clears only synthetic journey data. It retains language preferences.
+
+## Components, localization and storage
+
+The spotlight dims the surrounding real interface, highlights the relevant
+control and explains the action. Steps follow actual clicks or successful local
+saves. Explanatory optional actions do not require mutating a known mark or sending
+a report just to continue.
+
+Shared components: AppFrame, TrainingOverview, TrainingSenseCardStage,
+LibraryHeadwordGroupResultsList, LibrarySenseCardGroup, LibraryCollectionsPicker,
+ApprovedTrainingBuilder and TrainingDetailsDrawer. Installed React Joyride 3.2.0
+supplies the spotlight. No dependency was added. No shared production component
+was changed for this revision.
+
+Fixture content and training availability are synthetic. There is no account
+identity or connected database. Browser speech synthesis provides pronunciation
+in this sample, with a Dutch local voice when available. The device-dependent
+voice note is shown; this does not test the production audio resolver.
+
+The report trigger uses the existing quiet-action styling and localized labels.
+Its preview-only category/comment form has sending disabled and imports no delivery
+or outbox client. Field contents are not persisted. The development badge is hidden
+on this preview route so it cannot cover the Report button.
+
+Joyride mounts after ancestor transitions, scroll and stable target geometry.
+Native dialogs keep their own dimmed backdrop; the tooltip portal is resolved from
+the target's current dialog, including after resume. Visible close controls are
+chosen rather than hidden fallback buttons. Focus trapping is disabled so actual
+controls remain reachable; production accessibility/missing-target recovery still
+needs dedicated validation.
+
+Interface language starts from a supported saved choice, otherwise English. The
+preview preference takes precedence over an available saved app-language key;
+it never writes that app key. Switching immediately translates UI and guidance.
+The learning language remains Dutch. Translation language is independent.
+EN/NL/RU are supported interface locales; the sample translation choices are
+EN/NL/RU/DE/FR/ES and Off, not the full application catalog. No provider is called.
+
+All prose and topic labels are in `apps/ui/app/dev/onboarding-preview/locales/`.
+Stable stages/keys are in `content.ts`; topic order is in `PreviewSettings.tsx`.
+Future languages need registration and the corresponding application UI messages.
+
+Independent browser stores:
 
 - `2000nl:onboarding-preview:preferences:v1`: interface and translation languages.
-- `2000nl:onboarding-preview:journey:v1`: collections referencing meaning IDs,
-  saved training drafts referencing collections, synthetic learned-meaning IDs.
+- `2000nl:onboarding-preview:journey:v1`: meaning memberships, saved training drafts,
+  synthetic learned-meaning IDs. Membership does not copy/reset learning progress.
+- `2000nl:onboarding-preview:checkpoint:v1`: validated resume context and editor draft.
 
-Membership does not copy meanings or reset progress. Saved training retains the
-collection and exercise direction. Reload retains both stores and starts the
-guide at the beginning. Storage failure displays an error and blocks pretending
-to save. Show from beginning replays without clearing; Reset sample data clears
-only the synthetic journey, retaining language choices. Account settings and
-real progress are untouched.
+Storage errors are surfaced; saves do not pretend success. No account preferences,
+DB/defaults/setup-seed, managed rollout or legacy onboarding flags are changed.
 
-Native collection/name dialogs keep their own dimmed backdrop. Joyride's popover
-is placed inside the active dialog to remain in the browser top layer; preview
-styling highlights its form/footer. Normal screens use Joyride's overlay/cutout.
-Joyride mounts only after target preparation has waited for ancestor accordion
-transitions, scrolled the target into view and observed stable geometry. This
-avoids measuring an intermediate accordion position.
+## Validation and evidence
 
-## Evidence and checks
+27 tests passed for language/fallback/key coverage, independent storage, meaning
+identity/membership, saved training persistence, report's no-send/no-storage boundary,
+checkpoint context/draft/queue, invalid state/storage and visible-opener restoration.
+UI typecheck and touched-file lint passed.
 
-![Collection membership](evidence/19-journey-collection-added.jpg)
+Russian browser checks: short core path; pause/reload/resume on the word face and
+inside all-meanings; restored tooltip above the native dialog; statistics badge;
+sharing illustration; theme change and restoration of its settings pane; builder
+name/collection retained across reload and reopen of Save. Earlier checks cover
+collection/training save, card actions and Report. This revision does not claim a
+full EN/NL or mobile walkthrough, nor a complete all-topics browser chain.
 
-![Named training save](evidence/20-journey-save-training.jpg)
+![Initial pause explanation](evidence/33-pause-introduction.jpg)
 
-![Saved training after reload](evidence/21-journey-saved-result.jpg)
+![Settings: resume, restart and optional topics](evidence/34-resume-and-topics.jpg)
 
-![Both meaning choices on mobile](evidence/22-journey-meaning-mobile.jpg)
+![Dark appearance](evidence/35-appearance-dark.jpg)
 
-![Saved result on mobile](evidence/23-journey-saved-mobile.jpg)
+![Restored all-meanings step](evidence/36-restored-detail-step.jpg)
 
-19 focused tests cover locale/key completeness, fallback, independent language
-persistence, exact meaning membership without progress reset, training persistence,
-invalid state and storage failure. An additional report form test verifies that selecting a
-category and entering a comment cannot send or persist it. UI typecheck and touched-file lint passed.
+![Restored unsaved training name](evidence/37-restored-builder-draft.jpg)
 
-Browser checks exercised the Russian route on desktop/narrow layouts, creating
-and reusing a collection, save/reload, editing, and launch using the chosen financial
-meaning. The narrow check used 390×844. The meaning popover leaves both choices
-visible. Source/direction cutouts were checked after accordion expansion. A later
-preparation fix resolved the previous stale cutout; direction selection then
-advanced on its first click.
-Earlier language checks covered English/Dutch immediate switching, independent
-Russian translation/Off and reload. Extended English/Dutch routes have key tests,
-not a full browser walkthrough yet.
-
-Close dismisses guidance; Settings temporarily replays the sample. Account startup
-triggers/saves, cross-device persistence, missing-target recovery and release
-accessibility validation remain outside this prototype. Focus trapping is disabled
-so actual controls stay keyboard reachable. No DB/defaults/setup-seed/legacy flags
-changed. The local server is left running for owner review.
-
-Screenshots 12–18 retain the earlier two-step/language-first samples for comparison.
-This document supersedes those limited route descriptions and the earlier audit's
-conditional dependency-removal advice.
-
-## Card review correction
-
-Owner feedback: introduce the word before asking for recall; preserve the answer
-when leaving, and expose audio plus the three-dot word details action. The card
-segment now highlights the entire card while anchoring the explanation to the
-reveal/Learn action. Both EN/NL/RU copies introduce the word and explain that the
-answer represents one meaning. Audio and word details handlers were previously
-omitted by the preview, which hid those shared-card controls.
-
-The preview now connects both handlers. The three dots open the shared
-TrainingDetailsDrawer with both bank meanings; closing returns to the same answer
-and resumes its guidance. The details model uses the preview's learned-meaning
-state and translation selection. Learn preserves the revealed answer at the exit
-step. No shared production card behavior changed.
-
-Pronunciation uses browser speech synthesis for this isolated sample, with a Dutch
-local voice when available. A note explains device voice availability. This does
-not test the production audio resolver or assert audio quality. Browser verification
-confirmed face/reveal, visible audio/details controls, opening/closing both-meaning
-details, invoking pronunciation, and retaining the definition after Learn. Focused
-18 tests, typecheck and touched-component lint passed again.
-
-![Introduce the word card](evidence/24-card-introduction.jpg)
-
-![All meanings from the three dots](evidence/25-card-all-meanings.jpg)
-
-![Answer with audio and details actions](evidence/26-card-answer-actions.jpg)
-
-## Separate card actions and optional branch
-
-Owner requested explicit steps: reveal → speaker → three dots → close details →
-Learn. The speaker and three dots each get their own cutout; the return step
-anchors to the visible close button inside the native details dialog. Hidden
-fallback close controls are excluded from target selection. Closing details
-returns to the same revealed card before Learn is proposed.
-
-The main completion popover offers Done or More things you can do. The optional
-branch reopens a revealed sample card and highlights Mark as known without
-requiring it. A popover control continues to the Report button. The known action
-in this preview explains the concept without mutating known status.
-
-Report is now visible in the preview card's secondary action row. It opens a
-preview-only category/comment form using the existing localized report labels;
-sending is disabled. No delivery/outbox client is imported, fields are not
-persisted, and closing the form advances to optional completion. Done returns
-to the overview with the collection training preserved. The development badge
-is hidden only on this preview route to avoid covering Report.
-
-Browser verified the explicit audio/details/return/Learn sequence, the main path
-through training save, optional entry, known explanation, report open/fields/back
-and optional Done returning to the overview. Tests: 19 passed; typecheck and
-touched-file lint passed. The full extended route was checked in Russian at the
-current viewport; this revision does not add a full mobile or EN/NL browser run.
-
-![Dedicated audio step](evidence/27-audio-step.jpg)
-
-![Return from meanings](evidence/28-return-from-meanings-step.jpg)
-
-![Optional branch after saving](evidence/29-optional-branch-offer.jpg)
-
-![Mark as known explanation](evidence/30-optional-known-step.jpg)
-
-![Report discovery](evidence/31-optional-report-step.jpg)
-
-![Preview report form with sending disabled](evidence/32-report-demo-form.jpg)
+Screenshots 12–32 retain earlier iterations. This document supersedes their required
+13-section route and the earlier standalone HTML design/audit's conditional advice
+about removing Joyride. This preview does not validate #8 seeding or account startup.
+The local preview server remains running for owner review.

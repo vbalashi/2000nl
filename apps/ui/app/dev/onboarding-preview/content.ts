@@ -20,6 +20,7 @@ export const previewSteps = [
   { id: "details-return", section: 4, target: "#preview-details dialog", title: "returnTitle", body: "returnBody", placement: "bottom-end" },
   { id: "answer", section: 4, target: "#preview-card button", title: "learnTitle", body: "learnBody", placement: "top-end" },
   { id: "exit", section: 4, target: "#preview-session-close", title: "exitTitle", body: "exitBody", placement: "bottom-end" },
+  { id: "basic-complete", section: 4, target: "#preview-overview", title: "basicDoneTitle", body: "basicDoneBody", placement: "bottom" },
   { id: "go-library", section: 5, target: "nav button", title: "libraryTitle", body: "libraryBody", placement: "bottom" },
   { id: "search", section: 6, target: "#preview-library-search", title: "searchTitle", body: "searchBody", placement: "bottom" },
   { id: "result", section: 6, target: "[data-testid='library-headword-group-headword-bank']", title: "openWordTitle", body: "openWordBody", placement: "bottom" },
@@ -37,6 +38,8 @@ export const previewSteps = [
   { id: "save-training", section: 12, target: "#preview-builder button", title: "saveTrainingTitle", body: "saveTrainingBody", placement: "top" },
   { id: "training-name", section: 12, target: "#preview-builder dialog", title: "nameTrainingTitle", body: "nameTrainingBody", placement: "top" },
   { id: "complete", section: 13, target: "#preview-overview section:last-of-type", title: "completeTitle", body: "completeBody", placement: "top" },
+  { id: "extra-stats", section: 13, target: "#preview-meaning", title: "statsTitle", body: "statsBody", placement: "bottom" },
+  { id: "extra-sharing", section: 13, target: "#preview-sharing", title: "sharingTitle", body: "sharingBody", placement: "bottom" },
   { id: "extra-known", section: 13, target: "#preview-card", title: "knownTitle", body: "knownBody", placement: "top-end" },
   { id: "extra-report", section: 13, target: "#preview-report-action", title: "reportTitle", body: "reportBody", placement: "top-start" },
   { id: "extras-complete", section: 13, target: "#preview-session-close", title: "extrasDoneTitle", body: "extrasDoneBody", placement: "bottom-end" },
@@ -44,8 +47,8 @@ export const previewSteps = [
 export type PreviewStage = typeof previewSteps[number]["id"];
 
 export function progressLabel(language: OnboardingLanguage, stage: PreviewStage) {
-  if (stage.startsWith("extra")) return previewLocales[language].extrasProgress;
+  if (stage.startsWith("extra") || !["interface", "translation", "overview", "card", "answer", "exit", "basic-complete"].includes(stage)) return previewLocales[language].extrasProgress;
   return previewLocales[language].progress
     .replace("{step}", String(previewSteps.find(step => step.id === stage)?.section ?? 1))
-    .replace("{total}", String(Math.max(...previewSteps.map(step => step.section))));
+    .replace("{total}", "4");
 }

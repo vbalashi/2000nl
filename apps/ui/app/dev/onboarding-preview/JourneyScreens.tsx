@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import type { BuilderCheckpoint } from "./checkpoint";
 import { Search } from "lucide-react";
 import { LibraryHeadwordGroupResultsList } from "@/components/training/wordlist/LibraryHeadwordGroupResultsList";
 import { buildLibraryHeadwordGroupResults } from "@/components/training/wordlist/libraryHeadwordGroupResults";
@@ -21,7 +22,7 @@ import type { PreviewTranslationLanguage } from "./preferences";
 import workspace from "@/components/practice/library/libraryWorkspace.module.css";
 import styles from "./preview.module.css";
 
-export const libraryStages: readonly PreviewStage[] = ["search", "result", "meaning", "collections", "new-collection", "collection-name", "collection-done", "go-training"];
+export const libraryStages: readonly PreviewStage[] = ["extra-stats", "search", "result", "meaning", "collections", "new-collection", "collection-name", "collection-done", "go-training"];
 export const builderStages: readonly PreviewStage[] = ["source-open", "source-pick", "exercise-open", "direction-pick", "save-training", "training-name"];
 export const pickerStages: readonly PreviewStage[] = ["new-collection", "collection-name", "collection-done"];
 export const isLibraryStage = (stage: PreviewStage) => libraryStages.includes(stage);
@@ -41,15 +42,20 @@ type Props = {
   collectionId: string | null; onSelectCollection: (id: string) => void;
   saveError: boolean;
   editingTraining?: SavedTraining;
+  restoredBuilder: BuilderCheckpoint | null;
+  onBuilderChange: (snapshot: BuilderCheckpoint) => void;
+  onPreviewStats: (entryId: string) => void;
 };
 
 export function JourneyScreens(p: Props) {
   const { stage, language, journey } = p;
   const copy = previewLocales[language], ui = getUiMessages(language), b = ui.builder;
-  const [query, setQuery] = useState("");
-  const [draft, setDraft] = useState<TrainingSetupDraft & {sessionSize: TrainingSessionSize}>(() => p.editingTraining ? {...p.editingTraining.draft, sessionSize:p.editingTraining.draft.sessionSize ?? 10} : newPreviewDraft());
-  const [name, setName] = useState(p.editingTraining?.name ?? copy.collectionTrainingName);
+  const [query, setQuery] = useState(stage === "search" ? "" : "bank");
+  const [draft, setDraft] = useState<TrainingSetupDraft & {sessionSize: TrainingSessionSize}>(() => p.restoredBuilder ? { ...p.restoredBuilder.draft, sessionSize: p.restoredBuilder.draft.sessionSize ?? 10 } : p.editingTraining ? {...p.editingTraining.draft, sessionSize:p.editingTraining.draft.sessionSize ?? 10} : newPreviewDraft());
+  const [name, setName] = useState(p.restoredBuilder?.name ?? p.editingTraining?.name ?? copy.collectionTrainingName);
   const onStage = p.onStage;
+  const onBuilderChange = p.onBuilderChange;
+  useEffect(() => { if (isBuilderStage(stage)) onBuilderChange({ draft, name }); }, [draft, name, stage, onBuilderChange]);
   const entryId = p.selectedEntryId || gateFurnitureEntry.entryId;
   const group = useMemo(() => ({ ...gateBankGroup, dictionary: { ...gateBankGroup.dictionary, dictionaryId, displayName: "Dilum Nederlands" },
     entries: gateBankGroup.entries.map(entry => entry.kind === "sense-card" ? { ...entry,
@@ -78,6 +84,7 @@ export function JourneyScreens(p: Props) {
     };
     return <div id="preview-builder" className={styles.builderHost} onClickCapture={event => {
       const button = (event.target as Element).closest("button");
+      if (stage === "training-name" && button?.textContent?.trim() === b.cancel) requestAnimationFrame(() => p.onStage("save-training"));
       if (button?.getAttribute("aria-expanded") === "false") {
         const text = button.textContent?.trim() ?? "";
         if (stage === "source-open" && text.startsWith(b.source)) requestAnimationFrame(() => p.onStage("source-pick"));
@@ -118,7 +125,10 @@ export function JourneyScreens(p: Props) {
       {query.trim().toLowerCase() === "bank" ? <LibraryHeadwordGroupResultsList interfaceLanguage={language} results={buildLibraryHeadwordGroupResults([group])} selectedHeadwordGroupId={null}
         onSelect={() => { p.onSelectEntry(""); p.onStage("meaning"); }}/>
         : query.trim() ? <p>{copy.noResults}</p> : null}
-    </div> : <div id="preview-meaning" className={styles.meaningHost}>
+    </div> : <div id="preview-meaning" className={styles.meaningHost} onClickCapture={event => {
+      const button = (event.target as Element).closest("button");
+      if (button?.getAttribute("aria-haspopup") === "dialog") { event.preventDefault(); event.stopPropagation(); p.onPreviewStats(button.closest("[data-entry-id]")?.getAttribute("data-entry-id") ?? entryId); }
+    }}>
       <LibrarySenseCardGroup key={language} model={groupModel} interfaceLanguage={language} contentLanguage="nl" translationLanguage={p.translation === "off" ? undefined : p.translation}
         activeMeaningId={p.selectedEntryId || null} revealActiveMeaning={Boolean(p.selectedEntryId)} inlineGrading={false} translationEnabled={p.translation !== "off"}
         collectionCounts={Object.fromEntries(groupModel.meanings.map(meaning => [meaning.entryId, journey.collections.filter(c => c.entryIds.includes(meaning.entryId)).length]))}
