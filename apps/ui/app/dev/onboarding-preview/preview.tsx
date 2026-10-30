@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useEffect, useLayoutEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState, useCallback } from "react";
 import { Joyride, type TooltipRenderProps } from "react-joyride";
-import { X, RotateCcw } from "lucide-react";
+import { X, RotateCcw, Flag } from "lucide-react";
 import { AppFrame } from "@/components/navigation/AppFrame";
 import { TrainingOverview } from "@/components/practice/TrainingOverview";
 import { SettingsPanel, SettingsRow } from "@/components/practice/settings/SettingsLayout";
+import { PreviewReport } from "./PreviewReport";
+import { senseCardQuietAction } from "@/components/training/SenseCardChrome";
 import { TrainingDetailsDrawer } from "@/components/training/TrainingDetailsDrawer";
 import { LibrarySenseCardGroup } from "@/components/training/library-v2/LibrarySenseCardGroup";
 import { buildLibrarySenseCardGroupModel } from "@/components/training/library-v2/librarySenseCardModel";
@@ -24,7 +26,7 @@ import theme from "@/components/practice/ui/practiceTheme.module.css";
 import settingsStyle from "@/components/practice/settings/settings.module.css";
 import styles from "./preview.module.css";
 
-type MessageData = { copy: PreviewCopy; progress: string; languageStep: boolean; secondary: boolean; inputStep: boolean; complete: boolean };
+type MessageData = { copy: PreviewCopy; progress: string; languageStep: boolean; secondary: boolean; inputStep: boolean; complete: boolean; extrasDone: boolean; known: boolean; onExtras: () => void; onReport: () => void };
 function TourMessage({ step, tooltipProps, controls }: TooltipRenderProps) {
   const data = step.data as MessageData;
   return <div {...tooltipProps} className={styles.tooltip}>
@@ -32,7 +34,8 @@ function TourMessage({ step, tooltipProps, controls }: TooltipRenderProps) {
       <button onClick={() => controls.skip()} aria-label={data.copy.close}><X size={18}/></button></div>
     <h2>{step.title}</h2><div className={styles.copy}>{step.content}</div>
     {data.secondary && <p className={styles.secondaryMention}>{data.copy.secondaryMention}</p>}
-    {data.complete ? <button className={styles.confirm} onClick={() => controls.skip()}>{data.copy.done}</button>
+    {data.complete && !data.extrasDone && <button className={styles.confirm} onClick={data.onExtras}>{data.copy.showExtras}</button>}
+    {data.known ? <><p className={styles.instruction}>{data.copy.knownHint}</p><button className={styles.confirm} onClick={data.onReport}>{data.copy.nextReport}</button></> : data.complete ? <button className={styles.confirm} onClick={() => controls.skip()}>{data.copy.done}</button>
       : <p className={styles.instruction}>{data.languageStep ? data.copy.confirmHint : data.inputStep ? data.copy.actionHint : data.copy.clickHint}</p>}
   </div>;
 }
@@ -48,6 +51,7 @@ export function OnboardingPreview() {
   const [ready, setReady] = useState(false);
   const [stage, setStage] = useState<PreviewStage>("interface");
   const [revealed, setRevealed] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [audioNotice, setAudioNotice] = useState(false);
   const [running, setRunning] = useState(true);
@@ -57,6 +61,7 @@ export function OnboardingPreview() {
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [collectionId, setCollectionId] = useState<string | null>(null);
   const [selectedTrainingId, setSelectedTrainingId] = useState("preview-dilum");
+  const [preparedFor, setPreparedFor] = useState("");
   const [modalPortal, setModalPortal] = useState<HTMLElement | null>(null);
   const [sessionCompleted, setSessionCompleted] = useState(0);
   const [editingTrainingId, setEditingTrainingId] = useState<string | null>(null);
@@ -87,7 +92,7 @@ export function OnboardingPreview() {
   }, [stage, ready]);
 
   useLayoutEffect(() => {
-    const selector = isPickerStage(stage) ? "#preview-collections dialog" : stage === "training-name" ? "#preview-builder dialog" : null;
+    const selector = isPickerStage(stage) ? "#preview-collections dialog" : stage === "training-name" ? "#preview-builder dialog" : stage === "details-return" ? "#preview-details dialog" : null;
     setModalPortal(selector ? document.querySelector<HTMLElement>(selector) : null);
   }, [stage]);
   const commitJourney = (next: Journey) => {
@@ -109,13 +114,18 @@ export function OnboardingPreview() {
     persist(next);
   };
   const confirm = (next: PreviewStage) => { if (persist(preferences)) { setStage(next); setNotice(null); } };
-  const replay = () => { setRunning(false); setStage("interface"); setDetailsOpen(false); setAudioNotice(false); setRevealed(false); setNotice(null); setSelectedTrainingId("preview-dilum"); requestAnimationFrame(() => setRunning(true)); };
+  const replay = () => { setRunning(false); setStage("interface"); setDetailsOpen(false); setReportOpen(false); setAudioNotice(false); setRevealed(false); setNotice(null); setSelectedTrainingId("preview-dilum"); requestAnimationFrame(() => setRunning(true)); };
   const start = (id = "preview-dilum") => { setSelectedTrainingId(id); setSessionCompleted(0); setAudioNotice(false); setStage("card"); setRevealed(false); setNotice(null); };
+  const showExtras = () => { setSelectedTrainingId("preview-dilum"); setRevealed(true); setDetailsOpen(false); setReportOpen(false); setAudioNotice(false); setNotice(null); setStage("extra-known"); setRunning(true); };
   const spec = previewSteps.find(step => step.id === stage)!;
-  const getTarget = () => {
+  const getTarget = useCallback(() => {
     const b = ui.builder;
     const entrySelector = `#preview-meaning [data-entry-id="${selectedEntryId}"]`;
     if (stage === "card") return document.querySelector<HTMLElement>(`#preview-card button[aria-label="${platformV2Message(language, "senseCard.answer.show")}"]`);
+    if (stage === "audio") return document.querySelector<HTMLElement>(`#preview-card button[aria-label="${platformV2Message(language, "senseCard.audio.play")}"]`);
+    if (stage === "details-open") return document.querySelector<HTMLElement>(`#preview-card button[aria-label="${platformV2Message(language, "senseCard.wordDetails.open")}"]`);
+    if (stage === "details-return") return Array.from(document.querySelectorAll<HTMLElement>(`#preview-details dialog button[aria-label="${platformV2Message(language, "common.close")}"]`)).find(button => button.getClientRects().length > 0) ?? null;
+    if (stage === "extra-known") return buttonWithText("#preview-card", platformV2Message(language, "senseCard.known.mark"));
     if (stage === "answer") return buttonWithText("#preview-card", platformV2Message(language, "senseCard.learning.start"));
     if (stage === "go-library") return buttonWithText("nav", ui.navigation.library);
     if (stage === "go-training") return buttonWithText("nav", ui.navigation.training);
@@ -135,34 +145,41 @@ export function OnboardingPreview() {
       return Array.from(document.querySelectorAll<HTMLElement>("#preview-overview h3")).find(h => h.textContent === name)?.parentElement?.parentElement ?? null;
     }
     return document.querySelector<HTMLElement>(spec.target);
-  };
+  }, [stage, language, selectedEntryId, collectionId, journey.collections, journey.trainings, spec.target, ui]);
   const target = getTarget;
-  const prepareTarget = async () => {
-    const element = getTarget();
-    if (!element) return;
-    // A target can keep its own size while its expanding ancestor moves it.
-    // Joyride observes target resizing, so settle ancestor transitions first.
-    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-    const transitions = document.getAnimations().filter(animation => {
-      const node = (animation.effect as KeyframeEffect | null)?.target;
-      return node instanceof Element && node.contains(element) && animation.playState === "running";
-    });
-    await Promise.allSettled(transitions.map(animation => animation.finished));
-    element.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
-    // Wait for stable geometry after scrolling before Joyride measures.
-    let previous = "", stable = 0;
-    for (let frame = 0; frame < 40 && stable < 3; frame++) {
+  const preparationKey = `${stage}:${language}:${Boolean(modalPortal)}`;
+  useEffect(() => {
+    let cancelled = false;
+    setPreparedFor("");
+    const prepareTarget = async () => {
+      const element = getTarget();
+      if (!element) return;
+      // A target can keep its own size while its expanding ancestor moves it.
+      // Joyride observes target resizing, so settle ancestor transitions first.
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-      const rect = element.getBoundingClientRect();
-      const current = [rect.x, rect.y, rect.width, rect.height].map(Math.round).join(":");
-      stable = current === previous ? stable + 1 : 0;
-      previous = current;
-    }
-  };
+      const transitions = document.getAnimations().filter(animation => {
+        const node = (animation.effect as KeyframeEffect | null)?.target;
+        return node instanceof Element && node.contains(element) && animation.playState === "running";
+      });
+      await Promise.allSettled(transitions.map(animation => animation.finished));
+      element.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
+      // Wait for stable geometry after scrolling before Joyride measures.
+      let previous = "", stable = 0;
+      for (let frame = 0; frame < 40 && stable < 3; frame++) {
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+        const rect = element.getBoundingClientRect();
+        const current = [rect.x, rect.y, rect.width, rect.height].map(Math.round).join(":");
+        stable = current === previous ? stable + 1 : 0;
+        previous = current;
+      }
+      if (!cancelled) setPreparedFor(preparationKey);
+    };
+    if (ready) void prepareTarget();
+    return () => { cancelled = true; };
+  }, [getTarget, preparationKey, ready]);
   const step = { target, title: copy[spec.title], content: copy[spec.body], placement: spec.placement,
-    before: prepareTarget,
     spotlightTarget: ["card", "answer"].includes(stage) ? "#preview-card" : stage === "meaning" ? "#preview-meaning [data-testid=library-sense-card-scroll-region]" : undefined,
-    data: { copy, progress: progressLabel(language, stage), languageStep, secondary: stage === "translation", inputStep: ["search", "meaning", "new-collection", "collection-name", "training-name"].includes(stage), complete: stage === "complete" } satisfies MessageData };
+    data: { copy, progress: progressLabel(language, stage), languageStep, secondary: stage === "translation", inputStep: ["search", "meaning", "new-collection", "collection-name", "training-name"].includes(stage), complete: stage === "complete" || stage === "extras-complete", extrasDone: stage === "extras-complete", known: stage === "extra-known", onExtras: showExtras, onReport: () => setStage("extra-report") } satisfies MessageData };
   const training = {
     id: "preview-dilum", name: "Dilum NL", language: languageDisplayName(language, "nl"),
     description: `${ui.trainingOverview.exerciseType.Words} · ${ui.trainingOverview.direction.Direct}`,
@@ -185,6 +202,7 @@ export function OnboardingPreview() {
 
   const playSampleAudio = () => {
     setAudioNotice(true);
+    if (stage === "audio") setStage("details-open");
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const speech = new SpeechSynthesisUtterance(`de ${model.headword}`);
@@ -200,7 +218,7 @@ export function OnboardingPreview() {
   }));
   const mainId = stage === "complete" ? training.id : selectedTrainingId;
   const sessionName = savedItems.find(item => item.id === selectedTrainingId)?.name ?? training.name;
-  const sessionStage = ["card", "answer", "exit"].includes(stage);
+  const sessionStage = ["card", "audio", "details-open", "details-return", "answer", "exit", "extra-known", "extra-report", "extras-complete"].includes(stage);
   if (!ready) return null;
   return <div className={`${theme.theme} ${styles.root}`} lang={language} data-preview-stage={stage}>
     <div className={styles.previewBar}><span>{copy.preview}</span>
@@ -254,15 +272,16 @@ export function OnboardingPreview() {
           }}
           onEdit={id => { const saved = journey.trainings.find(t => t.id === id); if (saved) { setEditingTrainingId(id); setCollectionId(journey.collections.find(c => `user:${c.id}` === saved.draft.listValue)?.id ?? null); setStage("source-open"); } else { setRunning(false); setNotice("editLater"); } }} onRetry={replay}/>
       </div> : <div className={styles.session}>
-        <div className={styles.sessionHeader}><span>{sessionName}</span><span>{sessionCompleted} / {sessionCollection?.entryIds.length ?? 10}</span><button id="preview-session-close" aria-label={copy.closeSession} onClick={() => { setRevealed(false); setStage("go-library"); }}><X size={18}/></button></div>
+        <div className={styles.sessionHeader}><span>{sessionName}</span><span>{sessionCompleted} / {sessionCollection?.entryIds.length ?? 10}</span><button id="preview-session-close" aria-label={copy.closeSession} onClick={() => { setRevealed(false); setStage(stage.startsWith("extra") ? "complete" : "go-library"); }}><X size={18}/></button></div>
         <div id="preview-card" className={styles.card}>
           <TrainingSenseCardStage model={model} mode={selectedTraining?.draft.modes[0] ?? "word-to-definition"} interfaceLanguage={language} side={revealed ? "answer" : "face"}
-            onPlayAudio={playSampleAudio} onOpenDetails={() => setDetailsOpen(true)}
-            onSideChange={side => { setRevealed(side === "answer"); if (side === "answer") setStage("answer"); }}
-            onAction={() => { if (commitJourney(learnMeaning(journey, cardEntry.entryId))) { setSessionCompleted(1); setStage("exit"); } }}/>
+            reportAction={<button id="preview-report-action" className={senseCardQuietAction()} onClick={() => setReportOpen(true)}><Flag aria-hidden="true" className="h-3.5 w-3.5"/>{platformV2Message(language, "senseCard.report")}</button>}
+            onPlayAudio={playSampleAudio} onOpenDetails={() => { setDetailsOpen(true); if (stage === "details-open") setStage("details-return"); }}
+            onSideChange={side => { setRevealed(side === "answer"); if (side === "answer") setStage("audio"); }}
+            onAction={capability => { if (capability.actionId === "mark-known") { setNotice("knownHint"); return; } if (commitJourney(learnMeaning(journey, cardEntry.entryId))) { setSessionCompleted(1); setStage("exit"); } }}/>
         </div>
         {audioNotice && <p role="status" className={styles.localOnly}>{copy.sampleAudio}</p>}
-        <TrainingDetailsDrawer open={detailsOpen} onClose={() => setDetailsOpen(false)} interfaceLanguage={language}>
+        <div id="preview-details"><TrainingDetailsDrawer open={detailsOpen} onClose={() => { setDetailsOpen(false); if (stage === "details-return") setStage("answer"); }} interfaceLanguage={language}>
           <LibrarySenseCardGroup model={buildLibrarySenseCardGroupModel({ ...gateBankGroup,
             dictionary: { ...gateBankGroup.dictionary, displayName: "Dilum Nederlands" },
             entries: gateBankGroup.entries.map(entry => entry.kind === "sense-card" ? { ...entry,
@@ -273,14 +292,15 @@ export function OnboardingPreview() {
             interfaceLanguage={language} contentLanguage="nl" translationLanguage={preferences.translationLanguage === "off" ? undefined : preferences.translationLanguage}
             translationEnabled={preferences.translationLanguage !== "off"} activeMeaningId={cardEntry.entryId} revealActiveMeaning
             inlineGrading={false} onPlayAudio={playSampleAudio} onAction={() => {}}/>
-        </TrainingDetailsDrawer>
+        </TrainingDetailsDrawer></div>
+        {reportOpen && <PreviewReport language={language} onClose={() => { setReportOpen(false); if (stage === "extra-report") setStage("extras-complete"); }}/>}
       </div>}
       {notice && <p role="status" className={styles.notice}>{copy[notice]}</p>}
       {saveError && !isPickerStage(stage) && stage !== "training-name" && <p role="alert" className={styles.error}>{copy.saveError}</p>}
     </AppFrame>
-    {!detailsOpen && <Joyride key={`preview-${stage}:${language}:${Boolean(modalPortal)}`} portalElement={modalPortal ?? undefined} run={running} steps={[step]} tooltipComponent={TourMessage}
-      onEvent={data => { if (data.status === "skipped" || data.status === "finished") setRunning(false); }}
-      options={{ skipBeacon: true, hideOverlay: isPickerStage(stage) || stage === "training-name", blockTargetInteraction: false, disableFocusTrap: true, overlayClickAction: false,
+    {preparedFor === preparationKey && (!detailsOpen || stage === "details-return") && !reportOpen && <Joyride key={`preview-${stage}:${language}:${Boolean(modalPortal)}`} portalElement={modalPortal ?? undefined} run={running} steps={[step]} tooltipComponent={TourMessage}
+      onEvent={data => { if (data.status === "skipped" || data.status === "finished") { setRunning(false); if (stage === "extras-complete") setStage("complete"); } }}
+      options={{ skipBeacon: true, hideOverlay: isPickerStage(stage) || stage === "training-name" || stage === "details-return", blockTargetInteraction: false, disableFocusTrap: true, overlayClickAction: false,
         dismissKeyAction: "close", closeButtonAction: "skip", overlayColor: "rgba(24, 19, 34, .52)",
         spotlightPadding: 8, spotlightRadius: 15, arrowColor: "#fff", arrowSize: 8, arrowBase: 16,
         width: 340, zIndex: 10000, skipScroll: true, scrollDuration: 0, primaryColor: "#71608d" }}/> }

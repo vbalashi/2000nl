@@ -19,7 +19,8 @@ saves; there is no separate Next button.
 2. Independently choose translation language, including Off; mention a second
    translation language as an option for later.
 3. Start the ready Dilum NL training.
-4. Reveal the answer, read the definition/example, choose Learn and close the session.
+4. Reveal the answer, listen to the word, open all meanings, return to the card,
+   choose Learn and close the session.
 5. Open Library using the real navigation.
 6. Search for `bank` and open the result.
 7. Choose furniture or financial meaning; only the chosen meaning joins the collection.
@@ -32,7 +33,8 @@ saves; there is no separate Next button.
 13. Highlight the saved training and finish. It can then be loaded, launched or
     edited. Dilum NL remains primary.
 
-These 13 conceptual sections have 23 action states. Stable IDs, targets and keys
+These 13 conceptual sections have 26 action states, followed by three optional
+extra states for known meanings, reporting and completion. Stable IDs, targets and keys
 are in `apps/ui/app/dev/onboarding-preview/content.ts`; all tour prose, progress
 and controls are in adjacent `locales/{en,nl,ru}.json`. Future languages need a
 locale registration plus the corresponding application UI messages.
@@ -72,8 +74,9 @@ real progress are untouched.
 Native collection/name dialogs keep their own dimmed backdrop. Joyride's popover
 is placed inside the active dialog to remain in the browser top layer; preview
 styling highlights its form/footer. Normal screens use Joyride's overlay/cutout.
-Before measuring, target preparation waits for ancestor accordion transitions,
-scrolls the target into view and waits for stable geometry.
+Joyride mounts only after target preparation has waited for ancestor accordion
+transitions, scrolled the target into view and observed stable geometry. This
+avoids measuring an intermediate accordion position.
 
 ## Evidence and checks
 
@@ -87,15 +90,17 @@ scrolls the target into view and waits for stable geometry.
 
 ![Saved result on mobile](evidence/23-journey-saved-mobile.jpg)
 
-18 focused tests cover locale/key completeness, fallback, independent language
+19 focused tests cover locale/key completeness, fallback, independent language
 persistence, exact meaning membership without progress reset, training persistence,
-invalid state and storage failure. UI typecheck and touched-file lint passed.
+invalid state and storage failure. An additional report form test verifies that selecting a
+category and entering a comment cannot send or persist it. UI typecheck and touched-file lint passed.
 
 Browser checks exercised the Russian route on desktop/narrow layouts, creating
 and reusing a collection, save/reload, editing, and launch using the chosen financial
 meaning. The narrow check used 390×844. The meaning popover leaves both choices
-visible. Source/direction cutouts were checked after accordion expansion; a
-locator-induced scroll needed the overlay's scroll update before clicking.
+visible. Source/direction cutouts were checked after accordion expansion. A later
+preparation fix resolved the previous stale cutout; direction selection then
+advanced on its first click.
 Earlier language checks covered English/Dutch immediate switching, independent
 Russian translation/Off and reload. Extended English/Dutch routes have key tests,
 not a full browser walkthrough yet.
@@ -137,3 +142,41 @@ details, invoking pronunciation, and retaining the definition after Learn. Focus
 ![All meanings from the three dots](evidence/25-card-all-meanings.jpg)
 
 ![Answer with audio and details actions](evidence/26-card-answer-actions.jpg)
+
+## Separate card actions and optional branch
+
+Owner requested explicit steps: reveal → speaker → three dots → close details →
+Learn. The speaker and three dots each get their own cutout; the return step
+anchors to the visible close button inside the native details dialog. Hidden
+fallback close controls are excluded from target selection. Closing details
+returns to the same revealed card before Learn is proposed.
+
+The main completion popover offers Done or More things you can do. The optional
+branch reopens a revealed sample card and highlights Mark as known without
+requiring it. A popover control continues to the Report button. The known action
+in this preview explains the concept without mutating known status.
+
+Report is now visible in the preview card's secondary action row. It opens a
+preview-only category/comment form using the existing localized report labels;
+sending is disabled. No delivery/outbox client is imported, fields are not
+persisted, and closing the form advances to optional completion. Done returns
+to the overview with the collection training preserved. The development badge
+is hidden only on this preview route to avoid covering Report.
+
+Browser verified the explicit audio/details/return/Learn sequence, the main path
+through training save, optional entry, known explanation, report open/fields/back
+and optional Done returning to the overview. Tests: 19 passed; typecheck and
+touched-file lint passed. The full extended route was checked in Russian at the
+current viewport; this revision does not add a full mobile or EN/NL browser run.
+
+![Dedicated audio step](evidence/27-audio-step.jpg)
+
+![Return from meanings](evidence/28-return-from-meanings-step.jpg)
+
+![Optional branch after saving](evidence/29-optional-branch-offer.jpg)
+
+![Mark as known explanation](evidence/30-optional-known-step.jpg)
+
+![Report discovery](evidence/31-optional-report-step.jpg)
+
+![Preview report form with sending disabled](evidence/32-report-demo-form.jpg)

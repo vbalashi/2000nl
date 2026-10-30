@@ -15,6 +15,9 @@ export const previewSteps = [
   { id: "overview", section: 3, target: "#preview-overview section:first-of-type button:not([aria-label])", title: "startTitle", body: "startBody", placement: "bottom" },
   // Card target is refined from the current locale's actual accessible label.
   { id: "card", section: 4, target: "#preview-card button[aria-label]", title: "revealTitle", body: "revealBody", placement: "top-end" },
+  { id: "audio", section: 4, target: "#preview-card", title: "audioTitle", body: "audioBody", placement: "bottom-end" },
+  { id: "details-open", section: 4, target: "#preview-card", title: "detailsTitle", body: "detailsBody", placement: "bottom-end" },
+  { id: "details-return", section: 4, target: "#preview-details dialog", title: "returnTitle", body: "returnBody", placement: "bottom-end" },
   { id: "answer", section: 4, target: "#preview-card button", title: "learnTitle", body: "learnBody", placement: "top-end" },
   { id: "exit", section: 4, target: "#preview-session-close", title: "exitTitle", body: "exitBody", placement: "bottom-end" },
   { id: "go-library", section: 5, target: "nav button", title: "libraryTitle", body: "libraryBody", placement: "bottom" },
@@ -34,10 +37,14 @@ export const previewSteps = [
   { id: "save-training", section: 12, target: "#preview-builder button", title: "saveTrainingTitle", body: "saveTrainingBody", placement: "top" },
   { id: "training-name", section: 12, target: "#preview-builder dialog", title: "nameTrainingTitle", body: "nameTrainingBody", placement: "top" },
   { id: "complete", section: 13, target: "#preview-overview section:last-of-type", title: "completeTitle", body: "completeBody", placement: "top" },
+  { id: "extra-known", section: 13, target: "#preview-card", title: "knownTitle", body: "knownBody", placement: "top-end" },
+  { id: "extra-report", section: 13, target: "#preview-report-action", title: "reportTitle", body: "reportBody", placement: "top-start" },
+  { id: "extras-complete", section: 13, target: "#preview-session-close", title: "extrasDoneTitle", body: "extrasDoneBody", placement: "bottom-end" },
 ] as const;
 export type PreviewStage = typeof previewSteps[number]["id"];
 
 export function progressLabel(language: OnboardingLanguage, stage: PreviewStage) {
+  if (stage.startsWith("extra")) return previewLocales[language].extrasProgress;
   return previewLocales[language].progress
     .replace("{step}", String(previewSteps.find(step => step.id === stage)?.section ?? 1))
     .replace("{total}", String(Math.max(...previewSteps.map(step => step.section))));
