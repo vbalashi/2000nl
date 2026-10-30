@@ -33,8 +33,9 @@ test('unavailable features are omitted from settings rather than sending users t
  expect(screen.queryByRole('button',{name:tourCopy.en.sharingTopic})).toBeNull();expect(screen.queryByRole('button',{name:tourCopy.en.incomingTopic})).toBeNull();expect(screen.queryByRole('button',{name:tourCopy.en.collectionsTopic})).toBeNull();
 });
 test('denied storage leaves topic controls usable and reports that resume is unavailable',async()=>{
- const denied=vi.spyOn(localStorage,'setItem').mockImplementation(()=>{throw Error('denied');});
- try{renderGuide();fireEvent.click(screen.getByRole('button',{name:tourCopy.ru.sharingTopic}));await screen.findByRole('alert');expect(port.prepare).toHaveBeenCalledWith('sharing',0);}finally{denied.mockRestore();}
+ const denied=vi.fn(()=>{throw Error('denied');});
+ vi.stubGlobal('localStorage',{getItem:()=>null,setItem:denied,removeItem:()=>{},clear:()=>{},key:()=>null,length:0});
+ try{renderGuide();fireEvent.click(screen.getByRole('button',{name:tourCopy.ru.sharingTopic}));await screen.findByRole('alert');expect(port.prepare).toHaveBeenCalledWith('sharing',0);expect(denied).toHaveBeenCalled();}finally{vi.unstubAllGlobals();}
 });
 test('accepted action signals carry only the action type, never card or account data',()=>{
  const listener=vi.fn();window.addEventListener(ONBOARDING_SIGNAL,listener);act(()=>signalOnboarding('training-saved'));expect(listener.mock.calls[0][0].detail).toBe('training-saved');window.removeEventListener(ONBOARDING_SIGNAL,listener);
