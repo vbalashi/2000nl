@@ -121,7 +121,7 @@ export function TrainingCardAnswerHeader({
         >
           {onPlayAudio ? (
             <TrainingCardIconButton
-              label={audioLabel}
+              tour="audio" label={audioLabel}
               disabled={busy}
               onClick={onPlayAudio}
             >
@@ -141,7 +141,7 @@ export function TrainingCardAnswerHeader({
           )}
           {onOpenDetails ? (
             <TrainingCardIconButton
-              label={moreLabel}
+              tour="details" label={moreLabel}
               disabled={busy}
               onClick={onOpenDetails}
             >
@@ -426,7 +426,7 @@ export function TrainingCardFaceControls({
         </button>
       ) : null}
       <button
-        ref={showAnswerRef}
+        data-onboarding="reveal" ref={showAnswerRef}
         type="button"
         aria-label={showAnswerLabel}
         disabled={busy}
@@ -479,6 +479,7 @@ function scrollMask(top: boolean, bottom: boolean) {
 }
 
 export function TrainingCardIconButton({
+  tour,
   label,
   active = false,
   pending = false,
@@ -486,6 +487,7 @@ export function TrainingCardIconButton({
   onClick,
   children,
 }: {
+  tour?:string;
   label: string;
   active?: boolean;
   pending?: boolean;
@@ -494,7 +496,7 @@ export function TrainingCardIconButton({
   children: React.ReactNode;
 }) {
   return (
-    <button
+    <button data-onboarding={tour}
       type="button"
       aria-label={label}
       title={label}

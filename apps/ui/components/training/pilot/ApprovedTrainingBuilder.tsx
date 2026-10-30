@@ -1,4 +1,5 @@
 "use client";
+import {signalOnboarding} from "@/lib/onboarding/signals";
 import { SegmentedControl } from "@/components/practice/ui/SegmentedControl";
 import React, { useId, useState, useRef, useLayoutEffect } from "react";
 import {
@@ -298,6 +299,7 @@ export function ApprovedTrainingBuilder(p: Props) {
     setSaving(true);
     try {
       if (copyOpen ? await p.onSaveAs?.(copyName.trim()) : await p.onSave()) {
+        signalOnboarding("training-saved");
         setSaveOpen(false);
         setCopyOpen(false);
       }
@@ -307,7 +309,7 @@ export function ApprovedTrainingBuilder(p: Props) {
   };
   return (
     <div
-      ref={builderRef}
+      data-onboarding="builder" data-material-mode={p.draft.materialMode ?? "selected-dictionaries"} ref={builderRef}
       className={`${theme.theme} ${s.builder} session-builder-standard`}
       data-colour-mode="app"
       lang={p.interfaceLanguage}
@@ -738,7 +740,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                 <button
                   type="button"
                   className={s.secondary}
-                  aria-label={p.saveLabel}
+                  data-onboarding="save-training" aria-label={p.saveLabel}
                   disabled={saving || p.saveDisabled}
                   onClick={() => {
                     p.onBeginSave();
@@ -903,7 +905,7 @@ export function ApprovedTrainingBuilder(p: Props) {
               autoFocus
               disabled={saving}
               className={s.input}
-              aria-label={b.trainingName}
+              data-onboarding="training-name" aria-label={b.trainingName}
               maxLength={160}
               value={copyOpen ? copyName : p.name}
               onChange={(event) =>
@@ -937,7 +939,7 @@ export function ApprovedTrainingBuilder(p: Props) {
               disabled={
                 saving || p.saveDisabled || (copyOpen && !copyName.trim())
               }
-              onClick={() => void save()}
+              data-onboarding="confirm-training-save" onClick={() => void save()}
             >
               {copyOpen ? saveAsLabel : p.saveLabel}
             </button>

@@ -29,6 +29,7 @@ import type {
 export type LibraryMeaningIntent = {ownerId:string;key:string;entryId:string;headword:string;contentLanguageCode:string};
 
 type Props = {
+  onboardingSearch?:{key:string;query:string}|null;
   invitationCode?: string | null;
   onInvitationConsumed?:()=>void;
   meaningIntent?: LibraryMeaningIntent | null;
@@ -62,6 +63,7 @@ function LibraryDestinationSession({
   onOpenListMembership,
   onTrainWord,
   meaningIntent,
+  onboardingSearch,
 }: Props) {
   const [searchState, setSearchState] = useState<DictionarySearchTabState>(() =>
     createDictionarySearchTabState(),
@@ -89,6 +91,8 @@ function LibraryDestinationSession({
     setDestination("words");
     setSearchState(current=>({...current,query:meaningIntent.headword,applyListFilter:false,collectionId:null,labelId:null,labelName:null,selectedHeadwordGroupId:null,detailSelection:{entryId:meaningIntent.entryId,headword:meaningIntent.headword,contentLanguageCode:meaningIntent.contentLanguageCode},mobileDetailOpen:true}));
   },[meaningIntent,userId]);
+  const lastOnboardingSearch=React.useRef<string>();
+  useEffect(()=>{if(!onboardingSearch||lastOnboardingSearch.current===onboardingSearch.key)return;lastOnboardingSearch.current=onboardingSearch.key;setDestination('words');setSearchState({...createDictionarySearchTabState(),query:onboardingSearch.query});},[onboardingSearch]);
   const [hasOpened, setHasOpened] = useState(open);
   useEffect(() => {
     if (open) setHasOpened(true);
@@ -168,7 +172,7 @@ export function LibraryDestinationTabs({language,destination,organizationEnabled
  if(!organizationEnabled&&!sharingEnabled)return null;
  return <nav className={organization.tabs} aria-label={getUiMessages(language).library.title}>
   <button type="button" aria-current={destination==="words"?"page":undefined} onClick={()=>onChange("words")}><List size={14}/>{copy.words}</button>
-  {organizationEnabled&&<button type="button" aria-current={destination==="collections"?"page":undefined} onClick={()=>onChange("collections")}><Folders size={14}/>{copy.collections}</button>}
-  {sharingEnabled&&<button type="button" aria-current={destination==="shared"?"page":undefined} onClick={()=>onChange("shared")}><Share2 size={14}/>{language==="ru"?"Общий доступ":language==="nl"?"Gedeeld":"Shared"}</button>}
+  {organizationEnabled&&<button type="button" data-onboarding="library-collections" aria-current={destination==="collections"?"page":undefined} onClick={()=>onChange("collections")}><Folders size={14}/>{copy.collections}</button>}
+  {sharingEnabled&&<button type="button" data-onboarding="library-shared" aria-current={destination==="shared"?"page":undefined} onClick={()=>onChange("shared")}><Share2 size={14}/>{language==="ru"?"Общий доступ":language==="nl"?"Gedeeld":"Shared"}</button>}
  </nav>;
 }

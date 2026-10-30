@@ -178,7 +178,7 @@ export function PersonalCollectionRow({collection,names=[],locale,onOpen,onMore}
  const t=organizationCopy(locale);
  return <article className={s.collection}>
   <FileText size={18}/><div className={s.collectionCopy}><button className={s.collectionName} onClick={onOpen}>{collection.name}</button><p>{collection.isShared?<Share2 size={13}/>:<LockKeyhole size={13}/>}{collection.ownership==='received'?locale==='ru'?'Общая · добавлена вами':locale==='nl'?'Gedeeld · toegevoegd':'Shared · added by you':collection.isShared?t.shared:t.private}</p><p>{formatUiCount(locale,collection.item_count??0,t,"meaning")}{names.length?` · ${names.join(" / ")}`:""}</p></div>
-  <button className={s.viewWords} onClick={onOpen}>{t.open}</button><button aria-label={`${t.more}: ${collection.name}`} onClick={onMore}><MoreHorizontal size={18}/></button>
+  <button className={s.viewWords} onClick={onOpen}>{t.open}</button><button data-onboarding="own-collection-menu" aria-label={`${t.more}: ${collection.name}`} onClick={onMore}><MoreHorizontal size={18}/></button>
  </article>;
 }
 

@@ -26,8 +26,8 @@ export function SharedCollectionsWorkspaceView({locale,view,onViewChange,onAdd,c
  return <div className={s.sharedWorkspace}>
   <div className={s.sharedTop}><div className={s.sharedSwitcher} role="group" aria-label={locale==='ru'?'Разделы общего доступа':locale==='nl'?'Gedeelde onderdelen':'Shared sections'}>
    <button type="button" aria-pressed={view==='owned'} onClick={()=>onViewChange('owned')}>{t.owned}{counts?` · ${counts.sharedByMe.toLocaleString(locale)}`:''}</button>
-   <button type="button" aria-pressed={view==='received'} onClick={()=>onViewChange('received')}>{t.received}{counts?` · ${counts.addedByMe.toLocaleString(locale)}`:''}</button>
-  </div><button type="button" onClick={onAdd}><Plus size={16}/>{t.add}</button></div>
+   <button type="button" data-onboarding="shared-received" aria-pressed={view==='received'} onClick={()=>onViewChange('received')}>{t.received}{counts?` · ${counts.addedByMe.toLocaleString(locale)}`:''}</button>
+  </div><button type="button" data-onboarding="invitation-add" onClick={onAdd}><Plus size={16}/>{t.add}</button></div>
   {view==='owned'?owned:received}
  </div>;
 }

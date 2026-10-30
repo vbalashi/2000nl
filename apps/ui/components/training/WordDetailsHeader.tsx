@@ -19,7 +19,7 @@ export function WordDetailsHeader({ onClose, interfaceLanguage }: {
 }) {
   return (
     <header className={sheet.header}>
-      <button type="button" aria-label={platformV2Message(interfaceLanguage, "common.close")} onClick={onClose} className={sheet.close}>
+      <button data-onboarding="details-close" type="button" aria-label={platformV2Message(interfaceLanguage, "common.close")} onClick={onClose} className={sheet.close}>
         <X aria-hidden="true" size={18} />
       </button>
     </header>

@@ -48,7 +48,7 @@ export function SenseCardReportAction({
   return (
     <>
       <button
-        ref={triggerRef}
+        data-onboarding="report" ref={triggerRef}
         type="button"
         disabled={disabled}
         onClick={() => {
@@ -123,7 +123,7 @@ export function SenseCardReportSheet({
 
   const content = (
       <div
-        ref={dialogRef}
+        data-onboarding="report-sheet" ref={dialogRef}
         onKeyDown={(event) => {
           if (terminal && event.key === "Tab") {
             event.preventDefault();
@@ -212,7 +212,7 @@ export function SenseCardReportSheet({
 
         <div data-dialog-part="footer" className="grid grid-cols-3 gap-2 px-5 pb-4 pt-1">
           <button
-            ref={closeButtonRef}
+            data-onboarding="report-close" ref={closeButtonRef}
             type="button"
             disabled={delivery === "sending"}
             onClick={dismiss}

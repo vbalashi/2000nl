@@ -808,7 +808,7 @@ const defaultStartupSnapshot = {
     newReviewRatio: 2,
     activeScenario: "understanding",
     translationLang: "ru",
-    preferences: { onboardingLanguage: "en" as const },
+    preferences: { onboardingLanguage: "en" as const, onboardingCompleted:true },
   },
 };
 

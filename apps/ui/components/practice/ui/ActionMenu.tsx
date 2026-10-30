@@ -1,4 +1,5 @@
 "use client";
+import {ONBOARDING_PAUSE} from "@/lib/onboarding/signals";
 
 import React, { useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -75,6 +76,7 @@ export function ActionMenu({ anchor, title, language, items, onClose }: {
   }, [position]);
   // Native disabling blurs a menu item. Restore that same item after a brief
   // authority fence, without moving focus away from another active control.
+  React.useEffect(()=>{const close=()=>onCloseRef.current();window.addEventListener(ONBOARDING_PAUSE,close);return()=>window.removeEventListener(ONBOARDING_PAUSE,close);},[]);
   const availability = items.map(item => `${item.id}:${Boolean(item.disabled)}`).join("|");
   useLayoutEffect(() => {
     const item = lastFocusedItem.current;
@@ -101,7 +103,7 @@ export function ActionMenu({ anchor, title, language, items, onClose }: {
       buttons[event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1
         : (index + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length]?.focus();
     }}>
-    {items.map(item => <button type="button" role="menuitem" key={item.id} disabled={item.disabled} aria-label={item.label} aria-describedby={item.description ? `${descriptionId}-${item.id}` : undefined} onClick={item.onSelect}>
+    {items.map(item => <button type="button" role="menuitem" data-menu-action={item.id} key={item.id} disabled={item.disabled} aria-label={item.label} aria-describedby={item.description ? `${descriptionId}-${item.id}` : undefined} onClick={item.onSelect}>
       {item.icon}<span className={s.menuCopy}>{item.label}{item.description && <span id={`${descriptionId}-${item.id}`} className={s.menuDescription}>{item.description}</span>}</span>
     </button>)}
   </div>, anchor.closest("dialog") || anchor.closest("[data-practice-palette]") || document.body);
