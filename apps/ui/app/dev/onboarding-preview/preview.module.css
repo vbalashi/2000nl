@@ -1,0 +1,14 @@
+.root{height:100dvh;display:flex;flex-direction:column;background:var(--practice-canvas);color:var(--practice-text);font-family:var(--practice-font-ui)}
+.root>[data-app-frame]{flex:1;min-height:0;height:auto}
+.previewBar{min-height:32px;flex:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 24px;background:var(--practice-surface-subtle);color:var(--practice-text-muted);font-size:12px}
+.previewBar button{display:flex;align-items:center;gap:6px;border:0;background:none;color:inherit;cursor:pointer;font:inherit}
+.overview{flex:1;min-height:0;padding:40px 32px 24px;display:flex;flex-direction:column;--practice-training-name-size:38px;--practice-training-name-weight:400;--practice-training-name-spacing:-.5px;--practice-training-name-line:1.15}
+.session{width:100%;max-width:800px;align-self:center;flex:1;min-height:0;display:flex;flex-direction:column;padding:24px 20px 12px}
+.sessionHeader{display:flex;align-items:center;gap:18px;margin-bottom:22px;font-size:14px}.sessionHeader>span:first-child{margin-right:auto}.sessionHeader button{border:0;background:none;color:inherit;cursor:pointer;padding:6px}
+.card{flex:1;min-height:0;display:flex;flex-direction:column}
+.notice{max-width:760px;align-self:center;font-size:13px;line-height:1.5;padding:8px 20px 16px;margin:0;color:var(--practice-text-secondary)}
+.tooltip{width:min(340px,calc(100vw - 32px));padding:19px 21px 17px;background:#fff;border:1px solid #e2dce9;border-radius:16px;color:#303446;font:14px/1.55 var(--font-sense-sans),system-ui,sans-serif;box-shadow:0 12px 40px #1b102b24}
+.tooltipTop{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:9px}.tooltipTop>span{font-size:10px;letter-spacing:1.2px;color:#82768f;font-weight:500}.tooltipTop button{display:grid;place-items:center;border:0;background:transparent;color:#82768f;cursor:pointer;width:28px;height:28px;margin:-7px -9px -5px 0}
+.tooltip h2{font-size:19px;line-height:1.3;font-weight:600;margin:0 0 10px;letter-spacing:-.3px}.copy strong{font-weight:600}.instruction{margin:13px 0 0;padding-top:11px;border-top:1px solid #eee9f3;font-size:12px;color:#76628e}
+.tooltip button:focus-visible,.previewBar button:focus-visible{outline:2px solid #7753b0;outline-offset:3px}
+@media(max-width:650px){.previewBar{padding:5px 12px;font-size:10px}.previewBar button{max-width:96px}.overview{padding:22px 16px 16px;--practice-training-name-size:32px}.session{padding:16px 16px 12px}.sessionHeader{margin-bottom:16px}.tooltip{padding:15px 17px}.tooltip h2{font-size:18px}.notice{font-size:12px}}

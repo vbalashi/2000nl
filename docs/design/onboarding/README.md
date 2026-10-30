@@ -1,5 +1,10 @@
 # Progressive onboarding — proposal for #9
 
+**Superseded direction:** the owner rejected the standalone inline-guidance
+prototype. The current direction is an action-led spotlight tour in the real
+interface. Read [the current preview and scenario](spotlight-preview.md) first.
+The audit below remains valid; the earlier visual proposal is retained as history.
+
 Status: **design for owner review, not accepted or implemented**. 2026-10-30.
 Baseline audited: `d72b9d5e1d65dbee2d86abea619a701d8ece7d62`.
 Issue: https://github.com/vbalashi/2000nl/issues/9.
