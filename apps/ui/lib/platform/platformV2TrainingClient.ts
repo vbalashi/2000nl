@@ -122,6 +122,7 @@ export async function fetchPlatformV2TrainingEntry(
   const startedAt = performance.now();
   const result = await requestPlatformV2Lookup({
     signal: input.signal,
+    transitionId: input.transitionId,
     body: {
       entryId: input.entryId,
       cardTypeId: input.cardTypeId,

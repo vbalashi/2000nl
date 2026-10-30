@@ -1,4 +1,5 @@
 "use client";
+import { useCardLoadDiagnostics } from "@/lib/diagnostics/useCardLoadDiagnostics";
 import { useCurrentTrainingCard, usePresentedTrainingCard, type PresentedTrainingCard } from "../v2/useCurrentTrainingCard";
 import { readCurrentTrainingCard, type CurrentTrainingCardContext } from "@/lib/platform/trainingCurrentCardClient";
 import { useAdditionalTranslationLanguage } from "@/components/practice/article/AdditionalCardTranslation";
@@ -109,6 +110,8 @@ export function TrainingIdiomSession({
     target: candidate && content ? { sessionId: session.sessionId, entryId: candidate.entryId,
       cardTypeId: `${candidate.family}:${candidate.direction}`, targetId: candidate.targetId, direction: candidate.direction,
       sourceVersion: content.entry.sourceVersion ?? 0, stateRevision: candidate.state?.stateRevision ?? "untracked" } : null });
+  useCardLoadDiagnostics(JSON.stringify([userId, session.sessionId, candidate?.targetId]),
+    !presentationActive || terminal ? "inactive" : currentCard.failed || (error && !candidate) ? "failed" : loading || (candidate && !currentCard.ready) ? "loading" : "ready");
   usePresentedTrainingCard(presentationActive && currentCard.ready && currentCard.context && content ? { userId, group: content.group, entry: content.entry, currentCard: currentCard.context } : null, onCurrentCardContextChange);
   const currentReadRef = React.useRef<{targetId:string; context:CurrentTrainingCardContext} | null>(null);
   React.useLayoutEffect(()=>{currentReadRef.current = currentCard.context && candidate ? {targetId:candidate.targetId,context:currentCard.context} : null;},[candidate,currentCard.context]);

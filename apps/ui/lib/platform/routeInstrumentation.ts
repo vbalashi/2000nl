@@ -1,3 +1,5 @@
+import { currentDiagnosticRequestId } from "../diagnostics/server";
+import { diagnosticId } from "../diagnostics/contract";
 import { randomUUID } from "node:crypto";
 
 type RouteTimingEntry = {
@@ -14,7 +16,7 @@ export type PlatformRouteInstrumentation = {
 export function createPlatformRouteInstrumentation(request: Request) {
   const incomingRequestId = request.headers.get("x-request-id")?.trim();
   return {
-    requestId: incomingRequestId || randomUUID(),
+    requestId: currentDiagnosticRequestId() ?? (diagnosticId(incomingRequestId) ? incomingRequestId : randomUUID()),
     startedAt: performance.now(),
     entries: [],
   };

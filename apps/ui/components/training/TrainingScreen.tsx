@@ -1,4 +1,6 @@
 "use client";
+import { startTrainingDiagnostics } from "@/lib/diagnostics/client";
+import { authenticatedJsonHeaders } from "@/lib/platform/platformV2Http";
 import {CollectionSelectionContext} from '@/components/library/sharing/CollectionSelectionContext';
 import {canonicalDraft as canonicalEmptyTrainingDraft} from "@/lib/training/setups/model";
 import { useUserEventHints } from "@/lib/events/userEventHints";
@@ -219,6 +221,7 @@ function TrainingScreenContent({
   trainingTodaySetupEnabled = process.env
     .NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1 === "true",
 }: Props) {
+  useEffect(() => startTrainingDiagnostics(user.id, () => authenticatedJsonHeaders(user.id)), [user.id]);
   const {
     transitionId: initialTransitionId,
     interfaceLanguage: initialInterfaceLanguage,

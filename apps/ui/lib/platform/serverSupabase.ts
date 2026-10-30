@@ -1,3 +1,4 @@
+import { diagnosticSupabaseFetch, identifyDiagnosticActor } from "../diagnostics/server";
 import { checkAdmissionLazy } from "@/lib/admission/server";
 import { serverSupabaseConfig } from "@/lib/runtime/publicConfig";
 import crypto from "node:crypto";
@@ -145,6 +146,7 @@ function createServiceSupabaseClient(
   serviceKey: string,
 ): SupabaseClient {
   return createClient(supabaseUrl, serviceKey, {
+    global: { fetch: diagnosticSupabaseFetch },
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,
@@ -273,6 +275,7 @@ function createAuthenticatedBearerClient(token: string): SupabaseClient | NextRe
       persistSession: false,
     },
     global: {
+      fetch: diagnosticSupabaseFetch,
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -323,6 +326,7 @@ export async function getAuthenticatedSupabase(
     const supabase = createAuthenticatedBearerClient(token);
     if (supabase instanceof NextResponse) return supabase;
     recordAuthTiming(instrumentation, "auth.cache-hit", performance.now() - cacheStartedAt);
+    identifyDiagnosticActor(cached.user.id);
     return {
       supabase,
       user: cached.user,
@@ -342,6 +346,7 @@ export async function getAuthenticatedSupabase(
       const denied = await checkAdmissionLazy(platformServiceClient, shared.user.id); if (denied) return denied;
       const supabase = createAuthenticatedBearerClient(token);
       if (supabase instanceof NextResponse) return supabase;
+      identifyDiagnosticActor(shared.user.id);
       return { supabase, ...shared };
     }
   }
@@ -384,6 +389,7 @@ async function resolveAuthenticatedSupabase(
 
   writePlatformAuthCache(token, auth.user, principal);
 
+  identifyDiagnosticActor(auth.user.id);
   return { ...auth, principal };
 }
 

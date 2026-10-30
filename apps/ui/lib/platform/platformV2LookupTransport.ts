@@ -22,6 +22,7 @@ export async function requestPlatformV2Lookup(input: {
   expectedUserId?: string;
   signal?: AbortSignal;
   timeoutMs?: number;
+  transitionId?: string;
   libraryScope?: LibrarySearchScope;
 }): Promise<PlatformV2LookupTransportResult> {
   const controller = new AbortController();
@@ -40,6 +41,8 @@ export async function requestPlatformV2Lookup(input: {
       if (timedOut) throw new Error("platform_request_timeout");
       throw new DOMException("Aborted", "AbortError");
     }
+    const correlatedHeaders = new Headers(headers);
+    if (input.transitionId) correlatedHeaders.set("x-training-transition-id", input.transitionId);
     const response = await platformFetchWithTimeout(
       input.libraryScope ? "/api/library/search" : "/api/platform/v2/lookup",
       {
@@ -47,7 +50,7 @@ export async function requestPlatformV2Lookup(input: {
       credentials: "same-origin",
       cache: "no-store",
       signal: controller.signal,
-      headers,
+      headers: correlatedHeaders,
       body: JSON.stringify({
         ...input.body,
         ...(input.libraryScope ? {

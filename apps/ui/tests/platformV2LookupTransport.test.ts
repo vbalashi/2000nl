@@ -70,9 +70,10 @@ describe("requestPlatformV2Lookup", () => {
       "/api/platform/v2/lookup",
       expect.objectContaining({
         signal: expect.any(AbortSignal),
-        headers: expect.objectContaining({ authorization: "Bearer test-token" }),
+        headers: expect.any(Headers),
       }),
     );
+    expect(new Headers(vi.mocked(fetch).mock.calls[0]?.[1]?.headers).get("authorization")).toBe("Bearer test-token");
   });
 
   test.each([401, 403, 404, 500, 503])(

@@ -1,4 +1,5 @@
 "use client";
+import { useCardLoadDiagnostics } from "@/lib/diagnostics/useCardLoadDiagnostics";
 import {useEntryNoteMaterial} from "../useEntryNoteMaterial";
 import {clearPlatformNoteMaterial} from "@/lib/platform/noteMaterialPresentation";
 import { useCurrentTrainingCard, usePresentedTrainingCard, type PresentedTrainingCard } from "./useCurrentTrainingCard";
@@ -415,6 +416,8 @@ export function TrainingSenseCardV2Session({
   }, [currentCard.context, lookupInput]);
   const sessionState: TrainingV2SessionState = contentState === "ready" && !currentCard.ready
     ? currentCard.failed ? "lookup-http-error" : "loading" : contentState;
+  useCardLoadDiagnostics(JSON.stringify([cacheOwnerId, word.id, mode, nextTransitionId]),
+    !presentationActive ? "inactive" : sessionState === "loading" ? "loading" : sessionState === "ready" ? "ready" : "failed");
   const translationPreparing = useTrainingAnswerTranslationPreparation({
     entry: result?.entry ?? null,
     targetLanguageCode: translationTargetLanguageCode,
