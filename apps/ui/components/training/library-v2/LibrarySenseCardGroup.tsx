@@ -593,7 +593,7 @@ function MeaningCardBody({
         title={t("senseCard.collections.currentContext", { name: currentCollection.name })}>
         <collectionMarker.Icon size={13} aria-hidden="true"/>{collectionMarker.label}
       </span> : null}
-      <span className={surfaces.frameExposure}><button type="button" className={surfaces.statusAction} aria-haspopup="dialog" onClick={event=>{event.stopPropagation();setProgressOpen(true);}}>{exposure}</button></span>
+      <span className={surfaces.frameExposure}><button type="button" data-testid="meaning-learning-progress-trigger" className={surfaces.statusAction} aria-haspopup="dialog" onClick={event=>{event.stopPropagation();setProgressOpen(true);}}>{exposure}</button></span>
       {noteOpen&&userId&&<OwnNoteEditor key={`${userId}:${meaning.entryId}`} userId={userId} entryId={meaning.entryId} locale={interfaceLanguage} onClose={()=>setNoteOpen(false)} onSaved={()=>{setNoteOpen(false);void onProgressChanged?.();}}/>}
       {progressOpen&&<MeaningLearningProgress learningActionsBlocked={activeTraining} headwordActionsBlocked={headwordTrainingBlocked} entryId={meaning.entryId} language={interfaceLanguage} onClose={()=>setProgressOpen(false)} onChanged={onProgressChanged}/>}
       {meaning.displayOrdinal != null ? (

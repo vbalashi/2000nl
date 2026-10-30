@@ -1,15 +1,18 @@
 "use client";
 
-import React, { useEffect, useLayoutEffect, useState, useCallback } from "react";
+import React, { useEffect, useLayoutEffect, useState, useCallback, useMemo } from "react";
 import { Joyride, type TooltipRenderProps } from "react-joyride";
 import { X, RotateCcw, Flag } from "lucide-react";
 import { AppFrame } from "@/components/navigation/AppFrame";
 import { TrainingOverview } from "@/components/practice/TrainingOverview";
-import { SettingsPanel, SettingsRow } from "@/components/practice/settings/SettingsLayout";
-import { PreviewSettings, topics } from "./PreviewSettings";
+import { OnboardingSettingsSection, topics } from "./PreviewSettings";
 import { readCheckpoint, saveCheckpoint, restorableStage, type BuilderCheckpoint, type PreviewTopic } from "./checkpoint";
-import { DialogSurface } from "@/components/practice/ui/DialogSurface";
-import { PreviewReport } from "./PreviewReport";
+import { SettingsDestination } from "@/components/navigation/SettingsDestination";
+import { MeaningLearningProgress } from "@/components/practice/MeaningLearningProgress";
+import { SenseCardReportSheet } from "@/components/feedback/SenseCardReportSheet";
+import { freezeSenseCardDiagnosticSnapshot } from "@/lib/feedback/diagnosticReportClient";
+import { PreviewCollectionCatalog } from "./PreviewCollectionCatalog";
+import { previewMeaningProgress } from "./progressFixture";
 import { senseCardQuietAction } from "@/components/training/SenseCardChrome";
 import { TrainingDetailsDrawer } from "@/components/training/TrainingDetailsDrawer";
 import { LibrarySenseCardGroup } from "@/components/training/library-v2/LibrarySenseCardGroup";
@@ -21,15 +24,14 @@ import { getStoredOnboardingLanguage, type OnboardingLanguage } from "@/lib/onbo
 import { getUiMessages } from "@/lib/uiMessages";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
-import { previewLocales, previewSteps, previewLanguageOptions, progressLabel, type PreviewCopy, type PreviewStage } from "./content";
-import { readPreviewPreferences, resolvePreviewPreferences, savePreviewPreferences, previewTranslationLanguages, type PreviewPreferences, type PreviewTranslationLanguage } from "./preferences";
+import { previewLocales, previewSteps, progressLabel, type PreviewCopy, type PreviewStage } from "./content";
+import { readPreviewPreferences, resolvePreviewPreferences, savePreviewPreferences, type PreviewPreferences, type PreviewTranslationLanguage } from "./preferences";
 import { JourneyScreens, isLibraryStage, isBuilderStage, isPickerStage, buttonWithText } from "./JourneyScreens";
 import { emptyJourney, readJourney, saveJourney, learnMeaning, type Journey } from "./journeyState";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
-import settingsStyle from "@/components/practice/settings/settings.module.css";
 import styles from "./preview.module.css";
 
-type MessageData = { copy: PreviewCopy; progress: string; languageStep: boolean; secondary: boolean; inputStep: boolean; complete: boolean; extrasDone: boolean; known: boolean; onExtras: () => void; onReport: () => void; onPause: () => void; onDone: () => void; intro: boolean };
+type MessageData = { copy: PreviewCopy; progress: string; languageStep: boolean; secondary: boolean; inputStep: boolean; complete: boolean; extrasDone: boolean; known: boolean; onExtras: () => void; onReport: () => void; onPause: () => void; onDone: () => void; intro: boolean; onLanguageNext: () => void };
 function TourMessage({ step, tooltipProps }: TooltipRenderProps) {
   const data = step.data as MessageData;
   return <div {...tooltipProps} className={styles.tooltip}>
@@ -39,13 +41,14 @@ function TourMessage({ step, tooltipProps }: TooltipRenderProps) {
     {data.intro && <p className={styles.introHint}>{data.copy.pauseIntro}</p>}
     {data.secondary && <p className={styles.secondaryMention}>{data.copy.secondaryMention}</p>}
     {data.complete && !data.extrasDone && <button className={styles.confirm} onClick={data.onExtras}>{data.copy.showExtras}</button>}
+    {data.languageStep && <button className={styles.confirm} onClick={data.onLanguageNext}>{data.copy.continue}</button>}
     {data.known ? <><p className={styles.instruction}>{data.copy.knownHint}</p><button className={styles.confirm} onClick={data.onReport}>{data.copy.nextReport}</button></> : data.complete ? <button className={styles.confirm} onClick={data.onDone}>{data.copy.done}</button>
       : <p className={styles.instruction}>{data.languageStep ? data.copy.confirmHint : data.inputStep ? data.copy.actionHint : data.copy.clickHint}</p>}
   </div>;
 }
 
-const sampleFinanceTranslations = { en: "bank", nl: "bank", ru: "банк", de: "Bank", fr: "banque", es: "banco" };
-const sampleWordTranslations = { en: "bench · sofa", nl: "zitbank", ru: "скамья · диван", de: "Sitzbank · Sofa", fr: "banc · canapé", es: "banco · sofá" };
+const sampleFinanceTranslations: Record<string, string> = { en: "bank", nl: "bank", ru: "банк", de: "Bank", fr: "banque", es: "banco" };
+const sampleWordTranslations: Record<string, string> = { en: "bench · sofa", nl: "zitbank", ru: "скамья · диван", de: "Sitzbank · Sofa", fr: "banc · canapé", es: "banco · sofá" };
 function withoutTranslations(nodes: TrainingSenseCardContent[]): TrainingSenseCardContent[] {
   return nodes.map(node => ({ ...node, translation: undefined, literalTranslation: undefined, children: withoutTranslations(node.children) }));
 }
@@ -54,13 +57,13 @@ export function OnboardingPreview() {
   const [preferences, setPreferences] = useState<PreviewPreferences>(() => resolvePreviewPreferences(null));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsPane, setSettingsPane] = useState<"home" | "languages" | "appearance">("home");
-  const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
+  const [systemDark, setSystemDark] = useState(false);
+  useEffect(()=>{const media=window.matchMedia("(prefers-color-scheme: dark)"); const changed=()=>setSystemDark(media.matches);changed();media.addEventListener("change",changed);return()=>media.removeEventListener("change",changed);},[]);
+  const [themeMode, setThemeMode] = useState<"light" | "dark" | "system">("light");
   const [topicQueue, setTopicQueue] = useState<PreviewTopic[]>([]);
   const [builderCheckpoint, setBuilderCheckpoint] = useState<BuilderCheckpoint | null>(null);
   const [statsEntryId, setStatsEntryId] = useState(gateFurnitureEntry.entryId);
   const [statsOpen, setStatsOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
-  const [shareDemo, setShareDemo] = useState(false);
   const [ready, setReady] = useState(false);
   const [stage, setStage] = useState<PreviewStage>("interface");
   const [revealed, setRevealed] = useState(false);
@@ -81,6 +84,8 @@ export function OnboardingPreview() {
   const language = preferences.interfaceLanguage;
   const copy = previewLocales[language];
   const ui = getUiMessages(language);
+  const settingsTour = ["appearance-section", "appearance-choice", "appearance-done", "languages-section", "languages-choice"].includes(stage);
+  const catalogStage = stage.startsWith("sharing-");
   const languageStep = stage === "interface" || stage === "translation";
 
   useEffect(() => {
@@ -97,7 +102,7 @@ export function OnboardingPreview() {
         setSessionCompleted(checkpoint.sessionCompleted); setBuilderCheckpoint(checkpoint.builder);
         setThemeMode(checkpoint.theme); setSettingsPane(checkpoint.pane); setTopicQueue(checkpoint.topics);
         setDetailsOpen(checkpoint.running && checkpoint.stage === "details-return");
-        setSettingsOpen(!checkpoint.running);
+        setSettingsOpen(!checkpoint.running || ["appearance-section","appearance-choice","appearance-done","languages-section","languages-choice"].includes(checkpoint.stage));
       }
     } catch { /* preview remains restartable without storage */ }
     setReady(true);
@@ -147,21 +152,21 @@ export function OnboardingPreview() {
     persist(next);
   };
   const confirm = (next: PreviewStage) => { if (persist(preferences)) { setStage(next); setNotice(null); } };
-  const replay = () => { setBuilderCheckpoint(null); setTopicQueue([]); setSettingsOpen(false); setStatsOpen(false); setShareOpen(false); setRunning(false); setStage("interface"); setDetailsOpen(false); setReportOpen(false); setAudioNotice(false); setRevealed(false); setNotice(null); setSelectedTrainingId("preview-dilum"); requestAnimationFrame(() => setRunning(true)); };
+  const replay = () => { setBuilderCheckpoint(null); setTopicQueue([]); setSettingsOpen(false); setStatsOpen(false);  setRunning(false); setStage("interface"); setDetailsOpen(false); setReportOpen(false); setAudioNotice(false); setRevealed(false); setNotice(null); setSelectedTrainingId("preview-dilum"); requestAnimationFrame(() => setRunning(true)); };
   const start = (id = "preview-dilum") => { setSelectedTrainingId(id); setSessionCompleted(0); setAudioNotice(false); setStage("card"); setRevealed(false); setNotice(null); };
   const showExtras = () => { setRunning(false); setSettingsPane("home"); setSettingsOpen(true); };
   const pauseTour = () => { setRunning(false); setDetailsOpen(false); setSettingsPane("home"); setSettingsOpen(true); };
-  const resumeTour = () => { setSettingsOpen(false); setDetailsOpen(stage === "details-return"); setRunning(true); };
+  const resumeTour = () => { if(stage === "appearance-choice" || stage === "appearance-done") setSettingsPane("appearance"); if(stage === "languages-choice") setSettingsPane("languages"); setStage(restorableStage(stage)); setSettingsOpen(settingsTour || languageStep); setDetailsOpen(stage === "details-return"); setRunning(true); };
   const openTopic = (topic: PreviewTopic) => {
-    setSettingsOpen(false); setNotice(null); setRunning(true); setStatsOpen(false); setShareOpen(false);
+    setSettingsOpen(false); setNotice(null); setRunning(true); setStatsOpen(false);
     if (topic === "collections") { setStage("go-library"); setDetailsOpen(false); }
     if (topic === "card") { setSelectedTrainingId("preview-dilum"); setRevealed(true); setStage("audio"); }
     if (topic === "stats") { setSelectedEntryId(gateFurnitureEntry.entryId); setStage("extra-stats"); }
-    if (topic === "sharing") { setShareDemo(false); setStage("extra-sharing"); }
-    if (topic === "languages" || topic === "appearance") { setSettingsPane(topic); setSettingsOpen(true); setRunning(false); }
+    if (topic === "sharing") { setStage("go-sharing-library"); }
+    if (topic === "languages" || topic === "appearance") { setSettingsPane(topic); setStage(topic === "appearance" ? "go-settings" : "go-settings-languages"); }
   };
   const finishTopic = () => {
-    setRunning(false); setDetailsOpen(false); setStatsOpen(false); setShareOpen(false);
+    setRunning(false); setDetailsOpen(false); setStatsOpen(false);
     if (topicQueue.length) { const [next, ...rest] = topicQueue; setTopicQueue(rest); openTopic(next); }
     else { setStage("basic-complete"); setSettingsPane("home"); setSettingsOpen(true); }
   };
@@ -169,7 +174,21 @@ export function OnboardingPreview() {
   const getTarget = useCallback(() => {
     const b = ui.builder;
     const entrySelector = `#preview-meaning [data-entry-id="${selectedEntryId}"]`;
-    if (stage === "extra-stats") return Array.from(document.querySelectorAll<HTMLElement>("#preview-meaning button[aria-haspopup=dialog]")).find(button => button.getClientRects().length > 0) ?? null;
+    if (stage === "extra-stats") return Array.from(document.querySelectorAll<HTMLElement>(`#preview-meaning [data-entry-id="${selectedEntryId}"] [data-testid=meaning-learning-progress-trigger]`)).find(button => button.getClientRects().length > 0) ?? null;
+    if (stage === "extra-stats-view") return document.querySelector<HTMLElement>(`#preview-progress dialog button[aria-label="${ui.learningProgress.close}"]`);
+    if (stage === "interface") return document.querySelector<HTMLElement>(`#preview-settings button[aria-label="${ui.settings.interfaceLanguage}"]`);
+    if (stage === "translation" || stage === "languages-choice") return document.querySelector<HTMLElement>(`#preview-settings [role=group][aria-label="${ui.settings.translationLanguage}"]`);
+    if (stage === "appearance-section") return buttonWithText("#preview-settings nav", ui.settings.appearance);
+    if (stage === "languages-section") return buttonWithText("#preview-settings nav", ui.settings.languages);
+    if (stage === "appearance-choice" || stage === "appearance-done") return document.querySelector<HTMLElement>(`#preview-settings [role=group][aria-label="${ui.settings.colourMode}"]`);
+    if (stage === "go-settings" || stage === "go-settings-languages") return document.querySelector<HTMLElement>(`header button[aria-label="${ui.settings.title}"]`);
+    if (stage === "go-sharing-library") return buttonWithText("nav[aria-label]", ui.navigation.library);
+    if (stage === "extra-sharing") return buttonWithText("#preview-library-tabs", language === "ru" ? "Коллекции" : language === "nl" ? "Collecties" : "Collections");
+    if (stage === "sharing-menu") return buttonWithText("[role=menu]", language === "ru" ? "Общий доступ" : language === "nl" ? "Delen" : "Share");
+    if (stage.startsWith("sharing-") && stage !== "sharing-more") {
+      const labels = {ru:{create:"Создать ссылку просмотра",confirm:"Подтвердить",close:"Закрыть общий доступ",done:"Закрыть"},en:{create:"Create view-only link",confirm:"Confirm",close:"Close shared access",done:"Close"},nl:{create:"Alleen-lezenlink maken",confirm:"Bevestigen",close:"Gedeelde toegang sluiten",done:"Sluiten"}}[language];
+      return buttonWithText("#preview-sharing-dialog", stage === "sharing-create" ? labels.create : stage === "sharing-link" ? labels.close : stage === "sharing-done" ? labels.done : labels.confirm);
+    }
     if (stage === "basic-complete") return buttonWithText("#preview-overview", ui.trainingOverview.create);
     if (stage === "card") return document.querySelector<HTMLElement>(`#preview-card button[aria-label="${platformV2Message(language, "senseCard.answer.show")}"]`);
     if (stage === "audio") return document.querySelector<HTMLElement>(`#preview-card button[aria-label="${platformV2Message(language, "senseCard.audio.play")}"]`);
@@ -202,8 +221,14 @@ export function OnboardingPreview() {
     let cancelled = false;
     setPreparedFor("");
     const prepareTarget = async () => {
-      const element = getTarget();
-      if (!element) return;
+      // A real destination may reveal its section in a child effect after navigation.
+      let element = getTarget();
+      for (let frame = 0; frame < 180 && (!element || !element.getClientRects().length); frame++) {
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+        if (cancelled) return;
+        element = getTarget();
+      }
+      if (!element || cancelled) return;
       // A target can keep its own size while its expanding ancestor moves it.
       // Joyride observes target resizing, so settle ancestor transitions first.
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
@@ -224,12 +249,12 @@ export function OnboardingPreview() {
       }
       if (!cancelled) setPreparedFor(preparationKey);
     };
-    if (ready && !settingsOpen) void prepareTarget();
+    if (ready && (!settingsOpen || settingsTour || languageStep)) void prepareTarget();
     return () => { cancelled = true; };
-  }, [getTarget, preparationKey, ready, detailsOpen, settingsOpen]);
-  const step = { target, title: copy[spec.title], content: copy[spec.body], placement: spec.placement,
+  }, [getTarget, preparationKey, ready, detailsOpen, settingsOpen, settingsTour, languageStep]);
+  const step = { target, title: stage === "extra-stats" ? copy.statsTitle.replace("{status}", getTarget()?.textContent?.trim() ?? ui.learningProgress.new) : copy[spec.title].replace("{section}", ui.settings.appearance), content: copy[spec.body].replace("{section}", ui.settings.appearance), placement: spec.placement,
     spotlightTarget: ["card", "answer"].includes(stage) ? "#preview-card" : stage === "meaning" ? "#preview-meaning [data-testid=library-sense-card-scroll-region]" : undefined,
-    data: { copy, progress: progressLabel(language, stage), languageStep, secondary: stage === "translation", inputStep: ["search", "meaning", "new-collection", "collection-name", "training-name"].includes(stage), complete: stage === "basic-complete" || stage === "complete" || stage === "extras-complete", extrasDone: stage === "extras-complete", known: stage === "extra-known", onExtras: showExtras, onReport: () => setStage("extra-report"), onPause: pauseTour, onDone: () => { if ((stage === "basic-complete" || stage === "complete") && !topicQueue.length) { setRunning(false); setSettingsOpen(false); } else finishTopic(); }, intro: stage === "interface" } satisfies MessageData };
+    data: { copy, progress: progressLabel(language, stage), languageStep, secondary: stage === "translation", inputStep: ["search", "meaning", "new-collection", "collection-name", "training-name"].includes(stage), complete: stage === "basic-complete" || stage === "complete" || stage === "extras-complete" || stage === "appearance-done" || stage === "languages-choice", extrasDone: stage === "extras-complete" || stage === "appearance-done" || stage === "languages-choice", known: stage === "extra-known", onExtras: showExtras, onReport: () => setStage("extra-report"), onPause: pauseTour, onDone: () => { if ((stage === "basic-complete" || stage === "complete") && !topicQueue.length) { setRunning(false); setSettingsOpen(false); } else finishTopic(); }, intro: stage === "interface", onLanguageNext: () => confirm(stage === "interface" ? "translation" : "overview") } satisfies MessageData };
   const training = {
     id: "preview-dilum", name: "Dilum NL", language: languageDisplayName(language, "nl"),
     description: `${ui.trainingOverview.exerciseType.Words} · ${ui.trainingOverview.direction.Direct}`,
@@ -262,6 +287,9 @@ export function OnboardingPreview() {
     window.speechSynthesis.speak(speech);
   };
 
+  const progressSnapshot = useMemo(()=>previewMeaningProgress(statsEntryId, journey.learnedEntryIds.includes(statsEntryId)),[statsEntryId,journey.learnedEntryIds]);
+  const reportSnapshot = useMemo(()=>freezeSenseCardDiagnosticSnapshot({route:"training",group:gateBankGroup,entry:cardEntry}),[cardEntry]);
+  const sharingCollection = journey.collections.find(collection => collection.id === collectionId) ?? journey.collections[0];
   const savedItems = journey.trainings.map(saved => ({ ...training, id: saved.id, name: saved.name,
     description: `${journey.collections.find(c => `user:${c.id}` === saved.draft.listValue)?.name ?? ""} · ${saved.draft.modes.map(mode => mode === "word-to-definition" ? ui.trainingOverview.direction.Direct : ui.trainingOverview.direction.Reverse).join(" + ")}`,
     summary: `${languageDisplayName(language, "nl")} · ${journey.collections.find(c => `user:${c.id}` === saved.draft.listValue)?.name ?? ""}`,
@@ -270,51 +298,31 @@ export function OnboardingPreview() {
   const sessionName = savedItems.find(item => item.id === selectedTrainingId)?.name ?? training.name;
   const sessionStage = ["card", "audio", "details-open", "details-return", "answer", "exit", "extra-known", "extra-report", "extras-complete"].includes(stage);
   if (!ready) return null;
-  return <div className={`${theme.theme} ${styles.root} ${themeMode === "dark" ? "dark" : ""}`} data-colour-mode={themeMode} lang={language} data-preview-stage={stage}>
+  return <div className={`${theme.theme} ${styles.root} ${themeMode === "dark" || themeMode === "system" && systemDark ? "dark" : ""}`} data-colour-mode={themeMode === "system" ? systemDark ? "dark" : "light" : themeMode} lang={language} data-preview-stage={stage}>
     <div className={styles.previewBar}><span>{copy.preview}</span>
-      <div className={styles.previewActions}><button onClick={pauseTour}>{ui.settings.title}</button><button onClick={replay}><RotateCcw size={14}/>{copy.replay}</button>
+      <div className={styles.previewActions}><button onClick={replay}><RotateCcw size={14}/>{copy.replay}</button>
       <button onClick={() => { if (commitJourney(emptyJourney())) { setCollectionId(null); setSelectedEntryId(null); replay(); } }}>{copy.resetDemo}</button></div></div>
     {!running && !settingsOpen && <div className={styles.resumeBanner}>{stage === "basic-complete" || stage === "complete" ? copy.tourComplete : copy.paused}<button onClick={resumeTour}>{copy.resume}</button><button onClick={showExtras}>{ui.settings.title}</button></div>}
-    <AppFrame activeDestination={languageStep ? "settings" : isLibraryStage(stage) ? "library" : "training"} settingsActive={languageStep} interfaceLanguage={language} themePreference={themeMode} immersive={sessionStage}
+    <AppFrame activeDestination={languageStep || settingsOpen ? "settings" : isLibraryStage(stage) ? "library" : "training"} settingsActive={languageStep || settingsOpen} interfaceLanguage={language} themePreference={themeMode} immersive={sessionStage && !settingsOpen}
       onNavigate={destination => {
-        if (destination === "library") { setSelectedEntryId(null); setStage("search"); }
+        if (destination === "library") { setSelectedEntryId(null); setStage(stage === "go-sharing-library" ? "extra-sharing" : "result"); }
         else if (destination === "training") setStage(stage === "go-training" ? "create-training" : "overview");
         else { setNotice("scope"); setRunning(false); }
       }}
-      onCycleTheme={() => setThemeMode(current => current === "light" ? "dark" : "light")} onOpenSettings={pauseTour}>
-      {languageStep ? <div className={styles.languages}>
-        <h1>{ui.settings.languages}</h1>
-        <SettingsPanel title={ui.settings.title}>
-          <div id="preview-interface" className={styles.languageTarget}>
-            <SettingsRow title={ui.settings.interfaceLanguage} hint={copy.interfaceHint} className={styles.languageRow}>
-              <select className={settingsStyle.select} aria-label={ui.settings.interfaceLanguage} value={language}
-                onChange={event => choose({ interfaceLanguage: event.target.value as OnboardingLanguage })}>
-                {previewLanguageOptions.map(item => <option key={item.code} value={item.code}>{item.name}</option>)}
-              </select>
-              {stage === "interface" && <button className={styles.confirm} onClick={() => confirm("translation")}>{copy.interfaceConfirm}</button>}
-            </SettingsRow>
-            {stage === "interface" && saveError && <p role="alert" className={styles.error}>{copy.saveError}</p>}
-          </div>
-          <div id="preview-translation" className={styles.languageTarget}>
-            <SettingsRow title={ui.settings.translationLanguage} className={styles.languageRow}>
-              <select className={settingsStyle.select} aria-label={ui.settings.translationLanguage} value={preferences.translationLanguage}
-                onChange={event => choose({ translationLanguage: event.target.value as PreviewTranslationLanguage })}>
-                <option value="off">{ui.settings.off}</option>
-                {previewTranslationLanguages.map(code => <option key={code} value={code}>{languageDisplayName(language, code)}</option>)}
-              </select>
-              {stage === "translation" && <button className={styles.confirm} onClick={() => confirm("overview")}>{copy.translationConfirm}</button>}
-            </SettingsRow>
-            {stage === "translation" && saveError && <p role="alert" className={styles.error}>{copy.saveError}</p>}
-          </div>
-          <SettingsRow title={ui.settings.secondaryTranslationLanguage} hint={copy.secondaryMention} className={styles.languageRow}>
-            <span className={styles.later}>{copy.later}</span>
-          </SettingsRow>
-        </SettingsPanel>
-        <p className={styles.localOnly}>{copy.localOnly}</p>
-      </div> : stage === "extra-sharing" ? <div className={styles.lesson}><div><h1>{copy.sharingTopic}</h1><p>{copy.sharingTopicBody}</p><button id="preview-sharing" className={styles.confirm} onClick={()=>setShareOpen(true)}>{copy.manageSharing}</button><p>{copy.sharingDemo}</p></div></div>
+      onCycleTheme={() => setThemeMode(current => current === "light" ? "dark" : "light")} onOpenSettings={()=>{if(stage === "go-settings" || stage === "go-settings-languages") {setSettingsOpen(true);setSettingsPane("home");setStage(stage === "go-settings" ? "appearance-section" : "languages-section");} else pauseTour();}}>
+      {(languageStep || settingsOpen) ? <div id="preview-settings" className={styles.settingsDestination}>
+        <SettingsDestination open interfaceLanguage={language} themePreference={themeMode} translationLanguage={preferences.translationLanguage === "off" ? null : preferences.translationLanguage}
+          initialSection={!running && settingsOpen ? "onboarding" : languageStep ? "languages" : stage === "appearance-section" || stage === "languages-section" ? undefined : settingsPane === "home" ? "onboarding" : settingsPane}
+          onSectionChange={section=>{if(section==="appearance"){setSettingsPane("appearance");if(stage==="appearance-section")setStage("appearance-choice");}if(section==="languages"){setSettingsPane("languages");if(stage==="languages-section")setStage("languages-choice");}}}
+          onExit={()=>setSettingsOpen(false)} onThemeChange={mode=>{setThemeMode(mode);if(stage==="appearance-choice")setStage("appearance-done");}}
+          onInterfaceLanguageChange={value=>{choose({interfaceLanguage:value});}}
+          onTranslationLanguageChange={value=>choose({translationLanguage:(value??"off") as PreviewTranslationLanguage})}
+          userEmail="demo@example.invalid" onSignOut={()=>{}}
+          onboarding={{title:copy.tourName,content:<OnboardingSettingsSection language={language} saveError={saveError} onResume={resumeTour} onRestart={replay} onTopic={topic=>{setTopicQueue([]);openTopic(topic);}} onAll={()=>{setTopicQueue(topics.slice(1));openTopic(topics[0]);}}/>}}/>
+      </div> : catalogStage ? <PreviewCollectionCatalog language={language} stage={stage} onStage={setStage} onDone={finishTopic} onWords={()=>setStage("extra-sharing")} collection={{id:sharingCollection?.id??"00000000-0000-4000-8000-000000000010",name:sharingCollection?.name??copy.collectionTrainingName,type:"user",item_count:sharingCollection?.entryIds.length??1}}/>
       : (isLibraryStage(stage) || isBuilderStage(stage)) ? <JourneyScreens stage={stage} language={language} translation={preferences.translationLanguage}
         journey={journey} commit={commitJourney} onStage={setStage} selectedEntryId={selectedEntryId} onSelectEntry={setSelectedEntryId}
-        collectionId={collectionId} onSelectCollection={setCollectionId} saveError={saveError} restoredBuilder={builderCheckpoint} onBuilderChange={rememberBuilder} onPreviewStats={id=>{setStatsEntryId(id);setStatsOpen(true);}} editingTraining={journey.trainings.find(t => t.id === editingTrainingId)}/>
+        collectionId={collectionId} onSelectCollection={setCollectionId} saveError={saveError} restoredBuilder={builderCheckpoint} onBuilderChange={rememberBuilder} onOpenCatalog={()=>setStage("sharing-more")} onPreviewStats={id=>{setStatsEntryId(id);setStatsOpen(true);setStage("extra-stats-view");}} editingTraining={journey.trainings.find(t => t.id === editingTrainingId)}/>
       : !sessionStage ? <div id="preview-overview" className={styles.overview}>
         <TrainingOverview interfaceLanguage={language} state={{ status: "ready", trainings: [training, ...savedItems], mainId,
           availability: { trainingId: mainId, status: "ready", dueToday: 0, totalReviews: 0, stillNew: 12 } }}
@@ -345,19 +353,15 @@ export function OnboardingPreview() {
             translationEnabled={preferences.translationLanguage !== "off"} activeMeaningId={cardEntry.entryId} revealActiveMeaning
             inlineGrading={false} onPlayAudio={playSampleAudio} onAction={() => {}}/>
         </TrainingDetailsDrawer></div>
-        {reportOpen && <PreviewReport language={language} onClose={() => { setReportOpen(false); if (stage === "extra-report") setStage("extras-complete"); }}/>}
+        {reportOpen && <SenseCardReportSheet snapshot={reportSnapshot} interfaceLanguage={language} deliveryEnabled={false} onClose={() => { setReportOpen(false); if (stage === "extra-report") setStage("extras-complete"); }}/>}
       </div>}
       {notice && <p role="status" className={styles.notice}>{copy[notice]}</p>}
       {saveError && !isPickerStage(stage) && stage !== "training-name" && <p role="alert" className={styles.error}>{copy.saveError}</p>}
     </AppFrame>
-    {settingsOpen && <PreviewSettings preferences={preferences} saveError={saveError} pane={settingsPane} theme={themeMode} onTheme={setThemeMode}
-      onChoose={choose} onTopic={topic=>{setTopicQueue([]);openTopic(topic);}} onAll={()=>{setTopicQueue(topics.slice(1));openTopic(topics[0]);}}
-      onResume={resumeTour} onRestart={replay} onClose={()=>setSettingsOpen(false)} onDone={finishTopic}/>}
-    {statsOpen && <DialogSurface className={styles.hub} aria-labelledby="preview-stats-title" onDismiss={()=>{setStatsOpen(false);finishTopic();}}><h2 id="preview-stats-title">{copy.statsTitle}</h2><p>de bank · {buildLibrarySenseCardGroupModel(gateBankGroup, language).meanings.find(meaning=>meaning.entryId === statsEntryId)?.definition?.text}</p><p>{copy.statsExplanation}</p><p>{journey.learnedEntryIds.includes(statsEntryId) ? copy.statsLearning : copy.statsNew}</p><p>{copy.statsDemo}</p><button className={styles.confirm} onClick={finishTopic}>{copy.done}</button></DialogSurface>}
-    {shareOpen && <DialogSurface className={styles.hub} aria-labelledby="preview-share-title" onDismiss={finishTopic}><h2 id="preview-share-title">{copy.sharingTopic}</h2><p>{copy.sharingExplanation}</p><p>{copy.sharingDemo}</p><button className={styles.confirm} onClick={()=>setShareDemo(value=>!value)}>{shareDemo ? copy.closeDemoSharing : copy.openDemoSharing}</button>{shareDemo && <p role="status">{copy.sharingEnabledDemo}</p>}<footer><button className={styles.confirm} onClick={finishTopic}>{copy.done}</button></footer></DialogSurface>}
-    {preparedFor === preparationKey && !settingsOpen && !statsOpen && !shareOpen && (!detailsOpen || stage === "details-return") && !reportOpen && <Joyride key={`preview-${stage}:${language}:${Boolean(modalPortal)}`} portalElement={getTarget()?.closest<HTMLElement>("dialog") ?? undefined} run={running} steps={[step]} tooltipComponent={TourMessage}
+    <div id="preview-progress">{statsOpen && <MeaningLearningProgress entryId={statsEntryId} language={language} initialProgress={progressSnapshot} onClose={()=>{setStatsOpen(false);finishTopic();}}/>}</div>
+    {preparedFor === preparationKey && (!settingsOpen || settingsTour || languageStep) && (!detailsOpen || stage === "details-return") && !reportOpen && <Joyride key={`preview-${stage}:${language}:${Boolean(modalPortal)}`} portalElement={getTarget()?.closest<HTMLElement>("dialog") ?? undefined} run={running} steps={[step]} tooltipComponent={TourMessage}
       onEvent={data => { if (data.status === "skipped" || data.status === "finished") { pauseTour(); } }}
-      options={{ skipBeacon: true, hideOverlay: isPickerStage(stage) || stage === "training-name" || stage === "details-return", blockTargetInteraction: false, disableFocusTrap: true, overlayClickAction: false,
+      options={{ skipBeacon: true, hideOverlay: isPickerStage(stage) || stage === "training-name" || stage === "details-return" || stage === "extra-stats-view" || stage.startsWith("sharing-") && stage !== "sharing-more", blockTargetInteraction: false, disableFocusTrap: true, overlayClickAction: false,
         dismissKeyAction: "close", closeButtonAction: "skip", overlayColor: "rgba(24, 19, 34, .52)",
         spotlightPadding: 8, spotlightRadius: 15, arrowColor: "#fff", arrowSize: 8, arrowBase: 16,
         width: 340, zIndex: 10000, skipScroll: true, scrollDuration: 0, primaryColor: "#71608d" }}/> }

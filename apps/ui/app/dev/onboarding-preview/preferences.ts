@@ -1,8 +1,9 @@
+import { catalogLanguages } from "@/lib/languages/languageCatalog";
 import { isOnboardingLanguage, type OnboardingLanguage } from "@/lib/onboardingI18n";
 
 export const PREVIEW_PREFERENCES_KEY = "2000nl:onboarding-preview:preferences:v1";
 export const previewTranslationLanguages = ["en", "nl", "ru", "de", "fr", "es"] as const;
-export type PreviewTranslationLanguage = typeof previewTranslationLanguages[number] | "off";
+export type PreviewTranslationLanguage = string;
 export type PreviewPreferences = { version: 1; interfaceLanguage: OnboardingLanguage; translationLanguage: PreviewTranslationLanguage };
 type Storage = Pick<globalThis.Storage, "getItem" | "setItem">;
 
@@ -11,7 +12,7 @@ export function resolvePreviewPreferences(value: unknown, savedInterfaceLanguage
   const valid = item.version === 1;
   const interfaceLanguage = valid && isOnboardingLanguage(item.interfaceLanguage) ? item.interfaceLanguage
     : isOnboardingLanguage(savedInterfaceLanguage) ? savedInterfaceLanguage : "en";
-  const translationLanguage = valid && (item.translationLanguage === "off" || previewTranslationLanguages.some(code => code === item.translationLanguage))
+  const translationLanguage = valid && (item.translationLanguage === "off" || catalogLanguages.some(itemLanguage => itemLanguage.code === item.translationLanguage))
     ? item.translationLanguage as PreviewTranslationLanguage : "en";
   return { version: 1, interfaceLanguage, translationLanguage };
 }

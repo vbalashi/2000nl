@@ -1,27 +1,17 @@
 import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { PreviewReport } from "@/app/dev/onboarding-preview/PreviewReport";
-
-// Native dialog rendering belongs to browser checks; test the delivery boundary.
-vi.mock("@/components/practice/ui/DialogSurface", () => ({
-  DialogSurface: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-afterEach(cleanup);
-
-test("exploring report fields cannot submit a report or persist a comment", () => {
-  const close = vi.fn();
-  const fetchSpy = vi.spyOn(globalThis, "fetch");
-  const storageSpy = vi.spyOn(Storage.prototype, "setItem");
-  render(<PreviewReport language="ru" onClose={close}/>);
-  fireEvent.click(screen.getAllByRole("radio")[0]);
-  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Synthetic preview issue" } });
-  const send = screen.getByRole("button", { name: "Отправить" });
-  expect(send).toBeDisabled();
-  fireEvent.click(send);
-  expect(fetchSpy).not.toHaveBeenCalled();
-  expect(storageSpy).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: "Назад" }));
-  expect(close).toHaveBeenCalledOnce();
-  fetchSpy.mockRestore();
-  storageSpy.mockRestore();
+import { SenseCardReportSheet } from "@/components/feedback/SenseCardReportSheet";
+import { freezeSenseCardDiagnosticSnapshot } from "@/lib/feedback/diagnosticReportClient";
+import { gateBankGroup, gateFurnitureEntry } from "@/lib/platform/fixtures/senseCardV1GateFixture";
+vi.mock("@/components/practice/ui/DialogSurface", () => ({ DialogSurface: ({children}:{children:React.ReactNode})=><div>{children}</div> }));
+afterEach(()=>{cleanup();vi.restoreAllMocks();});
+test("the actual report form can be explored with delivery disabled", () => {
+ const close=vi.fn(),fetchSpy=vi.spyOn(globalThis,"fetch"),storageSpy=vi.spyOn(Storage.prototype,"setItem");
+ render(<SenseCardReportSheet snapshot={freezeSenseCardDiagnosticSnapshot({route:"training",group:gateBankGroup,entry:gateFurnitureEntry})} interfaceLanguage="ru" deliveryEnabled={false} onClose={close}/>);
+ fireEvent.click(screen.getAllByRole("radio")[0]);
+ fireEvent.change(screen.getByRole("textbox"),{target:{value:"Synthetic preview issue"}});
+ const send=screen.getByRole("button",{name:"Отправить"});
+ expect(send).toBeDisabled();fireEvent.click(send);
+ expect(fetchSpy).not.toHaveBeenCalled();expect(storageSpy).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole("button",{name:"Назад"}));expect(close).toHaveBeenCalledOnce();
 });

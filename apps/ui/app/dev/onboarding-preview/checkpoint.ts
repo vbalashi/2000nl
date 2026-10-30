@@ -9,7 +9,7 @@ export type Checkpoint = {
   version: 1; stage: PreviewStage; running: boolean; revealed: boolean;
   selectedEntryId: string | null; collectionId: string | null;
   selectedTrainingId: string; editingTrainingId: string | null;
-  sessionCompleted: number; pane: "home" | "languages" | "appearance"; theme: "light" | "dark"; topics: PreviewTopic[]; builder: BuilderCheckpoint | null;
+  sessionCompleted: number; pane: "home" | "languages" | "appearance"; theme: "light" | "dark" | "system"; topics: PreviewTopic[]; builder: BuilderCheckpoint | null;
 };
 type Store = Pick<Storage, "getItem" | "setItem">;
 export function readCheckpoint(storage: Store): Checkpoint | null {
@@ -21,7 +21,7 @@ export function readCheckpoint(storage: Store): Checkpoint | null {
       || ![value.selectedEntryId, value.collectionId, value.editingTrainingId].every(id => id === null || typeof id === "string")
       || (value.builder !== null && (!value.builder || typeof value.builder.name !== "string" || !isTrainingSetupDraft(value.builder.draft)))) return null;
     if (!["home", "languages", "appearance"].includes(value.pane)) return null;
-    if (value.theme !== "light" && value.theme !== "dark") return null;
+    if (value.theme !== "light" && value.theme !== "dark" && value.theme !== "system") return null;
     if (!Array.isArray(value.topics) || !value.topics.every((topic: unknown) => ["collections", "card", "stats", "sharing", "languages", "appearance"].includes(String(topic)))) return null;
     return value as Checkpoint;
   } catch { return null; }
@@ -33,6 +33,8 @@ export function saveCheckpoint(storage: Store, checkpoint: Checkpoint): boolean 
 // Shared editors own transient accordion/dialog state. After a reload, restore
 // the same task and draft at its preceding visible opener rather than an absent target.
 export function restorableStage(stage: PreviewStage): PreviewStage {
+  if (stage === "extra-stats-view") return "extra-stats";
+  if (stage.startsWith("sharing-")) return "sharing-more";
   if (stage === "source-pick") return "source-open";
   if (stage === "direction-pick") return "exercise-open";
   if (stage === "training-name") return "save-training";

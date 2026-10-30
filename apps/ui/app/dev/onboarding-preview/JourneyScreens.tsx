@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import type { BuilderCheckpoint } from "./checkpoint";
+import { LibraryDestinationTabs } from "@/components/navigation/LibraryDestination";
 import { Search } from "lucide-react";
 import { LibraryHeadwordGroupResultsList } from "@/components/training/wordlist/LibraryHeadwordGroupResultsList";
 import { buildLibraryHeadwordGroupResults } from "@/components/training/wordlist/libraryHeadwordGroupResults";
@@ -22,7 +23,7 @@ import type { PreviewTranslationLanguage } from "./preferences";
 import workspace from "@/components/practice/library/libraryWorkspace.module.css";
 import styles from "./preview.module.css";
 
-export const libraryStages: readonly PreviewStage[] = ["extra-stats", "search", "result", "meaning", "collections", "new-collection", "collection-name", "collection-done", "go-training"];
+export const libraryStages: readonly PreviewStage[] = ["extra-sharing", "extra-stats-view", "extra-stats", "search", "result", "meaning", "collections", "new-collection", "collection-name", "collection-done", "go-training"];
 export const builderStages: readonly PreviewStage[] = ["source-open", "source-pick", "exercise-open", "direction-pick", "save-training", "training-name"];
 export const pickerStages: readonly PreviewStage[] = ["new-collection", "collection-name", "collection-done"];
 export const isLibraryStage = (stage: PreviewStage) => libraryStages.includes(stage);
@@ -45,12 +46,13 @@ type Props = {
   restoredBuilder: BuilderCheckpoint | null;
   onBuilderChange: (snapshot: BuilderCheckpoint) => void;
   onPreviewStats: (entryId: string) => void;
+  onOpenCatalog: () => void;
 };
 
 export function JourneyScreens(p: Props) {
   const { stage, language, journey } = p;
   const copy = previewLocales[language], ui = getUiMessages(language), b = ui.builder;
-  const [query, setQuery] = useState(stage === "search" ? "" : "bank");
+  const [query, setQuery] = useState("bank");
   const [draft, setDraft] = useState<TrainingSetupDraft & {sessionSize: TrainingSessionSize}>(() => p.restoredBuilder ? { ...p.restoredBuilder.draft, sessionSize: p.restoredBuilder.draft.sessionSize ?? 10 } : p.editingTraining ? {...p.editingTraining.draft, sessionSize:p.editingTraining.draft.sessionSize ?? 10} : newPreviewDraft());
   const [name, setName] = useState(p.restoredBuilder?.name ?? p.editingTraining?.name ?? copy.collectionTrainingName);
   const onStage = p.onStage;
@@ -70,7 +72,7 @@ export function JourneyScreens(p: Props) {
 
   useEffect(() => {
     if (stage !== "search" || query.trim().toLowerCase() !== "bank") return;
-    const timeout = setTimeout(() => onStage("result"), 300);
+    const timeout = setTimeout(() => onStage("result"), 0);
     return () => clearTimeout(timeout);
   }, [query, stage, onStage]);
 
@@ -115,10 +117,10 @@ export function JourneyScreens(p: Props) {
 
   return <div className={`${workspace.workspace} ${styles.libraryHost}`}>
     <h1>{ui.navigation.library}</h1>
-    <div className={styles.libraryTab}>{copy.libraryTab}</div>
+    <div id="preview-library-tabs"><LibraryDestinationTabs language={language} destination="words" organizationEnabled sharingEnabled={false} onChange={destination=>{if(destination==="collections")p.onOpenCatalog();}}/></div>
     <div className={workspace.toolbar}>
       <div className={styles.searchBox}><Search size={18}/><input id="preview-library-search" className={workspace.input}
-        aria-label={ui.library.searchPlaceholder} value={query} placeholder={ui.library.searchPlaceholder} onChange={event => setQuery(event.target.value)}/></div>
+        aria-label={ui.library.searchPlaceholder} value={query} readOnly placeholder={ui.library.searchPlaceholder} onChange={event => setQuery(event.target.value)}/></div>
       <p className={workspace.scope}>Nederlands · Dilum Nederlands</p>
     </div>
     {(stage === "search" || stage === "result") ? <div className={workspace.results}>
@@ -127,7 +129,7 @@ export function JourneyScreens(p: Props) {
         : query.trim() ? <p>{copy.noResults}</p> : null}
     </div> : <div id="preview-meaning" className={styles.meaningHost} onClickCapture={event => {
       const button = (event.target as Element).closest("button");
-      if (button?.getAttribute("aria-haspopup") === "dialog") { event.preventDefault(); event.stopPropagation(); p.onPreviewStats(button.closest("[data-entry-id]")?.getAttribute("data-entry-id") ?? entryId); }
+      if (button?.matches("[data-testid=meaning-learning-progress-trigger]")) { event.preventDefault(); event.stopPropagation(); p.onPreviewStats(button.closest("[data-entry-id]")?.getAttribute("data-entry-id") ?? entryId); }
     }}>
       <LibrarySenseCardGroup key={language} model={groupModel} interfaceLanguage={language} contentLanguage="nl" translationLanguage={p.translation === "off" ? undefined : p.translation}
         activeMeaningId={p.selectedEntryId || null} revealActiveMeaning={Boolean(p.selectedEntryId)} inlineGrading={false} translationEnabled={p.translation !== "off"}
