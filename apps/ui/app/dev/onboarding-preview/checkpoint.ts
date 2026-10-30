@@ -3,7 +3,7 @@ import { isTrainingSetupDraft } from "@/lib/training/setups/model";
 import type { TrainingSetupDraft } from "@/lib/training/setups/types";
 
 export const CHECKPOINT_KEY = "2000nl:onboarding-preview:checkpoint:v1";
-export type PreviewTopic = "collections" | "card" | "stats" | "sharing" | "languages" | "appearance";
+export type PreviewTopic = "collections" | "card" | "stats" | "sharing" | "incoming" | "languages" | "appearance";
 export type BuilderCheckpoint = { draft: TrainingSetupDraft; name: string };
 export type Checkpoint = {
   version: 1; stage: PreviewStage; running: boolean; revealed: boolean;
@@ -22,7 +22,7 @@ export function readCheckpoint(storage: Store): Checkpoint | null {
       || (value.builder !== null && (!value.builder || typeof value.builder.name !== "string" || !isTrainingSetupDraft(value.builder.draft)))) return null;
     if (!["home", "languages", "appearance"].includes(value.pane)) return null;
     if (value.theme !== "light" && value.theme !== "dark" && value.theme !== "system") return null;
-    if (!Array.isArray(value.topics) || !value.topics.every((topic: unknown) => ["collections", "card", "stats", "sharing", "languages", "appearance"].includes(String(topic)))) return null;
+    if (!Array.isArray(value.topics) || !value.topics.every((topic: unknown) => ["collections", "card", "stats", "sharing", "incoming", "languages", "appearance"].includes(String(topic)))) return null;
     return value as Checkpoint;
   } catch { return null; }
 }
@@ -33,6 +33,7 @@ export function saveCheckpoint(storage: Store, checkpoint: Checkpoint): boolean 
 // Shared editors own transient accordion/dialog state. After a reload, restore
 // the same task and draft at its preceding visible opener rather than an absent target.
 export function restorableStage(stage: PreviewStage): PreviewStage {
+  if (stage.startsWith("incoming-")) return "incoming-received";
   if (stage === "extra-stats-view") return "extra-stats";
   if (stage.startsWith("sharing-")) return "sharing-more";
   if (stage === "source-pick") return "source-open";

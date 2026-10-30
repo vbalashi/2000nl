@@ -5,7 +5,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { previewLocales } from "./content";
 import type { PreviewTopic } from "./checkpoint";
 import styles from "./preview.module.css";
-export const topics: PreviewTopic[] = ["collections", "card", "stats", "sharing", "languages", "appearance"];
+export const topics: PreviewTopic[] = ["collections", "card", "stats", "sharing", "incoming", "languages", "appearance"];
 /** Content of the app's Settings → Getting started section, never a modal. */
 export function OnboardingSettingsSection(p: { language: OnboardingLanguage; saveError: boolean;
  onTopic: (topic: PreviewTopic) => void; onAll: () => void; onResume: () => void; onRestart: () => void }) {

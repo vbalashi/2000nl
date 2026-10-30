@@ -3,7 +3,7 @@ import type { TrainingSessionSize } from "@/lib/types";
 import { isTrainingSetupDraft, type SavedTraining } from "@/lib/training/setups/model";
 
 export const JOURNEY_KEY = "2000nl:onboarding-preview:journey:v1";
-export type PreviewCollection = { id: string; name: string; entryIds: string[] };
+export type PreviewCollection = { id: string; name: string; ownership?: "owned" | "received"; entryIds: string[] };
 export type Journey = { version: 1; collections: PreviewCollection[]; trainings: SavedTraining[]; learnedEntryIds: string[] };
 export const emptyJourney = (): Journey => ({ version: 1, collections: [], trainings: [], learnedEntryIds: [] });
 type Storage = Pick<globalThis.Storage, "getItem" | "setItem">;
@@ -13,7 +13,7 @@ export function readJourney(storage: Storage): Journey {
   try {
     const value: unknown = JSON.parse(storage.getItem(JOURNEY_KEY) ?? "null");
     if (!record(value) || value.version !== 1 || !Array.isArray(value.collections) || !Array.isArray(value.trainings) || !Array.isArray(value.learnedEntryIds)) return emptyJourney();
-    const collections = value.collections.filter((c): c is PreviewCollection => record(c) && typeof c.id === "string" && typeof c.name === "string" && c.name.trim().length > 0 && Array.isArray(c.entryIds) && c.entryIds.every(id => typeof id === "string")).slice(0, 50);
+    const collections = value.collections.filter((c): c is PreviewCollection => record(c) && typeof c.id === "string" && typeof c.name === "string" && c.name.trim().length > 0 && (c.ownership === undefined || c.ownership === "owned" || c.ownership === "received") && Array.isArray(c.entryIds) && c.entryIds.every(id => typeof id === "string")).slice(0, 50);
     const trainings = value.trainings.filter((t): t is SavedTraining => {
       if (!record(t) || typeof t.id !== "string" || typeof t.name !== "string" || !t.name.trim() || t.languageCode !== "nl") return false;
       const draft = t.draft;

@@ -18,7 +18,7 @@ export function PreviewCollectionCatalog(p:{language:OnboardingLanguage;collecti
  const [data,setData]=useState<CollectionShareManagement>({collectionId:p.collection.id,isOpen:false,revision:0,invitationCode:null,subscriberCount:0});
  const t=organizationCopy(p.language);
  const run=async(action:"open"|"rotate"|"close"|"check"|"retry")=>{
-  if(action==="open"||action==="rotate") {setData(current=>({...current,isOpen:true,revision:current.revision+1,invitationCode:"00000000000000000000000000"}));p.onStage("sharing-link");}
+  if(action==="open"||action==="rotate") {setData(current=>({...current,isOpen:true,revision:current.revision+1,invitationCode:"00000000000000000000000000"}));p.onStage("sharing-copy-link");}
   if(action==="close") {setData(current=>({...current,isOpen:false,revision:current.revision+1,invitationCode:null}));p.onStage("sharing-done");}
  };
  const controller={state:{key:"onboarding-fixture",status:"ready" as const,data},rejection:null,refresh:async()=>{},run};
@@ -34,7 +34,7 @@ export function PreviewCollectionCatalog(p:{language:OnboardingLanguage;collecti
    if(p.stage==="sharing-create"&&text===(p.language==="ru"?"Создать ссылку просмотра":p.language==="nl"?"Alleen-lezenlink maken":"Create view-only link"))requestAnimationFrame(()=>p.onStage("sharing-confirm"));
    if(p.stage==="sharing-link"&&text===(p.language==="ru"?"Закрыть общий доступ":p.language==="nl"?"Gedeelde toegang sluiten":"Close shared access"))requestAnimationFrame(()=>p.onStage("sharing-close-confirm"));
   }}>
-   {sharing&&<OwnedCollectionSharingView userId="onboarding-preview" collectionId={p.collection.id} name={p.collection.name} locale={p.language} controller={controller} onClose={()=>{setSharing(false);p.onDone();}}/>}
+   {sharing&&<OwnedCollectionSharingView userId="onboarding-preview" collectionId={p.collection.id} name={p.collection.name} locale={p.language} controller={controller} onCopied={kind=>p.onStage(kind==="link"?"sharing-copy-code":"sharing-sent")} onClose={()=>{setSharing(false);p.onDone();}}/>}
   </div>
  </div>;
 }

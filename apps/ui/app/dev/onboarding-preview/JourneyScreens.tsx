@@ -23,7 +23,7 @@ import type { PreviewTranslationLanguage } from "./preferences";
 import workspace from "@/components/practice/library/libraryWorkspace.module.css";
 import styles from "./preview.module.css";
 
-export const libraryStages: readonly PreviewStage[] = ["extra-sharing", "extra-stats-view", "extra-stats", "search", "result", "meaning", "collections", "new-collection", "collection-name", "collection-done", "go-training"];
+export const libraryStages: readonly PreviewStage[] = ["extra-incoming", "incoming-words", "extra-sharing", "extra-stats-view", "extra-stats", "search", "result", "meaning", "collections", "new-collection", "collection-name", "collection-done", "go-training"];
 export const builderStages: readonly PreviewStage[] = ["source-open", "source-pick", "exercise-open", "direction-pick", "save-training", "training-name"];
 export const pickerStages: readonly PreviewStage[] = ["new-collection", "collection-name", "collection-done"];
 export const isLibraryStage = (stage: PreviewStage) => libraryStages.includes(stage);
@@ -47,6 +47,8 @@ type Props = {
   onBuilderChange: (snapshot: BuilderCheckpoint) => void;
   onPreviewStats: (entryId: string) => void;
   onOpenCatalog: () => void;
+  onOpenShared?: () => void;
+  sourceName?: string;
 };
 
 export function JourneyScreens(p: Props) {
@@ -67,8 +69,9 @@ export function JourneyScreens(p: Props) {
     } : entry) }), [p.translation, journey.learnedEntryIds]);
   const groupModel = buildLibrarySenseCardGroupModel(group, language);
   const chosen = groupModel.meanings.find(meaning => meaning.entryId === entryId)!;
-  const lists: WordListSummary[] = journey.collections.map(c => ({ id: c.id, name: c.name, type: "user", language_code: "nl", primary_language_code: "nl", item_count: c.entryIds.length }));
-  const memberships = journey.collections.filter(c => c.entryIds.includes(entryId)).map(c => ({ listId: c.id, listType: "user" as const, name: c.name, editable: true, isActiveTrainingList: false }));
+  const materialLists: WordListSummary[] = journey.collections.map(c => ({ id: c.id, name: c.name, type: "user", language_code: "nl", primary_language_code: "nl", item_count: c.entryIds.length }));
+  const lists = materialLists.filter(list=>journey.collections.find(collection=>collection.id===list.id)?.ownership!=="received");
+  const memberships = journey.collections.filter(c => c.entryIds.includes(entryId)).map(c => ({ listId: c.id, listType: "user" as const, name: c.name, editable: c.ownership!=="received", isActiveTrainingList: false }));
 
   useEffect(() => {
     if (stage !== "search" || query.trim().toLowerCase() !== "bank") return;
@@ -95,7 +98,7 @@ export function JourneyScreens(p: Props) {
     }}>
       <ApprovedTrainingBuilder interfaceLanguage={language} draft={draft} name={name} onNameChange={setName}
         languageCode="nl" languageOptions={[{ value: "nl", label: "Nederlands" }]}
-        lists={lists.map(list => ({ value: `user:${list.id}`, label: list.name }))}
+        lists={materialLists.map(list => ({ value: `user:${list.id}`, label: list.name }))}
         dictionaries={[{ value: dictionaryId, label: "Dilum Nederlands" }]} sources={[]}
         scenarios={[{ value: "understanding", label: ui.trainingOverview.exerciseType.Words, modes: ["word-to-definition", "definition-to-word"] }]}
         languagePending={false} dictionariesLoading={false} translationLanguage={p.translation === "off" ? null : p.translation}
@@ -117,11 +120,11 @@ export function JourneyScreens(p: Props) {
 
   return <div className={`${workspace.workspace} ${styles.libraryHost}`}>
     <h1>{ui.navigation.library}</h1>
-    <div id="preview-library-tabs"><LibraryDestinationTabs language={language} destination="words" organizationEnabled sharingEnabled={false} onChange={destination=>{if(destination==="collections")p.onOpenCatalog();}}/></div>
+    <div id="preview-library-tabs"><LibraryDestinationTabs language={language} destination="words" organizationEnabled sharingEnabled onChange={destination=>{if(destination==="collections")p.onOpenCatalog();if(destination==="shared")p.onOpenShared?.();}}/></div>
     <div className={workspace.toolbar}>
       <div className={styles.searchBox}><Search size={18}/><input id="preview-library-search" className={workspace.input}
         aria-label={ui.library.searchPlaceholder} value={query} readOnly placeholder={ui.library.searchPlaceholder} onChange={event => setQuery(event.target.value)}/></div>
-      <p className={workspace.scope}>Nederlands · Dilum Nederlands</p>
+      <p className={workspace.scope}>Nederlands · {p.sourceName??"Dilum Nederlands"}</p>
     </div>
     {(stage === "search" || stage === "result") ? <div className={workspace.results}>
       {query.trim().toLowerCase() === "bank" ? <LibraryHeadwordGroupResultsList interfaceLanguage={language} results={buildLibraryHeadwordGroupResults([group])} selectedHeadwordGroupId={null}

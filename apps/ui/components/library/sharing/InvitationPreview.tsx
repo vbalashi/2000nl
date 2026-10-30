@@ -15,8 +15,13 @@ const copy={
  ru:{view:'Только просмотр',description:'Вы сможете смотреть значения и тренироваться. Изменения владельца будут появляться в этой коллекции.',add:'Добавить в библиотеку',check:'Проверить результат',retry:'Повторить запрос',uncertain:'Не удалось подтвердить результат. Проверьте его перед повтором.',unavailable:'Это приглашение недоступно.',accepted:'Коллекция добавлена',revoked:'Действие подтверждено, но коллекция больше недоступна.',already:'Уже в вашей библиотеке',count:'значений'},
  nl:{view:'Alleen bekijken',description:'Je kunt betekenissen bekijken en oefenen. Wijzigingen van de eigenaar verschijnen in deze collectie.',add:'Toevoegen aan bibliotheek',check:'Resultaat controleren',retry:'Zelfde verzoek opnieuw proberen',uncertain:'Het resultaat kon niet worden bevestigd. Controleer het voordat je opnieuw probeert.',unavailable:'Deze uitnodiging is niet beschikbaar.',accepted:'Collectie toegevoegd',revoked:'De actie is bevestigd, maar deze collectie is niet meer beschikbaar.',already:'Staat al in je bibliotheek',count:'betekenissen'},
 };
-export function InvitationPreview({userId,code,locale,onClose,onOpen,onConfirmed}:{userId:string;code:string;locale:OnboardingLanguage;onClose:()=>void;onConfirmed?:()=>void;onOpen:(id:string,name?:string,entryCount?:number)=>void}){
- const {state,accept,reconcile,retry,refresh}=useShareInvitation(userId,code);
+type InvitationProps={userId:string;code:string;locale:OnboardingLanguage;onClose:()=>void;onConfirmed?:()=>void;onOpen:(id:string,name?:string,entryCount?:number)=>void};
+export function InvitationPreview(props:InvitationProps){
+ const controller=useShareInvitation(props.userId,props.code);
+ return <InvitationPreviewView {...props} controller={controller}/>;
+}
+export function InvitationPreviewView({userId,code,locale,onClose,onOpen,onConfirmed,controller}:InvitationProps&{controller:ReturnType<typeof useShareInvitation>}){
+ const {state,accept,reconcile,retry,refresh}=controller;
  useEffect(()=>{if(state.status==='accepted')onConfirmed?.();},[state.status,onConfirmed]);
  const t=copy[locale],common=organizationCopy(locale);
  return <section className={`${s.catalog} ${s.invitation}`} aria-busy={state.status==='loading'||state.status==='saving'}><CorruptLocalRecovery scopeKey={JSON.stringify([userId,code])} storageKey={'2000nl.pending-share-accept.v1.'+encodeURIComponent(userId)} valid={raw=>['saving','uncertain'].includes(state.status)||Boolean(readAcceptJournal(localRecordSnapshotStore(raw),userId))} verify={async signal=>{try{await previewCollectionShare(userId,code,signal);}catch(error){if(!(error instanceof Error)||error.message!=='share_preview_not_found')throw error;};}} trigger={state.status} locale={locale} onClose={onClose} onReset={()=>{void refresh();}}/>

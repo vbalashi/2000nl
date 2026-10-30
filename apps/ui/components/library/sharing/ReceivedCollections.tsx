@@ -14,7 +14,7 @@ const copy={
  ru:{added:'Добавленные мной',add:'Добавить по ссылке / коду',empty:'Пока нет добавленных общих коллекций',error:'Не удалось загрузить общие коллекции.',shared:'Общая · только просмотр'},
  nl:{added:'Door mij toegevoegd',add:'Toevoegen via link / code',empty:'Nog geen gedeelde collecties toegevoegd',error:'Gedeelde collecties konden niet worden geladen.',shared:'Gedeeld · alleen bekijken'},
 };
-export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=false,onChanged}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:ReceivedCollection)=>void;onAdd:()=>void;embedded?:boolean;onChanged?:()=>void}){
+export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=false,onChanged,catalogOverride}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:ReceivedCollection)=>void;onAdd:()=>void;embedded?:boolean;onChanged?:()=>void;catalogOverride?:ReturnType<typeof useReceivedCatalog>}){
  const [query,setQuery]=useState('');
  const actionFocus=useRef<HTMLButtonElement|null>(null),addButton=useRef<HTMLButtonElement|null>(null),searchInput=useRef<HTMLInputElement|null>(null);
  const [menu,setMenu]=useState<{row:ReceivedCollection;anchor:HTMLButtonElement}|null>(null);
@@ -25,7 +25,8 @@ export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=
  const pendingKey=pending?JSON.stringify([userId,pending.command.operationId]):null;
  const closeUnsubscribe=()=>{const current=readUnsubscribeJournal(tabUnsubscribeStore(),userId);setDismissed(current?JSON.stringify([userId,current.command.operationId]):null);setAction(null);};
  const [sort,setSort]=useState<ReceivedCatalogQuery['sort']>('recent');
- const catalog=useReceivedCatalog({userId,active,query:{query,sort,scope:'all',labelId:null,limit:50}});
+ const connectedCatalog=useReceivedCatalog({userId,active:active&&!catalogOverride,query:{query,sort,scope:'all',labelId:null,limit:50}});
+ const catalog=catalogOverride??connectedCatalog;
  const t=copy[locale],common=organizationCopy(locale),actions=receivedActionCopy(locale);
  useEffect(()=>{if(!active||action||pendingKey===dismissed)return;const pending=readUnsubscribeJournal(tabUnsubscribeStore(),userId);if(pending&&'collectionId'in pending.command){const id=pending.command.collectionId;const row=catalog.collections.find(row=>row.id===id);setAction({kind:'unsubscribe',row:row??{id,name:common.collections}});}},[active,userId,action,catalog.collections,common.collections,pendingKey,dismissed]);
  return <section className={`${s.catalog} ${s.received}`} aria-label={t.added}>

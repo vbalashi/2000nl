@@ -22,12 +22,20 @@ The application UI now supplies:
   loading account data. Collection buttons cannot be mistaken for this trigger.
 - **Appearance:** app gear → existing settings section (the actual Russian label
   is “Оформление”) → actual ApprovedAppearanceSection theme controls. There is no
-  custom light/dark teaching modal.
+  custom light/dark teaching modal. Continue returns to the main screen and
+  highlights the always-visible utility theme button; it cycles light → dark → system.
 - **Sharing:** app Library navigation → actual LibraryDestinationTabs Collections
   tab → shared PersonalCollectionRow → its ownedCollectionMenuItems Share item →
   actual OwnedCollectionSharingView. The guide follows Create view-only link,
-  confirmation, real link/code fields, Close shared access, confirmation and Close.
+  confirmation, Copy link, Copy code and Close. The tooltip explains sending the
+  invitation outside the app and where to close access later.
   Commands operate only on local fixture state, not a published collection.
+- **Connect shared cards:** Library → Shared → Added by me → Add by link/code →
+  actual InvitationInput (sample code prefilled/read-only) → actual InvitationPreviewView →
+  Add to library → View words → cards (the ordinary direct open behavior).
+  The collection also appears in the actual received collection list. The accepted source
+  persists locally as received/read-only and is available as training material,
+  but is excluded from owned collection management. Learning progress is unchanged.
 - **Languages:** actual SettingsDestination language buttons/pickers; accepting an
   unchanged choice uses Continue in the tooltip, not invented app buttons.
 - **Report:** actual SenseCardReportSheet, with delivery disabled for the preview.
@@ -47,7 +55,7 @@ and notify navigation. These are UI/data seams, not account or database changes.
 Core: interface language → independent translation language/Off → start the ready
 Dilum NL training → introduce word/reveal definition/example/Learn/close session.
 Completion offers Done or optional topics, individually or in order:
-collections/training → extra card actions → statistics → sharing → languages →
+collections/training → extra card actions → statistics → sharing → connect shared cards → languages →
 appearance. Extra card actions cover speaker, three dots/all meanings/return,
 Mark as known explanation and Report. Known status is not mutated just to continue.
 
@@ -98,8 +106,16 @@ Focused tests cover localization/preferences, journey/checkpoint, actual progres
 snapshot without fetch, actual report no-send boundary, sharing confirmation,
 ready search without typing and separation of statistics/collection triggers.
 Connected settings, library navigation, sharing and owner-fence tests also run.
-58 focused/regression tests, UI typecheck and touched-file lint passed. Account startup, cross-device
+The sharing/recipient revision passed 56 focused/regression tests, UI typecheck
+and lint. Russian browser checks completed both owner and recipient paths and
+all three header theme modes. The recipient example is local fixture data. Account startup, cross-device
 state and release accessibility/missing-target recovery still need integration QA.
+
+![Copy invitation link](evidence/44-sharing-copy-link.png)
+
+![Connect shared cards](evidence/46-incoming-invitation.png)
+
+![Header theme shortcut](evidence/47-theme-shortcut.png)
 
 ![Exact status button](evidence/38-real-status-button.jpg)
 

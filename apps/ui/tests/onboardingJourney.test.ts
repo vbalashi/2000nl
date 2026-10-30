@@ -34,3 +34,19 @@ describe("onboarding journey preview", () => {
     expect(saveJourney({ getItem: () => null, setItem: () => { throw new Error("denied"); } }, emptyJourney())).toBe(false);
   });
 });
+
+import {acceptIncoming,incomingId} from "@/app/dev/onboarding-preview/incomingFixture";
+import {nextPreviewTheme} from "@/app/dev/onboarding-preview/themeCycle";
+test("connecting shared cards is idempotent and preserves ownership and personal learning after reload",()=>{
+ const original=learnMeaning(emptyJourney(),"meaning-furniture");
+ const added=acceptIncoming(original,"ru");
+ expect(added.collections.find(c=>c.id===incomingId)).toMatchObject({ownership:"received",entryIds:expect.any(Array)});
+ expect(added.collections.find(c=>c.id===incomingId)?.entryIds).toHaveLength(2);
+ expect(added.learnedEntryIds).toEqual(original.learnedEntryIds);
+ expect(acceptIncoming(added,"en")).toBe(added);
+ const storage={getItem:()=>JSON.stringify(added),setItem:()=>{}};
+ expect(readJourney(storage)).toEqual(added);
+});
+test("header theme shortcut cycles all three supported modes",()=>{
+ expect(nextPreviewTheme("light")).toBe("dark");expect(nextPreviewTheme("dark")).toBe("system");expect(nextPreviewTheme("system")).toBe("light");
+});
