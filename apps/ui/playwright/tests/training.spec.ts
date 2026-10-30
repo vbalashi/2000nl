@@ -420,7 +420,7 @@ const restHandler = async (route: any) => {
           new_review_ratio: 2,
           active_scenario: "understanding",
           translation_lang: "off",
-          preferences: {},
+          preferences: { onboardingCompleted: true },
         }),
       });
       return;
