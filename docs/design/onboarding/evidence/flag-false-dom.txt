@@ -1,0 +1,37 @@
+- button "Open Next.js Dev Tools":
+- alert
+- banner:
+  - 'button "2000nl: Training"':
+    - generic "2000nl":
+      - generic: 2000nl
+  - 'button "Theme: System"':
+  - 'tooltip "Theme: System"'
+  - button "Settings" [pressed]:
+  - tooltip "Settings"
+- main:
+  - region "Settings":
+    - heading "Settings" [level=1]
+    - button "Back to app":
+    - heading "Settings" [level=2]
+    - navigation "Mobile settings sections":
+      - button "Languages":
+        - generic: Languages
+      - button "Dictionaries":
+        - generic: Dictionaries
+      - button "Appearance":
+        - generic: Appearance
+      - button "Shortcuts":
+        - generic: Shortcuts
+      - button "Updates":
+        - generic: Updates
+      - button "Billing & subscriptions":
+        - generic: Billing & subscriptions
+      - button "Account":
+        - generic: Account
+- navigation "Primary":
+  - button "Training":
+    - text: Training
+  - button "Library":
+    - text: Library
+  - button "Statistics":
+    - text: Statistics

@@ -1,0 +1,182 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>2000NL — onboarding proposal #9</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f3f9;color:#31343d;font:16px/1.5 system-ui,sans-serif}button,input,select{font:inherit}button,a,input,select{outline-offset:4px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #625491}button{cursor:pointer;border:1px solid #d5d2e1;border-radius:12px;padding:12px 18px;background:white;color:inherit;min-height:46px}button:disabled{cursor:default;opacity:.6}button.primary{background:#6e608a;color:white;border-color:#6e608a}header{padding:16px 24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #ddd}header strong{font-size:24px;font-weight:500;margin-right:auto}select{max-width:100%;padding:8px;border-radius:8px;border:1px solid #ccc}main{max-width:760px;margin:24px auto;padding:0 16px 48px}.badge{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#625491}.proposal{margin:0;padding:8px 24px;background:#ece9f4;font-size:13px}.notice{background:#e9e4f1;border:1px solid #d7d0e4;padding:16px;border-radius:16px;margin:16px 0}.notice h2{font-size:19px;margin:0 0 8px}.notice p{margin:0}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.actions button{flex-grow:1}h1,.word{font:40px/1.15 Georgia,serif;margin:12px 0}h2{font-weight:500}p{margin:12px 0}.muted{font-size:14px;color:#60616b}.saved,.card{padding:24px;border:1px solid #dfdbe8;border-radius:22px;background:#ece9f3}.card{background:white;min-height:260px;display:flex;flex-direction:column;justify-content:center}.definition{font:24px/1.4 Georgia,serif}.example{border-left:2px solid #dedbe5;padding-left:16px;font:italic 18px/1.5 Georgia,serif}.status{min-height:24px;color:#625491;margin-top:12px}.field{display:block;margin:12px 0}input{display:block;padding:12px;border:1px solid #ccc;border-radius:9px;width:100%;margin:6px 0}label{font-size:14px}.stats{display:flex;justify-content:space-between;gap:12px}.small{font-size:13px}a{color:#574777}nav{display:flex;gap:8px}.training-meta{margin:12px 0 24px}.helptext{padding-top:12px;border-top:1px solid #ddd}.concealed{color:#777}.word{text-align:center;margin:70px 0}.screen-heading{font-size:22px}.simulation{padding:12px 0;color:#666;font-size:13px}@media(max-width:480px){header{padding:12px;gap:10px}main{margin:12px auto;padding:0 12px 24px}.proposal{padding:8px 12px}.saved,.card{padding:18px}.word{font-size:36px}h1{font-size:32px}.actions button{width:100%}.notice{padding:14px}nav{width:100%}nav button{flex:1}}
+</style><p class="proposal" id="proposal"></p><header><strong>2000nl</strong><label><span class="small">EN / NL / RU</span> <select id="language" aria-label="Language"><option value="en">English</option><option value="nl">Nederlands</option><option value="ru">Русский</option></select></label><button id="help"></button></header><main id="app"></main><script>
+const copy={
+  "en": {
+    "proposal": "Concept prototype — not approved",
+    "readyTitle": "Your training is ready",
+    "readyBody": "{training} uses meanings from {dictionary}. You can start now and change its settings later.",
+    "start": "Start training",
+    "skip": "Skip introduction",
+    "frontTitle": "Think of the meaning",
+    "frontBody": "Try to recall it, then show the answer.",
+    "reveal": "Show answer",
+    "answerTitle": "One card, one meaning",
+    "answerBody": "Read this meaning and its example. Choose Learn to start learning it. The same word can have other meanings.",
+    "learn": "Learn",
+    "doneTitle": "You have started learning",
+    "doneBody": "Keep going in {training}, or explore meanings in Library. You do not need a collection to continue.",
+    "continue": "Continue training",
+    "library": "Explore Library",
+    "collectionTitle": "Keep the meaning you need",
+    "collectionBody": "A collection groups meanings you choose. The same meaning can be in several collections; its learning progress stays with it.",
+    "collections": "Collections",
+    "collectionName": "New collection name",
+    "create": "Create collection",
+    "added": "Meaning added. Your learning progress is unchanged.",
+    "collectionTraining": "To practise this collection, choose it as the source of a saved training.",
+    "settingsHint": "Settings holds interface languages and preferences. Edit a training to change its material or exercises.",
+    "reviewHint": "On review cards, choose Again, Hard, Good or Easy to describe how well you recalled this meaning.",
+    "directionHint": "Direct shows the word first; reverse shows the meaning first. Choose an available direction here.",
+    "idiomHint": "When available, this exercise practises an expression in its context.",
+    "futureFrequency": "This rank describes the word in the selected frequency profile. A meanings limit is a separate choice.",
+    "resume": "Continue introduction",
+    "replay": "Introduction",
+    "pause": "Pause introduction",
+    "saveError": "Could not save. Try again.",
+    "retry": "Try again",
+    "empty": "No cards match this training. Change its material or filters to continue.",
+    "inaccessible": "This training material is unavailable. Try again or choose an accessible source.",
+    "simulated": "Demonstration only. Actions and progress are simulated in this browser.",
+    "help": "Help / Settings",
+    "return": "Return to training"
+  },
+  "nl": {
+    "proposal": "Conceptprototype — niet goedgekeurd",
+    "readyTitle": "Je training staat klaar",
+    "readyBody": "{training} gebruikt betekenissen uit {dictionary}. Je kunt nu beginnen en de instellingen later aanpassen.",
+    "start": "Start training",
+    "skip": "Introductie overslaan",
+    "frontTitle": "Denk aan de betekenis",
+    "frontBody": "Probeer de betekenis te herinneren en toon dan het antwoord.",
+    "reveal": "Toon antwoord",
+    "answerTitle": "Eén kaart, één betekenis",
+    "answerBody": "Lees deze betekenis en het voorbeeld. Kies Leren om deze betekenis te gaan leren. Hetzelfde woord kan andere betekenissen hebben.",
+    "learn": "Leren",
+    "doneTitle": "Je bent begonnen met leren",
+    "doneBody": "Ga verder met {training} of ontdek betekenissen in de Bibliotheek. Je hebt geen collectie nodig om door te gaan.",
+    "continue": "Verder met training",
+    "library": "Ontdek de Bibliotheek",
+    "collectionTitle": "Bewaar de betekenis die je nodig hebt",
+    "collectionBody": "Een collectie groepeert betekenissen die je kiest. Dezelfde betekenis kan in meerdere collecties staan; de leervoortgang blijft behouden.",
+    "collections": "Collecties",
+    "collectionName": "Naam van nieuwe collectie",
+    "create": "Collectie maken",
+    "added": "Betekenis toegevoegd. Je leervoortgang is behouden.",
+    "collectionTraining": "Kies deze collectie als bron van een opgeslagen training om ermee te oefenen.",
+    "settingsHint": "In Instellingen vind je interfacetalen en voorkeuren. Bewerk een training om het materiaal of de oefeningen te wijzigen.",
+    "reviewHint": "Kies bij herhalingskaarten Opnieuw, Lastig, Goed of Makkelijk om aan te geven hoe goed je deze betekenis herinnerde.",
+    "directionHint": "Bij direct zie je eerst het woord; bij omgekeerd eerst de betekenis. Kies hier een beschikbare richting.",
+    "idiomHint": "Als deze oefening beschikbaar is, oefen je een uitdrukking in de context.",
+    "futureFrequency": "Deze rang beschrijft het woord in het gekozen frequentieprofiel. Een limiet voor betekenissen is een aparte keuze.",
+    "resume": "Verder met introductie",
+    "replay": "Introductie",
+    "pause": "Introductie pauzeren",
+    "saveError": "Opslaan mislukt. Probeer opnieuw.",
+    "retry": "Opnieuw proberen",
+    "empty": "Er passen geen kaarten bij deze training. Wijzig het materiaal of de filters om door te gaan.",
+    "inaccessible": "Dit trainingsmateriaal is niet beschikbaar. Probeer opnieuw of kies een toegankelijke bron.",
+    "simulated": "Alleen een demonstratie. Acties en voortgang worden in deze browser gesimuleerd.",
+    "help": "Hulp / Instellingen",
+    "return": "Terug naar training"
+  },
+  "ru": {
+    "proposal": "Прототип концепции — не согласован",
+    "readyTitle": "Тренировка готова",
+    "readyBody": "В «{training}» используются значения из словаря {dictionary}. Можно начать сейчас, а настройки изменить позже.",
+    "start": "Начать тренировку",
+    "skip": "Пропустить знакомство",
+    "frontTitle": "Вспомните значение",
+    "frontBody": "Попробуйте вспомнить значение, затем покажите ответ.",
+    "reveal": "Показать ответ",
+    "answerTitle": "Одна карточка — одно значение",
+    "answerBody": "Прочитайте значение и пример. Нажмите «Учить», чтобы начать изучать это значение. У того же слова могут быть другие значения.",
+    "learn": "Учить",
+    "doneTitle": "Начало положено",
+    "doneBody": "Продолжайте «{training}» или найдите значения в Библиотеке. Создавать коллекцию для продолжения не нужно.",
+    "continue": "Продолжить тренировку",
+    "library": "Открыть Библиотеку",
+    "collectionTitle": "Сохраните нужное значение",
+    "collectionBody": "Коллекция объединяет выбранные значения. Одно значение может быть в нескольких коллекциях; прогресс его изучения сохраняется.",
+    "collections": "Коллекции",
+    "collectionName": "Название новой коллекции",
+    "create": "Создать коллекцию",
+    "added": "Значение добавлено. Прогресс изучения сохранён.",
+    "collectionTraining": "Чтобы тренироваться по коллекции, выберите её источником сохранённой тренировки.",
+    "settingsHint": "В Настройках — язык интерфейса и предпочтения. Материал и упражнения меняются в настройке самой тренировки.",
+    "reviewHint": "На карточках повторения выберите «Снова», «Трудно», «Хорошо» или «Легко» по тому, насколько хорошо вспомнили значение.",
+    "directionHint": "В прямом направлении сначала видно слово, в обратном — значение. Здесь можно выбрать доступное направление.",
+    "idiomHint": "Если упражнение доступно, оно помогает тренировать выражение в контексте.",
+    "futureFrequency": "Этот ранг относится к слову в выбранном частотном профиле. Число значений ограничивается отдельно.",
+    "resume": "Продолжить знакомство",
+    "replay": "Знакомство с приложением",
+    "pause": "Отложить знакомство",
+    "saveError": "Не удалось сохранить. Попробуйте ещё раз.",
+    "retry": "Повторить",
+    "empty": "Нет подходящих карточек. Измените материал или фильтры тренировки.",
+    "inaccessible": "Материал тренировки недоступен. Повторите попытку или выберите доступный источник.",
+    "simulated": "Это демонстрация. Действия и прогресс моделируются только в этом браузере.",
+    "help": "Помощь / Настройки",
+    "return": "Вернуться к тренировке"
+  }
+}
+;
+const key='2000nl-issue9-concept-v1';
+let state={lang:'en',status:'not-started',view:'ready',revealed:false,learned:0,actionsDone:0,activeTraining:'Dilum NL',collection:'',membership:false,collectionTraining:false,help:false};
+try{Object.assign(state,JSON.parse(localStorage.getItem(key)||'{}'))}catch{}
+const app=document.querySelector('#app');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const t=k=>(copy[state.lang][k]||k).replaceAll('{training}','Dilum NL').replaceAll('{dictionary}','Dilum Nederlands');
+function save(){try{localStorage.setItem(key,JSON.stringify(state))}catch{}}
+function btn(id,label,primary=false){return `<button id="${id}" ${primary?'class="primary"':''}>${esc(label)}</button>`}
+function guidance(title,body){return `<aside class="notice" aria-labelledby="guide-title"><h2 id="guide-title">${esc(title)}</h2><p>${esc(body)}</p></aside>`}
+function actions(s){return `<div class="actions">${s}</div>`}
+function doAction(id,fn){let e=document.getElementById(id);if(e)e.onclick=()=>{fn();save();render();const next={start:'reveal',reveal:'learn',learn:state.view==='done'?'continue':'reveal',pause:'resume',resume:state.revealed?'learn':'reveal',skip:state.view==='ready'?'start':state.revealed?'learn':'reveal',library:'search',collections:state.collection?'member':'name',create:'member',prepare:'collectionStart',collectionStart:'reveal',continue:'reveal',replay:'start',closeHelp:'help'}[id];if(next)document.getElementById(next)?.focus();}}
+function render(){
+ document.documentElement.lang=state.lang;document.getElementById('language').value=state.lang;document.getElementById('proposal').textContent=t('proposal');document.getElementById('help').textContent=t('help');
+ let g=state.status==='active'||state.status==='not-started';let s=`<div class="badge">#9 · ${esc(t('proposal'))}</div>`;
+ if(state.help){s+=guidance(t('help'),t('settingsHint'))+actions(btn('replay',t('replay'),true)+btn('closeHelp',t('return')))+`<p class="muted">${esc(t('simulated'))}</p>`;}
+ else if(state.view==='ready'){
+  if(state.status==='paused')s+=actions(btn('resume',t('resume'),true));
+  if(g)s+=guidance(t('readyTitle'),t('readyBody'));
+  s+=`<section class="saved"><span class="badge">Dilum Nederlands</span><h1>Dilum NL</h1><p class="training-meta">NL · ${esc(({en:'Words · Direct',nl:'Woorden · Direct',ru:'Слова · Прямой'})[state.lang])}</p><p>${esc(t('simulated'))}</p>${actions(btn('start',t('start'),true)+(g?btn('skip',t('skip')):''))}</section>`;
+ }else if(state.view==='card'){
+  let word=state.learned%2?'fiets':'bank';let def=word==='bank'?'Een zitplaats voor meerdere mensen.':'Een voertuig met twee wielen waarop je trapt.';let example=word==='bank'?'We zitten samen op de bank.':'Ik fiets naar huis.';
+  s+=`<div class="stats"><span>${esc(state.activeTraining)}</span><span>${state.learned} ✓</span></div>`;
+  if(g)s+=guidance(t(state.revealed?'answerTitle':'frontTitle'),t(state.revealed?'answerBody':'frontBody'));
+  if(state.status==='paused')s+=actions(btn('resume',t('resume')));
+  s+=`<section class="card"><h1 class="word">de ${word}</h1>${state.revealed?`<p class="definition">${def}</p><p class="example">${example}</p>`:''}</section>`;
+  s+=actions(btn(state.revealed?'learn':'reveal',t(state.revealed?'learn':'reveal'),true));
+  if(g)s+=actions(btn('pause',t('pause'))+btn('skip',t('skip')));
+ }else if(state.view==='done'){
+  s+=guidance(t('doneTitle'),t('doneBody'))+actions(btn('continue',t('continue'),true)+btn('library',t('library')));
+ }else if(state.view==='library'){
+  s+=guidance(t('collectionTitle'),t('collectionBody'));
+  s+=`<label class="field">${esc(({en:'Find a meaning',nl:'Zoek een betekenis',ru:'Найти значение'})[state.lang])}<input id="search" value="bank"></label><section class="card"><h1>de bank</h1><p class="definition">Een zitplaats voor meerdere mensen.</p><p class="example">We zitten samen op de bank.</p>${actions(btn('collections',t('collections'),true))}</section>`+actions(btn('continue',t('return')));
+ }else if(state.view==='collections'){
+  s+=`<h1 class="screen-heading">${esc(t('collections'))}</h1><p>bank · Een zitplaats voor meerdere mensen.</p>`;
+  if(state.collection)s+=`<label class="field"><input style="display:inline;width:auto" type="checkbox" id="member" ${state.membership?'checked':''}> ${esc(state.collection)}</label>`;
+  else s+=`<label class="field">${esc(t('collectionName'))}<input id="name" maxlength="160" autocomplete="off"></label>`+actions(btn('create',t('create'),true));
+  if(state.membership)s+=`<p role="status">${esc(t('added'))}</p><p>${esc(t('collectionTraining'))}</p>`+actions(btn('prepare',t('start')));
+  s+=actions(btn('library',t('library'))+btn('continue',t('return')));
+ }else if(state.view==='collection-training'){
+  s+=`<h1>${esc(state.collection)}</h1><p>${esc(t('collectionTraining'))}</p><section class="saved"><p>${esc(t('collections'))}: ${esc(state.collection)}</p><p>NL · ${esc(({en:'Words · Direct',nl:'Woorden · Direct',ru:'Слова · Прямой'})[state.lang])}</p>${actions(btn('collectionStart',t('start'),true))}</section>`+actions(btn('continue',t('return')));
+ }
+ s+=`<div class="status" aria-live="polite">${state.membership?esc(state.collection)+' · 1':''}</div><footer class="simulation">${esc(t('simulated'))}<p><a href="README.md">Design proposal</a> · <a href="audit.md">Current-product evidence</a></p></footer>`;
+ app.innerHTML=s;
+ doAction('start',()=>{state.view='card';state.activeTraining='Dilum NL';if(state.status==='not-started')state.status='active'});
+ doAction('reveal',()=>state.revealed=true);
+ doAction('learn',()=>{state.learned++;state.actionsDone++;state.revealed=false;if(state.status==='active'&&state.actionsDone>=2){state.status='completed';state.view='done'}});
+ doAction('continue',()=>{state.view='card';state.revealed=false});
+ doAction('library',()=>state.view='library');doAction('collections',()=>state.view='collections');
+ doAction('skip',()=>{state.status='skipped'});doAction('pause',()=>state.status='paused');doAction('resume',()=>state.status='active');
+ doAction('replay',()=>{state.help=false;state.status='active';state.actionsDone=0;state.view='ready'});doAction('closeHelp',()=>state.help=false);
+ doAction('create',()=>{let n=document.getElementById('name').value.trim();if(n){state.collection=n;state.membership=true}});
+ let member=document.getElementById('member');if(member)member.onchange=()=>{state.membership=member.checked;save();render()};
+ doAction('prepare',()=>{state.collectionTraining=true;state.view='collection-training'});doAction('collectionStart',()=>{state.view='card';state.activeTraining=state.collection;state.revealed=false});
+ let search=document.getElementById('search');if(search)search.oninput=()=>{let card=app.querySelector('.card');card.hidden=!('bank'.includes(search.value.trim().toLowerCase()))};
+}
+document.getElementById('language').onchange=e=>{state.lang=e.target.value;save();render()};
+document.getElementById('help').onclick=()=>{state.help=!state.help;save();render()};render();
+</script></html>
