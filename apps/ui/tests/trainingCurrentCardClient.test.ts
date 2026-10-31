@@ -33,3 +33,39 @@ test("archived-card reads use only explicit permit endpoint and reject unrelated
  expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({operation:"read",...input});
  await expect(readCurrentTrainingCard("owner",{...input,entryId:"unrelated"})).rejects.toThrow("current_card_contract_invalid");
 });
+
+test("a suspended auth read cannot leave display acknowledgement pending forever", async () => {
+ vi.useFakeTimers();
+ try {
+  headers.mockImplementation(() => new Promise(() => {}));
+  vi.stubGlobal("fetch",vi.fn());
+  const pending=acknowledgeCurrentTrainingCard("owner",target);
+  const verdict=expect(pending).rejects.toThrow("platform_request_timeout");
+  await vi.advanceTimersByTimeAsync(12_001);
+  await verdict;
+  expect(fetch).not.toHaveBeenCalled();
+ } finally {vi.useRealTimers();}
+}, 1000);
+
+test("leaving while credentials are suspended immediately cancels acknowledgement", async () => {
+ headers.mockImplementation(() => new Promise(() => {}));
+ vi.stubGlobal("fetch",vi.fn());
+ const controller=new AbortController();
+ const pending=acknowledgeCurrentTrainingCard("owner",target,controller.signal);
+ controller.abort();
+ await expect(pending).rejects.toMatchObject({name:"AbortError"});
+ expect(fetch).not.toHaveBeenCalled();
+}, 1000);
+
+
+test("a stalled response body is covered by the acknowledgement deadline", async () => {
+ vi.useFakeTimers();
+ try {
+  headers.mockResolvedValue({});
+  vi.stubGlobal("fetch",vi.fn().mockResolvedValue({ok:true,json:()=>new Promise(()=>{})}));
+  const pending=acknowledgeCurrentTrainingCard("owner",target);
+  const verdict=expect(pending).rejects.toThrow("platform_request_timeout");
+  await vi.advanceTimersByTimeAsync(12_001);
+  await verdict;
+ } finally {vi.useRealTimers();}
+});

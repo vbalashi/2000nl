@@ -142,6 +142,51 @@ const word: TrainingWord = {
 };
 
 describe("TrainingSenseCardV2Session", () => {
+  test("returning during a stalled context read exposes recovery and keeps the scheduled card", async () => {
+    vi.useFakeTimers();
+    try {
+      const prompt = {text:"Example",sourceText:singleSenseEntry.contentNodes[1].text,contentNodeId:"example-1",sourceTextFingerprint:"example-fingerprint"};
+      let finishStale!: (value: unknown) => void;
+      loadContextPrompt.mockImplementationOnce(() => new Promise(resolve => {finishStale=resolve;})).mockResolvedValue({state:"ready",prompt});
+      const view=render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext trainingSessionId="stalled-return-run" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()} />);
+      await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
+      expect(screen.getByTestId("training-v2-loading")).toBeVisible();
+      await act(async()=>{document.dispatchEvent(new Event("visibilitychange"));window.dispatchEvent(new Event("focus"));await vi.advanceTimersByTimeAsync(12_001);});
+      expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
+      // A focus hint received during the stalled read can now trigger the next
+      // bounded read; it no longer waits forever behind the old request.
+      await act(async()=>{await vi.advanceTimersByTimeAsync(2_000);});
+      expect(screen.getByRole("button",{name:"Show answer"})).toBeVisible();
+      await act(async()=>finishStale({state:"source-unavailable"}));
+      expect(screen.getByRole("button",{name:"Show answer"})).toBeVisible();
+      expect(loadContextPrompt.mock.calls.every(([request])=>request.sessionId==="stalled-return-run"&&request.entryId===word.id)).toBe(true);
+      expect(performAction).not.toHaveBeenCalled();
+      view.unmount();
+    } finally {vi.useRealTimers();}
+  });
+
+  test("keeps an acknowledged context card ready after leaving and returning to the screen", async () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED", "true");
+    try {
+      const entry = {...singleSenseEntry, sourceVersion: 1};
+      const group = {...singleSenseGroup, entries: [entry]};
+      fetchSingleSense.mockResolvedValue({state:"ready",group,entry});
+      acknowledgeCurrent.mockReset().mockResolvedValue({permitId:"75300000-0000-4000-8000-000000000001",expiresAt:new Date(Date.now()+60_000).toISOString(),runGeneration:1});
+      readCurrent.mockReset().mockResolvedValue({groups:[group]});
+      loadContextPrompt.mockImplementation(async () => ({state:"ready",prompt:{text:"Example",sourceText:entry.contentNodes[1].text,contentNodeId:"example-1",sourceTextFingerprint:"example-fingerprint"}}));
+      const props = {word, mode:"definition-to-word" as const, wordInContext:true, trainingSessionId:"return-run",contentLanguageCode:"nl",translationTargetLanguageCode:"en",interfaceLanguage:"en" as const,onProgressActionAccepted:vi.fn()};
+      const view = render(<TestTrainingSenseCardV2Session {...props} presentationActive />);
+      fireEvent.click(await screen.findByRole("button",{name:"Show answer"}));
+      view.rerender(<TestTrainingSenseCardV2Session {...props} presentationActive={false} />);
+      await act(async()=>window.dispatchEvent(new Event("focus")));
+      view.rerender(<TestTrainingSenseCardV2Session {...props} presentationActive />);
+      await act(async()=>{document.dispatchEvent(new Event("visibilitychange"));window.dispatchEvent(new Event("focus"));});
+      expect(await screen.findByRole("button",{name:"Good"})).toBeVisible();
+      expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
+      expect(performAction).not.toHaveBeenCalled();
+    } finally { vi.unstubAllEnvs(); }
+  });
+
   test("refreshes answer translations when context preparation completes a newer article lookup", async () => {
     const untranslatedEntry = {
       ...singleSenseEntry,

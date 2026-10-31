@@ -1,6 +1,7 @@
 "use client";
 import type { CurrentTrainingCardContext } from "@/lib/platform/trainingCurrentCardClient";
 import { useEffect, useState, useRef } from "react";
+import { withPlatformRequestTimeout } from "@/lib/platform/platformFetchWithTimeout";
 import {
   loadWordContextPrompt,
   type WordContextLoadResult,
@@ -61,16 +62,16 @@ export function useWordContextPrompt({
       try {
         const selectedPermit = getPermit.current?.();
         const currentCard = selectedPermit?.sessionId === trainingSessionId ? selectedPermit : undefined;
-        const loaded = await loadWordContextPrompt({
+        const loaded = await withPlatformRequestTimeout(signal => loadWordContextPrompt({
           userId: cacheOwnerId,
           ...(currentCard ? {currentCard} : {}),
           sessionId: trainingSessionId,
           entryId,
           contentLanguageCode,
           translationTargetLanguageCode,
-          signal: controller.signal,
+          signal,
           force,
-        });
+        }), controller.signal);
         force = false;
         if (controller.signal.aborted) return;
         setResult(loaded);
