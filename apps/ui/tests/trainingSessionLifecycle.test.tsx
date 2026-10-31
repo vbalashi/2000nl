@@ -17,7 +17,7 @@ function useRun() {
 
 test("accepted progress survives a parent rerender and partial runs keep their resume record", () => {
   const {result,rerender} = renderHook(useRun);
-  act(() => {result.current.accept();result.current.accept();});
+  act(() => {result.current.prepareAcceptance("first")();result.current.prepareAcceptance("second")();});
   rerender();
   expect(result.current.completed).toBe(2);
   expect(result.current.resumable).toBe(true);

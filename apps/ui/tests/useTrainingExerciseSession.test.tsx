@@ -2,6 +2,7 @@ import {act,renderHook,waitFor} from "@testing-library/react";
 import {expect,test,vi} from "vitest";
 import {useTrainingExerciseSession,type ExerciseNext,type ExercisePreparation} from "@/components/training/useTrainingExerciseSession";
 type C={targetId:string;targetKey:string;entryId:string};type Content={text:string};
+type RuntimeProps={id:string;language:string;serverCount?:number;members?:Array<{targetId:string;consumedAt:string|null;unavailableAt:string|null}>};
 const candidate={status:"ready" as const,ordinal:1,targetId:"one",targetKey:"one",entryId:"entry-one"};
 function deferred<T>(){let resolve!:(value:T)=>void;const promise=new Promise<T>(yes=>{resolve=yes;});return {promise,resolve};}
 function setup(){
@@ -9,8 +10,8 @@ function setup(){
  const prepare=vi.fn<[C,AbortSignal,boolean],Promise<ExercisePreparation<Content>>>().mockResolvedValue({state:"ready",content:{text:"example"}});
  const mark=vi.fn().mockResolvedValue({}),actClient=vi.fn().mockResolvedValue({}),progress=vi.fn(),replaced=vi.fn();
  const adapter={next,capturePreparation:()=>prepare,markUnavailable:mark,act:actClient,timing:{selection:"next-card.selection" as const,preparation:"next-card.lookup" as const}};
- const hook=renderHook(({id,language})=>useTrainingExerciseSession({identity:id,preparationIdentity:language,
-  session:{sessionId:id,completedActions:0,plannedTotal:5},adapter,onProgress:progress,onSuperseded:replaced}),{initialProps:{id:"run",language:"nl"}});
+ const hook=renderHook(({id,language,serverCount=0,members}:RuntimeProps)=>useTrainingExerciseSession({identity:id,preparationIdentity:language,
+  session:{sessionId:id,completedActions:serverCount,plannedTotal:5,members},adapter,onProgress:progress,onSuperseded:replaced}),{initialProps:{id:"run",language:"nl"} as RuntimeProps});
  return {...hook,next,prepare,mark,actClient,progress,replaced};
 }
 test("accepted grading with unavailable next content retries only preparation",async()=>{
@@ -59,4 +60,16 @@ test("pending translation retains one trailing hint without aborting the active 
  act(()=>{read=hook.result.current.loadNext(false,true);});await waitFor(()=>expect(hook.prepare).toHaveBeenCalledTimes(2));
  await act(async()=>{await hook.result.current.loadNext(false,true);await hook.result.current.loadNext(false,true);});expect(hook.next).toHaveBeenCalledTimes(2);
  await act(async()=>{pending.resolve({state:"translation-pending"});await read;});await waitFor(()=>expect(hook.next).toHaveBeenCalledTimes(3));expect(hook.actClient).not.toHaveBeenCalled();expect(hook.mark).not.toHaveBeenCalled();
+});
+
+test.each(["one","external","partial"] as const)("a deferred grade reconciles %s snapshot progress without replay",async(consumed)=>{
+ const hook=setup();await waitFor(()=>expect(hook.result.current.candidate).not.toBeNull());
+ const receipt=deferred<unknown>();hook.actClient.mockReturnValueOnce(receipt.promise);
+ let grade!:Promise<void>;act(()=>{grade=hook.result.current.grade("success");});
+ const members=consumed==="partial"?undefined:["one","external","remaining"].map(targetId=>({targetId,consumedAt:targetId===consumed?"2026-10-31T18:00:00Z":null,unavailableAt:null}));
+ hook.rerender({id:"run",language:"nl",serverCount:1,members});
+ hook.next.mockResolvedValue({...candidate,targetId:"remaining",targetKey:"remaining",entryId:"entry-remaining"});
+ await act(async()=>{receipt.resolve({});await grade;});
+ const expected=consumed==="external"?2:1;
+ expect(hook.result.current.completed).toBe(expected);expect(hook.progress).toHaveBeenLastCalledWith({sessionId:"run",completedActions:expected,completionReason:null});expect(hook.actClient).toHaveBeenCalledOnce();
 });

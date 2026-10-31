@@ -46,12 +46,13 @@ export function useTrainingExerciseSession<C extends Candidate,T>(input:{
   const [pendingEntryId,setPendingEntryId]=useState<string|null>(null);
   const [pendingIdentity,setPendingIdentity]=useState(input.preparationIdentity);
   const [terminal,setTerminal]=useState<"complete"|"empty"|null>(input.session.plannedTotal===0 ? input.session.completedActions>0 ? "complete" : "empty" : null);
-  const {completed,accept,finish}=useTrainingExerciseProgress(input.session,input.onProgress);
+  const {completed,prepareAcceptance,finish}=useTrainingExerciseProgress(input.session,input.onProgress);
   const retired=useRef(false),busy=useRef(false),trailingRead=useRef(false);
   const activeLoad=useRef<TrainingOperation|null>(null);
   const transition=useRef<string|null>(null);
-  const intent=useRef<{candidate:C;result:PlatformTrainingExerciseReviewResultV2;eventId:string}|null>(null);
+  const intent=useRef<{candidate:C;result:PlatformTrainingExerciseReviewResultV2;eventId:string;commit:()=>number}|null>(null);
   const [actionRetryRequired,setActionRetryRequired]=useState(false);
+  const externalAcceptance=useRef<{targetId:string;commit:()=>number}|null>(null);
   const endTransition=useCallback((outcome:string)=>{
     if(transition.current)finishTrainingUserTransition(transition.current,outcome);
     transition.current=null;
@@ -116,7 +117,7 @@ export function useTrainingExerciseSession<C extends Candidate,T>(input:{
   },[operations,endTransition,finish,replaceSession]);
   useEffect(()=>{if(candidate&&content)endTransition("ready");},[candidate,content,endTransition]);
   useEffect(()=>{
-    retired.current=false;busy.current=false;intent.current=null;trailingRead.current=false;
+    retired.current=false;busy.current=false;intent.current=null;externalAcceptance.current=null;trailingRead.current=false;
     setSuperseded(false);setSubmitting(false);setActionRetryRequired(false);
     return ()=>{operations.reset();activeLoad.current=null;trailingRead.current=false;endTransition("cancelled");};
   },[input.identity,operations,endTransition]);
@@ -143,26 +144,32 @@ export function useTrainingExerciseSession<C extends Candidate,T>(input:{
     try{
       await callbacks.current.adapter.act(request.candidate,request.result,request.eventId);
       if(!operation.isCurrent())return;
-      intent.current=null;setActionRetryRequired(false);accept();
+      intent.current=null;setActionRetryRequired(false);request.commit();
       await loadNext();
     }catch(cause){
       if(!operation.isCurrent())return;
       if(cause instanceof Error&&cause.message==="training_session_superseded"){replaceSession();return;}
       setFailed(true);setActionRetryRequired(true);
     }finally{if(operation.isCurrent()){busy.current=false;setSubmitting(false);}}
-  },[operations,accept,loadNext,replaceSession]);
+  },[operations,loadNext,replaceSession]);
   const grade=useCallback(async(result:PlatformTrainingExerciseReviewResultV2)=>{
     if(!candidate||!content||busy.current||retired.current||intent.current)return;
-    intent.current={candidate:structuredClone(candidate),result,eventId:crypto.randomUUID()};
+    intent.current={candidate:structuredClone(candidate),result,eventId:crypto.randomUUID(),commit:prepareAcceptance(candidate.targetId)};
     await performIntent();
-  },[candidate,content,performIntent]);
+  },[candidate,content,performIntent,prepareAcceptance]);
   const retry=useCallback(async(force=false)=>{
     if(intent.current)await performIntent();else await loadNext(force);
   },[performIntent,loadNext]);
+  const prepareExternalAcceptance=useCallback(()=>{
+    if(candidate && externalAcceptance.current?.targetId!==candidate.targetId){
+      externalAcceptance.current={targetId:candidate.targetId,commit:prepareAcceptance(candidate.targetId)};
+    }
+  },[candidate,prepareAcceptance]);
   const acceptAndAdvance=useCallback(async()=>{
-    if(retired.current)return;
-    accept();await loadNext();
-  },[accept,loadNext]);
+    if(retired.current||!candidate)return;
+    const commit=externalAcceptance.current?.commit??prepareAcceptance(candidate.targetId);
+    externalAcceptance.current=null;commit();await loadNext();
+  },[candidate,prepareAcceptance,loadNext]);
   return {candidate,content,setContent,revealed,setRevealed,loading,submitting,failed,setFailed,
-    superseded,pendingEntryId:pendingIdentity===input.preparationIdentity?pendingEntryId:null,terminal,completed,actionRetryRequired,loadNext,retry,grade,acceptAndAdvance,replaceSession,operations};
+    superseded,pendingEntryId:pendingIdentity===input.preparationIdentity?pendingEntryId:null,terminal,completed,actionRetryRequired,loadNext,retry,grade,prepareExternalAcceptance,acceptAndAdvance,replaceSession,operations};
 }

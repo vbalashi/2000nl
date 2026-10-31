@@ -53,9 +53,12 @@ supply content and translate existing server contracts into these outcomes:
 The controller exposes an observable session state and explicit intents: start,
 resume, reveal, grade/exclude, retry, replace, return and exit. `retry` derives its
 operation from state: it must not accept arbitrary caller-supplied session IDs.
-The adapter receives the owning operation's cancellation signal and identity.
-After each await the controller checks the full operation, even when a transport
-cannot be aborted. Cleanup clears a pending operation only if it still owns it.
+Selection and preparation adapters receive the owning operation’s cancellation
+signal. The controller retains operation identity at the commit seam. Mutations
+use the existing idempotent action clients; cancelling a UI operation does not
+roll back an accepted server mutation. After each await the controller checks
+the full operation, including transports that cannot be aborted. Cleanup clears
+a pending operation only if it still owns it.
 
 Preserve `usePreparedNextTrainingTurn` as an internal ordinary preparation seam;
 consume a prepared candidate only for its exact predecessor. Its queue prediction
@@ -116,7 +119,9 @@ leases span the complete logical operation, including a wait before selection;
 replacement/cleanup abort signals and invalidate commits even when transport
 cannot be aborted. Channels keep preparation and an accepted action independent.
 A translation preference update can refresh preparation without discarding an
-accepted grading receipt.
+accepted grading receipt. Acceptance is captured before dispatch and reconciles
+the exact target against refreshed member consumption, so a snapshot that already
+includes an in-flight grade cannot make its later receipt increment progress twice.
 
 - `useTrainingPilotController` owns Start/Continue intents. Its operation flows
   through `useCommitTrainingPilotDraft`, which dispatches the family request and

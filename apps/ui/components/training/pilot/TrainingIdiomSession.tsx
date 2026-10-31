@@ -107,7 +107,7 @@ export function TrainingIdiomSession({
     identity: candidate?.targetKey ?? "none",
     sessionId: session.sessionId,
     target: { kind: "exercise", targetId: candidate?.targetId ?? "" },
-    onAccepted: runtime.acceptAndAdvance,
+    onStarting:runtime.prepareExternalAcceptance, onAccepted: runtime.acceptAndAdvance,
   });
 
   useRecordedStudyTime({ ownerId: userId, sessionId: session.sessionId, family: "idiom", entryId: candidate?.entryId, targetId: candidate?.targetId,

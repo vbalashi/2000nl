@@ -97,7 +97,7 @@ export function TrainingSentenceSession(props: Props) {
       return null;
     },
   });
-  const exclusion = useTrainingExclusion({ userId, onSessionSuperseded: runtime.replaceSession, identity: candidate?.targetKey ?? "none", sessionId: session.sessionId, target: { kind: "exercise", targetId: candidate?.targetId ?? "" }, onAccepted: runtime.acceptAndAdvance });
+  const exclusion = useTrainingExclusion({ userId, onSessionSuperseded: runtime.replaceSession, identity: candidate?.targetKey ?? "none", sessionId: session.sessionId, target: { kind: "exercise", targetId: candidate?.targetId ?? "" }, onStarting:runtime.prepareExternalAcceptance, onAccepted: runtime.acceptAndAdvance });
   useRecordedStudyTime({ ownerId: userId, sessionId: session.sessionId, family: "sentence", entryId: candidate?.entryId, targetId: candidate?.targetId,
     enabled: studyTimeEnabled && currentCard.ready && Boolean(candidate && content) && !loading && !terminal && !submitting && !exclusion.busy && !exclusion.failed });
   const preparationFailed = failed && !candidate && !loading && !terminal;
