@@ -184,7 +184,7 @@ const entries: FixtureEntry[] = Array.from({ length: 64 }, (_, index) => ({
 
 const fixtureEntries = entries;
 
-const userSession = {
+const defaultUserSession = {
   id: "training-attribution-user",
   email: "test@2000nl.test",
 };
@@ -193,6 +193,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
   page: Page,
   injectedDelayMs: number,
   options: {
+    /** A UUID principal enables the real account event/reconciliation lifecycle. */
+    userId?: string;
     /** Preserve the real controller while exercising multi-meaning article states. */
     /** Install routes without installing auth or navigating, for staged bootstrap tests. */
     deferNavigation?: boolean;
@@ -236,6 +238,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     devTestLogin?: boolean;
   } = {},
 ) {
+  const userSession = { ...defaultUserSession, id: options.userId ?? defaultUserSession.id };
   const fixtureSessionId = options.useUuidSessionId ? "40710000-0000-4000-8000-000000000001" : "training-session-fixture";
   const entries = options.useUuidEntryIds ? fixtureEntries.map((entry, index) => ({
     ...entry, id: `40700000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,

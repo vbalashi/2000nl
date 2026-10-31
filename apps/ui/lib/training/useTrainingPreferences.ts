@@ -54,7 +54,7 @@ export function useTrainingPreferences(
   const applyPreferences = useCallback((prefs: UserPreferences) => {
       setThemePreference(prefs.themePreference);
       setAudioQualityState(prefs.audioQuality);
-      setEnabledModesState(prefs.modesEnabled);
+      setEnabledModesState(current => current.join("|") === prefs.modesEnabled.join("|") ? current : prefs.modesEnabled);
       setCardFilterState(prefs.cardFilter);
       setLanguageState(prefs.languageCode);
       setNewReviewRatioState(prefs.newReviewRatio);

@@ -338,6 +338,23 @@ describe("TrainingSenseCardV2Session", () => {
       await screen.findByRole("button",{name:"Show answer"});
     } finally {vi.unstubAllEnvs();}
   });
+  test("missing session context offers exit rather than a retry that cannot start an acknowledgement", async () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED", "true");
+    try {
+      acknowledgeCurrent.mockReset();
+      fetchSingleSense.mockResolvedValue({state:"ready",group:singleSenseGroup,entry:{...singleSenseEntry,sourceVersion:1}});
+      const exit = vi.fn();
+      render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition" trainingSessionId={null}
+        contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"
+        onExit={exit} onProgressActionAccepted={vi.fn()} />);
+      await screen.findByTestId("training-v2-failure");
+      expect(screen.queryByRole("button", {name: platformV2Message("en", "senseCard.training.retry")})).not.toBeInTheDocument();
+      expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
+      expect(acknowledgeCurrent).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole("button", {name: getUiMessages("en").trainingSession.back}));
+      expect(exit).toHaveBeenCalledOnce();
+    } finally { vi.unstubAllEnvs(); }
+  });
   test("a failed display acknowledgement retries that target without dropping it or invoking alternative selection",async()=>{
     vi.stubEnv("NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED","true");
     try {

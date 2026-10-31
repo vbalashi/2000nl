@@ -93,3 +93,11 @@ test("display acknowledgement starts at committed layout without a redundant loa
  expect(renders).toBe(2);
  expect((acknowledge.mock.calls[0][2] as AbortSignal).aborted).toBe(true);
 });
+
+
+test("an active presentation without a session target fails instead of waiting for an unstarted request", () => {
+ const view=renderHook(()=>useCurrentTrainingCard({userId:"owner",target:null,active:true}));
+ expect(view.result.current.ready).toBe(false);
+ expect(view.result.current.failed).toBe(true);
+ expect(acknowledge).not.toHaveBeenCalled();
+});
