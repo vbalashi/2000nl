@@ -99,6 +99,7 @@ import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentat
 import { useAuthoritativeTrainingSessionPlan } from "./v2/useTrainingSessionPlan";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import { useTrainingTurnSelectionPort } from "./useTrainingTurnSelectionPort";
+import { useTrainingSessionAuthority, useTrainingSessionAuthorityEvents } from "./useTrainingSessionAuthority";
 import { useTrainingTurnController } from "./useTrainingTurnController";
 import { getTrainingCardKey } from "@/lib/training/trainingQueue";
 import { TrainingDetailsDrawer } from "./TrainingDetailsDrawer";
@@ -131,8 +132,6 @@ import {
 import {
   clearTrainingSessionResume,
   readTrainingSessionResume,
-  subscribeTrainingSessionInvalidation,
-  subscribeTrainingSessionOwnerInvalidation,
   type TrainingSessionResumeRecord,
   writeTrainingSessionResume,
 } from "@/lib/training/sessionResumeStore";
@@ -166,7 +165,6 @@ type Props = {
 
 const DEFAULT_LANGUAGE_OPTIONS = [{ value: "nl", label: "Nederlands" }];
 
-const TRAINING_SESSION_AUTHORITY_POLL_MS = 20_000;
 
 const DEFAULT_TRAINING_FOCUS_FILTER: TrainingFocusFilter = {
   dateWindow: "all",
@@ -251,7 +249,6 @@ function TrainingScreenContent({
   const [sessionPlannedTotal, setSessionPlannedTotal] = useState<number | null>(
     null,
   );
-  const sessionReplanLoadRef = useRef<{ sessionId: string; revision: number; authorityGeneration: number; promise: Promise<boolean> } | null>(null);
   const reconciledSessionPlanRef = useRef<{ sessionId: string; revision: number } | null>(null);
   const [latchedSessionPlan, setLatchedSessionPlan] =
     useState<TrainingSessionPlan | null>(null);
@@ -278,33 +275,48 @@ function TrainingScreenContent({
   const [sessionResumeError, setSessionResumeError] = useState(false);
   const [sessionReplacementWarning, setSessionReplacementWarning] =
     useState(false);
-  const [sessionAuthorityRefreshing, setSessionAuthorityRefreshing] = useState(false);
   const accountMaterial = useAccountMaterial();
   const [homeStartupSettled, setHomeStartupSettled] = useState(false);
   const handleHomeStartupReady = useCallback(() => setHomeStartupSettled(true), []);
   const [openTrainingEditor, setOpenTrainingEditor] = useState(false);
-  const [sessionAuthorityChecking, setSessionAuthorityChecking] =
-    useState(false);
   const [platformProgressActionPending, setPlatformProgressActionPending] =
     useState(false);
   const sessionResumeAttemptedRef = useRef(false);
   const sessionResumeGenerationRef = useRef(0);
-  const sessionAuthorityValidationRef = useRef(0);
-  const sessionAuthorityBlockedRef = useRef(false);
-  const sessionAuthorityGenerationRef = useRef(0);
   const trainingSessionIdRef = useRef<string | null>(null);
   const [sessionTrainingId, setSessionTrainingId] = useState<string | undefined>();
   const [emptyTraining,setEmptyTraining]=useState<{trainingId:string;message:string;canReviewAhead?:boolean;draftKey?:string}|undefined>();
   const completionDraftRef = useRef<TrainingSetupDraft | null>(null);
+  const sessionAuthority = useTrainingSessionAuthority({
+    userId:user.id,
+    read: async (sessionId) => {
+      const snapshot = await fetchTrainingSessionSnapshot(user.id, sessionId);
+      const decision = decideAuthoritySnapshot(snapshot, sessionId, reconciledSessionPlanRef.current);
+      if (decision.kind === "superseded" || !snapshot) return {kind:"superseded"};
+      if (decision.kind !== "replan") return {kind:"active"};
+      return {kind:"replan",revision:decision.revision,
+        reconcile: async () => {
+          resetFocusQueueState();
+          setLatchedSessionPlan(snapshot);
+          setSessionPlannedTotal(snapshot.plannedTotal);
+          setSessionConsumedCardKeys(snapshot.members.filter(member=>member.consumedAt).map(member=>`${member.entryId}:${member.cardTypeId}`));
+          setSessionCompletedActions(snapshot.completedActions ?? 0);
+          setCurrentWord(null);
+          const result = await loadNextWord({trainingSessionId:sessionId});
+          return result === "loaded" || result === "session-complete";
+        },
+        commit: () => { reconciledSessionPlanRef.current={sessionId,revision:decision.revision}; },
+      };
+    },
+    onSuperseded: () => handleTrainingSessionSuperseded(),
+  });
+  const {checking:sessionAuthorityChecking,refreshing:sessionAuthorityRefreshing,
+    reset:resetSessionAuthority,validate:validateTrainingSessionAuthority} = sessionAuthority;
   const replaceTrainingSessionId = useCallback((sessionId: string | null) => {
-    sessionAuthorityGenerationRef.current += 1;
-    sessionAuthorityValidationRef.current += 1;
+    resetSessionAuthority(sessionId);
     trainingSessionIdRef.current = sessionId;
-    setSessionAuthorityChecking(false);
-    setSessionAuthorityRefreshing(false);
-    sessionAuthorityBlockedRef.current = false;
     setTrainingSessionId(sessionId);
-  }, []);
+  }, [resetSessionAuthority]);
   const platformProgressActionTokenRef = useRef<object | null>(null);
   const handlePlatformProgressActionPendingChange = useCallback(
     (pending: boolean, token: object) => {
@@ -328,8 +340,6 @@ function TrainingScreenContent({
     componentMountedRef.current = true;
     return () => {
       componentMountedRef.current = false;
-      sessionAuthorityGenerationRef.current += 1;
-      sessionAuthorityValidationRef.current += 1;
       trainingSessionIdRef.current = null;
     };
   }, []);
@@ -2134,15 +2144,7 @@ function TrainingScreenContent({
     trainingPilot.surface,
   ]);
   const handleTrainingSessionSuperseded = useCallback(
-    (expected?: { sessionId: string; authorityGeneration: number }) => {
-      if (
-        expected &&
-        (trainingSessionIdRef.current !== expected.sessionId ||
-          sessionAuthorityGenerationRef.current !==
-            expected.authorityGeneration)
-      ) {
-        return;
-      }
+    () => {
       releaseRunSelection();
       sessionResumeGenerationRef.current += 1;
       if (user?.id) void clearTrainingSessionResume(user.id);
@@ -2153,7 +2155,6 @@ function TrainingScreenContent({
       setSessionPlannedTotal(null);
       setSessionConsumedCardKeys([]);
       setSessionCompletedActions(0);
-      setSessionAuthorityChecking(false);
       resetPlatformProgressActionPending();
       setSessionReplacementWarning(true);
       returnToToday();
@@ -2167,94 +2168,6 @@ function TrainingScreenContent({
       user?.id,
     ],
   );
-  const validateTrainingSessionAuthority = useCallback(async () => {
-    const sessionId = trainingSessionIdRef.current;
-    if (!user?.id || !sessionId) return true;
-    const authorityGeneration = sessionAuthorityGenerationRef.current;
-    const validation = sessionAuthorityValidationRef.current + 1;
-    sessionAuthorityValidationRef.current = validation;
-    // Do not allow a visible card to accept a grade while the server checks
-    // whether another device deliberately replaced its queue.
-    setSessionAuthorityChecking(true);
-    setSessionAuthorityRefreshing(!sessionAuthorityBlockedRef.current);
-    try {
-      const snapshot = await fetchTrainingSessionSnapshot(
-        user.id,
-        sessionId,
-      );
-      if (
-        !componentMountedRef.current ||
-        sessionAuthorityValidationRef.current !== validation ||
-        sessionAuthorityGenerationRef.current !== authorityGeneration ||
-        trainingSessionIdRef.current !== sessionId
-      ) {
-        return false;
-      }
-      setSessionAuthorityRefreshing(false);
-      const authority = decideAuthoritySnapshot(
-        snapshot,
-        sessionId,
-        reconciledSessionPlanRef.current,
-      );
-      if (authority.kind === "superseded") {
-        handleTrainingSessionSuperseded({ sessionId, authorityGeneration });
-        return false;
-      }
-      if (!snapshot) return false;
-      const revision = authority.revision;
-      if (authority.kind === "replan") {
-        // The server replaced only the unconsumed plan. Keep accepted progress,
-        // discard prefetched selections, and ask the same owned run for its next member.
-        let pending = sessionReplanLoadRef.current;
-        if (!pending || pending.sessionId !== sessionId || pending.revision !== revision ||
-          pending.authorityGeneration !== authorityGeneration) {
-          resetFocusQueueState();
-          setLatchedSessionPlan(snapshot);
-          setSessionPlannedTotal(snapshot.plannedTotal);
-          setSessionConsumedCardKeys(snapshot.members.filter((member) => member.consumedAt)
-            .map((member) => `${member.entryId}:${member.cardTypeId}`));
-          setSessionCompletedActions(snapshot.completedActions ?? 0);
-          setCurrentWord(null);
-          pending = { sessionId, revision, authorityGeneration,
-            promise: loadNextWord({ trainingSessionId: sessionId })
-              .then((result) => result === "loaded" || result === "session-complete") };
-          sessionReplanLoadRef.current = pending;
-        }
-        let loaded: boolean;
-        try { loaded = await pending.promise; }
-        finally {
-          if (sessionReplanLoadRef.current === pending) sessionReplanLoadRef.current = null;
-        }
-        if (!loaded || !componentMountedRef.current || sessionAuthorityValidationRef.current !== validation ||
-          sessionAuthorityGenerationRef.current !== authorityGeneration ||
-          trainingSessionIdRef.current !== sessionId) return false;
-        reconciledSessionPlanRef.current = { sessionId, revision };
-      }
-      sessionAuthorityBlockedRef.current = false;
-      setSessionAuthorityChecking(false);
-      return true;
-    } catch {
-      // No offline grade queue in this slice. Keep the card non-actionable
-      // until a later focus/reconnect check reaches the server.
-      if (
-        componentMountedRef.current &&
-        sessionAuthorityValidationRef.current === validation &&
-        sessionAuthorityGenerationRef.current === authorityGeneration &&
-        trainingSessionIdRef.current === sessionId
-      ) {
-        sessionAuthorityBlockedRef.current = true;
-        setSessionAuthorityRefreshing(false);
-        setSessionAuthorityChecking(true);
-      }
-      return false;
-    }
-  }, [
-    componentMountedRef,
-    handleTrainingSessionSuperseded,
-    loadNextWord,
-    resetFocusQueueState,
-    user?.id,
-  ]);
   useUserEventHints(user?.id, ["training.changed"], async () => {
     if (trainingSessionIdRef.current) await validateTrainingSessionAuthority();
   });
@@ -2347,67 +2260,10 @@ function TrainingScreenContent({
     setExerciseFamilyForResume,
     setTrainingLoadError,
   ]);
-  useEffect(() => {
-    if (!trainingSessionId) {
-      setSessionAuthorityChecking(false);
-      return;
-    }
-    const onReturn = () => void validateTrainingSessionAuthority();
-    const onVisibilityChange = () => {
-      if (!document.hidden) onReturn();
-    };
-    window.addEventListener("focus", onReturn);
-    window.addEventListener("online", onReturn);
-    const onOffline = () => {
-      // Invalidate any in-flight positive authority result. Answers remain
-      // fenced until a later online validation succeeds.
-      sessionAuthorityValidationRef.current += 1;
-      sessionAuthorityBlockedRef.current = true;
-      setSessionAuthorityRefreshing(false);
-      setSessionAuthorityChecking(true);
-    };
-    window.addEventListener("offline", onOffline);
-    window.addEventListener("pageshow", onReturn);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    const unsubscribeInvalidation = subscribeTrainingSessionInvalidation(
-      user.id,
-      () => void validateTrainingSessionAuthority(),
-    );
-    const authorityGeneration = sessionAuthorityGenerationRef.current;
-    const unsubscribeOwnerInvalidation =
-      subscribeTrainingSessionOwnerInvalidation(() =>
-        handleTrainingSessionSuperseded({
-          sessionId: trainingSessionId,
-          authorityGeneration,
-        }),
-      );
-    return () => {
-      window.removeEventListener("focus", onReturn);
-      window.removeEventListener("online", onReturn);
-      window.removeEventListener("offline", onOffline);
-      window.removeEventListener("pageshow", onReturn);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      unsubscribeInvalidation();
-      unsubscribeOwnerInvalidation();
-    };
-  }, [
-    handleTrainingSessionSuperseded,
-    trainingSessionId,
-    user.id,
-    validateTrainingSessionAuthority,
-  ]);
-  useEffect(() => {
-    if (!trainingSessionId || destination !== "training") return;
-    const pollId = window.setInterval(() => {
-      if (document.hidden) return;
-      void validateTrainingSessionAuthority();
-    }, TRAINING_SESSION_AUTHORITY_POLL_MS);
-    return () => window.clearInterval(pollId);
-  }, [destination, trainingSessionId, validateTrainingSessionAuthority]);
-  useEffect(() => {
-    if (!trainingSessionId || !returnedToTraining) return;
-    void validateTrainingSessionAuthority();
-  }, [returnedToTraining, trainingSessionId, validateTrainingSessionAuthority]);
+  useTrainingSessionAuthorityEvents(sessionAuthority, {
+    userId:user.id, sessionId:trainingSessionId,
+    visible:destination === "training", returned:returnedToTraining,
+  });
   const exitUnsupportedTrainingMode = useCallback(() => {
     setCurrentWord(null);
     returnToToday();
