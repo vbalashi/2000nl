@@ -1,3 +1,4 @@
+import { runtimeEnv } from "../runtime/publicConfig";
 import { diagnosticPolicyFor } from "./serverPolicy";
 import { acceptsDiagnostic } from "./policy";
 import { readBoundedJson } from "../http/readBoundedJson";
@@ -11,7 +12,13 @@ import { diagnosticActor, writeDiagnostic } from "./server";
 const buckets = new Map<string, { at: number; count: number }>();
 export async function ingestTrainingDiagnostics(request: Request) {
   // Only the first-party same-origin browser is allowed to submit observations.
-  if (request.headers.get("origin") !== new URL(request.url).origin)
+  let expectedOrigin: string;
+  try {
+    // Next's request URL can contain its bind address behind a reverse proxy.
+    // Use the trusted application origin, never client-controlled forwarding headers.
+    expectedOrigin = new URL(runtimeEnv("SITE_URL") || runtimeEnv("NEXT_PUBLIC_SITE_URL") || request.url).origin;
+  } catch { return jsonNoStore({ error: "origin_denied" }, 403); }
+  if (request.headers.get("origin") !== expectedOrigin)
     return jsonNoStore({ error: "origin_denied" }, 403);
   const body = await readBoundedJson(request, 12_000);
   if ("error" in body)
