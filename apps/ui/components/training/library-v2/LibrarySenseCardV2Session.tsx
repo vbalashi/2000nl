@@ -1,4 +1,5 @@
 "use client";
+import { useCardLoadDiagnostics } from "@/lib/diagnostics/useCardLoadDiagnostics";
 import {useSelectedMembership} from '@/components/library/sharing/useSelectedMembership';
 import {clearPlatformNoteMaterial} from "@/lib/platform/noteMaterialPresentation";
 
@@ -176,6 +177,7 @@ function SenseCardV2Session({
     activeReferenceTarget?.targetHeadwordGroupId ?? null,
     activeReferenceTarget?.targetEntryId ?? null,
   ]);
+  useCardLoadDiagnostics(detailIdentity, loading ? "loading" : lookupError || !group ? "failed" : "ready");
   const detailIdentityRef = React.useRef(detailIdentity);
   const [noteAuthority,setNoteAuthority]=React.useState<{scope:string;group:PlatformHeadwordGroupV2}|null>(null);
   React.useEffect(()=>()=>audioController.current?.abort(),[detailIdentity]);

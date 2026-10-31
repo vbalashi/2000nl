@@ -1,3 +1,4 @@
+import { withTrainingDiagnostics } from "@/lib/diagnostics/server";
 import { NextRequest } from "next/server";
 import {
   appendPlatformRouteHeaders,
@@ -32,7 +33,7 @@ export function OPTIONS(request: NextRequest) {
   return platformCorsPreflight(request);
 }
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   const instrumentation = createPlatformRouteInstrumentation(request);
   const reply = (payload: unknown, status = 200) =>
     withPlatformCors(request, jsonNoStore(payload, status));
@@ -138,3 +139,5 @@ async function readJson(request: NextRequest): Promise<unknown> {
     return null;
   }
 }
+
+export const POST = withTrainingDiagnostics("/api/platform/v2/actions/reconcile", handlePOST);

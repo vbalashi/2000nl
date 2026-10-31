@@ -304,7 +304,7 @@ describe("/api/platform/lookup", () => {
       "http://localhost:54321",
       "anon-key",
       expect.objectContaining({
-        global: { headers: { Authorization: "Bearer token-1" } },
+        global: expect.objectContaining({ headers: { Authorization: "Bearer token-1" } }),
       }),
     );
     expect(rpc).toHaveBeenCalledWith("lookup_dictionary_entries_v3", {

@@ -1,3 +1,4 @@
+import { withTrainingDiagnostics } from "@/lib/diagnostics/server";
 import { NextRequest } from "next/server";
 import { readBoundedJson } from "@/lib/http/readBoundedJson";
 import {
@@ -12,7 +13,7 @@ import type { CardTypeId } from "../../../../../../../../packages/shared/types/p
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   const auth = await getAuthenticatedSupabase(request);
   if (auth instanceof Response) return auth;
   if (auth.principal.authKind !== "first_party")
@@ -96,3 +97,5 @@ export async function POST(request: NextRequest) {
   );
   return jsonNoStore(result.payload, result.status);
 }
+
+export const POST = withTrainingDiagnostics("/api/platform/v2/training/current-card", handlePOST);

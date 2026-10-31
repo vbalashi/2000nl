@@ -358,9 +358,7 @@ describe("performPlatformV2TrainingAction", () => {
       "/api/platform/v2/actions",
       "/api/platform/v2/actions/reconcile",
     ]);
-    expect(fetchMock.mock.calls[0]?.[1]?.headers).toEqual(
-      expect.objectContaining({ "x-platform-action-attempt": "1" }),
-    );
+    expect(new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get("x-platform-action-attempt")).toBe("1");
     expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual(
       expect.objectContaining({ clientEventId: eventId }),
     );

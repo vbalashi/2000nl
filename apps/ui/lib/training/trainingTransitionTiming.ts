@@ -1,3 +1,4 @@
+import { observeTrainingTiming } from "../diagnostics/client";
 export type TrainingTransitionStage =
   | "auth.session"
   | "training.interface-language"
@@ -187,6 +188,7 @@ export function recordTrainingTransitionTiming(
     ...(requestId ? { requestId } : {}),
     ...(serverTiming ? { serverTiming } : {}),
   };
+  try { observeTrainingTiming(event); } catch { /* Non-critical diagnostics. */ }
   if (process.env.NODE_ENV !== "test") {
     console.info("[platform.training.transition]", event);
   }

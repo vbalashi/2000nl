@@ -1,3 +1,4 @@
+import { withTrainingDiagnostics } from "@/lib/diagnostics/server";
 import { NextRequest } from "next/server";
 import {
   getAuthenticatedSupabase,
@@ -15,7 +16,7 @@ export const revalidate = 0;
 export function OPTIONS(request: NextRequest) {
   return platformCorsPreflight(request);
 }
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   const reply = (value: unknown, status = 200) =>
     withPlatformCors(request, jsonNoStore(value, status));
   const auth = await getAuthenticatedSupabase(request);
@@ -69,3 +70,5 @@ export async function POST(request: NextRequest) {
   }
   return reply(data);
 }
+
+export const POST = withTrainingDiagnostics("/api/platform/v2/training/exclusions", handlePOST);
