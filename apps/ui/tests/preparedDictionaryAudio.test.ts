@@ -1,0 +1,14 @@
+import {afterEach,expect,it} from 'vitest';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {resolvePreparedDictionaryAudio} from '../lib/audio/preparedDictionaryAudio';
+const roots:string[]=[];const previous=process.env.PREPARED_DICTIONARY_AUDIO_ROOT;
+afterEach(async()=>{if(previous===undefined)delete process.env.PREPARED_DICTIONARY_AUDIO_ROOT;else process.env.PREPARED_DICTIONARY_AUDIO_ROOT=previous;await Promise.all(roots.splice(0).map(r=>fs.rm(r,{recursive:true,force:true})));});
+const hash=(v:string|Buffer)=>crypto.createHash('sha256').update(v).digest('hex');
+async function fixture(){const root=await fs.mkdtemp(path.join(os.tmpdir(),'prepared-audio-'));roots.push(root);process.env.PREPARED_DICTIONARY_AUDIO_ROOT=root;const audio=Buffer.from('test-mp3');await fs.writeFile(path.join(root,'asset.mp3'),audio);const manifest={schema:'prepared-dictionary-audio-v1',dictionarySlug:'synthetic',bindings:{native:{textSha256:hash('huis'),assetPath:'asset.mp3',sha256:hash(audio)}}};await fs.writeFile(path.join(root,'manifest.json'),JSON.stringify(manifest));return {root,audio,manifest,entry:{id:'fixture',headword:'huis',dictionary_slug:'synthetic',raw:{_source:{source_entry_key:'native'}}}};}
+it('resolves native binding and never matches another dictionary by headword',async()=>{const f=await fixture();expect((await resolvePreparedDictionaryAudio(f.entry,'huis'))?.audio).toEqual(f.audio);expect(await resolvePreparedDictionaryAudio({...f.entry,dictionary_slug:'other'},'huis')).toBeNull();});
+it('rejects stale text and absent native source binding',async()=>{const f=await fixture();await expect(resolvePreparedDictionaryAudio(f.entry,'huizen')).rejects.toThrow('stale');await expect(resolvePreparedDictionaryAudio({...f.entry,raw:{}},'huis')).rejects.toThrow('missing');});
+it('rejects corrupt and missing assets',async()=>{const f=await fixture();await fs.writeFile(path.join(f.root,'asset.mp3'),'corrupt');await expect(resolvePreparedDictionaryAudio(f.entry,'huis')).rejects.toThrow('corrupt');await fs.unlink(path.join(f.root,'asset.mp3'));await expect(resolvePreparedDictionaryAudio(f.entry,'huis')).rejects.toThrow();});
+it('rejects a symlink escaping the configured root',async()=>{const f=await fixture();const outside=await fs.mkdtemp(path.join(os.tmpdir(),'outside-audio-'));roots.push(outside);await fs.writeFile(path.join(outside,'asset.mp3'),f.audio);await fs.unlink(path.join(f.root,'asset.mp3'));await fs.symlink(path.join(outside,'asset.mp3'),path.join(f.root,'asset.mp3'));await expect(resolvePreparedDictionaryAudio(f.entry,'huis')).rejects.toThrow('invalid_audio_path');});

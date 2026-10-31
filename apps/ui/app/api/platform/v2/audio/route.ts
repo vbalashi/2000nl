@@ -4,6 +4,7 @@ import {getAuthenticatedSupabase,jsonNoStore,requirePlatformScope} from "@/lib/p
 import {parseCurrentTrainingCardRead} from "@/lib/platform/currentTrainingCardRequest";
 import {readEntryAudioSource} from "@/lib/audio/entryAudioSource";
 import {contentFingerprint,normalizeDictionaryContent} from "@/lib/platform/projections/dictionaryContent";
+import {resolvePreparedDictionaryAudio} from "@/lib/audio/preparedDictionaryAudio";
 import {resolvePrivateEntryTtsAudio} from "@/lib/audio/ttsCache";
 
 export const runtime="nodejs";
@@ -39,7 +40,8 @@ export async function POST(request:NextRequest) {
   if(!source||(body.sourceVersion!==undefined&&String(source.entry.content_version)!==String(body.sourceVersion)))return denied;
   const entry=source.entry;
   try {
-    const result=await resolvePrivateEntryTtsAudio(source.text,()=>{
+    const prepared=body.node?null:await resolvePreparedDictionaryAudio(entry,source.text);
+    const result=prepared??await resolvePrivateEntryTtsAudio(source.text,()=>{
       if(!consumeAudioRateLimit(auth.user.id).allowed)throw new Error("audio_rate_limited");
     });
     const latest=await read();
