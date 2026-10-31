@@ -1,0 +1,43 @@
+.root{height:100dvh;display:flex;flex-direction:column;background:var(--practice-canvas);color:var(--practice-text);font-family:var(--practice-font-ui)}
+.root>[data-app-frame]{flex:1;min-height:0;height:auto}
+.previewBar{min-height:32px;flex:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 24px;background:var(--practice-surface-subtle);color:var(--practice-text-muted);font-size:12px}
+.previewBar button{display:flex;align-items:center;gap:6px;border:0;background:none;color:inherit;cursor:pointer;font:inherit}
+.previewActions{display:flex;gap:18px;align-items:center}
+.libraryHost{max-width:920px}.libraryHost>h1{font-size:24px;margin:0 0 12px}.libraryTab{padding:0 0 10px;margin-bottom:14px;border-bottom:1px solid var(--practice-border);font-size:13px}
+.searchBox{position:relative}.searchBox>svg{position:absolute;left:14px;top:13px;color:var(--practice-text-muted)}
+.meaningHost{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--practice-surface);border-radius:18px;border:1px solid var(--practice-border);overflow:hidden}
+.builderHost{display:flex;flex:1;min-height:0;flex-direction:column}
+.root :global(#preview-collections dialog),.root :global(#preview-builder dialog){overflow:visible}
+.root[data-preview-stage="collection-name"] :global(#preview-collections form),.root[data-preview-stage="collection-done"] :global(#preview-collections footer button),.root[data-preview-stage="training-name"] :global(#preview-builder dialog label){outline:4px solid var(--practice-selected);outline-offset:5px;border-radius:10px}
+.root :global(#preview-collections dialog [id^=react-joyride]),.root :global(#preview-builder dialog [id^=react-joyride]){font-family:var(--practice-font-ui)}
+.overview{flex:1;min-height:0;padding:40px 32px 24px;display:flex;flex-direction:column;--practice-training-name-size:38px;--practice-training-name-weight:400;--practice-training-name-spacing:-.5px;--practice-training-name-line:1.15}
+.session{width:100%;max-width:800px;align-self:center;flex:1;min-height:0;display:flex;flex-direction:column;padding:24px 20px 12px}
+.sessionHeader{display:flex;align-items:center;gap:18px;margin-bottom:22px;font-size:14px}.sessionHeader>span:first-child{margin-right:auto}.sessionHeader button{border:0;background:none;color:inherit;cursor:pointer;padding:6px}
+.card{flex:1;min-height:0;display:flex;flex-direction:column}
+.notice{max-width:760px;align-self:center;font-size:13px;line-height:1.5;padding:8px 20px 16px;margin:0;color:var(--practice-text-secondary)}
+.tooltip{width:min(340px,calc(100vw - 32px));padding:19px 21px 17px;background:#fff;border:1px solid #e2dce9;border-radius:16px;color:#303446;font:14px/1.55 var(--font-sense-sans),system-ui,sans-serif;box-shadow:0 12px 40px #1b102b24}
+.tooltipTop{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:9px}.tooltipTop>span{font-size:10px;letter-spacing:1.2px;color:#82768f;font-weight:500}.tooltipTop button{display:grid;place-items:center;border:0;background:transparent;color:#82768f;cursor:pointer;width:28px;height:28px;margin:-7px -9px -5px 0}
+.tooltip h2{font-size:19px;line-height:1.3;font-weight:600;margin:0 0 10px;letter-spacing:-.3px}.copy strong{font-weight:600}.instruction{margin:13px 0 0;padding-top:11px;border-top:1px solid #eee9f3;font-size:12px;color:#76628e}
+.tooltip button:focus-visible,.previewBar button:focus-visible{outline:2px solid #7753b0;outline-offset:3px}
+.languages{width:100%;max-width:760px;margin:0 auto;padding:32px 24px;overflow:auto;min-height:0;flex:1}
+.languages>h1{font-size:24px;font-weight:500;margin:0 0 26px}
+.languageTarget{border-radius:12px;background:var(--practice-canvas);padding:0 12px}
+.languageRow{gap:20px;min-height:94px}.languageRow>div:first-child{flex:1}.languageRow>div:last-child{display:flex;flex-direction:column;align-items:stretch;gap:10px;max-width:260px;flex:0 1 250px}
+.languageRow select{min-height:40px;width:100%}
+.confirm{border:1px solid var(--practice-accent);background:var(--practice-accent);color:var(--practice-on-accent);border-radius:10px;min-height:40px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer;line-height:1.35}
+.confirm:focus-visible,.languages select:focus-visible{outline:2px solid var(--practice-focus);outline-offset:3px}
+.later{color:var(--practice-text-muted);font-size:12px;line-height:1.5}.localOnly{color:var(--practice-text-muted);font-size:12px;line-height:1.5}.secondaryMention{margin:12px 0 0;padding-top:11px;border-top:1px solid #eee9f3;font-size:13px;color:#6c6079}.error{color:var(--practice-danger);font-size:13px;margin:0 0 8px}
+@media(max-width:650px){.previewBar{padding:5px 12px;font-size:10px}.previewBar button{max-width:96px}.overview{padding:22px 16px 16px;--practice-training-name-size:32px}.session{padding:16px 16px 12px}.sessionHeader{margin-bottom:16px}.tooltip{padding:15px 17px}.tooltip h2{font-size:18px}.notice{font-size:12px}}
+@media(max-width:650px){.languages{padding:20px 16px}.languages>h1{font-size:21px;margin-bottom:16px}.languageTarget{padding:0 6px}.languageRow{gap:10px;align-items:flex-start;flex-direction:column;padding:12px 0}.languageRow>div:last-child{flex:auto;width:100%;max-width:none}.languageRow h3{font-size:13px}.languageRow p{font-size:11px}.confirm{min-height:42px}.secondaryMention{font-size:12px}.tooltip .instruction{font-size:11px}}
+@media(max-width:650px){.previewActions{gap:8px}.previewActions>button:last-child{max-width:90px}.libraryHost{padding:16px 14px 12px}.libraryHost>h1{font-size:21px}}
+.tooltip>.confirm{margin-top:12px;margin-right:8px;background:#71608d;color:#fff;border-color:#71608d}
+.root :global(#preview-details dialog){overflow:visible}
+
+
+/* Keep the development badge from covering the card's Report control. */
+:global(body):has(.root) :global(nextjs-portal){display:none}
+
+.hubActions{display:flex;gap:10px;flex-wrap:wrap}.topicList{display:grid;gap:10px;margin:16px 0}.topicList button{text-align:left;display:grid;gap:4px}.topicList span{font-size:12px;color:var(--practice-text-secondary)}.pauseButton{font-size:11px!important;white-space:nowrap;width:auto!important}.resumeBanner{flex:none;padding:8px 16px;background:var(--practice-surface-subtle);font-size:12px;display:flex;gap:12px;align-items:center}.resumeBanner button{border:0;background:none;text-decoration:underline;cursor:pointer}.introHint{font-size:12px;color:#76628e;margin:12px 0}
+.settingsDestination{flex:1;min-height:0;height:100%;overflow:hidden}
+.topicList button{border:1px solid var(--practice-border);border-radius:10px;padding:12px;background:var(--practice-surface);color:inherit;cursor:pointer}
+.root :global(#preview-progress dialog),.root :global(#preview-sharing-dialog dialog){overflow:visible}

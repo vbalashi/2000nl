@@ -1,4 +1,5 @@
 "use client";
+import {useOnboardingQueryLocked} from "@/components/onboarding/Onboarding";
 import { dictionarySourceProfile } from "@/lib/dictionary/sourceProfile";
 import { useLibraryMaterialSelection } from "@/components/practice/material/useLibraryMaterialSelection";
 import {
@@ -177,6 +178,7 @@ export function DictionarySearchTab({
   const [dictionarySources, setDictionarySources] = useState<
     AvailableDictionarySource[]
   >([]);
+  const onboardingQueryLocked=useOnboardingQueryLocked();
   const queryRef = useRef<HTMLInputElement | null>(null);
   const latestDetailRequestRef = useRef(0);
   const pageSize = LIBRARY_PAGE_SIZE;
@@ -437,13 +439,13 @@ export function DictionarySearchTab({
   ]);
 
   useEffect(() => {
-    if (!autoFocusQuery) return;
+    if (!autoFocusQuery || onboardingQueryLocked) return;
     const raf = window.requestAnimationFrame(() => {
       queryRef.current?.focus();
       queryRef.current?.select();
     });
     return () => window.cancelAnimationFrame(raf);
-  }, [autoFocusQuery]);
+  }, [autoFocusQuery,onboardingQueryLocked]);
 
   const resetLookup = () => {
     updateSearchState(createDictionarySearchTabState());
@@ -539,6 +541,7 @@ export function DictionarySearchTab({
             ref={queryRef}
             autoComplete="off"
             name="library-query"
+            readOnly={onboardingQueryLocked}
             value={query}
             onChange={(event) => {
               updateSearchState({
@@ -565,7 +568,7 @@ export function DictionarySearchTab({
                   groupHasMore: false,
                 });
               }}
-              className={workspace.clearSearch}
+              disabled={onboardingQueryLocked} className={workspace.clearSearch}
             >
               <span className="sr-only">{copy.clearSearch}</span>x
             </button>

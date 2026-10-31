@@ -32,11 +32,21 @@ export function AdmissionPanel() {
     setBusy(true); setError(""); setMessage("");
     try {
       const response = await fetch("/api/admin/admission", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, emails, mode }) });
-      if (!response.ok) throw new Error("Не удалось сохранить решение");
+      if (!response.ok) {
+        const detail = await response.json().catch(() => null) as { error?: string } | null;
+        if (detail?.error === "forbidden_origin") {
+          setError("Сохранение отклонено: адрес админки не совпадает с настройкой сервера. Обратитесь к администратору."); return;
+        }
+        if (response.status === 401 || response.status === 403) {
+          setError("Сохранение отклонено. Проверьте вход в админку и права управления допуском."); return;
+        }
+        throw new Error("Не удалось сохранить решение");
+      }
       const result = await response.json() as { results?: { outcome: string }[] };
       const results = result.results ?? [];
       setMessage(action === "mode" ? "Режим сохранён. Ранее выданный доступ сохраняется." : `Изменено: ${results.filter(r => r.outcome === "changed").length}; без изменений: ${results.filter(r => r.outcome === "unchanged").length}; не найдено: ${results.filter(r => r.outcome === "not_found").length}.`);
-      setEmail(""); await reload();
+      setEmail("");
+      await reload().catch(() => setError("Решение сохранено, но список не обновился. Нажмите «Обновить заявки»."));
     } catch { setError("Не удалось подтвердить результат. Обновите список перед повтором."); }
     finally { setBusy(false); }
   }

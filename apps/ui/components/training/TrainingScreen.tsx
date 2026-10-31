@@ -25,7 +25,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 const ACCEPTED_STATS_REFRESH_DELAY_MS = 1_500;
 const ACCEPTED_STATS_REFRESH_MIN_INTERVAL_MS = 10_000;
 import type { User } from "@supabase/supabase-js";
-import { Joyride, Step } from "react-joyride";
+import {OnboardingProvider,OnboardingSettings} from "@/components/onboarding/Onboarding";
+import {tourCopy,tourFlows,type TourTopic} from "@/lib/onboarding/model";
 import { supabase } from "@/lib/supabaseClient";
 import { trainingDebug } from "@/lib/trainingDebug";
 import {
@@ -104,7 +105,6 @@ import { TrainingMoreSenseCardV2Session } from "./library-v2/LibrarySenseCardV2S
 import type { FooterStatsProps } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { areTrainingHotkeysSuspended } from "./trainingHotkeys";
-import { LanguageSelectionModal } from "./LanguageSelectionModal";
 import { AppFrame } from "@/components/navigation/AppFrame";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
 import { AppReleaseContext } from "@/components/releases/AppReleaseContext";
@@ -140,7 +140,6 @@ import {
   type AppDestination,
 } from "@/components/navigation/appDestination";
 import {
-  getOnboardingTranslation,
   type OnboardingLanguage,
 } from "@/lib/onboardingI18n";
 import {
@@ -175,27 +174,6 @@ const DEFAULT_TRAINING_FOCUS_FILTER: TrainingFocusFilter = {
 
 const fallbackLanguageLabel = (code: string) =>
   code ? code.toUpperCase() : "Onbekend";
-
-const STEP_TARGETS: Array<{
-  target: string;
-  placement: "center" | "bottom" | "top" | "right" | "left";
-}> = [
-  { target: "body", placement: "center" },
-  { target: "[data-tour='training-card']", placement: "bottom" },
-  { target: "[data-tour='rating-buttons']", placement: "top" },
-  { target: "[data-tour='card-toolbar']", placement: "right" },
-  { target: "[data-tour='settings-button']", placement: "left" },
-];
-
-function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
-  const t = getOnboardingTranslation(lang);
-  return STEP_TARGETS.map((config, i) => ({
-    target: config.target,
-    placement: config.placement,
-    title: t.onboarding.steps[i].title,
-    content: t.onboarding.steps[i].content,
-  }));
-}
 
 export function TrainingScreen(props: Props) {
   return (
@@ -482,6 +460,9 @@ function TrainingScreenContent({
   } | null>(null);
   const [detailInitialGroup, setDetailInitialGroup] =
     useState<PlatformHeadwordGroupV2 | null>(null);
+  const [onboardingNavigation,setOnboardingNavigation]=useState(0);
+  const [onboardingSection,setOnboardingSection]=useState<"onboarding"|"languages"|"appearance"|undefined>();
+  const [onboardingSearch,setOnboardingSearch]=useState<{key:string;query:string}|null>(null);
   const [historyMeaningIntent,setHistoryMeaningIntent]=React.useState<import('@/components/navigation/LibraryDestination').LibraryMeaningIntent|null>(null);
   const [statisticsMaterialIntent, setStatisticsMaterialIntent] =
     useState<TrainingMaterialIntent | null>(null);
@@ -509,11 +490,8 @@ function TrainingScreenContent({
   const { playAudio } = useTrainingAudio();
 
   const {
-    handleJoyrideCallback,
-    handleLanguageSelect,
-    isDarkMode,
+    completeOnboarding,
     onboardingLang,
-    runTour,
     saveOnboardingLanguageChoice,
     showLanguageSelection,
   } = useTrainingOnboarding({
@@ -2542,7 +2520,21 @@ function TrainingScreenContent({
         : null;
   const appRelease = useAppRelease(user.id, navigationBlocked || (hasResumableSession && v2SessionLayoutVisible) || trainingPilot.status === "preparing");
   const studyTimeEnabled = destination === "training" && !detailsOpen && !showHotkeys && !showLanguageSelection && !navigationBlocked && !loadingWord && !sessionAuthorityChecking;
+  const prepareOnboarding = (topic:TourTopic,step:number) => {
+    const id=tourFlows[topic][step]?.id;
+    if(topic==='languages'||topic==='core'&&step<2){setOnboardingNavigation(value=>value+1);setOnboardingSection('languages');onRequestDestination('settings');return;}
+    if(topic==='appearance'&&step===0){setOnboardingNavigation(value=>value+1);setOnboardingSection('appearance');onRequestDestination('settings');return;}
+    const inLibrary=(['collections','stats','sharing','incoming'].includes(topic)&&step>0&&!(topic==='collections'&&['training','create','source','source-pick','exercises','directions','save','name','done'].includes(id)));
+    if(inLibrary) onRequestDestination('library');
+    else onRequestDestination('training');
+    if(step===0 && !['languages','appearance'].includes(topic)) {setOpenTrainingEditor(false);trainingPilot.returnToToday();}
+    if(['collections','stats'].includes(topic)&&step===0)setOnboardingSearch({key:crypto.randomUUID(),query:currentWord?.headword??(currentTrainingLanguage==='nl'?'bank':'')});
+  };
+  const pauseOnboarding=()=>{setOnboardingNavigation(value=>value+1);setOnboardingSection('onboarding');onRequestDestination('settings');};
   return (
+    <OnboardingProvider key={user.id} userId={user.id} language={onboardingLang}
+      autoStart={!initialPreferences.preferences.onboardingCompleted && (!trainingTodaySetupEnabled || homeStartupSettled) && sessionResumeResolved && !invitationCode && !hasResumableSession && !navigationBlocked}
+      port={{prepare:prepareOnboarding,pause:pauseOnboarding,completeCore:()=>{void completeOnboarding();},enter:(topic,step)=>{if(topic==='appearance'&&step===1){setOpenTrainingEditor(false);trainingPilot.returnToToday();onRequestDestination('training');}}}}>
     <CollectionSelectionContext.Provider value={{userId:user.id,languageCode:currentTrainingLanguage,onTrainingResolved:(ids,rows)=>rememberTrainingReferences(ids,rows.map(row=>({id:row.id,name:row.name,type:'user',ownership:row.ownership,item_count:row.availableItemCount,available_item_count:row.availableItemCount})))}}>
     <CardTranslationLanguagesProvider ownerId={user.id} primary={translationLang} secondary={secondaryTranslationLang}>
     <TrainingStartupGate
@@ -2806,53 +2798,6 @@ function TrainingScreenContent({
             </div>
           ) : null}
         </TrainingDetailsDrawer>
-
-        {/* Language Selection Modal */}
-        <LanguageSelectionModal
-          open={showLanguageSelection}
-          onSelectLanguage={handleLanguageSelect}
-        />
-
-        {/* Onboarding Tour */}
-        <Joyride
-          steps={buildJoyrideSteps(onboardingLang)}
-          run={runTour}
-          continuous
-          onEvent={handleJoyrideCallback}
-          locale={getOnboardingTranslation(onboardingLang).onboarding.buttons}
-          options={{
-            showProgress: true,
-            buttons: ["back", "close", "primary", "skip"],
-            primaryColor: "#3b82f6",
-            zIndex: 10000,
-            backgroundColor: isDarkMode ? "#1e293b" : "#ffffff",
-            textColor: isDarkMode ? "#e2e8f0" : "#1f2937",
-            arrowColor: isDarkMode ? "#1e293b" : "#ffffff",
-          }}
-          styles={{
-            tooltip: {
-              backgroundColor: isDarkMode ? "#1e293b" : "#ffffff",
-              color: isDarkMode ? "#e2e8f0" : "#1f2937",
-              borderRadius: 8,
-            },
-            tooltipTitle: {
-              color: isDarkMode ? "#f1f5f9" : "#111827",
-            },
-            tooltipContent: {
-              color: isDarkMode ? "#e2e8f0" : "#374151",
-            },
-            buttonPrimary: {
-              backgroundColor: "#3b82f6",
-              color: "#ffffff",
-            },
-            buttonBack: {
-              color: isDarkMode ? "#94a3b8" : "#6b7280",
-            },
-            buttonSkip: {
-              color: isDarkMode ? "#94a3b8" : "#6b7280",
-            },
-          }}
-        />
       </div>
       {showHotkeys && (
         <HotkeyDialog
@@ -2863,6 +2808,7 @@ function TrainingScreenContent({
       <LibraryDestination
         invitationCode={invitationCode}
         onInvitationConsumed={onInvitationConsumed}
+        onboardingSearch={onboardingSearch}
         meaningIntent={historyMeaningIntent}
         open={visibleDestination === "library"}
         userId={user.id}
@@ -2904,7 +2850,9 @@ function TrainingScreenContent({
           onReturnFromHistory ?? (() => onRequestDestination("training"))
         }
       />
-      <SettingsDestination
+      <SettingsDestination key={`settings-tour-${onboardingNavigation}`}
+        initialSection={onboardingSection}
+        onboarding={{title:tourCopy[onboardingLang].tourName,content:<OnboardingSettings collections={process.env.NEXT_PUBLIC_COLLECTION_ORGANIZATION_ENABLED==='true'} sharing={process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED==='true'}/>}}
         onExit={() => onRequestDestination("training")}
         open={destination === "settings"}
         interfaceLanguage={onboardingLang}
@@ -2923,5 +2871,6 @@ function TrainingScreenContent({
     </TrainingStartupGate>
     </CardTranslationLanguagesProvider>
     </CollectionSelectionContext.Provider>
+    </OnboardingProvider>
   );
 }

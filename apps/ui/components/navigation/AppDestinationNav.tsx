@@ -102,6 +102,7 @@ export function AppDestinationNav({
       {destinations.map((destination) => (
         <button
           key={destination}
+          data-onboarding={`nav-${destination}`}
           type="button"
           disabled={disabled}
           aria-current={active === destination ? "page" : undefined}

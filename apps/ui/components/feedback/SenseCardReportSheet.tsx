@@ -48,7 +48,7 @@ export function SenseCardReportAction({
   return (
     <>
       <button
-        ref={triggerRef}
+        data-onboarding="report" ref={triggerRef}
         type="button"
         disabled={disabled}
         onClick={() => {
@@ -70,6 +70,7 @@ export function SenseCardReportAction({
 }
 
 export function SenseCardReportSheet({
+  deliveryEnabled = true,
   snapshot,
   interfaceLanguage,
   onClose,
@@ -77,6 +78,7 @@ export function SenseCardReportSheet({
   snapshot: SenseCardDiagnosticSnapshot;
   interfaceLanguage: OnboardingLanguage;
   onClose: () => void;
+  deliveryEnabled?: boolean;
 }) {
   const [kind, setKind] = React.useState<FeedbackKind | null>(null);
   const [comment, setComment] = React.useState("");
@@ -104,7 +106,7 @@ export function SenseCardReportSheet({
   }, [terminal]);
 
   const submit = async () => {
-    if (!kind || delivery === "sending") return;
+    if (!deliveryEnabled || !kind || delivery === "sending") return;
     setDelivery("sending");
     try {
       preparedReportRef.current ??= buildSenseCardDiagnosticReport({
@@ -121,7 +123,7 @@ export function SenseCardReportSheet({
 
   const content = (
       <div
-        ref={dialogRef}
+        data-onboarding="report-sheet" ref={dialogRef}
         onKeyDown={(event) => {
           if (terminal && event.key === "Tab") {
             event.preventDefault();
@@ -210,7 +212,7 @@ export function SenseCardReportSheet({
 
         <div data-dialog-part="footer" className="grid grid-cols-3 gap-2 px-5 pb-4 pt-1">
           <button
-            ref={closeButtonRef}
+            data-onboarding="report-close" ref={closeButtonRef}
             type="button"
             disabled={delivery === "sending"}
             onClick={dismiss}
@@ -220,7 +222,7 @@ export function SenseCardReportSheet({
           </button>
           <button
             type="button"
-            disabled={terminal || delivery === "sending" || !kind}
+            disabled={!deliveryEnabled || terminal || delivery === "sending" || !kind}
             onClick={() => void submit()}
             className="col-span-2 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-300 disabled:cursor-not-allowed disabled:opacity-45 dark:bg-indigo-500 dark:hover:bg-indigo-400"
           >

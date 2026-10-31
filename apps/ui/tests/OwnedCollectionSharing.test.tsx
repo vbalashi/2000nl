@@ -1,5 +1,5 @@
 import React from 'react';
-import {fireEvent,render,screen} from '@testing-library/react';
+import {fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {renderToString} from 'react-dom/server';
 import {beforeEach,expect,test,vi} from 'vitest';
 const mock=vi.hoisted(()=>({hook:vi.fn(),run:vi.fn(),refresh:vi.fn()}));
@@ -23,4 +23,15 @@ test('rotation and closing require their own explicit confirmation, with distinc
 });
 test('uncertainty shows no stale code, permits read-only check and local dismissal',()=>{
  mock.hook.mockReturnValue({state:{status:'uncertain',data:null},run:mock.run});render(<OwnedCollectionSharing {...props}/>);expect(screen.queryByRole('textbox')).not.toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:'Check result'}));expect(mock.run).toHaveBeenCalledWith('check');fireEvent.click(screen.getByRole('button',{name:'Close'}));expect(props.onClose).toHaveBeenCalledOnce();
+});
+
+test('guided copy advances only after the clipboard write succeeds',async()=>{
+ const onCopied=vi.fn(),writeText=vi.fn().mockResolvedValue(undefined);
+ Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText}});
+ render(<OwnedCollectionSharing {...props} onCopied={onCopied}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Copy link'}));
+ await waitFor(()=>expect(onCopied).toHaveBeenCalledWith('link'));
+ onCopied.mockClear();writeText.mockRejectedValue(new Error('denied'));
+ fireEvent.click(screen.getByRole('button',{name:'Copy code'}));
+ await screen.findByText(/Could not copy/);expect(onCopied).not.toHaveBeenCalled();
 });

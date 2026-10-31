@@ -21,7 +21,11 @@ export function SettingsLayout<Key extends string>({
   onExit,
   children,
   className = "",
+  initialSection,
+  onSectionChange,
 }: {
+  initialSection?: Key;
+  onSectionChange?: (section: Key) => void;
   active: boolean;
   language: OnboardingLanguage;
   items: SettingsItem<Key>[];
@@ -30,9 +34,10 @@ export function SettingsLayout<Key extends string>({
   children: (section: Key, visible: boolean) => React.ReactNode;
 }) {
   const copy = getUiMessages(language).settings;
-  const [section, setSection] = useState<Key>(items[0].id),
-    [mobileDetail, setMobileDetail] = useState(false);
+  const [section, setSection] = useState<Key>(initialSection ?? items[0].id),
+    [mobileDetail, setMobileDetail] = useState(Boolean(initialSection));
   const [phone, setPhone] = useState(false);
+  useEffect(() => { if (initialSection) setSection(initialSection); }, [initialSection]);
   useEffect(() => {
     const query = window.matchMedia?.("(max-width: 700px)");
     if (!query) return;
@@ -45,10 +50,11 @@ export function SettingsLayout<Key extends string>({
     heading = useRef<HTMLHeadingElement>(null),
     mobileButtons = useRef(new Map<Key, HTMLButtonElement>());
   useEffect(() => {
-    if (active) setMobileDetail(false);
-  }, [active]);
+    if (active) setMobileDetail(Boolean(initialSection));
+  }, [active, initialSection]);
   const navigate = (id: Key, mobile: boolean) => {
     setSection(id);
+    onSectionChange?.(id);
     setMobileDetail(mobile);
     scroll.current?.scrollTo?.({ top: 0 });
     if (mobile) requestAnimationFrame(() => heading.current?.focus());

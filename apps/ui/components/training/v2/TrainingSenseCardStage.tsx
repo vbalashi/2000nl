@@ -536,7 +536,7 @@ function AnswerDock({
     <div className={approvedCard.dock}>
       {model.learnCapability ? (
         <button
-          ref={primaryActionRef}
+          data-onboarding="learn" ref={primaryActionRef}
           type="button"
           disabled={busy}
           onClick={() => onAction(model.learnCapability!)}
@@ -597,7 +597,7 @@ function MarkKnownAction({
     <button
       type="button"
       disabled={busy}
-      onClick={() => onAction(capability)}
+      data-onboarding="known" onClick={() => onAction(capability)}
       className={senseCardQuietAction()}
     >
       <Check aria-hidden="true" className="h-4 w-4" /> {label}

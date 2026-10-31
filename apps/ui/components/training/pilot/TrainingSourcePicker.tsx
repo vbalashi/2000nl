@@ -67,7 +67,7 @@ export function TrainingSourcePicker({
   useLayoutEffect(()=>{const el=listRef.current;if(!el)return;const observer=new ResizeObserver(updateEdges);observer.observe(el);updateEdges();return()=>observer.disconnect();},[query,kind,search,entryKey]);
   const scrollLabel=locale==="ru"?["Предыдущие источники","Следующие источники"]:locale==="nl"?["Vorige bronnen","Meer bronnen"]:["Previous sources","More sources"];
   return (
-    <div className={s.source}>
+    <div data-onboarding="source-picker" className={s.source}>
       <div className={s.source_toolbar}>
         {large && (
           <button
@@ -121,6 +121,7 @@ export function TrainingSourcePicker({
             <button
               disabled={disabled||Boolean('disabled'in x&&x.disabled)}
               type="button"
+              data-onboarding="source-option" data-source-value={x.value}
               key={x.kind + ":" + x.value}
               aria-label={x.label}
               aria-pressed={Boolean(active)}
