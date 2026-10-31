@@ -10,7 +10,9 @@ export async function resolvePreparedDictionaryAudio(entry:DictionaryLookupPaylo
   const realRoot=await fs.realpath(root);
   const manifest=JSON.parse(await fs.readFile(path.join(realRoot,"manifest.json"),"utf8"));
   if(manifest.schema!=="prepared-dictionary-audio-v1"||typeof manifest.dictionarySlug!=="string")throw new Error("invalid_audio_manifest");
-  if(entry.dictionary_slug!==manifest.dictionarySlug)return null;
+  if(entry.dictionary&&entry.dictionary.id!==entry.dictionary_id)throw new Error("invalid_audio_dictionary_identity");
+  const dictionarySlug=entry.dictionary?.slug??entry.dictionary_slug;
+  if(dictionarySlug!==manifest.dictionarySlug)return null;
   const raw=entry.raw as Record<string,unknown>;
   const source=raw?._source as Record<string,unknown>|undefined;
   const key=source?.source_entry_key;
