@@ -162,7 +162,7 @@ test("a statement timeout stays actionable and retry keeps the server idempotenc
   expect(startTrainingSession.mock.calls[1]?.[3]).toBe(requestId);
 });
 
-test("accepted Start blocks a duplicate and unmount closes its diagnostic once", async () => {
+test("Start blocks a duplicate and unmount retires the pending commit and diagnostic", async () => {
   const dispatch = vi.spyOn(window, "dispatchEvent");
   let resolveCommit!: (committed: boolean) => void;
   const onCommitDraft = vi.fn().mockImplementation(() => new Promise<boolean>((resolve) => {
@@ -198,7 +198,7 @@ test("accepted Start blocks a duplicate and unmount closes its diagnostic once",
     transitionId, stage: "transition.total", outcome: "start-cancelled",
   }));
   resolveCommit(true);
-  expect(await start).toBe(true);
+  expect(await start).toBe(false);
   expect(transitionEvents(dispatch).filter(({ stage }) => stage === "transition.total")).toHaveLength(1);
 });
 
@@ -597,4 +597,45 @@ test('early review passes explicit timing through the planner without changing s
  await act(async()=>{await result.current(selected,'Words',{reviewTiming:'early'});});
  expect(startTrainingSession).toHaveBeenLastCalledWith('u',selected.modes,expect.objectContaining({cardFilter:'review',trainingFilter:expect.objectContaining({reviewTiming:'early'})}),expect.any(String));
  expect(selected).not.toHaveProperty('reviewTiming');
+});
+
+test.each(["meaning","word-in-context","idiom"] as const)("%s Start cannot issue a session request after its scope wait is retired",async(family)=>{
+ let resolve!:(value:{error:null})=>void;
+ updateActiveTrainingScope.mockReset().mockImplementation(()=>new Promise(done=>{resolve=done;}));
+ startTrainingSession.mockReset();startIdiomSession.mockReset();startTranslationSession.mockReset();
+ const ready=vi.fn(),loadWord=vi.fn();
+ const hook=renderHook(()=>useCommitTrainingPilotDraft({userId:"user",languageCode:"nl",resolveList:()=>null,
+  applyListLocally:vi.fn(),applyPreferences:vi.fn(),applyFocusFilter:vi.fn(),resetQueue:vi.fn(),loadStats:vi.fn(),loadWord,
+  startIdiomSession,startTranslationSession,reportError:vi.fn(),onSessionReady:ready}));
+ let start!:Promise<boolean>;act(()=>{start=hook.result.current({...draft,family,materialMode:"all-dictionaries"});});
+ hook.unmount();resolve({error:null});expect(await start).toBe(false);
+ expect(startTrainingSession).not.toHaveBeenCalled();expect(startIdiomSession).not.toHaveBeenCalled();expect(startTranslationSession).not.toHaveBeenCalled();expect(ready).not.toHaveBeenCalled();expect(loadWord).not.toHaveBeenCalled();
+});
+test.each(["meaning","word-in-context","idiom"] as const)("%s late Start result cannot bind or load a retired run",async(family)=>{
+ updateActiveTrainingScope.mockReset().mockResolvedValue({error:null});
+ let resolve!:(value:unknown)=>void;const pending=()=>new Promise(done=>{resolve=done;});
+ startTrainingSession.mockReset().mockImplementation(pending);startIdiomSession.mockReset().mockImplementation(pending);startTranslationSession.mockReset().mockImplementation(pending);
+ const ready=vi.fn(),loadWord=vi.fn(),preferences=vi.fn();
+ const hook=renderHook(()=>useCommitTrainingPilotDraft({userId:"user",languageCode:"nl",resolveList:()=>null,
+  applyListLocally:vi.fn(),applyPreferences:preferences,applyFocusFilter:vi.fn(),resetQueue:vi.fn(),loadStats:vi.fn(),loadWord,
+  startIdiomSession,startTranslationSession,reportError:vi.fn(),onSessionReady:ready}));
+ let start!:Promise<boolean>;act(()=>{start=hook.result.current({...draft,family,materialMode:"all-dictionaries"});});
+ await waitFor(()=>expect(resolve).toBeDefined());hook.unmount();resolve({sessionId:"old",runStatus:"active",plannedTotal:1});expect(await start).toBe(false);
+ expect(ready).not.toHaveBeenCalled();expect(loadWord).not.toHaveBeenCalled();expect(preferences).not.toHaveBeenCalled();
+});
+
+test("leaving while Continue validates cannot reopen the paused run",async()=>{
+ let resolve!:(value:boolean)=>void;const validate=()=>new Promise<boolean>(done=>{resolve=done;});const apply=vi.fn();
+ const loadTrainingScenarios=vi.fn().mockResolvedValue([]);
+ const hook=renderHook(()=>useTrainingPilotController({enabled:true,interfaceLanguage:"en",setupPrerequisites:"ready",activeScenario:"understanding",enabledModes:["word-to-definition"],cardFilter:"both",activeListValue:"",newReviewRatio:2,sessionSize:10,focusFilter:{dateWindow:"all"},listOptions:[],dictionaryOptions:[],sourceOptions:[],onCommitDraft:vi.fn(),onRetry:vi.fn(),loadTrainingScenarios}));
+ let pending!:Promise<boolean>;act(()=>{pending=hook.result.current.resumeAfterValidation(validate,apply);});act(()=>hook.result.current.returnToToday());
+ await act(async()=>{resolve(true);expect(await pending).toBe(false);});expect(apply).not.toHaveBeenCalled();expect(hook.result.current.surface).toBe("today");
+});
+test("only the latest Continue intent can commit its validated transition",async()=>{
+ let resolve!:(value:boolean)=>void;const old=()=>new Promise<boolean>(done=>{resolve=done;}),oldApply=vi.fn(),currentApply=vi.fn();
+ const loadTrainingScenarios=vi.fn().mockResolvedValue([]);
+ const hook=renderHook(()=>useTrainingPilotController({enabled:true,interfaceLanguage:"en",setupPrerequisites:"ready",activeScenario:"understanding",enabledModes:["word-to-definition"],cardFilter:"both",activeListValue:"",newReviewRatio:2,sessionSize:10,focusFilter:{dateWindow:"all"},listOptions:[],dictionaryOptions:[],sourceOptions:[],onCommitDraft:vi.fn(),onRetry:vi.fn(),loadTrainingScenarios}));
+ let pending!:Promise<boolean>;act(()=>{pending=hook.result.current.resumeAfterValidation(old,oldApply);});
+ await act(async()=>{expect(await hook.result.current.resumeAfterValidation(async()=>true,currentApply)).toBe(true);});
+ await act(async()=>{resolve(true);expect(await pending).toBe(false);});expect(oldApply).not.toHaveBeenCalled();expect(currentApply).toHaveBeenCalledOnce();
 });

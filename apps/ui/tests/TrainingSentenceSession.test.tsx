@@ -252,7 +252,7 @@ test("sentence notes clear on revoke hints without advancing, grading or hiding 
 trainingLifecyclePresentationContract("sentence", () => {
   vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockReset().mockResolvedValue(candidate);
   vi.mocked(loadSentenceExerciseContent).mockReset().mockResolvedValue({state:"ready",content:{...content,entry:{...content.entry,sourceVersion:1}}} as never);
-  return {view:(active)=><TrainingSentenceSession presentationActive={active} userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()}/>,
+  return {view:(active,blocked,refreshing)=><TrainingSentenceSession interactionDisabled={blocked} authorityRefreshing={refreshing} presentationActive={active} userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()}/>,
     read:vi.mocked(loadSentenceExerciseContent),acknowledge:currentAcknowledge,action:vi.mocked(performPlatformV2TranslationExerciseAction),
     target:{sessionId:session.sessionId,entryId:candidate.entryId,cardTypeId:"translation:recall"}};
 });

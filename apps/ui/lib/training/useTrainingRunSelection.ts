@@ -39,5 +39,6 @@ export function useTrainingRunSelection() {
   }, []);
   const isCurrent = useCallback((sessionId: string, family: TrainingExerciseFamily) =>
     owner.current?.sessionId === sessionId && owner.current.family === family, []);
-  return { selection, latch, release, isCurrent };
+  const owns = useCallback((expected: TrainingRunSelection) => owner.current === expected, []);
+  return { selection, latch, release, isCurrent, owns };
 }

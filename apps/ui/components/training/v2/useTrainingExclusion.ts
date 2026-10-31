@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useTrainingOperationScope } from "../useTrainingOperationScope";
 import type {
   TrainingExclusionRequest,
   TrainingExclusionTarget,
@@ -33,19 +34,15 @@ export function useTrainingExclusion({
   const pending = React.useRef<TrainingExclusionRequest | null>(null);
   const accepted = React.useRef(false);
   const acceptedMark = React.useRef<string | null>(null);
-  const running = React.useRef(false),
-    generation = React.useRef(0);
+  const running = React.useRef(false);
+  const operations=useTrainingOperationScope(JSON.stringify([identity,userId,sessionId]));
   React.useEffect(() => {
-    const currentGeneration=++generation.current;
     pending.current = null;
     accepted.current = false;
     acceptedMark.current = null;
     running.current = false;
     setBusy(false);
     setFailed(false);
-    return () => {
-      generation.current=currentGeneration+1;
-    };
   }, [identity, userId, sessionId]);
   React.useEffect(()=>subscribeRestoredExclusion((owner,mark)=>{
     if (context === "library" && owner === userId && acceptedMark.current === mark) {
@@ -57,7 +54,7 @@ export function useTrainingExclusion({
     running.current = true;
     setBusy(true);
     setFailed(false);
-    const current = generation.current;
+    const operation = operations.begin("exclude");
     const token = {};
     onPendingChange?.(true, token);
     onStarting?.();
@@ -79,13 +76,13 @@ export function useTrainingExclusion({
           target: request.target.kind === "headword" ? { kind: "headword", entryId: request.target.entryId } : request.target,
         },
       });
-      if (current !== generation.current) return;
+      if (!operation.isCurrent()) return;
       pending.current = null;
       accepted.current = true;
       acceptedMark.current = receipt.exclusionId;
       await onAccepted();
     } catch (cause) {
-      if (current !== generation.current) return;
+      if (!operation.isCurrent()) return;
       if (cause instanceof Error && cause.message === "training_session_superseded") {
         pending.current=null;
         accepted.current=true;
@@ -95,7 +92,7 @@ export function useTrainingExclusion({
       setFailed(true);
     } finally {
       onPendingChange?.(false, token);
-      if (current === generation.current) {
+      if (operation.isCurrent()) {
         running.current = false;
         setBusy(accepted.current);
       }

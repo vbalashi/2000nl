@@ -1,7 +1,7 @@
 # Training session lifecycle
 
-Status: implementation contract for issues #25–#29. This document describes the
-migration seam; it does not claim the common owner is already installed.
+Status: integrated implementation in PR #35 for issues #25–#29. The complete
+change is reviewable together; production deployment is a separate step.
 
 ## Ownership
 
@@ -24,6 +24,11 @@ Keep separate identities for:
 - the visible turn: target/card key and presentation identity;
 - a logical operation: run lifetime plus operation identity, across *every* await;
 - a transport attempt: retry of the same operation, not a new intentional grade.
+
+Late renderer notifications carry the exact owned selection object. The root
+checks that object before retiring a run, including during the synchronous gap
+between binding a successor and unmounting its predecessor. Server ID equality
+alone cannot authorize an earlier notification.
 
 The selection snapshot is not a snapshot of access, progress, plan revision or
 translations. Those remain live. An account/catalog refresh updates defaults and
@@ -48,9 +53,12 @@ supply content and translate existing server contracts into these outcomes:
 The controller exposes an observable session state and explicit intents: start,
 resume, reveal, grade/exclude, retry, replace, return and exit. `retry` derives its
 operation from state: it must not accept arbitrary caller-supplied session IDs.
-The adapter receives the owning operation's cancellation signal and identity.
-After each await the controller checks the full operation, even when a transport
-cannot be aborted. Cleanup clears a pending operation only if it still owns it.
+Selection and preparation adapters receive the owning operation’s cancellation
+signal. The controller retains operation identity at the commit seam. Mutations
+use the existing idempotent action clients; cancelling a UI operation does not
+roll back an accepted server mutation. After each await the controller checks
+the full operation, including transports that cannot be aborted. Cleanup clears
+a pending operation only if it still owns it.
 
 Preserve `usePreparedNextTrainingTurn` as an internal ordinary preparation seam;
 consume a prepared candidate only for its exact predecessor. Its queue prediction
@@ -67,14 +75,14 @@ all renderers. Keep card payload models and approved shells family-specific.
 | ACK rejected / expired | Retain target; retry read authority | Existing current-card Retry | Same behavior | Same behavior |
 | Reveal | Change presentation only | No grade | No grade | No grade |
 | Grade accepted | Settle receipt once; advance once | Consume exact prefetch or select | Load next target | Load next target |
-| Accepted grade, next preparation fails | Recover preparation; never repeat accepted mutation | Existing accepted-next-unavailable | Required adapter parity | Required adapter parity |
+| Accepted grade, next preparation fails | Recover preparation; never repeat accepted mutation | Existing accepted-next-unavailable | Shared exercise lifecycle | Shared exercise lifecycle |
 | Grade ambiguous | Keep event ID/payload; reconcile | Existing action reconciliation | Existing client reconciliation | Existing client reconciliation |
-| Grade rejected | No progress; retain recoverable turn or retire on superseded | Existing action semantics | #24 retirement | Required adapter parity |
+| Grade rejected | No progress; retain recoverable turn or retire on superseded | Existing action semantics | #24 retirement | Shared exercise lifecycle |
 | Content pending | Wait/retry same target; no grade/unavailable mark | Context preparation | If applicable | Existing translation recovery with trailing read |
 | Permanently unavailable content | Explicitly retire member, then select | Existing selection port | Existing exercise endpoint | Existing exercise endpoint |
 | completed / exhausted | Trust server terminal/count; cancel preparation | Existing finite plan | Shared completion shell | Shared completion shell |
-| Explicit replacement / superseded | Retire run/presentation before recovery; no generic Retry loop | Existing root recovery | #24 recovery | Required adapter parity |
-| Focus / online / visible return / periodic check | Read-only validation, fence unresolved authority, no actions | Existing root validation | Migration must add parity | Migration must add parity |
+| Explicit replacement / superseded | Retire run/presentation before recovery; no generic Retry loop | Existing root recovery | #24 recovery | Shared exercise lifecycle |
+| Focus / online / visible return / periodic check | Read-only validation, fence unresolved authority, no actions | Existing root validation | Shared authority adapter | Shared authority adapter |
 | Late response / unmount / account change | Discard old continuation and ref cleanup | #26 regressions | #24 and ACK regressions | ACK and migration regressions |
 
 `accepted` and `ready` are distinct facts. Display failure cannot undo acceptance,
@@ -89,7 +97,7 @@ renderers via their test fixtures. It defers the real current-card transport and
 asserts hidden/visible ACK gating, canonical target identity, no premature action,
 and rejection of late ACKs after unmount or a hidden/return transition.
 Removing the aborted-response guard from the real hook makes one contract test
-fail in each family (four failures); restoring it passes all 12 contract cases. These tests deliberately enable the
+fail in each family (four failures); restoring it passes all 16 contract cases. These tests deliberately enable the
 archive/current-card feature instead of relying on the legacy always-ready path.
 
 Additional existing integration coverage is part of the migration gate:
@@ -103,24 +111,63 @@ Additional existing integration coverage is part of the migration gate:
 | `TrainingSenseCardV2Session.test.tsx` | Actual word/context rendering, current-card ACK/Retry, accepted action versus next failure |
 | `useTrainingRunSelection.test.tsx` | Owned selection and current-run checks |
 
-Current asymmetries must be explicit until migrated. Root return/reconnect/polling
-is gated by the ordinary session ID, which is cleared for specialized families.
-Sentence next calls the superseded callback, but its action catch still treats
-supersession generically. Specialized progress/orchestration and ordinary root
-orchestration remain separate. The shared ACK contract does not prove these paths
-are already equivalent; migration needs targeted regressions for each gap.
+## Runtime modules
 
-## Migration and deletion gates
+The controller is composed at existing seams, not replaced by a second active
+ordinary controller. `trainingOperationScope` is the shared operation owner. Its
+leases span the complete logical operation, including a wait before selection;
+replacement/cleanup abort signals and invalidate commits even when transport
+cannot be aborted. Channels keep preparation and an accepted action independent.
+A translation preference update can refresh preparation without discarding an
+accepted grading receipt. Acceptance is captured before dispatch and reconciles
+the exact target against refreshed member consumption, so a snapshot that already
+includes an in-flight grade cannot make its later receipt increment progress twice.
 
-1. Land #24 and #26 regressions before moving their behavior. #27 establishes this
+- `useTrainingPilotController` owns Start/Continue intents. Its operation flows
+  through `useCommitTrainingPilotDraft`, which dispatches the family request and
+  then uses one binding/plan/selection path. Closing or superseding an intent
+  prevents a late result opening a run. Failed-start retries retain request IDs.
+- `recoverTrainingRun` reads and classifies every family's saved run with one
+  verdict. Root preflight validates available language/material; the root applies
+  the normalized run to selection/UI state rather than maintaining three resume
+  machines. Binding a Start server ID does not cancel its first selection.
+- `useTrainingTurnController` remains the ordinary/Word in Context adapter for
+  queue rhythm, exact prefetch consumption and accepted-action advancement. Its
+  former load/recovery generations use the common operation owner, including
+  the #26 mark/Retry regressions.
+- `useTrainingExerciseSession` owns idiom/sentence preparation, unavailable-member
+  retirement, reveal, grading, terminal progress and pending-content recovery.
+  `trainingExerciseAdapters` supply only target-specific transport and content.
+  The renderer files no longer own load/action generations or duplicate loops.
+- `useTrainingSessionAuthority` owns read-only checks and coalesced replans;
+  every family uses its return/reconnect/poll policy. Its leases reject late
+  responses across account changes, same-ID replacement and offline transitions.
+- `useTrainingExerciseProgress`, `sessionLifecycle` and the existing session
+  finalizer preserve server terminal counts and clear only terminal saved runs.
+
+An uncertain grade retains its candidate/result/event ID; the explicit Retry
+reuses that frozen intent and alternative grade buttons wait. Once accepted,
+Retry prepares the next card without repeating the mutation. A snapshot can
+retire an externally consumed/unavailable visible member; an unchanged member
+keeps its revealed presentation. New independent sentence runs remain paused by
+the existing product policy; legacy sentence restoration uses the same lifecycle.
+
+Pending translation retains its subscription during recovery reads. Hints are
+coalesced into one trailing read; clearing/rejoining the subscription mid-read
+would create a self-sustaining recovery loop. `TrainingSentenceRecovery.test.tsx`
+exercises the actual production registry, reconnects, sparse fallback, scope
+replacement, failed translation and late responses.
+
+## Verification and release gates
+
+1. #24 and #26 regressions landed before moving their behavior. #27 establishes this
    contract and common presentation tests.
-2. In #28 deepen the existing controller, move ordinary Start/resume/authority and
-   accepted recovery out of `TrainingScreen`, preserving its queue/preparation.
-   Remove the replaced root handlers in the same change.
-3. In #29 connect idiom/sentence adapters and remove their duplicate generations,
-   event IDs, load/action loops and lifecycle effects after parity. Move pending
-   translation orchestration behind its content adapter, retaining bounded hints
-   and its trailing read. Do not leave old and new owners active together.
+2. #28 reuses the ordinary controller and shared operation owner; Start and
+   saved-run recovery have common verdict/binding paths. Replaced root authority
+   listeners, counters and family resume branches are deleted.
+3. #29 connects idiom/sentence adapters to the common exercise lifecycle. The
+   old renderer generations, event IDs and load/action loops are deleted.
+   Pending translation keeps bounded hints, sparse fallback and its trailing read.
 4. Verify the complete four-family integration, including desktop/mobile,
    hidden/return and real ACK. Release the complete integration as one candidate.
 
