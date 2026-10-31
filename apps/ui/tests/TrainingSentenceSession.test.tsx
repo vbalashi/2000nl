@@ -1,3 +1,4 @@
+import { trainingLifecyclePresentationContract } from "./support/trainingLifecycleContract";
 const focusedNotes=vi.hoisted(()=>({read:vi.fn(),refresh:undefined as undefined|(()=>void|Promise<unknown>)}));
 vi.mock("@/lib/platform/entryNoteMaterialClient",()=>({readEntryNoteMaterial:focusedNotes.read}));
 vi.mock("@/lib/events/userEventHints",async importOriginal=>{
@@ -246,4 +247,12 @@ test("sentence notes clear on revoke hints without advancing, grading or hiding 
  act(()=>{pending=Promise.resolve(focusedNotes.refresh!());});expect(screen.queryByText("Live teaching note")).not.toBeInTheDocument();expect(screen.getByRole("button",{name:"Good"})).toBeInTheDocument();
  await act(async()=>{finish([]);await pending;});expect(screen.queryByText("Live teaching note")).not.toBeInTheDocument();expect(screen.getByRole("button",{name:"Good"})).toBeInTheDocument();
  expect(fetchNextPlatformV2TranslationTrainingSessionExercise).toHaveBeenCalledOnce();expect(performPlatformV2TranslationExerciseAction).not.toHaveBeenCalled();
+});
+
+trainingLifecyclePresentationContract("sentence", () => {
+  vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockReset().mockResolvedValue(candidate);
+  vi.mocked(loadSentenceExerciseContent).mockReset().mockResolvedValue({state:"ready",content:{...content,entry:{...content.entry,sourceVersion:1}}} as never);
+  return {view:(active)=><TrainingSentenceSession presentationActive={active} userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()}/>,
+    read:vi.mocked(loadSentenceExerciseContent),acknowledge:currentAcknowledge,action:vi.mocked(performPlatformV2TranslationExerciseAction),
+    target:{sessionId:session.sessionId,entryId:candidate.entryId,cardTypeId:"translation:recall"}};
 });

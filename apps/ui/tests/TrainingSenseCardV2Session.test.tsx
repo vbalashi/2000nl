@@ -1,3 +1,4 @@
+import { trainingLifecyclePresentationContract } from "./support/trainingLifecycleContract";
 const recordedStudy = vi.hoisted(() => vi.fn());
 vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
 const noteHintRead=vi.hoisted(()=>({read:vi.fn(),refresh:undefined as undefined|(()=>void|Promise<unknown>),blocked:undefined as undefined|(()=>boolean)}));
@@ -3026,6 +3027,16 @@ describe("TrainingSenseCardV2Session", () => {
     expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
   });
 
+  for (const wordInContext of [false, true]) {
+    trainingLifecyclePresentationContract(wordInContext ? "Word in Context" : "meaning", () => {
+      fetchSingleSense.mockResolvedValue({state:"ready",group:singleSenseGroup,entry:{...singleSenseEntry,sourceVersion:1}});
+      loadContextPrompt.mockResolvedValue({state:"ready",prompt:{recallTarget:"hand",text:"She held it in her hand.",sourceText:singleSenseEntry.contentNodes[1].text,contentNodeId:"example-1",sourceTextFingerprint:"example-fingerprint"}});
+      return {view:(active)=><TestTrainingSenseCardV2Session presentationActive={active} word={word} mode={wordInContext ? "definition-to-word" : "word-to-definition"} wordInContext={wordInContext} trainingSessionId="contract-run" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()}/>,
+        read:fetchSingleSense,acknowledge:acknowledgeCurrent,action:performAction,
+        target:{sessionId:"contract-run",entryId:word.id,cardTypeId:wordInContext ? "definition-to-word" : "word-to-definition"}};
+    });
+  }
+
 });
 
 
@@ -3043,4 +3054,6 @@ test("a context translation finishing in another request resumes the card withou
     expect(screen.queryByText(getUiMessages("en").trainingSession.contextPreparation.pending)).toBeNull();
     expect(performAction).not.toHaveBeenCalled();
   } finally {vi.useRealTimers();vi.unstubAllEnvs();}
+
+
 });
