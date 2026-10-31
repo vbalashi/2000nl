@@ -30,6 +30,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 test("derives account pseudonym from authentication and accepts a bounded batch", async () => {
   const output = vi.spyOn(console, "info").mockImplementation(() => {});
@@ -78,3 +79,20 @@ test("limits multiple tabs sharing one authenticated account", async () => {
 });
 
 vi.mock("@/lib/diagnostics/serverPolicy",()=>({diagnosticPolicyFor:()=>({enabled:true,detailed:true,successSampleRate:1,validUntil:Date.now()+90_000})}));
+
+
+test("accepts the configured public site origin behind an internal bind URL", async () => {
+  vi.stubEnv("SITE_URL", "https://app.example.test");
+  const proxied=new Request("http://0.0.0.0:3000/api/diagnostics/training", {
+    method:"POST",headers:{origin:"https://app.example.test","content-type":"application/json"},body:JSON.stringify([event]),
+  });
+  expect((await POST(proxied)).status).toBe(202);
+});
+
+test("does not trust forwarded headers to expand the configured diagnostics origin", async () => {
+  vi.stubEnv("SITE_URL", "https://app.example.test");
+  const proxied=new Request("http://0.0.0.0:3000/api/diagnostics/training", {
+    method:"POST",headers:{origin:"https://foreign.example.test","x-forwarded-host":"foreign.example.test","x-forwarded-proto":"https","content-type":"application/json"},body:JSON.stringify([event]),
+  });
+  expect((await POST(proxied)).status).toBe(403);
+});
