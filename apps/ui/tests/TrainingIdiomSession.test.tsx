@@ -1,3 +1,4 @@
+import { trainingLifecyclePresentationContract } from "./support/trainingLifecycleContract";
 const focusedNotes=vi.hoisted(()=>({read:vi.fn(),refresh:undefined as undefined|(()=>void|Promise<unknown>)}));
 vi.mock("@/lib/platform/entryNoteMaterialClient",()=>({readEntryNoteMaterial:focusedNotes.read}));
 vi.mock("@/lib/events/userEventHints",async importOriginal=>{
@@ -746,4 +747,12 @@ test("late rejected grading from an unmounted idiom run cannot replace its succe
   await act(async()=>{reject(new Error("training_session_superseded"));});
   expect(replaced).not.toHaveBeenCalled();expect(progress).not.toHaveBeenCalled();
   expect(screen.getByRole("button",{name:"Show answer"})).toBeVisible();
+});
+
+trainingLifecyclePresentationContract("idiom", () => {
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockReset().mockResolvedValue(candidate);
+  vi.mocked(loadIdiomExerciseContent).mockReset().mockResolvedValue({state:"ready",content:{...content,entry:{...content.entry,sourceVersion:1}}} as never);
+  return {view:(active)=><TrainingIdiomSession presentationActive={active} userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()}/>,
+    read:vi.mocked(loadIdiomExerciseContent),acknowledge:currentAcknowledge,action:vi.mocked(performPlatformV2IdiomExerciseAction),
+    target:{sessionId:session.sessionId,entryId:candidate.entryId,cardTypeId:"idiom:direct"}};
 });
