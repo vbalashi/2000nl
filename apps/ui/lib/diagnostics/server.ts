@@ -1,3 +1,5 @@
+import { diagnosticPolicyFor } from "./serverPolicy";
+import { sampleDiagnostic } from "./policy";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import { diagnosticId } from "./contract";
@@ -7,6 +9,7 @@ type Context = {
   transitionId?: string;
   displayId?: string;
   actor?: string;
+  userId?: string;
   route: string;
   rpcCount: number;
 };
@@ -26,12 +29,15 @@ export function diagnosticActor(userId: string) {
 }
 export function identifyDiagnosticActor(userId: string) {
   const ctx = contexts.getStore();
-  if (ctx) ctx.actor = diagnosticActor(userId);
+  if (ctx) { ctx.actor = diagnosticActor(userId); ctx.userId = userId; }
 }
 export function currentDiagnosticRequestId() {
   return contexts.getStore()?.requestId;
 }
-export function writeDiagnostic(event: Record<string, unknown>) {
+export function writeDiagnostic(event: Record<string, unknown>, userId?: string) {
+  const policy=diagnosticPolicyFor(userId ?? contexts.getStore()?.userId);
+  if(!policy.enabled)return;
+  if(event.kind!=="client_event"&&!policy.detailed&&!(typeof event.status==="number"&&(event.status>=500||event.status===0))&&!sampleDiagnostic(String(event.displayId??event.transitionId??event.requestId??""),policy.successSampleRate))return;
   // Callers supply only constructed allowlisted fields; never serialize request/error objects.
   try {
     console.info(

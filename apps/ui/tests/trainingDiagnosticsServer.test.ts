@@ -87,3 +87,5 @@ test("records thrown failures and concurrent identities stay isolated", async ()
   expect(logs[0].actor).not.toBe(logs[1].actor);
   expect(JSON.stringify(logs)).not.toContain("sensitive-error");
 });
+
+vi.mock("@/lib/diagnostics/serverPolicy",()=>({diagnosticPolicyFor:()=>({enabled:true,detailed:true,successSampleRate:1,validUntil:Date.now()+90_000})}));

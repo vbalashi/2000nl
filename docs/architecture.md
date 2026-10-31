@@ -40,3 +40,41 @@ logging are bounded; diagnostic delivery is best effort and cannot block a card
 request. Local memory is discarded on account changes/unmount. No card text,
 email, URL parameters, tokens, request bodies or raw errors enter this channel.
 Operators own log retention and alerting outside the application database.
+
+### Runtime collection policy
+
+Collection is off unless `TRAINING_DIAGNOSTICS_POLICY_PATH` names a readable,
+valid operator-owned JSON file. Mount its **directory** read-only into every UI
+replica (atomic replacement of a single-file bind mount can retain the old inode).
+Do not serve or commit the live file: account UUID selectors are private.
+
+The file contains `enabled`, `successSampleRate` (0–1), optional `detailedUntil`
+for an explicit global investigation and `users` mapping account UUIDs to ISO UTC
+expiry times. Ordinary operation uses `enabled: true`, `successSampleRate: 0.01`
+and an empty `users` object. Failures and stalls are retained; successful events
+are sampled consistently by load/request identity. Detailed grants are bounded to
+24 hours and checked on every policy resolution, including cached configurations.
+
+Operators can use `apps/ui/scripts/training-diagnostics-policy.mjs FILE baseline`,
+`... FILE detail USER_UUID 30`, `... FILE detail all 15`, `... FILE off`, or
+`... FILE status`. Baseline clears all detailed grants. Updates are atomic and
+files are created mode 0600; provision the mounted directory with suitable ownership
+for both the operator and application. Use account UUIDs from authorized account
+administration, never emails or browser-supplied selectors.
+
+Server policy refresh is at most five seconds. Authenticated first-party clients
+receive only their effective policy via GET `/api/diagnostics/training`, refresh
+it every 30 seconds, and fail closed after a failed refresh or the 90-second lease.
+Expiry also bounds the client lease. POST ingestion independently enforces current
+policy, so stale tabs cannot bypass a kill switch or select themselves for detail.
+The same policy gates server route/RPC logs; early records before authentication
+use only the global policy. This can omit a targeted request's initial start record,
+while its authenticated completion/RPC records remain available. Policy reads add
+at most one authenticated GET per active tab per 30 seconds. This does not change
+existing browser console timings. Disabling collection stops diagnostic delivery
+and log writes, while small local tracking hooks remain mounted.
+
+Changing the live file after initial path/mount provisioning needs no rebuild or
+restart. Policy errors fail closed; inspect file provisioning before treating an
+absence of events as an absence of failures. Production mount provisioning and
+operator changes follow the private managed release process.

@@ -1,3 +1,5 @@
+import { acceptsDiagnostic, disabledDiagnosticPolicy, type DiagnosticPolicy } from "./policy";
+import { readDiagnosticPolicy } from "./policyClient";
 import type { TrainingDiagnostic } from "./contract";
 type Timing = {
   transitionId: string;
@@ -80,6 +82,7 @@ export class ForegroundLoadTracker {
 }
 type Session = {
   queue: TrainingDiagnostic[];
+  policy: DiagnosticPolicy;
   stopped: boolean;
   flushing: boolean;
   tracker: ForegroundLoadTracker;
@@ -93,7 +96,9 @@ export function currentDisplayedLoadId() {
 function enqueue(event: Omit<TrainingDiagnostic, "eventId">) {
   if (!session || session.stopped) return;
   if (session.queue.length >= 100) session.queue.shift();
-  session.queue.push({ eventId: crypto.randomUUID(), ...event });
+  const diagnostic = { eventId: crypto.randomUUID(), ...event };
+  if (!acceptsDiagnostic(session.policy,diagnostic)) return;
+  session.queue.push(diagnostic);
   if (["load_stalled", "load_failed", "request_failed"].includes(event.kind))
     void flush(session);
 }
@@ -106,6 +111,7 @@ export function startTrainingDiagnostics(
   if (session) session.stopped = true;
   const current: Session = {
     headers,
+    policy: disabledDiagnosticPolicy(),
     queue: [],
     stopped: false,
     flushing: false,
@@ -113,6 +119,22 @@ export function startTrainingDiagnostics(
   };
   session = current;
   for (const id of displayedLoads) current.tracker.start(id, "display");
+  let policyRequest: AbortController | undefined;
+  const refreshPolicy = async () => {
+    if (policyRequest || current.stopped) return;
+    const request=new AbortController(); policyRequest=request;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const policy=await Promise.race([
+        readDiagnosticPolicy(current.headers,request.signal),
+        new Promise<never>((_,reject)=>{timer=setTimeout(()=>{request.abort();reject(new Error("diagnostics_policy_timeout"));},3000);}),
+      ]);
+      if(!current.stopped&&!request.signal.aborted&&session===current) current.policy=policy;
+    } catch {current.policy=disabledDiagnosticPolicy();}
+    finally {clearTimeout(timer);policyRequest=undefined;}
+  };
+  void refreshPolicy();
+  const policyTimer=window.setInterval(()=>{void refreshPolicy();},30_000);
   const tick = () => current.tracker.tick();
   const timer = window.setInterval(tick, 1_000);
   const flushTimer = window.setInterval(() => {
@@ -124,6 +146,8 @@ export function startTrainingDiagnostics(
   return () => {
     current.tracker.clear();
     current.stopped = true;
+    policyRequest?.abort();
+    window.clearInterval(policyTimer);
     current.queue = [];
     if (session === current) session = undefined;
     window.clearInterval(timer);
@@ -134,6 +158,10 @@ export function startTrainingDiagnostics(
   };
 }
 async function flush(current: Session) {
+  if (!current.policy.enabled || current.policy.validUntil<=Date.now()) {
+    current.queue=[];
+    return;
+  }
   if (
     current.stopped ||
     current.flushing ||
@@ -157,7 +185,8 @@ async function flush(current: Session) {
     ]);
     if (current.stopped || session !== current || controller.signal.aborted)
       return;
-    const batch = current.queue.splice(0, 20);
+    const batch = current.queue.splice(0, 20).filter(event=>acceptsDiagnostic(current.policy,event));
+    if(!batch.length)return;
     await fetch("/api/diagnostics/training", {
       method: "POST",
       credentials: "same-origin",

@@ -76,3 +76,5 @@ test("limits multiple tabs sharing one authenticated account", async () => {
     expect((await POST(request(Array(20).fill(event)))).status).toBe(202);
   expect((await POST(request([event]))).status).toBe(429);
 });
+
+vi.mock("@/lib/diagnostics/serverPolicy",()=>({diagnosticPolicyFor:()=>({enabled:true,detailed:true,successSampleRate:1,validUntil:Date.now()+90_000})}));

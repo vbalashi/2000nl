@@ -1,3 +1,5 @@
+import { diagnosticPolicyFor } from "./serverPolicy";
+import { acceptsDiagnostic } from "./policy";
 import { readBoundedJson } from "../http/readBoundedJson";
 import {
   getAuthenticatedSupabase,
@@ -23,6 +25,8 @@ export async function ingestTrainingDiagnostics(request: Request) {
   if (auth instanceof Response) return auth;
   if (auth.principal.authKind !== "first_party")
     return jsonNoStore({ error: "first_party_required" }, 403);
+  const policy = diagnosticPolicyFor(auth.user.id);
+  if (!policy.enabled) return jsonNoStore({accepted:0},202);
   const actor = diagnosticActor(auth.user.id);
   const now = Date.now();
   for (const [key, bucket] of buckets)
@@ -36,12 +40,12 @@ export async function ingestTrainingDiagnostics(request: Request) {
     return jsonNoStore({ error: "rate_limited" }, 429);
   bucket.count += events.length;
   buckets.set(actor, bucket);
-  for (const event of events)
+  for (const event of events.filter(event => acceptsDiagnostic(policy,event)))
     writeDiagnostic({
       ...event,
       kind: "client_event",
       event: event.kind,
       actor,
-    });
+    }, auth.user.id);
   return jsonNoStore({ accepted: events.length }, 202);
 }

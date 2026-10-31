@@ -198,3 +198,30 @@ test("renderer stalls remain observable after preparation has completed", async 
     stop();
   }
 });
+
+vi.mock("@/lib/diagnostics/policyClient",()=>({readDiagnosticPolicy:vi.fn(async()=>({enabled:true,detailed:true,successSampleRate:1,validUntil:Date.now()+90_000}))}));
+
+
+test("open clients apply a kill switch on refresh and discard previously queued detail", async () => {
+  vi.useFakeTimers();
+  const {readDiagnosticPolicy}=await import("@/lib/diagnostics/policyClient");
+  const {observeTrainingRequest}=await import("@/lib/diagnostics/client");
+  const read=vi.mocked(readDiagnosticPolicy);
+  const fetcher=vi.spyOn(globalThis,"fetch").mockResolvedValue(new Response(null,{status:202}));
+  const stop=startTrainingDiagnostics("owner",async()=>({"content-type":"application/json"}));
+  try {
+    await vi.advanceTimersByTimeAsync(0);
+    observeTrainingRequest({requestId:"first",durationMs:1,result:"ready",status:200});
+    await vi.advanceTimersByTimeAsync(5_001);
+    expect(fetcher).toHaveBeenCalledOnce();
+    read.mockResolvedValue({enabled:false,detailed:false,successSampleRate:0,validUntil:0});
+    await vi.advanceTimersByTimeAsync(30_000);
+    observeTrainingRequest({requestId:"failure-after-disable",durationMs:1,result:"failed",status:500});
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(read.mock.calls.length).toBeGreaterThanOrEqual(2);
+  } finally {
+    stop();
+    read.mockImplementation(async()=>({enabled:true,detailed:true,successSampleRate:1,validUntil:Date.now()+90_000}));
+  }
+});
