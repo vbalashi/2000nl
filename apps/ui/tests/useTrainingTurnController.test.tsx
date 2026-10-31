@@ -1435,4 +1435,71 @@ describe("useTrainingTurnController transition matrix", () => {
 
     expect(controller.result.current.nextCardOverrideNotice).toBeNull();
   });
+  test.each([true, false])("late unavailable mark (%s) cannot overwrite replacement rejection state", async (marked) => {
+    const oldMark = deferred<boolean>(), newMark = deferred<boolean>();
+    const markUnavailable = vi.fn().mockReturnValueOnce(oldMark.promise).mockReturnValueOnce(newMark.promise);
+    const controller = renderController({trainingSessionId:"old-run",markUnavailable});
+    let oldReport!: Promise<boolean>, newReport!: Promise<boolean>;
+    act(()=>{oldReport=controller.result.current.reportCardLoadFailure(word1,"model-invalid");});
+    act(()=>controller.result.current.beginSessionScopeChange());
+    act(()=>{newReport=controller.result.current.reportCardLoadFailure(word2,"model-invalid","new-run");});
+    await act(async()=>{oldMark.resolve(marked);await oldReport;});
+    let retry!: Promise<unknown>;
+    act(()=>{retry=controller.result.current.retryCardLoadFailure();});
+    expect(controller.selectNext).not.toHaveBeenCalled();
+    await act(async()=>{newMark.resolve(true);await newReport;await retry;});
+    expect(controller.selectNext).toHaveBeenLastCalledWith(expect.objectContaining({
+      trainingSessionId:"new-run",excludeCardKeys:["word-2:word-to-definition"],
+    }));
+  });
+
+  test.each([true, false])("retry waiting on old mark (%s) cannot load after explicit replacement", async (marked) => {
+    const mark=deferred<boolean>();
+    const controller=renderController({trainingSessionId:"old-run",markUnavailable:()=>mark.promise});
+    let report!:Promise<boolean>,retry!:Promise<unknown>;
+    act(()=>{report=controller.result.current.reportCardLoadFailure(word1,"model-invalid");});
+    act(()=>{retry=controller.result.current.retryCardLoadFailure();});
+    act(()=>controller.result.current.beginSessionScopeChange());
+    await act(async()=>{mark.resolve(marked);await report;await retry;});
+    expect(controller.selectNext).not.toHaveBeenCalled();
+    expect(controller.setCurrentWord).not.toHaveBeenCalled();
+    expect(controller.result.current.usableCandidatesExhausted).toBe(false);
+  });
+
+  test("scope identity replacement cancels waiting Retry without an explicit reset call",async()=>{
+    const mark=deferred<boolean>();
+    const controller=renderController({trainingSessionId:"old-run",markUnavailable:()=>mark.promise});
+    let report!:Promise<boolean>,retry!:Promise<unknown>;
+    act(()=>{report=controller.result.current.reportCardLoadFailure(word1,"model-invalid");retry=controller.result.current.retryCardLoadFailure();});
+    controller.rerender({sessionScopeKey:"replacement",currentWord:word2});
+    await act(async()=>{mark.resolve(true);await report;await retry;});
+    expect(controller.selectNext).not.toHaveBeenCalled();
+    expect(controller.setCurrentWord).not.toHaveBeenCalled();
+  });
+
+  test("unmount cancels a Retry waiting on unavailable mark",async()=>{
+    const mark=deferred<boolean>();
+    const controller=renderController({trainingSessionId:"old-run",markUnavailable:()=>mark.promise});
+    let report!:Promise<boolean>,retry!:Promise<unknown>;
+    act(()=>{report=controller.result.current.reportCardLoadFailure(word1,"model-invalid");retry=controller.result.current.retryCardLoadFailure();});
+    controller.unmount();
+    await act(async()=>{mark.resolve(true);await report;await retry;});
+    expect(controller.selectNext).not.toHaveBeenCalled();
+    expect(controller.setCurrentWord).not.toHaveBeenCalled();
+  });
+
+  test("accepted action cannot start old fallback selection after its unavailable mark settles",async()=>{
+    const mark=deferred<boolean>();
+    prepared.candidate={forWordId:word1.id,forCardKey:"word-1:word-to-definition",queueTurn:"new",word:word2,
+      v2Ready:Promise.resolve({ready:false,unavailableReason:"model-invalid"}),transitionId:"accepted-old"};
+    const controller=renderController({trainingSessionId:"old-run",markUnavailable:()=>mark.promise});
+    let accepted!:Promise<unknown>;
+    act(()=>{accepted=controller.result.current.acceptPlatformProgressAction({} as any);});
+    await waitFor(()=>expect(controller.markUnavailable).toHaveBeenCalledOnce());
+    act(()=>controller.result.current.beginSessionScopeChange());
+    await act(async()=>{mark.resolve(true);await accepted;});
+    expect(controller.selectNext).not.toHaveBeenCalled();
+    expect(controller.setCurrentWord).not.toHaveBeenCalled();
+  });
+
 });
