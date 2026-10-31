@@ -43,6 +43,29 @@ owner/adapter seam, transition matrix, characterization tests and migration gate
 It distinguishes the intended common controller from current family differences.
 
 
+## Meaning card spacing
+
+Decision: [ADR-0001](adr/0001-meaning-direction-spacing.md).
+
+Ordinary meaning sessions choose from the eligible candidate pool before applying
+session size. Opposite directions of one meaning (`entry_id`) have at least three
+intervening cards whenever a candidate outside that recent history is available.
+The planner prefers the normal new/review rhythm, but can select from the other
+category to avoid a nearby sibling. If all remaining candidates conflict, it uses the least
+recent meaning instead of shortening the session. Different meanings of the same
+headword remain independent.
+
+The resulting order is stored with session membership and survives resume. A
+replan after an external learning action includes the last three consumed members
+when ordering its remainder. Candidates displaced beyond the session boundary
+remain eligible with unchanged due times and memory state; ordering never creates
+review grades or a next-day deferral. This applies to ordinary meaning training;
+idiom and translation exercise queues retain their existing policies.
+
+The public migration is for application installations. Applying the equivalent
+change to the managed service requires its private forward-migration and release
+process.
+
 ## Training diagnostics
 
 Training emits bounded, content-free diagnostic events to authenticated,
