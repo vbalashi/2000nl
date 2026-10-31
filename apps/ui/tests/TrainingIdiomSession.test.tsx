@@ -664,3 +664,86 @@ test("idiom notes clear on revoke hints without advancing, grading or hiding the
  await act(async()=>{finish([]);await pending;});expect(screen.queryByText("Live teaching note")).not.toBeInTheDocument();expect(screen.getByRole("button",{name:"Good"})).toBeInTheDocument();
  expect(fetchNextPlatformV2IdiomTrainingSessionExercise).toHaveBeenCalledOnce();expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
 });
+
+test.each([false, true])("superseded idiom next leaves recovery Retry behind (after retry: %s)", async (retryFirst) => {
+  const replaced = vi.fn();
+  const next = vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise);
+  next.mockReset().mockResolvedValue({status:"superseded",sessionId:session.sessionId} as never);
+  if (retryFirst) next.mockRejectedValueOnce(new Error("offline"));
+  render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl"
+    translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} onSessionSuperseded={replaced} />);
+  if (retryFirst) fireEvent.click(await screen.findByRole("button",{name:getUiMessages("en").trainingExercises.idiom.retry}));
+  await waitFor(()=>expect(replaced).toHaveBeenCalledOnce());
+  expect(screen.queryByRole("button",{name:getUiMessages("en").trainingExercises.idiom.retry})).not.toBeInTheDocument();
+  expect(screen.queryByRole("button",{name:"Show answer"})).not.toBeInTheDocument();
+  expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
+});
+
+test("rejected stale idiom grade invalidates presentation without accepting progress",async()=>{
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockReset().mockResolvedValue(candidate);
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:"ready",content} as never);
+  vi.mocked(performPlatformV2IdiomExerciseAction).mockRejectedValue(new Error("training_session_superseded"));
+  const replaced=vi.fn(),progress=vi.fn();
+  render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl"
+    translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} onSessionSuperseded={replaced} onProgress={progress} />);
+  fireEvent.click(await screen.findByRole("button",{name:"Show answer"}));
+  fireEvent.click(screen.getByRole("button",{name:"Good"}));
+  await waitFor(()=>expect(replaced).toHaveBeenCalledOnce());
+  expect(screen.queryByRole("button",{name:"Good"})).not.toBeInTheDocument();
+  expect(progress).not.toHaveBeenCalled();
+  expect(fetchNextPlatformV2IdiomTrainingSessionExercise).toHaveBeenCalledOnce();
+});
+
+test("a fresh idiom run can start after replacement and uses the latest recovery callback",async()=>{
+  const oldCallback=vi.fn(),currentCallback=vi.fn();
+  let resolve!:(value: Awaited<ReturnType<typeof fetchNextPlatformV2IdiomTrainingSessionExercise>>)=>void;
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockReset().mockImplementationOnce(()=>new Promise(done=>{resolve=done;}));
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:"ready",content} as never);
+  const view=(id:string,callback:()=>void)=><TrainingIdiomSession key={id} userId="user-1" session={{...session,sessionId:id}} contentLanguageCode="nl"
+    translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} onSessionSuperseded={callback}/>;
+  const {rerender}=render(view("session-1",oldCallback));
+  rerender(view("session-1",currentCallback));
+  await act(async()=>{resolve({status:"superseded",sessionId:"session-1"} as never);});
+  expect(currentCallback).toHaveBeenCalledOnce();expect(oldCallback).not.toHaveBeenCalled();
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({...candidate,sessionId:"session-2"});
+  rerender(view("session-2",currentCallback));
+  expect(await screen.findByRole("button",{name:"Show answer"})).toBeVisible();
+  expect(fetchNextPlatformV2IdiomTrainingSessionExercise).toHaveBeenLastCalledWith("user-1","session-2");
+});
+
+test("superseded idiom run falls back to exit when no recovery callback is supplied",async()=>{
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockReset().mockResolvedValue({status:"superseded",sessionId:session.sessionId} as never);
+  const exit=vi.fn();
+  render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl"
+    translationTargetLanguageCode={null} interfaceLanguage="en" onExit={exit}/>);
+  await waitFor(()=>expect(exit).toHaveBeenCalledOnce());
+});
+
+test("a superseded response during idiom preparation uses replacement recovery",async()=>{
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockReset().mockResolvedValue(candidate);
+  vi.mocked(loadIdiomExerciseContent).mockRejectedValue(new Error("training_session_superseded"));
+  const replaced=vi.fn();
+  render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl"
+    translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} onSessionSuperseded={replaced}/>);
+  await waitFor(()=>expect(replaced).toHaveBeenCalledOnce());
+  expect(screen.queryByRole("button",{name:getUiMessages("en").trainingExercises.idiom.retry})).not.toBeInTheDocument();
+});
+
+test("late rejected grading from an unmounted idiom run cannot replace its successor",async()=>{
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockReset().mockResolvedValue(candidate);
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:"ready",content} as never);
+  let reject!:(error:Error)=>void;
+  vi.mocked(performPlatformV2IdiomExerciseAction).mockImplementationOnce(()=>new Promise((_,fail)=>{reject=fail;}));
+  const replaced=vi.fn(),progress=vi.fn();
+  const view=(id:string)=><TrainingIdiomSession key={id} userId="user-1" session={{...session,sessionId:id}} contentLanguageCode="nl"
+    translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()} onSessionSuperseded={replaced} onProgress={progress}/>;
+  const {rerender}=render(view("session-1"));
+  fireEvent.click(await screen.findByRole("button",{name:"Show answer"}));
+  fireEvent.click(screen.getByRole("button",{name:"Good"}));
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue({...candidate,sessionId:"session-2"});
+  rerender(view("session-2"));
+  await screen.findByRole("button",{name:"Show answer"});
+  await act(async()=>{reject(new Error("training_session_superseded"));});
+  expect(replaced).not.toHaveBeenCalled();expect(progress).not.toHaveBeenCalled();
+  expect(screen.getByRole("button",{name:"Show answer"})).toBeVisible();
+});
