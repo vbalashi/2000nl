@@ -110,6 +110,21 @@ supersession generically. Specialized progress/orchestration and ordinary root
 orchestration remain separate. The shared ACK contract does not prove these paths
 are already equivalent; migration needs targeted regressions for each gap.
 
+## Authority extraction in progress
+
+The first #28 implementation moves ordinary authority checking, stale-response
+fencing, coalesced replan ownership and return/reconnect/poll subscriptions into
+`useTrainingSessionAuthority`. `TrainingScreen` supplies its ordinary snapshot and
+reconciliation adapter; its old authority generations, pending-replan ref and
+listener effects are removed. The queue still uses `useTrainingTurnController`.
+
+`useTrainingSessionAuthority.test.tsx` covers account and same-ID replacement,
+late active/superseded responses, offline fencing, failed/retried and concurrent
+replans, unmount and event/poll rebinding. Existing TrainingScreen tests continue
+to exercise the actual integration. This extraction is not completion of #28 or
+#29: Start/resume orchestration and specialized adapters remain to be migrated,
+and the complete common controller is not yet released.
+
 ## Migration and deletion gates
 
 1. Land #24 and #26 regressions before moving their behavior. #27 establishes this
