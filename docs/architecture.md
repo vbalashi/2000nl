@@ -38,6 +38,11 @@ have a current-card target before requesting display authority; missing target
 context is a recoverable failure, never a pending request that cannot start.
 
 
+The [session lifecycle contract](training-session-lifecycle.md) records the shared
+owner/adapter seam, transition matrix, characterization tests and migration gates.
+It distinguishes the intended common controller from current family differences.
+
+
 ## Training diagnostics
 
 Training emits bounded, content-free diagnostic events to authenticated,
