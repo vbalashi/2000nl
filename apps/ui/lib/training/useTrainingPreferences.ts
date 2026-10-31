@@ -17,6 +17,7 @@ export function useTrainingPreferences(
   userId?: string,
   initialTransitionId?: string,
   initialPreferences?: UserPreferences,
+  preserveTrainingScope = false,
 ) {
   const [themePreference, setThemePreference] =
     useState<ThemePreference>(initialPreferences?.themePreference ?? "system");
@@ -47,6 +48,9 @@ export function useTrainingPreferences(
   const [secondaryTranslationLang, setSecondaryTranslationLangState] = useState<string | null>(initialPreferences?.translationLang && initialPreferences.translationLang !== "off" ? initialPreferences.secondaryTranslationLang ?? null : null);
   const initialTransitionIdRef = useRef(initialTransitionId);
   const initialPreferencesRef = useRef(initialPreferences);
+  // Read at response time: a refresh may start before the session is latched.
+  const preserveTrainingScopeRef = useRef(preserveTrainingScope);
+  preserveTrainingScopeRef.current = preserveTrainingScope;
 
   const readGeneration = useRef(0);
   const pendingWrites = useRef(0);
@@ -54,11 +58,15 @@ export function useTrainingPreferences(
   const applyPreferences = useCallback((prefs: UserPreferences) => {
       setThemePreference(prefs.themePreference);
       setAudioQualityState(prefs.audioQuality);
-      setEnabledModesState(prefs.modesEnabled);
-      setCardFilterState(prefs.cardFilter);
-      setLanguageState(prefs.languageCode);
-      setNewReviewRatioState(prefs.newReviewRatio);
-      setActiveScenarioState(prefs.activeScenario);
+      // A running session owns its selection. Account defaults are a setup
+      // input, not a request to replace an already mounted training card.
+      if (!preserveTrainingScopeRef.current) {
+        setEnabledModesState(current => current.join("|") === prefs.modesEnabled.join("|") ? current : prefs.modesEnabled);
+        setCardFilterState(prefs.cardFilter);
+        setLanguageState(prefs.languageCode);
+        setNewReviewRatioState(prefs.newReviewRatio);
+        setActiveScenarioState(prefs.activeScenario);
+      }
       setTranslationLangState(prefs.translationLang);
       translationLangRef.current = prefs.translationLang;
       setSecondaryTranslationLangState(prefs.translationLang && prefs.translationLang !== "off" ? prefs.secondaryTranslationLang ?? null : null);

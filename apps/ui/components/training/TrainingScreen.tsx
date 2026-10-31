@@ -348,7 +348,13 @@ function TrainingScreenContent({
     setTheme,
     setTranslationLang,
     setSecondaryTranslationLang,
-  } = useTrainingPreferences(user?.id, initialTransitionId, initialPreferences);
+  } = useTrainingPreferences(
+    user?.id,
+    initialTransitionId,
+    initialPreferences,
+    Boolean(trainingSessionId || idiomSession || sentenceSession) ||
+      (trainingTodaySetupEnabled && !sessionResumeResolved),
+  );
   const [currentTrainingLanguage, setCurrentTrainingLanguage] =
     useState(language);
   const [trainingLanguageOptions, setTrainingLanguageOptions] = useState(

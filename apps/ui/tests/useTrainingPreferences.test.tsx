@@ -197,3 +197,54 @@ test("a stale event refresh cannot overwrite a newer optimistic settings write",
   await act(async () => finishRead(loadedPreferences));
   expect(result.current.themePreference).toBe("light");
 });
+
+test("background account reads preserve session selection while refreshing presentation preferences", async () => {
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const initial = { ...loadedPreferences, cardFilter: "review", modesEnabled: ["definition-to-word"] } as UserPreferences;
+  const { result } = renderHook(() => useTrainingPreferences(userId, undefined, initial, true));
+  const modes = result.current.enabledModes;
+  fetchUserPreferences.mockResolvedValue({
+    ...initial, cardFilter: "both", modesEnabled: ["word-to-definition"], languageCode: "de",
+    activeScenario: "understanding", newReviewRatio: 10,
+    themePreference: "light", audioQuality: "free", translationLang: "fr", secondaryTranslationLang: "de",
+  });
+  act(() => eventTransport.listeners[0]({ kind: "account.changed" }));
+  await waitFor(() => expect(result.current.translationLang).toBe("fr"));
+  expect(result.current.enabledModes).toBe(modes);
+  expect(result.current).toEqual(expect.objectContaining({
+    cardFilter: "review", language: "nl", activeScenario: "listening", newReviewRatio: 4,
+    themePreference: "light", audioQuality: "free", secondaryTranslationLang: "de",
+  }));
+  expect(updateUserPreferences).not.toHaveBeenCalled();
+});
+
+test("a session started during an account read owns the scope when the response arrives", async () => {
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const { result, rerender } = renderHook(({ active }) =>
+    useTrainingPreferences(userId, undefined, loadedPreferences as UserPreferences, active),
+    { initialProps: { active: false } },
+  );
+  let finishRead!: (value: unknown) => void;
+  fetchUserPreferences.mockReturnValueOnce(new Promise(resolve => { finishRead = resolve; }));
+  act(() => eventTransport.listeners[0]({ kind: "account.changed" }));
+  await waitFor(() => expect(fetchUserPreferences).toHaveBeenCalledOnce());
+  rerender({ active: true });
+  act(() => {
+    result.current.setEnabledModes(["definition-to-word"], { persist: false });
+    result.current.setCardFilter("review", { persist: false });
+  });
+  await act(async () => finishRead({ ...loadedPreferences, cardFilter: "both", translationLang: "fr" }));
+  expect(result.current.enabledModes).toEqual(["definition-to-word"]);
+  expect(result.current.cardFilter).toBe("review");
+  expect(result.current.translationLang).toBe("fr");
+});
+
+test("setup account reads still adopt changed defaults without replacing equal mode arrays", async () => {
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const { result } = renderHook(() => useTrainingPreferences(userId, undefined, loadedPreferences as UserPreferences));
+  const modes = result.current.enabledModes;
+  fetchUserPreferences.mockResolvedValue({ ...loadedPreferences, modesEnabled: [...loadedPreferences.modesEnabled], cardFilter: "both" });
+  act(() => eventTransport.listeners[0]({ kind: "account.changed" }));
+  await waitFor(() => expect(result.current.cardFilter).toBe("both"));
+  expect(result.current.enabledModes).toBe(modes);
+});
