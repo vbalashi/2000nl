@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { useTrainingRunSelection, type TrainingRunSelection } from "@/lib/training/useTrainingRunSelection";
 import { useTrainingPreferences } from "@/lib/training/useTrainingPreferences";
 import type { UserPreferences } from "@/lib/trainingService";
 
@@ -198,45 +199,55 @@ test("a stale event refresh cannot overwrite a newer optimistic settings write",
   expect(result.current.themePreference).toBe("light");
 });
 
-test("background account reads preserve session selection while refreshing presentation preferences", async () => {
+const runSelection: TrainingRunSelection = {
+  sessionId: "run-a", family: "meaning", languageCode: "nl", scenarioId: "listening",
+  modes: ["definition-to-word"], cardFilter: "review", newReviewRatio: 4,
+  listId: "list-a", listType: "curated", focusFilter: { dateWindow: "all" }, sessionSize: 10,
+};
+
+test("background reads update future defaults and presentation while the run retains its selection", async () => {
   const userId = "11111111-1111-4111-8111-111111111111";
-  const initial = { ...loadedPreferences, cardFilter: "review", modesEnabled: ["definition-to-word"] } as UserPreferences;
-  const { result } = renderHook(() => useTrainingPreferences(userId, undefined, initial, true));
-  const modes = result.current.enabledModes;
+  const { result } = renderHook(() => ({
+    defaults: useTrainingPreferences(userId, undefined, loadedPreferences as UserPreferences),
+    run: useTrainingRunSelection(),
+  }));
+  act(() => result.current.run.latch(runSelection));
+  const selection = result.current.run.selection;
   fetchUserPreferences.mockResolvedValue({
-    ...initial, cardFilter: "both", modesEnabled: ["word-to-definition"], languageCode: "de",
-    activeScenario: "understanding", newReviewRatio: 10,
+    ...loadedPreferences, cardFilter: "both", modesEnabled: ["word-to-definition"], languageCode: "de",
+    activeScenario: "understanding", newReviewRatio: 5,
     themePreference: "light", audioQuality: "free", translationLang: "fr", secondaryTranslationLang: "de",
   });
   act(() => eventTransport.listeners[0]({ kind: "account.changed" }));
-  await waitFor(() => expect(result.current.translationLang).toBe("fr"));
-  expect(result.current.enabledModes).toBe(modes);
-  expect(result.current).toEqual(expect.objectContaining({
-    cardFilter: "review", language: "nl", activeScenario: "listening", newReviewRatio: 4,
+  await waitFor(() => expect(result.current.defaults.translationLang).toBe("fr"));
+  expect(result.current.run.selection).toBe(selection);
+  expect(result.current.run.selection).toEqual(runSelection);
+  expect(result.current.defaults).toEqual(expect.objectContaining({
+    enabledModes: ["word-to-definition"], cardFilter: "both", language: "de",
+    activeScenario: "understanding", newReviewRatio: 5,
     themePreference: "light", audioQuality: "free", secondaryTranslationLang: "de",
   }));
   expect(updateUserPreferences).not.toHaveBeenCalled();
+  act(() => result.current.run.release());
+  expect(result.current.run.selection).toBeNull();
+  expect(result.current.defaults.language).toBe("de");
 });
 
-test("a session started during an account read owns the scope when the response arrives", async () => {
+test("a response started before Start updates defaults without replacing the new run", async () => {
   const userId = "11111111-1111-4111-8111-111111111111";
-  const { result, rerender } = renderHook(({ active }) =>
-    useTrainingPreferences(userId, undefined, loadedPreferences as UserPreferences, active),
-    { initialProps: { active: false } },
-  );
+  const { result } = renderHook(() => ({
+    defaults: useTrainingPreferences(userId, undefined, loadedPreferences as UserPreferences),
+    run: useTrainingRunSelection(),
+  }));
   let finishRead!: (value: unknown) => void;
   fetchUserPreferences.mockReturnValueOnce(new Promise(resolve => { finishRead = resolve; }));
   act(() => eventTransport.listeners[0]({ kind: "account.changed" }));
   await waitFor(() => expect(fetchUserPreferences).toHaveBeenCalledOnce());
-  rerender({ active: true });
-  act(() => {
-    result.current.setEnabledModes(["definition-to-word"], { persist: false });
-    result.current.setCardFilter("review", { persist: false });
-  });
+  act(() => result.current.run.latch(runSelection));
   await act(async () => finishRead({ ...loadedPreferences, cardFilter: "both", translationLang: "fr" }));
-  expect(result.current.enabledModes).toEqual(["definition-to-word"]);
-  expect(result.current.cardFilter).toBe("review");
-  expect(result.current.translationLang).toBe("fr");
+  expect(result.current.run.selection).toEqual(runSelection);
+  expect(result.current.defaults.cardFilter).toBe("both");
+  expect(result.current.defaults.translationLang).toBe("fr");
 });
 
 test("setup account reads still adopt changed defaults without replacing equal mode arrays", async () => {

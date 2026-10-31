@@ -19,6 +19,24 @@ AudioFilms focuses on listening and shadowing; Pontix focuses on browser
 translation. 2000NL is intended to keep vocabulary and learning progress together
 as these connections develop.
 
+## Active training selection
+
+Account learning preferences and the saved active scope are defaults for setup.
+Their background reads continue to reconcile after account/collection hints and
+reconnects. A successful Start or validated resume creates an owned copy of the
+run selection through `useTrainingRunSelection`: language, exercise family,
+scenario, directions, filter, material identity, mixing ratio and session size.
+All exercise families use this ownership rule. Selection consumers use that
+snapshot until an explicit replacement or authoritative takeover releases it;
+catalog hydration cannot issue an implicit replacement command. Fresh defaults
+remain available for subsequent setup rather than being discarded during a run.
+
+This snapshot does not freeze learning progress, server plan revisions, material
+access or authority checks. Those remain live. Theme, audio and translation
+preferences also continue to update independently. A selected visible card must
+have a current-card target before requesting display authority; missing target
+context is a recoverable failure, never a pending request that cannot start.
+
 
 ## Training diagnostics
 

@@ -112,12 +112,14 @@ export function useCurrentTrainingCard(input: {
     enabled && ready && current?.permit && input.target
       ? { sessionId: input.target.sessionId, permitId: current.permit.permitId }
       : undefined;
+  const missingTarget = enabled && input.active && !input.target;
   return {
     enabled,
     ready,
+    missingTarget,
     failed:
       enabled &&
-      (current?.status === "failed" ||
+      (missingTarget || current?.status === "failed" ||
         Boolean(
           current?.permit && Date.parse(current.permit.expiresAt) <= Date.now(),
         )),

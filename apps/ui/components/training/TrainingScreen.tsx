@@ -3,6 +3,7 @@ import { startTrainingDiagnostics } from "@/lib/diagnostics/client";
 import { authenticatedJsonHeaders } from "@/lib/platform/platformV2Http";
 import {CollectionSelectionContext} from '@/components/library/sharing/CollectionSelectionContext';
 import {canonicalDraft as canonicalEmptyTrainingDraft} from "@/lib/training/setups/model";
+import { useTrainingRunSelection } from "@/lib/training/useTrainingRunSelection";
 import { useUserEventHints } from "@/lib/events/userEventHints";
 import { publishPlatformV2CardStateChanged } from "@/lib/platform/platformV2CardStateChanges";
 import {CardTranslationLanguagesProvider} from "@/components/practice/article/AdditionalCardTranslation";
@@ -244,7 +245,8 @@ function TrainingScreenContent({
   const [idiomSession, setIdiomSession] =
     useState<PlatformIdiomExerciseSessionV2 | null>(null);
   const [sentenceSession, setSentenceSession] = useState<PlatformTranslationExerciseSessionV2 | null>(null);
-  const [sessionSize, setSessionSize] =
+  const { selection: runSelection, latch: latchRunSelection, release: releaseRunSelection, isCurrent: isCurrentRunSelection } = useTrainingRunSelection();
+  const [setupSessionSize, setSessionSize] =
     useState<TrainingSessionSize>(DEFAULT_SESSION_SIZE);
   const [sessionPlannedTotal, setSessionPlannedTotal] = useState<number | null>(
     null,
@@ -332,12 +334,12 @@ function TrainingScreenContent({
     };
   }, []);
   const {
-    activeScenario,
+    activeScenario: setupActiveScenario,
     audioQuality,
-    cardFilter,
-    enabledModes,
+    cardFilter: setupCardFilter,
+    enabledModes: setupEnabledModes,
     language,
-    newReviewRatio,
+    newReviewRatio: setupNewReviewRatio,
     themePreference,
     translationLang,
     secondaryTranslationLang,
@@ -352,11 +354,14 @@ function TrainingScreenContent({
     user?.id,
     initialTransitionId,
     initialPreferences,
-    Boolean(trainingSessionId || idiomSession || sentenceSession) ||
-      (trainingTodaySetupEnabled && !sessionResumeResolved),
   );
-  const [currentTrainingLanguage, setCurrentTrainingLanguage] =
-    useState(language);
+  const activeScenario = runSelection?.scenarioId ?? setupActiveScenario;
+  const enabledModes = runSelection?.modes ?? setupEnabledModes;
+  const cardFilter = runSelection?.cardFilter ?? setupCardFilter;
+  const newReviewRatio = runSelection?.newReviewRatio ?? setupNewReviewRatio;
+  const sessionSize = runSelection?.sessionSize ?? setupSessionSize;
+  const [setupTrainingLanguage, setCurrentTrainingLanguage] = useState(language);
+  const currentTrainingLanguage = runSelection?.languageCode ?? setupTrainingLanguage;
   const [trainingLanguageOptions, setTrainingLanguageOptions] = useState(
     DEFAULT_LANGUAGE_OPTIONS,
   );
@@ -433,7 +438,7 @@ function TrainingScreenContent({
     };
   }, [user?.id]);
 
-  const [trainingFocusFilter, setTrainingFocusFilter] =
+  const [setupFocusFilter, setTrainingFocusFilter] =
     useState<TrainingFocusFilter>(DEFAULT_TRAINING_FOCUS_FILTER);
   const [trainingFilterSources, setTrainingFilterSources] = useState<
     TrainingFilterSource[]
@@ -520,11 +525,12 @@ function TrainingScreenContent({
     );
   }, [currentWord, currentWord?.id]);
 
+  const trainingFocusFilter = runSelection?.focusFilter ?? setupFocusFilter;
   const trainingFocusFilterKey = trainingFilterKey(trainingFocusFilter);
 
   const {
-    activeList,
-    activeListValue,
+    activeList: setupActiveList,
+    activeListValue: setupActiveListValue,
     applyListLocal,
     availableLists,
     rememberTrainingReferences,
@@ -539,9 +545,9 @@ function TrainingScreenContent({
     persistListChange,
     refreshAvailableLists,
     resolveListValue,
-    wordListId,
-    wordListLabel,
-    wordListType,
+    wordListId: setupWordListId,
+    wordListLabel: setupWordListLabel,
+    wordListType: setupWordListType,
   } = useTrainingActiveList({
     userId: user?.id,
     language: currentTrainingLanguage,
@@ -550,6 +556,15 @@ function TrainingScreenContent({
     interfaceLanguage: onboardingLang,
   });
   const readableLists=readableCatalogLists??availableLists;
+  const wordListId = runSelection ? runSelection.listId : setupWordListId;
+  const wordListType = runSelection ? runSelection.listType : setupWordListType;
+  const activeList = runSelection
+    ? readableLists.find(list => list.id === wordListId && list.type === wordListType) ?? null
+    : setupActiveList;
+  const wordListLabel = runSelection ? activeList?.name ?? runSelection.listLabel ?? "" : setupWordListLabel;
+  const activeListValue = runSelection
+    ? wordListId ? `${wordListType ?? "curated"}:${wordListId}` : ""
+    : setupActiveListValue;
   const currentStatsScopeKey = JSON.stringify([
     user?.id ?? "",
     currentTrainingLanguage,
@@ -563,16 +578,12 @@ function TrainingScreenContent({
     null,
   );
   const localTrainingPreferencesRef = useRef({
-    activeScenario,
-    cardFilter,
-    enabledModes,
-    newReviewRatio,
+    activeScenario: setupActiveScenario, cardFilter: setupCardFilter,
+    enabledModes: setupEnabledModes, newReviewRatio: setupNewReviewRatio,
   });
   localTrainingPreferencesRef.current = {
-    activeScenario,
-    cardFilter,
-    enabledModes,
-    newReviewRatio,
+    activeScenario: setupActiveScenario, cardFilter: setupCardFilter,
+    enabledModes: setupEnabledModes, newReviewRatio: setupNewReviewRatio,
   };
 
   const enabledModesKey = enabledModes.join("|");
@@ -872,6 +883,7 @@ function TrainingScreenContent({
       ? `${currentPresentationId}:${currentWord.id}:${currentMode}`
       : null;
   const beginSessionScopeChange = useCallback(() => {
+    releaseRunSelection();
     setSessionDisplayName(undefined);
     setSessionTrainingId(undefined);
     sessionResumeGenerationRef.current += 1;
@@ -886,6 +898,7 @@ function TrainingScreenContent({
     setSessionConsumedCardKeys([]);
     setSessionCompletedActions(0);
   }, [
+    releaseRunSelection,
     beginTrainingTurnScopeChange,
     resetPlatformProgressActionPending,
     replaceTrainingSessionId,
@@ -896,14 +909,13 @@ function TrainingScreenContent({
   useEffect(() => {
     if (
       !trainingLanguageManuallyChangedRef.current &&
-      currentTrainingLanguage !== language
+      setupTrainingLanguage !== language
     ) {
-      beginSessionScopeChange();
       languageHydrationPendingRef.current = true;
       languageHydrationObservedNotReadyRef.current = false;
       setCurrentTrainingLanguage(language);
     }
-  }, [beginSessionScopeChange, currentTrainingLanguage, language]);
+  }, [setupTrainingLanguage, language]);
 
   useEffect(() => {
     if (!activeTrainingScope) return;
@@ -916,11 +928,8 @@ function TrainingScreenContent({
     lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
     const current = localTrainingPreferencesRef.current;
     const nextModes = activeTrainingScope.modesEnabled as TrainingMode[];
-    const scopeChanged =
-      current.activeScenario !== activeTrainingScope.activeScenario ||
-      current.cardFilter !== activeTrainingScope.cardFilter ||
-      current.enabledModes.join("|") !== nextModes.join("|");
-    if (scopeChanged) beginSessionScopeChange();
+    // Saved scope is a setup projection. Only explicit user commands replace
+    // a latched run; authority/access changes follow their server checks.
     if (current.activeScenario !== activeTrainingScope.activeScenario) {
       setActiveScenario(activeTrainingScope.activeScenario, { persist: false });
     }
@@ -947,35 +956,26 @@ function TrainingScreenContent({
   ]);
 
   useEffect(() => {
-    if (!activeList?.default_scenario_id) {
+    if (!setupActiveList?.default_scenario_id) {
       appliedDefaultScenarioListRef.current = null;
       return;
     }
     if (activeTrainingScope?.hasSavedScope) return;
-    if (appliedDefaultScenarioListRef.current === activeList.id) return;
-
-    appliedDefaultScenarioListRef.current = activeList.id;
-    if (activeScenario !== activeList.default_scenario_id) {
-      beginSessionScopeChange();
-      setActiveScenario(activeList.default_scenario_id, { persist: false });
+    if (appliedDefaultScenarioListRef.current === setupActiveList.id) return;
+    appliedDefaultScenarioListRef.current = setupActiveList.id;
+    if (setupActiveScenario !== setupActiveList.default_scenario_id) {
+      setActiveScenario(setupActiveList.default_scenario_id, { persist: false });
       if (!trainingTodaySetupEnabled && initialLoadDone.current) {
         void replaceSessionScopeAndLoad({
-          scope: { listId: wordListId, listType: wordListType },
-          scenario: activeList.default_scenario_id,
+          scope: { listId: setupWordListId, listType: setupWordListType },
+          scenario: setupActiveList.default_scenario_id,
         });
       }
     }
   }, [
-    activeList?.default_scenario_id,
-    activeList?.id,
-    activeScenario,
-    activeTrainingScope?.hasSavedScope,
-    beginSessionScopeChange,
-    replaceSessionScopeAndLoad,
-    setActiveScenario,
-    trainingTodaySetupEnabled,
-    wordListId,
-    wordListType,
+    setupActiveList?.default_scenario_id, setupActiveList?.id, setupActiveScenario,
+    activeTrainingScope?.hasSavedScope, replaceSessionScopeAndLoad,
+    setActiveScenario, trainingTodaySetupEnabled, setupWordListId, setupWordListType,
   ]);
 
   const handleTrainingLanguageChange = useCallback(
@@ -1322,9 +1322,9 @@ function TrainingScreenContent({
       // default scenario below is authoritative for the replacement request,
       // so the hydration effect must not replay the intermediate snapshot.
       lastAppliedActiveTrainingScopeRef.current = refreshedScope;
-      if (previousListKey === `${list.type}:${list.id}`) {
+      if (runSelection || previousListKey === `${list.type}:${list.id}`) {
         // Editing collections must not end the running Training session.
-        void loadStats({ listId: list.id, listType: list.type });
+        void loadStats(runSelection ? { listId: runSelection.listId, listType: runSelection.listType } : { listId: list.id, listType: list.type });
         return;
       }
       beginSessionScopeChange();
@@ -1347,6 +1347,7 @@ function TrainingScreenContent({
       onPrimaryFallback: reloadForList,
     });
   }, [
+    runSelection,
     activeScenario,
     beginSessionScopeChange,
     loadStats,
@@ -1418,6 +1419,7 @@ function TrainingScreenContent({
     applyPreferences: applyPilotPreferences,
     applyFocusFilter: setTrainingFocusFilter,
     onEmptyPlan: (draft,options) => {
+      releaseRunSelection();
       setIdiomSession(null);setSentenceSession(null);replaceTrainingSessionId(null);setLatchedSessionPlan(null);setCurrentWord(null);setSessionPlannedTotal(null);setSessionCompletedActions(0);
       if(user?.id)void clearTrainingSessionResume(user.id);
       if(options?.trainingId)setEmptyTraining({draftKey:JSON.stringify([currentTrainingLanguage,canonicalEmptyTrainingDraft(draft)]),trainingId:options.trainingId,canReviewAhead:draft.cardFilter==="review"&&!options.reviewTiming,message:options.reviewTiming?{en:"No review cards match this training.",nl:"Geen herhalingskaarten passen bij deze training.",ru:"Нет подходящих изучаемых карточек для этой тренировки."}[onboardingLang]:draft.cardFilter==="review"?{en:"No cards are due for review now.",nl:"Er hoeven nu geen kaarten herhaald te worden.",ru:"Сейчас нет карточек для повторения."}[onboardingLang]:{en:"No cards match this training.",nl:"Geen kaarten passen bij deze training.",ru:"Нет подходящих карточек для этой тренировки."}[onboardingLang]});
@@ -1434,6 +1436,17 @@ function TrainingScreenContent({
     startTranslationSession: startPlatformV2TranslationTrainingSession,
     reportError: setTrainingLoadError,
     onSessionReady: (session, context) => {
+      latchRunSelection({
+        sessionId: session.sessionId, family: context.draft.family ?? "meaning",
+        languageCode: context.languageCode,
+        scenarioId: (context.draft.family ?? "meaning") === "meaning" ? context.draft.scenarioId : "understanding",
+        modes: context.draft.modes, cardFilter: context.draft.cardFilter,
+        newReviewRatio: context.draft.newReviewRatio, listId: context.scope.listId,
+        listType: context.scope.listType ?? null,
+        listLabel: resolveListValue(context.draft.listValue)?.name,
+        focusFilter: context.focusFilter,
+        sessionSize: context.draft.sessionSize ?? DEFAULT_SESSION_SIZE,
+      });
       setEmptyTraining(undefined);
       completionDraftRef.current = structuredClone(context.draft);
       setSessionDisplayName(context.sessionName?.trim() || undefined);
@@ -1600,13 +1613,13 @@ function TrainingScreenContent({
     translationTargetLanguageCode: translationLang === "off" ? null : translationLang,
     interfaceLanguage: onboardingLang,
     setupPrerequisites: trainingSetupPrerequisites,
-    activeScenario,
-    enabledModes,
-    cardFilter,
-    activeListValue,
-    newReviewRatio,
-    sessionSize,
-    focusFilter: trainingFocusFilter,
+    activeScenario: setupActiveScenario,
+    enabledModes: setupEnabledModes,
+    cardFilter: setupCardFilter,
+    activeListValue: setupActiveListValue,
+    newReviewRatio: setupNewReviewRatio,
+    sessionSize: setupSessionSize,
+    focusFilter: setupFocusFilter,
     listOptions,
     dictionaryOptions,
     sourceOptions: pilotSourceOptions,
@@ -1850,6 +1863,9 @@ function TrainingScreenContent({
                 list.id === record.listId && list.type === record.listType,
             )
           : null;
+        latchRunSelection({ ...record, sessionId: idiomSnapshot.sessionId,
+          family: "idiom", listId: record.listId ?? null, listType: record.listType ?? null,
+          scenarioId: "understanding", listLabel: savedList?.name });
         if (savedList) applyListLocal(savedList);
         if (activeTrainingScope) {
           lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
@@ -1894,6 +1910,9 @@ function TrainingScreenContent({
           setSessionResumeScopeResolved(true); setSessionResumeResolved(true); return;
         }
         const savedList = record.listId ? readableLists.find((list) => list.id === record.listId && list.type === record.listType) : null;
+        latchRunSelection({ ...record, sessionId: snapshot.sessionId,
+          family: "sentence", listId: record.listId ?? null, listType: record.listType ?? null,
+          scenarioId: "understanding", listLabel: savedList?.name });
         if (savedList) applyListLocal(savedList);
         if (activeTrainingScope) lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
         setActiveScenario("understanding", { persist: false }); setEnabledModes(record.modes, { persist: false });
@@ -1977,6 +1996,9 @@ function TrainingScreenContent({
             (list) => list.id === record.listId && list.type === record.listType,
           )
         : null;
+      latchRunSelection({ ...record, sessionId: snapshot.sessionId,
+        family: record.family ?? "meaning", listId: record.listId ?? null,
+        listType: record.listType ?? null, listLabel: activeList?.name });
       if (activeList) applyListLocal(activeList);
       // Scope hydration was intentionally deferred while resume was pending.
       // Mark the observed server scope as handled before applying the persisted
@@ -2054,6 +2076,7 @@ function TrainingScreenContent({
 
     void resolveResume();
   }, [
+    latchRunSelection,
     activeTrainingScope,
     applyListLocal,
     readableLists,
@@ -2120,6 +2143,7 @@ function TrainingScreenContent({
       ) {
         return;
       }
+      releaseRunSelection();
       sessionResumeGenerationRef.current += 1;
       if (user?.id) void clearTrainingSessionResume(user.id);
       resetFocusQueueState();
@@ -2135,6 +2159,7 @@ function TrainingScreenContent({
       returnToToday();
     },
     [
+      releaseRunSelection,
       resetFocusQueueState,
       resetPlatformProgressActionPending,
       replaceTrainingSessionId,
@@ -2240,11 +2265,13 @@ function TrainingScreenContent({
   const handleContinueTrainingSession = useCallback(() => {
     if (activeExerciseFamily === "sentence" && sentenceSession && user?.id) {
       void fetchPlatformV2TranslationTrainingSessionSnapshot(user.id, sentenceSession.sessionId).then((snapshot) => {
+        if (!componentMountedRef.current || !isCurrentRunSelection(sentenceSession.sessionId, "sentence")) return;
         if (!snapshot || snapshot.runStatus === "superseded") {
+          releaseRunSelection();
           void clearTrainingSessionResume(user.id); setSentenceSession(null); setActiveExerciseFamily("meaning"); setExerciseFamilyForResume("meaning"); setSessionReplacementWarning(Boolean(snapshot)); returnToToday(); return;
         }
         setSentenceSession(snapshot); resumeSession();
-      }).catch(() => { setSessionResumeError(true); setTrainingLoadError("training_resume_failed"); });
+      }).catch(() => { if (componentMountedRef.current && isCurrentRunSelection(sentenceSession.sessionId, "sentence")) { setSessionResumeError(true); setTrainingLoadError("training_resume_failed"); } });
       return;
     }
     if (activeExerciseFamily === "idiom" && idiomSession && user?.id) {
@@ -2253,7 +2280,9 @@ function TrainingScreenContent({
         idiomSession.sessionId,
       )
         .then((snapshot) => {
+          if (!componentMountedRef.current || !isCurrentRunSelection(idiomSession.sessionId, "idiom")) return;
           if (!snapshot || snapshot.runStatus === "superseded") {
+            releaseRunSelection();
             void clearTrainingSessionResume(user.id);
             setIdiomSession(null);
             setActiveExerciseFamily("meaning");
@@ -2266,6 +2295,7 @@ function TrainingScreenContent({
           resumeSession();
         })
         .catch(() => {
+          if (!componentMountedRef.current || !isCurrentRunSelection(idiomSession.sessionId, "idiom")) return;
           setSessionResumeError(true);
           setTrainingLoadError("training_resume_failed");
         });
@@ -2299,6 +2329,8 @@ function TrainingScreenContent({
       }
     });
   }, [
+    isCurrentRunSelection,
+    releaseRunSelection,
     currentWord,
     resetFocusQueueState,
     continueSession,
