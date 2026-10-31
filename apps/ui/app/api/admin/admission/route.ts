@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     // Cookie-authenticated mutations must originate from this admin origin.
-    const site = runtimeEnv("NEXT_PUBLIC_SITE_URL");
+    const site = runtimeEnv("ADMIN_SITE_URL") || runtimeEnv("NEXT_PUBLIC_SITE_URL");
     const expectedOrigin = new URL(site || request.url).origin;
     if (request.headers.get("origin") !== expectedOrigin) return reply({ error: "forbidden_origin" }, 403);
     const principal = await requireAdmin(request, "admission.manage");
