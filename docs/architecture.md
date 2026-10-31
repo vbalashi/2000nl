@@ -40,6 +40,8 @@ context is a recoverable failure, never a pending request that cannot start.
 
 ## Meaning card spacing
 
+Decision: [ADR-0001](adr/0001-meaning-direction-spacing.md).
+
 Ordinary meaning sessions choose from the eligible candidate pool before applying
 session size. Opposite directions of one meaning (`entry_id`) have at least three
 intervening cards whenever a candidate outside that recent history is available.
