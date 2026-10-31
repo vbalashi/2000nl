@@ -5,7 +5,7 @@ import { describe, expect, test, vi, type Mock } from "vitest";
 /** Runs against mounted production renderers and the real current-card hook.
  * Only the transport and content providers are replaced by synthetic fixtures. */
 export function trainingLifecyclePresentationContract(family: string, prepare: () => {
-  view: (active: boolean) => ReactElement;
+  view: (active: boolean,blocked?:boolean,refreshing?:boolean) => ReactElement;
   read: Mock;
   acknowledge: Mock;
   action: Mock;
@@ -31,6 +31,19 @@ export function trainingLifecyclePresentationContract(family: string, prepare: (
         expect(await screen.findByRole("button", { name: "Show answer" })).toBeVisible();
         expect(adapter.action).not.toHaveBeenCalled();
       } finally { vi.unstubAllEnvs(); }
+    });
+
+    test("authority validation fences a mounted card without replacing its display target",async()=>{
+      vi.stubEnv("NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED","true");
+      try{
+        const adapter=prepare();adapter.acknowledge.mockReset().mockResolvedValue({permitId:"permit",expiresAt:new Date(Date.now()+60_000).toISOString(),runGeneration:1});
+        const mounted=render(adapter.view(true));await screen.findByRole("button",{name:"Show answer"});
+        mounted.rerender(adapter.view(true,true,true));
+        expect(screen.getByRole("button",{name:"Show answer"})).toBeDisabled();
+        expect(document.querySelector("[data-authority-refreshing]")).not.toBeNull();
+        expect(adapter.acknowledge).toHaveBeenCalledOnce();expect(adapter.action).not.toHaveBeenCalled();
+        mounted.rerender(adapter.view(true,false,false));expect(screen.getByRole("button",{name:"Show answer"})).toBeEnabled();
+      }finally{vi.unstubAllEnvs();}
     });
 
     test("an ACK arriving while hidden cannot authorize a returned pane", async () => {

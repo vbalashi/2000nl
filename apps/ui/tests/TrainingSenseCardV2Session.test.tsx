@@ -3031,7 +3031,7 @@ describe("TrainingSenseCardV2Session", () => {
     trainingLifecyclePresentationContract(wordInContext ? "Word in Context" : "meaning", () => {
       fetchSingleSense.mockResolvedValue({state:"ready",group:singleSenseGroup,entry:{...singleSenseEntry,sourceVersion:1}});
       loadContextPrompt.mockResolvedValue({state:"ready",prompt:{recallTarget:"hand",text:"She held it in her hand.",sourceText:singleSenseEntry.contentNodes[1].text,contentNodeId:"example-1",sourceTextFingerprint:"example-fingerprint"}});
-      return {view:(active)=><TestTrainingSenseCardV2Session presentationActive={active} word={word} mode={wordInContext ? "definition-to-word" : "word-to-definition"} wordInContext={wordInContext} trainingSessionId="contract-run" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()}/>,
+      return {view:(active,blocked,refreshing)=><TestTrainingSenseCardV2Session interactionDisabled={blocked} authorityRefreshing={refreshing} presentationActive={active} word={word} mode={wordInContext ? "definition-to-word" : "word-to-definition"} wordInContext={wordInContext} trainingSessionId="contract-run" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()}/>,
         read:fetchSingleSense,acknowledge:acknowledgeCurrent,action:performAction,
         target:{sessionId:"contract-run",entryId:word.id,cardTypeId:wordInContext ? "definition-to-word" : "word-to-definition"}};
     });

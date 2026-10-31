@@ -1,9 +1,11 @@
 "use client";
+import { useTrainingOperationScope } from "./useTrainingOperationScope";
+import { recoverTrainingRun } from "@/lib/training/trainingRunRecovery";
 import { startTrainingDiagnostics } from "@/lib/diagnostics/client";
 import { authenticatedJsonHeaders } from "@/lib/platform/platformV2Http";
 import {CollectionSelectionContext} from '@/components/library/sharing/CollectionSelectionContext';
 import {canonicalDraft as canonicalEmptyTrainingDraft} from "@/lib/training/setups/model";
-import { useTrainingRunSelection } from "@/lib/training/useTrainingRunSelection";
+import { useTrainingRunSelection, type TrainingRunSelection } from "@/lib/training/useTrainingRunSelection";
 import { useUserEventHints } from "@/lib/events/userEventHints";
 import { publishPlatformV2CardStateChanged } from "@/lib/platform/platformV2CardStateChanges";
 import {CardTranslationLanguagesProvider} from "@/components/practice/article/AdditionalCardTranslation";
@@ -91,7 +93,6 @@ import sessionStyles from "./v2/TrainingSessionLayout.module.css";
 import { useLatchedTranslationBuffer } from "./v2/useLatchedTranslationBuffer";
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import {
-  classifyResumeSnapshot,
   decideAuthoritySnapshot,
   decideResumePreflight,
 } from "./trainingSessionDecisions";
@@ -243,7 +244,7 @@ function TrainingScreenContent({
   const [idiomSession, setIdiomSession] =
     useState<PlatformIdiomExerciseSessionV2 | null>(null);
   const [sentenceSession, setSentenceSession] = useState<PlatformTranslationExerciseSessionV2 | null>(null);
-  const { selection: runSelection, latch: latchRunSelection, release: releaseRunSelection, isCurrent: isCurrentRunSelection } = useTrainingRunSelection();
+  const { selection: runSelection, latch: latchRunSelection, release: releaseRunSelection, owns:ownsRunSelection } = useTrainingRunSelection();
   const [setupSessionSize, setSessionSize] =
     useState<TrainingSessionSize>(DEFAULT_SESSION_SIZE);
   const [sessionPlannedTotal, setSessionPlannedTotal] = useState<number | null>(
@@ -282,7 +283,7 @@ function TrainingScreenContent({
   const [platformProgressActionPending, setPlatformProgressActionPending] =
     useState(false);
   const sessionResumeAttemptedRef = useRef(false);
-  const sessionResumeGenerationRef = useRef(0);
+  const recoveryOperations=useTrainingOperationScope(user.id);
   const trainingSessionIdRef = useRef<string | null>(null);
   const [sessionTrainingId, setSessionTrainingId] = useState<string | undefined>();
   const [emptyTraining,setEmptyTraining]=useState<{trainingId:string;message:string;canReviewAhead?:boolean;draftKey?:string}|undefined>();
@@ -290,6 +291,16 @@ function TrainingScreenContent({
   const sessionAuthority = useTrainingSessionAuthority({
     userId:user.id,
     read: async (sessionId) => {
+      if(activeExerciseFamily==="idiom" || activeExerciseFamily==="sentence"){
+        const snapshot=activeExerciseFamily==="idiom"
+          ? await fetchPlatformV2IdiomTrainingSessionSnapshot(user.id,sessionId)
+          : await fetchPlatformV2TranslationTrainingSessionSnapshot(user.id,sessionId);
+        if(!snapshot || snapshot.runStatus==="superseded")return {kind:"superseded"};
+        return {kind:"active",commit:()=>{
+          if(snapshot.exerciseFamily==="idiom")setIdiomSession(current=>current?.sessionId===sessionId ? {...snapshot,completedActions:Math.max(current.completedActions,snapshot.completedActions)} : current);
+          else setSentenceSession(current=>current?.sessionId===sessionId ? {...snapshot,completedActions:Math.max(current.completedActions,snapshot.completedActions)} : current);
+        }};
+      }
       const snapshot = await fetchTrainingSessionSnapshot(user.id, sessionId);
       const decision = decideAuthoritySnapshot(snapshot, sessionId, reconciledSessionPlanRef.current);
       if (decision.kind === "superseded" || !snapshot) return {kind:"superseded"};
@@ -312,6 +323,10 @@ function TrainingScreenContent({
   });
   const {checking:sessionAuthorityChecking,refreshing:sessionAuthorityRefreshing,
     reset:resetSessionAuthority,validate:validateTrainingSessionAuthority} = sessionAuthority;
+  const specializedSessionId=activeExerciseFamily==="idiom" ? idiomSession?.sessionId : activeExerciseFamily==="sentence" ? sentenceSession?.sessionId : null;
+  useLayoutEffect(()=>{
+    if(specializedSessionId)resetSessionAuthority(specializedSessionId);
+  },[specializedSessionId,resetSessionAuthority]);
   const replaceTrainingSessionId = useCallback((sessionId: string | null) => {
     resetSessionAuthority(sessionId);
     trainingSessionIdRef.current = sessionId;
@@ -896,7 +911,7 @@ function TrainingScreenContent({
     releaseRunSelection();
     setSessionDisplayName(undefined);
     setSessionTrainingId(undefined);
-    sessionResumeGenerationRef.current += 1;
+    recoveryOperations.cancel("restore");
     resetPlatformProgressActionPending();
     trainingScenarioCatalog.invalidate();
     beginTrainingTurnScopeChange();
@@ -908,6 +923,7 @@ function TrainingScreenContent({
     setSessionConsumedCardKeys([]);
     setSessionCompletedActions(0);
   }, [
+    recoveryOperations,
     releaseRunSelection,
     beginTrainingTurnScopeChange,
     resetPlatformProgressActionPending,
@@ -1428,6 +1444,7 @@ function TrainingScreenContent({
     applyListLocally: applyListLocal,
     applyPreferences: applyPilotPreferences,
     applyFocusFilter: setTrainingFocusFilter,
+    onStarting:()=>recoveryOperations.cancel("restore"),
     onEmptyPlan: (draft,options) => {
       releaseRunSelection();
       setIdiomSession(null);setSentenceSession(null);replaceTrainingSessionId(null);setLatchedSessionPlan(null);setCurrentWord(null);setSessionPlannedTotal(null);setSessionCompletedActions(0);
@@ -1446,6 +1463,8 @@ function TrainingScreenContent({
     startTranslationSession: startPlatformV2TranslationTrainingSession,
     reportError: setTrainingLoadError,
     onSessionReady: (session, context) => {
+      recoveryOperations.cancel("restore");
+      setSessionResumeScopeResolved(true);setSessionResumeResolved(true);
       latchRunSelection({
         sessionId: session.sessionId, family: context.draft.family ?? "meaning",
         languageCode: context.languageCode,
@@ -1464,82 +1483,21 @@ function TrainingScreenContent({
       setSessionReplacementWarning(false);
       setSessionConsumedCardKeys([]);
       setSessionCompletedActions(0);
-      if (context.draft.family === "idiom") {
-        setActiveExerciseFamily("idiom");
-        setIdiomSession(session as PlatformIdiomExerciseSessionV2);
-        setSentenceSession(null);
-        setCurrentWord(null);
-        replaceTrainingSessionId(null);
-        setLatchedSessionPlan(null);
-        if (user.id) {
-          void writeTrainingSessionResume({
-            family: "idiom",
-            sessionId: session.sessionId,
-            sessionName: context.sessionName,
-            trainingId: context.trainingId,
-            userId: user.id,
-            languageCode: context.languageCode,
-            listId: context.scope.listId,
-            listType: context.scope.listType,
-            scenarioId: "idiom",
-            modes: context.draft.modes,
-            cardFilter: context.draft.cardFilter,
-            newReviewRatio: context.draft.newReviewRatio,
-            focusFilter: context.focusFilter,
-            sessionSize: context.draft.sessionSize ?? DEFAULT_SESSION_SIZE,
-          });
-        }
-        lastAppliedTrainingFocusFilterKey.current = trainingFilterKey(
-          context.focusFilter,
-        );
-        return;
-      }
-      if (context.draft.family === "sentence") {
-        setActiveExerciseFamily("sentence");
-        setSentenceSession(session as PlatformTranslationExerciseSessionV2);
-        setIdiomSession(null);
-        setCurrentWord(null);
-        replaceTrainingSessionId(null);
-        setLatchedSessionPlan(null);
-        if (user.id) void writeTrainingSessionResume({
-          family: "sentence", sessionId: session.sessionId,
-            sessionName: context.sessionName,
-            trainingId: context.trainingId, userId: user.id,
-          languageCode: context.languageCode, listId: context.scope.listId,
-          listType: context.scope.listType, scenarioId: "sentences",
-          modes: context.draft.modes, cardFilter: context.draft.cardFilter,
-          newReviewRatio: context.draft.newReviewRatio, focusFilter: context.focusFilter,
-          sessionSize: context.draft.sessionSize ?? DEFAULT_SESSION_SIZE,
-        });
-        lastAppliedTrainingFocusFilterKey.current = trainingFilterKey(context.focusFilter);
-        return;
-      }
-      setActiveExerciseFamily(context.draft.family === "word-in-context" ? "word-in-context" : "meaning");
-      setIdiomSession(null);
-      setSentenceSession(null);
-      replaceTrainingSessionId(session.sessionId);
-      setLatchedSessionPlan(session as TrainingSession);
-      // The explicit session-start load below owns this filter. Mark it as
-      // already applied so the focus-filter observer does not issue a
-      // second, unscoped replacement request after React commits the state.
-      lastAppliedTrainingFocusFilterKey.current = trainingFilterKey(
-        context.focusFilter,
-      );
+      const family=context.draft.family??"meaning";
+      const specialized=family==="idiom"||family==="sentence";
+      setActiveExerciseFamily(family);
+      setIdiomSession(family==="idiom"?session as PlatformIdiomExerciseSessionV2:null);
+      setSentenceSession(family==="sentence"?session as PlatformTranslationExerciseSessionV2:null);
+      if(specialized)setCurrentWord(null);
+      replaceTrainingSessionId(specialized?null:session.sessionId);
+      setLatchedSessionPlan(specialized?null:session as TrainingSession);
+      lastAppliedTrainingFocusFilterKey.current=trainingFilterKey(context.focusFilter);
       void writeTrainingSessionResume({
-        ...(context.draft.family === "word-in-context" ? { family: "word-in-context" as const } : {}),
-        sessionId: session.sessionId,
-            sessionName: context.sessionName,
-            trainingId: context.trainingId,
-        userId: user.id,
-        languageCode: context.languageCode,
-        listId: context.scope.listId,
-        listType: context.scope.listType,
-        scenarioId: context.draft.scenarioId,
-        modes: context.draft.modes,
-        cardFilter: context.draft.cardFilter,
-        newReviewRatio: context.draft.newReviewRatio,
-        focusFilter: context.focusFilter,
-        sessionSize: context.draft.sessionSize ?? DEFAULT_SESSION_SIZE,
+        ...(family!=="meaning"?{family}:{}),sessionId:session.sessionId,sessionName:context.sessionName,trainingId:context.trainingId,
+        userId:user.id,languageCode:context.languageCode,listId:context.scope.listId,listType:context.scope.listType,
+        scenarioId:family==="idiom"?"idiom":family==="sentence"?"sentences":context.draft.scenarioId,
+        modes:context.draft.modes,cardFilter:context.draft.cardFilter,newReviewRatio:context.draft.newReviewRatio,
+        focusFilter:context.focusFilter,sessionSize:context.draft.sessionSize??DEFAULT_SESSION_SIZE,
       });
     },
   });
@@ -1664,6 +1622,7 @@ function TrainingScreenContent({
   const {
     continueSession,
     resumeSession,
+    resumeAfterValidation,
     returnToToday,
     startSession,
     setExerciseFamilyForResume,
@@ -1718,12 +1677,12 @@ function TrainingScreenContent({
     // still run while the retry event's state updates are queued.
     sessionResumeAttemptedRef.current = false;
     let cancelled = false;
-    const resumeGeneration = sessionResumeGenerationRef.current;
+    const resumeOperation = recoveryOperations.capture("restore");
     void readTrainingSessionResume(user.id).then((record) => {
       if (
         cancelled ||
         !componentMountedRef.current ||
-        sessionResumeGenerationRef.current !== resumeGeneration
+        !resumeOperation.isCurrent()
       ) {
         return;
       }
@@ -1735,6 +1694,7 @@ function TrainingScreenContent({
       cancelled = true;
     };
   }, [
+    recoveryOperations,
     sessionResumeRecord,
     sessionResumeResolved,
     trainingTodaySetupEnabled,
@@ -1785,11 +1745,11 @@ function TrainingScreenContent({
     setSessionTrainingId(record.trainingId);
     if (preflight.kind === "discard" && preflight.reason === "language") {
       sessionResumeAttemptedRef.current = true;
-      const resumeGeneration = sessionResumeGenerationRef.current;
+      const resumeOperation = recoveryOperations.capture("restore");
       void clearTrainingSessionResume(user.id).then(() => {
         if (
           componentMountedRef.current &&
-          sessionResumeGenerationRef.current === resumeGeneration
+          resumeOperation.isCurrent()
         ) {
           setSessionResumeScopeResolved(true);
           setSessionResumeResolved(true);
@@ -1817,7 +1777,7 @@ function TrainingScreenContent({
     // A saved session must still validate its list against the hydrated
     // catalogue before it can be resumed.
     sessionResumeAttemptedRef.current = true;
-    const resumeGeneration = sessionResumeGenerationRef.current;
+    const resumeOperation = recoveryOperations.capture("restore");
     const resolveResume = async () => {
       languageHydrationPendingRef.current = false;
       languageHydrationObservedNotReadyRef.current = false;
@@ -1830,184 +1790,37 @@ function TrainingScreenContent({
         return;
       }
 
-      if (record.family === "idiom") {
-        let idiomSnapshot: PlatformIdiomExerciseSessionV2 | null;
-        try {
-          idiomSnapshot = await fetchPlatformV2IdiomTrainingSessionSnapshot(
-            user.id,
-            record.sessionId,
-          );
-        } catch {
-          if (
-            componentMountedRef.current &&
-            sessionResumeGenerationRef.current === resumeGeneration
-          ) {
-            setSessionResumeError(true);
-            setTrainingLoadError("training_resume_failed");
-          }
-          return;
-        }
-        if (
-          !componentMountedRef.current ||
-          sessionResumeGenerationRef.current !== resumeGeneration
-        ) {
-          return;
-        }
-        const idiomResume = classifyResumeSnapshot(idiomSnapshot);
-        if (!idiomSnapshot || idiomResume.kind !== "resumable") {
-          await clearTrainingSessionResume(user.id);
-          setIdiomSession(null);
-          setActiveExerciseFamily("meaning");
-          setExerciseFamilyForResume("meaning");
-          setSessionReplacementWarning(
-            idiomSnapshot?.runStatus === "superseded",
-          );
-          setSessionResumeScopeResolved(true);
-          setSessionResumeResolved(true);
-          return;
-        }
-
-        const savedList = record.listId
-          ? readableLists.find(
-              (list) =>
-                list.id === record.listId && list.type === record.listType,
-            )
-          : null;
-        latchRunSelection({ ...record, sessionId: idiomSnapshot.sessionId,
-          family: "idiom", listId: record.listId ?? null, listType: record.listType ?? null,
-          scenarioId: "understanding", listLabel: savedList?.name });
-        if (savedList) applyListLocal(savedList);
-        if (activeTrainingScope) {
-          lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
-        }
-        setActiveScenario("understanding", { persist: false });
-        setEnabledModes(record.modes, { persist: false });
-        setCardFilterPreference(record.cardFilter, { persist: false });
-        setNewReviewRatio(record.newReviewRatio, { persist: false });
-        setSessionSize(record.sessionSize);
-        setTrainingFocusFilter(record.focusFilter);
-        setExerciseFamilyForResume("idiom");
-        setActiveExerciseFamily("idiom");
-        setIdiomSession(idiomSnapshot);
-        setSentenceSession(null);
-        replaceTrainingSessionId(null);
-        setLatchedSessionPlan(null);
-        setSessionPlannedTotal(
-          idiomSnapshot.requestedTotal ?? idiomSnapshot.plannedTotal,
-        );
-        setSessionCompletedActions(
-          idiomSnapshot.completedActions ??
-            idiomSnapshot.members.filter((member) => member.consumedAt).length,
-        );
-        setSessionResumeScopeResolved(true);
-        setSessionResumeResolved(true);
-        resumeSession();
+      let restored:Awaited<ReturnType<typeof recoverTrainingRun>>;
+      try{restored=await recoverTrainingRun(user.id,record,resumeOperation);}
+      catch{
+        if(componentMountedRef.current&&resumeOperation.isCurrent()){setSessionResumeError(true);setTrainingLoadError("training_resume_failed");}
         return;
       }
-      if (record.family === "sentence") {
-        let snapshot: PlatformTranslationExerciseSessionV2 | null;
-        try { snapshot = await fetchPlatformV2TranslationTrainingSessionSnapshot(user.id, record.sessionId); }
-        catch {
-          if (componentMountedRef.current && sessionResumeGenerationRef.current === resumeGeneration) { setSessionResumeError(true); setTrainingLoadError("training_resume_failed"); }
-          return;
-        }
-        if (!componentMountedRef.current || sessionResumeGenerationRef.current !== resumeGeneration) return;
-        const sentenceResume = classifyResumeSnapshot(snapshot);
-        if (!snapshot || sentenceResume.kind !== "resumable") {
-          await clearTrainingSessionResume(user.id);
-          setSentenceSession(null); setActiveExerciseFamily("meaning"); setExerciseFamilyForResume("meaning");
-          setSessionReplacementWarning(snapshot?.runStatus === "superseded");
-          setSessionResumeScopeResolved(true); setSessionResumeResolved(true); return;
-        }
-        const savedList = record.listId ? readableLists.find((list) => list.id === record.listId && list.type === record.listType) : null;
-        latchRunSelection({ ...record, sessionId: snapshot.sessionId,
-          family: "sentence", listId: record.listId ?? null, listType: record.listType ?? null,
-          scenarioId: "understanding", listLabel: savedList?.name });
-        if (savedList) applyListLocal(savedList);
-        if (activeTrainingScope) lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
-        setActiveScenario("understanding", { persist: false }); setEnabledModes(record.modes, { persist: false });
-        setCardFilterPreference(record.cardFilter, { persist: false }); setNewReviewRatio(record.newReviewRatio, { persist: false });
-        setSessionSize(record.sessionSize); setTrainingFocusFilter(record.focusFilter);
-        setExerciseFamilyForResume("sentence"); setActiveExerciseFamily("sentence"); setSentenceSession(snapshot); setIdiomSession(null);
-        replaceTrainingSessionId(null); setLatchedSessionPlan(null);
-        setSessionPlannedTotal(snapshot.requestedTotal); setSessionCompletedActions(snapshot.completedActions);
-        setSessionResumeScopeResolved(true); setSessionResumeResolved(true); resumeSession(); return;
-      }
-
-      let snapshot: TrainingSessionSnapshot | null;
-      try {
-        snapshot = await fetchTrainingSessionSnapshot(
-          user.id,
-          record.sessionId,
-        );
-      } catch {
-        if (
-          componentMountedRef.current &&
-          sessionResumeGenerationRef.current === resumeGeneration
-        ) {
-          setSessionResumeError(true);
-          setTrainingLoadError("training_resume_failed");
-        }
-        return;
-      }
-      if (
-        !componentMountedRef.current ||
-        sessionResumeGenerationRef.current !== resumeGeneration
-      ) {
-        return;
-      }
-      const resumeClassification = classifyResumeSnapshot(snapshot);
-      if (resumeClassification.kind === "missing") {
+      if(restored.kind==="cancelled")return;
+      if(restored.kind!=="resumable"){
         await clearTrainingSessionResume(user.id);
-        setSessionResumeScopeResolved(true);
-        setSessionResumeResolved(true);
-        return;
-      }
-      if (resumeClassification.kind === "superseded") {
-        const savedList = record.listId
-          ? readableLists.find(
-              (list) =>
-                list.id === record.listId && list.type === record.listType,
-            )
-          : null;
-        if (savedList) applyListLocal(savedList);
-        if (activeTrainingScope) {
-          lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
+        if(!componentMountedRef.current||!resumeOperation.isCurrent())return;
+        if(restored.kind==="superseded"){
+          const savedList=record.listId?readableLists.find(list=>list.id===record.listId&&list.type===record.listType):null;
+          if(savedList)applyListLocal(savedList);
+          if(activeTrainingScope)lastAppliedActiveTrainingScopeRef.current=activeTrainingScope;
+          setActiveScenario(record.family==="idiom"||record.family==="sentence"?"understanding":record.scenarioId,{persist:false});
+          setEnabledModes(record.modes,{persist:false});setCardFilterPreference(record.cardFilter,{persist:false});
+          setNewReviewRatio(record.newReviewRatio,{persist:false});setSessionSize(record.sessionSize);setTrainingFocusFilter(record.focusFilter);
+          setIdiomSession(null);setSentenceSession(null);setActiveExerciseFamily("meaning");setExerciseFamilyForResume("meaning");
+          setCurrentWord(null);replaceTrainingSessionId(null);setLatchedSessionPlan(null);setSessionPlannedTotal(null);setSessionConsumedCardKeys([]);setSessionCompletedActions(0);
+          setSessionReplacementWarning(true);
         }
-        setActiveScenario(record.scenarioId, { persist: false });
-        setEnabledModes(record.modes, { persist: false });
-        setCardFilterPreference(record.cardFilter, { persist: false });
-        setNewReviewRatio(record.newReviewRatio, { persist: false });
-        setSessionSize(record.sessionSize);
-        setTrainingFocusFilter(record.focusFilter);
-        await clearTrainingSessionResume(user.id);
-        setCurrentWord(null);
-        replaceTrainingSessionId(null);
-        setLatchedSessionPlan(null);
-        setSessionPlannedTotal(null);
-        setSessionConsumedCardKeys([]);
-        setSessionCompletedActions(0);
-        setSessionReplacementWarning(true);
-        setSessionResumeScopeResolved(true);
-        setSessionResumeResolved(true);
-        return;
+        setSessionResumeScopeResolved(true);setSessionResumeResolved(true);return;
       }
-
-      if (resumeClassification.kind === "no-remaining-member") {
-        await clearTrainingSessionResume(user.id);
-        setSessionResumeScopeResolved(true);
-        setSessionResumeResolved(true);
-        return;
-      }
-      if (!snapshot) return;
-
+      const snapshot=restored.snapshot;
       const activeList = record.listId
         ? readableLists.find(
             (list) => list.id === record.listId && list.type === record.listType,
           )
         : null;
       latchRunSelection({ ...record, sessionId: snapshot.sessionId,
-        family: record.family ?? "meaning", listId: record.listId ?? null,
+        family: restored.family, scenarioId:restored.family==="idiom"||restored.family==="sentence"?"understanding":record.scenarioId, listId: record.listId ?? null,
         listType: record.listType ?? null, listLabel: activeList?.name });
       if (activeList) applyListLocal(activeList);
       // Scope hydration was intentionally deferred while resume was pending.
@@ -2016,27 +1829,27 @@ function TrainingScreenContent({
       if (activeTrainingScope) {
         lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
       }
-      setActiveScenario(record.scenarioId, { persist: false });
+      setActiveScenario(restored.family==="idiom"||restored.family==="sentence"?"understanding":record.scenarioId, { persist: false });
       setEnabledModes(record.modes, { persist: false });
       setCardFilterPreference(record.cardFilter, { persist: false });
       setNewReviewRatio(record.newReviewRatio, { persist: false });
       setSessionSize(record.sessionSize);
       setTrainingFocusFilter(record.focusFilter);
-      replaceTrainingSessionId(snapshot.sessionId);
-      setActiveExerciseFamily(record.family === "word-in-context" ? "word-in-context" : "meaning");
-      setExerciseFamilyForResume(record.family === "word-in-context" ? "word-in-context" : "meaning");
-      reconciledSessionPlanRef.current = { sessionId: snapshot.sessionId, revision: snapshot.planRevision ?? 0 };
-      setLatchedSessionPlan(snapshot);
+      setActiveExerciseFamily(restored.family);setExerciseFamilyForResume(restored.family);
       setSessionPlannedTotal(snapshot.requestedTotal ?? snapshot.plannedTotal);
-      setSessionConsumedCardKeys(
-        snapshot.members.filter((member) => member.consumedAt).map(
-          (member) => `${member.entryId}:${member.cardTypeId}`,
-        ),
-      );
-      setSessionCompletedActions(
-        snapshot.completedActions ??
-          snapshot.members.filter((member) => member.consumedAt).length,
-      );
+      setSessionCompletedActions(snapshot.completedActions??snapshot.members.filter(member=>member.consumedAt).length);
+      if(restored.family==="idiom"||restored.family==="sentence"){
+        setIdiomSession(restored.family==="idiom"?restored.snapshot:null);
+        setSentenceSession(restored.family==="sentence"?restored.snapshot:null);
+        replaceTrainingSessionId(null);setLatchedSessionPlan(null);setSessionConsumedCardKeys([]);
+        lastAppliedTrainingFocusFilterKey.current=trainingFilterKey(record.focusFilter);
+        setSessionResumeScopeResolved(true);setSessionResumeResolved(true);resumeSession();return;
+      }
+      const ordinarySnapshot=restored.snapshot;
+      replaceTrainingSessionId(ordinarySnapshot.sessionId);
+      reconciledSessionPlanRef.current={sessionId:ordinarySnapshot.sessionId,revision:ordinarySnapshot.planRevision??0};
+      setLatchedSessionPlan(ordinarySnapshot);
+      setSessionConsumedCardKeys(ordinarySnapshot.members.filter(member=>member.consumedAt).map(member=>`${member.entryId}:${member.cardTypeId}`));
       // These refs are initialized from the pre-hydration preferences. Align
       // them with the resumed context so hydration does not trigger a second,
       // unscoped load beside the session-bound request below.
@@ -2060,7 +1873,7 @@ function TrainingScreenContent({
       });
       if (
         !componentMountedRef.current ||
-        sessionResumeGenerationRef.current !== resumeGeneration
+        !resumeOperation.isCurrent()
       ) {
         return;
       }
@@ -2079,6 +1892,7 @@ function TrainingScreenContent({
         setTrainingLoadError("training_resume_failed");
       } else {
         await clearTrainingSessionResume(user.id);
+        if(!resumeOperation.isCurrent())return;
         setSessionResumeScopeResolved(true);
         setSessionResumeResolved(true);
       }
@@ -2086,6 +1900,7 @@ function TrainingScreenContent({
 
     void resolveResume();
   }, [
+    recoveryOperations,
     latchRunSelection,
     activeTrainingScope,
     applyListLocal,
@@ -2144,9 +1959,11 @@ function TrainingScreenContent({
     trainingPilot.surface,
   ]);
   const handleTrainingSessionSuperseded = useCallback(
-    () => {
+    (expected?:TrainingRunSelection) => {
+      if(expected&&!ownsRunSelection(expected))return;
       releaseRunSelection();
-      sessionResumeGenerationRef.current += 1;
+      setIdiomSession(null);setSentenceSession(null);setActiveExerciseFamily("meaning");setExerciseFamilyForResume("meaning");
+      recoveryOperations.cancel("restore");
       if (user?.id) void clearTrainingSessionResume(user.id);
       resetFocusQueueState();
       setCurrentWord(null);
@@ -2160,7 +1977,10 @@ function TrainingScreenContent({
       returnToToday();
     },
     [
+      recoveryOperations,
+      ownsRunSelection,
       releaseRunSelection,
+      setExerciseFamilyForResume,
       resetFocusQueueState,
       resetPlatformProgressActionPending,
       replaceTrainingSessionId,
@@ -2169,49 +1989,15 @@ function TrainingScreenContent({
     ],
   );
   useUserEventHints(user?.id, ["training.changed"], async () => {
-    if (trainingSessionIdRef.current) await validateTrainingSessionAuthority();
+    if (sessionAuthority.ownerToken.sessionId) await validateTrainingSessionAuthority();
   });
   useUserEventHints(user?.id, ["learning.changed"], () => {
     // A domain hint can cover several changed entries in one transaction.
     publishPlatformV2CardStateChanged();
   });
   const handleContinueTrainingSession = useCallback(() => {
-    if (activeExerciseFamily === "sentence" && sentenceSession && user?.id) {
-      void fetchPlatformV2TranslationTrainingSessionSnapshot(user.id, sentenceSession.sessionId).then((snapshot) => {
-        if (!componentMountedRef.current || !isCurrentRunSelection(sentenceSession.sessionId, "sentence")) return;
-        if (!snapshot || snapshot.runStatus === "superseded") {
-          releaseRunSelection();
-          void clearTrainingSessionResume(user.id); setSentenceSession(null); setActiveExerciseFamily("meaning"); setExerciseFamilyForResume("meaning"); setSessionReplacementWarning(Boolean(snapshot)); returnToToday(); return;
-        }
-        setSentenceSession(snapshot); resumeSession();
-      }).catch(() => { if (componentMountedRef.current && isCurrentRunSelection(sentenceSession.sessionId, "sentence")) { setSessionResumeError(true); setTrainingLoadError("training_resume_failed"); } });
-      return;
-    }
-    if (activeExerciseFamily === "idiom" && idiomSession && user?.id) {
-      void fetchPlatformV2IdiomTrainingSessionSnapshot(
-        user.id,
-        idiomSession.sessionId,
-      )
-        .then((snapshot) => {
-          if (!componentMountedRef.current || !isCurrentRunSelection(idiomSession.sessionId, "idiom")) return;
-          if (!snapshot || snapshot.runStatus === "superseded") {
-            releaseRunSelection();
-            void clearTrainingSessionResume(user.id);
-            setIdiomSession(null);
-            setActiveExerciseFamily("meaning");
-            setExerciseFamilyForResume("meaning");
-            setSessionReplacementWarning(Boolean(snapshot));
-            returnToToday();
-            return;
-          }
-          setIdiomSession(snapshot);
-          resumeSession();
-        })
-        .catch(() => {
-          if (!componentMountedRef.current || !isCurrentRunSelection(idiomSession.sessionId, "idiom")) return;
-          setSessionResumeError(true);
-          setTrainingLoadError("training_resume_failed");
-        });
+    if(specializedSessionId){
+      void resumeAfterValidation(validateTrainingSessionAuthority);
       return;
     }
     const continueCurrentSession = () => {
@@ -2236,14 +2022,12 @@ function TrainingScreenContent({
       continueCurrentSession();
       return;
     }
-    void validateTrainingSessionAuthority().then((authorized) => {
-      if (authorized && trainingSessionIdRef.current === sessionId) {
-        continueCurrentSession();
-      }
+    void resumeAfterValidation(validateTrainingSessionAuthority,()=>{
+      if(trainingSessionIdRef.current===sessionId)continueCurrentSession();
     });
   }, [
-    isCurrentRunSelection,
-    releaseRunSelection,
+    specializedSessionId,
+    resumeAfterValidation,
     currentWord,
     resetFocusQueueState,
     continueSession,
@@ -2252,16 +2036,9 @@ function TrainingScreenContent({
     trainingTodaySetupEnabled,
     user?.id,
     validateTrainingSessionAuthority,
-    activeExerciseFamily,
-    idiomSession,
-    sentenceSession,
-    resumeSession,
-    returnToToday,
-    setExerciseFamilyForResume,
-    setTrainingLoadError,
   ]);
   useTrainingSessionAuthorityEvents(sessionAuthority, {
-    userId:user.id, sessionId:trainingSessionId,
+    userId:user.id, sessionId:specializedSessionId ?? trainingSessionId,
     visible:destination === "training", returned:returnedToTraining,
   });
   const exitUnsupportedTrainingMode = useCallback(() => {
@@ -2536,6 +2313,8 @@ function TrainingScreenContent({
         ) : activeExerciseFamily === "idiom" && idiomSession ? (
           <TrainingIdiomSession
             presentationActive={visibleDestination === "training"}
+            interactionDisabled={sessionAuthorityChecking}
+            authorityRefreshing={sessionAuthorityRefreshing}
             sessionName={displayedSessionName}
             studyTimeEnabled={studyTimeEnabled}
             key={idiomSession.sessionId}
@@ -2552,18 +2331,13 @@ function TrainingScreenContent({
             onEdit={() => { setOpenTrainingEditor(true); trainingPilot.returnToToday(); }}
             onExit={exitIdiomSession}
             onProgress={handleExerciseProgress}
-            onSessionSuperseded={() => {
-              setIdiomSession(null);
-              setActiveExerciseFamily("meaning");
-              setExerciseFamilyForResume("meaning");
-              handleTrainingSessionSuperseded();
-            }}
+            onSessionSuperseded={()=>handleTrainingSessionSuperseded(runSelection??undefined)}
             onHistory={openTrainingHistory}
             onPlayResolvedAudio={(url, label) => playAudio(url, label)}
             onOpenDetails={handleShowCurrentWordDetails} onCurrentCardContextChange={handleCurrentCardContextChange}
           />
         ) : activeExerciseFamily === "sentence" && sentenceSession && typeof translationLang === "string" && translationLang !== "off" ? (
-          <TrainingSentenceSession presentationActive={visibleDestination === "training"} pending={trainingPilot.startPending} startFailed={Boolean(trainingLoadError)} onRestart={() => { void trainingPilot.startSession({...completionDraftRef.current ?? trainingPilot.initialDraft,sessionSize:10},displayedSessionName,{...trainingExtensionOptions(trainingFocusFilter),trainingId:sessionTrainingId}); }} onEdit={() => { setOpenTrainingEditor(true); trainingPilot.returnToToday(); }} sessionName={displayedSessionName} studyTimeEnabled={studyTimeEnabled} key={sentenceSession.sessionId} userId={user.id} session={sentenceSession} contentLanguageCode={currentTrainingLanguage} translationTargetLanguageCode={translationLang} interfaceLanguage={onboardingLang} onExit={exitIdiomSession} onProgress={handleExerciseProgress} onSessionSuperseded={() => { setSentenceSession(null); setActiveExerciseFamily("meaning"); setExerciseFamilyForResume("meaning"); handleTrainingSessionSuperseded(); }} onHistory={openTrainingHistory} onPlayResolvedAudio={(url, label) => playAudio(url, label)} onOpenDetails={handleShowCurrentWordDetails} onCurrentCardContextChange={handleCurrentCardContextChange} />
+          <TrainingSentenceSession interactionDisabled={sessionAuthorityChecking} authorityRefreshing={sessionAuthorityRefreshing} presentationActive={visibleDestination === "training"} pending={trainingPilot.startPending} startFailed={Boolean(trainingLoadError)} onRestart={() => { void trainingPilot.startSession({...completionDraftRef.current ?? trainingPilot.initialDraft,sessionSize:10},displayedSessionName,{...trainingExtensionOptions(trainingFocusFilter),trainingId:sessionTrainingId}); }} onEdit={() => { setOpenTrainingEditor(true); trainingPilot.returnToToday(); }} sessionName={displayedSessionName} studyTimeEnabled={studyTimeEnabled} key={sentenceSession.sessionId} userId={user.id} session={sentenceSession} contentLanguageCode={currentTrainingLanguage} translationTargetLanguageCode={translationLang} interfaceLanguage={onboardingLang} onExit={exitIdiomSession} onProgress={handleExerciseProgress} onSessionSuperseded={()=>handleTrainingSessionSuperseded(runSelection??undefined)} onHistory={openTrainingHistory} onPlayResolvedAudio={(url, label) => playAudio(url, label)} onOpenDetails={handleShowCurrentWordDetails} onCurrentCardContextChange={handleCurrentCardContextChange} />
         ) : v2SessionOwned && currentWord && v2SessionMode ? (
           <TrainingSenseCardV2Session
             presentationActive={visibleDestination === "training"}
@@ -2603,7 +2377,7 @@ function TrainingScreenContent({
             onProgressActionPendingChange={
               handlePlatformProgressActionPendingChange
             }
-            onTrainingSessionSuperseded={handleTrainingSessionSuperseded}
+            onTrainingSessionSuperseded={()=>handleTrainingSessionSuperseded(runSelection??undefined)}
             onLoadFailure={(failure) => {
               reportCardLoadFailure(currentWord, failure);
             }}

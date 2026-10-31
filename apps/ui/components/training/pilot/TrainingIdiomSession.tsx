@@ -5,27 +5,15 @@ import { readCurrentTrainingCard, type CurrentTrainingCardContext } from "@/lib/
 import { useAdditionalTranslationLanguage } from "@/components/practice/article/AdditionalCardTranslation";
 import { useLatchedTranslationBuffer } from "../v2/useLatchedTranslationBuffer";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React from "react";
+import { useTrainingExerciseSession } from "../useTrainingExerciseSession";
+import { idiomExerciseAdapter } from "./trainingExerciseAdapters";
 import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import {
-  fetchNextPlatformV2IdiomTrainingSessionExercise,
-  markPlatformV2IdiomTrainingSessionMemberUnavailable,
-  performPlatformV2IdiomExerciseAction,
-} from "@/lib/platform/platformV2IdiomExerciseClient";
 import type {
-  PlatformIdiomExerciseCandidateV2,
   PlatformIdiomExerciseSessionV2,
-  PlatformTrainingExerciseReviewResultV2,
 } from "../../../../../packages/shared/types/platformV2";
-import { loadIdiomExerciseContent } from "@/lib/training/idiomExerciseLoader";
-import { resolveIdiomExerciseContent, type IdiomExerciseContent } from "@/lib/training/idiomExerciseContent";
-import {
-  beginTrainingUserTransition,
-  createTrainingTransitionId,
-  finishTrainingUserTransition,
-  measureTrainingTransitionStage,
-} from "@/lib/training/trainingTransitionTiming";
+import type { IdiomExerciseContent } from "@/lib/training/idiomExerciseContent";
 
 import { TrainingCompletion, type TrainingCompletionActions } from "../v2/TrainingCompletion";
 import { TrainingSessionState } from "../v2/TrainingSessionState";
@@ -42,12 +30,13 @@ import { TrainingIdiomCard } from "./TrainingIdiomCard";
 
 import { useRecordedStudyTime } from "../useRecordedStudyTime";
 
-import { useTrainingExerciseProgress } from "../useTrainingExerciseProgress";
 import type { TrainingSessionProgress } from "@/lib/training/sessionLifecycle";
 
 import type {CardFilter} from "@/lib/types";
 type Props = TrainingCompletionActions & {
   presentationActive?: boolean;
+  interactionDisabled?: boolean;
+  authorityRefreshing?: boolean;
   cardFilter?: CardFilter;
   sessionName?: string;
   studyTimeEnabled?: boolean;
@@ -72,6 +61,8 @@ type Props = TrainingCompletionActions & {
 
 export function TrainingIdiomSession({
   sessionName,
+  interactionDisabled=false,
+  authorityRefreshing=false,
   cardFilter = "both",
   studyTimeEnabled = false,
   userId,
@@ -90,45 +81,15 @@ export function TrainingIdiomSession({
   onCurrentCardContextChange,
 }: Props) {
   const t = getUiMessages(interfaceLanguage).trainingExercises.idiom;
-  const [candidate, setCandidate] =
-    useState<PlatformIdiomExerciseCandidateV2 | null>(null);
-  const [content, setContent] = useState<IdiomExerciseContent | null>(null);
-  const { completed: completedCount, accept, finish } = useTrainingExerciseProgress(session, onProgress);
-  const footerStats = useIdiomTrainingStats(session.sessionId, completedCount);
-  const [terminal, setTerminal] = useState<"complete" | "empty" | null>(
-    session.plannedTotal === 0 ? session.completedActions > 0 ? "complete" : "empty" : null,
-  );
-  const [revealed, setRevealed] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(false);
-  const [superseded, setSuperseded] = useState(false);
-  const supersededRef = useRef(false);
-  const supersededCallback = useRef(onSessionSuperseded ?? onExit);
-  React.useLayoutEffect(() => { supersededCallback.current = onSessionSuperseded ?? onExit; }, [onSessionSuperseded, onExit]);
-  const actionClientEventIdRef = useRef<string | null>(null);
-  const activeTransitionIdRef = useRef<string | null>(null);
-  const loadGenerationRef = useRef(0);
   const currentReadRef = React.useRef<{targetId:string; context:CurrentTrainingCardContext} | null>(null);
-
-  const replaceSession = useCallback(() => {
-    if (supersededRef.current) return;
-    supersededRef.current = true;
-    loadGenerationRef.current++;
-    actionClientEventIdRef.current = null;
-    currentReadRef.current = null;
-    setSuperseded(true);
-    setCandidate(null);
-    setContent(null);
-    setRevealed(false);
-    setError(false);
-    setLoading(false);
-    const transitionId = activeTransitionIdRef.current;
-    activeTransitionIdRef.current = null;
-    if (transitionId) finishTrainingUserTransition(transitionId, "session-superseded");
-    supersededCallback.current();
-  }, []);
-
+  const runtime = useTrainingExerciseSession({
+    identity:JSON.stringify([userId,session.sessionId,session.runGeneration]),
+    preparationIdentity:JSON.stringify([contentLanguageCode,translationTargetLanguageCode]),session,
+    adapter:idiomExerciseAdapter({userId,sessionId:session.sessionId,contentLanguageCode,translationTargetLanguageCode,readPermit:currentReadRef}),
+    onProgress,onSuperseded:onSessionSuperseded ?? onExit,
+  });
+  const {candidate,content,revealed,setRevealed,loading,submitting,failed:error,terminal,superseded,completed:completedCount,replaceSession}=runtime;
+  const footerStats = useIdiomTrainingStats(session.sessionId, completedCount);
   const currentCard = useCurrentTrainingCard({ userId, active: !superseded && presentationActive && Boolean(candidate && content) && !loading && !terminal,
     target: candidate && content ? { sessionId: session.sessionId, entryId: candidate.entryId,
       cardTypeId: `${candidate.family}:${candidate.direction}`, targetId: candidate.targetId, direction: candidate.direction,
@@ -140,174 +101,17 @@ export function TrainingIdiomSession({
   const additionalTranslationLanguage = useAdditionalTranslationLanguage();
   useLatchedTranslationBuffer({ ownerId: userId, sessionId: session.sessionId, generation: session.runGeneration, currentEntryId: candidate?.entryId, currentOrdinal: session.members.find(member => member.targetId === candidate?.targetId)?.ordinal, targetLanguageCode: translationTargetLanguageCode, additionalTargetLanguageCode: additionalTranslationLanguage, members: session.members });
 
-  const loadNext = useCallback(async () => {
-    if (supersededRef.current) return;
-    const readPermit = currentReadRef.current;
-    const generation = ++loadGenerationRef.current;
-    const transitionId = createTrainingTransitionId();
-    activeTransitionIdRef.current = transitionId;
-    beginTrainingUserTransition(transitionId, "continue");
-    setLoading(true);
-    setError(false);
-    setTerminal(null);
-    setCandidate(null);
-    setContent(null);
-    setRevealed(false);
-    try {
-      for (let attempt = 0; attempt < 8; attempt += 1) {
-        const next = await measureTrainingTransitionStage(
-          transitionId,
-          "idiom.session-next",
-          () =>
-            fetchNextPlatformV2IdiomTrainingSessionExercise(
-              userId,
-              session.sessionId,
-            ),
-        );
-        if (generation !== loadGenerationRef.current) return;
-        if (next.status === "superseded") { replaceSession(); return; }
-        if (next.status === "ready") {
-          const loaded = await measureTrainingTransitionStage(
-            transitionId,
-            "idiom.content-lookup",
-            () =>
-              (async () => {
-                if (!readPermit || readPermit.targetId !== next.targetId) return loadIdiomExerciseContent({candidate:next,contentLanguageCode,translationTargetLanguageCode});
-                const payload=await readCurrentTrainingCard(userId,{...readPermit.context,entryId:next.entryId,cardTypeId:"word-to-definition",contentLanguageCode,translationTargetLanguageCode});
-                const group=payload.groups.find(item=>item.entries.some(entry=>entry.kind==="sense-card"&&entry.entryId===next.entryId));
-                const content=group&&resolveIdiomExerciseContent(next,group);
-                return content ? {state:"ready" as const,content} : {state:"projection-missing" as const};
-              })(),
-          );
-          if (generation !== loadGenerationRef.current) return;
-          if (loaded.state === "ready") {
-            setCandidate(next);
-            setContent(loaded.content);
-            return;
-          }
-          await markPlatformV2IdiomTrainingSessionMemberUnavailable(
-            userId,
-            session.sessionId,
-            next.targetId,
-            loaded.state,
-          );
-          continue;
-        }
-        if (next.status === "unavailable") {
-          await markPlatformV2IdiomTrainingSessionMemberUnavailable(
-            userId,
-            session.sessionId,
-            next.targetId,
-            next.reason,
-          );
-          continue;
-        }
-        if (next.status === "completed" || next.status === "exhausted") {
-          const completedActions = finish({ ...next, status: next.status });
-          setTerminal(completedActions > 0 ? "complete" : "empty");
-          activeTransitionIdRef.current = null;
-          finishTrainingUserTransition(transitionId, `terminal-${next.status}`);
-          return;
-        }
-        setError(true);
-        activeTransitionIdRef.current = null;
-        finishTrainingUserTransition(transitionId, `error-${next.status}`);
-        return;
-      }
-      setError(true);
-      activeTransitionIdRef.current = null;
-      finishTrainingUserTransition(transitionId, "error-retries-exhausted");
-    } catch (cause) {
-      if (generation !== loadGenerationRef.current) return;
-      if (cause instanceof Error && cause.message === "training_session_superseded") {
-        replaceSession();
-        return;
-      }
-      setError(true);
-      activeTransitionIdRef.current = null;
-      finishTrainingUserTransition(transitionId, "error-request");
-    } finally {
-      if (generation === loadGenerationRef.current) setLoading(false);
-    }
-  }, [
-    contentLanguageCode,
-    replaceSession,
-    finish,
-    session.sessionId,
-    translationTargetLanguageCode,
-    userId,
-  ]);
-
-  useEffect(() => {
-    if (!candidate || !content) return;
-    const transitionId = activeTransitionIdRef.current;
-    if (!transitionId) return;
-    activeTransitionIdRef.current = null;
-    finishTrainingUserTransition(transitionId, "ready");
-  }, [candidate, content]);
-
-  useEffect(
-    () => () => {
-      loadGenerationRef.current++;
-      const transitionId = activeTransitionIdRef.current;
-      if (!transitionId) return;
-      activeTransitionIdRef.current = null;
-      finishTrainingUserTransition(transitionId, "cancelled");
-    },
-    [],
-  );
-
-  useEffect(() => {
-    void loadNext();
-  }, [loadNext]);
-
   const exclusion = useTrainingExclusion({
     userId,
     onSessionSuperseded: replaceSession,
     identity: candidate?.targetKey ?? "none",
     sessionId: session.sessionId,
     target: { kind: "exercise", targetId: candidate?.targetId ?? "" },
-    onAccepted: async () => {
-      accept();
-      await loadNext();
-    },
+    onAccepted: runtime.acceptAndAdvance,
   });
 
   useRecordedStudyTime({ ownerId: userId, sessionId: session.sessionId, family: "idiom", entryId: candidate?.entryId, targetId: candidate?.targetId,
     enabled: studyTimeEnabled && currentCard.ready && Boolean(candidate && content) && !loading && !terminal && !submitting && !exclusion.busy && !exclusion.failed });
-
-  const grade = async (
-    reviewResult: PlatformTrainingExerciseReviewResultV2,
-  ) => {
-    if (supersededRef.current || !candidate || !content || submitting || exclusion.busy || !currentCard.ready) return;
-    const generation = loadGenerationRef.current;
-    setSubmitting(true);
-    setError(false);
-    try {
-      const clientEventId =
-        actionClientEventIdRef.current ?? crypto.randomUUID();
-      actionClientEventIdRef.current = clientEventId;
-      await performPlatformV2IdiomExerciseAction({
-        trainingSessionId: session.sessionId,
-        clientEventId,
-        candidate,
-        reviewResult,
-      });
-      if (generation !== loadGenerationRef.current) return;
-      actionClientEventIdRef.current = null;
-      accept();
-      await loadNext();
-    } catch (cause) {
-      if (generation !== loadGenerationRef.current) return;
-      if (cause instanceof Error && cause.message === "training_session_superseded") {
-        replaceSession();
-        return;
-      }
-      setError(true);
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const preparationFailed = error && !candidate && !loading && !terminal;
   const sessionPresentation = {
@@ -323,6 +127,7 @@ export function TrainingIdiomSession({
 
   return (
     <TrainingSessionV2Layout
+      authorityRefreshing={authorityRefreshing && !submitting && !exclusion.busy}
       approvedPresentation={true}
             phase={loading || (candidate && !currentCard.ready && !currentCard.failed) ? "loading" : currentCard.failed || (error && !candidate) ? "failure" : "ready"}
       chrome={
@@ -355,7 +160,7 @@ export function TrainingIdiomSession({
               retryLabel: t.retry,
               retryDisabled: submitting || loading,
               onRetry: () =>
-                exclusion.failed ? void exclusion.exclude() : void loadNext(),
+                exclusion.failed ? void exclusion.exclude() : void runtime.retry(),
             }}
           />
         ) : null
@@ -371,7 +176,7 @@ export function TrainingIdiomSession({
         action={currentCard.failed ? {label:t.retry,onClick:currentCard.retry} : undefined} /> : null}
       {loading ? <TrainingSessionState loading title={t.loading} /> : null}
       {preparationFailed ? <TrainingSessionState title={t.failed} announcement="alert"
-        action={{label:t.retry,onClick:()=>void loadNext()}}
+        action={{label:t.retry,onClick:()=>void runtime.retry()}}
         secondaryAction={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
       {!loading && terminal ? <TrainingCompletion empty={terminal==="empty"} emptyDetail={cardFilter==="review" && session.plannedTotal===0?{en:"No idioms are due now. Include new cards in training settings to start learning more.",nl:"Er hoeven nu geen uitdrukkingen herhaald te worden. Voeg nieuwe kaarten toe in de trainingsinstellingen om verder te leren.",ru:"Сейчас нет идиом для повторения. Включите новые карточки в настройках тренировки, чтобы продолжить изучение."}[interfaceLanguage]:undefined} ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} startFailed={startFailed} /> : null}
       {!loading && !terminal && currentCard.ready && candidate && content ? (
@@ -389,9 +194,9 @@ export function TrainingIdiomSession({
           interfaceLanguage={interfaceLanguage}
           revealed={revealed}
           onReveal={() => setRevealed(true)}
-          busy={submitting || exclusion.busy || exclusion.failed}
+          busy={interactionDisabled || submitting || exclusion.busy || exclusion.failed || runtime.actionRetryRequired}
           onExclude={() => void exclusion.exclude()}
-          onGrade={(result) => void grade(result)}
+          onGrade={(result) => { if(!interactionDisabled && currentCard.ready && !exclusion.busy)void runtime.grade(result); }}
         />
       ) : null}
     </TrainingSessionV2Layout>

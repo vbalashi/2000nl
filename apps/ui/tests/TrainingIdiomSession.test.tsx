@@ -502,7 +502,7 @@ test.each(["en", "nl", "ru"] as const)(
   },
 );
 
-test("failed grading uses the shared notice outside the clipped card frame", async () => {
+test("failed grading keeps its frozen intent retry outside the clipped card frame", async () => {
   vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
   vi.mocked(loadIdiomExerciseContent).mockResolvedValue({ state: "ready", content } as never);
   vi.mocked(performPlatformV2IdiomExerciseAction).mockRejectedValueOnce(new Error("offline"));
@@ -514,7 +514,7 @@ test("failed grading uses the shared notice outside the clipped card frame", asy
   const alert = await screen.findByRole("alert");
   expect(alert.closest('[data-testid="training-card-frame"]')).toBeNull();
   expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
-  expect(screen.getByRole("button", { name: "Good" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Good" })).toBeDisabled();
 });
 
 test.each(["audio", "translation"] as const)("failed %s stays inside the shared flex card layout", async (action) => {
@@ -752,7 +752,7 @@ test("late rejected grading from an unmounted idiom run cannot replace its succe
 trainingLifecyclePresentationContract("idiom", () => {
   vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockReset().mockResolvedValue(candidate);
   vi.mocked(loadIdiomExerciseContent).mockReset().mockResolvedValue({state:"ready",content:{...content,entry:{...content.entry,sourceVersion:1}}} as never);
-  return {view:(active)=><TrainingIdiomSession presentationActive={active} userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()}/>,
+  return {view:(active,blocked,refreshing)=><TrainingIdiomSession interactionDisabled={blocked} authorityRefreshing={refreshing} presentationActive={active} userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()}/>,
     read:vi.mocked(loadIdiomExerciseContent),acknowledge:currentAcknowledge,action:vi.mocked(performPlatformV2IdiomExerciseAction),
     target:{sessionId:session.sessionId,entryId:candidate.entryId,cardTypeId:"idiom:direct"}};
 });

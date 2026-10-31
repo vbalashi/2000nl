@@ -1,14 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTrainingOperationScope } from "./useTrainingOperationScope";
+import type { TrainingOperation } from "@/lib/training/trainingOperationScope";
 import { subscribeTrainingSessionInvalidation, subscribeTrainingSessionOwnerInvalidation } from "@/lib/training/sessionResumeStore";
 
 export type TrainingAuthorityRead =
-  | { kind: "active" }
+  | { kind: "active"; commit?:()=>void }
   | { kind: "superseded" }
   | { kind: "replan"; revision: number; reconcile: () => Promise<boolean>; commit: () => void };
 
-type Owner = { sessionId: string | null; userId: string };
+type Owner = { sessionId: string | null; userId: string; operation:TrainingOperation };
 
 /** Owns read-only authority and its recovery operation, independently of content.
  * A server ID is bound explicitly; rendering new defaults never replaces it. */
@@ -17,35 +19,29 @@ export function useTrainingSessionAuthority(input: {
   read: (sessionId: string) => Promise<TrainingAuthorityRead>;
   onSuperseded: () => void;
 }) {
+  const operations=useTrainingOperationScope(input.userId);
   const adapter = useRef(input);
   useLayoutEffect(() => { adapter.current = input; });
-  const owner = useRef<Owner>({sessionId:null,userId:input.userId});
+  const owner = useRef<Owner>({sessionId:null,userId:input.userId,operation:operations.capture("owner")});
   const [ownerToken,setOwnerToken] = useState(owner.current);
-  const validation = useRef(0);
-  const mounted = useRef(true);
   const blocked = useRef(false);
   const pendingReplan = useRef<{owner:Owner; revision:number; promise:Promise<boolean>} | null>(null);
   const [checking, setChecking] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const owns = useCallback((expected: Owner) => mounted.current && owner.current === expected && expected.userId === adapter.current.userId, []);
+  const owns = useCallback((expected: Owner) => expected.operation.isCurrent() && owner.current === expected && expected.userId === adapter.current.userId, []);
   const reset = useCallback((sessionId: string | null) => {
-    owner.current = {sessionId,userId:adapter.current.userId};
+    operations.reset();
+    owner.current = {sessionId,userId:adapter.current.userId,operation:operations.capture("owner")};
     setOwnerToken(owner.current);
-    validation.current++;
     pendingReplan.current = null;
     blocked.current = false;
     setChecking(false); setRefreshing(false);
-  }, []);
-  useEffect(() => {
-    const validationRef = validation;
-    mounted.current = true;
-    return () => { mounted.current=false; validationRef.current++; pendingReplan.current=null; };
-  }, []);
+  }, [operations]);
   const invalidate = useCallback((expected: Owner) => {
     if (!owns(expected)) return;
-    validation.current++;
+    operations.cancel("validation");
     blocked.current=true; setRefreshing(false); setChecking(true);
-  }, [owns]);
+  }, [owns,operations]);
   const supersede = useCallback((expected: Owner) => {
     if (!owns(expected) || !expected.sessionId) return;
     // Retire before notifying; a re-entrant callback cannot revive this owner.
@@ -56,8 +52,8 @@ export function useTrainingSessionAuthority(input: {
     const expected = owner.current;
     if (!expected.sessionId) return true;
     if (!owns(expected)) return false;
-    const attempt = ++validation.current;
-    const current = () => owns(expected) && validation.current === attempt;
+    const operation=operations.begin("validation");
+    const current = () => owns(expected) && operation.isCurrent();
     setChecking(true); setRefreshing(!blocked.current);
     try {
       const result = await adapter.current.read(expected.sessionId);
@@ -77,13 +73,14 @@ export function useTrainingSessionAuthority(input: {
         if (!loaded) { blocked.current=true; return false; }
         result.commit();
       }
+      if(result.kind==="active")result.commit?.();
       blocked.current=false; setChecking(false);
       return true;
     } catch {
       if (current()) { blocked.current=true; setRefreshing(false); setChecking(true); }
       return false;
     }
-  }, [owns, supersede]);
+  }, [owns, supersede,operations]);
   return {checking, refreshing, ownerToken, reset, validate, owns, invalidate, supersede};
 }
 

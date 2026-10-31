@@ -264,6 +264,7 @@ const clearPlatformV2TrainingClientCaches = vi.fn();
 const mockV2ProgressAction = vi.fn();
 const mockV2ProgressActionCompleted = vi.fn();
 let mockV2AcceptanceGate: Promise<void> | null = null;
+let mockV2Superseded: undefined | (()=>void);
 let mockV2SessionState: "ready" | "loading" = "ready";
 const defaultAvailableLearningLanguages = [
   {
@@ -666,6 +667,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     sessionFooter,
     sessionNotice,
     interactionDisabled,
+    onTrainingSessionSuperseded,
   }: {
     word: { headword: string };
     trainingSessionId?: string | null;
@@ -682,7 +684,9 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     sessionFooter: FooterStatsProps;
     sessionNotice?: TrainingSessionNoticeInput | null;
     interactionDisabled?: boolean;
+    onTrainingSessionSuperseded?:()=>void;
   }) => {
+    mockV2Superseded=onTrainingSessionSuperseded;
     const stageRef = React.useRef<HTMLDivElement>(null);
     // Match the real V2 session: a grade stays busy until the accepted-action
     // transition resolves, not merely until the next headword is rendered.
@@ -4731,4 +4735,37 @@ test('saved-source read failure reaches visible Retry and rereads the scope with
  await waitFor(()=>expect(fetchActiveTrainingScope.mock.calls.length).toBeGreaterThanOrEqual(2));
  await waitFor(()=>expect(screen.queryByTestId('training-startup-gate')).not.toBeInTheDocument());
  expect(updateActiveTrainingScope.mock.calls.some(call=>call[0]?.listId===null)).toBe(false);
+});
+
+test.each(["idiom","sentence"] as const)("%s return validation uses the common owner and retires a replaced run",async(family)=>{
+ const idioms=await import("@/lib/platform/platformV2IdiomExerciseClient");
+ const sessionId=`owned-${family}`;
+ const snapshot={contractVersion:family==="idiom"?"platform-idiom-exercise-session-v2":"platform-translation-exercise-session-v1",sessionId,
+  exerciseFamily:family==="idiom"?"idiom":"translation",direction:family==="idiom"?"direct":"recall",sessionSize:"5",requestedTotal:5,plannedNew:5,plannedReview:0,plannedPractice:0,plannedTotal:5,
+  plannedAt:"2026-10-03T09:00:00Z",runStatus:"active",runGeneration:4,completedActions:0,completionReason:null,
+  members:[{targetId:"one",ordinal:1,consumedAt:null,unavailableAt:null}]};
+ const read=family==="idiom"?vi.mocked(idioms.fetchPlatformV2IdiomTrainingSessionSnapshot):legacyTranslationSnapshot;
+ read.mockResolvedValue(snapshot as never);
+ vi.mocked(idioms.fetchNextPlatformV2IdiomTrainingSessionExercise).mockImplementation(()=>new Promise(()=>{}));
+ await writeTrainingSessionResume({sessionId,userId:user.id,family,languageCode:"nl",listId:"list-1",listType:"curated",scenarioId:family==="idiom"?"idiom":"sentences",modes:["word-to-definition"],cardFilter:"both",newReviewRatio:2,focusFilter:{dateWindow:"all"},sessionSize:5});
+ render(<TrainingScreen user={user} trainingTodaySetupEnabled/>);
+ await screen.findByTestId(family==="sentence"?"legacy-sentence-session":"training-session-chrome");
+ read.mockResolvedValue({...snapshot,runStatus:"superseded",runGeneration:null} as never);
+ act(()=>window.dispatchEvent(new Event("focus")));
+ await screen.findByRole("button",{name:/Start training|Calculate training/});
+ expect(read).toHaveBeenCalledTimes(2);
+ expect(startTrainingSession).not.toHaveBeenCalled();expect(legacyTranslationStart).not.toHaveBeenCalled();
+ expect(await readTrainingSessionResume(user.id)).toBeNull();
+});
+
+test("a retired card notification cannot clear a newly bound run",async()=>{
+ await writeTrainingSessionResume({sessionId:"retired-a",userId:user.id,languageCode:"nl",listId:"list-1",listType:"curated",scenarioId:"understanding",modes:["word-to-definition"],cardFilter:"both",newReviewRatio:2,focusFilter:{dateWindow:"all"},sessionSize:5});
+ fetchTrainingSessionSnapshot.mockResolvedValueOnce({sessionId:"retired-a",runStatus:"active",runGeneration:1,sessionSize:5,plannedNew:1,plannedReview:0,plannedPractice:0,plannedTotal:1,plannedAt:"2026-09-10T12:00:00Z",members:[{ordinal:1,entryId:"word-1",cardTypeId:"word-to-definition",queueSource:"new",consumedAt:null,unavailableAt:null}]} as never);
+ render(<TrainingScreen user={user} trainingTodaySetupEnabled/>);await screen.findByTestId("mock-training-sense-card-v2");const old=mockV2Superseded!;
+ fireEvent.click(screen.getByRole("button",{name:/Sessie sluiten|Close session|Закрыть сессию/}));
+ await screen.findByRole("heading",{name:/^(Training|Тренировка)$/});fireEvent.click(screen.getByRole("button",{name:"Create training"}));
+ const start=await screen.findByRole("button",{name:/Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/});
+ await waitFor(()=>expect(start).toBeEnabled());await clickTrainingAction(start);
+ const current=await screen.findByTestId("mock-training-sense-card-v2");const id=current.getAttribute("data-training-session-id");expect(id).not.toBe("retired-a");
+ act(()=>old());expect(screen.getByTestId("mock-training-sense-card-v2")).toHaveAttribute("data-training-session-id",id);
 });

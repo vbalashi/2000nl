@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { TrainingSessionProgress } from "@/lib/training/sessionLifecycle";
 
 /** One progress/terminal handoff for exercise runtimes, independent of card content. */
@@ -11,6 +11,9 @@ export function useTrainingExerciseProgress(
   const completedRef = useRef(session.completedActions);
   const notifyRef = useRef(onProgress);
   notifyRef.current = onProgress;
+  useEffect(()=>{
+    if(session.completedActions>completedRef.current){completedRef.current=session.completedActions;setCompleted(session.completedActions);}
+  },[session.completedActions]);
   const publish = useCallback((completedActions: number, completionReason: TrainingSessionProgress["completionReason"]) => {
     completedRef.current = completedActions;
     setCompleted(completedActions);

@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTrainingOperationScope } from "./useTrainingOperationScope";
+import type { TrainingOperation } from "@/lib/training/trainingOperationScope";
 import { trainingDebug } from "@/lib/trainingDebug";
 import { clearPlatformV2TrainingClientCaches } from "@/lib/platform/platformV2TrainingClient";
 import type { PlatformV2TrainingActionCapability } from "@/lib/platform/platformV2TrainingActionClient";
@@ -68,8 +70,8 @@ type AcceptedCardTransition = {
   wordMode: TrainingMode;
   trainingSessionId: string | null;
   currentCardKey: string;
-  loadGeneration: number;
-  recoveryGeneration: number;
+  selectionOperation: TrainingOperation;
+  recoveryOperation: TrainingOperation;
   turnIdForReview: string | null;
   isNextCardOverride: boolean;
   nextQueueTurn: QueueTurn;
@@ -167,9 +169,7 @@ export function useTrainingTurnController(input: Inputs) {
   >(null);
   const actionLoadingRef = useRef(false);
   const loadingInProgressRef = useRef(false);
-  const loadGenerationRef = useRef(0);
-  // Recovery spans marks and subsequent selection; individual loads have their own generation.
-  const recoveryGenerationRef = useRef(0);
+  const operations = useTrainingOperationScope(userId);
   const componentMountedRef = useRef(true);
   const sessionScopeKeyRef = useRef(sessionScopeKey);
   const currentTurnIdRef = useRef<string | null>(null);
@@ -255,21 +255,21 @@ export function useTrainingTurnController(input: Inputs) {
   });
 
   const clearReviewedSession = useCallback(() => {
-    recoveryGenerationRef.current += 1;
+    operations.cancel("recovery");
     reviewedCardKeysRef.current.clear();
     rejectedCardKeysRef.current.clear();
     cardFailureRef.current = null;
     unavailableMarkPromiseRef.current = null;
     setUsableCandidatesExhausted(false);
     clearAcceptedTransitionRecovery();
-  }, [clearAcceptedTransitionRecovery]);
+  }, [clearAcceptedTransitionRecovery, operations]);
 
   const cancelActiveSelection = useCallback(() => {
-    recoveryGenerationRef.current += 1;
-    loadGenerationRef.current += 1;
+    operations.cancel("recovery");
+    operations.cancel("selection");
     loadingInProgressRef.current = false;
     setLoadingWord(false);
-  }, []);
+  }, [operations]);
 
   const resetFocusQueue = useCallback(() => {
     clearReviewedSession();
@@ -361,7 +361,7 @@ export function useTrainingTurnController(input: Inputs) {
           ? unavailableMarkPromiseRef.current
           : false;
       }
-      const recoveryGeneration = recoveryGenerationRef.current;
+      const recoveryOperation = operations.capture("recovery");
       const failureState = {cardKey, word, failure, reason, trainingSessionId: effectiveSessionId};
       cardFailureRef.current = failureState;
       if (!reason || !effectiveSessionId || !selection.markUnavailable) {
@@ -379,7 +379,7 @@ export function useTrainingTurnController(input: Inputs) {
         .catch(() => false);
       unavailableMarkPromiseRef.current = markPromise;
       const marked = await markPromise;
-      if (!componentMountedRef.current || recoveryGeneration !== recoveryGenerationRef.current ||
+      if (!componentMountedRef.current || !recoveryOperation.isCurrent() ||
           cardFailureRef.current !== failureState || unavailableMarkPromiseRef.current !== markPromise) return false;
       if (marked) {
         rejectedCardKeysRef.current.add(cardKey);
@@ -387,7 +387,7 @@ export function useTrainingTurnController(input: Inputs) {
       } else unavailableMarkPromiseRef.current = null;
       return marked;
     },
-    [enabledModes, rememberRejectedCard, selection, trainingSessionId],
+    [enabledModes, rememberRejectedCard, selection, trainingSessionId, operations],
   );
 
   const loadNextWord = useCallback(
@@ -409,9 +409,8 @@ export function useTrainingTurnController(input: Inputs) {
       }
 
       loadingInProgressRef.current = true;
-      const generation = (loadGenerationRef.current += 1);
-      const isCurrentLoad = () =>
-        componentMountedRef.current && generation === loadGenerationRef.current;
+      const operation = operations.begin("selection");
+      const isCurrentLoad = () => componentMountedRef.current && operation.isCurrent();
       setLoadingWord(true);
       setUsableCandidatesExhausted(false);
       setLoadError(null);
@@ -622,6 +621,7 @@ export function useTrainingTurnController(input: Inputs) {
       queueTurn,
       recoverLoadErrors,
       reportCardLoadFailure,
+      operations,
       selection,
       trainingSessionId,
       warmWord,
@@ -631,9 +631,9 @@ export function useTrainingTurnController(input: Inputs) {
   const retryCardLoadFailure = useCallback(async () => {
     const failure = cardFailureRef.current;
     if (!failure || !componentMountedRef.current) return "skipped" as const;
-    const recoveryGeneration = recoveryGenerationRef.current;
+    const recoveryOperation = operations.capture("recovery");
     const isCurrentRecovery = () => componentMountedRef.current &&
-      recoveryGeneration === recoveryGenerationRef.current && cardFailureRef.current === failure;
+      recoveryOperation.isCurrent() && cardFailureRef.current === failure;
     const effectiveTrainingSessionId =
       failure.trainingSessionId === null
         ? null
@@ -668,7 +668,7 @@ export function useTrainingTurnController(input: Inputs) {
       unavailableMarkPromiseRef.current = null;
     }
     return result;
-  }, [loadNextWord, queueTurn, resetPreparedNextTurn, trainingSessionId]);
+  }, [loadNextWord, queueTurn, resetPreparedNextTurn, trainingSessionId, operations]);
 
   const replaceSessionScopeAndLoad = useCallback(
     (request: LoadNextTrainingTurnRequest) => {
@@ -733,8 +733,8 @@ export function useTrainingTurnController(input: Inputs) {
       wordMode,
       trainingSessionId,
       currentCardKey,
-      loadGeneration: loadGenerationRef.current,
-      recoveryGeneration: recoveryGenerationRef.current,
+      selectionOperation: operations.capture("selection"),
+      recoveryOperation: operations.capture("recovery"),
       turnIdForReview,
       isNextCardOverride:
         nextCardOverrideActiveKeyRef.current === currentCardKey,
@@ -750,6 +750,7 @@ export function useTrainingTurnController(input: Inputs) {
     newReviewRatio,
     nextTransitionId,
     onSessionCardAccepted,
+    operations,
     presentPreparedCandidate,
     queueTurn,
     reviewCounter,
@@ -775,7 +776,7 @@ export function useTrainingTurnController(input: Inputs) {
       >
     > => {
       const isCurrentTransition = () => componentMountedRef.current &&
-        transition.recoveryGeneration === recoveryGenerationRef.current;
+        transition.recoveryOperation.isCurrent();
       if (!isCurrentTransition()) return "accepted-next-unavailable";
       const reachedSessionLimit =
         sessionPlannedTotal !== null &&
@@ -806,7 +807,7 @@ export function useTrainingTurnController(input: Inputs) {
       if (prefetched?.v2Ready) {
         revalidatePreparedAfterCommit(prefetched, transition.word.id);
         const warmResult = await prefetched.v2Ready.catch(() => false);
-        if (transition.loadGeneration !== loadGenerationRef.current) {
+        if (!transition.selectionOperation.isCurrent()) {
           // Scope changes/reset invalidate a detached prefetch just as they
           // invalidate an on-demand selection. The accepted mutation remains
           // settled, but an old candidate must not replace the new session.
