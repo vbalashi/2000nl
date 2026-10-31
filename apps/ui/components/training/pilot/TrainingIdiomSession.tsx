@@ -102,23 +102,46 @@ export function TrainingIdiomSession({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(false);
+  const [superseded, setSuperseded] = useState(false);
+  const supersededRef = useRef(false);
+  const supersededCallback = useRef(onSessionSuperseded ?? onExit);
+  React.useLayoutEffect(() => { supersededCallback.current = onSessionSuperseded ?? onExit; }, [onSessionSuperseded, onExit]);
   const actionClientEventIdRef = useRef<string | null>(null);
   const activeTransitionIdRef = useRef<string | null>(null);
   const loadGenerationRef = useRef(0);
+  const currentReadRef = React.useRef<{targetId:string; context:CurrentTrainingCardContext} | null>(null);
 
-  const currentCard = useCurrentTrainingCard({ userId, active: presentationActive && Boolean(candidate && content) && !loading && !terminal,
+  const replaceSession = useCallback(() => {
+    if (supersededRef.current) return;
+    supersededRef.current = true;
+    loadGenerationRef.current++;
+    actionClientEventIdRef.current = null;
+    currentReadRef.current = null;
+    setSuperseded(true);
+    setCandidate(null);
+    setContent(null);
+    setRevealed(false);
+    setError(false);
+    setLoading(false);
+    const transitionId = activeTransitionIdRef.current;
+    activeTransitionIdRef.current = null;
+    if (transitionId) finishTrainingUserTransition(transitionId, "session-superseded");
+    supersededCallback.current();
+  }, []);
+
+  const currentCard = useCurrentTrainingCard({ userId, active: !superseded && presentationActive && Boolean(candidate && content) && !loading && !terminal,
     target: candidate && content ? { sessionId: session.sessionId, entryId: candidate.entryId,
       cardTypeId: `${candidate.family}:${candidate.direction}`, targetId: candidate.targetId, direction: candidate.direction,
       sourceVersion: content.entry.sourceVersion ?? 0, stateRevision: candidate.state?.stateRevision ?? "untracked" } : null });
   useCardLoadDiagnostics(JSON.stringify([userId, session.sessionId, candidate?.targetId]),
-    !presentationActive || terminal ? "inactive" : currentCard.failed || (error && !candidate) ? "failed" : loading || (candidate && !currentCard.ready) ? "loading" : "ready");
+    superseded || !presentationActive || terminal ? "inactive" : currentCard.failed || (error && !candidate) ? "failed" : loading || (candidate && !currentCard.ready) ? "loading" : "ready");
   usePresentedTrainingCard(presentationActive && currentCard.ready && currentCard.context && content ? { userId, group: content.group, entry: content.entry, currentCard: currentCard.context } : null, onCurrentCardContextChange);
-  const currentReadRef = React.useRef<{targetId:string; context:CurrentTrainingCardContext} | null>(null);
   React.useLayoutEffect(()=>{currentReadRef.current = currentCard.context && candidate ? {targetId:candidate.targetId,context:currentCard.context} : null;},[candidate,currentCard.context]);
   const additionalTranslationLanguage = useAdditionalTranslationLanguage();
   useLatchedTranslationBuffer({ ownerId: userId, sessionId: session.sessionId, generation: session.runGeneration, currentEntryId: candidate?.entryId, currentOrdinal: session.members.find(member => member.targetId === candidate?.targetId)?.ordinal, targetLanguageCode: translationTargetLanguageCode, additionalTargetLanguageCode: additionalTranslationLanguage, members: session.members });
 
   const loadNext = useCallback(async () => {
+    if (supersededRef.current) return;
     const readPermit = currentReadRef.current;
     const generation = ++loadGenerationRef.current;
     const transitionId = createTrainingTransitionId();
@@ -142,6 +165,7 @@ export function TrainingIdiomSession({
             ),
         );
         if (generation !== loadGenerationRef.current) return;
+        if (next.status === "superseded") { replaceSession(); return; }
         if (next.status === "ready") {
           const loaded = await measureTrainingTransitionStage(
             transitionId,
@@ -193,8 +217,12 @@ export function TrainingIdiomSession({
       setError(true);
       activeTransitionIdRef.current = null;
       finishTrainingUserTransition(transitionId, "error-retries-exhausted");
-    } catch {
+    } catch (cause) {
       if (generation !== loadGenerationRef.current) return;
+      if (cause instanceof Error && cause.message === "training_session_superseded") {
+        replaceSession();
+        return;
+      }
       setError(true);
       activeTransitionIdRef.current = null;
       finishTrainingUserTransition(transitionId, "error-request");
@@ -203,6 +231,7 @@ export function TrainingIdiomSession({
     }
   }, [
     contentLanguageCode,
+    replaceSession,
     finish,
     session.sessionId,
     translationTargetLanguageCode,
@@ -234,7 +263,7 @@ export function TrainingIdiomSession({
 
   const exclusion = useTrainingExclusion({
     userId,
-    onSessionSuperseded: onSessionSuperseded ?? onExit,
+    onSessionSuperseded: replaceSession,
     identity: candidate?.targetKey ?? "none",
     sessionId: session.sessionId,
     target: { kind: "exercise", targetId: candidate?.targetId ?? "" },
@@ -250,7 +279,8 @@ export function TrainingIdiomSession({
   const grade = async (
     reviewResult: PlatformTrainingExerciseReviewResultV2,
   ) => {
-    if (!candidate || !content || submitting || exclusion.busy || !currentCard.ready) return;
+    if (supersededRef.current || !candidate || !content || submitting || exclusion.busy || !currentCard.ready) return;
+    const generation = loadGenerationRef.current;
     setSubmitting(true);
     setError(false);
     try {
@@ -263,10 +293,16 @@ export function TrainingIdiomSession({
         candidate,
         reviewResult,
       });
+      if (generation !== loadGenerationRef.current) return;
       actionClientEventIdRef.current = null;
       accept();
       await loadNext();
-    } catch {
+    } catch (cause) {
+      if (generation !== loadGenerationRef.current) return;
+      if (cause instanceof Error && cause.message === "training_session_superseded") {
+        replaceSession();
+        return;
+      }
       setError(true);
     } finally {
       setSubmitting(false);
@@ -282,6 +318,8 @@ export function TrainingIdiomSession({
       ? Math.min(completedCount / session.requestedTotal, 1)
       : 0,
   };
+
+  if (superseded) return null;
 
   return (
     <TrainingSessionV2Layout
