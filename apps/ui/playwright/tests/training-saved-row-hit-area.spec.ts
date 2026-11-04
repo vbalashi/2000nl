@@ -30,7 +30,7 @@ for (const profile of [{name:'desktop light',width:1280,height:900,theme:'light'
    await alpha.click();
    await page.getByRole('button',{name:'Edit Beta',exact:true}).click();
    await expect(page.getByRole('heading',{name:'Session builder'})).toBeVisible();
-   await page.getByRole('button',{name:'Back',exact:true}).click();
+   await page.getByRole('button',{name:'Back to training',exact:true}).click();
    await expect(alpha).toHaveAttribute('aria-pressed','true');
    await expect(beta).toHaveAttribute('aria-pressed','false');
    await expect(page.locator('article')).toHaveCount(0);
