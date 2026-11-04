@@ -28,7 +28,7 @@ export function BuilderSection({
   return (
     <section className={s.section}>
       {headerActions || headerChoices ? (
-        <div className={s.controlledHeader}>
+        <div className={s.controlledHeader} data-open={open}>
           <div className={s.titleActions}>
             <button
               type="button"

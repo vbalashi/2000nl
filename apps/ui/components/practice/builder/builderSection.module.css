@@ -138,3 +138,23 @@
 .headerChoices { min-width:0; max-width:100%; }
 .controlledSummary { flex-basis:100%; font-size:var(--practice-text-small); color:var(--practice-text-muted); line-height:1.6; overflow-wrap:anywhere; }
 @media(max-width:700px) { .controlledHeader { padding:12px; gap:6px 12px; } .controlledSummary { font-size:var(--practice-text-caption); } }
+
+/* Collapsed summaries align with the ordinary BuilderSection title column. */
+.controlledHeader[data-open="false"] {
+  display:grid;
+  grid-template-columns:140px minmax(0,1fr);
+  min-height:51px;
+  box-sizing:border-box;
+  padding:11.5px 18px;
+}
+.controlledHeader[data-open="false"] .titleActions,
+.controlledHeader[data-open="false"] .titleDisclosure { min-width:0; }
+.controlledHeader[data-open="false"] .controlledSummary { min-width:0; }
+@media(max-width:700px) {
+  .controlledHeader[data-open="false"] {
+    grid-template-columns:108px minmax(0,1fr);
+    padding:11.5px 12px;
+  }
+  .controlledHeader[data-open="false"] .titleActions,
+  .controlledHeader[data-open="false"] .titleDisclosure { gap:4px; }
+}
