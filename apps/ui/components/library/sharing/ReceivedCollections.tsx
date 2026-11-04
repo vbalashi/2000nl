@@ -1,4 +1,5 @@
 'use client';
+import {CollectionSortControl} from '@/components/library/organization/CollectionSortControl';
 import React,{useState,useRef,useEffect} from 'react';
 import {Eye,FileText,Plus,Search,MoreHorizontal} from 'lucide-react';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
@@ -33,7 +34,7 @@ export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=
   {!embedded&&<header className={s.catalogHeader}><h2>{t.added}</h2><button ref={addButton} type="button" onClick={onAdd}><Plus size={16}/><span>{t.add}</span></button></header>}
   {pendingKey&&pendingKey===dismissed&&<button type="button" onClick={()=>setDismissed(null)}>{actions.check}</button>}
   <div className={s.filters}><label className={s.search}><Search size={16} aria-hidden="true"/><input ref={searchInput} aria-label={common.search} placeholder={common.search} maxLength={100} value={query} onChange={event=>setQuery(event.target.value)}/></label>
-   <select aria-label={locale==='ru'?'Сортировка':locale==='nl'?'Sorteren':'Sort'} value={sort} onChange={event=>setSort(event.target.value as ReceivedCatalogQuery['sort'])}><option value="recent">{common.recent}</option><option value="name">{common.alphabetic}</option><option value="count">{common.count}</option></select></div>
+   <CollectionSortControl locale={locale} value={sort} onChange={setSort}/></div>
   {catalog.status==='loading'?<div className={s.state} role="status">{common.loading}</div>:catalog.status==='error'?<div className={s.state}><p role="alert">{t.error}</p><button onClick={()=>void catalog.refresh()}>{common.retry}</button></div>:catalog.status==='ready'&&catalog.collections.length===0?<p className={s.state}>{query.trim()?common.noResults:t.empty}</p>:null}
   <div className={s.results}>{catalog.collections.map(row=><article className={s.collection} key={row.id}><FileText size={20} aria-hidden="true"/><div className={s.collectionCopy}><button className={s.collectionName} onClick={()=>onOpen(row)}>{row.name}</button><p><Eye size={14} aria-hidden="true"/>{t.shared} · {row.itemCount.toLocaleString(locale)}</p></div><button type="button" onClick={()=>onOpen(row)}>{common.open}</button><button type="button" aria-label={`${common.more} · ${row.name}`} onClick={event=>setMenu({row,anchor:event.currentTarget})}><MoreHorizontal size={18}/></button></article>)}</div>
   {catalog.nextCursor&&<button className={s.loadMore} disabled={catalog.loadingMore} onClick={()=>void catalog.loadMore()}>{catalog.loadingMore?common.loading:common.moreResults}</button>}

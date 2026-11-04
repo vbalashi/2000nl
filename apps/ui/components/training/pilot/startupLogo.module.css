@@ -10,7 +10,7 @@
   color:var(--practice-startup-text);
   font-family:var(--practice-startup-font-ui);
 }
-.logo { margin:0; font-size:52px; font-weight:400; letter-spacing:-.04em; line-height:1; }
+.logo { margin:0; font-size:var(--practice-startup-logo-size); font-weight:400; letter-spacing:-.04em; line-height:1; }
 .ink { color:var(--practice-startup-accent); }
 .status { text-align:center; max-width:min(480px,calc(100vw - 48px)); }
 .status h1,.status p { margin:0; color:inherit; font-size:var(--practice-startup-text-size); line-height:20px; font-weight:400; }

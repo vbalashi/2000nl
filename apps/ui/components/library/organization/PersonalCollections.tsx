@@ -1,4 +1,5 @@
 "use client";
+import {CollectionSortControl} from "@/components/library/organization/CollectionSortControl";
 import React, { useMemo, useState } from "react";
 import { FileText, Folder, Folders, Share2, LockKeyhole, MoreHorizontal, Plus, Search, Tags, X } from "lucide-react";
 import {readOwnerShareJournal,ownerShareStore} from '@/lib/collections/sharing/ownerShareJournal';
@@ -131,7 +132,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
     <aside className={s.sidebar}>{scopePicker}</aside>
     <section className={s.catalog} aria-label={t.collections}>
       <header className={s.catalogHeader}><button type="button" className={s.mobileScope} onClick={()=>setScopeOpen(true)}><Folder size={18}/><span>{scopeTitle}</span></button><h2>{scopeTitle}</h2><button type="button" aria-label={t.newCollection} onClick={()=>begin({kind:"collection"})}><Plus size={18}/><span>{t.newCollection}</span></button></header>
-      <div className={s.filters}><label className={s.search}><Search size={18}/><input aria-label={t.search} placeholder={t.search} maxLength={200} value={query} onChange={event=>{setQuery(Array.from(event.target.value).slice(0,100).join(''));setPageSize(20);}}/></label><select aria-label={t.recent} value={sort} onChange={event=>{setSort(event.target.value as CollectionSort);setPageSize(20);}}><option value="recent">{t.recent}</option><option value="name">{t.alphabetic}</option><option value="count">{t.count}</option></select></div>
+      <div className={s.filters}><label className={s.search}><Search size={16} aria-hidden="true"/><input aria-label={t.search} placeholder={t.search} maxLength={200} value={query} onChange={event=>{setQuery(Array.from(event.target.value).slice(0,100).join(''));setPageSize(20);}}/></label><CollectionSortControl locale={locale} value={sort} onChange={value=>{setSort(value);setPageSize(20);}}/></div>
       {labels.error && !editor && <p role="alert">{message(labels.error)} <button onClick={()=>void labels.refresh()} disabled={labels.busy}>{t.retry}</button></p>}
       {publicationEnabled&&catalog.status==='error'&&<p role="alert">{t.unavailable} <button onClick={()=>void catalog.refresh()}>{t.retry}</button></p>}
       <div className={s.results} aria-busy={labels.loading||publicationEnabled&&catalog.status==='loading'}>

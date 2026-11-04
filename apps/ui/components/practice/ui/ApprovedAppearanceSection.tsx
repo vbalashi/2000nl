@@ -84,7 +84,7 @@ export function ApprovedAppearanceSection({
             </div>
           )}
           {spacing.saveStatus === "saving" && (
-            <p role="status">{status.saving}</p>
+            <p className={layout.srOnly} role="status">{status.saving}</p>
           )}
         </>
       )}
@@ -115,7 +115,7 @@ export function ApprovedAppearanceSection({
             </div>
           )}
           {appearance.saveStatus === "saving" && (
-            <p role="status">{status.saving}</p>
+            <p className={layout.srOnly} role="status">{status.saving}</p>
           )}
           {appearance.saveStatus === "error" && (
             <div role="alert">

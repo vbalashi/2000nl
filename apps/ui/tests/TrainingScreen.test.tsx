@@ -3072,7 +3072,7 @@ test("dictionary search omits the retired private entry editor", async () => {
   expect(createUserDictionaryEntry).not.toHaveBeenCalled();
 });
 
-test("dictionary lookup preserves an open entry with an explicit stale-detail label", async () => {
+test("dictionary lookup keeps an open entry without a stale-detail banner", async () => {
   searchDictionaryGroups.mockImplementation(
     async ({ query }: { query?: string }) =>
       query === "boom"
@@ -3090,16 +3090,10 @@ test("dictionary lookup preserves an open entry with an explicit stale-detail la
     fireEvent.change(queryInput, { target: { value: "huis" } });
     const huisRow = await screen.findByTestId("library-headword-group-group-word-1");
     fireEvent.click(huisRow);
-    await screen.findByText("Details");
-
     fireEvent.change(queryInput, { target: { value: "boom" } });
 
     await screen.findByText("boom");
-    expect(
-      await screen.findByText(
-        "This entry stays open while search results change.",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.queryByText("This entry stays open while search results change.")).not.toBeInTheDocument();
   } finally {
     restoreDefaultSearchResults();
   }

@@ -28,10 +28,10 @@ export const tourFlows:Record<TourTopic,TourStep[]>={
  languages:[step('interface','[data-onboarding="interface"]','interfaceTitle','interfaceBody','continue'),step('translation','[data-onboarding="translation"]','translationTitle','translationBody','continue'),finish],
  appearance:[step('theme','[data-onboarding="appearance"] [role="group"]','appearanceChoiceTitle','appearanceChoiceBody'),step('shortcut','[data-tour="theme-switch"]','themeShortcutTitle','themeShortcutBody'),step('shortcut-done','[data-tour="theme-switch"]','themeShortcutDoneTitle','themeShortcutDoneBody','continue'),finish],
 };
-export type TourRecord={version:1;topic:TourTopic;step:number;status:'running'|'paused'|'complete';coreCompleted:boolean;collectionId?:string;remaining?:TourTopic[]};
+export type TourRecord={version:1;topic:TourTopic;step:number;status:'running'|'paused'|'complete';coreCompleted:boolean;collectionId?:string;remaining?:TourTopic[];completedTopics?:TourTopic[]};
 export const tourStorageKey=(userId:string)=>`2000nl:onboarding:v1:${encodeURIComponent(userId)}`;
 export function parseTourRecord(raw:string|null):TourRecord|null{
- try {const v=JSON.parse(raw??'null');return v?.version===1&&topics.includes(v.topic)&&Number.isInteger(v.step)&&v.step>=0&&v.step<tourFlows[v.topic as TourTopic].length&&['running','paused','complete'].includes(v.status)&&(v.remaining===undefined||Array.isArray(v.remaining)&&v.remaining.length<=topics.length&&v.remaining.every((topic:unknown)=>topics.includes(topic as TourTopic)))&&typeof v.coreCompleted==='boolean'&&(v.collectionId===undefined||typeof v.collectionId==='string'&&/^[a-zA-Z0-9-]{1,80}$/.test(v.collectionId))?v:null;}catch{return null;}
+ try {const v=JSON.parse(raw??'null');return v?.version===1&&topics.includes(v.topic)&&Number.isInteger(v.step)&&v.step>=0&&v.step<tourFlows[v.topic as TourTopic].length&&['running','paused','complete'].includes(v.status)&&(v.remaining===undefined||Array.isArray(v.remaining)&&v.remaining.length<=topics.length&&v.remaining.every((topic:unknown)=>topics.includes(topic as TourTopic)))&&(v.completedTopics===undefined||Array.isArray(v.completedTopics)&&v.completedTopics.length<=topics.length&&v.completedTopics.every((topic:unknown)=>topics.includes(topic as TourTopic)))&&typeof v.coreCompleted==='boolean'&&(v.collectionId===undefined||typeof v.collectionId==='string'&&/^[a-zA-Z0-9-]{1,80}$/.test(v.collectionId))?v:null;}catch{return null;}
 }
 
 /** Reopen a dismissed transient panel using its real control; keep mounted drafts intact. */

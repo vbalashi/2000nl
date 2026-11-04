@@ -251,12 +251,12 @@
   font-weight: 400;
 }
 .recallTarget {
-  font-size: calc(var(--practice-text-title) * 1.5);
+  font-size: var(--practice-recall-target-size);
   line-height: 1.2;
   color: var(--practice-text);
 }
 .faceContext {
-  font-size: calc(var(--practice-text-title) * 1.2);
+  font-size: var(--practice-face-context-size);
   line-height: 1.4;
   color: var(--practice-text-secondary);
 }

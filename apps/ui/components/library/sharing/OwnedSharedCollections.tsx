@@ -1,4 +1,5 @@
 'use client';
+import {CollectionSortControl} from '@/components/library/organization/CollectionSortControl';
 import React,{useEffect,useRef,useState} from 'react';
 import {FileText,MoreHorizontal,Search,Share2} from 'lucide-react';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
@@ -60,7 +61,7 @@ export function OwnedSharedCollections({userId,active,locale,onOpen,onChanged,ca
  };
  return <section className={`${s.catalog} ${s.received} ${s.ownedShared}`} aria-label={t.title}>
   <div className={s.filters}><label className={s.search}><Search size={16} aria-hidden="true"/><input ref={searchInput} aria-label={common.search} placeholder={common.search} maxLength={100} value={query} onChange={event=>setQuery(event.target.value)}/></label>
-   <select aria-label={t.sort} value={sort} onChange={event=>setSort(event.target.value as OwnedCatalogQuery['sort'])}><option value="recent">{common.recent}</option><option value="name">{common.alphabetic}</option><option value="count">{common.count}</option></select></div>
+   <CollectionSortControl locale={locale} value={sort} onChange={setSort}/></div>
   {notice?.key===key&&<p role="status" className={s.muted}>{notice.text}</p>}
   {catalog.status==='loading'?<div className={s.state} role="status">{common.loading}</div>:catalog.status==='error'?<div className={s.state}><p role="alert">{t.error}</p><button onClick={()=>void catalog.refresh()}>{common.retry}</button></div>:catalog.status==='ready'&&catalog.collections.length===0?<p className={s.state}>{query.trim()?common.noResults:t.empty}</p>:null}
   {catalog.collections.length>0&&<div className={s.ownedSharedTable} role="table" aria-label={t.title}><div className={s.ownedSharedHead} role="row"><span role="columnheader">{common.collections}</span><span role="columnheader">{t.active}</span><span role="columnheader">{t.subscribers}</span><span role="columnheader">{common.more}</span></div>

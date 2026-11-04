@@ -71,10 +71,6 @@
   font-size: var(--practice-text-headword);
   line-height: 1.2;
 }
-.headword small {
-  font-size: 0.65em;
-  color: var(--practice-text-muted);
-}
 .section .definition,
 .embedded .definition {
   font-family: var(--practice-font-reading);

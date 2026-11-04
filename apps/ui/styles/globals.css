@@ -5,6 +5,7 @@
 :root {
   --practice-startup-font-ui: var(--font-sense-sans), sans-serif;
   --practice-startup-text-size: 14px;
+  --practice-startup-logo-size: 52px;
   --practice-startup-surface: #f4f4f3;
   --practice-startup-text: #36383c;
   --practice-startup-accent: #71608d;

@@ -13,8 +13,10 @@ test('opens exact collection and does not expose internal owner identity',()=>{
  fireEvent.click(screen.getByRole('button',{name:'View words'}));expect(props.onOpen).toHaveBeenCalledWith(row);
 });
 test('search and sort are sent to the paginated query, rather than filtering one loaded page',()=>{
- render(<ReceivedCollections {...props}/>);fireEvent.change(screen.getByRole('textbox',{name:'Search collections'}),{target:{value:'Dutch'}});fireEvent.change(screen.getByRole('combobox',{name:'Sort'}),{target:{value:'name'}});
+ render(<ReceivedCollections {...props}/>);fireEvent.change(screen.getByRole('textbox',{name:'Search collections'}),{target:{value:'Dutch'}});fireEvent.click(screen.getByRole('button',{name:'Sort: Recent'}));fireEvent.click(screen.getByRole('menuitem',{name:'Name'}));
  expect(mock.hook.mock.calls.at(-1)?.[0].query).toMatchObject({query:'Dutch',sort:'name',limit:50});
+ expect(screen.getByRole('button',{name:'Sort: Name'})).toHaveFocus();
+ expect(screen.getByRole('button',{name:'Sort: Name'})).toHaveAttribute('aria-expanded','false');
 });
 test('pagination is explicit and single-flight state disables the next-page control',()=>{
  mock.hook.mockReturnValue({status:'ready',collections:[row],nextCursor:{},loadingMore:true});render(<ReceivedCollections {...props}/>);expect(screen.getByRole('button',{name:'Loading…'})).toBeDisabled();
