@@ -124,3 +124,7 @@ Changing the live file after initial path/mount provisioning needs no rebuild or
 restart. Policy errors fail closed; inspect file provisioning before treating an
 absence of events as an absence of failures. Production mount provisioning and
 operator changes follow the private managed release process.
+
+## Interface consistency
+
+The [interface standard](ui/interface-standard.md) maps typography and control roles to shared presentation components and records remaining gaps in component coverage. New screens should reuse those components and semantic theme roles.

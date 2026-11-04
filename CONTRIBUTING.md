@@ -4,6 +4,8 @@ Keep changes focused. Explain the user-visible problem and how you checked the
 change. Run typecheck, lint and relevant tests from `apps/ui`; database changes
 also need the database contract suite.
 
+For interface changes, read the [interface standard](docs/ui/interface-standard.md) first. Reuse its shared components and semantic roles, and run `npm run check:interface-standard` from `apps/ui`. Review any reported deviation rather than adding an exception merely to pass the check.
+
 Use synthetic fixtures. Do not submit production dictionary content, third-party
 corpora, personal learning records, credentials or proprietary prompts. Generic
 parsers may support external formats without bundling those external datasets.
