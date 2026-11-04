@@ -73,7 +73,8 @@
       "easy": "Easy"
     },
     "audio": {
-      "play": "Play audio"
+      "play": "Play audio",
+      "failed": "Could not play audio. Please try again."
     },
     "hint": {
       "show": "Show hint",
@@ -206,7 +207,8 @@
       "stateRefreshed": "The card changed elsewhere. Its latest state is now shown.",
       "temporaryFailure": "The connection was interrupted. Please try again.",
       "exit": "Back to Today",
-      "retry": "Try again"
+      "retry": "Try again",
+      "actionFailed": "Could not complete this action. Please try again."
     },
     "wordDetails": {
       "open": "Word details"
@@ -389,7 +391,8 @@
       "library": "Library",
       "statistics": "Statistics",
       "settings": "Settings",
-      "history": "History"
+      "history": "History",
+      "appLabel": "2000nl: {destination}"
     },
     "trainingOverview": {
       "nothingDue": "Nothing to review right now.",
@@ -1083,6 +1086,10 @@
     },
     "system": {
       "offline": "You're offline. Please connect to continue"
+    },
+    "common": {
+      "closePanel": "Close {title}",
+      "unknownLanguage": "Unknown language"
     }
   },
   "wordDetails": {
@@ -1503,7 +1510,9 @@
       "haveCodeToggle": "Already have a code?",
       "hideCodeToggle": "Hide code entry",
       "otpHelp": "If the email link doesn't work (for example it opens in the wrong browser), copy the code from the email and paste it here.",
-      "loginSuccess": "Signed in successfully!"
+      "loginSuccess": "Signed in successfully!",
+      "sendError": "Could not send a login code. Please try again.",
+      "verifyError": "Could not verify the code. Check it and try again."
     },
     "trainingScreen": {
       "noMatchingReviews": "No review cards match this training.",
@@ -1625,6 +1634,52 @@
       "changeList": "Change list in Settings",
       "changeScenario": "Change scenario in Settings",
       "selected": "selected"
+    },
+    "authPages": {
+      "signingIn": "Signing in…",
+      "title": "Reset password",
+      "description": "Enter your new password.",
+      "password": "New password",
+      "confirmPassword": "Confirm password",
+      "update": "Update password",
+      "authError": "Could not verify the reset link. Please request a new one.",
+      "invalidLink": "Invalid or expired reset link. Please request a new one.",
+      "mismatch": "Passwords do not match.",
+      "tooShort": "Password must be at least 6 characters long.",
+      "updated": "Password updated successfully. Redirecting…",
+      "updateError": "Could not update your password. Please try again."
+    },
+    "connect": {
+      "brand": "2000NL Connect",
+      "title": "Connect {name}",
+      "request": "{name} wants access to your 2000NL account.",
+      "loading": "Loading…",
+      "cancel": "Cancel",
+      "approve": "Connect",
+      "connecting": "Connecting…",
+      "unknownScope": "Additional permission",
+      "errors": {
+        "responseType": "Unsupported response type.",
+        "incomplete": "The connect request is incomplete.",
+        "redirect": "This connected app is not registered for this redirect URL.",
+        "unavailable": "This connected app cannot be authorized.",
+        "failed": "Could not complete the connection request."
+      },
+      "scopes": {
+        "platform:read": "Read your 2000NL dictionary and learning state",
+        "platform:write": "Update your 2000NL learning progress",
+        "offline_access": "Stay connected after closing the browser"
+      }
+    },
+    "overrideNotices": {
+      "failed": "Could not load this word. Please try again.",
+      "loaded": "{word} is now the next card. Normal training continues afterwards.",
+      "unavailable": "Could not load this word. Normal training continues.",
+      "queued": "This word will be loaded as the next card."
+    },
+    "appMetadata": {
+      "title": "2000NL",
+      "description": "Build your personal vocabulary library and practise words with spaced repetition."
     }
   },
   "tour": {

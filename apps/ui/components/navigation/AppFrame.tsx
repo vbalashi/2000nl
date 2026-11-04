@@ -1,13 +1,13 @@
 "use client";
 
 import React from "react";
+import {getUiMessages,formatUiMessage} from "@/lib/uiMessages";
 import { ReleaseBanner } from "@/components/releases/ReleaseUpdates";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AppDestinationNav, appDestinationLabel } from "./AppDestinationNav";
 import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
 import type { AppDestination } from "./appDestination";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { getUiMessages } from "@/lib/uiMessages";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import styles from "./AppFrame.module.css";
 
@@ -52,7 +52,7 @@ function AppHeader({
       data-app-header="true"
     >
       <button type="button" className={styles.brandLink}
-        aria-label={`2000nl: ${appDestinationLabel(interfaceLanguage, "training")}`}
+        aria-label={formatUiMessage(getUiMessages(interfaceLanguage).navigation.appLabel,{destination:appDestinationLabel(interfaceLanguage,"training")})}
         disabled={navigationDisabled} onClick={() => onNavigate("training")}>
         <BrandLogo as="span" className={styles.brand} accentClassName={styles.brandAccent} />
       </button>

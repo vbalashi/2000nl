@@ -1,0 +1,122 @@
+[
+  {
+    "file": "components/practice/article/ArticleWordDetails.tsx",
+    "rule": "property",
+    "text": "Past",
+    "reason": "Semantic form keys. ArticleWordForms.labelOf resolves them through ui.wordDetails.forms before display."
+  },
+  {
+    "file": "components/practice/article/ArticleWordDetails.tsx",
+    "rule": "property",
+    "text": "Perfect",
+    "reason": "Semantic form keys. ArticleWordForms.labelOf resolves them through ui.wordDetails.forms before display."
+  },
+  {
+    "file": "components/practice/article/ArticleWordDetails.tsx",
+    "rule": "property",
+    "text": "Inflected",
+    "reason": "Semantic form keys. ArticleWordForms.labelOf resolves them through ui.wordDetails.forms before display."
+  },
+  {
+    "file": "components/practice/article/ArticleWordDetails.tsx",
+    "rule": "property",
+    "text": "Present",
+    "reason": "Semantic form keys. ArticleWordForms.labelOf resolves them through ui.wordDetails.forms before display."
+  },
+  {
+    "file": "components/practice/article/ArticleWordDetails.tsx",
+    "rule": "property",
+    "text": "Form",
+    "reason": "Semantic form keys. ArticleWordForms.labelOf resolves them through ui.wordDetails.forms before display."
+  },
+  {
+    "file": "components/practice/article/wordDetailsPresentation.ts",
+    "rule": "property",
+    "text": "Form",
+    "reason": "Semantic form identity used for grouping. ArticleWordForms localizes it through ui.wordDetails.forms."
+  },
+  {
+    "file": "components/practice/article/wordDetailsPresentation.ts",
+    "rule": "property",
+    "text": "Principal forms",
+    "reason": "Semantic form identity used for grouping. ArticleWordForms localizes it through ui.wordDetails.forms."
+  },
+  {
+    "file": "components/training/v2/TrainingCardTemplates.tsx",
+    "rule": "expression",
+    "text": "zn.",
+    "reason": "Abbreviations of Dutch part-of-speech content, preserved from dictionary labels; not interface language choices."
+  },
+  {
+    "file": "components/training/v2/TrainingCardTemplates.tsx",
+    "rule": "expression",
+    "text": "bn.",
+    "reason": "Abbreviations of Dutch part-of-speech content, preserved from dictionary labels; not interface language choices."
+  },
+  {
+    "file": "lib/onboarding/model.ts",
+    "rule": "property",
+    "text": "basicDoneTitle",
+    "reason": "Typed keyof TourCopy identifier; actual title is read from the locale tour catalog."
+  },
+  {
+    "file": "lib/training/directionExamples.ts",
+    "rule": "catalog",
+    "text": "Inline interface-language catalog; move copy to locales/.",
+    "reason": "Illustrative learning-language sentences and headwords, selected by dictionary/translation language rather than interface locale."
+  },
+  {
+    "file": "components/practice/ui/NounArticleChoices.tsx",
+    "rule": "expression",
+    "text": "de",
+    "reason": "Dutch grammatical articles are learning-content filter identities and must not be translated into the interface language."
+  },
+  {
+    "file": "components/practice/ui/NounArticleChoices.tsx",
+    "rule": "expression",
+    "text": "het",
+    "reason": "Dutch grammatical articles are learning-content filter identities and must not be translated into the interface language."
+  },
+  {
+    "file": "components/training/pilot/ApprovedTrainingBuilder.tsx",
+    "rule": "expression",
+    "text": "de",
+    "reason": "Dutch grammatical articles are learning-content filter identities and must not be translated into the interface language."
+  },
+  {
+    "file": "components/training/pilot/ApprovedTrainingBuilder.tsx",
+    "rule": "expression",
+    "text": "het",
+    "reason": "Dutch grammatical articles are learning-content filter identities and must not be translated into the interface language."
+  },
+  {
+    "file": "components/training/useTrainingTurnController.ts",
+    "rule": "message",
+    "text": "Raw error.message is displayed; map it to a catalog message.",
+    "reason": "setLoadError stores an internal failure identifier, not visible copy. TrainingScreen renders a localized failure state. Rendered override notices use catalog identities."
+  },
+  {
+    "file": "lib/training/listService.ts",
+    "rule": "property",
+    "text": "Raw error.message is displayed; map it to a catalog message.",
+    "reason": "This is a service error contract for classification. Learner components render localized failure messages, not this diagnostic field."
+  },
+  {
+    "file": "components/training/useTrainingTurnController.ts",
+    "rule": "property",
+    "text": "AFTER {…} (platform-v2)",
+    "reason": "Internal stats/diagnostic stage label supplied to refreshAfterAccepted; never rendered as learner-facing UI copy."
+  },
+  {
+    "file": "components/training/v2/trainingSenseCardModel.ts",
+    "rule": "property",
+    "text": "2K",
+    "reason": "Fixed dictionary core-vocabulary mark, represented by the typed 2K indicator identity; not an interface phrase."
+  },
+  {
+    "file": "lib/training/idiomExerciseContent.ts",
+    "rule": "property",
+    "text": "2K",
+    "reason": "Fixed dictionary core-vocabulary mark, represented by the typed 2K indicator identity; not an interface phrase."
+  }
+]

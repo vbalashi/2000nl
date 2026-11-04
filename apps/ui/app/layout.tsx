@@ -1,3 +1,4 @@
+import {getInterfaceCatalog} from "@/lib/i18n/catalog";
 import "../styles/globals.css";
 import { InterfaceLanguageEffect } from "@/components/system/InterfaceLanguageEffect";
 import { startupAppearanceBootstrap } from "@/lib/preferences/startupAppearance";
@@ -26,9 +27,7 @@ const senseSerif = Newsreader({
 });
 
 export const metadata = {
-  title: "NT2 Training",
-  description:
-    "Leer de NT2 woorden met een Supabase-gestuurde training. Zet Luistermodus (🎧) aan en tik op een woord in een voorbeeldzin om uitspraak te horen.",
+  ...getInterfaceCatalog("en").features.appMetadata,
   manifest: "/manifest.json",
   icons: { icon: "/icons/favicon-v3.ico" }
 };

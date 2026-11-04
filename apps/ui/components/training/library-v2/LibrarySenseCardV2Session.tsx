@@ -543,7 +543,7 @@ function SenseCardV2Session({
       if(!isCurrent())return;
       const audio = new Audio(url);await audio.play();
     } catch (cause) {
-      if(isCurrent())setError(cause instanceof Error ? cause.message : "audio_failed");
+      if(isCurrent())setError(platformV2Message(interfaceLanguage,"senseCard.audio.failed"));
     } finally {
       if(audioController.current===controller){audioController.current=null;if(expected===detailIdentityRef.current)setAudioBusy(false);}
     }

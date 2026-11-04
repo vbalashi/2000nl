@@ -1,14 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
+import { useInterfaceLanguage } from "@/lib/i18n/useInterfaceLanguage";
+import { localizedSection, type MessageCatalog } from "@/lib/i18n/catalog";
+
+type MessageKey = keyof MessageCatalog["features"]["authPages"];
 export default function ResetPasswordPage() {
+  const language = useInterfaceLanguage();
+  const copy = localizedSection("authPages")[language];
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<MessageKey | null>(null);
   const [messageType, setMessageType] = useState<"error" | "success">("error");
   const [loading, setLoading] = useState(false);
 
@@ -23,13 +29,13 @@ export default function ResetPasswordPage() {
 
       if (error) {
         setMessageType("error");
-        setMessage(`Auth error: ${error.message}`);
+        setMessage("authError");
         return;
       }
 
       if (!data.session) {
         setMessageType("error");
-        setMessage("Invalid or expired reset link. Please request a new one.");
+        setMessage("invalidLink");
       }
     };
 
@@ -41,13 +47,13 @@ export default function ResetPasswordPage() {
 
     if (password !== confirmPassword) {
       setMessageType("error");
-      setMessage("Passwords do not match!");
+      setMessage("mismatch");
       return;
     }
 
     if (password.length < 6) {
       setMessageType("error");
-      setMessage("Password must be at least 6 characters long.");
+      setMessage("tooShort");
       return;
     }
 
@@ -60,10 +66,10 @@ export default function ResetPasswordPage() {
 
     if (error) {
       setMessageType("error");
-      setMessage(error.message);
+      setMessage("updateError");
     } else {
       setMessageType("success");
-      setMessage("Password updated successfully! Redirecting...");
+      setMessage("updated");
       setTimeout(() => {
         router.push("/");
       }, 2000);
@@ -77,15 +83,15 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md space-y-6 rounded-2xl bg-white/90 px-8 py-10 shadow-xl shadow-slate-900/10 backdrop-blur dark:bg-slate-900/70">
         <div>
           <h1 className="text-center text-3xl font-bold text-slate-900 dark:text-white">
-            Reset Wachtwoord
+            {copy.title}
           </h1>
           <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
-            Voer je nieuwe wachtwoord in.
+            {copy.description}
           </p>
         </div>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <label className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-            Nieuw Wachtwoord
+            {copy.password}
             <input
               type="password"
               required
@@ -95,7 +101,7 @@ export default function ResetPasswordPage() {
             />
           </label>
           <label className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-            Bevestig Wachtwoord
+            {copy.confirmPassword}
             <input
               type="password"
               required
@@ -112,7 +118,7 @@ export default function ResetPasswordPage() {
                   : "text-red-600 dark:text-red-400"
               }`}
             >
-              {message}
+              {copy[message]}
             </p>
           )}
           <button
@@ -120,7 +126,7 @@ export default function ResetPasswordPage() {
             disabled={loading}
             className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-primary/90 disabled:opacity-60"
           >
-            Wachtwoord Bijwerken
+            {copy.update}
           </button>
         </form>
       </div>

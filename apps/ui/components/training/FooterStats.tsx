@@ -1,4 +1,6 @@
 "use client";
+import {languageAutonym} from "@/lib/languages/languageDisplayName";
+
 import { localizedSection, localizedField } from "@/lib/i18n/catalog";
 
 import { dictionarySourceProfile } from "@/lib/dictionary/sourceProfile";
@@ -131,7 +133,7 @@ export function FooterStats({
     ? initialReviewDue ?? reviewCardsDone + stats.reviewCardsDue
     : null;
 
-  const fallbackLanguageOptions = [{ value: "nl", label: "Nederlands" }];
+  const fallbackLanguageOptions = [{ value: "nl", label: languageAutonym("nl") }];
 
   const filterLabels = localizedSection("trainingFilter")[interfaceLanguage];
   const cardFilterOptions = (["both", "new", "review"] as const).map(value => ({value, label: filterLabels[value]}));

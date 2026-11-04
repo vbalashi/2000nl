@@ -73,7 +73,8 @@
       "easy": "Makkelijk"
     },
     "audio": {
-      "play": "Afspelen"
+      "play": "Afspelen",
+      "failed": "De audio kon niet worden afgespeeld. Probeer opnieuw."
     },
     "hint": {
       "show": "Hint tonen",
@@ -206,7 +207,8 @@
       "stateRefreshed": "De kaart is elders gewijzigd. De nieuwste staat wordt nu getoond.",
       "temporaryFailure": "De verbinding werd onderbroken. Probeer het opnieuw.",
       "exit": "Terug naar Vandaag",
-      "retry": "Opnieuw proberen"
+      "retry": "Opnieuw proberen",
+      "actionFailed": "De actie kon niet worden uitgevoerd. Probeer opnieuw."
     },
     "wordDetails": {
       "open": "Woorddetails"
@@ -389,7 +391,8 @@
       "library": "Bibliotheek",
       "statistics": "Statistieken",
       "settings": "Instellingen",
-      "history": "Geschiedenis"
+      "history": "Geschiedenis",
+      "appLabel": "2000nl: {destination}"
     },
     "trainingOverview": {
       "nothingDue": "Er is nu niets te herhalen.",
@@ -1083,6 +1086,10 @@
     },
     "system": {
       "offline": "Je bent offline. Maak verbinding om verder te gaan"
+    },
+    "common": {
+      "closePanel": "{title} sluiten",
+      "unknownLanguage": "Onbekende taal"
     }
   },
   "wordDetails": {
@@ -1503,7 +1510,9 @@
       "haveCodeToggle": "Heb je al een code?",
       "hideCodeToggle": "Code invoer verbergen",
       "otpHelp": "Werkt de e-mail link niet (bijv. opent hij in de verkeerde browser)? Kopieer de code uit de e-mail en plak hem hier.",
-      "loginSuccess": "Inloggen succesvol!"
+      "loginSuccess": "Inloggen succesvol!",
+      "sendError": "De inlogcode kon niet worden verstuurd. Probeer opnieuw.",
+      "verifyError": "De code kon niet worden gecontroleerd. Controleer de code en probeer opnieuw."
     },
     "trainingScreen": {
       "noMatchingReviews": "Geen herhalingskaarten passen bij deze training.",
@@ -1625,6 +1634,52 @@
       "changeList": "Wijzig lijst in Instellingen",
       "changeScenario": "Wijzig scenario in Instellingen",
       "selected": "gekozen"
+    },
+    "authPages": {
+      "signingIn": "Inloggen…",
+      "title": "Wachtwoord herstellen",
+      "description": "Voer je nieuwe wachtwoord in.",
+      "password": "Nieuw wachtwoord",
+      "confirmPassword": "Bevestig wachtwoord",
+      "update": "Wachtwoord bijwerken",
+      "authError": "De herstellink kon niet worden gecontroleerd. Vraag een nieuwe aan.",
+      "invalidLink": "De herstellink is ongeldig of verlopen. Vraag een nieuwe aan.",
+      "mismatch": "De wachtwoorden komen niet overeen.",
+      "tooShort": "Het wachtwoord moet minstens 6 tekens bevatten.",
+      "updated": "Wachtwoord bijgewerkt. Je wordt doorgestuurd…",
+      "updateError": "Het wachtwoord kon niet worden bijgewerkt. Probeer opnieuw."
+    },
+    "connect": {
+      "brand": "2000NL Connect",
+      "title": "{name} verbinden",
+      "request": "{name} vraagt toegang tot je 2000NL-account.",
+      "loading": "Laden…",
+      "cancel": "Annuleren",
+      "approve": "Verbinden",
+      "connecting": "Verbinden…",
+      "unknownScope": "Aanvullende toestemming",
+      "errors": {
+        "responseType": "Dit type verzoek wordt niet ondersteund.",
+        "incomplete": "Het verbindingsverzoek is onvolledig.",
+        "redirect": "Dit terugkeeradres is niet geregistreerd voor de gekoppelde app.",
+        "unavailable": "Deze app kan geen toegang krijgen.",
+        "failed": "De verbinding kon niet worden voltooid."
+      },
+      "scopes": {
+        "platform:read": "Je 2000NL-woordenboek en leergegevens lezen",
+        "platform:write": "Je leervoortgang in 2000NL bijwerken",
+        "offline_access": "Verbonden blijven nadat je de browser sluit"
+      }
+    },
+    "overrideNotices": {
+      "failed": "Kon dit woord niet laden; probeer het opnieuw.",
+      "loaded": "{word} is nu de volgende kaart. Daarna gaat normale training verder.",
+      "unavailable": "Kon dit woord niet laden; normale training gaat verder.",
+      "queued": "Dit woord wordt als volgende kaart geladen."
+    },
+    "appMetadata": {
+      "title": "2000NL",
+      "description": "Bouw je persoonlijke woordenbibliotheek op en oefen woorden met gespreide herhaling."
     }
   },
   "tour": {

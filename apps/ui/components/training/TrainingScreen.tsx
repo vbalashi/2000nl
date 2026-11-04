@@ -1,4 +1,6 @@
 "use client";
+import {languageAutonym} from "@/lib/languages/languageDisplayName";
+
 import { localizedField } from "@/lib/i18n/catalog";
 
 import { useTrainingOperationScope } from "./useTrainingOperationScope";
@@ -166,14 +168,14 @@ type Props = {
   trainingTodaySetupEnabled?: boolean;
 };
 
-const DEFAULT_LANGUAGE_OPTIONS = [{ value: "nl", label: "Nederlands" }];
+const DEFAULT_LANGUAGE_OPTIONS = [{ value: "nl", label: languageAutonym("nl") }];
 
 const DEFAULT_TRAINING_FOCUS_FILTER: TrainingFocusFilter = {
   dateWindow: "all",
 };
 
 const fallbackLanguageLabel = (code: string) =>
-  code ? code.toUpperCase() : "Onbekend";
+  code ? code.toUpperCase() : getUiMessages("en").common.unknownLanguage;
 
 export function TrainingScreen(props: Props) {
   return (
@@ -881,6 +883,7 @@ function TrainingScreenContent({
     preparePlatformProgressAction: prepareV2ProgressAction,
     acceptPlatformProgressAction: handleV2ProgressActionAccepted,
   } = useTrainingTurnController({
+    interfaceLanguage: onboardingLang,
     userId: user.id,
     currentWord,
     setCurrentWord,

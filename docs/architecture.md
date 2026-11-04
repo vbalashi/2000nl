@@ -132,3 +132,11 @@ The interface registry and all learner UI message catalogs live in
 `apps/ui/locales`; adding a dictionary does not change interface preferences.
 The [localization guide](interface-localization.md) describes the catalog APIs,
 source-change review tracking, draft languages, validation and RTL readiness.
+
+Every new or changed learner-facing label, heading, button, table column,
+settings explanation, tooltip, accessibility label, validation or failure notice
+must originate in those catalogs. This includes independent page routes, not
+only shared components. `i18n:add` scaffolds a new message in active/draft
+catalogs; translation review is explicit. UI code still needs to reference the
+message. Source audits and the catalog/review checks enforce this contributor
+workflow; neither automatically translates arbitrary UI prose.

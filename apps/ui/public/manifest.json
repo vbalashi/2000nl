@@ -1,7 +1,7 @@
 {
-  "name": "2000nl Training",
+  "name": "2000NL",
   "short_name": "2000nl",
-  "description": "Leer de NT2 woorden met een Supabase-gestuurde training.",
+  "description": "Build your personal vocabulary library and practise words with spaced repetition.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

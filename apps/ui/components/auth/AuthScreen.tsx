@@ -1,5 +1,5 @@
 "use client";
-import { localizedSection } from "@/lib/i18n/catalog";
+import { localizedSection, type MessageCatalog } from "@/lib/i18n/catalog";
 
 import { useInterfaceLanguage } from "@/lib/i18n/useInterfaceLanguage";
 import React, { useEffect, useRef, useState } from "react";
@@ -36,7 +36,7 @@ export function AuthScreen() {
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [showOtpEntry, setShowOtpEntry] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<keyof MessageCatalog["features"]["auth"] | null>(null);
   const [messageType, setMessageType] = useState<"error" | "success">("error");
   const [loading, setLoading] = useState(false);
   const lang = useInterfaceLanguage();
@@ -70,10 +70,10 @@ export function AuthScreen() {
 
     if (error) {
       setMessageType("error");
-      setMessage(error.message);
+      setMessage("sendError");
     } else {
       setMessageType("success");
-      setMessage(translations[lang].successMessage);
+      setMessage("successMessage");
       setOtpSent(true);
       try {
         window.localStorage.setItem(PENDING_OTP_STORAGE_KEY, email);
@@ -98,10 +98,10 @@ export function AuthScreen() {
 
     if (error) {
       setMessageType("error");
-      setMessage(error.message);
+      setMessage("verifyError");
     } else {
       setMessageType("success");
-      setMessage(translations[lang].loginSuccess);
+      setMessage("loginSuccess");
       try {
         window.localStorage.removeItem(PENDING_OTP_STORAGE_KEY);
       } catch {
@@ -128,10 +128,10 @@ export function AuthScreen() {
 
     if (error) {
       setMessageType("error");
-      setMessage(error.message);
+      setMessage("sendError");
     } else {
       setMessageType("success");
-      setMessage(translations[lang].successMessage);
+      setMessage("successMessage");
     }
 
     setLoading(false);
@@ -161,7 +161,7 @@ export function AuthScreen() {
 
     if (error) {
       setMessageType("error");
-      setMessage(error.message);
+      setMessage("googleError");
       setLoading(false);
       return;
     }
@@ -172,7 +172,7 @@ export function AuthScreen() {
     }
 
     setMessageType("error");
-    setMessage(t.googleError);
+    setMessage("googleError");
     setLoading(false);
   };
 
@@ -230,7 +230,7 @@ export function AuthScreen() {
                       : "text-red-600 dark:text-red-400"
                   }`}
                 >
-                  {message}
+                  {t[message]}
                 </p>
               )}
               <button
@@ -334,7 +334,7 @@ export function AuthScreen() {
                       : "text-red-600 dark:text-red-400"
                   }`}
                 >
-                  {message}
+                  {t[message]}
                 </p>
               )}
               <button

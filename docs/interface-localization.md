@@ -41,6 +41,38 @@ Existing languages have explicit fallback wording in unused forms. New languages
 must supply appropriate wording for their own categories. `formatUiCount` and
 `formatPluralMessage` use the interface locale, not the dictionary language.
 
+## Adding a new message: AI translation note
+
+For a new explanation under the translation-language setting, use the existing
+mechanism; no new language switch or per-screen translation system is needed.
+Run this from `apps/ui`:
+
+```sh
+npm run i18n:add -- --key ui.settings.translationAttribution --text "Translations are provided by an AI service."
+```
+
+The command adds the English source and scaffolds the same key in every active
+and prepared draft locale. Target entries initially contain English source text
+and remain **unreviewed**. Nothing is automatically translated or approved.
+Existing keys and invalid parent paths are rejected before any catalog is changed.
+
+Translate the RU/NL entries (and future enabled languages), then acknowledge each:
+
+```sh
+npm run i18n:review -- --locale ru --key ui.settings.translationAttribution
+npm run i18n:review -- --locale nl --key ui.settings.translationAttribution
+npm run i18n:check
+```
+
+In the language settings component, where `copy` already comes from
+`getUiMessages(interfaceLanguage).settings`, render `{copy.translationAttribution}`
+in the explanatory paragraph. Adding a catalog key alone does not create a new
+control or place text on the screen. Conversely, adding the sentence directly to
+JSX, a local variable or a tooltip is rejected by the source audit. Editing the
+English wording later makes the corresponding target translations outdated.
+The integration tests exercise this example in temporary fixture catalogs; this
+example has not added an AI note to the product itself.
+
 ## Changing an existing message
 
 Run these commands from `apps/ui`:
@@ -61,7 +93,7 @@ English source, the new source and the current translation.
 `locales/reviews/<language>.json` records the English source and a fingerprint of
 the translation at acknowledgement. An English edit invalidates the matching
 translations even if the key remains unchanged. A translation edit also needs
-acknowledgement. Updating generated imports never resets this state. Keep review
+acknowledgement. Updating generated imports and install metadata never resets this state. Keep review
 files in version control; they are tooling metadata and are not bundled at runtime.
 The initial snapshots accept the pre-existing translations as the migration
 baseline; they do not certify a new human language review.
@@ -100,10 +132,25 @@ before either language is enabled. Tigrinya also needs font coverage checks.
 ## Guardrails and scope
 
 `npm run i18n:check` validates all registered catalogs, review state and generated
-imports, then scans learner components for inline JSX text and local language
-maps. `npm run i18n:audit` runs that source scan alone. It is a heuristic, not a
-proof that every dynamically constructed string is localized. Review new visible
-strings in JavaScript expressions as well as labels and accessibility text.
+imports, then scans `.ts` and `.tsx` learner components, independent app pages
+and client/presentation helpers. The audit covers JSX prose, text-bearing props,
+local literal variables, templates, conditional text, column/label definitions,
+static mapped arrays, displayed message state, raw formatter templates, and raw
+error messages passed to UI sinks. Literal `platformV2Message` keys (including
+local lookup wrappers) must also exist in the English catalog. `npm run i18n:audit` runs the source scan alone.
+
+Exact semantic exceptions are listed with reasons in
+`locales/copy-audit-exceptions.json`; unused exceptions fail the audit. These
+cover dictionary identities (such as Dutch articles and grammatical labels),
+not ordinary interface sentences. Adding a new JSX sentence cannot reuse an
+exception for a semantic property. Diagnostic API/server modules and generated
+catalog wiring are outside the learner UI source scan.
+
+Static analysis is a guardrail, not a proof about every runtime string or an
+automatic extractor/translator. Imported third-party content and novel dynamic
+code patterns still require review. Contributors must use the catalogs even if
+a particular expression is beyond the audit's static analysis. The type-level
+registration probe independently detects fixed-locale assumptions.
 
 Operator/admin tools, development diagnostics and the standalone development
 onboarding preview's demonstration text are outside the learner translation
@@ -117,3 +164,12 @@ interface messages.
 CI also runs `npm run i18n:check-registration`: TypeScript compiles against an
 additional in-memory locale to detect fixed-language maps that ordinary checks
 would miss. This probe writes no files and does not enable a real language.
+
+The default page metadata also comes from `features.appMetadata`. The install
+manifest's name and description are generated from the English source by
+`i18n:sync`, and `i18n:check` detects drift. This metadata uses the site's default
+English locale; learner account preferences are resolved client-side. Icons,
+brand marks and the language's own native name remain identities rather than
+translated prose. The audit also checks word-bearing CSS `content` literals and direct
+`textContent`, `innerText` and `innerHTML` writes. Current measurement labels are
+assigned from catalog-derived button text.

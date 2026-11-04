@@ -1,4 +1,6 @@
 "use client";
+import {languageAutonym} from "@/lib/languages/languageDisplayName";
+
 import { localizedSection, localizedField } from "@/lib/i18n/catalog";
 
 import {useTrainingSourceReferences} from '@/components/library/sharing/useTrainingSourceReferences';
@@ -123,7 +125,7 @@ export function TrainingTodaySetup({
   userId,
   emptyTraining,
   trainingLanguageCode,
-  trainingLanguageOptions: readableLanguageOptions = [{ value: "nl", label: "Nederlands" }],
+  trainingLanguageOptions: readableLanguageOptions = [{ value: "nl", label: languageAutonym("nl") }],
   trainingLanguageLoading = false,
   onTrainingLanguageChange,
   interfaceLanguage,

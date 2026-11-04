@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -69,7 +69,43 @@ try {
       if (errors.length) throw new Error(`${code}: catalog is incomplete: ${JSON.stringify(errors.slice(0, 5))}`);
     }
     writeFileSync(generatedPath, generatedModule(codes));
-    console.log("Updated catalog imports. Translation review state was not changed.");
+    if (!option("catalog-dir")) {
+      const manifestPath = path.join(uiRoot, "public/manifest.json");
+      const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+      manifest.name = source.features.appMetadata.title;
+      manifest.description = source.features.appMetadata.description;
+      writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    }
+    console.log("Updated catalog imports and default install metadata. Translation review state was not changed.");
+  } else if (command === "add") {
+    const key = option("key"), text = option("text");
+    const segments = key?.split(".") ?? [];
+    if (!segments.length || segments.some(segment => !/^[a-zA-Z][a-zA-Z0-9]*$/.test(segment) || ["__proto__", "prototype", "constructor"].includes(segment))) throw new Error("Specify a safe object message key, for example --key ui.settings.translationAttribution.");
+    if (typeof text !== "string" || !text.trim()) throw new Error("Specify non-empty English source text with --text.");
+    // Include prepared drafts too; no language silently loses a newly added message.
+    const catalogCodes = readdirSync(directory).filter(filename => /^[a-z]{2,3}\.json$/.test(filename)).map(filename => filename.slice(0, -5));
+    if (codes.some(code => !catalogCodes.includes(code))) throw new Error("A registered locale catalog is missing.");
+    const plans = catalogCodes.map(code => {
+      const catalog = load(`${code}.json`);
+      let parent = catalog;
+      for (const segment of segments.slice(0, -1)) {
+        if (!own(parent, segment)) parent[segment] = {};
+        if (!parent[segment] || typeof parent[segment] !== "object" || Array.isArray(parent[segment])) throw new Error(`${code}: ${segment} is not an object section.`);
+        parent = parent[segment];
+      }
+      const leaf = segments.at(-1);
+      if (own(parent, leaf)) throw new Error(`${code}: ${key} already exists; edit existing messages without resetting their review state.`);
+      parent[leaf] = text;
+      const reviewFile = `reviews/${code}.json`;
+      const review = code !== "en" && existsSync(path.join(directory, reviewFile)) ? load(reviewFile) : {};
+      delete review[key];
+      return {code, catalog, reviewFile, review};
+    });
+    for (const plan of plans) {
+      save(`${plan.code}.json`, plan.catalog);
+      if (plan.code !== "en") save(plan.reviewFile, plan.review);
+    }
+    console.log(`Added ${key} to ${plans.length} catalogs. Non-English entries contain source text and require translation/review; no translation was generated or approved.`);
   } else if (command === "prepare") {
     if (!locale || locale === "en") throw new Error("Use prepare --locale uk (a new non-English locale).");
     if (existsSync(path.join(directory, `${locale}.json`))) throw new Error(`Catalog ${locale} already exists.`);
@@ -123,9 +159,16 @@ try {
         console.error("Catalog imports are out of date. Run npm run i18n:sync.");
         process.exitCode = 1;
       }
+      if (!option("catalog-dir")) {
+        const manifest = JSON.parse(readFileSync(path.join(uiRoot, "public/manifest.json"), "utf8"));
+        if (manifest.name !== source.features.appMetadata.title || manifest.description !== source.features.appMetadata.description) {
+          console.error("Install metadata is out of date. Run npm run i18n:sync.");
+          process.exitCode = 1;
+        }
+      }
       if (reports.some(report => report.issues.length)) process.exitCode = 1;
     }
-  } else throw new Error("Commands: report, check, sync, prepare --locale CODE, review --locale CODE --key KEY|--all");
+  } else throw new Error("Commands: report, check, sync, add --key KEY --text TEXT, prepare --locale CODE, review --locale CODE --key KEY|--all");
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;
