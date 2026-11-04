@@ -34,3 +34,9 @@ test('localized count preference saves and reloads from the account repository',
  unmount();render(view());
  await waitFor(()=>expect(screen.getByRole('switch',{name:'Всегда показывать количество карточек'})).toHaveAttribute('aria-checked','true'));
 });
+
+test('oversized finite legacy plans use an exact counter without sampled dots',()=>{
+ render(wrap(<TrainingSessionChrome {...props} presentation={{kind:'planned',position:42,total:2000,fraction:42/2000}}/>));
+ expect(screen.queryByTestId('training-session-position')).toBeNull();
+ expect(screen.getByRole('progressbar')).toHaveAttribute('data-variant','line');
+});
