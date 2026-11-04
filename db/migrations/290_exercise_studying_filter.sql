@@ -477,8 +477,10 @@ WITH shared_entries AS MATERIALIZED (
     AND CASE
       WHEN (SELECT filter_data->>'presentationMode' FROM filter_values)
         = 'word-in-context'
-      THEN private.training_word_context_candidate_v2(
-        p_user_id, cards.entry_id, cards.card_type_id, p_training_filter)
+      THEN CASE WHEN p_training_filter->'studyingOnly' = 'false'::jsonb
+        THEN private.training_word_context_candidate_v2(p_user_id, cards.entry_id, cards.card_type_id, p_training_filter)
+        ELSE private.training_word_context_candidate_v1(p_user_id, cards.entry_id, cards.card_type_id)
+      END
       ELSE true
     END
     AND (
@@ -852,8 +854,10 @@ WITH shared_entries AS MATERIALIZED (
     AND CASE
       WHEN (SELECT filter_data->>'presentationMode' FROM filter_values)
         = 'word-in-context'
-      THEN private.training_word_context_candidate_v2(
-        p_user_id, cards.entry_id, cards.card_type_id, p_training_filter)
+      THEN CASE WHEN p_training_filter->'studyingOnly' = 'false'::jsonb
+        THEN private.training_word_context_candidate_v2(p_user_id, cards.entry_id, cards.card_type_id, p_training_filter)
+        ELSE private.training_word_context_candidate_v1(p_user_id, cards.entry_id, cards.card_type_id)
+      END
       ELSE true
     END
     AND (

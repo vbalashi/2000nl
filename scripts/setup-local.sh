@@ -15,15 +15,18 @@ fi
 node - <<'JS'
 const fs=require('node:fs');const crypto=require('node:crypto');
 const c=JSON.parse(fs.readFileSync('packages/shared/deployment/db-contract.json','utf8'));
-const hash=crypto.createHash('sha256').update(fs.readFileSync(c.baseline.file)).digest('hex');
-if(hash!==c.baseline.sha256)throw new Error('Baseline checksum mismatch');
+for(const item of [c.baseline,...c.migrations,c.readOnlyPostflightProbe]) {
+  const hash=crypto.createHash('sha256').update(fs.readFileSync(item.file)).digest('hex');
+  if(hash!==item.sha256)throw new Error(`Contract checksum mismatch: ${item.file}`);
+}
 JS
 psql "$target" -X -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
 psql "$target" -X -v ON_ERROR_STOP=1 -f db/test-fixtures/search_multisource.sql
 psql "$target" -X -v ON_ERROR_STOP=1 -f db/test-fixtures/training_smoke.sql
 # Demo entries need the same derived search documents as imported entries.
 psql "$target" -X -v ON_ERROR_STOP=1 -c "SELECT public.refresh_dictionary_search_document(id, 2) FROM public.word_entries" >/dev/null
-psql "$target" -X -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-289.sql
+postflight_probe="$(node -p 'require("./packages/shared/deployment/db-contract.json").postflightProbe')"
+psql "$target" -X -v ON_ERROR_STOP=1 -f "$postflight_probe"
 read -r contract_id migration_id < <(node -e 'const c=require("./packages/shared/deployment/db-contract.json");process.stdout.write(c.contractId+" "+(c.migrations.at(-1)?.migrationId??c.baseline.migrationId)+"\n")')
 [[ "$contract_id" =~ ^[a-z0-9-]+$ && "$migration_id" =~ ^[0-9]+$ ]]
 app_commit=0000000000000000000000000000000000000000
