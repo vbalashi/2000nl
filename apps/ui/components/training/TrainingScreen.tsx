@@ -2118,9 +2118,13 @@ function TrainingScreenContent({
 
   const v2SessionLayoutVisible = Boolean(
     ((activeExerciseFamily === "idiom" && Boolean(idiomSession)) || (activeExerciseFamily === "sentence" && Boolean(sentenceSession)) ||
-      v2SessionOwned) &&
+      v2SessionOwned || (Boolean(trainingSessionId) && usableCandidatesExhausted)) &&
     (!trainingTodaySetupEnabled || trainingPilot.surface === "session"),
   );
+  const restartCompletedSession = () => {
+    const draft = completionDraftRef.current ?? { ...trainingPilot.initialDraft, family: activeExerciseFamily };
+    void trainingPilot.startSession({ ...draft, sessionSize }, displayedSessionName, { ...trainingExtensionOptions(trainingFocusFilter), trainingId: sessionTrainingId });
+  };
   const sessionChromeVisible =
     trainingTodaySetupEnabled && trainingPilot.surface === "session";
   const displayedSessionName = sessionDisplayName ||
@@ -2327,7 +2331,7 @@ function TrainingScreenContent({
             }
             interfaceLanguage={onboardingLang}
             pending={trainingPilot.startPending} startFailed={Boolean(trainingLoadError)}
-            onRestart={() => { void trainingPilot.startSession({...completionDraftRef.current ?? trainingPilot.initialDraft,sessionSize:10},displayedSessionName,{...trainingExtensionOptions(trainingFocusFilter),trainingId:sessionTrainingId}); }}
+            sessionSize={sessionSize} onRestart={restartCompletedSession}
             onEdit={() => { setOpenTrainingEditor(true); trainingPilot.returnToToday(); }}
             onExit={exitIdiomSession}
             onProgress={handleExerciseProgress}
@@ -2337,7 +2341,7 @@ function TrainingScreenContent({
             onOpenDetails={handleShowCurrentWordDetails} onCurrentCardContextChange={handleCurrentCardContextChange}
           />
         ) : activeExerciseFamily === "sentence" && sentenceSession && typeof translationLang === "string" && translationLang !== "off" ? (
-          <TrainingSentenceSession interactionDisabled={sessionAuthorityChecking} authorityRefreshing={sessionAuthorityRefreshing} presentationActive={visibleDestination === "training"} pending={trainingPilot.startPending} startFailed={Boolean(trainingLoadError)} onRestart={() => { void trainingPilot.startSession({...completionDraftRef.current ?? trainingPilot.initialDraft,sessionSize:10},displayedSessionName,{...trainingExtensionOptions(trainingFocusFilter),trainingId:sessionTrainingId}); }} onEdit={() => { setOpenTrainingEditor(true); trainingPilot.returnToToday(); }} sessionName={displayedSessionName} studyTimeEnabled={studyTimeEnabled} key={sentenceSession.sessionId} userId={user.id} session={sentenceSession} contentLanguageCode={currentTrainingLanguage} translationTargetLanguageCode={translationLang} interfaceLanguage={onboardingLang} onExit={exitIdiomSession} onProgress={handleExerciseProgress} onSessionSuperseded={()=>handleTrainingSessionSuperseded(runSelection??undefined)} onHistory={openTrainingHistory} onPlayResolvedAudio={(url, label) => playAudio(url, label)} onOpenDetails={handleShowCurrentWordDetails} onCurrentCardContextChange={handleCurrentCardContextChange} />
+          <TrainingSentenceSession interactionDisabled={sessionAuthorityChecking} authorityRefreshing={sessionAuthorityRefreshing} presentationActive={visibleDestination === "training"} pending={trainingPilot.startPending} startFailed={Boolean(trainingLoadError)} sessionSize={sessionSize} onRestart={restartCompletedSession} onEdit={() => { setOpenTrainingEditor(true); trainingPilot.returnToToday(); }} sessionName={displayedSessionName} studyTimeEnabled={studyTimeEnabled} key={sentenceSession.sessionId} userId={user.id} session={sentenceSession} contentLanguageCode={currentTrainingLanguage} translationTargetLanguageCode={translationLang} interfaceLanguage={onboardingLang} onExit={exitIdiomSession} onProgress={handleExerciseProgress} onSessionSuperseded={()=>handleTrainingSessionSuperseded(runSelection??undefined)} onHistory={openTrainingHistory} onPlayResolvedAudio={(url, label) => playAudio(url, label)} onOpenDetails={handleShowCurrentWordDetails} onCurrentCardContextChange={handleCurrentCardContextChange} />
         ) : v2SessionOwned && currentWord && v2SessionMode ? (
           <TrainingSenseCardV2Session
             presentationActive={visibleDestination === "training"}
@@ -2410,7 +2414,7 @@ function TrainingScreenContent({
                 pending={trainingPilot.startPending} startFailed={Boolean(trainingLoadError)}
                 completedCount={sessionCompletedActions}
                 plannedTotal={latchedSessionPlan?.plannedTotal ?? sessionPlannedTotal}
-                onRestart={() => { void trainingPilot.startSession({...completionDraftRef.current ?? trainingPilot.initialDraft, sessionSize:10}, displayedSessionName,{...trainingExtensionOptions(trainingFocusFilter),trainingId:sessionTrainingId}); }}
+                sessionSize={sessionSize} onRestart={restartCompletedSession}
                 onEdit={() => { setOpenTrainingEditor(true); trainingPilot.returnToToday(); }}
                 onExit={() => { setOpenTrainingEditor(false); trainingPilot.returnToToday(); }}
               />

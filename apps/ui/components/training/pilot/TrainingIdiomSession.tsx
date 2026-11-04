@@ -73,7 +73,7 @@ export function TrainingIdiomSession({
   interfaceLanguage,
   onExit,
   onProgress,
-  onRestart, onEdit, pending, startFailed,
+  onRestart, onEdit, pending, startFailed, sessionSize,
   onSessionSuperseded,
   onHistory,
   onPlayResolvedAudio,
@@ -178,7 +178,7 @@ export function TrainingIdiomSession({
       {preparationFailed ? <TrainingSessionState title={t.failed} announcement="alert"
         action={{label:t.retry,onClick:()=>void runtime.retry()}}
         secondaryAction={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
-      {!loading && terminal ? <TrainingCompletion empty={terminal==="empty"} emptyDetail={cardFilter==="review" && session.plannedTotal===0?{en:"No idioms are due now. Include new cards in training settings to start learning more.",nl:"Er hoeven nu geen uitdrukkingen herhaald te worden. Voeg nieuwe kaarten toe in de trainingsinstellingen om verder te leren.",ru:"Сейчас нет идиом для повторения. Включите новые карточки в настройках тренировки, чтобы продолжить изучение."}[interfaceLanguage]:undefined} ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} startFailed={startFailed} /> : null}
+      {!loading && terminal ? <TrainingCompletion sessionSize={sessionSize} empty={terminal==="empty"} emptyDetail={cardFilter==="review" && session.plannedTotal===0?{en:"No idioms are due now. Include new cards in training settings to start learning more.",nl:"Er hoeven nu geen uitdrukkingen herhaald te worden. Voeg nieuwe kaarten toe in de trainingsinstellingen om verder te leren.",ru:"Сейчас нет идиом для повторения. Включите новые карточки в настройках тренировки, чтобы продолжить изучение."}[interfaceLanguage]:undefined} ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} startFailed={startFailed} /> : null}
       {!loading && !terminal && currentCard.ready && candidate && content ? (
         <TrainingIdiomCard
           presentationActive={presentationActive}
