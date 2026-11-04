@@ -15,7 +15,9 @@ test('saved training names load by click and keyboard without editing or launchi
  await user.click(name);expect(c.onSelect).toHaveBeenLastCalledWith('b');
  name.focus();await user.keyboard('{Enter} ');expect(c.onSelect).toHaveBeenCalledTimes(3);
  await user.click(screen.getByRole('button',{name:'Edit Idioms'}));
- expect(c.onEdit).toHaveBeenCalledWith('b');expect(c.onSelect).toHaveBeenCalledTimes(3);expect(c.onLaunch).not.toHaveBeenCalled();
+ expect(c.onEdit).toHaveBeenCalledWith('b');
+ screen.getByRole('button',{name:'Edit Idioms'}).focus();await user.keyboard('{Enter} ');
+ expect(c.onEdit).toHaveBeenCalledTimes(3);expect(c.onSelect).toHaveBeenCalledTimes(3);expect(c.onLaunch).not.toHaveBeenCalled();
  await user.click(screen.getByRole('button',{name:'Load Idioms'}));expect(c.onSelect).toHaveBeenLastCalledWith('b');
 });
 test('an unfinished session overrides the main routine and resumes its identity',()=>{const c=setup({status:'ready',trainings:items,mainId:'a',resume:{sessionId:'session-b',trainingId:'b',completed:3,total:10}});fireEvent.click(screen.getByRole('button',{name:'Continue training'}));expect(c.onResume).toHaveBeenCalledWith('session-b');expect(c.onLaunch).not.toHaveBeenCalled();expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow','3');});
