@@ -166,24 +166,10 @@
   color: var(--practice-text-muted);
   margin: 12px 0 0;
 }
-.activity {
-  margin-top: 24px;
-  font-size: var(--practice-text-small);
-  color: var(--practice-text-secondary);
-}
-.activity summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  list-style: none;
-  cursor: pointer;
-  padding: 8px 0;
-}
-.activity .field {
-  margin-top: 14px;
-}
-.input,
-.field select {
+
+.activityNotice { margin:0 0 16px; }
+
+.input {
   width: 100%;
   min-width: 0;
   padding: 9px 12px;
@@ -357,8 +343,6 @@
 .direction { flex: 1 1 calc((100% - 12px) / 2); min-width: min(100%, 170px); max-width: 244px; min-height: 172px; }
 .prompt, .answer { overflow-wrap: anywhere; }
 
-.activity summary::-webkit-details-marker { display: none; }
-.activity[open] summary svg { transform: rotate(180deg); }
 
 /* Saved-recipe actions share one footer group; the editor remains full screen. */
 .nameField { margin-bottom: 24px; }

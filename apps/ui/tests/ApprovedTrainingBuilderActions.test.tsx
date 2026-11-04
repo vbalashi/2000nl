@@ -68,3 +68,26 @@ test('unsaved indicator is accessible and clears when parent reports the saved b
  view.rerender(<ApprovedTrainingBuilder {...p} hasUnsavedChanges={false}/>);
  expect(screen.queryByRole('status',{name:'Unsaved changes'})).not.toBeInTheDocument();
 });
+
+test.each([
+ ['en','Word activity','Saved word activity filters still apply: YouTube'],
+ ['nl','Woordactiviteit','Opgeslagen filters voor woordactiviteit blijven gelden: YouTube'],
+ ['ru','Активность слов','Сохранённые фильтры активности слов по-прежнему действуют: YouTube'],
+] as const)('unfinished activity controls are absent and scoped recipes are explained in %s',(locale,activity,notice)=>{
+ const p=props();
+ render(<ApprovedTrainingBuilder {...p} interfaceLanguage={locale} draft={{...p.draft,sourceValue:'kind:youtube',dateWindow:'today'}}/>);
+ const filters=document.querySelector<HTMLButtonElement>('[data-builder-section="filters"]')!;
+ fireEvent.click(filters);
+ expect(screen.queryByText(activity)).not.toBeInTheDocument();
+ expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+ expect(screen.getByText(text=>text.startsWith(notice))).toBeInTheDocument();
+ expect(p.onDraftChange).not.toHaveBeenCalled();
+});
+test('default activity scope needs no notice and opening controls does not change its values',()=>{
+ const p=props();render(<ApprovedTrainingBuilder {...p}/>);
+ fireEvent.click(screen.getByRole('button',{name:/^Filters /}));
+ expect(screen.queryByText(/Saved word activity filters/)).not.toBeInTheDocument();
+ expect(screen.queryByText('Word activity')).not.toBeInTheDocument();
+ expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+ expect(p.onDraftChange).not.toHaveBeenCalled();
+});

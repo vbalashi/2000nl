@@ -129,3 +129,12 @@
 @media(prefers-reduced-motion:reduce){:global(.session-builder-standard) .heading{transition:none}}
 
 @media(max-width:700px){:global(.session-builder-standard) .heading{grid-template-columns:108px minmax(0,1fr) 17px}}
+
+/* Headers with sibling actions keep the title disclosure and choices independent. */
+.controlledHeader { display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; padding:12px 18px; }
+.titleActions { display:flex; align-items:center; gap:6px; }
+.titleDisclosure { display:flex; align-items:center; gap:8px; min-height:28px; padding:0; border:0; background:transparent; color:inherit; text-align:left; font-family:var(--practice-font-ui); cursor:pointer; }
+.titleDisclosure:focus-visible { outline:2px solid var(--practice-focus); outline-offset:3px; border-radius:4px; }
+.headerChoices { min-width:0; max-width:100%; }
+.controlledSummary { flex-basis:100%; font-size:var(--practice-text-small); color:var(--practice-text-muted); line-height:1.6; overflow-wrap:anywhere; }
+@media(max-width:700px) { .controlledHeader { padding:12px; gap:6px 12px; } .controlledSummary { font-size:var(--practice-text-caption); } }

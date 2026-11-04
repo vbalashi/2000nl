@@ -613,18 +613,54 @@ test("approved reverse idiom preview names its expression answer", async () => {
   expect(screen.queryByRole("button", { name: /^Reverse Meaning Words$/ })).not.toBeInTheDocument();
 });
 
- test("approved source search appears above five choices and hidden queries cannot hide short lists",async()=>{
+test("Source header search and disclosure are independent and filters remain visible without search",async()=>{
  const dictionaries=Array.from({length:12},(_,index)=>({value:`dictionary-${index}`,label:`Dictionary ${index}`}));
- const props={...baseProps,userId:"source-search-boundary",trainingLanguageCode:"nl",hasOwnedSession:false};
- const view=render(<TrainingTodaySetup {...props} dictionaries={dictionaries}/>);
- await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));fireEvent.click(screen.getByRole("button",{name:/^Source /}));
- fireEvent.click(screen.getByRole("button",{name:"Search sources"}));
+ render(<TrainingTodaySetup {...baseProps} userId="source-search-header" trainingLanguageCode="nl" hasOwnedSession={false} dictionaries={dictionaries}/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Create training"}));
+ const disclosure=screen.getByRole("button",{name:/^Source /});
+ const search=screen.getByRole("button",{name:"Search sources"});
+ expect(disclosure.contains(search)).toBe(false);
+ expect(disclosure).toHaveAttribute("aria-expanded","false");
+ expect(screen.queryByRole("group",{name:"Source type"})).toBeNull();
+ fireEvent.click(disclosure);
+ expect(screen.getByRole("group",{name:"Source type"})).toBeInTheDocument();
+ expect(screen.queryByRole("textbox",{name:"Search sources"})).toBeNull();
+ fireEvent.click(screen.getByRole("button",{name:"Collections"}));
+ expect(screen.queryByRole("button",{name:"Dictionary 0"})).toBeNull();
+ expect(screen.getByRole("button",{name:"NT2 2000"})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Dictionaries"}));
+ fireEvent.click(search);
+ expect(screen.getByRole("textbox",{name:"Search sources"})).toHaveFocus();
  fireEvent.change(screen.getByRole("textbox",{name:"Search sources"}),{target:{value:"Dictionary 5"}});
- expect(screen.queryByRole("button",{name:"Dictionary 0"})).not.toBeInTheDocument();
- view.rerender(<TrainingTodaySetup {...props} dictionaries={dictionaries.slice(0,5)}/>);
- expect(screen.queryByRole("textbox",{name:"Search sources"})).not.toBeInTheDocument();
+ expect(screen.queryByRole("button",{name:"Dictionary 0"})).toBeNull();
+ fireEvent.click(disclosure);
+ expect(search).toHaveAttribute("aria-expanded","false");
+ fireEvent.click(search);
+ expect(disclosure).toHaveAttribute("aria-expanded","true");
+ expect(screen.getByRole("textbox",{name:"Search sources"})).toHaveValue("");
  expect(screen.getByRole("button",{name:"Dictionary 0"})).toBeInTheDocument();
- });
+ expect(screen.getByRole("button",{name:"Dictionaries"})).toHaveAttribute("aria-pressed","true");
+});
+
+test("hidden word activity controls preserve a saved scoped recipe through update and start",async()=>{
+ const saved={id:"scoped-recipe",name:"Scoped practice",draft:{...initialDraft,sessionSize:10,dateWindow:"daysAgo" as const,daysAgo:4,sourceValue:"source:video-1"}};
+ seedAccount("activity-preserved",[saved]);
+ const onStart=vi.fn();
+ render(<TrainingTodaySetup {...baseProps} userId="activity-preserved" trainingLanguageCode="nl" hasOwnedSession={false} onStart={onStart}/>);
+ fireEvent.click((await screen.findAllByRole("button",{name:"Edit Scoped practice"}))[0]);
+ expect(screen.getByText(/Saved word activity filters still apply: Dutch lesson 1/)).toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
+ expect(screen.queryByText("Word activity")).not.toBeInTheDocument();
+ expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Training name"}));
+ fireEvent.change(screen.getByRole("textbox",{name:"Training name"}),{target:{value:"Renamed scoped practice"}});
+ fireEvent.blur(screen.getByRole("textbox",{name:"Training name"}));
+ fireEvent.click(screen.getByRole("button",{name:"Save changes"}));
+ await waitFor(()=>expect(accounts.get("activity-preserved")?.document.trainings[0].name).toBe("Renamed scoped practice"));
+ expect(accounts.get("activity-preserved")!.document.trainings[0].draft).toEqual(saved.draft);
+ await calculateAndStart();
+ expect(onStart).toHaveBeenCalledWith(saved.draft,"Renamed scoped practice",{trainingId:saved.id});
+});
 
 test.each(["preparing", "loading"] as const)("startup readiness waits through %s before exposing the overview", async status => {
    const ready = vi.fn();
