@@ -230,7 +230,15 @@ export async function performPlatformV2Lookup(
     entries,
     embeddedIdentities,
   );
-  const identityPromise = embeddedIdentityComplete
+  // The current-card reader can return an older embedded identity without the
+  // report revision. Hydrate it through the authoritative identity reader rather
+  // than silently hiding Report. Explicit null is a valid unverifiable revision.
+  const currentCardReportIdentityComplete = !currentCard || entries.every(
+    entry => Object.prototype.hasOwnProperty.call(
+      asRecord(asRecord(entry).platform_v2_identity), "reportContentRevision",
+    ),
+  );
+  const identityPromise = embeddedIdentityComplete && currentCardReportIdentityComplete
     ? Promise.resolve<RpcResult>({
         data: { entries: embeddedIdentities },
         error: null,

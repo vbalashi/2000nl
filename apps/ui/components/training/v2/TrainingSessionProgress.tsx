@@ -5,10 +5,12 @@ import type { ProgressAnimation } from "@/lib/preferences/trainingInteractions";
 import type { TrainingSessionPresentationSnapshot } from "./useTrainingSessionPresentation";
 import styles from "./TrainingSessionLayout.module.css";
 
+export const MAX_EXACT_SESSION_DOTS = 30;
+
 const labels = { en: "Session progress", nl: "Sessievoortgang", ru: "Прогресс сессии" };
 const waveY = (x: number) => 10 + 6 * Math.sin(x / 314 * Math.PI * 2);
 const wave = Array.from({length: 101}, (_, i) => `${i ? "L" : "M"}${i * 3.14},${waveY(i * 3.14)}`).join(" ");
-const jitter = (i: number) => Math.sin(i * 7.13) * .7;
+
 
 /** Bounded visual marks; the accessible counter always retains the exact total. */
 export function TrainingSessionProgress({ presentation, language, variant }: {
@@ -16,9 +18,10 @@ export function TrainingSessionProgress({ presentation, language, variant }: {
   language: OnboardingLanguage;
   variant: ProgressAnimation;
 }) {
-  const count = presentation.kind === "planned" ? Math.max(1, Math.min(15, presentation.total)) : 1;
+  const count = presentation.kind === "planned" ? Math.max(1, Math.min(MAX_EXACT_SESSION_DOTS, presentation.total)) : 1;
   const fraction = presentation.kind === "planned" ? Math.max(0, Math.min(1, presentation.fraction)) : 0;
-  const target = variant === "dots" ? Math.round(fraction * count) / count : fraction;
+  const line = variant === "dots" && presentation.kind === "planned" && presentation.total > MAX_EXACT_SESSION_DOTS;
+  const target = variant === "dots" && !line ? Math.round(fraction * count) / count : fraction;
   const [position, setPosition] = useState(target);
   const current = useRef(target);
   useEffect(() => {
@@ -40,21 +43,22 @@ export function TrainingSessionProgress({ presentation, language, variant }: {
   if (presentation.kind !== "planned" || variant === "off") return null;
   const completedMarks = Math.round(position * count);
   const step = Math.max(0, position * count - 1), index = Math.floor(step), travel = step - index;
-  const dotX = (i: number) => count === 1 ? 157 : i * 314 / (count - 1) + (i > 0 && i < count - 1 ? jitter(i) * 3 : 0);
+  const dotX = (i: number) => count === 1 ? 157 : i * 314 / (count - 1);
   const x = dotX(index) + (dotX(Math.min(index + 1, count - 1)) - dotX(index)) * travel;
-  return <div className={styles.sessionProgress} data-variant={variant} data-testid="training-session-progress-track"
+  return <div className={styles.sessionProgress} data-variant={line ? "line" : variant} data-testid="training-session-progress-track"
     role="progressbar" aria-label={labels[language]} aria-valuemin={0}
     aria-valuemax={presentation.total} aria-valuenow={Math.min(presentation.position, presentation.total)}>
     {variant === "wave" ? <svg viewBox="-2 0 318 20" preserveAspectRatio="none" aria-hidden="true">
       <path d={wave} fill="none" stroke="currentColor" strokeOpacity=".18" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
       <path d={wave} fill="none" stroke="currentColor" strokeOpacity=".312" strokeWidth="1.4" pathLength="1" strokeDasharray={`${position} 1`} vectorEffect="non-scaling-stroke" />
     </svg> : null}
-    {variant === "dots" && completedMarks >= 2 ? <svg viewBox="0 0 314 11" preserveAspectRatio="none" aria-hidden="true" className={styles.progressThread}><polyline points={Array.from({length: Math.min(count, completedMarks)}, (_, i) => `${dotX(i)},${8+jitter(i)*.55}`).join(" ")} fill="none" stroke="currentColor" strokeOpacity=".22" strokeWidth="1" vectorEffect="non-scaling-stroke" /></svg> : null}
-    {variant === "dots" ? Array.from({length: count}, (_, i) => <span aria-hidden="true" key={i} className={styles.progressDot} style={{left:`${dotX(i)/314*100}%`,top:8+jitter(i)*.55,opacity:i<completedMarks?.48:.15}} />) : null}
+    {line ? <svg viewBox="0 0 314 11" preserveAspectRatio="none" aria-hidden="true" className={styles.progressThread}><path d="M0 8 H314" fill="none" stroke="currentColor" strokeOpacity=".15" strokeWidth="1" vectorEffect="non-scaling-stroke" /><path d="M0 8 H314" fill="none" stroke="currentColor" strokeOpacity=".35" strokeWidth="1" pathLength="1" strokeDasharray={`${position} 1`} vectorEffect="non-scaling-stroke" /></svg> : null}
+    {variant === "dots" && !line && completedMarks >= 2 ? <svg viewBox="0 0 314 11" preserveAspectRatio="none" aria-hidden="true" className={styles.progressThread}><polyline points={Array.from({length: Math.min(count, completedMarks)}, (_, i) => `${dotX(i)},8`).join(" ")} fill="none" stroke="currentColor" strokeOpacity=".22" strokeWidth="1" vectorEffect="non-scaling-stroke" /></svg> : null}
+    {variant === "dots" && !line ? Array.from({length: count}, (_, i) => <span aria-hidden="true" key={i} className={styles.progressDot} style={{left:`${dotX(i)/314*100}%`,top:8,opacity:i<completedMarks?.48:.15}} />) : null}
     <span aria-hidden="true" className={styles.progressDot} style={{
-      left:`${variant === "wave" ? (2+position*314)/318*100 : x/314*100}%`,
-      top:variant === "wave" ? waveY(position*314) : 8+jitter(index)*.55-7*Math.sin(Math.PI*travel),
-      width:variant === "wave"?4.5:3,height:variant === "wave"?4.5:3,opacity:variant === "wave"?.48:position > 0?.55:0,
+      left:`${variant === "wave" ? (2+position*314)/318*100 : line ? position*100 : x/314*100}%`,
+      top:variant === "wave" ? waveY(position*314) : 8,
+      width:variant === "wave" || line?4.5:3,height:variant === "wave" || line?4.5:3,opacity:variant === "wave"?.48:position > 0?.55:0,
     }} />
   </div>;
 }
