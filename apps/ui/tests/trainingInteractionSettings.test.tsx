@@ -47,7 +47,8 @@ test('live preview follows the saved progress choice and optional count',()=>{
  const view=render(<TrainingInteractionSettings language="en"/>);
  expect(screen.getAllByRole('progressbar')).toHaveLength(2);
  expect(screen.queryAllByTestId('progress-preview-count')).toHaveLength(0);
- expect(screen.getByText(/Up to 30 cards/)).toBeVisible();
+ expect(screen.getByRole('button',{name:'? Progress animation'})).toHaveAttribute('aria-expanded','false');
+ expect(screen.getByLabelText('Progress animation: Preview')).not.toHaveTextContent('Up to 30');
  state.preferences={...defaultTrainingInteractions,progressAnimation:'off'};
  view.rerender(<TrainingInteractionSettings language="en"/>);
  expect(screen.queryAllByRole('progressbar')).toHaveLength(0);
@@ -72,4 +73,19 @@ test('preview advances but stays still with reduced motion',()=>{
  act(()=>vi.advanceTimersByTime(5400));
  expect(screen.getAllByRole('progressbar').every(el=>el.getAttribute('aria-valuenow')==='6')).toBe(true);
  match.mockRestore();
+});
+
+test('one progress help explains both variants and opens on hover or tap',()=>{
+ render(<TrainingInteractionSettings language="en"/>);
+ const trigger=screen.getByRole('button',{name:'? Progress animation'});
+ const popup=document.getElementById(trigger.getAttribute('aria-controls')!)!;
+ expect(popup).toHaveTextContent('Thread follows a straight line; Wave follows a curved line');
+ expect(popup).toHaveTextContent('up to 30 cards');
+ expect(popup).toHaveTextContent('Above 30, both use a continuous line');
+ fireEvent.pointerEnter(trigger,{pointerType:'mouse'});
+ expect(trigger).toHaveAttribute('aria-expanded','true');
+ fireEvent.keyDown(trigger,{key:'Escape'});
+ expect(trigger).toHaveAttribute('aria-expanded','false');
+ fireEvent.click(trigger);
+ expect(trigger).toHaveAttribute('aria-expanded','true');
 });

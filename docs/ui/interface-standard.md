@@ -44,3 +44,5 @@ Run `npm run check:interface-standard` from `apps/ui`. The normal test and CI wo
 The guard is a regression detector, not a visual approval: it cannot judge the beauty of spacing, guarantee that token choices fit every semantic role, or replace browser checks for overflow, focus and responsive behavior. Its tests deliberately introduce violations to verify that it rejects them.
 
 One remaining native selector exists in the parent-label editor dialog; sorting in all three catalogs is migrated. That editor is an explicit remaining gap, not evidence that arbitrary native dropdowns are the standard.
+
+The [baseline audit](interface-exceptions-audit.md) classifies the initial 65 entries and proposes the next migration slices. Grandfathering is not visual approval.

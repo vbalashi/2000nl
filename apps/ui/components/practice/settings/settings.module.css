@@ -309,3 +309,5 @@ button.select{min-height:28px;border:0;border-radius:11.2px;background:transpare
 .helpLabel{display:inline-flex;align-items:center;gap:4px}
 .help{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;padding:0;border:0;background:transparent;color:var(--practice-text-muted);cursor:pointer}
 .helpPopup{position:fixed;inset:auto;margin:0;box-sizing:border-box;width:min(304px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:12px;border:1px solid var(--practice-border);border-radius:var(--practice-radius-control);background:var(--practice-surface);color:var(--practice-text-secondary);box-shadow:0 12px 40px var(--practice-shadow);font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui)}
+
+.help:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px;border-radius:var(--practice-radius-control)}
