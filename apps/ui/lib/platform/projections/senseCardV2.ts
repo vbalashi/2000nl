@@ -279,7 +279,11 @@ function projectSenseCard(
         order,
         text: section.text,
         sourceTextFingerprint: binding.sourceTextFingerprint,
-        translations: binding.translations ?? [],
+        // Cached bindings may contain several languages. A lookup owns exactly
+        // the requested projection; array order must never select its language.
+        translations: (binding.translations ?? []).filter(
+          translation => translation.targetLanguageCode === request.translationTargetLanguageCode,
+        ),
       },
     ];
   });

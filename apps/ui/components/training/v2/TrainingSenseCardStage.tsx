@@ -311,7 +311,7 @@ export function TrainingSenseCardStage({
             })[interfaceLanguage] : mode === "definition-to-word" ? {
               en: "Recall the Dutch word from its meaning", nl: "Herinner je het Nederlandse woord bij deze betekenis", ru: "Вспомните нидерландское слово по значению",
             }[interfaceLanguage] : undefined}
-            partOfSpeech={mode === "definition-to-word" ? model.partOfSpeech : undefined}
+            partOfSpeech={mode === "definition-to-word" || mode === "word-to-definition" ? model.partOfSpeech : undefined}
             recallTarget={contextTarget}
             contextLabel={contextPrompt ? { en: "In this sentence", nl: "In deze zin", ru: "В этом предложении" }[interfaceLanguage] : undefined}
             hintLabel={contextPrompt ? t("senseCard.sections.definition") : t("senseCard.hint.example")}

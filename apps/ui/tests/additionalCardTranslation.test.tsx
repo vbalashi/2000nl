@@ -9,6 +9,9 @@ import {buildTrainingSenseCardModel} from "@/components/training/v2/trainingSens
 import {LibrarySenseCardGroup} from "@/components/training/library-v2/LibrarySenseCardGroup";
 import {buildLibrarySenseCardGroupModel} from "@/components/training/library-v2/librarySenseCardModel";
 import {singleSenseEntry,singleSenseGroup} from "./platformV2TrainingFixture";
+import {goedEntry,goedGroup} from "./platformV2IdiomHierarchyFixture";
+import {resolveIdiomExerciseContent} from "@/lib/training/idiomExerciseContent";
+import {buildIdiomCardPresentation} from "@/lib/training/idiomCardPresentation";
 import type {PlatformHeadwordGroupV2,PlatformSenseCardEntryV2} from "../../../packages/shared/types/platformV2";
 
 const {lookup,request,currentRead}=vi.hoisted(()=>({lookup:vi.fn(),request:vi.fn(),currentRead:vi.fn()}));
@@ -156,4 +159,67 @@ test("current-card secondary translation uses its permit instead of general Libr
  await screen.findByText("рука",{exact:false});
  expect(currentRead).toHaveBeenCalledWith("owner",expect.objectContaining({...currentCard,entryId:singleSenseEntry.entryId,translationTargetLanguageCode:"ru"}),expect.any(AbortSignal));
  expect(lookup).not.toHaveBeenCalled();
+});
+
+// Synthetic idiom content exercises the same tree in standalone and meaning cards.
+test.each([
+ ["standalone", true], ["standalone", false],
+ ["meaning", true], ["meaning", false],
+] as const)("%s idiom pairs both languages inline (primary literal=%s)", async (kind,primaryLiteral) => {
+ const entry = {
+  ...goedEntry,
+  translation: {...singleSenseEntry.translation!,entryId:goedEntry.entryId,targetLanguageCode:"ru",text:"добро",sourceContentFingerprint:goedEntry.contentRevision},
+  contentNodes: goedEntry.contentNodes.map(node => ({
+   ...node,
+   translations: [{
+    translationId: `${node.contentNodeId}-ru`, targetLanguageCode:"ru", status:"ready" as const,
+    text: node.kind === "idiom" ? "приносит пользу" : "русский перевод",
+    literalText: node.kind === "idiom" && primaryLiteral ? "что-то приносит выгоду" : undefined,
+    sourceTextFingerprint: node.sourceTextFingerprint, translationPolicyVersion:"test",
+   }],
+  })),
+ };
+ const group = {...goedGroup,entries:[entry]};
+ lookup.mockResolvedValue({...group,entries:[{
+  ...entry,
+  // An idiom-only projection can have content translations without a headword.
+  translation: null,
+  contentNodes: entry.contentNodes.map(node => ({
+   ...node,
+   translations: node.translations.map(translation => ({
+    ...translation,translationId:`${node.contentNodeId}-en`,targetLanguageCode:"en",
+    text: node.kind === "idiom" ? "benefits someone" : "English translation",
+    literalText: node.kind === "idiom" ? "something brings an advantage" : undefined,
+   })),
+  })),
+ }]});
+ const model = buildTrainingSenseCardModel({group,entry,interfaceLanguage:"en"});
+ const content = resolveIdiomExerciseContent({entryId:entry.entryId,contentNodeId:"idiom-goed",sourceTextFingerprint:"fingerprint-idiom-goed"},group)!;
+ const {container} = render(
+  <CardTranslationLanguagesProvider primary="ru" secondary="en">
+   {kind === "standalone" ? <TrainingExerciseCard
+    entryId={entry.entryId}
+    presentation={buildIdiomCardPresentation({content,direction:"direct",interfaceLanguage:"en",translationTargetLanguageCode:"ru"})}
+    contentLanguage="nl" translationLanguage="ru" interfaceLanguage="en"
+    revealed onReveal={vi.fn()} busy={false} onGrade={vi.fn()}
+   /> : <TrainingSenseCardStage
+    model={model} mode="word-to-definition" contentLanguage="nl" translationLanguage="ru"
+    interfaceLanguage="en" side="answer" onSideChange={vi.fn()} onAction={vi.fn()}
+   />}
+  </CardTranslationLanguagesProvider>,
+ );
+ fireEvent.click(screen.getByRole("button",{name:"Translate"}));
+ await screen.findByText("benefits someone",{exact:false});
+ const idiom = container.querySelector('[data-content-node-id="idiom-goed"]')!;
+ const rows = idiom.querySelectorAll(':scope > div:first-child p[data-content-translation]');
+ expect(rows).toHaveLength(2);
+ expect(rows[0]).toHaveAttribute("lang","ru");
+ expect(rows[0]).toHaveTextContent(primaryLiteral ? "приносит пользу (буквально: что-то приносит выгоду)" : "приносит пользу");
+ expect(rows[0].querySelectorAll('[data-literal-translation]')).toHaveLength(primaryLiteral ? 1 : 0);
+ expect(rows[1]).toHaveAttribute("lang","en");
+ expect(rows[1]).toHaveTextContent("benefits someone (literally: something brings an advantage)");
+ expect(rows[1].querySelectorAll('[data-literal-translation]')).toHaveLength(1);
+ for(const row of rows) expect(row.querySelectorAll('[data-translation-language]')).toHaveLength(0);
+ fireEvent.click(screen.getByRole("button",{name:"Translate"}));
+ for(const row of rows) expect(row.closest('[aria-hidden="true"]')).not.toBeNull();
 });

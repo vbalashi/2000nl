@@ -5,6 +5,24 @@ import { projectPlatformV2SenseContent } from "@/lib/platform/projections/platfo
 import { goedEntry } from "./platformV2IdiomHierarchyFixture";
 
 describe("Platform V2 SenseCard projection", () => {
+  test("selects requested RU nodes even when a fresh EN translation is first, including nested goed idioms", () => {
+    const input = projectionInput({stateRevision: "bilingual", knownMark: null});
+    input.request.translationTargetLanguageCode = "ru";
+    input.entries[0].contentSections = goedEntry.contentNodes.map(node => ({sourcePath: `fixture.${node.contentNodeId}`, kind: node.kind, text: node.text}));
+    input.entries[0].contentNodeBindings = goedEntry.contentNodes.map(node => ({
+      contentNodeId: node.contentNodeId, sourcePath: `fixture.${node.contentNodeId}`, kind: node.kind,
+      parentContentNodeId: node.parentContentNodeId, sourceTextFingerprint: node.sourceTextFingerprint,
+      translations: ["en", "ru"].map(code => ({translationId: `${node.contentNodeId}-${code}`, targetLanguageCode: code, status: "ready" as const, text: `${code} ${node.contentNodeId}`, sourceTextFingerprint: node.sourceTextFingerprint, translationPolicyVersion: "test"})),
+    }));
+    const entry = projectPlatformLookupV2(input).groups[0].entries[0];
+    if(entry.kind !== "sense-card") throw new Error("Expected sense card");
+    expect(projectPlatformV2SenseContent(entry).orderedNodes.every(node => node.translation === `ru ${node.contentNodeId}`)).toBe(true);
+    expect(entry.contentNodes.every(node => node.translations.every(t => t.targetLanguageCode === "ru"))).toBe(true);
+    input.request.translationTargetLanguageCode = null;
+    const untranslated = projectPlatformLookupV2(input).groups[0].entries[0];
+    if(untranslated.kind !== "sense-card") throw new Error("Expected sense card");
+    expect(untranslated.contentNodes.every(node => node.translations.length === 0)).toBe(true);
+  });
   test("complete idiom-only preparation does not require an invented headword or another paid request", () => {
     const input = projectionInput({stateRevision:"idiom-complete",knownMark:null});
     input.entries[0].allowMutationCapabilities = true;
@@ -130,6 +148,7 @@ describe("Platform V2 SenseCard projection", () => {
       stateRevision: "state-report-translation",
       knownMark: null,
     });
+    input.request.translationTargetLanguageCode = "ru";
     input.entries[0].allowMutationCapabilities = true;
     input.entries[0].entrySourceContentFingerprint = "content-known-1";
     input.entries[0].entryTranslation = {

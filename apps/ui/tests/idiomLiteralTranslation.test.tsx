@@ -37,13 +37,20 @@ describe("optional idiom literal translation",()=>{
   expect(project().literalTranslation).toBe("говорить о коровках и телятах");
   expression.translations[0].sourceTextFingerprint="old";expect(project()).not.toHaveProperty("literalTranslation");
  });
- test.each([["ru","дословно"],["en","literally"],["nl","letterlijk"]] as const)("renders natural first and localized optional literal with common visibility: %s",(language,label)=>{
+ test.each([["ru","буквально"],["en","literally"],["nl","letterlijk"]] as const)("renders natural first and localized optional literal with common visibility: %s",(language,label)=>{
   cleanup(); const node={contentNodeId:"idiom",parentContentNodeId:null,kind:"idiom" as const,text:"over alledaagse dingen babbelen",translation:"говорить о пустяках",literalTranslation:"говорить о коровках и телятах",children:[]};
-  const {rerender,container}=render(<ArticleContentNode node={node} interfaceLanguage={language} translationLanguage="ru" translationVisible/>);
+  const {rerender,container}=render(<ArticleContentNode node={node} interfaceLanguage={language === "ru" ? "en" : "ru"} translationLanguage={language} translationVisible/>);
   const natural=screen.getByText("говорить о пустяках"),literal=container.querySelector("[data-literal-translation]")!;
   expect(literal).toHaveTextContent(`(${label}: говорить о коровках и телятах)`);
   expect(natural.compareDocumentPosition(literal)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   rerender(<ArticleContentNode node={node} interfaceLanguage={language} translationVisible={false}/>);
   expect(literal.closest('[aria-hidden="true"]')).not.toBeNull();
  });
+});
+
+test("an absent natural translation never leaves an orphan literal", () => {
+ cleanup();
+ const node={contentNodeId:"idiom",parentContentNodeId:null,kind:"idiom" as const,text:"een uitdrukking",literalTranslation:"orphan",children:[]};
+ const {container}=render(<ArticleContentNode node={node} interfaceLanguage="en" translationLanguage="ru" translationVisible/>);
+ expect(container.querySelector("[data-literal-translation]")).toBeNull();
 });
