@@ -2,6 +2,7 @@
 import React, {useState} from "react";
 import {TrainingSessionChrome} from "@/components/training/v2/TrainingSessionChrome";
 import {TrainingInteractionPreferencesProvider, defaultTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
+import {TrainingInteractionSettings} from "@/components/practice/ui/TrainingInteractionSettings";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 
 const repository = {load: async () => defaultTrainingInteractions, save: async () => {}};
@@ -16,6 +17,9 @@ export function ProgressDensityGate() {
         <button onClick={() => setCompleted(value => value === 20 ? 0 : value + 1)}>Следующая карточка</button>
         <button onClick={() => setDark(value => !value)}>Светлая / тёмная</button>
       </nav>
+      <section data-settings-preview style={{marginBottom:32}}>
+        <TrainingInteractionPreferencesProvider userId="density-settings" initial={defaultTrainingInteractions} repository={repository}><TrainingInteractionSettings language="en" /></TrainingInteractionPreferencesProvider>
+      </section>
       <div data-density-examples style={{display:"grid",gap:24}}>
         {[20,30,40,50].map(total => <section key={total} data-density={total}>
           <h2 style={{fontSize:14,fontWeight:500,margin:"0 0 8px"}}>{total} карточек · пройдено {completed}</h2>
