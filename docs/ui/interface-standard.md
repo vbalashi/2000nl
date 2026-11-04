@@ -39,10 +39,16 @@ The application has shared tokens and several interaction primitives, not a comp
 
 ## Automated checks
 
-Run `npm run check:interface-standard` from `apps/ui`. The normal test and CI workflows also run it. The check enforces the recorded collection typography roles and shared sort/choice primitives. A broader scan rejects new literal typography or color styling in component CSS while preserving explicitly inventoried legacy exceptions. Changes to that inventory need review; do not regenerate it to make a failing change pass.
+Run `npm run check:interface-standard` from `apps/ui`. The normal test and CI workflows also run it. The check enforces the recorded collection typography roles and shared sort/choice primitives. A broader scan rejects literal typography or color styling in component CSS. The legacy baseline is now empty and retired: the check rejects new exemptions and the former baseline-generation command is disabled.
 
 The guard is a regression detector, not a visual approval: it cannot judge the beauty of spacing, guarantee that token choices fit every semantic role, or replace browser checks for overflow, focus and responsive behavior. Its tests deliberately introduce violations to verify that it rejects them.
 
 One remaining native selector exists in the parent-label editor dialog; sorting in all three catalogs is migrated. That editor is an explicit remaining gap, not evidence that arbitrary native dropdowns are the standard.
 
-The [baseline audit](interface-exceptions-audit.md) classifies the initial 65 entries, records the Onboarding/Updates migration (29 remaining), and proposes the next migration slices. Grandfathering is not visual approval.
+The [baseline audit](interface-exceptions-audit.md) classifies the initial 65 entries and records their migration to zero grandfathered entries. Grandfathering is not visual approval.
+
+## Deliberate special roles
+
+The ordinary text scale remains 11/12/13/14/16/18/20/24px and larger named display roles. Special presentation sizes live with the theme, not as local exceptions: `--practice-brand-size` (26px), compact brand cap (22px), headword article proportion (.55em), literal translation proportion (.85em), recall-target size (title ×1.5), and face-context size (title ×1.2). The startup logo keeps 52px through `--practice-startup-logo-size` in the root startup appearance contract, available before account theme hydration. Moving these values into roles preserves their existing visual purpose; they are not ordinary catalog/control text.
+
+Sign out uses caption12 at desktop, body14 at narrow widths, semantic danger/focus colors, and a 44px narrow-screen target. Its scoped selector must override the general Settings button font reset.

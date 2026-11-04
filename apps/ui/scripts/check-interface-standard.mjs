@@ -1,11 +1,11 @@
-import {readFileSync,writeFileSync,readdirSync} from 'node:fs';
+import {readFileSync,readdirSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import postcss from 'postcss';
 import ts from 'typescript';
 
 const base='components/library/';
-export const paths={css:base+'organization/organization.module.css',theme:'components/practice/ui/practiceTheme.module.css',personal:base+'organization/PersonalCollections.tsx',owned:base+'sharing/OwnedSharedCollections.tsx',received:base+'sharing/ReceivedCollections.tsx',sort:base+'organization/CollectionSortControl.tsx',shared:base+'sharing/SharedCollectionsWorkspace.tsx'};
+export const paths={css:base+'organization/organization.module.css',theme:'components/practice/ui/practiceTheme.module.css',settings:'components/practice/settings/settings.module.css',personal:base+'organization/PersonalCollections.tsx',owned:base+'sharing/OwnedSharedCollections.tsx',received:base+'sharing/ReceivedCollections.tsx',sort:base+'organization/CollectionSortControl.tsx',shared:base+'sharing/SharedCollectionsWorkspace.tsx'};
 /** Bounded collection presentation contract; intentionally not a legacy-wide style linter. */
 export function checkInterfaceStandard(read){
  const errors=[];
@@ -25,6 +25,9 @@ export function checkInterfaceStandard(read){
   if(/(?:color|background|fill|stroke)$/.test(decl.prop)&&!/^\s*(?:var\(--practice-[\w-]+\)|transparent|none|inherit|currentColor)\s*$/.test(decl.value))fail(paths.css,`${decl.parent.selector}: ${decl.prop} must use a semantic color token`);
   if(decl.prop==='font'&&decl.value!=='inherit'&&!decl.value.includes('var(--practice-text-'))fail(paths.css,`${decl.parent.selector}: font shorthand must use semantic typography`);
  });
+ const settings=postcss.parse(read(paths.settings));let signOut=false;
+ settings.walkRules(rule=>{if(!rule.selectors.includes('.settings .signOut'))return;rule.walkDecls(decl=>{if(decl.prop==='font'){signOut=true;if(decl.value!=='400 var(--practice-text-caption)/1.5 var(--practice-font-ui)')fail(paths.settings,'Sign out must use caption typography at desktop specificity');}if(decl.prop==='font-size'&&decl.value!=='var(--practice-text-body)')fail(paths.settings,'Sign out mobile size must use body typography');});});
+ if(!signOut)fail(paths.settings,'Sign out needs its scoped semantic caption font');
  const theme=postcss.parse(read(paths.theme));
  for(const [token,size] of [['caption',12],['body',14],['body-lg',16]]){
   const prop=`--practice-text-${token}`;let found=false;
@@ -84,10 +87,9 @@ export function collectLiteralStyles(sources){
  }
  return counts;
 }
-export const migratedStyleFiles=['components/onboarding/onboarding.module.css','components/releases/ReleaseUpdates.module.css'];
 export function checkLiteralBaseline(sources,baseline){
  const errors=[];
- for(const key of Object.keys(baseline))if(migratedStyleFiles.includes(JSON.parse(key)[0]))errors.push(`Migrated stylesheet cannot be grandfathered: ${JSON.parse(key)[0]}`);
+ for(const key of Object.keys(baseline))errors.push(`Component styles cannot be grandfathered; the legacy baseline is retired: ${JSON.parse(key)[0]}`);
  for(const [key,count] of Object.entries(collectLiteralStyles(sources)))if(count>(baseline[key]??0))errors.push(`New literal style (${count} > ${baseline[key]??0} grandfathered): ${key}`);
  return errors;
 }
@@ -100,7 +102,7 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
  const baselinePath=resolve(root,'scripts/interface-standard-baseline.json');
  const sources=componentCss(root);
- if(process.argv.includes('--write-baseline')){writeFileSync(baselinePath,JSON.stringify(collectLiteralStyles(sources),null,2)+'\n');console.log('Wrote reviewed legacy literal baseline. Do not regenerate it to hide regressions.');process.exit(0);}
+ if(process.argv.includes('--write-baseline')){console.error('Legacy baseline is retired. Use semantic roles instead of adding exemptions.');process.exit(1);}
  const errors=[...checkInterfaceStandard(path=>readFileSync(resolve(root,path),'utf8')),...checkLiteralBaseline(sources,JSON.parse(readFileSync(baselinePath,'utf8')))];
  if(errors.length){console.error('Interface standard failed:\n'+errors.map(error=>' - '+error).join('\n'));process.exitCode=1;}else console.log('Interface standard passed (bounded collection presentation checks).');
 }

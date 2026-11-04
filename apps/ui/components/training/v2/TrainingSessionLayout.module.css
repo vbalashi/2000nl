@@ -1,24 +1,13 @@
 /* #251 H1: accepted B geometry. Reading presets must not scale this utility row
  * together with headwords/body copy; keep these semantic roles independent. */
 .viewport {
-  --session-surface: #f1f5f9;
-  --session-ink: #334155;
-  --session-line: #cbd5e1;
-  --session-max-width: 760px;
-  --session-name-size: 0.75rem;
-  --session-position-size: 0.6875rem;
-  background: var(--session-surface);
-}
-:global(.dark) .viewport {
-  --session-surface: #171c24;
-  --session-ink: #bfc7d4;
-  --session-line: #394353;
-}
-/* Approved presentation inherits the account palette from the app frame. */
-.viewport.viewportApproved {
   --session-surface: var(--practice-canvas);
   --session-ink: var(--practice-text-secondary);
   --session-line: var(--practice-border);
+  --session-max-width: 760px;
+  --session-name-size: var(--practice-text-caption);
+  --session-position-size: var(--practice-text-label);
+  background: var(--session-surface);
 }
 .viewportApproved .utilities button:hover {
   background: var(--practice-surface-hover);
@@ -39,7 +28,7 @@
   justify-content: center;
   overflow: hidden;
   padding: 10px 16px;
-  background: var(--session-surface, #f1f5f9);
+  background: var(--session-surface, var(--practice-canvas));
 }
 .mainApproved {
   /* Terminal states may outlive the card viewport; inherit the account canvas directly. */
@@ -68,16 +57,16 @@
   flex-shrink: 0;
   height: 48px;
   padding: 0 6px 6px 10px;
-  border: 1px solid var(--session-line, #cbd5e1);
+  border: 1px solid var(--session-line, var(--practice-border));
   border-radius: 10px;
-  color: var(--session-ink, #334155);
+  color: var(--session-ink, var(--practice-text-secondary));
 }
 .sessionApproved {
   height: 29px;
   padding: 0;
   border: 0;
   border-radius: 0;
-  color: var(--session-ink, #334155);
+  color: var(--session-ink, var(--practice-text-secondary));
 }
 .sessionApproved .name {
   font-size: var(--practice-text-body-lg);
@@ -103,11 +92,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--session-name-size, 0.75rem);
+  font-size: var(--session-name-size, var(--practice-text-caption));
   font-weight: 500;
 }
 .position {
-  font-size: var(--session-position-size, 0.6875rem);
+  font-size: var(--session-position-size, var(--practice-text-label));
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -126,7 +115,7 @@
   border-radius: 9px;
 }
 .utilities button:hover {
-  background: #94a3b81a;
+  background: var(--practice-surface-hover);
 }
 .utilities button:disabled {
   cursor: wait;
@@ -136,7 +125,7 @@
   background: transparent;
 }
 .utilities button:focus-visible {
-  outline: 2px solid #8b89f6;
+  outline: 2px solid var(--practice-focus);
   outline-offset: 1px;
 }
 .utilities svg {
@@ -152,11 +141,11 @@
   height: 3px;
   overflow: hidden;
   border-radius: 0 0 10px 10px;
-  background: #94a3b820;
+  background: var(--practice-border);
 }
 .progress > div {
   height: 100%;
-  background: #8b89f6;
+  background: var(--practice-accent);
 }
 /* Header and indicator form one stationary session-owned region. */
 .progressHeader { flex-shrink: 0; }
@@ -171,17 +160,18 @@
   flex-shrink: 0;
   height: calc(44px + env(safe-area-inset-bottom));
   padding: 0 10px env(safe-area-inset-bottom);
-  border-top: 1px solid var(--session-line, #cbd5e1);
-  color: var(--session-ink, #334155);
-  background: var(--session-surface, #f1f5f9);
+  border-top: 1px solid var(--session-line, var(--practice-border));
+  color: var(--session-ink, var(--practice-text-secondary));
+  background: var(--session-surface, var(--practice-canvas));
 }
+/* The label role stays 11px at every width; breakpoints adjust spacing only. */
 .stats {
   display: flex;
   justify-content: space-between;
   gap: 8px;
   width: 100%;
   max-width: 100%;
-  font-size: 0.65625rem;
+  font-size: var(--practice-text-label);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -207,7 +197,7 @@
   height: 3px;
   overflow: hidden;
   border-radius: 2px;
-  background: #94a3b840;
+  background: var(--practice-border);
 }
 .statBar > div {
   height: 100%;
@@ -220,7 +210,6 @@
   .stats {
     justify-content: space-between;
     gap: 4px;
-    font-size: 0.6875rem;
   }
   .stat {
     flex: 0 1 auto;
@@ -248,7 +237,6 @@
   .stats {
     width: auto;
     justify-content: center;
-    font-size: 0.6875rem;
     gap: 28px;
   }
   .stat {

@@ -1,6 +1,13 @@
 /* Semantic theme contract. Screens consume roles; palette values live only here. */
 .theme {
  --practice-font-ui: var(--font-sense-sans), Inter, system-ui, sans-serif;
+ /* Named display/reading proportions; distinct from ordinary controls. */
+ --practice-brand-size: 26px;
+ --practice-brand-size-compact: 22px;
+ --practice-headword-article-size: .55em;
+ --practice-literal-translation-size: .85em;
+ --practice-recall-target-size: calc(var(--practice-text-title) * 1.5);
+ --practice-face-context-size: calc(var(--practice-text-title) * 1.2);
  --practice-font-reading: var(--font-sense-serif), Newsreader, Georgia, serif;
  --practice-text-label: var(--account-practice-text-label, 11px);
  --practice-text-caption: var(--account-practice-text-caption, 12px);

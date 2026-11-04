@@ -1,4 +1,5 @@
 import {test} from 'node:test';
+import {spawnSync} from 'node:child_process';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
@@ -16,7 +17,7 @@ test('rejects inline typography even with semantic values',()=>assert.ok(check(a
 for(const key of ['personal','owned','received'])test(`rejects replacing ${key} sorting with native select`,()=>{const errors=check(altered(paths[key],'<CollectionSortControl ','<select aria-label="sort" '));assert.ok(errors.some(e=>e.includes('native select')));assert.ok(errors.some(e=>e.includes('must render shared CollectionSortControl')));});
 test('rejects bypassing ActionMenu',()=>assert.ok(check(altered(paths.sort,'<ActionMenu ','<OtherMenu ')).some(e=>e.includes('must render shared ActionMenu'))));
 test('rejects nonstandard Shared segmented control',()=>assert.ok(check(altered(paths.shared,'<SegmentedControl standard ','<SegmentedControl ')).some(e=>e.includes('must use SegmentedControl standard'))));
-test('baseline rejects new files and increased literal counts',()=>{const legacy={'components/old.css':'.name{font-size:18px;color:#fff}'};const baseline=collectLiteralStyles(legacy);assert.deepEqual(checkLiteralBaseline(legacy,baseline),[]);assert.equal(checkLiteralBaseline({...legacy,'components/new.css':'.name{font-size:18px}'},baseline).length,1);assert.equal(checkLiteralBaseline({'components/old.css':legacy['components/old.css']+legacy['components/old.css']},baseline).length,2);assert.deepEqual(checkLiteralBaseline({'components/new.css':'.name{font-size:var(--practice-text-body);color:var(--practice-text)}'},baseline),[]);});
+test('empty baseline rejects literals in new or existing files and cannot be expanded',()=>{const sources={'components/example.css':'.name{font-size:18px;color:#fff}'};assert.equal(checkLiteralBaseline(sources,{}).length,2);assert.ok(checkLiteralBaseline(sources,collectLiteralStyles(sources)).some(error=>error.includes('cannot be grandfathered')));assert.deepEqual(checkLiteralBaseline({'components/new.css':'.name{font-size:var(--practice-text-body);color:var(--practice-text)}'},{}),[]);});
 
 test('rejects heading and sidebar role drift',()=>{assert.ok(check(altered(paths.css,'font-size:var(--practice-text-body-lg);font-weight:500','font-size:var(--practice-text-body);font-weight:500')).some(e=>e.includes('must use --practice-text-body-lg')));assert.ok(check(altered(paths.css,'.labelList button[aria-pressed]{font-size:var(--practice-text-caption)','.labelList button[aria-pressed]{font-size:var(--practice-text-body)')).some(e=>e.includes('must use --practice-text-caption')));});
 test('rejects inline literal colors',()=>assert.ok(check(altered(paths.owned,'<CollectionSortControl ','<CollectionSortControl style={{color:"red"}} ')).some(e=>e.includes('inline color'))));
@@ -27,3 +28,7 @@ test('onboarding and updates cannot regain baseline exemptions',()=>{
   assert.ok(checkLiteralBaseline(sources,collectLiteralStyles(sources)).some(error=>error.includes('cannot be grandfathered')));
  }
 });
+
+test('Sign out cannot drift back to tiny labels or lose selector specificity',()=>{assert.ok(check(altered(paths.settings,'font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui);cursor:pointer;','font:400 var(--practice-text-label)/1.5 var(--practice-font-ui);cursor:pointer;')).some(error=>error.includes('Sign out')));assert.ok(check({...clean,[paths.settings]:clean[paths.settings].replaceAll('.settings .signOut','.signOut')}).some(error=>error.includes('Sign out')));});
+
+test('retired baseline command fails without rewriting the checked-in file',()=>{const file=resolve(root,'scripts/interface-standard-baseline.json'),before=readFileSync(file,'utf8');const result=spawnSync(process.execPath,[resolve(root,'scripts/check-interface-standard.mjs'),'--write-baseline'],{encoding:'utf8'});assert.equal(result.status,1);assert.match(result.stderr,/baseline is retired/);assert.equal(readFileSync(file,'utf8'),before);});
