@@ -27,7 +27,7 @@ test.each([
 
 test('progress options save the account choice without changing gestures',()=>{
  render(<TrainingInteractionSettings language="ru"/>);
- expect(screen.getByRole('button',{name:'Точки'})).toHaveAttribute('aria-pressed','true');
+ expect(screen.getByRole('button',{name:'Ниточка'})).toHaveAttribute('aria-pressed','true');
  for(const [name,progressAnimation] of [['Волна','wave'],['Выключена','off']] as const){
   fireEvent.click(screen.getByRole('button',{name}));
   expect(save).toHaveBeenLastCalledWith({...defaultTrainingInteractions,progressAnimation});
