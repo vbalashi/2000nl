@@ -1,4 +1,5 @@
 "use client";
+import { interfaceLanguages } from "@/lib/i18n/registry";
 import React from "react";
 import { useReleaseUpdates } from "@/components/releases/AppReleaseContext";
 import { ReleaseDot, ReleaseUpdatesSection } from "@/components/releases/ReleaseUpdates";
@@ -22,11 +23,6 @@ import type { SettingsDestinationProps } from "./SettingsDestination";
 import { ActionMenu } from "@/components/practice/ui/ActionMenu";
 import {SegmentedControl} from "@/components/practice/ui/SegmentedControl";
 import s from "@/components/practice/settings/settings.module.css";
-const interfaceLanguages = [
-  { code: "en", name: "English" },
-  { code: "nl", name: "Nederlands" },
-  { code: "ru", name: "Русский" },
-] as const;
 const TranslationLanguagePicker = React.lazy(() =>
   import("@/components/practice/settings/LanguagePicker").then((module) => ({
     default: module.LanguagePicker,

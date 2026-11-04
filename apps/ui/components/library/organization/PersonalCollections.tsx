@@ -1,4 +1,6 @@
 "use client";
+import { localizedField } from "@/lib/i18n/catalog";
+
 import React, { useMemo, useState } from "react";
 import { FileText, Folder, Folders, Share2, LockKeyhole, MoreHorizontal, Plus, Search, Tags, X } from "lucide-react";
 import {readOwnerShareJournal,ownerShareStore} from '@/lib/collections/sharing/ownerShareJournal';
@@ -177,7 +179,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
 export function PersonalCollectionRow({collection,names=[],locale,onOpen,onMore}:{collection:CatalogCollection;names?:string[];locale:OnboardingLanguage;onOpen:()=>void;onMore:React.MouseEventHandler<HTMLButtonElement>}) {
  const t=organizationCopy(locale);
  return <article className={s.collection}>
-  <FileText size={18}/><div className={s.collectionCopy}><button className={s.collectionName} onClick={onOpen}>{collection.name}</button><p>{collection.isShared?<Share2 size={13}/>:<LockKeyhole size={13}/>}{collection.ownership==='received'?locale==='ru'?'Общая · добавлена вами':locale==='nl'?'Gedeeld · toegevoegd':'Shared · added by you':collection.isShared?t.shared:t.private}</p><p>{formatUiCount(locale,collection.item_count??0,t,"meaning")}{names.length?` · ${names.join(" / ")}`:""}</p></div>
+  <FileText size={18}/><div className={s.collectionCopy}><button className={s.collectionName} onClick={onOpen}>{collection.name}</button><p>{collection.isShared?<Share2 size={13}/>:<LockKeyhole size={13}/>}{collection.ownership==='received'?localizedField("personalCollections", "received")[locale]:collection.isShared?t.shared:t.private}</p><p>{formatUiCount(locale,collection.item_count??0,t,"meaning")}{names.length?` · ${names.join(" / ")}`:""}</p></div>
   <button className={s.viewWords} onClick={onOpen}>{t.open}</button><button data-onboarding="own-collection-menu" aria-label={`${t.more}: ${collection.name}`} onClick={onMore}><MoreHorizontal size={18}/></button>
  </article>;
 }
@@ -185,6 +187,6 @@ export function PersonalCollectionRow({collection,names=[],locale,onOpen,onMore}
 export function ownedCollectionMenuItems(p:{locale:OnboardingLanguage;sharingEnabled:boolean;onOpen:()=>void;onLabels:()=>void;onShare:()=>void;onRename:()=>void;onDelete:()=>void}) {
  const t=organizationCopy(p.locale);
  return [{id:"open",label:t.open,onSelect:p.onOpen},{id:"labels",label:t.assign,icon:<Tags size={16}/>,onSelect:p.onLabels},
- ...(p.sharingEnabled?[{id:"share",label:p.locale==="ru"?"Общий доступ":p.locale==="nl"?"Delen":"Share",icon:<Share2 size={16}/>,onSelect:p.onShare}]:[]),
+ ...(p.sharingEnabled?[{id:"share",label:localizedField("personalCollections", "share")[p.locale],icon:<Share2 size={16}/>,onSelect:p.onShare}]:[]),
  {id:"rename",label:t.rename,onSelect:p.onRename},{id:"delete",label:t.remove,onSelect:p.onDelete}];
 }

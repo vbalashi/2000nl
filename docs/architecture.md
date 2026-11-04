@@ -124,3 +124,11 @@ Changing the live file after initial path/mount provisioning needs no rebuild or
 restart. Policy errors fail closed; inspect file provisioning before treating an
 absence of events as an absence of failures. Production mount provisioning and
 operator changes follow the private managed release process.
+
+## Interface languages
+
+Interface, learning and dictionary translation languages have separate owners.
+The interface registry and all learner UI message catalogs live in
+`apps/ui/locales`; adding a dictionary does not change interface preferences.
+The [localization guide](interface-localization.md) describes the catalog APIs,
+source-change review tracking, draft languages, validation and RTL readiness.

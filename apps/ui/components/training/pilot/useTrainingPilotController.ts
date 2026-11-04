@@ -1,3 +1,4 @@
+import { localizedSection, localizedField } from "@/lib/i18n/catalog";
 import { useTrainingOperationScope } from "../useTrainingOperationScope";
 import type { TrainingOperation } from "@/lib/training/trainingOperationScope";
 import { isTrainingSetupPaused } from "@/lib/training/setups/availability";
@@ -464,21 +465,18 @@ export function useTrainingPilotController({
       .filter((scenario) => scenario.id === "understanding")
       .map((scenario) => ({
         value: scenario.id,
-        label:
-          interfaceLanguage === "nl"
-            ? scenario.nameNl || scenario.nameEn
-            : scenario.nameEn || scenario.nameNl || scenario.id,
+        label: localizedSection("sessionLabels")[interfaceLanguage].scenario.understanding,
         modes: scenario.cardModes.filter(isTrainingMode),
       }));
     if (platformV2IdiomExercisesEnabled()) {
       options.push({
         value: "idiom",
-        label: interfaceLanguage === "nl" ? "Uitdrukkingen" : interfaceLanguage === "ru" ? "Идиомы" : "Idioms",
+        label: localizedField("trainingScenarios", "idioms")[interfaceLanguage],
         modes: ["word-to-definition", "definition-to-word"],
       });
     }
     if (platformV2TranslationExercisesEnabled() && translationTargetLanguageCode) {
-      options.push({ value: "sentences", label: interfaceLanguage === "nl" ? "Voorbeeldzinnen" : interfaceLanguage === "ru" ? "Примеры предложений" : "Example sentences", modes: ["word-to-definition"] });
+      options.push({ value: "sentences", label: localizedField("trainingScenarios", "sentences")[interfaceLanguage], modes: ["word-to-definition"] });
     }
     return options;
   }, [interfaceLanguage, scenarios, scenariosResolved, translationTargetLanguageCode]);

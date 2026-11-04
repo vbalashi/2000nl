@@ -1,3 +1,4 @@
+import { localizedSection } from "@/lib/i18n/catalog";
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {formatUiMessage,getUiMessages} from '@/lib/uiMessages';
 import type {TrainingSetupDraft} from './types';
@@ -9,11 +10,7 @@ const exercisePresentation = {
  'word-in-context': {label:'Translation',direction:false},
  sentence: {label:'Translation',direction:false},
 } as const;
-const selectionLabels = {
- en:{new:'New only',review:'Reviews only',both:'New + reviews'},
- nl:{new:'Alleen nieuwe',review:'Alleen herhalingen',both:'Nieuw + herhalingen'},
- ru:{new:'Только новые',review:'Только повторения',both:'Новые + повторения'},
-};
+const selectionLabels = localizedSection("trainingFilter");
 export function trainingMetadata(draft:TrainingSetupDraft,language:OnboardingLanguage,languageLabel:string){
  const copy=getUiMessages(language).trainingOverview;
  const capability=exercisePresentation[draft.family??'meaning'];

@@ -1,3 +1,4 @@
+import { localizedField } from "@/lib/i18n/catalog";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { localizePlatformSemanticTerm, projectPlatformV2SenseContent } from "@/lib/platform/projections/platformV2SenseContent";
 import type { TrainingExercisePresentation } from "./exerciseCardPresentation";
@@ -28,7 +29,7 @@ export function buildSentenceCardPresentation({
   });
   return {
     promptTarget: { contentNodeId: content.sentence.contentNodeId, kind: "translation" },
-    label: { en: "Translate into Dutch", nl: "Vertaal naar het Nederlands", ru: "Переведите на нидерландский" }[interfaceLanguage],
+    label: localizedField("sentencePrompt", "translate")[interfaceLanguage],
     prompt: { kind: "explanation", text: prompt.text },
     answerTranslationInitiallyVisible: true,
     answer: {

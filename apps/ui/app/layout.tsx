@@ -1,4 +1,5 @@
 import "../styles/globals.css";
+import { InterfaceLanguageEffect } from "@/components/system/InterfaceLanguageEffect";
 import { startupAppearanceBootstrap } from "@/lib/preferences/startupAppearance";
 import type { ReactNode } from "react";
 import { unstable_noStore as noStore } from "next/cache";
@@ -46,7 +47,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   if (portable) noStore();
   const runtimeConfig = portable ? publicRuntimeConfig() : null;
   return (
-    <html suppressHydrationWarning lang="nl" className={`${senseSans.variable} ${senseSerif.variable}`}>
+    <html suppressHydrationWarning lang="en" dir="ltr" className={`${senseSans.variable} ${senseSerif.variable}`}>
       <head>
         {runtimeConfig && <script dangerouslySetInnerHTML={{ __html: publicConfigScript(runtimeConfig) }} />}
         <script dangerouslySetInnerHTML={{ __html: startupAppearanceBootstrap }} />
@@ -109,6 +110,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="min-h-screen bg-background-light text-slate-900 dark:bg-background-dark dark:text-white">
+        <InterfaceLanguageEffect />
         <InputModality />
         <SystemThemeEffect />
         <OfflineBanner />

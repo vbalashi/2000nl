@@ -1938,7 +1938,7 @@ test("late stats for a previous list cannot replace visible no-chrome stats", as
   fetchStats.mockImplementation((_userId: string, _modes: string[], scope: unknown) => new Promise((resolve) => { requests.push({ scope, resolve }); }));
   try {
     render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
-    const footer = await screen.findByRole("button", { name: "Wijzigen" });
+    const footer = await screen.findByRole("button", { name: "Change" });
     await waitFor(() => expect(requests).toHaveLength(1));
     fireEvent.click(footer);
     fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
@@ -1965,7 +1965,7 @@ test("returning to a pending no-chrome stats scope adopts its original request",
   fetchStats.mockImplementation((_userId: string, _modes: string[], scope: unknown) => new Promise((resolve) => { requests.push({ scope, resolve }); }));
   try {
     render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Wijzigen" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Change" }));
     await waitFor(() => expect(requests).toHaveLength(1));
     fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
     fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
@@ -2000,7 +2000,7 @@ test("a failed first stats read leaves the review baseline for the next successf
   try {
     render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
     await waitFor(() => expect(fetchStats).toHaveBeenCalledOnce());
-    fireEvent.click(await screen.findByRole("button", { name: "Wijzigen" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Change" }));
     fireEvent.click(await screen.findByRole("button", { name: /active list/i }));
     fireEvent.click(await screen.findByRole("button", { name: /secondary list/i }));
     await waitFor(() => expect(fetchStats).toHaveBeenCalledTimes(2));
@@ -3282,7 +3282,7 @@ test("footer list selector still changes active training scope", async () => {
     expect(
       screen.queryByRole("button", { name: /active list/i }),
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Change" }));
     fireEvent.click(
       await screen.findByRole("button", { name: /active list/i }),
     );
@@ -3343,15 +3343,15 @@ test("footer card-filter change reloads without the previous finite session", as
     .mockResolvedValue(mockWord);
 
   render(<TrainingScreen user={user} />);
-  await screen.findByRole("button", { name: "Wijzigen" });
+  await screen.findByRole("button", { name: "Change" });
 
   fetchNextTrainingWordByScenario.mockClear();
-  fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
+  fireEvent.click(screen.getByRole("button", { name: "Change" }));
   fireEvent.click(
-    screen.getByRole("button", { name: /Nieuw \+ Herhaling/ }),
+    screen.getByRole("button", { name: /New \+ reviews/ }),
   );
   fireEvent.click(
-    await screen.findByRole("button", { name: /Alleen nieuw/ }),
+    await screen.findByRole("button", { name: /New only/ }),
   );
 
   await waitFor(() =>

@@ -1,14 +1,11 @@
 "use client";
+import { localizedField } from "@/lib/i18n/catalog";
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { StartupLogoScreen } from "./StartupLogoScreen";
 
-const copy: Record<OnboardingLanguage, string> = {
-  en: "Preparing training",
-  nl: "Training voorbereiden",
-  ru: "Подготавливаем тренировку",
-};
+const copy: Record<OnboardingLanguage, string> = localizedField("startup", "preparing");
 
 /** One waiting surface across auth, account presentation and training hydration. */
 export function StartupStatus({ language = "en", copyVisible = true }: {

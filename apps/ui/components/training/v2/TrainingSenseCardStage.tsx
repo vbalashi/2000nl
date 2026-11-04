@@ -1,4 +1,6 @@
 "use client";
+import { localizedField } from "@/lib/i18n/catalog";
+
 import type { CurrentTrainingCardContext } from "@/lib/platform/trainingCurrentCardClient";
 import { TrainingAnswerTranslationProvider } from "./TrainingAnswerTranslation";
 import { hasTrainingCardTranslation as hasTranslation } from "@/lib/training/exerciseCardPresentation";
@@ -134,7 +136,6 @@ export function TrainingSenseCardStage({
     setTranslationVisible(visible => !visible);
   }, [busy, moving, model, onAction, translationVisible]);
   useCardVerticalSwipe({ root: stageRef, audioEnabled: !busy && !moving && Boolean(model.audioCapability && onPlayAudio), onPlayAudio, enabled: answerVisible && !busy && !moving && (hasDisplayTranslation || translationActionAvailable || Boolean(additionalLanguage)), onToggle: toggleTranslation });
-
 
   React.useEffect(() => {
     if (!focusOnMount) return;
@@ -304,16 +305,10 @@ export function TrainingSenseCardStage({
             }
             hint={hint}
             hintVisible={hintVisible}
-            label={contextPrompt ? (contextTarget ? {
-              en: "Recall the Dutch word for", nl: "Herinner je het Nederlandse woord voor", ru: "Вспомните нидерландское слово для",
-            } : {
-              en: "Recall the Dutch word in this sentence", nl: "Herinner je het Nederlandse woord in deze zin", ru: "Вспомните нидерландское слово в этом предложении",
-            })[interfaceLanguage] : mode === "definition-to-word" ? {
-              en: "Recall the Dutch word from its meaning", nl: "Herinner je het Nederlandse woord bij deze betekenis", ru: "Вспомните нидерландское слово по значению",
-            }[interfaceLanguage] : undefined}
+            label={contextPrompt ? (contextTarget ? localizedField("sensePrompt", "wordFor") : localizedField("sensePrompt", "wordInSentence"))[interfaceLanguage] : mode === "definition-to-word" ? localizedField("sensePrompt", "wordFromMeaning")[interfaceLanguage] : undefined}
             partOfSpeech={mode === "definition-to-word" ? model.partOfSpeech : undefined}
             recallTarget={contextTarget}
-            contextLabel={contextPrompt ? { en: "In this sentence", nl: "In deze zin", ru: "В этом предложении" }[interfaceLanguage] : undefined}
+            contextLabel={contextPrompt ? localizedField("sensePrompt", "context")[interfaceLanguage] : undefined}
             hintLabel={contextPrompt ? t("senseCard.sections.definition") : t("senseCard.hint.example")}
             contentLabel={t("senseCard.training.content")}
           />

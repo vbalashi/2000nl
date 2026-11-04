@@ -1,4 +1,6 @@
 "use client";
+import { localizedField } from "@/lib/i18n/catalog";
+
 import {signalOnboarding} from "@/lib/onboarding/signals";
 import { SegmentedControl } from "@/components/practice/ui/SegmentedControl";
 import React, { useId, useState, useRef, useLayoutEffect } from "react";
@@ -138,16 +140,12 @@ export function ApprovedTrainingBuilder(p: Props) {
     formatUiCount(p.interfaceLanguage, n, b, "ratio");
   const saveAsLabel =
     p.saveAsLabel ??
-    { en: "Save as…", nl: "Opslaan als…", ru: "Сохранить как…" }[
+    localizedField("trainingBuilderActions", "saveAs")[
       p.interfaceLanguage
     ];
   const deleteLabel =
     p.deleteLabel ??
-    {
-      en: "Delete training",
-      nl: "Training verwijderen",
-      ru: "Удалить тренировку",
-    }[p.interfaceLanguage];
+    localizedField("trainingBuilderActions", "delete")[p.interfaceLanguage];
   const uid = useId();
   const builderRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -679,7 +677,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                     formatExerciseCount(p.interfaceLanguage, count)
                   }
                   allDueLabel={c.allDueToday}
-                  allAvailableTick={{en:"All",nl:"Alle",ru:"Все"}[p.interfaceLanguage]}
+                  allAvailableTick={localizedField("trainingBuilderActions", "all")[p.interfaceLanguage]}
                   allDueHelp={c.allDueHelp}
                   allowAllDueToday={family === "meaning"}
                 />
@@ -697,11 +695,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                 <p className={s.session_note}>
                   <Info size={13} aria-hidden="true" />
                   <span>
-                    {p.interfaceLanguage === "ru"
-                      ? "Фактический размер сессии и баланс новых карточек и повторений зависят от доступных карточек."
-                      : p.interfaceLanguage === "nl"
-                        ? "De werkelijke sessiegrootte en verhouding tussen nieuwe kaarten en herhalingen hangen af van de beschikbare kaarten."
-                        : "Actual session size and new/review balance depend on available cards."}
+                    {localizedField("trainingBuilderActions", "availabilityHint")[p.interfaceLanguage]}
                   </span>
                 </p>
               </div>,
@@ -748,7 +742,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                     else setSaveOpen(true);
                   }}
                 >
-                  {p.hasUnsavedChanges && <span className={s.unsavedDot} role="status" aria-label={({en:"Unsaved changes",ru:"Несохранённые изменения",nl:"Niet-opgeslagen wijzigingen"})[p.interfaceLanguage]} title={({en:"Unsaved changes",ru:"Несохранённые изменения",nl:"Niet-opgeslagen wijzigingen"})[p.interfaceLanguage]} />}
+                  {p.hasUnsavedChanges && <span className={s.unsavedDot} role="status" aria-label={(localizedField("trainingBuilderActions", "unsaved"))[p.interfaceLanguage]} title={(localizedField("trainingBuilderActions", "unsaved"))[p.interfaceLanguage]} />}
                   {p.saveLabel}
                 </button>
                 {p.editing && p.onSaveAs && (

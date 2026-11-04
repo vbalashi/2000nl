@@ -1,10 +1,8 @@
-import en from './locales/en.json';
-import nl from './locales/nl.json';
-import ru from './locales/ru.json';
-import type {OnboardingLanguage} from '@/lib/onboardingI18n';
+import { interfaceCatalogs, type MessageCatalog } from '@/lib/i18n/catalog';
+import { interfaceLanguages, type InterfaceLanguage } from '@/lib/i18n/registry';
 import type {OnboardingSignal} from './signals';
-export const tourCopy = {en,nl,ru};
-export type TourCopy = typeof en;
+export type TourCopy = MessageCatalog['tour'];
+export const tourCopy = Object.fromEntries(interfaceLanguages.map(({code}) => [code, interfaceCatalogs[code].tour])) as Record<InterfaceLanguage, TourCopy>;
 export const topics = ['core','collections','card','stats','sharing','incoming','languages','appearance'] as const;
 export type TourTopic = typeof topics[number];
 export type TourStep = {id:string; target:string; title:keyof TourCopy; body:keyof TourCopy; next?:'click'|'continue'|OnboardingSignal; ready?:string; bypass?:string};

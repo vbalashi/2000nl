@@ -1,4 +1,6 @@
 "use client";
+import { localizedField } from "@/lib/i18n/catalog";
+
 import { useTrainingOperationScope } from "./useTrainingOperationScope";
 import { recoverTrainingRun } from "@/lib/training/trainingRunRecovery";
 import { startTrainingDiagnostics } from "@/lib/diagnostics/client";
@@ -166,11 +168,9 @@ type Props = {
 
 const DEFAULT_LANGUAGE_OPTIONS = [{ value: "nl", label: "Nederlands" }];
 
-
 const DEFAULT_TRAINING_FOCUS_FILTER: TrainingFocusFilter = {
   dateWindow: "all",
 };
-
 
 const fallbackLanguageLabel = (code: string) =>
   code ? code.toUpperCase() : "Onbekend";
@@ -1449,7 +1449,7 @@ function TrainingScreenContent({
       releaseRunSelection();
       setIdiomSession(null);setSentenceSession(null);replaceTrainingSessionId(null);setLatchedSessionPlan(null);setCurrentWord(null);setSessionPlannedTotal(null);setSessionCompletedActions(0);
       if(user?.id)void clearTrainingSessionResume(user.id);
-      if(options?.trainingId)setEmptyTraining({draftKey:JSON.stringify([currentTrainingLanguage,canonicalEmptyTrainingDraft(draft)]),trainingId:options.trainingId,canReviewAhead:draft.cardFilter==="review"&&!options.reviewTiming,message:options.reviewTiming?{en:"No review cards match this training.",nl:"Geen herhalingskaarten passen bij deze training.",ru:"Нет подходящих изучаемых карточек для этой тренировки."}[onboardingLang]:draft.cardFilter==="review"?{en:"No cards are due for review now.",nl:"Er hoeven nu geen kaarten herhaald te worden.",ru:"Сейчас нет карточек для повторения."}[onboardingLang]:{en:"No cards match this training.",nl:"Geen kaarten passen bij deze training.",ru:"Нет подходящих карточек для этой тренировки."}[onboardingLang]});
+      if(options?.trainingId)setEmptyTraining({draftKey:JSON.stringify([currentTrainingLanguage,canonicalEmptyTrainingDraft(draft)]),trainingId:options.trainingId,canReviewAhead:draft.cardFilter==="review"&&!options.reviewTiming,message:options.reviewTiming?localizedField("trainingScreen", "noMatchingReviews")[onboardingLang]:draft.cardFilter==="review"?localizedField("trainingScreen", "noDueReviews")[onboardingLang]:localizedField("trainingScreen", "noMatchingCards")[onboardingLang]});
     },
     onPlanReady: (plan) => {
       setSessionConsumedCardKeys([]);
@@ -2290,11 +2290,7 @@ function TrainingScreenContent({
             ownedSession={activeExerciseFamily === "idiom" && idiomSession ? {trainingId:sessionTrainingId,draft:completionDraftRef.current??{...trainingPilot.initialDraft,family:activeExerciseFamily},reviewTiming:trainingFocusFilter.reviewTiming,id:idiomSession.sessionId,completed:idiomSession.completedActions,total:idiomSession.plannedTotal} : activeExerciseFamily === "sentence" && sentenceSession ? {trainingId:sessionTrainingId,draft:completionDraftRef.current??{...trainingPilot.initialDraft,family:activeExerciseFamily},reviewTiming:trainingFocusFilter.reviewTiming,id:sentenceSession.sessionId,completed:sentenceSession.completedActions,total:sentenceSession.plannedTotal} : trainingSessionId ? {trainingId:sessionTrainingId,draft:completionDraftRef.current??{...trainingPilot.initialDraft,family:activeExerciseFamily},reviewTiming:trainingFocusFilter.reviewTiming,id:trainingSessionId,completed:sessionCompletedActions,total:latchedSessionPlan?.plannedTotal??sessionPlannedTotal} : undefined}
             activeSessionLabel={sessionDisplayName || (
               activeExerciseFamily === "idiom"
-                ? onboardingLang === "ru"
-                  ? "Тренировка идиом"
-                  : onboardingLang === "nl"
-                    ? "Training uitdrukkingen"
-                    : "Idiom training"
+                ? localizedField("trainingScreen", "idiomTraining")[onboardingLang]
                 : trainingFocusFilter.dictionaryScope
                   ? undefined
                   : wordListLabel || undefined)

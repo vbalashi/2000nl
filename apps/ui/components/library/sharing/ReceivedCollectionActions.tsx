@@ -1,4 +1,6 @@
 'use client';
+import { localizedSection } from "@/lib/i18n/catalog";
+
 import {localRecordSnapshotStore} from '@/lib/collections/sharing/corruptLocalRecord';
 import {readUnsubscribeJournal} from '@/lib/collections/sharing/unsubscribeJournal';
 import {readReceivedSource} from '@/lib/collections/sharing/receivedSourceClient';
@@ -15,7 +17,7 @@ import overlays from '@/components/practice/library/libraryOverlays.module.css';
 import s from '../organization/organization.module.css';
 import {organizationCopy} from '../organization/copy';
 import {useUnsubscribeCollection} from './useShareMutation';
-const copy={en:{leave:'Remove from my library',confirm:'The owner’s collection and your learning progress are kept.',check:'Check result',retry:'Retry same request',uncertain:'Could not confirm the result. Check before retrying.',forward:'Share collection',link:'Invitation link',code:'Invitation code',copyLink:'Copy link',copyCode:'Copy code',copied:'Copied',copyError:'Could not copy. Select and copy the text.',unavailable:'This invitation can no longer be forwarded. Ask the owner for a new link.'},ru:{leave:'Убрать из моей библиотеки',confirm:'Коллекция владельца и ваш учебный прогресс сохранятся.',check:'Проверить результат',retry:'Повторить запрос',uncertain:'Не удалось подтвердить результат. Проверьте его перед повтором.',forward:'Поделиться коллекцией',link:'Ссылка приглашения',code:'Код приглашения',copyLink:'Копировать ссылку',copyCode:'Копировать код',copied:'Скопировано',copyError:'Не удалось скопировать. Выделите и скопируйте текст.',unavailable:'Это приглашение больше нельзя переслать. Попросите владельца прислать новую ссылку.'},nl:{leave:'Uit mijn bibliotheek verwijderen',confirm:'De collectie van de eigenaar en je leervoortgang blijven bewaard.',check:'Resultaat controleren',retry:'Zelfde verzoek opnieuw proberen',uncertain:'Het resultaat kon niet worden bevestigd. Controleer het voordat je opnieuw probeert.',forward:'Collectie delen',link:'Uitnodigingslink',code:'Uitnodigingscode',copyLink:'Link kopiëren',copyCode:'Code kopiëren',copied:'Gekopieerd',copyError:'Kopiëren mislukt. Selecteer en kopieer de tekst.',unavailable:'Deze uitnodiging kan niet meer worden doorgestuurd. Vraag de eigenaar om een nieuwe link.'}};
+const copy=localizedSection("receivedCollectionActions");
 export const receivedActionCopy=(locale:OnboardingLanguage)=>copy[locale];
 export function UnsubscribeCollection({userId,row,locale,onClose,onDone}:{userId:string;row:Pick<ReceivedCollection,'id'|'name'>;locale:OnboardingLanguage;onClose:()=>void;onDone:()=>void}){
  const {state,start,check,retry}=useUnsubscribeCollection(userId,row.id);

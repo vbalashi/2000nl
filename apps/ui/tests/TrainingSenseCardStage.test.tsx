@@ -109,7 +109,7 @@ describe("TrainingSenseCardStage", () => {
       onHintOpened={onHintOpened}
       contextPrompt={{ text: "Я знаю это слово.", sourceText: "Ik ken dit woord.", contentNodeId: "selected", sourceTextFingerprint: "selected-fingerprint" }} />);
     expect(screen.getByTestId("reverse-prompt")).toHaveTextContent("Я знаю это слово.");
-    expect(screen.getByText("Recall the Dutch word for")).toBeInTheDocument();
+    expect(screen.getByText("Recall the word for")).toBeInTheDocument();
     expect(screen.getByTestId("training-face-part-of-speech")).toHaveTextContent("noun");
     expect(screen.getByTestId("training-face-recall-target")).toHaveTextContent("слово");
     expect(screen.getByTestId("reverse-prompt").children).toHaveLength(0);

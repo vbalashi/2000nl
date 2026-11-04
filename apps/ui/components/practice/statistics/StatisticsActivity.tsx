@@ -1,4 +1,6 @@
 "use client";
+import { localizedField } from "@/lib/i18n/catalog";
+
 import React, { useEffect, useId, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -21,7 +23,7 @@ export function StatisticsActivity({ interfaceLanguage: locale, calendar, recent
   const [period, setPeriod] = useState<StudyTimePeriod>("Week");
   const [selected, setSelected] = useState<string | null>(null);
   const [view,setView]=useState<"daily"|"weekly">("daily");
-  const viewLabels=locale==="ru"?["По дням","По неделям"]:locale==="nl"?["Dagelijks","Wekelijks"]:["Daily","Weekly"];
+  const viewLabels=localizedField("statisticsActivity", "views")[locale];
   const [page, setPage] = useState(0);
   const [tip, setTip] = useState<{date:string;x:number;y:number}|null>(null);
   const tipId = useId();

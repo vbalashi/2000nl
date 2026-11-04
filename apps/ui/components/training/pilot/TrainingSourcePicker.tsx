@@ -1,3 +1,4 @@
+import { localizedField } from "@/lib/i18n/catalog";
 import {useTrainingSourcePage} from '@/components/library/sharing/useTrainingSourcePage';
 import React, { useState, useRef, useLayoutEffect } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -30,23 +31,7 @@ export function TrainingSourcePicker({
     [kind, setKind] = useState("all");
   const remote=useTrainingSourcePage(query);
   const labels =
-    locale === "ru"
-      ? ["Все", "Словари", "Коллекции", "Поиск источников", "Нет совпадений"]
-      : locale === "nl"
-        ? [
-            "Alles",
-            "Woordenboeken",
-            "Collecties",
-            "Bronnen zoeken",
-            "Geen resultaten",
-          ]
-        : [
-            "All",
-            "Dictionaries",
-            "Collections",
-            "Search sources",
-            "No matches",
-          ];
+    localizedField("sourcePicker", "labels")[locale];
   const entries = [
     ...dictionaries.map((x) => ({ ...x, kind: "dictionary" })),
     ...lists.filter(x=>!remote.active||!x.value.startsWith('user:')).map((x) => ({ ...x, kind: "collection",server:false,ownership:undefined as undefined|'received'|'owned' })),
@@ -65,7 +50,7 @@ export function TrainingSourcePicker({
   );
   const entryKey=entries.map(x=>`${x.value}:${x.label}`).join("|");
   useLayoutEffect(()=>{const el=listRef.current;if(!el)return;const observer=new ResizeObserver(updateEdges);observer.observe(el);updateEdges();return()=>observer.disconnect();},[query,kind,search,entryKey]);
-  const scrollLabel=locale==="ru"?["Предыдущие источники","Следующие источники"]:locale==="nl"?["Vorige bronnen","Meer bronnen"]:["Previous sources","More sources"];
+  const scrollLabel=localizedField("sourcePicker", "scroll")[locale];
   return (
     <div data-onboarding="source-picker" className={s.source}>
       <div className={s.source_toolbar}>
@@ -107,8 +92,8 @@ export function TrainingSourcePicker({
       <div className={s.source_window}>
       {edges.top&&<button type="button" className={`${s.edge} ${s.edgeTop}`} aria-label={scrollLabel[0]} onClick={()=>listRef.current?.scrollBy({top:-180,behavior:"smooth"})}><ChevronUp size={14}/></button>}
       <div ref={listRef} className={s.source_list} onScroll={updateEdges}>
-        {remote.active&&remote.status==='loading'&&<p role="status">{locale==='ru'?'Загрузка…':locale==='nl'?'Laden…':'Loading…'}</p>}
-        {remote.active&&remote.status==='error'&&<button type="button" onClick={()=>void remote.retry()}>{locale==='ru'?'Повторить':locale==='nl'?'Opnieuw proberen':'Retry'}</button>}
+        {remote.active&&remote.status==='loading'&&<p role="status">{localizedField("sourcePicker", "loading")[locale]}</p>}
+        {remote.active&&remote.status==='error'&&<button type="button" onClick={()=>void remote.retry()}>{localizedField("sourcePicker", "retry")[locale]}</button>}
         {visible.map((x) => {
           const active =
             x.kind === "dictionary"
@@ -158,7 +143,7 @@ export function TrainingSourcePicker({
             </button>
           );
         })}
-        {remote.active&&remote.page.nextCursor&&<button type="button" disabled={remote.more} onClick={()=>void remote.loadMore()}>{locale==='ru'?'Показать ещё':locale==='nl'?'Meer tonen':'Show more'}</button>}
+        {remote.active&&remote.page.nextCursor&&<button type="button" disabled={remote.more} onClick={()=>void remote.loadMore()}>{localizedField("sourcePicker", "more")[locale]}</button>}
         {!visible.length && <p>{labels[4]}</p>}
       </div>
       {edges.bottom&&<button type="button" className={`${s.edge} ${s.edgeBottom}`} aria-label={scrollLabel[1]} onClick={()=>listRef.current?.scrollBy({top:180,behavior:"smooth"})}><ChevronDown size={14}/></button>}

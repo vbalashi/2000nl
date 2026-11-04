@@ -80,19 +80,19 @@
       "hide": "Hint verbergen",
       "example": "Hint · voorbeeld"
     },
-  "answer": {
+    "answer": {
       "show": "Antwoord tonen",
       "prompt": "Wat betekent dit woord?",
       "reversePrompt": "Welk woord hoort bij deze betekenis?",
       "revealed": "Antwoord getoond",
-    "hidden": "Antwoord verborgen"
-  },
-  "listening": {
-    "label": "Luister",
-    "prompt": "Herken je dit woord?",
-    "fail": "Niet herkend",
-    "success": "Herkend"
-  },
+      "hidden": "Antwoord verborgen"
+    },
+    "listening": {
+      "label": "Luister",
+      "prompt": "Herken je dit woord?",
+      "fail": "Niet herkend",
+      "success": "Herkend"
+    },
     "sections": {
       "meaning": "Betekenis",
       "meanings": "Betekenissen",
@@ -131,13 +131,46 @@
     "dismiss": "Melding sluiten",
     "reportUnavailable": "Melden is nog niet beschikbaar.",
     "reportSheet": {
-      "title": "Wat klopt er niet?", "subtitle": "Kies de beste categorie", "close": "Sluiten", "back": "Terug", "send": "Versturen", "sending": "Versturen…", "tryAgain": "Opnieuw proberen",
-      "retry": "De melding kon niet worden opgeslagen. Probeer opnieuw.", "commentLabel": "Opmerking", "optional": "optioneel", "commentPlaceholder": "Optionele opmerking (niet verplicht)",
+      "title": "Wat klopt er niet?",
+      "subtitle": "Kies de beste categorie",
+      "close": "Sluiten",
+      "back": "Terug",
+      "send": "Versturen",
+      "sending": "Versturen…",
+      "tryAgain": "Opnieuw proberen",
+      "retry": "De melding kon niet worden opgeslagen. Probeer opnieuw.",
+      "commentLabel": "Opmerking",
+      "optional": "optioneel",
+      "commentPlaceholder": "Optionele opmerking (niet verplicht)",
       "context": "Kaartcontext en sessiegegevens worden automatisch meegestuurd.",
       "operationContext": "Exacte details van deze trainingsactie worden ook meegestuurd.",
       "privacy": "Deel geen wachtwoorden, tokens, contactgegevens of privélinks.",
-      "categories": { "translation-quality": "Vertaling", "content-quality": "Betekenis of voorbeeld", "rendering": "Weergave", "loading": "Laden of wachten", "training-action": "Trainingsactie", "other": "Iets anders" },
-      "states": { "sent": { "title": "Verzonden", "body": "Bedankt. Je melding is ontvangen." }, "queued": { "title": "Bewaard voor later", "body": "De melding wordt automatisch verstuurd zodra je weer online bent." }, "scheduled": { "title": "Opnieuw gepland", "body": "De melding wordt automatisch opnieuw verstuurd." }, "rejected": { "title": "Versturen niet mogelijk", "body": "Deze melding wordt niet ondersteund door de huidige appversie of je bent niet aangemeld." } }
+      "categories": {
+        "translation-quality": "Vertaling",
+        "content-quality": "Betekenis of voorbeeld",
+        "rendering": "Weergave",
+        "loading": "Laden of wachten",
+        "training-action": "Trainingsactie",
+        "other": "Iets anders"
+      },
+      "states": {
+        "sent": {
+          "title": "Verzonden",
+          "body": "Bedankt. Je melding is ontvangen."
+        },
+        "queued": {
+          "title": "Bewaard voor later",
+          "body": "De melding wordt automatisch verstuurd zodra je weer online bent."
+        },
+        "scheduled": {
+          "title": "Opnieuw gepland",
+          "body": "De melding wordt automatisch opnieuw verstuurd."
+        },
+        "rejected": {
+          "title": "Versturen niet mogelijk",
+          "body": "Deze melding wordt niet ondersteund door de huidige appversie of je bent niet aangemeld."
+        }
+      }
     },
     "collections": {
       "inCurrent": "In collectie",
@@ -409,9 +442,22 @@
       "exerciseMany": "{count} oefeningen",
       "exerciseOther": "{count} oefeningen",
       "illustrativeActivity": "Voorbeeldactiviteit · alleen opgeslagen in dit voorbeeld.",
-      "exerciseType": {"Words": "Woorden", "Idioms": "Uitdrukkingen", "Translation": "Vertaling"},
-      "direction": {"Direct": "Direct", "Reverse": "Omgekeerd"},
-      "learningLanguage": {"Dutch": "Nederlands", "English": "Engels", "German": "Duits"}
+      "exerciseType": {
+        "Words": "Woorden",
+        "Idioms": "Uitdrukkingen",
+        "Translation": "Vertaling"
+      },
+      "direction": {
+        "Direct": "Direct",
+        "Reverse": "Omgekeerd"
+      },
+      "learningLanguage": {
+        "Dutch": "Nederlands",
+        "English": "Engels",
+        "German": "Duits"
+      },
+      "exerciseZero": "{count} oefeningen",
+      "exerciseTwo": "{count} oefeningen"
     },
     "builder": {
       "ratioOne": "1 nieuw : {count} herhaling",
@@ -501,11 +547,18 @@
         "Light": "Licht",
         "Dark": "Donker",
         "System": "Systeem"
-      }
+      },
+      "ratioZero": "1 nieuw : {count} herhalingen",
+      "ratioTwo": "1 nieuw : {count} herhalingen",
+      "meaningZero": "{count} betekenissen beschikbaar",
+      "meaningTwo": "{count} betekenissen beschikbaar"
     },
     "settings": {
       "cardSpacing": "Kaartafstand",
-      "cardSpacings": {"balanced": "Gebalanceerd", "airy": "Ruimer"},
+      "cardSpacings": {
+        "balanced": "Gebalanceerd",
+        "airy": "Ruimer"
+      },
       "title": "Instellingen",
       "languages": "Talen",
       "dictionaries": "Woordenboeken",
@@ -588,7 +641,11 @@
         "larger": "Groter",
         "large": "Groot",
         "extra": "Extra groot"
-      }
+      },
+      "entryZero": "{count} vermeldingen",
+      "entryTwo": "{count} vermeldingen",
+      "expressionZero": "{count} uitdrukkingen",
+      "expressionTwo": "{count} uitdrukkingen"
     },
     "languagePicker": {
       "loading": "Talen laden…",
@@ -602,7 +659,9 @@
       "languageOne": "{count} taal",
       "languageFew": "{count} talen",
       "languageMany": "{count} talen",
-      "languageOther": "{count} talen"
+      "languageOther": "{count} talen",
+      "languageZero": "{count} talen",
+      "languageTwo": "{count} talen"
     },
     "trainingHotkeys": {
       "answer": "Antwoord tonen of verbergen",
@@ -687,7 +746,9 @@
       "historyScope": "Al je trainingen · voorbeeldactiviteit",
       "emptyHistory": "Nog geen activiteit. Voltooide oefeningen verschijnen hier.",
       "knownResult": "Bekend",
-      "excludedResult": "Uitgesloten"
+      "excludedResult": "Uitgesloten",
+      "completedZero": "{count} oefeningen voltooid",
+      "completedTwo": "{count} oefeningen voltooid"
     },
     "cardActions": {
       "knownHelp": "Alleen deze richting",
@@ -831,7 +892,19 @@
       "referenceOne": "{count} verwijzing",
       "referenceFew": "{count} verwijzingen",
       "referenceMany": "{count} verwijzingen",
-      "referenceOther": "{count} verwijzingen"
+      "referenceOther": "{count} verwijzingen",
+      "entryZero": "{count} vermeldingen",
+      "entryTwo": "{count} vermeldingen",
+      "meaningZero": "{count} betekenissen",
+      "meaningTwo": "{count} betekenissen",
+      "matchingZero": "{count} passende vermeldingen",
+      "matchingTwo": "{count} passende vermeldingen",
+      "groupZero": "{count} hoofdwoordgroepen",
+      "groupTwo": "{count} hoofdwoordgroepen",
+      "matchingGroupZero": "{count} passende artikelen",
+      "matchingGroupTwo": "{count} passende artikelen",
+      "referenceZero": "{count} verwijzingen",
+      "referenceTwo": "{count} verwijzingen"
     },
     "collections": {
       "title": "Collecties",
@@ -848,7 +921,9 @@
       "cardOne": "{count} kaart",
       "cardFew": "{count} kaarten",
       "cardMany": "{count} kaarten",
-      "cardOther": "{count} kaarten"
+      "cardOther": "{count} kaarten",
+      "cardZero": "{count} kaarten",
+      "cardTwo": "{count} kaarten"
     },
     "wordDetails": {
       "formsOf": "Vormen van {word}",
@@ -888,7 +963,10 @@
       "all": "Alles",
       "dictionaries": "Woordenboeken",
       "collections": "Collecties",
-      "noMatches": {"language": "Geen talen gevonden.", "source": "Geen bronnen gevonden."}
+      "noMatches": {
+        "language": "Geen talen gevonden.",
+        "source": "Geen bronnen gevonden."
+      }
     },
     "statistics": {
       "learningLanguage": "Leertaal",
@@ -979,7 +1057,13 @@
         "Today": "Vandaag",
         "Week": "Week",
         "Month": "Maand"
-      }
+      },
+      "cardZero": "{count} kaarten",
+      "cardTwo": "{count} kaarten",
+      "dayZero": "{count} dagen",
+      "dayTwo": "{count} dagen",
+      "readyZero": "{count} kaarten klaar om te herhalen",
+      "readyTwo": "{count} kaarten klaar om te herhalen"
     },
     "materialPreferences": {
       "loading": "Materiaal laden…",
@@ -992,6 +1076,13 @@
       "catalogError": "Woordenboeken konden niet worden geladen.",
       "useDictionary": "Gebruik {name}",
       "selectionHint": "Wijzigingen gelden voor nieuwe trainingen. Je kunt een begonnen sessie voortzetten."
+    },
+    "interfaceSelection": {
+      "title": "Kies je taal",
+      "subtitle": "Kies de taal voor de uitleg over de app"
+    },
+    "system": {
+      "offline": "Je bent offline. Maak verbinding om verder te gaan"
     }
   },
   "wordDetails": {
@@ -1017,5 +1108,641 @@
       "headword": "Verwant trefwoord",
       "table": "Naslag"
     }
+  },
+  "features": {
+    "admission": {
+      "pending": "Je aanvraag wacht op goedkeuring",
+      "unconfirmed": "Bevestig je e-mailadres",
+      "revoked": "De toegang is ingetrokken",
+      "rejected": "Je aanvraag is afgewezen",
+      "body": "Je bent ingelogd. Toegang tot 2000NL vereist goedkeuring voor je bevestigde e-mailadres.",
+      "retry": "Toegang controleren",
+      "out": "Uitloggen"
+    },
+    "personalNote": {
+      "title": "Mijn notitie",
+      "conflict": "Je notitie is elders gewijzigd. Vergelijk voordat je opslaat.",
+      "current": "Huidige opgeslagen notitie",
+      "mine": "Jouw concept",
+      "overwrite": "Mijn versie opslaan",
+      "uncertain": "Opslaan kon niet worden bevestigd. Controleer de huidige notitie.",
+      "check": "Resultaat controleren",
+      "discard": "Wijzigingen niet opslaan?",
+      "discardYes": "Niet opslaan",
+      "keep": "Verder bewerken",
+      "invalid": "De notitie is te lang of bevat ongeldige tekens."
+    },
+    "receivedCollectionLabels": {
+      "check": "Opgeslagen labels controleren",
+      "missing": "Deze collectie is niet meer beschikbaar."
+    },
+    "libraryOrganization": {
+      "meaningOne": "{count} betekenis",
+      "meaningFew": "{count} betekenissen",
+      "meaningMany": "{count} betekenissen",
+      "meaningOther": "{count} betekenissen",
+      "words": "Woorden",
+      "collections": "Collecties",
+      "labels": "Labels",
+      "all": "Alle collecties",
+      "unlabelled": "Zonder labels",
+      "searchLabels": "Labels zoeken",
+      "search": "Collecties zoeken",
+      "recent": "Recent",
+      "alphabetic": "Naam",
+      "count": "Betekenissen",
+      "newCollection": "Nieuwe collectie",
+      "newLabel": "Nieuw label",
+      "editLabel": "Label wijzigen",
+      "editCollection": "Collectie wijzigen",
+      "name": "Naam",
+      "parent": "Bovenliggend label",
+      "noParent": "Geen bovenliggend label",
+      "save": "Opslaan",
+      "cancel": "Annuleren",
+      "close": "Sluiten",
+      "more": "Acties",
+      "open": "Woorden bekijken",
+      "rename": "Naam wijzigen",
+      "remove": "Verwijderen",
+      "assign": "Labels kiezen",
+      "addLabels": "Labels toevoegen",
+      "private": "Persoonlijk",
+      "shared": "Gedeeld",
+      "sharingStatusError": "De deelstatus kon niet worden geladen.",
+      "empty": "Nog geen collecties",
+      "noResults": "Geen collecties gevonden",
+      "noLabels": "Nog geen labels",
+      "moreResults": "Meer tonen",
+      "loading": "Laden…",
+      "retry": "Vernieuwen",
+      "error": "Labels konden niet worden geladen. Vernieuw om opnieuw te proberen.",
+      "conflict": "De bibliotheek is elders gewijzigd. Je concept blijft bewaard. Controleer de actuele gegevens voordat je opnieuw opslaat.",
+      "uncertain": "De wijziging kon niet worden bevestigd. Vernieuw en controleer het resultaat voordat je het opnieuw probeert.",
+      "failed": "Opslaan mislukt. Je concept blijft bewaard.",
+      "unavailable": "Collectie-organisatie is nog niet beschikbaar.",
+      "deleteLabel": "Dit label verwijderen? Collecties en betekenissen blijven bewaard. Onderliggende labels schuiven één niveau omhoog.",
+      "deleteCollection": "Deze collectie verwijderen? Woorden en je leervoortgang blijven bewaard.",
+      "chooseScope": "Label kiezen",
+      "manage": "Labels beheren",
+      "back": "Terug",
+      "saving": "Opslaan…",
+      "selected": "Geselecteerd",
+      "clear": "Selectie wissen",
+      "meaningZero": "{count} betekenissen",
+      "meaningTwo": "{count} betekenissen"
+    },
+    "localRecovery": {
+      "retry": "Opnieuw proberen",
+      "failed": "De huidige toestand kon niet worden gecontroleerd. Lokale gegevens zijn niet gewijzigd.",
+      "title": "Lokaal herstel",
+      "checking": "Lokale herstelgegevens in dit tabblad zijn beschadigd. De huidige opgeslagen toestand wordt gecontroleerd. Een eerder verzoek kan al zijn uitgevoerd.",
+      "ready": "De huidige opgeslagen toestand is gecontroleerd. Alleen het beschadigde lokale record wordt gewist. Artikelen, collecties en voortgang blijven behouden. Geen verzoek wordt opnieuw verzonden.",
+      "clear": "Lokaal record wissen"
+    },
+    "invitationInput": {
+      "title": "Toevoegen via link / code",
+      "hint": "Plak een uitnodigingslink of code",
+      "check": "Uitnodiging controleren",
+      "error": "Voer een geldige uitnodigingslink of code in."
+    },
+    "invitationPreview": {
+      "view": "Alleen bekijken",
+      "description": "Je kunt betekenissen bekijken en oefenen. Wijzigingen van de eigenaar verschijnen in deze collectie.",
+      "add": "Toevoegen aan bibliotheek",
+      "check": "Resultaat controleren",
+      "retry": "Zelfde verzoek opnieuw proberen",
+      "uncertain": "Het resultaat kon niet worden bevestigd. Controleer het voordat je opnieuw probeert.",
+      "unavailable": "Deze uitnodiging is niet beschikbaar.",
+      "accepted": "Collectie toegevoegd",
+      "revoked": "De actie is bevestigd, maar deze collectie is niet meer beschikbaar.",
+      "already": "Staat al in je bibliotheek",
+      "count": "betekenissen",
+      "loadError": "Uitnodiging kon niet worden geladen. Probeer opnieuw."
+    },
+    "collectionSharing": {
+      "title": "Collectie delen",
+      "open": "Alleen-lezenlink maken",
+      "rotate": "Link vervangen",
+      "close": "Gedeelde toegang sluiten",
+      "rotateNotice": "De vorige uitnodiging werkt niet meer. Bestaande abonnees behouden toegang.",
+      "closeNotice": "Abonnees verliezen deze gedeelde toegang. Jouw collectie en hun leervoortgang blijven bewaard.",
+      "openNotice": "Met de link of code kan iemand de collectie toevoegen en de uitnodiging doorsturen.",
+      "confirm": "Bevestigen",
+      "check": "Resultaat controleren",
+      "retry": "Zelfde verzoek opnieuw proberen",
+      "uncertain": "De wijziging kon niet worden bevestigd. Controleer het resultaat voordat je opnieuw probeert.",
+      "readError": "Instellingen voor delen konden niet worden geladen.",
+      "copyLink": "Link kopiëren",
+      "copyCode": "Code kopiëren",
+      "copied": "Gekopieerd",
+      "copyFailed": "Kopiëren mislukt. Selecteer en kopieer de tekst.",
+      "subscribers": "Abonnees",
+      "view": "Alleen bekijken",
+      "rejected": "Het verzoek is afgewezen. Controleer de huidige instellingen voordat je opnieuw bevestigt."
+    },
+    "ownedSharedCollections": {
+      "title": "Door mij gedeeld",
+      "empty": "Nog geen gedeelde collecties",
+      "error": "Gedeelde collecties konden niet worden geladen.",
+      "active": "Link actief",
+      "subscribers": "Abonnees",
+      "copy": "Link kopiëren",
+      "copied": "Link gekopieerd",
+      "copyFailed": "Open Link en code om de uitnodiging te kopiëren.",
+      "manage": "Link en code",
+      "stop": "Delen stoppen",
+      "sort": "Sorteren",
+      "owned": "van jou"
+    },
+    "receivedCollectionActions": {
+      "leave": "Uit mijn bibliotheek verwijderen",
+      "confirm": "De collectie van de eigenaar en je leervoortgang blijven bewaard.",
+      "check": "Resultaat controleren",
+      "retry": "Zelfde verzoek opnieuw proberen",
+      "uncertain": "Het resultaat kon niet worden bevestigd. Controleer het voordat je opnieuw probeert.",
+      "forward": "Collectie delen",
+      "link": "Uitnodigingslink",
+      "code": "Uitnodigingscode",
+      "copyLink": "Link kopiëren",
+      "copyCode": "Code kopiëren",
+      "copied": "Gekopieerd",
+      "copyError": "Kopiëren mislukt. Selecteer en kopieer de tekst.",
+      "unavailable": "Deze uitnodiging kan niet meer worden doorgestuurd. Vraag de eigenaar om een nieuwe link."
+    },
+    "receivedCollections": {
+      "added": "Door mij toegevoegd",
+      "add": "Toevoegen via link / code",
+      "empty": "Nog geen gedeelde collecties toegevoegd",
+      "error": "Gedeelde collecties konden niet worden geladen.",
+      "shared": "Gedeeld · alleen bekijken",
+      "sort": "Sorteren"
+    },
+    "collectionSourceStatus": {
+      "loading": "Collectie laden…",
+      "ready": "",
+      "error": "Collectiegegevens konden niet worden geladen.",
+      "unavailable": "Deze collectie is niet meer beschikbaar.",
+      "retry": "Opnieuw proberen"
+    },
+    "sharedWorkspace": {
+      "owned": "Door mij gedeeld",
+      "received": "Door mij toegevoegd",
+      "add": "Toevoegen via link / code",
+      "label": "Gedeelde onderdelen"
+    },
+    "utilityNavigation": {
+      "theme": "Thema",
+      "light": "Licht",
+      "dark": "Donker",
+      "system": "Systeem",
+      "settings": "Instellingen"
+    },
+    "interactionSettings": {
+      "progress": "Voortgangsanimatie",
+      "off": "Uit",
+      "dots": "Stippen",
+      "wave": "Golf",
+      "animation": "Kaartanimatie",
+      "gestures": "Gebaren",
+      "gradeSwipe": "Beoordelen met een veeg",
+      "translationSwipe": "Vertaling met een veeg",
+      "audioSwipe": "Audio met een veeg",
+      "syllableDoubleTap": "Lettergrepen met dubbeltik",
+      "error": "Opslaan is niet gelukt. Je vorige instellingen blijven actief.",
+      "help": {
+        "audioSwipe": "Veeg kort omhoog op een niet-scrollbaar deel van beide kaartzijden om het woord te horen.",
+        "animation": "Een korte verschuiving bij het tonen van het antwoord. Uitgeschakeld verschijnt het antwoord meteen.",
+        "gradeSwipe": "Veeg naar links of rechts om het antwoord te beoordelen.",
+        "translationSwipe": "Veeg omlaag op een niet-scrollbaar deel van de geopende kaart om de vertaling te tonen of te verbergen.",
+        "syllableDoubleTap": "Dubbeltik of dubbelklik op het trefwoord om de lettergreepverdeling te tonen of te verbergen."
+      }
+    },
+    "readingSettings": {
+      "title": "Leestekst",
+      "description": "Aparte groottes voor telefoon en computer. Knoppen en navigatie blijven even groot.",
+      "phone": "Tekstgrootte op telefoon",
+      "desktop": "Tekstgrootte op computer / tablet",
+      "normal": "Normaal",
+      "large": "Groot",
+      "largest": "Extra groot",
+      "extra": "Zeer groot",
+      "device": "Profiel voor deze browser",
+      "phoneDevice": "Telefoon",
+      "desktopDevice": "Computer / tablet",
+      "deviceHint": "Een smaller venster verandert het profiel niet. Deze keuze blijft in deze browser; beide tekstgroottes worden in je account opgeslagen.",
+      "temporary": "Deze browser kan de apparaatkeuze niet bewaren. De keuze geldt totdat je deze pagina verlaat.",
+      "loading": "Leesinstellingen laden…",
+      "loadError": "Leesinstellingen konden niet worden geladen.",
+      "saving": "Opslaan…",
+      "saved": "Opgeslagen",
+      "saveError": "Niet opgeslagen. Het voorbeeld is tijdelijk; probeer opnieuw om deze grootte te bewaren.",
+      "retry": "Opnieuw proberen",
+      "preview": "Voorbeeld voor dit apparaat"
+    },
+    "hotkeyDialog": {
+      "title": "Sneltoetsen",
+      "close": "Sluiten"
+    },
+    "sessionFooter": {
+      "new": "Nieuw",
+      "review": "Herhaling",
+      "total": "Totaal",
+      "loading": "wordt geladen",
+      "unavailable": "niet beschikbaar"
+    },
+    "startupRecovery": {
+      "bootstrap": "Sessie kon niet worden gecontroleerd",
+      "training": "Training kon niet worden geladen",
+      "bootstrapBody": "We konden je sessie niet controleren. Probeer het opnieuw.",
+      "body": "Probeer opnieuw; je huidige sessie en selectie blijven bewaard.",
+      "retry": "Opnieuw proberen"
+    },
+    "trainingSetupEmpty": {
+      "empty": "Geen kaarten voor deze selectie",
+      "emptyBody": "Pas de selectie aan zonder je huidige sessie te verliezen.",
+      "firstUse": "Maak je eerste training",
+      "firstUseBody": "Begin veilig en pas alleen aan wat je nodig hebt.",
+      "adjustFilters": "Filters aanpassen",
+      "setUp": "Training samenstellen"
+    },
+    "trainingSetup": {
+      "contextLanguageNeeded": "Kies een vertaaltaal in Instellingen voor deze oefening.",
+      "allDictionaries": "Alle toegankelijke woordenboeken",
+      "partialDictionaryAccess": "Sommige gekozen woordenboeken zijn niet beschikbaar; deze sessie gebruikt alleen de toegankelijke.",
+      "loadingDictionaries": "Woordenboeken laden…",
+      "start": "Training starten",
+      "starting": "Starten…",
+      "loading": "Training laden",
+      "materialUnavailable": "Het gekozen materiaal is niet beschikbaar. Kies ander materiaal voordat je start.",
+      "chooseGoal": "Kies een trainingsdoel",
+      "resumePending": "Je opgeslagen sessie wordt gecontroleerd…",
+      "resumeError": "Je opgeslagen sessie kon niet worden gecontroleerd.",
+      "retryResume": "Sessiecontrole opnieuw proberen",
+      "cardError": "De volgende kaart kon niet worden voorbereid. Probeer opnieuw of pas de selectie aan.",
+      "retryCard": "Kaart opnieuw voorbereiden",
+      "startTimeout": "De gekozen training is niet gestart omdat de server te lang nodig had. Je selectie is hier bewaard; je kunt het opnieuw proberen.",
+      "startFailed": "De gekozen training kon niet worden gestart. Je selectie is hier bewaard; je kunt het opnieuw proberen.",
+      "retryStart": "Deze training opnieuw starten",
+      "selectedMaterial": "Gekozen materiaal",
+      "collectionError": "Collectiegegevens konden niet worden geladen.",
+      "retry": "Opnieuw proberen",
+      "saveChanges": "Wijzigingen opslaan",
+      "calculating": "Berekenen…",
+      "calculate": "Training berekenen"
+    },
+    "trainingCompletion": {
+      "title": "Sessie voltooid",
+      "cards": "kaarten",
+      "next": "Nog 10 kaarten",
+      "edit": "Training aanpassen",
+      "home": "Terug naar start",
+      "min": "min",
+      "sec": "sec",
+      "empty": {
+        "title": "Geen kaarten beschikbaar",
+        "detail": "Er zijn nu geen kaarten beschikbaar voor deze training"
+      },
+      "restartError": "De volgende reeks kon niet starten. Probeer opnieuw of pas de training aan."
+    },
+    "sessionChrome": {
+      "close": "Sessie sluiten",
+      "history": "Geschiedenis"
+    },
+    "releases": {
+      "updates": "Updates",
+      "whatsNew": "Wat is er nieuw",
+      "updateHint": "Herlaad 2000nl om de verbeteringen toe te passen. Je voortgang en instellingen blijven behouden.",
+      "currentHint": "2000nl controleert automatisch op updates.",
+      "version": "Versie",
+      "available": "Er staat een nieuwe versie klaar",
+      "summary": "Werk de app bij voor de nieuwste verbeteringen.",
+      "update": "App bijwerken",
+      "later": "Later",
+      "more": "Meer lezen",
+      "check": "Controleren op updates",
+      "checking": "Updates controleren…",
+      "updating": "Bijwerken…",
+      "current": "Je app is up-to-date",
+      "unknown": "Updates controleren is niet gelukt. Controleer je verbinding en probeer opnieuw.",
+      "failed": "Bijwerken is niet gelukt. Probeer opnieuw.",
+      "worker": "Er is een oudere offline-installatie gevonden. Sluit de app, open deze opnieuw en probeer het nog eens.",
+      "deferred": "Rond je training af voordat je de app bijwerkt.",
+      "installed": "Geïnstalleerde versie",
+      "latest": "Beschikbare versie",
+      "released": "Uitgebracht",
+      "built": "Gebouwd",
+      "unread": "Updates beschikbaar",
+      "dev": "Ontwikkelversie — releasecontrole niet beschikbaar.",
+      "updated": "App bijgewerkt"
+    },
+    "trainingFilter": {
+      "new": "Alleen nieuwe",
+      "review": "Alleen herhalingen",
+      "both": "Nieuw + herhalingen"
+    },
+    "authorEntryArchive": {
+      "action": "Artikel archiveren",
+      "confirm": "Archiveren",
+      "title": "Artikel ‘{word}’ archiveren?",
+      "notice": "Het artikel verdwijnt uit het woordenboek, collecties en nieuwe oefensessies.",
+      "history": "Je leergeschiedenis blijft bewaard. Een kaart die al wordt getoond kun je afmaken.",
+      "cancel": "Annuleren",
+      "pending": "Archiveren…",
+      "success": "Artikel gearchiveerd",
+      "failed": "Het artikel kon niet worden gearchiveerd. Probeer het opnieuw.",
+      "uncertain": "We konden niet bevestigen of het artikel is gearchiveerd. Controleer je verbinding en probeer het opnieuw; deze actie herhalen is veilig."
+    },
+    "independentEntryCopy": {
+      "action": "Kopiëren naar mijn woordenboek",
+      "title": "‘{word}’ kopiëren?",
+      "destination": "Mijn woordenboek",
+      "notice": "De onafhankelijke kopie bevat de betekenissen, voorbeelden en beschikbare notities. Leervoortgang wordt niet gekopieerd.",
+      "confirm": "Kopiëren",
+      "cancel": "Annuleren",
+      "loading": "Laden…",
+      "pending": "Kopiëren…",
+      "success": "Kopie gemaakt",
+      "open": "Kopie openen",
+      "close": "Sluiten",
+      "failed": "De kopie kon niet worden gemaakt. De bron is mogelijk niet beschikbaar of bevat niet-ondersteunde inhoud.",
+      "changed": "De bron is gewijzigd. Bekijk de huidige versie voordat je kopieert.",
+      "refresh": "Gegevens vernieuwen",
+      "uncertain": "Het resultaat kon niet worden bevestigd. Controleer het voordat je nog een kopie maakt.",
+      "check": "Resultaat controleren"
+    },
+    "trainingExhausted": {
+      "completed": "Sessie voltooid",
+      "count": "{completedCount} kaarten voltooid",
+      "next": "Volgende sessie starten",
+      "edit": "Training aanpassen"
+    },
+    "auth": {
+      "title": "Log in om je woordenschat op te bouwen.",
+      "emailLabel": "E-mailadres",
+      "emailPlaceholder": "jouw@email.nl",
+      "submitButton": "Stuur Inlogcode",
+      "submitLoading": "Versturen...",
+      "googleButton": "Doorgaan met Google",
+      "googleError": "Kon Google-aanmelding niet starten. Probeer opnieuw.",
+      "successMessage": "Check je inbox! We hebben een inlogcode naar je verstuurd.",
+      "infoText": "Geen wachtwoord nodig! We sturen een beveiligde code naar je e-mail.",
+      "orDivider": "of",
+      "otpLabel": "Voer je code in",
+      "verifyButton": "Verifieer Code",
+      "verifyLoading": "Verifiëren...",
+      "resendButton": "Code opnieuw versturen",
+      "changeEmail": "Ander e-mailadres gebruiken",
+      "haveCodeToggle": "Heb je al een code?",
+      "hideCodeToggle": "Code invoer verbergen",
+      "otpHelp": "Werkt de e-mail link niet (bijv. opent hij in de verkeerde browser)? Kopieer de code uit de e-mail en plak hem hier.",
+      "loginSuccess": "Inloggen succesvol!"
+    },
+    "trainingScreen": {
+      "noMatchingReviews": "Geen herhalingskaarten passen bij deze training.",
+      "noDueReviews": "Er hoeven nu geen kaarten herhaald te worden.",
+      "noMatchingCards": "Geen kaarten passen bij deze training.",
+      "idiomTraining": "Training uitdrukkingen"
+    },
+    "trainingBuilderActions": {
+      "saveAs": "Opslaan als…",
+      "delete": "Training verwijderen",
+      "all": "Alle",
+      "unsaved": "Niet-opgeslagen wijzigingen",
+      "availabilityHint": "De werkelijke sessiegrootte en verhouding tussen nieuwe kaarten en herhalingen hangen af van de beschikbare kaarten."
+    },
+    "startup": {
+      "preparing": "Training voorbereiden"
+    },
+    "idiomSession": {
+      "noDue": "Er hoeven nu geen uitdrukkingen herhaald te worden. Voeg nieuwe kaarten toe in de trainingsinstellingen om verder te leren."
+    },
+    "sensePrompt": {
+      "wordFor": "Herinner je het woord voor",
+      "wordInSentence": "Herinner je het woord in deze zin",
+      "wordFromMeaning": "Herinner je het woord bij de betekenis",
+      "context": "In deze zin"
+    },
+    "sessionProgress": {
+      "label": "Sessievoortgang"
+    },
+    "sessionLabels": {
+      "scenario": {
+        "understanding": "Begrip",
+        "listening": "Luisteren",
+        "conjugation": "Vervoegingen"
+      },
+      "mode": {
+        "word-to-definition": null,
+        "definition-to-word": "Definitie → woord",
+        "listen-recognize": "Luisteren → herkennen",
+        "listen-type": "Luisteren → typen"
+      },
+      "filter": {
+        "new": "Nieuw",
+        "review": "Herhaling",
+        "both": "Nieuw + herhaling"
+      }
+    },
+    "sharedTrainingSelection": {
+      "error": "Collectiegegevens konden niet worden geladen.",
+      "unavailable": "Deze collectie is niet meer beschikbaar."
+    },
+    "idiomPrompt": {
+      "meaning": "Herinner je de betekenis van deze uitdrukking",
+      "expression": "Herinner je de uitdrukking",
+      "headword": "Trefwoord"
+    },
+    "sentencePrompt": {
+      "translate": "Vertaal naar de leertaal"
+    },
+    "translationPending": {
+      "label": "Vertaling wordt voorbereid…"
+    },
+    "personalCollections": {
+      "received": "Gedeeld · toegevoegd",
+      "share": "Delen"
+    },
+    "libraryNavigation": {
+      "shared": "Gedeeld"
+    },
+    "statisticsActivity": {
+      "views": [
+        "Dagelijks",
+        "Wekelijks"
+      ]
+    },
+    "legacyFooter": {
+      "loading": "wordt geladen",
+      "unavailable": "niet beschikbaar"
+    },
+    "meaningActions": {
+      "personalNote": "Mijn notitie"
+    },
+    "sourcePicker": {
+      "labels": [
+        "Alles",
+        "Woordenboeken",
+        "Collecties",
+        "Bronnen zoeken",
+        "Geen resultaten"
+      ],
+      "scroll": [
+        "Vorige bronnen",
+        "Meer bronnen"
+      ],
+      "loading": "Laden…",
+      "retry": "Opnieuw proberen",
+      "more": "Meer tonen"
+    },
+    "trainingScenarios": {
+      "idioms": "Uitdrukkingen",
+      "sentences": "Voorbeeldzinnen"
+    },
+    "trainingScope": {
+      "title": "Training",
+      "noList": "Geen actieve lijst",
+      "noModes": "geen kaarttypes ingesteld",
+      "restrictedDefault": "Standaard {scenario}; beperkt tot {modes}",
+      "restricted": "Beperkt tot {modes}",
+      "preferredDefault": "Standaard {scenario}; voorkeur {modes}",
+      "preferred": "Voorkeur {modes}",
+      "defaultScenario": "Standaard scenario: {scenario}",
+      "noDefault": "Geen lijststandaard",
+      "current": "Huidige training: {summary}",
+      "footerHint": "De lijstkeuze in de footer wijzigt normale training.",
+      "change": "Wijzigen",
+      "learningLanguage": "Leertaal",
+      "list": "Trainingslijst",
+      "cards": "Kaarten",
+      "changeList": "Wijzig lijst in Instellingen",
+      "changeScenario": "Wijzig scenario in Instellingen",
+      "selected": "gekozen"
+    }
+  },
+  "tour": {
+    "progress": "INTRODUCTIE · {step} VAN {total}",
+    "close": "Introductie sluiten",
+    "continue": "Verder",
+    "clickHint": "Klik op de gemarkeerde knop.",
+    "interfaceTitle": "Kies je interfacetaal",
+    "interfaceBody": "In welke taal wil je de app en deze introductie zien? Kies een andere taal of behoud de huidige keuze.",
+    "translationTitle": "Kies je vertaaltaal",
+    "translationBody": "Kies een vertaaltaal voor betekenissen en voorbeelden. Dit mag een andere taal zijn dan de interfacetaal. Je kunt vertalingen ook uitschakelen.",
+    "secondaryMention": "Je kunt later een tweede vertaaltaal toevoegen via Instellingen → Talen.",
+    "startTitle": "Begin met je kant-en-klare training",
+    "startBody": "Start of hervat een beschikbare woordtraining om echte kaarten te bekijken. Zijn er nog geen kaarten, stel dan de training in of ga naar het onderwerp Bibliotheek.",
+    "revealTitle": "Maak kennis met de woordkaart",
+    "revealBody": "Klik op Antwoord tonen om de kaart om te draaien en de definitie en voorbeelden te zien.",
+    "exitTitle": "Terug naar de app",
+    "exitBody": "Je leeractie is opgeslagen. Sluit de sessie om de introductie af te ronden en andere onderwerpen te kiezen.",
+    "libraryTitle": "Open de Bibliotheek",
+    "libraryBody": "In de Bibliotheek zoek je woorden en kies je betekenissen om te oefenen.",
+    "openWordTitle": "Open het woordenboekartikel",
+    "meaningTitle": "Kies een betekenis",
+    "meaningBody": "Een woord kan meerdere betekenissen hebben. Kies de betekenis die je nodig hebt: alleen die voeg je toe aan een collectie.",
+    "collectionsTitle": "Orden de gekozen betekenis",
+    "collectionsBody": "Open Collecties bij deze betekenis. Collecties groeperen betekenissen; de leervoortgang wordt niet gekopieerd of gereset.",
+    "membershipTitle": "De betekenis staat in je collectie",
+    "membershipBody": "De aangevinkte collectie bevat deze betekenis. Kies Gereed om verder te gaan; de leervoortgang blijft behouden.",
+    "goTrainingTitle": "Maak een training voor de collectie",
+    "goTrainingBody": "Ga terug naar Training. Een collectie kiest materiaal; een opgeslagen training onthoudt ook hoe je oefent.",
+    "createTrainingTitle": "Maak een aparte training",
+    "createTrainingBody": "Maak een aparte training voor je collectie. Je bestaande trainingen blijven beschikbaar.",
+    "sourceTitle": "Kies het trainingsmateriaal",
+    "sourceBody": "Open Bron om je collectie te kiezen in plaats van het hele woordenboek.",
+    "sourcePickTitle": "Selecteer je collectie",
+    "exercisesTitle": "Kies hoe je oefent",
+    "exercisesBody": "Open Oefeningen. Behoud Woorden en kies Direct voor deze eerste collectietraining.",
+    "directionTitle": "Eerst het woord, dan de betekenis",
+    "directionBody": "Kies Direct. Je ziet eerst het woord en herinnert je de betekenis. Omgekeerd begint met de betekenis.",
+    "saveTrainingTitle": "Sla deze keuzes op",
+    "saveTrainingBody": "Sla de training op om terug te keren naar deze collectie en oefeninstellingen.",
+    "nameTrainingTitle": "Geef de training een naam en sla op",
+    "nameTrainingBody": "Vul een herkenbare naam in en sla op. Dit maakt een aparte opgeslagen training, geen kopie van je leervoortgang.",
+    "done": "Gereed",
+    "audioTitle": "Luister naar het woord",
+    "audioBody": "Klik op de luidspreker om het woord te horen. Daarna bekijken we de andere betekenissen.",
+    "detailsTitle": "Open alle betekenissen",
+    "detailsBody": "Deze kaart toont één betekenis. Klik op de drie puntjes voor het woordenboekartikel met alle beschikbare betekenissen.",
+    "returnTitle": "Keer terug naar de kaart",
+    "returnBody": "Klap de betekenissen open die je wilt lezen. Sluit het paneel om terug te keren naar de oefenkaart.",
+    "knownTitle": "Als je de betekenis al kent",
+    "knownBody": "“Markeren als bekend” is een alternatief voor “Leren” voor een betekenis die je al kent. De knop geldt voor deze betekenis, niet voor alle betekenissen van het woord.",
+    "reportTitle": "Als je een fout ziet",
+    "reportBody": "Met de vlagknop (Report) meld je een probleem met een vertaling, de kaartinhoud of de werking van de app. Open de knop om het formulier te bekijken.",
+    "extrasDoneTitle": "Onderwerp afgerond",
+    "pause": "Pauzeren",
+    "paused": "Rondleiding gepauzeerd. Ga verder via Instellingen → Kennismaking.",
+    "pauseIntro": "Je kunt pauzeren en de introductie terugvinden in Instellingen → Kennismaking. Na herladen hervat je vanaf het begin van het huidige onderwerp.",
+    "tourName": "Kennismaking",
+    "resume": "Kennismaking hervatten",
+    "restart": "Opnieuw beginnen",
+    "topicHeading": "Wat wil je nog bekijken?",
+    "allTopics": "Alle onderwerpen op volgorde",
+    "collectionsTopic": "Bibliotheek, collectie en eigen training",
+    "cardTopic": "Meer kaartacties",
+    "statsTopic": "Statistieken per betekenis",
+    "sharingTopic": "Kaarten delen",
+    "languagesTopic": "Talen",
+    "appearanceTopic": "Uiterlijk",
+    "basicDoneTitle": "Je hebt een kaart geprobeerd",
+    "basicDoneBody": "Je hebt je talen gekozen en een kaart geprobeerd. Bekijk nu meer onderwerpen of keer later terug via Instellingen → Kennismaking.",
+    "statsViewTitle": "Voortgang voor deze betekenis",
+    "statsViewBody": "Dit paneel toont leerrichtingen, kaartweergaven en herhalingen. Sluit het met het kruisje om verder te gaan.",
+    "appearanceChoiceTitle": "Wissel van thema",
+    "appearanceChoiceBody": "Hier pas je het uiterlijk aan. Kies een licht, donker of systeemthema.",
+    "sharingTabTitle": "Open je collecties",
+    "sharingTabBody": "Klik in de Bibliotheek op Collecties.",
+    "sharingMoreTitle": "Open het collectiemenu",
+    "sharingMoreBody": "Klik op de drie puntjes rechts van je collectie.",
+    "sharingMenuTitle": "Kies Delen",
+    "sharingMenuBody": "Dit opent de deelinstellingen voor de gekozen collectie.",
+    "sharingCreateTitle": "Maak een alleen-lezenlink",
+    "sharingConfirmTitle": "Controleer en bevestig",
+    "sharingConfirmBody": "Lees de waarschuwing over de uitnodigingslink en code. Bevestig daarna.",
+    "incomingTopic": "Gedeelde kaarten toevoegen",
+    "sharingCopyLinkTitle": "Kopieer de link",
+    "sharingCopyLinkBody": "Je deelt kaarten via een collectie. Kies Link kopiëren om die naar iemand te sturen.",
+    "sharingCopyCodeTitle": "Je kunt ook een code delen",
+    "sharingCopyCodeBody": "Een uitnodigingscode is een alternatief voor een link. Kies Code kopiëren.",
+    "sharingSentTitle": "De uitnodiging is klaar",
+    "sharingSentBody": "Stuur de link of code op de manier die je prettig vindt. De collectie blijft beschikbaar totdat je de gedeelde toegang sluit. Sluit dit paneel.",
+    "incomingSharedTitle": "Open Gedeeld",
+    "incomingSharedBody": "Klik op Gedeeld in de Bibliotheek.",
+    "incomingReceivedTitle": "Open Door mij toegevoegd",
+    "incomingReceivedBody": "Hier staan gedeelde collecties die je hebt toegevoegd. Kies Door mij toegevoegd.",
+    "incomingAddTitle": "Voeg een uitnodiging toe",
+    "incomingAddBody": "Kies Toevoegen via link / code om gedeelde kaarten toe te voegen.",
+    "incomingInputTitle": "Controleer de uitnodiging",
+    "incomingPreviewTitle": "Bekijk de aangeboden kaarten",
+    "incomingPreviewBody": "Controleer de naam en voorbeeldkaarten. Alleen bekijken betekent dat de eigenaar de collectie beheert, terwijl jij kunt kijken en oefenen. Kies Toevoegen aan bibliotheek.",
+    "incomingAcceptedTitle": "Gedeelde collectie toegevoegd",
+    "incomingAcceptedBody": "De collectie staat nu in je bibliotheek. Klik op “Woorden bekijken” om de kaarten te openen.",
+    "themeShortcutTitle": "Het thema is altijd dichtbij",
+    "themeShortcutBody": "Deze knop op de hoofdschermen wisselt tussen licht, donker en systeem. Klik erop om het te proberen.",
+    "themeShortcutDoneTitle": "De snelle knop werkt",
+    "themeShortcutDoneBody": "Klik verder om alle drie de standen te bekijken. Systeem volgt je apparaat. Je hoeft niet telkens Uiterlijk te openen.",
+    "wordTitle": "Bekijk de kaart",
+    "wordBody": "Dit is het huidige woord of de vraag. Probeer de betekenis te herinneren voordat je het antwoord opent.",
+    "answerTitle": "Lees de betekenis",
+    "answerBody": "Op de achterkant staan de betekenis en voorbeelden. Je leert elke betekenis afzonderlijk.",
+    "liveLearnTitle": "Sla je leeractie op",
+    "liveLearnBody": "Klik bij een nieuwe kaart op Leren. Heb je deze al geoefend, beoordeel dan hoe goed je het antwoord wist. Dit werkt je echte leervoortgang bij.",
+    "liveOpenWordBody": "De zoekopdracht staat al klaar. Open een woord en klap de betekenis open die je wilt leren.",
+    "liveMembershipBody": "Kies een bestaande collectie of maak hier een nieuwe met een duidelijke naam. Wacht tot de betekenis is toegevoegd en ga verder.",
+    "liveSourceBody": "Kies je collectie als oefenmateriaal. Ga daarna verder om de oefeningen in te stellen.",
+    "liveSharingCreateBody": "Maak een uitnodiging voor alleen bekijken. Lees de bevestiging: mensen met de link of code kunnen zich abonneren en deze doorsturen.",
+    "liveInvitationBody": "Plak een echte uitnodigingslink of code die je hebt ontvangen en controleer deze. De collectie wordt pas toegevoegd nadat je het voorbeeld bevestigt.",
+    "liveReportBody": "Dit is het gewone formulier om een fout te melden. Verstuur zo nodig een melding of sluit het formulier. Ga verder als je klaar bent met kijken.",
+    "liveStatsTitle": "Open de leerstatus van de betekenis",
+    "liveStatsBody": "Klik op Nieuw of Aan het leren boven deze betekenis. Voortgang wordt per betekenis en richting bijgehouden.",
+    "topicDoneBody": "Dit onderwerp is afgerond. Je vindt de introductie en andere onderwerpen in Instellingen → Kennismaking.",
+    "waiting": "Deze actie is nog niet beschikbaar op het huidige scherm. Rond het open venster af of wacht op laden. Je kunt pauzeren en terugkeren via Instellingen → Kennismaking.",
+    "retryTopic": "Dit onderwerp opnieuw beginnen",
+    "storageError": "Je plek kon niet worden opgeslagen op dit apparaat. Je kunt doorgaan, maar na herladen kan je plek verloren gaan.",
+    "deviceHint": "Je plek in de rondleiding wordt op dit apparaat bewaard. Sluiten bewaart je collecties en leervoortgang.",
+    "returnTrainingTitle": "Open Training",
+    "returnTrainingBody": "Ga via de gemarkeerde navigatieknop terug naar Training."
   }
 }

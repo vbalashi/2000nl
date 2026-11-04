@@ -1,0 +1,17 @@
+{
+  "en": {
+    "name": "English",
+    "direction": "ltr",
+    "formatLocale": "en-GB"
+  },
+  "ru": {
+    "name": "Русский",
+    "direction": "ltr",
+    "formatLocale": "ru-RU"
+  },
+  "nl": {
+    "name": "Nederlands",
+    "direction": "ltr",
+    "formatLocale": "nl-NL"
+  }
+}

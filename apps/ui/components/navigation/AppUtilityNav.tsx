@@ -1,4 +1,5 @@
 "use client";
+import { localizedSection } from "@/lib/i18n/catalog";
 
 import React from "react";
 import { useReleaseUpdates } from "@/components/releases/AppReleaseContext";
@@ -9,29 +10,7 @@ import { Tooltip } from "@/components/Tooltip";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 
-const copy = {
-  nl: {
-    theme: "Thema",
-    light: "Licht",
-    dark: "Donker",
-    system: "Systeem",
-    settings: "Instellingen",
-  },
-  en: {
-    theme: "Theme",
-    light: "Light",
-    dark: "Dark",
-    system: "System",
-    settings: "Settings",
-  },
-  ru: {
-    theme: "Тема",
-    light: "Светлая",
-    dark: "Тёмная",
-    system: "Системная",
-    settings: "Настройки",
-  },
-} satisfies Record<OnboardingLanguage, Record<string, string>>;
+const copy = localizedSection("utilityNavigation") satisfies Record<OnboardingLanguage, Record<string, string>>;
 
 export type AppUtilityNavProps = {
   interfaceLanguage: OnboardingLanguage;
