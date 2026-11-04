@@ -58,6 +58,7 @@ function Tooltip({step,tooltipProps}:TooltipRenderProps){
 export function useOnboardingQueryLocked(){const tour=React.useContext(TourContext);return tour?.record?.status==='running'&&['collections','stats'].includes(tour.record.topic);}
 function TourOverlay(){
  const tour=React.useContext(TourContext)!;const {record,copy,advance,pause}=tour;
+ const origin=useRef<HTMLSpanElement>(null);
  const baseStep=record?tourFlows[record.topic][record.step]:null;
  const step=React.useMemo(()=>baseStep&&baseStep.id==='source-pick'&&record?.collectionId?{...baseStep,target:`[data-onboarding=source-option][data-source-value="user:${record.collectionId}"]`}:baseStep,[baseStep,record?.collectionId]);
  const [target,setTarget]=useState<HTMLElement|null>(null),[waiting,setWaiting]=useState(false),[canContinue,setCanContinue]=useState(false),[topLayer,setTopLayer]=useState<HTMLElement|null>(null);
@@ -103,10 +104,12 @@ function TourOverlay(){
   };frame=requestAnimationFrame(sample);
   return()=>{cancelled=true;cancelAnimationFrame(frame);clearTimeout(timeout);document.removeEventListener('click',click,true);window.removeEventListener(ONBOARDING_SIGNAL,signal);};
  },[running,step,advance,tour.language]);
- if(!running||!step)return null;
+ if(!running||!step)return <span ref={origin} hidden/>;
  const text=(value:string)=>value.replace('{section}',document.querySelector('[data-onboarding="appearance"]')?.getAttribute('aria-label')??'');
  const dialog=target?.closest<HTMLElement>('dialog,[popover]')??undefined;
- if(topLayer&&!topLayer.contains(target))return null;
- return <>{target&&<Joyride key={`${record!.topic}:${record!.step}:${tour.language}`} run steps={[{target:()=>target,title:text(copy[step.title]),content:text(copy[step.body]),placement:'auto',data:{ready:canContinue}}]} tooltipComponent={Tooltip} floatingOptions={floatingOptions} portalElement={dialog} onEvent={event=>{if(['finished','skipped'].includes(event.status))pause();}} options={{skipBeacon:true,hideOverlay:Boolean(dialog),blockTargetInteraction:false,disableFocusTrap:true,overlayClickAction:false,dismissKeyAction:'close',closeButtonAction:'skip',overlayColor:'rgba(24,19,34,.52)',spotlightPadding:8,spotlightRadius:15,width:340,zIndex:10000,skipScroll:true,primaryColor:'#71608d'}}/>}
+ if(topLayer&&!topLayer.contains(target))return <span ref={origin} hidden/>;
+ // Keep portal content under the account palette and text-scale owner. Body portals lose these inherited roles.
+ const themeHost=target?.closest<HTMLElement>('[data-account-palette]')??origin.current?.closest<HTMLElement>('[data-account-palette]')??undefined;
+ return <><span ref={origin} hidden/>{target&&<Joyride key={`${record!.topic}:${record!.step}:${tour.language}`} run steps={[{target:()=>target,title:text(copy[step.title]),content:text(copy[step.body]),placement:'auto',data:{ready:canContinue}}]} tooltipComponent={Tooltip} floatingOptions={floatingOptions} portalElement={dialog??themeHost} onEvent={event=>{if(['finished','skipped'].includes(event.status))pause();}} options={{arrowColor:'var(--practice-surface)',backgroundColor:'var(--practice-surface)',skipBeacon:true,hideOverlay:Boolean(dialog),blockTargetInteraction:false,disableFocusTrap:true,overlayClickAction:false,dismissKeyAction:'close',closeButtonAction:'skip',overlayColor:'var(--practice-backdrop)',spotlightPadding:8,spotlightRadius:15,width:340,zIndex:10000,skipScroll:true,primaryColor:'var(--practice-accent)'}}/>}
  {!target&&waiting&&<aside className={s.recovery} role="status"><p>{copy.waiting}</p><button onClick={pause}>{copy.pause}</button><button onClick={()=>tour.start(record!.topic)}>{copy.retryTopic}</button></aside>}</>;
 }

@@ -84,8 +84,10 @@ export function collectLiteralStyles(sources){
  }
  return counts;
 }
+export const migratedStyleFiles=['components/onboarding/onboarding.module.css','components/releases/ReleaseUpdates.module.css'];
 export function checkLiteralBaseline(sources,baseline){
  const errors=[];
+ for(const key of Object.keys(baseline))if(migratedStyleFiles.includes(JSON.parse(key)[0]))errors.push(`Migrated stylesheet cannot be grandfathered: ${JSON.parse(key)[0]}`);
  for(const [key,count] of Object.entries(collectLiteralStyles(sources)))if(count>(baseline[key]??0))errors.push(`New literal style (${count} > ${baseline[key]??0} grandfathered): ${key}`);
  return errors;
 }

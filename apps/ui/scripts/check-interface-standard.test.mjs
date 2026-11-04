@@ -20,3 +20,10 @@ test('baseline rejects new files and increased literal counts',()=>{const legacy
 
 test('rejects heading and sidebar role drift',()=>{assert.ok(check(altered(paths.css,'font-size:var(--practice-text-body-lg);font-weight:500','font-size:var(--practice-text-body);font-weight:500')).some(e=>e.includes('must use --practice-text-body-lg')));assert.ok(check(altered(paths.css,'.labelList button[aria-pressed]{font-size:var(--practice-text-caption)','.labelList button[aria-pressed]{font-size:var(--practice-text-body)')).some(e=>e.includes('must use --practice-text-caption')));});
 test('rejects inline literal colors',()=>assert.ok(check(altered(paths.owned,'<CollectionSortControl ','<CollectionSortControl style={{color:"red"}} ')).some(e=>e.includes('inline color'))));
+
+test('onboarding and updates cannot regain baseline exemptions',()=>{
+ for(const file of ['components/onboarding/onboarding.module.css','components/releases/ReleaseUpdates.module.css']){
+  const sources={[file]:'.heading{font-size:21px}'};
+  assert.ok(checkLiteralBaseline(sources,collectLiteralStyles(sources)).some(error=>error.includes('cannot be grandfathered')));
+ }
+});

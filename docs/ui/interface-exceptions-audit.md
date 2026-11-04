@@ -44,3 +44,13 @@ All component paths below are relative to `apps/ui/components/`.
 ## Evidence limits
 
 This is static import, JSX-selector and CSS-cascade tracing, not a new visual or accessibility acceptance test. Conditional paths are identified as reachable, not asserted to be currently visible for a particular account. Ordinary token checks do not establish contrast, computed inheritance, glyph fit or behavior. The baseline omits inline styles, utility-class literals, custom-property definitions and some fallback forms; its 65 entries are not a complete inventory of every interface inconsistency.
+
+## Migration checkpoint — 2026-11-04
+
+Onboarding tooltip/recovery and Updates banner/settings have now moved to semantic typography and palette roles. The 18 Onboarding entries and all 18 Updates entries (17 legacy + 1 fallback-family false positive) were removed individually from the baseline: **65 → 29** signatures. No new grandfathered entries were added. The checker now rejects attempts to restore exemptions for either migrated stylesheet.
+
+Onboarding portals remain under the account theme/text-scale owner. Updates retains its explicit update, deferred/unsafe and dismissal lifecycle. A development-only `/dev/updates-preview` composes the actual banner and settings components with synthetic release metadata; no update/deployment is triggered there.
+
+Remaining active legacy migration priorities: source picker/Builder/article labels (8), then training footer (4). The initial classification above remains the historical audit, not the current outstanding count.
+
+Verification: browser captures of the real Onboarding language-topic overlay in Light/Dark at desktop and 390px widths, including themed arrow and opaque tooltip surface. Updates settings was checked in the real local app; the same production banner and section were additionally checked with deterministic synthetic update-available state in Light/Dark at desktop and 390px widths. Mobile actions have 44px targets. Typecheck, 22 focused onboarding/release/bounds tests and 14 interface-guard tests passed. This is presentation acceptance, not a deployment or live-update rollout.

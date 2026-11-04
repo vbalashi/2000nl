@@ -45,4 +45,4 @@ The guard is a regression detector, not a visual approval: it cannot judge the b
 
 One remaining native selector exists in the parent-label editor dialog; sorting in all three catalogs is migrated. That editor is an explicit remaining gap, not evidence that arbitrary native dropdowns are the standard.
 
-The [baseline audit](interface-exceptions-audit.md) classifies the initial 65 entries and proposes the next migration slices. Grandfathering is not visual approval.
+The [baseline audit](interface-exceptions-audit.md) classifies the initial 65 entries, records the Onboarding/Updates migration (29 remaining), and proposes the next migration slices. Grandfathering is not visual approval.
