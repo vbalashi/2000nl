@@ -3,3 +3,13 @@
 /* The visual viewport can shrink independently of the layout viewport. */
 .tooltip{max-width:calc(var(--tour-viewport-width, 100vw) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 24px);max-height:calc(var(--tour-viewport-height, 100dvh) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);overflow:auto;overscroll-behavior:contain}
 .safeArea{position:absolute;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px)}
+
+/* Settings uses the same quiet hierarchy and controls as Languages. */
+.settingsPanel .actions { margin: 16px 0 24px; }
+.settingsPanel .actions button, .settingsPanel .topics button { min-height: 28px; padding: 6px 10px; border: 0; border-radius: var(--practice-radius-control); background: transparent; color: var(--practice-text-secondary); font: 400 var(--practice-text-caption)/1.5 var(--practice-font-ui); }
+.settingsPanel .actions button:hover, .settingsPanel .topics button:hover { background: var(--practice-surface-hover); }
+.settingsPanel .topics { gap: 0; }
+.settingsPanel .topics button { padding: 14px 0; border-radius: 0; border-bottom: 1px solid var(--practice-border); text-align: left; }
+.settingsPanel .topics button:last-child { border-bottom: 0; }
+
+@media(max-width:650px){.settingsPanel .actions button,.settingsPanel .topics button{min-height:44px}}

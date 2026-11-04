@@ -20,8 +20,9 @@ export function TrainingSessionProgress({ presentation, language, variant }: {
 }) {
   const count = presentation.kind === "planned" ? Math.max(1, Math.min(MAX_EXACT_SESSION_DOTS, presentation.total)) : 1;
   const fraction = presentation.kind === "planned" ? Math.max(0, Math.min(1, presentation.fraction)) : 0;
-  const line = variant === "dots" && presentation.kind === "planned" && presentation.total > MAX_EXACT_SESSION_DOTS;
-  const target = variant === "dots" && !line ? Math.round(fraction * count) / count : fraction;
+  const exactDots = presentation.kind === "planned" && presentation.total <= MAX_EXACT_SESSION_DOTS;
+  const line = variant === "dots" && !exactDots;
+  const target = exactDots ? Math.round(fraction * count) / count : fraction;
   const [position, setPosition] = useState(target);
   const current = useRef(target);
   useEffect(() => {
@@ -45,19 +46,21 @@ export function TrainingSessionProgress({ presentation, language, variant }: {
   const step = Math.max(0, position * count - 1), index = Math.floor(step), travel = step - index;
   const dotX = (i: number) => count === 1 ? 157 : i * 314 / (count - 1);
   const x = dotX(index) + (dotX(Math.min(index + 1, count - 1)) - dotX(index)) * travel;
+  const waveX = exactDots ? x : position * 314;
+  const waveLeft = (value: number) => (2 + value) / 318 * 100;
   return <div className={styles.sessionProgress} data-variant={line ? "line" : variant} data-testid="training-session-progress-track"
     role="progressbar" aria-label={labels[language]} aria-valuemin={0}
     aria-valuemax={presentation.total} aria-valuenow={Math.min(presentation.position, presentation.total)}>
     {variant === "wave" ? <svg viewBox="-2 0 318 20" preserveAspectRatio="none" aria-hidden="true">
       <path d={wave} fill="none" stroke="currentColor" strokeOpacity=".18" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
-      <path d={wave} fill="none" stroke="currentColor" strokeOpacity=".312" strokeWidth="1.4" pathLength="1" strokeDasharray={`${position} 1`} vectorEffect="non-scaling-stroke" />
+      <path d={wave} fill="none" stroke="currentColor" strokeOpacity=".312" strokeWidth="1.4" pathLength="1" strokeDasharray={`${waveX / 314} 1`} vectorEffect="non-scaling-stroke" />
     </svg> : null}
     {line ? <svg viewBox="0 0 314 11" preserveAspectRatio="none" aria-hidden="true" className={styles.progressThread}><path d="M0 8 H314" fill="none" stroke="currentColor" strokeOpacity=".15" strokeWidth="1" vectorEffect="non-scaling-stroke" /><path d="M0 8 H314" fill="none" stroke="currentColor" strokeOpacity=".35" strokeWidth="1" pathLength="1" strokeDasharray={`${position} 1`} vectorEffect="non-scaling-stroke" /></svg> : null}
     {variant === "dots" && !line && completedMarks >= 2 ? <svg viewBox="0 0 314 11" preserveAspectRatio="none" aria-hidden="true" className={styles.progressThread}><polyline points={Array.from({length: Math.min(count, completedMarks)}, (_, i) => `${dotX(i)},8`).join(" ")} fill="none" stroke="currentColor" strokeOpacity=".22" strokeWidth="1" vectorEffect="non-scaling-stroke" /></svg> : null}
-    {variant === "dots" && !line ? Array.from({length: count}, (_, i) => <span aria-hidden="true" key={i} className={styles.progressDot} style={{left:`${dotX(i)/314*100}%`,top:8,opacity:i<completedMarks?.48:.15}} />) : null}
+    {exactDots ? Array.from({length: count}, (_, i) => <span aria-hidden="true" data-progress-mark="" key={i} className={styles.progressDot} style={{left:`${variant === "wave" ? waveLeft(dotX(i)) : dotX(i)/314*100}%`,top:variant === "wave" ? waveY(dotX(i)) : 8,opacity:i<completedMarks?.48:.15}} />) : null}
     <span aria-hidden="true" className={styles.progressDot} style={{
-      left:`${variant === "wave" ? (2+position*314)/318*100 : line ? position*100 : x/314*100}%`,
-      top:variant === "wave" ? waveY(position*314) : 8,
+      left:`${variant === "wave" ? waveLeft(waveX) : line ? position*100 : x/314*100}%`,
+      top:variant === "wave" ? waveY(waveX) : 8,
       width:variant === "wave" || line?4.5:3,height:variant === "wave" || line?4.5:3,opacity:variant === "wave"?.48:position > 0?.55:0,
     }} />
   </div>;

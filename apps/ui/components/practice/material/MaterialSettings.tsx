@@ -46,7 +46,7 @@ function MaterialFeedback({ language }: { language: OnboardingLanguage }) {
               : null;
   return message ? (
     <div
-      className={s.materialFeedback}
+      className={account.status === "ready" && account.saveStatus === "saving" ? s.srOnly : s.materialFeedback}
       role={
         account.status === "error" || account.saveStatus === "error"
           ? "alert"

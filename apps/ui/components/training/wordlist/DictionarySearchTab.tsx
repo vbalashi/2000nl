@@ -304,19 +304,6 @@ export function DictionarySearchTab({
     },
     [updateSearchState, presentation?.filterPlacement],
   );
-  const detailEntryInCurrentResults = useMemo(
-    () =>
-      Boolean(
-        detailSelection &&
-        (!materialEnabled && useViewedListFilter
-          ? wordResults.some(
-              (resultEntry) => resultEntry.id === detailSelection.entryId,
-            )
-          : selectedGroupResult),
-      ),
-    [detailSelection, selectedGroupResult, useViewedListFilter, wordResults, materialEnabled],
-  );
-
   const openEntryDetail = useCallback(
     async (entry: DictionaryEntry) => {
       const requestId = latestDetailRequestRef.current + 1;
@@ -866,12 +853,6 @@ export function DictionarySearchTab({
         >
           {detailSelection ? (
             <div className="flex h-full min-h-0 flex-col">
-              {(
-                <div className={detailEntryInCurrentResults ? workspace.srOnly : workspace.detailNotice}>
-                  <h2>{copy.details}</h2>
-                  {!detailEntryInCurrentResults ? <p>{copy.retainedEntry}</p> : null}
-                </div>
-              )}
               <div className="flex min-h-0 flex-1 flex-col">
                 <WordDetailsCloseProvider onClose={() => updateSearchState({detailSelection:null,selectedHeadwordGroupId:null,mobileDetailOpen:false})} interfaceLanguage={interfaceLanguage}>
                 <LibraryWordDetail

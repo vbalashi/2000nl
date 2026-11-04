@@ -61,7 +61,7 @@ export function ApprovedTextSizeSection({
       </SegmentedControl>
       </div>
       {settings.loadStatus === "loading" && (
-        <p role="status">{status.loading}</p>
+        <p className="sr-only" role="status">{status.loading}</p>
       )}
       {settings.loadStatus === "error" && (
         <div role="alert">
@@ -71,7 +71,7 @@ export function ApprovedTextSizeSection({
           </button>
         </div>
       )}
-      {saveStatus === "saving" && <p role="status">{status.saving}</p>}
+      {saveStatus === "saving" && <p className="sr-only" role="status">{status.saving}</p>}
       {saveStatus === "error" && (
         <div role="alert">
           <p>{status.saveError}</p>

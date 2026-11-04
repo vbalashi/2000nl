@@ -6,6 +6,7 @@ import {ONBOARDING_SIGNAL,ONBOARDING_PAUSE} from '@/lib/onboarding/signals';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {SettingsPanel} from '@/components/practice/settings/SettingsLayout';
 import s from './onboarding.module.css';
+import settings from '@/components/practice/settings/settings.module.css';
 import {tooltipBounds} from './tooltipBounds';
 export type TourPort={prepare:(topic:TourTopic,step:number)=>void;pause:()=>void;completeCore:()=>void;enter?:(topic:TourTopic,step:number)=>void};
 const TourContext=React.createContext<ReturnType<typeof useTour>|null>(null);
@@ -39,9 +40,9 @@ export function OnboardingSettings({sharing,collections}:{sharing:boolean;collec
  const tour=React.useContext(TourContext);if(!tour)return null;const {copy,record}=tour;
  const available=topics.filter(topic=>(collections||topic!=='collections')&&(sharing||!['sharing','incoming'].includes(topic))&&(collections||topic!=='sharing'));
  const labels={core:copy.tourName,collections:copy.collectionsTopic,card:copy.cardTopic,stats:copy.statsTopic,sharing:copy.sharingTopic,incoming:copy.incomingTopic,languages:copy.languagesTopic,appearance:copy.appearanceTopic};
- return <SettingsPanel title={copy.tourName}><p className={s.hint}>{copy.deviceHint}</p>{tour.saveError&&<p role="alert">{copy.storageError}</p>}
+ return <SettingsPanel title={copy.tourName} className={s.settingsPanel}><p className={settings.hint}>{copy.deviceHint}</p>{tour.saveError&&<p role="alert">{copy.storageError}</p>}
  <div className={s.actions}>{record&&record.status!=='complete'&&<button onClick={tour.resume}>{copy.resume}</button>}<button onClick={()=>tour.start('core')}>{copy.restart}</button></div>
- <h3>{copy.topicHeading}</h3><div className={s.topics}>{available.filter(topic=>topic!=='core').map(topic=><button key={topic} onClick={()=>tour.start(topic)}>{labels[topic]}</button>)}</div><div className={s.actions}><button onClick={()=>{const [first,...rest]=available.filter(topic=>topic!=='core');if(first)tour.start(first,rest);}}>{copy.allTopics}</button></div></SettingsPanel>;
+ <h3 className={settings.subheading}>{copy.topicHeading}</h3><div className={s.topics}>{available.filter(topic=>topic!=='core').map(topic=><button key={topic} onClick={()=>tour.start(topic)}>{labels[topic]}</button>)}</div><div className={s.actions}><button onClick={()=>{const [first,...rest]=available.filter(topic=>topic!=='core');if(first)tour.start(first,rest);}}>{copy.allTopics}</button></div></SettingsPanel>;
 }
 function Tooltip({step,tooltipProps}:TooltipRenderProps){
  const tour=React.useContext(TourContext)!;const current=tourFlows[tour.record!.topic][tour.record!.step];
