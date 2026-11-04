@@ -29,6 +29,12 @@ Personal, received and owned-shared names share a single rule in `organization.m
 
 Primary navigation has a 34 px visual height and a persistent group background. Ordinary choices use the `standard` 28 px visual family, transparent unselected backgrounds and a soft selected capsule. The shared component owns selection animation, focus, disabled states and reduced motion. Keep touch targets usable and non-overlapping. Primary launch actions have their own 44 px family and must not be flattened into ordinary choices.
 
+## Session builder sources
+
+Source type uses the shared `SegmentedControl standard`: All, Dictionaries and Collections remain available in the expanded Source header, independently of search. The header search action is a sibling of the Source disclosure, with its own expanded state and controlled search field. Opening search focuses the field; Escape or closing search clears its query and returns focus to the action. Closing Source also clears search. Type choices and selected material remain intact while search is hidden. Search and disclosure transitions respect reduced motion.
+
+The unfinished Word activity controls are hidden. Existing recipe source/time scopes continue to apply unchanged; a compact localized explanation names any active saved scope. Editing another recipe setting must preserve those values.
+
 ## Before accepting a screen
 
 Compare like roles across another existing screen, not merely adjacent labels. Check light/dark modes, narrow widths, long localized labels and account text scaling. Autosave success/pending announcements must not add/remove visible layout rows; failures remain visible. Document genuine exceptions instead of silently inventing a new control family.

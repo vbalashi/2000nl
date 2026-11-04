@@ -49,3 +49,24 @@ test("multiple builders do not reuse disclosure control identities", () => {
   expect(document.getElementById(one!)).toBeInTheDocument();
   expect(document.getElementById(two!)).toBeInTheDocument();
 });
+
+test("header actions and expanded choices are siblings of the disclosure", () => {
+  const onToggle=vi.fn(), onAction=vi.fn();
+  const props={id:"source",title:"Source",summary:"Chosen dictionary",open:false,onToggle,
+    headerActions:<button onClick={onAction}>Search sources</button>,
+    headerChoices:<button>All types</button>};
+  const view=render(<BuilderSection {...props}>Source options</BuilderSection>);
+  const heading=screen.getByRole("button",{name:"Source Chosen dictionary"});
+  const search=screen.getByRole("button",{name:"Search sources"});
+  expect(heading.contains(search)).toBe(false);
+  expect(screen.queryByRole("button",{name:"All types"})).toBeNull();
+  fireEvent.click(search);
+  expect(onAction).toHaveBeenCalledOnce();
+  expect(onToggle).not.toHaveBeenCalled();
+  fireEvent.click(heading);
+  expect(onToggle).toHaveBeenCalledOnce();
+  view.rerender(<BuilderSection {...props} open>Source options</BuilderSection>);
+  expect(screen.getByRole("button",{name:"All types"})).toBeInTheDocument();
+  expect(heading).toHaveAttribute("aria-expanded","true");
+  expect(screen.getByTestId("source-summary")).toHaveTextContent("Chosen dictionary");
+});

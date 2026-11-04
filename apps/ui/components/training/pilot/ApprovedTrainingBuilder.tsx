@@ -33,7 +33,6 @@ import type { TrainingSetupDraft } from "@/lib/training/setups/types";
 import type { TrainingSetupOption } from "@/lib/training/setups/availability";
 import type {
   DutchTrainingPartOfSpeech,
-  TrainingDateWindow,
   TrainingExerciseFamily,
   TrainingMode,
   TrainingSessionSize,
@@ -263,6 +262,17 @@ export function ApprovedTrainingBuilder(p: Props) {
   ]
     .filter(Boolean)
     .join(" · ");
+  const activityScope = [
+    p.draft.sourceValue !== "all"
+      ? p.sources.find(option => option.value === p.draft.sourceValue)?.label ??
+        (p.draft.sourceValue === "kind:youtube" ? c.youtube : {en:"Saved source", nl:"Opgeslagen bron", ru:"Сохранённый источник"}[p.interfaceLanguage])
+      : null,
+    p.draft.dateWindow !== "all"
+      ? p.draft.dateWindow === "today" ? c.today
+        : p.draft.dateWindow === "yesterday" ? c.yesterday
+          : `${c.daysAgo}: ${p.draft.daysAgo ?? 7}`
+      : null,
+  ].filter(Boolean).join(" · ");
   const size = p.draft.sessionSize ?? 10;
   const section = (
     key: string,
@@ -330,6 +340,13 @@ export function ApprovedTrainingBuilder(p: Props) {
               disabled={saving}
             />
           }
+          {activityScope && <p className={`${s.help} ${s.activityNotice}`}>
+            {p.interfaceLanguage === "ru"
+              ? `Сохранённые фильтры активности слов по-прежнему действуют: ${activityScope}. Их редактирование пока недоступно.`
+              : p.interfaceLanguage === "nl"
+                ? `Opgeslagen filters voor woordactiviteit blijven gelden: ${activityScope}. Bewerken is nog niet beschikbaar.`
+                : `Saved word activity filters still apply: ${activityScope}. Editing them is not yet available.`}
+          </p>}
           <div className={`${s.section_group} builder-section-group`}>
             <section className={s.inline_language}>
               <h2>{b.language}</h2>
@@ -346,36 +363,35 @@ export function ApprovedTrainingBuilder(p: Props) {
                 ))}
               </SegmentedControl>
             </section>
-            {section(
-              "source",
-              b.source,
-              material,
-              <>
-                {p.dictionariesLoading && (
-                  <p role="status" className={s.help}>
-                    {c.loadingDictionaries}
-                  </p>
-                )}
-                <TrainingSourcePicker
-                  locale={p.interfaceLanguage}
-                  lists={p.lists}
-                  dictionaries={p.dictionaries}
-                  draft={p.draft}
-                  onChange={p.onDraftChange}
-                  disabled={p.languagePending || p.dictionariesLoading}
-                />
-                {materialMode === "selected-dictionaries" &&
-                  (p.draft.dictionaryIds ?? []).some(
-                    (id) =>
-                      !p.dictionaries.some((option) => option.value === id),
-                  ) &&
-                  !p.dictionariesLoading && (
-                    <p role="status" className={s.help}>
-                      {c.partialDictionaryAccess}
-                    </p>
-                  )}
-              </>,
-            )}
+            <TrainingSourcePicker
+              locale={p.interfaceLanguage}
+              lists={p.lists}
+              dictionaries={p.dictionaries}
+              draft={p.draft}
+              onChange={p.onDraftChange}
+              disabled={p.languagePending || p.dictionariesLoading}
+              expanded={open.includes("source")}
+              onSearchOpen={() => setOpen(current =>
+                current.includes("source") ? current : [...current, "source"],
+              )}
+              renderSection={({ searchAction, filters, content }) => (
+                <BuilderSection
+                  id={`${uid}-source`}
+                  title={b.source}
+                  summary={material}
+                  open={open.includes("source")}
+                  onToggle={() => toggle("source")}
+                  headerActions={searchAction}
+                  headerChoices={filters}
+                >
+                  {p.dictionariesLoading && <p role="status" className={s.help}>{c.loadingDictionaries}</p>}
+                  {content}
+                  {materialMode === "selected-dictionaries" &&
+                    (p.draft.dictionaryIds ?? []).some(id => !p.dictionaries.some(option => option.value === id)) &&
+                    !p.dictionariesLoading && <p role="status" className={s.help}>{c.partialDictionaryAccess}</p>}
+                </BuilderSection>
+              )}
+            />
             {section(
               "exercises",
               b.exercises,
@@ -584,80 +600,6 @@ export function ApprovedTrainingBuilder(p: Props) {
                     </div>
                   )}
                 </div>
-                <details className={s.activity}>
-                  <summary>
-                    <span>{c.activity}</span>
-                    <ChevronDown size={15} aria-hidden="true" />
-                  </summary>
-                  <p className={s.help}>{c.activityHelp}</p>
-                  <label className={s.field}>
-                    {c.source}
-                    <select
-                      aria-label={c.source}
-                      value={p.draft.sourceValue}
-                      onChange={(event) =>
-                        p.onDraftChange((current) => ({
-                          ...current,
-                          sourceValue: event.target.value,
-                        }))
-                      }
-                    >
-                      <option value="all">{c.allSources}</option>
-                      <option value="kind:youtube">{c.youtube}</option>
-                      {p.sources.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className={s.field}>
-                    {c.date}
-                    <select
-                      aria-label={c.date}
-                      value={p.draft.dateWindow}
-                      onChange={(event) =>
-                        p.onDraftChange((current) => ({
-                          ...current,
-                          dateWindow: event.target.value as TrainingDateWindow,
-                        }))
-                      }
-                    >
-                      {(["all", "today", "yesterday", "daysAgo"] as const).map(
-                        (value) => (
-                          <option key={value} value={value}>
-                            {value === "all"
-                              ? c.allDates
-                              : value === "today"
-                                ? c.today
-                                : value === "yesterday"
-                                  ? c.yesterday
-                                  : c.daysAgo}
-                          </option>
-                        ),
-                      )}
-                    </select>
-                  </label>
-                  {p.draft.dateWindow === "daysAgo" && (
-                    <input
-                      className={s.input}
-                      aria-label={c.daysAgo}
-                      type="number"
-                      min={1}
-                      max={365}
-                      value={p.draft.daysAgo ?? 7}
-                      onChange={(event) =>
-                        p.onDraftChange((current) => ({
-                          ...current,
-                          daysAgo: Math.max(
-                            1,
-                            Math.min(365, Number(event.target.value) || 1),
-                          ),
-                        }))
-                      }
-                    />
-                  )}
-                </details>
               </>,
             )}
             {section(

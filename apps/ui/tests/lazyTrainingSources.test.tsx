@@ -13,12 +13,29 @@ const id='75600000-0000-4000-8000-000000000001',second='75600000-0000-4000-8000-
 const scope={userId:'reader',languageCode:'nl',onTrainingResolved:mock.resolved};
 beforeEach(()=>{vi.resetAllMocks();vi.stubEnv('NEXT_PUBLIC_COLLECTION_SHARING_ENABLED','true');mock.page.mockResolvedValue({collections:[row],nextCursor:null});mock.refs.mockResolvedValue([row]);});
 afterEach(()=>{vi.unstubAllEnvs();});
-function Picker(){const[draft,setDraft]=useState<TrainingSetupDraft & {sessionSize:TrainingSessionSize}>({family:'meaning',scenarioId:'understanding',modes:['word-to-definition'],cardFilter:'both',newReviewRatio:2,dateWindow:'all',sourceValue:'all',materialMode:'collection',listValue:'',sessionSize:5});return <TrainingSourcePicker locale="en" draft={{...draft,sessionSize:5}} onChange={setDraft} lists={Array.from({length:1000},(_,n)=>({value:'user:old-'+n,label:'Legacy '+n}))} dictionaries={[]}/>;}
+function Picker(){const[draft,setDraft]=useState<TrainingSetupDraft & {sessionSize:TrainingSessionSize}>({family:'meaning',scenarioId:'understanding',modes:['word-to-definition'],cardFilter:'both',newReviewRatio:2,dateWindow:'all',sourceValue:'all',materialMode:'collection',listValue:'',sessionSize:5});return <><TrainingSourcePicker locale="en" draft={{...draft,sessionSize:5}} onChange={setDraft} lists={Array.from({length:1000},(_,n)=>({value:'user:old-'+n,label:'Legacy '+n}))} dictionaries={[]}/><output data-testid="source-draft">{JSON.stringify(draft)}</output></>;}
 test('source picker reads one bounded page; search remains available for a single remote match',async()=>{
  render(<CollectionSelectionContext.Provider value={scope}><Picker/></CollectionSelectionContext.Provider>);
  await screen.findByRole('button',{name:'Shared lesson'});expect(mock.page).toHaveBeenCalledOnce();expect(screen.queryByRole('button',{name:'Legacy 0'})).toBeNull();expect(mock.resolved).not.toHaveBeenCalled();
  fireEvent.click(screen.getByRole('button',{name:'Search sources'}));fireEvent.change(screen.getByRole('textbox',{name:'Search sources'}),{target:{value:'Shared'}});
  await waitFor(()=>expect(mock.page).toHaveBeenCalledTimes(2));await screen.findByRole('button',{name:'Shared lesson'});expect(screen.getByRole('textbox',{name:'Search sources'})).toHaveValue('Shared');fireEvent.click(screen.getByRole('button',{name:'Shared lesson'}));expect(mock.resolved).toHaveBeenCalledWith([id],[row]);
+});
+test('closing remote search reloads the unfiltered page and type filters retain resolved selection',async()=>{
+ render(<CollectionSelectionContext.Provider value={scope}><Picker/></CollectionSelectionContext.Provider>);
+ fireEvent.click(await screen.findByRole('button',{name:'Shared lesson'}));
+ expect(mock.resolved).toHaveBeenCalledWith([id],[row]);
+ fireEvent.click(screen.getByRole('button',{name:'Dictionaries'}));
+ expect(screen.queryByRole('button',{name:'Shared lesson'})).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Collections'}));
+ expect(screen.getByRole('button',{name:'Shared lesson'})).toHaveAttribute('aria-pressed','true');
+ fireEvent.click(screen.getByRole('button',{name:'Search sources'}));
+ fireEvent.change(screen.getByRole('textbox'),{target:{value:'Shared'}});
+ await waitFor(()=>expect(mock.page).toHaveBeenLastCalledWith('reader','nl','Shared',null,expect.any(AbortSignal)));
+ fireEvent.click(screen.getByRole('button',{name:'Search sources'}));
+ await waitFor(()=>expect(mock.page).toHaveBeenLastCalledWith('reader','nl','',null,expect.any(AbortSignal)));
+ expect(JSON.parse(screen.getByTestId('source-draft').textContent!)).toMatchObject({materialMode:'collection',listValue:'user:'+id});
+ expect(await screen.findByRole('button',{name:'Shared lesson'})).toHaveAttribute('aria-pressed','true');
+ expect(screen.getByRole('button',{name:'Collections'})).toHaveAttribute('aria-pressed','true');
 });
 test('a next cursor is fetched only after explicit Show more',async()=>{
  const first=Array.from({length:50},(_,n)=>({...row,id:n===49?id:'75600000-0000-4000-8000-'+String(n+10).padStart(12,'0'),name:'Lesson '+n}));

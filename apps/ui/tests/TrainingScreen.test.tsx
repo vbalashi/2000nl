@@ -2865,22 +2865,58 @@ test("pilot Start persists the complete selection in one scope update", async ()
   expect(updateActiveTrainingScope).toHaveBeenCalledWith({ userId:user.id, languageCode:"nl", listId:defaultAvailableList.id, listType:defaultAvailableList.type, activeScenario:"understanding", cardFilter:"both", modesEnabled:["word-to-definition","definition-to-word"], newReviewRatio:3 });
 }, 15_000);
 
-test("pilot Setup applies source and date filters only when Start commits the draft", async () => {
+test("pilot Setup preserves saved source and date filters until Start commits the draft", async () => {
+  const savedRecipe = {
+    id: "saved-activity-scope",
+    name: "Scoped activity practice",
+    languageCode: "nl",
+    draft: {
+      family: "meaning",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      listValue: "curated:list-1",
+      materialMode: "collection",
+      newReviewRatio: 2,
+      dateWindow: "today",
+      sourceValue: "source:source-youtube-1",
+      sessionSize: 5,
+    },
+  };
+  savedSetupAccounts.set(user.id, {
+    revision: 1,
+    document: { schemaVersion: 1, trainings: [savedRecipe], mainTrainingId: savedRecipe.id },
+  });
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
   await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
   await waitFor(() => expect(fetchTrainingFilterSources).toHaveBeenCalledWith(user.id));
-  fireEvent.click(await screen.findByRole("button", { name:"Create training" }));
-  fireEvent.click(await screen.findByRole("button", { name:/^Filters / }));
-  fireEvent.click(screen.getByText(/Activity|Activiteit/));
-  fireEvent.change(screen.getByLabelText("Time window"), { target:{value:"today"} });
-  fireEvent.change(screen.getByRole("combobox",{name:"Source"}), { target:{value:"source:source-youtube-1"} });
+  fireEvent.click((await screen.findAllByRole("button", { name: "Edit Scoped activity practice" }))[0]);
+  expect(await screen.findByText(/Saved word activity filters still apply:/)).toHaveTextContent("Today");
+  fireEvent.click(await screen.findByRole("button", { name: /^Filters / }));
+  expect(screen.queryByLabelText("Time window")).not.toBeInTheDocument();
+  expect(screen.queryByRole("combobox", { name: "Source" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Verbs" }));
+  expect(savedSetupAccounts.get(user.id)?.document).toEqual({
+    schemaVersion: 1, trainings: [savedRecipe], mainTrainingId: savedRecipe.id,
+  });
   expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
   expect(fetchTrainingSessionPlan).not.toHaveBeenCalled();
   expect(startTrainingSession).not.toHaveBeenCalled();
-  const start = screen.getByRole("button", { name:/Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/ });
+  const start = screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/ });
   await waitFor(() => expect(start).toBeEnabled());
   await clickTrainingAction(start);
-  await waitFor(() => expect(fetchNextTrainingWordByScenario.mock.calls.map(call=>call[8])).toContainEqual(expect.objectContaining({dateWindow:"today",sourceId:"source-youtube-1"})));
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  expect(startTrainingSession).toHaveBeenCalledWith(
+    user.id,
+    ["word-to-definition"],
+    expect.objectContaining({
+      trainingFilter: { dateWindow: "today", sourceId: "source-youtube-1", partOfSpeech: ["ww"] },
+    }),
+    expect.any(String),
+  );
+  await waitFor(() => expect(fetchNextTrainingWordByScenario.mock.calls.map(call => call[8])).toContainEqual(
+    expect.objectContaining({ dateWindow: "today", sourceId: "source-youtube-1", partOfSpeech: ["ww"] }),
+  ));
 });
 test("pilot Start keeps recovery visible when the replacement queue fails", async () => {
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
