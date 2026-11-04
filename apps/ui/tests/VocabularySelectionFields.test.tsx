@@ -18,7 +18,7 @@ test("the meaning slider runs from one to all",()=>{
 test("exact bounds reject zero and reversed ranges; cancelling restores the opener",()=>{
  render(<Fields/>);const open=screen.getByRole("button",{name:"Изменить диапазон: 1–100"});open.focus();fireEvent.click(open);
  const dialog=screen.getByRole("dialog",{name:"Места в списке"});
- for(const value of ["0","101"]){fireEvent.change(within(dialog).getByLabelText("От"),{target:{value}});expect(within(dialog).getByRole("button",{name:"Готово"})).toBeDisabled();}
+ for(const value of ["0","101","1.5",""]){fireEvent.change(within(dialog).getByLabelText("От"),{target:{value}});expect(within(dialog).getByRole("button",{name:"Готово"})).toBeDisabled();}
  fireEvent.click(within(dialog).getByRole("button",{name:"Отмена"}));
  expect(screen.getByRole("button",{name:"Изменить диапазон: 1–100"})).toHaveFocus();
 });
@@ -39,4 +39,33 @@ test("the icon sort trigger names its selection and restores focus",()=>{
  render(<Sort/>);const trigger=screen.getByRole("button",{name:"Сортировка: По алфавиту"});expect(trigger).toHaveTextContent("");fireEvent.click(trigger);
  fireEvent.click(screen.getByRole("menuitem",{name:"По частоте в разговоре"}));expect(change).toHaveBeenCalledWith("spoken");
  expect(screen.getByRole("button",{name:"Сортировка: По частоте в разговоре"})).toHaveFocus();expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+});
+
+test("either coincident boundary can be separated by a pointer drag",()=>{
+ class Pointer extends MouseEvent {readonly pointerId=1;readonly isPrimary=true;}
+ vi.stubGlobal("PointerEvent",Pointer);
+ Object.defineProperty(HTMLElement.prototype,"setPointerCapture",{configurable:true,value:vi.fn()});
+ Object.defineProperty(HTMLElement.prototype,"hasPointerCapture",{configurable:true,value:()=>false});
+ const view=render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
+ const dialog=screen.getByRole("dialog",{name:"Места в списке"});for(const label of ["От","До"])fireEvent.change(within(dialog).getByLabelText(label),{target:{value:"73"}});
+ fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
+ const surface=screen.getByRole("slider",{name:"Первая граница диапазона"}).parentElement!;
+ vi.spyOn(surface,"getBoundingClientRect").mockReturnValue({left:0,width:916,right:916,top:0,bottom:44,height:44,x:0,y:0,toJSON:()=>({})});
+ fireEvent.pointerDown(surface,{clientX:208,button:0});fireEvent.pointerMove(surface,{clientX:108,button:0});fireEvent.pointerUp(surface,{clientX:108,button:0});
+ expect(screen.getByRole("slider",{name:"Первая граница диапазона"})).toHaveAttribute("aria-valuetext","50");
+ expect(screen.getByRole("slider",{name:"Последняя граница диапазона"})).toHaveAttribute("aria-valuetext","73");
+ // Recreate the coincident state and move the other way.
+ fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 50–73"}));
+ fireEvent.change(screen.getByRole("dialog",{name:"Места в списке"}).querySelector("input")!,{target:{value:"73"}});
+ fireEvent.click(screen.getByRole("button",{name:"Готово"}));
+ fireEvent.pointerDown(surface,{clientX:208,button:0});fireEvent.pointerMove(surface,{clientX:308,button:0});fireEvent.pointerUp(surface,{clientX:308,button:0});
+ expect(screen.getByRole("slider",{name:"Первая граница диапазона"})).toHaveAttribute("aria-valuetext","73");
+ expect(screen.getByRole("slider",{name:"Последняя граница диапазона"})).toHaveAttribute("aria-valuetext","100");
+ expect(screen.getByRole("slider",{name:"Последняя граница диапазона"})).toHaveAttribute("min","2");
+ view.unmount();vi.unstubAllGlobals();
+});
+
+test("the sort review limitation is available before opening the menu",()=>{
+ render(<LibrarySortControl value="alphabetical" onChange={()=>{}} language="ru" reviewNotice="Порядок слов пока не меняется"/>);
+ expect(screen.getByRole("button",{name:"Сортировка: По алфавиту"})).toHaveAccessibleDescription("Порядок слов пока не меняется");
 });

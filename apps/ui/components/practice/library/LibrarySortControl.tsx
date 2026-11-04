@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useId, useState } from "react";
 import { ArrowDownAZ, MessageCircle, FileText, Check } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { ActionMenu } from "../ui/ActionMenu";
@@ -11,11 +11,12 @@ const copy={
  en:{title:"Sort",alphabetical:"Alphabetical",spoken:"Spoken frequency",written:"Written frequency",spokenHelp:"Common words in conversations first (CGN). Words without a rank follow alphabetically.",writtenHelp:"Common words in texts first (SoNaR500). Words without a rank follow alphabetically."},
  nl:{title:"Sorteren",alphabetical:"Alfabetisch",spoken:"Frequentie in gesprekken",written:"Frequentie in teksten",spokenHelp:"Veelgebruikte woorden in gesprekken eerst (CGN). Woorden zonder rang komen daarna, op alfabet.",writtenHelp:"Veelgebruikte woorden in teksten eerst (SoNaR500). Woorden zonder rang komen daarna, op alfabet."},
 };
-export function LibrarySortControl({value,onChange,language}:{value:LibrarySort;onChange:(value:LibrarySort)=>void;language:OnboardingLanguage}){
+export function LibrarySortControl({value,onChange,language,reviewNotice}:{value:LibrarySort;onChange:(value:LibrarySort)=>void;language:OnboardingLanguage;reviewNotice?:string}){
+ const noticeId=useId();
  const [anchor,setAnchor]=useState<HTMLButtonElement|null>(null),t=copy[language];
  const close=useCallback(()=>{anchor?.focus({preventScroll:true});setAnchor(null);},[anchor]);
  const Icon=value==="alphabetical"?ArrowDownAZ:value==="spoken"?MessageCircle:FileText;
  const options:LibrarySort[]=["alphabetical","spoken","written"];
- return <><IconAction label={`${t.title}: ${t[value]}`} title={`${t.title}: ${t[value]}`} className={workspace.filterButton} aria-haspopup="menu" aria-expanded={Boolean(anchor)} onClick={event=>setAnchor(event.currentTarget)}><Icon size={18} aria-hidden="true"/></IconAction>
- {anchor&&<ActionMenu anchor={anchor} title={t.title} language={language} onClose={close} items={options.map(id=>({id,label:t[id],description:id==="spoken"?t.spokenHelp:id==="written"?t.writtenHelp:undefined,icon:id===value?<Check size={14} aria-hidden="true"/>:undefined,onSelect:()=>{onChange(id);close();}}))}/>}</>;
+ return <><IconAction label={`${t.title}: ${t[value]}`} title={`${t.title}: ${t[value]}`} className={workspace.filterButton} aria-describedby={reviewNotice?noticeId:undefined} aria-haspopup="menu" aria-expanded={Boolean(anchor)} onClick={event=>setAnchor(event.currentTarget)}><Icon size={18} aria-hidden="true"/></IconAction>{reviewNotice&&<span id={noticeId} className={workspace.srOnly}>{reviewNotice}</span>}
+ {anchor&&<ActionMenu anchor={anchor} title={t.title} language={language} onClose={close} notice={reviewNotice} items={options.map(id=>({id,label:t[id],description:id==="spoken"?t.spokenHelp:id==="written"?t.writtenHelp:undefined,icon:id===value?<Check size={14} aria-hidden="true"/>:undefined,onSelect:()=>{onChange(id);close();}}))}/>}</>;
 }

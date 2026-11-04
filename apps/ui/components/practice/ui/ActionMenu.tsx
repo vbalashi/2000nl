@@ -15,9 +15,10 @@ export type ActionMenuItem = {
 };
 
 /** Anchored native popover stays above dialogs and inherits their theme. */
-export function ActionMenu({ anchor, title, language, items, onClose }: {
+export function ActionMenu({ anchor, title, language, items, onClose, notice }: {
   anchor: HTMLButtonElement;
   title: string;
+  notice?: string;
   language: string;
   items: ActionMenuItem[];
   onClose: () => void;
@@ -29,7 +30,7 @@ export function ActionMenu({ anchor, title, language, items, onClose }: {
   const focused = useRef(false);
   const lastFocusedItem = useRef<HTMLButtonElement | null>(null);
   useLayoutEffect(() => { onCloseRef.current = onClose; }, [onClose]);
-  const signature = items.map(item => `${item.id}:${item.label}:${item.description ?? ""}`).join("|");
+  const signature = [notice ?? "", ...items.map(item => `${item.id}:${item.label}:${item.description ?? ""}`)].join("|");
   useLayoutEffect(() => {
     const menu = ref.current!;
     focused.current = false;
@@ -103,6 +104,7 @@ export function ActionMenu({ anchor, title, language, items, onClose }: {
       buttons[event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1
         : (index + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length]?.focus();
     }}>
+    {notice && <p className={s.menuNotice} aria-hidden="true">{notice}</p>}
     {items.map(item => <button type="button" role="menuitem" data-menu-action={item.id} key={item.id} disabled={item.disabled} aria-label={item.label} aria-describedby={item.description ? `${descriptionId}-${item.id}` : undefined} onClick={item.onSelect}>
       {item.icon}<span className={s.menuCopy}>{item.label}{item.description && <span id={`${descriptionId}-${item.id}`} className={s.menuDescription}>{item.description}</span>}</span>
     </button>)}

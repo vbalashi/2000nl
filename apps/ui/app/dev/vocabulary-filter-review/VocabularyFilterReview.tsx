@@ -18,7 +18,7 @@ export function VocabularyFilterReview({children}:{children:React.ReactNode}){
  const [sort,setSort]=useState<LibrarySort>("alphabetical"),[open,setOpen]=useState(true);
  const fields=(language:OnboardingLanguage,value:VocabularySelection,onChange:(value:VocabularySelection)=>void)=><><VocabularySelectionFields language={language} value={value} onChange={onChange}/><p className={s.note}>{copy[language].note}</p></>;
  return <LibraryPresentationContext.Provider value={{
-   renderSearchActions:language=><LibrarySortControl language={language} value={sort} onChange={setSort}/>,
+   renderSearchActions:language=><LibrarySortControl language={language} value={sort} onChange={setSort} reviewNotice={{ru:"Проверка вида: порядок слов пока не меняется",en:"UI review: word order does not change yet",nl:"Interfacebeoordeling: de woordvolgorde blijft gelijk"}[language]}/>,
    renderAdditionalFilters:language=><BuilderSection title={copy[language].title} summary="" open={open} onToggle={()=>setOpen(current=>!current)}>{fields(language,draft,setDraft)}</BuilderSection>,
    onApplyAdditionalFilters:()=>setApplied(draft),onDismissAdditionalFilters:()=>setDraft(applied),onResetAdditionalFilters:()=>setDraft(DEFAULT_VOCABULARY_SELECTION),
  }}><TrainingBuilderPresentationContext.Provider value={{renderAdditionalFilters:language=><div className={s.trainingFields}>{fields(language,training,setTraining)}</div>}}>{children}</TrainingBuilderPresentationContext.Provider></LibraryPresentationContext.Provider>;

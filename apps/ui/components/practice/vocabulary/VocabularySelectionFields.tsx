@@ -1,5 +1,6 @@
 "use client";
 import React, { useId, useState } from "react";
+import { FrequencyRange } from "./FrequencyRange";
 import { Pencil } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { MEANING_LIMIT_STEPS, frequencyRangeSteps, validFrequencyRange, type VocabularySelection } from "@/lib/vocabulary/selection";
@@ -22,7 +23,7 @@ export function VocabularySelectionFields({ value, onChange, language }: { value
   const id=useId(), t=copy[language];
   const [rangeEdit,setRangeEdit]=useState<{from:string;to:string}|null>(null);
   const update=(patch:Partial<VocabularySelection>)=>onChange({...value,...patch});
-  const steps=frequencyRangeSteps(value.from,value.to), lower=steps.indexOf(value.from), upper=steps.indexOf(value.to);
+  const steps=frequencyRangeSteps(value.from,value.to);
   const selected=value.meanings==="all"?t.allMeanings:value.meanings===1?t.firstMeaning:t.firstMeanings(value.meanings);
   const rangeLabel=`${value.from.toLocaleString(language)}–${value.to.toLocaleString(language)}`;
   const formFrom=Number(rangeEdit?.from),formTo=Number(rangeEdit?.to),valid=validFrequencyRange(formFrom,formTo);
@@ -41,18 +42,13 @@ export function VocabularySelectionFields({ value, onChange, language }: { value
           <div className={s.heading}><span className={controls.label}>{t.range}</span><SettingsHelp label={t.range} text={t.rangeHelp}/></div>
           <IconAction className={`${controls.selection} ${s.rangeValue}`} label={`${t.edit}: ${rangeLabel}`} onClick={()=>setRangeEdit({from:String(value.from),to:String(value.to)})}>{rangeLabel}<Pencil size={12} aria-hidden="true"/></IconAction>
         </div>
-        <div className={s.dualRange} style={{"--range-start":`${lower/(steps.length-1)*100}%`,"--range-end":`${upper/(steps.length-1)*100}%`} as React.CSSProperties}>
-          <div className={s.rail} aria-hidden="true"/>
-          <input className={controls.range} type="range" min={0} max={upper} step={1} value={lower} style={{width:`calc(${upper/(steps.length-1)*100}% + ${16*(1-upper/(steps.length-1))}px)`}} aria-label={t.first} aria-valuetext={String(value.from)} onChange={event=>update({from:steps[Number(event.target.value)]})}/>
-          <input className={controls.range} type="range" min={0} max={steps.length-1} step={1} value={upper} aria-label={t.last} aria-valuetext={String(value.to)} onChange={event=>update({to:steps[Math.max(Number(event.target.value),lower)]})}/>
-        </div>
-        <div className={controls.sizeTicks} aria-hidden="true">{steps.map((rank,index)=>[1,100,1000,steps.at(-1)].includes(rank)&&<span key={rank} style={{left:`${index/(steps.length-1)*100}%`}}>{rank.toLocaleString(language)}</span>)}</div>
+        <FrequencyRange from={value.from} to={value.to} steps={steps} language={language} firstLabel={t.first} lastLabel={t.last} onChange={(from,to)=>update({from,to})}/>
       </div>
     </div>}
     <div className={controls.rangeGroup}>
       <div className={controls.labelRow}><div className={s.heading}><label htmlFor={`${id}-meanings`} className={controls.label}>{t.meanings}</label><SettingsHelp label={t.meanings} text={t.meaningHelp}/></div><span className={controls.selection}>{selected}</span></div>
       <input id={`${id}-meanings`} className={controls.range} type="range" min={0} max={MEANING_LIMIT_STEPS.length-1} step={1} value={MEANING_LIMIT_STEPS.indexOf(value.meanings)} aria-valuetext={selected} onChange={event=>update({meanings:MEANING_LIMIT_STEPS[Number(event.target.value)]})}/>
-      <div className={controls.sizeTicks} aria-hidden="true">{MEANING_LIMIT_STEPS.map((limit,index)=><span key={limit} style={{left:`${index/(MEANING_LIMIT_STEPS.length-1)*100}%`}}>{limit==="all"?t.all:limit}</span>)}</div>
+      <div className={`${controls.sizeTicks} ${s.ticks}`} aria-hidden="true">{MEANING_LIMIT_STEPS.map((limit,index)=><span key={limit} style={{left:`${index/(MEANING_LIMIT_STEPS.length-1)*100}%`}}>{limit==="all"?t.all:limit}</span>)}</div>
       <p className={controls.help}>{value.meanings==="all"?t.allHint:t.meaningHint(value.meanings)}</p>
     </div>
     {rangeEdit&&<DialogSurface onDismiss={()=>setRangeEdit(null)} aria-labelledby={`${id}-range-title`} className={s.rangeDialog}>
