@@ -40,6 +40,14 @@ function TrainingSenseCardStage(
 }
 
 describe("TrainingSenseCardStage", () => {
+  test("direct word front shows the same localized POS as the answer", () => {
+    const model = buildTrainingSenseCardModel({group: singleSenseGroup, entry: singleSenseEntry, interfaceLanguage: "en"});
+    render(<TrainingSenseCardStage model={model} mode="word-to-definition" interfaceLanguage="en" onAction={vi.fn()} onPlayAudio={vi.fn()}/>);
+    const pos = screen.getByTestId("training-face-part-of-speech");
+    expect(pos).toHaveTextContent(model.partOfSpeech!);
+    fireEvent.click(screen.getByRole("button", {name: "Show answer"}));
+    expect(screen.getByText(model.partOfSpeech!)).toBeVisible();
+  });
   test("answer metadata omits repetition counters", () => {
     const model = buildTrainingSenseCardModel({group: singleSenseGroup, entry: singleSenseEntry, interfaceLanguage: "en"});
     model.repeatCount = 3;
@@ -164,7 +172,7 @@ describe("TrainingSenseCardStage", () => {
         onAction={vi.fn()}
       />,
     );
-    expect(screen.queryByTestId("training-face-part-of-speech")).not.toBeInTheDocument();
+    expect(screen.getByTestId("training-face-part-of-speech")).toHaveTextContent(nodigModel.partOfSpeech!);
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
 
     const nodigIdioms = container.querySelector('[data-section="expressions"]');

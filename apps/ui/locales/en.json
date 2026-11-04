@@ -1316,7 +1316,8 @@
         "gradeSwipe": "Swipe left or right to rate the answer.",
         "translationSwipe": "Swipe down in a non-scrolling area of the revealed card to show or hide translation.",
         "syllableDoubleTap": "Double-tap or double-click the headword to show or hide syllable breaks."
-      }
+      },
+      "alwaysShowCardCount": "Always show card count"
     },
     "readingSettings": {
       "title": "Reading text",
@@ -1394,7 +1395,6 @@
     "trainingCompletion": {
       "title": "Session complete",
       "cards": "cards",
-      "next": "Another 10 cards",
       "edit": "Modify training",
       "home": "Back to home",
       "min": "min",
@@ -1403,7 +1403,14 @@
         "title": "No cards available",
         "detail": "No cards available for this training right now"
       },
-      "restartError": "Could not start the next batch. Try again or modify training."
+      "restartError": "Could not start the next batch. Try again or modify training.",
+      "unlimited": "Start another session",
+      "nextZero": "Another {count} cards",
+      "nextOne": "Another {count} card",
+      "nextTwo": "Another {count} cards",
+      "nextFew": "Another {count} cards",
+      "nextMany": "Another {count} cards",
+      "nextOther": "Another {count} cards"
     },
     "sessionChrome": {
       "close": "Close session",

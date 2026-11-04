@@ -1168,7 +1168,6 @@
   "features.trainingSetup.calculate": {"source":"Calculate training","translationHash":"89528651a88bc7a3ff4f85020e17a19acfb81ce083f06ecfd1502c2f17def7b2"},
   "features.trainingCompletion.title": {"source":"Session complete","translationHash":"9a7152ed1f18b9c1856c8d42d649e5fe0401ed89e2d4845197d8afd53d83857b"},
   "features.trainingCompletion.cards": {"source":"cards","translationHash":"fa5fd55668cd52dae9c4397d4b5f3b991dd3f689e462ad86d3e303b9d906f4af"},
-  "features.trainingCompletion.next": {"source":"Another 10 cards","translationHash":"9f3bfc105bc8e88c51012e22ea923cc4f7e911bc9b1a40ce7ea4bdc97d081c86"},
   "features.trainingCompletion.edit": {"source":"Modify training","translationHash":"e38077d8cb3c4991f4a2ef49c768013699aff2cf741401c16db2f78ce6618083"},
   "features.trainingCompletion.home": {"source":"Back to home","translationHash":"bdf4ac11d3312aa1d4216bcb8bb5ac10a57c7b4457a206a68360d785968f1077"},
   "features.trainingCompletion.min": {"source":"min","translationHash":"1f6fa6f69d185e6086d04e7330361bf9001a3b8d0ce511171055dc34eb90c1c5"},
@@ -1447,5 +1446,13 @@
   "tour.storageError": {"source":"Could not save your place on this device. The guide can continue, but may not resume after reloading.","translationHash":"7e9e6f069a46aa77dc4a3ebc7b4d50bab1918ff90afc7f21ed032fc3581a5639"},
   "tour.deviceHint": {"source":"Your place in the guide is saved on this device. Closing tips keeps your collections and learning progress.","translationHash":"33f02937f9b6b2e0be1a84b1395d40c067d49c3419b7191e786654f39b0f6883"},
   "tour.returnTrainingTitle": {"source":"Open Training","translationHash":"38b465b515617e59b0d264d872d0820c9e74b3f7752ab7fc8ca8881fdf1d58aa"},
-  "tour.returnTrainingBody": {"source":"Return to Training using the highlighted navigation button.","translationHash":"5a388f010ecb6f18e7ddff38bc9c4bf1b2a8be679e85e748df23f2260a7d21a7"}
+  "tour.returnTrainingBody": {"source":"Return to Training using the highlighted navigation button.","translationHash":"5a388f010ecb6f18e7ddff38bc9c4bf1b2a8be679e85e748df23f2260a7d21a7"},
+  "features.interactionSettings.alwaysShowCardCount": {"source":"Always show card count","translationHash":"c87bc5da23eae15a7d3e483ec3747ff1ead5dee16702e33b5c59d3a5dfdcaa27"},
+  "features.trainingCompletion.unlimited": {"source":"Start another session","translationHash":"779203e8a5e0504014b27672798ec12a7fbec2a6534b62489785e61dc4829461"},
+  "features.trainingCompletion.nextZero": {"source":"Another {count} cards","translationHash":"bb6cd8ce0fe0d5d499b0b602e18622c426ad06a241584b3589dcdbda06f8549d"},
+  "features.trainingCompletion.nextOne": {"source":"Another {count} card","translationHash":"ca3bf97afb4bff8833a1aa043c04b278703aa0f9558c3ed9c61af2d0b78fd871"},
+  "features.trainingCompletion.nextTwo": {"source":"Another {count} cards","translationHash":"bb6cd8ce0fe0d5d499b0b602e18622c426ad06a241584b3589dcdbda06f8549d"},
+  "features.trainingCompletion.nextFew": {"source":"Another {count} cards","translationHash":"bb6cd8ce0fe0d5d499b0b602e18622c426ad06a241584b3589dcdbda06f8549d"},
+  "features.trainingCompletion.nextMany": {"source":"Another {count} cards","translationHash":"bb6cd8ce0fe0d5d499b0b602e18622c426ad06a241584b3589dcdbda06f8549d"},
+  "features.trainingCompletion.nextOther": {"source":"Another {count} cards","translationHash":"bb6cd8ce0fe0d5d499b0b602e18622c426ad06a241584b3589dcdbda06f8549d"}
 }

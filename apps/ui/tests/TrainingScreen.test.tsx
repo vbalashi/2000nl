@@ -2117,9 +2117,8 @@ test("resumes a still-active server session after refresh without starting anoth
     listId: "list-1",
     listType: "curated",
   }));
-  expect(await screen.findByTestId("training-session-position")).toHaveTextContent(
-    "2 / 5",
-  );
+  expect(await screen.findByRole("progressbar")).toHaveAttribute("aria-valuenow", "2");
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuemax", "5");
   expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
     "user-1",
     "session-resume",
@@ -3541,12 +3540,9 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
       screen.queryByRole("button", { name: /Opnieuw|Again/ }),
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
-    expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
-      /Test list0 \/ 2/,
-    );
-    expect(screen.getByTestId("training-session-position")).toHaveTextContent(
-      "0 / 2",
-    );
+    expect(screen.getByTestId("training-session-chrome")).toHaveTextContent("Test list");
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuemax", "2");
     expect(
       screen.getByTestId("training-session-progress-track"),
     ).toBeInTheDocument();
@@ -4512,11 +4508,13 @@ test("a same-run revision keeps the accepted-card position and server counts", a
   fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
   await screen.findByTestId("mock-training-sense-card-v2");
-  await waitFor(() => expect(screen.getByTestId("training-session-position")).toHaveTextContent("0 / 5"));
+  await waitFor(() => expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0"));
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuemax", "5");
 
   fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
   await waitFor(() => expect(mockV2ProgressActionCompleted).toHaveBeenCalledWith("accepted-next-presented"));
-  await waitFor(() => expect(screen.getByTestId("training-session-position")).toHaveTextContent("1 / 5"));
+  await waitFor(() => expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "1"));
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuemax", "5");
 
   fetchTrainingSessionSnapshot.mockResolvedValue({
     ...initial, planRevision: 1, completedActions: 1,
@@ -4528,7 +4526,8 @@ test("a same-run revision keeps the accepted-card position and server counts", a
   fetchNextTrainingWordByScenario.mockResolvedValue(overrideWord);
   act(() => window.dispatchEvent(new Event("focus")));
   await screen.findByRole("heading", { name: "boom" });
-  await waitFor(() => expect(screen.getByTestId("training-session-position")).toHaveTextContent("1 / 5"));
+  await waitFor(() => expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "1"));
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuemax", "5");
   expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
 });
 

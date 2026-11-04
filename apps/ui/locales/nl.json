@@ -1316,7 +1316,8 @@
         "gradeSwipe": "Veeg naar links of rechts om het antwoord te beoordelen.",
         "translationSwipe": "Veeg omlaag op een niet-scrollbaar deel van de geopende kaart om de vertaling te tonen of te verbergen.",
         "syllableDoubleTap": "Dubbeltik of dubbelklik op het trefwoord om de lettergreepverdeling te tonen of te verbergen."
-      }
+      },
+      "alwaysShowCardCount": "Aantal kaarten altijd tonen"
     },
     "readingSettings": {
       "title": "Leestekst",
@@ -1394,7 +1395,6 @@
     "trainingCompletion": {
       "title": "Sessie voltooid",
       "cards": "kaarten",
-      "next": "Nog 10 kaarten",
       "edit": "Training aanpassen",
       "home": "Terug naar start",
       "min": "min",
@@ -1403,7 +1403,14 @@
         "title": "Geen kaarten beschikbaar",
         "detail": "Er zijn nu geen kaarten beschikbaar voor deze training"
       },
-      "restartError": "De volgende reeks kon niet starten. Probeer opnieuw of pas de training aan."
+      "restartError": "De volgende reeks kon niet starten. Probeer opnieuw of pas de training aan.",
+      "unlimited": "Volgende sessie starten",
+      "nextZero": "Nog {count} kaarten",
+      "nextOne": "Nog {count} kaart",
+      "nextTwo": "Nog {count} kaarten",
+      "nextFew": "Nog {count} kaarten",
+      "nextMany": "Nog {count} kaarten",
+      "nextOther": "Nog {count} kaarten"
     },
     "sessionChrome": {
       "close": "Sessie sluiten",

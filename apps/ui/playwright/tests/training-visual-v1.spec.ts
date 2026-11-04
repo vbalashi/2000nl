@@ -20,9 +20,9 @@ async function advanceToApprovedPosition(page: import("@playwright/test").Page) 
     } else {
       await page.getByRole("button", { name: /Goed|Хорошо|Good/i }).click();
     }
-    await expect(page.getByTestId("training-session-position")).toHaveText(
-      `${position} / 23`,
-    );
+    const progress = page.getByTestId("training-session-progress-track");
+    await expect(progress).toHaveAttribute("aria-valuenow", String(position));
+    await expect(progress).toHaveAttribute("aria-valuemax", "23");
   }
 }
 

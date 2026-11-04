@@ -5,10 +5,12 @@ import React, { useEffect, useState } from "react";
 import { authenticatedAccountRequest } from "@/lib/preferences/accountRequest";
 import { settleStudyTime } from "@/lib/training/studyTime/delivery";
 import { ArrowRight, Check, BookOpen } from "lucide-react";
+import type { TrainingSessionSize } from "@/lib/types";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { formatUiCount } from "@/lib/uiMessages";
 import styles from "./TrainingCompletion.module.css";
-export type TrainingCompletionActions = { onRestart?: () => void; onEdit?: () => void; pending?: boolean; startFailed?: boolean };
-export function TrainingCompletion({ interfaceLanguage, completedCount, onExit, onRestart, onEdit, pending=false, startFailed=false, activeMilliseconds, ownerId, sessionId, empty=false, emptyDetail }: TrainingCompletionActions & { empty?:boolean; emptyDetail?:string; interfaceLanguage: OnboardingLanguage; completedCount: number; onExit: () => void; activeMilliseconds?: number | null; ownerId?: string; sessionId?: string | null }) {
+export type TrainingCompletionActions = { onRestart?: () => void; onEdit?: () => void; pending?: boolean; startFailed?: boolean; sessionSize?: TrainingSessionSize };
+export function TrainingCompletion({ interfaceLanguage, completedCount, onExit, onRestart, onEdit, pending=false, startFailed=false, activeMilliseconds, ownerId, sessionId, empty=false, emptyDetail, sessionSize=10 }: TrainingCompletionActions & { empty?:boolean; emptyDetail?:string; interfaceLanguage: OnboardingLanguage; completedCount: number; onExit: () => void; activeMilliseconds?: number | null; ownerId?: string; sessionId?: string | null }) {
  const t = localizedSection("trainingCompletion")[interfaceLanguage];
  const [savedTime,setSavedTime] = useState<number | null>(null);
  useEffect(() => {
@@ -36,7 +38,7 @@ export function TrainingCompletion({ interfaceLanguage, completedCount, onExit, 
  <span className={styles.check} aria-hidden="true">{empty?<BookOpen size={36}/>:<Check size={36} />}</span>
  <h2 className={styles.title} role="status">{empty?emptyCopy.title:t.title}</h2>
  <p className={styles.summary}>{empty?(emptyDetail??emptyCopy.detail):<>{completedCount} {t.cards}{seconds !== null ? ` · ${Math.floor(seconds/60)} ${t.min} ${seconds%60} ${t.sec}` : ""}</>}</p>
- {onRestart && !empty ? <button className={styles.primary} disabled={pending} onClick={onRestart}>{t.next}<ArrowRight size={20} aria-hidden="true" /></button> : null}
+ {onRestart && !empty ? <button className={styles.primary} disabled={pending} onClick={onRestart}>{typeof sessionSize === "number" ? formatUiCount(interfaceLanguage, sessionSize, t, "next") : t.unlimited}<ArrowRight size={20} aria-hidden="true" /></button> : null}
  {startFailed && !pending && !empty ? <p role="alert">{localizedField("trainingCompletion", "restartError")[interfaceLanguage]}</p> : null}
  {onEdit ? <button className={empty?styles.primary:styles.secondary} disabled={pending} onClick={onEdit}>{t.edit}{empty?<ArrowRight size={20} aria-hidden="true"/>:null}</button> : null}
  <button className={styles.home} disabled={pending} onClick={onExit}>{t.home}</button>

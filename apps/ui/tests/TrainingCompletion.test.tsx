@@ -27,3 +27,15 @@ test('empty terminal preserves shared visual surface and truthful actions withou
 test.each([['en','No cards available'],['nl','Geen kaarten beschikbaar'],['ru','Нет доступных карточек']] as const)('empty terminal localizes %s and fences all actions while pending',(language,title)=>{
  render(<TrainingCompletion empty interfaceLanguage={language} completedCount={0} pending onRestart={vi.fn()} onEdit={vi.fn()} onExit={vi.fn()}/>);expect(screen.getByText(title)).toBeVisible();expect(screen.getAllByRole('button')).toHaveLength(2);screen.getAllByRole('button').forEach(b=>expect(b).toBeDisabled());
 });
+
+
+test.each([
+ ["en", 5, "Another 5 cards"], ["nl", 20, "Nog 20 kaarten"],
+ ["ru", 1, "Ещё 1 карточка"], ["ru", 22, "Ещё 22 карточки"],
+ ["en", "all-due-today", "Start another session"],
+ ["nl", "all-due-today", "Volgende sessie starten"],
+ ["ru", "all-due-today", "Начать следующую сессию"],
+] as const)("localizes restart for %s and %s", (language, size, label) => {
+ render(<TrainingCompletion interfaceLanguage={language} sessionSize={size} completedCount={3} onRestart={vi.fn()} onExit={vi.fn()}/>);
+ expect(screen.getByRole("button", {name: label})).toBeVisible();
+});

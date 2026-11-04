@@ -53,8 +53,13 @@ test("@pilot paused meaning session still continues the same run", async ({ page
 for (const action of ["restart", "edit"] as const) test(`@pilot finite completion keeps the palette and supports ${action}`, async ({page}) => {
   await page.setViewportSize({width:429,height:916});
   const fixture = await setupAuthenticatedTrainingAttributionPage(page, 0, { visualProfile: "answer", devTestLogin, sessionPlannedTotal: 3 });
+  const draft = {family:"meaning",scenarioId:"understanding",modes:["word-to-definition"],cardFilter:"both",listValue:"curated:list-attribution",materialMode:"collection",newReviewRatio:2,dateWindow:"all",sourceValue:"all",sessionSize:5};
+  await page.route("**/api/training/setups", route => route.fulfill({json:{revision:1,document:{schemaVersion:1,mainTrainingId:"five",trainings:[{id:"five",name:"Five cards",languageCode:"nl",draft}]}}}));
+  await page.reload();
   await page.route(/\/api\/training\/study-time\?session=/,async route => {const id=new URL(route.request().url()).searchParams.get("session"); await route.fulfill({json:{sessionId:id,activeMilliseconds:260000,measurementCount:12}});});
   await page.getByRole("button", {name: /^(Start training|Начать тренировку|Training starten)$/i}).click();
+  await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+  const headerBefore = await page.locator("[data-training-session-main]").boundingBox();
   for (let index = 0; index < 3; index++) {
     await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
     const reveal = page.getByRole("button", {name: /Show answer|Показать ответ|Antwoord Tonen/i});
@@ -66,6 +71,8 @@ for (const action of ["restart", "edit"] as const) test(`@pilot finite completio
   const completed = page.getByTestId("training-usable-candidates-exhausted");
   await expect(completed).toHaveAttribute("data-training-v2-state", "completed");
   await expect(completed.getByRole("button")).toHaveCount(3);
+  await expect(page.getByTestId("app-header")).toBeHidden();
+  expect((await page.locator("[data-training-session-main]").boundingBox())?.y).toBe(headerBefore?.y);
   await expect(completed).toContainText(/4 min 20 sec|4 мин 20 сек/);
   await page.screenshot({path:`test-results/completion-${action}.png`});
   const colors: string[] = [];
@@ -83,10 +90,10 @@ for (const action of ["restart", "edit"] as const) test(`@pilot finite completio
     expect(fixture.requests.sessionStarts).toHaveLength(1);
     return;
   }
-  await page.getByRole("button", {name: /Another 10 cards|Ещё 10 карточек|Nog 10 kaarten/i}).click();
+  await page.getByRole("button", {name: /Another 5 cards|Ещё 5 карточек|Nog 5 kaarten/i}).click();
   await expect.poll(() => fixture.requests.sessionStarts.length).toBe(2);
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
-  expect(fixture.requests.sessionStarts[1].p_session_size).toBe("10");
+  expect(fixture.requests.sessionStarts[1].p_session_size).toBe("5");
   const {p_session_size: firstSize,p_request_id:firstId,...firstRecipe}=fixture.requests.sessionStarts[0];
   const {p_session_size: nextSize,p_request_id:nextId,...nextRecipe}=fixture.requests.sessionStarts[1];
   expect(nextRecipe).toEqual(firstRecipe); expect(nextId).not.toBe(firstId);
@@ -108,4 +115,42 @@ test("@pilot returning focus preserves Start and one click starts one run", asyn
   await start.click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
   expect(fixture.requests.sessionStarts).toHaveLength(1);
+});
+
+for (const viewport of [
+  {name:"mobile", width:390, height:844},
+  {name:"desktop", width:1280, height:900},
+  {name:"landscape", width:844, height:300},
+]) test(`@pilot completion matches training controls and stays accessible: ${viewport.name}`, async ({page}, testInfo) => {
+  await page.setViewportSize({width:viewport.width,height:viewport.height});
+  await setupAuthenticatedTrainingAttributionPage(page, 0, {visualProfile:"answer", devTestLogin, sessionPlannedTotal:1});
+  await page.getByRole("button", {name:/^(Start training|Начать тренировку|Training starten)$/i}).click();
+  const card = page.getByTestId("training-sense-card-v2");
+  await expect(card).toBeVisible();
+  const reveal = page.getByRole("button", {name:/Show answer|Показать ответ|Antwoord Tonen/i});
+  await expect(reveal).toBeVisible();
+  const activeButton = await reveal.evaluate(el => {
+    const style = getComputedStyle(el);
+    return {fontFamily:style.fontFamily,fontSize:style.fontSize,fontWeight:style.fontWeight,lineHeight:style.lineHeight,borderRadius:style.borderRadius,minHeight:style.minHeight};
+  });
+  await page.screenshot({path:testInfo.outputPath(`active-${viewport.name}.png`)});
+  await reveal.click();
+  await page.getByRole("button", {name:/^(Good|Хорошо|Goed)$/i}).click();
+  const completion = page.getByTestId("training-completion");
+  await expect(completion).toBeVisible();
+  const restart = completion.getByRole("button").first();
+  const completionButton = await restart.evaluate(el => {
+    const style = getComputedStyle(el);
+    return {fontFamily:style.fontFamily,fontSize:style.fontSize,fontWeight:style.fontWeight,lineHeight:style.lineHeight,borderRadius:style.borderRadius,minHeight:style.minHeight};
+  });
+  expect(completionButton).toEqual(activeButton);
+  await page.screenshot({path:testInfo.outputPath(`completion-${viewport.name}.png`)});
+  for (const button of await completion.getByRole("button").all()) {
+    await button.scrollIntoViewIfNeeded();
+    const buttonBounds = await button.boundingBox();
+    const panelBounds = await completion.boundingBox();
+    expect(buttonBounds!.y).toBeGreaterThanOrEqual(panelBounds!.y - 1);
+    expect(buttonBounds!.y + buttonBounds!.height).toBeLessThanOrEqual(panelBounds!.y + panelBounds!.height + 1);
+  }
+  if (viewport.name === "landscape") await page.screenshot({path:testInfo.outputPath("completion-landscape-scrolled.png")});
 });

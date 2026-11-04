@@ -620,7 +620,7 @@
   "ui.cardActions.reportNotice": {"source":"{reason} · demo report, nothing sent","translationHash":"58e4e93e15fd090b61dfe615e21a3f3fff1e60ef4d0a3da2692ed083f036dce3"},
   "ui.article.examples": {"source":"Examples","translationHash":"d190b24bce7f34bdceabc9f392cbc46b67dac597536c8a3ecc2d3ae4004e36da"},
   "ui.article.expressions": {"source":"Expressions","translationHash":"830d0f3a8d2f42f8280e5f09241873d5b6cfb3293025951155197ddc69c73a01"},
-  "ui.article.literally": {"source":"literally","translationHash":"4c34536432b12cf257607527828cf0118e9b22d09f9872e9dbc4d13d03a9cdca"},
+  "ui.article.literally": {"source":"literally","translationHash":"7f6d5b3ae895531b084363ed9cfd2262116624b1885ff611f4ca4886d4fe2f24"},
   "ui.article.usage": {"source":"Usage","translationHash":"5f28077238f104d96057b20bacb5c4ff864305e1dd04776689f37c9c2423044d"},
   "ui.article.example": {"source":"Example","translationHash":"fab313a94604a96150cd1eb009b7486a12b0c9fda83de27f0d9efb61f8b955a7"},
   "ui.article.explanation": {"source":"Explanation","translationHash":"1cd33df9055dbd6ba3ecd1a0203cc888493a76538bfadb8d925e516b5acc2379"},
@@ -1168,7 +1168,6 @@
   "features.trainingSetup.calculate": {"source":"Calculate training","translationHash":"0e892bcf6b922771b6e326d07158a198efe7dab7c7ce6a283f5f9bb64d9bdd3c"},
   "features.trainingCompletion.title": {"source":"Session complete","translationHash":"311bf7c1c116da645af9e4bb1742a761b1a7f8189179f3683fd3045269874424"},
   "features.trainingCompletion.cards": {"source":"cards","translationHash":"b05577ff30c59ce183026ba6fe020374f7a66c044414081f228a290a6674a57b"},
-  "features.trainingCompletion.next": {"source":"Another 10 cards","translationHash":"6d4768d883fa72c0fb6fd77ad469fa9dc62b849f464692087e5df1bb99b06e7d"},
   "features.trainingCompletion.edit": {"source":"Modify training","translationHash":"21d424f0cd133bc2bf191c9790abbc36758975e14e77e11fa32aea7f14e9d0a8"},
   "features.trainingCompletion.home": {"source":"Back to home","translationHash":"2be7c693036e02fe8cc36a23430ba41eb328a16206990aa0fc010994f7b8367c"},
   "features.trainingCompletion.min": {"source":"min","translationHash":"62dcfe2d4dee3196ee4a04c3191fd1d57df7c80070c9a717115fcb03f209bb94"},
@@ -1447,5 +1446,13 @@
   "tour.storageError": {"source":"Could not save your place on this device. The guide can continue, but may not resume after reloading.","translationHash":"a35bc1b1d49e3c53838dbc5accddb73ddfe1c5851dcc25190486738e6842a781"},
   "tour.deviceHint": {"source":"Your place in the guide is saved on this device. Closing tips keeps your collections and learning progress.","translationHash":"8eb0d9f25bedd20dd72da2c6de4935c39dab8afd9372f8ab7c8c3165297acbb3"},
   "tour.returnTrainingTitle": {"source":"Open Training","translationHash":"7d472b7aa44bdae594f174210e35463f04655ade834cd83a639c147441063a7d"},
-  "tour.returnTrainingBody": {"source":"Return to Training using the highlighted navigation button.","translationHash":"7f7920005d24a17bd5b075c77c40f5f8e5fd94a75e35b833d0f8082d3603d81f"}
+  "tour.returnTrainingBody": {"source":"Return to Training using the highlighted navigation button.","translationHash":"7f7920005d24a17bd5b075c77c40f5f8e5fd94a75e35b833d0f8082d3603d81f"},
+  "features.interactionSettings.alwaysShowCardCount": {"source":"Always show card count","translationHash":"3262d47996ce9cb2a847894da9452d9507ac7802cd76e907dcc47afeb60ce21b"},
+  "features.trainingCompletion.unlimited": {"source":"Start another session","translationHash":"52bd213d224420af371472adbff3522909b9d710b4147710bb468d2cc51a58c5"},
+  "features.trainingCompletion.nextZero": {"source":"Another {count} cards","translationHash":"ee98e61fd641d6e7532f348cd0be8c78f454df04134588916b21bc6355306ba7"},
+  "features.trainingCompletion.nextOne": {"source":"Another {count} card","translationHash":"d3f6010e0c02f97127025bff3d009185ec9815bb0562f51bdb0e02f85fae5e57"},
+  "features.trainingCompletion.nextTwo": {"source":"Another {count} cards","translationHash":"ee98e61fd641d6e7532f348cd0be8c78f454df04134588916b21bc6355306ba7"},
+  "features.trainingCompletion.nextFew": {"source":"Another {count} cards","translationHash":"20ec1f1bc153b9928a73306abb079b17ffd1bdc74b0b82393840499c4a7d49cb"},
+  "features.trainingCompletion.nextMany": {"source":"Another {count} cards","translationHash":"ee98e61fd641d6e7532f348cd0be8c78f454df04134588916b21bc6355306ba7"},
+  "features.trainingCompletion.nextOther": {"source":"Another {count} cards","translationHash":"ee98e61fd641d6e7532f348cd0be8c78f454df04134588916b21bc6355306ba7"}
 }

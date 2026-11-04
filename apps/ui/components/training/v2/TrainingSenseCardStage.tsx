@@ -306,7 +306,7 @@ export function TrainingSenseCardStage({
             hint={hint}
             hintVisible={hintVisible}
             label={contextPrompt ? (contextTarget ? localizedField("sensePrompt", "wordFor") : localizedField("sensePrompt", "wordInSentence"))[interfaceLanguage] : mode === "definition-to-word" ? localizedField("sensePrompt", "wordFromMeaning")[interfaceLanguage] : undefined}
-            partOfSpeech={mode === "definition-to-word" ? model.partOfSpeech : undefined}
+            partOfSpeech={mode === "definition-to-word" || mode === "word-to-definition" ? model.partOfSpeech : undefined}
             recallTarget={contextTarget}
             contextLabel={contextPrompt ? localizedField("sensePrompt", "context")[interfaceLanguage] : undefined}
             hintLabel={contextPrompt ? t("senseCard.sections.definition") : t("senseCard.hint.example")}
