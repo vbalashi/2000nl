@@ -32,13 +32,14 @@ import { useRecordedStudyTime } from "../useRecordedStudyTime";
 
 import type { TrainingSessionProgress } from "@/lib/training/sessionLifecycle";
 
-import type {CardFilter} from "@/lib/types";
+import type {CardFilter, TrainingSessionSize} from "@/lib/types";
 type Props = TrainingCompletionActions & {
   presentationActive?: boolean;
   interactionDisabled?: boolean;
   authorityRefreshing?: boolean;
   cardFilter?: CardFilter;
   sessionName?: string;
+  sessionSize?: TrainingSessionSize;
   studyTimeEnabled?: boolean;
   userId: string;
   session: PlatformIdiomExerciseSessionV2;
@@ -61,6 +62,7 @@ type Props = TrainingCompletionActions & {
 
 export function TrainingIdiomSession({
   sessionName,
+  sessionSize,
   interactionDisabled=false,
   authorityRefreshing=false,
   cardFilter = "both",
@@ -73,7 +75,7 @@ export function TrainingIdiomSession({
   interfaceLanguage,
   onExit,
   onProgress,
-  onRestart, onEdit, pending, startFailed, sessionSize,
+  onRestart, onEdit, pending, startFailed,
   onSessionSuperseded,
   onHistory,
   onPlayResolvedAudio,
@@ -143,6 +145,7 @@ export function TrainingIdiomSession({
           cardFilter={cardFilter}
           sessionName={sessionName || t.title}
           presentation={sessionPresentation}
+          unlimited={sessionSize === "all-due-today"}
           showProgress={!loading && !(error && !candidate) && !terminal}
           onHistory={onHistory}
           onClose={onExit}

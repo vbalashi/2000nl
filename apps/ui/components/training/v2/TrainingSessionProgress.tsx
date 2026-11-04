@@ -49,7 +49,7 @@ export function TrainingSessionProgress({ presentation, language, variant }: {
       <path d={wave} fill="none" stroke="currentColor" strokeOpacity=".18" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
       <path d={wave} fill="none" stroke="currentColor" strokeOpacity=".312" strokeWidth="1.4" pathLength="1" strokeDasharray={`${position} 1`} vectorEffect="non-scaling-stroke" />
     </svg> : null}
-    {variant === "dots" && completedMarks >= 2 ? <svg viewBox="-2 0 318 20" preserveAspectRatio="none" aria-hidden="true" className={styles.progressThread}><polyline points={Array.from({length: Math.min(count, completedMarks)}, (_, i) => `${dotX(i)},${8+jitter(i)*.55}`).join(" ")} fill="none" stroke="currentColor" strokeOpacity=".22" strokeWidth="1" vectorEffect="non-scaling-stroke" /></svg> : null}
+    {variant === "dots" && completedMarks >= 2 ? <svg viewBox="0 0 314 11" preserveAspectRatio="none" aria-hidden="true" className={styles.progressThread}><polyline points={Array.from({length: Math.min(count, completedMarks)}, (_, i) => `${dotX(i)},${8+jitter(i)*.55}`).join(" ")} fill="none" stroke="currentColor" strokeOpacity=".22" strokeWidth="1" vectorEffect="non-scaling-stroke" /></svg> : null}
     {variant === "dots" ? Array.from({length: count}, (_, i) => <span aria-hidden="true" key={i} className={styles.progressDot} style={{left:`${dotX(i)/314*100}%`,top:8+jitter(i)*.55,opacity:i<completedMarks?.48:.15}} />) : null}
     <span aria-hidden="true" className={styles.progressDot} style={{
       left:`${variant === "wave" ? (2+position*314)/318*100 : x/314*100}%`,

@@ -33,6 +33,7 @@ import { resolvePlatformV2Audio } from "@/lib/platform/platformV2TrainingMediaCl
 
 import { useRecordedStudyTime } from "../useRecordedStudyTime";
 
+import type { TrainingSessionSize } from "@/lib/types";
 import type { TrainingSessionProgress } from "@/lib/training/sessionLifecycle";
 
 type Props = TrainingCompletionActions & {
@@ -40,6 +41,7 @@ type Props = TrainingCompletionActions & {
   interactionDisabled?: boolean;
   authorityRefreshing?: boolean;
   sessionName?: string;
+  sessionSize?: TrainingSessionSize;
   studyTimeEnabled?: boolean;
   userId: string;
   session: PlatformTranslationExerciseSessionV2;
@@ -120,7 +122,7 @@ export function TrainingSentenceSession(props: Props) {
 
   if(runtime.superseded)return null;
   return <TrainingSessionV2Layout authorityRefreshing={props.authorityRefreshing && !submitting && !exclusion.busy} approvedPresentation={true} phase={loading || translationPending || (candidate && !currentCard.ready && !currentCard.failed) ? "loading" : currentCard.failed || (failed && !candidate) ? "failure" : "ready"}
-    chrome={<TrainingSessionChrome approvedPresentation={true} interfaceLanguage={interfaceLanguage} scenario="idiom" mode="word-to-definition" cardFilter="both" sessionName={props.sessionName || t.title} presentation={sessionPresentation} showProgress={!loading && !(failed && !candidate) && !terminal} onHistory={onHistory} onClose={onExit} disabled={submitting || exclusion.busy} />}
+    chrome={<TrainingSessionChrome approvedPresentation={true} interfaceLanguage={interfaceLanguage} scenario="idiom" mode="word-to-definition" cardFilter="both" sessionName={props.sessionName || t.title} presentation={sessionPresentation} unlimited={props.sessionSize === "all-due-today"} showProgress={!loading && !(failed && !candidate) && !terminal} onHistory={onHistory} onClose={onExit} disabled={submitting || exclusion.busy} />}
     notice={!preparationFailed && (failed || exclusion.failed) ? <TrainingSessionNotice notice={{ kind: "error", message: exclusion.failed ? trainingExclusionCopy[interfaceLanguage].failed : t.failed, retryLabel: t.retry, retryDisabled: submitting || loading, onRetry: () => exclusion.failed ? void exclusion.exclude() : void runtime.retry() }} /> : null}
     footer={<TrainingSessionStatsFooter {...stats} interfaceLanguage={interfaceLanguage} />}>
       {currentCard.enabled && candidate && !loading && !currentCard.ready ? <TrainingSessionState loading={!currentCard.failed} title={currentCard.failed ? t.failed : t.loading}

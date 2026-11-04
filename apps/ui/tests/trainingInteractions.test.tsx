@@ -107,3 +107,25 @@ test('audio swipe is an opt-in upward stroke and preserves scrolling and control
  stroke(scroll,0,-60);stroke(screen.getByRole('button',{name:'Audio'}),0,-60);stroke(screen.getByTestId('lower'),60,-15);stroke(screen.getByTestId('lower'),0,-200);
  expect(onPlayAudio).toHaveBeenCalledOnce();
 });
+
+test('old schema loads existing preferences and saves unrelated choices without writing a missing column',async()=>{
+ const missing=new Response(JSON.stringify({code:'42703',message:'column user_settings.training_always_show_card_count does not exist'}),{status:400});
+ const fetch=vi.fn().mockResolvedValueOnce(missing).mockResolvedValueOnce(new Response(JSON.stringify({training_animation_enabled:false,training_grade_swipe_enabled:true}),{status:200}))
+  .mockResolvedValueOnce(new Response(JSON.stringify({code:'PGRST204',message:"Could not find the 'training_always_show_card_count' column"}),{status:400})).mockResolvedValueOnce(new Response(null,{status:201}));
+ vi.stubGlobal('fetch',fetch);
+ const value=await trainingInteractionRepository.load('owner');
+ expect(value).toMatchObject({animation:false,gradeSwipe:true,alwaysShowCardCount:false});
+ await trainingInteractionRepository.save('owner',value);
+ expect(JSON.parse(fetch.mock.calls[3][1].body)).not.toHaveProperty('training_always_show_card_count');
+ expect(JSON.parse(fetch.mock.calls[3][1].body)).toMatchObject({training_animation_enabled:false,training_grade_swipe_enabled:true});
+});
+test('old schema rejects a requested count setting instead of reporting a false save',async()=>{
+ const fetch=vi.fn().mockResolvedValue(new Response(JSON.stringify({code:'PGRST204',message:"Could not find the 'training_always_show_card_count' column"}),{status:400}));vi.stubGlobal('fetch',fetch);
+ await expect(trainingInteractionRepository.save('owner',{...defaultTrainingInteractions,alwaysShowCardCount:true})).rejects.toThrow('training_card_count_unavailable');
+ expect(fetch).toHaveBeenCalledTimes(1);
+});
+test('unrelated database errors do not trigger legacy fallback',async()=>{
+ const fetch=vi.fn().mockResolvedValue(new Response(JSON.stringify({code:'42501',message:'permission denied'}),{status:403}));vi.stubGlobal('fetch',fetch);
+ await expect(trainingInteractionRepository.load('owner')).rejects.toThrow('training_interactions_load_failed');
+ expect(fetch).toHaveBeenCalledTimes(1);
+});

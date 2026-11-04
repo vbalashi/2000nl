@@ -256,3 +256,12 @@ trainingLifecyclePresentationContract("sentence", () => {
     read:vi.mocked(loadSentenceExerciseContent),acknowledge:currentAcknowledge,action:vi.mocked(performPlatformV2TranslationExerciseAction),
     target:{sessionId:session.sessionId,entryId:candidate.entryId,cardTypeId:"translation:recall"}};
 });
+
+test('unlimited sentence session shows its exact count without dots',async()=>{
+ vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValue(candidate);
+ vi.mocked(loadSentenceExerciseContent).mockResolvedValue({state:'ready',content} as never);
+ render(<TrainingSentenceSession userId="user-1" session={{...session,requestedTotal:2661,completedActions:42}} sessionSize="all-due-today" contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()}/>);
+ await screen.findByText('Переведённый пример.');
+ expect(screen.getByTestId('training-session-position')).toHaveTextContent('42 / 2661');
+ expect(screen.queryByRole('progressbar')).toBeNull();
+});
