@@ -580,6 +580,7 @@ export function DictionarySearchTab({
           ) : null}
         </div>
         {presentation?.filterButtonSide !== "left" && filterButton}
+        {presentation?.renderSearchActions?.(interfaceLanguage)}
         </div>
 
 

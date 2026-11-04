@@ -27,6 +27,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
   layout?: "rows" | "chips";
 }) {
   const presentation = React.useContext(LibraryPresentationContext);
+  const close = () => { presentation?.onDismissAdditionalFilters?.(); onClose(); };
   const inlinePanel = presentation?.filterPlacement === "panel";
   const messages = getUiMessages(locale), copy = messages.library, builder = messages.builder;
   const [draft, setDraft] = useState(value);
@@ -79,7 +80,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
   const content = <>
     <header className={f.header}>
       {page !== "main" && <button type="button" ref={backRef} className={f.icon} aria-label={copy.backFilters} onClick={back}><ArrowLeft size={19}/></button>}
-      <h2>{title}</h2><button type="button" className={f.icon} aria-label={copy.closeFilters} onClick={onClose}><X size={19}/></button>
+      <h2>{title}</h2><button type="button" className={f.icon} aria-label={copy.closeFilters} onClick={close}><X size={19}/></button>
     </header>
     <div className={f.viewport}>
       <div className={f.track} data-child={page !== "main"}>
@@ -104,6 +105,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
             {!renderSources&&!presentation?.renderSources&&!visibleOptions.length && <p className={f.help}>{copy.noSources}</p>}
             {presentation?.renderSourceActions?.()}
           </BuilderSection>
+          {presentation?.renderAdditionalFilters?.(locale)}
           <BuilderSection title={builder.partOfSpeech} summary={draft.parts.length ? draft.parts.map(part => builder.parts[LIBRARY_PART_LABELS[part]]).join(" · ") : builder.allParts} open={partsOpen} onToggle={() => setPartsOpen(open => !open)}>
           {layout === "chips" ? <div className={f.parts}>{LIBRARY_PARTS.map(part => <div className={`${f.part} ${draft.parts.includes(part) ? f.selected : ""}`} key={part}>
             <button type="button" aria-pressed={draft.parts.includes(part)} onClick={() => togglePart(part)}>{builder.parts[LIBRARY_PART_LABELS[part]]}{part === "noun" && draft.article && <span className={f.dot} role="img" aria-label={formatUiMessage(copy.articleFilter,{article:draft.article??""})}/>}</button>
@@ -134,7 +136,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
     <footer className={f.footer}>
       {page === "main" ? <>
         <p className={f.count} role="status">{countContent}</p>
-        <div className={f.actions}><button type="button" className={f.reset} onClick={() => setDraft({ languageCode: draft.languageCode, dictionaryId: null, parts: [], article: null })}>{copy.resetFilters}</button><button type="button" className={f.action} onClick={onClose}>{builder.cancel}</button><button type="button" className={`${f.action} ${f.primary}`} disabled={!canApply} onClick={() => onApply(draft)}>{copy.showResults}</button></div>
+        <div className={f.actions}><button type="button" className={f.reset} onClick={() => { setDraft({ languageCode: draft.languageCode, dictionaryId: null, parts: [], article: null }); presentation?.onResetAdditionalFilters?.(); }}>{copy.resetFilters}</button><button type="button" className={f.action} onClick={close}>{builder.cancel}</button><button type="button" className={`${f.action} ${f.primary}`} disabled={!canApply} onClick={() => { presentation?.onApplyAdditionalFilters?.(); onApply(draft); }}>{copy.showResults}</button></div>
       </> : <div className={f.actions}><button type="button" className={`${f.action} ${f.primary}`} onClick={back}>{copy.ok}</button></div>}
     </footer>
     {nounAnchor && <NounFilterPopover locale={locale} anchor={nounAnchor} article={draft.article} onChange={article => update({ article })} onClose={() => setNounAnchor(null)}/>}
@@ -142,7 +144,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
   // Keep the controlled draft mounted while the dev organizer occupies Library.
   if (presentation?.organizerOpen) return <div hidden>{content}</div>;
   if (inlinePanel) return <section className={`${f.dialog} ${f.inlinePanel}`} aria-label={copy.filterTitle} lang={locale}>{content}</section>;
-  return <DialogSurface onDismiss={onClose} ref={dialogRef} className={f.dialog} aria-label={copy.filterTitle} lang={locale}
-    onCancel={event => { event.preventDefault(); if (page === "main") onClose(); else back(); }}
+  return <DialogSurface onDismiss={close} ref={dialogRef} className={f.dialog} aria-label={copy.filterTitle} lang={locale}
+    onCancel={event => { event.preventDefault(); if (page === "main") close(); else back(); }}
   >{content}</DialogSurface>;
 }

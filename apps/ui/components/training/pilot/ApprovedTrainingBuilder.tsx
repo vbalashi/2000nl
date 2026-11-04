@@ -17,6 +17,7 @@ import {
 } from "@/lib/training/nounArticles";
 import { DirectionCard } from "@/components/practice/builder/DirectionCard";
 import { directionExample } from "@/lib/training/directionExamples";
+import { TrainingBuilderPresentationContext } from "@/components/practice/builder/TrainingBuilderPresentationContext";
 import { BuilderSection } from "@/components/practice/builder/BuilderSection";
 import { BuilderChoice } from "@/components/practice/builder/BuilderChoice";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
@@ -129,6 +130,7 @@ const partKeys: Partial<
 };
 /** Controlled presentation: the production controller retains catalog, draft and start ownership. */
 export function ApprovedTrainingBuilder(p: Props) {
+  const presentation = React.useContext(TrainingBuilderPresentationContext);
   const messages = getUiMessages(p.interfaceLanguage),
     b = messages.builder,
     o = messages.trainingOverview,
@@ -600,6 +602,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                     </div>
                   )}
                 </div>
+                {presentation?.renderAdditionalFilters(p.interfaceLanguage)}
               </>,
             )}
             {section(
