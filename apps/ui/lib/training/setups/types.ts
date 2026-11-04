@@ -14,6 +14,8 @@ export type TrainingSetupDraft = {
   materialMode?: "collection" | "all-dictionaries" | "selected-dictionaries";
   dictionaryIds?: string[];
   newReviewRatio: number;
+  /** Omitted preserves the existing studied-word gate. */
+  studyingOnly?: boolean;
   dateWindow: TrainingDateWindow;
   daysAgo?: number;
   sourceValue: string;

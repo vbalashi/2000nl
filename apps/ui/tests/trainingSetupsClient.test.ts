@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 const { getSession } = vi.hoisted(() => ({ getSession: vi.fn() }));
 vi.mock("@/lib/supabaseClient", () => ({ supabase: { auth: { getSession } } }));
 import { fetchAccountTrainingSetups, saveAccountTrainingSetups } from "@/lib/training/setups/client";
-import { emptyTrainingSetups } from "@/lib/training/setups/model";
+import { emptyTrainingSetups, parseTrainingSetupsDocument } from "@/lib/training/setups/model";
 const fetchMock = vi.fn();
 beforeEach(() => {
   vi.clearAllMocks(); vi.stubGlobal("fetch", fetchMock);
@@ -36,4 +36,13 @@ test("contextual Translation survives save and authenticated fetch without sente
  expect(await saveAccountTrainingSetups("a",3,document)).toEqual({kind:"saved",snapshot});
  expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({expectedRevision:3,document});
  expect(await fetchAccountTrainingSetups("a")).toEqual(snapshot);
+});
+
+test('saved recipes preserve the disabled gate and treat omitted and enabled as the default',()=>{
+ const draft={family:'idiom',scenarioId:'idiom',modes:['word-to-definition'],cardFilter:'both',listValue:'curated:nt2',sourceValue:'all',newReviewRatio:2,dateWindow:'all',sessionSize:10};
+ const document=(value:unknown)=>({schemaVersion:1,mainTrainingId:'one',trainings:[{id:'one',name:'Idioms',languageCode:'nl',draft:value}]});
+ expect(parseTrainingSetupsDocument(document({...draft,studyingOnly:false}))?.trainings[0].draft.studyingOnly).toBe(false);
+ expect(parseTrainingSetupsDocument(document({...draft,studyingOnly:true}))?.trainings[0].draft.studyingOnly).toBeUndefined();
+ expect(parseTrainingSetupsDocument(document(draft))?.trainings[0].draft.studyingOnly).toBeUndefined();
+ expect(parseTrainingSetupsDocument(document({...draft,studyingOnly:'false'}))).toBeNull();
 });

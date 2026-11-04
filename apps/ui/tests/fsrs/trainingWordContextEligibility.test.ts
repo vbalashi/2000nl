@@ -12,6 +12,44 @@ describeIfDb("word in context uses ordinary reverse membership", () => {
   beforeAll(async () => runMigrations(pool));
   afterAll(async () => pool.end());
 
+  test("familiarity is scoped to the learner and exact meaning, including known and previously reviewed cards", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      const otherUserId = randomUUID();
+      await ensureUserWithSettings(client, userId);
+      await ensureUserWithSettings(client, otherUserId);
+      const known = await insertWord(client, `context-known-${randomUUID()}`);
+      const reviewed = await insertWord(client, `context-reviewed-${randomUUID()}`);
+      const untouched = await insertWord(client, `context-untouched-${randomUUID()}`);
+      for (const entryId of [known, reviewed, untouched]) {
+        await client.query(`insert into private.platform_v2_content_nodes
+          (id,entry_id,kind,binding_state,first_source_revision,last_source_revision,
+           source_text_fingerprint,diagnostic_locator)
+          values ($1,$2,'example','active','v1','v1',$3,'raw.meanings[0].examples[0]')`,
+        [randomUUID(), entryId, `example-${entryId}`]);
+      }
+      const event = await client.query(`insert into user_card_action_events
+        (user_id,entry_id,card_type_id,action,client_event_id,action_payload_hash)
+        values ($1,$2,'word-to-definition','mark-known',$3,'context-known') returning id`,
+      [userId, known, randomUUID()]);
+      await client.query(`insert into user_card_known_marks (user_id,entry_id,card_type_id,mark_event_id)
+        values ($1,$2,'word-to-definition',$3)`, [userId, known, event.rows[0].id]);
+      await client.query(`insert into user_card_status
+        (user_id,entry_id,card_type_id,fsrs_enabled,in_learning,fsrs_reps)
+        values ($1,$2,'word-to-definition',false,false,1),
+               ($3,$4,'word-to-definition',true,true,0)`,
+      [userId, reviewed, otherUserId, untouched]);
+      const result = await client.query(`select entry_id,
+        private.training_word_context_candidate_v1($1, entry_id, 'definition-to-word') eligible
+        from unnest($2::uuid[]) entry_id`, [userId, [known, reviewed, untouched]]);
+      expect(result.rows).toEqual([
+        { entry_id: known, eligible: true },
+        { entry_id: reviewed, eligible: true },
+        { entry_id: untouched, eligible: false },
+      ]);
+    });
+  });
+
   test("latches only familiar exact meanings with an active example", async () => {
     await withTransaction(pool, async (client) => {
       const userId = randomUUID();
@@ -49,6 +87,33 @@ describeIfDb("word in context uses ordinary reverse membership", () => {
         [rows[0].session.sessionId],
       );
       expect(members).toEqual([{ entry_id: familiar, card_type_id: "definition-to-word" }]);
+      const group = await client.query(`insert into private.platform_v2_headword_groups
+        (dictionary_id,management_kind,identity_scheme_version,source_group_key)
+        select id,'source',$1,$2 from dictionaries limit 1 returning id`, [randomUUID(), randomUUID()]);
+      await client.query(`insert into private.training_headword_exclusions
+        (user_id,headword_group_id,entry_id,created_at) values ($1,$2,$3,now())`, [userId,group.rows[0].id,familiar]);
+      const startWithFilter = async (studyingOnly: boolean) => {
+        const { rows } = await client.query(`select start_training_session(
+          p_user_id => $1::uuid, p_card_type_ids => ARRAY['definition-to-word']::text[],
+          p_list_id => NULL::uuid, p_list_type => 'curated', p_card_filter => 'both',
+          p_training_filter => $2::jsonb, p_session_size => '5', p_request_id => $3::uuid,
+          p_new_review_ratio => 2) session`, [userId, JSON.stringify({presentationMode: 'word-in-context', studyingOnly}), randomUUID()]);
+        const members = await client.query(`select entry_id from training_session_members where session_id=$1`, [rows[0].session.sessionId]);
+        return {sessionId: rows[0].session.sessionId, entries: members.rows.map(row => row.entry_id)};
+      };
+      expect((await startWithFilter(true)).entries).toEqual([]);
+      const expanded = await startWithFilter(false);
+      expect(expanded.entries).toEqual([unfamiliar]);
+      const card = await client.query(`select get_next_training_session_card($1,$2) card`, [userId, expanded.sessionId]);
+      expect(card.rows[0].card).toMatchObject({id: unfamiliar, mode: 'definition-to-word'});
+      const context = await client.query(`select read_training_word_context_member($1,$2,$3) source`, [userId,expanded.sessionId,unfamiliar]);
+      expect(context.rows[0].source).toMatchObject({entryId: unfamiliar});
+      for (const [studyingOnly, expected] of [[true, 0], [false, 1]] as const) {
+        const available = await client.query(`select read_training_recipe_availability_v1(
+          $1, ARRAY['definition-to-word'],null,'curated',$2,'meaning') result`,
+        [userId, JSON.stringify({presentationMode:'word-in-context',studyingOnly})]);
+        expect(available.rows[0].result.newCards).toBe(expected);
+      }
       const { rows: oldState } = await client.query(
         `select count(*)::integer total from user_training_exercise_state where user_id=$1`,
         [userId],

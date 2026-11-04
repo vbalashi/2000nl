@@ -40,6 +40,7 @@ export function isTrainingSetupDraft(value: unknown): value is TrainingSetupDraf
       (value.daysAgo !== undefined && !integer(value.daysAgo, 36500)) ||
       !text(value.listValue, 512) || !text(value.sourceValue, 512)) return false;
   if (!(family === "meaning" && value.sessionSize === "all-due-today") && !integer(value.sessionSize)) return false;
+  if (value.studyingOnly !== undefined && typeof value.studyingOnly !== "boolean") return false;
   if (value.materialMode !== undefined && !["collection", "all-dictionaries", "selected-dictionaries"].includes(String(value.materialMode))) return false;
   if (value.dictionaryIds !== undefined && (!Array.isArray(value.dictionaryIds) || value.dictionaryIds.length > 100 ||
       new Set(value.dictionaryIds).size !== value.dictionaryIds.length ||
@@ -60,6 +61,7 @@ export function canonicalDraft(value: TrainingSetupDraft): TrainingSetupDraft {
     scenarioId: value.scenarioId, modes: [...value.modes], cardFilter: value.cardFilter,
     listValue: value.listValue, newReviewRatio: value.newReviewRatio,
     dateWindow: value.dateWindow, sourceValue: value.sourceValue, sessionSize: value.sessionSize,
+    ...(value.studyingOnly === false ? { studyingOnly: false } : {}),
     ...(value.daysAgo !== undefined ? { daysAgo: value.daysAgo } : {}),
     ...(value.materialMode !== undefined ? { materialMode: value.materialMode } : {}),
     ...(value.dictionaryIds !== undefined ? { dictionaryIds: [...value.dictionaryIds] } : {}),

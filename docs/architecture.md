@@ -42,6 +42,16 @@ The [session lifecycle contract](training-session-lifecycle.md) records the shar
 owner/adapter seam, transition matrix, characterization tests and migration gates.
 It distinguishes the intended common controller from current family differences.
 
+Idioms and contextual Translation default to studying words only, including for
+older saved recipes. A familiar ordinary meaning has an active learning or FSRS
+state, prior review history, or an uncleared Known mark in either ordinary
+direction. Paused or previously reviewed meanings can therefore qualify. Idioms
+use the source headword group; contextual Translation uses the exact meaning.
+Turning the setting off removes that familiarity gate, while material access,
+family content requirements, exclusions and scheduling remain in force. An
+empty intersection stays empty. The selected setting belongs to the saved recipe
+and the owned session, and availability uses the same selection as session start.
+
 
 ## Meaning card spacing
 

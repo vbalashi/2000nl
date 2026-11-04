@@ -181,6 +181,7 @@ export function useCommitTrainingPilotDraft({
       const focusFilter: TrainingFocusFilter = {
         ...(options?.reviewTiming ? {reviewTiming:options.reviewTiming} : {}),
         dateWindow: draft.dateWindow,
+        ...((draft.family === "idiom" || draft.family === "word-in-context") && draft.studyingOnly === false ? { studyingOnly: false } : {}),
         ...(draft.dateWindow === "daysAgo"
           ? { daysAgo: draft.daysAgo ?? 7 }
           : {}),
@@ -448,6 +449,7 @@ export function useTrainingPilotController({
     newReviewRatio,
     sessionSize,
     dateWindow: focusFilter.dateWindow,
+    ...(focusFilter.studyingOnly === false ? { studyingOnly: false } : {}),
     daysAgo: focusFilter.daysAgo,
     sourceValue: focusFilter.sourceId
       ? `source:${focusFilter.sourceId}`

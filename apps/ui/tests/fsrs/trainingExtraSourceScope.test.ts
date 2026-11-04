@@ -221,6 +221,39 @@ async function sourceEntries(
       );
       expect(siblingRows.map((row) => row.item.entryId)).toEqual([verb]);
 
+      // An unrelated learner has no familiar words. Turning the gate off
+      // expands material, but cannot restore an explicitly excluded idiom.
+      const freshUser = randomUUID();
+      await ensureUserWithSettings(client, freshUser);
+      await client.query(`insert into dictionary_entitlements
+        (dictionary_id,subject_type,subject_key,permission) values ($1,'user',$2,'read')`,
+      [accessibleDictionary, freshUser]);
+      const candidates = async (filter: Record<string, unknown>) => {
+        const result = await client.query(`select item from private.platform_v2_idiom_exercise_candidates_v2(
+          $1,'direct',20,0,null,'curated','new',$2) item`, [freshUser, JSON.stringify(filter)]);
+        return result.rows.map(row => row.item.entryId).sort();
+      };
+      expect(await candidates(selected)).toEqual([]);
+      expect(await candidates({...selected, studyingOnly: false})).toEqual([adjective, verb].sort());
+      const node = idiomNodeIds.get(adjective)!;
+      await client.query(`insert into private.training_pair_exclusions
+        (user_id,pair_key,family,entry_id,content_node_id,source_text_fingerprint,created_at)
+        values ($1,private.training_pair_key_v1('idiom',$2,$3,$4,null),'idiom',$2,$3,$4,now())`,
+      [freshUser, adjective, node, `fingerprint-${node}`]);
+      expect(await candidates({...selected, studyingOnly: false})).toEqual([verb]);
+      expect(await candidates({...selected, studyingOnly: true})).toEqual([]);
+      await client.query("select set_config('request.jwt.claim.sub',$1,true)", [freshUser]);
+      for (const [studyingOnly, expected] of [[true, 0], [false, 1]] as const) {
+        const filter = {...selected, studyingOnly};
+        const available = await client.query(`select read_training_recipe_availability_v1(
+          $1,ARRAY['idiom:direct'],null,'curated',$2,'idiom') result`, [freshUser,JSON.stringify(filter)]);
+        expect(available.rows[0].result.newCards).toBe(expected);
+        const started = await client.query(`select start_platform_v2_idiom_training_session(
+          $1,'direct','5',$2,null,'curated','new',$3,2) result`, [freshUser,randomUUID(),JSON.stringify(filter)]);
+        expect(started.rows[0].result.plannedTotal).toBe(expected);
+      }
+      await client.query("select set_config('request.jwt.claim.sub',$1,true)", [userId]);
+
       const startFilter = { ...selected, partOfSpeech: ["bn", "zn"] };
       const requestId = randomUUID();
       const start = async (filter = startFilter, ratio = 3) => {

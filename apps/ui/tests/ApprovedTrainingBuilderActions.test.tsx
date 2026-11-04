@@ -68,3 +68,16 @@ test('unsaved indicator is accessible and clears when parent reports the saved b
  view.rerender(<ApprovedTrainingBuilder {...p} hasUnsavedChanges={false}/>);
  expect(screen.queryByRole('status',{name:'Unsaved changes'})).not.toBeInTheDocument();
 });
+
+test.each(['idiom','word-in-context'] as const)('%s exposes the default-on setting and click help',family=>{
+ const p=props(); const draft={...p.draft,family,scenarioId:family==='idiom'?'idiom':'understanding',modes:family==='idiom'?['word-to-definition' as const]:['definition-to-word' as const]};
+ render(<ApprovedTrainingBuilder {...p} draft={draft}/>);
+ fireEvent.click(screen.getByRole('button',{name:/Filters/}));
+ const help=screen.getByRole('button',{name:'? Studying words only'});
+ expect(help).toHaveAttribute('aria-expanded','false');fireEvent.click(help);
+ expect(help).toHaveAttribute('aria-expanded','true');
+ expect(screen.getByText(/When on,/)).toHaveTextContent(family==='idiom'?'same dictionary word group':'exact meanings');
+ fireEvent.click(screen.getByRole('button',{name:'Off'}));
+ expect(p.onDraftChange).toHaveBeenCalledOnce();
+ expect(p.onDraftChange.mock.calls[0][0](draft)).toMatchObject({studyingOnly:false});
+});

@@ -24,6 +24,11 @@ test("maps idiom both and contextual Translation onto authoritative families", a
   expect(rpc.mock.calls[0][1]).toMatchObject({ p_exercise_family: "idiom", p_card_type_ids: ["idiom:direct", "idiom:reverse"], p_list_id: null, p_training_filter: { dictionaryScope: { mode: "all", languageCode: "nl" } } });
   await POST(request({ languageCode: "nl", draft: { ...draft(), family: "word-in-context", modes: ["definition-to-word"] } })); expect(rpc.mock.calls[1][1]).toMatchObject({ p_exercise_family: "meaning", p_training_filter: { presentationMode: "word-in-context" } });
 });
+test.each([['idiom','idiom','word-to-definition'],['word-in-context','understanding','definition-to-word']])('forwards the disabled studying gate for %s availability', async (family,scenario,mode) => {
+  const response=await POST(request({languageCode:'nl',draft:{...draft(),family,scenarioId:scenario,modes:[mode],studyingOnly:false}}));
+  expect(response.status).toBe(200);
+  expect(rpc.mock.calls[0][1].p_training_filter).toMatchObject({studyingOnly:false});
+});
 test("rejects identities, paused sentences, malformed scopes and oversized payloads without RPC", async () => {
   for (const body of [{ ...recipe(), userId: "victim" }, { ...recipe(), draft: { ...draft(), reviewTiming: "early" } }, { ...recipe(), draft: { ...draft(), family: "sentence", scenarioId: "sentences" } }, { ...recipe(), languageCode: "Dutch" }, { ...recipe(), draft: { ...draft(), listValue: "user:bad" } }, { ...recipe(), draft: { ...draft(), sourceValue: "source:bad" } }]) expect((await POST(request(body))).status).toBe(400);
   expect((await POST(request({ padding: "x".repeat(20000) }))).status).toBe(413); expect(rpc).not.toHaveBeenCalled();

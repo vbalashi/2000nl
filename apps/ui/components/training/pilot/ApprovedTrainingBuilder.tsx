@@ -1,5 +1,6 @@
 "use client";
 import {signalOnboarding} from "@/lib/onboarding/signals";
+import { SettingsHelp } from "@/components/practice/settings/SettingsHelp";
 import { SegmentedControl } from "@/components/practice/ui/SegmentedControl";
 import React, { useId, useState, useRef, useLayoutEffect } from "react";
 import {
@@ -584,6 +585,15 @@ export function ApprovedTrainingBuilder(p: Props) {
                     </div>
                   )}
                 </div>
+                {(family === "idiom" || family === "word-in-context") && (
+                  <div className={s.field}>
+                    <h2>{c.studyingOnly} <SettingsHelp label={c.studyingOnly} text={family === "idiom" ? c.studyingOnlyIdiomHelp : c.studyingOnlyContextHelp} /></h2>
+                    <SegmentedControl standard label={c.studyingOnly}>
+                      <BuilderChoice active={p.draft.studyingOnly !== false} onClick={() => p.onDraftChange(current => ({...current, studyingOnly: true}))}>{c.studyingOnlyOn}</BuilderChoice>
+                      <BuilderChoice active={p.draft.studyingOnly === false} onClick={() => p.onDraftChange(current => ({...current, studyingOnly: false}))}>{c.studyingOnlyOff}</BuilderChoice>
+                    </SegmentedControl>
+                  </div>
+                )}
                 <details className={s.activity}>
                   <summary>
                     <span>{c.activity}</span>

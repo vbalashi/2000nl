@@ -3,6 +3,7 @@ import type {TrainingFocusFilter} from "@/lib/types";
 export const trainingFilterKey = (filter: TrainingFocusFilter) =>
   JSON.stringify({
     reviewTiming: filter.reviewTiming ?? null,
+    studyingOnly: filter.studyingOnly !== false,
     presentationMode: filter.presentationMode ?? null,
     dateWindow: filter.dateWindow,
     daysAgo: filter.daysAgo ?? null,

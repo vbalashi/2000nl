@@ -10,7 +10,7 @@ export type TrainingAvailability = {
 };
 const object = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const draftKeys = ["family", "scenarioId", "modes", "cardFilter", "listValue", "materialMode", "dictionaryIds", "newReviewRatio", "dateWindow", "daysAgo", "sourceValue", "sessionSize", "partOfSpeech", "nounArticles"];
+const draftKeys = ["family", "scenarioId", "modes", "cardFilter", "listValue", "materialMode", "dictionaryIds", "newReviewRatio", "dateWindow", "daysAgo", "sourceValue", "sessionSize", "partOfSpeech", "nounArticles", "studyingOnly"];
 
 /** The principal is never accepted in the request. Recipe fields are preferences only. */
 export function parseAvailabilityRecipe(value: unknown): TrainingAvailabilityRecipe | null {
@@ -32,6 +32,7 @@ export function availabilityRpcScope(recipe: TrainingAvailabilityRecipe) {
   const [listType, listId] = draft.listValue.split(":");
   const filter: TrainingFocusFilter = {
     dateWindow: draft.dateWindow,
+    ...((draft.family === "idiom" || draft.family === "word-in-context") && draft.studyingOnly === false ? { studyingOnly: false } : {}),
     ...(draft.dateWindow === "daysAgo" ? { daysAgo: draft.daysAgo ?? 7 } : {}),
     ...(draft.sourceValue.startsWith("source:") ? { sourceId: draft.sourceValue.slice(7) } : draft.sourceValue === "kind:youtube" ? { sourceKind: "youtube" } : {}),
     ...(draft.partOfSpeech?.length ? { partOfSpeech: [...draft.partOfSpeech].sort() } : {}),

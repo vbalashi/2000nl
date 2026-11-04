@@ -445,11 +445,11 @@ test("word in context starts only the ordinary reverse queue with a presentation
   await act(async () => {
     expect(await result.current({ ...draft, family: "word-in-context",
       modes: ["definition-to-word"], materialMode: "all-dictionaries",
-      partOfSpeech: ["ww"], cardFilter: "review" })).toBe(true);
+      partOfSpeech: ["ww"], cardFilter: "review", studyingOnly: false })).toBe(true);
   });
   expect(startTrainingSession).toHaveBeenCalledWith("user-1", ["definition-to-word"],
     expect.objectContaining({ trainingFilter: expect.objectContaining({
-      presentationMode: "word-in-context", partOfSpeech: ["ww"],
+      presentationMode: "word-in-context", partOfSpeech: ["ww"], studyingOnly: false,
     }) }), expect.any(String));
   expect(applyFocusFilter).toHaveBeenCalledWith(expect.not.objectContaining({
     presentationMode: "word-in-context",
@@ -543,6 +543,7 @@ test.each(["direct", "reverse", "mixed"] as const)("idiom %s starts forward the 
       partOfSpeech: ["bn"],
       nounArticles: ["de"],
       sourceValue: "kind:youtube",
+      studyingOnly: false,
       sessionSize: 10,
     })).toBe(true);
   });
@@ -557,6 +558,7 @@ test.each(["direct", "reverse", "mixed"] as const)("idiom %s starts forward the 
       sourceKind: "youtube",
       partOfSpeech: ["bn"],
       nounArticles: ["de"],
+      studyingOnly: false,
     }),
   }));
   expect(onSessionReady).toHaveBeenCalledWith(
