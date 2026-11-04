@@ -1,4 +1,5 @@
 'use client';
+import {Check} from 'lucide-react';
 import React,{useCallback,useEffect,useRef,useState} from 'react';
 import {Joyride,type TooltipRenderProps} from 'react-joyride';
 import {tourCopy,tourFlows,topics,tourStorageKey,parseTourRecord,pausePoint,type TourTopic,type TourRecord,type TourStep} from '@/lib/onboarding/model';
@@ -24,10 +25,10 @@ function useTour(userId:string,autoStart:boolean,language:OnboardingLanguage,por
  if(saved){wasCompleted.current=saved.status==='complete';setRecord(saved.status==='complete'?saved:{...saved,status:'paused',step:0});}setReady(true);
  },[userId]);
  useEffect(()=>{if(!ready||!record)return;try{localStorage.setItem(tourStorageKey(userId),JSON.stringify(record));setSaveError(false);}catch{setSaveError(true);}},[record,ready,userId]);
- const start=useCallback((topic:TourTopic,remaining:TourTopic[]=[])=>{setRecord(prev=>({version:1,topic,step:0,status:'running',remaining,coreCompleted:prev?.coreCompleted??!autoStart}));portRef.current.prepare(topic,0);},[autoStart]);
+ const start=useCallback((topic:TourTopic,remaining:TourTopic[]=[])=>{setRecord(prev=>({version:1,topic,step:0,status:'running',remaining,coreCompleted:prev?.coreCompleted??!autoStart,completedTopics:prev?.completedTopics??(prev?.status==='complete'?[prev.topic]:[])}));portRef.current.prepare(topic,0);},[autoStart]);
  useEffect(()=>{if(ready&&!record&&autoStart&&!autoStarted.current){autoStarted.current=true;start('core');}},[ready,record,autoStart,start]);
  const pause=useCallback(()=>{window.dispatchEvent(new Event(ONBOARDING_PAUSE));setRecord(prev=>prev?{...prev,status:'paused',step:pausePoint(prev)}:prev);portRef.current.pause();},[]);
- const advance=useCallback(()=>{setRecord(prev=>{if(!prev||prev.status!=='running')return prev;const last=prev.step===tourFlows[prev.topic].length-1;const selected=prev.topic==='collections'&&tourFlows[prev.topic][prev.step].id==='membership'?document.querySelector<HTMLInputElement>('[data-onboarding=member-option]:checked')?.value:undefined;return {...prev,...(selected?{collectionId:selected}:{}),step:last?prev.step:prev.step+1,status:last?'complete':'running',coreCompleted:prev.coreCompleted||last&&prev.topic==='core'};});},[]);
+ const advance=useCallback(()=>{setRecord(prev=>{if(!prev||prev.status!=='running')return prev;const last=prev.step===tourFlows[prev.topic].length-1;const selected=prev.topic==='collections'&&tourFlows[prev.topic][prev.step].id==='membership'?document.querySelector<HTMLInputElement>('[data-onboarding=member-option]:checked')?.value:undefined;return {...prev,...(selected?{collectionId:selected}:{}),step:last?prev.step:prev.step+1,status:last?'complete':'running',coreCompleted:prev.coreCompleted||last&&prev.topic==='core',completedTopics:last?Array.from(new Set([...(prev.completedTopics??[]),prev.topic])):prev.completedTopics};});},[]);
  useEffect(()=>{if(record?.status==='running')portRef.current.enter?.(record.topic,record.step);},[record]);
  useEffect(()=>{if(record?.status==='complete'&&!wasCompleted.current){wasCompleted.current=true;window.dispatchEvent(new Event(ONBOARDING_PAUSE));if(record.topic==='core')portRef.current.completeCore();if(record.remaining?.length){const [next,...rest]=record.remaining;start(next,rest);}else portRef.current.pause();}else if(record&&record.status!=='complete')wasCompleted.current=false;},[record,start]);
  const resume=()=>{if(!record)return;portRef.current.prepare(record.topic,record.step);setRecord({...record,status:'running'});};
@@ -39,10 +40,12 @@ export function OnboardingProvider({userId,autoStart,language,port,children}:{us
 export function OnboardingSettings({sharing,collections}:{sharing:boolean;collections:boolean}){
  const tour=React.useContext(TourContext);if(!tour)return null;const {copy,record}=tour;
  const available=topics.filter(topic=>(collections||topic!=='collections')&&(sharing||!['sharing','incoming'].includes(topic))&&(collections||topic!=='sharing'));
+ const statusCopy={en:{completed:'Completed',inProgress:'In progress'},ru:{completed:'Пройдено',inProgress:'В процессе'},nl:{completed:'Voltooid',inProgress:'Bezig'}}[tour.language];
+ const completed=new Set([...(record?.completedTopics??[]),...(record?.status==='complete'?[record.topic]:[])]);
  const labels={core:copy.tourName,collections:copy.collectionsTopic,card:copy.cardTopic,stats:copy.statsTopic,sharing:copy.sharingTopic,incoming:copy.incomingTopic,languages:copy.languagesTopic,appearance:copy.appearanceTopic};
  return <SettingsPanel title={copy.tourName} className={s.settingsPanel}><p className={settings.hint}>{copy.deviceHint}</p>{tour.saveError&&<p role="alert">{copy.storageError}</p>}
  <div className={s.actions}>{record&&record.status!=='complete'&&<button onClick={tour.resume}>{copy.resume}</button>}<button onClick={()=>tour.start('core')}>{copy.restart}</button></div>
- <h3 className={settings.subheading}>{copy.topicHeading}</h3><div className={s.topics}>{available.filter(topic=>topic!=='core').map(topic=><button key={topic} onClick={()=>tour.start(topic)}>{labels[topic]}</button>)}</div><div className={s.actions}><button onClick={()=>{const [first,...rest]=available.filter(topic=>topic!=='core');if(first)tour.start(first,rest);}}>{copy.allTopics}</button></div></SettingsPanel>;
+ <h3 className={settings.subheading}>{copy.topicHeading}</h3><div className={s.topics}>{available.filter(topic=>topic!=='core').map(topic=><button key={topic} onClick={()=>tour.start(topic)}><span>{labels[topic]}</span>{completed.has(topic)?<span className={s.topicStatus}><Check size={14} aria-hidden="true"/>{statusCopy.completed}</span>:record?.topic===topic&&record.status!=='complete'?<span className={s.topicStatus}>{statusCopy.inProgress}</span>:null}</button>)}</div><div className={s.actions}><button onClick={()=>{const [first,...rest]=available.filter(topic=>topic!=='core');if(first)tour.start(first,rest);}}>{copy.allTopics}</button></div></SettingsPanel>;
 }
 function Tooltip({step,tooltipProps}:TooltipRenderProps){
  const tour=React.useContext(TourContext)!;const current=tourFlows[tour.record!.topic][tour.record!.step];

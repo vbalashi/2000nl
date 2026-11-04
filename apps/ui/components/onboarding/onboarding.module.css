@@ -8,8 +8,11 @@
 .settingsPanel .actions { margin: 16px 0 24px; }
 .settingsPanel .actions button, .settingsPanel .topics button { min-height: 28px; padding: 6px 10px; border: 0; border-radius: var(--practice-radius-control); background: transparent; color: var(--practice-text-secondary); font: 400 var(--practice-text-caption)/1.5 var(--practice-font-ui); }
 .settingsPanel .actions button:hover, .settingsPanel .topics button:hover { background: var(--practice-surface-hover); }
-.settingsPanel .topics { gap: 0; }
-.settingsPanel .topics button { padding: 14px 0; border-radius: 0; border-bottom: 1px solid var(--practice-border); text-align: left; }
+.settingsPanel .topics { gap: 4px; }
+.settingsPanel .topics button { display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 10px;border-radius:var(--practice-radius-control);text-align:left; }
 .settingsPanel .topics button:last-child { border-bottom: 0; }
 
 @media(max-width:650px){.settingsPanel .actions button,.settingsPanel .topics button{min-height:44px}}
+
+.topicStatus{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;color:var(--practice-text-muted);font-size:var(--practice-text-label)}
+@media(max-width:650px){.settingsPanel .topics button{flex-wrap:wrap}.topicStatus{margin-inline-start:auto}}

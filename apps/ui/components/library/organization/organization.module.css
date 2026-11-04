@@ -73,3 +73,5 @@
 
 @media(min-width:701px){.organizer button,.received button{min-height:36px}.organizer select,.received select{min-height:36px;padding:6px 10px}.sharedTop button{min-height:36px}}
 @media(max-width:700px){.labelList button[aria-pressed]{min-height:44px}.collection{background:transparent;border:0;border-bottom:1px solid var(--practice-border);border-radius:0;padding:14px 4px}.sharedWorkspace{overflow:hidden}}
+
+.labelList > p{margin:16px 10px 0;line-height:1.5;font-size:var(--practice-text-caption)}
