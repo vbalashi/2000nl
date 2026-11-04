@@ -37,11 +37,11 @@ test.describe("animated swipe preview", () => {
     await startFixture(page);
     for (let i = 0; i < 6; i++) {
       await page.getByRole("button", { name: /Antwoord tonen/i }).click();
-      const position = await page.getByTestId("training-session-position").innerText();
+      const position = await page.getByTestId("training-session-progress-track").getAttribute("aria-valuenow");
       const learn = page.getByRole("button", { name: /Begin met leren/i });
       if (await learn.isVisible()) await learn.click();
       else await page.getByRole("button", { name: /Goed/i }).click();
-      await expect(page.getByTestId("training-session-position")).not.toHaveText(position);
+      await expect(page.getByTestId("training-session-progress-track")).not.toHaveAttribute("aria-valuenow", position!);
     }
     await page.getByRole("button", { name: /Antwoord tonen/i }).click();
     const rim = page.getByTestId("training-session-progress-track");
@@ -79,18 +79,18 @@ test("session progress stays above the card through reveal and accepted next car
   expect(await rim.evaluate(el => el.closest('[data-testid="training-card-swipe-wrapper"]'))).toBeNull();
   await page.getByRole("button", { name: /Antwoord tonen|Show answer/i }).click();
   expect(await rim.boundingBox()).toEqual(before);
-  const oldPosition = await page.getByTestId("training-session-position").innerText();
+  const oldPosition = await page.getByTestId("training-session-progress-track").getAttribute("aria-valuenow");
   const learn = page.getByRole("button", { name: /Begin met leren|Start learning/i });
   if (await learn.isVisible()) await learn.click();
   else await page.getByRole("button", { name: /Goed|Good/i }).click();
-  await expect(page.getByTestId("training-session-position")).not.toHaveText(oldPosition);
+  await expect(page.getByTestId("training-session-progress-track")).not.toHaveAttribute("aria-valuenow", oldPosition!);
   expect(await rim.boundingBox()).toEqual(before);
   for (let i = 0; i < 5; i++) {
     await page.getByRole("button", { name: /Antwoord tonen|Show answer/i }).click();
-    const position = await page.getByTestId("training-session-position").innerText();
+    const position = await page.getByTestId("training-session-progress-track").getAttribute("aria-valuenow");
     if (await learn.isVisible()) await learn.click();
     else await page.getByRole("button", { name: /Goed|Good/i }).click();
-    await expect(page.getByTestId("training-session-position")).not.toHaveText(position);
+    await expect(page.getByTestId("training-session-progress-track")).not.toHaveAttribute("aria-valuenow", position!);
     expect(await rim.boundingBox()).toEqual(before);
   }
   await page.screenshot({ path: testInfo.outputPath("quiet-dots-next.png") });
@@ -275,7 +275,8 @@ for (const variant of ["wave", "off"] as const) {
   const progress=page.getByTestId("training-session-progress-track");
   if(variant==="off") await expect(progress).toHaveCount(0);
   else await expect(progress).toHaveAttribute("data-variant",variant);
-  await expect(page.getByTestId("training-session-position")).toBeVisible();
+  if (variant === "off") await expect(page.getByTestId("training-session-position")).toBeVisible();
+  else await expect(page.getByTestId("training-session-position")).toHaveCount(0);
   await page.screenshot({path:testInfo.outputPath(`progress-${variant}.png`)});
  });
 }
