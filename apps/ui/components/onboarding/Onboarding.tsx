@@ -6,6 +6,7 @@ import {ONBOARDING_SIGNAL,ONBOARDING_PAUSE} from '@/lib/onboarding/signals';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {SettingsPanel} from '@/components/practice/settings/SettingsLayout';
 import s from './onboarding.module.css';
+import {tooltipBounds} from './tooltipBounds';
 export type TourPort={prepare:(topic:TourTopic,step:number)=>void;pause:()=>void;completeCore:()=>void;enter?:(topic:TourTopic,step:number)=>void};
 const TourContext=React.createContext<ReturnType<typeof useTour>|null>(null);
 function visible(selector:string):HTMLElement|null {
@@ -45,7 +46,7 @@ export function OnboardingSettings({sharing,collections}:{sharing:boolean;collec
 function Tooltip({step,tooltipProps}:TooltipRenderProps){
  const tour=React.useContext(TourContext)!;const current=tourFlows[tour.record!.topic][tour.record!.step];
  const canContinue=current.next==='continue'&&Boolean(step.data?.ready);
- return <div {...tooltipProps} data-training-hotkeys-suspended="true" className={s.tooltip}><div className={s.top}><span>{tour.copy.tourName} · {tour.record!.step+1} / {tourFlows[tour.record!.topic].length}</span><button onClick={tour.pause}>{tour.copy.pause}</button></div><h2>{step.title}</h2><p>{step.content}</p>
+ return <div {...tooltipProps} data-training-hotkeys-suspended="true" className={s.tooltip}><span className={s.safeArea} aria-hidden="true"/><div className={s.top}><span>{tour.copy.tourName} · {tour.record!.step+1} / {tourFlows[tour.record!.topic].length}</span><button onClick={tour.pause}>{tour.copy.pause}</button></div><h2>{step.title}</h2><p>{step.content}</p>
  {current.id==='interface'&&<p>{tour.copy.pauseIntro}</p>}{current.id==='translation'&&<p>{tour.copy.secondaryMention}</p>}
  {current.next==='continue'?<button disabled={!canContinue} className={s.primary} onClick={tour.advance}>{current.id==='done'?tour.copy.done:tour.copy.continue}</button>:<p className={s.instruction}>{tour.copy.clickHint}</p>}
  {tour.saveError&&<p role="alert">{tour.copy.storageError}</p>}</div>;
@@ -57,6 +58,24 @@ function TourOverlay(){
  const step=React.useMemo(()=>baseStep&&baseStep.id==='source-pick'&&record?.collectionId?{...baseStep,target:`[data-onboarding=source-option][data-source-value="user:${record.collectionId}"]`}:baseStep,[baseStep,record?.collectionId]);
  const [target,setTarget]=useState<HTMLElement|null>(null),[waiting,setWaiting]=useState(false),[canContinue,setCanContinue]=useState(false),[topLayer,setTopLayer]=useState<HTMLElement|null>(null);
  const running=record?.status==='running';
+ // Recompute when the visual viewport changes, including zoom and the keyboard.
+ const [viewportVersion,setViewportVersion]=useState(0);
+ useEffect(()=>{if(!running)return;const update=()=>setViewportVersion(v=>v+1);const viewport=window.visualViewport;
+  window.addEventListener('resize',update);viewport?.addEventListener('resize',update);viewport?.addEventListener('scroll',update);
+  return()=>{window.removeEventListener('resize',update);viewport?.removeEventListener('resize',update);viewport?.removeEventListener('scroll',update);};
+ },[running]);
+ const floatingOptions=React.useMemo(()=>{void viewportVersion;return {strategy:'fixed' as const, hideArrow:step?.id==='done', middleware:[{name:'safeViewport',async fn(state:import('@floating-ui/react-dom').MiddlewareState){
+  const vv=window.visualViewport;const viewport={left:vv?.offsetLeft??0,top:vv?.offsetTop??0,width:vv?.width??window.innerWidth,height:vv?.height??window.innerHeight};
+  const tooltip=state.elements.floating.firstElementChild as HTMLElement|null;
+  if(tooltip){tooltip.style.setProperty('--tour-viewport-height',`${viewport.height}px`);tooltip.style.setProperty('--tour-viewport-width',`${viewport.width}px`);}
+  const probe=state.elements.floating.querySelector('[aria-hidden="true"]') as HTMLElement|null;const style=probe?getComputedStyle(probe):null;
+  const safe={top:parseFloat(style?.paddingTop||'0')||0,right:parseFloat(style?.paddingRight||'0')||0,bottom:parseFloat(style?.paddingBottom||'0')||0,left:parseFloat(style?.paddingLeft||'0')||0};
+  const parent=await state.platform.getOffsetParent?.(state.elements.floating);
+  const rect=await state.platform.convertOffsetParentRelativeRectToViewportRelativeRect!({elements:state.elements,rect:{...state.rects.floating,x:state.x,y:state.y},offsetParent:parent,strategy:state.strategy});
+  const desired=step?.id==='done'?{x:viewport.left+(viewport.width-rect.width)/2,y:viewport.top+(viewport.height-rect.height)/2}:{x:rect.x,y:rect.y};
+  const bounded=tooltipBounds(viewport,{width:document.documentElement.clientWidth,height:document.documentElement.clientHeight},safe,rect,desired);
+  return {x:state.x+bounded.x-rect.x,y:state.y+bounded.y-rect.y};
+ }}]};},[step?.id,viewportVersion]);
  useEffect(()=>{
   setTarget(null);setWaiting(false);if(!running||!step)return;
   let cancelled=false,frame=0,previous='',stable=0,armed=false;
@@ -84,6 +103,6 @@ function TourOverlay(){
  const text=(value:string)=>value.replace('{section}',document.querySelector('[data-onboarding="appearance"]')?.getAttribute('aria-label')??'');
  const dialog=target?.closest<HTMLElement>('dialog,[popover]')??undefined;
  if(topLayer&&!topLayer.contains(target))return null;
- return <>{target&&<Joyride key={`${record!.topic}:${record!.step}:${tour.language}`} run steps={[{target:()=>target,title:text(copy[step.title]),content:text(copy[step.body]),placement:step.id==='done'?'center':'auto',data:{ready:canContinue}}]} tooltipComponent={Tooltip} portalElement={dialog} onEvent={event=>{if(['finished','skipped'].includes(event.status))pause();}} options={{skipBeacon:true,hideOverlay:Boolean(dialog),blockTargetInteraction:false,disableFocusTrap:true,overlayClickAction:false,dismissKeyAction:'close',closeButtonAction:'skip',overlayColor:'rgba(24,19,34,.52)',spotlightPadding:8,spotlightRadius:15,width:340,zIndex:10000,skipScroll:true,primaryColor:'#71608d'}}/>}
+ return <>{target&&<Joyride key={`${record!.topic}:${record!.step}:${tour.language}`} run steps={[{target:()=>target,title:text(copy[step.title]),content:text(copy[step.body]),placement:'auto',data:{ready:canContinue}}]} tooltipComponent={Tooltip} floatingOptions={floatingOptions} portalElement={dialog} onEvent={event=>{if(['finished','skipped'].includes(event.status))pause();}} options={{skipBeacon:true,hideOverlay:Boolean(dialog),blockTargetInteraction:false,disableFocusTrap:true,overlayClickAction:false,dismissKeyAction:'close',closeButtonAction:'skip',overlayColor:'rgba(24,19,34,.52)',spotlightPadding:8,spotlightRadius:15,width:340,zIndex:10000,skipScroll:true,primaryColor:'#71608d'}}/>}
  {!target&&waiting&&<aside className={s.recovery} role="status"><p>{copy.waiting}</p><button onClick={pause}>{copy.pause}</button><button onClick={()=>tour.start(record!.topic)}>{copy.retryTopic}</button></aside>}</>;
 }

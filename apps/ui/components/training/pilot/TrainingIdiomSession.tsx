@@ -32,13 +32,14 @@ import { useRecordedStudyTime } from "../useRecordedStudyTime";
 
 import type { TrainingSessionProgress } from "@/lib/training/sessionLifecycle";
 
-import type {CardFilter} from "@/lib/types";
+import type {CardFilter, TrainingSessionSize} from "@/lib/types";
 type Props = TrainingCompletionActions & {
   presentationActive?: boolean;
   interactionDisabled?: boolean;
   authorityRefreshing?: boolean;
   cardFilter?: CardFilter;
   sessionName?: string;
+  sessionSize?: TrainingSessionSize;
   studyTimeEnabled?: boolean;
   userId: string;
   session: PlatformIdiomExerciseSessionV2;
@@ -61,6 +62,7 @@ type Props = TrainingCompletionActions & {
 
 export function TrainingIdiomSession({
   sessionName,
+  sessionSize,
   interactionDisabled=false,
   authorityRefreshing=false,
   cardFilter = "both",
@@ -143,6 +145,7 @@ export function TrainingIdiomSession({
           cardFilter={cardFilter}
           sessionName={sessionName || t.title}
           presentation={sessionPresentation}
+          unlimited={sessionSize === "all-due-today"}
           showProgress={!loading && !(error && !candidate) && !terminal}
           onHistory={onHistory}
           onClose={onExit}
@@ -178,7 +181,7 @@ export function TrainingIdiomSession({
       {preparationFailed ? <TrainingSessionState title={t.failed} announcement="alert"
         action={{label:t.retry,onClick:()=>void runtime.retry()}}
         secondaryAction={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
-      {!loading && terminal ? <TrainingCompletion empty={terminal==="empty"} emptyDetail={cardFilter==="review" && session.plannedTotal===0?{en:"No idioms are due now. Include new cards in training settings to start learning more.",nl:"Er hoeven nu geen uitdrukkingen herhaald te worden. Voeg nieuwe kaarten toe in de trainingsinstellingen om verder te leren.",ru:"Сейчас нет идиом для повторения. Включите новые карточки в настройках тренировки, чтобы продолжить изучение."}[interfaceLanguage]:undefined} ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} startFailed={startFailed} /> : null}
+      {!loading && terminal ? <TrainingCompletion sessionSize={sessionSize} empty={terminal==="empty"} emptyDetail={cardFilter==="review" && session.plannedTotal===0?{en:"No idioms are due now. Include new cards in training settings to start learning more.",nl:"Er hoeven nu geen uitdrukkingen herhaald te worden. Voeg nieuwe kaarten toe in de trainingsinstellingen om verder te leren.",ru:"Сейчас нет идиом для повторения. Включите новые карточки в настройках тренировки, чтобы продолжить изучение."}[interfaceLanguage]:undefined} ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} startFailed={startFailed} /> : null}
       {!loading && !terminal && currentCard.ready && candidate && content ? (
         <TrainingIdiomCard
           presentationActive={presentationActive}

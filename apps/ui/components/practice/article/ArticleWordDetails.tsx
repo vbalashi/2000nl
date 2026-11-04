@@ -98,9 +98,43 @@ function Disclosure({label,children}:{label:string;children:ReactNode}) {
 export function ArticleSenseRelations({relation,interfaceLanguage,contentLanguage,translationLanguage,translationVisible=false,translationPending=false,translationFailed=false,onRetryTranslation,compact=false}:{relation?:{synonyms?:LexicalRelationDisplayItem[];antonyms?:LexicalRelationDisplayItem[]};interfaceLanguage:OnboardingLanguage;contentLanguage?:string;translationLanguage?:string;translationVisible?:boolean;translationPending?:boolean;translationFailed?:boolean;onRetryTranslation?:()=>void;compact?:boolean}) {
  const copy=getUiMessages(interfaceLanguage).wordDetails;
  const additional=useAdditionalCardTranslation();
- const secondaryText=(item:LexicalRelationDisplayItem)=>{const relation=additional?.entry?.wordDetails?.lexicalRelations.find(r=>r.relationId===item.relationId && (!item.sourceTextFingerprint || r.sourceTextFingerprint===item.sourceTextFingerprint));return relation?.sourceTextFingerprint ? firstExactRenderableNodeTranslationV1((relation.translations??[]).filter(t=>t.targetLanguageCode===additional?.language),relation.sourceTextFingerprint)?.text : undefined;};
+ const secondaryText=(item:LexicalRelationDisplayItem)=>{
+  const candidate=additional?.entry?.wordDetails?.lexicalRelations.find(r=>r.relationId===item.relationId && (!item.sourceTextFingerprint || r.sourceTextFingerprint===item.sourceTextFingerprint));
+  return candidate?.sourceTextFingerprint ? firstExactRenderableNodeTranslationV1((candidate.translations??[]).filter(t=>t.targetLanguageCode===additional?.language),candidate.sourceTextFingerprint)?.text : undefined;
+ };
+ const renderTranslation=(item:LexicalRelationDisplayItem)=>{
+  const translations:{language?:string;content:ReactNode}[]=[];
+  const primary=item.translation
+   || (translationVisible&&translationPending ? <TranslationPlaceholder inline/>
+    : translationVisible&&translationFailed&&onRetryTranslation ? <TranslationFailure language={interfaceLanguage} onRetry={onRetryTranslation}/> : null);
+  if(primary)translations.push({language:translationLanguage,content:primary});
+  if(additional){
+   const secondary=secondaryText(item)
+    ?? (translationVisible&&additional.status==="pending" ? <TranslationPlaceholder inline/>
+     : translationVisible&&additional.status==="failed" ? <TranslationFailure language={interfaceLanguage} onRetry={additional.retry}/> : null);
+   if(secondary)translations.push({language:additional.language,content:secondary});
+  }
+  if(!translations.length)return null;
+  const showLabels=Boolean(additional);
+  return <span
+   lang={translations.length===1?translations[0].language:undefined}
+   hidden={!translationVisible} aria-hidden={!translationVisible}
+   data-content-translation="true" className={s.relationTranslation}
+  >{" ("}{translations.map((translation,index)=><React.Fragment key={translation.language??index}>
+   {index>0&&" · "}
+   {showLabels?<span lang={translation.language}>
+    {translation.language&&<><span data-language-label={translation.language} className={s.languageLabel}>{translation.language.toUpperCase()}</span>{" "}</>}
+    {translation.content}
+   </span>:translation.content}
+  </React.Fragment>)}{")"}</span>;
+ };
  const groups=[{id:"synonyms",label:copy.synonyms,values:relation?.synonyms||[]},{id:"antonyms",label:copy.antonyms,values:relation?.antonyms||[]}].filter(g=>g.values.length);
  if(!groups.length)return null;
- const content=<div className={s.relations}>{groups.map(g=><div className={s.relationGroup} data-kind={g.id} key={g.id}><h3>{g.id==="synonyms"?<Link2 size={12}/>:<ArrowLeftRight size={12}/>}<span>{g.label}</span></h3><p lang={contentLanguage}>{g.values.map((item,index)=><React.Fragment key={item.relationId}>{index>0&&" · "}<span lang={contentLanguage}>{item.text}</span>{item.translation?<span lang={translationLanguage} hidden={!translationVisible} aria-hidden={!translationVisible} data-content-translation="true" className={s.relationTranslation}> ({additional?.labelPrimary ? `${translationLanguage?.toUpperCase()}: ` : ""}{item.translation})</span>:translationVisible&&translationPending?<TranslationPlaceholder inline/>:translationVisible&&translationFailed&&onRetryTranslation?<TranslationFailure language={interfaceLanguage} onRetry={onRetryTranslation}/>:null}{additional&&translationVisible&&(secondaryText(item)?<span lang={additional.language} data-content-translation="true" className={s.relationTranslation}> ({additional.language.toUpperCase()}: {secondaryText(item)})</span>:additional.status==="pending"?<TranslationPlaceholder inline/>:additional.status==="failed"?<TranslationFailure language={interfaceLanguage} onRetry={additional.retry}/>:null)}</React.Fragment>)}</p></div>)}</div>;
+ const content=<div className={s.relations}>{groups.map(g=><div className={s.relationGroup} data-kind={g.id} key={g.id}>
+  <h3>{g.id==="synonyms"?<Link2 size={12}/>:<ArrowLeftRight size={12}/>}<span>{g.label}</span></h3>
+  <p lang={contentLanguage}>{g.values.map((item,index)=><React.Fragment key={item.relationId}>
+   {index>0&&" · "}<span lang={contentLanguage}>{item.text}</span>{renderTranslation(item)}
+  </React.Fragment>)}</p>
+ </div>)}</div>;
  return <section aria-label={copy.relations} className={s.sense}>{compact?<Disclosure label={groups.map(g=>g.label).join(" · ")}>{content}</Disclosure>:content}</section>;
 }

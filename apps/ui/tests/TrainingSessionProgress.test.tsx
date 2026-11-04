@@ -35,3 +35,8 @@ test('dots land on a mark instead of stopping partway through a jump',()=>{
  const runner=marks.pop()!;
  expect(marks.some(mark=>mark.style.left===runner.style.left && mark.style.top===runner.style.top)).toBe(true);
 });
+
+test('completed dots are joined by a subtle thread',()=>{
+ const {container}=render(<TrainingSessionProgress presentation={planned} language="en" variant="dots"/>);
+ expect(container.querySelector('polyline')?.getAttribute('points')?.split(' ')).toHaveLength(7);
+});

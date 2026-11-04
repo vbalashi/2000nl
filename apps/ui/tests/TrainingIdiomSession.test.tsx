@@ -389,7 +389,7 @@ test("header actions use the selected content and do not consume a review", asyn
   expect(fetchNextPlatformV2IdiomTrainingSessionExercise).toHaveBeenCalledTimes(
     1,
   );
-  expect(screen.getByText("0 / 1")).toBeInTheDocument();
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
 });
 
 test("an audio response after leaving the card does not start playback", async () => {
@@ -489,7 +489,7 @@ test.each(["en", "nl", "ru"] as const)(
     );
     await screen.findByText("ergens echt genoeg van hebben");
     expect(container.querySelector("[data-training-session-main]")).toBeInTheDocument();
-    expect(screen.getByTestId("training-session-position")).toHaveTextContent("2 / 5");
+    expect(screen.queryByTestId("training-session-position")).toBeNull();
     expect(screen.getByTestId("training-session-progress-track")).toHaveAttribute("aria-valuemax", "5");
     expect(screen.getByTestId("training-session-progress-track")).toHaveAttribute("aria-valuenow", "2");
     const chrome = screen.getByTestId("training-session-chrome");
@@ -755,4 +755,13 @@ trainingLifecyclePresentationContract("idiom", () => {
   return {view:(active,blocked,refreshing)=><TrainingIdiomSession interactionDisabled={blocked} authorityRefreshing={refreshing} presentationActive={active} userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()}/>,
     read:vi.mocked(loadIdiomExerciseContent),acknowledge:currentAcknowledge,action:vi.mocked(performPlatformV2IdiomExerciseAction),
     target:{sessionId:session.sessionId,entryId:candidate.entryId,cardTypeId:"idiom:direct"}};
+});
+
+test('unlimited idiom session shows its exact count without dots',async()=>{
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+ vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:'ready',content} as never);
+ render(<TrainingIdiomSession userId="user-1" session={{...session,requestedTotal:2661,completedActions:42}} sessionSize="all-due-today" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()}/>);
+ await screen.findByText('ergens echt genoeg van hebben');
+ expect(screen.getByTestId('training-session-position')).toHaveTextContent('42 / 2661');
+ expect(screen.queryByRole('progressbar')).toBeNull();
 });

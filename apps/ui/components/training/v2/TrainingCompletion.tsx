@@ -3,11 +3,12 @@ import React, { useEffect, useState } from "react";
 import { authenticatedAccountRequest } from "@/lib/preferences/accountRequest";
 import { settleStudyTime } from "@/lib/training/studyTime/delivery";
 import { ArrowRight, Check, BookOpen } from "lucide-react";
+import type { TrainingSessionSize } from "@/lib/types";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import styles from "./TrainingCompletion.module.css";
-export type TrainingCompletionActions = { onRestart?: () => void; onEdit?: () => void; pending?: boolean; startFailed?: boolean };
-export function TrainingCompletion({ interfaceLanguage, completedCount, onExit, onRestart, onEdit, pending=false, startFailed=false, activeMilliseconds, ownerId, sessionId, empty=false, emptyDetail }: TrainingCompletionActions & { empty?:boolean; emptyDetail?:string; interfaceLanguage: OnboardingLanguage; completedCount: number; onExit: () => void; activeMilliseconds?: number | null; ownerId?: string; sessionId?: string | null }) {
- const t = {en:{title:"Session complete",cards:"cards",next:"Another 10 cards",edit:"Modify training",home:"Back to home",min:"min",sec:"sec"},nl:{title:"Sessie voltooid",cards:"kaarten",next:"Nog 10 kaarten",edit:"Training aanpassen",home:"Terug naar start",min:"min",sec:"sec"},ru:{title:"Сессия завершена",cards:"карточек",next:"Ещё 10 карточек",edit:"Изменить тренировку",home:"На главный экран",min:"мин",sec:"сек"}}[interfaceLanguage];
+export type TrainingCompletionActions = { onRestart?: () => void; onEdit?: () => void; pending?: boolean; startFailed?: boolean; sessionSize?: TrainingSessionSize };
+export function TrainingCompletion({ interfaceLanguage, completedCount, onExit, onRestart, onEdit, pending=false, startFailed=false, activeMilliseconds, ownerId, sessionId, empty=false, emptyDetail, sessionSize=10 }: TrainingCompletionActions & { empty?:boolean; emptyDetail?:string; interfaceLanguage: OnboardingLanguage; completedCount: number; onExit: () => void; activeMilliseconds?: number | null; ownerId?: string; sessionId?: string | null }) {
+ const t = {en:{title:"Session complete",cards:"cards",next:(size:number)=>`Another ${size} ${size === 1 ? "card" : "cards"}`,unlimited:"Start another session",edit:"Modify training",home:"Back to home",min:"min",sec:"sec"},nl:{title:"Sessie voltooid",cards:"kaarten",next:(size:number)=>`Nog ${size} ${size === 1 ? "kaart" : "kaarten"}`,unlimited:"Volgende sessie starten",edit:"Training aanpassen",home:"Terug naar start",min:"min",sec:"sec"},ru:{title:"Сессия завершена",cards:"карточек",next:(size:number)=>`Ещё ${size} ${size % 100 >= 11 && size % 100 <= 14 ? "карточек" : size % 10 === 1 ? "карточка" : size % 10 >= 2 && size % 10 <= 4 ? "карточки" : "карточек"}`,unlimited:"Начать следующую сессию",edit:"Изменить тренировку",home:"На главный экран",min:"мин",sec:"сек"}}[interfaceLanguage];
  const [savedTime,setSavedTime] = useState<number | null>(null);
  useEffect(() => {
    let cancelled=false;
@@ -34,7 +35,7 @@ export function TrainingCompletion({ interfaceLanguage, completedCount, onExit, 
  <span className={styles.check} aria-hidden="true">{empty?<BookOpen size={36}/>:<Check size={36} />}</span>
  <h2 className={styles.title} role="status">{empty?emptyCopy.title:t.title}</h2>
  <p className={styles.summary}>{empty?(emptyDetail??emptyCopy.detail):<>{completedCount} {t.cards}{seconds !== null ? ` · ${Math.floor(seconds/60)} ${t.min} ${seconds%60} ${t.sec}` : ""}</>}</p>
- {onRestart && !empty ? <button className={styles.primary} disabled={pending} onClick={onRestart}>{t.next}<ArrowRight size={20} aria-hidden="true" /></button> : null}
+ {onRestart && !empty ? <button className={styles.primary} disabled={pending} onClick={onRestart}>{typeof sessionSize === "number" ? t.next(sessionSize) : t.unlimited}<ArrowRight size={20} aria-hidden="true" /></button> : null}
  {startFailed && !pending && !empty ? <p role="alert">{{en:"Could not start the next batch. Try again or modify training.",nl:"De volgende reeks kon niet starten. Probeer opnieuw of pas de training aan.",ru:"Не удалось продолжить. Попробуйте ещё раз или измените тренировку."}[interfaceLanguage]}</p> : null}
  {onEdit ? <button className={empty?styles.primary:styles.secondary} disabled={pending} onClick={onEdit}>{t.edit}{empty?<ArrowRight size={20} aria-hidden="true"/>:null}</button> : null}
  <button className={styles.home} disabled={pending} onClick={onExit}>{t.home}</button>

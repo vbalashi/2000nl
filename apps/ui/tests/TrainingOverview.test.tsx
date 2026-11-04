@@ -1,11 +1,23 @@
 import React from 'react';
 import {fireEvent,render,screen,cleanup} from '@testing-library/react';
 import {afterEach,expect,test,vi} from 'vitest';
+import userEvent from '@testing-library/user-event';
 import {TrainingOverview,type TrainingOverviewItem,type TrainingOverviewState} from '@/components/practice/TrainingOverview';
 afterEach(cleanup);
 const items:TrainingOverviewItem[]=[{id:'a',name:'Words',language:'Dutch',description:'Words · Direct',summary:'Dutch · 20 exercises',completedToday:12,meaningCount:36,sessionSize:20,canLaunch:true},{id:'b',name:'Idioms',language:'Dutch',description:'Idioms · Direct',summary:'Dutch · 10 exercises',completedToday:null,meaningCount:null,sessionSize:10,canLaunch:true}];
 function setup(state:TrainingOverviewState={status:'ready',trainings:items,mainId:'a'},interfaceLanguage:'en'|'nl'|'ru'='en'){const callbacks={onSelect:vi.fn(),onLaunch:vi.fn(),onResume:vi.fn(),onEdit:vi.fn(),onCreate:vi.fn(),onRetry:vi.fn()};render(<TrainingOverview state={state} interfaceLanguage={interfaceLanguage} {...callbacks}/>);return callbacks;}
 test('edit and launch take the stable training identity directly',()=>{const c=setup();fireEvent.click(screen.getAllByRole('button',{name:'Edit Idioms'})[0]);expect(c.onEdit).toHaveBeenCalledWith('b');fireEvent.click(screen.getByRole('button',{name:'Start training'}));expect(c.onLaunch).toHaveBeenCalledWith('a');expect(screen.queryByRole('dialog')).toBeNull();});
+test('saved training names load by click and keyboard without editing or launching',async()=>{
+ const user=userEvent.setup();const c=setup();
+ const name=screen.getByRole('button',{name:'Idioms'});
+ expect(name).toHaveAttribute('aria-pressed','false');
+ expect(screen.getByRole('button',{name:'Words'})).toHaveAttribute('aria-pressed','true');
+ await user.click(name);expect(c.onSelect).toHaveBeenLastCalledWith('b');
+ name.focus();await user.keyboard('{Enter} ');expect(c.onSelect).toHaveBeenCalledTimes(3);
+ await user.click(screen.getByRole('button',{name:'Edit Idioms'}));
+ expect(c.onEdit).toHaveBeenCalledWith('b');expect(c.onSelect).toHaveBeenCalledTimes(3);expect(c.onLaunch).not.toHaveBeenCalled();
+ await user.click(screen.getByRole('button',{name:'Load Idioms'}));expect(c.onSelect).toHaveBeenLastCalledWith('b');
+});
 test('an unfinished session overrides the main routine and resumes its identity',()=>{const c=setup({status:'ready',trainings:items,mainId:'a',resume:{sessionId:'session-b',trainingId:'b',completed:3,total:10}});fireEvent.click(screen.getByRole('button',{name:'Continue training'}));expect(c.onResume).toHaveBeenCalledWith('session-b');expect(c.onLaunch).not.toHaveBeenCalled();expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow','3');});
 test('unknown activity is omitted rather than presented as zero',()=>{setup({status:'ready',trainings:items,mainId:'b'});expect(screen.queryByText('done today')).toBeNull();expect(screen.queryByText('meanings')).toBeNull();expect(screen.getByText('Still new').nextElementSibling).toHaveTextContent('—');});
 test('loading, failure and empty are distinct actionable states',()=>{setup({status:'loading'});expect(screen.getByRole('status')).toHaveTextContent('Loading');expect(screen.queryByRole('button')).toBeNull();cleanup();let c=setup({status:'error',message:'Could not load training.'});fireEvent.click(screen.getByRole('button',{name:'Try again'}));expect(c.onRetry).toHaveBeenCalled();cleanup();c=setup({status:'ready',trainings:[],mainId:null});fireEvent.click(screen.getAllByRole('button',{name:'Create training'})[0]);expect(c.onCreate).toHaveBeenCalled();});

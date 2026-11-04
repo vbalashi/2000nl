@@ -23,6 +23,7 @@ export type TrainingSessionChromeProps = {
   cardFilter: CardFilter;
   presentation: TrainingSessionPresentationSnapshot;
   sessionName?: string;
+  unlimited?: boolean;
   onHistory?: () => void;
   historyButtonRef?: React.Ref<HTMLButtonElement>;
   onClose: () => void;
@@ -39,6 +40,7 @@ export function TrainingSessionChrome({
   cardFilter,
   presentation,
   sessionName,
+  unlimited = false,
   onHistory,
   historyButtonRef,
   onClose,
@@ -64,10 +66,10 @@ export function TrainingSessionChrome({
       >
         {name}
       </span>
-      <span data-testid="training-session-position" className={styles.position}>
+      {(!approvedPresentation || !showProgress || unlimited || preferences.alwaysShowCardCount || preferences.progressAnimation === "off" || presentation.kind === "ordinal") && <span data-testid="training-session-position" className={styles.position}>
         {presentation.position}
         {presentation.kind === "planned" ? ` / ${presentation.total}` : null}
-      </span>
+      </span>}
       <div className={styles.utilities}>
         {onHistory ? (
           <button
@@ -106,7 +108,7 @@ export function TrainingSessionChrome({
   return (
     <div className={styles.progressHeader}>
       {chrome}
-      {showProgress && presentation.kind === "planned" && preferences.progressAnimation !== "off" ? (
+      {showProgress && !unlimited && presentation.kind === "planned" && preferences.progressAnimation !== "off" ? (
         <TrainingSessionProgress
           presentation={presentation}
           language={interfaceLanguage}

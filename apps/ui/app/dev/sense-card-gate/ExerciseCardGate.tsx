@@ -123,6 +123,8 @@ export function ExerciseCardGate({ cow = false }: { cow?: boolean }) {
             translationTargetLanguageCode: cow ? "ru" : null,
           })}
           interfaceLanguage="en"
+          contentLanguage="nl"
+          translationLanguage={sentence ? "en" : cow ? "ru" : undefined}
           revealed={revealed}
           onReveal={() => setRevealed(true)}
           busy={false}

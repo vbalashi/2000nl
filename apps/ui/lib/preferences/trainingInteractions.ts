@@ -1,5 +1,6 @@
 export type ProgressAnimation = "off" | "dots" | "wave";
 export const defaultTrainingInteractions = {
+  alwaysShowCardCount: false,
   animation: true,
   gradeSwipe: false,
   translationSwipe: false,
