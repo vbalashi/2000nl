@@ -288,7 +288,7 @@ test("Appearance switches progress off and to wave without losing the revealed c
  await page.getByTestId("app-header").getByRole("button",{name:"Instellingen"}).click();
  await page.locator("nav").getByRole("button",{name:/Uiterlijk|Weergave|Vormgeving/,exact:true}).click();
  const group=page.getByRole("group",{name:"Voortgangsanimatie"});
- await expect(group.getByRole("button",{name:"Stippen",exact:true})).toHaveAttribute("aria-pressed","true");
+ await expect(group.getByRole("button",{name:"Draad",exact:true})).toHaveAttribute("aria-pressed","true");
  const saved=page.waitForRequest(request=>request.url().includes('/user_settings') && request.method()==='POST' && request.postDataJSON()?.training_progress_animation==='off');
  await group.getByRole("button",{name:"Uit",exact:true}).click();
  await saved;
