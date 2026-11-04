@@ -116,3 +116,41 @@ test("@pilot returning focus preserves Start and one click starts one run", asyn
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
   expect(fixture.requests.sessionStarts).toHaveLength(1);
 });
+
+for (const viewport of [
+  {name:"mobile", width:390, height:844},
+  {name:"desktop", width:1280, height:900},
+  {name:"landscape", width:844, height:300},
+]) test(`@pilot completion matches training controls and stays accessible: ${viewport.name}`, async ({page}, testInfo) => {
+  await page.setViewportSize({width:viewport.width,height:viewport.height});
+  await setupAuthenticatedTrainingAttributionPage(page, 0, {visualProfile:"answer", devTestLogin, sessionPlannedTotal:1});
+  await page.getByRole("button", {name:/^(Start training|Начать тренировку|Training starten)$/i}).click();
+  const card = page.getByTestId("training-sense-card-v2");
+  await expect(card).toBeVisible();
+  const reveal = page.getByRole("button", {name:/Show answer|Показать ответ|Antwoord Tonen/i});
+  await expect(reveal).toBeVisible();
+  const activeButton = await reveal.evaluate(el => {
+    const style = getComputedStyle(el);
+    return {fontFamily:style.fontFamily,fontSize:style.fontSize,fontWeight:style.fontWeight,lineHeight:style.lineHeight,borderRadius:style.borderRadius,minHeight:style.minHeight};
+  });
+  await page.screenshot({path:testInfo.outputPath(`active-${viewport.name}.png`)});
+  await reveal.click();
+  await page.getByRole("button", {name:/^(Good|Хорошо|Goed)$/i}).click();
+  const completion = page.getByTestId("training-completion");
+  await expect(completion).toBeVisible();
+  const restart = completion.getByRole("button").first();
+  const completionButton = await restart.evaluate(el => {
+    const style = getComputedStyle(el);
+    return {fontFamily:style.fontFamily,fontSize:style.fontSize,fontWeight:style.fontWeight,lineHeight:style.lineHeight,borderRadius:style.borderRadius,minHeight:style.minHeight};
+  });
+  expect(completionButton).toEqual(activeButton);
+  await page.screenshot({path:testInfo.outputPath(`completion-${viewport.name}.png`)});
+  for (const button of await completion.getByRole("button").all()) {
+    await button.scrollIntoViewIfNeeded();
+    const buttonBounds = await button.boundingBox();
+    const panelBounds = await completion.boundingBox();
+    expect(buttonBounds!.y).toBeGreaterThanOrEqual(panelBounds!.y - 1);
+    expect(buttonBounds!.y + buttonBounds!.height).toBeLessThanOrEqual(panelBounds!.y + panelBounds!.height + 1);
+  }
+  if (viewport.name === "landscape") await page.screenshot({path:testInfo.outputPath("completion-landscape-scrolled.png")});
+});
