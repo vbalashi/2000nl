@@ -6,7 +6,7 @@ export interface TrainingInteractionRepository {
  save(userId:string,value:TrainingInteractions):Promise<void>;
 }
 const columns = {
- animation:"training_animation_enabled", gradeSwipe:"training_grade_swipe_enabled",
+ alwaysShowCardCount:"training_always_show_card_count", animation:"training_animation_enabled", gradeSwipe:"training_grade_swipe_enabled",
  translationSwipe:"training_translation_swipe_enabled", syllableDoubleTap:"training_syllable_double_tap_enabled",
  progressAnimation:"training_progress_animation", showSyllables:"training_show_syllables", audioSwipe:"training_audio_swipe_enabled",
 } as const;

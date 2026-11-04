@@ -16,9 +16,9 @@ export function TrainingSessionProgress({ presentation, language, variant }: {
   language: OnboardingLanguage;
   variant: ProgressAnimation;
 }) {
-  const count = presentation.kind === "planned" ? Math.max(2, Math.min(15, presentation.total)) : 2;
+  const count = presentation.kind === "planned" ? Math.max(1, Math.min(15, presentation.total)) : 1;
   const fraction = presentation.kind === "planned" ? Math.max(0, Math.min(1, presentation.fraction)) : 0;
-  const target = variant === "dots" ? Math.round(fraction * (count - 1)) / (count - 1) : fraction;
+  const target = variant === "dots" ? Math.round(fraction * count) / count : fraction;
   const [position, setPosition] = useState(target);
   const current = useRef(target);
   useEffect(() => {
@@ -38,8 +38,9 @@ export function TrainingSessionProgress({ presentation, language, variant }: {
     return () => { cancelAnimationFrame(frame); media.removeEventListener("change", snap); };
   }, [target, variant]);
   if (presentation.kind !== "planned" || variant === "off") return null;
-  const step = position * (count - 1), index = Math.floor(step), travel = step - index;
-  const dotX = (i: number) => i * 314 / (count - 1) + (i > 0 && i < count - 1 ? jitter(i) * 3 : 0);
+  const completedMarks = Math.round(position * count);
+  const step = Math.max(0, position * count - 1), index = Math.floor(step), travel = step - index;
+  const dotX = (i: number) => count === 1 ? 157 : i * 314 / (count - 1) + (i > 0 && i < count - 1 ? jitter(i) * 3 : 0);
   const x = dotX(index) + (dotX(Math.min(index + 1, count - 1)) - dotX(index)) * travel;
   return <div className={styles.sessionProgress} data-variant={variant} data-testid="training-session-progress-track"
     role="progressbar" aria-label={labels[language]} aria-valuemin={0}
@@ -48,11 +49,12 @@ export function TrainingSessionProgress({ presentation, language, variant }: {
       <path d={wave} fill="none" stroke="currentColor" strokeOpacity=".18" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
       <path d={wave} fill="none" stroke="currentColor" strokeOpacity=".312" strokeWidth="1.4" pathLength="1" strokeDasharray={`${position} 1`} vectorEffect="non-scaling-stroke" />
     </svg> : null}
-    {variant === "dots" ? Array.from({length: count}, (_, i) => <span aria-hidden="true" key={i} className={styles.progressDot} style={{left:`${dotX(i)/314*100}%`,top:8+jitter(i)*.55,opacity:i<=step?.48:.15}} />) : null}
+    {variant === "dots" && completedMarks >= 2 ? <svg viewBox="-2 0 318 20" preserveAspectRatio="none" aria-hidden="true" className={styles.progressThread}><polyline points={Array.from({length: Math.min(count, completedMarks)}, (_, i) => `${dotX(i)},${8+jitter(i)*.55}`).join(" ")} fill="none" stroke="currentColor" strokeOpacity=".22" strokeWidth="1" vectorEffect="non-scaling-stroke" /></svg> : null}
+    {variant === "dots" ? Array.from({length: count}, (_, i) => <span aria-hidden="true" key={i} className={styles.progressDot} style={{left:`${dotX(i)/314*100}%`,top:8+jitter(i)*.55,opacity:i<completedMarks?.48:.15}} />) : null}
     <span aria-hidden="true" className={styles.progressDot} style={{
       left:`${variant === "wave" ? (2+position*314)/318*100 : x/314*100}%`,
       top:variant === "wave" ? waveY(position*314) : 8+jitter(index)*.55-7*Math.sin(Math.PI*travel),
-      width:variant === "wave"?4.5:3,height:variant === "wave"?4.5:3,opacity:variant === "wave"?.48:.55,
+      width:variant === "wave"?4.5:3,height:variant === "wave"?4.5:3,opacity:variant === "wave"?.48:position > 0?.55:0,
     }} />
   </div>;
 }

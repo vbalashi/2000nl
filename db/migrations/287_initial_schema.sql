@@ -32619,6 +32619,7 @@ CREATE TABLE public.user_settings (
     training_show_syllables boolean DEFAULT false NOT NULL,
     training_audio_swipe_enabled boolean DEFAULT false NOT NULL,
     training_progress_animation text DEFAULT 'dots'::text NOT NULL,
+    training_always_show_card_count boolean DEFAULT false NOT NULL,
     secondary_translation_lang text,
     CONSTRAINT user_settings_active_list_type_check CHECK ((active_list_type = ANY (ARRAY['curated'::text, 'user'::text]))),
     CONSTRAINT user_settings_audio_quality_check CHECK ((audio_quality = ANY (ARRAY['free'::text, 'premium'::text]))),

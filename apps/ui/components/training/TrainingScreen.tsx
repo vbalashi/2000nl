@@ -2137,6 +2137,7 @@ function TrainingScreenContent({
         mode: currentMode,
         cardFilter,
         presentation: sessionPresentation,
+        unlimited: sessionSize === "all-due-today",
         sessionName: displayedSessionName,
         onHistory: openTrainingHistory,
         historyButtonRef,
