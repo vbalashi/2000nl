@@ -1,7 +1,7 @@
 /** First-party Library query scope; exact group reads never carry this selection. */
 export const LIBRARY_PARTS = [
   "noun", "verb", "adjective", "adverb", "pronoun", "preposition",
-  "conjunction", "numeral", "article", "interjection",
+  "conjunction", "numeral", "article", "interjection", "abbreviation", "prefix",
 ] as const;
 export type LibraryPart = (typeof LIBRARY_PARTS)[number];
 export type LibraryEntryFilters = {
@@ -50,7 +50,7 @@ export function parseLibrarySearchScope(value: unknown): LibrarySearchScope | nu
 }
 const partAliases: Record<string, LibraryPart> = {
   zn: "noun", ww: "verb", bn: "adjective", bw: "adverb", vnw: "pronoun",
-  vz: "preposition", vw: "conjunction", tw: "numeral", lidw: "article", tsw: "interjection",
+  vz: "preposition", vw: "conjunction", tw: "numeral", lidw: "article", tsw: "interjection", afk: "abbreviation", vv: "prefix",
 };
 /** Mirrors the DB predicate only to choose a preview sense; never filters paginated groups. */
 export function libraryEntryMatchesFilters(partValue: string | null | undefined, gender: string | null | undefined, filters: LibraryEntryFilters): boolean {

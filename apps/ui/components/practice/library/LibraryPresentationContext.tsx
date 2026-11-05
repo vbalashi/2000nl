@@ -39,6 +39,7 @@ export const LibraryPresentationContext = createContext<{
   filterPlacement?: "panel" | "dialog";
   filterButtonSide?: "left" | "right";
   renderSearchActions?: (language: OnboardingLanguage) => ReactNode;
+  showPartsFilter?: boolean;
   renderAdditionalFilters?: (language: OnboardingLanguage) => ReactNode;
   onApplyAdditionalFilters?: () => void;
   onDismissAdditionalFilters?: () => void;

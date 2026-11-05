@@ -501,6 +501,8 @@
         "Conjunctions": "Conjunctions",
         "Numerals": "Numerals",
         "Articles": "Articles",
+        "Abbreviations": "Abbreviations",
+        "Prefixes": "Prefixes",
         "Interjections": "Interjections"
       },
       "balance": [

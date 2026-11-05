@@ -41,3 +41,8 @@ The agreed presentation is an open list, without an outer frame. Words,
 alphabetical neighbors and matching fragments share the same row geometry,
 separators and selected-row marker. The temporary framed comparison and its
 URL override have been removed from the Library owner.
+
+The fixed part-of-speech catalog also includes Abbreviations and Prefixes. The
+`afk`/`abbreviation` and `vv`/`prefix` labels have the same meaning in the UI
+preview predicate and every Library server read (ordinary, collection, material
+and category search). Source permissions and noun-only article rules still apply.

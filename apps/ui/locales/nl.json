@@ -501,6 +501,8 @@
         "Conjunctions": "Voegwoorden",
         "Numerals": "Telwoorden",
         "Articles": "Lidwoorden",
+        "Abbreviations": "Afkortingen",
+        "Prefixes": "Voorvoegsels",
         "Interjections": "Tussenwerpsels"
       },
       "balance": [

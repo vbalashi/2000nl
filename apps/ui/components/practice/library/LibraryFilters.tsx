@@ -15,7 +15,7 @@ export type LibraryFilterDraft = LibraryEntryFilters & { languageCode: string; d
 export type LibraryFilterOption = { id: string | null; label: string };
 export const LIBRARY_PART_LABELS = {
  noun: "Nouns", verb: "Verbs", adjective: "Adjectives", adverb: "Adverbs", pronoun: "Pronouns",
- preposition: "Prepositions", conjunction: "Conjunctions", numeral: "Numerals", article: "Articles", interjection: "Interjections",
+ preposition: "Prepositions", conjunction: "Conjunctions", numeral: "Numerals", article: "Articles", interjection: "Interjections", abbreviation: "Abbreviations", prefix: "Prefixes",
 } as const;
 export function LibraryFilters({ value, languageOptions, sourceOptions, locale, countContent, sourceNotice,
   canApply = true, collectionOptions = [], labelOptions = [], onDraftChange, onClose, onApply, renderSources, layout = "chips" }: {
@@ -106,7 +106,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
             {presentation?.renderSourceActions?.()}
           </BuilderSection>
           {presentation?.renderAdditionalFilters?.(locale)}
-          <BuilderSection title={builder.partOfSpeech} summary={draft.parts.length ? draft.parts.map(part => builder.parts[LIBRARY_PART_LABELS[part]]).join(" · ") : builder.allParts} open={partsOpen} onToggle={() => setPartsOpen(open => !open)}>
+          {presentation?.showPartsFilter!==false&&<BuilderSection title={builder.partOfSpeech} summary={draft.parts.length ? draft.parts.map(part => builder.parts[LIBRARY_PART_LABELS[part]]).join(" · ") : builder.allParts} open={partsOpen} onToggle={() => setPartsOpen(open => !open)}>
           {layout === "chips" ? <div className={f.parts}>{LIBRARY_PARTS.map(part => <div className={`${f.part} ${draft.parts.includes(part) ? f.selected : ""}`} key={part}>
             <button type="button" aria-pressed={draft.parts.includes(part)} onClick={() => togglePart(part)}>{builder.parts[LIBRARY_PART_LABELS[part]]}{part === "noun" && draft.article && <span className={f.dot} role="img" aria-label={formatUiMessage(copy.articleFilter,{article:draft.article??""})}/>}</button>
             {part === "noun" && draft.languageCode === "nl" && <button type="button" className={f.chipDisclosure} aria-label={builder.nounSubfilters} aria-haspopup="dialog" onClick={event => {
@@ -124,7 +124,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
             }}><ChevronRight size={17}/></button>}
           </div>)}</div>}
 
-          </BuilderSection>
+          </BuilderSection>}
           </div></div>
         </div>
         <div className={f.page} ref={node=>{node?.toggleAttribute("inert",page === "main");}} aria-hidden={page === "main"}>

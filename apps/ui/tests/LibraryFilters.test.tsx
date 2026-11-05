@@ -1,6 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
+import { LibraryPresentationContext } from "@/components/practice/library/LibraryPresentationContext";
 import { LibraryFilters, type LibraryFilterDraft } from "@/components/practice/library/LibraryFilters";
 const value:LibraryFilterDraft={languageCode:"nl",dictionaryId:null,parts:[],article:null};
 const props={value,locale:"en" as const,languageOptions:[{id:"nl",label:"Dutch"},{id:"en",label:"English"}],sourceOptions:[{id:"source",label:"Real source"}],countContent:"3 matching articles"};
@@ -112,4 +113,18 @@ test("label source is distinct from collection and preserves manual POS/article 
  fireEvent.click(screen.getByRole("button",{name:"Lesson"}));
  fireEvent.click(screen.getByRole("button",{name:"Show results"}));
  expect(apply).toHaveBeenLastCalledWith(expect.objectContaining({collectionId:"same",applyListFilter:true,labelId:null,labelName:null,parts:["noun","verb"],article:"de"}));
+});
+
+test("abbreviations and prefixes use the normal filter draft",()=>{
+ const apply=vi.fn();render(<LibraryFilters {...props} onClose={()=>{}} onApply={apply}/>);
+ fireEvent.click(screen.getByRole("button",{name:"Abbreviations"}));
+ fireEvent.click(screen.getByRole("button",{name:"Prefixes"}));
+ fireEvent.click(screen.getByRole("button",{name:"Show results"}));
+ expect(apply).toHaveBeenCalledWith({...value,parts:["abbreviation","prefix"]});
+});
+test("other entry review hides parts while ordinary Library retains them",()=>{
+ const view=render(<LibraryPresentationContext.Provider value={{showPartsFilter:false}}><LibraryFilters {...props} onClose={()=>{}} onApply={()=>{}}/></LibraryPresentationContext.Provider>);
+ expect(screen.queryByRole("button",{name:"Nouns"})).not.toBeInTheDocument();
+ view.rerender(<LibraryPresentationContext.Provider value={{showPartsFilter:true}}><LibraryFilters {...props} onClose={()=>{}} onApply={()=>{}}/></LibraryPresentationContext.Provider>);
+ expect(screen.getByRole("button",{name:"Nouns"})).toBeInTheDocument();
 });

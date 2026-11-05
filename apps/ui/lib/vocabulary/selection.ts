@@ -1,6 +1,6 @@
 /** UI selection contract. Corpus loading and server-side filtering are separate. */
 export type FrequencyProfile = "spoken" | "written";
-export type VocabularyMaterialKind = "word" | "expression" | "sentence";
+export type VocabularyMaterialKind = "word" | "other";
 export type MeaningLimit = 1 | 2 | 3 | "all";
 export type VocabularySelection = {
   mode: "all" | "frequency";

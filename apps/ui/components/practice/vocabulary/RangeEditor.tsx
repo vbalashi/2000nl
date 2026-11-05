@@ -3,6 +3,7 @@ import React, { useId, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { frequencyRangeSteps, validFrequencyRange } from "@/lib/vocabulary/selection";
+import { NumberWheel } from "./NumberWheel";
 import { DialogSurface } from "../ui/DialogSurface";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { BuilderChoice } from "../builder/BuilderChoice";
@@ -12,15 +13,15 @@ import workspace from "../library/libraryWorkspace.module.css";
 import s from "./vocabularySelection.module.css";
 
 type Boundary="from"|"to";
-type Mode="buttons"|"sliders"|"input";
+type Mode="buttons"|"sliders"|"wheel";
 const copy={
- ru:{mode:"Способ настройки",buttons:"Кнопки",sliders:"Две шкалы",input:"Ввод",from:"От",to:"До",step:"Шаг",cancel:"Отмена",apply:"Готово",minusFrom:"Уменьшить начало",plusFrom:"Увеличить начало",minusTo:"Уменьшить конец",plusTo:"Увеличить конец",fromSlider:"Шкала начала диапазона",toSlider:"Шкала конца диапазона",hint:"Шкалы помогают быстро выбрать примерное число. Кнопки «−» и «+» уточняют его на выбранный шаг.",invalid:"Начните с 1 или больше. Конец диапазона должен быть не меньше начала."},
- en:{mode:"Adjustment method",buttons:"Buttons",sliders:"Two sliders",input:"Type",from:"From",to:"To",step:"Step",cancel:"Cancel",apply:"Done",minusFrom:"Decrease start",plusFrom:"Increase start",minusTo:"Decrease end",plusTo:"Increase end",fromSlider:"Range start slider",toSlider:"Range end slider",hint:"Use the sliders for a quick approximate choice. The minus and plus buttons refine it by the selected step.",invalid:"Start at 1 or higher. The end must be at least the start."},
- nl:{mode:"Manier van instellen",buttons:"Knoppen",sliders:"Twee schuiven",input:"Invoer",from:"Van",to:"Tot",step:"Stap",cancel:"Annuleren",apply:"Gereed",minusFrom:"Begin verlagen",plusFrom:"Begin verhogen",minusTo:"Einde verlagen",plusTo:"Einde verhogen",fromSlider:"Schuif voor begin bereik",toSlider:"Schuif voor einde bereik",hint:"Gebruik de schuiven voor een snelle, globale keuze. De min- en plusknoppen verfijnen het getal met de gekozen stap.",invalid:"Begin bij 1 of hoger. Het einde mag niet lager zijn dan het begin."},
+ ru:{mode:"Способ настройки",buttons:"Кнопки",sliders:"Две шкалы",wheel:"Колёсики",wheelHint:"Прокрутите число вверх или вниз, проведите по нему пальцем или нажмите соседнее число. Шаг задаёт, насколько меняется число. С клавиатуры — стрелки вверх и вниз.",from:"От",to:"До",step:"Шаг",cancel:"Отмена",apply:"Готово",minusFrom:"Уменьшить начало",plusFrom:"Увеличить начало",minusTo:"Уменьшить конец",plusTo:"Увеличить конец",fromSlider:"Шкала начала диапазона",toSlider:"Шкала конца диапазона",hint:"Шкалы помогают быстро выбрать примерное число. Кнопки «−» и «+» уточняют его на выбранный шаг.",invalid:"Начните с 1 или больше. Конец диапазона должен быть не меньше начала."},
+ en:{mode:"Adjustment method",buttons:"Buttons",sliders:"Two sliders",wheel:"Wheels",wheelHint:"Scroll up or down, swipe vertically, or select a nearby number. The step sets how far each change moves. With a keyboard, use the up and down arrows.",from:"From",to:"To",step:"Step",cancel:"Cancel",apply:"Done",minusFrom:"Decrease start",plusFrom:"Increase start",minusTo:"Decrease end",plusTo:"Increase end",fromSlider:"Range start slider",toSlider:"Range end slider",hint:"Use the sliders for a quick approximate choice. The minus and plus buttons refine it by the selected step.",invalid:"Start at 1 or higher. The end must be at least the start."},
+ nl:{mode:"Manier van instellen",buttons:"Knoppen",sliders:"Twee schuiven",wheel:"Wielen",wheelHint:"Scroll omhoog of omlaag, veeg verticaal of kies een nabijgelegen getal. De stap bepaalt hoeveel het getal verandert. Gebruik op het toetsenbord de pijlen omhoog en omlaag.",from:"Van",to:"Tot",step:"Stap",cancel:"Annuleren",apply:"Gereed",minusFrom:"Begin verlagen",plusFrom:"Begin verhogen",minusTo:"Einde verlagen",plusTo:"Einde verhogen",fromSlider:"Schuif voor begin bereik",toSlider:"Schuif voor einde bereik",hint:"Gebruik de schuiven voor een snelle, globale keuze. De min- en plusknoppen verfijnen het getal met de gekozen stap.",invalid:"Begin bij 1 of hoger. Het einde mag niet lager zijn dan het begin."},
 };
 export function RangeEditor({initialFrom,initialTo,language,title,onCancel,onApply}:{initialFrom:number;initialTo:number;language:OnboardingLanguage;title:string;onCancel:()=>void;onApply:(from:number,to:number)=>void}){
  const id=useId(),t=copy[language];
- const [mode,setMode]=useState<Mode>("input"),[step,setStep]=useState(1);
+ const [mode,setMode]=useState<Mode>("buttons"),[step,setStep]=useState(1);
  const [draft,setDraft]=useState({from:String(initialFrom),to:String(initialTo)});
  const from=Number(draft.from),to=Number(draft.to),valid=validFrequencyRange(from,to);
  const numbers={from,to};
@@ -37,25 +38,24 @@ export function RangeEditor({initialFrom,initialTo,language,title,onCancel,onApp
  return <DialogSurface onDismiss={onCancel} aria-labelledby={`${id}-title`} className={s.rangeDialog}>
   <form onSubmit={event=>{event.preventDefault();if(valid)onApply(from,to);}}>
    <h2 id={`${id}-title`}>{title}</h2>
-   <SegmentedControl standard label={t.mode}>{(["input","buttons","sliders"] as const).map(option=><BuilderChoice key={option} active={mode===option} onClick={()=>setMode(option)}>{t[option]}</BuilderChoice>)}</SegmentedControl>
-   {mode==="input"?<div className={s.rangeInputs}>
-    {(["from","to"] as const).map(boundary=><label key={boundary} className={workspace.label}>{labels[boundary]}<input className={workspace.field} type="number" inputMode="numeric" min={1} step={1} required value={draft[boundary]} onChange={event=>setDraft(current=>({...current,[boundary]:event.target.value}))}/></label>)}
-   </div>:<>
+   <SegmentedControl standard label={t.mode}>{(["buttons","sliders","wheel"] as const).map(option=><BuilderChoice key={option} active={mode===option} onClick={()=>setMode(option)}>{t[option]}</BuilderChoice>)}</SegmentedControl>
+   <>
     <div className={s.stepChoice}><span className={controls.label}>{t.step}</span><SegmentedControl standard label={t.step}>{[1,10,100].map(amount=><BuilderChoice key={amount} active={step===amount} onClick={()=>setStep(amount)}>{amount}</BuilderChoice>)}</SegmentedControl></div>
-    <div className={s.boundaries}>{(["from","to"] as const).map(boundary=><div key={boundary} className={controls.rangeGroup} role="group" aria-label={labels[boundary]}>
-     <span className={controls.label}>{labels[boundary]}</span>
-     <div className={s.stepper}>
+    <div className={mode==="wheel"&&valid?s.wheelColumns:s.boundaries}>{(["from","to"] as const).map(boundary=><div key={boundary} className={controls.rangeGroup} role="group" aria-label={labels[boundary]}>
+     {mode==="buttons"||!valid?<label htmlFor={`${id}-${boundary}`} className={controls.label}>{labels[boundary]}</label>:<span className={controls.label}>{labels[boundary]}</span>}
+     {mode==="wheel"&&valid?<NumberWheel value={numbers[boundary]} min={boundary==="from"?1:from} max={boundary==="from"?to:Number.MAX_SAFE_INTEGER} step={step} label={labels[boundary]} language={language} describedBy={`${id}-wheel-help`} onChange={next=>setDraft(current=>({...current,[boundary]:String(next)}))}/>:<div className={s.stepper}>
       <IconAction className={`${workspace.button} ${s.stepAction}`} label={boundary==="from"?t.minusFrom:t.minusTo} disabled={valid&&(boundary==="from"?from<=1:to<=from)} onClick={()=>change(boundary,-step)}><Minus size={16}/></IconAction>
-      <output className={controls.selection} aria-live="polite">{Number.isSafeInteger(numbers[boundary])&&numbers[boundary]>=1?numbers[boundary].toLocaleString(language):"—"}</output>
+      {mode==="buttons"||!valid?<input id={`${id}-${boundary}`} aria-label={labels[boundary]} className={`${workspace.field} ${s.stepValue}`} type="number" inputMode="numeric" min={boundary==="from"?1:(valid?from:1)} max={boundary==="from"&&valid?to:Number.MAX_SAFE_INTEGER} step={1} required value={draft[boundary]} onChange={event=>setDraft(current=>({...current,[boundary]:event.target.value}))}/>:<output className={controls.selection} aria-live="polite">{numbers[boundary].toLocaleString(language)}</output>}
       <IconAction className={`${workspace.button} ${s.stepAction}`} label={boundary==="from"?t.plusFrom:t.plusTo} disabled={valid&&(boundary==="from"?from>=to:to>=Number.MAX_SAFE_INTEGER)} onClick={()=>change(boundary,step)}><Plus size={16}/></IconAction>
-     </div>
+     </div>}
      {mode==="sliders"&&<>
       <input type="range" className={controls.range} disabled={!valid} min={boundary==="from"?0:indexFrom} max={boundary==="from"?indexTo:steps.length-1} step={1} value={boundary==="from"?indexFrom:indexTo} aria-label={boundary==="from"?t.fromSlider:t.toSlider} aria-valuetext={String(numbers[boundary])} onChange={event=>setDraft(current=>({...current,[boundary]:String(steps[Number(event.target.value)])}))}/>
       <div className={controls.ends} aria-hidden="true"><span>{boundary==="from"?1:(valid?from:initialFrom).toLocaleString(language)}</span><span>{boundary==="from"?(valid?to:initialTo).toLocaleString(language):steps.at(-1)!.toLocaleString(language)}</span></div>
      </>}
     </div>)}</div>
+    {mode==="wheel"&&<p id={`${id}-wheel-help`} className={controls.help}>{t.wheelHint}</p>}
     {mode==="sliders"&&<p className={controls.help}>{t.hint}</p>}
-   </>}
+   </>
    {!valid&&<p className={workspace.error} role="alert">{t.invalid}</p>}
    <div className={s.rangeActions}><button className={workspace.button} type="button" onClick={onCancel}>{t.cancel}</button><button className={workspace.button} type="submit" disabled={!valid}>{t.apply}</button></div>
   </form>

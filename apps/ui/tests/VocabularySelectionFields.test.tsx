@@ -20,13 +20,13 @@ test("the meaning slider runs from one to all",()=>{
 test("exact bounds reject zero and reversed ranges; cancelling restores the opener",()=>{
  render(<Fields/>);const open=screen.getByRole("button",{name:"Изменить диапазон: 1–100"});open.focus();fireEvent.click(open);
  const dialog=screen.getByRole("dialog",{name:"Места в списке"});
- for(const value of ["0","101","1.5",""]){fireEvent.change(within(dialog).getByLabelText("От"),{target:{value}});expect(within(dialog).getByRole("button",{name:"Готово"})).toBeDisabled();}
+ for(const value of ["0","101","1.5",""]){fireEvent.change(within(dialog).getByRole("spinbutton",{name:"От"}),{target:{value}});expect(within(dialog).getByRole("button",{name:"Готово"})).toBeDisabled();}
  fireEvent.click(within(dialog).getByRole("button",{name:"Отмена"}));
  expect(screen.getByRole("button",{name:"Изменить диапазон: 1–100"})).toHaveFocus();
 });
 test("custom bounds remain exact and can select a single rank",()=>{
  render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));const dialog=screen.getByRole("dialog",{name:"Места в списке"});
- for(const label of ["От","До"])fireEvent.change(within(dialog).getByLabelText(label),{target:{value:"73"}});
+ for(const label of ["От","До"])fireEvent.change(within(dialog).getByRole("spinbutton",{name:label}),{target:{value:"73"}});
  fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
  expect(screen.getByRole("button",{name:"Изменить диапазон: 73–73"})).toBeInTheDocument();
  for(const name of ["Первая граница диапазона","Последняя граница диапазона"])expect(screen.getByRole("slider",{name})).toHaveAttribute("aria-valuetext","73");
@@ -49,7 +49,7 @@ test("either coincident boundary can be separated by a pointer drag",()=>{
  Object.defineProperty(HTMLElement.prototype,"setPointerCapture",{configurable:true,value:vi.fn()});
  Object.defineProperty(HTMLElement.prototype,"hasPointerCapture",{configurable:true,value:()=>false});
  const view=render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
- const dialog=screen.getByRole("dialog",{name:"Места в списке"});for(const label of ["От","До"])fireEvent.change(within(dialog).getByLabelText(label),{target:{value:"73"}});
+ const dialog=screen.getByRole("dialog",{name:"Места в списке"});for(const label of ["От","До"])fireEvent.change(within(dialog).getByRole("spinbutton",{name:label}),{target:{value:"73"}});
  fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
  const surface=screen.getByRole("slider",{name:"Первая граница диапазона"}).parentElement!;
  vi.spyOn(surface,"getBoundingClientRect").mockReturnValue({left:0,width:916,right:916,top:0,bottom:44,height:44,x:0,y:0,toJSON:()=>({})});
@@ -85,7 +85,7 @@ test("button adjustment changes exact values without typing and applies only on 
  render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
  const dialog=screen.getByRole("dialog",{name:"Места в списке"});
  fireEvent.click(within(dialog).getByRole("button",{name:"Кнопки"}));
- expect(within(dialog).queryByRole("spinbutton")).not.toBeInTheDocument();
+ expect(within(dialog).getAllByRole("spinbutton")).toHaveLength(2);
  fireEvent.click(within(dialog).getByRole("button",{name:"10"}));
  fireEvent.click(within(dialog).getByRole("button",{name:"Увеличить начало"}));
  fireEvent.click(within(dialog).getByRole("button",{name:"Увеличить конец"}));
@@ -102,11 +102,60 @@ test("two sliders can be refined by one without opening a numeric field",()=>{
  fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
  expect(screen.getByRole("button",{name:"Изменить диапазон: 51–100"})).toBeInTheDocument();
 });
-test("material types are separate from parts of speech and can be combined",()=>{
+test("entry types offer only confirmed groups, independently of parts of speech",()=>{
  function Kinds(){const [value,setValue]=useState<VocabularyMaterialKind[]>([]);return <MaterialKindSelection value={value} onChange={setValue} language="ru"/>;}
  render(<Kinds/>);expect(screen.getByRole("button",{name:"Всё"})).toHaveAttribute("aria-pressed","true");
- fireEvent.click(screen.getByRole("button",{name:"Выражения"}));fireEvent.click(screen.getByRole("button",{name:"Предложения"}));
- expect(screen.getByRole("button",{name:"Выражения"})).toHaveAttribute("aria-pressed","true");expect(screen.getByRole("button",{name:"Предложения"})).toHaveAttribute("aria-pressed","true");
+ fireEvent.click(screen.getByRole("button",{name:"Другое"}));
+ expect(screen.getByRole("button",{name:"Другое"})).toHaveAttribute("aria-pressed","true");
  expect(screen.getByRole("button",{name:"Слова"})).toHaveAttribute("aria-pressed","false");
- fireEvent.click(screen.getByRole("button",{name:"Всё"}));expect(screen.getByRole("button",{name:"Выражения"})).toHaveAttribute("aria-pressed","false");
+ expect(screen.queryByRole("button",{name:"Предложения"})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Слова"}));
+ expect(screen.getByRole("button",{name:"Всё"})).toHaveAttribute("aria-pressed","true");
+});
+test("buttons and typing share the exact draft and selected step",()=>{
+ render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
+ const dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ fireEvent.change(within(dialog).getByRole("spinbutton",{name:"От"}),{target:{value:"20"}});
+ fireEvent.change(within(dialog).getByRole("spinbutton",{name:"До"}),{target:{value:"200"}});
+ fireEvent.click(within(dialog).getByRole("button",{name:"100"}));
+ fireEvent.click(within(dialog).getByRole("button",{name:"Увеличить начало"}));
+ expect(within(dialog).getByRole("spinbutton",{name:"От"})).toHaveValue(120);
+ fireEvent.click(within(dialog).getByRole("button",{name:"Увеличить начало"}));
+ expect(within(dialog).getByRole("spinbutton",{name:"От"})).toHaveValue(200);
+ fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
+ expect(screen.getByRole("button",{name:"Изменить диапазон: 200–200"})).toBeInTheDocument();
+});
+test("wheels support keys and scrolling, clamp bounds and preserve the draft across modes",()=>{
+ render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
+ const dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ fireEvent.click(within(dialog).getByRole("button",{name:"Колёсики"}));
+ const start=within(dialog).getByRole("spinbutton",{name:"От"}),end=within(dialog).getByRole("spinbutton",{name:"До"});
+ fireEvent.keyDown(start,{key:"ArrowDown"});expect(start).toHaveAttribute("aria-valuenow","1");
+ fireEvent.keyDown(start,{key:"ArrowUp"});expect(start).toHaveAttribute("aria-valuenow","2");
+ fireEvent.click(within(dialog).getByRole("button",{name:"100"}));
+ fireEvent.wheel(start,{deltaY:32});expect(start).toHaveAttribute("aria-valuenow","100");
+ fireEvent.keyDown(end,{key:"ArrowDown"});expect(end).toHaveAttribute("aria-valuenow","100");
+ fireEvent.keyDown(end,{key:"ArrowUp"});expect(end).toHaveAttribute("aria-valuenow","200");
+ fireEvent.click(within(dialog).getByRole("button",{name:"Кнопки"}));
+ expect(within(dialog).getByRole("spinbutton",{name:"От"})).toHaveValue(100);
+ expect(within(dialog).getByRole("spinbutton",{name:"До"})).toHaveValue(200);
+ fireEvent.click(within(dialog).getByRole("button",{name:"Отмена"}));
+ expect(screen.getByRole("button",{name:"Изменить диапазон: 1–100"})).toBeInTheDocument();
+});
+test("wheel drag and tapping nearby values use the selected step",()=>{
+ class Pointer extends MouseEvent {readonly pointerId=1;readonly isPrimary=true;}
+ vi.stubGlobal("PointerEvent",Pointer);
+ Object.defineProperty(HTMLElement.prototype,"setPointerCapture",{configurable:true,value:vi.fn()});
+ Object.defineProperty(HTMLElement.prototype,"hasPointerCapture",{configurable:true,value:()=>false});
+ const view=render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
+ const dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ fireEvent.click(within(dialog).getByRole("button",{name:"10"}));
+ fireEvent.click(within(dialog).getByRole("button",{name:"Колёсики"}));
+ const wheel=within(dialog).getByRole("spinbutton",{name:"От"});
+ vi.spyOn(wheel,"getBoundingClientRect").mockReturnValue({left:0,width:100,right:100,top:0,bottom:160,height:160,x:0,y:0,toJSON:()=>({})});
+ fireEvent.pointerDown(wheel,{clientY:80,button:0});fireEvent.pointerMove(wheel,{clientY:16,button:0});fireEvent.pointerUp(wheel,{clientY:16,button:0});
+ expect(wheel).toHaveAttribute("aria-valuenow","21");
+ fireEvent.pointerDown(wheel,{clientY:16,button:0});fireEvent.pointerUp(wheel,{clientY:16,button:0});
+ expect(wheel).toHaveAttribute("aria-valuenow","1");
+ view.unmount();vi.unstubAllGlobals();
 });
